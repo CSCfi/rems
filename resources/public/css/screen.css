@@ -18,6 +18,11 @@ body {
 .navbar-nav .nav-link + .nav-link {
   margin-left: 0;
 }
+
+.secondary-navigation {
+  float: right;
+}
+
 @media (min-width: 34em) {
   .navbar-brand {
     float: left;
@@ -32,3 +37,8 @@ body {
   }
 }
 
+@media (max-width: 33em) {
+  .secondary-navigation {
+    float: none;
+  }
+}
