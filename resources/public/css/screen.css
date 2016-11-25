@@ -1,3 +1,7 @@
+* {
+    margin: 0;
+}
+
 html,
 body {
 	font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -21,6 +25,24 @@ body {
 
 .secondary-navigation {
   float: right;
+}
+
+.wrapper {
+  min-height: 100%;
+  margin: 0 auto -80px;
+}
+
+footer .footer-wrapper {
+    text-align: center;
+    padding: 2em 1em 0em 1em;
+}
+
+footer {
+  background-color: #dfe1e3;
+}
+
+footer, .push {
+    height: 80px;
 }
 
 @media (min-width: 34em) {
