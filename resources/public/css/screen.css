@@ -38,11 +38,23 @@ footer .footer-wrapper {
 }
 
 footer {
-  background-color: #dfe1e3;
+  background-color: rgba(77, 90, 145, 0.45);
 }
 
 footer, .push {
     height: 80px;
+}
+
+.jumbotron {
+  text-align: center;
+  max-width: 420px;
+  margin: 0 auto;
+  color: #fff;
+  background-color: rgba(77, 90, 145, 0.9)
+}
+
+.jumbotron h1 {
+    margin-bottom: 20px;
 }
 
 @media (min-width: 34em) {
