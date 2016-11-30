@@ -14,37 +14,38 @@
   <body>
       <div class="wrapper">
 
-          <!-- navbar -->
-          <nav class="navbar navbar-dark bg-primary" role="navigation">
-              <button class="navbar-toggler hidden-sm-up"
-                      type="button"
-                      data-toggle="collapse"
-                      data-target="#collapsing-navbar">
-                  &#9776;
-              </button>
-              <div class="collapse navbar-toggleable-xs" id="collapsing-navbar">
-                  <ul class="nav navbar-nav">
-                      <li class="nav-item">
-                          <a href="{{servlet-context}}/"
-                             class="nav-link{% ifequal page "home.html" %} active{%endifequal%}">
-                          Home
-                          </a>
-                      </li>
-                      <li class="nav-item">
-                          <a href="{{servlet-context}}/about"
-                             class="nav-link{% ifequal page "about.html" %} active{%endifequal%}">
-                          About
-                          </a>
-                      </li>
-                  </ul>
-                  <div class="secondary-navigation navbar-nav nav-item">
-                      <a href="{{servlet-context}}/Shibboleth.sso/Login"
-                             class="nav-link{% ifequal page "login.html" %} active{%endifequal%}">
-                          Login
-                          </a>
+          <div class="container">
+
+              <!-- navbar -->
+              <nav class="navbar rems-navbar" role="navigation">
+                  <button class="navbar-toggler hidden-sm-up"
+                          type="button"
+                          data-toggle="collapse"
+                          data-target="#collapsing-navbar">
+                      &#9776;
+                  </button>
+                  <div class="collapse navbar-toggleable-xs" id="collapsing-navbar">
+                      <ul class="nav navbar-nav">
+                          <li class="nav-item">
+                              <a href="{{servlet-context}}/"
+                                 class="nav-link{% ifequal page "home.html" %} active{%endifequal%}">
+                              Home
+                              </a>
+                          </li>
+                          <li class="nav-item">
+                              <a href="{{servlet-context}}/about"
+                                 class="nav-link{% ifequal page "about.html" %} active{%endifequal%}">
+                              About
+                              </a>
+                          </li>
+                      </ul>
                   </div>
-              </div>
-          </nav>
+              </nav>
+          </div>
+
+          <div class="logo">
+
+          </div>
 
         <div class="container">
           {% block content %}
