@@ -18,7 +18,7 @@
                 :start
                 (http/start
                   (-> env
-                      (assoc :handler (handler/app))
+                      (assoc :handler handler/app)
                       (update :port #(or (-> env :options :port) %))))
                 :stop
                 (http/stop http-server))
@@ -33,18 +33,20 @@
                   (repl/stop repl-server)))
 
 
-(defn stop-app []
-  (doseq [component (:stopped (mount/stop))]
-    (log/info component "stopped"))
-  (shutdown-agents))
+(defn init-jndi []
+  (System/setProperty "java.naming.factory.initial"
+                      "org.apache.naming.java.javaURLContextFactory")
+  (System/setProperty "java.naming.factory.url.pkgs"
+                      "org.apache.naming"))
 
 (defn start-app [args]
+  (init-jndi)
   (doseq [component (-> args
                         (parse-opts cli-options)
                         mount/start-with-args
                         :started)]
     (log/info component "started"))
-  (.addShutdownHook (Runtime/getRuntime) (Thread. stop-app)))
+  (.addShutdownHook (Runtime/getRuntime) (Thread. handler/destroy)))
 
 (defn -main [& args]
   (cond
@@ -55,4 +57,4 @@
       (System/exit 0))
     :else
     (start-app args)))
-  
+

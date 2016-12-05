@@ -79,19 +79,16 @@ footer, .push {
   color: #000;
   border-style: solid;
   border-width: 1px;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 
 .jumbotron h2 {
     margin-bottom: 20px;
 }
 
-.lbr {
-  background: #7A90C3 url("/img/logo.png") center center no-repeat;
-  -webkit-background-size: cover;
-  -moz-background-size: cover;
-  -o-background-size: cover;
-  background-size: cover;
-  height: 230px;
+.login-btn:hover {
+  background-image: linear-gradient(#eee, #ddd);
+  border-radius: 10px;
 }
 
 @media (min-width: 34em) {
