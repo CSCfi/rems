@@ -1,5 +1,5 @@
 (ns rems.core
-  (:require [rems.handler :as handler]
+  (:require [rems.dev-handler :as handler]
             [luminus.repl-server :as repl]
             [luminus.http-server :as http]
             [luminus-migrations.core :as migrations]
@@ -32,21 +32,18 @@
                 (when repl-server
                   (repl/stop repl-server)))
 
-
-(defn init-jndi []
-  (System/setProperty "java.naming.factory.initial"
-                      "org.apache.naming.java.javaURLContextFactory")
-  (System/setProperty "java.naming.factory.url.pkgs"
-                      "org.apache.naming"))
+(defn stop-app []
+  (doseq [component (:stopped (mount/stop))]
+    (log/info component "stopped"))
+  (shutdown-agents))
 
 (defn start-app [args]
-  (init-jndi)
   (doseq [component (-> args
                         (parse-opts cli-options)
                         mount/start-with-args
                         :started)]
     (log/info component "started"))
-  (.addShutdownHook (Runtime/getRuntime) (Thread. handler/destroy)))
+  (.addShutdownHook (Runtime/getRuntime) (Thread. stop-app)))
 
 (defn -main [& args]
   (cond
