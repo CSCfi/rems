@@ -22,15 +22,3 @@
 (defroutes secured-routes
   (GET "/catalogue" [] (catalogue-page)))
 
-(defn- dev-login [{session :session}]
-      (assoc (redirect "/catalogue")
-             :session (assoc session :identity "developer")))
-
-(defn- dev-logout [{session :session}]
-  (-> (redirect "/")
-      (assoc :session (dissoc session :identity))))
-
-(defroutes dev-routes
-  (GET "/Shibboleth.sso/Login" req (dev-login req))
-  (GET "/logout" req (dev-logout req)))
-
