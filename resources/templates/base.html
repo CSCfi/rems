@@ -38,7 +38,29 @@
                               About
                               </a>
                           </li>
+
+                        {% if user %}
+                            <li class="nav-item">
+                              <a href="{{servlet-context}}/catalogue"
+                                 class="nav-link{% ifequal page "catalogue.html" %} active{%endifequal%}">
+                              Catalogue
+                              </a>
+                          </li>
+
                       </ul>
+                        <div class="secondary-navigation navbar-nav nav-item">
+                          <div style="display: inline-block" class="fa fa-user"> {{user}} /</div>
+                          <div style="display: inline-block">
+                            <a href="{{servlet-context}}/logout" class="nav-link">
+                            Sign Out
+                            </a>
+                          </div>
+                        </div>
+
+                      {% else %}
+                      </ul>
+                      {% endif %}
+
                   </div>
               </nav>
           </div>

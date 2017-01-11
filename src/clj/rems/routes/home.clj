@@ -21,4 +21,3 @@
 
 (defroutes secured-routes
   (GET "/catalogue" [] (catalogue-page)))
-
