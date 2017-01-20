@@ -13,6 +13,13 @@
 (parser/add-tag! :csrf-field (fn [_ _] (anti-forgery-field)))
 (filters/add-filter! :markdown (fn [content] [:safe (md-to-html-string content)]))
 
+(defn- localized-nav [{tr :tempura/tr}]
+  {:home (tr [:navigation/home])
+   :login (tr [:navigation/login])
+   :logout (tr [:navigation/logout])
+   :about (tr [:navigation/about])
+   :catalogue (tr [:navigation/catalogue])})
+
 (deftype
   RenderableTemplate
   [template params]
@@ -27,7 +34,8 @@
           :page template
           :csrf-token *anti-forgery-token*
           :servlet-context *app-context*
-          :user (:identity request))))
+          :user (:identity request)
+          :navigation (localized-nav request))))
     "text/html; charset=utf-8")))
 (defn render
   "renders the HTML template located relative to resources/templates"

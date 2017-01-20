@@ -7,6 +7,7 @@
                  [buddy "1.2.0"]
                  [ch.qos.logback/logback-classic "1.1.7"]
                  [compojure "1.5.1"]
+                 [com.taoensso/tempura "1.0.0"]
                  [conman "0.6.2"]
                  [cprop "0.1.9"]
                  [luminus-migrations "0.2.8"]

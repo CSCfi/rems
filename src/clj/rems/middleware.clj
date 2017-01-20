@@ -11,7 +11,9 @@
             [buddy.auth.middleware :refer [wrap-authentication wrap-authorization]]
             [buddy.auth.accessrules :refer [restrict]]
             [buddy.auth :refer [authenticated?]]
-            [buddy.auth.backends.session :refer [session-backend]])
+            [buddy.auth.backends.session :refer [session-backend]]
+            [taoensso.tempura :as tempura :refer [tr]]
+            [rems.locales :refer [tconfig]])
   (:import [javax.servlet ServletContext]))
 
 (defn wrap-context [handler]
@@ -71,9 +73,13 @@
         (wrap-authentication backend)
         (wrap-authorization backend))))
 
+(defn wrap-i18n [handler]
+  (tempura/wrap-ring-request handler {:tr-opts tconfig}))
+
 (defn wrap-base [handler]
   (-> ((:middleware defaults) handler)
       wrap-auth
+      wrap-i18n
       wrap-webjars
       (wrap-defaults
         (-> site-defaults

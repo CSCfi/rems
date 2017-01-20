@@ -29,13 +29,13 @@
                           <li class="nav-item">
                               <a href="{{servlet-context}}/"
                                  class="nav-link{% ifequal page "home.html" %} active{%endifequal%}">
-                              Home
+                              {{navigation.home}}
                               </a>
                           </li>
                           <li class="nav-item">
                               <a href="{{servlet-context}}/about"
                                  class="nav-link{% ifequal page "about.html" %} active{%endifequal%}">
-                              About
+                              {{navigation.about}}
                               </a>
                           </li>
 
@@ -43,7 +43,7 @@
                             <li class="nav-item">
                               <a href="{{servlet-context}}/catalogue"
                                  class="nav-link{% ifequal page "catalogue.html" %} active{%endifequal%}">
-                              Catalogue
+                              {{navigation.catalogue}}
                               </a>
                           </li>
 
@@ -52,7 +52,7 @@
                           <div style="display: inline-block" class="fa fa-user"> {{user}} /</div>
                           <div style="display: inline-block">
                             <a href="{{servlet-context}}/logout" class="nav-link">
-                            Sign Out
+                            {{navigation.logout}}
                             </a>
                           </div>
                         </div>
