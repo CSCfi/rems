@@ -16,4 +16,3 @@
 (defroutes dev-routes
   (GET "/Shibboleth.sso/Login" req (dev-login req))
   (GET "/logout" req (dev-logout req)))
-

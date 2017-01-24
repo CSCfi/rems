@@ -36,6 +36,10 @@
     (-> #'public-routes
         (wrap-routes middleware/wrap-csrf)
         (wrap-routes middleware/wrap-formats))
+    (-> #'secured-routes
+        (wrap-routes middleware/wrap-csrf)
+        (wrap-routes middleware/wrap-restricted)
+        (wrap-routes middleware/wrap-formats))
     (route/not-found
       (:body
         (error-page {:status 404
