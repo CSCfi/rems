@@ -1,0 +1,15 @@
+language: clojure
+lein: 2.6.1
+branches:
+  only:
+    - master
+    - dev
+jdk:
+  - oraclejdk8
+services:
+  - postgresql
+before_script:
+  - psql -c 'CREATE USER db_user WITH PASSWORD 'db_password';' -U postgres
+  - psql -c 'CREATE DATABASE rems_test OWNER db_user;' -U postgres
+  - export DATABASE_URL='postgresql://localhost/rems_test?user=db_user&password=db_password'
+  - lein run migrate
