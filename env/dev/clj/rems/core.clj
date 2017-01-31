@@ -1,5 +1,5 @@
 (ns rems.core
-  (:require [rems.handler :as handler]
+  (:require [rems.dev-handler :as handler]
             [luminus.repl-server :as repl]
             [luminus.http-server :as http]
             [luminus-migrations.core :as migrations]
@@ -18,7 +18,7 @@
                 :start
                 (http/start
                   (-> env
-                      (assoc :handler (handler/app))
+                      (assoc :handler handler/app)
                       (update :port #(or (-> env :options :port) %))))
                 :stop
                 (http/stop http-server))
@@ -31,7 +31,6 @@
                 :stop
                 (when repl-server
                   (repl/stop repl-server)))
-
 
 (defn stop-app []
   (doseq [component (:stopped (mount/stop))]
@@ -55,4 +54,4 @@
       (System/exit 0))
     :else
     (start-app args)))
-  
+

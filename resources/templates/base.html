@@ -12,37 +12,77 @@
     {% style "/css/screen.css" %}
   </head>
   <body>
-      <!-- navbar -->
-      <nav class="navbar navbar-dark bg-primary" role="navigation">
-          <button class="navbar-toggler hidden-sm-up"
-                  type="button"
-                  data-toggle="collapse"
-                  data-target="#collapsing-navbar">
-              &#9776;
-          </button>
-          <div class="collapse navbar-toggleable-xs" id="collapsing-navbar">
-              <a class="navbar-brand" href="{{servlet-context}}/">rems</a>
-              <ul class="nav navbar-nav">
-                  <li class="nav-item">
-                      <a href="{{servlet-context}}/"
-                         class="nav-link{% ifequal page "home.html" %} active{%endifequal%}">
-                      home
-                      </a>
-                  </li>
-                  <li class="nav-item">
-                      <a href="{{servlet-context}}/about"
-                         class="nav-link{% ifequal page "about.html" %} active{%endifequal%}">
-                      about
-                      </a>
-                  </li>
-              </ul>
-          </div>
-      </nav>
+      <div class="wrapper">
 
-    <div class="container">
-      {% block content %}
-      {% endblock %}
+          <div class="container">
+
+              <!-- navbar -->
+              <nav class="navbar rems-navbar" role="navigation">
+                  <button class="navbar-toggler hidden-sm-up"
+                          type="button"
+                          data-toggle="collapse"
+                          data-target="#collapsing-navbar">
+                      &#9776;
+                  </button>
+                  <div class="collapse navbar-toggleable-xs" id="collapsing-navbar">
+                      <ul class="nav navbar-nav">
+                          <li class="nav-item">
+                              <a href="{{servlet-context}}/"
+                                 class="nav-link{% ifequal page "home.html" %} active{%endifequal%}">
+                              {{navigation.home}}
+                              </a>
+                          </li>
+                          <li class="nav-item">
+                              <a href="{{servlet-context}}/about"
+                                 class="nav-link{% ifequal page "about.html" %} active{%endifequal%}">
+                              {{navigation.about}}
+                              </a>
+                          </li>
+
+                        {% if user %}
+                            <li class="nav-item">
+                              <a href="{{servlet-context}}/catalogue"
+                                 class="nav-link{% ifequal page "catalogue.html" %} active{%endifequal%}">
+                              {{navigation.catalogue}}
+                              </a>
+                          </li>
+
+                      </ul>
+                        <div class="secondary-navigation navbar-nav nav-item">
+                          <div style="display: inline-block" class="fa fa-user"> {{user}} /</div>
+                          <div style="display: inline-block">
+                            <a href="{{servlet-context}}/logout" class="nav-link">
+                            {{navigation.logout}}
+                            </a>
+                          </div>
+                        </div>
+
+                      {% else %}
+                      </ul>
+                      {% endif %}
+
+                  </div>
+              </nav>
+          </div>
+
+          <div class="logo">
+
+          </div>
+
+        <div class="container">
+          {% block content %}
+          {% endblock %}
+        </div>
+        <div class="push"></div>
     </div>
+
+    <footer>
+        <article class="footer-wrapper">
+            <p>
+              Powered by CSC - IT Center for Science
+            </p>
+        </article>
+    </footer>
 
     <!-- scripts -->
     {% script "/assets/jquery/jquery.min.js" %}

@@ -4,11 +4,12 @@
   :url "http://example.com/FIXME"
 
   :dependencies [[bouncer "1.0.0"]
+                 [buddy "1.2.0"]
                  [ch.qos.logback/logback-classic "1.1.7"]
                  [compojure "1.5.1"]
+                 [com.taoensso/tempura "1.0.0"]
                  [conman "0.6.2"]
                  [cprop "0.1.9"]
-                 [luminus-jetty "0.1.4"]
                  [luminus-migrations "0.2.8"]
                  [luminus-nrepl "0.1.4"]
                  [luminus/ring-ttl-session "0.3.1"]
@@ -26,6 +27,7 @@
                  [ring-middleware-format "0.7.0"]
                  [ring-webjars "0.1.1"]
                  [ring/ring-defaults "0.2.1"]
+                 [ring/ring-servlet "1.4.0"]
                  [selmer "1.10.0"]]
 
   :min-lein-version "2.0.0"
@@ -38,7 +40,14 @@
   :migratus {:store :database :db ~(get (System/getenv) "DATABASE_URL")}
 
   :plugins [[lein-cprop "1.0.1"]
-            [migratus-lein "0.4.3"]]
+            [migratus-lein "0.4.3"]
+            [lein-uberwar "0.2.0"]]
+
+   :uberwar
+     {:handler rems.handler/app
+      :init rems.handler/init
+      :destroy rems.handler/destroy
+      :name "rems.war"}
 
   :profiles
   {:uberjar {:omit-source true
@@ -53,9 +62,11 @@
    :project/dev  {:dependencies [[prone "1.1.2"]
                                  [ring/ring-mock "0.3.0"]
                                  [ring/ring-devel "1.5.0"]
-                                 [pjstadig/humane-test-output "0.8.1"]]
+                                 [luminus-jetty "0.1.4"]
+                                 [pjstadig/humane-test-output "0.8.1"]
+                                 [directory-naming/naming-java "0.8"]]
                   :plugins      [[com.jakemccrary/lein-test-refresh "0.14.0"]]
-                  
+
                   :source-paths ["env/dev/clj" "test/clj"]
                   :resource-paths ["env/dev/resources"]
                   :repl-options {:init-ns user}

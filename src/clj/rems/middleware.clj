@@ -7,7 +7,13 @@
             [ring.middleware.format :refer [wrap-restful-format]]
             [rems.config :refer [env]]
             [ring-ttl-session.core :refer [ttl-memory-store]]
-            [ring.middleware.defaults :refer [site-defaults wrap-defaults]])
+            [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
+            [buddy.auth.middleware :refer [wrap-authentication wrap-authorization]]
+            [buddy.auth.accessrules :refer [restrict]]
+            [buddy.auth :refer [authenticated?]]
+            [taoensso.tempura :as tempura :refer [tr]]
+            [rems.locales :refer [tconfig]]
+            [rems.auth.backend :refer [shibbo-backend authz-backend]])
   (:import [javax.servlet ServletContext]))
 
 (defn wrap-context [handler]
@@ -52,8 +58,24 @@
       ;; since they're not compatible with this middleware
       ((if (:websocket? request) handler wrapped) request))))
 
+(defn on-error [request response]
+  (error-page
+    {:status 403
+     :headers {"Content-Type" "text/plain"}
+     :title (str "Access to " (:uri request) " is not authorized")}))
+
+(defn wrap-restricted [handler]
+  (restrict handler {:handler authenticated?
+                     :on-error on-error}))
+
+(defn wrap-i18n [handler]
+  (tempura/wrap-ring-request handler {:tr-opts tconfig}))
+
 (defn wrap-base [handler]
   (-> ((:middleware defaults) handler)
+      wrap-i18n
+      (wrap-authentication (shibbo-backend))
+      (wrap-authorization (authz-backend))
       wrap-webjars
       (wrap-defaults
         (-> site-defaults
