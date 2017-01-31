@@ -31,6 +31,12 @@
   (shutdown-agents)
   (log/info "Rems has shut down!"))
 
+(def not-found
+  (route/not-found
+   (:body
+    (error-page {:status 404
+                 :title "page not found"}))))
+
 (def app-routes
   (routes
     (-> #'public-routes
@@ -40,9 +46,6 @@
         (wrap-routes middleware/wrap-csrf)
         (wrap-routes middleware/wrap-restricted)
         (wrap-routes middleware/wrap-formats))
-    (route/not-found
-      (:body
-        (error-page {:status 404
-                     :title "page not found"})))))
+    not-found))
 
 (def app (middleware/wrap-base #'app-routes))
