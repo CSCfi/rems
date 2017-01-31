@@ -36,16 +36,19 @@
    (:body
     (error-page {:status 404
                  :title "page not found"}))))
+(def normal-routes
+  (routes
+   (-> #'public-routes
+       (wrap-routes middleware/wrap-csrf)
+       (wrap-routes middleware/wrap-formats))
+   (-> #'secured-routes
+       (wrap-routes middleware/wrap-csrf)
+       (wrap-routes middleware/wrap-restricted)
+       (wrap-routes middleware/wrap-formats))))
 
 (def app-routes
   (routes
-    (-> #'public-routes
-        (wrap-routes middleware/wrap-csrf)
-        (wrap-routes middleware/wrap-formats))
-    (-> #'secured-routes
-        (wrap-routes middleware/wrap-csrf)
-        (wrap-routes middleware/wrap-restricted)
-        (wrap-routes middleware/wrap-formats))
-    not-found))
+   normal-routes
+   not-found))
 
 (def app (middleware/wrap-base #'app-routes))
