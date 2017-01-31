@@ -2,7 +2,7 @@
   (:require [compojure.core :refer [routes wrap-routes]]
             [rems.layout :refer [error-page]]
             [rems.routes.home :refer [public-routes secured-routes]]
-            [rems.routes.dev-home :refer [dev-routes]]
+            [rems.routes.dev-home :refer [login-routes]]
             [compojure.route :as route]
             [rems.env :refer [defaults]]
             [mount.core :as mount]
