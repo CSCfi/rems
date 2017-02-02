@@ -23,7 +23,7 @@
             (shibbo/get-attributes request env))
     (-authenticate [_ request shib-attribs]
                    (let [id
-                         (if (haka-login-valid? shib-attribs) shib-attribs nil)]
+                         (when (haka-login-valid? shib-attribs) shib-attribs)]
                      id))))
 
 (defn authz-backend
