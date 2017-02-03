@@ -3,7 +3,7 @@
             [clojure.tools.logging :as log]
             [rems.middleware.dev :refer [wrap-dev]]))
 
-(def defaults
+(def +defaults+
   {:init
    (fn []
      (parser/cache-off!)

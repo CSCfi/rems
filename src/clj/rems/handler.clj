@@ -4,15 +4,15 @@
             [rems.routes.home :refer [public-routes secured-routes]]
             [rems.routes.fake-shibboleth :refer [fake-shibboleth-routes]]
             [compojure.route :as route]
-            [rems.env :refer [defaults]]
+            [rems.env :refer [+defaults+]]
             [mount.core :as mount]
             [rems.middleware :as middleware]
             [clojure.tools.logging :as log]
             [rems.config :refer [env]]))
 
 (mount/defstate init-app
-                :start ((or (:init defaults) identity))
-                :stop  ((or (:stop defaults) identity)))
+                :start ((or (:init +defaults+) identity))
+                :stop  ((or (:stop +defaults+) identity)))
 
 (defn init
   "init will be called once when
@@ -58,7 +58,7 @@
 (def app-routes
   (routes
    normal-routes
-   (if (:fake-shibboleth defaults)
+   (if (:fake-shibboleth +defaults+)
      wrapped-fake-shibboleth-routes
      never-match-route)
    not-found))
