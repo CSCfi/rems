@@ -8,6 +8,7 @@
             [rems.config :refer [env]]
             [ring-ttl-session.core :refer [ttl-memory-store]]
             [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
+            [buddy.auth.backends.session :refer [session-backend]]
             [buddy.auth.middleware :refer [wrap-authentication wrap-authorization]]
             [buddy.auth.accessrules :refer [restrict]]
             [buddy.auth :refer [authenticated?]]
@@ -71,11 +72,22 @@
 (defn wrap-i18n [handler]
   (tempura/wrap-ring-request handler {:tr-opts tconfig}))
 
+(defn wrap-auth
+  [handler]
+  (let [authentication (if (:fake-shibboleth +defaults+)
+                         (session-backend)
+                         (shibbo-backend))
+        authorization (if (:fake-shibboleth +defaults+)
+                        authentication
+                        (authz-backend))]
+    (-> handler
+        (wrap-authentication authentication)
+        (wrap-authorization authorization))))
+
 (defn wrap-base [handler]
   (-> ((:middleware +defaults+) handler)
       wrap-i18n
-      (wrap-authentication (shibbo-backend))
-      (wrap-authorization (authz-backend))
+      wrap-auth
       wrap-webjars
       (wrap-defaults
         (-> site-defaults
