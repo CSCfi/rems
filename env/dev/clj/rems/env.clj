@@ -1,7 +1,7 @@
 (ns rems.env
   (:require [selmer.parser :as parser]
             [clojure.tools.logging :as log]
-            [rems.dev-middleware :refer [wrap-dev]]))
+            [rems.middleware.dev :refer [wrap-dev]]))
 
 (def defaults
   {:init
