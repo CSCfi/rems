@@ -36,7 +36,7 @@
   :source-paths ["src/clj"]
   :resource-paths ["resources"]
   :target-path "target/%s/"
-  :main rems.core
+  :main rems.standalone
   :migratus {:store :database :db ~(get (System/getenv) "DATABASE_URL")}
 
   :plugins [[lein-cprop "1.0.1"]

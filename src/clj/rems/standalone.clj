@@ -1,4 +1,5 @@
-(ns rems.core
+(ns rems.standalone
+  "Run the REMS app in an embedded http server."
   (:require [rems.handler :as handler]
             [luminus.repl-server :as repl]
             [luminus.http-server :as http]
