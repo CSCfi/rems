@@ -82,4 +82,6 @@
             (assoc-in [:security :anti-forgery] false)
             (assoc-in  [:session :store] (ttl-memory-store (* 60 30)))))
       wrap-context
-      wrap-internal-error))
+      wrap-internal-error
+      wrap-csrf
+      wrap-formats))
