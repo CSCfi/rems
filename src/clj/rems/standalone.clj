@@ -1,5 +1,6 @@
-(ns rems.core
-  (:require [rems.dev-handler :as handler]
+(ns rems.standalone
+  "Run the REMS app in an embedded http server."
+  (:require [rems.handler :as handler]
             [luminus.repl-server :as repl]
             [luminus.http-server :as http]
             [luminus-migrations.core :as migrations]
@@ -54,4 +55,3 @@
       (System/exit 0))
     :else
     (start-app args)))
-

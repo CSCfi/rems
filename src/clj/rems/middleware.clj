@@ -1,5 +1,5 @@
 (ns rems.middleware
-  (:require [rems.env :refer [defaults]]
+  (:require [rems.env :refer [+defaults+]]
             [clojure.tools.logging :as log]
             [rems.layout :refer [*app-context* error-page]]
             [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
@@ -72,7 +72,7 @@
   (tempura/wrap-ring-request handler {:tr-opts tconfig}))
 
 (defn wrap-base [handler]
-  (-> ((:middleware defaults) handler)
+  (-> ((:middleware +defaults+) handler)
       wrap-i18n
       (wrap-authentication (shibbo-backend))
       (wrap-authorization (authz-backend))

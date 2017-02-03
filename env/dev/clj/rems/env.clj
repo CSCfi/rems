@@ -1,9 +1,9 @@
 (ns rems.env
   (:require [selmer.parser :as parser]
             [clojure.tools.logging :as log]
-            [rems.dev-middleware :refer [wrap-dev]]))
+            [rems.middleware.dev :refer [wrap-dev]]))
 
-(def defaults
+(def +defaults+
   {:init
    (fn []
      (parser/cache-off!)
@@ -11,4 +11,5 @@
    :stop
    (fn []
      (log/info "\n-=[rems has shut down successfully]=-"))
-   :middleware wrap-dev})
+   :middleware wrap-dev
+   :fake-shibboleth true})

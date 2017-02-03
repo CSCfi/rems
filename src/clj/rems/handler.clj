@@ -2,16 +2,17 @@
   (:require [compojure.core :refer [routes wrap-routes]]
             [rems.layout :refer [error-page]]
             [rems.routes.home :refer [public-routes secured-routes]]
+            [rems.routes.fake-shibboleth :refer [fake-shibboleth-routes]]
             [compojure.route :as route]
-            [rems.env :refer [defaults]]
+            [rems.env :refer [+defaults+]]
             [mount.core :as mount]
             [rems.middleware :as middleware]
             [clojure.tools.logging :as log]
             [rems.config :refer [env]]))
 
 (mount/defstate init-app
-                :start ((or (:init defaults) identity))
-                :stop  ((or (:stop defaults) identity)))
+                :start ((or (:init +defaults+) identity))
+                :stop  ((or (:stop +defaults+) identity)))
 
 (defn init
   "init will be called once when
@@ -46,9 +47,20 @@
        (wrap-routes middleware/wrap-restricted)
        (wrap-routes middleware/wrap-formats))))
 
+(def wrapped-fake-shibboleth-routes
+  (-> #'fake-shibboleth-routes
+      (wrap-routes middleware/wrap-csrf)
+      (wrap-routes middleware/wrap-formats)))
+
+(def never-match-route
+  (constantly nil))
+
 (def app-routes
   (routes
    normal-routes
+   (if (:fake-shibboleth +defaults+)
+     wrapped-fake-shibboleth-routes
+     never-match-route)
    not-found))
 
 (def app (middleware/wrap-base #'app-routes))
