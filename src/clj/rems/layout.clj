@@ -1,5 +1,6 @@
 (ns rems.layout
-  (:require [selmer.parser :as parser]
+  (:require [compojure.response]
+            [selmer.parser :as parser]
             [selmer.filters :as filters]
             [markdown.core :refer [md-to-html-string]]
             [ring.util.http-response :refer [content-type ok]]
