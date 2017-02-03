@@ -13,12 +13,11 @@
   [names req]
   (let [^ServletRequest request (:servlet-request req)]
     (when (some? request)
-        (into {}
-              (filter
-                #(not-blank? (last %))
-                (map #(let [val (.getAttribute request %)]
-[% (when (some? val) (cast String val))]) names))))))
+      (into {}
+            (filter
+             #(not-blank? (last %))
+             (map #(let [val (.getAttribute request %)]
+                     [% (when (some? val) (cast String val))]) names))))))
 
 (defn get-attributes [request env & {:keys [names] :or {names shibbo-attribs}}]
   (get-ajp-attributes names request))
-

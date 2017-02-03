@@ -20,15 +20,15 @@
   (reify
     proto/IAuthentication
     (-parse [_ request]
-            (shibbo/get-attributes request env))
+      (shibbo/get-attributes request env))
     (-authenticate [_ request shib-attribs]
-                   (let [id
-                         (when (haka-login-valid? shib-attribs) shib-attribs)]
-                     id))))
+      (let [id
+            (when (haka-login-valid? shib-attribs) shib-attribs)]
+        id))))
 
 (defn authz-backend
   []
   (reify
     proto/IAuthorization
     (-handle-unauthorized [_ request metadata]
-                          (handle-unauthorized-default request))))
+      (handle-unauthorized-default request))))
