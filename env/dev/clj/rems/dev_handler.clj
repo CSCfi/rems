@@ -2,7 +2,7 @@
   (:require [compojure.core :refer [routes wrap-routes]]
             [rems.layout :refer [error-page]]
             [rems.handler :as handler]
-            [rems.routes.dev-home :refer [login-routes]]
+            [rems.routes.fake-shibboleth :refer [fake-shibboleth-routes]]
             [compojure.route :as route]
             [rems.env :refer [defaults]]
             [mount.core :as mount]
@@ -14,7 +14,7 @@
                 :stop  ((or (:stop defaults) identity)))
 
 (def dev-routes
-  (-> #'login-routes
+  (-> #'fake-shibboleth-routes
       (wrap-routes middleware/wrap-csrf)
       (wrap-routes middleware/wrap-formats)))
 
