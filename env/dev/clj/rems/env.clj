@@ -11,4 +11,5 @@
    :stop
    (fn []
      (log/info "\n-=[rems has shut down successfully]=-"))
-   :middleware wrap-dev})
+   :middleware wrap-dev
+   :fake-shibboleth true})

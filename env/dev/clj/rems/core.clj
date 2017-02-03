@@ -1,5 +1,5 @@
 (ns rems.core
-  (:require [rems.dev-handler :as handler]
+  (:require [rems.handler :as handler]
             [luminus.repl-server :as repl]
             [luminus.http-server :as http]
             [luminus-migrations.core :as migrations]
@@ -54,4 +54,3 @@
       (System/exit 0))
     :else
     (start-app args)))
-
