@@ -56,8 +56,8 @@
   {:uberjar {:omit-source true
              :aot :all
              :uberjar-name "rems.jar"
-             :source-paths ["env/prod/clj"]
-             :resource-paths ["env/prod/resources"]}
+             :source-paths ["env/dev/clj"]
+             :resource-paths ["env/dev/resources"]}
 
    :dev           [:project/dev :profiles/dev]
    :test          [:project/dev :project/test :profiles/test]
@@ -69,7 +69,7 @@
 
                   :source-paths ["env/dev/clj" "test/clj"]
                   :resource-paths ["env/dev/resources"]
-                  :repl-options {:init-ns user}
+                  :repl-options {:init-ns rems.standalone}
                   :injections [(require 'pjstadig.humane-test-output)
                                (pjstadig.humane-test-output/activate!)]}
    :project/test {:resource-paths ["env/test/resources"]}
