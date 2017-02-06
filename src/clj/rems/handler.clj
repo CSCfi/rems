@@ -39,18 +39,8 @@
                  :title "page not found"}))))
 (def normal-routes
   (routes
-   (-> #'public-routes
-       (wrap-routes middleware/wrap-csrf)
-       (wrap-routes middleware/wrap-formats))
-   (-> #'secured-routes
-       (wrap-routes middleware/wrap-csrf)
-       (wrap-routes middleware/wrap-restricted)
-       (wrap-routes middleware/wrap-formats))))
-
-(def wrapped-fake-shibboleth-routes
-  (-> #'fake-shibboleth-routes
-      (wrap-routes middleware/wrap-csrf)
-      (wrap-routes middleware/wrap-formats)))
+   #'public-routes
+   (wrap-routes #'secured-routes middleware/wrap-restricted)))
 
 (def never-match-route
   (constantly nil))
@@ -59,7 +49,7 @@
   (routes
    normal-routes
    (if (:fake-shibboleth +defaults+)
-     wrapped-fake-shibboleth-routes
+     fake-shibboleth-routes
      never-match-route)
    not-found))
 
