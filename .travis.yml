@@ -3,7 +3,6 @@ lein: 2.6.1
 branches:
   only:
     - master
-    - dev
 jdk:
   - oraclejdk8
 services:
