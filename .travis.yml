@@ -13,6 +13,7 @@ before_script:
   - export DATABASE_URL='postgresql://localhost/rems_test?user=db_user&password=db_password'
   - lein run migrate
 script:
+  - lein test
   - lein uberwar
 notifications:
   flowdock:
