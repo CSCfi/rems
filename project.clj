@@ -44,6 +44,7 @@
 
   :plugins [[lein-cprop "1.0.1"]
             [migratus-lein "0.4.3"]
+            [org.clojars.punkisdead/lein-cucumber "1.0.5"]
             [lein-uberwar "0.2.0"]]
 
    :uberwar
@@ -64,7 +65,9 @@
 
    :project/dev  {:dependencies [[ring/ring-mock "0.3.0"]
                                  [pjstadig/humane-test-output "0.8.1"]
-                                 [directory-naming/naming-java "0.8"]]
+                                 [clj-webdriver/clj-webdriver "0.7.2"]
+                                 [directory-naming/naming-java "0.8"]
+                                 [org.seleniumhq.selenium/selenium-server "2.48.2"]]
                   :plugins      [[com.jakemccrary/lein-test-refresh "0.14.0"]]
 
                   :source-paths ["env/dev/clj" "test/clj"]
