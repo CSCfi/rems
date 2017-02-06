@@ -22,12 +22,6 @@
     <logger name="org.xnio.nio" level="warn">
         <AppenderRef ref="FILE"/>
     </logger>
-    <logger name="com.zaxxer.hikari" level="warn">
-        <AppenderRef ref="FILE"/>
-    </logger>
-    <logger name="org.eclipse.jetty" level="warn">
-        <AppenderRef ref="FILE"/>
-    </logger>
     <root level="INFO">
         <appender-ref ref="FILE" />
     </root>
