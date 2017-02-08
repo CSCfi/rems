@@ -41,6 +41,7 @@
   - name: Pull latest rems docker image
     docker_image:
       name: "{{ecr}}/rems"
+      force: yes # download latest version even if image is already available
 
   - name: Run rems docker container
     docker_container:
