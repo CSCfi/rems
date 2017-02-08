@@ -5,8 +5,11 @@ branches:
     - master
 jdk:
   - oraclejdk8
+env:
+  - DOCKER_REPOSITORY=673230199239.dkr.ecr.eu-central-1.amazonaws.com
 services:
   - postgresql
+  - docker
 before_script:
   - psql -c "CREATE USER db_user WITH PASSWORD 'db_password';" -U postgres
   - psql -c 'CREATE DATABASE rems_test OWNER db_user;' -U postgres
@@ -15,6 +18,10 @@ before_script:
 script:
   - lein test
   - lein uberwar
+  - lein uberjar && docker build -t rems . && docker tag rems:latest $DOCKER_REPOSITORY/rems:latest
+after_success:
+  # AWS_DOCKER_LOGIN_COMMAND is secret, stored in travis repository environment
+  - if [[ "$TRAVIS_BRANCH" == "master" ]]; then $AWS_DOCKER_LOGIN_COMMAND && docker push $DOCKER_REPOSITORY/rems:latest fi
 notifications:
   flowdock:
     secure: "MIpbDHtm3Qz++2HvPLSWpXYUubtwvhUrimrYS5fmXMtEbLMtkVETzDJ0wuAaD+jB+MuBzvKl1MbeHvPV1w/sWjVh6lcJZKO3qzrXiMV1avLYfNrJuznTeaPcVNjMuwDEtY9bg0u0RQqNoNPYg5zT9tgk8HdDeAmw5MQ9O/pZLM13Sn8r1hkx5Mlnq2iNCqFXNgphGl8mJoqxkSxf1nwMuUFtpRE7Ob6dzFJ/DHxLjIXzzjJj4La8QPxtePKCcrjfQSNkXqoAAlsVoYilp/F5HJbCeXKBFICpj74sG9dgEKtP6SPVXa+7LVYFD/kzY0wVwyj1BlY7BjaGLqiV73v+PnNMkYUKqnKOc+Nb5WkL9Yqu2PGLz1oTFL/RDso9NVh88BVIWzkBHnW3FnHc9TCSYreiK8ttCuf7oFvhRrhX4vBzZjCOTP9iXNjaTkBznYvsc/9dwReCLMW6vwqVbeTrCo9ZNPNp+/ZnPdxuRCxzWERLGBWrGxU07m80J7UroTPxLj0yJg90Qv0lV8S4mQ+bXY5JR+zuFqjJyPAN09fiWF1hAUc+80qAkA4cQJbsuwFMPA8OQkBwDtwOu72Wih4FvYldPIPlg3YFol8/Z4Fn4SZNwrDRBovlcURuJ7vS0j7g3SqoUtyoHDCdi/YnWFR3gActo8+W66gal4pATU+JUPs="
