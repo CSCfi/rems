@@ -3,7 +3,6 @@ lein: 2.6.1
 branches:
   only:
     - master
-    - dev
 jdk:
   - oraclejdk8
 services:
@@ -13,6 +12,9 @@ before_script:
   - psql -c 'CREATE DATABASE rems_test OWNER db_user;' -U postgres
   - export DATABASE_URL='postgresql://localhost/rems_test?user=db_user&password=db_password'
   - lein run migrate
+script:
+  - lein test
+  - lein uberwar
 notifications:
   flowdock:
     secure: "MIpbDHtm3Qz++2HvPLSWpXYUubtwvhUrimrYS5fmXMtEbLMtkVETzDJ0wuAaD+jB+MuBzvKl1MbeHvPV1w/sWjVh6lcJZKO3qzrXiMV1avLYfNrJuznTeaPcVNjMuwDEtY9bg0u0RQqNoNPYg5zT9tgk8HdDeAmw5MQ9O/pZLM13Sn8r1hkx5Mlnq2iNCqFXNgphGl8mJoqxkSxf1nwMuUFtpRE7Ob6dzFJ/DHxLjIXzzjJj4La8QPxtePKCcrjfQSNkXqoAAlsVoYilp/F5HJbCeXKBFICpj74sG9dgEKtP6SPVXa+7LVYFD/kzY0wVwyj1BlY7BjaGLqiV73v+PnNMkYUKqnKOc+Nb5WkL9Yqu2PGLz1oTFL/RDso9NVh88BVIWzkBHnW3FnHc9TCSYreiK8ttCuf7oFvhRrhX4vBzZjCOTP9iXNjaTkBznYvsc/9dwReCLMW6vwqVbeTrCo9ZNPNp+/ZnPdxuRCxzWERLGBWrGxU07m80J7UroTPxLj0yJg90Qv0lV8S4mQ+bXY5JR+zuFqjJyPAN09fiWF1hAUc+80qAkA4cQJbsuwFMPA8OQkBwDtwOu72Wih4FvYldPIPlg3YFol8/Z4Fn4SZNwrDRBovlcURuJ7vS0j7g3SqoUtyoHDCdi/YnWFR3gActo8+W66gal4pATU+JUPs="
