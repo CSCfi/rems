@@ -6,13 +6,12 @@
 # playbook to deploy it.
 #
 # Assumptions for travis:
-# - $DOCKER_REPOSITORY and $AWS_DOCKER_LOGIN_COMMAND are in the environment
+# - DOCKER_REPOSITORY, AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in env
 # - ssh keys for accessing AWS are set up
 
 if [[ "$TRAVIS_BRANCH" == "master" && "$TRAVIS_PULL_REQUEST" == "false" ]]; then
     docker tag rems:latest $DOCKER_REPOSITORY/rems:latest
-    # AWS_DOCKER_LOGIN_COMMAND is secret, stored in travis repository environment
-    $AWS_DOCKER_LOGIN_COMMAND
+    $(aws ecr get-login)
     docker push $DOCKER_REPOSITORY/rems:latest
     cd ansible/
     ansible-playbook -vv rems.yml
