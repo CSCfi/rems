@@ -1,5 +1,7 @@
 (ns rems.browser
-  (:require [clj-webdriver.taxi :refer :all]))
+  (:require [clj-webdriver.taxi :refer :all]
+            [clojure.test :refer :all]
+            [mount.core :as mount]))
 
 (def ^:private browser-count (atom 0))
 
@@ -15,3 +17,13 @@
   [& {:keys [force] :or {force false}}]
   (when (zero? (swap! browser-count (if force (constantly 0) dec)))
     (quit)))
+
+(defn with-browser [f]
+  (browser-up)
+  (f)
+  (browser-down))
+
+(defn with-server [f]
+  (mount/start)
+  (f)
+  (mount/stop))
