@@ -1,5 +1,6 @@
 (ns rems.routes.home
   (:require [rems.layout :as layout]
+            [rems.contents :as contents]
             [compojure.core :refer [defroutes GET]]
             [ring.util.response :refer [response redirect]]
             [buddy.auth.backends.session :refer [session-backend]]
@@ -7,13 +8,15 @@
 
 (defn home-page []
   (layout/render
-    "home.html"))
+    (contents/login layout/*app-context*)))
 
 (defn about-page []
-  (layout/render "about.html"))
+  (layout/render
+    (contents/about)))
 
 (defn catalogue-page []
-  (layout/render "catalogue.html"))
+  (layout/render
+    (contents/catalogue)))
 
 (defn break-page []
   (layout/render "maintenance.html"))

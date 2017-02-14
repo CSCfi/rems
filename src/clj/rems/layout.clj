@@ -1,7 +1,7 @@
 (ns rems.layout
   (:require [compojure.response]
-            [selmer.parser :as parser]
-            [selmer.filters :as filters]
+            [hiccup.element :refer [link-to]]
+            [hiccup.page :refer [html5 include-css include-js]]
             [markdown.core :refer [md-to-html-string]]
             [ring.util.http-response :refer [content-type ok]]
             [ring.util.anti-forgery :refer [anti-forgery-field]]
@@ -10,9 +10,6 @@
 
 
 (declare ^:dynamic *app-context*)
-(parser/set-resource-path!  (clojure.java.io/resource "templates"))
-(parser/add-tag! :csrf-field (fn [_ _] (anti-forgery-field)))
-(filters/add-filter! :markdown (fn [content] [:safe (md-to-html-string content)]))
 
 (defn- localized-nav [{tr :tempura/tr}]
   {:home (tr [:navigation/home])
@@ -21,22 +18,45 @@
    :about (tr [:navigation/about])
    :catalogue (tr [:navigation/catalogue])})
 
+(defn navbar []
+  [:nav.navbar.rems-navbar {:role "navigation"}
+   [:button.navbar-toggler.hidden-sm-up {:type "button" :data-toggle "collapse" :data-target "#collapsing-navbar"} "&#9776;"]
+   [:div#collapsing-navbar.collapse.navbar-toggleable-xs
+    [:ul.nav.navbar-nav
+     [:li.nav-item
+      (link-to {:class "nav-link"} (str *app-context* "/") "Home")]
+     [:li.nav-item
+      (link-to {:class "nav-link"} (str *app-context* "/about") "About")]]]])
+
+(defn footer []
+  [:article.footer-wrapper
+   [:p "Powered by CSC - IT Center for Science"]])
+
 (deftype
   RenderableTemplate
-  [template params]
+  [content params]
   Renderable
   (render
     [this request]
     (content-type
     (ok
-      (parser/render-file
-        template
-        (assoc params
-          :page template
-          :csrf-token *anti-forgery-token*
-          :servlet-context *app-context*
-          :user (:identity request)
-          :navigation (localized-nav request))))
+      (html5 [:head
+              [:META {:http-equiv "Content-Type" :content "text/html; charset=UTF-8"}]
+              [:META {:name "viewport" :content "width=device-width, initial-scale=1"}]
+              [:title "Welcome to rems"]
+              (include-css "/assets/bootstrap/css/bootstrap.min.css")
+              (include-css "/assets/font-awesome/css/font-awesome.min.css")
+              (include-css "/css/screen.css")
+
+              [:body
+               [:div.wrapper
+                [:div.container (navbar)]
+                [:div.logo]
+                [:div.container content]]
+               [:footer (footer)]
+               (include-js "/assets/jquery/jquery.min.js")
+               (include-js "/assets/tether/dist/js/tether.min.js")
+               (include-js "/assets/bootstrap/js/bootstrap.min.js")]]))
     "text/html; charset=utf-8")))
 (defn render
   "renders the HTML template located relative to resources/templates"
@@ -54,4 +74,4 @@
   [error-details]
   {:status  (:status error-details)
    :headers {"Content-Type" "text/html; charset=utf-8"}
-   :body    (parser/render-file "error.html" error-details)})
+   })
