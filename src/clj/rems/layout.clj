@@ -18,23 +18,41 @@
    :about (tr [:navigation/about])
    :catalogue (tr [:navigation/catalogue])})
 
-(defn navbar []
+(defn primary-nav
+  [user context]
+  [:ul.nav.navbar-nav
+   [:li.nav-item
+    (link-to {:class "nav-link"} (str context "/") "Home")]
+   [:li.nav-item
+    (link-to {:class "nav-link"} (str context "/about") "About")]
+   (when user
+     [:li.nav-item
+      (link-to {:class "nav-link"} (str context "/catalogue") "Catalogue")])])
+
+(defn secondary-nav
+  [user context]
+  [:div.secondary-navigation.navbar-nav.navitem
+   [:div.fa.fa-user {:style "display: inline-block"} (str user " / ")]
+   [:div {:style "display: inline-block"}
+    (link-to {:class "nav-link"} (str context "/logout") "Sign Out")]])
+
+(defn navbar
+  [user]
   [:nav.navbar.rems-navbar {:role "navigation"}
    [:button.navbar-toggler.hidden-sm-up {:type "button" :data-toggle "collapse" :data-target "#collapsing-navbar"} "&#9776;"]
-   [:div#collapsing-navbar.collapse.navbar-toggleable-xs
-    (let [context (if (bound? #'*app-context*) *app-context* nil)]
-      [:ul.nav.navbar-nav
-       [:li.nav-item
-        (link-to {:class "nav-link"} (str context "/") "Home")]
-       [:li.nav-item
-        (link-to {:class "nav-link"} (str context "/about") "About")]])]])
+   (let [context (if (bound? #'*app-context*) *app-context* nil)]
+     [:div#collapsing-navbar.collapse.navbar-toggleable-xs
+      (primary-nav user context)
+      (when user
+        (secondary-nav user context))
+     ])])
 
 (defn footer []
   [:article.footer-wrapper
    [:p "Powered by CSC - IT Center for Science"]])
 
 (defn page-template
-  [content]
+  [content user]
   (html5 [:head
           [:META {:http-equiv "Content-Type" :content "text/html; charset=UTF-8"}]
           [:META {:name "viewport" :content "width=device-width, initial-scale=1"}]
@@ -45,7 +63,7 @@
 
           [:body
            [:div.wrapper
-            [:div.container (navbar)]
+            [:div.container (navbar user)]
             [:div.logo]
             [:div.container content]]
            [:footer (footer)]
@@ -61,13 +79,13 @@
     [this request]
     (content-type
     (ok
-      (page-template content))
+      (page-template content (:identity request)))
     "text/html; charset=utf-8")))
 
 (defn render
   "renders the HTML template located relative to resources/templates"
-  [template & [params]]
-  (RenderableTemplate. template params))
+  [content & [params]]
+  (RenderableTemplate. content params))
 
 (defn error-content
   [error-details]
@@ -93,4 +111,4 @@
   [error-details]
   {:status  (:status error-details)
    :headers {"Content-Type" "text/html; charset=utf-8"}
-   :body (page-template (error-content error-details))})
+   :body (render (error-content error-details))})
