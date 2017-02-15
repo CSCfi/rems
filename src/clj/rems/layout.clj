@@ -70,16 +70,16 @@
 
 (defn error-content
   [error-details]
-  (html5 [:div.container-fluid
-          [:div.row-fluid
-           [:div.col-lg-12
-            [:div.centering.text-center
-             [:div.text-center
-              [:h1
-               [:span.text-danger (str "Error: " (error-details :status))]
-               [:hr]
-               [:h2.without-margin (error-details :title)]
-               [:h4.text-danger (error-details :message)]]]]]]]))
+  [:div.container-fluid
+   [:div.row-fluid
+    [:div.col-lg-12
+     [:div.centering.text-center
+      [:div.text-center
+       [:h1
+        [:span.text-danger (str "Error: " (error-details :status))]
+        [:hr]
+        [:h2.without-margin (error-details :title)]
+        [:h4.text-danger (error-details :message)]]]]]]])
 
 (defn error-page
   "error-details should be a map containing the following keys:
