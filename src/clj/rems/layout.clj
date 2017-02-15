@@ -22,11 +22,12 @@
   [:nav.navbar.rems-navbar {:role "navigation"}
    [:button.navbar-toggler.hidden-sm-up {:type "button" :data-toggle "collapse" :data-target "#collapsing-navbar"} "&#9776;"]
    [:div#collapsing-navbar.collapse.navbar-toggleable-xs
-    [:ul.nav.navbar-nav
-     [:li.nav-item
-      (link-to {:class "nav-link"} (str *app-context* "/") "Home")]
-     [:li.nav-item
-      (link-to {:class "nav-link"} (str *app-context* "/about") "About")]]]])
+    (let [context (if (bound? #'*app-context*) *app-context* nil)]
+      [:ul.nav.navbar-nav
+       [:li.nav-item
+        (link-to {:class "nav-link"} (str context "/") "Home")]
+       [:li.nav-item
+        (link-to {:class "nav-link"} (str context "/about") "About")]])]])
 
 (defn footer []
   [:article.footer-wrapper
