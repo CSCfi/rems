@@ -32,6 +32,26 @@
   [:article.footer-wrapper
    [:p "Powered by CSC - IT Center for Science"]])
 
+(defn page-template
+  [content]
+  (html5 [:head
+          [:META {:http-equiv "Content-Type" :content "text/html; charset=UTF-8"}]
+          [:META {:name "viewport" :content "width=device-width, initial-scale=1"}]
+          [:title "Welcome to rems"]
+          (include-css "/assets/bootstrap/css/bootstrap.min.css")
+          (include-css "/assets/font-awesome/css/font-awesome.min.css")
+          (include-css "/css/screen.css")
+
+          [:body
+           [:div.wrapper
+            [:div.container (navbar)]
+            [:div.logo]
+            [:div.container content]]
+           [:footer (footer)]
+           (include-js "/assets/jquery/jquery.min.js")
+           (include-js "/assets/tether/dist/js/tether.min.js")
+           (include-js "/assets/bootstrap/js/bootstrap.min.js")]]))
+
 (deftype
   RenderableTemplate
   [content params]
@@ -40,28 +60,26 @@
     [this request]
     (content-type
     (ok
-      (html5 [:head
-              [:META {:http-equiv "Content-Type" :content "text/html; charset=UTF-8"}]
-              [:META {:name "viewport" :content "width=device-width, initial-scale=1"}]
-              [:title "Welcome to rems"]
-              (include-css "/assets/bootstrap/css/bootstrap.min.css")
-              (include-css "/assets/font-awesome/css/font-awesome.min.css")
-              (include-css "/css/screen.css")
-
-              [:body
-               [:div.wrapper
-                [:div.container (navbar)]
-                [:div.logo]
-                [:div.container content]]
-               [:footer (footer)]
-               (include-js "/assets/jquery/jquery.min.js")
-               (include-js "/assets/tether/dist/js/tether.min.js")
-               (include-js "/assets/bootstrap/js/bootstrap.min.js")]]))
+      (page-template content))
     "text/html; charset=utf-8")))
+
 (defn render
   "renders the HTML template located relative to resources/templates"
   [template & [params]]
   (RenderableTemplate. template params))
+
+(defn error-content
+  [error-details]
+  (html5 [:div.container-fluid
+          [:div.row-fluid
+           [:div.col-lg-12
+            [:div.centering.text-center
+             [:div.text-center
+              [:h1
+               [:span.text-danger (str "Error: " (error-details :status))]
+               [:hr]
+               [:h2.without-margin (error-details :title)]
+               [:h4.text-danger (error-details :message)]]]]]]]))
 
 (defn error-page
   "error-details should be a map containing the following keys:
@@ -74,4 +92,4 @@
   [error-details]
   {:status  (:status error-details)
    :headers {"Content-Type" "text/html; charset=utf-8"}
-   })
+   :body (page-template (error-content error-details))})
