@@ -18,13 +18,9 @@
   (layout/render
     (contents/catalogue)))
 
-(defn break-page []
-  (layout/render "maintenance.html"))
-
 (defroutes public-routes
   (GET "/" [] (home-page))
-  (GET "/about" [] (about-page))
-  (GET "/break" [] (break-page)))
+  (GET "/about" [] (about-page)))
 
 (defroutes secured-routes
   (GET "/catalogue" [] (catalogue-page)))
