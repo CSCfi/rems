@@ -11,40 +11,33 @@
 
 (declare ^:dynamic *app-context*)
 
-(defn- localized-nav [{tr :tempura/tr}]
-  {:home (tr [:navigation/home])
-   :login (tr [:navigation/login])
-   :logout (tr [:navigation/logout])
-   :about (tr [:navigation/about])
-   :catalogue (tr [:navigation/catalogue])})
-
 (defn primary-nav
-  [user context]
+  [user context tr]
   [:ul.nav.navbar-nav
    [:li.nav-item
-    (link-to {:class "nav-link"} (str context "/") "Home")]
+    (link-to {:class "nav-link"} (str context "/") (tr [:navigation/home]))]
    [:li.nav-item
-    (link-to {:class "nav-link"} (str context "/about") "About")]
+    (link-to {:class "nav-link"} (str context "/about") (tr [:navigation/about]))]
    (when user
      [:li.nav-item
-      (link-to {:class "nav-link"} (str context "/catalogue") "Catalogue")])])
+      (link-to {:class "nav-link"} (str context "/catalogue") (tr [:navigation/catalogue]))])])
 
 (defn secondary-nav
-  [user context]
+  [user context tr]
   [:div.secondary-navigation.navbar-nav.navitem
    [:div.fa.fa-user {:style "display: inline-block"} (str user " / ")]
    [:div {:style "display: inline-block"}
-    (link-to {:class "nav-link"} (str context "/logout") "Sign Out")]])
+    (link-to {:class "nav-link"} (str context "/logout") (tr [:navigation/logout]))]])
 
 (defn navbar
-  [user]
+  [user tr]
   [:nav.navbar.rems-navbar {:role "navigation"}
    [:button.navbar-toggler.hidden-sm-up {:type "button" :data-toggle "collapse" :data-target "#collapsing-navbar"} "&#9776;"]
    (let [context (if (bound? #'*app-context*) *app-context* nil)]
      [:div#collapsing-navbar.collapse.navbar-toggleable-xs
-      (primary-nav user context)
+      (primary-nav user context tr)
       (when user
-        (secondary-nav user context))
+        (secondary-nav user context tr))
      ])])
 
 (defn footer []
@@ -52,7 +45,7 @@
    [:p "Powered by CSC - IT Center for Science"]])
 
 (defn page-template
-  [content user]
+  [content user tr]
   (html5 [:head
           [:META {:http-equiv "Content-Type" :content "text/html; charset=UTF-8"}]
           [:META {:name "viewport" :content "width=device-width, initial-scale=1"}]
@@ -63,7 +56,7 @@
 
           [:body
            [:div.wrapper
-            [:div.container (navbar user)]
+            [:div.container (navbar user tr)]
             [:div.logo]
             [:div.container content]]
            [:footer (footer)]
@@ -79,7 +72,7 @@
     [this request]
     (content-type
     (ok
-      (page-template content (:identity request)))
+      (page-template content (:identity request) (:tempura/tr request)))
     "text/html; charset=utf-8")))
 
 (defn render
