@@ -15,18 +15,7 @@
    [:tr
     [:th "Resource"]
     [:th ""]]
-   [:tr
-    [:td {:data-th "Resource"} "A"]
-    [:td {:data-th ""} [:div.btn.btn-primary "Add to cart"]]]
-   [:tr
-    [:td {:data-th "Resource"} "B"]
-    [:td {:data-th ""} [:div.btn.btn-primary "Add to cart"]]]
-   [:tr
-    [:td {:data-th "Resource"} "C"]
-    [:td {:data-th ""} [:div.btn.btn-primary "Add to cart"]]]
-   [:tr
-    [:td {:data-th "Resource"} "D"]
-    [:td {:data-th ""} [:div.btn.btn-primary "Add to cart"]]]
-   [:tr
-    [:td {:data-th "Resource"} "E"]
-    [:td {:data-th ""} [:div.btn.btn-primary "Add to cart"]]]])
+   (for [x ["A" "B" "C" "D" "E"]]
+     [:tr
+      [:td {:data-th "Resource"} x]
+      [:td {:data-th ""} [:div.btn.btn-primary "Add to cart"]]])])
