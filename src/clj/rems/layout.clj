@@ -11,12 +11,18 @@
 
 (declare ^:dynamic *app-context*)
 
+(defn url-dest
+  [dest]
+  (let [context (if (bound? #'*app-context*) *app-context* nil)]
+    (str context dest)))
+
 (defn nav-link
   ([path title]
-   (link-to {:class "nav-link"} path title))
-
+   (nav-link path title "nav-link"))
+  ([path title nav-classes]
+   (link-to {:class nav-classes} (url-dest path) title))
   ([path title page-name li-name]
-  (link-to {:class (if (= page-name li-name) "nav-link active" "nav-link")} path title)))
+   (nav-link path title (if (= page-name li-name) "nav-link active" "nav-link"))))
 
 (defn nav-item
   [path title page-name li-name]
@@ -24,30 +30,29 @@
    (nav-link path title page-name li-name)])
 
 (defn primary-nav
-  [page-name user context tr]
+  [page-name user tr]
   [:ul.nav.navbar-nav
-   (nav-item (str context "/") (tr [:navigation/home]) page-name "home")
-   (nav-item (str context "/about") (tr [:navigation/about]) page-name "about")
+   (nav-item "/" (tr [:navigation/home]) page-name "home")
+   (nav-item "/about" (tr [:navigation/about]) page-name "about")
    (when user
-     (nav-item (str context "/catalogue") (tr [:navigation/catalogue]) page-name "catalogue"))])
+     (nav-item "/catalogue" (tr [:navigation/catalogue]) page-name "catalogue"))])
 
 (defn secondary-nav
-  [user context tr]
+  [user tr]
   [:div.secondary-navigation.navbar-nav.navitem
    [:div.fa.fa-user {:style "display: inline-block"} (str user " / ")]
    [:div {:style "display: inline-block"}
-    (nav-link (str context "/logout") (tr [:navigation/logout]))]])
+    (nav-link "/logout" (tr [:navigation/logout]))]])
 
 (defn navbar
   [page-name user tr]
   [:nav.navbar.rems-navbar {:role "navigation"}
    [:button.navbar-toggler.hidden-sm-up {:type "button" :data-toggle "collapse" :data-target "#collapsing-navbar"} "&#9776;"]
-   (let [context (if (bound? #'*app-context*) *app-context* nil)]
      [:div#collapsing-navbar.collapse.navbar-toggleable-xs
-      (primary-nav page-name user context tr)
+      (primary-nav page-name user tr)
       (when user
-        (secondary-nav user context tr))
-     ])])
+        (secondary-nav user tr))
+      ]])
 
 (defn footer []
   [:article.footer-wrapper
