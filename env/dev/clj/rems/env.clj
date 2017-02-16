@@ -1,12 +1,10 @@
 (ns rems.env
-  (:require [selmer.parser :as parser]
-            [clojure.tools.logging :as log]
+  (:require [clojure.tools.logging :as log]
             [rems.middleware.dev :refer [wrap-dev]]))
 
 (def +defaults+
   {:init
    (fn []
-     (parser/cache-off!)
      (log/info "\n-=[rems started successfully using the development profile]=-"))
    :stop
    (fn []
