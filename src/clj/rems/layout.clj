@@ -11,14 +11,14 @@
 
 (declare ^:dynamic *app-context*)
 
+(defn nav-link
+  [path title]
+  (link-to {:class "nav-link"} path title))
+
 (defn nav-item
   [path title]
   [:li.nav-item
    (nav-link path title)])
-
-(defn nav-link
-  [path title]
-  (link-to {:class "nav-link"} path title))
 
 (defn primary-nav
   [user context tr]
