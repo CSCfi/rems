@@ -58,8 +58,8 @@
            [:div.wrapper
             [:div.container (navbar user tr)]
             [:div.logo]
-            [:div.container content]]
-           [:footer (footer)]
+            [:div.container content]
+            [:footer (footer)]]
            (include-js "/assets/jquery/jquery.min.js")
            (include-js "/assets/tether/dist/js/tether.min.js")
            (include-js "/assets/bootstrap/js/bootstrap.min.js")]]))
