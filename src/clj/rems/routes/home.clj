@@ -8,15 +8,15 @@
 
 (defn home-page []
   (layout/render
-    (contents/login layout/*app-context*)))
+    "home" (contents/login layout/*app-context*)))
 
 (defn about-page []
   (layout/render
-    (contents/about)))
+    "about" (contents/about)))
 
 (defn catalogue-page []
   (layout/render
-    (contents/catalogue)))
+    "catalogue" (contents/catalogue)))
 
 (defroutes public-routes
   (GET "/" [] (home-page))
