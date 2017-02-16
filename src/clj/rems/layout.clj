@@ -11,23 +11,29 @@
 
 (declare ^:dynamic *app-context*)
 
+(defn nav-item
+  [path title]
+  [:li.nav-item
+   (nav-link path title)])
+
+(defn nav-link
+  [path title]
+  (link-to {:class "nav-link"} path title))
+
 (defn primary-nav
   [user context tr]
   [:ul.nav.navbar-nav
-   [:li.nav-item
-    (link-to {:class "nav-link"} (str context "/") (tr [:navigation/home]))]
-   [:li.nav-item
-    (link-to {:class "nav-link"} (str context "/about") (tr [:navigation/about]))]
+   (nav-item (str context "/") (tr [:navigation/home]))
+   (nav-item (str context "/about") (tr [:navigation/about]))
    (when user
-     [:li.nav-item
-      (link-to {:class "nav-link"} (str context "/catalogue") (tr [:navigation/catalogue]))])])
+     (nav-item (str context "/catalogue") (tr [:navigation/catalogue])))])
 
 (defn secondary-nav
   [user context tr]
   [:div.secondary-navigation.navbar-nav.navitem
    [:div.fa.fa-user {:style "display: inline-block"} (str user " / ")]
    [:div {:style "display: inline-block"}
-    (link-to {:class "nav-link"} (str context "/logout") (tr [:navigation/logout]))]])
+    (nav-link (str context "/logout") (tr [:navigation/logout]))]])
 
 (defn navbar
   [user tr]
