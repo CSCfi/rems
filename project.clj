@@ -71,7 +71,8 @@
 
                   :source-paths ["env/dev/clj" "test/clj"]
                   :resource-paths ["env/dev/resources"]
-                  :repl-options {:init-ns rems.standalone}
+                  :repl-options {:init-ns rems.standalone
+                                 :welcome (rems.standalone/repl-help)}
                   :injections [(require 'pjstadig.humane-test-output)
                                (pjstadig.humane-test-output/activate!)]}
    :project/test {:resource-paths ["env/test/resources"]}

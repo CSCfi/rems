@@ -46,6 +46,10 @@
     (log/info component "started"))
   (.addShutdownHook (Runtime/getRuntime) (Thread. stop-app)))
 
+(defn repl-help []
+  (println "Welcome to REMS!")
+  (println "You can run the server with (start-app)"))
+
 (defn -main [& args]
   (cond
     (some #{"migrate" "rollback"} args)
