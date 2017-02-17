@@ -123,20 +123,6 @@ CREATE TABLE rms_application_form_item_map (
   CONSTRAINT rms_application_form_item_map_ibfk_2 FOREIGN KEY (formItemId) REFERENCES rms_application_form_item (id)
 );
 --;;
-CREATE TABLE rms_attachment (
-  id serial NOT NULL PRIMARY KEY,
-  userId bigint NOT NULL,
-  title varchar(256) NOT NULL,
-  file_name varchar(256) NOT NULL,
-  file_type varchar(15) DEFAULT NULL,
-  file_size bigint NOT NULL,
-  file_content bytea NOT NULL,
-  file_ext varchar(10) NOT NULL,
-  state attachment_state NOT NULL DEFAULT 'visible',
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL
-);
---;;
 CREATE TABLE rms_license (
   id serial NOT NULL PRIMARY KEY,
   ownerUserId bigint NOT NULL,
@@ -249,17 +235,6 @@ CREATE TABLE rms_catalogue_item_application_licenses (
   CONSTRAINT rms_catalogue_item_application_licenses_ibfk_2 FOREIGN KEY (licId) REFERENCES rms_license (id)
 );
 --;;
-CREATE TABLE rms_catalogue_item_application_member_invite_values (
-  id serial NOT NULL PRIMARY KEY,
-  catAppId integer DEFAULT NULL,
-  modifierUserId bigint DEFAULT NULL,
-  email varchar(256) NOT NULL,
-  hash varchar(256) NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_catalogue_item_application_member_invite_values_ibfk_1 FOREIGN KEY (catAppId) REFERENCES rms_catalogue_item_application (id)
-);
---;;
 CREATE TABLE rms_catalogue_item_application_members (
   id serial NOT NULL PRIMARY KEY,
   catAppId integer DEFAULT NULL,
@@ -292,15 +267,6 @@ CREATE TABLE rms_catalogue_item_application_predecessor (
   CONSTRAINT rms_catalogue_item_application_predecessor_ibfk_2 FOREIGN KEY (suc_catAppId) REFERENCES rms_catalogue_item_application (id)
 );
 --;;
-CREATE TABLE rms_catalogue_item_application_publications (
-  id serial NOT NULL PRIMARY KEY,
-  catAppId integer DEFAULT NULL,
-  publication varchar(512) NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_catalogue_item_application_publications_ibfk_1 FOREIGN KEY (catAppId) REFERENCES rms_catalogue_item_application (id)
-);
---;;
 CREATE TABLE rms_catalogue_item_application_reviewers (
   id serial NOT NULL PRIMARY KEY,
   catAppId integer DEFAULT NULL,
@@ -325,19 +291,6 @@ CREATE TABLE rms_catalogue_item_application_state (
   CONSTRAINT rms_catalogue_item_application_state_ibfk_1 FOREIGN KEY (catAppId) REFERENCES rms_catalogue_item_application (id)
 );
 --;;
-CREATE TABLE rms_catalogue_item_application_state_reason (
-  id serial NOT NULL PRIMARY KEY,
-  catAppId integer NOT NULL,
-  catAppStateId integer NOT NULL,
-  modifierUserId bigint NOT NULL,
-  reason varchar(32) NOT NULL,
-  comment varchar(4096) NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_catalogue_item_application_state_reason_ibfk_1 FOREIGN KEY (catAppId) REFERENCES rms_catalogue_item_application (id),
-  CONSTRAINT rms_catalogue_item_application_state_reason_ibfk_2 FOREIGN KEY (catAppStateId) REFERENCES rms_catalogue_item_application_state (id)
-);
---;;
 CREATE TABLE rms_catalogue_item_localization (
   id serial NOT NULL PRIMARY KEY,
   catId integer DEFAULT NULL,
@@ -346,17 +299,6 @@ CREATE TABLE rms_catalogue_item_localization (
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
   CONSTRAINT rms_catalogue_item_localization_ibfk_1 FOREIGN KEY (catId) REFERENCES rms_catalogue_item (id)
-);
---;;
-CREATE TABLE rms_catalogue_item_predecessor (
-  id serial NOT NULL PRIMARY KEY,
-  pre_catId integer DEFAULT NULL,
-  suc_catId integer DEFAULT NULL,
-  modifierUserId bigint NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_catalogue_item_predecessor_ibfk_1 FOREIGN KEY (pre_catId) REFERENCES rms_catalogue_item (id),
-  CONSTRAINT rms_catalogue_item_predecessor_ibfk_2 FOREIGN KEY (suc_catId) REFERENCES rms_catalogue_item (id)
 );
 --;;
 CREATE TABLE rms_catalogue_item_state (
