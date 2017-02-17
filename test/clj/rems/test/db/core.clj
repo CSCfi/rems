@@ -14,3 +14,7 @@
       #'rems.db.core/*db*)
     (migrations/migrate ["migrate"] (select-keys env [:database-url]))
     (f)))
+
+(deftest ^:integration test-get-catalogue-items
+  (db/create-test-data!)
+  (is (= ["A" "B"] (sort (map :title (db/get-catalogue-items))))))
