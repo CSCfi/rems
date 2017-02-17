@@ -441,37 +441,6 @@ CREATE TABLE rms_entitlement (
   CONSTRAINT rms_entitlement_ibfk_2 FOREIGN KEY (catAppId) REFERENCES rms_catalogue_item_application (id)
 );
 --;;
-CREATE TABLE rms_entitlement_ebi (
-  id serial NOT NULL PRIMARY KEY,
-  eppn varchar(255) NOT NULL,
-  domain varchar(255) NOT NULL,
-  resource varchar(255) NOT NULL,
-  dacId varchar(256) NOT NULL,
-  userId bigint NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL
-);
---;;
-CREATE TABLE rms_entitlement_saml (
-  id serial NOT NULL PRIMARY KEY,
-  eppn varchar(255) NOT NULL,
-  domain varchar(255) NOT NULL,
-  resource varchar(255) NOT NULL,
-  entityId varchar(256) NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL
-);
---;;
-CREATE TABLE rms_entitlement_saml_migration (
-  id serial NOT NULL PRIMARY KEY,
-  eppn varchar(255) NOT NULL,
-  domain varchar(255) NOT NULL,
-  resource varchar(255) NOT NULL,
-  entityId varchar(256) NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL
-);
---;;
 CREATE TABLE rms_invitations (
   id serial NOT NULL PRIMARY KEY,
   email varchar(256) NOT NULL,
@@ -546,26 +515,6 @@ CREATE TABLE rms_resource_link_location (
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
   CONSTRAINT rms_resource_link_location_ibfk_1 FOREIGN KEY (resId) REFERENCES rms_resource (id)
-);
---;;
-CREATE TABLE rms_resource_mf_ebi_dac_target (
-  id serial NOT NULL PRIMARY KEY,
-  resId integer DEFAULT NULL,
-  dacId varchar(256) NOT NULL,
-  modifierUserId bigint NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_resource_mf_ebi_dac_target_ibfk_1 FOREIGN KEY (resId) REFERENCES rms_resource (id)
-);
---;;
-CREATE TABLE rms_resource_mf_saml_target (
-  id serial NOT NULL PRIMARY KEY,
-  resId integer DEFAULT NULL,
-  entityId varchar(256) NOT NULL,
-  modifierUserId bigint NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_resource_mf_saml_target_ibfk_1 FOREIGN KEY (resId) REFERENCES rms_resource (id)
 );
 --;;
 CREATE TABLE rms_resource_prefix_allow_form_editing (
@@ -648,16 +597,6 @@ CREATE TABLE rms_resource_prefix_link_location (
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
   CONSTRAINT rms_resource_prefix_link_location_ibfk_1 FOREIGN KEY (rsPrId) REFERENCES rms_resource_prefix (id)
-);
---;;
-CREATE TABLE rms_resource_prefix_mf_ebi (
-  id serial NOT NULL PRIMARY KEY,
-  rsPrId integer DEFAULT NULL,
-  enabled bit(1) DEFAULT NULL,
-  modifierUserId bigint NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_resource_prefix_mf_ebi_ibfk_1 FOREIGN KEY (rsPrId) REFERENCES rms_resource_prefix (id)
 );
 --;;
 CREATE TABLE rms_resource_prefix_owners (
