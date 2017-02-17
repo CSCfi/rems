@@ -38,13 +38,17 @@
     (log/info component "stopped"))
   (shutdown-agents))
 
-(defn start-app [args]
+(defn start-app [& args]
   (doseq [component (-> args
                         (parse-opts cli-options)
                         mount/start-with-args
                         :started)]
     (log/info component "started"))
   (.addShutdownHook (Runtime/getRuntime) (Thread. stop-app)))
+
+(defn repl-help []
+  (println "Welcome to REMS!")
+  (println "You can run the server with (start-app)"))
 
 (defn -main [& args]
   (cond
@@ -54,4 +58,4 @@
       (migrations/migrate args (select-keys env [:database-url]))
       (System/exit 0))
     :else
-    (start-app args)))
+    (apply start-app args)))
