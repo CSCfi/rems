@@ -22,7 +22,7 @@ before_script:
   - psql -c 'CREATE DATABASE rems_test OWNER db_user;' -U postgres
   - export DATABASE_URL='postgresql://localhost/rems_test?user=db_user&password=db_password'
 script:
-  - lein test
+  - lein test :all
   - lein uberwar
   - lein uberjar && docker build -t rems .
 after_success:

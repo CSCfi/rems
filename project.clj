@@ -52,6 +52,10 @@
       :destroy rems.handler/destroy
       :name "rems.war"}
 
+  ;; flag tests that need a db with ^:integration
+  :test-selectors {:default (complement :integration)
+                   :all (constantly true)}
+
   :profiles
   {:uberjar {:omit-source true
              :aot :all
