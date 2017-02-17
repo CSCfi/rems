@@ -1,5 +1,6 @@
 (ns rems.routes.home
   (:require [rems.layout :as layout]
+            [rems.context :as context]
             [rems.contents :as contents]
             [compojure.core :refer [defroutes GET]]
             [ring.util.response :refer [response redirect]]
@@ -8,7 +9,7 @@
 
 (defn home-page []
   (layout/render
-    "home" (contents/login layout/*app-context*)))
+    "home" (contents/login context/*root-path*)))
 
 (defn about-page []
   (layout/render

@@ -1,5 +1,6 @@
 (ns rems.layout
   (:require [compojure.response]
+            [rems.context :as context]
             [hiccup.element :refer [link-to]]
             [hiccup.page :refer [html5 include-css include-js]]
             [markdown.core :refer [md-to-html-string]]
@@ -9,12 +10,9 @@
   (:import compojure.response.Renderable))
 
 
-(declare ^:dynamic *app-context*)
-
 (defn url-dest
   [dest]
-  (let [context (if (bound? #'*app-context*) *app-context* nil)]
-    (str context dest)))
+  (str context/*root-path* dest))
 
 (defn nav-link
   ([path title]

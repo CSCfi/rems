@@ -1,7 +1,8 @@
 (ns rems.middleware
   (:require [rems.env :refer [+defaults+]]
             [clojure.tools.logging :as log]
-            [rems.layout :refer [*app-context* error-page]]
+            [rems.layout :refer [error-page]]
+            [rems.context :as context]
             [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
             [ring.middleware.webjars :refer [wrap-webjars]]
             [ring.middleware.format :refer [wrap-restful-format]]
@@ -17,19 +18,21 @@
             [rems.auth.backend :refer [shibbo-backend authz-backend]])
   (:import [javax.servlet ServletContext]))
 
+(defn calculate-root-path [request]
+  (if-let [context (:servlet-context request)]
+    ;; If we're not inside a servlet environment
+    ;; (for example when using mock requests), then
+    ;; .getContextPath might not exist
+    (try (.getContextPath ^ServletContext context)
+         (catch IllegalArgumentException _ context))
+    ;; if the context is not specified in the request
+    ;; we check if one has been specified in the environment
+    ;; instead
+    (:app-context env)))
+
 (defn wrap-context [handler]
   (fn [request]
-    (binding [*app-context*
-              (if-let [context (:servlet-context request)]
-                ;; If we're not inside a servlet environment
-                ;; (for example when using mock requests), then
-                ;; .getContextPath might not exist
-                (try (.getContextPath ^ServletContext context)
-                     (catch IllegalArgumentException _ context))
-                ;; if the context is not specified in the request
-                ;; we check if one has been specified in the environment
-                ;; instead
-                (:app-context env))]
+    (binding [context/*root-path* (calculate-root-path request)]
       (handler request))))
 
 (defn wrap-internal-error [handler]
