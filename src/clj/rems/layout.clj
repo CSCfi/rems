@@ -9,12 +9,11 @@
   (:import compojure.response.Renderable))
 
 
-(declare ^:dynamic *app-context*)
+(def ^:dynamic *app-context* nil)
 
 (defn url-dest
   [dest]
-  (let [context (if (bound? #'*app-context*) *app-context* nil)]
-    (str context dest)))
+  (str *app-context* dest))
 
 (defn nav-link
   ([path title]
