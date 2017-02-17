@@ -8,6 +8,8 @@ CREATE TYPE license_status AS ENUM ('approved','rejected');
 --;;
 CREATE TYPE license_state AS ENUM ('created','approved','rejected');
 --;;
+CREATE TYPE reviewers_state AS ENUM ('created','commented');
+--;;
 CREATE TYPE application_state AS ENUM ('applied','approved','rejected','returned','closed','draft','onhold');
 --;;
 CREATE TYPE item_state AS ENUM ('disabled','enabled','copied');
