@@ -38,7 +38,7 @@
     (log/info component "stopped"))
   (shutdown-agents))
 
-(defn start-app [args]
+(defn start-app [& args]
   (doseq [component (-> args
                         (parse-opts cli-options)
                         mount/start-with-args
@@ -54,4 +54,4 @@
       (migrations/migrate args (select-keys env [:database-url]))
       (System/exit 0))
     :else
-    (start-app args)))
+    (apply start-app args)))
