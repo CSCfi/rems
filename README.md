@@ -40,7 +40,7 @@ First run the official postgres docker image. Also initialize the database. For 
 ```
 docker run --rm --name rems_test -p 5432:5432 -e POSTGRESS_PASSWORD=db_password -e POSGRES_USER=db_user -d postgres
 
-./.travis-init-db.sql
+./.travis-init-db.sh
 
 export DATABASE_URL='postgresql://localhost/rems_test?user=db_user&password=db_password'
 ```
