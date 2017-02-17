@@ -1,5 +1,6 @@
 (ns rems.layout
   (:require [compojure.response]
+            [rems.context :refer [*app-context*]]
             [hiccup.element :refer [link-to]]
             [hiccup.page :refer [html5 include-css include-js]]
             [markdown.core :refer [md-to-html-string]]
@@ -8,8 +9,6 @@
             [ring.middleware.anti-forgery :refer [*anti-forgery-token*]])
   (:import compojure.response.Renderable))
 
-
-(def ^:dynamic *app-context* nil)
 
 (defn url-dest
   [dest]

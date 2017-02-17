@@ -1,7 +1,8 @@
 (ns rems.middleware
   (:require [rems.env :refer [+defaults+]]
             [clojure.tools.logging :as log]
-            [rems.layout :refer [*app-context* error-page]]
+            [rems.layout :refer [error-page]]
+            [rems.context :refer [*app-context*]]
             [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
             [ring.middleware.webjars :refer [wrap-webjars]]
             [ring.middleware.format :refer [wrap-restful-format]]
