@@ -1,3 +1,3 @@
 (ns rems.context)
 
-(def ^:dynamic *app-context* nil)
+(def ^:dynamic *root-path* nil)

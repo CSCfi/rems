@@ -1,6 +1,6 @@
 (ns rems.layout
   (:require [compojure.response]
-            [rems.context :refer [*app-context*]]
+            [rems.context :as context]
             [hiccup.element :refer [link-to]]
             [hiccup.page :refer [html5 include-css include-js]]
             [markdown.core :refer [md-to-html-string]]
@@ -12,7 +12,7 @@
 
 (defn url-dest
   [dest]
-  (str *app-context* dest))
+  (str context/*root-path* dest))
 
 (defn nav-link
   ([path title]

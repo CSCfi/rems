@@ -1,7 +1,7 @@
 (ns rems.routes.home
   (:require [rems.layout :as layout]
+            [rems.context :as context]
             [rems.contents :as contents]
-            [rems.context :refer [*app-context*]]
             [compojure.core :refer [defroutes GET]]
             [ring.util.response :refer [response redirect]]
             [buddy.auth.backends.session :refer [session-backend]]
@@ -9,7 +9,7 @@
 
 (defn home-page []
   (layout/render
-    "home" (contents/login *app-context*)))
+    "home" (contents/login context/*root-path*)))
 
 (defn about-page []
   (layout/render
