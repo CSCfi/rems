@@ -40,6 +40,8 @@ First run the official postgres docker image. Also initialize the database. For 
 ```
 docker run --rm --name rems_test -p 5432:5432 -e POSTGRESS_PASSWORD=db_password -e POSGRES_USER=db_user -d postgres
 
+export PGHOST=localhost
+
 ./.travis-init-db.sh
 
 export DATABASE_URL='postgresql://localhost/rems_test?user=db_user&password=db_password'
@@ -54,7 +56,7 @@ lein run test :all
 Or connect to it using `psql`
 
 ```
-PGHOST=localhost psql -U db_user rems_test
+psql -U db_user rems_test
 ```
 
 When done you can stop (and automatically remove) the database.
