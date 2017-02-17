@@ -4,13 +4,9 @@ CREATE TYPE itemtype AS ENUM ('text','texta','label','license','attachment','ref
 --;;
 CREATE TYPE approval_status AS ENUM ('created','approved','rejected','returned','rerouted','closed');
 --;;
-CREATE TYPE referee_status AS ENUM ('created','recommended','rejected','returned');
---;;
 CREATE TYPE license_status AS ENUM ('approved','rejected');
 --;;
 CREATE TYPE license_state AS ENUM ('created','approved','rejected');
---;;
-CREATE TYPE attachment_state AS ENUM ('visible','hidden');
 --;;
 CREATE TYPE reviewers_state AS ENUM ('created','commented');
 --;;
@@ -123,20 +119,6 @@ CREATE TABLE rms_application_form_item_map (
   CONSTRAINT rms_application_form_item_map_ibfk_2 FOREIGN KEY (formItemId) REFERENCES rms_application_form_item (id)
 );
 --;;
-CREATE TABLE rms_attachment (
-  id serial NOT NULL PRIMARY KEY,
-  userId bigint NOT NULL,
-  title varchar(256) NOT NULL,
-  file_name varchar(256) NOT NULL,
-  file_type varchar(15) DEFAULT NULL,
-  file_size bigint NOT NULL,
-  file_content bytea NOT NULL,
-  file_ext varchar(10) NOT NULL,
-  state attachment_state NOT NULL DEFAULT 'visible',
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL
-);
---;;
 CREATE TABLE rms_license (
   id serial NOT NULL PRIMARY KEY,
   ownerUserId bigint NOT NULL,
@@ -147,43 +129,7 @@ CREATE TABLE rms_license (
   attId integer DEFAULT NULL,
   visibility scope NOT NULL DEFAULT 'private',
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_license_ibfk_1 FOREIGN KEY (attId) REFERENCES rms_attachment (id)
-);
---;;
-CREATE TABLE rms_application_attachment_values (
-  id serial NOT NULL PRIMARY KEY,
-  catAppId integer DEFAULT NULL,
-  formMapId integer DEFAULT NULL,
-  modifierUserId bigint NOT NULL,
-  attachmentId integer DEFAULT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_application_attachment_values_ibfk_1 FOREIGN KEY (catAppId) REFERENCES rms_catalogue_item_application (id),
-  CONSTRAINT rms_application_attachment_values_ibfk_2 FOREIGN KEY (formMapId) REFERENCES rms_application_form_item_map (id),
-  CONSTRAINT rms_application_attachment_values_ibfk_3 FOREIGN KEY (attachmentId) REFERENCES rms_attachment (id)
-);
---;;
-CREATE TABLE rms_application_checkbox_values (
-  id serial NOT NULL PRIMARY KEY,
-  catAppId integer DEFAULT NULL,
-  formMapId integer DEFAULT NULL,
-  modifierUserId bigint NOT NULL,
-  value bit(1) DEFAULT b'0',
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_application_checkbox_values_ibfk_1 FOREIGN KEY (catAppId) REFERENCES rms_catalogue_item_application (id),
-  CONSTRAINT rms_application_checkbox_values_ibfk_2 FOREIGN KEY (formMapId) REFERENCES rms_application_form_item_map (id)
-);
---;;
-CREATE TABLE rms_application_form_item_string_values (
-  id serial NOT NULL PRIMARY KEY,
-  formItemId integer DEFAULT NULL,
-  value varchar(4096) NOT NULL,
-  itemOrder integer DEFAULT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_application_form_item_string_values_ibfk_1 FOREIGN KEY (formItemId) REFERENCES rms_application_form_item (id)
+  endt timestamp NULL DEFAULT NULL
 );
 --;;
 CREATE TABLE rms_application_form_meta_map (
@@ -210,32 +156,6 @@ CREATE TABLE rms_application_license_approval_values (
   CONSTRAINT rms_application_license_approval_values_ibfk_1 FOREIGN KEY (catAppId) REFERENCES rms_catalogue_item_application (id),
   CONSTRAINT rms_application_license_approval_values_ibfk_2 FOREIGN KEY (formMapId) REFERENCES rms_application_form_item_map (id),
   CONSTRAINT rms_application_license_approval_values_ibfk_3 FOREIGN KEY (licId) REFERENCES rms_license (id)
-);
---;;
-CREATE TABLE rms_application_referee_invite_values (
-  id serial NOT NULL PRIMARY KEY,
-  catAppId integer DEFAULT NULL,
-  formMapId integer DEFAULT NULL,
-  modifierUserId bigint DEFAULT NULL,
-  email varchar(256) NOT NULL,
-  hash varchar(256) NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_application_referee_invite_values_ibfk_1 FOREIGN KEY (catAppId) REFERENCES rms_catalogue_item_application (id),
-  CONSTRAINT rms_application_referee_invite_values_ibfk_2 FOREIGN KEY (formMapId) REFERENCES rms_application_form_item_map (id)
-);
---;;
-CREATE TABLE rms_application_referee_values (
-  id serial NOT NULL PRIMARY KEY,
-  catAppId integer DEFAULT NULL,
-  formMapId integer DEFAULT NULL,
-  refereeUserId bigint NOT NULL,
-  comment varchar(4096) DEFAULT NULL,
-  state referee_status NOT NULL DEFAULT 'created',
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_application_referee_values_ibfk_1 FOREIGN KEY (catAppId) REFERENCES rms_catalogue_item_application (id),
-  CONSTRAINT rms_application_referee_values_ibfk_2 FOREIGN KEY (formMapId) REFERENCES rms_application_form_item_map (id)
 );
 --;;
 CREATE TABLE rms_application_text_values (
@@ -310,17 +230,6 @@ CREATE TABLE rms_catalogue_item_application_licenses (
   CONSTRAINT rms_catalogue_item_application_licenses_ibfk_2 FOREIGN KEY (licId) REFERENCES rms_license (id)
 );
 --;;
-CREATE TABLE rms_catalogue_item_application_member_invite_values (
-  id serial NOT NULL PRIMARY KEY,
-  catAppId integer DEFAULT NULL,
-  modifierUserId bigint DEFAULT NULL,
-  email varchar(256) NOT NULL,
-  hash varchar(256) NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_catalogue_item_application_member_invite_values_ibfk_1 FOREIGN KEY (catAppId) REFERENCES rms_catalogue_item_application (id)
-);
---;;
 CREATE TABLE rms_catalogue_item_application_members (
   id serial NOT NULL PRIMARY KEY,
   catAppId integer DEFAULT NULL,
@@ -353,15 +262,6 @@ CREATE TABLE rms_catalogue_item_application_predecessor (
   CONSTRAINT rms_catalogue_item_application_predecessor_ibfk_2 FOREIGN KEY (suc_catAppId) REFERENCES rms_catalogue_item_application (id)
 );
 --;;
-CREATE TABLE rms_catalogue_item_application_publications (
-  id serial NOT NULL PRIMARY KEY,
-  catAppId integer DEFAULT NULL,
-  publication varchar(512) NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_catalogue_item_application_publications_ibfk_1 FOREIGN KEY (catAppId) REFERENCES rms_catalogue_item_application (id)
-);
---;;
 CREATE TABLE rms_catalogue_item_application_reviewers (
   id serial NOT NULL PRIMARY KEY,
   catAppId integer DEFAULT NULL,
@@ -386,19 +286,6 @@ CREATE TABLE rms_catalogue_item_application_state (
   CONSTRAINT rms_catalogue_item_application_state_ibfk_1 FOREIGN KEY (catAppId) REFERENCES rms_catalogue_item_application (id)
 );
 --;;
-CREATE TABLE rms_catalogue_item_application_state_reason (
-  id serial NOT NULL PRIMARY KEY,
-  catAppId integer NOT NULL,
-  catAppStateId integer NOT NULL,
-  modifierUserId bigint NOT NULL,
-  reason varchar(32) NOT NULL,
-  comment varchar(4096) NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_catalogue_item_application_state_reason_ibfk_1 FOREIGN KEY (catAppId) REFERENCES rms_catalogue_item_application (id),
-  CONSTRAINT rms_catalogue_item_application_state_reason_ibfk_2 FOREIGN KEY (catAppStateId) REFERENCES rms_catalogue_item_application_state (id)
-);
---;;
 CREATE TABLE rms_catalogue_item_localization (
   id serial NOT NULL PRIMARY KEY,
   catId integer DEFAULT NULL,
@@ -407,17 +294,6 @@ CREATE TABLE rms_catalogue_item_localization (
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
   CONSTRAINT rms_catalogue_item_localization_ibfk_1 FOREIGN KEY (catId) REFERENCES rms_catalogue_item (id)
-);
---;;
-CREATE TABLE rms_catalogue_item_predecessor (
-  id serial NOT NULL PRIMARY KEY,
-  pre_catId integer DEFAULT NULL,
-  suc_catId integer DEFAULT NULL,
-  modifierUserId bigint NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_catalogue_item_predecessor_ibfk_1 FOREIGN KEY (pre_catId) REFERENCES rms_catalogue_item (id),
-  CONSTRAINT rms_catalogue_item_predecessor_ibfk_2 FOREIGN KEY (suc_catId) REFERENCES rms_catalogue_item (id)
 );
 --;;
 CREATE TABLE rms_catalogue_item_state (
@@ -441,46 +317,6 @@ CREATE TABLE rms_entitlement (
   CONSTRAINT rms_entitlement_ibfk_2 FOREIGN KEY (catAppId) REFERENCES rms_catalogue_item_application (id)
 );
 --;;
-CREATE TABLE rms_entitlement_ebi (
-  id serial NOT NULL PRIMARY KEY,
-  eppn varchar(255) NOT NULL,
-  domain varchar(255) NOT NULL,
-  resource varchar(255) NOT NULL,
-  dacId varchar(256) NOT NULL,
-  userId bigint NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL
-);
---;;
-CREATE TABLE rms_entitlement_saml (
-  id serial NOT NULL PRIMARY KEY,
-  eppn varchar(255) NOT NULL,
-  domain varchar(255) NOT NULL,
-  resource varchar(255) NOT NULL,
-  entityId varchar(256) NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL
-);
---;;
-CREATE TABLE rms_entitlement_saml_migration (
-  id serial NOT NULL PRIMARY KEY,
-  eppn varchar(255) NOT NULL,
-  domain varchar(255) NOT NULL,
-  resource varchar(255) NOT NULL,
-  entityId varchar(256) NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL
-);
---;;
-CREATE TABLE rms_invitations (
-  id serial NOT NULL PRIMARY KEY,
-  email varchar(256) NOT NULL,
-  hash varchar(256) NOT NULL,
-  userId bigint DEFAULT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL
-);
---;;
 CREATE TABLE rms_license_localization (
   id serial NOT NULL PRIMARY KEY,
   licId integer DEFAULT NULL,
@@ -490,31 +326,7 @@ CREATE TABLE rms_license_localization (
   attId integer DEFAULT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_license_localization_ibfk_1 FOREIGN KEY (licId) REFERENCES rms_license (id),
-  CONSTRAINT rms_license_localization_ibfk_2 FOREIGN KEY (attId) REFERENCES rms_attachment (id)
-);
---;;
-CREATE TABLE rms_license_references (
-  id serial NOT NULL PRIMARY KEY,
-  rsPrId integer DEFAULT NULL,
-  licId integer DEFAULT NULL,
-  referenceName varchar(64) NOT NULL,
-  modifierUserId bigint NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_license_references_ibfk_1 FOREIGN KEY (rsPrId) REFERENCES rms_resource_prefix (id),
-  CONSTRAINT rms_license_references_ibfk_2 FOREIGN KEY (licId) REFERENCES rms_license (id)
-);
---;;
-CREATE TABLE rms_manifestations (
-  id serial NOT NULL PRIMARY KEY,
-  manifId varchar(256) NOT NULL,
-  resId integer NOT NULL,
-  manifConf varchar(256) NOT NULL,
-  modifierUserId bigint NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_manifestations_ibfk_1 FOREIGN KEY (resId) REFERENCES rms_resource (id)
+  CONSTRAINT rms_license_localization_ibfk_1 FOREIGN KEY (licId) REFERENCES rms_license (id)
 );
 --;;
 CREATE TABLE rms_resource_close_period (
@@ -536,46 +348,6 @@ CREATE TABLE rms_resource_licenses (
   endt timestamp NULL DEFAULT NULL,
   CONSTRAINT rms_resource_licenses_ibfk_1 FOREIGN KEY (resId) REFERENCES rms_resource (id),
   CONSTRAINT rms_resource_licenses_ibfk_2 FOREIGN KEY (licId) REFERENCES rms_license (id)
-);
---;;
-CREATE TABLE rms_resource_link_location (
-  id serial NOT NULL PRIMARY KEY,
-  resId integer DEFAULT NULL,
-  link varchar(2048) NOT NULL,
-  modifierUserId bigint NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_resource_link_location_ibfk_1 FOREIGN KEY (resId) REFERENCES rms_resource (id)
-);
---;;
-CREATE TABLE rms_resource_mf_ebi_dac_target (
-  id serial NOT NULL PRIMARY KEY,
-  resId integer DEFAULT NULL,
-  dacId varchar(256) NOT NULL,
-  modifierUserId bigint NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_resource_mf_ebi_dac_target_ibfk_1 FOREIGN KEY (resId) REFERENCES rms_resource (id)
-);
---;;
-CREATE TABLE rms_resource_mf_saml_target (
-  id serial NOT NULL PRIMARY KEY,
-  resId integer DEFAULT NULL,
-  entityId varchar(256) NOT NULL,
-  modifierUserId bigint NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_resource_mf_saml_target_ibfk_1 FOREIGN KEY (resId) REFERENCES rms_resource (id)
-);
---;;
-CREATE TABLE rms_resource_prefix_allow_form_editing (
-  id serial NOT NULL PRIMARY KEY,
-  rsPrId integer DEFAULT NULL,
-  enabled bit(1) DEFAULT NULL,
-  modifierUserId bigint NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_resource_prefix_allow_form_editing_ibfk_1 FOREIGN KEY (rsPrId) REFERENCES rms_resource_prefix (id)
 );
 --;;
 CREATE TABLE rms_resource_prefix_allow_members (
@@ -619,16 +391,6 @@ CREATE TABLE rms_resource_prefix_certificates (
   CONSTRAINT rms_resource_prefix_certificates_ibfk_1 FOREIGN KEY (rsPrId) REFERENCES rms_resource_prefix (id)
 );
 --;;
-CREATE TABLE rms_resource_prefix_close_period (
-  id serial NOT NULL PRIMARY KEY,
-  rsPrId integer DEFAULT NULL,
-  closePeriod integer DEFAULT NULL,
-  modifierUserId bigint NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_resource_prefix_close_period_ibfk_1 FOREIGN KEY (rsPrId) REFERENCES rms_resource_prefix (id)
-);
---;;
 CREATE TABLE rms_resource_prefix_default_form (
   id serial NOT NULL PRIMARY KEY,
   rsPrId integer DEFAULT NULL,
@@ -640,26 +402,6 @@ CREATE TABLE rms_resource_prefix_default_form (
   CONSTRAINT rms_resource_prefix_default_form_ibfk_2 FOREIGN KEY (metaFormId) REFERENCES rms_application_form_meta (id)
 );
 --;;
-CREATE TABLE rms_resource_prefix_link_location (
-  id serial NOT NULL PRIMARY KEY,
-  rsPrId integer DEFAULT NULL,
-  link varchar(2048) NOT NULL,
-  modifierUserId bigint NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_resource_prefix_link_location_ibfk_1 FOREIGN KEY (rsPrId) REFERENCES rms_resource_prefix (id)
-);
---;;
-CREATE TABLE rms_resource_prefix_mf_ebi (
-  id serial NOT NULL PRIMARY KEY,
-  rsPrId integer DEFAULT NULL,
-  enabled bit(1) DEFAULT NULL,
-  modifierUserId bigint NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_resource_prefix_mf_ebi_ibfk_1 FOREIGN KEY (rsPrId) REFERENCES rms_resource_prefix (id)
-);
---;;
 CREATE TABLE rms_resource_prefix_owners (
   id serial NOT NULL PRIMARY KEY,
   rsPrId integer DEFAULT NULL,
@@ -668,16 +410,6 @@ CREATE TABLE rms_resource_prefix_owners (
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
   CONSTRAINT rms_resource_prefix_owners_ibfk_1 FOREIGN KEY (rsPrId) REFERENCES rms_resource_prefix (id)
-);
---;;
-CREATE TABLE rms_resource_prefix_refresh_period (
-  id serial NOT NULL PRIMARY KEY,
-  rsPrId integer DEFAULT NULL,
-  refreshPeriod integer DEFAULT NULL,
-  modifierUserId bigint NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_resource_prefix_refresh_period_ibfk_1 FOREIGN KEY (rsPrId) REFERENCES rms_resource_prefix (id)
 );
 --;;
 CREATE TABLE rms_resource_prefix_reporters (
