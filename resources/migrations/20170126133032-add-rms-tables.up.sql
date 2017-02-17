@@ -4,15 +4,9 @@ CREATE TYPE itemtype AS ENUM ('text','texta','label','license','attachment','ref
 --;;
 CREATE TYPE approval_status AS ENUM ('created','approved','rejected','returned','rerouted','closed');
 --;;
-CREATE TYPE referee_status AS ENUM ('created','recommended','rejected','returned');
---;;
 CREATE TYPE license_status AS ENUM ('approved','rejected');
 --;;
 CREATE TYPE license_state AS ENUM ('created','approved','rejected');
---;;
-CREATE TYPE attachment_state AS ENUM ('visible','hidden');
---;;
-CREATE TYPE reviewers_state AS ENUM ('created','commented');
 --;;
 CREATE TYPE application_state AS ENUM ('applied','approved','rejected','returned','closed','draft','onhold');
 --;;
