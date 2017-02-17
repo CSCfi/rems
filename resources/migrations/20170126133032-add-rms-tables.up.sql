@@ -1,20 +1,20 @@
-CREATE TYPE scope AS ENUM ('private', 'public');
+--CREATE TYPE scope AS ENUM ('private', 'public');
 --;;
-CREATE TYPE itemtype AS ENUM ('text','texta','label','license','attachment','referee','checkbox','dropdown','date');
+--CREATE TYPE itemtype AS ENUM ('text','texta','label','license','attachment','referee','checkbox','dropdown','date');
 --;;
-CREATE TYPE approval_status AS ENUM ('created','approved','rejected','returned','rerouted','closed');
+--CREATE TYPE approval_status AS ENUM ('created','approved','rejected','returned','rerouted','closed');
 --;;
-CREATE TYPE license_status AS ENUM ('approved','rejected');
+--CREATE TYPE license_status AS ENUM ('approved','rejected');
 --;;
-CREATE TYPE license_state AS ENUM ('created','approved','rejected');
+--CREATE TYPE license_state AS ENUM ('created','approved','rejected');
 --;;
-CREATE TYPE application_state AS ENUM ('applied','approved','rejected','returned','closed','draft','onhold');
+--CREATE TYPE application_state AS ENUM ('applied','approved','rejected','returned','closed','draft','onhold');
 --;;
-CREATE TYPE item_state AS ENUM ('disabled','enabled','copied');
+--CREATE TYPE item_state AS ENUM ('disabled','enabled','copied');
 --;;
-CREATE TYPE prefix_state AS ENUM ('applied','approved','denied');
+--CREATE TYPE prefix_state AS ENUM ('applied','approved','denied');
 --;;
-CREATE TYPE license_type AS ENUM ('text','attachment','link');
+--CREATE TYPE license_type AS ENUM ('text','attachment','link');
 --;;
 CREATE TABLE rms_resource_prefix (
   id serial NOT NULL PRIMARY KEY,
@@ -127,8 +127,7 @@ CREATE TABLE rms_license (
   attId integer DEFAULT NULL,
   visibility scope NOT NULL DEFAULT 'private',
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_license_ibfk_1 FOREIGN KEY (attId) REFERENCES rms_attachment (id)
+  endt timestamp NULL DEFAULT NULL
 );
 --;;
 CREATE TABLE rms_application_form_meta_map (
@@ -325,8 +324,7 @@ CREATE TABLE rms_license_localization (
   attId integer DEFAULT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_license_localization_ibfk_1 FOREIGN KEY (licId) REFERENCES rms_license (id),
-  CONSTRAINT rms_license_localization_ibfk_2 FOREIGN KEY (attId) REFERENCES rms_attachment (id)
+  CONSTRAINT rms_license_localization_ibfk_1 FOREIGN KEY (licId) REFERENCES rms_license (id)
 );
 --;;
 CREATE TABLE rms_resource_close_period (
