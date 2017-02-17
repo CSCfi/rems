@@ -151,41 +151,6 @@ CREATE TABLE rms_license (
   CONSTRAINT rms_license_ibfk_1 FOREIGN KEY (attId) REFERENCES rms_attachment (id)
 );
 --;;
-CREATE TABLE rms_application_attachment_values (
-  id serial NOT NULL PRIMARY KEY,
-  catAppId integer DEFAULT NULL,
-  formMapId integer DEFAULT NULL,
-  modifierUserId bigint NOT NULL,
-  attachmentId integer DEFAULT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_application_attachment_values_ibfk_1 FOREIGN KEY (catAppId) REFERENCES rms_catalogue_item_application (id),
-  CONSTRAINT rms_application_attachment_values_ibfk_2 FOREIGN KEY (formMapId) REFERENCES rms_application_form_item_map (id),
-  CONSTRAINT rms_application_attachment_values_ibfk_3 FOREIGN KEY (attachmentId) REFERENCES rms_attachment (id)
-);
---;;
-CREATE TABLE rms_application_checkbox_values (
-  id serial NOT NULL PRIMARY KEY,
-  catAppId integer DEFAULT NULL,
-  formMapId integer DEFAULT NULL,
-  modifierUserId bigint NOT NULL,
-  value bit(1) DEFAULT b'0',
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_application_checkbox_values_ibfk_1 FOREIGN KEY (catAppId) REFERENCES rms_catalogue_item_application (id),
-  CONSTRAINT rms_application_checkbox_values_ibfk_2 FOREIGN KEY (formMapId) REFERENCES rms_application_form_item_map (id)
-);
---;;
-CREATE TABLE rms_application_form_item_string_values (
-  id serial NOT NULL PRIMARY KEY,
-  formItemId integer DEFAULT NULL,
-  value varchar(4096) NOT NULL,
-  itemOrder integer DEFAULT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_application_form_item_string_values_ibfk_1 FOREIGN KEY (formItemId) REFERENCES rms_application_form_item (id)
-);
---;;
 CREATE TABLE rms_application_form_meta_map (
   id serial NOT NULL PRIMARY KEY,
   metaFormId integer DEFAULT NULL,
@@ -210,32 +175,6 @@ CREATE TABLE rms_application_license_approval_values (
   CONSTRAINT rms_application_license_approval_values_ibfk_1 FOREIGN KEY (catAppId) REFERENCES rms_catalogue_item_application (id),
   CONSTRAINT rms_application_license_approval_values_ibfk_2 FOREIGN KEY (formMapId) REFERENCES rms_application_form_item_map (id),
   CONSTRAINT rms_application_license_approval_values_ibfk_3 FOREIGN KEY (licId) REFERENCES rms_license (id)
-);
---;;
-CREATE TABLE rms_application_referee_invite_values (
-  id serial NOT NULL PRIMARY KEY,
-  catAppId integer DEFAULT NULL,
-  formMapId integer DEFAULT NULL,
-  modifierUserId bigint DEFAULT NULL,
-  email varchar(256) NOT NULL,
-  hash varchar(256) NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_application_referee_invite_values_ibfk_1 FOREIGN KEY (catAppId) REFERENCES rms_catalogue_item_application (id),
-  CONSTRAINT rms_application_referee_invite_values_ibfk_2 FOREIGN KEY (formMapId) REFERENCES rms_application_form_item_map (id)
-);
---;;
-CREATE TABLE rms_application_referee_values (
-  id serial NOT NULL PRIMARY KEY,
-  catAppId integer DEFAULT NULL,
-  formMapId integer DEFAULT NULL,
-  refereeUserId bigint NOT NULL,
-  comment varchar(4096) DEFAULT NULL,
-  state referee_status NOT NULL DEFAULT 'created',
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT rms_application_referee_values_ibfk_1 FOREIGN KEY (catAppId) REFERENCES rms_catalogue_item_application (id),
-  CONSTRAINT rms_application_referee_values_ibfk_2 FOREIGN KEY (formMapId) REFERENCES rms_application_form_item_map (id)
 );
 --;;
 CREATE TABLE rms_application_text_values (
