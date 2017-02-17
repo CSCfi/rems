@@ -18,8 +18,7 @@ install:
   - pip install ansible
   - pip install awscli
 before_script:
-  - psql -c "CREATE USER db_user WITH PASSWORD 'db_password';" -U postgres
-  - psql -c 'CREATE DATABASE rems_test OWNER db_user;' -U postgres
+  - ./.travis-init-db.sh
   - export DATABASE_URL='postgresql://localhost/rems_test?user=db_user&password=db_password'
 script:
   - lein test :all
