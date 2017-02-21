@@ -10,12 +10,12 @@
 (defn about []
   [:p "this is the story of rems... work in progress"])
 
-(defn catalogue []
+(defn catalogue [resources]
   [:table.ctlg-table
    [:tr
     [:th "Resource"]
     [:th ""]]
-   (for [x ["A" "B" "C" "D" "E"]]
+   (for [x (sort (map :title resources))]
      [:tr
       [:td {:data-th "Resource"} x]
       [:td {:data-th ""} [:div.btn.btn-primary "Add to cart"]]])])
