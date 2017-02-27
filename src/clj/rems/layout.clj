@@ -44,7 +44,7 @@
 
 (defn navbar
   [page-name user tr]
-  [:nav.navbar.rems-navbar {:role "navigation"}
+  [:nav.navbar {:role "navigation"}
    [:button.navbar-toggler.hidden-sm-up {:type "button" :data-toggle "collapse" :data-target "#collapsing-navbar"} "&#9776;"]
      [:div#collapsing-navbar.collapse.navbar-toggleable-xs
       (primary-nav page-name user tr)
@@ -53,8 +53,7 @@
       ]])
 
 (defn footer []
-  [:article.footer-wrapper
-   [:p "Powered by CSC - IT Center for Science"]])
+  [:footer "Powered by CSC - IT Center for Science"])
 
 (defn page-template
   [page-name content user tr]
@@ -72,7 +71,7 @@
             [:div.logo]
             [:div.container content]
             [:div.push]]
-           [:footer (footer)]
+           (footer)
            (include-js "/assets/jquery/jquery.min.js")
            (include-js "/assets/tether/dist/js/tether.min.js")
            (include-js "/assets/bootstrap/js/bootstrap.min.js")]]))

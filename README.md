@@ -64,3 +64,7 @@ When done you can stop (and automatically remove) the database.
 ```
 docker stop rems_test
 ```
+
+## Component Guide
+
+You can access the component guide at `/guide`. It contains all the components in various configurations.

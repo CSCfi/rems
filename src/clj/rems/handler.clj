@@ -2,6 +2,7 @@
   (:require [compojure.core :refer [routes wrap-routes]]
             [rems.layout :refer [error-page]]
             [rems.routes.home :refer [public-routes secured-routes]]
+            [rems.routes.guide :refer [guide-routes]]
             [rems.routes.fake-shibboleth :refer [fake-shibboleth-routes]]
             [compojure.route :as route]
             [rems.env :refer [+defaults+]]
@@ -48,6 +49,9 @@
 (def app-routes
   (routes
    normal-routes
+   (if (:component-guide +defaults+)
+     guide-routes
+     never-match-route)
    (if (:fake-shibboleth +defaults+)
      fake-shibboleth-routes
      never-match-route)
