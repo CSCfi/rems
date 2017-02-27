@@ -188,3 +188,23 @@ footer, .push {
     padding: 0.5em 1em !important;
   }
 }
+
+.example-page {
+  margin: 2em;
+}
+
+.example-page h1, .example-page h2, .example-page h3 {
+  margin-bottom: 1em;
+}
+
+.example {
+  margin: 2em 0;
+}
+
+.example-content {
+  border: 1px dashed black;
+}
+
+.example-content-end {
+  clear: both;
+}
