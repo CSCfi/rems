@@ -9,7 +9,7 @@
 ```
 lein repl
 
-rems.standalone=> (start-app [])
+rems.standalone=> (start-app)
 ```
 
 Point your browser to <http://localhost:3000>
