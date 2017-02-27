@@ -44,7 +44,7 @@
 
 (defn navbar
   [page-name user tr]
-  [:nav.navbar.rems-navbar {:role "navigation"}
+  [:nav.navbar {:role "navigation"}
    [:button.navbar-toggler.hidden-sm-up {:type "button" :data-toggle "collapse" :data-target "#collapsing-navbar"} "&#9776;"]
      [:div#collapsing-navbar.collapse.navbar-toggleable-xs
       (primary-nav page-name user tr)
