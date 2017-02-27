@@ -53,8 +53,7 @@
       ]])
 
 (defn footer []
-  [:article.footer-wrapper
-   [:p "Powered by CSC - IT Center for Science"]])
+  [:footer "Powered by CSC - IT Center for Science"])
 
 (defn page-template
   [page-name content user tr]
@@ -72,7 +71,7 @@
             [:div.logo]
             [:div.container content]
             [:div.push]]
-           [:footer (footer)]
+           (footer)
            (include-js "/assets/jquery/jquery.min.js")
            (include-js "/assets/tether/dist/js/tether.min.js")
            (include-js "/assets/bootstrap/js/bootstrap.min.js")]]))

@@ -58,9 +58,10 @@ body {
 
 }
 
-footer .footer-wrapper {
-    text-align: center;
-    padding: 2em 1em 0em 1em;
+footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 footer {
