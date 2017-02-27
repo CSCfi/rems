@@ -29,12 +29,15 @@
     [:div.example-page
      [:h1 "Component Guide"]
      [:h2 "Layout components"]
-     (example "nav-link" nil
-              (layout/nav-link "example/path" "link text"))
-     (example "nav-link active" nil
-              (layout/nav-link "example/path" "link text" "page-name" "page-name"))
-     (example "nav-item" nil
-              (layout/nav-link "example/path" "link text" "page-name" "li-name"))
+     [:div.navbar-nav
+      (example "nav-link" nil
+               (layout/nav-link "example/path" "link text"))]
+     [:div.navbar-nav
+      (example "nav-link active" nil
+               (layout/nav-link "example/path" "link text" "page-name" "page-name"))]
+     [:div.navbar-nav
+      (example "nav-item" nil
+               (layout/nav-link "example/path" "link text" "page-name" "li-name"))]
      (example "primary-nav" nil
                 (layout/primary-nav "page-name" g-user g-tr))
      (example "secondary-nav" nil
