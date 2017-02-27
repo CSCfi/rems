@@ -43,7 +43,9 @@
      (example "secondary-nav" nil
               (layout/secondary-nav g-user g-tr))
      (example "navbar" nil
-              (layout/navbar "example-page" g-user g-tr))]]))
+              (layout/navbar "example-page" g-user g-tr))
+     (example "footer" nil
+              (layout/footer))]]))
 
 (defroutes guide-routes
   (GET "/guide" [] (guide-page)))
