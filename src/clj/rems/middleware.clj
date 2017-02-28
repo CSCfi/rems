@@ -82,7 +82,9 @@
         authorization (if (:fake-shibboleth +defaults+)
                         authentication
                         (authz-backend))]
-    (-> handler
+    (-> (fn [request]
+          (binding [context/*user* (:identity request)]
+            (handler request)))
         (wrap-authentication authentication)
         (wrap-authorization authorization))))
 
