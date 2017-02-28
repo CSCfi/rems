@@ -1,5 +1,6 @@
 (ns rems.test.db.core
-  (:require [rems.db.core :refer [*db*] :as db]
+  (:require [rems.db.core :as db]
+            [rems.env :refer [*db*]]
             [luminus-migrations.core :as migrations]
             [clojure.test :refer :all]
             [clojure.java.jdbc :as jdbc]
@@ -11,8 +12,8 @@
   (fn [f]
     (mount/start
       #'rems.config/env
-      #'rems.db.core/*db*)
-    (migrations/migrate ["migrate"] (select-keys env [:database-url]))
+      #'rems.env/*db*)
+    (migrations/migrate ["reset"] (select-keys env [:database-url]))
     (f)))
 
 (deftest ^:integration test-get-catalogue-items
