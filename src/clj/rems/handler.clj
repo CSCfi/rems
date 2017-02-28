@@ -33,11 +33,10 @@
   (shutdown-agents)
   (log/info "Rems has shut down!"))
 
-(def not-found
-  (route/not-found
-   (:body
-    (error-page {:status 404
-                 :title "page not found"}))))
+(defn not-found [req]
+  (error-page {:status 404
+               :title "Page not found"}))
+
 (def normal-routes
   (routes
    #'public-routes
