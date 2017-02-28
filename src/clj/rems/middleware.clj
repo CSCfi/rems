@@ -48,10 +48,9 @@
 (defn wrap-csrf [handler]
   (wrap-anti-forgery
     handler
-    {:error-response
-     (error-page
-       {:status 403
-        :title "Invalid anti-forgery token"})}))
+    {:error-handler (fn [req] (error-page
+                               {:status 403
+                                :title "Invalid anti-forgery token"}))}))
 
 (defn wrap-formats [handler]
   (let [wrapped (wrap-restful-format
