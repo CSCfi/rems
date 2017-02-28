@@ -100,9 +100,9 @@
       wrap-auth
       wrap-webjars
       (wrap-defaults
-        (-> site-defaults
-            (assoc-in [:security :anti-forgery] false)
-            (assoc-in  [:session :store] (ttl-memory-store (* 60 30)))))
+       (-> site-defaults
+           (assoc-in [:security :anti-forgery] false)
+           (assoc-in [:session :store] (ttl-memory-store (* 60 30)))))
       wrap-context
       wrap-internal-error
       wrap-csrf
