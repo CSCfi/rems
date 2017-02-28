@@ -7,7 +7,7 @@
 #
 # Assumptions for travis:
 # - DOCKER_REPOSITORY, AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in env
-# - ssh keys for accessing AWS are set up
+# - ssh keys for ansible are set up (see ansible/README.md)
 
 if [[ "$TRAVIS_BRANCH" == "master" && "$TRAVIS_PULL_REQUEST" == "false" ]]; then
     docker tag rems:latest $DOCKER_REPOSITORY/rems:latest
