@@ -3,8 +3,8 @@
     [cheshire.core :refer [generate-string parse-string]]
     [clojure.java.jdbc :as jdbc]
     [conman.core :as conman]
-    [rems.config :refer [env]]
-    [mount.core :refer [defstate]])
+    [rems.env :refer [+defaults+ *db*]]
+    [rems.config :refer [env]])
   (:import org.postgresql.util.PGobject
            java.sql.Array
            clojure.lang.IPersistentMap
@@ -14,10 +14,6 @@
             Date
             Timestamp
             PreparedStatement]))
-
-(defstate ^:dynamic *db*
-           :start (conman/connect! {:jdbc-url (env :database-url)})
-           :stop (conman/disconnect! *db*))
 
 (conman/bind-connection *db* "sql/queries.sql")
 

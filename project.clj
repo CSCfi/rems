@@ -50,6 +50,7 @@
      {:handler rems.handler/app
       :init rems.handler/init
       :destroy rems.handler/destroy
+      :web-xml "web.xml"
       :name "rems.war"}
 
   ;; flag tests that need a db with ^:integration
