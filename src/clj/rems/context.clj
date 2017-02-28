@@ -13,3 +13,5 @@
 (def ^:dynamic *user*
   "User data available from request.")
 
+(def ^:dynamic *tempura*
+  "Tempura object initialized with user's preferred language.")

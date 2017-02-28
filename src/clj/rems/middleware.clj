@@ -71,8 +71,14 @@
   (restrict handler {:handler authenticated?
                      :on-error on-error}))
 
-(defn wrap-i18n [handler]
-  (tempura/wrap-ring-request handler {:tr-opts tconfig}))
+(defn wrap-i18n
+  "Wraps tempura into both the request as well as dynamic context."
+  [handler]
+  (tempura/wrap-ring-request
+   (fn [request]
+     (binding [context/*tempura* (:tempura/tr request)]
+       (handler request)))
+   {:tr-opts tconfig}))
 
 (defn wrap-auth
   [handler]
