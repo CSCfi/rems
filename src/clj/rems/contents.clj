@@ -1,5 +1,6 @@
 (ns rems.contents
-  (:require [hiccup.element :refer [link-to image]]))
+  (:require [hiccup.element :refer [link-to image]]
+            [rems.db.core :as db]))
 
 (defn login [context]
   [:div.jumbotron
@@ -10,12 +11,12 @@
 (defn about []
   [:p "this is the story of rems... work in progress"])
 
-(defn catalogue [resources]
+(defn catalogue []
   [:table.ctlg-table
    [:tr
     [:th "Resource"]
     [:th ""]]
-   (for [x (sort (map :title resources))]
+   (for [x (sort (map :title (db/get-catalogue-items)))]
      [:tr
       [:td {:data-th "Resource"} x]
       [:td {:data-th ""} [:div.btn.btn-primary "Add to cart"]]])])

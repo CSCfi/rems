@@ -1,6 +1,5 @@
 (ns rems.routes.home
-  (:require [rems.db.core :as db]
-            [rems.layout :as layout]
+  (:require [rems.layout :as layout]
             [rems.context :as context]
             [rems.contents :as contents]
             [compojure.core :refer [defroutes GET]]
@@ -18,7 +17,7 @@
 
 (defn catalogue-page []
   (layout/render
-    "catalogue" (contents/catalogue (db/get-catalogue-items))))
+    "catalogue" (contents/catalogue)))
 
 (defroutes public-routes
   (GET "/" [] (home-page))
