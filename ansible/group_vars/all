@@ -1,2 +1,4 @@
 region: eu-central-1
 ecr: 673230199239.dkr.ecr.eu-central-1.amazonaws.com
+# XXX can the ip change?
+docker_host_ip: 172.17.0.1

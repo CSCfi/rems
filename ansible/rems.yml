@@ -48,3 +48,5 @@
       name: rems
       image: "{{ecr}}/rems"
       published_ports: 0.0.0.0:80:3000
+      env:
+        DATABASE_URL: postgresql://{{docker_host_ip}}/rems?user=rems

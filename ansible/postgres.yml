@@ -24,6 +24,18 @@
       creates: /srv/remsdb/PG_VERSION
     become_user: postgres
 
+  - name: Make postgres listen on docker interface
+    lineinfile:
+      dest: /srv/remsdb/postgresql.conf
+      regexp: listen_addresses
+      line: "listen_addresses = 'localhost, {{docker_host_ip}}'"
+
+  - name: Make postgres allow connections docker interface
+    lineinfile:
+      dest: /srv/remsdb/pg_hba.conf
+      regexp: "{{docker_host_ip}}"
+      line: "host rems rems {{docker_host_ip}}/24 trust"
+
   - name: Install remsdb service
     copy:
       dest: /etc/systemd/system/remsdb.service
@@ -44,7 +56,7 @@
   - name: Enable remsdb service
     systemd:
       name: remsdb
-      state: started
+      state: restarted
       enabled: yes
       daemon_reload: yes
 
