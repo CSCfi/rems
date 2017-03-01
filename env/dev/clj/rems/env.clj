@@ -1,6 +1,9 @@
 (ns rems.env
   (:require [clojure.tools.logging :as log]
-            [rems.middleware.dev :refer [wrap-dev]]))
+            [conman.core :as conman]
+            [mount.core :refer [defstate]]
+            [rems.middleware.dev :refer [wrap-dev]]
+            [rems.config :refer [env]]))
 
 (def +defaults+
   {:init
@@ -12,3 +15,7 @@
    :middleware wrap-dev
    :fake-shibboleth true
    :component-guide true})
+
+(defstate ^:dynamic *db*
+           :start (conman/connect! {:jdbc-url (env :database-url)})
+           :stop (conman/disconnect! *db*))
