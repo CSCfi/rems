@@ -1,6 +1,7 @@
 (ns rems.standalone
   "Run the REMS app in an embedded http server."
   (:require [rems.handler :as handler]
+            [rems.db.core :as db]
             [luminus.repl-server :as repl]
             [luminus.http-server :as http]
             [luminus-migrations.core :as migrations]
@@ -50,12 +51,20 @@
   (println "Welcome to REMS!")
   (println "You can run the server with (start-app)"))
 
-(defn -main [& args]
+(defn -main
+  "Arguments can be either arguments to mount/start-with-args, or one of
+     \"migrate\" -- migrate database
+     \"rollback\" -- roll back database migration
+     \"populate\" -- insert test data into database"
+  [& args]
   (cond
-    (some #{"migrate" "rollback"} args)
+    (#{"migrate" "rollback"} (first args))
     (do
       (mount/start #'rems.config/env)
-      (migrations/migrate args (select-keys env [:database-url]))
-      (System/exit 0))
+      (migrations/migrate args (select-keys env [:database-url])))
+    (= "populate" (first args))
+    (do
+      (mount/start #'rems.config/env #'rems.env/*db*)
+      (db/create-test-data!))
     :else
     (apply start-app args)))

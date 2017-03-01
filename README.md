@@ -4,6 +4,21 @@
 
 ## Getting started
 
+### Getting a database
+
+Run the official postgres docker image and initialize the database:
+
+```
+docker run --rm --name rems_test -p 5432:5432 -d postgres
+./create-test-db.sh
+```
+
+When done you can stop (and automatically remove) the database.
+
+```
+docker stop rems_test
+```
+
 ### Running interactively
 
 ```
@@ -13,6 +28,20 @@ rems.standalone=> (start-app)
 ```
 
 Point your browser to <http://localhost:3000>
+
+### Running tests
+
+To run unit tests:
+
+```
+lein test
+```
+
+To run tests that need a database:
+
+```
+lein test :all
+```
 
 ### Running via uberjar
 
@@ -25,40 +54,15 @@ Point your browser to <http://localhost:3000>
 
 ### Running via docker
 
+Look up the ip address of your postgres docker with `docker info rems_test`. Replace `172.17.0.2` below with the ip address:
+
 ```
 lein uberjar
 docker build . -t rems
-sudo docker run -p 127.0.0.1:3000:3000 -d rems
+docker run --name rems -p 127.0.0.1:3000:3000 -e DATABASE_URL=postgres://172.17.0.2/rems_test?user=rems_test -d rems
 ```
 
 Point your browser to <http://localhost:3000>
-
-### Running PostgreSQL inside a local docker container
-
-First run the official postgres docker image. Also initialize the database. For running REMS you also need to provide the environment variable in one way or another.
-
-```
-docker run --rm --name rems_test -p 5432:5432 -d postgres
-./.travis-init-db.sh
-```
-
-Now your database is set. Running the database tests is possible.
-
-```
-DATABASE_URL='postgresql://localhost/rems_test?user=db_user' lein test :all
-```
-
-Or connect to it using `psql`
-
-```
-psql -U db_user rems_test
-```
-
-When done you can stop (and automatically remove) the database.
-
-```
-docker stop rems_test
-```
 
 ## Component Guide
 

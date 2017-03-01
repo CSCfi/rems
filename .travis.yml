@@ -18,8 +18,7 @@ install:
   - pip install ansible
   - pip install awscli
 before_script:
-  - ./.travis-init-db.sh
-  - export DATABASE_URL='postgresql://localhost/rems_test?user=db_user'
+  - ./create-test-db.sh
 script:
   - lein test :all
   - lein uberwar
