@@ -19,7 +19,7 @@ install:
   - pip install awscli
 before_script:
   - ./.travis-init-db.sh
-  - export DATABASE_URL='postgresql://localhost/rems_test?user=db_user&password=db_password'
+  - export DATABASE_URL='postgresql://localhost/rems_test?user=db_user'
 script:
   - lein test :all
   - lein uberwar

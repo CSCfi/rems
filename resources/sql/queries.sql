@@ -5,3 +5,6 @@ SELECT * FROM rms_catalogue_item
 INSERT INTO rms_catalogue_item
 (title, formId)
 VALUES ('A', null), ('B', null)
+
+-- :name get-database-name :? :1
+SELECT current_database()
