@@ -13,7 +13,8 @@
    (fn []
      (log/info "\n-=[rems has shut down successfully]=-"))
    :middleware wrap-dev
-   :fake-shibboleth true})
+   :fake-shibboleth true
+   :component-guide true})
 
 (defstate ^:dynamic *db*
            :start (conman/connect! {:jdbc-url (env :database-url)})

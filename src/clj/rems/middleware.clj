@@ -48,10 +48,9 @@
 (defn wrap-csrf [handler]
   (wrap-anti-forgery
     handler
-    {:error-response
-     (error-page
-       {:status 403
-        :title "Invalid anti-forgery token"})}))
+    {:error-handler (fn [req] (error-page
+                               {:status 403
+                                :title "Invalid anti-forgery token"}))}))
 
 (defn wrap-formats [handler]
   (let [wrapped (wrap-restful-format
@@ -65,15 +64,20 @@
 (defn on-error [request response]
   (error-page
     {:status 403
-     :headers {"Content-Type" "text/plain"}
      :title (str "Access to " (:uri request) " is not authorized")}))
 
 (defn wrap-restricted [handler]
   (restrict handler {:handler authenticated?
                      :on-error on-error}))
 
-(defn wrap-i18n [handler]
-  (tempura/wrap-ring-request handler {:tr-opts tconfig}))
+(defn wrap-i18n
+  "Wraps tempura into both the request as well as dynamic context."
+  [handler]
+  (tempura/wrap-ring-request
+   (fn [request]
+     (binding [context/*tempura* (:tempura/tr request)]
+       (handler request)))
+   {:tr-opts tconfig}))
 
 (defn wrap-auth
   [handler]
@@ -83,7 +87,9 @@
         authorization (if (:fake-shibboleth +defaults+)
                         authentication
                         (authz-backend))]
-    (-> handler
+    (-> (fn [request]
+          (binding [context/*user* (:identity request)]
+            (handler request)))
         (wrap-authentication authentication)
         (wrap-authorization authorization))))
 
@@ -93,9 +99,9 @@
       wrap-auth
       wrap-webjars
       (wrap-defaults
-        (-> site-defaults
-            (assoc-in [:security :anti-forgery] false)
-            (assoc-in  [:session :store] (ttl-memory-store (* 60 30)))))
+       (-> site-defaults
+           (assoc-in [:security :anti-forgery] false)
+           (assoc-in [:session :store] (ttl-memory-store (* 60 30)))))
       wrap-context
       wrap-internal-error
       wrap-csrf

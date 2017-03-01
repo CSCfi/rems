@@ -13,9 +13,11 @@
     (mount/start
       #'rems.config/env
       #'rems.env/*db*)
+    (db/assert-test-database!)
     (migrations/migrate ["reset"] (select-keys env [:database-url]))
-    (f)))
+    (db/create-test-data!)
+    (f)
+    (mount/stop)))
 
 (deftest ^:integration test-get-catalogue-items
-  (db/create-test-data!)
   (is (= ["A" "B"] (sort (map :title (db/get-catalogue-items))))))

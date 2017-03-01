@@ -2,6 +2,7 @@
   (:require [compojure.core :refer [routes wrap-routes]]
             [rems.layout :refer [error-page]]
             [rems.routes.home :refer [public-routes secured-routes]]
+            [rems.routes.guide :refer [guide-routes]]
             [rems.routes.fake-shibboleth :refer [fake-shibboleth-routes]]
             [compojure.route :as route]
             [rems.env :refer [+defaults+]]
@@ -32,11 +33,10 @@
   (shutdown-agents)
   (log/info "Rems has shut down!"))
 
-(def not-found
-  (route/not-found
-   (:body
-    (error-page {:status 404
-                 :title "page not found"}))))
+(defn not-found [req]
+  (error-page {:status 404
+               :title "Page not found"}))
+
 (def normal-routes
   (routes
    #'public-routes
@@ -48,6 +48,9 @@
 (def app-routes
   (routes
    normal-routes
+   (if (:component-guide +defaults+)
+     guide-routes
+     never-match-route)
    (if (:fake-shibboleth +defaults+)
      fake-shibboleth-routes
      never-match-route)

@@ -17,6 +17,10 @@
 
 (conman/bind-connection *db* "sql/queries.sql")
 
+(defn assert-test-database! []
+  (assert (= {:current_database "rems_test"}
+             (get-database-name))))
+
 (defn to-date [^java.sql.Date sql-date]
   (-> sql-date (.getTime) (java.util.Date.)))
 

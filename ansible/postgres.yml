@@ -1,0 +1,59 @@
+---
+
+- hosts: rems
+  become: yes
+  tasks:
+
+  - name: Install packages
+    yum:
+      name: "{{item}}"
+    with_items:
+      - postgresql-server
+      - python-psycopg2
+
+  - name: Create data directories
+    file:
+      path: /srv/remsdb
+      state: directory
+      owner: postgres
+
+  # Persistent volume mounted on /srv
+  - name: Initialize remsdb database cluster
+    shell: initdb /srv/remsdb
+    args:
+      creates: /srv/remsdb/PG_VERSION
+    become_user: postgres
+
+  - name: Install remsdb service
+    copy:
+      dest: /etc/systemd/system/remsdb.service
+      content: |
+        .include /lib/systemd/system/postgresql.service
+        [Service]
+        Environment=PGDATA=/srv/remsdb
+
+  - name: Configure SELinux
+    sefcontext:
+      target: '/srv/remsdb(/.*)?'
+      setype: postgresql_db_t
+      state: present
+
+  - name: Configure SELinux
+    command: restorecon -R /srv/remsdb
+
+  - name: Enable remsdb service
+    systemd:
+      name: remsdb
+      state: started
+      enabled: yes
+      daemon_reload: yes
+
+  - name: Create rems database
+    postgresql_db:
+      name: rems
+
+  # No password needed since pg only listens to localhost
+  - name: Create rems database user
+    postgresql_user:
+      name: rems
+      db: rems

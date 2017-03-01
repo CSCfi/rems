@@ -8,6 +8,10 @@
     (let [response (app (request :get "/"))]
       (is (= 200 (:status response)))))
 
+  (testing "catalogue route"
+    (let [response (app (request :get "/catalogue"))]
+      (is (= 403 (:status response)))))
+
   (testing "not-found route"
     (let [response (app (request :get "/invalid"))]
       (is (= 404 (:status response))))))

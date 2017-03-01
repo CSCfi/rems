@@ -9,7 +9,7 @@
 ```
 lein repl
 
-rems.standalone=> (start-app [])
+rems.standalone=> (start-app)
 ```
 
 Point your browser to <http://localhost:3000>
@@ -38,19 +38,14 @@ Point your browser to <http://localhost:3000>
 First run the official postgres docker image. Also initialize the database. For running REMS you also need to provide the environment variable in one way or another.
 
 ```
-docker run --rm --name rems_test -p 5432:5432 -e POSTGRESS_PASSWORD=db_password -e POSGRES_USER=db_user -d postgres
-
-export PGHOST=localhost
-
+docker run --rm --name rems_test -p 5432:5432 -d postgres
 ./.travis-init-db.sh
-
-export DATABASE_URL='postgresql://localhost/rems_test?user=db_user&password=db_password'
 ```
 
 Now your database is set. Running the database tests is possible.
 
 ```
-lein run test :all
+DATABASE_URL='postgresql://localhost/rems_test?user=db_user' lein test :all
 ```
 
 Or connect to it using `psql`
@@ -64,3 +59,7 @@ When done you can stop (and automatically remove) the database.
 ```
 docker stop rems_test
 ```
+
+## Component Guide
+
+You can access the component guide at `/guide`. It contains all the components in various configurations.
