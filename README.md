@@ -11,7 +11,6 @@ Run the official postgres docker image and initialize the database:
 ```
 docker run --rm --name rems_test -p 5432:5432 -d postgres
 ./create-test-db.sh
-lein run migrate
 ```
 
 When done you can stop (and automatically remove) the database.
