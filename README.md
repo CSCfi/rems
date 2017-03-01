@@ -54,7 +54,7 @@ Point your browser to <http://localhost:3000>
 
 ### Running via docker
 
-Look up the ip address of your postgres docker with `docker info rems_test`. Replace `172.17.0.2` below with the ip address:
+Look up the ip address of your postgres docker with `docker inspect rems_test`. Replace `172.17.0.2` below with the ip address:
 
 ```
 lein uberjar
