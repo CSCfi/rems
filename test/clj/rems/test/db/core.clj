@@ -19,11 +19,14 @@
     (f)
     (mount/stop)))
 
+(defn get-data-rows []
+  (get (contents/catalogue) 2))
+
 (deftest ^:integration test-get-catalogue-items
-  (is (empty? (get (contents/catalogue) 2)))
+  (is (empty? (get-data-rows)))
   (db/create-test-data!)
-  (is (seq (get (contents/catalogue) 2)))
-  (is (= ["A" "B"] (map #(last (nth % 1)) (get (rems.contents/catalogue) 2))))
-  (is (= 2 (count (get (rems.contents/catalogue) 2))))
+  (is (seq (get-data-rows)))
+  (is (= ["A" "B"] (map #(last (nth % 1)) (get-data-rows))))
+  (is (= 2 (count (get-data-rows))))
   (db/create-test-data!)
-  (is (= 4 (count (get (rems.contents/catalogue) 2)))))
+  (is (= 4 (count (get-data-rows)))))
