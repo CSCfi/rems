@@ -4,10 +4,17 @@ SELECT * FROM rms_catalogue_item
 -- :name get-catalogue-item :? :1
 SELECT * FROM rms_catalogue_item WHERE id = :id
 
--- :name create-test-data! :! :n
+-- :name create-catalogue-item! :! :n
+-- :doc Create a single catalogue item
 INSERT INTO rms_catalogue_item
-(title, formId)
-VALUES ('A', null), ('B', null)
+(title, formid, resid)
+VALUES (:title, :formid, :resid)
+
+-- :name create-resource! :! :n
+-- :doc Create a single resource
+INSERT INTO rms_resource
+(id, resid, prefix, modifieruserid)
+VALUES (:id, :resid, :prefix, :modifieruserid)
 
 -- :name get-database-name :? :1
 SELECT current_database()

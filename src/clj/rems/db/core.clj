@@ -24,6 +24,15 @@
 (defn to-date [^java.sql.Date sql-date]
   (-> sql-date (.getTime) (java.util.Date.)))
 
+(defn create-test-data! []
+  (create-resource! {:id 1 :resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1})
+  (create-catalogue-item! {:title "ELFA Corpus"
+                           :formid nil
+                           :resid 1})
+  (create-catalogue-item! {:title "B"
+                           :formid nil
+                           :resid nil}))
+
 (extend-protocol jdbc/IResultSetReadColumn
   Date
   (result-set-read-column [v _ _] (to-date v))
