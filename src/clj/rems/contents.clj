@@ -21,12 +21,13 @@
    [:td {:data-th ""}]])
 
 (defn cart-list [items]
-  [:table.ctlg-table
-   [:tr
-    [:th "Resource in cart"]
-    [:th ""]]
-   (for [item (sort-by :title items)]
-     (cart-item item))])
+  (when-not (empty? items)
+    [:table.ctlg-table
+     [:tr
+      [:th "Resource in cart"]
+      [:th ""]]
+     (for [item (sort-by :title items)]
+       (cart-item item))]))
 
 (defn catalogue-item [item]
   [:tr
