@@ -25,7 +25,7 @@
    [:tr
     [:th "Resource in cart"]
     [:th ""]]
-   (for [item (sort-by :title items)]
+   (for [item (sort items)]
      (cart-item item))])
 
 (defn catalogue-item [item]
