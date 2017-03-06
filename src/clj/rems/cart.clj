@@ -18,7 +18,7 @@
 
 (defn- add-to-cart [session item-id]
   (update session :cart
-          #(vec (conj % item-id))))
+          #(set (conj % item-id))))
 
 (defroutes cart-routes
   (POST "/cart/add" {session :session params :params}
