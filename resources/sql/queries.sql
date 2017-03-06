@@ -1,5 +1,5 @@
 -- :name get-catalogue-items :? :*
-SELECT * FROM rms_catalogue_item
+SELECT rci.id, rci.title, rr.resid FROM rms_catalogue_item rci LEFT OUTER JOIN rms_resource rr ON (rci.resid = rr.id)
 
 -- :name get-catalogue-item :? :1
 SELECT * FROM rms_catalogue_item WHERE id = :id
