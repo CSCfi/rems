@@ -68,5 +68,13 @@
      (example "cart-list with two items" nil
               (contents/cart-list [{:title "Item title"} {:title "Another title"}]))
 
+
+     [:h2 "Misc components"]
+     (example "login" nil (contents/login "/"))
+     (example "about" nil (contents/about))
+     (example "logo" nil (layout/logo))
+     (example "error-content" nil (layout/error-content {:status 123 :title "Error title" :message "Error message"}))
+     ]]))
+
 (defroutes guide-routes
   (GET "/guide" [] (guide-page)))
