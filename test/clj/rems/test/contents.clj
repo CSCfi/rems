@@ -19,7 +19,7 @@
     (check-row-text (nth elements 2) "C")))
 
 (deftest test-cart-list
-  (let [c (cart-list ["D" "C"])
+  (let [c (cart-list [{:title "D"} {:title "C"}])
         elements (get c 2)]
     (is (= 2 (count elements)))
     (check-row-text (first elements) "C")
