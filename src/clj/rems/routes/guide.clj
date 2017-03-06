@@ -48,12 +48,17 @@
      (example "footer" nil
               (layout/footer))
      [:h2 "Catalogue components"]
-      (example "catalogue-item" nil
-               [:table.ctlg-table
-                (contents/catalogue-item {:title "Item title"})])
+     (example "catalogue-item" nil
+              [:table.ctlg-table
+               (contents/catalogue-item {:title "Item title"})])
      (example "catalogue with two items" nil
-              (with-redefs [db/get-catalogue-items (constantly [{:title "Item title"} {:title "Another title"}])]
-                (contents/catalogue)))]]))
+              (contents/catalogue-list [{:title "Item title"} {:title "Another title"}]))
+     [:h2 "Cart components"]
+     (example "cart-item" nil
+              [:table.ctlg-table
+               (contents/cart-item "Item title")])
+     (example "catalogue-list" nil
+              (contents/cart-list ["Item title" "Another title"]))]]))
 
 (defroutes guide-routes
   (GET "/guide" [] (guide-page)))

@@ -31,7 +31,8 @@
 
 (defn wrap-context [handler]
   (fn [request]
-    (binding [context/*root-path* (calculate-root-path request)]
+    (binding [context/*root-path* (calculate-root-path request)
+              context/*cart* (get-in request [:session :cart])]
       (handler request))))
 
 (defn wrap-internal-error [handler]
@@ -90,10 +91,10 @@
       wrap-i18n
       wrap-auth
       wrap-webjars
+      wrap-context
       (wrap-defaults
        (-> site-defaults
            (assoc-in [:security :anti-forgery] true)
            (assoc-in [:session :store] (ttl-memory-store (* 60 30)))))
-      wrap-context
       wrap-internal-error
       wrap-formats))

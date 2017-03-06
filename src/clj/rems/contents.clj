@@ -1,5 +1,7 @@
 (ns rems.contents
   (:require [hiccup.element :refer [link-to image]]
+            [rems.cart :as cart]
+            [rems.context :as context]
             [rems.db.core :as db]))
 
 (defn login [context]
@@ -11,15 +13,35 @@
 (defn about []
   [:p "this is the story of rems... work in progress"])
 
+;; TODO duplication between cart and catalogue to be factored out
+
+(defn cart-item [item]
+  [:tr
+   [:td {:data-th "Resource in cart"} item]
+   [:td {:data-th ""}]])
+
+(defn cart-list [items]
+  [:table.ctlg-table
+   [:tr
+    [:th "Resource in cart"]
+    [:th ""]]
+   (for [item (sort items)]
+     (cart-item item))])
+
 (defn catalogue-item [item]
   [:tr
    [:td {:data-th "Resource"} (:title item)]
-   [:td {:data-th ""} [:div.btn.btn-primary "Add to cart"]]])
+   [:td {:data-th ""} (cart/add-to-cart-button (:title item))]])
 
-(defn catalogue []
+(defn catalogue-list [items]
   [:table.ctlg-table
    [:tr
     [:th "Resource"]
     [:th ""]]
-   (for [item (sort-by :title (db/get-catalogue-items))]
+   (for [item (sort-by :title items)]
      (catalogue-item item))])
+
+(defn catalogue []
+  (list
+   (cart-list context/*cart*)
+   (catalogue-list (db/get-catalogue-items))))
