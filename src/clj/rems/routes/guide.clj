@@ -29,6 +29,8 @@
    [:body
     [:div.example-page
      [:h1 "Component Guide"]
+
+
      [:h2 "Layout components"]
      [:div.navbar-nav
       (example "nav-link" nil
@@ -47,12 +49,16 @@
               (layout/navbar "example-page" g-user g-tr))
      (example "footer" nil
               (layout/footer))
+
+
      [:h2 "Catalogue components"]
      (example "catalogue-item" nil
               [:table.ctlg-table
                (contents/catalogue-item {:title "Item title"})])
      (example "catalogue with two items" nil
               (contents/catalogue-list [{:title "Item title"} {:title "Another title"}]))
+
+
      [:h2 "Cart components"]
      (example "cart-item" nil
               [:table.ctlg-table
