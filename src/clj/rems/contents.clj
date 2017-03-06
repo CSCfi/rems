@@ -11,12 +11,15 @@
 (defn about []
   [:p "this is the story of rems... work in progress"])
 
+(defn catalogue-item [item]
+  [:tr
+   [:td {:data-th "Resource"} (:title item)]
+   [:td {:data-th ""} [:div.btn.btn-primary "Add to cart"]]])
+
 (defn catalogue []
   [:table.ctlg-table
    [:tr
     [:th "Resource"]
     [:th ""]]
-   (for [x (sort (map :title (db/get-catalogue-items)))]
-     [:tr
-      [:td {:data-th "Resource"} x]
-      [:td {:data-th ""} [:div.btn.btn-primary "Add to cart"]]])])
+   (for [item (sort-by :title (db/get-catalogue-items))]
+     (catalogue-item item))])

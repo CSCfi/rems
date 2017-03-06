@@ -6,6 +6,7 @@
             [compojure.core :refer [defroutes GET]]
             [rems.locales :as locales]
             [taoensso.tempura :as tempura :refer [tr]]
+            [rems.db.core :as db]
             ))
 
 (def g-user "Eero Esimerkki")
@@ -45,7 +46,14 @@
      (example "navbar" nil
               (layout/navbar "example-page" g-user g-tr))
      (example "footer" nil
-              (layout/footer))]]))
+              (layout/footer))
+     [:h2 "Catalogue components"]
+      (example "catalogue-item" nil
+               [:table.ctlg-table
+                (contents/catalogue-item {:title "Item title"})])
+     (example "catalogue with two items" nil
+              (with-redefs [db/get-catalogue-items (constantly [{:title "Item title"} {:title "Another title"}])]
+                (contents/catalogue)))]]))
 
 (defroutes guide-routes
   (GET "/guide" [] (guide-page)))
