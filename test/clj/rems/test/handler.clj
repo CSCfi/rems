@@ -17,6 +17,7 @@
       #'rems.env/*db*)
     (db/assert-test-database!)
     (migrations/migrate ["reset"] (select-keys env [:database-url]))
+    (db/create-test-data!)
     (f)
     (mount/stop)))
 
@@ -43,11 +44,27 @@
                 catalogue-response (app catalogue-request)]
             (is (= 200 (:status catalogue-response)) "should return 200 OK"))))))
 
-  (testing "CSRF forgery"
-    (let [response (app (request :post "/Shibboleth.sso/Login"))]
-      (is (= 403 (:status response)))
-      (is (.contains (:body response) "anti-forgery"))))
-
   (testing "not-found route"
     (let [response (app (request :get "/invalid"))]
       (is (= 404 (:status response))))))
+
+(deftest test-csrf
+  (testing "cart routes"
+    (testing "without CSRF token"
+      (let [response (app (request :post "/cart/add"))]
+        (is (= 403 (:status response)))
+        (is (.contains (:body response) "anti-forgery"))
+        (is (nil? (:session response)))))
+    (testing "with CSRF token"
+      (let [;; no real mechanism for mocking the token or the session,
+            ;; so we log in, get the catalogue, etc.
+            login (app (request :get "/Shibboleth.sso/Login"))
+            catalogue (app (-> (request :get "/catalogue")
+                               (pass-cookies login)))
+            token-regex #"<input id=\"__anti-forgery-token\" name=\"__anti-forgery-token\" type=\"hidden\" value=\"([^\"]*)\">"
+            [_ token] (re-find token-regex (:body catalogue))
+            req (-> (request :post "/cart/add")
+                    (pass-cookies login)
+                    (assoc :form-params {"item" "A" "__anti-forgery-token" token}))
+            response (app req)]
+        (is (= 303 (:status response)))))))
