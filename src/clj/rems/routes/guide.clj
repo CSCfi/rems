@@ -61,9 +61,11 @@
      [:h2 "Cart components"]
      (example "cart-item" nil
               [:table.ctlg-table
-               (contents/cart-item "Item title")])
-     (example "catalogue-list" nil
-              (contents/cart-list ["Item title" "Another title"]))]]))
+               (contents/cart-item {:title "Item title"})])
+     (example "cart-list empty" nil
+              (contents/cart-list []))
+     (example "cart-list with two items" nil
+              (contents/cart-list [{:title "Item title"} {:title "Another title"}]))]]))
 
 (defroutes guide-routes
   (GET "/guide" [] (guide-page)))
