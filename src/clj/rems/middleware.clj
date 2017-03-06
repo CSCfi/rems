@@ -5,6 +5,7 @@
             [rems.context :as context]
             [ring.middleware.webjars :refer [wrap-webjars]]
             [ring.middleware.format :refer [wrap-restful-format]]
+            [rems.cart :refer [get-cart-from-session]]
             [rems.config :refer [env]]
             [ring-ttl-session.core :refer [ttl-memory-store]]
             [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
@@ -32,7 +33,7 @@
 (defn wrap-context [handler]
   (fn [request]
     (binding [context/*root-path* (calculate-root-path request)
-              context/*cart* (get-in request [:session :cart])]
+              context/*cart* (get-cart-from-session request)]
       (handler request))))
 
 (defn wrap-internal-error [handler]

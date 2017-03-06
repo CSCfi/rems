@@ -24,4 +24,6 @@
   (db/create-test-data!)
   (is (= ["A" "B"] (sort (map :title (db/get-catalogue-items)))))
   (db/create-test-data!)
-  (is (= 4 (count (db/get-catalogue-items)))))
+  (is (= 4 (count (db/get-catalogue-items))))
+  (let [item (second (db/get-catalogue-items))]
+    (is (= item (db/get-catalogue-item {:id (:id item)})))))

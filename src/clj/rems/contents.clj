@@ -17,7 +17,7 @@
 
 (defn cart-item [item]
   [:tr
-   [:td {:data-th "Resource in cart"} item]
+   [:td {:data-th "Resource in cart"} (:title item)]
    [:td {:data-th ""}]])
 
 (defn cart-list [items]
@@ -25,13 +25,13 @@
    [:tr
     [:th "Resource in cart"]
     [:th ""]]
-   (for [item (sort items)]
+   (for [item (sort-by :title items)]
      (cart-item item))])
 
 (defn catalogue-item [item]
   [:tr
    [:td {:data-th "Resource"} (:title item)]
-   [:td {:data-th ""} (cart/add-to-cart-button (:title item))]])
+   [:td {:data-th ""} (cart/add-to-cart-button item)]])
 
 (defn catalogue-list [items]
   [:table.ctlg-table
@@ -43,5 +43,5 @@
 
 (defn catalogue []
   (list
-   (cart-list context/*cart*)
+   (cart-list (cart/get-cart-items))
    (catalogue-list (db/get-catalogue-items))))
