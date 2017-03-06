@@ -1,5 +1,6 @@
 (ns rems.test.db.core
   (:require [rems.db.core :as db]
+            [rems.contents :as contents]
             [rems.env :refer [*db*]]
             [luminus-migrations.core :as migrations]
             [clojure.test :refer :all]
@@ -15,9 +16,17 @@
       #'rems.env/*db*)
     (db/assert-test-database!)
     (migrations/migrate ["reset"] (select-keys env [:database-url]))
-    (db/create-test-data!)
     (f)
     (mount/stop)))
 
+(defn get-data-rows []
+  (get (contents/catalogue) 2))
+
 (deftest ^:integration test-get-catalogue-items
-  (is (= ["A" "B"] (sort (map :title (db/get-catalogue-items))))))
+  (is (empty? (get-data-rows)))
+  (db/create-test-data!)
+  (is (seq (get-data-rows)))
+  (is (= ["A" "B"] (map #(last (nth % 1)) (get-data-rows))))
+  (is (= 2 (count (get-data-rows))))
+  (db/create-test-data!)
+  (is (= 4 (count (get-data-rows)))))
