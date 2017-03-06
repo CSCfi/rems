@@ -3,7 +3,6 @@
             [clojure.tools.logging :as log]
             [rems.layout :refer [error-page]]
             [rems.context :as context]
-            [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
             [ring.middleware.webjars :refer [wrap-webjars]]
             [ring.middleware.format :refer [wrap-restful-format]]
             [rems.config :refer [env]]
@@ -44,13 +43,6 @@
         (error-page {:status 500
                      :title "Something very bad has happened!"
                      :message "We've dispatched a team of highly trained gnomes to take care of the problem."})))))
-
-(defn wrap-csrf [handler]
-  (wrap-anti-forgery
-    handler
-    {:error-handler (fn [req] (error-page
-                               {:status 403
-                                :title "Invalid anti-forgery token"}))}))
 
 (defn wrap-formats [handler]
   (let [wrapped (wrap-restful-format
@@ -100,9 +92,8 @@
       wrap-webjars
       (wrap-defaults
        (-> site-defaults
-           (assoc-in [:security :anti-forgery] false)
+           (assoc-in [:security :anti-forgery] true)
            (assoc-in [:session :store] (ttl-memory-store (* 60 30)))))
       wrap-context
       wrap-internal-error
-      wrap-csrf
       wrap-formats))

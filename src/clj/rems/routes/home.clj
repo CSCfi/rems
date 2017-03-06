@@ -2,10 +2,7 @@
   (:require [rems.layout :as layout]
             [rems.context :as context]
             [rems.contents :as contents]
-            [compojure.core :refer [defroutes GET]]
-            [ring.util.response :refer [response redirect]]
-            [buddy.auth.backends.session :refer [session-backend]]
-            [clojure.java.io :as io]))
+            [compojure.core :refer [defroutes GET]]))
 
 (defn home-page []
   (layout/render
