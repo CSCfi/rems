@@ -7,8 +7,7 @@
             [rems.db.core :as db]
             [rems.env :refer [*db*]]
             [luminus-migrations.core :as migrations]
-            [rems.config :refer [env]]
-))
+            [rems.config :refer [env]]))
 
 (use-fixtures
   :once
