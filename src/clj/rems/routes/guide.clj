@@ -51,6 +51,9 @@
      (example "catalogue-item" nil
               [:table.ctlg-table
                (contents/catalogue-item {:title "Item title"})])
+     (example "catalogue-item linked to urn.fi" nil
+              [:table.ctlg-table
+               (contents/catalogue-item {:title "Item title" :resid "http://urn.fi/urn:nbn:fi:lb-201403262"})])
      (example "catalogue with two items" nil
               (contents/catalogue-list [{:title "Item title"} {:title "Another title"}]))
      [:h2 "Cart components"]
