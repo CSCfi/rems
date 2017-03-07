@@ -55,6 +55,9 @@
 (defn footer []
   [:footer "Powered by CSC - IT Center for Science"])
 
+(defn logo []
+  [:div.logo])
+
 (defn page-template
   [page-name content user tr]
   (html5 [:head
@@ -68,7 +71,7 @@
           [:body
            [:div.wrapper
             [:div.container (navbar page-name user tr)]
-            [:div.logo]
+            (logo)
             [:div.container content]
             [:div.push]]
            (footer)

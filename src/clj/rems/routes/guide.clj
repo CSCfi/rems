@@ -29,6 +29,8 @@
    [:body
     [:div.example-page
      [:h1 "Component Guide"]
+
+
      [:h2 "Layout components"]
      [:div.navbar-nav
       (example "nav-link" nil
@@ -47,18 +49,32 @@
               (layout/navbar "example-page" g-user g-tr))
      (example "footer" nil
               (layout/footer))
+
+
      [:h2 "Catalogue components"]
      (example "catalogue-item" nil
               [:table.ctlg-table
                (contents/catalogue-item {:title "Item title"})])
      (example "catalogue with two items" nil
               (contents/catalogue-list [{:title "Item title"} {:title "Another title"}]))
+
+
      [:h2 "Cart components"]
      (example "cart-item" nil
               [:table.ctlg-table
-               (contents/cart-item "Item title")])
-     (example "catalogue-list" nil
-              (contents/cart-list ["Item title" "Another title"]))]]))
+               (contents/cart-item {:title "Item title"})])
+     (example "cart-list empty" nil
+              (contents/cart-list []))
+     (example "cart-list with two items" nil
+              (contents/cart-list [{:title "Item title"} {:title "Another title"}]))
+
+
+     [:h2 "Misc components"]
+     (example "login" nil (contents/login "/"))
+     (example "about" nil (contents/about))
+     (example "logo" nil (layout/logo))
+     (example "error-content" nil (layout/error-content {:status 123 :title "Error title" :message "Error message"}))
+     ]]))
 
 (defroutes guide-routes
   (GET "/guide" [] (guide-page)))
