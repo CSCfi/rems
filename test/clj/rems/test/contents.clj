@@ -2,8 +2,16 @@
   (:require [clojure.test :refer :all]
             [rems.contents :refer :all]))
 
-;; TODO some utilites for testing hiccup output
+(deftest test-catalogue-item
+  (testing "catalogue item with urn"
+    (let [urn "http://urn.fi/urn:nbn:fi:lb-201403262"
+          c (catalogue-item {:title "U" :resid urn})
+          link (-> c second (nth 2))] ;; TODO also refactor with hiccup utility
+      (is (= :a (first link)) "is a link")
+      (is (= urn (:href (second link))) "links to the urn")
+      (is (= :_blank (:target (second link))) "opens in new tab"))))
 
+;; TODO some utilites for testing hiccup output
 (defn check-row-text [row text]
   (is (= :tr (first row)))
   (let [cell (second row)]
