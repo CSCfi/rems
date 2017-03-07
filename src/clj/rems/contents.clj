@@ -1,30 +1,30 @@
 (ns rems.contents
   (:require [hiccup.element :refer [link-to image]]
             [rems.cart :as cart]
-            [rems.context :as context]
+            [rems.text :refer :all]
             [rems.db.core :as db]))
 
 (defn login [context]
   [:div.jumbotron
-   [:h2 "Login"]
-   [:p "Login by using your Haka credentials"]
+   [:h2 (text :t/login/title)]
+   [:p (text :t/login/text)]
    (link-to (str context "/Shibboleth.sso/Login") (image {:class "login-btn"} "/img/haka_landscape_large.gif"))])
 
 (defn about []
-  [:p "this is the story of rems... work in progress"])
+  [:p (text :t/about/text)])
 
 ;; TODO duplication between cart and catalogue to be factored out
 
 (defn cart-item [item]
   [:tr
-   [:td {:data-th "Resource in cart"} (:title item)]
+   [:td {:data-th (text :t/cart/header)} (:title item)]
    [:td {:data-th ""}]])
 
 (defn cart-list [items]
   (when-not (empty? items)
     [:table.ctlg-table
      [:tr
-      [:th "Resource in cart"]
+      [:th (text :t/cart/header)]
       [:th ""]]
      (for [item (sort-by :title items)]
        (cart-item item))]))
@@ -39,13 +39,13 @@
                     [:a {:href resid :target :_blank} title]
                     title)]
     [:tr
-     [:td {:data-th "Resource"} component]
+     [:td {:data-th (text :t/catalogue/header)} component]
      [:td {:data-th ""} (cart/add-to-cart-button item)]]))
 
 (defn catalogue-list [items]
   [:table.ctlg-table
    [:tr
-    [:th "Resource"]
+    [:th (text :t/catalogue/header)]
     [:th ""]]
    (for [item (sort-by :title items)]
      (catalogue-item item))])

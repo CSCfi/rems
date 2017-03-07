@@ -29,6 +29,7 @@ body {
 
 .navbar-nav .nav-link {
   color: #F16522;
+  border: 0;   /* for button links */
 }
 
 .navbar-nav .nav-link.active {
@@ -40,6 +41,10 @@ body {
 
 .secondary-navigation {
   float: right;
+}
+
+.secondary-navigation > * {
+  margin-left: 1em;
 }
 
 .wrapper {
@@ -192,6 +197,18 @@ footer, .push {
   .ctlg-table th, .ctlg-table td {
     padding: 0.5em 1em !important;
   }
+}
+
+.language-switcher {
+  display: inline-block;
+}
+
+.language-switcher form {
+  display: inline-block;
+}
+
+.user {
+  display: inline-block;
 }
 
 .example-page {
