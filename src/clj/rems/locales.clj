@@ -16,7 +16,8 @@
               :text "Login by using your Haka credentials"}
       :about {:text "this is the story of rems... work in progress"}
       :cart {:header "Resource in cart"
-             :add "Add to cart"}
+             :add "Add to cart"
+             :remove "Remove"}
       :catalogue {:header "Resource"}}}
     :fi
     {:t
@@ -30,6 +31,7 @@
               :text "Kirjaudu sisään Haka-tunnuksillasi"}
       :about {:text "hauki on kala"}
       :cart {:header "Resurssi korissa"
-             :add "Lisää koriin"}
+             :add "Lisää koriin"
+             :remove "Poista"}
       :catalogue {:header "Resurssi"}}}
     :en :en-GB}})
