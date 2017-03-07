@@ -30,10 +30,10 @@
 (defn primary-nav
   [page-name user tr]
   [:ul.nav.navbar-nav
-   (nav-item "/" (tr [:navigation/home]) page-name "home")
-   (nav-item "/about" (tr [:navigation/about]) page-name "about")
-   (when user
-     (nav-item "/catalogue" (tr [:navigation/catalogue]) page-name "catalogue"))])
+   (if user
+     (nav-item "/catalogue" (tr [:navigation/catalogue]) page-name "catalogue")
+     (nav-item "/" (tr [:navigation/home]) page-name "home"))
+   (nav-item "/about" (tr [:navigation/about]) page-name "about")])
 
 (defn secondary-nav
   [user tr]
