@@ -8,7 +8,13 @@
                   :logout "Sign Out"
                   :about "About"
                   :home "Home"
-                  :catalogue "Catalogue"}}
+                  :catalogue "Catalogue"}
+     :login {:title "Login"
+             :text "Login by using your Haka credentials"}
+     :about {:text "this is the story of rems... work in progress"}
+     :cart {:header "Resource in cart"
+            :add "Add to cart"}
+     :catalogue {:header "Resource"}}
     :fi
     {:missing "Käännös puuttuu"
      :navigation {:login "Kirjaudu sisään"
