@@ -25,6 +25,11 @@
   (let [set-cookie (get-in from-response [:headers "Set-Cookie"])]
     (assoc-in to-request [:headers "cookie"] (s/join "; " set-cookie))))
 
+(defn get-csrf-token [response]
+  (let [token-regex #"<input id=\"__anti-forgery-token\" name=\"__anti-forgery-token\" type=\"hidden\" value=\"([^\"]*)\">"
+        [_ token] (re-find token-regex (:body response))]
+    token))
+
 (deftest test-app
   (testing "main route"
     (let [response (app (request :get "/"))]
@@ -61,10 +66,27 @@
             login (app (request :get "/Shibboleth.sso/Login"))
             catalogue (app (-> (request :get "/catalogue")
                                (pass-cookies login)))
-            token-regex #"<input id=\"__anti-forgery-token\" name=\"__anti-forgery-token\" type=\"hidden\" value=\"([^\"]*)\">"
-            [_ token] (re-find token-regex (:body catalogue))
+            token (get-csrf-token catalogue)
             req (-> (request :post "/cart/add")
                     (pass-cookies login)
                     (assoc :form-params {"item" "A" "__anti-forgery-token" token}))
             response (app req)]
         (is (= 303 (:status response)))))))
+
+(deftest test-language-switch
+  (let [login (app (request :get "/Shibboleth.sso/Login"))
+        catalogue (app (-> (request :get "/catalogue")
+                           (pass-cookies login)))]
+    (is (.contains (:body catalogue) "cart") "defaults to english")
+    (let [token (get-csrf-token catalogue)
+          fi (app (-> (request :post "/language/fi")
+                      (pass-cookies login)
+                      (assoc :form-params {"__anti-forgery-token" token})
+                      (assoc-in [:headers "referer"] "/catalogue")))
+          catalogue-fi (app (-> (request :get "/catalogue")
+                                (pass-cookies login)))]
+      (is (= 303 (:status fi)))
+      (is (.endsWith (get-in fi [:headers "Location"]) "/catalogue")
+          "language switch redirects back")
+      (is (.contains (:body catalogue-fi) "kori")
+          "language switches to finnish"))))
