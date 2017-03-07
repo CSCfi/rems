@@ -6,16 +6,22 @@
             [ring.util.anti-forgery :refer [anti-forgery-field]]
             [ring.util.response :refer [redirect]]))
 
-;; TODO: cart should store ids, not names. cart contents should be
-;; fetched from db using the ids
+(defn- button
+  [action text item]
+  [:form.inline {:method "post" :action action}
+   (anti-forgery-field)
+   [:input {:type "hidden" :name "id" :value (:id item)}]
+   [:button.btn-primary {:type "submit"} text]])
 
 (defn add-to-cart-button
   "Hiccup fragment that contains a button that adds the given item to the cart"
   [item]
-  [:form.inline {:method "post" :action "/cart/add"}
-   (anti-forgery-field)
-   [:input {:type "hidden" :name "id" :value (:id item)}]
-   [:button.btn-primary {:type "submit"} (text :t/cart/add)]])
+  (button "/cart/add" (text :t/cart/add) item))
+
+(defn remove-from-cart-button
+  "Hiccup fragment that contains a button that removes the given item from the cart"
+  [item]
+  (button "/cart/remove" (text :t/cart/remove) item))
 
 (defn get-cart-from-session
   "Computes the value for context/*cart*: a sequence of integer ids."
@@ -28,11 +34,15 @@
   (doall (for [i context/*cart*]
            (db/get-catalogue-item {:id i}))))
 
-(defn- add-to-cart [session item-id]
-  (update session :cart
-          #(set (conj % item-id))))
+(defn- handler [method {session :session {id :id} :params :as req}]
+  (let [modifier (case method
+                   :add conj
+                   :remove disj)]
+    (assoc (redirect "/catalogue" :see-other)
+           :session (update session :cart #(set (modifier % id))))))
 
 (defroutes cart-routes
-  (POST "/cart/add" {session :session params :params}
-        (assoc (redirect "/catalogue" :see-other)
-               :session (add-to-cart session (get params :id)))))
+  (POST "/cart/add" session
+        (handler :add session))
+  (POST "/cart/remove" session
+        (handler :remove session)))

@@ -18,7 +18,7 @@
 (defn cart-item [item]
   [:tr
    [:td {:data-th (text :t/cart/header)} (:title item)]
-   [:td {:data-th ""}]])
+   [:td {:data-th ""} (cart/remove-from-cart-button item)]])
 
 (defn cart-list [items]
   (when-not (empty? items)
