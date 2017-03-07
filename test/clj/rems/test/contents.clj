@@ -7,7 +7,7 @@
   (testing "catalogue item with urn"
     (let [urn "http://urn.fi/urn:nbn:fi:lb-201403262"
           c (catalogue-item {:title "U" :resid urn})
-          link (-> c second (nth 2))] ;; TODO also refactor with hiccup utility
+          link (first (hiccup-find [:a] c))]
       (is (= :a (first link)) "is a link")
       (is (= urn (:href (second link))) "links to the urn")
       (is (= :_blank (:target (second link))) "opens in new tab"))))
