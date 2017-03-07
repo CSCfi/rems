@@ -31,7 +31,8 @@
                  [ring/ring-defaults "0.2.1"]
                  [ring/ring-devel "1.5.0"]
                  [ring/ring-servlet "1.4.0"]
-                 [hiccup "1.0.5"]]
+                 [hiccup "1.0.5"]
+                 [hiccup-find "0.5.0"]]
 
   :min-lein-version "2.0.0"
 
