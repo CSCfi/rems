@@ -1,10 +1,10 @@
 (ns rems.db.core
   (:require
-    [cheshire.core :refer [generate-string parse-string]]
-    [clojure.java.jdbc :as jdbc]
-    [conman.core :as conman]
-    [rems.env :refer [+defaults+ *db*]]
-    [rems.config :refer [env]])
+   [cheshire.core :refer [generate-string parse-string]]
+   [clojure.java.jdbc :as jdbc]
+   [conman.core :as conman]
+   [rems.env :refer [+defaults+ *db*]]
+   [rems.config :refer [env]])
   (:import org.postgresql.util.PGobject
            java.sql.Array
            clojure.lang.IPersistentMap
@@ -23,6 +23,15 @@
 
 (defn to-date [^java.sql.Date sql-date]
   (-> sql-date (.getTime) (java.util.Date.)))
+
+(defn create-test-data! []
+  (create-resource! {:id 1 :resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1})
+  (create-catalogue-item! {:title "ELFA Corpus"
+                           :formid nil
+                           :resid 1})
+  (create-catalogue-item! {:title "B"
+                           :formid nil
+                           :resid nil}))
 
 (extend-protocol jdbc/IResultSetReadColumn
   Date

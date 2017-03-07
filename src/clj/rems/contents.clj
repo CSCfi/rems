@@ -29,10 +29,18 @@
      (for [item (sort-by :title items)]
        (cart-item item))]))
 
+(defn urn-catalogue-item? [{:keys [resid]}]
+  (and resid (.startsWith resid "http://urn.fi")))
+
 (defn catalogue-item [item]
-  [:tr
-   [:td {:data-th (text :t/catalogue/header)} (:title item)]
-   [:td {:data-th ""} (cart/add-to-cart-button item)]])
+  (let [resid (:resid item)
+        title (:title item)
+        component (if (urn-catalogue-item? item)
+                    [:a {:href resid :target :_blank} title]
+                    title)]
+    [:tr
+     [:td {:data-th (text :t/catalogue/header)} component]
+     [:td {:data-th ""} (cart/add-to-cart-button item)]]))
 
 (defn catalogue-list [items]
   [:table.ctlg-table

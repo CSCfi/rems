@@ -121,6 +121,10 @@ footer, .push {
   overflow: hidden;
 }
 
+.ctlg-table a {
+  color: #fff;
+}
+
 .ctlg-table th {
   display: none;
 }
