@@ -14,7 +14,7 @@
   [:form.inline {:method "post" :action "/cart/add"}
    (anti-forgery-field)
    [:input {:type "hidden" :name "id" :value (:id item)}]
-   [:button.btn-primary {:type "submit"} (context/*tempura* [:cart/add])]])
+   [:button.btn-primary {:type "submit"} (context/*tempura* [:t/cart/add])]])
 
 (defn get-cart-from-session
   "Computes the value for context/*cart*: a sequence of integer ids."

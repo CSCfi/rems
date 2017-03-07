@@ -30,17 +30,17 @@
 (defn primary-nav
   [page-name user]
   [:ul.nav.navbar-nav
-   (nav-item "/" (context/*tempura* [:navigation/home]) page-name "home")
-   (nav-item "/about" (context/*tempura* [:navigation/about]) page-name "about")
+   (nav-item "/" (context/*tempura* [:t/navigation/home]) page-name "home")
+   (nav-item "/about" (context/*tempura* [:t/navigation/about]) page-name "about")
    (when user
-     (nav-item "/catalogue" (context/*tempura* [:navigation/catalogue]) page-name "catalogue"))])
+     (nav-item "/catalogue" (context/*tempura* [:t/navigation/catalogue]) page-name "catalogue"))])
 
 (defn secondary-nav
   [user]
   [:div.secondary-navigation.navbar-nav.navitem
    [:div.fa.fa-user {:style "display: inline-block"} (str user " / ")]
    [:div {:style "display: inline-block"}
-    (nav-link "/logout" (context/*tempura* [:navigation/logout]))]])
+    (nav-link "/logout" (context/*tempura* [:t/navigation/logout]))]])
 
 (defn navbar
   [page-name user]
