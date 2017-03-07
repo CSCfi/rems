@@ -41,11 +41,15 @@
      [:div.navbar-nav
       (example "nav-item" nil
                (layout/nav-link "example/path" "link text" "page-name" "li-name"))]
-     (example "primary-nav" nil
+     (example "Guest user: primary-nav" nil
+                (layout/primary-nav "page-name" nil g-tr))
+     (example "Guest user: navbar" nil
+              (layout/navbar "example-page" nil g-tr))
+     (example "Logged in user: primary-nav" nil
                 (layout/primary-nav "page-name" g-user g-tr))
-     (example "secondary-nav" nil
+     (example "Logged in user: secondary-nav" nil
               (layout/secondary-nav g-user g-tr))
-     (example "navbar" nil
+     (example "Logged in user: navbar" nil
               (layout/navbar "example-page" g-user g-tr))
      (example "footer" nil
               (layout/footer))
