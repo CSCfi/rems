@@ -19,7 +19,7 @@
   (button "/cart/add" (text :t/cart/add) item))
 
 (defn remove-from-cart-button
-  "Hiccup fragment that contains a button that adds the given item to the cart"
+  "Hiccup fragment that contains a button that removes the given item from the cart"
   [item]
   (button "/cart/remove" (text :t/cart/remove) item))
 
