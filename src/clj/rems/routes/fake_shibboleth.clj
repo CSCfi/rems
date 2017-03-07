@@ -15,4 +15,4 @@
 
 (defroutes fake-shibboleth-routes
   (GET "/Shibboleth.sso/Login" req (fake-login req))
-  (GET "/logout" req (fake-logout req)))
+  (GET "/Shibboleth.sso/Logout" req (fake-logout req)))

@@ -46,11 +46,15 @@
        [:div.navbar-nav
         (example "language-switcher" nil
                  (language-switcher))]
-       (example "primary-nav" nil
+       (example "Guest user: primary-nav" nil
+                (layout/primary-nav "page-name" nil))
+       (example "Guest user: navbar" nil
+              (layout/navbar "example-page" nil))
+       (example "Logged in user: primary-nav" nil
                 (layout/primary-nav "page-name" g-user))
-       (example "secondary-nav" nil
+       (example "Logged in user: secondary-nav" nil
                 (layout/secondary-nav g-user))
-       (example "navbar" nil
+       (example "Logged in user: navbar" nil
                 (layout/navbar "example-page" g-user))
        (example "footer" nil
                 (layout/footer))
