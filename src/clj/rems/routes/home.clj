@@ -3,6 +3,7 @@
             [rems.context :as context]
             [rems.contents :as contents]
             [rems.cart :as cart]
+            [rems.language-switcher :as language-switcher]
             [compojure.core :refer [defroutes GET]]))
 
 (defn home-page []
@@ -19,7 +20,8 @@
 
 (defroutes public-routes
   (GET "/" [] (home-page))
-  (GET "/about" [] (about-page)))
+  (GET "/about" [] (about-page))
+  language-switcher/switcher-routes)
 
 (defroutes secured-routes
   (GET "/catalogue" [] (catalogue-page))

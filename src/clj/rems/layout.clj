@@ -2,6 +2,7 @@
   (:require [compojure.response]
             [rems.context :as context]
             [rems.text :refer :all]
+            [rems.language-switcher :refer [language-switcher]]
             [hiccup.element :refer [link-to]]
             [hiccup.page :refer [html5 include-css include-js]]
             [markdown.core :refer [md-to-html-string]]
@@ -39,9 +40,12 @@
 (defn secondary-nav
   [user]
   [:div.secondary-navigation.navbar-nav.navitem
-   [:div.fa.fa-user {:style "display: inline-block"} (str user " / ")]
-   [:div {:style "display: inline-block"}
-    (nav-link "/logout" (text :t/navigation/logout))]])
+   (when user
+     [:div.user
+      [:div.fa.fa-user {:style "display: inline-block"} (str user " / ")]
+      [:div {:style "display: inline-block"}
+       (nav-link "/logout" (text :t/navigation/logout))]])
+   (language-switcher)])
 
 (defn navbar
   [page-name user]
@@ -51,8 +55,7 @@
     "&#9776;"]
    [:div#collapsing-navbar.collapse.navbar-toggleable-xs
     (primary-nav page-name user)
-    (when user
-      (secondary-nav user))]])
+    (secondary-nav user)]])
 
 (defn footer []
   [:footer "Powered by CSC - IT Center for Science"])
