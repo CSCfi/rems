@@ -1,43 +1,43 @@
 (ns rems.contents
   (:require [hiccup.element :refer [link-to image]]
             [rems.cart :as cart]
-            [rems.context :as context]
+            [rems.text :refer :all]
             [rems.db.core :as db]))
 
 (defn login [context]
   [:div.jumbotron
-   [:h2 (context/*tempura* [:t/login/title])]
-   [:p (context/*tempura* [:t/login/text])]
+   [:h2 (text :t/login/title)]
+   [:p (text :t/login/text)]
    (link-to (str context "/Shibboleth.sso/Login") (image {:class "login-btn"} "/img/haka_landscape_large.gif"))])
 
 (defn about []
-  [:p (context/*tempura* [:t/about/text])])
+  [:p (text :t/about/text)])
 
 ;; TODO duplication between cart and catalogue to be factored out
 
 (defn cart-item [item]
   [:tr
-   [:td {:data-th (context/*tempura* [:t/cart/header])} (:title item)]
+   [:td {:data-th (text :t/cart/header)} (:title item)]
    [:td {:data-th ""}]])
 
 (defn cart-list [items]
   (when-not (empty? items)
     [:table.ctlg-table
      [:tr
-      [:th (context/*tempura* [:t/cart/header])]
+      [:th (text :t/cart/header)]
       [:th ""]]
      (for [item (sort-by :title items)]
        (cart-item item))]))
 
 (defn catalogue-item [item]
   [:tr
-   [:td {:data-th (context/*tempura* [:t/catalogue/header])} (:title item)]
+   [:td {:data-th (text :t/catalogue/header)} (:title item)]
    [:td {:data-th ""} (cart/add-to-cart-button item)]])
 
 (defn catalogue-list [items]
   [:table.ctlg-table
    [:tr
-    [:th (context/*tempura* [:t/catalogue/header])]
+    [:th (text :t/catalogue/header)]
     [:th ""]]
    (for [item (sort-by :title items)]
      (catalogue-item item))])
