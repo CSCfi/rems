@@ -43,6 +43,10 @@ body {
   float: right;
 }
 
+.secondary-navigation > * {
+  margin-left: 1em;
+}
+
 .wrapper {
   min-height: 100%;
   margin: 0 auto -80px;
@@ -196,6 +200,14 @@ footer, .push {
 }
 
 .language-switcher {
+  display: inline-block;
+}
+
+.language-switcher form {
+  display: inline-block;
+}
+
+.user {
   display: inline-block;
 }
 

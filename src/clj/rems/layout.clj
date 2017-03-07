@@ -41,10 +41,10 @@
   [user]
   [:div.secondary-navigation.navbar-nav.navitem
    (when user
-     (list
+     [:div.user
       [:div.fa.fa-user {:style "display: inline-block"} (str user " / ")]
       [:div {:style "display: inline-block"}
-       (nav-link "/logout" (text :t/navigation/logout))]))
+       (nav-link "/logout" (text :t/navigation/logout))]])
    (language-switcher)])
 
 (defn navbar

@@ -18,7 +18,8 @@
 (defn language-switcher
   "Language switcher widget"
   []
-  (for [lang +languages+]
-    [:form.language-switcher {:method "post" :action (str "/language/" lang)}
-     (anti-forgery-field)
-     [:button.btn-link.nav-link {:type "submit"} lang]]))
+  [:div.language-switcher
+   (for [lang +languages+]
+     [:form {:method "post" :action (str "/language/" lang)}
+      (anti-forgery-field)
+      [:button.btn-link.nav-link {:type "submit"} lang]])])
