@@ -2,6 +2,7 @@
   (:require [rems.layout :as layout]
             [rems.context :as context]
             [rems.contents :as contents]
+            [rems.language-switcher :refer [language-switcher]]
             [hiccup.core :as h]
             [compojure.core :refer [defroutes GET]]
             [rems.locales :as locales]
@@ -42,6 +43,9 @@
        [:div.navbar-nav
         (example "nav-item" nil
                  (layout/nav-link "example/path" "link text" "page-name" "li-name"))]
+       [:div.navbar-nav
+        (example "language-switcher" nil
+                 (language-switcher))]
        (example "primary-nav" nil
                 (layout/primary-nav "page-name" g-user))
        (example "secondary-nav" nil

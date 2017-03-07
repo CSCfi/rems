@@ -64,14 +64,23 @@
   (restrict handler {:handler authenticated?
                      :on-error on-error}))
 
+(defn- wrap-tempura-locales-from-session
+  [handler]
+  (fn [request]
+    (handler
+     (if-let [lang (get-in request [:session :language])]
+       (assoc request :tr-locales [lang])
+       request))))
+
 (defn wrap-i18n
   "Wraps tempura into both the request as well as dynamic context."
   [handler]
-  (tempura/wrap-ring-request
-   (fn [request]
-     (binding [context/*tempura* (:tempura/tr request)]
-       (handler request)))
-   {:tr-opts tconfig}))
+  (wrap-tempura-locales-from-session
+   (tempura/wrap-ring-request
+    (fn [request]
+      (binding [context/*tempura* (:tempura/tr request)]
+        (handler request)))
+    {:tr-opts tconfig})))
 
 (defn wrap-auth
   [handler]
