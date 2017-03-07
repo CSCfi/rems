@@ -40,7 +40,7 @@
   [:div.secondary-navigation.navbar-nav.navitem
    [:div.fa.fa-user {:style "display: inline-block"} (str user " / ")]
    [:div {:style "display: inline-block"}
-    (nav-link "/logout" (tr [:navigation/logout]))]])
+    (nav-link "/Shibboleth.sso/Logout" (tr [:navigation/logout]))]])
 
 (defn navbar
   [page-name user tr]
