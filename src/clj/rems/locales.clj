@@ -25,5 +25,11 @@
                    :logout "Kirjaudu ulos"
                    :about "Info"
                    :home "Etusivu"
-                   :catalogue "Aineistoluettelo"}}
-     :en :en-GB}}})
+                   :catalogue "Aineistoluettelo"}
+      :login {:title "Kirjaudu sisään"
+              :text "Kirjaudu sisään Haka-tunnuksillasi"}
+      :about {:text "hauki on kala"}
+      :cart {:header "Resurssi korissa"
+             :add "Lisää koriin"}
+      :catalogue {:header "Resurssi"}}}
+    :en :en-GB}})
