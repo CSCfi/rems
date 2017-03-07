@@ -47,9 +47,9 @@
         (example "language-switcher" nil
                  (language-switcher))]
        (example "Guest user: primary-nav" nil
-                (layout/primary-nav "page-name" nil g-tr))
+                (layout/primary-nav "page-name" nil))
        (example "Guest user: navbar" nil
-              (layout/navbar "example-page" nil g-tr))
+              (layout/navbar "example-page" nil))
        (example "Logged in user: primary-nav" nil
                 (layout/primary-nav "page-name" g-user))
        (example "Logged in user: secondary-nav" nil
