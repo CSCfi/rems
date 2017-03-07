@@ -1,5 +1,6 @@
 (ns rems.cart
   (:require [rems.context :as context]
+            [rems.text :refer :all]
             [rems.db.core :as db]
             [compojure.core :refer [defroutes POST]]
             [ring.util.anti-forgery :refer [anti-forgery-field]]
@@ -14,7 +15,7 @@
   [:form.inline {:method "post" :action "/cart/add"}
    (anti-forgery-field)
    [:input {:type "hidden" :name "id" :value (:id item)}]
-   [:button.btn-primary {:type "submit"} "Add to cart"]])
+   [:button.btn-primary {:type "submit"} (text :t/cart/add)]])
 
 (defn get-cart-from-session
   "Computes the value for context/*cart*: a sequence of integer ids."
