@@ -1,7 +1,7 @@
 (ns rems.locales)
 
 ;; Note: the intermediate :t key in the dictionaries makes grepping
-;; easier: all localizations are of the form :t/foo
+;; easier: all localizations are of the form :t/foo or :t.something/foo
 (def tconfig
   {:dict
    {:en-GB

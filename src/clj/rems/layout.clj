@@ -33,9 +33,9 @@
   [page-name user]
   [:ul.nav.navbar-nav
    (if user
-     (nav-item "/catalogue" (text :t/navigation/catalogue) page-name "catalogue")
-     (nav-item "/" (text :t/navigation/home) page-name "home"))
-   (nav-item "/about" (text :t/navigation/about) page-name "about")])
+     (nav-item "/catalogue" (text :t.navigation/catalogue) page-name "catalogue")
+     (nav-item "/" (text :t.navigation/home) page-name "home"))
+   (nav-item "/about" (text :t.navigation/about) page-name "about")])
 
 (defn secondary-nav
   [user]
@@ -44,7 +44,7 @@
      [:div.user
       [:div.fa.fa-user {:style "display: inline-block"} (str user " / ")]
       [:div {:style "display: inline-block"}
-       (nav-link "/Shibboleth.sso/Logout" (text :t/navigation/logout))]])
+       (nav-link "/Shibboleth.sso/Logout" (text :t.navigation/logout))]])
    (language-switcher)])
 
 (defn navbar
