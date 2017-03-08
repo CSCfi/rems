@@ -58,7 +58,7 @@
     (secondary-nav user)]])
 
 (defn footer []
-  [:footer "Powered by CSC - IT Center for Science"])
+  [:footer (text :t/footer)])
 
 (defn logo []
   [:div.logo])

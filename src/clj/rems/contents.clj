@@ -22,7 +22,7 @@
 
 (defn cart-list [items]
   (when-not (empty? items)
-    [:table.ctlg-table
+    [:table.rems-table
      [:tr
       [:th (text :t/cart/header)]
       [:th ""]]
@@ -43,7 +43,7 @@
      [:td {:data-th ""} (cart/add-to-cart-button item)]]))
 
 (defn catalogue-list [items]
-  [:table.ctlg-table
+  [:table.rems-table
    [:tr
     [:th (text :t/catalogue/header)]
     [:th ""]]
