@@ -10,12 +10,6 @@
 3. Deploy latest version of rems: `ansible-playbook -vv rems.yml`
 4. See it run on <http://vm0773.kaj.pouta.csc.fi/> (not publicly accessible)
 
-## Infrastructure details
-
-- A private Docker image registry (Amazon Elastic Container Registry)
-- A virtual machine in CSC's Pouta cloud with AWS credetials to access the above
-- A `deploy` user on the virtual machine, accessible with `rems.pem`
-
 ## Playbooks
 
 - `rems.yml` deploy rems docker image

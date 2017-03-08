@@ -27,6 +27,12 @@ lein repl
 rems.standalone=> (start-app)
 ```
 
+or alternatively
+
+```
+lein run
+```
+
 Point your browser to <http://localhost:3000>
 
 ### Running tests
@@ -42,27 +48,6 @@ To run tests that need a database:
 ```
 lein test :all
 ```
-
-### Running via uberjar
-
-```
-lein uberjar
-java -jar target/uberjar/rems.jar
-```
-
-Point your browser to <http://localhost:3000>
-
-### Running via docker
-
-Look up the ip address of your postgres docker with `docker inspect rems_test`. Replace `172.17.0.2` below with the ip address:
-
-```
-lein uberjar
-docker build . -t rems
-docker run --name rems -p 127.0.0.1:3000:3000 -e DATABASE_URL=postgres://172.17.0.2/rems_test?user=rems_test -d rems
-```
-
-Point your browser to <http://localhost:3000>
 
 ## Component Guide
 
