@@ -19,7 +19,24 @@
       - emacs
       - screen
 
+  - name: Create directories
+    file:
+      path: /srv/rems
+      state: directory
+
+  - name: Get git version
+    shell: git rev-parse HEAD
+    delegate_to: localhost
+    become: no
+    register: revparse
+
   - name: Install warfile
     copy:
       src: "{{warfile}}"
+      dest: "/srv/rems/rems-{{revparse.stdout}}.war"
+
+  - name: Deploy warfile
+    file:
+      src: "/srv/rems/rems-{{revparse.stdout}}.war"
       dest: /opt/tomcat/webapps/ROOT.war
+      state: link
