@@ -64,10 +64,10 @@
 
        [:h2 "Catalogue components"]
        (example "catalogue-item" nil
-                [:table.ctlg-table
+                [:table.rems-table
                  (contents/catalogue-item {:title "Item title"})])
        (example "catalogue-item linked to urn.fi" nil
-                [:table.ctlg-table
+                [:table.rems-table
                  (contents/catalogue-item {:title "Item title" :resid "http://urn.fi/urn:nbn:fi:lb-201403262"})])
        (example "catalogue-list empty" nil
                 (contents/catalogue-list []))
@@ -77,7 +77,7 @@
 
        [:h2 "Cart components"]
        (example "cart-item" nil
-                [:table.ctlg-table
+                [:table.rems-table
                  (contents/cart-item {:title "Item title"})])
        (example "cart-list empty" nil
                 (contents/cart-list []))
