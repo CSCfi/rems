@@ -54,6 +54,9 @@
    (if (:fake-shibboleth +defaults+)
      fake-shibboleth-routes
      never-match-route)
+   (if-let [path (:serve-static +defaults+)]
+     (route/files "/" {:root path})
+     never-match-route)
    not-found))
 
 (def app (middleware/wrap-base #'app-routes))
