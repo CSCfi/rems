@@ -7,6 +7,7 @@
    {:en-GB
     {:t
      {:missing "Missing translation"
+      :footer "Powered by CSC - IT Center for Science"
       :navigation {:login "Login"
                    :logout "Sign Out"
                    :about "About"
@@ -22,6 +23,7 @@
     :fi
     {:t
      {:missing "Käännös puuttuu"
+      :footer "CSC - IT Center for Science"
       :navigation {:login "Kirjaudu sisään"
                    :logout "Kirjaudu ulos"
                    :about "Info"
