@@ -13,7 +13,6 @@ env:
   - DOCKER_REPOSITORY=673230199239.dkr.ecr.eu-central-1.amazonaws.com
 services:
   - postgresql
-  - docker
 install:
   - pip install ansible
   - pip install awscli
@@ -22,7 +21,6 @@ before_script:
 script:
   - lein test :all
   - lein uberwar
-  - lein uberjar && docker build -t rems .
 after_success:
   - ./.travis-deploy.sh
 notifications:
