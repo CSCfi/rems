@@ -43,6 +43,7 @@
       (catch Throwable t
         (log/error t)
         (error-page {:status 500
+                     :bare true ;; navbar requires tempura and we might not have it
                      :title "Something very bad has happened!"
                      :message "We've dispatched a team of highly trained gnomes to take care of the problem."})))))
 
