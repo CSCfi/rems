@@ -40,3 +40,8 @@
       src: "/srv/rems/rems-{{revparse.stdout}}.war"
       dest: /opt/tomcat/webapps/ROOT.war
       state: link
+    register: deploy
+
+  - name: Update deploy log
+    shell: "echo $(date --rfc-3339=seconds) /srv/rems/rems-{{revparse.stdout}}.war >> /srv/rems/deploy.log"
+    when: deploy.changed
