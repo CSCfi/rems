@@ -45,7 +45,8 @@
 
   :plugins [[lein-cprop "1.0.1"]
             [migratus-lein "0.4.3"]
-            [lein-uberwar "0.2.0"]]
+            [lein-uberwar "0.2.0"]
+            [lein-cloverage "1.0.9"]]
 
    :uberwar
      {:handler rems.handler/app
