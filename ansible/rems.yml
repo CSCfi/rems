@@ -24,6 +24,7 @@
       path: /srv/rems
       state: directory
 
+  # TODO: store revision in warfile, get it from there
   - name: Get git version
     shell: git rev-parse HEAD
     delegate_to: localhost
