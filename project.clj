@@ -45,8 +45,7 @@
 
   :plugins [[lein-cprop "1.0.1"]
             [migratus-lein "0.4.3"]
-            [lein-uberwar "0.2.0"]
-            [lein-cloverage "1.0.9"]]
+            [lein-uberwar "0.2.0"]]
 
    :uberwar
      {:handler rems.handler/app
@@ -74,7 +73,8 @@
                                  [clj-webdriver/clj-webdriver "0.7.2"]
                                  [directory-naming/naming-java "0.8"]
                                  [org.seleniumhq.selenium/selenium-server "3.0.1"]]
-                  :plugins      [[com.jakemccrary/lein-test-refresh "0.14.0"]]
+                  :plugins      [[com.jakemccrary/lein-test-refresh "0.14.0"]
+                                 [lein-cloverage "1.0.9"]]
 
                   :source-paths ["env/dev/clj" "test/clj"]
                   :resource-paths ["env/dev/resources"]
