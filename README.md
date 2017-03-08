@@ -49,6 +49,12 @@ To run tests that need a database:
 lein test :all
 ```
 
+To run all tests and output coverage:
+
+```
+lein with-profile test cloverage
+```
+
 ## Component Guide
 
 You can access the component guide at `/guide`. It contains all the components in various configurations.

@@ -6,25 +6,25 @@
 
 (defn login [context]
   [:div.jumbotron
-   [:h2 (text :t/login/title)]
-   [:p (text :t/login/text)]
+   [:h2 (text :t.login/title)]
+   [:p (text :t.login/text)]
    (link-to (str context "/Shibboleth.sso/Login") (image {:class "login-btn"} "/img/haka_landscape_large.gif"))])
 
 (defn about []
-  [:p (text :t/about/text)])
+  [:p (text :t.about/text)])
 
 ;; TODO duplication between cart and catalogue to be factored out
 
 (defn cart-item [item]
   [:tr
-   [:td {:data-th (text :t/cart/header)} (:title item)]
+   [:td {:data-th (text :t.cart/header)} (:title item)]
    [:td {:data-th ""} (cart/remove-from-cart-button item)]])
 
 (defn cart-list [items]
   (when-not (empty? items)
     [:table.rems-table
      [:tr
-      [:th (text :t/cart/header)]
+      [:th (text :t.cart/header)]
       [:th ""]]
      (for [item (sort-by :title items)]
        (cart-item item))]))
@@ -39,13 +39,13 @@
                     [:a {:href resid :target :_blank} title]
                     title)]
     [:tr
-     [:td {:data-th (text :t/catalogue/header)} component]
+     [:td {:data-th (text :t.catalogue/header)} component]
      [:td {:data-th ""} (cart/add-to-cart-button item)]]))
 
 (defn catalogue-list [items]
   [:table.rems-table
    [:tr
-    [:th (text :t/catalogue/header)]
+    [:th (text :t.catalogue/header)]
     [:th ""]]
    (for [item (sort-by :title items)]
      (catalogue-item item))])
