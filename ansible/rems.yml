@@ -8,45 +8,18 @@
     yum:
       name: epel-release
 
-  - name: Add Docker yum repository
-    shell: "yum-config-manager --add-repo https://docs.docker.com/engine/installation/linux/repo_files/centos/docker.repo"
-    args:
-      creates: /etc/yum.repos.d/docker.repo
-
   - name: Install packages
     yum:
       name: "{{item}}"
       state: latest
     with_items:
-      - awscli
-      - docker-engine
-      - python-docker-py
       - curl
       - wget
       - vim
       - emacs
       - screen
 
-  - name: Start & enable docker service
-    systemd:
-      name: docker
-      enabled: yes
-      state: started
-
-  - name: Log in to ECR
-    shell: "$(aws ecr get-login --region={{region}})"
-    # Always make this task green:
-    changed_when: False
-
-  - name: Pull latest rems docker image
-    docker_image:
-      name: "{{ecr}}/rems"
-      force: yes # download latest version even if image is already available
-
-  - name: Run rems docker container
-    docker_container:
-      name: rems
-      image: "{{ecr}}/rems"
-      published_ports: 0.0.0.0:80:3000
-      env:
-        DATABASE_URL: postgresql://{{docker_host_ip}}/rems?user=rems
+  - name: Install warfile
+    copy:
+      src: "{{warfile}}"
+      dest: /opt/tomcat/webapps/ROOT.war
