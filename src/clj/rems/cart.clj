@@ -11,7 +11,7 @@
   [:form.inline {:method "post" :action action}
    (anti-forgery-field)
    [:input {:type "hidden" :name "id" :value (:id item)}]
-   [:button.btn-primary {:type "submit"} text]])
+   [:button.btn.btn-primary {:type "submit"} text]])
 
 (defn add-to-cart-button
   "Hiccup fragment that contains a button that adds the given item to the cart"
