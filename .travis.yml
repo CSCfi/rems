@@ -14,8 +14,7 @@ env:
 services:
   - postgresql
 install:
-  - pip install ansible
-  - pip install awscli
+  - sudo pip install ansible
 before_script:
   - ./create-test-db.sh
 script:
