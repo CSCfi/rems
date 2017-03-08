@@ -8,6 +8,7 @@
    :stop
    (fn []
      (log/info "\n-=[rems has shut down successfully]=-"))
-   :middleware identity})
+   :middleware identity
+   :serve-static "/srv/rems_static"})
 
 (def ^:dynamic *db* {:name "java:comp/env/jdbc/rems"})
