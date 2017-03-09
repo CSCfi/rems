@@ -44,7 +44,7 @@
      [:div.user
       [:div.fa.fa-user {:style "display: inline-block"} (str user " / ")]
       [:div {:style "display: inline-block"}
-       (nav-link "/Shibboleth.sso/Logout" (text :t.navigation/logout))]])
+       (nav-link "/Shibboleth.sso/Logout?return=%2F" (text :t.navigation/logout))]])
    (language-switcher)])
 
 (defn navbar
