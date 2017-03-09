@@ -18,7 +18,7 @@ install:
 before_script:
   - ./create-test-db.sh
 script:
-  - lein test :all
+  - lein with-profile test cloverage
   - lein uberwar
 after_success:
   - ./.travis-deploy.sh
