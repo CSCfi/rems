@@ -31,7 +31,9 @@
   (when-not (empty? items)
     [:div.outer-cart
      [:div.inner-cart
-      [:p (text :t.cart/header)]
+      [:div
+       [:div.fa.fa-shopping-cart {:style "display: inline-block; margin-right: 10px"}]
+       [:p {:style "display: inline-block"} (text :t.cart/header)]]
       [:table.rems-table.cart
        [:tr
         [:th ""]

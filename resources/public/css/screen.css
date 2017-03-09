@@ -120,6 +120,7 @@ footer, .push {
 .rems-table.cart {
   background: #fff;
   color: #000;
+  margin: 0 0 1em 0;
 }
 
 .rems-table.cart td, .rems-table.cart th {
