@@ -6,11 +6,11 @@ CREATE CAST (transfer.rms_application_form_meta_visibility AS public.scope)
 WITH INOUT
 AS IMPLICIT;
 
+DELETE FROM public.rms_catalogue_item CASCADE;
 DELETE FROM public.rms_resource CASCADE;
 DELETE FROM public.rms_resource_prefix CASCADE;
 DELETE FROM public.rms_workflow CASCADE;
-DELETE FROM public.rms_catalogue_item CASCADE;
---DELETE FROM public.rms_application_form_meta CASCADE;
+DELETE FROM public.rms_application_form_meta CASCADE;
 
 INSERT INTO public.rms_workflow
 SELECT * FROM transfer.rms_workflow;
