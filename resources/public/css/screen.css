@@ -263,3 +263,7 @@ footer, .push {
   border: 1px solid #CAD2E6;
   border-radius: .4em;
 }
+
+.cart-title {
+  margin-top: 0.5em;
+}

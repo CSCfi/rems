@@ -31,14 +31,10 @@
   (when-not (empty? items)
     [:div.outer-cart
      [:div.inner-cart
-      [:div
+      [:div.cart-title
        [:div.fa.fa-shopping-cart {:style "display: inline-block; margin-right: 10px"}]
        [:p {:style "display: inline-block"} (text :t.cart/header)]]
       [:table.rems-table.cart
-       [:tr
-        [:th ""]
-        [:th ""]
-        [:th ""]]
        (for [item (sort-by get-catalogue-item-title items)]
          (cart-item item))]]]))
 
