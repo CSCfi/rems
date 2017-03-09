@@ -12,8 +12,6 @@ DELETE FROM public.rms_workflow CASCADE;
 DELETE FROM public.rms_catalogue_item CASCADE;
 --DELETE FROM public.rms_application_form_meta CASCADE;
 
---INSERT INTO public.rms_workflow (id, owneruserid, modifieruserid, title, fnlround, visibility, start, endt)
---SELECT t.id, t.owneruserid, t.modifieruserid, t.title, t.fnlround, public.scope(t.visibility::text), t.start, t.end FROM transfer.rms_workflow t;
 INSERT INTO public.rms_workflow
 SELECT * FROM transfer.rms_workflow;
 
