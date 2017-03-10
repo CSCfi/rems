@@ -17,6 +17,11 @@
         (assoc (redirect referer :see-other)
                :session (assoc session :language (keyword language)))))
 
+(defn lang-link-classes [lang]
+  (if (= (name context/*lang*) lang)
+    "btn-link nav-link active"
+    "btn-link nav-link"))
+
 (defn language-switcher
   "Language switcher widget"
   []
@@ -24,4 +29,4 @@
    (for [lang +languages+]
      [:form {:method "post" :action (str "/language/" lang)}
       (anti-forgery-field)
-      [:button.btn-link.nav-link {:type "submit"} lang]])])
+      [:button {:class (lang-link-classes lang) :type "submit"} lang]])])
