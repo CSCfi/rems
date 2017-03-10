@@ -23,3 +23,7 @@ VALUES (:id, :resid, :prefix, :modifieruserid)
 
 -- :name get-database-name :? :1
 SELECT current_database()
+
+-- :name get-catalogue-item-localizations :? :*
+SELECT catid, langcode, title
+FROM rms_catalogue_item_localization
