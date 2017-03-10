@@ -1,6 +1,7 @@
 (ns rems.contents
   (:require [hiccup.element :refer [link-to image]]
             [rems.cart :as cart]
+            [rems.form :as form]
             [rems.text :refer :all]
             [rems.db.core :as db]
             [rems.context :as context]))
@@ -59,3 +60,9 @@
   (list
    (cart-list (cart/get-cart-items))
    (catalogue-list (db/get-localized-catalogue-items))))
+
+(defn form [id]
+  (let [form (db/get-form-for-catalogue-item
+              {:id (Long/parseLong id) :lang (name context/*lang*)})
+        items (db/get-form-items {:id (:formid form)})]
+    (form/form form items)))
