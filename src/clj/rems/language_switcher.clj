@@ -18,7 +18,7 @@
                :session (assoc session :language (keyword language)))))
 
 (defn lang-link-classes [lang]
-  (if (= (name context/*lang*) lang)
+  (if (= context/*lang* (keyword lang))
     "btn-link nav-link active"
     "btn-link nav-link"))
 
