@@ -5,7 +5,7 @@
   (let [nam (str "text" order)]
     [:div.form-group
      [:label {:for nam} title]
-     [:input.form-control {:type "text" :id nam :value prompt}]]))
+     [:input.form-control {:type "text" :id nam :placeholder prompt}]]))
 
 (defn field [f]
   (case (:type f)
