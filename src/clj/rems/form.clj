@@ -18,3 +18,6 @@
    [:h3 (or (:formtitle form) (:metatitle form))]
    (for [f fields]
      (field f))])
+
+(defn link-to-form [item]
+  [:a.btn.btn-primary {:href (str "/form/" (:id item))} "Apply"])

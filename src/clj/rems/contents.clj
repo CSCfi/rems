@@ -24,6 +24,7 @@
 (defn cart-item [item]
   [:tr
    [:td {:data-th (text :t.cart/header)} (get-catalogue-item-title item)]
+   [:td {:data-th ""} (form/link-to-form item)]
    [:td {:data-th ""} (cart/remove-from-cart-button item)]])
 
 (defn cart-list [items]
@@ -31,6 +32,7 @@
     [:table.rems-table
      [:tr
       [:th (text :t.cart/header)]
+      [:th ""]
       [:th ""]]
      (for [item (sort-by get-catalogue-item-title items)]
        (cart-item item))]))
