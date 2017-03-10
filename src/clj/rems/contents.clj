@@ -2,7 +2,8 @@
   (:require [hiccup.element :refer [link-to image]]
             [rems.cart :as cart]
             [rems.text :refer :all]
-            [rems.db.core :as db]))
+            [rems.db.core :as db]
+            [rems.context :as context]))
 
 (defn login [context]
   [:div.jumbotron
@@ -15,9 +16,13 @@
 
 ;; TODO duplication between cart and catalogue to be factored out
 
+(defn get-catalogue-item-title [item]
+  (let [localized-title (get-in item [:localizations context/*lang* :title])]
+    (or localized-title (:title item))))
+
 (defn cart-item [item]
   [:tr
-   [:td {:data-th (text :t.cart/header)} (:title item)]
+   [:td {:data-th (text :t.cart/header)} (get-catalogue-item-title item)]
    [:td {:data-th ""} (cart/remove-from-cart-button item)]])
 
 (defn cart-list [items]
@@ -26,7 +31,7 @@
      [:tr
       [:th (text :t.cart/header)]
       [:th ""]]
-     (for [item (sort-by :title items)]
+     (for [item (sort-by get-catalogue-item-title items)]
        (cart-item item))]))
 
 (defn urn-catalogue-item? [{:keys [resid]}]
@@ -34,7 +39,7 @@
 
 (defn catalogue-item [item]
   (let [resid (:resid item)
-        title (:title item)
+        title (get-catalogue-item-title item)
         component (if (urn-catalogue-item? item)
                     [:a {:href resid :target :_blank} title]
                     title)]
@@ -47,7 +52,7 @@
    [:tr
     [:th (text :t.catalogue/header)]
     [:th ""]]
-   (for [item (sort-by :title items)]
+   (for [item (sort-by get-catalogue-item-title items)]
      (catalogue-item item))])
 
 (defn catalogue []
