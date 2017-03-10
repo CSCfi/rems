@@ -11,6 +11,9 @@
     (binding [context/*tempura* (fn [[k]] (str k))]
       (f))))
 
+(defn check-catalogue-item-text [props]
+  (hiccup-text (first (hiccup-find [:td] (catalogue-item props)))))
+
 (deftest test-catalogue-item
   (testing "catalogue item with urn"
     (let [urn "http://urn.fi/urn:nbn:fi:lb-201403262"
@@ -18,7 +21,18 @@
           link (first (hiccup-find [:a] c))]
       (is (= :a (first link)) "is a link")
       (is (= urn (:href (second link))) "links to the urn")
-      (is (= :_blank (:target (second link))) "opens in new tab"))))
+      (is (= :_blank (:target (second link))) "opens in new tab")))
+
+  (testing "catalogue item with localizations"
+    (let [props {:title "NO" :localizations {:fi {:title "FI"} :en {:title "EN"}}}]
+      (testing "without localizations"
+        (is (= "NO" (check-catalogue-item-text (dissoc props :localizations)))))
+      (testing "for Finnish session"
+        (binding [context/*lang* :fi]
+          (is (= "FI" (check-catalogue-item-text props)))))
+      (testing "for English session"
+        (binding [context/*lang* :en]
+          (is (= "EN" (check-catalogue-item-text props))))))))
 
 (defn check-row-text [row text]
   (is (= text (hiccup-text (first (hiccup-find [:td] row))))))
