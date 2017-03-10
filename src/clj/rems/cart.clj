@@ -32,7 +32,7 @@
   "Fetch items currently in cart from database"
   []
   (doall (for [i context/*cart*]
-           (db/get-catalogue-item {:id i}))))
+           (db/get-localized-catalogue-item {:id i}))))
 
 (defn- handler [method {session :session {id :id} :params :as req}]
   (let [modifier (case method

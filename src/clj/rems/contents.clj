@@ -53,4 +53,4 @@
 (defn catalogue []
   (list
    (cart-list (cart/get-cart-items))
-   (catalogue-list (db/get-catalogue-items))))
+   (catalogue-list (db/get-localized-catalogue-items))))
