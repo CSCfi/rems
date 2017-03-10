@@ -50,6 +50,15 @@
 (mount/defstate catalogue-item-localizations
   :start (load-catalogue-item-localizations!))
 
+(defn localize-catalogue-item [item]
+  (assoc item :localizations (catalogue-item-localizations (:id item))))
+
+(defn get-localized-catalogue-items []
+  (map localize-catalogue-item (get-catalogue-items)))
+
+(defn get-localized-catalogue-item [id]
+  (localize-catalogue-item (get-catalogue-item id)))
+
 (extend-protocol jdbc/IResultSetReadColumn
   Date
   (result-set-read-column [v _ _] (to-date v))
