@@ -32,8 +32,8 @@
     [:div.outer-cart
      [:div.inner-cart
       [:div.cart-title
-       [:div.fa.fa-shopping-cart {:style "display: inline-block; margin-right: 10px"}]
-       [:p {:style "display: inline-block"} (text :t.cart/header)]]
+       [:div.fa.fa-shopping-cart]
+       [:div.cart-title (text :t.cart/header)]]
       [:table.rems-table.cart
        (for [item (sort-by get-catalogue-item-title items)]
          (cart-item item))]]]))

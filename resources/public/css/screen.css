@@ -222,15 +222,7 @@ footer, .push {
   }
 }
 
-.language-switcher {
-  float: left;
-}
-
-.language-switcher form {
-  display: inline-block;
-}
-
-.user {
+.language-switcher, .user {
   float: left;
 }
 
@@ -266,4 +258,12 @@ footer, .push {
 
 .cart-title {
   margin-top: 0.5em;
+}
+
+.fa, .user-name {
+  margin-right: 5px;
+}
+
+.fa-user, .logout-link, .user-name, .fa-shopping-cart, .cart-title, .language-switcher form {
+  display: inline-block;
 }
