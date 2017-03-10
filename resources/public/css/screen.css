@@ -13,7 +13,7 @@ body {
 }
 .navbar {
   border-radius: 0px;
-  padding: 0rem 1rem;
+  padding: 0rem;
 }
 .navbar-brand {
   float: none;
@@ -223,7 +223,7 @@ footer, .push {
 }
 
 .language-switcher {
-  display: inline-block;
+  float: left;
 }
 
 .language-switcher form {
@@ -231,7 +231,7 @@ footer, .push {
 }
 
 .user {
-  display: inline-block;
+  float: left;
 }
 
 .example-page {
