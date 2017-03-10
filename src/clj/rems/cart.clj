@@ -3,7 +3,7 @@
             [rems.text :refer :all]
             [rems.db.core :as db]
             [compojure.core :refer [defroutes POST]]
-            [ring.util.anti-forgery :refer [anti-forgery-field]]
+            [rems.anti-forgery :refer [anti-forgery-field]]
             [ring.util.response :refer [redirect]]))
 
 (defn- button
