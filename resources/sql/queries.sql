@@ -1,8 +1,13 @@
 -- :name get-catalogue-items :? :*
-SELECT rci.id, rci.title, rr.resid FROM rms_catalogue_item rci LEFT OUTER JOIN rms_resource rr ON (rci.resid = rr.id)
+SELECT rci.id, rci.title, rr.resid
+FROM rms_catalogue_item rci
+LEFT OUTER JOIN rms_resource rr ON (rci.resid = rr.id)
 
 -- :name get-catalogue-item :? :1
-SELECT rci.id, rci.title, rr.resid FROM rms_catalogue_item rci LEFT OUTER JOIN rms_resource rr ON (rci.resid = rr.id) WHERE rci.id = :id
+SELECT rci.id, rci.title, rr.resid
+FROM rms_catalogue_item rci
+LEFT OUTER JOIN rms_resource rr ON (rci.resid = rr.id)
+WHERE rci.id = :id
 
 -- :name create-catalogue-item! :! :n
 -- :doc Create a single catalogue item
