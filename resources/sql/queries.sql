@@ -27,3 +27,49 @@ SELECT current_database()
 -- :name get-catalogue-item-localizations :? :*
 SELECT catid, langcode, title
 FROM rms_catalogue_item_localization
+
+-- :name get-forms :? :*
+SELECT
+  meta.id as metaid,
+  form.id as formid,
+  meta.title as metatitle,
+  form.title as formtitle,
+  meta.visibility as metavisibility,
+  form.visibility as formvisibility,
+  langcode
+FROM rms_application_form_meta meta
+LEFT OUTER JOIN rms_application_form_meta_map metamap ON meta.id = metamap.metaFormId
+LEFT OUTER JOIN rms_application_form form ON form.id = metamap.formId
+
+-- :name get-form-for-catalogue-item :? :1
+SELECT
+  meta.id as metaid,
+  form.id as formid,
+  meta.title as metatitle,
+  form.title as formtitle,
+  meta.visibility as metavisibility,
+  form.visibility as formvisibility,
+  langcode
+FROM rms_catalogue_item rci
+LEFT OUTER JOIN rms_application_form_meta meta ON rci.formId = meta.id
+LEFT OUTER JOIN rms_application_form_meta_map metamap ON meta.id = metamap.metaFormId
+LEFT OUTER JOIN rms_application_form form ON form.id = metamap.formId
+WHERE rci.id = :id
+  AND langcode = :lang
+   OR langcode is NULL -- nonlocalized form
+
+-- :name get-form-items :? :*
+SELECT
+  item.title,
+  inputprompt,
+  formitemoptional,
+  type,
+  value,
+  itemorder,
+  tooltip,
+  item.visibility
+FROM rms_application_form form
+LEFT OUTER JOIN rms_application_form_item_map itemmap ON form.id = itemmap.formId
+LEFT OUTER JOIN rms_application_form_item item ON item.id = itemmap.formItemId
+WHERE form.id = :id
+ORDER BY itemorder
