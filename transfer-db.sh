@@ -1,14 +1,10 @@
 #!/bin/bash -xeu
 
 # Start MariaDB
-
-docker run --name rems_mysql -p 3306:3306 --rm -e MYSQL_ROOT_PASSWORD=rems_test -d mariadb
+docker run --name rems_mysql -p 3306:3306 --rm -e MYSQL_DATABASE=rems_mysql -e MYSQL_ROOT_PASSWORD=rems_test -d mariadb
 
 # Wait until the database has started
 sleep 30
-
-# Create database for loading the dump
-docker run -it --link rems_mysql:mysql --rm mariadb sh -c 'exec mysql -h"$MYSQL_PORT_3306_TCP_ADDR" -P"$MYSQL_PORT_3306_TCP_PORT" -uroot -p"$MYSQL_ENV_MYSQL_ROOT_PASSWORD" --execute="CREATE DATABASE rems_mysql;"'
 
 # Load dump
 docker run -it --link rems_mysql:mysql -v $(pwd)/demo_rems-25-Jan-2017.sql:/tmp/data.sql --rm mariadb sh -c 'exec mysql -h"$MYSQL_PORT_3306_TCP_ADDR" -P"$MYSQL_PORT_3306_TCP_PORT" -uroot -p"$MYSQL_ENV_MYSQL_ROOT_PASSWORD" rems_mysql < /tmp/data.sql'
@@ -23,7 +19,7 @@ docker run -it --link rems_mysql:mysql -v $(pwd)/demo_rems-25-Jan-2017.sql:/tmp/
 #docker run -it --rm --link rems_test:postgres postgres psql -h postgres -U rems
 
 # Create target schema in Postgres
-docker run -it --rm --link rems_test:postgres postgres psql -h postgres -U rems -c 'CREATE SCHEMA transfer;'
+docker run -it --rm --link rems_test:postgres postgres psql -h postgres -U rems -c 'DROP SCHEMA IF EXISTS transfer CASCADE; CREATE SCHEMA transfer;'
 
 # Load data from MariaDB into Postgres
 docker run -it --rm --link rems_test:postgres --link rems_mysql:mysql dimitri/pgloader pgloader --set "search_path='transfer'" --verbose mysql://root:rems_test@rems_mysql/rems_mysql postgresql://rems@rems_test/rems
