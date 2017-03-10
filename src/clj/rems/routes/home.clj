@@ -18,6 +18,10 @@
   (layout/render
     "catalogue" (contents/catalogue)))
 
+(defn form-page [id]
+  (layout/render
+   "form" (contents/form id)))
+
 (defroutes public-routes
   (GET "/" [] (home-page))
   (GET "/about" [] (about-page))
@@ -25,4 +29,5 @@
 
 (defroutes secured-routes
   (GET "/catalogue" [] (catalogue-page))
+  (GET "/form/:id" [id] (form-page id))
   cart/cart-routes)

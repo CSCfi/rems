@@ -1,6 +1,7 @@
 (ns rems.contents
   (:require [hiccup.element :refer [link-to image]]
             [rems.cart :as cart]
+            [rems.form :as form]
             [rems.text :refer :all]
             [rems.db.core :as db]
             [rems.context :as context]))
@@ -23,6 +24,7 @@
 (defn cart-item [item]
   [:tr
    [:td {:data-th (text :t.cart/header)} (get-catalogue-item-title item)]
+   [:td {:data-th ""} (form/link-to-form item)]
    [:td {:data-th ""} (cart/remove-from-cart-button item)]])
 
 (defn cart-list [items]
@@ -30,6 +32,7 @@
     [:table.rems-table
      [:tr
       [:th (text :t.cart/header)]
+      [:th ""]
       [:th ""]]
      (for [item (sort-by get-catalogue-item-title items)]
        (cart-item item))]))
@@ -59,3 +62,9 @@
   (list
    (cart-list (cart/get-cart-items))
    (catalogue-list (db/get-localized-catalogue-items))))
+
+(defn form [id]
+  (let [form (db/get-form-for-catalogue-item
+              {:id (Long/parseLong id) :lang (name context/*lang*)})
+        items (db/get-form-items {:id (:formid form)})]
+    (form/form form items)))

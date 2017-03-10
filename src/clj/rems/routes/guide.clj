@@ -2,6 +2,7 @@
   (:require [rems.layout :as layout]
             [rems.context :as context]
             [rems.contents :as contents]
+            [rems.form :as form]
             [rems.language-switcher :refer [language-switcher]]
             [hiccup.core :as h]
             [compojure.core :refer [defroutes GET]]
@@ -92,6 +93,22 @@
                 (contents/cart-list []))
        (example "cart-list with two items" nil
                 (contents/cart-list [{:title "Item title"} {:title "Another title"}]))
+
+       [:h2 "Forms"]
+       (example "\"text\" field" nil
+                [:form
+                 (form/field {:type "text" :title "Title" :order 1 :inputprompt "prompt"})])
+       (example "\"texta\" field" nil
+                [:form
+                 (form/field {:type "texta" :title "Title" :order 1 :inputprompt "prompt"})])
+       (example "unsupported field" nil
+                [:form
+                 (form/field {:type "unsupported" :title "Title" :order 1 :inputprompt "prompt"})])
+       (example "form" nil
+                (form/form {:formtitle "Form title"}
+                           [{:type "text" :title "Field 1" :order 1 :inputprompt "prompt 1"}
+                            {:type "texta" :title "Field 2" :order 2 :inputprompt "prompt 2"}
+                            {:type "unsupported" :title "Field 3" :order 3 :inputprompt "prompt 3"}]))
 
 
        [:h2 "Misc components"]
