@@ -30,6 +30,7 @@
     delegate_to: localhost
     become: no
     register: revparse
+    check_mode: no
 
   - name: Install warfile
     copy:
@@ -45,4 +46,11 @@
 
   - name: Update deploy log
     shell: "echo $(date --rfc-3339=seconds) /srv/rems/rems-{{revparse.stdout}}.war >> /srv/rems/deploy.log"
+    when: deploy.changed
+
+  # tomcat doesn't always notice that the jar changed
+  - name: Restart tomcat
+    service:
+      name: tomcat
+      state: restarted
     when: deploy.changed
