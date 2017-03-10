@@ -15,7 +15,8 @@
             [buddy.auth :refer [authenticated?]]
             [taoensso.tempura :as tempura :refer [tr]]
             [rems.locales :refer [tconfig]]
-            [rems.auth.backend :refer [shibbo-backend authz-backend]])
+            [rems.auth.backend :refer [shibbo-backend authz-backend]]
+            [rems.language-switcher :refer [+default-language+]])
   (:import [javax.servlet ServletContext]))
 
 (defn calculate-root-path [request]
@@ -79,7 +80,8 @@
   (wrap-tempura-locales-from-session
    (tempura/wrap-ring-request
     (fn [request]
-      (binding [context/*tempura* (:tempura/tr request)]
+      (binding [context/*tempura* (:tempura/tr request)
+                context/*lang* (get-in request [:session :language] +default-language+)]
         (handler request)))
     {:tr-opts tconfig})))
 

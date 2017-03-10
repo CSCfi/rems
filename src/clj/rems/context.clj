@@ -15,4 +15,6 @@
 (def ^:dynamic ^{:doc "Tempura object initialized with user's preferred language."}
   *tempura*)
 
+(def ^:dynamic ^{:doc "User's preferred language."} *lang*)
+
 (def ^:dynamic ^{:doc "Contents of the cart."} *cart*)

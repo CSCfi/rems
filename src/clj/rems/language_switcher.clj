@@ -4,6 +4,8 @@
             [rems.anti-forgery :refer [anti-forgery-field]]
             [ring.util.response :refer [redirect]]))
 
+(def +default-language+ :en)
+
 ;; languages to switch between hardcoded for now
 (def ^:private +languages+ ["en" "fi"])
 
