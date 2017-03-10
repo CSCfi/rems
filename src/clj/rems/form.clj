@@ -7,7 +7,7 @@
      [:label {:for nam} title]
      [:input.form-control {:type "text" :id nam :value prompt}]]))
 
-(defn- field [f]
+(defn field [f]
   (case (:type f)
     "text" (text-field f)
     "texta" (text-field f)
