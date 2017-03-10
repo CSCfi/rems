@@ -12,8 +12,8 @@
             [rems.config :refer [env]]))
 
 (mount/defstate init-app
-                :start ((or (:init +defaults+) identity))
-                :stop  ((or (:stop +defaults+) identity)))
+  :start ((or (:init +defaults+) identity))
+  :stop  ((or (:stop +defaults+) identity)))
 
 (defn init
   "init will be called once when
