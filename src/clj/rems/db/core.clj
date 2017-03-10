@@ -4,7 +4,8 @@
    [clojure.java.jdbc :as jdbc]
    [conman.core :as conman]
    [rems.env :refer [+defaults+ *db*]]
-   [rems.config :refer [env]])
+   [rems.config :refer [env]]
+   [mount.core :as mount])
   (:import org.postgresql.util.PGobject
            java.sql.Array
            clojure.lang.IPersistentMap
@@ -32,6 +33,22 @@
   (create-catalogue-item! {:title "B"
                            :formid nil
                            :resid nil}))
+
+(defn index-by [ks coll]
+  (if (empty? ks)
+    (first coll)
+    (->> coll
+         (group-by (first ks))
+         (map (fn [[k v]] [k (index-by (rest ks) v)]))
+         (into {}))))
+
+(defn load-catalogue-item-localizations! []
+  (->> (get-catalogue-item-localizations)
+       (map #(update-in % [:langcode] keyword))
+       (index-by [:catid :langcode])))
+
+(mount/defstate catalogue-item-localizations
+  :start (load-catalogue-item-localizations!))
 
 (extend-protocol jdbc/IResultSetReadColumn
   Date
