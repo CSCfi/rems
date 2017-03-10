@@ -34,7 +34,12 @@
                            :formid nil
                            :resid nil}))
 
-(defn index-by [ks coll]
+(defn index-by
+  "Index the collection coll with given keys ks.
+
+  Result is a map indexed by the first key
+  that contains a map indexed by the second key."
+  [ks coll]
   (if (empty? ks)
     (first coll)
     (->> coll
@@ -42,7 +47,9 @@
          (map (fn [[k v]] [k (index-by (rest ks) v)]))
          (into {}))))
 
-(defn load-catalogue-item-localizations! []
+(defn load-catalogue-item-localizations!
+  "Load catalogue item localizations from the database."
+  []
   (->> (get-catalogue-item-localizations)
        (map #(update-in % [:langcode] keyword))
        (index-by [:catid :langcode])))
@@ -50,7 +57,10 @@
 (mount/defstate catalogue-item-localizations
   :start (load-catalogue-item-localizations!))
 
-(defn localize-catalogue-item [item]
+(defn localize-catalogue-item
+  "Associates localisations into a catalogue item from
+  the preloaded state."
+  [item]
   (assoc item :localizations (catalogue-item-localizations (:id item))))
 
 (defn get-localized-catalogue-items []
