@@ -1,8 +1,10 @@
 (ns rems.language-switcher
   (:require [rems.context :as context]
             [compojure.core :refer [defroutes POST]]
-            [ring.util.anti-forgery :refer [anti-forgery-field]]
+            [rems.anti-forgery :refer [anti-forgery-field]]
             [ring.util.response :refer [redirect]]))
+
+(def +default-language+ :en)
 
 ;; languages to switch between hardcoded for now
 (def ^:private +languages+ ["en" "fi"])

@@ -3,7 +3,7 @@
             [rems.text :refer :all]
             [rems.db.core :as db]
             [compojure.core :refer [defroutes POST]]
-            [ring.util.anti-forgery :refer [anti-forgery-field]]
+            [rems.anti-forgery :refer [anti-forgery-field]]
             [ring.util.response :refer [redirect]]))
 
 (defn- button
@@ -32,7 +32,7 @@
   "Fetch items currently in cart from database"
   []
   (doall (for [i context/*cart*]
-           (db/get-catalogue-item {:id i}))))
+           (db/get-localized-catalogue-item {:id i}))))
 
 (defn- handler [method {session :session {id :id} :params :as req}]
   (let [modifier (case method

@@ -69,6 +69,15 @@
        (example "catalogue-item linked to urn.fi" nil
                 [:table.rems-table
                  (contents/catalogue-item {:title "Item title" :resid "http://urn.fi/urn:nbn:fi:lb-201403262"})])
+       (example "catalogue-item in Finnish with localizations" nil
+                [:table.rems-table
+                 (binding [context/*lang* :fi]
+                   (contents/catalogue-item {:title "Not used when there are localizations" :localizations {:fi {:title "Suomenkielinen title"} :en {:title "English title"}}}))])
+       (example "catalogue-item in English with localizations" nil
+                [:table.rems-table
+                 (binding [context/*lang* :en]
+                   (contents/catalogue-item {:title "Not used when there are localizations" :localizations {:fi {:title "Suomenkielinen title"} :en {:title "English title"}}}))])
+
        (example "catalogue-list empty" nil
                 (contents/catalogue-list []))
        (example "catalogue-list with two items" nil

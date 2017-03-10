@@ -6,6 +6,7 @@ CREATE CAST (transfer.rms_application_form_meta_visibility AS public.scope)
 WITH INOUT
 AS IMPLICIT;
 
+DELETE FROM public.rms_catalogue_item_localization CASCADE;
 DELETE FROM public.rms_catalogue_item CASCADE;
 DELETE FROM public.rms_resource CASCADE;
 DELETE FROM public.rms_resource_prefix CASCADE;
@@ -26,6 +27,9 @@ SELECT * FROM transfer.rms_application_form_meta;
 
 INSERT INTO public.rms_catalogue_item
 SELECT * FROM transfer.rms_catalogue_item;
+
+INSERT INTO public.rms_catalogue_item_localization
+SELECT * FROM transfer.rms_catalogue_item_localization;
 
 DROP CAST IF EXISTS (transfer.rms_workflow_visibility AS public.scope);
 DROP CAST IF EXISTS (transfer.rms_application_form_meta_visibility AS public.scope);
