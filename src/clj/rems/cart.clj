@@ -24,7 +24,8 @@
 (defn add-to-cart-button
   "Hiccup fragment that contains a button that adds the given item to the cart"
   [item]
-  (button-primary "/cart/add" (text :t.cart/add) item (and context/*cart* (contains? (set context/*cart*) (:id item)))))
+  (let [disabled? (and (bound? #'context/*cart*) (contains? (set context/*cart*) (:id item)))]
+    (button-primary "/cart/add" (text :t.cart/add) item disabled?)))
 
 (defn remove-from-cart-button
   "Hiccup fragment that contains a button that removes the given item from the cart"
