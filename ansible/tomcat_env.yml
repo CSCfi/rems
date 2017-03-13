@@ -1,0 +1,34 @@
+---
+
+- hosts: rems
+  become: yes
+  tasks:
+
+- name: Add Shibboleth yum repository
+    shell: "yum-config-manager --add-repo https://download.opensuse.org/repositories/security://shibboleth/CentOS_7/security:shibboleth.repo"
+    args:
+      creates: /etc/yum.repos.d/shibboleth.repo
+
+  - name: Install packages
+    yum:
+      name: "{{item}}"
+      state: latest
+    with_items:
+      - java-1.8.0-openjdk
+      - java-1.8.0-openjdk-devel
+      - httpd
+      - shibboleth
+      - mod_proxy_html
+      - mod_ssl
+
+  - name: Enable shibboleth service
+    service:
+      name: shibd
+      state: started
+      enabled: yes
+
+  - name: Enable httpd service
+    service:
+      name: httpd
+      state: started
+      enabled: yes
