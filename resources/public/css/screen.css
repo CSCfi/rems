@@ -182,6 +182,11 @@ footer, .push {
   white-space: nowrap;
 }
 
+.navbar {
+  padding-left: 0;
+  padding-right: 0;
+}
+
 .navbar-text .language-switcher {
   margin-right: 1rem;
 }
