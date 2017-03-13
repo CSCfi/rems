@@ -268,3 +268,15 @@ footer, .push {
 .fa-user, .logout-link, .user-name, .fa-shopping-cart, .cart-title, .language-switcher form {
   display: inline-block;
 }
+
+form.inline {
+  display: inline-block;
+}
+
+.actions {
+  white-space: nowrap;
+}
+
+.actions  > *:not(:first-child) {
+  padding-left: 0.5em;
+}

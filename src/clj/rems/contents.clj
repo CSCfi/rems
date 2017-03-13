@@ -24,8 +24,9 @@
 (defn cart-item [item]
   [:tr
    [:td {:data-th ""} (get-catalogue-item-title item)]
-   [:td {:data-th ""} (form/link-to-form item)]
-   [:td {:data-th ""} (cart/remove-from-cart-button item)]])
+   [:td.actions {:data-th ""}
+    (form/link-to-form item)
+    (cart/remove-from-cart-button item)]])
 
 (defn cart-list [items]
   (when-not (empty? items)
