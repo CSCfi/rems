@@ -43,7 +43,8 @@
      ]]])
 
 (defn footer []
-  [:footer (text :t/footer)])
+  [:footer.footer
+   [:div.container [:nav.navbar [:div.navbar-text (text :t/footer)]]]])
 
 (defn logo []
   [:div.logo [:div.img]])
@@ -63,8 +64,7 @@
             [:div.container nav]
             (logo)
             [:div.container content]
-            [:div.push]]
-           footer
+            footer]
            (include-js "/assets/jquery/jquery.min.js")
            (include-js "/assets/tether/dist/js/tether.min.js")
            (include-js "/assets/bootstrap/js/bootstrap.min.js")]]))

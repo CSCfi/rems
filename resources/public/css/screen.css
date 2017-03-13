@@ -88,17 +88,7 @@ body {
 }
 
 footer {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-footer {
   background-color: #CAD2E6;
-}
-
-footer, .push {
-    height: 80px;
 }
 
 .jumbotron {
