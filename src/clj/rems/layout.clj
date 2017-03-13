@@ -46,7 +46,7 @@
   [:footer (text :t/footer)])
 
 (defn logo []
-  [:div.logo])
+  [:div.logo [:div.img]])
 
 (defn page-template
   [page-name nav content footer]
