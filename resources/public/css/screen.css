@@ -138,7 +138,7 @@ footer, .push {
 .rems-table {
   margin: 1em 0;
   min-width: 100%;
-  background: #5e6a9c;
+  background-color: #7A90C3;
   color: #fff;
   border-radius: .4em;
   overflow: hidden;
@@ -203,7 +203,7 @@ footer, .push {
 }
 
 .rems-table tr:nth-child(2n) {
-  background: #4D5A91;
+  background-color: #8a9dca;
 }
 
 @media (max-width: 480px) {
