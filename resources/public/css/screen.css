@@ -53,6 +53,10 @@ body {
   border: 0;   /* for button links */
 }
 
+.navbar .nav-link, .navbar .btn-link {
+  text-transform: uppercase;
+}
+
 .nav-link.active, .btn-link.active {
   color: #4D5A91;
 }
