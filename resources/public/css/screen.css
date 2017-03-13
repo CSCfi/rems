@@ -123,7 +123,7 @@ footer, .push {
   margin: 0;
 }
 
-.rems-table.cart td, .rems-table.cart th {
+.rems-table.cart tr:not(:last-child) {
   border-bottom: 1px solid #CAD2E6;
 }
 
@@ -199,12 +199,8 @@ footer, .push {
 }
 
 @media (max-width: 480px) {
-  .rems-table.cart td {
+  .rems-table.cart tr {
     border-bottom: none;
-  }
-
-  .rems-table.cart td:last-child {
-    border-bottom: 1px solid #CAD2E6;
   }
 }
 
