@@ -12,6 +12,7 @@
    (anti-forgery-field)
    [:input {:type "hidden" :name "id" :value (:id item)}]
    [:button.btn {:type "submit"
+                 :disabled disabled?
                  :class (str class (if disabled? " disabled" ""))} text]])
 
 (def button-primary
