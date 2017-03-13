@@ -87,7 +87,7 @@
 
        [:h2 "Cart components"]
        (example "cart-item" nil
-                [:table.rems-table
+                [:table.rems-table.cart
                  (contents/cart-item {:title "Item title"})])
        (example "cart-list empty" nil
                 (contents/cart-list []))

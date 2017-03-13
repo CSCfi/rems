@@ -42,8 +42,9 @@
   [:div.secondary-navigation.navbar-nav.navitem
    (when user
      [:div.user
-      [:div.fa.fa-user {:style "display: inline-block"} (str user " / ")]
-      [:div {:style "display: inline-block"}
+      [:div.fa.fa-user]
+      [:div.user-name (str user " / ")]
+      [:div.logout-link
        (nav-link "/Shibboleth.sso/Logout?return=%2F" (text :t.navigation/logout))]])
    (language-switcher)])
 

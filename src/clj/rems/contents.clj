@@ -23,19 +23,20 @@
 
 (defn cart-item [item]
   [:tr
-   [:td {:data-th (text :t.cart/header)} (get-catalogue-item-title item)]
+   [:td {:data-th ""} (get-catalogue-item-title item)]
    [:td {:data-th ""} (form/link-to-form item)]
    [:td {:data-th ""} (cart/remove-from-cart-button item)]])
 
 (defn cart-list [items]
   (when-not (empty? items)
-    [:table.rems-table
-     [:tr
-      [:th (text :t.cart/header)]
-      [:th ""]
-      [:th ""]]
-     (for [item (sort-by get-catalogue-item-title items)]
-       (cart-item item))]))
+    [:div.outer-cart
+     [:div.inner-cart
+      [:div.cart-title
+       [:div.fa.fa-shopping-cart]
+       [:div.cart-title (text :t.cart/header)]]
+      [:table.rems-table.cart
+       (for [item (sort-by get-catalogue-item-title items)]
+         (cart-item item))]]]))
 
 (defn urn-catalogue-item? [{:keys [resid]}]
   (and resid (.startsWith resid "http://urn.fi")))

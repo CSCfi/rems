@@ -47,7 +47,7 @@
 
 (deftest test-cart-list
   (let [c (cart-list [{:title "D"} {:title "C"}])
-        rows (rest (hiccup-find [:tr] c))]
+        rows (hiccup-find [:tr] c)]
     (is (= 2 (count rows)))
     (check-row-text (first rows) "C")
     (check-row-text (second rows) "D")))
