@@ -300,3 +300,8 @@ form.inline .btn-link {
 .actions  > *:not(:first-child) {
   padding-left: 0.5em;
 }
+
+.cart-title {
+  margin-left: 1em;
+  font-weight: bold;
+}
