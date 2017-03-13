@@ -94,7 +94,7 @@ footer, .push {
   overflow: hidden;
 }
 
-.rems-table a {
+.catalogue-item-link {
   color: #fff;
   text-decoration: underline;
 }
