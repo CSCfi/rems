@@ -21,6 +21,13 @@
       - mod_proxy_html
       - mod_ssl
 
+  - name: Copy maintenance page files
+    copy: src={{item.src}} dest={{item.dest}}
+    with_items:
+      - { src: '{{maintenance_src}}' dest: '/var/www/html' }
+      - { src: '{{styles_src}}' dest: '/var/www/html/css' }
+      - { src: '/srv/rems_static/img/revontulet.jpg' dest: '/var/www/html/img' }
+
   - name: Enable shibboleth service
     service:
       name: shibd
