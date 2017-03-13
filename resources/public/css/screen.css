@@ -32,13 +32,29 @@ body {
   max-width: 891px;
 }
 
+.btn-primary {
+  background-color: #F16522;
+  border-color: #F16522;
+  outline-color: transparent;
+}
+
+.btn-secondary:hover, .btn-secondary:focus, .btn-secondary:active:hover {
+  outline-color: transparent;
+}
+
+.btn-primary:hover, .btn-primary:focus,  .btn-primary:active:hover {
+  background-color: #d84f0e;
+  border-color: #F16522;
+  outline-color: transparent;
+}
+
 .nav-link, .btn-link {
   color: #F16522;
   border: 0;   /* for button links */
 }
 
 .nav-link.active, .btn-link.active {
-  color: #7A90C3;
+  color: #4D5A91;
 }
 
 .nav-link:hover, .btn-link:hover {
