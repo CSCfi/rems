@@ -23,7 +23,8 @@
 
 (defn guide-page []
   (binding [context/*root-path* "path/"
-            context/*tempura* (partial tr locales/tconfig [:fi])]
+            context/*lang* :en
+            context/*tempura* (partial tr locales/tconfig [:en])]
     (h/html
      [:head
       [:link {:type "text/css" :rel "stylesheet" :href "/assets/bootstrap/css/bootstrap.min.css"}]
@@ -60,11 +61,13 @@
                  (contents/catalogue-item {:title "Item title" :resid "http://urn.fi/urn:nbn:fi:lb-201403262"})])
        (example "catalogue-item in Finnish with localizations" nil
                 [:table.rems-table
-                 (binding [context/*lang* :fi]
+                 (binding [context/*lang* :fi
+                           context/*tempura* (partial tr locales/tconfig [:fi])]
                    (contents/catalogue-item {:title "Not used when there are localizations" :localizations {:fi {:title "Suomenkielinen title"} :en {:title "English title"}}}))])
        (example "catalogue-item in English with localizations" nil
                 [:table.rems-table
-                 (binding [context/*lang* :en]
+                 (binding [context/*lang* :en
+                           context/*tempura* (partial tr locales/tconfig [:en])]
                    (contents/catalogue-item {:title "Not used when there are localizations" :localizations {:fi {:title "Suomenkielinen title"} :en {:title "English title"}}}))])
 
        (example "catalogue-list empty" nil
