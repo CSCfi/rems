@@ -173,16 +173,8 @@ footer, .push {
     padding: .25em .5em;
   }
 
-  .rems-table th:first-child, .rems-table td:first-child {
-    padding-left: 0;
-  }
-
-  .rems-table th:last-child, .rems-table td:last-child {
-        padding-right: 0;
-  }
-
   .rems-table th, .rems-table td {
-    padding: 0.5em 1em !important;
+    padding: 0.5em 1em;
   }
 }
 
