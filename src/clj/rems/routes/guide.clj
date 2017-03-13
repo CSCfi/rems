@@ -86,13 +86,13 @@
                 (contents/cart-list [{:title "Item title"} {:title "Another title"}]))
 
        [:h2 "Forms"]
-       (example "\"text\" field" nil
+       (example "field of type \"text\"" nil
                 [:form
                  (form/field {:type "text" :title "Title" :order 1 :inputprompt "prompt"})])
-       (example "\"texta\" field" nil
+       (example "field of type \"texta\"" nil
                 [:form
                  (form/field {:type "texta" :title "Title" :order 1 :inputprompt "prompt"})])
-       (example "unsupported field" nil
+       (example "field of unsupported type" nil
                 [:form
                  (form/field {:type "unsupported" :title "Title" :order 1 :inputprompt "prompt"})])
        (example "form" nil
