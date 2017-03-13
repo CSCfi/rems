@@ -232,8 +232,10 @@ form.inline .btn-link {
   margin-left: 0.5rem;
 }
 
-.actions {
-  white-space: nowrap;
+@media (min-width: 480px) {
+  .actions {
+    white-space: nowrap;
+  }
 }
 
 .actions  > *:not(:first-child) {
