@@ -19,7 +19,7 @@
     (let [urn "http://urn.fi/urn:nbn:fi:lb-201403262"
           c (catalogue-item {:title "U" :resid urn})
           link (first (hiccup-find [:a] c))]
-      (is (= :a (first link)) "is a link")
+      (is (= :a.catalogue-item-link (first link)) "is a link")
       (is (= urn (:href (second link))) "links to the urn")
       (is (= :_blank (:target (second link))) "opens in new tab")))
 

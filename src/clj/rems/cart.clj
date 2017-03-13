@@ -7,21 +7,30 @@
             [ring.util.response :refer [redirect]]))
 
 (defn- button
-  [action text item]
+  [class action text item & [disabled?]]
   [:form.inline {:method "post" :action action}
    (anti-forgery-field)
    [:input {:type "hidden" :name "id" :value (:id item)}]
-   [:button.btn.btn-primary {:type "submit"} text]])
+   [:button.btn {:type "submit"
+                 :disabled disabled?
+                 :class (str class (if disabled? " disabled" ""))} text]])
+
+(def button-primary
+  (partial button "btn-primary"))
+
+(def button-secondary
+  (partial button "btn-secondary"))
 
 (defn add-to-cart-button
   "Hiccup fragment that contains a button that adds the given item to the cart"
   [item]
-  (button "/cart/add" (text :t.cart/add) item))
+  (let [disabled? (and (bound? #'context/*cart*) (contains? (set context/*cart*) (:id item)))]
+    (button-primary "/cart/add" (text :t.cart/add) item disabled?)))
 
 (defn remove-from-cart-button
   "Hiccup fragment that contains a button that removes the given item from the cart"
   [item]
-  (button "/cart/remove" (text :t.cart/remove) item))
+  (button-secondary "/cart/remove" (text :t.cart/remove) item))
 
 (defn get-cart-from-session
   "Computes the value for context/*cart*: a sequence of integer ids."

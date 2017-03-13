@@ -7,10 +7,16 @@
      [:label {:for nam} title]
      [:input.form-control {:type "text" :id nam :placeholder prompt}]]))
 
+(defn texta-field [{title :title order :itemorder prompt :inputprompt}]
+  (let [nam (str "text" order)]
+    [:div.form-group
+     [:label {:for nam} title]
+     [:textarea.form-control {:id nam :placeholder prompt}]]))
+
 (defn field [f]
   (case (:type f)
     "text" (text-field f)
-    "texta" (text-field f)
+    "texta" (texta-field f)
     [:p "Unsupported field " (pr-str f)]))
 
 (defn form [form fields]

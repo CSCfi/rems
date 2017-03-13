@@ -24,16 +24,17 @@
 (defn cart-item [item]
   [:tr
    [:td {:data-th ""} (get-catalogue-item-title item)]
-   [:td {:data-th ""} (form/link-to-form item)]
-   [:td {:data-th ""} (cart/remove-from-cart-button item)]])
+   [:td.actions {:data-th ""}
+    (form/link-to-form item)
+    (cart/remove-from-cart-button item)]])
 
 (defn cart-list [items]
   (when-not (empty? items)
     [:div.outer-cart
      [:div.inner-cart
       [:div.cart-title
-       [:div.fa.fa-shopping-cart]
-       [:div.cart-title (text :t.cart/header)]]
+       [:i.fa.fa-shopping-cart]
+       [:span (text :t.cart/header)]]
       [:table.rems-table.cart
        (for [item (sort-by get-catalogue-item-title items)]
          (cart-item item))]]]))
@@ -45,11 +46,11 @@
   (let [resid (:resid item)
         title (get-catalogue-item-title item)
         component (if (urn-catalogue-item? item)
-                    [:a {:href resid :target :_blank} title]
+                    [:a.catalogue-item-link {:href resid :target :_blank} title]
                     title)]
     [:tr
      [:td {:data-th (text :t.catalogue/header)} component]
-     [:td {:data-th ""} (cart/add-to-cart-button item)]]))
+     [:td.actions {:data-th ""} (cart/add-to-cart-button item)]]))
 
 (defn catalogue-list [items]
   [:table.rems-table
