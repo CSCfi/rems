@@ -35,29 +35,17 @@
 
 
        [:h2 "Layout components"]
-       [:div.navbar-nav
-        (example "nav-link" nil
-                 (layout/nav-link "example/path" "link text"))]
-       [:div.navbar-nav
-        (example "nav-link active" nil
-                 (layout/nav-link "example/path" "link text" "page-name" "page-name"))]
-       [:div.navbar-nav
-        (example "nav-item" nil
-                 (layout/nav-link "example/path" "link text" "page-name" "li-name"))]
-       [:div.navbar-nav
-        (example "language-switcher" nil
-                 (language-switcher))]
-       (example "Guest user: primary-nav" nil
-                (layout/primary-nav "page-name" nil))
-       (example "Guest user: secondary-nav" nil
-                (layout/secondary-nav nil))
-       (example "Guest user: navbar" nil
-              (layout/navbar "example-page" nil))
-       (example "Logged in user: primary-nav" nil
-                (layout/primary-nav "page-name" g-user))
-       (example "Logged in user: secondary-nav" nil
-                (layout/secondary-nav g-user))
-       (example "Logged in user: navbar" nil
+       (example "nav-link" nil
+                (layout/nav-link "example/path" "link text"))
+       (example "nav-link active" nil
+                (layout/nav-link "example/path" "link text" "page-name" "page-name"))
+       (example "nav-item" nil
+                (layout/nav-link "example/path" "link text" "page-name" "li-name"))
+       (example "language-switcher" nil
+                (language-switcher))
+       (example "navbar guest" nil
+                (layout/navbar "example-page" nil))
+       (example "navbar for logged-in user" nil
                 (layout/navbar "example-page" g-user))
        (example "footer" nil
                 (layout/footer))

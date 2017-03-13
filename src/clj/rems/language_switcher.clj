@@ -19,14 +19,14 @@
 
 (defn lang-link-classes [lang]
   (if (= context/*lang* (keyword lang))
-    "btn-link nav-link active"
-    "btn-link nav-link"))
+    "btn-link active"
+    "btn-link"))
 
 (defn language-switcher
   "Language switcher widget"
   []
   [:div.language-switcher
    (for [lang +languages+]
-     [:form {:method "post" :action (str "/language/" lang)}
+     [:form.inline {:method "post" :action (str "/language/" lang)}
       (anti-forgery-field)
       [:button {:class (lang-link-classes lang) :type "submit"} lang]])])

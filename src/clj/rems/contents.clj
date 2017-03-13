@@ -33,8 +33,8 @@
     [:div.outer-cart
      [:div.inner-cart
       [:div.cart-title
-       [:div.fa.fa-shopping-cart]
-       [:div.cart-title (text :t.cart/header)]]
+       [:i.fa.fa-shopping-cart]
+       [:span (text :t.cart/header)]]
       [:table.rems-table.cart
        (for [item (sort-by get-catalogue-item-title items)]
          (cart-item item))]]]))

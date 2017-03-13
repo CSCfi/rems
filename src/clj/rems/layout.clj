@@ -16,37 +16,8 @@
   [dest]
   (str context/*root-path* dest))
 
-(defn nav-link
-  ([path title]
-   (nav-link path title "nav-link"))
-  ([path title nav-classes]
-   (link-to {:class nav-classes} (url-dest path) title))
-  ([path title page-name li-name]
-   (nav-link path title (if (= page-name li-name) "nav-link active" "nav-link"))))
-
-(defn nav-item
-  [path title page-name li-name]
-  [:li.nav-item
-   (nav-link path title page-name li-name)])
-
-(defn primary-nav
-  [page-name user]
-  [:ul.nav.navbar-nav
-   (if user
-     (nav-item "/catalogue" (text :t.navigation/catalogue) page-name "catalogue")
-     (nav-item "/" (text :t.navigation/home) page-name "home"))
-   (nav-item "/about" (text :t.navigation/about) page-name "about")])
-
-(defn secondary-nav
-  [user]
-  [:div.secondary-navigation.navbar-nav.navitem
-   (when user
-     [:div.user
-      [:div.fa.fa-user]
-      [:div.user-name (str user " / ")]
-      [:div.logout-link
-       (nav-link "/Shibboleth.sso/Logout?return=%2F" (text :t.navigation/logout))]])
-   (language-switcher)])
+(defn nav-link [path title & [active?]]
+  (link-to {:class (str "nav-item nav-link" (if active? " active" ""))} (url-dest path) title))
 
 (defn navbar
   [page-name user]
@@ -54,9 +25,22 @@
    [:button.navbar-toggler.hidden-sm-up
     {:type "button" :data-toggle "collapse" :data-target "#collapsing-navbar"}
     "&#9776;"]
+   [:div.navbar-text.float-xs-right
+    (when user
+      [:div.user
+       [:i.fa.fa-user]
+       [:span.user-name (str user " /")]
+       (nav-link "/Shibboleth.sso/Logout?return=%2F" (text :t.navigation/logout) false)])]
    [:div#collapsing-navbar.collapse.navbar-toggleable-xs
-    (primary-nav page-name user)
-    (secondary-nav user)]])
+    ;; TODO configurable brand?
+    ;; [:a.navbar-brand {:href "/"} "REMS"]
+    [:div.nav.navbar-nav
+     (if user
+       (nav-link "/catalogue" (text :t.navigation/catalogue) (= page-name "catalogue"))
+       (nav-link "/" (text :t.navigation/home) (= page-name "home")))
+     (nav-link "/about" (text :t.navigation/about) (= page-name "about"))
+     [:div.nav-item.navbar-text.float-sm-right (language-switcher)]
+     ]]])
 
 (defn footer []
   [:footer (text :t/footer)])
