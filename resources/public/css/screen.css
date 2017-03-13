@@ -232,6 +232,10 @@ footer, .push {
   white-space: nowrap;
 }
 
+.user {
+  color: #4D5A91;
+}
+
 .navbar {
   padding-left: 0;
   padding-right: 0;
