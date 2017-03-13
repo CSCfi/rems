@@ -120,10 +120,10 @@ footer, .push {
 }
 
 .rems-table td:before {
-  content: attr(data-th)": ";
+  content: attr(data-th)":";
   font-weight: bold;
 
-  width: 6.5em;
+  margin-right: 0.5rem;
   display: inline-block;
 }
 
