@@ -28,12 +28,12 @@
                    :logout "Kirjaudu ulos"
                    :about "Info"
                    :home "Etusivu"
-                   :catalogue "Aineistoluettelo"}
+                   :catalogue "Kielivarat"}
       :login {:title "Kirjaudu sisään"
               :text "Kirjaudu sisään Haka-tunnuksillasi"}
       :about {:text "hauki on kala"}
-      :cart {:header "Resurssi korissa"
+      :cart {:header "Kielivarat korissa"
              :add "Lisää koriin"
              :remove "Poista"}
-      :catalogue {:header "Resurssi"}}}
+      :catalogue {:header "Kielivarat"}}}
     :en :en-GB}})
