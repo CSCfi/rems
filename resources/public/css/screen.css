@@ -85,6 +85,10 @@ footer, .push {
   border-bottom: 1px solid #CAD2E6;
 }
 
+.btn.disabled {
+  opacity: 0.25;
+}
+
 .rems-table {
   margin: 1em 0;
   min-width: 100%;
