@@ -120,7 +120,7 @@ footer, .push {
 .rems-table.cart {
   background: #fff;
   color: #000;
-  margin: 0 0 1em 0;
+  margin: 0;
 }
 
 .rems-table.cart td, .rems-table.cart th {
@@ -257,17 +257,12 @@ footer, .push {
 }
 
 .inner-cart {
-  width: 95%;
-  margin: 0 auto;
+  margin: 1em;
 }
 
 .outer-cart {
   border: 1px solid #CAD2E6;
   border-radius: .4em;
-}
-
-.cart-title {
-  margin-top: 0.5em;
 }
 
 .fa, .user-name {
