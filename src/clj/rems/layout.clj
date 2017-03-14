@@ -43,27 +43,26 @@
      ]]])
 
 (defn footer []
-  [:footer (text :t/footer)])
+  [:footer.footer
+   [:div.container [:nav.navbar [:div.navbar-text (text :t/footer)]]]])
 
 (defn logo []
-  [:div.logo])
+  [:div.logo [:div.img]])
 
 (defn page-template
   [page-name nav content footer]
   (html5 [:head
-          [:META {:http-equiv "Content-Type" :content "text/html; charset=UTF-8"}]
-          [:META {:name "viewport" :content "width=device-width, initial-scale=1"}]
+          [:meta {:http-equiv "Content-Type" :content "text/html; charset=UTF-8"}]
+          [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
           [:title "Welcome to rems"]
           (include-css "/assets/bootstrap/css/bootstrap.min.css")
           (include-css "/assets/font-awesome/css/font-awesome.min.css")
           (include-css "/css/screen.css")
 
           [:body
-           [:div.wrapper
-            [:div.container nav]
-            (logo)
-            [:div.container content]
-            [:div.push]]
+           [:div.container nav]
+           (logo)
+           [:div.container content]
            footer
            (include-js "/assets/jquery/jquery.min.js")
            (include-js "/assets/tether/dist/js/tether.min.js")
