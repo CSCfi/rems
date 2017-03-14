@@ -44,3 +44,20 @@
       name: httpd
       state: started
       enabled: yes
+
+  - name: Download tomcat binaries
+    get_url:
+      url: http://archive.apache.org/dist/tomcat/tomcat-8/v8.0.30/bin/apache-tomcat-8.0.30.tar.gz
+      dest: /opt/tomcat
+
+  - name: Extract tomcat archive
+    command: tar xvf apache-tomcat-8*tar.gz -C /opt/tomcat --strip-components=1
+    args:
+      chdir: /opt/tomcat
+
+  - name: Add tomcat group
+    group:
+      name: tomcat
+
+  - name: Add tomcat user to group tomcat without login option
+    command: useradd -M -s /bin/nologin -g tomcat -d /opt/tomcat tomcat
