@@ -2,6 +2,8 @@
 
 - hosts: rems
   become: yes
+  roles:
+    - tomcat_env
   tasks:
 
 - name: Add Shibboleth yum repository
@@ -45,6 +47,20 @@
       state: started
       enabled: yes
 
+  - name: Add tomcat group
+    group:
+      name: tomcat
+
+  - name: Add tomcat user to group tomcat without login option
+    command: useradd -M -s /bin/nologin -g tomcat -d /opt/tomcat tomcat
+
+  - name: Create /opt/tomcat directory with tomcat as group and owner
+    file:
+      path: /opt/tomcat
+      state: directory
+      owner: tomcat
+      group: tomcat
+
   - name: Download tomcat binaries
     get_url:
       url: http://archive.apache.org/dist/tomcat/tomcat-8/v8.0.30/bin/apache-tomcat-8.0.30.tar.gz
@@ -55,9 +71,18 @@
     args:
       chdir: /opt/tomcat
 
-  - name: Add tomcat group
-    group:
-      name: tomcat
+  - name: Copy tomcat.service
+    copy:
+      src: tomcat.service
+      dest: /etc/systemd/system
 
-  - name: Add tomcat user to group tomcat without login option
-    command: useradd -M -s /bin/nologin -g tomcat -d /opt/tomcat tomcat
+  - name: Copy tomcat context.xml
+    copy:
+      src: context.xml
+      dest: /opt/tomcat/conf
+
+  - name: Enable tomcat service
+    service:
+      name: tomcat
+      state: started
+      enabled: yes
