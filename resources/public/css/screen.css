@@ -91,6 +91,10 @@ footer {
   background-color: #CAD2E6;
 }
 
+footer, .push {
+    height: 80px;
+}
+
 .jumbotron {
   background-color: #fff;
   text-align: center;

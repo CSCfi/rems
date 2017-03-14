@@ -64,7 +64,9 @@
             [:div.container nav]
             (logo)
             [:div.container content]
-            footer]
+            ;this pushes the footer to be at the bottom of the page regardless of page content length
+            [:div.push]]
+            footer
            (include-js "/assets/jquery/jquery.min.js")
            (include-js "/assets/tether/dist/js/tether.min.js")
            (include-js "/assets/bootstrap/js/bootstrap.min.js")]]))
