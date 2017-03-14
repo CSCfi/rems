@@ -52,8 +52,8 @@
 (defn page-template
   [page-name nav content footer]
   (html5 [:head
-          [:META {:http-equiv "Content-Type" :content "text/html; charset=UTF-8"}]
-          [:META {:name "viewport" :content "width=device-width, initial-scale=1"}]
+          [:meta {:http-equiv "Content-Type" :content "text/html; charset=UTF-8"}]
+          [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
           [:title "Welcome to rems"]
           (include-css "/assets/bootstrap/css/bootstrap.min.css")
           (include-css "/assets/font-awesome/css/font-awesome.min.css")
