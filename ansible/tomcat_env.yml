@@ -2,11 +2,9 @@
 
 - hosts: rems
   become: yes
-  roles:
-    - tomcat_env
   tasks:
 
-- name: Add Shibboleth yum repository
+  - name: Add Shibboleth yum repository
     shell: "yum-config-manager --add-repo https://download.opensuse.org/repositories/security://shibboleth/CentOS_7/security:shibboleth.repo"
     args:
       creates: /etc/yum.repos.d/shibboleth.repo
@@ -26,9 +24,9 @@
   - name: Copy maintenance page files
     copy: src={{item.src}} dest={{item.dest}}
     with_items:
-      - { src: '{{maintenance_src}}' dest: '/var/www/html' }
-      - { src: '{{styles_src}}' dest: '/var/www/html/css' }
-      - { src: '{{bg_img_src}}' dest: '/var/www/html/img' }
+      - { src: '{{maintenance_src}}', dest: '/var/www/html' }
+      - { src: '{{styles_src}}', dest: '/var/www/html/css' }
+      - { src: '{{bg_img_src}}', dest: '/var/www/html/img' }
 
   - name: Copy haka test cert
     get_url:
@@ -52,7 +50,12 @@
       name: tomcat
 
   - name: Add tomcat user to group tomcat without login option
-    command: useradd -M -s /bin/nologin -g tomcat -d /opt/tomcat tomcat
+    user:
+      name: tomcat
+      group: tomcat
+      shell: /bin/nologin
+      createhome: no
+      home: /opt/tomcat
 
   - name: Create /opt/tomcat directory with tomcat as group and owner
     file:
@@ -67,7 +70,7 @@
       dest: /opt/tomcat
 
   - name: Extract tomcat archive
-    command: tar xvf apache-tomcat-8*tar.gz -C /opt/tomcat --strip-components=1
+    shell: tar xvf apache-tomcat-8*tar.gz -C /opt/tomcat --strip-components=1
     args:
       chdir: /opt/tomcat
 
@@ -80,6 +83,15 @@
     copy:
       src: context.xml
       dest: /opt/tomcat/conf
+
+  - name: Change ownership files in /opt/tomcat to tomcat user
+    file:
+      path: /opt/tomcat
+      state: directory
+      owner: tomcat
+      group: tomcat
+      recurse: yes
+      mode: 0750
 
   - name: Enable tomcat service
     service:
