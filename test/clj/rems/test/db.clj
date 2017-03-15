@@ -1,4 +1,5 @@
-(ns rems.test.db.core
+(ns rems.test.db
+  "Namespace for tests that use an actual database."
   (:require [rems.db.core :as db]
             [rems.contents :as contents]
             [rems.env :refer [*db*]]
