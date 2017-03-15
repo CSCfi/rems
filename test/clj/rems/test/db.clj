@@ -63,9 +63,22 @@
     (db/link-form-item! {:form (:id form-fi) :itemorder 1 :item (:id item-a) :user 0})
 
     (is (:id item) "sanity check")
-    (let [form-fi (form/get-form-for (:id item) "fi")
-          form-en (form/get-form-for (:id item) "en")]
-      (is (= "entitle" (:title form-en)) "title")
-      (is (= ["A" "B" "C"] (map :title (:items form-en))) "items should be in order")
-      (is (= "fititle" (:title form-fi)) "title")
-      (is (= ["A"] (map :title (:items form-fi))) "there should be only one item"))))
+
+    (testing "get form for catalogue item"
+      (let [form-fi (form/get-form-for (:id item) "fi")
+            form-en (form/get-form-for (:id item) "en")]
+        (is (= "entitle" (:title form-en)) "title")
+        (is (= ["A" "B" "C"] (map :title (:items form-en))) "items should be in order")
+        (is (= "fititle" (:title form-fi)) "title")
+        (is (= ["A"] (map :title (:items form-fi))) "there should be only one item")))
+
+    (testing "get partially filled form"
+      (let [app (db/create-application! {:item (:id item) :user 0})]
+        (is app "sanity check")
+        (db/save-field-value! {:application (:id app)
+                               :form (:id form-en)
+                               :item (:id item-b)
+                               :user 0
+                               :value "B"})
+        (let [f (form/get-form-for (:id item) "en" (:id app))]
+          (is (= [nil "B" nil] (map :value (:items f)))))))))

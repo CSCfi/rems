@@ -105,7 +105,7 @@ INSERT INTO rms_application_form_item_map
 VALUES
 (:form, :item, :user, :itemorder)
 
--- :name create-application! :<!
+-- :name create-application! :insert
 -- TODO: what is fnlround?
 INSERT INTO rms_catalogue_item_application
 (catId, applicantUserId, fnlround)
