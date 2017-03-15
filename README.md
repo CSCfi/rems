@@ -77,3 +77,8 @@ Transfer script
 ```
 PGHOST=172.17.0.2 PGUSER=rems ./transfer-db.sh demo_rems-25-Jan-2017.sql
 ```
+
+In case you don't allow the `CREATE SCHEMA` for the user, you can pre-create it like so:
+```
+psql -U postgres -c "CREATE SCHEMA transfer AUTHORIZATION rems"
+```
