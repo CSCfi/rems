@@ -60,6 +60,7 @@ WHERE rci.id = :id
 
 -- :name get-form-items :? :*
 SELECT
+  item.id,
   item.title,
   inputprompt,
   formitemoptional,
@@ -73,3 +74,29 @@ LEFT OUTER JOIN rms_application_form_item_map itemmap ON form.id = itemmap.formI
 LEFT OUTER JOIN rms_application_form_item item ON item.id = itemmap.formItemId
 WHERE form.id = :id
 ORDER BY itemorder
+
+-- :name create-application! :<!
+-- TODO: what is fnlround?
+INSERT INTO rms_catalogue_item_application
+(catId, applicantUserId, fnlround)
+VALUES
+(:item, :user, 0)
+RETURNING id
+
+-- :name save-field-value! :!
+-- TODO: upsert
+INSERT INTO rms_application_text_values
+(catAppId, modifierUserId, value, formMapId)
+VALUES
+(:application, :user, :value,
+ (SELECT id FROM rms_application_form_item_map
+  WHERE formId = :form AND formItemId = :item))
+
+-- :name get-field-value :? :n
+SELECT
+  value
+FROM rms_application_text_values textvalues
+LEFT OUTER JOIN rms_application_form_item_map itemmap ON textvalues.formMapId = itemmap.id
+WHERE textvalues.catAppId = :application
+  AND itemmap.formItemId = :item
+  AND itemmap.formId = :form

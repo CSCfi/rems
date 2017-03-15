@@ -3,6 +3,7 @@
             [rems.context :as context]
             [rems.contents :as contents]
             [rems.cart :as cart]
+            [rems.form :as form]
             [rems.language-switcher :as language-switcher]
             [compojure.core :refer [defroutes GET]]))
 
@@ -18,9 +19,13 @@
   (layout/render
     "catalogue" (contents/catalogue)))
 
-(defn form-page [id]
+(defn form-page [id application]
   (layout/render
-   "form" (contents/form id)))
+   "form"
+   (form/form (form/get-form-for
+               id
+               (name context/*lang*)
+               application))))
 
 (defroutes public-routes
   (GET "/" [] (home-page))
@@ -29,5 +34,8 @@
 
 (defroutes secured-routes
   (GET "/catalogue" [] (catalogue-page))
-  (GET "/form/:id" [id] (form-page id))
+  (GET "/form/:id/:application" [id application]
+       (form-page (Long/parseLong id) (Long/parseLong application)))
+  (GET "/form/:id" [id]
+       (form-page (Long/parseLong id) nil))
   cart/cart-routes)
