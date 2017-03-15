@@ -1,6 +1,10 @@
 (ns rems.form
   (:require [hiccup.form :as f]
-            [rems.db.core :as db]))
+            [rems.context :as context]
+            [rems.db.core :as db]
+            [rems.anti-forgery :refer [anti-forgery-field]]
+            [compojure.core :refer [defroutes POST]]
+            [ring.util.response :refer [redirect]]))
 
 (defn- process-item
   "Returns an item structure like this:
@@ -44,21 +48,22 @@
      :title (or (:formtitle form) (:metatitle form))
      :items items}))
 
+(defn- id-to-name [id]
+  (str "field" id))
+
 (defn text-field [{title :title id :id
                    prompt :inputprompt value :value}]
-  (let [nam (str "text" id)]
-    [:div.form-group
-     [:label {:for nam} title]
-     [:input.form-control {:type "text" :id nam :placeholder prompt
-                           :value value}]]))
+  [:div.form-group
+   [:label {:for (id-to-name id)} title]
+   [:input.form-control {:type "text" :name (id-to-name id) :placeholder prompt
+                         :value value}]])
 
 (defn texta-field [{title :title id :id
                     prompt :inputprompt value :value}]
-  (let [nam (str "text" id)]
-    [:div.form-group
-     [:label {:for nam} title]
-     [:textarea.form-control {:id nam :placeholder prompt
-                              :value value}]]))
+  [:div.form-group
+   [:label {:for (id-to-name id)} title]
+   [:textarea.form-control {:name (id-to-name id) :placeholder prompt}
+    value]])
 
 (defn field [f]
   (case (:type f)
@@ -67,10 +72,32 @@
     [:p.alert.alert-warning "Unsupported field " (pr-str f)]))
 
 (defn form [form]
-  [:form
+  [:form {:method "post" :action (str "/form/" (:id form) "/save")}
    [:h3 (:title form)]
    (for [i (:items form)]
-     (field i))])
+     (field i))
+   (anti-forgery-field)
+   [:button.btn {:type "submit"} "Save"]])
 
 (defn link-to-form [item]
   [:a.btn.btn-primary {:href (str "/form/" (:id item))} "Apply"])
+
+(defn- create-application [id input]
+  (let [application-id (:id (db/create-application! {:item id :user 0}))
+        form (get-form-for id (name context/*lang*))]
+    (doseq [{item-id :id :as item} (:items form)]
+      (when-let [value (get input (id-to-name item-id))]
+        (db/save-field-value! {:application application-id
+                               :form (:id form)
+                               :item item-id
+                               :user 0
+                               :value value})))
+    application-id))
+
+(defn- save [id input]
+  (let [application-id (create-application id input)]
+    (redirect (str "/form/" id "/" application-id) :see-other)))
+
+(defroutes form-routes
+  (POST "/form/:id/save" [id :as {input :form-params}]
+        (save (Long/parseLong id) input)))
