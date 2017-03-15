@@ -7,7 +7,7 @@ docker run --name rems_mysql -p 3306:3306 --rm -e MYSQL_DATABASE=rems_mysql -e M
 sleep 30
 
 # Load dump
-docker run -it --link rems_mysql:mysql -v $(pwd)/demo_rems-25-Jan-2017.sql:/tmp/data.sql --rm mariadb sh -c 'exec mysql -h"$MYSQL_PORT_3306_TCP_ADDR" -P"$MYSQL_PORT_3306_TCP_PORT" -uroot -p"$MYSQL_ENV_MYSQL_ROOT_PASSWORD" rems_mysql < /tmp/data.sql'
+docker run -it --link rems_mysql:mysql -v `readlink -f $1`:/tmp/data.sql --rm mariadb sh -c 'exec mysql -h"$MYSQL_PORT_3306_TCP_ADDR" -P"$MYSQL_PORT_3306_TCP_PORT" -uroot -p"$MYSQL_ENV_MYSQL_ROOT_PASSWORD" rems_mysql < /tmp/data.sql'
 
 # Check contents of MariaDB
 #docker run -it --link rems_mysql:mysql --rm mariadb sh -c 'exec mysql -h"$MYSQL_PORT_3306_TCP_ADDR" -P"$MYSQL_PORT_3306_TCP_PORT" -uroot -p"$MYSQL_ENV_MYSQL_ROOT_PASSWORD" --execute="USE rems_mysql; SELECT * from rms_catalogue_item;"'
