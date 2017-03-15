@@ -1,6 +1,6 @@
 # Resource Entitlement Management System
 
-... prototype in clojure
+... prototype in Clojure.
 
 ## Getting started
 
