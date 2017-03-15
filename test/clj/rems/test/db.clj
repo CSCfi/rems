@@ -8,7 +8,8 @@
             [clojure.test :refer :all]
             [clojure.java.jdbc :as jdbc]
             [rems.config :refer [env]]
-            [mount.core :as mount]))
+            [mount.core :as mount]
+            [conman.core :as conman]))
 
 (use-fixtures
   :once
@@ -18,12 +19,21 @@
       #'rems.env/*db*)
     (db/assert-test-database!)
     (migrations/migrate ["reset"] (select-keys env [:database-url]))
-    (db/create-test-data!)
     (f)
     (mount/stop)))
 
+(use-fixtures :each
+  (fn [f]
+    (conman/with-transaction [rems.env/*db*]
+      (jdbc/db-set-rollback-only! rems.env/*db*)
+      (f))))
+
 (deftest ^:integration test-get-catalogue-items
+  (testing "without catalogue items"
+    (is (empty? (db/get-catalogue-items))))
+
   (testing "with test database"
+    (db/create-test-data!)
     (is (= ["B" "ELFA Corpus"] (sort (map :title (db/get-catalogue-items)))) "should find two items")
 
     (let [item-from-list (second (db/get-catalogue-items))
@@ -32,6 +42,7 @@
              (select-keys item-by-id [:id :title])) "should find catalogue item by id"))))
 
 (deftest ^:integration test-form
+  (db/create-test-data!)
   (let [elfa (first (filter #(= (:title %) "ELFA Corpus") (db/get-catalogue-items)))
         form-fi (form/get-form-for (:id elfa) "fi")
         form-en (form/get-form-for (:id elfa) "en")]
