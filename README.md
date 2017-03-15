@@ -10,6 +10,7 @@ Run the official postgres docker image and initialize the database:
 
 ```
 docker run --rm --name rems_test -p 5432:5432 -d postgres
+sleep 5
 PGHOST=localhost ./create-test-db.sh
 ```
 
