@@ -1,1 +1,5 @@
 warfile: ../target/uberjar/rems.war
+
+maintenance_src: ../resources/templates/maintenance.html
+styles_src: ../resources/public/css/maintenance.css
+bg_img_src: ../resources/public/img/revontulet.jpg

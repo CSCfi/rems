@@ -1,0 +1,101 @@
+---
+
+- hosts: rems
+  become: yes
+  tasks:
+
+  - name: Add Shibboleth yum repository
+    shell: "yum-config-manager --add-repo https://download.opensuse.org/repositories/security://shibboleth/CentOS_7/security:shibboleth.repo"
+    args:
+      creates: /etc/yum.repos.d/shibboleth.repo
+
+  - name: Install packages
+    yum:
+      name: "{{item}}"
+      state: latest
+    with_items:
+      - java-1.8.0-openjdk
+      - java-1.8.0-openjdk-devel
+      - httpd
+      - shibboleth
+      - mod_proxy_html
+      - mod_ssl
+
+  - name: Copy maintenance page files
+    copy: src={{item.src}} dest={{item.dest}}
+    with_items:
+      - src: '{{maintenance_src}}'
+        dest: /var/www/html
+      - src: '{{styles_src}}'
+        dest: /var/www/html/css
+      - src: '{{bg_img_src}}'
+        dest: /var/www/html/img
+
+  - name: Copy haka test cert
+    get_url:
+      url: https://confluence.csc.fi/download/attachments/31195585/haka_testi_2015_sha2.crt
+      dest: /etc/pki/tls/certs
+
+  - name: Enable shibboleth service
+    service:
+      name: shibd
+      state: started
+      enabled: yes
+
+  - name: Enable httpd service
+    service:
+      name: httpd
+      state: started
+      enabled: yes
+
+  - name: Add tomcat group
+    group:
+      name: tomcat
+
+  - name: Add tomcat user to group tomcat without login option
+    user:
+      name: tomcat
+      group: tomcat
+      shell: /bin/nologin
+      createhome: no
+      home: /opt/tomcat
+      system: yes
+
+  - name: Create /opt/tomcat directory with tomcat as group and owner
+    file:
+      path: /opt/tomcat
+      state: directory
+      owner: tomcat
+      group: tomcat
+
+  - name: Install tomcat
+    unarchive:
+      src: http://archive.apache.org/dist/tomcat/tomcat-8/v8.0.30/bin/apache-tomcat-8.0.30.tar.gz
+      dest: /opt/tomcat
+      remote_src: yes
+      extra_opts: --strip-components=1
+
+  - name: Copy tomcat.service
+    copy:
+      src: tomcat.service
+      dest: /etc/systemd/system
+
+  - name: Copy tomcat context.xml
+    copy:
+      src: context.xml
+      dest: /opt/tomcat/conf
+
+  - name: Change ownership files in /opt/tomcat to tomcat user
+    file:
+      path: /opt/tomcat
+      state: directory
+      owner: tomcat
+      group: tomcat
+      recurse: yes
+      mode: 0750
+
+  - name: Enable tomcat service
+    systemd:
+      name: tomcat
+      state: started
+      enabled: yes
