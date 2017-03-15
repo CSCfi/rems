@@ -9,13 +9,13 @@ FROM rms_catalogue_item rci
 LEFT OUTER JOIN rms_resource rr ON (rci.resid = rr.id)
 WHERE rci.id = :id
 
--- :name create-catalogue-item! :! :n
+-- :name create-catalogue-item! :insert
 -- :doc Create a single catalogue item
 INSERT INTO rms_catalogue_item
 (title, formid, resid)
 VALUES (:title, :form, :resid)
 
--- :name create-resource! :! :n
+-- :name create-resource! :insert
 -- :doc Create a single resource
 INSERT INTO rms_resource
 (id, resid, prefix, modifieruserid)

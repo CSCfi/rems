@@ -33,21 +33,39 @@
     (is (empty? (db/get-catalogue-items))))
 
   (testing "with test database"
-    (db/create-test-data!)
-    (is (= ["B" "ELFA Corpus"] (sort (map :title (db/get-catalogue-items)))) "should find two items")
-
+    (db/create-resource! {:id 1 :resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1})
+    (db/create-catalogue-item! {:title "ELFA Corpus" :form nil :resid 1})
+    (db/create-catalogue-item! {:title "B" :form nil :resid nil})
+    (is (= ["B" "ELFA Corpus"] (sort (map :title (db/get-catalogue-items))))
+        "should find two items")
     (let [item-from-list (second (db/get-catalogue-items))
           item-by-id (db/get-catalogue-item {:id (:id item-from-list)})]
       (is (= (select-keys item-from-list [:id :title])
-             (select-keys item-by-id [:id :title])) "should find catalogue item by id"))))
+             (select-keys item-by-id [:id :title]))
+          "should find catalogue item by id"))))
 
 (deftest ^:integration test-form
-  (db/create-test-data!)
-  (let [elfa (first (filter #(= (:title %) "ELFA Corpus") (db/get-catalogue-items)))
-        form-fi (form/get-form-for (:id elfa) "fi")
-        form-en (form/get-form-for (:id elfa) "en")]
-    (is elfa "sanity check")
-    (is (= "entitle" (:title form-en)) "title")
-    (is (= ["A" "B" "C"] (map :title (:items form-en))) "items should be in order")
-    (is (= "fititle" (:title form-fi)) "title")
-    (is (= ["A"] (map :title (:items form-fi))) "there should be only one item")))
+  (let [meta (db/create-form-meta! {:title "metatitle" :user 0})
+        item (db/create-catalogue-item! {:title "item" :form (:id meta) :resid nil})
+        form-en (db/create-form! {:title "entitle" :user 0})
+        form-fi (db/create-form! {:title "fititle" :user 0})
+        item-c (db/create-form-item!
+                {:title "C" :type "text" :inputprompt "prompt" :user 0 :value 0})
+        item-a (db/create-form-item!
+                {:title "A" :type "text" :inputprompt "prompt" :user 0 :value 0})
+        item-b (db/create-form-item!
+                {:title "B" :type "text" :inputprompt "prompt" :user 0 :value 0})]
+    (db/link-form-meta! {:meta (:id meta) :form (:id form-en) :lang "en" :user 0})
+    (db/link-form-meta! {:meta (:id meta) :form (:id form-fi) :lang "fi" :user 0})
+    (db/link-form-item! {:form (:id form-en) :itemorder 2 :item (:id item-b) :user 0})
+    (db/link-form-item! {:form (:id form-en) :itemorder 1 :item (:id item-a) :user 0})
+    (db/link-form-item! {:form (:id form-en) :itemorder 3 :item (:id item-c) :user 0})
+    (db/link-form-item! {:form (:id form-fi) :itemorder 1 :item (:id item-a) :user 0})
+
+    (is (:id item) "sanity check")
+    (let [form-fi (form/get-form-for (:id item) "fi")
+          form-en (form/get-form-for (:id item) "en")]
+      (is (= "entitle" (:title form-en)) "title")
+      (is (= ["A" "B" "C"] (map :title (:items form-en))) "items should be in order")
+      (is (= "fititle" (:title form-fi)) "title")
+      (is (= ["A"] (map :title (:items form-fi))) "there should be only one item"))))
