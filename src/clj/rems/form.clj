@@ -19,8 +19,8 @@
    :value (when application-id
             (:value
              (db/get-field-value {:item (:id item)
-                                 :form form-id
-                                 :application application-id})))})
+                                  :form form-id
+                                  :application application-id})))})
 
 (defn get-form-for
   "Returns a form structure like this:
