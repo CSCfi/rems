@@ -19,12 +19,12 @@ docker run -it --link rems_mysql:mysql -v $(pwd)/demo_rems-25-Jan-2017.sql:/tmp/
 #docker run -it --rm --link rems_test:postgres postgres psql -h postgres -U rems
 
 # Create target schema in Postgres
-docker run -it --rm --link rems_test:postgres postgres psql -h postgres -U rems -c 'DROP SCHEMA IF EXISTS transfer CASCADE; CREATE SCHEMA transfer;'
+docker run -it --rm postgres psql -h $PGHOST -U $PGUSER -c 'DROP SCHEMA IF EXISTS transfer CASCADE; CREATE SCHEMA transfer;'
 
 # Load data from MariaDB into Postgres
-docker run -it --rm --link rems_test:postgres --link rems_mysql:mysql dimitri/pgloader pgloader --set "search_path='transfer'" --verbose mysql://root:rems_test@rems_mysql/rems_mysql postgresql://rems@rems_test/rems
+docker run -it --rm --link rems_mysql:mysql dimitri/pgloader pgloader --set "search_path='transfer'" --verbose mysql://root:rems_test@rems_mysql/rems_mysql postgresql://$PGUSER@$PGHOST/rems
 
-docker run -it --rm --link rems_test:postgres -v $(pwd)/resources/sql/transfer.sql:/tmp/transfer.sql postgres psql -h postgres -U rems -f /tmp/transfer.sql
+docker run -it --rm --link rems_test:postgres -v $(pwd)/resources/sql/transfer.sql:/tmp/transfer.sql postgres psql -h $PGHOST -U $PGUSER -f /tmp/transfer.sql
 
 # Stop (and remove) MariaDB
 docker stop rems_mysql
