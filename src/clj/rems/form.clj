@@ -17,7 +17,7 @@
   (case (:type f)
     "text" (text-field f)
     "texta" (texta-field f)
-    [:p "Unsupported field " (pr-str f)]))
+    [:p.alert.alert-warning "Unsupported field " (pr-str f)]))
 
 (defn form [form fields]
   [:form
