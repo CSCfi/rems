@@ -88,19 +88,18 @@
        [:h2 "Forms"]
        (example "field of type \"text\"" nil
                 [:form
-                 (form/field {:type "text" :title "Title" :order 1 :inputprompt "prompt"})])
+                 (form/field {:type "text" :title "Title" :inputprompt "prompt"})])
        (example "field of type \"texta\"" nil
                 [:form
-                 (form/field {:type "texta" :title "Title" :order 1 :inputprompt "prompt"})])
+                 (form/field {:type "texta" :title "Title" :inputprompt "prompt"})])
        (example "field of unsupported type" nil
                 [:form
-                 (form/field {:type "unsupported" :title "Title" :order 1 :inputprompt "prompt"})])
+                 (form/field {:type "unsupported" :title "Title" :inputprompt "prompt"})])
        (example "form" nil
-                (form/form {:formtitle "Form title"}
-                           [{:type "text" :title "Field 1" :order 1 :inputprompt "prompt 1"}
-                            {:type "texta" :title "Field 2" :order 2 :inputprompt "prompt 2"}
-                            {:type "unsupported" :title "Field 3" :order 3 :inputprompt "prompt 3"}]))
-
+                (form/form {:title "Form title"
+                            :items [{:type "text" :title "Field 1" :inputprompt "prompt 1"}
+                                    {:type "texta" :title "Field 2" :inputprompt "prompt 2"}
+                                    {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]}))
 
        [:h2 "Misc components"]
        (example "login" nil (contents/login "/"))
