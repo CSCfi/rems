@@ -14,3 +14,4 @@
 
 - `rems.yml` deploy rems docker image
 - `postgres.yml` install & configure postgres database
+- `tomcat_env.yml` install httpd, shibd and tomcat
