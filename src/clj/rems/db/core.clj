@@ -1,5 +1,6 @@
 (ns rems.db.core
   (:require
+   [clojure.core.memoize :as memo]
    [cheshire.core :refer [generate-string parse-string]]
    [clojure.java.jdbc :as jdbc]
    [conman.core :as conman]
@@ -15,6 +16,8 @@
             Date
             Timestamp
             PreparedStatement]))
+
+(def +localizations-cache-time-ms+ (* 5 60 1000))
 
 (conman/bind-connection *db* "sql/queries.sql")
 
@@ -70,14 +73,18 @@
        (map #(update-in % [:langcode] keyword))
        (index-by [:catid :langcode])))
 
-(mount/defstate catalogue-item-localizations
-  :start (load-catalogue-item-localizations!))
+(defn get-cache [cache-key]
+  (case cache-key
+    :localizations (load-catalogue-item-localizations!)))
+
+(def cached
+  (memo/ttl get-cache :ttl/threshold +localizations-cache-time-ms+))
 
 (defn localize-catalogue-item
   "Associates localisations into a catalogue item from
   the preloaded state."
   [item]
-  (assoc item :localizations (catalogue-item-localizations (:id item))))
+  (assoc item :localizations ((cached :localizations) (:id item))))
 
 (defn get-localized-catalogue-items []
   (map localize-catalogue-item (get-catalogue-items)))

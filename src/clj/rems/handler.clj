@@ -9,8 +9,7 @@
             [mount.core :as mount]
             [rems.middleware :as middleware]
             [clojure.tools.logging :as log]
-            [rems.config :refer [env]]
-            [rems.db.core :as db :refer [catalogue-item-localizations]]))
+            [rems.config :refer [env]]))
 
 (mount/defstate init-app
   :start ((or (:init +defaults+) identity))

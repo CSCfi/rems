@@ -9,6 +9,12 @@
 Run the official postgres docker image and initialize the database:
 
 ```
+./dev_db.sh
+```
+
+Which does roughly the following:
+
+```
 docker run --rm --name rems_test -p 5432:5432 -d postgres
 sleep 5
 PGHOST=localhost ./create-test-db.sh
@@ -85,6 +91,15 @@ Transfer script
 1. loads the dump in there, then
 1. uses `pgloader` to transfer the data.
 
+
+Not it may take up to 5 minutes for the DB caches to reload, and reload e.g. localization texts. To force this you can restart the server.
+
 ```
 PGHOST=172.17.0.2 PGUSER=rems ./transfer-db.sh demo_rems-25-Jan-2017.sql
+```
+
+For development you can just run:
+
+```
+./dev_transfer.sh
 ```
