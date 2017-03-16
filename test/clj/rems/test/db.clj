@@ -81,4 +81,16 @@
                                :user 0
                                :value "B"})
         (let [f (form/get-form-for (:id item) "en" (:id app))]
-          (is (= [nil "B" nil] (map :value (:items f)))))))))
+          (is (= [nil "B" nil] (map :value (:items f)))))
+
+        (testing "reset field value"
+          (db/clear-field-value! {:application (:id app)
+                                  :form (:id form-en)
+                                  :item (:id item-b)})
+          (db/save-field-value! {:application (:id app)
+                                 :form (:id form-en)
+                                 :item (:id item-b)
+                                 :user 0
+                                 :value "X"})
+          (let [f (form/get-form-for (:id item) "en" (:id app))]
+            (is (= [nil "X" nil] (map :value (:items f))))))))))

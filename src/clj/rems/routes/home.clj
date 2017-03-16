@@ -38,4 +38,5 @@
        (form-page (Long/parseLong id) (Long/parseLong application)))
   (GET "/form/:id" [id]
        (form-page (Long/parseLong id) nil))
-  cart/cart-routes)
+  cart/cart-routes
+  form/form-routes)

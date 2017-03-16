@@ -1,6 +1,10 @@
 (ns rems.form
   (:require [hiccup.form :as f]
-            [rems.db.core :as db]))
+            [rems.context :as context]
+            [rems.db.core :as db]
+            [rems.anti-forgery :refer [anti-forgery-field]]
+            [compojure.core :refer [defroutes POST]]
+            [ring.util.response :refer [redirect]]))
 
 (defn- process-item
   "Returns an item structure like this:
@@ -27,6 +31,7 @@
 
     {:id id
      :title \"Title\"
+     :application 4
      :items [{:id 123
               :type \"texta\"
               :title \"Item title\"
@@ -41,24 +46,26 @@
         items (mapv #(process-item application-id form-id %)
                     (db/get-form-items {:id form-id}))]
     {:id form-id
+     :application application-id
      :title (or (:formtitle form) (:metatitle form))
      :items items}))
 
+(defn- id-to-name [id]
+  (str "field" id))
+
 (defn text-field [{title :title id :id
                    prompt :inputprompt value :value}]
-  (let [nam (str "text" id)]
-    [:div.form-group
-     [:label {:for nam} title]
-     [:input.form-control {:type "text" :id nam :placeholder prompt
-                           :value value}]]))
+  [:div.form-group
+   [:label {:for (id-to-name id)} title]
+   [:input.form-control {:type "text" :name (id-to-name id) :placeholder prompt
+                         :value value}]])
 
 (defn texta-field [{title :title id :id
                     prompt :inputprompt value :value}]
-  (let [nam (str "text" id)]
-    [:div.form-group
-     [:label {:for nam} title]
-     [:textarea.form-control {:id nam :placeholder prompt
-                              :value value}]]))
+  [:div.form-group
+   [:label {:for (id-to-name id)} title]
+   [:textarea.form-control {:name (id-to-name id) :placeholder prompt}
+    value]])
 
 (defn field [f]
   (case (:type f)
@@ -67,10 +74,48 @@
     [:p.alert.alert-warning "Unsupported field " (pr-str f)]))
 
 (defn form [form]
-  [:form
+  [:form {:method "post"
+          :action (if-let [app (:application form)]
+                    (str "/form/" (:id form) "/" app "/save")
+                    (str "/form/" (:id form) "/save"))}
    [:h3 (:title form)]
    (for [i (:items form)]
-     (field i))])
+     (field i))
+   (anti-forgery-field)
+   [:button.btn {:type "submit"} "Save"]])
 
 (defn link-to-form [item]
   [:a.btn.btn-primary {:href (str "/form/" (:id item))} "Apply"])
+
+(defn- save-fields
+  [resource-id application-id input]
+  (let [form (get-form-for resource-id (name context/*lang*))]
+    (doseq [{item-id :id :as item} (:items form)]
+      ;; TODO: the rms_application_text_values table should have a
+      ;; UNIQUE (catAppId, formMapId) constraint. Then we could run one
+      ;; INSERT ON CONFLICT UPDATE query here instead of two queries.
+      (db/clear-field-value! {:application application-id
+                              :form (:id form)
+                              :item item-id})
+      (when-let [value (get input (id-to-name item-id))]
+        (db/save-field-value! {:application application-id
+                               :form (:id form)
+                               :item item-id
+                               :user 0
+                               :value value})))))
+
+(defn- save
+  ([resource-id input]
+   (save resource-id
+         (:id (db/create-application!
+               {:item resource-id :user 0}))
+         input))
+  ([resource-id application-id input]
+   (save-fields resource-id application-id input)
+   (redirect (str "/form/" resource-id "/" application-id) :see-other)))
+
+(defroutes form-routes
+  (POST "/form/:id/save" [id :as {input :form-params}]
+        (save (Long/parseLong id) input))
+  (POST "/form/:id/:application/save" [id application :as {input :form-params}]
+        (save (Long/parseLong id) (Long/parseLong application) input)))

@@ -114,13 +114,18 @@ VALUES
 RETURNING id
 
 -- :name save-field-value! :!
--- TODO: upsert
 INSERT INTO rms_application_text_values
 (catAppId, modifierUserId, value, formMapId)
 VALUES
 (:application, :user, :value,
  (SELECT id FROM rms_application_form_item_map
   WHERE formId = :form AND formItemId = :item))
+
+-- :name clear-field-value! :!
+DELETE FROM rms_application_text_values
+WHERE catAppId = :application
+  AND formMapId = (SELECT id FROM rms_application_form_item_map
+                   WHERE formId = :form AND formItemId = :item)
 
 -- :name get-field-value :? :n
 SELECT
