@@ -18,7 +18,6 @@
     (db/assert-test-database!)
     (migrations/migrate ["reset"] (select-keys env [:database-url]))
     (db/create-test-data!)
-    ;; This needs to start only after the db and data are in place
     (f)
     (mount/stop)))
 
