@@ -9,6 +9,12 @@
 Run the official postgres docker image and initialize the database:
 
 ```
+./dev_db.sh
+```
+
+Which does roughly the following:
+
+```
 docker run --rm --name rems_test -p 5432:5432 -d postgres
 sleep 5
 PGHOST=localhost ./create-test-db.sh
@@ -87,4 +93,10 @@ Transfer script
 
 ```
 PGHOST=172.17.0.2 PGUSER=rems ./transfer-db.sh demo_rems-25-Jan-2017.sql
+```
+
+For development you can just run:
+
+```
+./dev_transfer.sh
 ```
