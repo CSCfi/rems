@@ -19,8 +19,6 @@
     (migrations/migrate ["reset"] (select-keys env [:database-url]))
     (db/create-test-data!)
     ;; This needs to start only after the db and data are in place
-    (mount/start
-      #'rems.db.core/catalogue-item-localizations)
     (f)
     (mount/stop)))
 
