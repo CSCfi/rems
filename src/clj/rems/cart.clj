@@ -1,7 +1,7 @@
 (ns rems.cart
   (:require [rems.context :as context]
             [rems.text :refer :all]
-            [rems.db.core :as db]
+            [rems.db.catalogue :as catalogue.db]
             [rems.form :as form]
             [compojure.core :refer [defroutes POST]]
             [rems.anti-forgery :refer [anti-forgery-field]]
@@ -47,7 +47,7 @@
   "Fetch items currently in cart from database"
   []
   (doall (for [i context/*cart*]
-           (db/get-localized-catalogue-item {:id i}))))
+           (catalogue.db/get-localized-catalogue-item {:id i}))))
 
 (defn- handler [method {session :session {id :id} :params :as req}]
   (let [modifier (case method

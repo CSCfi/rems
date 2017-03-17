@@ -1,6 +1,5 @@
 (ns rems.db.core
   (:require
-   [clojure.core.memoize :as memo]
    [cheshire.core :refer [generate-string parse-string]]
    [clojure.java.jdbc :as jdbc]
    [conman.core :as conman]
@@ -16,8 +15,6 @@
             Date
             Timestamp
             PreparedStatement]))
-
-(def +localizations-cache-time-ms+ (* 5 60 1000))
 
 (conman/bind-connection *db* "sql/queries.sql")
 
@@ -52,45 +49,6 @@
     (create-catalogue-item! {:title "B"
                              :form nil
                              :resid nil})))
-
-(defn index-by
-  "Index the collection coll with given keys ks.
-
-  Result is a map indexed by the first key
-  that contains a map indexed by the second key."
-  [ks coll]
-  (if (empty? ks)
-    (first coll)
-    (->> coll
-         (group-by (first ks))
-         (map (fn [[k v]] [k (index-by (rest ks) v)]))
-         (into {}))))
-
-(defn load-catalogue-item-localizations!
-  "Load catalogue item localizations from the database."
-  []
-  (->> (get-catalogue-item-localizations)
-       (map #(update-in % [:langcode] keyword))
-       (index-by [:catid :langcode])))
-
-(defn get-cache [cache-key]
-  (case cache-key
-    :localizations (load-catalogue-item-localizations!)))
-
-(def cached
-  (memo/ttl get-cache :ttl/threshold +localizations-cache-time-ms+))
-
-(defn localize-catalogue-item
-  "Associates localisations into a catalogue item from
-  the preloaded state."
-  [item]
-  (assoc item :localizations ((cached :localizations) (:id item))))
-
-(defn get-localized-catalogue-items []
-  (map localize-catalogue-item (get-catalogue-items)))
-
-(defn get-localized-catalogue-item [id]
-  (localize-catalogue-item (get-catalogue-item id)))
 
 (extend-protocol jdbc/IResultSetReadColumn
   Date

@@ -3,8 +3,8 @@
             [rems.cart :as cart]
             [rems.form :as form]
             [rems.text :refer :all]
-            [rems.db.core :as db]
-            [rems.context :as context]))
+            [rems.context :as context]
+            [rems.db.catalogue :as catalogue.db]))
 
 ;; TODO duplication between cart and catalogue to be factored out
 
@@ -55,4 +55,4 @@
 (defn catalogue []
   (list
    (cart-list (cart/get-cart-items))
-   (catalogue-list (db/get-localized-catalogue-items))))
+   (catalogue-list (catalogue.db/get-localized-catalogue-items))))
