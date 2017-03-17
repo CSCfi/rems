@@ -14,6 +14,7 @@
   [:tr
    [:td [:a {:href (str "/form/" (:catid app) "/" (:id app))} (:id app)]]
    [:td (get-in app [:catalogue-item :title])]
+   [:td (:state app)]
    [:td (:applicantuserid app)]])
 
 (defn applications
@@ -24,6 +25,7 @@
     [:tr
      [:th (text :t.applications/application)]
      [:th (text :t.applications/resource)]
+     [:th (text :t.applications/state)]
      [:th (text :t.applications/user)]]
     (for [app apps]
       (applications-item app))]))

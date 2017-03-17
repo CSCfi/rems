@@ -101,12 +101,15 @@
                                :user 0
                                :value value})))))
 
+(defn- create-new-draft [resource-id]
+  (let [id (:id (db/create-application!
+                 {:item resource-id :user 0}))]
+    (db/update-application-state! {:id id :user 0 :state "draft"})
+    id))
+
 (defn- save
   ([resource-id input]
-   (save resource-id
-         (:id (db/create-application!
-               {:item resource-id :user 0}))
-         input))
+   (save resource-id (create-new-draft resource-id) input))
   ([resource-id application-id input]
    (save-fields resource-id application-id input)
    (redirect (str "/form/" resource-id "/" application-id) :see-other)))

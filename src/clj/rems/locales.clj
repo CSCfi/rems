@@ -25,7 +25,8 @@
       :catalogue {:header "Resource"}
       :applications {:application "Application"
                      :resource "Resource"
-                     :user "User"}}}
+                     :user "User"
+                     :state "State"}}}
     :fi
     {:t
      {:missing "Käännös puuttuu"
@@ -47,5 +48,6 @@
       :catalogue {:header "Kielivarat"}
       :applications {:application "Hakemus"
                      :resource "Kielivara"
-                     :user "Käyttäjä"}}}
+                     :user "Käyttäjä"
+                     :state "Tila"}}}
     :en :en-GB}})

@@ -113,10 +113,20 @@ VALUES
 (:item, :user, 0)
 RETURNING id
 
+-- :name update-application-state! :!
+INSERT INTO catalogue_item_application_state
+(catAppId, modifierUserId, curround, state)
+VALUES
+(:id, :user, 0, CAST (:state as application_state))
+ON CONFLICT (catAppId)
+DO UPDATE
+SET (modifierUserId, curround, state) = (:user, 0, CAST (:state as application_state))
+
 -- :name get-applications :? :*
 SELECT
-  id, catId, applicantUserId
-FROM catalogue_item_application
+  app.id, app.catId, app.applicantUserId, state.state
+FROM catalogue_item_application app
+LEFT OUTER JOIN catalogue_item_application_state state ON app.id = state.catAppId
 
 -- :name save-field-value! :!
 INSERT INTO application_text_values
