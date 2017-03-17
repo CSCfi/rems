@@ -23,9 +23,12 @@
              :apply "Apply"
              :checkout "Check out"}
       :catalogue {:header "Resource"}
+      :form {:apply "Apply"
+             :save "Save as draft"}
       :applications {:application "Application"
                      :resource "Resource"
                      :user "User"}}}
+
     :fi
     {:t
      {:missing "Käännös puuttuu"
@@ -45,6 +48,8 @@
              :apply "Hae"
              :checkout "Lähetä"}
       :catalogue {:header "Kielivarat"}
+      :form {:apply "Hae"
+             :save "Tallenna luonnos"}
       :applications {:application "Hakemus"
                      :resource "Kielivara"
                      :user "Käyttäjä"}}}
