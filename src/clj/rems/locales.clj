@@ -18,7 +18,8 @@
       :about {:text "this is the story of rems... work in progress"}
       :cart {:header "Resource in cart"
              :add "Add to cart"
-             :remove "Remove"}
+             :remove "Remove"
+             :apply "Apply"
       :catalogue {:header "Resource"}}}
     :fi
     {:t
@@ -34,6 +35,8 @@
       :about {:text "hauki on kala"}
       :cart {:header "Kielivarat korissa"
              :add "Lisää koriin"
-             :remove "Poista"}
+             :remove "Poista"
+             :apply "Hae"
+             :checkout "Lähetä"}
       :catalogue {:header "Kielivarat"}}}
     :en :en-GB}})

@@ -1,6 +1,7 @@
 (ns rems.form
   (:require [hiccup.form :as f]
             [rems.context :as context]
+            [rems.text :refer :all]
             [rems.db.core :as db]
             [rems.anti-forgery :refer [anti-forgery-field]]
             [compojure.core :refer [defroutes POST]]
@@ -85,7 +86,7 @@
    [:button.btn {:type "submit"} "Save"]])
 
 (defn link-to-form [item]
-  [:a.btn.btn-primary {:href (str "/form/" (:id item))} "Apply"])
+  [:a.btn.btn-primary {:href (str "/form/" (:id item))} (text :t.cart/apply)])
 
 (defn- save-fields
   [resource-id application-id input]
