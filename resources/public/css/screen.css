@@ -307,3 +307,27 @@ div.actions {
 .full {
   width: 100%;
 }
+.rectangle {
+  width: 50px;
+  height: 50px;
+}
+
+.color-1 {
+  background-color: #CAD2E6;
+}
+
+.color-2 {
+  background-color: #7A90C3;
+}
+
+.color-3 {
+  background-color: #4D5A91;
+}
+
+.color-4 {
+  background-color: #F16522;
+}
+
+.color-title {
+  padding-top: 0.8rem;
+}
