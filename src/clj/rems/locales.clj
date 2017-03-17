@@ -26,7 +26,9 @@
       :applications {:application "Application"
                      :resource "Resource"
                      :user "User"
-                     :state "State"}}}
+                     :state "State"
+                     :states {:draft "Draft"
+                              :unknown "Unknown"}}}}
     :fi
     {:t
      {:missing "Käännös puuttuu"
@@ -49,5 +51,7 @@
       :applications {:application "Hakemus"
                      :resource "Kielivara"
                      :user "Käyttäjä"
-                     :state "Tila"}}}
+                     :state "Tila"
+                     :states {:draft "Luonnos"
+                              :unknown "Tuntematon"}}}}
     :en :en-GB}})
