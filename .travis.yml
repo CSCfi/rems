@@ -16,7 +16,7 @@ services:
 install:
   - sudo pip install ansible
 before_script:
-  - ./create-test-db.sh
+  - psql -U postgres < resources/sql/init.sql
 script:
   - lein with-profile test cloverage
   - lein uberwar
