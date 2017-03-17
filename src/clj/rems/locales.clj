@@ -26,8 +26,10 @@
       :form {:save "Save as draft"}
       :applications {:application "Application"
                      :resource "Resource"
-                     :user "User"}}}
-
+                     :user "User"
+                     :state "State"
+                     :states {:draft "Draft"
+                              :unknown "Unknown"}}}}
     :fi
     {:t
      {:missing "Käännös puuttuu"
@@ -50,5 +52,8 @@
       :form {:save "Tallenna luonnos"}
       :applications {:application "Hakemus"
                      :resource "Kielivara"
-                     :user "Käyttäjä"}}}
+                     :user "Käyttäjä"
+                     :state "Tila"
+                     :states {:draft "Luonnos"
+                              :unknown "Tuntematon"}}}}
     :en :en-GB}})

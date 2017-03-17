@@ -3,6 +3,7 @@
   (:require [rems.db.core :as db]
             [rems.contents :as contents]
             [rems.form :as form]
+            [rems.applications :as applications]
             [rems.env :refer [*db*]]
             [luminus-migrations.core :as migrations]
             [clojure.test :refer :all]
@@ -94,3 +95,14 @@
                                  :value "X"})
           (let [f (form/get-form-for (:id item) "en" (:id app))]
             (is (= [nil "X" nil] (map :value (:items f))))))))))
+
+(deftest ^:integration test-applications
+  (let [item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil}))
+        app (#'form/create-new-draft item)]
+    (is (= [{:id app :state "draft" :catid item}]
+           (map #(select-keys % [:id :state :catid])
+                (applications/get-applications))))
+    (db/update-application-state! {:id app :user 0 :state "approved"})
+    (is (= [{:id app :state "approved" :catid item}]
+           (map #(select-keys % [:id :state :catid])
+                (applications/get-applications))))))
