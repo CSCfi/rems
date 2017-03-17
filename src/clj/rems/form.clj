@@ -30,9 +30,10 @@
 (defn get-form-for
   "Returns a form structure like this:
 
-    {:id id
+    {:id 7
      :title \"Title\"
      :application 4
+     :catalogue-item 3
      :items [{:id 123
               :type \"texta\"
               :title \"Item title\"
@@ -47,6 +48,7 @@
         items (mapv #(process-item application-id form-id %)
                     (db/get-form-items {:id form-id}))]
     {:id form-id
+     :catalogue-item catalogue-item
      :application application-id
      :title (or (:formtitle form) (:metatitle form))
      :items items}))
@@ -77,8 +79,8 @@
 (defn form [form]
   [:form {:method "post"
           :action (if-let [app (:application form)]
-                    (str "/form/" (:id form) "/" app "/save")
-                    (str "/form/" (:id form) "/save"))}
+                    (str "/form/" (:catalogue-item form) "/" app "/save")
+                    (str "/form/" (:catalogue-item form) "/save"))}
    [:h3 (:title form)]
    (for [i (:items form)]
      (field i))
