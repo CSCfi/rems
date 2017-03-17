@@ -3,6 +3,7 @@
             [rems.context :as context]
             [rems.contents :as contents]
             [rems.form :as form]
+            [rems.applications :as applications]
             [rems.language-switcher :refer [language-switcher]]
             [hiccup.core :as h]
             [compojure.core :refer [defroutes GET]]
@@ -84,6 +85,12 @@
                 (contents/cart-list []))
        (example "cart-list with two items" nil
                 (contents/cart-list [{:title "Item title"} {:title "Another title"}]))
+
+       [:h2 "Applications list"]
+       (example "applications" nil
+                (applications/applications
+                 [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid 2}
+                  {:id 3 :catalogue-item {:title "bbbbbb"} :applicantuserid 4}]))
 
        [:h2 "Forms"]
        (example "field of type \"text\"" nil

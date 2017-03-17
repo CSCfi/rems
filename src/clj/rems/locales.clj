@@ -12,7 +12,8 @@
                    :logout "Sign Out"
                    :about "About"
                    :home "Home"
-                   :catalogue "Catalogue"}
+                   :catalogue "Catalogue"
+                   :applications "Applications"}
       :login {:title "Login"
               :text "Login by using your Haka credentials"}
       :about {:text "this is the story of rems... work in progress"}
@@ -21,7 +22,10 @@
              :remove "Remove"
              :apply "Apply"
              :checkout "Check out"}
-      :catalogue {:header "Resource"}}}
+      :catalogue {:header "Resource"}
+      :applications {:application "Application"
+                     :resource "Resource"
+                     :user "User"}}}
     :fi
     {:t
      {:missing "Käännös puuttuu"
@@ -30,7 +34,8 @@
                    :logout "Kirjaudu ulos"
                    :about "Info"
                    :home "Etusivu"
-                   :catalogue "Kielivarat"}
+                   :catalogue "Kielivarat"
+                   :applications "Hakemukset"}
       :login {:title "Kirjaudu sisään"
               :text "Kirjaudu sisään Haka-tunnuksillasi"}
       :about {:text "hauki on kala"}
@@ -39,5 +44,8 @@
              :remove "Poista"
              :apply "Hae"
              :checkout "Lähetä"}
-      :catalogue {:header "Kielivarat"}}}
+      :catalogue {:header "Kielivarat"}
+      :applications {:application "Hakemus"
+                     :resource "Kielivara"
+                     :user "Käyttäjä"}}}
     :en :en-GB}})

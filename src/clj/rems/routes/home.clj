@@ -2,6 +2,7 @@
   (:require [rems.layout :as layout]
             [rems.context :as context]
             [rems.contents :as contents]
+            [rems.applications :as applications]
             [rems.cart :as cart]
             [rems.form :as form]
             [rems.language-switcher :as language-switcher]
@@ -27,12 +28,18 @@
                (name context/*lang*)
                application))))
 
+(defn applications-page []
+  (layout/render
+   "applications"
+   (applications/applications)))
+
 (defroutes public-routes
   (GET "/" [] (home-page))
   (GET "/about" [] (about-page))
   language-switcher/switcher-routes)
 
 (defroutes secured-routes
+  (GET "/applications" [] (applications-page))
   (GET "/catalogue" [] (catalogue-page))
   (GET "/form/:id/:application" [id application]
        (form-page (Long/parseLong id) (Long/parseLong application)))

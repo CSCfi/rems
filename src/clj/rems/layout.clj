@@ -36,7 +36,9 @@
     ;; [:a.navbar-brand {:href "/"} "REMS"]
     [:div.nav.navbar-nav
      (if user
-       (nav-link "/catalogue" (text :t.navigation/catalogue) (= page-name "catalogue"))
+       (list
+        (nav-link "/catalogue" (text :t.navigation/catalogue) (= page-name "catalogue"))
+        (nav-link "/applications" (text :t.navigation/applications) (= page-name "applications")))
        (nav-link "/" (text :t.navigation/home) (= page-name "home")))
      (nav-link "/about" (text :t.navigation/about) (= page-name "about"))
      [:div.nav-item.navbar-text.float-sm-right (language-switcher)]
