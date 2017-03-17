@@ -25,7 +25,7 @@
   [:tr
    [:td {:data-th ""} (get-catalogue-item-title item)]
    [:td.actions {:data-th ""}
-    (form/link-to-form item)
+    (cart/apply-button item)
     (cart/remove-from-cart-button item)]])
 
 (defn cart-list [items]
@@ -37,7 +37,8 @@
        [:span (text :t.cart/header)]]
       [:table.rems-table.cart
        (for [item (sort-by get-catalogue-item-title items)]
-         (cart-item item))]]]))
+         (cart-item item))]
+      [:div.full.actions (cart/checkout-cart-button)]]]))
 
 (defn urn-catalogue-item? [{:keys [resid]}]
   (and resid (.startsWith resid "http://urn.fi")))

@@ -124,7 +124,7 @@ footer {
   margin: 0;
 }
 
-.rems-table.cart tr:not(:last-child) {
+.rems-table.cart tr {
   border-bottom: 1px solid #CAD2E6;
 }
 
@@ -154,14 +154,6 @@ footer {
   display: block;
 }
 
-.rems-table td:first-child {
-  padding-top: .5em;
-}
-
-.rems-table td:last-child {
-  padding-bottom: .5em;
-}
-
 .rems-table.cart td:before {
   content: initial;
 }
@@ -175,8 +167,8 @@ footer {
 }
 
 .rems-table th, .rems-table td {
-  margin: .5em 1em;
   text-align: left;
+  padding: 0.5em 1em;
 }
 
 .rems-table.cart th, .rems-table.cart td:before {
@@ -191,8 +183,8 @@ footer {
   content: attr(data-th)"";
 }
 
-.rems-table td:last-child {
-  text-align: right;
+.rems-table tr {
+  margin: 0 1rem;
 }
 
 .rems-table.cart tr:nth-child(2n) {
@@ -217,11 +209,6 @@ footer {
 
   .rems-table th, .rems-table td {
     display: table-cell;
-    padding: .25em .5em;
-  }
-
-  .rems-table th, .rems-table td {
-    padding: 0.5em 1em;
   }
 }
 
@@ -288,6 +275,20 @@ form.inline .btn-link {
   margin-left: 0.5rem;
 }
 
+.actions {
+  text-align: right;
+  padding: 0 1rem;
+}
+
+div.actions {
+  padding-top: 0.5rem;
+}
+
+.rems-table td.actions:last-child {
+  text-align: right;
+  padding-right: 1rem;
+}
+
 @media (min-width: 480px) {
   .actions {
     white-space: nowrap;
@@ -301,4 +302,8 @@ form.inline .btn-link {
 .cart-title {
   margin-left: 1em;
   font-weight: bold;
+}
+
+.full {
+  width: 100%;
 }
