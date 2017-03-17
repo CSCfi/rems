@@ -24,7 +24,7 @@ docker run -it --link rems_mysql:mysql -v `readlink -f $1`:/tmp/data.sql --rm ma
 # Load data from MariaDB into Postgres
 docker run -it --rm --link rems_mysql:mysql dimitri/pgloader pgloader --set "search_path='transfer'" --verbose mysql://root:rems_test@rems_mysql/rems_mysql postgresql://$PGUSER@$PGHOST/rems
 
-docker run -it --rm --link rems_test:postgres -v `readlink -f resources/sql/transfer.sql`:/tmp/transfer.sql postgres psql -h $PGHOST -U $PGUSER -f /tmp/transfer.sql
+docker run -i --rm --link rems_test:postgres postgres psql -h $PGHOST -U $PGUSER < resources/sql/transfer.sql
 
 # Stop (and remove) MariaDB
 docker stop rems_mysql

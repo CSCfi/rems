@@ -14,11 +14,9 @@ Run the official postgres docker image and initialize the database:
 
 Which does roughly the following:
 
-```
-docker run --rm --name rems_test -p 5432:5432 -d postgres
-sleep 5
-PGHOST=localhost ./create-test-db.sh
-```
+1. run a postgres container named `rems_test`
+2. initialize the database with `resources/sql/init.sql`
+3. create the schema with `lein run migrate`
 
 When done you can stop (and automatically remove) the database.
 
