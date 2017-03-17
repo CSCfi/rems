@@ -11,12 +11,14 @@ jdk:
   - oraclejdk8
 env:
   - DOCKER_REPOSITORY=673230199239.dkr.ecr.eu-central-1.amazonaws.com
+addons:
+  postgresql: "9.5"
 services:
   - postgresql
 install:
   - sudo pip install ansible
 before_script:
-  - ./create-test-db.sh
+  - psql -U postgres < resources/sql/init.sql
 script:
   - lein with-profile test cloverage
   - lein uberwar
