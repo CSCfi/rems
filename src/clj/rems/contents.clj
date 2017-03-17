@@ -37,7 +37,8 @@
        [:span (text :t.cart/header)]]
       [:table.rems-table.cart
        (for [item (sort-by get-catalogue-item-title items)]
-         (cart-item item))]]]))
+         (cart-item item))]
+      [:div.full.actions (cart/checkout-cart-button)]]]))
 
 (defn urn-catalogue-item? [{:keys [resid]}]
   (and resid (.startsWith resid "http://urn.fi")))

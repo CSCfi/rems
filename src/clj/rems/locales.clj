@@ -20,6 +20,7 @@
              :add "Add to cart"
              :remove "Remove"
              :apply "Apply"
+             :checkout "Check out"}
       :catalogue {:header "Resource"}}}
     :fi
     {:t

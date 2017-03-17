@@ -32,6 +32,11 @@
   [item]
   (button-secondary "/cart/remove" (text :t.cart/remove) (:id item)))
 
+(defn checkout-cart-button
+  "Hiccup fragment for a button that sends the applications for the cart."
+  []
+  (button-primary "/cart/checkout" (text :t.cart/checkout) :checkout))
+
 (defn get-cart-from-session
   "Computes the value for context/*cart*: a sequence of integer ids."
   [request]
