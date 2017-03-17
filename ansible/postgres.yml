@@ -4,11 +4,15 @@
   become: yes
   tasks:
 
+  - name: Install postgresql 9.5 repository
+    yum:
+      name: https://download.postgresql.org/pub/repos/yum/9.5/redhat/rhel-7-x86_64/pgdg-centos95-9.5-3.noarch.rpm
+
   - name: Install packages
     yum:
       name: "{{item}}"
     with_items:
-      - postgresql-server
+      - postgresql95-server
       - python-psycopg2
 
   - name: Create data directories
@@ -19,28 +23,16 @@
 
   # Persistent volume mounted on /srv
   - name: Initialize remsdb database cluster
-    shell: initdb /srv/remsdb
+    shell: /usr/pgsql-9.5/bin/pg_ctl initdb -D /srv/remsdb
     args:
       creates: /srv/remsdb/PG_VERSION
     become_user: postgres
-
-  - name: Make postgres listen on docker interface
-    lineinfile:
-      dest: /srv/remsdb/postgresql.conf
-      regexp: listen_addresses
-      line: "listen_addresses = 'localhost, {{docker_host_ip}}'"
-
-  - name: Make postgres allow connections docker interface
-    lineinfile:
-      dest: /srv/remsdb/pg_hba.conf
-      regexp: "{{docker_host_ip}}"
-      line: "host rems rems {{docker_host_ip}}/24 trust"
 
   - name: Install remsdb service
     copy:
       dest: /etc/systemd/system/remsdb.service
       content: |
-        .include /lib/systemd/system/postgresql.service
+        .include /lib/systemd/system/postgresql-9.5.service
         [Service]
         Environment=PGDATA=/srv/remsdb
 
