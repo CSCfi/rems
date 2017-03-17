@@ -167,7 +167,8 @@ CREATE TABLE application_text_values (
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
   CONSTRAINT application_text_values_ibfk_1 FOREIGN KEY (catAppId) REFERENCES catalogue_item_application (id),
-  CONSTRAINT application_text_values_ibfk_2 FOREIGN KEY (formMapId) REFERENCES application_form_item_map (id)
+  CONSTRAINT application_text_values_ibfk_2 FOREIGN KEY (formMapId) REFERENCES application_form_item_map (id),
+  UNIQUE (catAppId, formMapId)
 );
 --;;
 CREATE TABLE workflow_approvers (
@@ -283,7 +284,8 @@ CREATE TABLE catalogue_item_application_state (
   state application_state DEFAULT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT catalogue_item_application_state_ibfk_1 FOREIGN KEY (catAppId) REFERENCES catalogue_item_application (id)
+  CONSTRAINT catalogue_item_application_state_ibfk_1 FOREIGN KEY (catAppId) REFERENCES catalogue_item_application (id),
+  UNIQUE (catAppId)
 );
 --;;
 CREATE TABLE catalogue_item_localization (

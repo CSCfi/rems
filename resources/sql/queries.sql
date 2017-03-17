@@ -120,6 +120,9 @@ VALUES
 (:application, :user, :value,
  (SELECT id FROM application_form_item_map
   WHERE formId = :form AND formItemId = :item))
+ON CONFLICT (catAppId, formMapId)
+DO UPDATE
+SET (modifierUserId, value) = (:user, :value)
 
 -- :name clear-field-value! :!
 DELETE FROM application_text_values

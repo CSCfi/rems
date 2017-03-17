@@ -91,12 +91,6 @@
   [resource-id application-id input]
   (let [form (get-form-for resource-id (name context/*lang*))]
     (doseq [{item-id :id :as item} (:items form)]
-      ;; TODO: the application_text_values table should have a
-      ;; UNIQUE (catAppId, formMapId) constraint. Then we could run one
-      ;; INSERT ON CONFLICT UPDATE query here instead of two queries.
-      (db/clear-field-value! {:application application-id
-                              :form (:id form)
-                              :item item-id})
       (when-let [value (get input (id-to-name item-id))]
         (db/save-field-value! {:application application-id
                                :form (:id form)
