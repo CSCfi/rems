@@ -21,7 +21,10 @@
              :remove "Remove"
              :apply "Apply"
              :checkout "Check out"}
-      :catalogue {:header "Resource"}}}
+      :catalogue {:header "Resource"}
+      :applications {:application "Application"
+                     :resource "Resource"
+                     :user "User"}}}
     :fi
     {:t
      {:missing "Käännös puuttuu"
@@ -39,5 +42,8 @@
              :remove "Poista"
              :apply "Hae"
              :checkout "Lähetä"}
-      :catalogue {:header "Kielivarat"}}}
+      :catalogue {:header "Kielivarat"}
+      :applications {:application "Hakemus"
+                     :resource "Kielivara"
+                     :user "Käyttäjä"}}}
     :en :en-GB}})

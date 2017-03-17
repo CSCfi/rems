@@ -113,6 +113,11 @@ VALUES
 (:item, :user, 0)
 RETURNING id
 
+-- :name get-applications :? :*
+SELECT
+  id, catId, applicantUserId
+FROM catalogue_item_application
+
 -- :name save-field-value! :!
 INSERT INTO application_text_values
 (catAppId, modifierUserId, value, formMapId)
