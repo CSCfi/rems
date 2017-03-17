@@ -3,15 +3,22 @@
             [rems.text :refer [text]]
             [rems.db.core :as db]))
 
+(defn get-applications []
+  (doall
+   (for [a (db/get-applications)]
+     (assoc a :catalogue-item
+            (get-in (db/get-localized-catalogue-item {:id (:catid a)})
+                    [:localizations context/*lang*])))))
+
 (defn applications-item [app]
   [:tr
    [:td (:id app)]
-   [:td (:catid app)]
+   [:td (get-in app [:catalogue-item :title])]
    [:td (:applicantuserid app)]])
 
 (defn applications
   ([]
-   (applications (db/get-applications)))
+   (applications (get-applications)))
   ([apps]
    [:table.rems-table
     [:tr

@@ -88,8 +88,9 @@
 
        [:h2 "Applications list"]
        (example "applications" nil
-                (applications/applications [{:id 1 :catid 2 :applicantuserid 3}
-                                            {:id 4 :catid 5 :applicantuserid 6}]))
+                (applications/applications
+                 [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid 2}
+                  {:id 3 :catalogue-item {:title "bbbbbb"} :applicantuserid 4}]))
 
        [:h2 "Forms"]
        (example "field of type \"text\"" nil
