@@ -12,7 +12,7 @@
 
 (defn applications-item [app]
   [:tr
-   [:td (:id app)]
+   [:td [:a {:href (str "/form/" (:catid app) "/" (:id app))} (:id app)]]
    [:td (get-in app [:catalogue-item :title])]
    [:td (:applicantuserid app)]])
 
@@ -27,4 +27,3 @@
      [:th (text :t.applications/user)]]
     (for [app apps]
       (applications-item app))]))
-
