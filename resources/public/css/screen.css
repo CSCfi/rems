@@ -154,18 +154,6 @@ footer {
   display: block;
 }
 
-/*
-.rems-table td:first-child {
-  padding-top: .5em;
-}
-*/
-
-/*
-.rems-table td:last-child {
-  padding-bottom: .5em;
-}
-*/
-
 .rems-table.cart td:before {
   content: initial;
 }
