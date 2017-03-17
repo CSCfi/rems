@@ -5,4 +5,4 @@
   "Return the tempura translation for a given key. Additional fallback
   keys can be given."
   [& keys]
-  (context/*tempura* (vec keys)))
+  (context/*tempura* (conj (vec keys) :t/missing)))
