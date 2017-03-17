@@ -23,6 +23,7 @@
              :apply "Apply"
              :checkout "Check out"}
       :catalogue {:header "Resource"}
+      :form {:save "Save as draft"}
       :applications {:application "Application"
                      :resource "Resource"
                      :user "User"
@@ -48,6 +49,7 @@
              :apply "Hae"
              :checkout "Lähetä"}
       :catalogue {:header "Kielivarat"}
+      :form {:save "Tallenna luonnos"}
       :applications {:application "Hakemus"
                      :resource "Kielivara"
                      :user "Käyttäjä"

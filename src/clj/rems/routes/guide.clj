@@ -22,6 +22,19 @@
    [:div.example-content content
     [:div.example-content-end]]])
 
+(defn color-box [id hex]
+  [:div.col-md-3
+   [:row
+    [:div.col-md-6.rectangle {:class id }]
+    [:div.col-md-6.color-title hex]]])
+
+(defn color-boxes []
+  [:div.row
+   (color-box "color-1" "#CAD2E6")
+   (color-box "color-2" "#7A90C3")
+   (color-box "color-3" "#4D5A91")
+   (color-box "color-4" "#F16522")])
+
 (defn guide-page []
   (binding [context/*root-path* "path/"
             context/*lang* :en
@@ -35,6 +48,8 @@
       [:div.example-page
        [:h1 "Component Guide"]
 
+       [:h2 "Colors"]
+       (example "" nil (color-boxes))
 
        [:h2 "Layout components"]
        (example "nav-link" nil

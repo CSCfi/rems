@@ -85,7 +85,7 @@
    (for [i (:items form)]
      (field i))
    (anti-forgery-field)
-   [:button.btn {:type "submit"} "Save"]])
+   [:button.btn {:type "submit"} (text :t.form/save)]])
 
 (defn link-to-item [item]
   (str "/form/" (:id item)))
