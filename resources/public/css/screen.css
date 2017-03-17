@@ -53,7 +53,7 @@ body {
 }
 
 .nav-link, .btn-link {
-  color: #F16522;
+  color: #4D5A91;
   border: 0;   /* for button links */
 }
 
@@ -62,11 +62,11 @@ body {
 }
 
 .nav-link.active, .btn-link.active {
-  color: #4D5A91;
+  color: #F16522;
 }
 
 .nav-link:hover, .btn-link:hover {
-  color: #4D5A91;
+  color: #F16522;
 }
 
 .logo {
