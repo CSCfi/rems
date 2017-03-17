@@ -12,7 +12,8 @@
                    :logout "Sign Out"
                    :about "About"
                    :home "Home"
-                   :catalogue "Catalogue"}
+                   :catalogue "Catalogue"
+                   :applications "Applications"}
       :login {:title "Login"
               :text "Login by using your Haka credentials"}
       :about {:text "this is the story of rems... work in progress"}
@@ -33,7 +34,8 @@
                    :logout "Kirjaudu ulos"
                    :about "Info"
                    :home "Etusivu"
-                   :catalogue "Kielivarat"}
+                   :catalogue "Kielivarat"
+                   :applications "Hakemukset"}
       :login {:title "Kirjaudu sisään"
               :text "Kirjaudu sisään Haka-tunnuksillasi"}
       :about {:text "hauki on kala"}
