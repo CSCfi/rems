@@ -2,6 +2,7 @@
   (:require [rems.context :as context]
             [rems.text :refer :all]
             [rems.db.core :as db]
+            [rems.form :as form]
             [compojure.core :refer [defroutes POST]]
             [rems.anti-forgery :refer [anti-forgery-field]]
             [ring.util.response :refer [redirect]]))
@@ -60,3 +61,6 @@
         (handler :add session))
   (POST "/cart/remove" session
         (handler :remove session)))
+
+(defn apply-button [item]
+  [:a.btn.btn-primary {:href (form/link-to-item item)} (text :t.cart/apply)])

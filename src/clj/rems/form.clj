@@ -85,8 +85,8 @@
    (anti-forgery-field)
    [:button.btn {:type "submit"} "Save"]])
 
-(defn link-to-form [item]
-  [:a.btn.btn-primary {:href (str "/form/" (:id item))} (text :t.cart/apply)])
+(defn link-to-item [item]
+  (str "/form/" (:id item)))
 
 (defn- save-fields
   [resource-id application-id input]

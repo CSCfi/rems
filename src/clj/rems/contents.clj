@@ -25,7 +25,7 @@
   [:tr
    [:td {:data-th ""} (get-catalogue-item-title item)]
    [:td.actions {:data-th ""}
-    (form/link-to-form item)
+    (cart/apply-button item)
     (cart/remove-from-cart-button item)]])
 
 (defn cart-list [items]
