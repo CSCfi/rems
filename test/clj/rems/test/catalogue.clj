@@ -44,10 +44,3 @@
     (check-row-text (nth rows 0) "A")
     (check-row-text (nth rows 1) "B")
     (check-row-text (nth rows 2) "C")))
-
-(deftest test-cart-list
-  (let [c (cart-list [{:title "D"} {:title "C"}])
-        rows (hiccup-find [:tr] c)]
-    (is (= 2 (count rows)))
-    (check-row-text (first rows) "C")
-    (check-row-text (second rows) "D")))

@@ -2,6 +2,7 @@
   (:require [rems.layout :as layout]
             [rems.context :as context]
             [rems.catalogue :as catalogue]
+            [rems.cart :as cart]
             [rems.contents :as contents]
             [rems.form :as form]
             [rems.applications :as applications]
@@ -96,11 +97,11 @@
        [:h2 "Cart components"]
        (example "cart-item" nil
                 [:table.rems-table.cart
-                 (catalogue/cart-item {:title "Item title"})])
+                 (cart/cart-item {:title "Item title"})])
        (example "cart-list empty" nil
-                (catalogue/cart-list []))
+                (cart/cart-list []))
        (example "cart-list with two items" nil
-                (catalogue/cart-list [{:title "Item title"} {:title "Another title"}]))
+                (cart/cart-list [{:title "Item title"} {:title "Another title"}]))
 
        [:h2 "Applications list"]
        (example "applications" nil

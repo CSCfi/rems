@@ -1,7 +1,26 @@
 (ns rems.test.cart
   (:require [clojure.test :refer :all]
+            [hiccup-find.core :refer :all]
             [ring.mock.request :refer :all]
+            [rems.context :as context]
             [rems.cart :as cart]))
+
+;; TODO: factor out if needed elsewhere
+(use-fixtures
+  :once
+  (fn [f]
+    (binding [context/*tempura* (fn [[k]] (str k))]
+      (f))))
+
+(defn check-row-text [row text]
+  (is (= text (hiccup-text (first (hiccup-find [:td] row))))))
+
+(deftest test-cart-list
+  (let [c (cart/cart-list [{:title "D"} {:title "C"}])
+        rows (hiccup-find [:tr] c)]
+    (is (= 2 (count rows)))
+    (check-row-text (first rows) "C")
+    (check-row-text (second rows) "D")))
 
 (deftest test-add-to-cart
   (let [run (fn [session path id]

@@ -1,11 +1,12 @@
 (ns rems.cart
   (:require [rems.context :as context]
             [rems.text :refer :all]
-            [rems.db.catalogue :as catalogue.db]
             [rems.form :as form]
             [compojure.core :refer [defroutes POST]]
             [rems.anti-forgery :refer [anti-forgery-field]]
-            [ring.util.response :refer [redirect]]))
+            [ring.util.response :refer [redirect]]
+            [rems.db.catalogue :refer [get-localized-catalogue-item
+                                       get-catalogue-item-title]]))
 
 (defn- button
   [class action text value & [disabled?]]
@@ -47,7 +48,7 @@
   "Fetch items currently in cart from database"
   []
   (doall (for [i context/*cart*]
-           (catalogue.db/get-localized-catalogue-item {:id i}))))
+           (get-localized-catalogue-item {:id i}))))
 
 (defn- handler [method {session :session {id :id} :params :as req}]
   (let [modifier (case method
@@ -64,3 +65,22 @@
 
 (defn apply-button [item]
   [:a.btn.btn-primary {:href (form/link-to-item item)} (text :t.cart/apply)])
+
+(defn cart-item [item]
+  [:tr
+   [:td {:data-th ""} (get-catalogue-item-title item)]
+   [:td.actions {:data-th ""}
+    (apply-button item)
+    (remove-from-cart-button item)]])
+
+(defn cart-list [items]
+  (when-not (empty? items)
+    [:div.outer-cart
+     [:div.inner-cart
+      [:div.cart-title
+       [:i.fa.fa-shopping-cart]
+       [:span (text :t.cart/header)]]
+      [:table.rems-table.cart
+       (for [item (sort-by get-catalogue-item-title items)]
+         (cart-item item))]
+      [:div.full.actions (checkout-cart-button)]]]))
