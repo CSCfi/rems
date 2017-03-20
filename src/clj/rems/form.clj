@@ -92,7 +92,9 @@
    (for [i (:items form)]
      (field i))
    (anti-forgery-field)
-   [:button.btn {:type "submit"} (text :t.form/save)]])
+   [:button.btn {:type "submit" :name "save"} (text :t.form/save)]
+   [:button.btn.btn-primary {:type "submit" :name "submit"}
+    (text :t.form/submit)]])
 
 (defn link-to-item [item]
   (str "/form/" (:id item)))
@@ -119,6 +121,8 @@
    (save resource-id (create-new-draft resource-id) input))
   ([resource-id application-id input]
    (save-fields resource-id application-id input)
+   (when (get input "submit")
+     (db/update-application-state! {:id application-id :user 0 :state "applied"}))
    (redirect (str "/form/" resource-id "/" application-id) :see-other)))
 
 (defroutes form-routes

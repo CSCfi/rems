@@ -23,12 +23,14 @@
              :apply "Apply"
              :checkout "Check out"}
       :catalogue {:header "Resource"}
-      :form {:save "Save as draft"}
+      :form {:save "Save as draft"
+             :submit "Send application"}
       :applications {:application "Application"
                      :resource "Resource"
                      :user "User"
                      :state "State"
                      :states {:draft "Draft"
+                              :applied "Applied"
                               :unknown "Unknown"}}}}
     :fi
     {:t
@@ -49,11 +51,13 @@
              :apply "Hae"
              :checkout "Lähetä"}
       :catalogue {:header "Kielivarat"}
-      :form {:save "Tallenna luonnos"}
+      :form {:save "Tallenna luonnos"
+             :submit "Lähetä hakemus"}
       :applications {:application "Hakemus"
                      :resource "Kielivara"
                      :user "Käyttäjä"
                      :state "Tila"
                      :states {:draft "Luonnos"
+                              :applied "Haettu"
                               :unknown "Tuntematon"}}}}
     :en :en-GB}})
