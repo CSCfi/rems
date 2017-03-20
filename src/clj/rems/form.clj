@@ -7,6 +7,8 @@
             [compojure.core :refer [defroutes POST]]
             [ring.util.response :refer [redirect]]))
 
+;; TODO split db functions to own file like catalogue?
+
 (defn- process-item
   "Returns an item structure like this:
 

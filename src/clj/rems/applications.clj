@@ -1,13 +1,14 @@
 (ns rems.applications
   (:require [rems.context :as context]
             [rems.text :refer [text]]
-            [rems.db.core :as db]))
+            [rems.db.core :as db]
+            [rems.db.catalogue :refer [get-localized-catalogue-item]]))
 
 (defn get-applications []
   (doall
    (for [a (db/get-applications)]
      (assoc a :catalogue-item
-            (get-in (db/get-localized-catalogue-item {:id (:catid a)})
+            (get-in (get-localized-catalogue-item {:id (:catid a)})
                     [:localizations context/*lang*])))))
 
 (defn localize-state [state]
@@ -17,7 +18,7 @@
 
 (defn applications-item [app]
   [:tr
-   [:td [:a {:href (str "/form/" (:catid app) "/" (:id app))} (:id app)]]
+   [:td [:a.catalogue-item-link {:href (str "/form/" (:catid app) "/" (:id app))} (:id app)]]
    [:td (get-in app [:catalogue-item :title])]
    [:td (text (localize-state (:state app)))]
    [:td (:applicantuserid app)]])

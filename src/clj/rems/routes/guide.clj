@@ -1,6 +1,8 @@
 (ns rems.routes.guide
   (:require [rems.layout :as layout]
             [rems.context :as context]
+            [rems.catalogue :as catalogue]
+            [rems.cart :as cart]
             [rems.contents :as contents]
             [rems.form :as form]
             [rems.applications :as applications]
@@ -71,35 +73,35 @@
        [:h2 "Catalogue components"]
        (example "catalogue-item" nil
                 [:table.rems-table
-                 (contents/catalogue-item {:title "Item title"})])
+                 (catalogue/catalogue-item {:title "Item title"})])
        (example "catalogue-item linked to urn.fi" nil
                 [:table.rems-table
-                 (contents/catalogue-item {:title "Item title" :resid "http://urn.fi/urn:nbn:fi:lb-201403262"})])
+                 (catalogue/catalogue-item {:title "Item title" :resid "http://urn.fi/urn:nbn:fi:lb-201403262"})])
        (example "catalogue-item in Finnish with localizations" nil
                 [:table.rems-table
                  (binding [context/*lang* :fi
                            context/*tempura* (partial tr locales/tconfig [:fi])]
-                   (contents/catalogue-item {:title "Not used when there are localizations" :localizations {:fi {:title "Suomenkielinen title"} :en {:title "English title"}}}))])
+                   (catalogue/catalogue-item {:title "Not used when there are localizations" :localizations {:fi {:title "Suomenkielinen title"} :en {:title "English title"}}}))])
        (example "catalogue-item in English with localizations" nil
                 [:table.rems-table
                  (binding [context/*lang* :en
                            context/*tempura* (partial tr locales/tconfig [:en])]
-                   (contents/catalogue-item {:title "Not used when there are localizations" :localizations {:fi {:title "Suomenkielinen title"} :en {:title "English title"}}}))])
+                   (catalogue/catalogue-item {:title "Not used when there are localizations" :localizations {:fi {:title "Suomenkielinen title"} :en {:title "English title"}}}))])
 
        (example "catalogue-list empty" nil
-                (contents/catalogue-list []))
+                (catalogue/catalogue-list []))
        (example "catalogue-list with two items" nil
-                (contents/catalogue-list [{:title "Item title"} {:title "Another title"}]))
+                (catalogue/catalogue-list [{:title "Item title"} {:title "Another title"}]))
 
 
        [:h2 "Cart components"]
        (example "cart-item" nil
                 [:table.rems-table.cart
-                 (contents/cart-item {:title "Item title"})])
+                 (cart/cart-item {:title "Item title"})])
        (example "cart-list empty" nil
-                (contents/cart-list []))
+                (cart/cart-list []))
        (example "cart-list with two items" nil
-                (contents/cart-list [{:title "Item title"} {:title "Another title"}]))
+                (cart/cart-list [{:title "Item title"} {:title "Another title"}]))
 
        [:h2 "Applications list"]
        (example "applications" nil

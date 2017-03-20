@@ -1,6 +1,7 @@
 (ns rems.routes.home
   (:require [rems.layout :as layout]
             [rems.context :as context]
+            [rems.catalogue :as catalogue]
             [rems.contents :as contents]
             [rems.applications :as applications]
             [rems.cart :as cart]
@@ -18,7 +19,7 @@
 
 (defn catalogue-page []
   (layout/render
-    "catalogue" (contents/catalogue)))
+    "catalogue" (catalogue/catalogue)))
 
 (defn form-page [id application]
   (layout/render
