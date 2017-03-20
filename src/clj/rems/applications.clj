@@ -17,7 +17,7 @@
 
 (defn applications-item [app]
   [:tr
-   [:td [:a {:href (str "/form/" (:catid app) "/" (:id app))} (:id app)]]
+   [:td [:a.catalogue-item-link {:href (str "/form/" (:catid app) "/" (:id app))} (:id app)]]
    [:td (get-in app [:catalogue-item :title])]
    [:td (text (localize-state (:state app)))]
    [:td (:applicantuserid app)]])
