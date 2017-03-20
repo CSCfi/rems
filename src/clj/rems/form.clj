@@ -70,10 +70,15 @@
    [:textarea.form-control {:name (id-to-name id) :placeholder prompt}
     value]])
 
+(defn label [{title :title}]
+  [:div.form-group
+   [:label title]])
+
 (defn field [f]
   (case (:type f)
     "text" (text-field f)
     "texta" (texta-field f)
+    "label" (label f)
     [:p.alert.alert-warning "Unsupported field " (pr-str f)]))
 
 (defn form [form]
