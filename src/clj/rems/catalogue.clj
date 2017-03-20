@@ -6,8 +6,6 @@
             [rems.db.catalogue :refer [get-localized-catalogue-items
                                        get-catalogue-item-title]]))
 
-;; TODO duplication between cart and catalogue to be factored out
-
 (defn urn-catalogue-item? [{:keys [resid]}]
   (and resid (.startsWith resid "http://urn.fi")))
 
