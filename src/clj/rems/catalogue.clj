@@ -4,13 +4,10 @@
             [rems.form :as form]
             [rems.text :refer :all]
             [rems.context :as context]
-            [rems.db.catalogue :as catalogue.db]))
+            [rems.db.catalogue :refer [get-localized-catalogue-items
+                                       get-catalogue-item-title]]))
 
 ;; TODO duplication between cart and catalogue to be factored out
-
-(defn get-catalogue-item-title [item]
-  (let [localized-title (get-in item [:localizations context/*lang* :title])]
-    (or localized-title (:title item))))
 
 (defn cart-item [item]
   [:tr
@@ -55,4 +52,4 @@
 (defn catalogue []
   (list
    (cart-list (cart/get-cart-items))
-   (catalogue-list (catalogue.db/get-localized-catalogue-items))))
+   (catalogue-list (get-localized-catalogue-items))))
