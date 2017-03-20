@@ -128,6 +128,13 @@
                                     {:type "label" :title "Please input your wishes below."}
                                     {:type "texta" :title "Field 2" :inputprompt "prompt 2"}
                                     {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]}))
+       (example "applied form" nil
+                (form/form {:title "Form title"
+                            :state "applied"
+                            :items [{:type "text" :title "Field 1" :inputprompt "prompt 1"}
+                                    {:type "label" :title "Please input your wishes below."}
+                                    {:type "texta" :title "Field 2" :inputprompt "prompt 2"}
+                                    {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]}))
 
        [:h2 "Misc components"]
        (example "login" nil (contents/login "/"))

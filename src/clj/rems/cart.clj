@@ -34,11 +34,6 @@
   [item]
   (button-secondary "/cart/remove" (text :t.cart/remove) (:id item)))
 
-(defn checkout-cart-button
-  "Hiccup fragment for a button that sends the applications for the cart."
-  []
-  (button-primary "/cart/checkout" (text :t.cart/checkout) :checkout))
-
 (defn get-cart-from-session
   "Computes the value for context/*cart*: a sequence of integer ids."
   [request]
@@ -82,5 +77,4 @@
        [:span (text :t.cart/header)]]
       [:table.rems-table.cart
        (for [item (sort-by get-catalogue-item-title items)]
-         (cart-item item))]
-      [:div.full.actions (checkout-cart-button)]]]))
+         (cart-item item))]]]))

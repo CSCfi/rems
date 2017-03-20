@@ -122,6 +122,13 @@ ON CONFLICT (catAppId)
 DO UPDATE
 SET (modifierUserId, curround, state) = (:user, 0, CAST (:state as application_state))
 
+-- :name get-application :? :1
+SELECT
+  app.id, app.catId, app.applicantUserId, state.state
+FROM catalogue_item_application app
+LEFT OUTER JOIN catalogue_item_application_state state ON app.id = state.catAppId
+WHERE app.id = :id
+
 -- :name get-applications :? :*
 SELECT
   app.id, app.catId, app.applicantUserId, state.state

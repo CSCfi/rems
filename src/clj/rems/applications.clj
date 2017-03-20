@@ -14,6 +14,7 @@
 (defn localize-state [state]
   (case state
     "draft" :t.applications.states/draft
+    "applied" :t.applications.states/applied
     :t.applications.states/unknown))
 
 (defn applications-item [app]
