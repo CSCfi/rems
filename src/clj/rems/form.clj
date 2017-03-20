@@ -34,7 +34,8 @@
 
     {:id 7
      :title \"Title\"
-     :application 4
+     :application 3
+     :state \"draft\"
      :catalogue-item 3
      :items [{:id 123
               :type \"texta\"
@@ -46,12 +47,15 @@
   [catalogue-item language & [application-id]]
   (let [form (db/get-form-for-catalogue-item
               {:id catalogue-item :lang language})
+        application (when application-id
+                      (db/get-application {:id application-id}))
         form-id (:formid form)
         items (mapv #(process-item application-id form-id %)
                     (db/get-form-items {:id form-id}))]
     {:id form-id
      :catalogue-item catalogue-item
      :application application-id
+     :state (:state application)
      :title (or (:formtitle form) (:metatitle form))
      :items items}))
 
@@ -59,17 +63,20 @@
   (str "field" id))
 
 (defn text-field [{title :title id :id
-                   prompt :inputprompt value :value}]
+                   prompt :inputprompt value :value
+                   readonly :readonly}]
   [:div.form-group
    [:label {:for (id-to-name id)} title]
    [:input.form-control {:type "text" :name (id-to-name id) :placeholder prompt
-                         :value value}]])
+                         :value value :readonly readonly}]])
 
 (defn texta-field [{title :title id :id
-                    prompt :inputprompt value :value}]
+                    prompt :inputprompt value :value
+                    readonly :readonly}]
   [:div.form-group
    [:label {:for (id-to-name id)} title]
-   [:textarea.form-control {:name (id-to-name id) :placeholder prompt}
+   [:textarea.form-control {:name (id-to-name id) :placeholder prompt
+                            :readonly readonly}
     value]])
 
 (defn label [{title :title}]
@@ -84,17 +91,22 @@
     [:p.alert.alert-warning "Unsupported field " (pr-str f)]))
 
 (defn form [form]
-  [:form {:method "post"
-          :action (if-let [app (:application form)]
-                    (str "/form/" (:catalogue-item form) "/" app "/save")
-                    (str "/form/" (:catalogue-item form) "/save"))}
-   [:h3 (:title form)]
-   (for [i (:items form)]
-     (field i))
-   (anti-forgery-field)
-   [:button.btn {:type "submit" :name "save"} (text :t.form/save)]
-   [:button.btn.btn-primary {:type "submit" :name "submit"}
-    (text :t.form/submit)]])
+  (let [applied (= (:state form) "applied")]
+    [:form {:method "post"
+            :action (if-let [app (:application form)]
+                      (str "/form/" (:catalogue-item form) "/" app "/save")
+                      (str "/form/" (:catalogue-item form) "/save"))}
+     [:h3 (:title form)]
+     (when applied
+       [:h2 (text :t.applications.states/applied)])
+     (for [i (:items form)]
+       (field (assoc i :readonly applied)))
+     (anti-forgery-field)
+     (when-not applied
+       (list
+        [:button.btn {:type "submit" :name "save"} (text :t.form/save)]
+        [:button.btn.btn-primary {:type "submit" :name "submit"}
+         (text :t.form/submit)]))]))
 
 (defn link-to-item [item]
   (str "/form/" (:id item)))
