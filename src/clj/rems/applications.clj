@@ -1,13 +1,14 @@
 (ns rems.applications
   (:require [rems.context :as context]
             [rems.text :refer [text]]
-            [rems.db.core :as db]))
+            [rems.db.core :as db]
+            [rems.db.catalogue :as catalogue.db]))
 
 (defn get-applications []
   (doall
    (for [a (db/get-applications)]
      (assoc a :catalogue-item
-            (get-in (db/get-localized-catalogue-item {:id (:catid a)})
+            (get-in (catalogue.db/get-localized-catalogue-item {:id (:catid a)})
                     [:localizations context/*lang*])))))
 
 (defn localize-state [state]
