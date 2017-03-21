@@ -1,4 +1,4 @@
-(ns rems.test.handler
+(ns ^:integration rems.test.handler
   (:require [clojure.test :refer :all]
             [clojure.string :as s]
             [ring.mock.request :refer :all]
@@ -21,11 +21,11 @@
     (f)
     (mount/stop)))
 
-(defn pass-cookies [to-request from-response]
+(defn- pass-cookies [to-request from-response]
   (let [set-cookie (get-in from-response [:headers "Set-Cookie"])]
     (assoc-in to-request [:headers "cookie"] (s/join "; " set-cookie))))
 
-(defn get-csrf-token [response]
+(defn- get-csrf-token [response]
   (let [token-regex #"<input id=\"__anti-forgery-token\" name=\"__anti-forgery-token\" type=\"hidden\" value=\"([^\"]*)\">"
         [_ token] (re-find token-regex (:body response))]
     token))
