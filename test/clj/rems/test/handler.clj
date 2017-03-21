@@ -67,9 +67,8 @@
             catalogue (app (-> (request :get "/catalogue")
                                (pass-cookies login)))
             token (get-csrf-token catalogue)
-            req (-> (request :post "/cart/add")
-                    (pass-cookies login)
-                    (assoc :form-params {"item" "A" "__anti-forgery-token" token}))
+            req (-> (request :post "/cart/add" {"id" "1" "__anti-forgery-token" token})
+                    (pass-cookies login))
             response (app req)]
         (is (= 303 (:status response)))))))
 
@@ -79,9 +78,8 @@
                            (pass-cookies login)))]
     (is (.contains (:body catalogue) "cart") "defaults to english")
     (let [token (get-csrf-token catalogue)
-          fi (app (-> (request :post "/language/fi")
+          fi (app (-> (request :post "/language/fi" {"__anti-forgery-token" token})
                       (pass-cookies login)
-                      (assoc :form-params {"__anti-forgery-token" token})
                       (header "referer" "/catalogue")))
           catalogue-fi (app (-> (request :get "/catalogue")
                                 (pass-cookies login)))]
