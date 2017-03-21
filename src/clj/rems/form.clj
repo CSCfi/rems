@@ -1,11 +1,12 @@
 (ns rems.form
   (:require [hiccup.form :as f]
             [rems.context :as context]
+            [rems.layout :as layout]
             [rems.text :refer :all]
             [rems.db.core :as db]
             [rems.db.applications :refer [get-form-for create-new-draft]]
             [rems.anti-forgery :refer [anti-forgery-field]]
-            [compojure.core :refer [defroutes POST]]
+            [compojure.core :refer [defroutes GET POST]]
             [ring.util.response :refer [redirect]]))
 
 (defn- id-to-name [id]
@@ -80,7 +81,16 @@
      (db/update-application-state! {:id application-id :user 0 :state "applied"}))
    (redirect (str "/form/" resource-id "/" application-id) :see-other)))
 
+(defn- form-page [id application]
+  (layout/render
+   "form"
+   (form (get-form-for id application))))
+
 (defroutes form-routes
+  (GET "/form/:id/:application" [id application]
+       (form-page (Long/parseLong id) (Long/parseLong application)))
+  (GET "/form/:id" [id]
+       (form-page (Long/parseLong id) nil))
   (POST "/form/:id/save" [id :as {input :form-params}]
         (save (Long/parseLong id) input))
   (POST "/form/:id/:application/save" [id application :as {input :form-params}]

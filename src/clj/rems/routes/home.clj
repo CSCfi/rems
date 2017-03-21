@@ -22,13 +22,6 @@
   (layout/render
     "catalogue" (catalogue/catalogue)))
 
-(defn form-page [id application]
-  (layout/render
-   "form"
-   (form/form (get-form-for
-               id
-               application))))
-
 (defn applications-page []
   (layout/render
    "applications"
@@ -42,9 +35,5 @@
 (defroutes secured-routes
   (GET "/applications" [] (applications-page))
   (GET "/catalogue" [] (catalogue-page))
-  (GET "/form/:id/:application" [id application]
-       (form-page (Long/parseLong id) (Long/parseLong application)))
-  (GET "/form/:id" [id]
-       (form-page (Long/parseLong id) nil))
   cart/cart-routes
   form/form-routes)
