@@ -1,4 +1,4 @@
-(ns rems.test.db
+(ns ^:integration rems.test.db
   "Namespace for tests that use an actual database."
   (:require [rems.db.core :as db]
             [rems.context :as context]
@@ -29,7 +29,7 @@
       (jdbc/db-set-rollback-only! rems.env/*db*)
       (f))))
 
-(deftest ^:integration test-get-catalogue-items
+(deftest test-get-catalogue-items
   (testing "without catalogue items"
     (is (empty? (db/get-catalogue-items))))
 
@@ -45,7 +45,7 @@
              (select-keys item-by-id [:id :title]))
           "should find catalogue item by id"))))
 
-(deftest ^:integration test-form
+(deftest test-form
   (let [meta (db/create-form-meta! {:title "metatitle" :user 0})
         item (db/create-catalogue-item! {:title "item" :form (:id meta) :resid nil})
         form-en (db/create-form! {:title "entitle" :user 0})
@@ -99,7 +99,7 @@
             (let [f (applications/get-form-for (:id item) (:id app))]
               (is (= [nil "X" nil] (map :value (:items f)))))))))))
 
-(deftest ^:integration test-applications
+(deftest test-applications
   (let [item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil}))
         app (applications/create-new-draft item)]
     (is (= [{:id app :state "draft" :catid item}]
