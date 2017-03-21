@@ -34,11 +34,18 @@
   [:div.form-group
    [:label title]])
 
+(defn license [{title :title id :id}]
+  [:div.checkbox
+   [:label
+    [:input {:type "checkbox" :id id :value "approved"}]
+    [:a {:href "/" :target :_blank :for id} (str " " title)]]])
+
 (defn- field [f]
   (case (:type f)
     "text" (text-field f)
     "texta" (texta-field f)
     "label" (label f)
+    "license" (license f)
     [:p.alert.alert-warning "Unsupported field " (pr-str f)]))
 
 (defn- form [form]
