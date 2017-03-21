@@ -52,7 +52,7 @@
    (let [form (db/get-form-for-catalogue-item
                {:id catalogue-item :lang (name context/*lang*)})
          application (when application-id
-                       (db/get-application {:id application-id}))
+                       (first (db/get-applications {:id application-id})))
          form-id (:formid form)
          items (mapv #(process-item application-id form-id %)
                      (db/get-form-items {:id form-id}))]

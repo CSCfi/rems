@@ -122,18 +122,27 @@ ON CONFLICT (catAppId)
 DO UPDATE
 SET (modifierUserId, curround, state) = (:user, 0, CAST (:state as application_state))
 
--- :name get-application :? :1
-SELECT
-  app.id, app.catId, app.applicantUserId, state.state
-FROM catalogue_item_application app
-LEFT OUTER JOIN catalogue_item_application_state state ON app.id = state.catAppId
-WHERE app.id = :id
-
 -- :name get-applications :? :*
+-- :doc
+-- - Pass in no arguments to get all applications.
+-- - Use {:id id} to get a specific application
+-- - Use {:resource id} to get applications for a specific resource
+-- - Use {:state state} to filter by application state
 SELECT
   app.id, app.catId, app.applicantUserId, state.state
 FROM catalogue_item_application app
 LEFT OUTER JOIN catalogue_item_application_state state ON app.id = state.catAppId
+WHERE 1=1
+/*~ (when (:id params) */
+  AND app.id = :id
+/*~ ) ~*/
+/*~ (when (:resource params) */
+  AND app.catId = :resource
+/*~ ) ~*/
+/*~ (when (:state params) */
+  AND state.state = CAST (:state AS application_state)
+/*~ ) ~*/
+
 
 -- :name save-field-value! :!
 INSERT INTO application_text_values
