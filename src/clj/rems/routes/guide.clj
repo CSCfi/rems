@@ -16,11 +16,9 @@
 
 (def g-user "Eero Esimerkki")
 
-(defn example [name description content]
+(defn example [name content]
   [:div.example
    [:h3 name]
-   (when description
-     description)
    [:div.example-content content
     [:div.example-content-end]]])
 
@@ -51,84 +49,84 @@
        [:h1 "Component Guide"]
 
        [:h2 "Colors"]
-       (example "" nil (color-boxes))
+       (example "" (color-boxes))
 
        [:h2 "Layout components"]
-       (example "nav-link" nil
+       (example "nav-link"
                 (layout/nav-link "example/path" "link text"))
-       (example "nav-link active" nil
+       (example "nav-link active"
                 (layout/nav-link "example/path" "link text" "page-name" "page-name"))
-       (example "nav-item" nil
+       (example "nav-item"
                 (layout/nav-link "example/path" "link text" "page-name" "li-name"))
-       (example "language-switcher" nil
+       (example "language-switcher"
                 (language-switcher))
-       (example "navbar guest" nil
+       (example "navbar guest"
                 (layout/navbar "example-page" nil))
-       (example "navbar for logged-in user" nil
+       (example "navbar for logged-in user"
                 (layout/navbar "example-page" g-user))
-       (example "footer" nil
+       (example "footer"
                 (layout/footer))
 
 
        [:h2 "Catalogue components"]
-       (example "catalogue-item" nil
+       (example "catalogue-item"
                 [:table.rems-table
                  (catalogue/catalogue-item {:title "Item title"})])
-       (example "catalogue-item linked to urn.fi" nil
+       (example "catalogue-item linked to urn.fi"
                 [:table.rems-table
                  (catalogue/catalogue-item {:title "Item title" :resid "http://urn.fi/urn:nbn:fi:lb-201403262"})])
-       (example "catalogue-item in Finnish with localizations" nil
+       (example "catalogue-item in Finnish with localizations"
                 [:table.rems-table
                  (binding [context/*lang* :fi
                            context/*tempura* (partial tr locales/tconfig [:fi])]
                    (catalogue/catalogue-item {:title "Not used when there are localizations" :localizations {:fi {:title "Suomenkielinen title"} :en {:title "English title"}}}))])
-       (example "catalogue-item in English with localizations" nil
+       (example "catalogue-item in English with localizations"
                 [:table.rems-table
                  (binding [context/*lang* :en
                            context/*tempura* (partial tr locales/tconfig [:en])]
                    (catalogue/catalogue-item {:title "Not used when there are localizations" :localizations {:fi {:title "Suomenkielinen title"} :en {:title "English title"}}}))])
 
-       (example "catalogue-list empty" nil
+       (example "catalogue-list empty"
                 (catalogue/catalogue-list []))
-       (example "catalogue-list with two items" nil
+       (example "catalogue-list with two items"
                 (catalogue/catalogue-list [{:title "Item title"} {:title "Another title"}]))
 
 
        [:h2 "Cart components"]
-       (example "cart-item" nil
+       (example "cart-item"
                 [:table.rems-table.cart
                  (cart/cart-item {:title "Item title"})])
-       (example "cart-list empty" nil
+       (example "cart-list empty"
                 (cart/cart-list []))
-       (example "cart-list with two items" nil
+       (example "cart-list with two items"
                 (cart/cart-list [{:title "Item title"} {:title "Another title"}]))
 
        [:h2 "Applications list"]
-       (example "applications" nil
+       (example "applications"
                 (applications/applications
                  [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid 2}
                   {:id 3 :catalogue-item {:title "bbbbbb"} :applicantuserid 4}]))
 
        [:h2 "Forms"]
-       (example "field of type \"text\"" nil
+       (example "field of type \"text\""
                 [:form
                  (form/field {:type "text" :title "Title" :inputprompt "prompt"})])
-       (example "field of type \"texta\"" nil
+       (example "field of type \"texta\""
                 [:form
                  (form/field {:type "texta" :title "Title" :inputprompt "prompt"})])
-       (example "field of type \"label\"" nil
+       (example "field of type \"label\""
                 [:form
                  (form/field {:type "label" :title "Lorem ipsum dolor sit amet"})])
-       (example "field of unsupported type" nil
+       (example "field of unsupported type"
                 [:form
                  (form/field {:type "unsupported" :title "Title" :inputprompt "prompt"})])
-       (example "form" nil
+       (example "form"
                 (form/form {:title "Form title"
                             :items [{:type "text" :title "Field 1" :inputprompt "prompt 1"}
                                     {:type "label" :title "Please input your wishes below."}
                                     {:type "texta" :title "Field 2" :inputprompt "prompt 2"}
                                     {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]}))
-       (example "applied form" nil
+       (example "applied form"
                 (form/form {:title "Form title"
                             :state "applied"
                             :items [{:type "text" :title "Field 1" :inputprompt "prompt 1"}
@@ -137,10 +135,10 @@
                                     {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]}))
 
        [:h2 "Misc components"]
-       (example "login" nil (contents/login "/"))
-       (example "about" nil (contents/about))
-       (example "logo" nil (layout/logo))
-       (example "error-content" nil (layout/error-content {:status 123 :title "Error title" :message "Error message"}))
+       (example "login" (contents/login "/"))
+       (example "about" (contents/about))
+       (example "logo" (layout/logo))
+       (example "error-content" (layout/error-content {:status 123 :title "Error title" :message "Error message"}))
        ]])))
 
 (defroutes guide-routes
