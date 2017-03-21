@@ -1,9 +1,9 @@
 (ns rems.test.db
   "Namespace for tests that use an actual database."
   (:require [rems.db.core :as db]
+            [rems.context :as context]
             [rems.contents :as contents]
-            [rems.form :as form]
-            [rems.applications :as applications]
+            [rems.db.applications :as applications]
             [rems.env :refer [*db*]]
             [luminus-migrations.core :as migrations]
             [clojure.test :refer :all]
@@ -66,39 +66,42 @@
     (is (:id item) "sanity check")
 
     (testing "get form for catalogue item"
-      (let [form-fi (form/get-form-for (:id item) "fi")
-            form-en (form/get-form-for (:id item) "en")]
+      (let [form-fi (binding [context/*lang* :fi]
+                      (applications/get-form-for (:id item)))
+            form-en (binding [context/*lang* :en]
+                      (applications/get-form-for (:id item)))]
         (is (= "entitle" (:title form-en)) "title")
         (is (= ["A" "B" "C"] (map :title (:items form-en))) "items should be in order")
         (is (= "fititle" (:title form-fi)) "title")
         (is (= ["A"] (map :title (:items form-fi))) "there should be only one item")))
 
     (testing "get partially filled form"
-      (let [app (db/create-application! {:item (:id item) :user 0})]
-        (is app "sanity check")
-        (db/save-field-value! {:application (:id app)
-                               :form (:id form-en)
-                               :item (:id item-b)
-                               :user 0
-                               :value "B"})
-        (let [f (form/get-form-for (:id item) "en" (:id app))]
-          (is (= [nil "B" nil] (map :value (:items f)))))
-
-        (testing "reset field value"
-          (db/clear-field-value! {:application (:id app)
-                                  :form (:id form-en)
-                                  :item (:id item-b)})
+      (binding [context/*lang* :en]
+        (let [app (db/create-application! {:item (:id item) :user 0})]
+          (is app "sanity check")
           (db/save-field-value! {:application (:id app)
                                  :form (:id form-en)
                                  :item (:id item-b)
                                  :user 0
-                                 :value "X"})
-          (let [f (form/get-form-for (:id item) "en" (:id app))]
-            (is (= [nil "X" nil] (map :value (:items f))))))))))
+                                 :value "B"})
+          (let [f (applications/get-form-for (:id item) (:id app))]
+            (is (= [nil "B" nil] (map :value (:items f)))))
+
+          (testing "reset field value"
+            (db/clear-field-value! {:application (:id app)
+                                    :form (:id form-en)
+                                    :item (:id item-b)})
+            (db/save-field-value! {:application (:id app)
+                                   :form (:id form-en)
+                                   :item (:id item-b)
+                                   :user 0
+                                   :value "X"})
+            (let [f (applications/get-form-for (:id item) (:id app))]
+              (is (= [nil "X" nil] (map :value (:items f)))))))))))
 
 (deftest ^:integration test-applications
   (let [item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil}))
-        app (#'form/create-new-draft item)]
+        app (applications/create-new-draft item)]
     (is (= [{:id app :state "draft" :catid item}]
            (map #(select-keys % [:id :state :catid])
                 (applications/get-applications))))

@@ -1,63 +1,13 @@
 (ns rems.form
   (:require [hiccup.form :as f]
             [rems.context :as context]
+            [rems.layout :as layout]
             [rems.text :refer :all]
             [rems.db.core :as db]
+            [rems.db.applications :refer [get-form-for create-new-draft]]
             [rems.anti-forgery :refer [anti-forgery-field]]
-            [compojure.core :refer [defroutes POST]]
+            [compojure.core :refer [defroutes GET POST]]
             [ring.util.response :refer [redirect]]))
-
-;; TODO split db functions to own file like catalogue?
-
-(defn- process-item
-  "Returns an item structure like this:
-
-    {:id 123
-     :type \"texta\"
-     :title \"Item title\"
-     :placeholder \"hello\"
-     :optional true
-     :value \"filled value or nil\"}"
-  [application-id form-id item]
-  {:id (:id item)
-   :title (:title item)
-   :inputprompt (:inputprompt item)
-   :type (:type item)
-   :value (when application-id
-            (:value
-             (db/get-field-value {:item (:id item)
-                                  :form form-id
-                                  :application application-id})))})
-
-(defn get-form-for
-  "Returns a form structure like this:
-
-    {:id 7
-     :title \"Title\"
-     :application 3
-     :state \"draft\"
-     :catalogue-item 3
-     :items [{:id 123
-              :type \"texta\"
-              :title \"Item title\"
-              :inputprompt \"hello\"
-              :optional true
-              :value \"filled value or nil\"}
-             ...]}"
-  [catalogue-item language & [application-id]]
-  (let [form (db/get-form-for-catalogue-item
-              {:id catalogue-item :lang language})
-        application (when application-id
-                      (db/get-application {:id application-id}))
-        form-id (:formid form)
-        items (mapv #(process-item application-id form-id %)
-                    (db/get-form-items {:id form-id}))]
-    {:id form-id
-     :catalogue-item catalogue-item
-     :application application-id
-     :state (:state application)
-     :title (or (:formtitle form) (:metatitle form))
-     :items items}))
 
 (defn- id-to-name [id]
   (str "field" id))
@@ -113,7 +63,7 @@
 
 (defn- save-fields
   [resource-id application-id input]
-  (let [form (get-form-for resource-id (name context/*lang*))]
+  (let [form (get-form-for resource-id)]
     (doseq [{item-id :id :as item} (:items form)]
       (when-let [value (get input (id-to-name item-id))]
         (db/save-field-value! {:application application-id
@@ -121,12 +71,6 @@
                                :item item-id
                                :user 0
                                :value value})))))
-
-(defn- create-new-draft [resource-id]
-  (let [id (:id (db/create-application!
-                 {:item resource-id :user 0}))]
-    (db/update-application-state! {:id id :user 0 :state "draft"})
-    id))
 
 (defn- save
   ([resource-id input]
@@ -137,7 +81,16 @@
      (db/update-application-state! {:id application-id :user 0 :state "applied"}))
    (redirect (str "/form/" resource-id "/" application-id) :see-other)))
 
+(defn- form-page [id application]
+  (layout/render
+   "form"
+   (form (get-form-for id application))))
+
 (defroutes form-routes
+  (GET "/form/:id/:application" [id application]
+       (form-page (Long/parseLong id) (Long/parseLong application)))
+  (GET "/form/:id" [id]
+       (form-page (Long/parseLong id) nil))
   (POST "/form/:id/save" [id :as {input :form-params}]
         (save (Long/parseLong id) input))
   (POST "/form/:id/:application/save" [id application :as {input :form-params}]
