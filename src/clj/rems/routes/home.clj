@@ -4,6 +4,7 @@
             [rems.catalogue :as catalogue]
             [rems.contents :as contents]
             [rems.applications :as applications]
+            [rems.db.applications :refer [get-form-for]]
             [rems.cart :as cart]
             [rems.form :as form]
             [rems.language-switcher :as language-switcher]
@@ -24,7 +25,7 @@
 (defn form-page [id application]
   (layout/render
    "form"
-   (form/form (form/get-form-for
+   (form/form (get-form-for
                id
                (name context/*lang*)
                application))))
