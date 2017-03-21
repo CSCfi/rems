@@ -53,10 +53,7 @@
        (cart/guide)
 
        [:h2 "Applications list"]
-       (example "applications"
-                (applications/applications
-                 [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid 2}
-                  {:id 3 :catalogue-item {:title "bbbbbb"} :applicantuserid 4}]))
+       (applications/guide)
 
        [:h2 "Forms"]
        (example "field of type \"text\""
