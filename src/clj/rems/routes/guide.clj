@@ -56,31 +56,7 @@
        (applications/guide)
 
        [:h2 "Forms"]
-       (example "field of type \"text\""
-                [:form
-                 (form/field {:type "text" :title "Title" :inputprompt "prompt"})])
-       (example "field of type \"texta\""
-                [:form
-                 (form/field {:type "texta" :title "Title" :inputprompt "prompt"})])
-       (example "field of type \"label\""
-                [:form
-                 (form/field {:type "label" :title "Lorem ipsum dolor sit amet"})])
-       (example "field of unsupported type"
-                [:form
-                 (form/field {:type "unsupported" :title "Title" :inputprompt "prompt"})])
-       (example "form"
-                (form/form {:title "Form title"
-                            :items [{:type "text" :title "Field 1" :inputprompt "prompt 1"}
-                                    {:type "label" :title "Please input your wishes below."}
-                                    {:type "texta" :title "Field 2" :inputprompt "prompt 2"}
-                                    {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]}))
-       (example "applied form"
-                (form/form {:title "Form title"
-                            :state "applied"
-                            :items [{:type "text" :title "Field 1" :inputprompt "prompt 1"}
-                                    {:type "label" :title "Please input your wishes below."}
-                                    {:type "texta" :title "Field 2" :inputprompt "prompt 2"}
-                                    {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]}))
+       (form/guide)
 
        [:h2 "Misc components"]
        (example "login" (contents/login "/"))
