@@ -104,10 +104,12 @@
 (deftest test-applications
   (let [item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil}))
         app (applications/create-new-draft item)]
+    (is (= app (applications/get-draft-id-for item)))
     (is (= [{:id app :state "draft" :catid item}]
            (map #(select-keys % [:id :state :catid])
                 (applications/get-applications))))
     (db/update-application-state! {:id app :user 0 :state "approved"})
+    (is (nil? (applications/get-draft-id-for item)))
     (is (= [{:id app :state "approved" :catid item}]
            (map #(select-keys % [:id :state :catid])
                 (applications/get-applications))))))
