@@ -47,28 +47,7 @@
        (layout/guide)
 
        [:h2 "Catalogue components"]
-       (example "catalogue-item"
-                [:table.rems-table
-                 (catalogue/catalogue-item {:title "Item title"})])
-       (example "catalogue-item linked to urn.fi"
-                [:table.rems-table
-                 (catalogue/catalogue-item {:title "Item title" :resid "http://urn.fi/urn:nbn:fi:lb-201403262"})])
-       (example "catalogue-item in Finnish with localizations"
-                [:table.rems-table
-                 (binding [context/*lang* :fi
-                           context/*tempura* (partial tr locales/tconfig [:fi])]
-                   (catalogue/catalogue-item {:title "Not used when there are localizations" :localizations {:fi {:title "Suomenkielinen title"} :en {:title "English title"}}}))])
-       (example "catalogue-item in English with localizations"
-                [:table.rems-table
-                 (binding [context/*lang* :en
-                           context/*tempura* (partial tr locales/tconfig [:en])]
-                   (catalogue/catalogue-item {:title "Not used when there are localizations" :localizations {:fi {:title "Suomenkielinen title"} :en {:title "English title"}}}))])
-
-       (example "catalogue-list empty"
-                (catalogue/catalogue-list []))
-       (example "catalogue-list with two items"
-                (catalogue/catalogue-list [{:title "Item title"} {:title "Another title"}]))
-
+       (catalogue/guide)
 
        [:h2 "Cart components"]
        (cart/guide)
