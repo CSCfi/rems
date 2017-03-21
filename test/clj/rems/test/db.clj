@@ -77,35 +77,39 @@
 
     (testing "get partially filled form"
       (binding [context/*lang* :en]
-        (let [app (db/create-application! {:item (:id item) :user 0})]
-          (is app "sanity check")
-          (db/save-field-value! {:application (:id app)
+        (let [app-id (applications/create-new-draft (:id item))]
+          (is app-id "sanity check")
+          (db/save-field-value! {:application app-id
                                  :form (:id form-en)
                                  :item (:id item-b)
                                  :user 0
                                  :value "B"})
-          (let [f (applications/get-form-for (:id item) (:id app))]
+          (let [f (applications/get-form-for (:id item) app-id)]
+            (is (= app-id (:application f)))
+            (is (= "draft" (:state f)))
             (is (= [nil "B" nil] (map :value (:items f)))))
 
           (testing "reset field value"
-            (db/clear-field-value! {:application (:id app)
+            (db/clear-field-value! {:application app-id
                                     :form (:id form-en)
                                     :item (:id item-b)})
-            (db/save-field-value! {:application (:id app)
+            (db/save-field-value! {:application app-id
                                    :form (:id form-en)
                                    :item (:id item-b)
                                    :user 0
                                    :value "X"})
-            (let [f (applications/get-form-for (:id item) (:id app))]
+            (let [f (applications/get-form-for (:id item) app-id)]
               (is (= [nil "X" nil] (map :value (:items f)))))))))))
 
 (deftest test-applications
   (let [item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil}))
         app (applications/create-new-draft item)]
+    (is (= app (applications/get-draft-id-for item)))
     (is (= [{:id app :state "draft" :catid item}]
            (map #(select-keys % [:id :state :catid])
                 (applications/get-applications))))
     (db/update-application-state! {:id app :user 0 :state "approved"})
+    (is (nil? (applications/get-draft-id-for item)))
     (is (= [{:id app :state "approved" :catid item}]
            (map #(select-keys % [:id :state :catid])
                 (applications/get-applications))))))

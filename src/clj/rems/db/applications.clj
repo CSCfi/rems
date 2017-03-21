@@ -11,6 +11,13 @@
             (get-in (get-localized-catalogue-item {:id (:catid a)})
                     [:localizations context/*lang*])))))
 
+(defn get-draft-id-for
+  "Finds applications in the draft state for the given catalogue item.
+   Returns an id of an arbitrary one of them, or nil if there are none."
+  [catalogue-item]
+  (when-let [app (first (db/get-applications {:resource catalogue-item :state "draft"}))]
+    (:id app)))
+
 (defn- process-item
   "Returns an item structure like this:
 
@@ -52,7 +59,7 @@
    (let [form (db/get-form-for-catalogue-item
                {:id catalogue-item :lang (name context/*lang*)})
          application (when application-id
-                       (db/get-application {:id application-id}))
+                       (first (db/get-applications {:id application-id})))
          form-id (:formid form)
          items (mapv #(process-item application-id form-id %)
                      (db/get-form-items {:id form-id}))]
