@@ -5,7 +5,7 @@
             [rems.guide :refer :all]
             [rems.text :refer :all]
             [rems.db.core :as db]
-            [rems.db.applications :refer [get-form-for create-new-draft]]
+            [rems.db.applications :refer [get-form-for get-draft-id-for create-new-draft]]
             [rems.anti-forgery :refer [anti-forgery-field]]
             [compojure.core :refer [defroutes GET POST]]
             [ring.util.response :refer [redirect]]))
@@ -73,6 +73,9 @@
                                :user 0
                                :value value})))))
 
+(defn- redirect-to-application [resource-id application-id]
+  (redirect (str "/form/" resource-id "/" application-id) :see-other))
+
 (defn- save
   ([resource-id input]
    (save resource-id (create-new-draft resource-id) input))
@@ -80,7 +83,7 @@
    (save-fields resource-id application-id input)
    (when (get input "submit")
      (db/update-application-state! {:id application-id :user 0 :state "applied"}))
-   (redirect (str "/form/" resource-id "/" application-id) :see-other)))
+   (redirect-to-application resource-id application-id)))
 
 (defn- form-page [id application]
   (layout/render
@@ -91,7 +94,10 @@
   (GET "/form/:id/:application" [id application]
        (form-page (Long/parseLong id) (Long/parseLong application)))
   (GET "/form/:id" [id]
-       (form-page (Long/parseLong id) nil))
+       (let [resource-id (Long/parseLong id)]
+         (if-let [app (get-draft-id-for resource-id)]
+           (redirect-to-application id app)
+           (form-page resource-id nil))))
   (POST "/form/:id/save" [id :as {input :form-params}]
         (save (Long/parseLong id) input))
   (POST "/form/:id/:application/save" [id application :as {input :form-params}]
