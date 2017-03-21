@@ -122,6 +122,9 @@
    (example "field of type \"label\""
             [:form
              (field {:type "label" :title "Lorem ipsum dolor sit amet"})])
+   (example "field of type \"license\""
+            [:form
+             (field {:type "license" :title "Link to license"})])
    (example "field of unsupported type"
             [:form
              (field {:type "unsupported" :title "Title" :inputprompt "prompt"})])
