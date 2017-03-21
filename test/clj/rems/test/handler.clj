@@ -1,6 +1,7 @@
 (ns ^:integration rems.test.handler
   (:require [clojure.test :refer :all]
             [clojure.string :as s]
+            [hickory.core :as h]
             [ring.mock.request :refer :all]
             [rems.handler :refer :all]
             [mount.core :as mount]
