@@ -2,6 +2,7 @@
   (:require [hiccup.form :as f]
             [rems.context :as context]
             [rems.layout :as layout]
+            [rems.guide :refer :all]
             [rems.text :refer :all]
             [rems.db.core :as db]
             [rems.db.applications :refer [get-form-for create-new-draft]]
@@ -12,7 +13,7 @@
 (defn- id-to-name [id]
   (str "field" id))
 
-(defn text-field [{title :title id :id
+(defn- text-field [{title :title id :id
                    prompt :inputprompt value :value
                    readonly :readonly}]
   [:div.form-group
@@ -20,7 +21,7 @@
    [:input.form-control {:type "text" :name (id-to-name id) :placeholder prompt
                          :value value :readonly readonly}]])
 
-(defn texta-field [{title :title id :id
+(defn- texta-field [{title :title id :id
                     prompt :inputprompt value :value
                     readonly :readonly}]
   [:div.form-group
@@ -29,18 +30,18 @@
                             :readonly readonly}
     value]])
 
-(defn label [{title :title}]
+(defn- label [{title :title}]
   [:div.form-group
    [:label title]])
 
-(defn field [f]
+(defn- field [f]
   (case (:type f)
     "text" (text-field f)
     "texta" (texta-field f)
     "label" (label f)
     [:p.alert.alert-warning "Unsupported field " (pr-str f)]))
 
-(defn form [form]
+(defn- form [form]
   (let [applied (= (:state form) "applied")]
     [:form {:method "post"
             :action (if-let [app (:application form)]
@@ -95,3 +96,32 @@
         (save (Long/parseLong id) input))
   (POST "/form/:id/:application/save" [id application :as {input :form-params}]
         (save (Long/parseLong id) (Long/parseLong application) input)))
+
+(defn guide
+  []
+  (list
+   (example "field of type \"text\""
+            [:form
+             (field {:type "text" :title "Title" :inputprompt "prompt"})])
+   (example "field of type \"texta\""
+            [:form
+             (field {:type "texta" :title "Title" :inputprompt "prompt"})])
+   (example "field of type \"label\""
+            [:form
+             (field {:type "label" :title "Lorem ipsum dolor sit amet"})])
+   (example "field of unsupported type"
+            [:form
+             (field {:type "unsupported" :title "Title" :inputprompt "prompt"})])
+   (example "form"
+            (form {:title "Form title"
+                        :items [{:type "text" :title "Field 1" :inputprompt "prompt 1"}
+                                {:type "label" :title "Please input your wishes below."}
+                                {:type "texta" :title "Field 2" :inputprompt "prompt 2"}
+                                {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]}))
+   (example "applied form"
+            (form {:title "Form title"
+                        :state "applied"
+                        :items [{:type "text" :title "Field 1" :inputprompt "prompt 1"}
+                                {:type "label" :title "Please input your wishes below."}
+                                {:type "texta" :title "Field 2" :inputprompt "prompt 2"}
+                                {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]}))))

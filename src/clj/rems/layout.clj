@@ -1,6 +1,7 @@
 (ns rems.layout
   (:require [compojure.response]
             [rems.context :as context]
+            [rems.guide :refer :all]
             [rems.text :refer :all]
             [rems.language-switcher :refer [language-switcher]]
             [hiccup.element :refer [link-to]]
@@ -12,14 +13,14 @@
   (:import compojure.response.Renderable))
 
 
-(defn url-dest
+(defn- url-dest
   [dest]
   (str context/*root-path* dest))
 
-(defn nav-link [path title & [active?]]
+(defn- nav-link [path title & [active?]]
   (link-to {:class (str "nav-item nav-link" (if active? " active" ""))} (url-dest path) title))
 
-(defn navbar
+(defn- navbar
   [page-name user]
   [:nav.navbar {:role "navigation"}
    [:button.navbar-toggler.hidden-sm-up
@@ -44,14 +45,14 @@
      [:div.nav-item.navbar-text.float-sm-right (language-switcher)]
      ]]])
 
-(defn footer []
+(defn- footer []
   [:footer.footer
    [:div.container [:nav.navbar [:div.navbar-text (text :t/footer)]]]])
 
-(defn logo []
+(defn- logo []
   [:div.logo [:div.img]])
 
-(defn page-template
+(defn- page-template
   [page-name nav content footer]
   (html5 [:head
           [:meta {:http-equiv "Content-Type" :content "text/html; charset=UTF-8"}]
@@ -91,7 +92,7 @@
         :body (page-template page-name nav content footer)}
        content-type)))
 
-(defn error-content
+(defn- error-content
   [error-details]
   [:div.container-fluid
    [:div.row-fluid
@@ -117,3 +118,25 @@
    and the status specified by the status key"
   [error-details]
   (render "error page" (error-content error-details) error-details))
+
+(defn guide
+  "Component guide fragment"
+  []
+  (list
+   (example "nav-link"
+            (nav-link "example/path" "link text"))
+   (example "nav-link active"
+            (nav-link "example/path" "link text" "page-name" "page-name"))
+   (example "nav-item"
+            (nav-link "example/path" "link text" "page-name" "li-name"))
+   (example "language-switcher"
+            (language-switcher))
+   (example "navbar guest"
+            (navbar "example-page" nil))
+   (example "navbar for logged-in user"
+            (navbar "example-page" "Eero Esimerkki"))
+   (example "footer"
+            (footer))
+   (example "logo" (logo))
+   (example "error-content"
+            (error-content {:status 123 :title "Error title" :message "Error message"}))))

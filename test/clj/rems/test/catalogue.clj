@@ -12,12 +12,12 @@
       (f))))
 
 (defn check-catalogue-item-text [props]
-  (hiccup-text (first (hiccup-find [:td] (catalogue-item props)))))
+  (hiccup-text (first (hiccup-find [:td] (#'rems.catalogue/catalogue-item props)))))
 
 (deftest test-catalogue-item
   (testing "catalogue item with urn"
     (let [urn "http://urn.fi/urn:nbn:fi:lb-201403262"
-          c (catalogue-item {:title "U" :resid urn})
+          c (#'rems.catalogue/catalogue-item {:title "U" :resid urn})
           link (first (hiccup-find [:a] c))]
       (is (= :a.catalogue-item-link (first link)) "is a link")
       (is (= urn (:href (second link))) "links to the urn")
@@ -38,7 +38,7 @@
   (is (= text (hiccup-text (first (hiccup-find [:td] row))))))
 
 (deftest test-catalogue-list
-  (let [c (catalogue-list [{:title "B"} {:title "A"} {:title "C"}])
+  (let [c (#'rems.catalogue/catalogue-list [{:title "B"} {:title "A"} {:title "C"}])
         rows (rest (hiccup-find [:tr] c))]
     (is (= 3 (count rows)))
     (check-row-text (nth rows 0) "A")
