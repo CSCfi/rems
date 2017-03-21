@@ -1,6 +1,6 @@
 (ns rems.cart
   (:require [rems.context :as context]
-            [rems.example :refer :all]
+            [rems.guide :refer :all]
             [rems.text :refer :all]
             [rems.form :as form]
             [compojure.core :refer [defroutes POST]]

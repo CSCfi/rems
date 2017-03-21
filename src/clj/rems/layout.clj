@@ -1,7 +1,7 @@
 (ns rems.layout
   (:require [compojure.response]
             [rems.context :as context]
-            [rems.example :refer :all]
+            [rems.guide :refer :all]
             [rems.text :refer :all]
             [rems.language-switcher :refer [language-switcher]]
             [hiccup.element :refer [link-to]]

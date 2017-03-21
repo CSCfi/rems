@@ -1,6 +1,6 @@
 (ns rems.applications
   (:require [rems.context :as context]
-            [rems.example :refer :all]
+            [rems.guide :refer :all]
             [rems.text :refer [text]]
             [rems.db.core :as db]
             [rems.db.applications :refer [get-applications]]))

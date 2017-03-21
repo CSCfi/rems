@@ -1,5 +1,5 @@
 (ns rems.routes.guide
-  (:require [rems.example :refer [example]]
+  (:require [rems.guide :refer :all]
             [rems.layout :as layout]
             [rems.context :as context]
             [rems.catalogue :as catalogue]
@@ -28,39 +28,38 @@
    (color-box "color-4" "#F16522")])
 
 (defn guide-page []
-  (binding [context/*root-path* "path/"
-            context/*lang* :en
-            context/*tempura* (partial tr locales/tconfig [:en])]
-    (h/html
-     [:head
-      [:link {:type "text/css" :rel "stylesheet" :href "/assets/bootstrap/css/bootstrap.min.css"}]
-      [:link {:type "text/css" :rel "stylesheet" :href "/assets/font-awesome/css/font-awesome.min.css"}]
-      [:link {:type "text/css" :rel "stylesheet" :href "/css/screen.css"}]]
-     [:body
-      [:div.example-page
-       [:h1 "Component Guide"]
+  (binding [context/*root-path* "path/"]
+    (with-language :en
+      (h/html
+       [:head
+        [:link {:type "text/css" :rel "stylesheet" :href "/assets/bootstrap/css/bootstrap.min.css"}]
+        [:link {:type "text/css" :rel "stylesheet" :href "/assets/font-awesome/css/font-awesome.min.css"}]
+        [:link {:type "text/css" :rel "stylesheet" :href "/css/screen.css"}]]
+       [:body
+        [:div.example-page
+         [:h1 "Component Guide"]
 
-       [:h2 "Colors"]
-       (example "" (color-boxes))
+         [:h2 "Colors"]
+         (example "" (color-boxes))
 
-       [:h2 "Layout components"]
-       (layout/guide)
+         [:h2 "Layout components"]
+         (layout/guide)
 
-       [:h2 "Catalogue components"]
-       (catalogue/guide)
+         [:h2 "Catalogue components"]
+         (catalogue/guide)
 
-       [:h2 "Cart components"]
-       (cart/guide)
+         [:h2 "Cart components"]
+         (cart/guide)
 
-       [:h2 "Applications list"]
-       (applications/guide)
+         [:h2 "Applications list"]
+         (applications/guide)
 
-       [:h2 "Forms"]
-       (form/guide)
+         [:h2 "Forms"]
+         (form/guide)
 
-       [:h2 "Misc components"]
-       (example "login" (contents/login "/"))
-       (example "about" (contents/about))]])))
+         [:h2 "Misc components"]
+         (example "login" (contents/login "/"))
+         (example "about" (contents/about))]]))))
 
 (defroutes guide-routes
   (GET "/guide" [] (guide-page)))

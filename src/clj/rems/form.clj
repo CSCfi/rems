@@ -2,7 +2,7 @@
   (:require [hiccup.form :as f]
             [rems.context :as context]
             [rems.layout :as layout]
-            [rems.example :refer :all]
+            [rems.guide :refer :all]
             [rems.text :refer :all]
             [rems.db.core :as db]
             [rems.db.applications :refer [get-form-for create-new-draft]]

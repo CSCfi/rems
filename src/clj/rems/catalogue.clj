@@ -1,11 +1,9 @@
 (ns rems.catalogue
   (:require [hiccup.element :refer [link-to image]]
-            [taoensso.tempura :refer [tr]]
-            [rems.locales :as locales]
             [rems.context :as context]
             [rems.cart :as cart]
             [rems.form :as form]
-            [rems.example :refer :all]
+            [rems.guide :refer :all]
             [rems.text :refer :all]
             [rems.db.catalogue :refer [get-localized-catalogue-items
                                        get-catalogue-item-title]]))
@@ -44,16 +42,13 @@
    (example "catalogue-item linked to urn.fi"
             [:table.rems-table
              (catalogue-item {:title "Item title" :resid "http://urn.fi/urn:nbn:fi:lb-201403262"})])
-   ;; TODO write helper for overriding language
    (example "catalogue-item in Finnish with localizations"
             [:table.rems-table
-             (binding [context/*lang* :fi
-                       context/*tempura* (partial tr locales/tconfig [:fi])]
+             (with-language :fi
                (catalogue-item {:title "Not used when there are localizations" :localizations {:fi {:title "Suomenkielinen title"} :en {:title "English title"}}}))])
    (example "catalogue-item in English with localizations"
             [:table.rems-table
-             (binding [context/*lang* :en
-                       context/*tempura* (partial tr locales/tconfig [:en])]
+             (with-language :en
                (catalogue-item {:title "Not used when there are localizations" :localizations {:fi {:title "Suomenkielinen title"} :en {:title "English title"}}}))])
 
    (example "catalogue-list empty"
