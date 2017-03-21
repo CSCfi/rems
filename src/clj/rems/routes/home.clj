@@ -27,7 +27,6 @@
    "form"
    (form/form (get-form-for
                id
-               (name context/*lang*)
                application))))
 
 (defn applications-page []

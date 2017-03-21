@@ -62,7 +62,7 @@
 
 (defn- save-fields
   [resource-id application-id input]
-  (let [form (get-form-for resource-id (name context/*lang*))]
+  (let [form (get-form-for resource-id)]
     (doseq [{item-id :id :as item} (:items form)]
       (when-let [value (get input (id-to-name item-id))]
         (db/save-field-value! {:application application-id
