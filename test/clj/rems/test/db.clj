@@ -3,7 +3,7 @@
   (:require [rems.db.core :as db]
             [rems.contents :as contents]
             [rems.form :as form]
-            [rems.applications :as applications]
+            [rems.db.applications :as applications]
             [rems.env :refer [*db*]]
             [luminus-migrations.core :as migrations]
             [clojure.test :refer :all]
