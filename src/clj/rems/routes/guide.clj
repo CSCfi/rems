@@ -14,8 +14,6 @@
             [taoensso.tempura :as tempura :refer [tr]]
             [rems.db.core :as db]))
 
-(def g-user "Eero Esimerkki")
-
 (defn color-box [id hex]
   [:div.col-md-3
    [:row
@@ -46,21 +44,7 @@
        (example "" (color-boxes))
 
        [:h2 "Layout components"]
-       (example "nav-link"
-                (layout/nav-link "example/path" "link text"))
-       (example "nav-link active"
-                (layout/nav-link "example/path" "link text" "page-name" "page-name"))
-       (example "nav-item"
-                (layout/nav-link "example/path" "link text" "page-name" "li-name"))
-       (example "language-switcher"
-                (language-switcher))
-       (example "navbar guest"
-                (layout/navbar "example-page" nil))
-       (example "navbar for logged-in user"
-                (layout/navbar "example-page" g-user))
-       (example "footer"
-                (layout/footer))
-
+       (layout/guide)
 
        [:h2 "Catalogue components"]
        (example "catalogue-item"
@@ -130,10 +114,7 @@
 
        [:h2 "Misc components"]
        (example "login" (contents/login "/"))
-       (example "about" (contents/about))
-       (example "logo" (layout/logo))
-       (example "error-content" (layout/error-content {:status 123 :title "Error title" :message "Error message"}))
-       ]])))
+       (example "about" (contents/about))]])))
 
 (defroutes guide-routes
   (GET "/guide" [] (guide-page)))
