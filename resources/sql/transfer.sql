@@ -18,6 +18,12 @@ CREATE CAST (transfer.rms_application_form_item_visibility AS public.scope)
 WITH INOUT
 AS IMPLICIT;
 
+-- data created by the app that might reference data we want to clear
+DELETE FROM public.application_text_values CASCADE;
+DELETE FROM public.catalogue_item_application_state CASCADE;
+DELETE FROM public.catalogue_item_application CASCADE;
+
+-- clear existing data
 DELETE FROM public.catalogue_item_localization CASCADE;
 DELETE FROM public.catalogue_item CASCADE;
 DELETE FROM public.resource CASCADE;
@@ -71,7 +77,10 @@ SELECT * FROM transfer.rms_catalogue_item;
 INSERT INTO public.catalogue_item_localization
 SELECT * FROM transfer.rms_catalogue_item_localization;
 
+-- if all casts are not dropped, the next pgloader run might fail
+-- (can't drop a type that is referenced by a cast)
 DROP CAST IF EXISTS (transfer.rms_workflow_visibility AS public.scope);
 DROP CAST IF EXISTS (transfer.rms_application_form_meta_visibility AS public.scope);
 DROP CAST IF EXISTS (transfer.rms_application_form_visibility AS public.scope);
 DROP CAST IF EXISTS (transfer.rms_application_form_item_type AS public.itemtype);
+DROP CAST IF EXISTS (transfer.rms_application_form_item_visibility AS public.scope);
