@@ -5,9 +5,9 @@
             [buddy.auth.backends.session :refer [session-backend]]
             [clojure.java.io :as io]))
 
-(defn- fake-login [{session :session}]
+(defn- fake-login [{session :session username :fake-username}]
       (assoc (redirect "/catalogue")
-             :session (assoc session :identity "developer")))
+             :session (assoc session :identity (or username "developer"))))
 
 (defn- fake-logout [{session :session}]
   (-> (redirect "/")
