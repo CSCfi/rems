@@ -1,5 +1,6 @@
 (ns rems.routes.guide
-  (:require [rems.layout :as layout]
+  (:require [rems.example :refer [example]]
+            [rems.layout :as layout]
             [rems.context :as context]
             [rems.catalogue :as catalogue]
             [rems.cart :as cart]
@@ -11,16 +12,9 @@
             [compojure.core :refer [defroutes GET]]
             [rems.locales :as locales]
             [taoensso.tempura :as tempura :refer [tr]]
-            [rems.db.core :as db]
-            ))
+            [rems.db.core :as db]))
 
 (def g-user "Eero Esimerkki")
-
-(defn example [name content]
-  [:div.example
-   [:h3 name]
-   [:div.example-content content
-    [:div.example-content-end]]])
 
 (defn color-box [id hex]
   [:div.col-md-3
