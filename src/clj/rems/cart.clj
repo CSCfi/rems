@@ -1,5 +1,6 @@
 (ns rems.cart
   (:require [rems.context :as context]
+            [rems.example :refer :all]
             [rems.text :refer :all]
             [rems.form :as form]
             [compojure.core :refer [defroutes POST]]
@@ -17,10 +18,10 @@
                  :disabled disabled?
                  :class (str class (if disabled? " disabled" ""))} text]])
 
-(def button-primary
+(def ^:private button-primary
   (partial button "btn-primary"))
 
-(def button-secondary
+(def ^:private button-secondary
   (partial button "btn-secondary"))
 
 (defn add-to-cart-button
@@ -58,10 +59,10 @@
   (POST "/cart/remove" session
         (handler :remove session)))
 
-(defn apply-button [item]
+(defn- apply-button [item]
   [:a.btn.btn-primary {:href (form/link-to-item item)} (text :t.cart/apply)])
 
-(defn cart-item [item]
+(defn- cart-item [item]
   [:tr
    [:td {:data-th ""} (get-catalogue-item-title item)]
    [:td.actions {:data-th ""}
@@ -78,3 +79,13 @@
       [:table.rems-table.cart
        (for [item (sort-by get-catalogue-item-title items)]
          (cart-item item))]]]))
+
+(defn guide []
+  (list
+   (example "cart-item"
+            [:table.rems-table.cart
+             (cart-item {:title "Item title"})])
+   (example "cart-list empty"
+            (cart-list []))
+   (example "cart-list with two items"
+            (cart-list [{:title "Item title"} {:title "Another title"}]))))

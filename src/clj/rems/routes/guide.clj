@@ -71,13 +71,7 @@
 
 
        [:h2 "Cart components"]
-       (example "cart-item"
-                [:table.rems-table.cart
-                 (cart/cart-item {:title "Item title"})])
-       (example "cart-list empty"
-                (cart/cart-list []))
-       (example "cart-list with two items"
-                (cart/cart-list [{:title "Item title"} {:title "Another title"}]))
+       (cart/guide)
 
        [:h2 "Applications list"]
        (example "applications"
