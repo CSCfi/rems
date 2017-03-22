@@ -36,6 +36,11 @@
       url: https://confluence.csc.fi/download/attachments/31195585/haka_testi_2015_sha2.crt
       dest: /etc/pki/tls/certs
 
+  - name: Configure shibboleth2.xml
+    template:
+      src: shibboleth2.xml
+      dest: /etc/shibboleth/
+
   - name: Enable shibboleth service
     service:
       name: shibd
