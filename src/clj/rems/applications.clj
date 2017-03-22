@@ -16,7 +16,7 @@
    [:td (:id app)]
    [:td (get-in app [:catalogue-item :title])]
    [:td (text (localize-state (:state app)))]
-   [:td (:applicantuserid app)]
+   [:td (:start app)]
    [:td [:a.btn.btn-primary
          {:href (str "/form/" (:catid app) "/" (:id app))}
          (text :t/applications.view)]]])
@@ -30,7 +30,7 @@
      [:th (text :t.applications/application)]
      [:th (text :t.applications/resource)]
      [:th (text :t.applications/state)]
-     [:th (text :t.applications/user)]]
+     [:th (text :t.applications/created)]]
     (for [app apps]
       (applications-item app))]))
 

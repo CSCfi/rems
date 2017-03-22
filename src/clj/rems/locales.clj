@@ -30,6 +30,7 @@
                      :user "User"
                      :state "State"
                      :view "View"
+                     :created "Created"
                      :states {:draft "Draft"
                               :applied "Applied"
                               :unknown "Unknown"}}}}
@@ -59,6 +60,7 @@
                      :user "Käyttäjä"
                      :state "Tila"
                      :view "Näytä"
+                     :created "Luotu"
                      :states {:draft "Luonnos"
                               :applied "Haettu"
                               :unknown "Tuntematon"}}}}
