@@ -4,8 +4,9 @@
     xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol"
     xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
     clockSkew="180">
-    <ApplicationDefaults entityID="https://{{inventory_hostname}}"
+    <ApplicationDefaults entityID="https://{{shib_hostname}}/shibboleth"
                          REMOTE_USER="eppn persistent-id targeted-id"
+                         homeURL="/catalogue"
                          attributePrefix="AJP_">
         <Sessions lifetime="28800" timeout="3600" relayState="ss:mem"
                   checkAddress="false" handlerSSL="true" cookieProps="; path=/; secure">

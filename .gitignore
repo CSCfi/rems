@@ -11,3 +11,5 @@ profiles.clj
 .nrepl-port
 /log
 *~
+*.retry
+.DS_Store
