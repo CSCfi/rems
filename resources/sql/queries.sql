@@ -129,7 +129,7 @@ SET (modifierUserId, curround, state) = (:user, 0, CAST (:state as application_s
 -- - Use {:resource id} to get applications for a specific resource
 -- - Use {:state state} to filter by application state
 SELECT
-  app.id, app.catId, app.applicantUserId, state.state
+  app.id, app.catId, app.applicantUserId, app.start, state.state
 FROM catalogue_item_application app
 LEFT OUTER JOIN catalogue_item_application_state state ON app.id = state.catAppId
 WHERE 1=1
