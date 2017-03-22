@@ -47,6 +47,11 @@
       state: started
       enabled: yes
 
+  - name: disable pesky welcome.conf
+    copy:
+      dest: /etc/httpd/conf.d/welcome.conf
+      content:
+
   - name: Enable httpd service
     service:
       name: httpd
