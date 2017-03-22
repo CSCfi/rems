@@ -29,6 +29,7 @@
                      :resource "Resource"
                      :user "User"
                      :state "State"
+                     :view "View"
                      :states {:draft "Draft"
                               :applied "Applied"
                               :unknown "Unknown"}}}}
@@ -57,6 +58,7 @@
                      :resource "Kielivara"
                      :user "Käyttäjä"
                      :state "Tila"
+                     :view "Näytä"
                      :states {:draft "Luonnos"
                               :applied "Haettu"
                               :unknown "Tuntematon"}}}}

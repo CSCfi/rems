@@ -13,10 +13,13 @@
 
 (defn- applications-item [app]
   [:tr
-   [:td [:a.catalogue-item-link {:href (str "/form/" (:catid app) "/" (:id app))} (:id app)]]
+   [:td (:id app)]
    [:td (get-in app [:catalogue-item :title])]
    [:td (text (localize-state (:state app)))]
-   [:td (:applicantuserid app)]])
+   [:td (:applicantuserid app)]
+   [:td [:a.btn.btn-primary
+         {:href (str "/form/" (:catid app) "/" (:id app))}
+         (text :t/applications.view)]]])
 
 (defn applications
   ([]
