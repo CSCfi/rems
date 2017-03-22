@@ -1,6 +1,6 @@
 ---
 
-- hosts: rems
+- hosts: all
   become: yes
   tasks:
 
@@ -41,6 +41,16 @@
       src: shibboleth2.xml
       dest: /etc/shibboleth/
 
+  - name: Change host cert file to shibd group
+    file:
+      path: /etc/pki/tls/certs/{{shib_certname}}
+      group: shibd
+
+  - name: Change host key file to shibd group
+    file:
+      path: /etc/pki/tls/private/{{shib_keyname}}
+      group: shibd
+
   - name: Enable shibboleth service
     service:
       name: shibd
@@ -50,12 +60,15 @@
   - name: Disable pesky welcome.conf
     copy:
       dest: /etc/httpd/conf.d/welcome.conf
-      content:
+      content: "#DON'T REMOVE THIS FILE! IT IS INTENTIONALLY LEFT EMPTY"
 
   - name: Configure ssl.conf
     template:
       src: ssl.conf
       dest: /etc/httpd/conf.d/
+
+  - name: Restore SELinux file context
+    command: restorecon -R -v /etc/pki/
 
   - name: Enable httpd service
     service:

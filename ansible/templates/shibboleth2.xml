@@ -25,7 +25,7 @@
         <AttributeExtractor type="XML" validate="true" reloadChanges="false" path="attribute-map.xml"/>
         <AttributeResolver type="Query" subjectMatch="true"/>
         <AttributeFilter type="XML" validate="true" path="attribute-policy.xml"/>
-        <CredentialResolver type="File" key="/etc/pki/tls/private/{{host_keyname}}" certificate="/etc/pki/tls/certs/{{host_certname}}"/>
+        <CredentialResolver type="File" key="/etc/pki/tls/private/{{shib_keyname}}" certificate="/etc/pki/tls/certs/{{shib_certname}}"/>
     </ApplicationDefaults>
     <SecurityPolicyProvider type="XML" validate="true" path="security-policy.xml"/>
     <ProtocolProvider type="XML" validate="true" reloadChanges="false" path="protocols.xml"/>
