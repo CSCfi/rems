@@ -1,5 +1,7 @@
 (ns rems.applications
   (:require [rems.context :as context]
+            [clj-time.core :as time]
+            [clj-time.format :as format]
             [rems.guide :refer :all]
             [rems.text :refer [text]]
             [rems.db.core :as db]
@@ -11,12 +13,15 @@
     "applied" :t.applications.states/applied
     :t.applications.states/unknown))
 
+(def ^:private time-format (format/formatter "yyyy-MM-dd HH:mm"
+                                             (time/default-time-zone)))
+
 (defn- applications-item [app]
   [:tr
    [:td (:id app)]
    [:td (get-in app [:catalogue-item :title])]
    [:td (text (localize-state (:state app)))]
-   [:td (:start app)]
+   [:td (format/unparse time-format (:start app))]
    [:td [:a.btn.btn-primary
          {:href (str "/form/" (:catid app) "/" (:id app))}
          (text :t/applications.view)]]])
