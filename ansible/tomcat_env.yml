@@ -47,10 +47,15 @@
       state: started
       enabled: yes
 
-  - name: disable pesky welcome.conf
+  - name: Disable pesky welcome.conf
     copy:
       dest: /etc/httpd/conf.d/welcome.conf
       content:
+
+  - name: Configure ssl.conf
+    template:
+      src: ssl.conf
+      dest: /etc/httpd/conf.d/
 
   - name: Enable httpd service
     service:
