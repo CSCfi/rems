@@ -280,10 +280,6 @@ form.inline .btn-link {
   padding: 0 1rem;
 }
 
-div.actions {
-  padding-top: 0.5rem;
-}
-
 .rems-table td.actions:last-child {
   text-align: right;
   padding-right: 1rem;
@@ -296,7 +292,7 @@ div.actions {
 }
 
 .actions  > *:not(:first-child) {
-  padding-left: 0.5em;
+  margin-left: 0.5em;
 }
 
 .cart-title {

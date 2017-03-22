@@ -53,11 +53,14 @@
      (for [i (:items form)]
        (field (assoc i :readonly applied)))
      (anti-forgery-field)
-     (when-not applied
-       (list
-        [:button.btn {:type "submit" :name "save"} (text :t.form/save)]
-        [:button.btn.btn-primary {:type "submit" :name "submit"}
-         (text :t.form/submit)]))]))
+     [:div.row
+      [:div.col-sm-6
+       [:a.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
+      (when-not applied
+        [:div.col-sm-6.actions
+         [:button.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)]
+         [:button.btn.btn-primary {:type "submit" :name "submit"}
+          (text :t.form/submit)]])]]))
 
 (defn link-to-item [item]
   (str "/form/" (:id item)))
