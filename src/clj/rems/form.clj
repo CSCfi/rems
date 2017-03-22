@@ -34,11 +34,11 @@
   [:div.form-group
    [:label title]])
 
-(defn license [{title :title id :id}]
+(defn- license [{title :title id :id}]
   [:div.checkbox
    [:label
     [:input {:type "checkbox" :id id :value "approved"}]
-    [:a {:href "/" :target :_blank :for id} (str " " title)]]])
+    [:a {:href "/" :target "_blank" :for id} (str " " title)]]])
 
 (defn- field [f]
   (case (:type f)
