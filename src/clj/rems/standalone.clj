@@ -36,8 +36,7 @@
 
 (defn stop-app []
   (doseq [component (:stopped (mount/stop))]
-    (log/info component "stopped"))
-  (shutdown-agents))
+    (log/info component "stopped")))
 
 (defn start-app [& args]
   (doseq [component (-> args
