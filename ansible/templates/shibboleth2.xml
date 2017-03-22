@@ -1,0 +1,33 @@
+<SPConfig xmlns="urn:mace:shibboleth:2.0:native:sp:config"
+    xmlns:conf="urn:mace:shibboleth:2.0:native:sp:config"
+    xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"
+    xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol"
+    xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
+    clockSkew="180">
+    <ApplicationDefaults entityID="https://{{shib_hostname}}/shibboleth"
+                         REMOTE_USER="eppn persistent-id targeted-id"
+                         homeURL="/catalogue"
+                         attributePrefix="AJP_">
+        <Sessions lifetime="28800" timeout="3600" relayState="ss:mem"
+                  checkAddress="false" handlerSSL="true" cookieProps="; path=/; secure">
+            <SSO discoveryProtocol="SAMLDS" discoveryURL="{{shib_discovery_url}}"> SAML2 </SSO>
+            <Logout>Local</Logout>
+            <Handler type="MetadataGenerator" Location="/Metadata" signing="false"/>
+            <Handler type="Status" Location="/Status" acl="127.0.0.1 ::1"/>
+            <Handler type="Session" Location="/Session" showAttributeValues="false"/>
+            <Handler type="DiscoveryFeed" Location="/DiscoFeed"/>
+        </Sessions>
+        <Errors supportContact="root@localhost"
+            helpLocation="/about.html"
+            styleSheet="/shibboleth-sp/main.css"/>
+        <MetadataProvider type="XML" uri="{{shib_metadata_provider}}"
+              backingFilePath="haka-test-metadata.xml" legacyOrgNames="false" reloadInterval="7200">
+        </MetadataProvider>
+        <AttributeExtractor type="XML" validate="true" reloadChanges="false" path="attribute-map.xml"/>
+        <AttributeResolver type="Query" subjectMatch="true"/>
+        <AttributeFilter type="XML" validate="true" path="attribute-policy.xml"/>
+        <CredentialResolver type="File" key="/etc/pki/tls/private/{{shib_keyname}}" certificate="/etc/pki/tls/certs/{{shib_certname}}"/>
+    </ApplicationDefaults>
+    <SecurityPolicyProvider type="XML" validate="true" path="security-policy.xml"/>
+    <ProtocolProvider type="XML" validate="true" reloadChanges="false" path="protocols.xml"/>
+</SPConfig>
