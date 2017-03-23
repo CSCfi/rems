@@ -34,11 +34,11 @@
   [:div.form-group
    [:label title]])
 
-(defn- license [{title :title id :id linkcontent :linkcontent}]
+(defn- license [{title :title id :id textcontent :textcontent}]
   [:div.checkbox
    [:label
     [:input {:type "checkbox" :id (id-to-name id) :value "approved"}]
-    [:a {:href linkcontent :target "_blank" :for (id-to-name id)} (str " " title)]]])
+    [:a {:href textcontent :target "_blank" :for (id-to-name id)} (str " " title)]]])
 
 (defn- unsupported-field
   [f]
@@ -49,7 +49,7 @@
     "text" (text-field f)
     "texta" (texta-field f)
     "label" (label f)
-    "license" (if (= "link" (:linktype f))
+    "license" (if (= "link" (:licensetype f))
                 (license f)
                 (unsupported-field f))
     (unsupported-field f)))
@@ -130,7 +130,7 @@
              (field {:type "label" :title "Lorem ipsum dolor sit amet"})])
    (example "field of type \"license\""
             [:form
-             (field {:type "license" :title "Link to license" :linktype "link" :linkcontent "/guide"})])
+             (field {:type "license" :title "Link to license" :licensetype "link" :textcontent "/guide"})])
    (example "field of unsupported type"
             [:form
              (field {:type "unsupported" :title "Title" :inputprompt "prompt"})])
