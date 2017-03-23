@@ -34,19 +34,25 @@
   [:div.form-group
    [:label title]])
 
-(defn- license [{title :title id :id}]
+(defn- license [{title :title id :id linkcontent :linkcontent}]
   [:div.checkbox
    [:label
-    [:input {:type "checkbox" :id id :value "approved"}]
-    [:a {:href "/" :target "_blank" :for id} (str " " title)]]])
+    [:input {:type "checkbox" :id (id-to-name id) :value "approved"}]
+    [:a {:href linkcontent :target "_blank" :for (id-to-name id)} (str " " title)]]])
+
+(defn- unsupported-field
+  [f]
+  [:p.alert.alert-warning "Unsupported field " (pr-str f)])
 
 (defn- field [f]
   (case (:type f)
     "text" (text-field f)
     "texta" (texta-field f)
     "label" (label f)
-    "license" (license f)
-    [:p.alert.alert-warning "Unsupported field " (pr-str f)]))
+    "license" (if (= "link" (:linktype f))
+                (license f)
+                (unsupported-field f))
+    (unsupported-field f)))
 
 (defn- form [form]
   (let [applied (= (:state form) "applied")]
@@ -124,7 +130,7 @@
              (field {:type "label" :title "Lorem ipsum dolor sit amet"})])
    (example "field of type \"license\""
             [:form
-             (field {:type "license" :title "Link to license"})])
+             (field {:type "license" :title "Link to license" :linktype "link" :linkcontent "/guide"})])
    (example "field of unsupported type"
             [:form
              (field {:type "unsupported" :title "Title" :inputprompt "prompt"})])
