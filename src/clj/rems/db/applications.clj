@@ -24,7 +24,7 @@
     {:id 123
      :type \"texta\"
      :title \"Item title\"
-     :placeholder \"hello\"
+     :inputprompt \"hello\"
      :optional true
      :value \"filled value or nil\"}"
   [application-id form-id item]
