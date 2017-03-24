@@ -24,12 +24,17 @@
              :checkout "Check out"}
       :catalogue {:header "Resource"}
       :form {:save "Save as draft"
-             :submit "Send application"
              :licenses "Licenses"}
+             :saved "Draft saved."
+             :submit "Send application"
+             :submitted "Application submitted."
+             :back "Back to catalogue"}
       :applications {:application "Application"
                      :resource "Resource"
                      :user "User"
                      :state "State"
+                     :view "View"
+                     :created "Created"
                      :states {:draft "Draft"
                               :applied "Applied"
                               :unknown "Unknown"}}}}
@@ -53,12 +58,17 @@
              :checkout "Lähetä"}
       :catalogue {:header "Kielivarat"}
       :form {:save "Tallenna luonnos"
-             :submit "Lähetä hakemus"
              :licenses "Lisenssiehdot"}
+             :saved "Luonnos tallennettu."
+             :submit "Lähetä hakemus"
+             :submitted "Hakemus lähetetty."
+             :back "Takaisin kielivaroihin"}
       :applications {:application "Hakemus"
                      :resource "Kielivara"
                      :user "Käyttäjä"
                      :state "Tila"
+                     :view "Näytä"
+                     :created "Luotu"
                      :states {:draft "Luonnos"
                               :applied "Haettu"
                               :unknown "Tuntematon"}}}}
