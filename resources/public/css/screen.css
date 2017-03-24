@@ -52,13 +52,17 @@ body {
   outline-color: transparent;
 }
 
-.nav-link, .btn-link {
+.nav-link, .btn-link, .nav-link a {
   color: #4D5A91;
   border: 0;   /* for button links */
 }
 
 .navbar .nav-link, .navbar .btn-link {
   text-transform: uppercase;
+}
+
+.navbar-toggler {
+  border-color: #CAD2E6;
 }
 
 .nav-link.active, .btn-link.active {
@@ -216,8 +220,12 @@ footer {
   white-space: nowrap;
 }
 
-.user {
-  color: #4D5A91;
+.user-name {
+  text-transform: none;
+}
+
+.fa, .user-name {
+  margin-right: 5px;
 }
 
 .navbar {
@@ -256,10 +264,6 @@ footer {
 .outer-cart {
   border: 1px solid #CAD2E6;
   border-radius: .4em;
-}
-
-.fa, .user-name {
-  margin-right: 5px;
 }
 
 form.inline {

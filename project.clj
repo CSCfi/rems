@@ -24,7 +24,7 @@
                  [org.clojure/tools.logging "0.3.1"]
                  [org.postgresql/postgresql "9.4.1212"]
                  [org.webjars.bower/tether "1.3.7"]
-                 [org.webjars/bootstrap "4.0.0-alpha.5"]
+                 [org.webjars/bootstrap "4.0.0-alpha.6"]
                  [org.webjars/font-awesome "4.6.3"]
                  [org.webjars/jquery "3.1.1"]
                  [prone "1.1.2"]

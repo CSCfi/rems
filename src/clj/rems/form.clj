@@ -72,10 +72,10 @@
           (field (assoc l :readonly applied)))])
      (anti-forgery-field)
      [:div.row
-      [:div.col-sm-6
+      [:div.col
        [:a.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
       (when-not applied
-        [:div.col-sm-6.actions
+        [:div.col.actions
          [:button.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)]
          [:button.btn.btn-primary {:type "submit" :name "submit"}
           (text :t.form/submit)]])]]))
