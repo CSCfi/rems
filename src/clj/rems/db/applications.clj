@@ -24,7 +24,7 @@
     {:id 123
      :type \"texta\"
      :title \"Item title\"
-     :placeholder \"hello\"
+     :inputprompt \"hello\"
      :optional true
      :value \"filled value or nil\"}"
   [application-id form-id item]
@@ -37,6 +37,19 @@
              (db/get-field-value {:item (:id item)
                                   :form form-id
                                   :application application-id})))})
+
+(defn- process-license
+  "Returns a license structure like this:
+
+    {:type \"license\"
+     :licensetype \"link\"
+     :title \"LGPL\"
+     :textcontent \"www.license.link\"}"
+  [license]
+  {:type "license"
+   :licensetype (:type license)
+   :title (:title license)
+   :textcontent (:textcontent license)})
 
 (defn get-form-for
   "Returns a form structure like this:
@@ -62,13 +75,16 @@
                        (first (db/get-applications {:id application-id})))
          form-id (:formid form)
          items (mapv #(process-item application-id form-id %)
-                     (db/get-form-items {:id form-id}))]
+                     (db/get-form-items {:id form-id}))
+         licenses (mapv process-license
+                        (db/get-workflow-licenses {:catId catalogue-item}))]
      {:id form-id
       :catalogue-item catalogue-item
       :application application-id
       :state (:state application)
       :title (or (:formtitle form) (:metatitle form))
-      :items items})))
+      :items items
+      :licenses licenses})))
 
 (defn create-new-draft [resource-id]
   (let [id (:id (db/create-application!

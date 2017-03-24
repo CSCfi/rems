@@ -24,6 +24,7 @@
              :checkout "Check out"}
       :catalogue {:header "Resource"}
       :form {:save "Save as draft"
+             :licenses "Licenses"
              :saved "Draft saved."
              :submit "Send application"
              :submitted "Application submitted."
@@ -57,6 +58,7 @@
              :checkout "Lähetä"}
       :catalogue {:header "Kielivarat"}
       :form {:save "Tallenna luonnos"
+             :licenses "Lisenssiehdot"
              :saved "Luonnos tallennettu."
              :submit "Lähetä hakemus"
              :submitted "Hakemus lähetetty."

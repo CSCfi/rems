@@ -169,3 +169,11 @@ LEFT OUTER JOIN application_form_item_map itemmap ON textvalues.formMapId = item
 WHERE textvalues.catAppId = :application
   AND itemmap.formItemId = :item
   AND itemmap.formId = :form
+
+-- :name get-workflow-licenses :? :*
+SELECT
+  lic.title, lic.type, lic.textcontent
+FROM license lic
+INNER JOIN workflow_licenses wl ON lic.id = wl.licId
+INNER JOIN catalogue_item cat ON wl.wfId = cat.wfId
+WHERE cat.id = :catId

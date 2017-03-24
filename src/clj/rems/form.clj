@@ -34,12 +34,25 @@
   [:div.form-group
    [:label title]])
 
+(defn- license [{title :title id :id textcontent :textcontent}]
+  [:div.checkbox
+   [:label
+    [:input {:type "checkbox" :id (id-to-name id) :value "approved"}]
+    [:a {:href textcontent :target "_blank" :for (id-to-name id)} (str " " title)]]])
+
+(defn- unsupported-field
+  [f]
+  [:p.alert.alert-warning "Unsupported field " (pr-str f)])
+
 (defn- field [f]
   (case (:type f)
     "text" (text-field f)
     "texta" (texta-field f)
     "label" (label f)
-    [:p.alert.alert-warning "Unsupported field " (pr-str f)]))
+    "license" (if (= "link" (:licensetype f))
+                (license f)
+                (unsupported-field f))
+    (unsupported-field f)))
 
 (defn- form [form]
   (let [applied (= (:state form) "applied")]
@@ -52,6 +65,11 @@
        [:h2 (text :t.applications.states/applied)])
      (for [i (:items form)]
        (field (assoc i :readonly applied)))
+     (when-let [licenses (not-empty (:licenses form))]
+       [:div
+        [:label (text :t.form/licenses)]
+        (for [l licenses]
+          (field (assoc l :readonly applied)))])
      (anti-forgery-field)
      [:div.row
       [:div.col-sm-6
@@ -122,6 +140,9 @@
    (example "field of type \"label\""
             [:form
              (field {:type "label" :title "Lorem ipsum dolor sit amet"})])
+   (example "field of type \"license\""
+            [:form
+             (field {:type "license" :title "Link to license" :licensetype "link" :textcontent "/guide"})])
    (example "field of unsupported type"
             [:form
              (field {:type "unsupported" :title "Title" :inputprompt "prompt"})])
