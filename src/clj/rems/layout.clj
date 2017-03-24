@@ -39,10 +39,10 @@
     [:div.nav-item.navbar-text (language-switcher)]]
    (when user
      [:div.user.navbar-nav
-      [:div.navbar-text
+      [:div.nav-link
        [:i.fa.fa-user]
-       [:span.user-name (str user " /")]]
-      (nav-link "/Shibboleth.sso/Logout?return=%2F" (text :t.navigation/logout) false)])])
+       [:span.user-name (str user " /")]
+       (link-to "/Shibboleth.sso/Logout?return=%2F" (text :t.navigation/logout))]])])
 
 (defn- footer []
   [:footer.footer
