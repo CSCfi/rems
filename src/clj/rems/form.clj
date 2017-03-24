@@ -65,6 +65,11 @@
        [:h2 (text :t.applications.states/applied)])
      (for [i (:items form)]
        (field (assoc i :readonly applied)))
+     (when-let [licenses (not-empty (:licenses form))]
+       [:div
+        [:label (text :t.form/licenses)]
+        (for [l licenses]
+          (field (assoc l :readonly applied)))])
      (anti-forgery-field)
      (when-not applied
        (list

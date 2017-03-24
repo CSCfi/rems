@@ -24,7 +24,8 @@
              :checkout "Check out"}
       :catalogue {:header "Resource"}
       :form {:save "Save as draft"
-             :submit "Send application"}
+             :submit "Send application"
+             :licenses "Licenses"}
       :applications {:application "Application"
                      :resource "Resource"
                      :user "User"
@@ -52,7 +53,8 @@
              :checkout "Lähetä"}
       :catalogue {:header "Kielivarat"}
       :form {:save "Tallenna luonnos"
-             :submit "Lähetä hakemus"}
+             :submit "Lähetä hakemus"
+             :licenses "Lisenssiehdot"}
       :applications {:application "Hakemus"
                      :resource "Kielivara"
                      :user "Käyttäjä"

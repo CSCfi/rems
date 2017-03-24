@@ -38,6 +38,13 @@
                                   :form form-id
                                   :application application-id})))})
 
+(defn- process-license
+  [license]
+  {:type "license"
+   :licensetype (:type license)
+   :title (:title license)
+   :textcontent (:textcontent license)})
+
 (defn get-form-for
   "Returns a form structure like this:
 
@@ -62,13 +69,16 @@
                        (first (db/get-applications {:id application-id})))
          form-id (:formid form)
          items (mapv #(process-item application-id form-id %)
-                     (db/get-form-items {:id form-id}))]
+                     (db/get-form-items {:id form-id}))
+         licenses (mapv process-license
+                        (db/get-workflow-licenses {:catId catalogue-item}))]
      {:id form-id
       :catalogue-item catalogue-item
       :application application-id
       :state (:state application)
       :title (or (:formtitle form) (:metatitle form))
-      :items items})))
+      :items items
+      :licenses licenses})))
 
 (defn create-new-draft [resource-id]
   (let [id (:id (db/create-application!
