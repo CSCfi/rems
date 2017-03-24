@@ -22,28 +22,27 @@
 
 (defn- navbar
   [page-name user]
-  [:nav.navbar {:role "navigation"}
-   [:button.navbar-toggler.hidden-sm-up
+  [:nav.navbar.navbar-toggleable-sm {:role "navigation"}
+   [:button.navbar-toggler
     {:type "button" :data-toggle "collapse" :data-target "#collapsing-navbar"}
     "&#9776;"]
-   [:div.navbar-text.float-xs-right
-    (when user
-      [:div.user
-       [:i.fa.fa-user]
-       [:span.user-name (str user " /")]
-       (nav-link "/Shibboleth.sso/Logout?return=%2F" (text :t.navigation/logout) false)])]
-   [:div#collapsing-navbar.collapse.navbar-toggleable-xs
+   [:div#collapsing-navbar.collapse.navbar-collapse
     ;; TODO configurable brand?
     ;; [:a.navbar-brand {:href "/"} "REMS"]
-    [:div.nav.navbar-nav
+    [:div.navbar-nav.mr-auto
      (if user
        (list
         (nav-link "/catalogue" (text :t.navigation/catalogue) (= page-name "catalogue"))
         (nav-link "/applications" (text :t.navigation/applications) (= page-name "applications")))
        (nav-link "/" (text :t.navigation/home) (= page-name "home")))
-     (nav-link "/about" (text :t.navigation/about) (= page-name "about"))
-     [:div.nav-item.navbar-text.float-sm-right (language-switcher)]
-     ]]])
+     (nav-link "/about" (text :t.navigation/about) (= page-name "about"))]
+    [:div.nav-item.navbar-text (language-switcher)]]
+   (when user
+     [:div.user.navbar-nav
+      [:div.navbar-text
+       [:i.fa.fa-user]
+       [:span.user-name (str user " /")]]
+      (nav-link "/Shibboleth.sso/Logout?return=%2F" (text :t.navigation/logout) false)])])
 
 (defn- footer []
   [:footer.footer
