@@ -39,6 +39,12 @@
                                   :application application-id})))})
 
 (defn- process-license
+  "Returns a license structure like this:
+
+    {:type \"license\"
+     :licensetype \"link\"
+     :title \"LGPL\"
+     :textcontent \"www.license.link\"}"
   [license]
   {:type "license"
    :licensetype (:type license)
