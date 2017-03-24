@@ -36,9 +36,9 @@
   (button-secondary "/cart/remove" (text :t.cart/remove) (:id item)))
 
 (defn get-cart-from-session
-  "Computes the value for context/*cart*: a sequence of integer ids."
+  "Computes the value for context/*cart*: a set of integer ids."
   [request]
-  (map #(Long/parseLong %) (get-in request [:session :cart])))
+  (get-in request [:session :cart]))
 
 (defn get-cart-items
   "Fetch items currently in cart from database"
@@ -46,8 +46,9 @@
   (doall (for [i context/*cart*]
            (get-localized-catalogue-item {:id i}))))
 
-(defn- handler [method {session :session {id :id} :params :as req}]
-  (let [modifier (case method
+(defn- handler [method {session :session {id-string :id} :params :as req}]
+  (let [id (Long/parseLong id-string)
+        modifier (case method
                    :add conj
                    :remove disj)]
     (assoc (redirect "/catalogue" :see-other)

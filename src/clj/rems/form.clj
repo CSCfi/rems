@@ -97,18 +97,22 @@
 (defn- redirect-to-application [resource-id application-id]
   (redirect (str "/form/" resource-id "/" application-id) :see-other))
 
-(defn- save
-  ([resource-id input]
-   (save resource-id (create-new-draft resource-id) input))
-  ([resource-id application-id input]
-   (save-fields resource-id application-id input)
-   (when (get input "submit")
-     (db/update-application-state! {:id application-id :user 0 :state "applied"}))
-   (assoc (redirect-to-application resource-id application-id)
-          :flash
-          (if (get input "submit")
-            (text :t.form/submitted)
-            (text :t.form/saved)))))
+(defn- save [{params :params input :form-params session :session}]
+  (let [resource-id (Long/parseLong (get params :id))
+        application-id (if-let [s (get params :application)]
+                         (Long/parseLong s)
+                         (create-new-draft resource-id))
+        submit (get input "submit")
+        flash-text (if submit
+                     (text :t.form/submitted)
+                     (text :t.form/saved))]
+    (save-fields resource-id application-id input)
+    (when submit
+      (db/update-application-state! {:id application-id :user 0 :state "applied"}))
+    (->
+     (redirect-to-application resource-id application-id)
+     (assoc :flash flash-text)
+     (assoc :session (update session :cart disj resource-id)))))
 
 (defn- form-page [id application]
   (layout/render
@@ -123,10 +127,8 @@
          (if-let [app (get-draft-id-for resource-id)]
            (redirect-to-application id app)
            (form-page resource-id nil))))
-  (POST "/form/:id/save" [id :as {input :form-params}]
-        (save (Long/parseLong id) input))
-  (POST "/form/:id/:application/save" [id application :as {input :form-params}]
-        (save (Long/parseLong id) (Long/parseLong application) input)))
+  (POST "/form/:id/save" req (save req))
+  (POST "/form/:id/:application/save" req (save req)))
 
 (defn guide
   []
