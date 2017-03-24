@@ -71,11 +71,14 @@
         (for [l licenses]
           (field (assoc l :readonly applied)))])
      (anti-forgery-field)
-     (when-not applied
-       (list
-        [:button.btn {:type "submit" :name "save"} (text :t.form/save)]
-        [:button.btn.btn-primary {:type "submit" :name "submit"}
-         (text :t.form/submit)]))]))
+     [:div.row
+      [:div.col-sm-6
+       [:a.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
+      (when-not applied
+        [:div.col-sm-6.actions
+         [:button.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)]
+         [:button.btn.btn-primary {:type "submit" :name "submit"}
+          (text :t.form/submit)]])]]))
 
 (defn link-to-item [item]
   (str "/form/" (:id item)))
@@ -101,7 +104,11 @@
    (save-fields resource-id application-id input)
    (when (get input "submit")
      (db/update-application-state! {:id application-id :user 0 :state "applied"}))
-   (redirect-to-application resource-id application-id)))
+   (assoc (redirect-to-application resource-id application-id)
+          :flash
+          (if (get input "submit")
+            (text :t.form/submitted)
+            (text :t.form/saved)))))
 
 (defn- form-page [id application]
   (layout/render

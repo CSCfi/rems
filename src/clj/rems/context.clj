@@ -18,3 +18,5 @@
 (def ^:dynamic ^{:doc "User's preferred language."} *lang*)
 
 (def ^:dynamic ^{:doc "Contents of the cart."} *cart*)
+
+(def ^:dynamic ^{:doc "Flash session."} *flash*)
