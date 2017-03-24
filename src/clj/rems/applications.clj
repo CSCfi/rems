@@ -18,10 +18,10 @@
 
 (defn- applications-item [app]
   [:tr
-   [:td (:id app)]
-   [:td (get-in app [:catalogue-item :title])]
-   [:td (text (localize-state (:state app)))]
-   [:td (format/unparse time-format (:start app))]
+   [:td {:data-th (text :t.applications/application)} (:id app)]
+   [:td {:data-th (text :t.applications/resource)} (get-in app [:catalogue-item :title])]
+   [:td {:data-th (text :t.applications/state)} (text (localize-state (:state app)))]
+   [:td {:data-th (text :t.applications/created)} (format/unparse time-format (:start app))]
    [:td [:a.btn.btn-primary
          {:href (str "/form/" (:catid app) "/" (:id app))}
          (text :t/applications.view)]]])
