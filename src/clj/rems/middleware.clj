@@ -34,7 +34,8 @@
 (defn wrap-context [handler]
   (fn [request]
     (binding [context/*root-path* (calculate-root-path request)
-              context/*cart* (get-cart-from-session request)]
+              context/*cart* (get-cart-from-session request)
+              context/*flash* (:flash request)]
       (handler request))))
 
 (defn wrap-internal-error [handler]
@@ -99,15 +100,18 @@
         (wrap-authentication authentication)
         (wrap-authorization authorization))))
 
+(def +wrap-defaults-settings+
+  (-> site-defaults
+      (assoc-in [:security :anti-forgery] true)
+      (assoc-in [:session :store] (ttl-memory-store (* 60 30)))
+      (assoc-in [:session :flash] true)))
+
 (defn wrap-base [handler]
   (-> ((:middleware +defaults+) handler)
       wrap-i18n
       wrap-auth
       wrap-webjars
       wrap-context
-      (wrap-defaults
-       (-> site-defaults
-           (assoc-in [:security :anti-forgery] true)
-           (assoc-in [:session :store] (ttl-memory-store (* 60 30)))))
+      (wrap-defaults +wrap-defaults-settings+)
       wrap-internal-error
       wrap-formats))
