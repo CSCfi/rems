@@ -26,32 +26,31 @@
   (let [run (fn [session path id]
               (-> (request :post path)
                   (assoc :session session
-                         :params {:id id})
+                         :params {:id (str id)})
                   cart/cart-routes
-                  :session))
-        cart (comp sort :cart)]
+                  :session))]
     (testing "empty session"
-      (is (= ["A"] (cart (run nil "/cart/add" "A")))))
+      (is (= #{12} (:cart (run nil "/cart/add" 12)))))
     (testing "add two"
-      (is (= ["A" "B"] (-> nil
-                           (run "/cart/add" "A")
-                           (run "/cart/add" "B")
-                           cart))))
+      (is (= #{12 34} (-> nil
+                          (run "/cart/add" 12)
+                          (run "/cart/add" 34)
+                          :cart))))
     (testing "add twice"
-      (is (= ["A"] (-> nil
-                       (run "/cart/add" "A")
-                       (run "/cart/add" "A")
-                       cart))))
+      (is (= #{12} (-> nil
+                       (run "/cart/add" 12)
+                       (run "/cart/add" 12)
+                       :cart))))
     (testing "remove"
-      (is (= ["C"] (-> nil
-                       (run "/cart/add" "A")
-                       (run "/cart/add" "C")
-                       (run "/cart/remove" "A")
-                       cart))))
+      (is (= #{56} (-> nil
+                       (run "/cart/add" 12)
+                       (run "/cart/add" 56)
+                       (run "/cart/remove" 12)
+                       :cart))))
     (testing "remove twice"
-      (is (= ["C"] (-> nil
-                       (run "/cart/add" "A")
-                       (run "/cart/add" "C")
-                       (run "/cart/remove" "A")
-                       (run "/cart/remove" "A")
-                       cart))))))
+      (is (= #{56} (-> nil
+                       (run "/cart/add" 12)
+                       (run "/cart/add" 56)
+                       (run "/cart/remove" 12)
+                       (run "/cart/remove" 12)
+                       :cart))))))
