@@ -24,7 +24,9 @@
              :checkout "Check out"}
       :catalogue {:header "Resource"}
       :form {:save "Save as draft"
+             :saved "Draft saved."
              :submit "Send application"
+             :submitted "Application submitted."
              :back "Back to catalogue"}
       :applications {:application "Application"
                      :resource "Resource"
@@ -55,7 +57,9 @@
              :checkout "Lähetä"}
       :catalogue {:header "Kielivarat"}
       :form {:save "Tallenna luonnos"
+             :saved "Luonnos tallennettu."
              :submit "Lähetä hakemus"
+             :submitted "Hakemus lähetetty."
              :back "Takaisin kielivaroihin"}
       :applications {:application "Hakemus"
                      :resource "Kielivara"

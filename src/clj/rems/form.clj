@@ -87,7 +87,10 @@
    (when (get input "submit")
      (db/update-application-state! {:id application-id :user 0 :state "applied"}))
    (assoc (redirect-to-application resource-id application-id)
-          :flash "Saved")))
+          :flash
+          (if (get input "submit")
+            (text :t.form/submitted)
+            (text :t.form/saved)))))
 
 (defn- form-page [id application]
   (layout/render
