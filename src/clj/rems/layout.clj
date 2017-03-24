@@ -52,6 +52,9 @@
 (defn- logo []
   [:div.logo [:div.img]])
 
+(defn- flash-message [msg]
+  [:div.alert.alert-success msg])
+
 (defn- page-template
   [page-name nav content footer message]
   (html5 [:head
@@ -84,7 +87,7 @@
         footer (when-not (:bare params)
                  (footer))
         message (when context/*flash*
-                  (pr-str context/*flash*))
+                  (flash-message context/*flash*))
         content-type (:content-type params "text/html; charset=utf-8")
         status (:status params 200)
         headers (:headers params {})]
@@ -140,5 +143,7 @@
    (example "footer"
             (footer))
    (example "logo" (logo))
+   (example "flash message"
+            (flash-message [:p "Message " [:strong "contents"] " here"]))
    (example "error-content"
             (error-content {:status 123 :title "Error title" :message "Error message"}))))
