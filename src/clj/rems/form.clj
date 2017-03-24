@@ -86,7 +86,8 @@
    (save-fields resource-id application-id input)
    (when (get input "submit")
      (db/update-application-state! {:id application-id :user 0 :state "applied"}))
-   (redirect-to-application resource-id application-id)))
+   (assoc (redirect-to-application resource-id application-id)
+          :flash "Saved")))
 
 (defn- form-page [id application]
   (layout/render

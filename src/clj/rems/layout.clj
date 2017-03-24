@@ -53,7 +53,7 @@
   [:div.logo [:div.img]])
 
 (defn- page-template
-  [page-name nav content footer]
+  [page-name nav content footer message]
   (html5 [:head
           [:meta {:http-equiv "Content-Type" :content "text/html; charset=UTF-8"}]
           [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
@@ -61,10 +61,10 @@
           (include-css "/assets/bootstrap/css/bootstrap.min.css")
           (include-css "/assets/font-awesome/css/font-awesome.min.css")
           (include-css "/css/screen.css")
-
           [:body
            [:div.container nav]
            (logo)
+           [:div.container message]
            [:div.container content]
            footer
            (include-js "/assets/jquery/jquery.min.js")
@@ -83,13 +83,15 @@
               (navbar page-name context/*user*))
         footer (when-not (:bare params)
                  (footer))
+        message (when context/*flash*
+                  (pr-str context/*flash*))
         content-type (:content-type params "text/html; charset=utf-8")
         status (:status params 200)
         headers (:headers params {})]
       (response/content-type
        {:status status
         :headers headers
-        :body (page-template page-name nav content footer)}
+        :body (page-template page-name nav content footer message)}
        content-type)))
 
 (defn- error-content
