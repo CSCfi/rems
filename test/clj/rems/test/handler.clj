@@ -23,7 +23,7 @@
 
 (defn- pass-cookies [to-request from-response]
   (let [set-cookie (get-in from-response [:headers "Set-Cookie"])]
-    (assoc-in to-request [:headers "cookie"] (s/join "; " set-cookie))))
+    (header to-request "cookie" (s/join "; " set-cookie))))
 
 (defn- get-csrf-token [response]
   (let [token-regex #"<input id=\"__anti-forgery-token\" name=\"__anti-forgery-token\" type=\"hidden\" value=\"([^\"]*)\">"
@@ -67,9 +67,8 @@
             catalogue (app (-> (request :get "/catalogue")
                                (pass-cookies login)))
             token (get-csrf-token catalogue)
-            req (-> (request :post "/cart/add")
-                    (pass-cookies login)
-                    (assoc :form-params {"item" "A" "__anti-forgery-token" token}))
+            req (-> (request :post "/cart/add" {"id" "1" "__anti-forgery-token" token})
+                    (pass-cookies login))
             response (app req)]
         (is (= 303 (:status response)))))))
 
@@ -79,10 +78,9 @@
                            (pass-cookies login)))]
     (is (.contains (:body catalogue) "cart") "defaults to english")
     (let [token (get-csrf-token catalogue)
-          fi (app (-> (request :post "/language/fi")
+          fi (app (-> (request :post "/language/fi" {"__anti-forgery-token" token})
                       (pass-cookies login)
-                      (assoc :form-params {"__anti-forgery-token" token})
-                      (assoc-in [:headers "referer"] "/catalogue")))
+                      (header "referer" "/catalogue")))
           catalogue-fi (app (-> (request :get "/catalogue")
                                 (pass-cookies login)))]
       (is (= 303 (:status fi)))
