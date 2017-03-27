@@ -157,7 +157,6 @@
         (follow-redirect)
         (dispatch (request :post "/cart/add" {"id" "1"}))
         (follow-redirect)
-        (cart-contains-item "1")
         (dispatch (request :get "/form/1"))
         (dispatch (request :post "/form/1/save" {"field2" "alice field2"}))
         (follow-redirect))
