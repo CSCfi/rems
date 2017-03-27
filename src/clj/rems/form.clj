@@ -137,18 +137,20 @@
           validation (validate (get-form-for resource-id application-id))
           valid (= :valid validation)
           perform-submit (and submit valid)
-          status (if perform-submit
+          message (if perform-submit
                    (text :t.form/submitted)
                    (text :t.form/saved))
-          flash-message (if valid
-                          status
-                          (list status
-                                (format-validation-messages validation)))]
+          flash (if valid
+                  {:status :success
+                   :contents message}
+                  {:status :warning
+                   :contents (list message
+                                   (format-validation-messages validation))})]
       (when perform-submit
         (db/update-application-state! {:id application-id :user 0 :state "applied"}))
       (->
        (redirect-to-application resource-id application-id)
-       (assoc :flash flash-message)
+       (assoc :flash flash)
        (assoc :session (update session :cart disj resource-id))))))
 
 (defn- form-page [id application]
