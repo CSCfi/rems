@@ -32,6 +32,9 @@ DELETE FROM public.catalogue_item_application_state CASCADE;
 DELETE FROM public.catalogue_item_application CASCADE;
 
 -- clear existing data
+DELETE FROM public.workflow_licenses CASCADE;
+DELETE FROM public.license_localization CASCADE;
+DELETE FROM public.license CASCADE;
 DELETE FROM public.catalogue_item_localization CASCADE;
 DELETE FROM public.catalogue_item CASCADE;
 DELETE FROM public.resource CASCADE;
@@ -65,19 +68,7 @@ INSERT INTO public.application_form_item
 SELECT * FROM transfer.rms_application_form_item;
 
 INSERT INTO public.application_form_item_map
-SELECT
-  id,
-  formId,
-  formItemId,
-  CASE WHEN formItemOptional THEN b'1'
-       ELSE b'0'
-  END
-  AS formItemOptional,
-  modifierUserId,
-  itemOrder,
-  start,
-  transfer.rms_application_form_item_map.end AS endt
-FROM transfer.rms_application_form_item_map;
+SELECT * FROM transfer.rms_application_form_item_map;
 
 INSERT INTO public.catalogue_item
 SELECT * FROM transfer.rms_catalogue_item;
@@ -92,18 +83,7 @@ INSERT INTO public.license_localization
 SELECT * FROM transfer.rms_license_localization;
 
 INSERT INTO public.workflow_licenses
-SELECT
-  id,
-  wfId,
-  licId,
-  round,
-  CASE WHEN stalling THEN b'1'
-       ELSE b'0'
-  END
-  AS stalling,
-  start,
-  transfer.rms_workflow_licenses.end AS endt
-FROM transfer.rms_workflow_licenses;
+SELECT * FROM transfer.rms_workflow_licenses;
 
 -- if all casts are not dropped, the next pgloader run might fail
 -- (can't drop a type that is referenced by a cast)
