@@ -12,8 +12,8 @@ WHERE ci.id = :id
 -- :name create-catalogue-item! :insert
 -- :doc Create a single catalogue item
 INSERT INTO catalogue_item
-(title, formid, resid)
-VALUES (:title, :form, :resid)
+(title, formid, resid, wfid)
+VALUES (:title, :form, :resid, :wfid)
 
 -- :name create-resource! :insert
 -- :doc Create a single resource
@@ -154,6 +154,30 @@ VALUES
 ON CONFLICT (catAppId, formMapId)
 DO UPDATE
 SET (modifierUserId, value) = (:user, :value)
+
+-- :name create-license! :insert
+INSERT INTO license
+(ownerUserId, modifierUserId, title, type, textcontent)
+VALUES
+(:owneruserid, :modifieruserid, :title, :type::license_type, :textcontent)
+
+-- :name create-license-localization! :insert
+INSERT INTO license_localization
+(licid, langcode, title, textcontent)
+VALUES
+(:licid, :langcode, :title, :textcontent)
+
+-- :name create-workflow! :insert
+INSERT INTO workflow
+(ownerUserId, modifierUserId, title, fnlround)
+VALUES
+(:owneruserid, :modifieruserid, :title, :fnlround)
+
+-- :name create-workflow-license! :insert
+INSERT INTO workflow_licenses
+(wfid, licid, round)
+VALUES
+(:wfid, :licid, :round)
 
 -- :name clear-field-value! :!
 DELETE FROM application_text_values
