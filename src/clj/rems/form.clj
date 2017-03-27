@@ -14,18 +14,26 @@
   (str "field" id))
 
 (defn- text-field [{title :title id :id
-                   prompt :inputprompt value :value
-                   readonly :readonly}]
+                    prompt :inputprompt value :value
+                    optional :optional
+                    readonly :readonly}]
   [:div.form-group
-   [:label {:for (id-to-name id)} title]
+   [:label {:for (id-to-name id)}
+    title " "
+    (when optional
+      (text :t.form/optional))]
    [:input.form-control {:type "text" :name (id-to-name id) :placeholder prompt
                          :value value :readonly readonly}]])
 
 (defn- texta-field [{title :title id :id
-                    prompt :inputprompt value :value
-                    readonly :readonly}]
+                     prompt :inputprompt value :value
+                     optional :optional
+                     readonly :readonly}]
   [:div.form-group
-   [:label {:for (id-to-name id)} title]
+   [:label {:for (id-to-name id)}
+    title " "
+    (when optional
+      (text :t.form/optional))]
    [:textarea.form-control {:name (id-to-name id) :placeholder prompt
                             :readonly readonly}
     value]])
@@ -83,6 +91,28 @@
 (defn link-to-item [item]
   (str "/form/" (:id item)))
 
+(defn- validate-item
+  [item]
+  (when-not (:optional item)
+    (when (empty? (:value item))
+      (text-format :t.form.validation/required (:title item)))))
+
+(defn- validate
+  "Validates a filled in form from (get-form-for resource application).
+
+   Returns either :valid or a sequence of validation errors."
+  [form]
+  (let [messages (vec (filter identity (map validate-item (:items form))))]
+    (if (empty? messages)
+      :valid
+      messages)))
+
+(defn- format-validation-messages
+  [msgs]
+  [:ul
+   (for [m msgs]
+     [:li m])])
+
 (defn- save-fields
   [resource-id application-id input]
   (let [form (get-form-for resource-id)]
@@ -101,18 +131,27 @@
   (let [resource-id (Long/parseLong (get params :id))
         application-id (if-let [s (get params :application)]
                          (Long/parseLong s)
-                         (create-new-draft resource-id))
-        submit (get input "submit")
-        flash-text (if submit
-                     (text :t.form/submitted)
-                     (text :t.form/saved))]
+                         (create-new-draft resource-id))]
     (save-fields resource-id application-id input)
-    (when submit
-      (db/update-application-state! {:id application-id :user 0 :state "applied"}))
-    (->
-     (redirect-to-application resource-id application-id)
-     (assoc :flash flash-text)
-     (assoc :session (update session :cart disj resource-id)))))
+    (let [submit (get input "submit")
+          validation (validate (get-form-for resource-id application-id))
+          valid (= :valid validation)
+          perform-submit (and submit valid)
+          message (if perform-submit
+                   (text :t.form/submitted)
+                   (text :t.form/saved))
+          flash (if valid
+                  {:status :success
+                   :contents message}
+                  {:status :warning
+                   :contents (list message
+                                   (format-validation-messages validation))})]
+      (when perform-submit
+        (db/update-application-state! {:id application-id :user 0 :state "applied"}))
+      (->
+       (redirect-to-application resource-id application-id)
+       (assoc :flash flash)
+       (assoc :session (update session :cart disj resource-id))))))
 
 (defn- form-page [id application]
   (layout/render
@@ -139,6 +178,9 @@
    (example "field of type \"texta\""
             [:form
              (field {:type "texta" :title "Title" :inputprompt "prompt"})])
+   (example "optional field"
+            [:form
+             (field {:type "texta" :optional "true" :title "Title" :inputprompt "prompt"})])
    (example "field of type \"label\""
             [:form
              (field {:type "label" :title "Lorem ipsum dolor sit amet"})])
@@ -148,16 +190,16 @@
    (example "field of unsupported type"
             [:form
              (field {:type "unsupported" :title "Title" :inputprompt "prompt"})])
-   (example "form"
+   (example "partially filled form"
             (form {:title "Form title"
-                        :items [{:type "text" :title "Field 1" :inputprompt "prompt 1"}
+                        :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
                                 {:type "label" :title "Please input your wishes below."}
-                                {:type "texta" :title "Field 2" :inputprompt "prompt 2"}
+                                {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2"}
                                 {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]}))
    (example "applied form"
             (form {:title "Form title"
                         :state "applied"
-                        :items [{:type "text" :title "Field 1" :inputprompt "prompt 1"}
+                        :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
                                 {:type "label" :title "Please input your wishes below."}
-                                {:type "texta" :title "Field 2" :inputprompt "prompt 2"}
+                                {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2" :value "def"}
                                 {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]}))))

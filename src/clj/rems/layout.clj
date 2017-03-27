@@ -51,8 +51,12 @@
 (defn- logo []
   [:div.logo [:div.img]])
 
-(defn- flash-message [msg]
-  [:div.alert.alert-success msg])
+(defn- flash-message [{status :status contents :contents}]
+  [:div.alert
+   {:class (case status
+             :success "alert-success"
+             :warning "alert-warning")}
+   contents])
 
 (defn- page-template
   [page-name nav content footer message]
@@ -142,7 +146,11 @@
    (example "footer"
             (footer))
    (example "logo" (logo))
-   (example "flash message"
-            (flash-message [:p "Message " [:strong "contents"] " here"]))
+   (example "flash success"
+            (flash-message {:status :success
+                            :contents [:p "Message " [:strong "contents"] " here"]}))
+   (example "flash warning"
+            (flash-message {:status :warning
+                            :contents [:p "Message " [:strong "contents"] " here"]}))
    (example "error-content"
             (error-content {:status 123 :title "Error title" :message "Error message"}))))

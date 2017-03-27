@@ -3,14 +3,10 @@
             [hiccup-find.core :refer :all]
             [ring.mock.request :refer :all]
             [rems.context :as context]
-            [rems.cart :as cart]))
+            [rems.cart :as cart]
+            rems.test.tempura))
 
-;; TODO: factor out if needed elsewhere
-(use-fixtures
-  :once
-  (fn [f]
-    (binding [context/*tempura* (fn [[k]] (str k))]
-      (f))))
+(use-fixtures :once rems.test.tempura/fake-tempura-fixture)
 
 (defn check-row-text [row text]
   (is (= text (hiccup-text (first (hiccup-find [:td] row))))))

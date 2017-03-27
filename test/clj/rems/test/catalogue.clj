@@ -2,14 +2,10 @@
   (:require [clojure.test :refer :all]
             [hiccup-find.core :refer :all]
             [rems.context :as context]
-            [rems.catalogue :refer :all]))
+            [rems.catalogue :refer :all]
+            rems.test.tempura))
 
-;; TODO: factor out if needed elsewhere
-(use-fixtures
-  :once
-  (fn [f]
-    (binding [context/*tempura* (fn [[k]] (str k))]
-      (f))))
+(use-fixtures :once rems.test.tempura/fake-tempura-fixture)
 
 (defn check-catalogue-item-text [props]
   (hiccup-text (first (hiccup-find [:td] (#'rems.catalogue/catalogue-item props)))))

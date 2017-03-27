@@ -24,11 +24,13 @@
              :checkout "Check out"}
       :catalogue {:header "Resource"}
       :form {:save "Save as draft"
+             :optional "(optional)"
              :licenses "Licenses"
              :saved "Draft saved."
              :submit "Send application"
              :submitted "Application submitted."
-             :back "Back to catalogue"}
+             :back "Back to catalogue"
+             :validation {:required "Field \"%1\" is required."}}
       :applications {:application "Application"
                      :resource "Resource"
                      :user "User"
@@ -58,11 +60,13 @@
              :checkout "Lähetä"}
       :catalogue {:header "Kielivarat"}
       :form {:save "Tallenna luonnos"
+             :optional "(ei pakollinen)"
              :licenses "Lisenssiehdot"
              :saved "Luonnos tallennettu."
              :submit "Lähetä hakemus"
              :submitted "Hakemus lähetetty."
-             :back "Takaisin kielivaroihin"}
+             :back "Takaisin kielivaroihin"
+             :validation {:required "Kenttä \"%1\" on pakollinen."}}
       :applications {:application "Hakemus"
                      :resource "Kielivara"
                      :user "Käyttäjä"
