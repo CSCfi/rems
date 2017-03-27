@@ -172,8 +172,12 @@ WHERE textvalues.catAppId = :application
 
 -- :name get-workflow-licenses :? :*
 SELECT
-  lic.title, lic.type, lic.textcontent
+  lic.id, lic.title, lic.type, lic.textcontent
 FROM license lic
 INNER JOIN workflow_licenses wl ON lic.id = wl.licId
 INNER JOIN catalogue_item cat ON wl.wfId = cat.wfId
 WHERE cat.id = :catId
+
+-- :name get-license-localizations :? :*
+SELECT licid, langcode, title, textcontent
+FROM license_localization

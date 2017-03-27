@@ -2,7 +2,8 @@
   "Query functions for forms and applications."
   (:require [rems.context :as context]
             [rems.db.core :as db]
-            [rems.db.catalogue :refer [get-localized-catalogue-item]]))
+            [rems.db.catalogue :refer [get-localized-catalogue-item]]
+            [rems.util :refer [index-by]]))
 
 (defn get-applications []
   (doall
@@ -46,11 +47,13 @@
      :licensetype \"link\"
      :title \"LGPL\"
      :textcontent \"www.license.link\"}"
-  [license]
-  {:type "license"
-   :licensetype (:type license)
-   :title (:title license)
-   :textcontent (:textcontent license)})
+  [localizations license]
+  (let [localized-title (get-in localizations [context/*lang* :title])
+        localized-content (get-in localizations [context/*lang* :textcontent])]
+    {:type "license"
+     :licensetype (:type license)
+     :title (or localized-title (:title license))
+     :textcontent (or localized-content (:textcontent license))}))
 
 (defn get-form-for
   "Returns a form structure like this:
@@ -81,7 +84,10 @@
          form-id (:formid form)
          items (mapv #(process-item application-id form-id %)
                      (db/get-form-items {:id form-id}))
-         licenses (mapv process-license
+         license-localizations (->> (db/get-license-localizations)
+                                    (map #(update-in % [:langcode] keyword))
+                                    (index-by [:licid :langcode]))
+         licenses (mapv #(process-license (license-localizations (:id %)) %)
                         (db/get-workflow-licenses {:catId catalogue-item}))]
      {:id form-id
       :catalogue-item catalogue-item
