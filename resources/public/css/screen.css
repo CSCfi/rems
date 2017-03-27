@@ -206,6 +206,18 @@ footer {
   .rems-table.cart tr {
     border-bottom: none;
   }
+
+  .logo .img {
+    background: #CAD2E6 url("/img/Logo-matala.png") center center no-repeat;
+    -webkit-background-size: contain;
+    -moz-background-size: contain;
+    -o-background-size: contain;
+    background-size: contain;
+  }
+
+  .logo {
+    height: 150px;
+  }
 }
 
 @media (min-width: 480px) {
