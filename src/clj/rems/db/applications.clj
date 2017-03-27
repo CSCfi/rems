@@ -85,9 +85,9 @@
                      (db/get-form-items {:id form-id}))
          licenses (mapv process-license
                         (db/get-workflow-licenses {:catId catalogue-item}))]
-    (when (and application-id
-               (not= (:applicantuserid application) context/*user*))
-      (throw-unauthorized))
+     (when (and application-id
+                (not= (:applicantuserid application) context/*user*))
+       (throw-unauthorized))
      {:id form-id
       :catalogue-item catalogue-item
       :application application-id
