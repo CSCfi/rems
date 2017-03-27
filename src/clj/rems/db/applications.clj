@@ -98,6 +98,6 @@
 
 (defn create-new-draft [resource-id]
   (let [id (:id (db/create-application!
-                 {:item resource-id :user 0}))]
-    (db/update-application-state! {:id id :user 0 :state "draft"})
+                 {:item resource-id :user context/*user*}))]
+    (db/update-application-state! {:id id :user context/*user* :state "draft"})
     id))
