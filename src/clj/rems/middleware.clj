@@ -86,6 +86,20 @@
         (handler request)))
     {:tr-opts tconfig})))
 
+(defn wrap-unauthorized
+  "Handles unauthorized exceptions by showing an error page."
+  [handler]
+  (fn [req]
+    (try
+      (handler req)
+      (catch Throwable t
+        (if (instance? clojure.lang.ExceptionInfo t)
+          (let [data (ex-data t)]
+            (if (= :buddy.auth/unauthorized (:buddy.auth/type data))
+              (on-error req nil)
+              (throw t)))
+          (throw t))))))
+
 (defn wrap-auth
   [handler]
   (let [authentication (if (:fake-shibboleth +defaults+)
@@ -108,6 +122,7 @@
 
 (defn wrap-base [handler]
   (-> ((:middleware +defaults+) handler)
+      wrap-unauthorized
       wrap-i18n
       wrap-auth
       wrap-webjars
