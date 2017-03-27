@@ -20,7 +20,7 @@ CREATE TYPE license_type AS ENUM ('text','attachment','link');
 --;;
 CREATE TABLE resource_prefix (
   id serial NOT NULL PRIMARY KEY,
-  modifierUserId bigint NOT NULL,
+  modifierUserId varchar(255) NOT NULL,
   prefix varchar(255) DEFAULT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL
@@ -28,7 +28,7 @@ CREATE TABLE resource_prefix (
 --;;
 CREATE TABLE resource (
   id serial NOT NULL PRIMARY KEY,
-  modifierUserId bigint NOT NULL,
+  modifierUserId varchar(255) NOT NULL,
   rsPrId integer DEFAULT NULL,
   prefix varchar(255) NOT NULL,
   resId varchar(255) NOT NULL,
@@ -39,8 +39,8 @@ CREATE TABLE resource (
 --;;
 CREATE TABLE workflow (
   id serial NOT NULL PRIMARY KEY,
-  ownerUserId bigint NOT NULL,
-  modifierUserId bigint NOT NULL,
+  ownerUserId varchar(255) NOT NULL,
+  modifierUserId varchar(255) NOT NULL,
   title varchar(256) NOT NULL,
   fnlround integer NOT NULL,
   visibility scope NOT NULL DEFAULT 'private',
@@ -50,8 +50,8 @@ CREATE TABLE workflow (
 --;;
 CREATE TABLE application_form_meta (
   id serial NOT NULL PRIMARY KEY,
-  ownerUserId bigint NOT NULL,
-  modifierUserId bigint NOT NULL,
+  ownerUserId varchar(255) NOT NULL,
+  modifierUserId varchar(255) NOT NULL,
   title varchar(256) DEFAULT NULL,
   visibility scope NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -74,18 +74,18 @@ CREATE TABLE catalogue_item (
 CREATE TABLE catalogue_item_application (
   id serial NOT NULL PRIMARY KEY,
   catId integer DEFAULT NULL,
-  applicantUserId bigint NOT NULL,
+  applicantUserId varchar(255) NOT NULL,
   fnlround integer NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
-  modifierUserId bigint DEFAULT NULL,
+  modifierUserId varchar(255) DEFAULT NULL,
   CONSTRAINT catalogue_item_application_ibfk_1 FOREIGN KEY (catId) REFERENCES catalogue_item (id)
 );
 --;;
 CREATE TABLE application_form (
   id serial NOT NULL PRIMARY KEY,
-  ownerUserId bigint NOT NULL,
-  modifierUserId bigint NOT NULL,
+  ownerUserId varchar(255) NOT NULL,
+  modifierUserId varchar(255) NOT NULL,
   title varchar(256) NOT NULL,
   visibility scope NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -94,8 +94,8 @@ CREATE TABLE application_form (
 --;;
 CREATE TABLE application_form_item (
   id serial NOT NULL PRIMARY KEY,
-  ownerUserId bigint NOT NULL,
-  modifierUserId bigint NOT NULL,
+  ownerUserId varchar(255) NOT NULL,
+  modifierUserId varchar(255) NOT NULL,
   title varchar(256) NOT NULL,
   toolTip varchar(256) DEFAULT NULL,
   inputPrompt varchar(256) DEFAULT NULL,
@@ -111,7 +111,7 @@ CREATE TABLE application_form_item_map (
   formId integer DEFAULT NULL,
   formItemId integer DEFAULT NULL,
   formItemOptional boolean NOT NULL DEFAULT FALSE,
-  modifierUserId bigint NOT NULL,
+  modifierUserId varchar(255) NOT NULL,
   itemOrder integer DEFAULT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
@@ -121,8 +121,8 @@ CREATE TABLE application_form_item_map (
 --;;
 CREATE TABLE license (
   id serial NOT NULL PRIMARY KEY,
-  ownerUserId bigint NOT NULL,
-  modifierUserId bigint NOT NULL,
+  ownerUserId varchar(255) NOT NULL,
+  modifierUserId varchar(255) NOT NULL,
   title varchar(256) NOT NULL,
   type license_type NOT NULL,
   textContent varchar(16384) DEFAULT NULL,
@@ -135,7 +135,7 @@ CREATE TABLE license (
 CREATE TABLE application_form_meta_map (
   id serial NOT NULL PRIMARY KEY,
   metaFormId integer DEFAULT NULL,
-  modifierUserId bigint NOT NULL,
+  modifierUserId varchar(255) NOT NULL,
   langCode varchar(64) DEFAULT NULL,
   formId integer DEFAULT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -149,7 +149,7 @@ CREATE TABLE application_license_approval_values (
   catAppId integer DEFAULT NULL,
   formMapId integer DEFAULT NULL,
   licId integer NOT NULL,
-  modifierUserId bigint DEFAULT NULL,
+  modifierUserId varchar(255) DEFAULT NULL,
   state license_status NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
@@ -162,7 +162,7 @@ CREATE TABLE application_text_values (
   id serial NOT NULL PRIMARY KEY,
   catAppId integer DEFAULT NULL,
   formMapId integer DEFAULT NULL,
-  modifierUserId bigint NOT NULL,
+  modifierUserId varchar(255) NOT NULL,
   value varchar(4096) NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
@@ -174,7 +174,7 @@ CREATE TABLE application_text_values (
 CREATE TABLE workflow_approvers (
   id serial NOT NULL PRIMARY KEY,
   wfId integer DEFAULT NULL,
-  apprUserId bigint NOT NULL,
+  apprUserId varchar(255) NOT NULL,
   round integer NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
@@ -185,7 +185,7 @@ CREATE TABLE catalogue_item_application_approvers (
   id serial NOT NULL PRIMARY KEY,
   catAppId integer DEFAULT NULL,
   wfApprId integer DEFAULT NULL,
-  apprUserId bigint NOT NULL,
+  apprUserId varchar(255) NOT NULL,
   round integer NOT NULL,
   comment varchar(4096) DEFAULT NULL,
   state approval_status DEFAULT NULL,
@@ -199,7 +199,7 @@ CREATE TABLE catalogue_item_application_catid_overflow (
   id serial NOT NULL PRIMARY KEY,
   catAppId integer DEFAULT NULL,
   catId integer DEFAULT NULL,
-  modifierUserId bigint NOT NULL,
+  modifierUserId varchar(255) NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
   CONSTRAINT catalogue_item_application_catid_overflow_ibfk_1 FOREIGN KEY (catAppId) REFERENCES catalogue_item_application (id),
@@ -208,7 +208,7 @@ CREATE TABLE catalogue_item_application_catid_overflow (
 --;;
 CREATE TABLE catalogue_item_application_free_comment_values (
   id serial NOT NULL PRIMARY KEY,
-  userId bigint NOT NULL,
+  userId varchar(255) NOT NULL,
   catAppId integer DEFAULT NULL,
   comment varchar(4096) DEFAULT NULL,
   public boolean NOT NULL DEFAULT FALSE,
@@ -221,7 +221,7 @@ CREATE TABLE catalogue_item_application_licenses (
   id serial NOT NULL PRIMARY KEY,
   catAppId integer DEFAULT NULL,
   licId integer DEFAULT NULL,
-  actorUserId bigint NOT NULL,
+  actorUserId varchar(255) NOT NULL,
   round integer NOT NULL,
   stalling boolean NOT NULL DEFAULT FALSE,
   state license_state NOT NULL DEFAULT 'created',
@@ -234,8 +234,8 @@ CREATE TABLE catalogue_item_application_licenses (
 CREATE TABLE catalogue_item_application_members (
   id serial NOT NULL PRIMARY KEY,
   catAppId integer DEFAULT NULL,
-  memberUserId bigint NOT NULL,
-  modifierUserId bigint DEFAULT '-1',
+  memberUserId varchar(255) NOT NULL,
+  modifierUserId varchar(255) DEFAULT '-1',
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
   CONSTRAINT catalogue_item_application_members_ibfk_1 FOREIGN KEY (catAppId) REFERENCES catalogue_item_application (id)
@@ -243,7 +243,7 @@ CREATE TABLE catalogue_item_application_members (
 --;;
 CREATE TABLE catalogue_item_application_metadata (
   id serial NOT NULL PRIMARY KEY,
-  userId bigint NOT NULL,
+  userId varchar(255) NOT NULL,
   catAppId integer DEFAULT NULL,
   key varchar(32) NOT NULL,
   value varchar(256) NOT NULL,
@@ -256,7 +256,7 @@ CREATE TABLE catalogue_item_application_predecessor (
   id serial NOT NULL PRIMARY KEY,
   pre_catAppId integer DEFAULT NULL,
   suc_catAppId integer DEFAULT NULL,
-  modifierUserId bigint NOT NULL,
+  modifierUserId varchar(255) NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
   CONSTRAINT catalogue_item_application_predecessor_ibfk_1 FOREIGN KEY (pre_catAppId) REFERENCES catalogue_item_application (id),
@@ -266,8 +266,8 @@ CREATE TABLE catalogue_item_application_predecessor (
 CREATE TABLE catalogue_item_application_reviewers (
   id serial NOT NULL PRIMARY KEY,
   catAppId integer DEFAULT NULL,
-  revUserId bigint NOT NULL,
-  modifierUserId bigint DEFAULT NULL,
+  revUserId varchar(255) NOT NULL,
+  modifierUserId varchar(255) DEFAULT NULL,
   round integer NOT NULL,
   comment varchar(4096) DEFAULT NULL,
   state reviewers_state NOT NULL DEFAULT 'created',
@@ -279,7 +279,7 @@ CREATE TABLE catalogue_item_application_reviewers (
 CREATE TABLE catalogue_item_application_state (
   id serial NOT NULL PRIMARY KEY,
   catAppId integer DEFAULT NULL,
-  modifierUserId bigint NOT NULL,
+  modifierUserId varchar(255) NOT NULL,
   curround integer NOT NULL,
   state application_state DEFAULT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -301,7 +301,7 @@ CREATE TABLE catalogue_item_localization (
 CREATE TABLE catalogue_item_state (
   id serial NOT NULL PRIMARY KEY,
   catId integer DEFAULT NULL,
-  modifierUserId bigint NOT NULL,
+  modifierUserId varchar(255) NOT NULL,
   state item_state DEFAULT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
@@ -312,7 +312,7 @@ CREATE TABLE entitlement (
   id serial NOT NULL PRIMARY KEY,
   resId integer DEFAULT NULL,
   catAppId integer DEFAULT NULL,
-  userId bigint NOT NULL,
+  userId varchar(255) NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
   CONSTRAINT entitlement_ibfk_1 FOREIGN KEY (resId) REFERENCES resource (id),
@@ -335,7 +335,7 @@ CREATE TABLE resource_close_period (
   id serial NOT NULL PRIMARY KEY,
   resId integer DEFAULT NULL,
   closePeriod integer DEFAULT NULL,
-  modifierUserId bigint NOT NULL,
+  modifierUserId varchar(255) NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
   CONSTRAINT resource_close_period_ibfk_1 FOREIGN KEY (resId) REFERENCES resource (id)
@@ -356,7 +356,7 @@ CREATE TABLE resource_prefix_allow_members (
   id serial NOT NULL PRIMARY KEY,
   rsPrId integer DEFAULT NULL,
   enabled bit(1) DEFAULT NULL,
-  modifierUserId bigint NOT NULL,
+  modifierUserId varchar(255) NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
   CONSTRAINT resource_prefix_allow_members_ibfk_1 FOREIGN KEY (rsPrId) REFERENCES resource_prefix (id)
@@ -366,7 +366,7 @@ CREATE TABLE resource_prefix_allow_updates (
   id serial NOT NULL PRIMARY KEY,
   rsPrId integer DEFAULT NULL,
   enabled bit(1) DEFAULT NULL,
-  modifierUserId bigint NOT NULL,
+  modifierUserId varchar(255) NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
   CONSTRAINT resource_prefix_allow_updates_ibfk_1 FOREIGN KEY (rsPrId) REFERENCES resource_prefix (id)
@@ -376,7 +376,7 @@ CREATE TABLE resource_prefix_application (
   id serial NOT NULL PRIMARY KEY,
   rsPrId integer DEFAULT NULL,
   application varchar(2048) DEFAULT NULL,
-  modifierUserId bigint NOT NULL,
+  modifierUserId varchar(255) NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
   CONSTRAINT resource_prefix_application_ibfk_1 FOREIGN KEY (rsPrId) REFERENCES resource_prefix (id)
@@ -387,7 +387,7 @@ CREATE TABLE resource_prefix_certificates (
   rsPrId integer DEFAULT NULL,
   subjectDn varchar(256) DEFAULT NULL,
   base64content varchar(16384) DEFAULT NULL,
-  modifierUserId bigint NOT NULL,
+  modifierUserId varchar(255) NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
   CONSTRAINT resource_prefix_certificates_ibfk_1 FOREIGN KEY (rsPrId) REFERENCES resource_prefix (id)
@@ -397,7 +397,7 @@ CREATE TABLE resource_prefix_default_form (
   id serial NOT NULL PRIMARY KEY,
   rsPrId integer DEFAULT NULL,
   metaFormId integer DEFAULT NULL,
-  modifierUserId bigint NOT NULL,
+  modifierUserId varchar(255) NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
   CONSTRAINT resource_prefix_default_form_ibfk_1 FOREIGN KEY (rsPrId) REFERENCES resource_prefix (id),
@@ -407,8 +407,8 @@ CREATE TABLE resource_prefix_default_form (
 CREATE TABLE resource_prefix_owners (
   id serial NOT NULL PRIMARY KEY,
   rsPrId integer DEFAULT NULL,
-  ownerUserId bigint NOT NULL,
-  modifierUserId bigint NOT NULL,
+  ownerUserId varchar(255) NOT NULL,
+  modifierUserId varchar(255) NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
   CONSTRAINT resource_prefix_owners_ibfk_1 FOREIGN KEY (rsPrId) REFERENCES resource_prefix (id)
@@ -417,8 +417,8 @@ CREATE TABLE resource_prefix_owners (
 CREATE TABLE resource_prefix_reporters (
   id serial NOT NULL PRIMARY KEY,
   rsPrId integer DEFAULT NULL,
-  reporterUserId bigint NOT NULL,
-  modifierUserId bigint NOT NULL,
+  reporterUserId varchar(255) NOT NULL,
+  modifierUserId varchar(255) NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
   CONSTRAINT resource_prefix_reporters_ibfk_1 FOREIGN KEY (rsPrId) REFERENCES resource_prefix (id)
@@ -427,7 +427,7 @@ CREATE TABLE resource_prefix_reporters (
 CREATE TABLE resource_prefix_state (
   id serial NOT NULL PRIMARY KEY,
   rsPrId integer DEFAULT NULL,
-  modifierUserId bigint NOT NULL,
+  modifierUserId varchar(255) NOT NULL,
   state prefix_state NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
@@ -438,7 +438,7 @@ CREATE TABLE resource_refresh_period (
   id serial NOT NULL PRIMARY KEY,
   resId integer DEFAULT NULL,
   refreshPeriod integer DEFAULT NULL,
-  modifierUserId bigint NOT NULL,
+  modifierUserId varchar(255) NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
   CONSTRAINT resource_refresh_period_ibfk_1 FOREIGN KEY (resId) REFERENCES resource (id)
@@ -447,8 +447,8 @@ CREATE TABLE resource_refresh_period (
 CREATE TABLE resource_state (
   id serial NOT NULL PRIMARY KEY,
   resId integer DEFAULT NULL,
-  ownerUserId bigint NOT NULL,
-  modifierUserId bigint NOT NULL,
+  ownerUserId varchar(255) NOT NULL,
+  modifierUserId varchar(255) NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
   CONSTRAINT resource_state_ibfk_1 FOREIGN KEY (resId) REFERENCES resource (id)
@@ -467,7 +467,7 @@ CREATE TABLE user_selections (
   id serial NOT NULL PRIMARY KEY,
   actionId bigint NOT NULL,
   groupId integer NOT NULL,
-  userId bigint NOT NULL,
+  userId varchar(255) NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL
 );
@@ -497,7 +497,7 @@ CREATE TABLE workflow_licenses (
 CREATE TABLE workflow_reviewers (
   id serial NOT NULL PRIMARY KEY,
   wfId integer DEFAULT NULL,
-  revUserId bigint NOT NULL,
+  revUserId varchar(255) NOT NULL,
   round integer NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
