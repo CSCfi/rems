@@ -161,10 +161,8 @@
         (dispatch (request :post "/form/1/save" {"field2" "alice field2"}))
         (follow-redirect))
     (testing "and another user goes to the same application"
-      (let [html (-> (new-context app)
-                     (login "bob")
-                     (follow-redirect)
-                     (dispatch (request :get "/form/1/1"))
-                     ctx->html)]
-        (is (not= "alice field2" (:value (hiccup-attrs (first (hiccup-find [:input {:name "field2"}] html)))))
-            "bob shouldn't see alice's applications")))))
+      (let [response (-> (new-context app)
+                         (login "bob")
+                         (follow-redirect)
+                         (dispatch (request :get "/form/1/1")))]
+        (is (= 403 (:status response)) "bob shouldn't see alice's applications")))))
