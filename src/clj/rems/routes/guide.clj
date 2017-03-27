@@ -36,30 +36,31 @@
         [:link {:type "text/css" :rel "stylesheet" :href "/assets/font-awesome/css/font-awesome.min.css"}]
         [:link {:type "text/css" :rel "stylesheet" :href "/css/screen.css"}]]
        [:body
-        [:div.example-page
-         [:h1 "Component Guide"]
+        [:div.container
+         [:div.example-page
+          [:h1 "Component Guide"]
 
-         [:h2 "Colors"]
-         (example "" (color-boxes))
+          [:h2 "Colors"]
+          (example "" (color-boxes))
 
-         [:h2 "Layout components"]
-         (layout/guide)
+          [:h2 "Layout components"]
+          (layout/guide)
 
-         [:h2 "Catalogue components"]
-         (catalogue/guide)
+          [:h2 "Catalogue components"]
+          (catalogue/guide)
 
-         [:h2 "Cart components"]
-         (cart/guide)
+          [:h2 "Cart components"]
+          (cart/guide)
 
-         [:h2 "Applications list"]
-         (applications/guide)
+          [:h2 "Applications list"]
+          (applications/guide)
 
-         [:h2 "Forms"]
-         (form/guide)
+          [:h2 "Forms"]
+          (form/guide)
 
-         [:h2 "Misc components"]
-         (example "login" (contents/login "/"))
-         (example "about" (contents/about))]]))))
+          [:h2 "Misc components"]
+          (example "login" (contents/login "/"))
+          (example "about" (contents/about))]]]))))
 
 (defroutes guide-routes
   (GET "/guide" [] (guide-page)))
