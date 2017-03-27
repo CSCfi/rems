@@ -91,6 +91,22 @@
 (defn link-to-item [item]
   (str "/form/" (:id item)))
 
+(defn- validate-item
+  [item]
+  (when-not (:optional item)
+    (when (empty? (:value item))
+      (text (str "Field \"" (:title item) "\" is required")))))
+
+(defn- validate
+  "Validates a filled in form from (get-form-for resource application).
+
+   Returns either :valid or a sequence of validation errors."
+  [form]
+  (let [messages (vec (filter identity (map validate-item (:items form))))]
+    (if (empty? messages)
+      :valid
+      messages)))
+
 (defn- save-fields
   [resource-id application-id input]
   (let [form (get-form-for resource-id)]
@@ -109,18 +125,20 @@
   (let [resource-id (Long/parseLong (get params :id))
         application-id (if-let [s (get params :application)]
                          (Long/parseLong s)
-                         (create-new-draft resource-id))
-        submit (get input "submit")
-        flash-text (if submit
-                     (text :t.form/submitted)
-                     (text :t.form/saved))]
+                         (create-new-draft resource-id))]
     (save-fields resource-id application-id input)
-    (when submit
-      (db/update-application-state! {:id application-id :user 0 :state "applied"}))
-    (->
-     (redirect-to-application resource-id application-id)
-     (assoc :flash flash-text)
-     (assoc :session (update session :cart disj resource-id)))))
+    (let [submit (get input "submit")
+          validation (validate (get-form-for resource-id application-id))
+          perform-submit (and submit (= :valid validation))
+          flash-text (if perform-submit
+                       (text :t.form/submitted)
+                       (text :t.form/saved))]
+      (when perform-submit
+        (db/update-application-state! {:id application-id :user 0 :state "applied"}))
+      (->
+       (redirect-to-application resource-id application-id)
+       (assoc :flash flash-text)
+       (assoc :session (update session :cart disj resource-id))))))
 
 (defn- form-page [id application]
   (layout/render
