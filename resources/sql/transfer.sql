@@ -32,6 +32,9 @@ DELETE FROM public.catalogue_item_application_state CASCADE;
 DELETE FROM public.catalogue_item_application CASCADE;
 
 -- clear existing data
+DELETE FROM public.workflow_licenses CASCADE;
+DELETE FROM public.license_localization CASCADE;
+DELETE FROM public.license CASCADE;
 DELETE FROM public.catalogue_item_localization CASCADE;
 DELETE FROM public.catalogue_item CASCADE;
 DELETE FROM public.resource CASCADE;
