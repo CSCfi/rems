@@ -58,14 +58,14 @@
       ;; since they're not compatible with this middleware
       ((if (:websocket? request) handler wrapped) request))))
 
-(defn on-error [request response]
+(defn on-unauthorized-error [request response]
   (error-page
     {:status 403
      :title (str "Access to " (:uri request) " is not authorized")}))
 
 (defn wrap-restricted [handler]
   (restrict handler {:handler authenticated?
-                     :on-error on-error}))
+                     :on-error on-unauthorized-error}))
 
 (defn- wrap-tempura-locales-from-session
   [handler]
@@ -96,7 +96,7 @@
         (if (instance? clojure.lang.ExceptionInfo t)
           (let [data (ex-data t)]
             (if (= :buddy.auth/unauthorized (:buddy.auth/type data))
-              (on-error req nil)
+              (on-unauthorized-error req nil)
               (throw t)))
           (throw t))))))
 
