@@ -1,8 +1,8 @@
 (ns rems.test.tempura
   (:require [rems.context :as context]))
 
-(defn fake-tempura [[k]]
-  (str k))
+(defn fake-tempura [& args]
+  (pr-str args))
 
 (defmacro with-fake-tempura [& body]
   `(binding [context/*tempura* fake-tempura]

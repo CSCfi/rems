@@ -6,3 +6,8 @@
   keys can be given."
   [& keys]
   (context/*tempura* (conj (vec keys) :t/missing)))
+
+(defn text-format
+  "Return the tempura translation for a given key & format arguments"
+  [key & args]
+  (context/*tempura* [key :t/missing] (vec args)))

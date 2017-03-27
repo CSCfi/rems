@@ -95,7 +95,7 @@
   [item]
   (when-not (:optional item)
     (when (empty? (:value item))
-      (text (str "Field \"" (:title item) "\" is required")))))
+      (text-format :t.form.validation/required (:title item)))))
 
 (defn- validate
   "Validates a filled in form from (get-form-for resource application).
@@ -106,6 +106,12 @@
     (if (empty? messages)
       :valid
       messages)))
+
+(defn- format-validation-messages
+  [msgs]
+  [:ul
+   (for [m msgs]
+     [:li m])])
 
 (defn- save-fields
   [resource-id application-id input]
@@ -129,15 +135,20 @@
     (save-fields resource-id application-id input)
     (let [submit (get input "submit")
           validation (validate (get-form-for resource-id application-id))
-          perform-submit (and submit (= :valid validation))
-          flash-text (if perform-submit
-                       (text :t.form/submitted)
-                       (text :t.form/saved))]
+          valid (= :valid validation)
+          perform-submit (and submit valid)
+          status (if perform-submit
+                   (text :t.form/submitted)
+                   (text :t.form/saved))
+          flash-message (if valid
+                          status
+                          (list status
+                                (format-validation-messages validation)))]
       (when perform-submit
         (db/update-application-state! {:id application-id :user 0 :state "applied"}))
       (->
        (redirect-to-application resource-id application-id)
-       (assoc :flash flash-text)
+       (assoc :flash flash-message)
        (assoc :session (update session :cart disj resource-id))))))
 
 (defn- form-page [id application]
