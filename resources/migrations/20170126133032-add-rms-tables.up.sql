@@ -487,7 +487,7 @@ CREATE TABLE workflow_licenses (
   wfId integer DEFAULT NULL,
   licId integer DEFAULT NULL,
   round integer NOT NULL,
-  stalling bit(1) NOT NULL DEFAULT b'0',
+  stalling boolean NOT NULL DEFAULT FALSE,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
   CONSTRAINT workflow_licenses_ibfk_1 FOREIGN KEY (wfId) REFERENCES workflow (id),

@@ -94,10 +94,7 @@ SELECT
   wfId,
   licId,
   round,
-  CASE WHEN stalling THEN b'1'
-       ELSE b'0'
-  END
-  AS stalling,
+  stalling,
   start,
   transfer.rms_workflow_licenses.end AS endt
 FROM transfer.rms_workflow_licenses;
