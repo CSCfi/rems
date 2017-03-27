@@ -65,7 +65,11 @@
               :inputprompt \"hello\"
               :optional true
               :value \"filled value or nil\"}
-             ...]}"
+             ...]
+     :licences [{:type \"license\"
+                 :licensetype \"link\"
+                 :title \"LGPL\"
+                 :textcontent \"http://foo\"}]}"
   ([catalogue-item]
    (get-form-for catalogue-item nil))
   ([catalogue-item application-id]
