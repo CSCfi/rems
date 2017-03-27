@@ -10,7 +10,7 @@
   [:div.jumbotron
    [:h2 (text :t.login/title)]
    [:p (text :t.login/text)]
-   (link-to (str context "/Shibboleth.sso/Login") (image {:class "login-btn"} "/img/haka_landscape_large.gif"))])
+   (link-to (str context "/Shibboleth.sso/Login") (image {:class "login-btn"} "/img/haka-logo.jpg"))])
 
 (defn about []
   [:p (text :t.about/text)])

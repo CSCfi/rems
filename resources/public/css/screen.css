@@ -117,9 +117,12 @@ footer {
   margin-bottom: 20px;
 }
 
+.login-btn {
+  max-height: 70px;
+}
+
 .login-btn:hover {
-  background-image: linear-gradient(#eee, #ddd);
-  border-radius: 10px;
+  filter: brightness(80%);
 }
 
 .rems-table.cart {
@@ -202,6 +205,18 @@ footer {
 @media (max-width: 480px) {
   .rems-table.cart tr {
     border-bottom: none;
+  }
+
+  .logo .img {
+    background: #CAD2E6 url("/img/Logo-matala.png") center center no-repeat;
+    -webkit-background-size: contain;
+    -moz-background-size: contain;
+    -o-background-size: contain;
+    background-size: contain;
+  }
+
+  .logo {
+    height: 150px;
   }
 }
 
