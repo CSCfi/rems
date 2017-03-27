@@ -31,6 +31,7 @@
   {:id (:id item)
    :title (:title item)
    :inputprompt (:inputprompt item)
+   :optional (:formitemoptional item)
    :type (:type item)
    :value (when application-id
             (:value

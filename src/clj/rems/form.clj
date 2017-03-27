@@ -14,18 +14,26 @@
   (str "field" id))
 
 (defn- text-field [{title :title id :id
-                   prompt :inputprompt value :value
-                   readonly :readonly}]
+                    prompt :inputprompt value :value
+                    optional :optional
+                    readonly :readonly}]
   [:div.form-group
-   [:label {:for (id-to-name id)} title]
+   [:label {:for (id-to-name id)}
+    title " "
+    (when optional
+      (text :t.form/optional))]
    [:input.form-control {:type "text" :name (id-to-name id) :placeholder prompt
                          :value value :readonly readonly}]])
 
 (defn- texta-field [{title :title id :id
-                    prompt :inputprompt value :value
-                    readonly :readonly}]
+                     prompt :inputprompt value :value
+                     optional :optional
+                     readonly :readonly}]
   [:div.form-group
-   [:label {:for (id-to-name id)} title]
+   [:label {:for (id-to-name id)}
+    title " "
+    (when optional
+      (text :t.form/optional))]
    [:textarea.form-control {:name (id-to-name id) :placeholder prompt
                             :readonly readonly}
     value]])
@@ -139,6 +147,9 @@
    (example "field of type \"texta\""
             [:form
              (field {:type "texta" :title "Title" :inputprompt "prompt"})])
+   (example "optional field"
+            [:form
+             (field {:type "texta" :optional "true" :title "Title" :inputprompt "prompt"})])
    (example "field of type \"label\""
             [:form
              (field {:type "label" :title "Lorem ipsum dolor sit amet"})])
@@ -148,16 +159,16 @@
    (example "field of unsupported type"
             [:form
              (field {:type "unsupported" :title "Title" :inputprompt "prompt"})])
-   (example "form"
+   (example "partially filled form"
             (form {:title "Form title"
-                        :items [{:type "text" :title "Field 1" :inputprompt "prompt 1"}
+                        :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
                                 {:type "label" :title "Please input your wishes below."}
-                                {:type "texta" :title "Field 2" :inputprompt "prompt 2"}
+                                {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2"}
                                 {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]}))
    (example "applied form"
             (form {:title "Form title"
                         :state "applied"
-                        :items [{:type "text" :title "Field 1" :inputprompt "prompt 1"}
+                        :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
                                 {:type "label" :title "Please input your wishes below."}
-                                {:type "texta" :title "Field 2" :inputprompt "prompt 2"}
+                                {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2" :value "def"}
                                 {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]}))))
