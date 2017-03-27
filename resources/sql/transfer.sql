@@ -69,10 +69,7 @@ SELECT
   id,
   formId,
   formItemId,
-  CASE WHEN formItemOptional THEN b'1'
-       ELSE b'0'
-  END
-  AS formItemOptional,
+  formItemOptional,
   modifierUserId,
   itemOrder,
   start,

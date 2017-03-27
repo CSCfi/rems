@@ -110,7 +110,7 @@ CREATE TABLE application_form_item_map (
   id serial NOT NULL PRIMARY KEY,
   formId integer DEFAULT NULL,
   formItemId integer DEFAULT NULL,
-  formItemOptional bit(1) DEFAULT b'0',
+  formItemOptional boolean NOT NULL DEFAULT FALSE,
   modifierUserId bigint NOT NULL,
   itemOrder integer DEFAULT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
