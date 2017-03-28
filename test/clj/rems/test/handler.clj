@@ -91,7 +91,7 @@
              ))))
 
 (defn login
-  "Logs in the cgiven user by sending a request to the fake login."
+  "Logs in the given user by sending a request to the fake login."
   [ctx username]
   (dispatch ctx (-> (request :get "/Shibboleth.sso/Login")
                     (assoc :fake-username username))))
