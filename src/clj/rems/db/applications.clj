@@ -8,7 +8,7 @@
 
 (defn get-applications []
   (doall
-   (for [a (db/get-applications)]
+   (for [a (db/get-applications {:applicant context/*user*})]
      (assoc a :catalogue-item
             (get-in (get-localized-catalogue-item {:id (:catid a)})
                     [:localizations context/*lang*])))))
