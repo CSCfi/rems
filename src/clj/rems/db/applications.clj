@@ -17,7 +17,7 @@
   "Finds applications in the draft state for the given catalogue item.
    Returns an id of an arbitrary one of them, or nil if there are none."
   [catalogue-item]
-  (when-let [app (first (db/get-applications {:resource catalogue-item :state "draft"}))]
+  (when-let [app (first (db/get-applications {:resource catalogue-item :state "draft" :applicant context/*user*}))]
     (:id app)))
 
 (defn- process-item
