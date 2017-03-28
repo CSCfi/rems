@@ -79,6 +79,8 @@
                   :plugins      [[com.jakemccrary/lein-test-refresh "0.14.0"]
                                  [lein-cloverage "1.0.9"]]
 
+                  :aot [rems.auth.NotAuthorizedException]
+
                   :source-paths ["env/dev/clj" "test/clj"]
                   :resource-paths ["env/dev/resources"]
                   :repl-options {:init-ns rems.standalone
