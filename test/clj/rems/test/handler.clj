@@ -44,10 +44,10 @@
 ;;; context language
 
 (defn new-context
-  "Create a new test context that tracks visited pages, passes cookies 
+  "Create a new test context that tracks visited pages, passes cookies
   and the CSRF token, when sending further requests by using dispatch.
 
-  You must give your application's handler, which will be stored and 
+  You must give your application's handler, which will be stored and
   subsequently used in the request dispatching.
 
   See also: dispatch, login, follow-redirect"
@@ -58,6 +58,8 @@
 
   Requests are like the regular ring requests that can be created with
   the standard tools.
+
+  The context object has the :response and :status available.
 
   Example:
 
