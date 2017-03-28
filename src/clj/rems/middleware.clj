@@ -16,7 +16,8 @@
             [taoensso.tempura :as tempura :refer [tr]]
             [rems.locales :refer [tconfig]]
             [rems.auth.backend :refer [shibbo-backend authz-backend]]
-            [rems.language-switcher :refer [+default-language+]])
+            [rems.language-switcher :refer [+default-language+]]
+            [rems.auth.NotAuthorizedException])
   (:import [javax.servlet ServletContext]))
 
 (defn calculate-root-path [request]
@@ -92,11 +93,8 @@
   (fn [req]
     (try
       (handler req)
-      (catch clojure.lang.ExceptionInfo e
-        (let [data (ex-data e)]
-          (if (= :buddy.auth/unauthorized (:buddy.auth/type data))
-            (on-unauthorized-error req nil)
-            (throw e)))))))
+      (catch rems.auth.NotAuthorizedException e
+        (on-unauthorized-error req nil)))))
 
 (defn wrap-auth
   [handler]

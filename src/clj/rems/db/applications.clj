@@ -3,7 +3,7 @@
   (:require [rems.context :as context]
             [rems.db.core :as db]
             [rems.db.catalogue :refer [get-localized-catalogue-item]]
-            [buddy.auth :refer [throw-unauthorized]]
+            [rems.auth.util :refer [throw-unauthorized]]
             ))
 
 (defn get-applications []

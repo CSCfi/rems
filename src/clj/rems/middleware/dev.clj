@@ -1,19 +1,17 @@
 (ns rems.middleware.dev
   (:require [ring.middleware.reload :refer [wrap-reload]]
-            [prone.middleware :refer [wrap-exceptions]]))
+            [prone.middleware :refer [wrap-exceptions]]
+            [rems.auth.NotAuthorizedException]))
 
 (defn wrap-some-exceptions
   "Wrap some exceptions in the prone.middleware/wrap-exceptions,
-  but let others pass (i.e. unauthorized)."
+  but let others pass (i.e. `NotAuthorizedException`)."
   [handler]
   (fn [req]
     (try
       (handler req)
-      (catch clojure.lang.ExceptionInfo e
-        (let [data (ex-data e)]
-          (if (= :buddy.auth/unauthorized (:buddy.auth/type data))
-            (throw e)
-            ((wrap-exceptions (fn [& _] (throw e))) req))))
+      (catch rems.auth.NotAuthorizedException e
+        (throw e))
       (catch Throwable e
         ((wrap-exceptions (fn [& _] (throw e))) req)))))
 
