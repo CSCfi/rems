@@ -24,6 +24,9 @@
     (f)
     (mount/stop)))
 
+
+
+
 ;;; test helpers
 
 (defn- pass-cookies [to-request from-response]
@@ -35,12 +38,31 @@
         [_ token] (re-find token-regex (:body response))]
     token))
 
-(defn new-context [app] {:app app})
 
-(defn ctx->html [ctx]
-  (-> ctx (:response) (:body) (h/parse) (h/as-hiccup) (second)))
 
-(defn dispatch [{:keys [app cookie csrf-token response] :as ctx} req]
+
+;;; context language
+
+(defn new-context
+  "Create a new test context that tracks visited pages, passes cookies 
+  and the CSRF token, when sending further requests by using dispatch.
+
+  You must give your application's handler, which will be stored and 
+  subsequently used in the request dispatching.
+
+  See also: dispatch, login, follow-redirect"
+  [app] {:app app})
+
+(defn dispatch
+  "Send a single request in the given context returning a new context.
+
+  Requests are like the regular ring requests that can be created with
+  the standard tools.
+
+  Example:
+
+    (dispatch (request :get \"/resource\" {:id 1}))"
+  [{:keys [app cookie csrf-token response] :as ctx} req]
   (let [req (if cookie
               (header req "cookie" (s/join "; " cookie))
               req)
@@ -65,20 +87,25 @@
               :response response}
              ))))
 
-(defn login [ctx username]
+(defn login
+  "Logs in the cgiven user by sending a request to the fake login."
+  [ctx username]
   (dispatch ctx (-> (request :get "/Shibboleth.sso/Login")
                     (assoc :fake-username username))))
 
-(defn follow-redirect [ctx]
+(defn follow-redirect
+  "Ensures the previous response in the context was a redirect and
+  dispatches a GET to the address in the Location header."
+  [ctx]
   (assert (contains? #{302 303} (:status ctx)) (str "Not redirect " (:status ctx) ""))
   (let [location (get-in (:response ctx) [:headers "Location"])
         location (subs location 16)]
     (dispatch ctx (request :get location))))
 
-(defn print-inputs [ctx]
-  (let [html (ctx->html ctx)]
-    (clojure.pprint/pprint (hiccup-find [:input] html)))
-  ctx)
+(defn ctx->html
+  "Takes the last response in the given context and turns it into a Hiccup data-structure."
+  [ctx]
+  (-> ctx (:response) (:body) (h/parse) (h/as-hiccup) (second)))
 
 
 
