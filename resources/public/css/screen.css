@@ -284,6 +284,10 @@ footer {
   border-radius: .4em;
 }
 
+form {
+    padding-bottom: 1em;
+}
+
 form.inline {
   display: inline-block;
 }
