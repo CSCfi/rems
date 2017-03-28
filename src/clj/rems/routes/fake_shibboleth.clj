@@ -18,7 +18,32 @@
   (let [username (or username (-> req :params :username))]
     (if username
       (fake-login session username)
-      (-> (html5 [:body [:ul (map user-selection ["developer" "alice" "bob"])]])
+      (-> (html5 [:head [:style "
+html { height: 100%; color: #fff;}
+body {
+  height: 100%;
+  font-size: 3em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+h1 { color: #333; text-align: center; }
+ul { padding: 0 }
+li {
+  list-style-type: none;
+  text-align: center;
+  background-color: #99135e;
+  margin: 0.5em;
+  padding: 0.2em;
+  border-radius: 0.2em;
+  text-transform: uppercase;
+a { text-decoration: none; }
+a:visited { color: #fff; }
+"]]
+                 [:body
+                  [:div.login
+                   [:h1 "Development Login"]
+                   [:ul (map user-selection ["developer" "alice" "bob"])]]])
           (response)
           (content-type "text/html; charset=utf-8")))))
 
