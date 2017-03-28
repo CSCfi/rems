@@ -34,7 +34,8 @@
                  [ring/ring-devel "1.5.0"]
                  [ring/ring-servlet "1.4.0"]
                  [hiccup "1.0.5"]
-                 [hiccup-find "0.5.0"]]
+                 [macroz/hiccup-find "0.5.0"]
+                 [hickory "0.7.0"]]
 
   :min-lein-version "2.0.0"
 
@@ -77,6 +78,8 @@
                                  [org.seleniumhq.selenium/selenium-server "3.0.1"]]
                   :plugins      [[com.jakemccrary/lein-test-refresh "0.14.0"]
                                  [lein-cloverage "1.0.9"]]
+
+                  :aot [rems.auth.NotAuthorizedException]
 
                   :source-paths ["env/dev/clj" "test/clj"]
                   :resource-paths ["env/dev/resources"]

@@ -16,7 +16,8 @@
             [taoensso.tempura :as tempura :refer [tr]]
             [rems.locales :refer [tconfig]]
             [rems.auth.backend :refer [shibbo-backend authz-backend]]
-            [rems.language-switcher :refer [+default-language+]])
+            [rems.language-switcher :refer [+default-language+]]
+            [rems.auth.NotAuthorizedException])
   (:import [javax.servlet ServletContext]))
 
 (defn calculate-root-path [request]
@@ -58,14 +59,14 @@
       ;; since they're not compatible with this middleware
       ((if (:websocket? request) handler wrapped) request))))
 
-(defn on-error [request response]
+(defn on-unauthorized-error [request response]
   (error-page
     {:status 403
      :title (str "Access to " (:uri request) " is not authorized")}))
 
 (defn wrap-restricted [handler]
   (restrict handler {:handler authenticated?
-                     :on-error on-error}))
+                     :on-error on-unauthorized-error}))
 
 (defn- wrap-tempura-locales-from-session
   [handler]
@@ -85,6 +86,15 @@
                 context/*lang* (get-in request [:session :language] +default-language+)]
         (handler request)))
     {:tr-opts tconfig})))
+
+(defn wrap-unauthorized
+  "Handles unauthorized exceptions by showing an error page."
+  [handler]
+  (fn [req]
+    (try
+      (handler req)
+      (catch rems.auth.NotAuthorizedException e
+        (on-unauthorized-error req nil)))))
 
 (defn wrap-auth
   [handler]
@@ -108,6 +118,7 @@
 
 (defn wrap-base [handler]
   (-> ((:middleware +defaults+) handler)
+      wrap-unauthorized
       wrap-i18n
       wrap-auth
       wrap-webjars

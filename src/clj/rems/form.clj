@@ -121,7 +121,7 @@
         (db/save-field-value! {:application application-id
                                :form (:id form)
                                :item item-id
-                               :user 0
+                               :user context/*user*
                                :value value})))))
 
 (defn- redirect-to-application [resource-id application-id]
@@ -147,7 +147,7 @@
                    :contents (list message
                                    (format-validation-messages validation))})]
       (when perform-submit
-        (db/update-application-state! {:id application-id :user 0 :state "applied"}))
+        (db/update-application-state! {:id application-id :user context/*user* :state "applied"}))
       (->
        (redirect-to-application resource-id application-id)
        (assoc :flash flash)

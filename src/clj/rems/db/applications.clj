@@ -2,7 +2,9 @@
   "Query functions for forms and applications."
   (:require [rems.context :as context]
             [rems.db.core :as db]
-            [rems.db.catalogue :refer [get-localized-catalogue-item]]))
+            [rems.db.catalogue :refer [get-localized-catalogue-item]]
+            [rems.auth.util :refer [throw-unauthorized]]
+            ))
 
 (defn get-applications []
   (doall
@@ -83,6 +85,9 @@
                      (db/get-form-items {:id form-id}))
          licenses (mapv process-license
                         (db/get-workflow-licenses {:catId catalogue-item}))]
+     (when (and application-id
+                (not= (:applicantuserid application) context/*user*))
+       (throw-unauthorized))
      {:id form-id
       :catalogue-item catalogue-item
       :application application-id
@@ -93,6 +98,6 @@
 
 (defn create-new-draft [resource-id]
   (let [id (:id (db/create-application!
-                 {:item resource-id :user 0}))]
-    (db/update-application-state! {:id id :user 0 :state "draft"})
+                 {:item resource-id :user context/*user*}))]
+    (db/update-application-state! {:id id :user context/*user* :state "draft"})
     id))
