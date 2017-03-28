@@ -92,13 +92,11 @@
   (fn [req]
     (try
       (handler req)
-      (catch Throwable t
-        (if (instance? clojure.lang.ExceptionInfo t)
-          (let [data (ex-data t)]
-            (if (= :buddy.auth/unauthorized (:buddy.auth/type data))
-              (on-unauthorized-error req nil)
-              (throw t)))
-          (throw t))))))
+      (catch clojure.lang.ExceptionInfo e
+        (let [data (ex-data e)]
+          (if (= :buddy.auth/unauthorized (:buddy.auth/type data))
+            (on-unauthorized-error req nil)
+            (throw e)))))))
 
 (defn wrap-auth
   [handler]

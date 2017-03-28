@@ -9,13 +9,13 @@
   (fn [req]
     (try
       (handler req)
-      (catch Throwable t
-        (if (instance? clojure.lang.ExceptionInfo t)
-          (let [data (ex-data t)]
-            (if (= :buddy.auth/unauthorized (:buddy.auth/type data))
-              (throw t)
-              ((wrap-exceptions (fn [& _] (throw t))) req)))
-          (throw t))))))
+      (catch clojure.lang.ExceptionInfo e
+        (let [data (ex-data e)]
+          (if (= :buddy.auth/unauthorized (:buddy.auth/type data))
+            (throw e)
+            ((wrap-exceptions (fn [& _] (throw e))) req))))
+      (catch Throwable e
+        ((wrap-exceptions (fn [& _] (throw e))) req)))))
 
 (defn wrap-dev
   "Middleware for dev use. Autoreload, nicer errors."
