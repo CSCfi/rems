@@ -62,7 +62,7 @@
   Example:
 
     (dispatch (request :get \"/resource\" {:id 1}))"
-  [{:keys [app cookie csrf-token response] :as ctx} req]
+  [{:keys [app cookie csrf-token requests response] :as ctx :or {requests []}} req]
   (let [req (if cookie
               (header req "cookie" (s/join "; " cookie))
               req)
@@ -72,18 +72,19 @@
                                (when (:body req) (form-decode (slurp (:body req))))))
               req)]
     (let [response (app req)
-          set-cookie (get-in response [:headers "Set-Cookie"])]
-      (println (:request-method req)
-               (:uri req)
-               (remove nil? [(when cookie :send-cookie)
-                             (when send-token? :send-csrf-token)])
-               "=>"
-               (:status response)
-               (remove nil? [(when set-cookie :set-cookie)]))
+          set-cookie (get-in response [:headers "Set-Cookie"])
+          request-entry [(:request-method req)
+                         (:uri req)
+                         (remove nil? [(when cookie :send-cookie)
+                                       (when send-token? :send-csrf-token)])
+                         :=>
+                         (:status response)
+                         (remove nil? [(when set-cookie :set-cookie)])]]
       (merge ctx
              {:cookie (or set-cookie cookie)
               :csrf-token (get-csrf-token response)
               :status (:status response)
+              :requests (conj requests request-entry)
               :response response}
              ))))
 
