@@ -76,7 +76,7 @@
      [:div.inner-cart
       [:div.cart-title
        [:i.fa.fa-shopping-cart]
-       [:span (text :t.cart/header)]]
+       [:span (text-format :t.cart/header (count items))]]
       [:table.rems-table.cart
        (for [item (sort-by get-catalogue-item-title items)]
          (cart-item item))]]]))

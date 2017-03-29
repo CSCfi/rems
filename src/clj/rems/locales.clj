@@ -17,7 +17,7 @@
       :login {:title "Login"
               :text "Login by using your Haka credentials"}
       :about {:text "this is the story of rems... work in progress"}
-      :cart {:header "Resource in cart"
+      :cart {:header "%1 resources in cart"
              :add "Add to cart"
              :remove "Remove"
              :apply "Apply"
@@ -53,7 +53,7 @@
       :login {:title "Kirjaudu sisään"
               :text "Kirjaudu sisään Haka-tunnuksillasi"}
       :about {:text "hauki on kala"}
-      :cart {:header "Kielivarat korissa"
+      :cart {:header "%1 kielivaraa korissa"
              :add "Lisää koriin"
              :remove "Poista"
              :apply "Hae"

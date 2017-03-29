@@ -13,10 +13,14 @@
 
 (deftest test-cart-list
   (let [c (cart/cart-list [{:title "D"} {:title "C"}])
-        rows (hiccup-find [:tr] c)]
+        rows (hiccup-find [:tr] c)
+        title (first (hiccup-find [:div.cart-title] c))]
     (is (= 2 (count rows)))
     (check-row-text (first rows) "C")
-    (check-row-text (second rows) "D")))
+    (check-row-text (second rows) "D")
+    (testing title
+      (is title)
+      (is (.contains (hiccup-text title) "2")))))
 
 (deftest test-add-to-cart
   (let [run (fn [session path id]

@@ -1,20 +1,23 @@
 @font-face {
   font-family: 'Lato';
-  src: url('../font/Lato-Light.eot'), url('../font/Lato-Light.woff2') format('woff2'), url('../font/Lato-Light.woff') format('woff'), url('../font/Lato-Light.ttf') format('truetype');
+  src: url('/font/Lato-Light.eot');
+  src: url('/font/Lato-Light.eot') format('embedded-opentype'), url('/font/Lato-Light.woff2') format('woff2'), url('/font/Lato-Light.woff') format('woff'), url('/font/Lato-Light.ttf') format('truetype');
   font-weight: 300;
   font-style: normal;
 }
 
 @font-face {
   font-family: 'Lato';
-  src: url('../font/Lato-Regular.eot'), url('../font/Lato-Regular.woff2') format('woff2'), url('../font/Lato-Regular.woff') format('woff'), url('../font/Lato-Regular.ttf') format('truetype');
+  src: url('/font/Lato-Regular.eot');
+  src: url('/font/Lato-Regular.eot') format('embedded-opentype'), url('/font/Lato-Regular.woff2') format('woff2'), url('/font/Lato-Regular.woff') format('woff'), url('/font/Lato-Regular.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
 }
 
 @font-face {
   font-family: 'Lato';
-  src: url('../font/Lato-Bold.eot'), url('../font/Lato-Bold.woff2') format('woff2'), url('../font/Lato-Bold.woff') format('woff'), url('../font/Lato-Bold.ttf') format('truetype');
+  src: url('/font/Lato-Bold.eot');
+  src: url('/font/Lato-Bold.eot') format('embedded-opentype'), url('/font/Lato-Bold.woff2') format('woff2'), url('/font/Lato-Bold.woff') format('woff'), url('/font/Lato-Bold.ttf') format('truetype');
   font-weight: 700;
   font-style: normal;
 }
