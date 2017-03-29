@@ -116,6 +116,25 @@
         (wrap-authentication authentication)
         (wrap-authorization authorization))))
 
+(defn wrap-logging
+  [handler]
+  (fn [request]
+    (let [uri (str (:uri request)
+                   (when-let [q (:query-string request)]
+                     (str "?" q)))]
+      (log/info ">" (:request-method request) uri
+                "lang:" context/*lang*
+                "user:" context/*user*
+                "roles:" context/*roles*
+                "active:" context/*active-role*)
+      (log/debug "session" (pr-str (:session request)))
+      (when-not (empty? (:form-params request))
+        (log/debug "form params" (pr-str (:form-params request))))
+      (let [response (handler request)]
+        (log/info "<" (:request-method request) uri (:status response)
+                  (or (get-in response [:headers "Location"]) ""))
+        response))))
+
 (def +wrap-defaults-settings+
   (-> site-defaults
       (assoc-in [:security :anti-forgery] true)
@@ -125,6 +144,7 @@
 (defn wrap-base [handler]
   (-> ((:middleware +defaults+) handler)
       wrap-unauthorized
+      wrap-logging
       wrap-i18n
       wrap-context
       wrap-auth
