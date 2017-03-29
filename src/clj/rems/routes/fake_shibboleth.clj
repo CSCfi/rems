@@ -7,20 +7,9 @@
             [hiccup.page :refer [html5]]
             [clojure.java.io :as io]))
 
-(defn- fake-login [session username]
-  (assoc (redirect "/catalogue")
-         :session (assoc session :identity username)))
-
-(defn user-selection [username]
-  (let [url (url "/Shibboleth.sso/Login" {:username username})]
-    [:li {:onclick (str "window.location.href='" url "';")}
-     [:a {:href url} username]]))
-
-(defn- fake-login-screen [{session :session username :fake-username :as req}]
-  (let [username (or username (-> req :params :username))]
-    (if username
-      (fake-login session username)
-      (-> (html5 [:head [:style "
+(def ^{:private true
+       :doc "Inlined CSS declaration for fake login."}
+  fake-login-styles "
 html { height: 100%; color: #fff;}
 body {
   height: 100%;
@@ -43,7 +32,22 @@ li {
 }
 a { text-decoration: none; color: #fff; }
 a:visited { color: #fff; }
-"]]
+")
+
+(defn- fake-login [session username]
+  (assoc (redirect "/catalogue")
+         :session (assoc session :identity username)))
+
+(defn user-selection [username]
+  (let [url (url "/Shibboleth.sso/Login" {:username username})]
+    [:li {:onclick (str "window.location.href='" url "';")}
+     [:a {:href url} username]]))
+
+(defn- fake-login-screen [{session :session username :fake-username :as req}]
+  (let [username (or username (-> req :params :username))]
+    (if username
+      (fake-login session username)
+      (-> (html5 [:head [:style fake-login-styles]]
                  [:body
                   [:div.login
                    [:h1 "Development Login"]
