@@ -159,20 +159,17 @@
 
 
 (deftest test-language-switch
-  (let [login (app (request :get "/Shibboleth.sso/Login"))
-        catalogue (app (-> (request :get "/catalogue")
-                           (pass-cookies login)))]
-    (is (.contains (:body catalogue) "cart") "defaults to english")
-    (let [token (get-csrf-token catalogue)
-          fi (app (-> (request :post "/language/fi" {"__anti-forgery-token" token})
-                      (pass-cookies login)
-                      (header "referer" "/catalogue")))
-          catalogue-fi (app (-> (request :get "/catalogue")
-                                (pass-cookies login)))]
-      (is (= 303 (:status fi)))
-      (is (.endsWith (get-in fi [:headers "Location"]) "/catalogue")
+  (let [ctx (-> (new-context app)
+                (dispatch (request :get "/Shibboleth.sso/Login"))
+                (dispatch (request :get "/catalogue")))]
+    (is (.contains (get-in ctx [:response :body]) "cart") "defaults to english")
+    (let [fi-ctx (dispatch ctx (header (request :post "/language/fi")
+                                       "referer" "/catalogue"))
+          catalogue-ctx (follow-redirect fi-ctx)]
+      (is (= 303 (:status fi-ctx)))
+      (is (.endsWith (get-in fi-ctx [:response :headers "Location"]) "/catalogue")
           "language switch redirects back")
-      (is (.contains (:body catalogue-fi) "kori")
+      (is (.contains (get-in catalogue-ctx [:response :body]) "kori")
           "language switches to finnish"))))
 
 
