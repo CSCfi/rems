@@ -41,7 +41,7 @@ li {
   text-transform: uppercase;
   cursor: pointer;
 }
-a { text-decoration: none; }
+a { text-decoration: none; color: #fff; }
 a:visited { color: #fff; }
 "]]
                  [:body
