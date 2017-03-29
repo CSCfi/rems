@@ -209,3 +209,25 @@ WHERE cat.id = :catId
 -- :name get-license-localizations :? :*
 SELECT licid, langcode, title, textcontent
 FROM license_localization
+
+-- :name get-roles :? :*
+SELECT role
+FROM roles
+WHERE userId = :user
+
+-- :name add-role! :!
+INSERT INTO roles (userId, role)
+VALUES (:user, :role)
+ON CONFLICT (userId, role)
+DO NOTHING
+
+-- :name get-active-role :? :1
+SELECT role
+FROM active_role
+WHERE userId = :user
+
+-- :name set-active-role! :!
+INSERT INTO active_role (userId, role)
+VALUES (:user, :role)
+ON CONFLICT (userId)
+DO UPDATE SET role = :role

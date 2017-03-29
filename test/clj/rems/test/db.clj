@@ -4,6 +4,7 @@
             [rems.context :as context]
             [rems.contents :as contents]
             [rems.db.applications :as applications]
+            [rems.db.roles :as roles]
             [rems.env :refer [*db*]]
             [luminus-migrations.core :as migrations]
             [clojure.test :refer :all]
@@ -128,3 +129,22 @@
       (is (= [{:id app :state "approved" :catid item}]
              (map #(select-keys % [:id :state :catid])
                   (applications/get-applications)))))))
+
+(deftest test-roles
+  (roles/add-role! "pekka" :applicant)
+  (roles/add-role! "pekka" :reviewer)
+  (roles/add-role! "pekka" :reviewer) ;; add should be idempotent
+  (roles/add-role! "simo" :approver)
+  (is (= #{:applicant :reviewer} (roles/get-roles "pekka")))
+  (is (= #{:approver} (roles/get-roles "simo")))
+  (is (empty? (roles/get-roles "juho")))
+  (is (thrown? RuntimeException (roles/add-role! "pekka" :unknown-role)))
+
+  (is (nil? (roles/get-active-role "pekka")))
+  (roles/set-active-role! "pekka" :applicant)
+  (is (= :applicant (roles/get-active-role "pekka")))
+  (roles/set-active-role! "pekka" :reviewer)
+  (is (= :reviewer (roles/get-active-role "pekka")))
+  ;; a sql constraint violation causes the current transaction to go
+  ;; to aborted state, thus we test this last
+  (is (thrown? Exception (roles/set-active-role! "pekka" :approver))))

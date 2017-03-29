@@ -6,6 +6,7 @@
             [ring.middleware.webjars :refer [wrap-webjars]]
             [ring.middleware.format :refer [wrap-restful-format]]
             [rems.cart :refer [get-cart-from-session]]
+            [rems.db.roles :as roles]
             [rems.config :refer [env]]
             [ring-ttl-session.core :refer [ttl-memory-store]]
             [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
@@ -36,7 +37,11 @@
   (fn [request]
     (binding [context/*root-path* (calculate-root-path request)
               context/*cart* (get-cart-from-session request)
-              context/*flash* (:flash request)]
+              context/*flash* (:flash request)
+              context/*roles* (when context/*user*
+                                (roles/get-roles context/*user*))
+              context/*active-role* (when context/*user*
+                                      (roles/get-active-role context/*user*))]
       (handler request))))
 
 (defn wrap-internal-error [handler]
@@ -120,9 +125,9 @@
   (-> ((:middleware +defaults+) handler)
       wrap-unauthorized
       wrap-i18n
+      wrap-context
       wrap-auth
       wrap-webjars
-      wrap-context
       (wrap-defaults +wrap-defaults-settings+)
       wrap-internal-error
       wrap-formats))

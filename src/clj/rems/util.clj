@@ -12,3 +12,8 @@
          (group-by (first ks))
          (map (fn [[k v]] [k (index-by (rest ks) v)]))
          (into {}))))
+
+(defn errorf
+  "Throw a RuntimeException, args passed to clojure.core/format."
+  [& fmt-args]
+  (throw (RuntimeException. (apply format fmt-args))))

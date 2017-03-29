@@ -513,3 +513,17 @@ CREATE TABLE workflow_round_min (
   endt timestamp NULL DEFAULT NULL,
   CONSTRAINT workflow_round_min_ibfk_1 FOREIGN KEY (wfId) REFERENCES workflow (id)
 );
+--;;
+CREATE TABLE roles (
+  -- TODO should this have an id for consistency with the other tables?
+  -- TODO userId should reference user table once we get it
+  userId varchar(255),
+  role varchar(255),
+  PRIMARY KEY (userId, role)
+)
+--;;
+CREATE TABLE active_role (
+  userId varchar(255) PRIMARY KEY,
+  role varchar(255) NOT NULL,
+  FOREIGN KEY (userId, role) REFERENCES roles
+)
