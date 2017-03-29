@@ -110,8 +110,9 @@
                         authentication
                         (authz-backend))]
     (-> (fn [request]
-          (binding [context/*user* (:identity request)]
-            (handler request)))
+          (let [identity (:identity request)]
+            (binding [context/*user* (get identity "eppn")]
+              (handler request))))
         (wrap-authentication authentication)
         (wrap-authorization authorization))))
 
