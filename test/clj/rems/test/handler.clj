@@ -44,10 +44,10 @@
 ;;; context language
 
 (defn new-context
-  "Create a new test context that tracks visited pages, passes cookies 
+  "Create a new test context that tracks visited pages, passes cookies
   and the CSRF token, when sending further requests by using dispatch.
 
-  You must give your application's handler, which will be stored and 
+  You must give your application's handler, which will be stored and
   subsequently used in the request dispatching.
 
   See also: dispatch, login, follow-redirect"
@@ -58,6 +58,8 @@
 
   Requests are like the regular ring requests that can be created with
   the standard tools.
+
+  The context object has the :response and :status available.
 
   Example:
 
@@ -89,7 +91,7 @@
              ))))
 
 (defn login
-  "Logs in the cgiven user by sending a request to the fake login."
+  "Logs in the given user by sending a request to the fake login."
   [ctx username]
   (dispatch ctx (-> (request :get "/Shibboleth.sso/Login")
                     (assoc :fake-username username))))
@@ -179,7 +181,7 @@
 
 
 (deftest test-authz
-  (testing "when one user makes an application"
+  (testing "when alice makes an application"
     (-> (new-context app)
         (login "alice")
         (follow-redirect)
@@ -188,9 +190,12 @@
         (dispatch (request :get "/form/1"))
         (dispatch (request :post "/form/1/save" {"field2" "alice field2"}))
         (follow-redirect))
-    (testing "and another user goes to the same application"
-      (let [response (-> (new-context app)
-                         (login "bob")
-                         (follow-redirect)
-                         (dispatch (request :get "/form/1/1")))]
-        (is (= 403 (:status response)) "bob shouldn't see alice's applications")))))
+    (testing "and bob goes to view applications"
+      (let [ctx (-> (new-context app)
+                    (login "bob")
+                    (follow-redirect)
+                    (dispatch (request :get "/applications")))]
+        (is (empty? (hiccup-find [:.application] (ctx->html ctx))) "bob shouldn't see alice's application")
+        (testing "bob tries to open alice's application"
+          (let [ctx (dispatch ctx (request :get "/form/1/1"))]
+            (is (= 403 (:status ctx)) "bob shouldn't be authorized")))))))

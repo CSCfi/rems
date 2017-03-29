@@ -17,7 +17,7 @@
                                              (time/default-time-zone)))
 
 (defn- applications-item [app]
-  [:tr
+  [:tr.application
    [:td {:data-th (text :t.applications/application)} (:id app)]
    [:td {:data-th (text :t.applications/resource)} (get-in app [:catalogue-item :title])]
    [:td {:data-th (text :t.applications/state)} (text (localize-state (:state app)))]
@@ -30,7 +30,7 @@
   ([]
    (applications (get-applications)))
   ([apps]
-   [:table.rems-table
+   [:table.rems-table.applications
     [:tr
      [:th (text :t.applications/application)]
      [:th (text :t.applications/resource)]

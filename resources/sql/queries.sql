@@ -128,6 +128,7 @@ SET (modifierUserId, curround, state) = (:user, 0, CAST (:state as application_s
 -- - Use {:id id} to get a specific application
 -- - Use {:resource id} to get applications for a specific resource
 -- - Use {:state state} to filter by application state
+-- - Use {:applicant user} to filter by applicant
 SELECT
   app.id, app.catId, app.applicantUserId, app.start, state.state
 FROM catalogue_item_application app
@@ -141,6 +142,9 @@ WHERE 1=1
 /*~ ) ~*/
 /*~ (when (:state params) */
   AND state.state = CAST (:state AS application_state)
+/*~ ) ~*/
+/*~ (when (:applicant params) */
+  AND app.applicantUserId = :applicant
 /*~ ) ~*/
 
 
