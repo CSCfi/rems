@@ -42,6 +42,7 @@
     </logger>
     <logger name="migratus.core" level="warn" />
     <logger name="migratus.database" level="warn" />
+    <logger name="rems.middleware" level="warn" />
     <root level="DEBUG">
         <appender-ref ref="STDOUT" />
         <appender-ref ref="FILE" />
