@@ -137,6 +137,7 @@
   (roles/add-role! "simo" :approver)
   (is (= #{:applicant :reviewer} (roles/get-roles "pekka")))
   (is (= #{:approver} (roles/get-roles "simo")))
+  (is (empty? (roles/get-roles "juho")))
   (is (thrown? RuntimeException (roles/add-role! "pekka" :unknown-role)))
 
   (is (nil? (roles/get-active-role "pekka")))
