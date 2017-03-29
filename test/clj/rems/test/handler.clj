@@ -124,13 +124,15 @@
         (is (= 403 (:status response)) "should return 403 unauthorized)")))
 
     (testing "when logging in"
-      (let [login-response (app (request :get "/Shibboleth.sso/Login"))]
-        (is (= 302 (:status login-response)) "should return redirect")
-        (is (= "http://localhost/catalogue" (get-in login-response [:headers "Location"])) "login should redirect to /catalogue")
+      (let [login-ctx (-> (new-context app)
+                          (login "bob"))]
+        (is (= 302 (:status login-ctx)) "should return redirect")
+        (is (= "http://localhost/catalogue"
+               (get-in login-ctx [:response :headers "Location"]))
+            "login should redirect to /catalogue")
         (testing "successfully"
-          (let [catalogue-request (-> (request :get "/catalogue") (pass-cookies login-response))
-                catalogue-response (app catalogue-request)]
-            (is (= 200 (:status catalogue-response)) "should return 200 OK"))))))
+          (let [catalogue (dispatch login-ctx (request :get "/catalogue"))]
+            (is (= 200 (:status catalogue)) "should return 200 OK"))))))
 
   (testing "not-found route"
     (let [response (app (request :get "/invalid"))]
@@ -149,7 +151,7 @@
       (let [;; no real mechanism for mocking the token or the session,
             ;; so we log in, get the catalogue, etc.
             response (-> (new-context app)
-                         (dispatch (request :get "/Shibboleth.sso/Login"))
+                         (login "jack")
                          (dispatch (request :get "/catalogue"))
                          ;; csrf token added automatically by dispatch
                          (dispatch (request :post "/cart/add" {"id" "1"}))
@@ -160,7 +162,7 @@
 
 (deftest test-language-switch
   (let [ctx (-> (new-context app)
-                (dispatch (request :get "/Shibboleth.sso/Login"))
+                (login "john")
                 (dispatch (request :get "/catalogue")))]
     (is (.contains (get-in ctx [:response :body]) "cart") "defaults to english")
     (let [fi-ctx (dispatch ctx (header (request :post "/language/fi")
