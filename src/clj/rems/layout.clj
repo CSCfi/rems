@@ -83,22 +83,23 @@
    params: :status -- status code to return, defaults to 200
            :headers -- map of headers to return, optional
            :content-type -- optional, defaults to \"text/html; charset=utf-8\"
-           :bare -- don't include navbar and footer"
+           :bare -- don't include navbar, footer or flash"
   [page-name content & [params]]
   (let [nav (when-not (:bare params)
               (navbar page-name context/*user*))
         footer (when-not (:bare params)
                  (footer))
-        message (when context/*flash*
-                  (flash-message context/*flash*))
+        message (when-not (:bare params)
+                  (when context/*flash*
+                    (flash-message context/*flash*)))
         content-type (:content-type params "text/html; charset=utf-8")
         status (:status params 200)
         headers (:headers params {})]
-      (response/content-type
-       {:status status
-        :headers headers
-        :body (page-template page-name nav content footer message)}
-       content-type)))
+    (response/content-type
+     {:status status
+      :headers headers
+      :body (page-template page-name nav content footer message)}
+     content-type)))
 
 (defn- error-content
   [error-details]
