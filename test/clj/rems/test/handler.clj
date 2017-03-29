@@ -44,10 +44,10 @@
 ;;; context language
 
 (defn new-context
-  "Create a new test context that tracks visited pages, passes cookies 
+  "Create a new test context that tracks visited pages, passes cookies
   and the CSRF token, when sending further requests by using dispatch.
 
-  You must give your application's handler, which will be stored and 
+  You must give your application's handler, which will be stored and
   subsequently used in the request dispatching.
 
   See also: dispatch, login, follow-redirect"
@@ -148,13 +148,12 @@
     (testing "with CSRF token"
       (let [;; no real mechanism for mocking the token or the session,
             ;; so we log in, get the catalogue, etc.
-            login (app (request :get "/Shibboleth.sso/Login"))
-            catalogue (app (-> (request :get "/catalogue")
-                               (pass-cookies login)))
-            token (get-csrf-token catalogue)
-            req (-> (request :post "/cart/add" {"id" "1" "__anti-forgery-token" token})
-                    (pass-cookies login))
-            response (app req)]
+            response (-> (new-context app)
+                         (dispatch (request :get "/Shibboleth.sso/Login"))
+                         (dispatch (request :get "/catalogue"))
+                         ;; csrf token added automatically by dispatch
+                         (dispatch (request :post "/cart/add" {"id" "1"}))
+                         :response)]
         (is (= 303 (:status response)))))))
 
 
