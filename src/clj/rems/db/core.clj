@@ -43,7 +43,9 @@
     (create-resource! {:id 1 :resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1})
     (create-catalogue-item! {:title "ELFA Corpus"
                              :form (:id meta)
-                             :resid 1})
+                             :resid 1
+                             :wfid nil})
     (create-catalogue-item! {:title "B"
                              :form nil
-                             :resid nil})))
+                             :resid nil
+                             :wfid nil})))

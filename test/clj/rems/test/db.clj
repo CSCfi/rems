@@ -35,8 +35,8 @@
 
   (testing "with test database"
     (db/create-resource! {:id 1 :resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1})
-    (db/create-catalogue-item! {:title "ELFA Corpus" :form nil :resid 1})
-    (db/create-catalogue-item! {:title "B" :form nil :resid nil})
+    (db/create-catalogue-item! {:title "ELFA Corpus" :form nil :resid 1 :wfid nil})
+    (db/create-catalogue-item! {:title "B" :form nil :resid nil :wfid nil})
     (is (= ["B" "ELFA Corpus"] (sort (map :title (db/get-catalogue-items))))
         "should find two items")
     (let [item-from-list (second (db/get-catalogue-items))
@@ -48,7 +48,12 @@
 (deftest test-form
   (binding [context/*user* "test-user"]
     (let [meta (db/create-form-meta! {:title "metatitle" :user context/*user*})
-          item (db/create-catalogue-item! {:title "item" :form (:id meta) :resid nil})
+          wf (db/create-workflow! {:modifieruserid 1 :owneruserid 1 :title "Test workflow" :fnlround 0})
+          license (db/create-license! {:modifieruserid 1 :owneruserid 1 :title "non-localized license" :type "link" :textcontent "http://test.org"})
+          license-fi (db/create-license-localization! {:licid (:id license) :langcode "fi" :title "Testi lisenssi" :textcontent "http://testi.fi"})
+          license-en (db/create-license-localization! {:licid (:id license) :langcode "en" :title "Test license" :textcontent "http://test.com"})
+          wf-license (db/create-workflow-license! {:wfid (:id wf) :licid (:id license) :round 0})
+          item (db/create-catalogue-item! {:title "item" :form (:id meta) :resid nil :wfid (:id license)})
           form-en (db/create-form! {:title "entitle" :user context/*user*})
           form-fi (db/create-form! {:title "fititle" :user context/*user*})
           item-c (db/create-form-item!
@@ -70,11 +75,19 @@
         (let [form-fi (binding [context/*lang* :fi]
                         (applications/get-form-for (:id item)))
               form-en (binding [context/*lang* :en]
+                        (applications/get-form-for (:id item)))
+              form-ru (binding [context/*lang* :ru]
                         (applications/get-form-for (:id item)))]
           (is (= "entitle" (:title form-en)) "title")
           (is (= ["A" "B" "C"] (map :title (:items form-en))) "items should be in order")
           (is (= "fititle" (:title form-fi)) "title")
-          (is (= ["A"] (map :title (:items form-fi))) "there should be only one item")))
+          (is (= ["A"] (map :title (:items form-fi))) "there should be only one item")
+          (is (= ["Testi lisenssi"] (map :title (:licenses form-fi))) "there should only be one license in Finnish")
+          (is (= "http://testi.fi" (:textcontent (first (:licenses form-fi)))) "link should point to Finnish site")
+          (is (= "Test license" (:title (first (:licenses form-en)))) "title should be in English")
+          (is (= "http://test.com" (:textcontent (first (:licenses form-en)))) "link should point to English site")
+          (is (= "non-localized license" (:title (first (:licenses form-ru)))) "default title used when no localization is found")
+          (is (= "http://test.org" (:textcontent (first (:licenses form-ru)))) "link should point to default license site")))
 
       (testing "get partially filled form"
         (binding [context/*lang* :en]
@@ -104,7 +117,7 @@
 
 (deftest test-applications
   (binding [context/*user* "test-user"]
-    (let [item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil}))
+    (let [item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid nil}))
           app (applications/create-new-draft item)]
       (is (= app (applications/get-draft-id-for item)))
       (is (= [{:id app :state "draft" :catid item}]

@@ -12,8 +12,8 @@ WHERE ci.id = :id
 -- :name create-catalogue-item! :insert
 -- :doc Create a single catalogue item
 INSERT INTO catalogue_item
-(title, formid, resid)
-VALUES (:title, :form, :resid)
+(title, formid, resid, wfid)
+VALUES (:title, :form, :resid, :wfid)
 
 -- :name create-resource! :insert
 -- :doc Create a single resource
@@ -155,6 +155,30 @@ ON CONFLICT (catAppId, formMapId)
 DO UPDATE
 SET (modifierUserId, value) = (:user, :value)
 
+-- :name create-license! :insert
+INSERT INTO license
+(ownerUserId, modifierUserId, title, type, textcontent)
+VALUES
+(:owneruserid, :modifieruserid, :title, :type::license_type, :textcontent)
+
+-- :name create-license-localization! :insert
+INSERT INTO license_localization
+(licid, langcode, title, textcontent)
+VALUES
+(:licid, :langcode, :title, :textcontent)
+
+-- :name create-workflow! :insert
+INSERT INTO workflow
+(ownerUserId, modifierUserId, title, fnlround)
+VALUES
+(:owneruserid, :modifieruserid, :title, :fnlround)
+
+-- :name create-workflow-license! :insert
+INSERT INTO workflow_licenses
+(wfid, licid, round)
+VALUES
+(:wfid, :licid, :round)
+
 -- :name clear-field-value! :!
 DELETE FROM application_text_values
 WHERE catAppId = :application
@@ -172,8 +196,12 @@ WHERE textvalues.catAppId = :application
 
 -- :name get-workflow-licenses :? :*
 SELECT
-  lic.title, lic.type, lic.textcontent
+  lic.id, lic.title, lic.type, lic.textcontent
 FROM license lic
 INNER JOIN workflow_licenses wl ON lic.id = wl.licId
 INNER JOIN catalogue_item cat ON wl.wfId = cat.wfId
 WHERE cat.id = :catId
+
+-- :name get-license-localizations :? :*
+SELECT licid, langcode, title, textcontent
+FROM license_localization
