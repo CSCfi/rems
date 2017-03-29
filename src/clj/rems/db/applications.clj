@@ -71,7 +71,7 @@
               :optional true
               :value \"filled value or nil\"}
              ...]
-     :licences [{:type \"license\"
+     :licenses [{:type \"license\"
                  :licensetype \"link\"
                  :title \"LGPL\"
                  :textcontent \"http://foo\"}]}"
