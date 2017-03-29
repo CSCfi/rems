@@ -4,6 +4,7 @@
             [rems.guide :refer :all]
             [rems.text :refer :all]
             [rems.language-switcher :refer [language-switcher]]
+            [rems.role-switcher :refer [role-switcher]]
             [hiccup.element :refer [link-to]]
             [hiccup.page :refer [html5 include-css include-js]]
             [markdown.core :refer [md-to-html-string]]
@@ -22,27 +23,29 @@
 
 (defn- navbar
   [page-name user]
-  [:nav.navbar.navbar-toggleable-sm {:role "navigation"}
-   [:button.navbar-toggler
-    {:type "button" :data-toggle "collapse" :data-target "#collapsing-navbar"}
-    "&#9776;"]
-   [:div#collapsing-navbar.collapse.navbar-collapse
-    ;; TODO configurable brand?
-    ;; [:a.navbar-brand {:href "/"} "REMS"]
-    [:div.navbar-nav.mr-auto
-     (if user
-       (list
-        (nav-link "/catalogue" (text :t.navigation/catalogue) (= page-name "catalogue"))
-        (nav-link "/applications" (text :t.navigation/applications) (= page-name "applications")))
-       (nav-link "/" (text :t.navigation/home) (= page-name "home")))
-     (nav-link "/about" (text :t.navigation/about) (= page-name "about"))]
-    [:div.nav-item.navbar-text (language-switcher)]]
-   (when user
-     [:div.user.navbar-nav
-      [:div.nav-link
-       [:i.fa.fa-user]
-       [:span.user-name (str user " /")]
-       (link-to "/Shibboleth.sso/Logout?return=%2F" (text :t.navigation/logout))]])])
+  (list
+   [:nav.navbar.navbar-toggleable-sm {:role "navigation"}
+    [:button.navbar-toggler
+     {:type "button" :data-toggle "collapse" :data-target "#collapsing-navbar"}
+     "&#9776;"]
+    [:div#collapsing-navbar.collapse.navbar-collapse
+     ;; TODO configurable brand?
+     ;; [:a.navbar-brand {:href "/"} "REMS"]
+     [:div.navbar-nav.mr-auto
+      (if user
+        (list
+         (nav-link "/catalogue" (text :t.navigation/catalogue) (= page-name "catalogue"))
+         (nav-link "/applications" (text :t.navigation/applications) (= page-name "applications")))
+        (nav-link "/" (text :t.navigation/home) (= page-name "home")))
+      (nav-link "/about" (text :t.navigation/about) (= page-name "about"))]
+     [:div.nav-item.navbar-text (language-switcher)]]
+    (when user
+      [:div.user.navbar-nav
+       [:div.nav-link
+        [:i.fa.fa-user]
+        [:span.user-name (str user " /")]
+        (link-to "/Shibboleth.sso/Logout?return=%2F" (text :t.navigation/logout))]])]
+   (role-switcher)))
 
 (defn- footer []
   [:footer.footer
@@ -141,9 +144,12 @@
    (example "language-switcher"
             (language-switcher))
    (example "navbar guest"
-            (navbar "example-page" nil))
+            (binding [context/*roles* nil]
+              (navbar "example-page" nil)))
    (example "navbar for logged-in user"
-            (navbar "example-page" "Eero Esimerkki"))
+            (binding [context/*roles* #{:applicant :reviewer}
+                      context/*active-role* :applicant]
+              (navbar "example-page" "Eero Esimerkki")))
    (example "footer"
             (footer))
    (example "logo" (logo))

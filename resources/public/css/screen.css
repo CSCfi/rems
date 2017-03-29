@@ -301,6 +301,10 @@ form.inline .btn-link {
   margin-left: 0.5rem;
 }
 
+.role-switcher form {
+  margin-left: 0.5rem;
+}
+
 .actions {
   text-align: right;
   padding: 0 1rem;
