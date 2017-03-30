@@ -39,7 +39,11 @@
                      :created "Created"
                      :states {:draft "Draft"
                               :applied "Applied"
-                              :unknown "Unknown"}}}}
+                              :unknown "Unknown"}}
+      :roles {:header "Select role:"
+              :names {:approver "Approver"
+                      :reviewer "Reviewer"
+                      :applicant "Applicant"}}}}
     :fi
     {:t
      {:missing "Käännös puuttuu"
@@ -75,5 +79,9 @@
                      :created "Luotu"
                      :states {:draft "Luonnos"
                               :applied "Haettu"
-                              :unknown "Tuntematon"}}}}
+                              :unknown "Tuntematon"}}
+      :roles {:header "Valitse rooli:"
+              :names {:approver "Hyväksyjä"
+                      :reviewer "Katselmoija"
+                      :applicant "Hakija"}}}}
     :en :en-GB}})

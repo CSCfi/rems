@@ -7,7 +7,7 @@
             [rems.contents :as contents]
             [rems.form :as form]
             [rems.applications :as applications]
-            [rems.language-switcher :refer [language-switcher]]
+            [rems.role-switcher :as role-switcher]
             [hiccup.core :as h]
             [compojure.core :refer [defroutes GET]]
             [rems.locales :as locales]
@@ -57,6 +57,9 @@
 
           [:h2 "Forms"]
           (form/guide)
+
+          [:h2 "Role switcher"]
+          (role-switcher/guide)
 
           [:h2 "Misc components"]
           (example "login" (contents/login "/"))

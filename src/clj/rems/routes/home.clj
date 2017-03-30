@@ -8,6 +8,7 @@
             [rems.cart :as cart]
             [rems.form :as form]
             [rems.language-switcher :as language-switcher]
+            [rems.role-switcher :as role-switcher]
             [compojure.core :refer [defroutes GET]]))
 
 (defn home-page []
@@ -36,4 +37,5 @@
   (GET "/applications" [] (applications-page))
   (GET "/catalogue" [] (catalogue-page))
   cart/cart-routes
-  form/form-routes)
+  form/form-routes
+  role-switcher/role-switcher-routes)
