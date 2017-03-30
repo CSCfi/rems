@@ -43,17 +43,16 @@ a:visited { color: #fff; }
     [:li {:onclick (str "window.location.href='" url "';")}
      [:a {:href url} username]]))
 
-(defn- fake-login-screen [{session :session username :fake-username :as req}]
-  (let [username (or username (-> req :params :username))]
-    (if username
-      (fake-login session username)
-      (-> (html5 [:head [:style fake-login-styles]]
-                 [:body
-                  [:div.login
-                   [:h1 "Development Login"]
-                   [:ul (map user-selection ["developer" "alice" "bob"])]]])
-          (response)
-          (content-type "text/html; charset=utf-8")))))
+(defn- fake-login-screen [{session :session :as req}]
+  (if-let [username (-> req :params :username)]
+    (fake-login session username)
+    (-> (html5 [:head [:style fake-login-styles]]
+               [:body
+                [:div.login
+                 [:h1 "Development Login"]
+                 [:ul (map user-selection ["developer" "alice" "bob"])]]])
+        (response)
+        (content-type "text/html; charset=utf-8"))))
 
 (defn- fake-logout [{session :session}]
   (-> (redirect "/")
