@@ -196,4 +196,7 @@
         (is (empty? (hiccup-find [:.application] (ctx->html ctx))) "bob shouldn't see alice's application")
         (testing "bob tries to open alice's application"
           (let [ctx (dispatch ctx (request :get "/form/1/1"))]
+            (is (= 403 (:status ctx)) "bob shouldn't be authorized")))
+        (testing "bob tries to write to alice's application"
+          (let [ctx (dispatch ctx (request :post "/form/1/1/save" {"field2" "bob field2"}))]
             (is (= 403 (:status ctx)) "bob shouldn't be authorized")))))))
