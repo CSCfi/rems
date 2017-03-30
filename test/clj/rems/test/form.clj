@@ -35,6 +35,20 @@
                             {:title "C"
                              :optional false
                              :value "1"}]})))
+
+    (is (not= :valid (validate
+                      {:items [{:title "A"
+                                :optional false
+                                :value "a"}]
+                       :licenses [:title "LGPL"]})))
+
+    (is (= :valid (validate
+                      {:items [{:title "A"
+                                :optional false
+                                :value "a"}]
+                       :licenses [:title "LGPL"
+                                  :value "checked"]})))
+
     (let [res (validate
                {:items [{:title "A"
                          :optional true
@@ -74,7 +88,12 @@
                      :title "B"
                      :type "text"
                      :optional false
-                     :value (get-in @world [:values application 62])}]})
+                     :value (get-in @world [:values application 62])}]
+            :licenses [{:id 70
+                        :type "license"
+                        :licensetype "link"
+                        :title "KielipankkiTerms"
+                        :textcontent "https://kitwiki.csc.fi/twiki/bin/view/FinCLARIN/KielipankkiTerms"}]})
 
          db/save-field-value!
          (fn [{application :application
@@ -138,9 +157,22 @@
             (is (= {:states {2 "draft"} :values {2 {61 "u", 62 ""}}}
                    @world))))
 
+        (testing "submit with unchecked license"
+          (let [resp (run "/form/7/2/save" {"field61" ""
+                                            "field62" "v"
+                                            "submit" "true"})
+                flash (:flash resp)
+                flash-text (hiccup-text (:contents flash))]
+            (testing flash
+              (is (= :warning (:status flash)))
+              (is (not (.contains flash-text "submitted"))))
+            (is (= {:states {2 "draft"} :values {2 {61 "", 62 "v"}}}
+                   @world))))
+
         (testing "successful submit"
           (let [resp (run "/form/7/2/save" {"field61" ""
                                             "field62" "v"
+                                            "license70" "approved"
                                             "submit" "true"})
                 flash (:flash resp)
                 flash-text (hiccup-text (:contents flash))]
