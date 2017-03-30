@@ -46,19 +46,14 @@
   (doall (for [i context/*cart*]
            (get-localized-catalogue-item {:id i}))))
 
-(defn- handler [method {session :session {id-string :id} :params :as req}]
-  (let [id (Long/parseLong id-string)
-        modifier (case method
-                   :add conj
-                   :remove disj)]
+(defn- handler [modifier {session :session {id-string :id} :params :as req}]
+  (let [id (Long/parseLong id-string)]
     (assoc (redirect "/catalogue" :see-other)
            :session (update session :cart #(set (modifier % id))))))
 
 (defroutes cart-routes
-  (POST "/cart/add" session
-        (handler :add session))
-  (POST "/cart/remove" session
-        (handler :remove session)))
+  (POST "/cart/add" session (handler conj session))
+  (POST "/cart/remove" session (handler disj session)))
 
 (defn- apply-button [item]
   [:a.btn.btn-primary {:href (form/link-to-item item)} (text :t.cart/apply)])
