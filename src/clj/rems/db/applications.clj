@@ -44,14 +44,16 @@
 (defn- process-license
   "Returns a license structure like this:
 
-    {:type \"license\"
+    {:id 2
+     :type \"license\"
      :licensetype \"link\"
      :title \"LGPL\"
      :textcontent \"www.license.link\"}"
   [localizations license]
   (let [localized-title (get-in localizations [context/*lang* :title])
         localized-content (get-in localizations [context/*lang* :textcontent])]
-    {:type "license"
+    {:id (:id license)
+     :type "license"
      :licensetype (:type license)
      :title (or localized-title (:title license))
      :textcontent (or localized-content (:textcontent license))}))
@@ -71,7 +73,8 @@
               :optional true
               :value \"filled value or nil\"}
              ...]
-     :licenses [{:type \"license\"
+     :licenses [{:id 2
+                 :type \"license\"
                  :licensetype \"link\"
                  :title \"LGPL\"
                  :textcontent \"http://foo\"}]}"
