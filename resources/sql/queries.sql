@@ -159,6 +159,22 @@ ON CONFLICT (catAppId, formMapId)
 DO UPDATE
 SET (modifierUserId, value) = (:user, :value)
 
+-- :name save-license-approval! :!
+-- TODO: make this atomic
+INSERT INTO catalogue_item_application_licenses
+(catappid, licid, actoruserid, round, state)
+SELECT
+:catappid, :licid, :actoruserid, :round, CAST(:state AS license_state)
+WHERE NOT exists
+(SELECT id, catappid, licid, actoruserid
+ FROM catalogue_item_application_licenses
+ WHERE
+ catappid = :catappid AND licid = :licid AND actoruserid = :actoruserid);
+
+-- :name get-application-license-approval :? :1
+SELECT state FROM catalogue_item_application_licenses
+WHERE catappid = :catappid AND licid = :licid AND actoruserid = :actoruserid
+
 -- :name create-license! :insert
 INSERT INTO license
 (ownerUserId, modifierUserId, title, type, textcontent)

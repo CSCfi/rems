@@ -48,15 +48,23 @@
      :type \"license\"
      :licensetype \"link\"
      :title \"LGPL\"
-     :textcontent \"www.license.link\"}"
-  [localizations license]
+     :textcontent \"www.license.link\"
+     :approved false}"
+  [application-id localizations license]
   (let [localized-title (get-in localizations [context/*lang* :title])
         localized-content (get-in localizations [context/*lang* :textcontent])]
     {:id (:id license)
      :type "license"
      :licensetype (:type license)
      :title (or localized-title (:title license))
-     :textcontent (or localized-content (:textcontent license))}))
+     :textcontent (or localized-content (:textcontent license))
+     :approved (if application-id
+                 (= "approved"
+                    (:state
+                      (db/get-application-license-approval {:catappid application-id
+                                                            :licid (:id license)
+                                                            :actoruserid context/*user*})))
+                 false)}))
 
 (defn get-form-for
   "Returns a form structure like this:
@@ -91,7 +99,7 @@
          license-localizations (->> (db/get-license-localizations)
                                     (map #(update-in % [:langcode] keyword))
                                     (index-by [:licid :langcode]))
-         licenses (mapv #(process-license (license-localizations (:id %)) %)
+         licenses (mapv #(process-license application-id (license-localizations (:id %)) %)
                         (db/get-workflow-licenses {:catId catalogue-item}))]
      (when (and application-id
                 (not= (:applicantuserid application) context/*user*))
