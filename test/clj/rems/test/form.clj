@@ -146,6 +146,19 @@
             (is (= {:states {2 "draft"} :values {2 {61 "", 62 "z"}} :approvals {2 {70 "approved"}}}
                    @world))))
 
+        (testing "save with unchecked license"
+          (let [resp (run "/form/7/save" {"field61" "x"
+                                          "field62" "y"})
+                flash (:flash resp)
+                flash-text (hiccup-text (:contents flash))]
+            (is (= 303 (:status resp)))
+            (testing flash
+              (is (= :warning (:status flash)))
+              (is (.contains flash-text "\"KielipankkiTerms\""))
+              (is (.contains flash-text "saved")))
+            (is (= {:states {2 "draft"} :values {2 {61 "x", 62 "y"}}}
+                   @world))))
+
         (testing "save with missing mandatory field"
           (let [resp (run "/form/7/2/save" {"field61" "w"
                                             "field62" ""
