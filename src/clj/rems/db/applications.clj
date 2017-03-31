@@ -85,7 +85,8 @@
                  :type \"license\"
                  :licensetype \"link\"
                  :title \"LGPL\"
-                 :textcontent \"http://foo\"}]}"
+                 :textcontent \"http://foo\"
+                 :approved false}]}"
   ([catalogue-item]
    (get-form-for catalogue-item nil))
   ([catalogue-item application-id]
