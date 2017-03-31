@@ -138,12 +138,15 @@
   [resource-id application-id input]
   (let [form (get-form-for resource-id)]
     (doseq [{licid :id :as license} (:licenses form)]
-      (when-let [state (get input (str "license" licid))]
+      (if-let [state (get input (str "license" licid))]
         (db/save-license-approval! {:catappid application-id
                                     :round 0
                                     :licid licid
                                     :actoruserid context/*user*
-                                    :state state})))))
+                                    :state state})
+        (db/delete-license-approval! {:catappid application-id
+                                      :licid licid
+                                      :actoruserid context/*user*})))))
 
 (defn- redirect-to-application [resource-id application-id]
   (redirect (str "/form/" resource-id "/" application-id) :see-other))

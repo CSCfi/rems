@@ -171,6 +171,10 @@ WHERE NOT exists
  WHERE
  catappid = :catappid AND licid = :licid AND actoruserid = :actoruserid);
 
+-- :name delete-license-approval! :!
+DELETE FROM catalogue_item_application_licenses
+WHERE catappid = :catappid AND licid = :licid AND actoruserid = :actoruserid
+
 -- :name get-application-license-approval :? :1
 SELECT state FROM catalogue_item_application_licenses
 WHERE catappid = :catappid AND licid = :licid AND actoruserid = :actoruserid
