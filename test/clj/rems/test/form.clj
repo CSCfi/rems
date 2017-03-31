@@ -108,6 +108,11 @@
                state :state}]
            (swap! world assoc-in [:approvals application licid] state))
 
+         db/delete-license-approval!
+         (fn [{application :catappid
+              licid :licid}]
+           (swap! world dissoc :approvals))
+
          db/update-application-state!
          (fn [{id :id state :state}]
            (swap! world assoc-in [:states id] state))
