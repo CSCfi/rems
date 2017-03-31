@@ -41,10 +41,15 @@
   [:div.form-group
    [:label title]])
 
-(defn- license [{title :title id :id textcontent :textcontent}]
+(defn- checkbox-attrs [id approved]
+  (if approved
+    {:type "checkbox" :name (str "license" id) :checked "" :value "approved"}
+    {:type "checkbox" :name (str "license" id) :value "approved"}))
+
+(defn- license [{title :title id :id textcontent :textcontent approved :approved}]
   [:div.checkbox
    [:label
-    [:input {:type "checkbox" :name (str "license" id) :value "approved"}]
+    [:input (checkbox-attrs id approved)]
     [:a {:href textcontent :target "_blank"} (str " " title)]]])
 
 (defn- unsupported-field
