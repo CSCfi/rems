@@ -242,6 +242,10 @@ footer {
   white-space: nowrap;
 }
 
+.user .nav-link {
+  display: inline-block;
+}
+
 .user-name {
   text-transform: none;
 }
@@ -323,6 +327,17 @@ form.inline .btn-link {
   .actions {
     white-space: nowrap;
   }
+}
+
+.navbar-flex {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  min-width: 100%;
+}
+
+.navbar-flex nav {
+  flex: 1;
 }
 
 .actions  > *:not(:first-child) {
