@@ -41,6 +41,11 @@
       src: shibboleth2.xml
       dest: /etc/shibboleth/
 
+  - name: Configure attribute-map.xml
+    template:
+      src: attribute-map.xml
+      dest: /etc/shibboleth/
+
   - name: Change host cert file to shibd group
     file:
       path: /etc/pki/tls/certs/{{shib_certname}}
