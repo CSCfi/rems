@@ -167,7 +167,8 @@
                 flash-text (hiccup-text (:contents flash))]
             (testing flash
               (is (= :warning (:status flash)))
-              (is (.contains flash-text "\"B\"")))
+              (is (.contains flash-text "\"B\""))
+              (is (.contains flash-text "saved")))
             (is (= {:states {2 "draft"} :values {2 {61 "w", 62 ""}} :approvals {2 {70 "approved"}}}
                    @world))))
 
@@ -194,6 +195,7 @@
                 flash-text (hiccup-text (:contents flash))]
             (testing flash
               (is (= :warning (:status flash)))
+              (is (.contains flash-text "saved"))
               (is (not (.contains flash-text "submitted"))))
             (is (= {:states {2 "draft"} :values {2 {61 "", 62 "v"}}}
                    @world))))
