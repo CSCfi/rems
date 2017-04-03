@@ -1,6 +1,5 @@
 (ns rems.form
-  (:require [hiccup.form :as f]
-            [rems.context :as context]
+  (:require [rems.context :as context]
             [rems.layout :as layout]
             [rems.guide :refer :all]
             [rems.text :refer :all]
@@ -42,11 +41,16 @@
   [:div.form-group
    [:label title]])
 
-(defn- license [{title :title id :id textcontent :textcontent}]
+(defn- checkbox-attrs [id approved]
+  (if approved
+    {:type "checkbox" :name (str "license" id) :checked "" :value "approved"}
+    {:type "checkbox" :name (str "license" id) :value "approved"}))
+
+(defn- license [{title :title id :id textcontent :textcontent approved :approved}]
   [:div.checkbox
    [:label
-    [:input {:type "checkbox" :id (id-to-name id) :value "approved"}]
-    [:a {:href textcontent :target "_blank" :for (id-to-name id)} (str " " title)]]])
+    [:input (checkbox-attrs id approved)]
+    [:a {:href textcontent :target "_blank"} (str " " title)]]])
 
 (defn- unsupported-field
   [f]
@@ -97,12 +101,18 @@
     (when (empty? (:value item))
       (text-format :t.form.validation/required (:title item)))))
 
+(defn- validate-license
+  [license]
+  (when-not (:approved license)
+    (text-format :t.form.validation/required (:title license))))
+
 (defn- validate
   "Validates a filled in form from (get-form-for resource application).
 
    Returns either :valid or a sequence of validation errors."
   [form]
-  (let [messages (vec (filter identity (map validate-item (:items form))))]
+  (let [messages (vec (concat (vec (filter identity (map validate-item (:items form))))
+                              (vec (filter identity (map validate-license (:licenses form))))))]
     (if (empty? messages)
       :valid
       messages)))
@@ -124,6 +134,20 @@
                                :user context/*user*
                                :value value})))))
 
+(defn save-licenses
+  [resource-id application-id input]
+  (let [form (get-form-for resource-id)]
+    (doseq [{licid :id :as license} (:licenses form)]
+      (if-let [state (get input (str "license" licid))]
+        (db/save-license-approval! {:catappid application-id
+                                    :round 0
+                                    :licid licid
+                                    :actoruserid context/*user*
+                                    :state state})
+        (db/delete-license-approval! {:catappid application-id
+                                      :licid licid
+                                      :actoruserid context/*user*})))))
+
 (defn- redirect-to-application [resource-id application-id]
   (redirect (str "/form/" resource-id "/" application-id) :see-other))
 
@@ -133,6 +157,7 @@
                          (Long/parseLong s)
                          (create-new-draft resource-id))]
     (save-fields resource-id application-id input)
+    (save-licenses resource-id application-id input)
     (let [submit (get input "submit")
           validation (validate (get-form-for resource-id application-id))
           valid (= :valid validation)

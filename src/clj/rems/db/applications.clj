@@ -44,17 +44,27 @@
 (defn- process-license
   "Returns a license structure like this:
 
-    {:type \"license\"
+    {:id 2
+     :type \"license\"
      :licensetype \"link\"
      :title \"LGPL\"
-     :textcontent \"www.license.link\"}"
-  [localizations license]
+     :textcontent \"www.license.link\"
+     :approved false}"
+  [application-id localizations license]
   (let [localized-title (get-in localizations [context/*lang* :title])
         localized-content (get-in localizations [context/*lang* :textcontent])]
-    {:type "license"
+    {:id (:id license)
+     :type "license"
      :licensetype (:type license)
      :title (or localized-title (:title license))
-     :textcontent (or localized-content (:textcontent license))}))
+     :textcontent (or localized-content (:textcontent license))
+     :approved (= "approved"
+                  (:state
+                   (when application-id
+                     (db/get-application-license-approval {:catappid application-id
+                                                           :licid (:id license)
+                                                           :actoruserid context/*user*}))))
+     }))
 
 (defn get-form-for
   "Returns a form structure like this:
@@ -71,10 +81,12 @@
               :optional true
               :value \"filled value or nil\"}
              ...]
-     :licences [{:type \"license\"
+     :licenses [{:id 2
+                 :type \"license\"
                  :licensetype \"link\"
                  :title \"LGPL\"
-                 :textcontent \"http://foo\"}]}"
+                 :textcontent \"http://foo\"
+                 :approved false}]}"
   ([catalogue-item]
    (get-form-for catalogue-item nil))
   ([catalogue-item application-id]
@@ -88,7 +100,7 @@
          license-localizations (->> (db/get-license-localizations)
                                     (map #(update-in % [:langcode] keyword))
                                     (index-by [:licid :langcode]))
-         licenses (mapv #(process-license (license-localizations (:id %)) %)
+         licenses (mapv #(process-license application-id (license-localizations (:id %)) %)
                         (db/get-workflow-licenses {:catId catalogue-item}))]
      (when (and application-id
                 (not= (:applicantuserid application) context/*user*))

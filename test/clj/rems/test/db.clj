@@ -99,10 +99,36 @@
                                    :item (:id item-b)
                                    :user context/*user*
                                    :value "B"})
+            (db/save-license-approval! {:catappid app-id
+                                       :licid (:id license)
+                                       :actoruserid context/*user*
+                                       :round 0
+                                       :state "approved"})
             (let [f (applications/get-form-for (:id item) app-id)]
               (is (= app-id (:application f)))
               (is (= "draft" (:state f)))
-              (is (= [nil "B" nil] (map :value (:items f)))))
+              (is (= [nil "B" nil] (map :value (:items f))))
+              (is (= [true] (map :approved (:licenses f)))))
+
+            (testing "license field"
+              (db/save-license-approval! {:catappid app-id
+                                          :licid (:id license)
+                                          :actoruserid context/*user*
+                                          :round 0
+                                          :state "approved"})
+              (is (= 1 (count (db/get-application-license-approval {:catappid app-id
+                                                                    :licid (:id license)
+                                                                    :actoruserid context/*user*})))
+                  "saving a license approval twice should only create one row")
+              (db/delete-license-approval! {:catappid app-id
+                                            :licid (:id license)
+                                            :actoruserid context/*user*})
+              (is (= 0 (count (db/get-application-license-approval {:catappid app-id
+                                                                    :licid (:id license)
+                                                                    :actoruserid context/*user*})))
+                  "after deletion there should not be saved approvals")
+              (let [f (applications/get-form-for (:id item) app-id)]
+                (is (= [false] (map :approved (:licenses f))))))
 
             (testing "reset field value"
               (db/clear-field-value! {:application app-id
