@@ -3,11 +3,12 @@
   (:require [taoensso.tempura :as tempura]
             [rems.locales :as locales]))
 
-(defn example [name content]
-  [:div.example
-   [:h3 name]
-   [:div.example-content content
-    [:div.example-content-end]]])
+(defmacro example [name content]
+  `[:div.example
+    [:h3 ~name]
+    [:pre.example-source ~(pr-str content)]
+    [:div.example-content ~content
+     [:div.example-content-end]]])
 
 (defmacro with-language [lang & body]
   `(binding [context/*lang* ~lang
