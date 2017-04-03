@@ -25,6 +25,10 @@
     margin: 0;
 }
 
+a, button {
+  cursor: pointer;
+}
+
 html {
   position: relative;
   min-height: 100%;
