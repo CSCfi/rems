@@ -6,7 +6,8 @@
 (defmacro example [name content]
   `[:div.example
     [:h3 ~name]
-    [:pre.example-source ~(pr-str content)]
+    [:pre.example-source
+     ~(with-out-str (clojure.pprint/write content :dispatch clojure.pprint/code-dispatch))]
     [:div.example-content ~content
      [:div.example-content-end]]])
 
