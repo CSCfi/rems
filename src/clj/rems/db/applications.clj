@@ -58,13 +58,13 @@
      :licensetype (:type license)
      :title (or localized-title (:title license))
      :textcontent (or localized-content (:textcontent license))
-     :approved (if application-id
-                 (= "approved"
-                    (:state
-                      (db/get-application-license-approval {:catappid application-id
-                                                            :licid (:id license)
-                                                            :actoruserid context/*user*})))
-                 false)}))
+     :approved (= "approved"
+                  (:state
+                   (when application-id
+                     (db/get-application-license-approval {:catappid application-id
+                                                           :licid (:id license)
+                                                           :actoruserid context/*user*}))))
+     }))
 
 (defn get-form-for
   "Returns a form structure like this:
