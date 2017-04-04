@@ -3,11 +3,13 @@
   (:require [taoensso.tempura :as tempura]
             [rems.locales :as locales]))
 
-(defn example [name content]
-  [:div.example
-   [:h3 name]
-   [:div.example-content content
-    [:div.example-content-end]]])
+(defmacro example [name content]
+  `[:div.example
+    [:h3 ~name]
+    [:pre.example-source
+     ~(with-out-str (clojure.pprint/write content :dispatch clojure.pprint/code-dispatch))]
+    [:div.example-content ~content
+     [:div.example-content-end]]])
 
 (defmacro with-language [lang & body]
   `(binding [context/*lang* ~lang
