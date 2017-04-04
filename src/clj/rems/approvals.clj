@@ -32,9 +32,9 @@
     (for [app apps]
       (approvals-item app))]))
 
-;; (defn guide
-;;   []
-;;   (example "applications"
-;;            (applications
-;;             [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid 2}
-;;              {:id 3 :catalogue-item {:title "bbbbbb"} :applicantuserid 4}])))
+(defn guide
+  []
+  (example "approvals"
+           (approvals
+            [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid "alice"}
+             {:id 3 :catalogue-item {:title "bbbbbb"} :applicantuserid "bob"}])))
