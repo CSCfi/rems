@@ -21,31 +21,45 @@
 (defn- nav-link [path title & [active?]]
   (link-to {:class (str "nav-item nav-link" (if active? " active" ""))} (url-dest path) title))
 
+(defn user-switcher [user]
+  (when user
+    [:div.user.px-2.px-sm-0
+     [:i.fa.fa-user]
+     [:span.user-name (str user " /")]
+     (link-to {:class (str "px-0 nav-link")} (url-dest "/Shibboleth.sso/Logout?return=%2F") (text :t.navigation/logout))]))
+
 (defn- navbar
   [page-name user]
   (list
-   [:nav.navbar.navbar-toggleable-sm {:role "navigation"}
-    [:button.navbar-toggler
-     {:type "button" :data-toggle "collapse" :data-target "#collapsing-navbar"}
-     "&#9776;"]
-    [:div#collapsing-navbar.collapse.navbar-collapse
-     ;; TODO configurable brand?
-     ;; [:a.navbar-brand {:href "/"} "REMS"]
-     [:div.navbar-nav.mr-auto
-      (if user
-        (list
-         (nav-link "/catalogue" (text :t.navigation/catalogue) (= page-name "catalogue"))
-         (nav-link "/applications" (text :t.navigation/applications) (= page-name "applications")))
-        (nav-link "/" (text :t.navigation/home) (= page-name "home")))
-      (nav-link "/about" (text :t.navigation/about) (= page-name "about"))]
-     [:div.nav-item.navbar-text (language-switcher)]]
-    (when user
-      [:div.user.navbar-nav
-       [:div.nav-link
-        [:i.fa.fa-user]
-        [:span.user-name (str user " /")]
-        (link-to "/Shibboleth.sso/Logout?return=%2F" (text :t.navigation/logout))]])]
-   (role-switcher)))
+   [:div.navbar-flex
+    [:nav.navbar.navbar-toggleable-sm {:role "navigation"}
+     [:button.navbar-toggler
+      {:type "button" :data-toggle "collapse" :data-target "#small-navbar"}
+      "&#9776;"]
+     [:div#big-navbar.collapse.navbar-collapse
+      ;; TODO configurable brand?
+      ;; [:a.navbar-brand {:href "/"} "REMS"]
+      [:div.navbar-nav.mr-auto
+       (if user
+         (list
+          (nav-link "/catalogue" (text :t.navigation/catalogue) (= page-name "catalogue"))
+          (nav-link "/applications" (text :t.navigation/applications) (= page-name "applications")))
+         (nav-link "/" (text :t.navigation/home) (= page-name "home")))
+       (nav-link "/about" (text :t.navigation/about) (= page-name "about"))]
+      [:div.nav-item.navbar-text (language-switcher)]]]
+    [:div.nav-item.navbar-text (user-switcher user)]]
+   [:div#small-navbar.collapse.navbar-collapse.collapse.hidden-md-up
+      ;; TODO configurable brand?
+      ;; [:a.navbar-brand {:href "/"} "REMS"]
+      [:div.navbar-nav.mr-auto
+       (if user
+         (list
+          (nav-link "/catalogue" (text :t.navigation/catalogue) (= page-name "catalogue"))
+          (nav-link "/applications" (text :t.navigation/applications) (= page-name "applications")))
+         (nav-link "/" (text :t.navigation/home) (= page-name "home")))
+       (nav-link "/about" (text :t.navigation/about) (= page-name "about"))]
+    [:div.nav-item.navbar-text (language-switcher)]]
+   [:div.px-md-2 (role-switcher)]))
 
 (defn- footer []
   [:footer.footer
