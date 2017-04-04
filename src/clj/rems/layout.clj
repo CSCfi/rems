@@ -5,7 +5,7 @@
             [rems.text :refer :all]
             [rems.language-switcher :refer [language-switcher]]
             [rems.util :refer [get-username]]
-            [rems.role-switcher :refer [role-switcher]]
+            [rems.role-switcher :refer [role-switcher when-role]]
             [hiccup.element :refer [link-to]]
             [hiccup.page :refer [html5 include-css include-js]]
             [markdown.core :refer [md-to-html-string]]
@@ -43,9 +43,12 @@
       [:div.navbar-nav.mr-auto
        (if user
          (list
-          (nav-link "/catalogue" (text :t.navigation/catalogue) (= page-name "catalogue"))
-          (nav-link "/applications" (text :t.navigation/applications) (= page-name "applications"))
-          (nav-link "/approvals" (text :t.navigation/approvals) (= page-name "approvals")))
+          (when-role :applicant
+            (nav-link "/catalogue" (text :t.navigation/catalogue) (= page-name "catalogue")))
+          (when-role :applicant
+            (nav-link "/applications" (text :t.navigation/applications) (= page-name "applications")))
+          (when-role :approver
+            (nav-link "/approvals" (text :t.navigation/approvals) (= page-name "approvals"))))
          (nav-link "/" (text :t.navigation/home) (= page-name "home")))
        (nav-link "/about" (text :t.navigation/about) (= page-name "about"))]
       [:div.nav-item.navbar-text (language-switcher)]]]
