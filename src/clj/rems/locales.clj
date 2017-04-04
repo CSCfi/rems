@@ -13,7 +13,8 @@
                    :about "About"
                    :home "Home"
                    :catalogue "Catalogue"
-                   :applications "Applications"}
+                   :applications "Applications"
+                   :approvals "Approvals"}
       :login {:title "Login"
               :text "Login by using your Haka credentials"}
       :about {:text "this is the story of rems... work in progress"}
@@ -40,6 +41,11 @@
                      :states {:draft "Draft"
                               :applied "Applied"
                               :unknown "Unknown"}}
+      :approvals {:application "Application"
+                  :resource "Resource"
+                  :applicant "Applicant"
+                  :view "View"
+                  :created "Created"}
       :roles {:header "Select role:"
               :names {:approver "Approver"
                       :reviewer "Reviewer"

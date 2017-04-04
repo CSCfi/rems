@@ -44,7 +44,8 @@
        (if user
          (list
           (nav-link "/catalogue" (text :t.navigation/catalogue) (= page-name "catalogue"))
-          (nav-link "/applications" (text :t.navigation/applications) (= page-name "applications")))
+          (nav-link "/applications" (text :t.navigation/applications) (= page-name "applications"))
+          (nav-link "/approvals" (text :t.navigation/approvals) (= page-name "approvals")))
          (nav-link "/" (text :t.navigation/home) (= page-name "home")))
        (nav-link "/about" (text :t.navigation/about) (= page-name "about"))]
       [:div.nav-item.navbar-text (language-switcher)]]]
