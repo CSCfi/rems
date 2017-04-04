@@ -29,6 +29,23 @@
      [:span.user-name (str (get-username) " /")]
      (link-to {:class (str "px-0 nav-link")} (url-dest "/Shibboleth.sso/Logout?return=%2F") (text :t.navigation/logout))]))
 
+(defn- navbar-items [e page-name user]
+  [e
+   ;; TODO configurable brand?
+   ;; [:a.navbar-brand {:href "/"} "REMS"]
+   [:div.navbar-nav.mr-auto
+    (if user
+      (list
+       (when-role :applicant
+         (nav-link "/catalogue" (text :t.navigation/catalogue) (= page-name "catalogue")))
+       (when-role :applicant
+         (nav-link "/applications" (text :t.navigation/applications) (= page-name "applications")))
+       (when-roles #{:approver :reviewer}
+         (nav-link "/approvals" (text :t.navigation/approvals) (= page-name "approvals"))))
+      (nav-link "/" (text :t.navigation/home) (= page-name "home")))
+    (nav-link "/about" (text :t.navigation/about) (= page-name "about"))]
+   [:div.nav-item.navbar-text (language-switcher)]])
+
 (defn- navbar
   [page-name user]
   (list
@@ -37,33 +54,9 @@
      [:button.navbar-toggler
       {:type "button" :data-toggle "collapse" :data-target "#small-navbar"}
       "&#9776;"]
-     [:div#big-navbar.collapse.navbar-collapse
-      ;; TODO configurable brand?
-      ;; [:a.navbar-brand {:href "/"} "REMS"]
-      [:div.navbar-nav.mr-auto
-       (if user
-         (list
-          (when-role :applicant
-            (nav-link "/catalogue" (text :t.navigation/catalogue) (= page-name "catalogue")))
-          (when-role :applicant
-            (nav-link "/applications" (text :t.navigation/applications) (= page-name "applications")))
-          (when-roles #{:approver :reviewer}
-            (nav-link "/approvals" (text :t.navigation/approvals) (= page-name "approvals"))))
-         (nav-link "/" (text :t.navigation/home) (= page-name "home")))
-       (nav-link "/about" (text :t.navigation/about) (= page-name "about"))]
-      [:div.nav-item.navbar-text (language-switcher)]]]
+     (navbar-items :div#big-navbar.collapse.navbar-collapse page-name user)]
     [:div.nav-item.navbar-text (user-switcher user)]]
-   [:div#small-navbar.collapse.navbar-collapse.collapse.hidden-md-up
-      ;; TODO configurable brand?
-      ;; [:a.navbar-brand {:href "/"} "REMS"]
-      [:div.navbar-nav.mr-auto
-       (if user
-         (list
-          (nav-link "/catalogue" (text :t.navigation/catalogue) (= page-name "catalogue"))
-          (nav-link "/applications" (text :t.navigation/applications) (= page-name "applications")))
-         (nav-link "/" (text :t.navigation/home) (= page-name "home")))
-       (nav-link "/about" (text :t.navigation/about) (= page-name "about"))]
-    [:div.nav-item.navbar-text (language-switcher)]]
+   (navbar-items :div#small-navbar.collapse.navbar-collapse.collapse.hidden-md-up page-name user)
    [:div.px-md-2 (role-switcher)]))
 
 (defn- footer []
