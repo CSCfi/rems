@@ -129,10 +129,15 @@ SET (modifierUserId, curround, state) = (:user, 0, CAST (:state as application_s
 -- - Use {:resource id} to get applications for a specific resource
 -- - Use {:state state} to filter by application state
 -- - Use {:applicant user} to filter by applicant
+-- - Use {:approver user} to filter by possible approver
 SELECT
   app.id, app.catId, app.applicantUserId, app.start, state.state
 FROM catalogue_item_application app
 LEFT OUTER JOIN catalogue_item_application_state state ON app.id = state.catAppId
+/*~ (when (:approver params) */
+LEFT OUTER JOIN workflow wf ON app.catid = wf.id
+LEFT OUTER JOIN workflow_approvers wfa ON wf.id = wfa.wfid
+/*~ ) ~*/
 WHERE 1=1
 /*~ (when (:id params) */
   AND app.id = :id
@@ -145,6 +150,10 @@ WHERE 1=1
 /*~ ) ~*/
 /*~ (when (:applicant params) */
   AND app.applicantUserId = :applicant
+/*~ ) ~*/
+/*~ (when (:approver params) */
+  AND wfa.apprUserId = :approver
+  AND state.curround = wfa.round
 /*~ ) ~*/
 
 

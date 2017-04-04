@@ -8,7 +8,7 @@
 
 (defn get-approvals []
   (doall
-   (for [a (db/get-applications {:applicant context/*user* :state "applied"})]
+   (for [a (db/get-applications {:approver context/*user* :state "applied"})]
      (assoc a :catalogue-item
             (get-in (get-localized-catalogue-item {:id (:catid a)})
                     [:localizations context/*lang*])))))
