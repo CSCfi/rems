@@ -59,7 +59,8 @@
                    :about "Info"
                    :home "Etusivu"
                    :catalogue "Kielivarat"
-                   :applications "Hakemukset"}
+                   :applications "Hakemukset"
+                   :approvals "Hyväksynnät"}
       :login {:title "Kirjaudu sisään"
               :text "Kirjaudu sisään Haka-tunnuksillasi"}
       :about {:text "hauki on kala"}
@@ -86,6 +87,11 @@
                      :states {:draft "Luonnos"
                               :applied "Haettu"
                               :unknown "Tuntematon"}}
+      :approvals {:application "Hakemus"
+                  :resource "Kielivara"
+                  :applicant "Hakija"
+                  :view "Näytä"
+                  :created "Luotu"}
       :roles {:header "Valitse rooli:"
               :names {:approver "Hyväksyjä"
                       :reviewer "Katselmoija"
