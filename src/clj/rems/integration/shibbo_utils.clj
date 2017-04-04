@@ -2,7 +2,7 @@
   (:import (javax.servlet ServletRequest)))
 
 (def ^:private shibbo-attribs
-  ["eppn"])
+  ["commonName" "displayName" "eduPersonAffiliation" "eppn" "mail" "surname" "schacHomeOrganization" "schacHomeOrganizationType"])
 
 (def not-blank? (complement clojure.string/blank?))
 
