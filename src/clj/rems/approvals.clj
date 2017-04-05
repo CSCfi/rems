@@ -29,7 +29,7 @@
      [:th (text :t.approvals/applicant)]
      [:th (text :t.approvals/created)]
      [:th]]
-    (for [app apps]
+    (for [app (sort-by :id apps)]
       (approvals-item app))]))
 
 (defn guide
