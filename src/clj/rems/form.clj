@@ -173,7 +173,7 @@
                    :contents (list message
                                    (format-validation-messages validation))})]
       (when perform-submit
-        (db/update-application-state! {:id application-id :user (get-user-id) :state "applied"}))
+        (db/update-application-state! {:id application-id :user (get-user-id) :state "applied" :curround 0}))
       (->
        (redirect-to-application resource-id application-id)
        (assoc :flash flash)

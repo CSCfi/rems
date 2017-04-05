@@ -117,10 +117,10 @@ RETURNING id
 INSERT INTO catalogue_item_application_state
 (catAppId, modifierUserId, curround, state)
 VALUES
-(:id, :user, 0, CAST (:state as application_state))
+(:id, :user, :curround, CAST (:state as application_state))
 ON CONFLICT (catAppId)
 DO UPDATE
-SET (modifierUserId, curround, state) = (:user, 0, CAST (:state as application_state))
+SET (modifierUserId, curround, state) = (:user, :curround, CAST (:state as application_state))
 
 -- :name get-applications :? :*
 -- :doc
@@ -131,7 +131,7 @@ SET (modifierUserId, curround, state) = (:user, 0, CAST (:state as application_s
 -- - Use {:applicant user} to filter by applicant
 -- - Use {:approver user} to filter by possible approver
 SELECT
-  app.id, app.catId, app.applicantUserId, app.start, state.state
+  app.id, app.catId, app.applicantUserId, app.start, state.state, state.curround
 FROM catalogue_item_application app
 LEFT OUTER JOIN catalogue_item_application_state state ON app.id = state.catAppId
 /*~ (when (:approver params) */

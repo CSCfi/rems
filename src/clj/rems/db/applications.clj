@@ -116,5 +116,5 @@
 (defn create-new-draft [resource-id]
   (let [id (:id (db/create-application!
                  {:item resource-id :user (get-user-id)}))]
-    (db/update-application-state! {:id id :user (get-user-id) :state "draft"})
+    (db/update-application-state! {:id id :user (get-user-id) :state "draft"} :curround 0)
     id))
