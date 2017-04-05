@@ -212,6 +212,12 @@ INSERT INTO workflow_licenses
 VALUES
 (:wfid, :licid, :round)
 
+-- :name create-workflow-approver! :insert
+INSERT INTO workflow_approvers
+(wfid, appruserid, round)
+VALUES
+(:wfid, :appruserid, :round)
+
 -- :name clear-field-value! :!
 DELETE FROM application_text_values
 WHERE catAppId = :application
