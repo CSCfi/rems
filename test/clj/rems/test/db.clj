@@ -4,6 +4,7 @@
             [rems.context :as context]
             [rems.contents :as contents]
             [rems.db.applications :as applications]
+            [rems.db.approvals :as approvals]
             [rems.db.roles :as roles]
             [rems.env :refer [*db*]]
             [rems.util :refer [get-user-id]]
@@ -158,6 +159,37 @@
       (is (= [{:id app :state "approved" :catid item}]
              (map #(select-keys % [:id :state :catid])
                   (applications/get-applications)))))))
+
+(deftest test-approvals
+  (binding [context/*user* "test-user"]
+    (let [wfid1 (:id (db/create-workflow! {:owneruserid context/*user* :modifieruserid context/*user* :title "" :fnlround 0 :visibility "public"}))
+          wfid2 (:id (db/create-workflow! {:owneruserid context/*user* :modifieruserid context/*user* :title "" :fnlround 1 :visibility "public"}))
+          wfa1 (db/create-workflow-approver! {:wfid wfid1 :appruserid context/*user* :round 0})
+          wfa2 (db/create-workflow-approver! {:wfid wfid2 :appruserid context/*user* :round 1})
+          item1 (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wfid1}))
+          item2 (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wfid2}))
+          item3 (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wfid1}))
+          item4 (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wfid2}))
+          app1 (applications/create-new-draft item1) ; should see as approver for round 0
+          app2 (applications/create-new-draft item2) ; should see as approver for round 1
+          app3 (applications/create-new-draft item3) ; should not see draft
+          app4 (applications/create-new-draft item4)] ; should not see approved
+      (db/update-application-state! {:id app1 :user context/*user* :state "applied" :curround 0})
+      (db/update-application-state! {:id app2 :user context/*user* :state "applied" :curround 0})
+      (db/update-application-state! {:id app3 :user context/*user* :state "draft" :curround 0})
+      (db/update-application-state! {:id app4 :user context/*user* :state "approved" :curround 0})
+      (is (= [{:id app1 :state "applied" :catid item1 :curround 0}]
+             (map #(select-keys % [:id :state :catid :curround])
+                  (approvals/get-approvals)))
+          "should only see app1")
+      (db/update-application-state! {:id app1 :user context/*user* :state "applied" :curround 1})
+      (db/update-application-state! {:id app2 :user context/*user* :state "applied" :curround 1})
+      (db/update-application-state! {:id app3 :user context/*user* :state "draft" :curround 1})
+      (db/update-application-state! {:id app4 :user context/*user* :state "approved" :curround 1})
+      (is (= [{:id app2 :state "applied" :catid item2 :curround 1}]
+             (map #(select-keys % [:id :state :catid :curround])
+                  (approvals/get-approvals)))
+          "should only see app2"))))
 
 (deftest test-roles
   (roles/add-role! "pekka" :applicant)
