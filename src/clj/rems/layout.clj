@@ -4,6 +4,7 @@
             [rems.guide :refer :all]
             [rems.text :refer :all]
             [rems.language-switcher :refer [language-switcher]]
+            [rems.util :refer [get-username]]
             [rems.role-switcher :refer [role-switcher]]
             [hiccup.element :refer [link-to]]
             [hiccup.page :refer [html5 include-css include-js]]
@@ -25,7 +26,7 @@
   (when user
     [:div.user.px-2.px-sm-0
      [:i.fa.fa-user]
-     [:span.user-name (str user " /")]
+     [:span.user-name (str (get-username) " /")]
      (link-to {:class (str "px-0 nav-link")} (url-dest "/Shibboleth.sso/Logout?return=%2F") (text :t.navigation/logout))]))
 
 (defn- navbar

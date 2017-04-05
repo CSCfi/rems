@@ -3,6 +3,7 @@
             [rems.text :refer :all]
             [rems.db.roles :as roles]
             [rems.guide :refer :all]
+            [rems.util :refer [get-user-id]]
             [rems.anti-forgery :refer [anti-forgery-field]]
             [compojure.core :refer [defroutes POST]]
             [ring.util.response :refer [redirect]]))
@@ -18,7 +19,7 @@
 (defroutes role-switcher-routes
   (POST "/active_role/:role" {{role :role} :params
                               {referer "referer"} :headers}
-        (roles/set-active-role! context/*user* (keyword role))
+        (roles/set-active-role! (get-user-id) (keyword role))
         (redirect referer :see-other)))
 
 (defn role-switcher

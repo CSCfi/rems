@@ -1,4 +1,5 @@
-(ns rems.util)
+(ns rems.util
+   (:require [rems.context :as context]))
 
 (defn index-by
   "Index the collection coll with given keys ks.
@@ -17,3 +18,9 @@
   "Throw a RuntimeException, args passed to clojure.core/format."
   [& fmt-args]
   (throw (RuntimeException. (apply format fmt-args))))
+
+(defn get-user-id []
+  (get context/*user* "eppn"))
+
+(defn get-username []
+  (get context/*user* "commonName"))

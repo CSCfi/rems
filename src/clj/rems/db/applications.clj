@@ -3,12 +3,12 @@
   (:require [rems.context :as context]
             [rems.db.core :as db]
             [rems.db.catalogue :refer [get-localized-catalogue-item]]
-            [rems.util :refer [index-by]]
+            [rems.util :refer [index-by get-user-id]]
             [rems.auth.util :refer [throw-unauthorized]]))
 
 (defn get-applications []
   (doall
-   (for [a (db/get-applications {:applicant context/*user*})]
+   (for [a (db/get-applications {:applicant (get-user-id)})]
      (assoc a :catalogue-item
             (get-in (get-localized-catalogue-item {:id (:catid a)})
                     [:localizations context/*lang*])))))
@@ -17,7 +17,7 @@
   "Finds applications in the draft state for the given catalogue item.
    Returns an id of an arbitrary one of them, or nil if there are none."
   [catalogue-item]
-  (when-let [app (first (db/get-applications {:resource catalogue-item :state "draft" :applicant context/*user*}))]
+  (when-let [app (first (db/get-applications {:resource catalogue-item :state "draft" :applicant (get-user-id)}))]
     (:id app)))
 
 (defn- process-item
@@ -63,7 +63,7 @@
                    (when application-id
                      (db/get-application-license-approval {:catappid application-id
                                                            :licid (:id license)
-                                                           :actoruserid context/*user*}))))
+                                                           :actoruserid (get-user-id)}))))
      }))
 
 (defn get-form-for
@@ -103,7 +103,7 @@
          licenses (mapv #(process-license application-id (license-localizations (:id %)) %)
                         (db/get-workflow-licenses {:catId catalogue-item}))]
      (when (and application-id
-                (not= (:applicantuserid application) context/*user*))
+                (not= (:applicantuserid application) (get-user-id)))
        (throw-unauthorized))
      {:id form-id
       :catalogue-item catalogue-item
@@ -115,6 +115,6 @@
 
 (defn create-new-draft [resource-id]
   (let [id (:id (db/create-application!
-                 {:item resource-id :user context/*user*}))]
-    (db/update-application-state! {:id id :user context/*user* :state "draft"})
+                 {:item resource-id :user (get-user-id)}))]
+    (db/update-application-state! {:id id :user (get-user-id) :state "draft"})
     id))
