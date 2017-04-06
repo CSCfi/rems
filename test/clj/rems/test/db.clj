@@ -166,9 +166,7 @@
   (binding [context/*user* {"eppn" "test-user"}]
     (let [uid (get-user-id)
           wfid1 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 0}))
-          _ (println "wfid1" wfid1)
           wfid2 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 1}))
-          _ (println "wfid2" wfid2)
           _ (db/create-workflow-approver! {:wfid wfid1 :appruserid uid :round 0})
           _ (db/create-workflow-approver! {:wfid wfid2 :appruserid uid :round 1})
           item1 (:id (db/create-catalogue-item! {:title "item1" :form nil :resid nil :wfid wfid1}))
