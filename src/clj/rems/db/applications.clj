@@ -114,7 +114,8 @@
       :licenses licenses})))
 
 (defn create-new-draft [resource-id]
-  (let [id (:id (db/create-application!
-                 {:item resource-id :user (get-user-id)}))]
+  (let [uid (get-user-id)
+        id (:id (db/create-application!
+                 {:item resource-id :user uid}))]
     (db/update-application-state! {:id id :user uid :state "draft" :curround 0})
     id))
