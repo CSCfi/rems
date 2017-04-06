@@ -524,7 +524,7 @@ CREATE TABLE roles (
   -- TODO userId should reference user table once we get it
   userId varchar(255),
   role varchar(255),
-  PRIMARY KEY (role),
+  PRIMARY KEY (userId, role),
   FOREIGN KEY (userId) REFERENCES users
 )
 --;;

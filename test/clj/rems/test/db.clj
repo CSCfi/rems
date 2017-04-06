@@ -195,6 +195,8 @@
           "should only see app2"))))
 
 (deftest test-roles
+  (db/add-user! {:user "pekka", :userattrs nil})
+  (db/add-user! {:user "simo", :userattrs nil})
   (roles/add-role! "pekka" :applicant)
   (roles/add-role! "pekka" :reviewer)
   (roles/add-role! "pekka" :reviewer) ;; add should be idempotent

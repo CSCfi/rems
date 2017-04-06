@@ -267,3 +267,9 @@ INSERT INTO active_role (userId, role)
 VALUES (:user, :role)
 ON CONFLICT (userId)
 DO UPDATE SET role = :role
+
+-- :name add-user! :!
+INSERT INTO users (userId, userAttrs)
+VALUES (:user, :userattrs)
+ON CONFLICT (userId)
+DO NOTHING
