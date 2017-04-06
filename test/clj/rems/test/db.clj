@@ -57,7 +57,7 @@
           license-fi (db/create-license-localization! {:licid (:id license) :langcode "fi" :title "Testi lisenssi" :textcontent "http://testi.fi"})
           license-en (db/create-license-localization! {:licid (:id license) :langcode "en" :title "Test license" :textcontent "http://test.com"})
           wf-license (db/create-workflow-license! {:wfid (:id wf) :licid (:id license) :round 0})
-          item (db/create-catalogue-item! {:title "item" :form (:id meta) :resid nil :wfid (:id license)})
+          item (db/create-catalogue-item! {:title "item" :form (:id meta) :resid nil :wfid (:id wf)})
           form-en (db/create-form! {:title "entitle" :user uid})
           form-fi (db/create-form! {:title "fititle" :user uid})
           item-c (db/create-form-item!
@@ -165,14 +165,16 @@
 (deftest test-approvals
   (binding [context/*user* {"eppn" "test-user"}]
     (let [uid (get-user-id)
-          wfid1 (:id (db/create-workflow! {:owneruserid uid :modifieruserid uid :title "" :fnlround 0 :visibility "public"}))
-          wfid2 (:id (db/create-workflow! {:owneruserid uid :modifieruserid uid :title "" :fnlround 1 :visibility "public"}))
-          wfa1 (db/create-workflow-approver! {:wfid wfid1 :appruserid uid :round 0})
-          wfa2 (db/create-workflow-approver! {:wfid wfid2 :appruserid uid :round 1})
-          item1 (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wfid1}))
-          item2 (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wfid2}))
-          item3 (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wfid1}))
-          item4 (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wfid2}))
+          wfid1 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 0}))
+          _ (println "wfid1" wfid1)
+          wfid2 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 1}))
+          _ (println "wfid2" wfid2)
+          _ (db/create-workflow-approver! {:wfid wfid1 :appruserid uid :round 0})
+          _ (db/create-workflow-approver! {:wfid wfid2 :appruserid uid :round 1})
+          item1 (:id (db/create-catalogue-item! {:title "item1" :form nil :resid nil :wfid wfid1}))
+          item2 (:id (db/create-catalogue-item! {:title "item2" :form nil :resid nil :wfid wfid2}))
+          item3 (:id (db/create-catalogue-item! {:title "item3" :form nil :resid nil :wfid wfid1}))
+          item4 (:id (db/create-catalogue-item! {:title "item4" :form nil :resid nil :wfid wfid2}))
           app1 (applications/create-new-draft item1) ; should see as approver for round 0
           app2 (applications/create-new-draft item2) ; should see as approver for round 1
           app3 (applications/create-new-draft item3) ; should not see draft
