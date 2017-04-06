@@ -50,27 +50,28 @@
 
 (deftest test-form
   (binding [context/*user* {"eppn" "test-user"}]
-    (let [meta (db/create-form-meta! {:title "metatitle" :user (get-user-id)})
-          wf (db/create-workflow! {:modifieruserid 1 :owneruserid 1 :title "Test workflow" :fnlround 0})
-          license (db/create-license! {:modifieruserid 1 :owneruserid 1 :title "non-localized license" :type "link" :textcontent "http://test.org"})
+    (let [uid (get-user-id)
+          meta (db/create-form-meta! {:title "metatitle" :user uid})
+          wf (db/create-workflow! {:modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 0})
+          license (db/create-license! {:modifieruserid uid :owneruserid uid :title "non-localized license" :type "link" :textcontent "http://test.org"})
           license-fi (db/create-license-localization! {:licid (:id license) :langcode "fi" :title "Testi lisenssi" :textcontent "http://testi.fi"})
           license-en (db/create-license-localization! {:licid (:id license) :langcode "en" :title "Test license" :textcontent "http://test.com"})
           wf-license (db/create-workflow-license! {:wfid (:id wf) :licid (:id license) :round 0})
           item (db/create-catalogue-item! {:title "item" :form (:id meta) :resid nil :wfid (:id license)})
-          form-en (db/create-form! {:title "entitle" :user (get-user-id)})
-          form-fi (db/create-form! {:title "fititle" :user (get-user-id)})
+          form-en (db/create-form! {:title "entitle" :user uid})
+          form-fi (db/create-form! {:title "fititle" :user uid})
           item-c (db/create-form-item!
-                  {:title "C" :type "text" :inputprompt "prompt" :user (get-user-id) :value 0})
+                  {:title "C" :type "text" :inputprompt "prompt" :user uid :value 0})
           item-a (db/create-form-item!
-                  {:title "A" :type "text" :inputprompt "prompt" :user (get-user-id) :value 0})
+                  {:title "A" :type "text" :inputprompt "prompt" :user uid :value 0})
           item-b (db/create-form-item!
-                  {:title "B" :type "text" :inputprompt "prompt" :user (get-user-id) :value 0})]
-      (db/link-form-meta! {:meta (:id meta) :form (:id form-en) :lang "en" :user (get-user-id)})
-      (db/link-form-meta! {:meta (:id meta) :form (:id form-fi) :lang "fi" :user (get-user-id)})
-      (db/link-form-item! {:form (:id form-en) :itemorder 2 :item (:id item-b) :user (get-user-id)})
-      (db/link-form-item! {:form (:id form-en) :itemorder 1 :item (:id item-a) :user (get-user-id)})
-      (db/link-form-item! {:form (:id form-en) :itemorder 3 :item (:id item-c) :user (get-user-id)})
-      (db/link-form-item! {:form (:id form-fi) :itemorder 1 :item (:id item-a) :user (get-user-id)})
+                  {:title "B" :type "text" :inputprompt "prompt" :user uid :value 0})]
+      (db/link-form-meta! {:meta (:id meta) :form (:id form-en) :lang "en" :user uid})
+      (db/link-form-meta! {:meta (:id meta) :form (:id form-fi) :lang "fi" :user uid})
+      (db/link-form-item! {:form (:id form-en) :itemorder 2 :item (:id item-b) :user uid})
+      (db/link-form-item! {:form (:id form-en) :itemorder 1 :item (:id item-a) :user uid})
+      (db/link-form-item! {:form (:id form-en) :itemorder 3 :item (:id item-c) :user uid})
+      (db/link-form-item! {:form (:id form-fi) :itemorder 1 :item (:id item-a) :user uid})
 
       (is (:id item) "sanity check")
 
@@ -99,11 +100,11 @@
             (db/save-field-value! {:application app-id
                                    :form (:id form-en)
                                    :item (:id item-b)
-                                   :user (get-user-id)
+                                   :user uid
                                    :value "B"})
             (db/save-license-approval! {:catappid app-id
                                        :licid (:id license)
-                                       :actoruserid (get-user-id)
+                                       :actoruserid uid
                                        :round 0
                                        :state "approved"})
             (let [f (applications/get-form-for (:id item) app-id)]
@@ -115,19 +116,19 @@
             (testing "license field"
               (db/save-license-approval! {:catappid app-id
                                           :licid (:id license)
-                                          :actoruserid (get-user-id)
+                                          :actoruserid uid
                                           :round 0
                                           :state "approved"})
               (is (= 1 (count (db/get-application-license-approval {:catappid app-id
                                                                     :licid (:id license)
-                                                                    :actoruserid (get-user-id)})))
+                                                                    :actoruserid uid})))
                   "saving a license approval twice should only create one row")
               (db/delete-license-approval! {:catappid app-id
                                             :licid (:id license)
-                                            :actoruserid (get-user-id)})
+                                            :actoruserid uid})
               (is (= 0 (count (db/get-application-license-approval {:catappid app-id
                                                                     :licid (:id license)
-                                                                    :actoruserid (get-user-id)})))
+                                                                    :actoruserid uid})))
                   "after deletion there should not be saved approvals")
               (let [f (applications/get-form-for (:id item) app-id)]
                 (is (= [false] (map :approved (:licenses f))))))
@@ -139,33 +140,35 @@
               (db/save-field-value! {:application app-id
                                      :form (:id form-en)
                                      :item (:id item-b)
-                                     :user (get-user-id)
+                                     :user uid
                                      :value "X"})
               (let [f (applications/get-form-for (:id item) app-id)]
                 (is (= [nil "X" nil] (map :value (:items f))))))))))))
 
 (deftest test-applications
   (binding [context/*user* {"eppn" "test-user"}]
-    (let [item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid nil}))
+    (let [uid (get-user-id)
+          item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid nil}))
           app (applications/create-new-draft item)]
       (is (= app (applications/get-draft-id-for item)))
       (is (= [{:id app :state "draft" :catid item}]
              (map #(select-keys % [:id :state :catid])
                   (applications/get-applications))))
-      (db/update-application-state! {:id app :user (get-user-id) :state "applied"})
+      (db/update-application-state! {:id app :user uid :state "applied"})
       (is (nil? (applications/get-draft-id-for item)))
-      (db/update-application-state! {:id app :user (get-user-id) :state "approved"})
+      (db/update-application-state! {:id app :user uid :state "approved"})
       (is (nil? (applications/get-draft-id-for item)))
       (is (= [{:id app :state "approved" :catid item}]
              (map #(select-keys % [:id :state :catid])
                   (applications/get-applications)))))))
 
 (deftest test-approvals
-  (binding [context/*user* "test-user"]
-    (let [wfid1 (:id (db/create-workflow! {:owneruserid context/*user* :modifieruserid context/*user* :title "" :fnlround 0 :visibility "public"}))
-          wfid2 (:id (db/create-workflow! {:owneruserid context/*user* :modifieruserid context/*user* :title "" :fnlround 1 :visibility "public"}))
-          wfa1 (db/create-workflow-approver! {:wfid wfid1 :appruserid context/*user* :round 0})
-          wfa2 (db/create-workflow-approver! {:wfid wfid2 :appruserid context/*user* :round 1})
+  (binding [context/*user* {"eppn" "test-user"}]
+    (let [uid (get-user-id)
+          wfid1 (:id (db/create-workflow! {:owneruserid uid :modifieruserid uid :title "" :fnlround 0 :visibility "public"}))
+          wfid2 (:id (db/create-workflow! {:owneruserid uid :modifieruserid uid :title "" :fnlround 1 :visibility "public"}))
+          wfa1 (db/create-workflow-approver! {:wfid wfid1 :appruserid uid :round 0})
+          wfa2 (db/create-workflow-approver! {:wfid wfid2 :appruserid uid :round 1})
           item1 (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wfid1}))
           item2 (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wfid2}))
           item3 (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wfid1}))
@@ -174,18 +177,18 @@
           app2 (applications/create-new-draft item2) ; should see as approver for round 1
           app3 (applications/create-new-draft item3) ; should not see draft
           app4 (applications/create-new-draft item4)] ; should not see approved
-      (db/update-application-state! {:id app1 :user context/*user* :state "applied" :curround 0})
-      (db/update-application-state! {:id app2 :user context/*user* :state "applied" :curround 0})
-      (db/update-application-state! {:id app3 :user context/*user* :state "draft" :curround 0})
-      (db/update-application-state! {:id app4 :user context/*user* :state "approved" :curround 0})
+      (db/update-application-state! {:id app1 :user uid :state "applied" :curround 0})
+      (db/update-application-state! {:id app2 :user uid :state "applied" :curround 0})
+      (db/update-application-state! {:id app3 :user uid :state "draft" :curround 0})
+      (db/update-application-state! {:id app4 :user uid :state "approved" :curround 0})
       (is (= [{:id app1 :state "applied" :catid item1 :curround 0}]
              (map #(select-keys % [:id :state :catid :curround])
                   (approvals/get-approvals)))
           "should only see app1")
-      (db/update-application-state! {:id app1 :user context/*user* :state "applied" :curround 1})
-      (db/update-application-state! {:id app2 :user context/*user* :state "applied" :curround 1})
-      (db/update-application-state! {:id app3 :user context/*user* :state "draft" :curround 1})
-      (db/update-application-state! {:id app4 :user context/*user* :state "approved" :curround 1})
+      (db/update-application-state! {:id app1 :user uid :state "applied" :curround 1})
+      (db/update-application-state! {:id app2 :user uid :state "applied" :curround 1})
+      (db/update-application-state! {:id app3 :user uid :state "draft" :curround 1})
+      (db/update-application-state! {:id app4 :user uid :state "approved" :curround 1})
       (is (= [{:id app2 :state "applied" :catid item2 :curround 1}]
              (map #(select-keys % [:id :state :catid :curround])
                   (approvals/get-approvals)))
