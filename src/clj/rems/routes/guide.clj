@@ -7,6 +7,7 @@
             [rems.contents :as contents]
             [rems.form :as form]
             [rems.applications :as applications]
+            [rems.approvals :as approvals]
             [rems.role-switcher :as role-switcher]
             [hiccup.core :as h]
             [compojure.core :refer [defroutes GET]]
@@ -54,6 +55,9 @@
 
           [:h2 "Applications list"]
           (applications/guide)
+
+          [:h2 "Approvals list"]
+          (approvals/guide)
 
           [:h2 "Forms"]
           (form/guide)

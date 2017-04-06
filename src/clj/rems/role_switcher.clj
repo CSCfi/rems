@@ -39,6 +39,13 @@
                    :type "submit"}
           (text (localize-role role))]]))]))
 
+(defmacro when-roles [roles & body]
+  `(when (contains? ~roles context/*active-role*)
+     ~@body))
+
+(defmacro when-role [role & body]
+  `(when-roles #{~role} ~@body))
+
 (defn guide []
   (list
    (example "switcher with one role"

@@ -117,10 +117,10 @@ RETURNING id
 INSERT INTO catalogue_item_application_state
 (catAppId, modifierUserId, curround, state)
 VALUES
-(:id, :user, 0, CAST (:state as application_state))
+(:id, :user, :curround, CAST (:state as application_state))
 ON CONFLICT (catAppId)
 DO UPDATE
-SET (modifierUserId, curround, state) = (:user, 0, CAST (:state as application_state))
+SET (modifierUserId, curround, state) = (:user, :curround, CAST (:state as application_state))
 
 -- :name get-applications :? :*
 -- :doc
@@ -129,10 +129,16 @@ SET (modifierUserId, curround, state) = (:user, 0, CAST (:state as application_s
 -- - Use {:resource id} to get applications for a specific resource
 -- - Use {:state state} to filter by application state
 -- - Use {:applicant user} to filter by applicant
+-- - Use {:approver user} to filter by possible approver
 SELECT
-  app.id, app.catId, app.applicantUserId, app.start, state.state
+  app.id, app.catId, app.applicantUserId, app.start, state.state, state.curround
 FROM catalogue_item_application app
 LEFT OUTER JOIN catalogue_item_application_state state ON app.id = state.catAppId
+/*~ (when (:approver params) */
+LEFT OUTER JOIN catalogue_item cat ON app.catid = cat.id
+LEFT OUTER JOIN workflow wf ON cat.wfid = wf.id
+LEFT OUTER JOIN workflow_approvers wfa ON wf.id = wfa.wfid
+/*~ ) ~*/
 WHERE 1=1
 /*~ (when (:id params) */
   AND app.id = :id
@@ -145,6 +151,10 @@ WHERE 1=1
 /*~ ) ~*/
 /*~ (when (:applicant params) */
   AND app.applicantUserId = :applicant
+/*~ ) ~*/
+/*~ (when (:approver params) */
+  AND wfa.apprUserId = :approver
+  AND state.curround = wfa.round
 /*~ ) ~*/
 
 
@@ -202,6 +212,12 @@ INSERT INTO workflow_licenses
 (wfid, licid, round)
 VALUES
 (:wfid, :licid, :round)
+
+-- :name create-workflow-approver! :insert
+INSERT INTO workflow_approvers
+(wfid, appruserid, round)
+VALUES
+(:wfid, :appruserid, :round)
 
 -- :name clear-field-value! :!
 DELETE FROM application_text_values

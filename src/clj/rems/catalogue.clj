@@ -22,7 +22,7 @@
      [:td.actions {:data-th ""} (cart/add-to-cart-button item)]]))
 
 (defn- catalogue-list [items]
-  [:table.rems-table
+  [:table.rems-table.catalogue
    [:tr
     [:th (text :t.catalogue/header)]
     [:th ""]]

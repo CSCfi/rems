@@ -43,5 +43,5 @@
   []
   (example "applications"
            (applications
-            [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid 2}
-             {:id 3 :catalogue-item {:title "bbbbbb"} :applicantuserid 4}])))
+            [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :state "draft" :applicantuserid "alice"}
+             {:id 3 :catalogue-item {:title "bbbbbb"} :state "applied" :applicantuserid "bob"}])))

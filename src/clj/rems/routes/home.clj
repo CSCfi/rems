@@ -4,7 +4,7 @@
             [rems.catalogue :as catalogue]
             [rems.contents :as contents]
             [rems.applications :as applications]
-            [rems.db.applications :refer [get-form-for]]
+            [rems.approvals :as approvals]
             [rems.cart :as cart]
             [rems.form :as form]
             [rems.language-switcher :as language-switcher]
@@ -28,12 +28,18 @@
    "applications"
    (applications/applications)))
 
+(defn approvals-page []
+  (layout/render
+   "approvals"
+   (approvals/approvals)))
+
 (defroutes public-routes
   (GET "/" [] (home-page))
   (GET "/about" [] (about-page))
   language-switcher/switcher-routes)
 
 (defroutes secured-routes
+  (GET "/approvals" [] (approvals-page))
   (GET "/applications" [] (applications-page))
   (GET "/catalogue" [] (catalogue-page))
   cart/cart-routes
