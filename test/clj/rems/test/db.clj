@@ -13,7 +13,8 @@
             [clojure.java.jdbc :as jdbc]
             [rems.config :refer [env]]
             [mount.core :as mount]
-            [conman.core :as conman]))
+            [conman.core :as conman]
+            [cheshire.core :refer :all]))
 
 (use-fixtures
   :once
@@ -193,6 +194,15 @@
              (map #(select-keys % [:id :state :catid :curround])
                   (approvals/get-approvals)))
           "should only see app2"))))
+
+(deftest test-users
+  (db/add-user! {:user "pekka", :userattrs nil})
+  (db/add-user! {:user "simo", :userattrs nil})
+  (is (= 2 (count (db/get-users))))
+  (db/add-user! {:user "pekka", :userattrs (generate-string {"key" "value"})})
+  (db/add-user! {:user "simo", :userattrs nil})
+  (is (= 2 (count (db/get-users))))
+  (is (= {"key" "value"} (parse-string (:userattrs(db/get-user-attributes {:user "pekka"}))))))
 
 (deftest test-roles
   (db/add-user! {:user "pekka", :userattrs nil})

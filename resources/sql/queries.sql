@@ -270,6 +270,15 @@ DO UPDATE SET role = :role
 
 -- :name add-user! :!
 INSERT INTO users (userId, userAttrs)
-VALUES (:user, :userattrs)
+VALUES (:user, :userattrs::jsonb)
 ON CONFLICT (userId)
-DO NOTHING
+DO UPDATE SET userAttrs = :userattrs::jsonb
+
+-- :name get-users :? :*
+SELECT userId
+FROM users
+
+-- :name get-user-attributes :? :1
+SELECT userAttrs::TEXT
+FROM users
+WHERE userId = :user
