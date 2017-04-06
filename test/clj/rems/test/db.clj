@@ -154,9 +154,9 @@
       (is (= [{:id app :state "draft" :catid item}]
              (map #(select-keys % [:id :state :catid])
                   (applications/get-applications))))
-      (db/update-application-state! {:id app :user uid :state "applied"})
+      (db/update-application-state! {:id app :user uid :state "applied" :curround 0})
       (is (nil? (applications/get-draft-id-for item)))
-      (db/update-application-state! {:id app :user uid :state "approved"})
+      (db/update-application-state! {:id app :user uid :state "approved" :curround 0})
       (is (nil? (applications/get-draft-id-for item)))
       (is (= [{:id app :state "approved" :catid item}]
              (map #(select-keys % [:id :state :catid])
