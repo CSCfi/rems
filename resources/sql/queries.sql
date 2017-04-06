@@ -135,7 +135,8 @@ SELECT
 FROM catalogue_item_application app
 LEFT OUTER JOIN catalogue_item_application_state state ON app.id = state.catAppId
 /*~ (when (:approver params) */
-LEFT OUTER JOIN workflow wf ON app.catid = wf.id
+LEFT OUTER JOIN catalogue_item cat ON app.catid = cat.id
+LEFT OUTER JOIN workflow wf ON cat.wfid = wf.id
 LEFT OUTER JOIN workflow_approvers wfa ON wf.id = wfa.wfid
 /*~ ) ~*/
 WHERE 1=1
