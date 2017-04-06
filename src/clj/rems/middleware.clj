@@ -18,7 +18,8 @@
             [rems.locales :refer [tconfig]]
             [rems.auth.backend :refer [shibbo-backend authz-backend]]
             [rems.language-switcher :refer [+default-language+]]
-            [rems.auth.NotAuthorizedException])
+            [rems.auth.NotAuthorizedException]
+            [rems.util :refer [get-user-id]])
   (:import [javax.servlet ServletContext]))
 
 (defn calculate-root-path [request]
@@ -39,9 +40,9 @@
               context/*cart* (get-cart-from-session request)
               context/*flash* (:flash request)
               context/*roles* (when context/*user*
-                                (roles/get-roles context/*user*))
+                                (roles/get-roles (get-user-id)))
               context/*active-role* (when context/*user*
-                                      (roles/get-active-role context/*user*))]
+                                      (roles/get-active-role (get-user-id)))]
       (handler request))))
 
 (defn wrap-internal-error [handler]
@@ -110,9 +111,8 @@
                         authentication
                         (authz-backend))]
     (-> (fn [request]
-          (let [identity (:identity request)]
-            (binding [context/*user* (get identity "eppn")]
-              (handler request))))
+            (binding [context/*user* (:identity request)]
+              (handler request)))
         (wrap-authentication authentication)
         (wrap-authorization authorization))))
 

@@ -36,7 +36,7 @@ a:visited { color: #fff; }
 
 (defn- fake-login [session username]
   (assoc (redirect "/catalogue")
-         :session (assoc session :identity {"eppn" username})))
+         :session (assoc session :identity {"eppn" username "commonName" username})))
 
 (defn user-selection [username]
   (let [url (url "/Shibboleth.sso/Login" {:username username})]

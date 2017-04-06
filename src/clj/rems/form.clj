@@ -3,6 +3,7 @@
             [rems.layout :as layout]
             [rems.guide :refer :all]
             [rems.text :refer :all]
+            [rems.util :refer [get-user-id]]
             [rems.db.core :as db]
             [rems.db.applications :refer [get-form-for get-draft-id-for create-new-draft]]
             [rems.anti-forgery :refer [anti-forgery-field]]
@@ -131,7 +132,7 @@
         (db/save-field-value! {:application application-id
                                :form (:id form)
                                :item item-id
-                               :user context/*user*
+                               :user (get-user-id)
                                :value value})))))
 
 (defn save-licenses
@@ -142,11 +143,11 @@
         (db/save-license-approval! {:catappid application-id
                                     :round 0
                                     :licid licid
-                                    :actoruserid context/*user*
+                                    :actoruserid (get-user-id)
                                     :state state})
         (db/delete-license-approval! {:catappid application-id
                                       :licid licid
-                                      :actoruserid context/*user*})))))
+                                      :actoruserid (get-user-id)})))))
 
 (defn- redirect-to-application [resource-id application-id]
   (redirect (str "/form/" resource-id "/" application-id) :see-other))
@@ -172,7 +173,7 @@
                    :contents (list message
                                    (format-validation-messages validation))})]
       (when perform-submit
-        (db/update-application-state! {:id application-id :user context/*user* :state "applied"}))
+        (db/update-application-state! {:id application-id :user (get-user-id) :state "applied"}))
       (->
        (redirect-to-application resource-id application-id)
        (assoc :flash flash)
