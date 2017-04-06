@@ -136,6 +136,8 @@ DROP TABLE IF EXISTS workflow_reviewers CASCADE;
 --;;
 DROP TABLE IF EXISTS workflow_round_min CASCADE;
 --;;
+DROP TABLE IF EXISTS users;
+--;;
 DROP TABLE IF EXISTS active_role;
 --;;
 DROP TABLE IF EXISTS roles;

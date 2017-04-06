@@ -514,12 +514,18 @@ CREATE TABLE workflow_round_min (
   CONSTRAINT workflow_round_min_ibfk_1 FOREIGN KEY (wfId) REFERENCES workflow (id)
 );
 --;;
+CREATE TABLE users (
+  userId varchar(255) NOT NULL PRIMARY KEY,
+  userAttrs jsonb
+);
+--;;
 CREATE TABLE roles (
   -- TODO should this have an id for consistency with the other tables?
   -- TODO userId should reference user table once we get it
   userId varchar(255),
   role varchar(255),
-  PRIMARY KEY (userId, role)
+  PRIMARY KEY (role),
+  FOREIGN KEY (userId) REFERENCES users
 )
 --;;
 CREATE TABLE active_role (
