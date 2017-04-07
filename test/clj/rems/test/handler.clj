@@ -205,3 +205,19 @@
         (testing "bob tries to write to alice's application"
           (let [ctx (dispatch ctx (request :post "/form/1/1/save" {"field2" "bob field2"}))]
             (is (= 403 (:status ctx)) "bob shouldn't be authorized")))))))
+
+(deftest test-roles
+  (testing "when applicant logs in"
+    (let [ctx (-> (new-context app)
+                  (login "alice" :applicant)
+                  (follow-redirect)
+                  (follow-redirect))]
+      (is (not-empty (hiccup-find [:.catalogue] (ctx->html ctx))) "applicant sees catalogue initially")
+      ))
+  (testing "when approver logs in"
+    (let [ctx (-> (new-context app)
+                  (login "bob" :approver)
+                  (follow-redirect)
+                  (follow-redirect))]
+      (is (not-empty (hiccup-find [:.approvals] (ctx->html ctx))) "approver sees approvals initially")
+      )))
