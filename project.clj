@@ -3,8 +3,8 @@
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
 
-  :dependencies [[bouncer "1.0.1"]
-                 [buddy "1.3.0"]
+  :dependencies [[bouncer "1.0.1" :exclusions [org.clojure/tools.reader]]
+                 [buddy "1.3.0" :exclusions [cheshire]]
                  [ch.qos.logback/logback-classic "1.2.3"]
                  [clj-time "0.13.0"]
                  [org.clojure/core.memoize "0.5.9"]
@@ -12,8 +12,8 @@
                  [com.taoensso/tempura "1.1.2"]
                  [conman "0.6.3"]
                  [cprop "0.1.10"]
-                 [luminus-jetty "0.1.4"]
-                 [luminus-migrations "0.3.0"]
+                 [luminus-jetty "0.1.4" :exclusions [org.clojure/tools.reader]]
+                 [luminus-migrations "0.3.0" :exclusions [org.clojure/java.jdbc]]
                  [luminus-nrepl "0.1.4"]
                  [luminus/ring-ttl-session "0.3.2"]
                  [markdown-clj "0.9.98"]
@@ -34,8 +34,8 @@
                  [ring/ring-devel "1.5.1"]
                  [ring/ring-servlet "1.5.1"]
                  [hiccup "1.0.5"]
-                 [macroz/hiccup-find "0.5.0"]
-                 [hickory "0.7.1"]]
+                 [macroz/hiccup-find "0.5.0" :exclusions [org.clojure/tools.reader]]
+                 [hickory "0.7.1" :exclusions [org.clojure/tools.reader]]]
 
   :min-lein-version "2.0.0"
 
@@ -73,9 +73,12 @@
 
    :project/dev  {:dependencies [[ring/ring-mock "0.3.0"]
                                  [pjstadig/humane-test-output "0.8.1"]
-                                 [clj-webdriver/clj-webdriver "0.7.2"]
+                                 [clj-webdriver/clj-webdriver "0.7.2" :exclusions [commons-logging]]
                                  [directory-naming/naming-java "0.8"]
-                                 [org.seleniumhq.selenium/selenium-server "3.0.1"]]
+                                 [org.seleniumhq.selenium/selenium-server "3.0.1" :exclusions [commons-logging
+                                                                                               org.apache.httpcomponents/httpmime
+                                                                                               org.apache.httpcomponents/httpclient
+                                                                                               org.apache.httpcomponents/httpcore]]]
                   :plugins      [[com.jakemccrary/lein-test-refresh "0.14.0"]
                                  [lein-cloverage "1.0.9"]]
 
