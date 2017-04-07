@@ -10,7 +10,8 @@
             [rems.db.core :as db]
             [rems.env :refer [*db*]]
             [luminus-migrations.core :as migrations]
-            [rems.config :refer [env]]))
+            [rems.config :refer [env]]
+            [rems.db.roles :as roles]))
 
 (use-fixtures
   :once
@@ -92,7 +93,9 @@
 
 (defn login
   "Logs in the given user by sending a request to the fake login."
-  [ctx username]
+  [ctx username & roles]
+  (doseq [role roles]
+    (roles/add-role! username role))
   (dispatch ctx (-> (request :get "/Shibboleth.sso/Login" {:username username}))))
 
 (defn follow-redirect
@@ -128,12 +131,14 @@
       (let [login-ctx (-> (new-context app)
                           (login "bob"))]
         (is (= 302 (:status login-ctx)) "should return redirect")
-        (is (= "http://localhost/catalogue"
+        (is (= "http://localhost/landing_page"
                (get-in login-ctx [:response :headers "Location"]))
-            "login should redirect to /catalogue")
-        (testing "successfully"
-          (let [catalogue (dispatch login-ctx (request :get "/catalogue"))]
-            (is (= 200 (:status catalogue)) "should return 200 OK"))))))
+            "login should redirect to /landing_page")
+        (testing "after landing page"
+          (let [landing-ctx (follow-redirect login-ctx)]
+            (testing "successfully"
+              (let [catalogue-ctx (follow-redirect landing-ctx)]
+                (is (= 200 (:status catalogue-ctx)) "should return 200 OK"))))))))
 
   (testing "not-found route"
     (let [response (app (request :get "/invalid"))]
@@ -181,6 +186,7 @@
   (testing "when alice makes an application"
     (-> (new-context app)
         (login "alice")
+        (follow-redirect)
         (follow-redirect)
         (dispatch (request :post "/cart/add" {"id" "1"}))
         (follow-redirect)
