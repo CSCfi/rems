@@ -1,5 +1,5 @@
 (ns rems.db.approvals
-  "Query functions for forms and applications."
+  "Query functions for approvals."
   (:require [rems.context :as context]
             [rems.db.core :as db]
             [rems.db.catalogue :refer [get-localized-catalogue-item]]
@@ -12,3 +12,8 @@
      (assoc a :catalogue-item
             (get-in (get-localized-catalogue-item {:id (:catid a)})
                     [:localizations context/*lang*])))))
+
+(defn approver? [application-id]
+  (not (empty? (db/get-applications {:id application-id
+                                     :approver (get-user-id)
+                                     :state "applied"}))))

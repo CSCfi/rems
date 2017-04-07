@@ -3,6 +3,7 @@
   (:require [rems.context :as context]
             [rems.db.core :as db]
             [rems.db.catalogue :refer [get-localized-catalogue-item]]
+            [rems.db.approvals :refer [approver?]]
             [rems.util :refer [index-by get-user-id]]
             [rems.auth.util :refer [throw-unauthorized]]))
 
@@ -101,10 +102,12 @@
                                     (map #(update-in % [:langcode] keyword))
                                     (index-by [:licid :langcode]))
          licenses (mapv #(process-license application-id (license-localizations (:id %)) %)
-                        (db/get-workflow-licenses {:catId catalogue-item}))]
-     (when (and application-id
-                (not= (:applicantuserid application) (get-user-id)))
-       (throw-unauthorized))
+                        (db/get-workflow-licenses {:catId catalogue-item}))
+         applicant? (= (:applicantuserid application) (get-user-id))]
+     (when application-id
+       (when-not (or applicant?
+                     (approver? application-id))
+         (throw-unauthorized)))
      {:id form-id
       :catalogue-item catalogue-item
       :application application-id
