@@ -166,10 +166,12 @@
 (deftest test-approvals
   (binding [context/*user* {"eppn" "test-user"}]
     (let [uid (get-user-id)
+          uid2 "another-user"
           wfid1 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 0}))
           wfid2 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 1}))
           _ (db/create-workflow-approver! {:wfid wfid1 :appruserid uid :round 0})
           _ (db/create-workflow-approver! {:wfid wfid2 :appruserid uid :round 1})
+          _ (db/create-workflow-approver! {:wfid wfid2 :appruserid uid2 :round 1})
           item1 (:id (db/create-catalogue-item! {:title "item1" :form nil :resid nil :wfid wfid1}))
           item2 (:id (db/create-catalogue-item! {:title "item2" :form nil :resid nil :wfid wfid2}))
           item3 (:id (db/create-catalogue-item! {:title "item3" :form nil :resid nil :wfid wfid1}))
@@ -186,6 +188,14 @@
              (map #(select-keys % [:id :state :catid :curround])
                   (approvals/get-approvals)))
           "should only see app1")
+      (testing "approvals/approver?"
+        (is (approvals/approver? app1))
+        (is (not (approvals/approver? app2)))
+        (is (not (approvals/approver? app3)))
+        (is (not (approvals/approver? app4)))
+        (binding [context/*user* {"eppn" uid2}]
+          (is (not (approvals/approver? app1)))
+          (is (not (approvals/approver? app2)))))
       (db/update-application-state! {:id app1 :user uid :state "applied" :curround 1})
       (db/update-application-state! {:id app2 :user uid :state "applied" :curround 1})
       (db/update-application-state! {:id app3 :user uid :state "draft" :curround 1})
@@ -193,7 +203,16 @@
       (is (= [{:id app2 :state "applied" :catid item2 :curround 1}]
              (map #(select-keys % [:id :state :catid :curround])
                   (approvals/get-approvals)))
-          "should only see app2"))))
+          "should only see app2")
+      (testing "approvals/approver?"
+        (is (not (approvals/approver? app1)))
+        (is (approvals/approver? app2))
+        (is (not (approvals/approver? app3)))
+        (is (not (approvals/approver? app4)))
+        (binding [context/*user* {"eppn" uid2}]
+          (is (not (approvals/approver? app1)))
+          (is (approvals/approver? app2)))))))
+
 
 (deftest test-users
   (db/add-user! {:user "pekka", :userattrs nil})
