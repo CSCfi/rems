@@ -2,7 +2,9 @@
   (:require [rems.context :as context]
             [clj-time.core :as time]
             [clj-time.format :as format]
+            [compojure.core :refer [defroutes GET POST]]
             [rems.guide :refer :all]
+            [rems.layout :as layout]
             [rems.text :refer [text]]
             [rems.db.core :as db]
             [rems.db.approvals :refer [get-approvals]]))
@@ -38,3 +40,11 @@
            (approvals
             [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid "alice"}
              {:id 3 :catalogue-item {:title "bbbbbb"} :applicantuserid "bob"}])))
+
+(defn approvals-page []
+  (layout/render
+   "approvals"
+   (approvals)))
+
+(defroutes approvals-routes
+  (GET "/approvals" [] (approvals-page)))
