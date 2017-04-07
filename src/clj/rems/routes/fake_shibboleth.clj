@@ -35,7 +35,7 @@ a:visited { color: #fff; }
 ")
 
 (defn- fake-login [session username]
-  (assoc (redirect "/catalogue")
+  (assoc (redirect "/landing_page")
          :session (assoc session :identity {"eppn" username "commonName" username})))
 
 (defn user-selection [username]

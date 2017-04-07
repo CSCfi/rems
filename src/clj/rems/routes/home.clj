@@ -4,6 +4,7 @@
             [rems.catalogue :as catalogue]
             [rems.contents :as contents]
             [rems.applications :as applications]
+            [rems.landing-page :as landing-page]
             [rems.approvals :as approvals]
             [rems.cart :as cart]
             [rems.form :as form]
@@ -42,6 +43,7 @@
   (GET "/approvals" [] (approvals-page))
   (GET "/applications" [] (applications-page))
   (GET "/catalogue" [] (catalogue-page))
+  landing-page/landing-page-routes
   cart/cart-routes
   form/form-routes
   role-switcher/role-switcher-routes)
