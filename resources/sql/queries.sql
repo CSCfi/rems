@@ -157,6 +157,28 @@ WHERE 1=1
   AND state.curround = wfa.round
 /*~ ) ~*/
 
+-- :name add-application-approval! :!
+-- TODO: This table is denormalized and bad. Should either only have
+-- wfApprId (and not apprUserId and round) or, my favourite, get rid
+-- of the workflow_approvers.id column all together.
+INSERT INTO catalogue_item_application_approvers
+  (catAppId, wfApprId, apprUserId, round, comment, state)
+SELECT
+  :id, wfa.id, :user, state.curround, :comment, CAST (:state AS approval_status)
+FROM catalogue_item_application app
+LEFT OUTER JOIN catalogue_item_application_state state ON app.id = state.catAppId
+LEFT OUTER JOIN catalogue_item cat ON app.catid = cat.id
+LEFT OUTER JOIN workflow wf ON cat.wfid = wf.id
+LEFT OUTER JOIN workflow_approvers wfa ON (wf.id = wfa.wfid AND state.curround = wfa.round)
+WHERE app.id = :id
+  AND wfa.apprUserId = :user
+
+-- :name get-application-approvals :? :*
+SELECT
+ *
+FROM catalogue_item_application_approvers
+WHERE catAppId = :id
+
 -- :name save-field-value! :!
 INSERT INTO application_text_values
 (catAppId, modifierUserId, value, formMapId)

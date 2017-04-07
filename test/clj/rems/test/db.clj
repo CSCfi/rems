@@ -213,6 +213,57 @@
           (is (not (approvals/approver? app1)))
           (is (approvals/approver? app2)))))))
 
+(deftest test-approve
+  (binding [context/*user* {"eppn" "tester"}]
+    (let [uid (get-user-id)
+          uid2 "pekka"
+          wfid-a (:id (db/create-workflow! {:owneruserid "" :modifieruserid "" :title "" :fnlround 1}))
+          wfid-b (:id (db/create-workflow! {:owneruserid "" :modifieruserid "" :title "" :fnlround 1}))
+          item-a (:id (db/create-catalogue-item! {:title "" :form nil :resid nil :wfid wfid-a}))
+          item-b (:id (db/create-catalogue-item! {:title "" :form nil :resid nil :wfid wfid-b}))
+          app-a-1 (applications/create-new-draft item-a)
+          app-a-2 (applications/create-new-draft item-a)
+          draft (applications/create-new-draft item-a)
+          app-b (applications/create-new-draft item-b)
+
+          get (fn [app-id]
+                (let [apps (db/get-applications {:id app-id})]
+                  (is (= 1 (count apps)))
+                  (select-keys (first apps) [:state :curround])))
+          approvals (fn [app-id]
+                      (sort-by :round
+                               (map #(select-keys % [:catappid :appruserid :round :comment :state])
+                                    (db/get-application-approvals {:id app-id}))))]
+      (db/create-workflow-approver! {:wfid wfid-a :appruserid uid :round 0})
+      (db/create-workflow-approver! {:wfid wfid-a :appruserid uid :round 1})
+      (db/create-workflow-approver! {:wfid wfid-b :appruserid uid2 :round 0})
+      (db/create-workflow-approver! {:wfid wfid-b :appruserid uid :round 1})
+
+      (doseq [a [app-a-1 app-a-2 app-b]]
+        (db/update-application-state! {:id a :user uid :state "applied" :curround 0}))
+
+      (approvals/approve app-a-1 "comment")
+      (is (= {:state "applied" :curround 1} (get app-a-1)))
+      (is (= [{:catappid app-a-1 :appruserid uid :round 0 :comment "comment" :state "approved"}]
+             (approvals app-a-1)))
+      (is (= {:state "applied" :curround 0} (get app-a-2)))
+      (is (empty? (approvals app-a-2)))
+
+      (approvals/approve app-a-1 "comment2")
+      ;; TODO state=approved?
+      (is (= {:state "applied" :curround 2} (get app-a-1)))
+      (is (= [{:catappid app-a-1 :appruserid uid :round 0 :comment "comment" :state "approved"}
+              {:catappid app-a-1 :appruserid uid :round 1 :comment "comment2" :state "approved"}]
+             (approvals app-a-1)))
+      (is (= {:state "applied" :curround 0} (get app-a-2)))
+      (is (empty? (approvals app-a-2)))
+
+      (is (thrown? rems.auth.NotAuthorizedException
+                   (approvals/approve app-b "comment"))
+          "shouldn't be able to approve when not approver")
+      (is (thrown? rems.auth.NotAuthorizedException
+                   (approvals/approve draft "comment"))
+          "shouldn't be able to approve draft"))))
 
 (deftest test-users
   (db/add-user! {:user "pekka", :userattrs nil})
