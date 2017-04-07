@@ -22,7 +22,7 @@
   ([]
    (approvals (get-approvals)))
   ([apps]
-   [:table.rems-table.applications
+   [:table.rems-table.approvals
     [:tr
      [:th (text :t.approvals/application)]
      [:th (text :t.approvals/resource)]

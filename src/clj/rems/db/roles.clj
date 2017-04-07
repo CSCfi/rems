@@ -16,8 +16,7 @@
   (name role))
 
 (defn get-roles [user]
-  (set (conj (map role-from-db (db/get-roles {:user user}))
-             :applicant)))
+  (set (map role-from-db (db/get-roles {:user user}))))
 
 (defn add-role! [user role]
   (db/add-role! {:user user :role (role-to-db role)})
@@ -26,7 +25,9 @@
 (defn get-active-role [user]
   (if-let [role (db/get-active-role {:user user})]
     (role-from-db role)
-    :applicant))
+    (if-let [role (first (db/get-roles {:user user}))]
+      (role-from-db role)
+      :applicant)))
 
 (defn set-active-role! [user role]
   (db/set-active-role! {:user user :role (role-to-db role)})
