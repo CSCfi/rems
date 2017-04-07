@@ -39,8 +39,11 @@
                    :type "submit"}
           (text (localize-role role))]]))]))
 
+(defn has-roles? [& roles]
+  (contains? (set roles) context/*active-role*))
+
 (defmacro when-roles [roles & body]
-  `(when (contains? ~roles context/*active-role*)
+  `(when (has-roles? ~@roles)
      ~@body))
 
 (defmacro when-role [role & body]
