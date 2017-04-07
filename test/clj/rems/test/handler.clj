@@ -92,8 +92,13 @@
              ))))
 
 (defn login
-  "Logs in the given user by sending a request to the fake login."
+  "Logs in the given user by sending a request to the fake login.
+
+  You can give desired roles as parameters.
+
+  The user is created in the DB as well as given the roles."
   [ctx username & roles]
+  (db/add-user! {:user username :userattrs  nil})
   (doseq [role roles]
     (roles/add-role! username role))
   (dispatch ctx (-> (request :get "/Shibboleth.sso/Login" {:username username}))))
