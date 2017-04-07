@@ -140,6 +140,8 @@ DROP TABLE IF EXISTS active_role;
 --;;
 DROP TABLE IF EXISTS roles;
 --;;
+DROP TABLE IF EXISTS users;
+--;;
 DROP TYPE scope;
 --;;
 DROP TYPE itemtype;
