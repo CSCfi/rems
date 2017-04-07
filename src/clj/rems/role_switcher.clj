@@ -39,14 +39,20 @@
                    :type "submit"}
           (text (localize-role role))]]))]))
 
-(defn has-roles? [& roles]
+(defn has-roles?
+  "Checks that the `context/*active-role*` matches one of the given roles."
+  [& roles]
   (contains? (set roles) context/*active-role*))
 
-(defmacro when-roles [roles & body]
+(defmacro when-roles
+  "Executes the body when the active role is one of the given roles."
+  [roles & body]
   `(when (has-roles? ~@roles)
      ~@body))
 
-(defmacro when-role [role & body]
+(defmacro when-role
+  "Executes the body when the active role is the given role."
+  [role & body]
   `(when-roles #{~role} ~@body))
 
 (defn guide []
