@@ -231,8 +231,8 @@
   (roles/add-role! "pekka" :reviewer) ;; add should be idempotent
   (roles/add-role! "simo" :approver)
   (is (= #{:applicant :reviewer} (roles/get-roles "pekka")))
-  (is (= #{:applicant :approver} (roles/get-roles "simo")))
-  (is (= #{:applicant} (roles/get-roles "juho")) "applicant is the default for all")
+  (is (= #{:approver} (roles/get-roles "simo")))
+  (is (empty? (roles/get-roles "juho")))
   (is (thrown? RuntimeException (roles/add-role! "pekka" :unknown-role)))
 
   (is (= :applicant (roles/get-active-role "pekka")) "applicant is the default active role")
