@@ -45,7 +45,9 @@
                   :resource "Resource"
                   :applicant "Applicant"
                   :view "View"
-                  :created "Created"}
+                  :created "Created"
+                  :approve "Approve"
+                  :success "Application approved"}
       :roles {:header "Select role:"
               :names {:approver "Approver"
                       :reviewer "Reviewer"
@@ -91,7 +93,9 @@
                   :resource "Kielivara"
                   :applicant "Hakija"
                   :view "Näytä"
-                  :created "Luotu"}
+                  :created "Luotu"
+                  :approve "Hyväksy"
+                  :success "Hakemus hyväksytty"}
       :roles {:header "Valitse rooli:"
               :names {:approver "Hyväksyjä"
                       :reviewer "Katselmoija"
