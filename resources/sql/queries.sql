@@ -131,12 +131,12 @@ SET (modifierUserId, curround, state) = (:user, :curround, CAST (:state as appli
 -- - Use {:applicant user} to filter by applicant
 -- - Use {:approver user} to filter by possible approver
 SELECT
-  app.id, app.catId, app.applicantUserId, app.start, state.state, state.curround
+  app.id, app.catId, app.applicantUserId, app.start, state.state, state.curround, wf.fnlround
 FROM catalogue_item_application app
 LEFT OUTER JOIN catalogue_item_application_state state ON app.id = state.catAppId
-/*~ (when (:approver params) */
 LEFT OUTER JOIN catalogue_item cat ON app.catid = cat.id
 LEFT OUTER JOIN workflow wf ON cat.wfid = wf.id
+/*~ (when (:approver params) */
 LEFT OUTER JOIN workflow_approvers wfa ON wf.id = wfa.wfid
 /*~ ) ~*/
 WHERE 1=1
@@ -164,14 +164,14 @@ WHERE 1=1
 INSERT INTO catalogue_item_application_approvers
   (catAppId, wfApprId, apprUserId, round, comment, state)
 SELECT
-  :id, wfa.id, :user, state.curround, :comment, CAST (:state AS approval_status)
+  :id, wfa.id, :user, :round, :comment, CAST (:state AS approval_status)
 FROM catalogue_item_application app
-LEFT OUTER JOIN catalogue_item_application_state state ON app.id = state.catAppId
 LEFT OUTER JOIN catalogue_item cat ON app.catid = cat.id
 LEFT OUTER JOIN workflow wf ON cat.wfid = wf.id
-LEFT OUTER JOIN workflow_approvers wfa ON (wf.id = wfa.wfid AND state.curround = wfa.round)
+LEFT OUTER JOIN workflow_approvers wfa ON wf.id = wfa.wfid
 WHERE app.id = :id
   AND wfa.apprUserId = :user
+  AND wfa.round = :round
 
 -- :name get-application-approvals :? :*
 SELECT
