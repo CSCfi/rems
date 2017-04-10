@@ -21,7 +21,25 @@
                                      :approver (get-user-id)
                                      :state "applied"}))))
 
-(defn approve [application-id round comment]
+(defn- handle-approved [application round]
+  (if (= round (:fnlround application))
+    (do (db/update-application-state!
+         {:id (:id application) :user (get-user-id)
+          :curround round :state "approved"})
+        (db/add-entitlement!
+         {:application (:id application) :user (get-user-id)
+          :resource (:catid application)}))
+    (db/update-application-state!
+     {:id (:id application) :user (get-user-id)
+      :curround (inc round) :state "applied"})))
+
+(defn- handle-rejected [application round]
+  (db/update-application-state!
+   {:id (:id application) :user (get-user-id)
+    :curround round :state "rejected"}))
+
+(defn approve [application-id round state comment]
+  (assert (#{:approved :rejected} state))
   (when-not (approver? application-id)
     (throw-unauthorized))
   (let [application (first (db/get-applications {:id application-id}))]
@@ -39,14 +57,7 @@
         :user (get-user-id)
         :round round
         :comment comment
-        :state "approved"})
-      (if (= round (:fnlround application))
-        (do (db/update-application-state!
-             {:id application-id :user (get-user-id)
-              :curround round :state "approved"})
-            (db/add-entitlement!
-             {:application application-id :user (get-user-id)
-              :resource (:catid application)}))
-        (db/update-application-state!
-         {:id application-id :user (get-user-id)
-          :curround (inc round) :state "applied"})))))
+        :state (name state)})
+      (case state
+        :approved (handle-approved application round)
+        :rejected (handle-rejected application round)))))

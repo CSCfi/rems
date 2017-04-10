@@ -244,7 +244,7 @@
       (doseq [a [app-a-1 app-a-2 app-b]]
         (db/update-application-state! {:id a :user uid :state "applied" :curround 0}))
 
-      (approvals/approve app-a-1 0 "comment")
+      (approvals/approve app-a-1 0 :approved "comment")
       (is (= {:state "applied" :curround 1} (get app-a-1)))
       (is (= [{:catappid app-a-1 :appruserid uid :round 0 :comment "comment" :state "approved"}]
              (approvals app-a-1)))
@@ -253,10 +253,10 @@
       (is (empty? (db/get-entitlements)))
 
       (is (thrown? Exception
-                   (approvals/approve 0 "comment3"))
+                   (approvals/approve 0 :approved "comment3"))
           "shouldn't be able to approve same round again")
 
-      (approvals/approve app-a-1 1 "comment2")
+      (approvals/approve app-a-1 1 :approved "comment2")
       (is (= {:state "approved" :curround 1} (get app-a-1)))
       (is (= [{:catappid app-a-1 :appruserid uid :round 0 :comment "comment" :state "approved"}
               {:catappid app-a-1 :appruserid uid :round 1 :comment "comment2" :state "approved"}]
@@ -265,13 +265,17 @@
       (is (= {:state "applied" :curround 0} (get app-a-2)))
       (is (empty? (approvals app-a-2)))
 
+      (approvals/approve app-a-2 0 :rejected "comment4")
+      (is (= {:state "rejected" :curround 0} (get app-a-2)))
+      (is (= [{:catappid app-a-2 :appruserid uid :round 0 :comment "comment4" :state "rejected"}]
+             (approvals app-a-2)))
+
       (is (thrown? rems.auth.NotAuthorizedException
-                   (approvals/approve app-b 0 "comment"))
+                   (approvals/approve app-b 0 :approved "comment"))
           "shouldn't be able to approve when not approver")
       (is (thrown? rems.auth.NotAuthorizedException
-                   (approvals/approve draft 0 "comment"))
-          "shouldn't be able to approve draft")
-      )))
+                   (approvals/approve draft 0 :approved "comment"))
+          "shouldn't be able to approve draft"))))
 
 (deftest test-users
   (db/add-user! {:user "pekka", :userattrs nil})

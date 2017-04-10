@@ -57,7 +57,7 @@
   (POST "/approvals/:id/:round/approve" [id round]
         (let [id (Long/parseLong id)
               round (Long/parseLong round)]
-          (approve id round "")
+          (approve id round :approved "")
           (assoc (redirect "/approvals" :see-other)
                  :flash {:status :success
                          :contents (text :t.approvals/success)}))))

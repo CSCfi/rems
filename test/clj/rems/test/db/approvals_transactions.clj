@@ -48,14 +48,14 @@
 
         (testing "when a db function throws"
           (with-redefs [db/add-application-approval! (fn [& _] (throw (Exception. "oops")))]
-            (is (thrown? Exception (approvals/approve app 0 "approval should rollback")))
+            (is (thrown? Exception (approvals/approve app 0 :approved "approval should rollback")))
             (is (= {:state "applied" :curround 0} (get app)) "state should be same"))
 
           (with-redefs [db/update-application-state! (fn [& _] (throw (Exception. "oops")))]
-            (is (thrown? Exception (approvals/approve app 0 "approval should rollback")))
+            (is (thrown? Exception (approvals/approve app 0 :approved "approval should rollback")))
             (is (= {:state "applied" :curround 0} (get app)) "state should be same"))
 
           (with-redefs [db/add-entitlement! (fn [& _] (throw (Exception. "oops")))]
-            (is (thrown? Exception (approvals/approve app 0 "approval should rollback")))
+            (is (thrown? Exception (approvals/approve app 0 :approved "approval should rollback")))
             (is (= {:state "applied" :curround 0} (get app)) "state should be same"))
           )))))
