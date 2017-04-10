@@ -41,6 +41,7 @@
                      :states {:draft "Draft"
                               :applied "Applied"
                               :approved "Approved"
+                              :rejected "Rejected"
                               :unknown "Unknown"}}
       :approvals {:application "Application"
                   :resource "Resource"
@@ -92,6 +93,7 @@
                      :states {:draft "Luonnos"
                               :applied "Haettu"
                               :approved "Hyväksytty"
+                              :rejected "Hylätty"
                               :unknown "Tuntematon"}}
       :approvals {:application "Hakemus"
                   :resource "Kielivara"
