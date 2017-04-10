@@ -40,6 +40,7 @@
                      :created "Created"
                      :states {:draft "Draft"
                               :applied "Applied"
+                              :approved "Approved"
                               :unknown "Unknown"}}
       :approvals {:application "Application"
                   :resource "Resource"
@@ -88,6 +89,7 @@
                      :created "Luotu"
                      :states {:draft "Luonnos"
                               :applied "Haettu"
+                              :approved "Hyväksytty"
                               :unknown "Tuntematon"}}
       :approvals {:application "Hakemus"
                   :resource "Kielivara"

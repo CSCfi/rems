@@ -11,6 +11,7 @@
   (case state
     "draft" :t.applications.states/draft
     "applied" :t.applications.states/applied
+    "approved" :t.applications.states/approved
     :t.applications.states/unknown))
 
 (def ^:private time-format (format/formatter "yyyy-MM-dd HH:mm"
