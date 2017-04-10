@@ -3,7 +3,7 @@
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
 
-  :dependencies [[bouncer "1.0.1" :exclusions [org.clojure/tools.reader]]
+  :dependencies [[bouncer "1.0.1" :exclusions [org.clojure/clojurescript]]
                  [buddy "1.3.0" :exclusions [cheshire]]
                  [ch.qos.logback/logback-classic "1.2.3"]
                  [clj-time "0.13.0"]
@@ -34,8 +34,8 @@
                  [ring/ring-devel "1.5.1"]
                  [ring/ring-servlet "1.5.1"]
                  [hiccup "1.0.5"]
-                 [macroz/hiccup-find "0.5.0" :exclusions [org.clojure/tools.reader]]
-                 [hickory "0.7.1" :exclusions [org.clojure/tools.reader]]]
+                 [macroz/hiccup-find "0.5.0" :exclusions [org.clojure/clojurescript]]
+                 [hickory "0.7.1" :exclusions [org.clojure/clojurescript]]]
 
   :min-lein-version "2.0.0"
 
@@ -79,8 +79,8 @@
                                                                                                org.apache.httpcomponents/httpmime
                                                                                                org.apache.httpcomponents/httpclient
                                                                                                org.apache.httpcomponents/httpcore]]]
-                  :plugins      [[com.jakemccrary/lein-test-refresh "0.14.0"]
-                                 [lein-cloverage "1.0.9"]]
+                  :plugins [[com.jakemccrary/lein-test-refresh "0.14.0"]
+                            [lein-cloverage "1.0.9" :exclusions [org.clojure/clojure]]]
 
                   :aot [rems.auth.NotAuthorizedException]
 
