@@ -217,8 +217,8 @@
   (binding [context/*user* {"eppn" "tester"}]
     (let [uid (get-user-id)
           uid2 "pekka"
-          wfid-a (:id (db/create-workflow! {:owneruserid "" :modifieruserid "" :title "" :fnlround 2}))
-          wfid-b (:id (db/create-workflow! {:owneruserid "" :modifieruserid "" :title "" :fnlround 1}))
+          wfid-a (:id (db/create-workflow! {:owneruserid "" :modifieruserid "" :title "" :fnlround 1}))
+          wfid-b (:id (db/create-workflow! {:owneruserid "" :modifieruserid "" :title "" :fnlround 0}))
           item-a (:id (db/create-catalogue-item! {:title "" :form nil :resid nil :wfid wfid-a}))
           item-b (:id (db/create-catalogue-item! {:title "" :form nil :resid nil :wfid wfid-b}))
           app-a-1 (applications/create-new-draft item-a)
@@ -254,7 +254,7 @@
           "shouldn't be able to approve same round again")
 
       (approvals/approve app-a-1 1 "comment2")
-      (is (= {:state "approved" :curround 2} (get app-a-1)))
+      (is (= {:state "approved" :curround 1} (get app-a-1)))
       (is (= [{:catappid app-a-1 :appruserid uid :round 0 :comment "comment" :state "approved"}
               {:catappid app-a-1 :appruserid uid :round 1 :comment "comment2" :state "approved"}]
              (approvals app-a-1)))
