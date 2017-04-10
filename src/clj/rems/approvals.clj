@@ -14,6 +14,11 @@
 (def ^:private time-format (format/formatter "yyyy-MM-dd HH:mm"
                                              (time/default-time-zone)))
 
+(defn view-button [app]
+  [:a.btn.btn-primary
+   {:href (str "/form/" (:catid app) "/" (:id app))}
+   (text :t/applications.view)])
+
 (defn approve-button [app]
   [:form.inline {:method "post"
                  :action (str "/approvals/" (:id app) "/" (:curround app) "/approve")}
@@ -35,6 +40,7 @@
    [:td {:data-th (text :t.approvals/applicant)} (:applicantuserid app)]
    [:td {:data-th (text :t.approvals/created)} (format/unparse time-format (:start app))]
    [:td.actions
+    (view-button app)
     (approve-button app)
     (reject-button app)
     ]])
