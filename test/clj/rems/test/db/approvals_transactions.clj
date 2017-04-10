@@ -1,5 +1,7 @@
-(ns ^:integration rems.test.db.approvals
-  "Approvals tests that require transactions."
+(ns ^:integration rems.test.db.approvals-transactions
+  "Approvals tests that require transactions.
+
+  Regular tests can use the DB resetting fixture."
   (:require [rems.db.core :as db]
             [rems.context :as context]
             [rems.contents :as contents]
