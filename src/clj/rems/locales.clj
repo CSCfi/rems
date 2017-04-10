@@ -48,7 +48,9 @@
                   :view "View"
                   :created "Created"
                   :approve "Approve"
-                  :success "Application approved"}
+                  :reject "Reject"
+                  :approve-success "Application approved"
+                  :reject-success "Application rejected"}
       :roles {:header "Select role:"
               :names {:approver "Approver"
                       :reviewer "Reviewer"
@@ -97,7 +99,9 @@
                   :view "Näytä"
                   :created "Luotu"
                   :approve "Hyväksy"
-                  :success "Hakemus hyväksytty"}
+                  :reject "Hylkää"
+                  :approve-success "Hakemus hyväksytty"
+                  :reject-success "Hakemus hylätty"}
       :roles {:header "Valitse rooli:"
               :names {:approver "Hyväksyjä"
                       :reviewer "Katselmoija"
