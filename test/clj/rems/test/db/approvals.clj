@@ -1,4 +1,4 @@
-(ns rems.db.approvals
+(ns rems.test.db.approvals
   "Approvals tests that require transactions."
   (:require [rems.db.core :as db]
             [rems.context :as context]
