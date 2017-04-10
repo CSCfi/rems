@@ -1,6 +1,8 @@
 (ns rems.db.approvals
   "Query functions for approvals."
   (:require [clojure.tools.logging :as log]
+            [conman.core :as conman]
+            [rems.env :refer [*db*]]
             [rems.context :as context]
             [rems.db.core :as db]
             [rems.db.catalogue :refer [get-localized-catalogue-item]]
@@ -31,19 +33,20 @@
       (log/info "Tried to approve application with bad state: %s" (pr-str application))
       (throw-unauthorized))
 
-    (db/add-application-approval!
-     {:id application-id
-      :user (get-user-id)
-      :round round
-      :comment comment
-      :state "approved"})
-    (if (= round (:fnlround application))
-      (do (db/update-application-state!
-           {:id application-id :user (get-user-id)
-            :curround round :state "approved"})
-          (db/add-entitlement!
-           {:application application-id :user (get-user-id)
-            :resource (:catid application)}))
-      (db/update-application-state!
-       {:id application-id :user (get-user-id)
-        :curround (inc round) :state "applied"}))))
+    (conman/with-transaction [*db* {:isolation :serializable}]
+      (db/add-application-approval!
+       {:id application-id
+        :user (get-user-id)
+        :round round
+        :comment comment
+        :state "approved"})
+      (if (= round (:fnlround application))
+        (do (db/update-application-state!
+             {:id application-id :user (get-user-id)
+              :curround round :state "approved"})
+            (db/add-entitlement!
+             {:application application-id :user (get-user-id)
+              :resource (:catid application)}))
+        (db/update-application-state!
+         {:id application-id :user (get-user-id)
+          :curround (inc round) :state "applied"})))))

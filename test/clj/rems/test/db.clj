@@ -29,7 +29,7 @@
 
 (use-fixtures :each
   (fn [f]
-    (conman/with-transaction [rems.env/*db*]
+    (conman/with-transaction [rems.env/*db* {:isolation :serializable}]
       (jdbc/db-set-rollback-only! rems.env/*db*)
       (f))))
 
@@ -270,7 +270,8 @@
           "shouldn't be able to approve when not approver")
       (is (thrown? rems.auth.NotAuthorizedException
                    (approvals/approve draft 0 "comment"))
-          "shouldn't be able to approve draft"))))
+          "shouldn't be able to approve draft")
+      )))
 
 (deftest test-users
   (db/add-user! {:user "pekka", :userattrs nil})
