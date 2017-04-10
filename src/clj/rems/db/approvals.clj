@@ -19,8 +19,6 @@
                                      :approver (get-user-id)
                                      :state "applied"}))))
 
-;; TODO: fnlround 0 means we transition from round:0 state:applied to
-;; round:0 state:approved!
 (defn approve [application-id round comment]
   (when-not (approver? application-id)
     (throw-unauthorized))
@@ -39,10 +37,13 @@
       :round round
       :comment comment
       :state "approved"})
-    (db/update-application-state!
-     {:id application-id
-      :user (get-user-id)
-      :curround (inc round)
-      :state (if (= (inc round) (:fnlround application))
-               "approved"
-               "applied")})))
+    (if (= round (:fnlround application))
+      (do (db/update-application-state!
+           {:id application-id :user (get-user-id)
+            :curround round :state "approved"})
+          (db/add-entitlement!
+           {:application application-id :user (get-user-id)
+            :resource (:catid application)}))
+      (db/update-application-state!
+       {:id application-id :user (get-user-id)
+        :curround (inc round) :state "applied"}))))

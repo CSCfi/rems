@@ -215,12 +215,14 @@
 
 (deftest test-approve
   (binding [context/*user* {"eppn" "tester"}]
+    (db/create-resource! {:id 3 :resid "" :prefix "" :modifieruserid 1})
+    (db/create-resource! {:id 5 :resid "" :prefix "" :modifieruserid 1})
     (let [uid (get-user-id)
           uid2 "pekka"
-          wfid-a (:id (db/create-workflow! {:owneruserid "" :modifieruserid "" :title "" :fnlround 2}))
-          wfid-b (:id (db/create-workflow! {:owneruserid "" :modifieruserid "" :title "" :fnlround 1}))
-          item-a (:id (db/create-catalogue-item! {:title "" :form nil :resid nil :wfid wfid-a}))
-          item-b (:id (db/create-catalogue-item! {:title "" :form nil :resid nil :wfid wfid-b}))
+          wfid-a (:id (db/create-workflow! {:owneruserid "" :modifieruserid "" :title "" :fnlround 1}))
+          wfid-b (:id (db/create-workflow! {:owneruserid "" :modifieruserid "" :title "" :fnlround 0}))
+          item-a (:id (db/create-catalogue-item! {:title "" :form nil :resid 3 :wfid wfid-a}))
+          item-b (:id (db/create-catalogue-item! {:title "" :form nil :resid 5 :wfid wfid-b}))
           app-a-1 (applications/create-new-draft item-a)
           app-a-2 (applications/create-new-draft item-a)
           draft (applications/create-new-draft item-a)
@@ -248,16 +250,18 @@
              (approvals app-a-1)))
       (is (= {:state "applied" :curround 0} (get app-a-2)))
       (is (empty? (approvals app-a-2)))
+      (is (empty? (db/get-entitlements)))
 
       (is (thrown? Exception
                    (approvals/approve 0 "comment3"))
           "shouldn't be able to approve same round again")
 
       (approvals/approve app-a-1 1 "comment2")
-      (is (= {:state "approved" :curround 2} (get app-a-1)))
+      (is (= {:state "approved" :curround 1} (get app-a-1)))
       (is (= [{:catappid app-a-1 :appruserid uid :round 0 :comment "comment" :state "approved"}
               {:catappid app-a-1 :appruserid uid :round 1 :comment "comment2" :state "approved"}]
              (approvals app-a-1)))
+      (is (= [{:resid 3 :catappid app-a-1 :userid uid}] (db/get-entitlements)))
       (is (= {:state "applied" :curround 0} (get app-a-2)))
       (is (empty? (approvals app-a-2)))
 
