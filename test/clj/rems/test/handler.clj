@@ -212,12 +212,14 @@
             (is (= 403 (:status ctx)) "bob shouldn't be authorized")))))))
 
 (deftest test-roles
+  (is (= (list {:userid "bob"}) (db/get-users)))
   (testing "when applicant logs in"
     (let [ctx (-> (new-context app)
                   (login "alice" :applicant)
                   (follow-redirect)
                   (follow-redirect))]
       (is (not-empty (hiccup-find [:.catalogue] (ctx->html ctx))) "applicant sees catalogue initially")
+      (is (= (list {:userid "bob"} {:userid "alice"}) (db/get-users)))
       ))
   (testing "when approver logs in"
     (let [ctx (-> (new-context app)
@@ -225,4 +227,5 @@
                   (follow-redirect)
                   (follow-redirect))]
       (is (not-empty (hiccup-find [:.approvals] (ctx->html ctx))) "approver sees approvals initially")
+      (is (= 2 (count (db/get-users))))
       )))
