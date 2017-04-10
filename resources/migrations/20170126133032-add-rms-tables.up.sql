@@ -514,6 +514,7 @@ CREATE TABLE workflow_round_min (
   CONSTRAINT workflow_round_min_ibfk_1 FOREIGN KEY (wfId) REFERENCES workflow (id)
 );
 --;;
+-- TODO add foreign key constraints from other tables to user table
 CREATE TABLE users (
   userId varchar(255) NOT NULL PRIMARY KEY,
   userAttrs jsonb

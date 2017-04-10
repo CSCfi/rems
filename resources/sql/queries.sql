@@ -179,6 +179,21 @@ SELECT
 FROM catalogue_item_application_approvers
 WHERE catAppId = :id
 
+-- :name add-entitlement! :!
+-- TODO remove resId from this table to make it normalized?
+INSERT INTO entitlement
+  (catAppId, userId, resId)
+VALUES
+  (:application, :user,
+   (SELECT
+      cat.resid
+    FROM catalogue_item_application app
+    LEFT OUTER JOIN catalogue_item cat ON app.catid = cat.id
+    WHERE app.id = :application))
+
+-- :name get-entitlements :?
+SELECT resId, catAppId, userId FROM entitlement
+
 -- :name save-field-value! :!
 INSERT INTO application_text_values
 (catAppId, modifierUserId, value, formMapId)

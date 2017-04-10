@@ -37,9 +37,13 @@
       :round round
       :comment comment
       :state "approved"})
-    (db/update-application-state!
-     (if (= round (:fnlround application))
-       {:id application-id :user (get-user-id)
-        :curround round :state "approved"}
+    (if (= round (:fnlround application))
+      (do (db/update-application-state!
+           {:id application-id :user (get-user-id)
+            :curround round :state "approved"})
+          (db/add-entitlement!
+           {:application application-id :user (get-user-id)
+            :resource (:catid application)}))
+      (db/update-application-state!
        {:id application-id :user (get-user-id)
         :curround (inc round) :state "applied"}))))
