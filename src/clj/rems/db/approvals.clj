@@ -38,7 +38,7 @@
    {:id (:id application) :user (get-user-id)
     :curround round :state "rejected"}))
 
-(defn approve [application-id round state comment]
+(defn- handle [application-id round state comment]
   (assert (#{:approved :rejected} state))
   (when-not (approver? application-id)
     (throw-unauthorized))
@@ -61,3 +61,9 @@
       (case state
         :approved (handle-approved application round)
         :rejected (handle-rejected application round)))))
+
+(defn approve [application-id round comment]
+  (handle application-id round :approved comment))
+
+(defn reject [application-id round comment]
+  (handle application-id round :rejected comment))
