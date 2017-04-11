@@ -6,7 +6,9 @@
             [rems.util :refer [get-user-id]]
             [rems.db.core :as db]
             [rems.db.applications :refer [get-form-for get-draft-id-for create-new-draft]]
+            [rems.approvals :as approvals]
             [rems.anti-forgery :refer [anti-forgery-field]]
+            [rems.role-switcher :refer [when-role]]
             [compojure.core :refer [defroutes GET POST]]
             [ring.util.response :refer [redirect]]))
 
@@ -69,29 +71,40 @@
 
 (defn- form [form]
   (let [applied (= (:state (:application form)) "applied")]
-    [:form {:method "post"
-            :action (if-let [app (:id (:application form))]
-                      (str "/form/" (:catalogue-item form) "/" app "/save")
-                      (str "/form/" (:catalogue-item form) "/save"))}
-     [:h3 (:title form)]
-     (when applied
-       [:h2 (text :t.applications.states/applied)])
-     (for [i (:items form)]
-       (field (assoc i :readonly applied)))
-     (when-let [licenses (not-empty (:licenses form))]
-       [:div
-        [:label (text :t.form/licenses)]
-        (for [l licenses]
-          (field (assoc l :readonly applied)))])
-     (anti-forgery-field)
-     [:div.row
-      [:div.col
-       [:a.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
-      (when-not applied
-        [:div.col.actions
-         [:button.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)]
-         [:button.btn.btn-primary {:type "submit" :name "submit"}
-          (text :t.form/submit)]])]]))
+    (list
+     [:form {:method "post"
+             :action (if-let [app (:id (:application form))]
+                       (str "/form/" (:catalogue-item form) "/" app "/save")
+                       (str "/form/" (:catalogue-item form) "/save"))}
+      [:h3 (:title form)]
+      (when applied
+        [:h2 (text :t.applications.states/applied)])
+      (for [i (:items form)]
+        (field (assoc i :readonly applied)))
+      (when-let [licenses (not-empty (:licenses form))]
+        [:div
+         [:label (text :t.form/licenses)]
+         (for [l licenses]
+           (field (assoc l :readonly applied)))])
+      (anti-forgery-field)
+      (when-role :applicant
+        [:div.row
+         [:div.col
+          [:a.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
+         (when-not applied
+           [:div.col.actions
+            [:button.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)]
+            [:button.btn.btn-primary {:type "submit" :name "submit"} (text :t.form/submit)]])])]
+     ;; The approve buttons need to be outside the form since they're
+     ;; implemented as forms
+     (when-role :approver
+       [:div.row
+        [:div.col
+         [:a.btn.btn-secondary {:href "/approvals"} (text :t.form/back-approvals)]]
+        (when applied
+          [:div.col.actions
+           (approvals/approve-button (:application form))
+           (approvals/reject-button (:application form))])]))))
 
 (defn link-to-item [item]
   (str "/form/" (:id item)))
