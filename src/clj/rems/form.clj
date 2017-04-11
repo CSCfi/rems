@@ -68,9 +68,9 @@
     (unsupported-field f)))
 
 (defn- form [form]
-  (let [applied (= (:state form) "applied")]
+  (let [applied (= (:state (:application form)) "applied")]
     [:form {:method "post"
-            :action (if-let [app (:application form)]
+            :action (if-let [app (:id (:application form))]
                       (str "/form/" (:catalogue-item form) "/" app "/save")
                       (str "/form/" (:catalogue-item form) "/save"))}
      [:h3 (:title form)]
@@ -218,14 +218,15 @@
              (field {:type "unsupported" :title "Title" :inputprompt "prompt"})])
    (example "partially filled form"
             (form {:title "Form title"
-                        :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
-                                {:type "label" :title "Please input your wishes below."}
-                                {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2"}
-                                {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]}))
+                   :application {:id 17 :state "draft"}
+                   :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
+                           {:type "label" :title "Please input your wishes below."}
+                           {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2"}
+                           {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]}))
    (example "applied form"
             (form {:title "Form title"
-                        :state "applied"
-                        :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
-                                {:type "label" :title "Please input your wishes below."}
-                                {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2" :value "def"}
-                                {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]}))))
+                   :application {:id 17 :state "applied"}
+                   :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
+                           {:type "label" :title "Please input your wishes below."}
+                           {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2" :value "def"}
+                           {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]}))))

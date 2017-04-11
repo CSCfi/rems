@@ -109,8 +109,8 @@
                                        :round 0
                                        :state "approved"})
             (let [f (applications/get-form-for (:id item) app-id)]
-              (is (= app-id (:application f)))
-              (is (= "draft" (:state f)))
+              (is (= app-id (:id (:application f))))
+              (is (= "draft" (:state (:application f))))
               (is (= [nil "B" nil] (map :value (:items f))))
               (is (= [true] (map :approved (:licenses f)))))
 
