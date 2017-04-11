@@ -265,13 +265,17 @@
       (is (= {:state "applied" :curround 0} (get app-a-2)))
       (is (empty? (approvals app-a-2)))
 
+      (approvals/reject app-a-2 0 "comment4")
+      (is (= {:state "rejected" :curround 0} (get app-a-2)))
+      (is (= [{:catappid app-a-2 :appruserid uid :round 0 :comment "comment4" :state "rejected"}]
+             (approvals app-a-2)))
+
       (is (thrown? rems.auth.NotAuthorizedException
                    (approvals/approve app-b 0 "comment"))
           "shouldn't be able to approve when not approver")
       (is (thrown? rems.auth.NotAuthorizedException
                    (approvals/approve draft 0 "comment"))
-          "shouldn't be able to approve draft")
-      )))
+          "shouldn't be able to approve draft"))))
 
 (deftest test-users
   (db/add-user! {:user "pekka", :userattrs nil})

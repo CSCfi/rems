@@ -12,6 +12,7 @@
     "draft" :t.applications.states/draft
     "applied" :t.applications.states/applied
     "approved" :t.applications.states/approved
+    "rejected" :t.applications.states/rejected
     :t.applications.states/unknown))
 
 (def ^:private time-format (format/formatter "yyyy-MM-dd HH:mm"
@@ -44,5 +45,7 @@
   []
   (example "applications"
            (applications
-            [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :state "draft" :applicantuserid "alice"}
-             {:id 3 :catalogue-item {:title "bbbbbb"} :state "applied" :applicantuserid "bob"}])))
+            [{:id 1 :catalogue-item {:title "Draft application"} :state "draft" :applicantuserid "alice"}
+             {:id 3 :catalogue-item {:title "Applied application"} :state "applied" :applicantuserid "bob"}
+             {:id 3 :catalogue-item {:title "Approved application"} :state "approved" :applicantuserid "charlie"}
+             {:id 3 :catalogue-item {:title "Rejected application"} :state "rejected" :applicantuserid "david"}])))

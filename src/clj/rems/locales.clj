@@ -41,6 +41,7 @@
                      :states {:draft "Draft"
                               :applied "Applied"
                               :approved "Approved"
+                              :rejected "Rejected"
                               :unknown "Unknown"}}
       :approvals {:application "Application"
                   :resource "Resource"
@@ -48,7 +49,9 @@
                   :view "View"
                   :created "Created"
                   :approve "Approve"
-                  :success "Application approved"}
+                  :reject "Reject"
+                  :approve-success "Application approved"
+                  :reject-success "Application rejected"}
       :roles {:header "Select role:"
               :names {:approver "Approver"
                       :reviewer "Reviewer"
@@ -90,6 +93,7 @@
                      :states {:draft "Luonnos"
                               :applied "Haettu"
                               :approved "Hyväksytty"
+                              :rejected "Hylätty"
                               :unknown "Tuntematon"}}
       :approvals {:application "Hakemus"
                   :resource "Kielivara"
@@ -97,7 +101,9 @@
                   :view "Näytä"
                   :created "Luotu"
                   :approve "Hyväksy"
-                  :success "Hakemus hyväksytty"}
+                  :reject "Hylkää"
+                  :approve-success "Hakemus hyväksytty"
+                  :reject-success "Hakemus hylätty"}
       :roles {:header "Valitse rooli:"
               :names {:approver "Hyväksyjä"
                       :reviewer "Katselmoija"
