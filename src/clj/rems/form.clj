@@ -100,13 +100,10 @@
      ;; The approve buttons need to be outside the form since they're
      ;; implemented as forms
      (when-role :approver
-       [:div.row
-        [:div.col
-         [:a.btn.btn-secondary {:href "/approvals"} (text :t.form/back-approvals)]]
+       (list
         (when approvable
-          [:div.col.actions
-           (approvals/approve-button (:application form))
-           (approvals/reject-button (:application form))])]))))
+          (approvals/approve-form (:application form)))
+        [:a.btn.btn-secondary {:href "/approvals"} (text :t.form/back-approvals)])))))
 
 (defn link-to-item [item]
   (str "/form/" (:id item)))

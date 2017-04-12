@@ -7,6 +7,7 @@
             [rems.guide :refer :all]
             [rems.layout :as layout]
             [rems.text :refer [text]]
+            [rems.util :refer [errorf]]
             [rems.anti-forgery :refer [anti-forgery-field]]
             [rems.db.core :as db]
             [rems.db.approvals :refer [get-approvals approve reject]]))
@@ -19,19 +20,33 @@
    {:href (str "/form/" (:catid app) "/" (:id app))}
    (text :t.applications/view)])
 
-(defn approve-button [app]
-  [:form.inline {:method "post"
-                 :action (str "/approvals/" (:id app) "/" (:curround app) "/approve")}
-   (anti-forgery-field)
-   [:button.btn.btn-success {:type "submit"}
-    (text :t.approvals/approve)]])
+(defn- approve-button []
+  [:button.btn.btn-success {:type "submit" :name "approve"}
+   (text :t.approvals/approve)])
 
-(defn reject-button [app]
-  [:form.inline {:method "post"
-                 :action (str "/approvals/" (:id app) "/" (:curround app) "/reject")}
+(defn- reject-button []
+  [:button.btn.btn-danger {:type "submit" :name "reject"}
+   (text :t.approvals/reject)])
+
+(defn- approve-form-attrs [app]
+  {:method "post"
+   :action (str "/approvals/" (:id app) "/" (:curround app))})
+
+(defn approve-buttons [app]
+  [:form.inline (approve-form-attrs app)
    (anti-forgery-field)
-   [:button.btn.btn-danger {:type "submit"}
-    (text :t.approvals/reject)]])
+   (approve-button)
+   (reject-button)])
+
+(defn approve-form [app]
+  [:form (approve-form-attrs app)
+   (anti-forgery-field)
+   [:div.form-group
+    [:label {:for "comment"} (text :t.approvals/comment)]
+    [:textarea.form-control {:name "comment"}]]
+   [:div.actions
+    (approve-button)
+    (reject-button)]])
 
 (defn- approvals-item [app]
   [:tr.approval
@@ -41,9 +56,7 @@
    [:td {:data-th (text :t.approvals/created)} (format/unparse time-format (:start app))]
    [:td.actions
     (view-button app)
-    (approve-button app)
-    (reject-button app)
-    ]])
+    (approve-buttons app)]])
 
 (defn approvals
   ([]
@@ -73,17 +86,19 @@
 
 (defroutes approvals-routes
   (GET "/approvals" [] (approvals-page))
-  (POST "/approvals/:id/:round/approve" [id round]
+  (POST "/approvals/:id/:round" [id round :as request]
         (let [id (Long/parseLong id)
-              round (Long/parseLong round)]
-          (approve id round "")
+              round (Long/parseLong round)
+              input (:form-params request)
+              action (cond (get input "approve") :approve
+                           (get input "reject") :reject
+                           :else (errorf "Unknown action!"))
+              comment (get input "comment")]
+          (case action
+            :approve (approve id round comment)
+            :reject (reject id round comment))
           (assoc (redirect "/approvals" :see-other)
                  :flash {:status :success
-                         :contents (text :t.approvals/approve-success)})))
-  (POST "/approvals/:id/:round/reject" [id round]
-        (let [id (Long/parseLong id)
-              round (Long/parseLong round)]
-          (reject id round "")
-          (assoc (redirect "/approvals" :see-other)
-                 :flash {:status :success
-                         :contents (text :t.approvals/reject-success)}))))
+                         :contents (case action
+                                     :approve (text :t.approvals/approve-success)
+                                     :reject (text :t.approvals/reject-success))}))))
