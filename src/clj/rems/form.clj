@@ -45,15 +45,13 @@
   [:div.form-group
    [:label title]])
 
-(defn- checkbox-attrs [id approved]
-  (if approved
-    {:type "checkbox" :name (str "license" id) :checked "" :value "approved"}
-    {:type "checkbox" :name (str "license" id) :value "approved"}))
-
-(defn- license [{title :title id :id textcontent :textcontent approved :approved}]
+(defn- license [{title :title id :id textcontent :textcontent approved :approved
+                 readonly :readonly}]
   [:div.checkbox
    [:label
-    [:input (checkbox-attrs id approved)]
+    [:input (merge {:type "checkbox" :name (str "license" id) :value "approved"
+                    :readonly readonly}
+                   (when approved {:checked ""}))]
     [:a {:href textcontent :target "_blank"} (str " " title)]]])
 
 (defn- unsupported-field
@@ -85,7 +83,7 @@
       (for [i (:items form)]
         (field (assoc i :readonly readonly)))
       (when-let [licenses (not-empty (:licenses form))]
-        [:div
+        [:div.form-group
          [:label (text :t.form/licenses)]
          (for [l licenses]
            (field (assoc l :readonly readonly)))])
@@ -97,7 +95,7 @@
          (when editable
            [:div.col.actions
             [:button.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)]
-            [:button.btn.btn-primary {:type "submit" :name "submit"} (text :t.form/submit)]])])]
+            [:button.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)]])])]
      ;; The approve buttons need to be outside the form since they're
      ;; implemented as forms
      (when-role :approver
