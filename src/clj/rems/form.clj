@@ -88,6 +88,12 @@
          [:label (text :t.form/licenses)]
          (for [l licenses]
            (field (assoc l :readonly readonly)))])
+      (when-let [comments (not-empty (:comments form))]
+        (list
+         [:h4 (text :t.form/comments)]
+         [:ul
+          (for [c comments]
+            [:li (:comment c)])]))
       (anti-forgery-field)
       (when-role :applicant
         [:div.row
@@ -245,4 +251,5 @@
                            {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2" :value "def"}
                            {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]
                    :licenses [{:type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
-                               :approved true}]}))))
+                               :approved true}]
+                   :comments [{:comment "a comment"}]}))))
