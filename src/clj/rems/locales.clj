@@ -51,6 +51,7 @@
                   :created "Created"
                   :approve "Approve"
                   :reject "Reject"
+                  :comment "Comment"
                   :approve-success "Application approved"
                   :reject-success "Application rejected"}
       :roles {:header "Select role:"
@@ -104,6 +105,7 @@
                   :created "Luotu"
                   :approve "Hyväksy"
                   :reject "Hylkää"
+                  :comment "Kommentti"
                   :approve-success "Hakemus hyväksytty"
                   :reject-success "Hakemus hylätty"}
       :roles {:header "Valitse rooli:"
