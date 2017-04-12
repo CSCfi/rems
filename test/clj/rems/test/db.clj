@@ -74,6 +74,8 @@
       (db/link-form-item! {:form (:id form-en) :itemorder 3 :item (:id item-c) :user uid})
       (db/link-form-item! {:form (:id form-fi) :itemorder 1 :item (:id item-a) :user uid})
 
+      (db/create-workflow-approver! {:wfid (:id wf) :appruserid uid :round 0})
+
       (is (:id item) "sanity check")
 
       (testing "get form for catalogue item"
@@ -104,15 +106,22 @@
                                    :user uid
                                    :value "B"})
             (db/save-license-approval! {:catappid app-id
-                                       :licid (:id license)
-                                       :actoruserid uid
-                                       :round 0
-                                       :state "approved"})
+                                        :licid (:id license)
+                                        :actoruserid uid
+                                        :round 0
+                                        :state "approved"})
+            (db/add-application-approval! {:id app-id
+                                           :user uid
+                                           :comment "comment"
+                                           :round 0
+                                           :state "rejected"})
             (let [f (applications/get-form-for (:id item) app-id)]
               (is (= app-id (:id (:application f))))
               (is (= "draft" (:state (:application f))))
               (is (= [nil "B" nil] (map :value (:items f))))
-              (is (= [true] (map :approved (:licenses f)))))
+              (is (= [true] (map :approved (:licenses f))))
+              (is (= [{:comment "comment" :round 0 :state "rejected"}]
+                     (:comments f))))
 
             (testing "license field"
               (db/save-license-approval! {:catappid app-id

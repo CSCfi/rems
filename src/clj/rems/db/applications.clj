@@ -67,6 +67,9 @@
                                                            :actoruserid (get-user-id)}))))
      }))
 
+(defn- process-comment [approval]
+  (select-keys approval [:round :comment :state]))
+
 (defn get-form-for
   "Returns a form structure like this:
 
@@ -87,7 +90,8 @@
                  :licensetype \"link\"
                  :title \"LGPL\"
                  :textcontent \"http://foo\"
-                 :approved false}]}"
+                 :approved false}]
+     :comments [{:round 0 :comment \"blah\" :state \"approved\"}]"
   ([catalogue-item]
    (get-form-for catalogue-item nil))
   ([catalogue-item application-id]
@@ -103,7 +107,10 @@
                                     (index-by [:licid :langcode]))
          licenses (mapv #(process-license application-id (license-localizations (:id %)) %)
                         (db/get-workflow-licenses {:catId catalogue-item}))
-         applicant? (= (:applicantuserid application) (get-user-id))]
+         applicant? (= (:applicantuserid application) (get-user-id))
+         comments (when application-id
+                    (mapv process-comment (db/get-application-approvals
+                                           {:id application-id})))]
      (when application-id
        (when-not (or applicant?
                      (approver? application-id))
@@ -113,7 +120,8 @@
       :application application
       :title (or (:formtitle form) (:metatitle form))
       :items items
-      :licenses licenses})))
+      :licenses licenses
+      :comments comments})))
 
 (defn create-new-draft [resource-id]
   (let [uid (get-user-id)
