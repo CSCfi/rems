@@ -7,6 +7,7 @@
             [rems.db.core :as db]
             [rems.db.applications :refer [get-form-for get-draft-id-for create-new-draft]]
             [rems.approvals :as approvals]
+            [rems.applications :as applications]
             [rems.anti-forgery :refer [anti-forgery-field]]
             [rems.role-switcher :refer [when-role]]
             [compojure.core :refer [defroutes GET POST]]
@@ -70,28 +71,30 @@
     (unsupported-field f)))
 
 (defn- form [form]
-  (let [applied (= (:state (:application form)) "applied")]
+  (let [state (:state (:application form))
+        editable (= state "draft")
+        readonly (not editable)
+        approvable (= state "applied")]
     (list
      [:form {:method "post"
              :action (if-let [app (:id (:application form))]
                        (str "/form/" (:catalogue-item form) "/" app "/save")
                        (str "/form/" (:catalogue-item form) "/save"))}
       [:h3 (:title form)]
-      (when applied
-        [:h2 (text :t.applications.states/applied)])
+      [:h4 (text (applications/localize-state state))]
       (for [i (:items form)]
-        (field (assoc i :readonly applied)))
+        (field (assoc i :readonly readonly)))
       (when-let [licenses (not-empty (:licenses form))]
         [:div
          [:label (text :t.form/licenses)]
          (for [l licenses]
-           (field (assoc l :readonly applied)))])
+           (field (assoc l :readonly readonly)))])
       (anti-forgery-field)
       (when-role :applicant
         [:div.row
          [:div.col
           [:a.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
-         (when-not applied
+         (when editable
            [:div.col.actions
             [:button.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)]
             [:button.btn.btn-primary {:type "submit" :name "submit"} (text :t.form/submit)]])])]
@@ -101,7 +104,7 @@
        [:div.row
         [:div.col
          [:a.btn.btn-secondary {:href "/approvals"} (text :t.form/back-approvals)]]
-        (when applied
+        (when approvable
           [:div.col.actions
            (approvals/approve-button (:application form))
            (approvals/reject-button (:application form))])]))))

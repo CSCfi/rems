@@ -7,7 +7,7 @@
             [rems.db.core :as db]
             [rems.db.applications :refer [get-applications]]))
 
-(defn- localize-state [state]
+(defn localize-state [state]
   (case state
     "draft" :t.applications.states/draft
     "applied" :t.applications.states/applied
