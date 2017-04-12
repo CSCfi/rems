@@ -17,7 +17,7 @@
 (defn view-button [app]
   [:a.btn.btn-primary
    {:href (str "/form/" (:catid app) "/" (:id app))}
-   (text :t/applications.view)])
+   (text :t.applications/view)])
 
 (defn approve-button [app]
   [:form.inline {:method "post"
