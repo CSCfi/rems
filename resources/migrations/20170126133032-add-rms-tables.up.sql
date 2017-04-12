@@ -522,7 +522,6 @@ CREATE TABLE users (
 --;;
 CREATE TABLE roles (
   -- TODO should this have an id for consistency with the other tables?
-  -- TODO userId should reference user table once we get it
   userId varchar(255),
   role varchar(255),
   PRIMARY KEY (userId, role),
