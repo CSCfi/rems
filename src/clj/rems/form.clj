@@ -50,7 +50,7 @@
   [:div.checkbox
    [:label
     [:input (merge {:type "checkbox" :name (str "license" id) :value "approved"
-                    :readonly readonly}
+                    :disabled readonly}
                    (when approved {:checked ""}))]
     [:a {:href textcontent :target "_blank"} (str " " title)]]])
 

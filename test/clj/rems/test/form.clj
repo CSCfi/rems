@@ -220,7 +220,10 @@
 (deftest test-editable
   (with-fake-tempura
     (binding [context/*active-role* :applicant]
-      (let [readonly? (fn [[_tag attrs]] (boolean (:readonly attrs)))
+      (let [readonly? (fn [[_tag attrs]]
+                        (case (:type attrs)
+                          "checkbox" (:disabled attrs) ;; checkboxes are special
+                          (:readonly attrs)))
             all-inputs (fn [body] (concat (hiccup-find [:div.form-group :input] body)
                                           (hiccup-find [:div.form-group :textarea] body)))
             submit-button #(first (hiccup-find [:.submit-button] %))
