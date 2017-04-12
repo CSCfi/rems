@@ -64,6 +64,7 @@
   :profiles
   {:uberjar {:omit-source true
              :aot :all
+             :jvm-opts ["-Dclojure.compiler.elide-meta=[:doc]"]
              :uberjar-name "rems.jar"
              :source-paths ["env/prod/clj"]
              :resource-paths ["env/prod/resources"]}
