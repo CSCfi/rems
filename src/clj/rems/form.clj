@@ -237,11 +237,15 @@
                    :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
                            {:type "label" :title "Please input your wishes below."}
                            {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2"}
-                           {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]}))
+                           {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]
+                   :licenses [{:type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
+                               :approved true}]}))
    (example "applied form"
             (form {:title "Form title"
                    :application {:id 17 :state "applied"}
                    :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
                            {:type "label" :title "Please input your wishes below."}
                            {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2" :value "def"}
-                           {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]}))))
+                           {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]
+                   :licenses [{:type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
+                               :approved true}]}))))
