@@ -72,8 +72,8 @@
 
     {:id 7
      :title \"Title\"
-     :application 3
-     :state \"draft\"
+     :application {:id 3
+                   :state \"draft\"}
      :catalogue-item 3
      :items [{:id 123
               :type \"texta\"
@@ -110,8 +110,7 @@
          (throw-unauthorized)))
      {:id form-id
       :catalogue-item catalogue-item
-      :application application-id
-      :state (:state application)
+      :application application
       :title (or (:formtitle form) (:metatitle form))
       :items items
       :licenses licenses})))

@@ -31,6 +31,7 @@
              :submit "Send application"
              :submitted "Application submitted."
              :back "Back to catalogue"
+             :back-approvals "Back to approvals"
              :validation {:required "Field \"%1\" is required."}}
       :applications {:application "Application"
                      :resource "Resource"
@@ -83,6 +84,7 @@
              :submit "Lähetä hakemus"
              :submitted "Hakemus lähetetty."
              :back "Takaisin kielivaroihin"
+             :back-approvals "Takaisin hyväksyntiin"
              :validation {:required "Kenttä \"%1\" on pakollinen."}}
       :applications {:application "Hakemus"
                      :resource "Kielivara"
