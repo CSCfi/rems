@@ -7,6 +7,7 @@
             [rems.db.core :as db]
             [rems.db.applications :refer [get-form-for get-draft-id-for create-new-draft]]
             [rems.approvals :as approvals]
+            [rems.applications :as applications]
             [rems.anti-forgery :refer [anti-forgery-field]]
             [rems.role-switcher :refer [when-role]]
             [compojure.core :refer [defroutes GET POST]]
@@ -44,15 +45,13 @@
   [:div.form-group
    [:label title]])
 
-(defn- checkbox-attrs [id approved]
-  (if approved
-    {:type "checkbox" :name (str "license" id) :checked "" :value "approved"}
-    {:type "checkbox" :name (str "license" id) :value "approved"}))
-
-(defn- license [{title :title id :id textcontent :textcontent approved :approved}]
+(defn- license [{title :title id :id textcontent :textcontent approved :approved
+                 readonly :readonly}]
   [:div.checkbox
    [:label
-    [:input (checkbox-attrs id approved)]
+    [:input (merge {:type "checkbox" :name (str "license" id) :value "approved"
+                    :disabled readonly}
+                   (when approved {:checked ""}))]
     [:a {:href textcontent :target "_blank"} (str " " title)]]])
 
 (defn- unsupported-field
@@ -70,38 +69,41 @@
     (unsupported-field f)))
 
 (defn- form [form]
-  (let [applied (= (:state (:application form)) "applied")]
+  (let [state (:state (:application form))
+        editable (or (nil? state) (= state "draft"))
+        readonly (not editable)
+        approvable (= state "applied")]
     (list
      [:form {:method "post"
              :action (if-let [app (:id (:application form))]
                        (str "/form/" (:catalogue-item form) "/" app "/save")
                        (str "/form/" (:catalogue-item form) "/save"))}
       [:h3 (:title form)]
-      (when applied
-        [:h2 (text :t.applications.states/applied)])
+      (when state
+        [:h4 (text (applications/localize-state state))])
       (for [i (:items form)]
-        (field (assoc i :readonly applied)))
+        (field (assoc i :readonly readonly)))
       (when-let [licenses (not-empty (:licenses form))]
-        [:div
+        [:div.form-group
          [:label (text :t.form/licenses)]
          (for [l licenses]
-           (field (assoc l :readonly applied)))])
+           (field (assoc l :readonly readonly)))])
       (anti-forgery-field)
       (when-role :applicant
         [:div.row
          [:div.col
           [:a.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
-         (when-not applied
+         (when editable
            [:div.col.actions
             [:button.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)]
-            [:button.btn.btn-primary {:type "submit" :name "submit"} (text :t.form/submit)]])])]
+            [:button.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)]])])]
      ;; The approve buttons need to be outside the form since they're
      ;; implemented as forms
      (when-role :approver
        [:div.row
         [:div.col
          [:a.btn.btn-secondary {:href "/approvals"} (text :t.form/back-approvals)]]
-        (when applied
+        (when approvable
           [:div.col.actions
            (approvals/approve-button (:application form))
            (approvals/reject-button (:application form))])]))))
@@ -235,11 +237,15 @@
                    :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
                            {:type "label" :title "Please input your wishes below."}
                            {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2"}
-                           {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]}))
+                           {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]
+                   :licenses [{:type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
+                               :approved true}]}))
    (example "applied form"
             (form {:title "Form title"
                    :application {:id 17 :state "applied"}
                    :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
                            {:type "label" :title "Please input your wishes below."}
                            {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2" :value "def"}
-                           {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]}))))
+                           {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]
+                   :licenses [{:type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
+                               :approved true}]}))))

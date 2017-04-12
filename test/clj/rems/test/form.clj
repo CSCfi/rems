@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [hiccup-find.core :refer :all]
             [ring.mock.request :refer :all]
+            [rems.context :as context]
             [rems.db.core :as db]
             rems.db.applications
             [rems.form :as form]
@@ -213,3 +214,33 @@
               (is (.contains flash-text "submitted")))
             (is (= {:states {2 "applied"} :values {2 {61 "", 62 "v"}} :approvals {2 {70 "approved"}}}
                    @world))))))))
+
+(def form #'form/form)
+
+(deftest test-editable
+  (with-fake-tempura
+    (binding [context/*active-role* :applicant]
+      (let [readonly? (fn [[_tag attrs]]
+                        (case (:type attrs)
+                          "checkbox" (:disabled attrs) ;; checkboxes are special
+                          (:readonly attrs)))
+            all-inputs (fn [body] (concat (hiccup-find [:div.form-group :input] body)
+                                          (hiccup-find [:div.form-group :textarea] body)))
+            submit-button #(first (hiccup-find [:.submit-button] %))
+            data {:items [{:type "text"}
+                          {:type "texta"}]
+                  :licenses [{:type "license" :licensetype "link"
+                              :textcontent "" :title ""}]}]
+        (testing "new form"
+          (let [body (form data)]
+            (is (= [false false false] (map readonly? (all-inputs body))))
+            (is (submit-button body))))
+        (testing "draft"
+          (let [body (form (assoc data :application {:state "draft"}))]
+            (is (= [false false false] (map readonly? (all-inputs body))))
+            (is (submit-button body))))
+        (doseq [state ["applied" "approved" "rejected"]]
+          (testing state
+            (let [body (form (assoc data :application {:state state}))]
+              (is (= [true true true] (map readonly? (all-inputs body))))
+              (is (nil? (submit-button body))))))))))
