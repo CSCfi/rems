@@ -70,7 +70,7 @@
 
 (defn- form [form]
   (let [state (:state (:application form))
-        editable (= state "draft")
+        editable (or (nil? state) (= state "draft"))
         readonly (not editable)
         approvable (= state "applied")]
     (list
@@ -79,7 +79,8 @@
                        (str "/form/" (:catalogue-item form) "/" app "/save")
                        (str "/form/" (:catalogue-item form) "/save"))}
       [:h3 (:title form)]
-      [:h4 (text (applications/localize-state state))]
+      (when state
+        [:h4 (text (applications/localize-state state))])
       (for [i (:items form)]
         (field (assoc i :readonly readonly)))
       (when-let [licenses (not-empty (:licenses form))]
