@@ -136,7 +136,7 @@
               (db/delete-license-approval! {:catappid app-id
                                             :licid (:id license)
                                             :actoruserid uid})
-              (is (= 0 (count (db/get-application-license-approval {:catappid app-id
+              (is (zero? (count (db/get-application-license-approval {:catappid app-id
                                                                     :licid (:id license)
                                                                     :actoruserid uid})))
                   "after deletion there should not be saved approvals")

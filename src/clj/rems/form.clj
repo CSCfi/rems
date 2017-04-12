@@ -130,8 +130,8 @@
 
    Returns either :valid or a sequence of validation errors."
   [form]
-  (let [messages (vec (concat (vec (filter identity (map validate-item (:items form))))
-                              (vec (filter identity (map validate-license (:licenses form))))))]
+  (let [messages (vec (concat (filterv identity (map validate-item (:items form)))
+                              (filterv identity (map validate-license (:licenses form)))))]
     (if (empty? messages)
       :valid
       messages)))
