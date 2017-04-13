@@ -66,7 +66,8 @@
           item-a (db/create-form-item!
                   {:title "A" :type "text" :inputprompt "prompt" :user uid :value 0})
           item-b (db/create-form-item!
-                  {:title "B" :type "text" :inputprompt "prompt" :user uid :value 0})]
+                  {:title "B" :type "text" :inputprompt "prompt" :user uid :value 0})
+          app-id (applications/create-new-draft (:id item))]
       (db/link-form-meta! {:meta (:id meta) :form (:id form-en) :lang "en" :user uid})
       (db/link-form-meta! {:meta (:id meta) :form (:id form-fi) :lang "fi" :user uid})
       (db/link-form-item! {:form (:id form-en) :itemorder 2 :item (:id item-b) :user uid})
@@ -98,62 +99,76 @@
 
       (testing "get partially filled form"
         (binding [context/*lang* :en]
-          (let [app-id (applications/create-new-draft (:id item))]
-            (is app-id "sanity check")
-            (db/save-field-value! {:application app-id
-                                   :form (:id form-en)
-                                   :item (:id item-b)
-                                   :user uid
-                                   :value "B"})
+          (is app-id "sanity check")
+          (db/save-field-value! {:application app-id
+                                 :form (:id form-en)
+                                 :item (:id item-b)
+                                 :user uid
+                                 :value "B"})
+          (db/save-license-approval! {:catappid app-id
+                                      :licid (:id license)
+                                      :actoruserid uid
+                                      :round 0
+                                      :state "approved"})
+          (db/add-application-approval! {:id app-id
+                                         :user uid
+                                         :comment "comment"
+                                         :round 0
+                                         :state "rejected"})
+          (let [f (applications/get-form-for (:id item) app-id)]
+            (is (= app-id (:id (:application f))))
+            (is (= "draft" (:state (:application f))))
+            (is (= [nil "B" nil] (map :value (:items f))))
+            (is (= [true] (map :approved (:licenses f))))
+            (is (= [{:comment "comment" :round 0 :state "rejected"}]
+                   (:comments f))))
+
+          (testing "license field"
             (db/save-license-approval! {:catappid app-id
                                         :licid (:id license)
                                         :actoruserid uid
                                         :round 0
                                         :state "approved"})
-            (db/add-application-approval! {:id app-id
-                                           :user uid
-                                           :comment "comment"
-                                           :round 0
-                                           :state "rejected"})
-            (let [f (applications/get-form-for (:id item) app-id)]
-              (is (= app-id (:id (:application f))))
-              (is (= "draft" (:state (:application f))))
-              (is (= [nil "B" nil] (map :value (:items f))))
-              (is (= [true] (map :approved (:licenses f))))
-              (is (= [{:comment "comment" :round 0 :state "rejected"}]
-                     (:comments f))))
-
-            (testing "license field"
-              (db/save-license-approval! {:catappid app-id
+            (is (= 1 (count (db/get-application-license-approval {:catappid app-id
+                                                                  :licid (:id license)
+                                                                  :actoruserid uid})))
+                "saving a license approval twice should only create one row")
+            (db/delete-license-approval! {:catappid app-id
                                           :licid (:id license)
-                                          :actoruserid uid
-                                          :round 0
-                                          :state "approved"})
-              (is (= 1 (count (db/get-application-license-approval {:catappid app-id
-                                                                    :licid (:id license)
-                                                                    :actoruserid uid})))
-                  "saving a license approval twice should only create one row")
-              (db/delete-license-approval! {:catappid app-id
-                                            :licid (:id license)
-                                            :actoruserid uid})
-              (is (= 0 (count (db/get-application-license-approval {:catappid app-id
-                                                                    :licid (:id license)
-                                                                    :actoruserid uid})))
-                  "after deletion there should not be saved approvals")
-              (let [f (applications/get-form-for (:id item) app-id)]
-                (is (= [false] (map :approved (:licenses f))))))
+                                          :actoruserid uid})
+            (is (= 0 (count (db/get-application-license-approval {:catappid app-id
+                                                                  :licid (:id license)
+                                                                  :actoruserid uid})))
+                "after deletion there should not be saved approvals")
+            (let [f (applications/get-form-for (:id item) app-id)]
+              (is (= [false] (map :approved (:licenses f))))))
 
-            (testing "reset field value"
-              (db/clear-field-value! {:application app-id
-                                      :form (:id form-en)
-                                      :item (:id item-b)})
-              (db/save-field-value! {:application app-id
-                                     :form (:id form-en)
-                                     :item (:id item-b)
-                                     :user uid
-                                     :value "X"})
-              (let [f (applications/get-form-for (:id item) app-id)]
-                (is (= [nil "X" nil] (map :value (:items f))))))))))))
+          (testing "reset field value"
+            (db/clear-field-value! {:application app-id
+                                    :form (:id form-en)
+                                    :item (:id item-b)})
+            (db/save-field-value! {:application app-id
+                                   :form (:id form-en)
+                                   :item (:id item-b)
+                                   :user uid
+                                   :value "X"})
+            (let [f (applications/get-form-for (:id item) app-id)]
+              (is (= [nil "X" nil] (map :value (:items f))))))))
+
+      (testing "get submitted form as approver"
+        (db/create-workflow-approver! {:wfid (:id wf) :appruserid "approver" :round 0})
+        (db/update-application-state! {:id app-id :user uid :state "applied" :curround 0})
+        (db/save-license-approval! {:catappid app-id
+                                    :licid (:id license)
+                                    :actoruserid uid
+                                    :round 0
+                                    :state "approved"})
+        (binding [context/*user* {"eppn" "approver"}
+                  context/*lang* :en]
+          (let [form (applications/get-form-for (:id item) app-id)]
+            (is (= "applied" (get-in form [:application :state])))
+            (is (= [nil "X" nil] (map :value (:items form))))
+            (is (get-in form [:licenses 0 :approved]))))))))
 
 (deftest test-applications
   (binding [context/*user* {"eppn" "test-user"}]
