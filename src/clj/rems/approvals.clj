@@ -93,7 +93,8 @@
               action (cond (get input "approve") :approve
                            (get input "reject") :reject
                            :else (errorf "Unknown action!"))
-              comment (get input "comment")]
+              comment (get input "comment")
+              comment (when-not (empty? comment) comment)]
           (case action
             :approve (approve id round comment)
             :reject (reject id round comment))
