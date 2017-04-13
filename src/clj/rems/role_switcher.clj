@@ -1,11 +1,11 @@
 (ns rems.role-switcher
-  (:require [rems.context :as context]
-            [rems.text :refer :all]
+  (:require [compojure.core :refer [POST defroutes]]
+            [rems.anti-forgery :refer [anti-forgery-field]]
+            [rems.context :as context]
             [rems.db.roles :as roles]
             [rems.guide :refer :all]
+            [rems.text :refer :all]
             [rems.util :refer [get-user-id]]
-            [rems.anti-forgery :refer [anti-forgery-field]]
-            [compojure.core :refer [defroutes POST]]
             [ring.util.response :refer [redirect]]))
 
 (defn- localize-role

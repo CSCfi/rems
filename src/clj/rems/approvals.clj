@@ -1,16 +1,14 @@
 (ns rems.approvals
-  (:require [rems.context :as context]
-            [clj-time.core :as time]
+  (:require [clj-time.core :as time]
             [clj-time.format :as format]
-            [compojure.core :refer [defroutes GET POST]]
-            [ring.util.response :refer [redirect]]
+            [compojure.core :refer [GET POST defroutes]]
+            [rems.anti-forgery :refer [anti-forgery-field]]
+            [rems.db.approvals :refer [approve get-approvals reject]]
             [rems.guide :refer :all]
             [rems.layout :as layout]
             [rems.text :refer [text]]
             [rems.util :refer [errorf]]
-            [rems.anti-forgery :refer [anti-forgery-field]]
-            [rems.db.core :as db]
-            [rems.db.approvals :refer [get-approvals approve reject]]))
+            [ring.util.response :refer [redirect]]))
 
 (def ^:private time-format (format/formatter "yyyy-MM-dd HH:mm"
                                              (time/default-time-zone)))

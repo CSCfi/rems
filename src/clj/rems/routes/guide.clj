@@ -1,19 +1,19 @@
 (ns rems.routes.guide
-  (:require [rems.guide :refer :all]
-            [rems.layout :as layout]
-            [rems.context :as context]
-            [rems.catalogue :as catalogue]
-            [rems.cart :as cart]
-            [rems.contents :as contents]
-            [rems.form :as form]
+  (:require [compojure.core :refer [GET defroutes]]
+            [hiccup.core :as h]
             [rems.applications :as applications]
             [rems.approvals :as approvals]
-            [rems.role-switcher :as role-switcher]
-            [hiccup.core :as h]
-            [compojure.core :refer [defroutes GET]]
+            [rems.cart :as cart]
+            [rems.catalogue :as catalogue]
+            [rems.contents :as contents]
+            [rems.context :as context]
+            [rems.db.core :as db]
+            [rems.form :as form]
+            [rems.guide :refer :all]
+            [rems.layout :as layout]
             [rems.locales :as locales]
-            [taoensso.tempura :as tempura :refer [tr]]
-            [rems.db.core :as db]))
+            [rems.role-switcher :as role-switcher]
+            [taoensso.tempura :as tempura :refer [tr]]))
 
 (defn color-box [id hex]
   [:div.col-md-3

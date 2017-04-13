@@ -1,12 +1,12 @@
 (ns rems.db.core
   (:require
    [cheshire.core :refer [generate-string parse-string]]
-   [clojure.java.jdbc :as jdbc]
    [clj-time.jdbc] ;; convert db timestamps to joda-time objects
+   [clojure.java.jdbc :as jdbc]
    [conman.core :as conman]
-   [rems.env :refer [+defaults+ *db*]]
+   [mount.core :as mount]
    [rems.config :refer [env]]
-   [mount.core :as mount])
+   [rems.env :refer [+defaults+ *db*]])
   (:import org.postgresql.util.PGobject
            java.sql.Array
            clojure.lang.IPersistentMap

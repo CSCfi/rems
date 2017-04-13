@@ -1,5 +1,5 @@
 (ns rems.util
-   (:require [rems.context :as context]))
+  (:require [rems.context :as context]))
 
 (defn index-by
   "Index the collection coll with given keys ks.

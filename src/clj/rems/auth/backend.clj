@@ -1,6 +1,6 @@
 (ns rems.auth.backend
-  (:require [rems.config :refer [env]]
-            [buddy.auth.protocols :as proto]
+  (:require [buddy.auth.protocols :as proto]
+            [rems.config :refer [env]]
             [rems.integration.shibbo-utils :as shibbo]))
 
 (defn- handle-unauthorized-default

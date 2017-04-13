@@ -1,16 +1,16 @@
 (ns rems.routes.home
-  (:require [rems.layout :as layout]
-            [rems.context :as context]
-            [rems.catalogue :as catalogue]
-            [rems.contents :as contents]
+  (:require [compojure.core :refer [GET defroutes]]
             [rems.applications :as applications]
-            [rems.landing-page :as landing-page]
             [rems.approvals :as approvals]
             [rems.cart :as cart]
+            [rems.catalogue :as catalogue]
+            [rems.contents :as contents]
+            [rems.context :as context]
             [rems.form :as form]
+            [rems.landing-page :as landing-page]
             [rems.language-switcher :as language-switcher]
-            [rems.role-switcher :as role-switcher]
-            [compojure.core :refer [defroutes GET]]))
+            [rems.layout :as layout]
+            [rems.role-switcher :as role-switcher]))
 
 (defn home-page []
   (layout/render

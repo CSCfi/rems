@@ -1,14 +1,14 @@
 (ns rems.standalone
   "Run the REMS app in an embedded http server."
-  (:require [rems.handler :as handler]
-            [rems.db.core :as db]
-            [luminus.repl-server :as repl]
-            [luminus.http-server :as http]
-            [luminus-migrations.core :as migrations]
-            [rems.config :refer [env]]
-            [clojure.tools.cli :refer [parse-opts]]
+  (:require [clojure.tools.cli :refer [parse-opts]]
             [clojure.tools.logging :as log]
-            [mount.core :as mount])
+            [luminus-migrations.core :as migrations]
+            [luminus.http-server :as http]
+            [luminus.repl-server :as repl]
+            [mount.core :as mount]
+            [rems.config :refer [env]]
+            [rems.db.core :as db]
+            [rems.handler :as handler])
   (:gen-class))
 
 (def cli-options

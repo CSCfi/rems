@@ -1,26 +1,28 @@
 (ns rems.middleware
-  (:require [rems.env :refer [+defaults+]]
-            [clojure.tools.logging :as log]
-            [rems.layout :refer [error-page]]
-            [rems.context :as context]
-            [ring.middleware.webjars :refer [wrap-webjars]]
-            [ring.middleware.format :refer [wrap-restful-format]]
-            [rems.cart :refer [get-cart-from-session]]
-            [rems.db.roles :as roles]
-            [rems.config :refer [env]]
-            [ring-ttl-session.core :refer [ttl-memory-store]]
-            [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
-            [buddy.auth.backends.session :refer [session-backend]]
-            [buddy.auth.middleware :refer [wrap-authentication wrap-authorization]]
+  (:require [buddy.auth :refer [authenticated?]]
             [buddy.auth.accessrules :refer [restrict]]
-            [buddy.auth :refer [authenticated?]]
-            [taoensso.tempura :as tempura :refer [tr]]
-            [rems.locales :refer [tconfig]]
-            [rems.auth.backend :refer [shibbo-backend authz-backend]]
-            [rems.language-switcher :refer [+default-language+]]
+            [buddy.auth.backends.session :refer [session-backend]]
+            [buddy.auth.middleware :refer [wrap-authentication
+                                           wrap-authorization]]
+            [clojure.tools.logging :as log]
+            [rems.auth.backend :refer [authz-backend shibbo-backend]]
             [rems.auth.NotAuthorizedException]
-            [rems.util :refer [get-user-id]])
-  (:import [javax.servlet ServletContext]))
+            [rems.cart :refer [get-cart-from-session]]
+            [rems.config :refer [env]]
+            [rems.context :as context]
+            [rems.db.roles :as roles]
+            [rems.env :refer [+defaults+]]
+            [rems.language-switcher :refer [+default-language+]]
+            [rems.layout :refer [error-page]]
+            [rems.locales :refer [tconfig]]
+            [rems.util :refer [get-user-id]]
+            [ring-ttl-session.core :refer [ttl-memory-store]]
+            [ring.middleware.defaults :refer [site-defaults
+                                              wrap-defaults]]
+            [ring.middleware.format :refer [wrap-restful-format]]
+            [ring.middleware.webjars :refer [wrap-webjars]]
+            [taoensso.tempura :as tempura])
+  (:import (javax.servlet ServletContext)))
 
 (defn calculate-root-path [request]
   (if-let [context (:servlet-context request)]

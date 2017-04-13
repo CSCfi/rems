@@ -1,10 +1,10 @@
 (ns rems.landing-page
-  (:require [ring.util.response :refer [redirect]]
-            [compojure.core :refer [defroutes GET]]
-            [rems.role-switcher :refer [has-roles?]]
+  (:require [compojure.core :refer [GET defroutes]]
             [rems.context :as context]
             [rems.db.users :as users]
-            [rems.util :refer [get-user-id]]))
+            [rems.role-switcher :refer [has-roles?]]
+            [rems.util :refer [get-user-id]]
+            [ring.util.response :refer [redirect]]))
 
 (defn- landing-page [req]
   (users/add-user! (get-user-id) context/*user*)

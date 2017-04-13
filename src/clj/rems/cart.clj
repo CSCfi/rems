@@ -1,13 +1,13 @@
 (ns rems.cart
-  (:require [rems.context :as context]
+  (:require [compojure.core :refer [POST defroutes]]
+            [rems.anti-forgery :refer [anti-forgery-field]]
+            [rems.context :as context]
+            [rems.db.catalogue :refer [get-catalogue-item-title
+                                       get-localized-catalogue-item]]
+            [rems.form :as form]
             [rems.guide :refer :all]
             [rems.text :refer :all]
-            [rems.form :as form]
-            [compojure.core :refer [defroutes POST]]
-            [rems.anti-forgery :refer [anti-forgery-field]]
-            [ring.util.response :refer [redirect]]
-            [rems.db.catalogue :refer [get-localized-catalogue-item
-                                       get-catalogue-item-title]]))
+            [ring.util.response :refer [redirect]]))
 
 (defn- button
   [class action text value & [disabled?]]

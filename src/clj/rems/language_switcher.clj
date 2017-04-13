@@ -1,7 +1,7 @@
 (ns rems.language-switcher
-  (:require [rems.context :as context]
-            [compojure.core :refer [defroutes POST]]
+  (:require [compojure.core :refer [POST defroutes]]
             [rems.anti-forgery :refer [anti-forgery-field]]
+            [rems.context :as context]
             [ring.util.response :refer [redirect]]))
 
 (def +default-language+ :en)

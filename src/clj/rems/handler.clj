@@ -1,15 +1,15 @@
 (ns rems.handler
-  (:require [compojure.core :refer [routes wrap-routes]]
-            [rems.layout :refer [error-page]]
-            [rems.routes.home :refer [public-routes secured-routes]]
-            [rems.routes.guide :refer [guide-routes]]
-            [rems.routes.fake-shibboleth :refer [fake-shibboleth-routes]]
+  (:require [clojure.tools.logging :as log]
+            [compojure.core :refer [routes wrap-routes]]
             [compojure.route :as route]
-            [rems.env :refer [+defaults+]]
             [mount.core :as mount]
+            [rems.config :refer [env]]
+            [rems.env :refer [+defaults+]]
+            [rems.layout :refer [error-page]]
             [rems.middleware :as middleware]
-            [clojure.tools.logging :as log]
-            [rems.config :refer [env]]))
+            [rems.routes.fake-shibboleth :refer [fake-shibboleth-routes]]
+            [rems.routes.guide :refer [guide-routes]]
+            [rems.routes.home :refer [public-routes secured-routes]]))
 
 (mount/defstate init-app
   :start ((or (:init +defaults+) identity))

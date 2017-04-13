@@ -1,17 +1,18 @@
 (ns rems.layout
   (:require [compojure.response]
-            [rems.context :as context]
-            [rems.guide :refer :all]
-            [rems.text :refer :all]
-            [rems.language-switcher :refer [language-switcher]]
-            [rems.util :refer [get-username]]
-            [rems.role-switcher :refer [role-switcher when-role when-roles]]
             [hiccup.element :refer [link-to]]
             [hiccup.page :refer [html5 include-css include-js]]
             [markdown.core :refer [md-to-html-string]]
-            [ring.util.http-response :as response]
+            [rems.context :as context]
+            [rems.guide :refer :all]
+            [rems.language-switcher :refer [language-switcher]]
+            [rems.role-switcher :refer [role-switcher when-role
+                                        when-roles]]
+            [rems.text :refer :all]
+            [rems.util :refer [get-username]]
+            [ring.middleware.anti-forgery :refer [*anti-forgery-token*]]
             [ring.util.anti-forgery :refer [anti-forgery-field]]
-            [ring.middleware.anti-forgery :refer [*anti-forgery-token*]])
+            [ring.util.http-response :as response])
   (:import compojure.response.Renderable))
 
 
