@@ -51,9 +51,12 @@
      :title \"LGPL\"
      :textcontent \"www.license.link\"
      :approved false}"
-  [application-id user localizations license]
-  (let [localized-title (get-in localizations [context/*lang* :title])
-        localized-content (get-in localizations [context/*lang* :textcontent])]
+  [application localizations license]
+  (let [app-id (:id application)
+        app-user (:applicantuserid application)
+        license-id (:id license)
+        localized-title (get-in localizations [license-id context/*lang* :title])
+        localized-content (get-in localizations [license-id context/*lang* :textcontent])]
     {:id (:id license)
      :type "license"
      :licensetype (:type license)
@@ -61,11 +64,10 @@
      :textcontent (or localized-content (:textcontent license))
      :approved (= "approved"
                   (:state
-                   (when application-id
-                     (db/get-application-license-approval {:catappid application-id
+                   (when application
+                     (db/get-application-license-approval {:catappid app-id
                                                            :licid (:id license)
-                                                           :actoruserid user}))))
-     }))
+                                                           :actoruserid app-user}))))}))
 
 (defn- process-comment [approval]
   (select-keys approval [:round :comment :state]))
@@ -99,14 +101,13 @@
                {:id catalogue-item :lang (name context/*lang*)})
          application (when application-id
                        (first (db/get-applications {:id application-id})))
-         user (get application :applicantuserid)
          form-id (:formid form)
          items (mapv #(process-item application-id form-id %)
                      (db/get-form-items {:id form-id}))
          license-localizations (->> (db/get-license-localizations)
                                     (map #(update-in % [:langcode] keyword))
                                     (index-by [:licid :langcode]))
-         licenses (mapv #(process-license application-id user (license-localizations (:id %)) %)
+         licenses (mapv #(process-license application license-localizations %)
                         (db/get-workflow-licenses {:catId catalogue-item}))
          applicant? (= (:applicantuserid application) (get-user-id))
          comments (when application-id
