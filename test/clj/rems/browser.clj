@@ -1,6 +1,5 @@
 (ns rems.browser
   (:require [clj-webdriver.taxi :refer :all]
-            [clojure.test :refer :all]
             [mount.core :as mount]))
 
 (def ^:private browser-count (atom 0))

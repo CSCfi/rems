@@ -1,16 +1,17 @@
 (ns rems.form
-  (:require [rems.context :as context]
-            [rems.layout :as layout]
+  (:require [compojure.core :refer [GET POST defroutes]]
+            [rems.anti-forgery :refer [anti-forgery-field]]
+            [rems.applications :as applications]
+            [rems.approvals :as approvals]
+            [rems.db.applications :refer [create-new-draft
+                                          get-draft-id-for
+                                          get-form-for]]
+            [rems.db.core :as db]
             [rems.guide :refer :all]
+            [rems.layout :as layout]
+            [rems.role-switcher :refer [when-role]]
             [rems.text :refer :all]
             [rems.util :refer [get-user-id]]
-            [rems.db.core :as db]
-            [rems.db.applications :refer [get-form-for get-draft-id-for create-new-draft]]
-            [rems.approvals :as approvals]
-            [rems.applications :as applications]
-            [rems.anti-forgery :refer [anti-forgery-field]]
-            [rems.role-switcher :refer [when-role]]
-            [compojure.core :refer [defroutes GET POST]]
             [ring.util.response :refer [redirect]]))
 
 (defn- id-to-name [id]
@@ -131,8 +132,8 @@
 
    Returns either :valid or a sequence of validation errors."
   [form]
-  (let [messages (vec (concat (vec (filter identity (map validate-item (:items form))))
-                              (vec (filter identity (map validate-license (:licenses form))))))]
+  (let [messages (vec (concat (filterv identity (map validate-item (:items form)))
+                              (filterv identity (map validate-license (:licenses form)))))]
     (if (empty? messages)
       :valid
       messages)))

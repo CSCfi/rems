@@ -2,12 +2,12 @@
   "Query functions for approvals."
   (:require [clojure.tools.logging :as log]
             [conman.core :as conman]
-            [rems.env :refer [*db*]]
+            [rems.auth.util :refer [throw-unauthorized]]
             [rems.context :as context]
-            [rems.db.core :as db]
             [rems.db.catalogue :refer [get-localized-catalogue-item]]
-            [rems.util :refer [index-by get-user-id]]
-            [rems.auth.util :refer [throw-unauthorized]]))
+            [rems.db.core :as db]
+            [rems.env :refer [*db*]]
+            [rems.util :refer [get-user-id]]))
 
 (defn get-approvals []
   (doall

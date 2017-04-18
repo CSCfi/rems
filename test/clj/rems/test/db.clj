@@ -1,20 +1,18 @@
 (ns ^:integration rems.test.db
   "Namespace for tests that use an actual database."
-  (:require [rems.db.core :as db]
+  (:require [cheshire.core :refer :all]
+            [clojure.java.jdbc :as jdbc]
+            [clojure.test :refer :all]
+            [conman.core :as conman]
+            [luminus-migrations.core :as migrations]
+            [mount.core :as mount]
+            [rems.config :refer [env]]
             [rems.context :as context]
-            [rems.contents :as contents]
             [rems.db.applications :as applications]
             [rems.db.approvals :as approvals]
+            [rems.db.core :as db]
             [rems.db.roles :as roles]
-            [rems.env :refer [*db*]]
-            [rems.util :refer [get-user-id]]
-            [luminus-migrations.core :as migrations]
-            [clojure.test :refer :all]
-            [clojure.java.jdbc :as jdbc]
-            [rems.config :refer [env]]
-            [mount.core :as mount]
-            [conman.core :as conman]
-            [cheshire.core :refer :all]))
+            [rems.util :refer [get-user-id]]))
 
 (use-fixtures
   :once
@@ -136,13 +134,12 @@
             (db/delete-license-approval! {:catappid app-id
                                           :licid (:id license)
                                           :actoruserid uid})
-            (is (= 0 (count (db/get-application-license-approval {:catappid app-id
+            (is (empty? (db/get-application-license-approval {:catappid app-id
                                                                   :licid (:id license)
-                                                                  :actoruserid uid})))
+                                                                  :actoruserid uid}))
                 "after deletion there should not be saved approvals")
             (let [f (applications/get-form-for (:id item) app-id)]
               (is (= [false] (map :approved (:licenses f))))))
-
           (testing "reset field value"
             (db/clear-field-value! {:application app-id
                                     :form (:id form-en)

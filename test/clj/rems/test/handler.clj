@@ -1,17 +1,16 @@
 (ns ^:integration rems.test.handler
-  (:require [clojure.test :refer :all]
-            [clojure.string :as s]
-            [hickory.core :as h]
-            [ring.mock.request :refer :all]
-            [ring.util.codec :refer [form-decode]]
+  (:require [clojure.string :as s]
+            [clojure.test :refer :all]
             [hiccup-find.core :refer :all]
-            [rems.handler :refer :all]
-            [mount.core :as mount]
-            [rems.db.core :as db]
-            [rems.env :refer [*db*]]
+            [hickory.core :as h]
             [luminus-migrations.core :as migrations]
+            [mount.core :as mount]
             [rems.config :refer [env]]
-            [rems.db.roles :as roles]))
+            [rems.db.core :as db]
+            [rems.db.roles :as roles]
+            [rems.handler :refer :all]
+            [ring.mock.request :refer :all]
+            [ring.util.codec :refer [form-decode]]))
 
 (use-fixtures
   :once

@@ -1,10 +1,6 @@
 (ns rems.contents
-  (:require [hiccup.element :refer [link-to image]]
-            [rems.cart :as cart]
-            [rems.form :as form]
-            [rems.text :refer :all]
-            [rems.db.core :as db]
-            [rems.context :as context]))
+  (:require [hiccup.element :refer [image link-to]]
+            [rems.text :refer :all]))
 
 (defn login [context]
   [:div.jumbotron

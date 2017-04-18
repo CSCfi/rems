@@ -1,11 +1,9 @@
 (ns rems.routes.fake-shibboleth
-  (:require [rems.layout :as layout]
-            [compojure.core :refer [defroutes GET]]
-            [ring.util.response :refer [response redirect content-type]]
-            [hiccup.util :refer [url]]
-            [buddy.auth.backends.session :refer [session-backend]]
+  (:require [compojure.core :refer [GET defroutes]]
             [hiccup.page :refer [html5]]
-            [clojure.java.io :as io]))
+            [hiccup.util :refer [url]]
+            [ring.util.response :refer [content-type redirect
+                                        response]]))
 
 (def ^{:private true
        :doc "Inlined CSS declaration for fake login."}

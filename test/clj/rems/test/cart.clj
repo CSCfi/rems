@@ -1,10 +1,8 @@
 (ns rems.test.cart
   (:require [clojure.test :refer :all]
             [hiccup-find.core :refer :all]
-            [ring.mock.request :refer :all]
-            [rems.context :as context]
             [rems.cart :as cart]
-            rems.test.tempura))
+            [ring.mock.request :refer :all]))
 
 (use-fixtures :once rems.test.tempura/fake-tempura-fixture)
 

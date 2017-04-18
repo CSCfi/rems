@@ -1,11 +1,9 @@
 (ns rems.applications
-  (:require [rems.context :as context]
-            [clj-time.core :as time]
+  (:require [clj-time.core :as time]
             [clj-time.format :as format]
+            [rems.db.applications :refer [get-applications]]
             [rems.guide :refer :all]
-            [rems.text :refer [text]]
-            [rems.db.core :as db]
-            [rems.db.applications :refer [get-applications]]))
+            [rems.text :refer [text]]))
 
 (defn localize-state [state]
   (case state

@@ -1,21 +1,7 @@
 (ns rems.db.core
-  (:require
-   [cheshire.core :refer [generate-string parse-string]]
-   [clojure.java.jdbc :as jdbc]
-   [clj-time.jdbc] ;; convert db timestamps to joda-time objects
-   [conman.core :as conman]
-   [rems.env :refer [+defaults+ *db*]]
-   [rems.config :refer [env]]
-   [mount.core :as mount])
-  (:import org.postgresql.util.PGobject
-           java.sql.Array
-           clojure.lang.IPersistentMap
-           clojure.lang.IPersistentVector
-           [java.sql
-            BatchUpdateException
-            Date
-            Timestamp
-            PreparedStatement]))
+  (:require [clj-time.jdbc] ;; convert db timestamps to joda-time objects
+            [conman.core :as conman]
+            [rems.env :refer [*db*]]))
 
 (conman/bind-connection *db* "sql/queries.sql")
 

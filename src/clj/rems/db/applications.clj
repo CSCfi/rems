@@ -1,11 +1,11 @@
 (ns rems.db.applications
   "Query functions for forms and applications."
-  (:require [rems.context :as context]
-            [rems.db.core :as db]
-            [rems.db.catalogue :refer [get-localized-catalogue-item]]
+  (:require [rems.auth.util :refer [throw-unauthorized]]
+            [rems.context :as context]
             [rems.db.approvals :refer [approver?]]
-            [rems.util :refer [index-by get-user-id]]
-            [rems.auth.util :refer [throw-unauthorized]]))
+            [rems.db.catalogue :refer [get-localized-catalogue-item]]
+            [rems.db.core :as db]
+            [rems.util :refer [get-user-id index-by]]))
 
 (defn get-applications []
   (doall
