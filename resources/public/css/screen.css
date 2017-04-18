@@ -384,6 +384,10 @@ form.inline .btn-link {
   padding-top: 0.8rem;
 }
 
+.alert ul {
+  margin-bottom: 0;
+}
+
 .form-control::placeholder { /* Standard */
   color: #ccc;
 }
