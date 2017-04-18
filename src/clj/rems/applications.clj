@@ -32,20 +32,25 @@
   ([]
    (applications (get-applications)))
   ([apps]
-   [:table.rems-table.applications
-    [:tr
-     [:th (text :t.applications/application)]
-     [:th (text :t.applications/resource)]
-     [:th (text :t.applications/state)]
-     [:th (text :t.applications/created)]]
-    (for [app apps]
-      (applications-item app))]))
+   (if (empty? apps)
+    [:div.alert.alert-success (text :t/applications.empty)]
+    [:table.rems-table.applications
+     [:tr
+      [:th (text :t.applications/application)]
+      [:th (text :t.applications/resource)]
+      [:th (text :t.applications/state)]
+      [:th (text :t.applications/created)]]
+     (for [app apps]
+       (applications-item app))])))
 
 (defn guide
   []
-  (example "applications"
-           (applications
-            [{:id 1 :catalogue-item {:title "Draft application"} :state "draft" :applicantuserid "alice"}
-             {:id 3 :catalogue-item {:title "Applied application"} :state "applied" :applicantuserid "bob"}
-             {:id 3 :catalogue-item {:title "Approved application"} :state "approved" :applicantuserid "charlie"}
-             {:id 3 :catalogue-item {:title "Rejected application"} :state "rejected" :applicantuserid "david"}])))
+  (list
+   (example "applications empty"
+            (applications []))
+   (example "applications"
+            (applications
+             [{:id 1 :catalogue-item {:title "Draft application"} :state "draft" :applicantuserid "alice"}
+              {:id 3 :catalogue-item {:title "Applied application"} :state "applied" :applicantuserid "bob"}
+              {:id 3 :catalogue-item {:title "Approved application"} :state "approved" :applicantuserid "charlie"}
+              {:id 3 :catalogue-item {:title "Rejected application"} :state "rejected" :applicantuserid "david"}]))))

@@ -62,22 +62,27 @@
   ([]
    (approvals (get-approvals)))
   ([apps]
-   [:table.rems-table.approvals
-    [:tr
-     [:th (text :t.approvals/application)]
-     [:th (text :t.approvals/resource)]
-     [:th (text :t.approvals/applicant)]
-     [:th (text :t.approvals/created)]
-     [:th]]
-    (for [app (sort-by :id apps)]
-      (approvals-item app))]))
+   (if (empty? apps)
+     [:div.alert.alert-success (text :t/approvals.empty)]
+     [:table.rems-table.approvals
+      [:tr
+       [:th (text :t.approvals/application)]
+       [:th (text :t.approvals/resource)]
+       [:th (text :t.approvals/applicant)]
+       [:th (text :t.approvals/created)]
+       [:th]]
+      (for [app (sort-by :id apps)]
+        (approvals-item app))])))
 
 (defn guide
   []
-  (example "approvals"
-           (approvals
-            [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid "alice"}
-             {:id 3 :catalogue-item {:title "bbbbbb"} :applicantuserid "bob"}])))
+  (list
+   (example "approvals empty"
+            (approvals []))
+   (example "approvals"
+            (approvals
+             [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid "alice"}
+              {:id 3 :catalogue-item {:title "bbbbbb"} :applicantuserid "bob"}]))))
 
 (defn approvals-page []
   (layout/render
