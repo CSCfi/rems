@@ -33,7 +33,7 @@
    (applications (get-applications)))
   ([apps]
    (if (empty? apps)
-    [:div.alert.alert-success (text :t/applications.empty)]
+    [:div.applications.alert.alert-success (text :t/applications.empty)]
     [:table.rems-table.applications
      [:tr
       [:th (text :t.applications/application)]

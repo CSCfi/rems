@@ -63,7 +63,7 @@
    (approvals (get-approvals)))
   ([apps]
    (if (empty? apps)
-     [:div.alert.alert-success (text :t/approvals.empty)]
+     [:div.approvals.alert.alert-success (text :t/approvals.empty)]
      [:table.rems-table.approvals
       [:tr
        [:th (text :t.approvals/application)]
