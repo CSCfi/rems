@@ -292,7 +292,7 @@ footer {
   border-radius: .4em;
 }
 
-form {
+form:not(.inline) {
     padding-bottom: 1em;
 }
 
