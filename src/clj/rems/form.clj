@@ -3,7 +3,6 @@
             [rems.anti-forgery :refer [anti-forgery-field]]
             [rems.applications :as applications]
             [rems.approvals :as approvals]
-            [rems.context :as context]
             [rems.db.applications :refer [create-new-draft
                                           get-draft-id-for
                                           get-form-for]]

@@ -2,7 +2,6 @@
   (:require [clojure.test :refer :all]
             [hiccup-find.core :refer :all]
             [rems.context :as context]
-            rems.db.applications
             [rems.db.core :as db]
             [rems.form :as form]
             [rems.test.tempura :refer [with-fake-tempura]]

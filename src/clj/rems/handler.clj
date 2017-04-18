@@ -3,7 +3,6 @@
             [compojure.core :refer [routes wrap-routes]]
             [compojure.route :as route]
             [mount.core :as mount]
-            [rems.config :refer [env]]
             [rems.env :refer [+defaults+]]
             [rems.layout :refer [error-page]]
             [rems.middleware :as middleware]

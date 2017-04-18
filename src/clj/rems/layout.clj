@@ -1,8 +1,6 @@
 (ns rems.layout
-  (:require [compojure.response]
-            [hiccup.element :refer [link-to]]
+  (:require [hiccup.element :refer [link-to]]
             [hiccup.page :refer [html5 include-css include-js]]
-            [markdown.core :refer [md-to-html-string]]
             [rems.context :as context]
             [rems.guide :refer :all]
             [rems.language-switcher :refer [language-switcher]]
@@ -10,11 +8,7 @@
                                         when-roles]]
             [rems.text :refer :all]
             [rems.util :refer [get-username]]
-            [ring.middleware.anti-forgery :refer [*anti-forgery-token*]]
-            [ring.util.anti-forgery :refer [anti-forgery-field]]
-            [ring.util.http-response :as response])
-  (:import compojure.response.Renderable))
-
+            [ring.util.http-response :as response]))
 
 (defn- url-dest
   [dest]

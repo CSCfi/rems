@@ -1,6 +1,5 @@
 (ns rems.test.locales
   (:require [clojure.test :refer :all]
-            [clojure.walk :refer [postwalk]]
             [rems.locales :refer [tconfig]]))
 
 (defn map-structure

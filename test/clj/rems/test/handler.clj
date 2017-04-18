@@ -8,7 +8,6 @@
             [rems.config :refer [env]]
             [rems.db.core :as db]
             [rems.db.roles :as roles]
-            [rems.env :refer [*db*]]
             [rems.handler :refer :all]
             [ring.mock.request :refer :all]
             [ring.util.codec :refer [form-decode]]))

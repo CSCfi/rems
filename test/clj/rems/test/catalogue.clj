@@ -2,8 +2,7 @@
   (:require [clojure.test :refer :all]
             [hiccup-find.core :refer :all]
             [rems.catalogue :refer :all]
-            [rems.context :as context]
-            rems.test.tempura))
+            [rems.context :as context]))
 
 (use-fixtures :once rems.test.tempura/fake-tempura-fixture)
 

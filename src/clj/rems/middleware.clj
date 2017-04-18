@@ -6,7 +6,6 @@
                                            wrap-authorization]]
             [clojure.tools.logging :as log]
             [rems.auth.backend :refer [authz-backend shibbo-backend]]
-            [rems.auth.NotAuthorizedException]
             [rems.cart :refer [get-cart-from-session]]
             [rems.config :refer [env]]
             [rems.context :as context]

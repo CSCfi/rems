@@ -1,9 +1,5 @@
 (ns rems.contents
-  (:require [hiccup.element :refer [link-to image]]
-            [rems.cart :as cart]
-            [rems.context :as context]
-            [rems.db.core :as db]
-            [rems.form :as form]
+  (:require [hiccup.element :refer [image link-to]]
             [rems.text :refer :all]))
 
 (defn login [context]

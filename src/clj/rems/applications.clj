@@ -1,9 +1,7 @@
 (ns rems.applications
   (:require [clj-time.core :as time]
             [clj-time.format :as format]
-            [rems.context :as context]
             [rems.db.applications :refer [get-applications]]
-            [rems.db.core :as db]
             [rems.guide :refer :all]
             [rems.text :refer [text]]))
 

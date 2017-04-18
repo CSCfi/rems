@@ -7,13 +7,10 @@
             [rems.catalogue :as catalogue]
             [rems.contents :as contents]
             [rems.context :as context]
-            [rems.db.core :as db]
             [rems.form :as form]
             [rems.guide :refer :all]
             [rems.layout :as layout]
-            [rems.locales :as locales]
-            [rems.role-switcher :as role-switcher]
-            [taoensso.tempura :as tempura :refer [tr]]))
+            [rems.role-switcher :as role-switcher]))
 
 (defn color-box [id hex]
   [:div.col-md-3
