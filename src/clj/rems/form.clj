@@ -72,7 +72,8 @@
   (let [state (:state (:application form))
         editable (or (nil? state) (= state "draft"))
         readonly (not editable)
-        approvable (= state "applied")]
+        approvable (= state "applied")
+        comments (keep :comment (:comments form))]
     (list
      [:form {:method "post"
              :action (if-let [app (:id (:application form))]
@@ -88,12 +89,12 @@
          [:label (text :t.form/licenses)]
          (for [l licenses]
            (field (assoc l :readonly readonly)))])
-      (when-let [comments (not-empty (:comments form))]
+      (when-not (empty? comments)
         (list
          [:h4 (text :t.form/comments)]
          [:ul
           (for [c comments]
-            [:li (:comment c)])]))
+            [:li c])]))
       (anti-forgery-field)
       (when-role :applicant
         [:div.row
