@@ -1,12 +1,12 @@
 (ns rems.test.form
   (:require [clojure.test :refer :all]
             [hiccup-find.core :refer :all]
-            [ring.mock.request :refer :all]
             [rems.context :as context]
-            [rems.db.core :as db]
             rems.db.applications
+            [rems.db.core :as db]
             [rems.form :as form]
-            [rems.test.tempura :refer [with-fake-tempura]]))
+            [rems.test.tempura :refer [with-fake-tempura]]
+            [ring.mock.request :refer :all]))
 
 (def field #'form/field)
 

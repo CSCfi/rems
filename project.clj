@@ -7,19 +7,22 @@
                  [buddy "1.3.0" :exclusions [cheshire]]
                  [ch.qos.logback/logback-classic "1.2.3"]
                  [clj-time "0.13.0"]
-                 [org.clojure/core.memoize "0.5.9"]
                  [compojure "1.5.2"]
                  [com.taoensso/tempura "1.1.2"]
                  [conman "0.6.3"]
                  [cprop "0.1.10"]
+                 [hiccup "1.0.5"]
+                 [hickory "0.7.1" :exclusions [org.clojure/clojurescript]]
                  [luminus-jetty "0.1.4" :exclusions [org.clojure/tools.reader]]
                  [luminus-migrations "0.3.0" :exclusions [org.clojure/java.jdbc]]
                  [luminus-nrepl "0.1.4"]
                  [luminus/ring-ttl-session "0.3.2"]
+                 [macroz/hiccup-find "0.5.0" :exclusions [org.clojure/clojurescript]]
                  [markdown-clj "0.9.98"]
                  [metosin/ring-http-response "0.8.2"]
                  [mount "0.1.11"]
                  [org.clojure/clojure "1.8.0"]
+                 [org.clojure/core.memoize "0.5.9"]
                  [org.clojure/tools.cli "0.3.5"]
                  [org.clojure/tools.logging "0.3.1"]
                  [org.postgresql/postgresql "9.4.1212"]
@@ -32,10 +35,7 @@
                  [ring-webjars "0.1.1"]
                  [ring/ring-defaults "0.2.3"]
                  [ring/ring-devel "1.5.1"]
-                 [ring/ring-servlet "1.5.1"]
-                 [hiccup "1.0.5"]
-                 [macroz/hiccup-find "0.5.0" :exclusions [org.clojure/clojurescript]]
-                 [hickory "0.7.1" :exclusions [org.clojure/clojurescript]]]
+                 [ring/ring-servlet "1.5.1"]]
 
   :min-lein-version "2.0.0"
 
@@ -47,8 +47,8 @@
   :migratus {:store :database :db ~(get (System/getenv) "DATABASE_URL")}
 
   :plugins [[lein-cprop "1.0.1"]
-            [migratus-lein "0.4.3"]
-            [lein-uberwar "0.2.0"]]
+            [lein-uberwar "0.2.0"]
+            [migratus-lein "0.4.3"]]
 
    :uberwar
      {:handler rems.handler/app
@@ -72,14 +72,14 @@
    :dev           [:project/dev :profiles/dev]
    :test          [:project/dev :project/test :profiles/test]
 
-   :project/dev  {:dependencies [[ring/ring-mock "0.3.0"]
-                                 [pjstadig/humane-test-output "0.8.1"]
-                                 [clj-webdriver/clj-webdriver "0.7.2" :exclusions [commons-logging]]
+   :project/dev  {:dependencies [[clj-webdriver/clj-webdriver "0.7.2" :exclusions [commons-logging]]
                                  [directory-naming/naming-java "0.8"]
                                  [org.seleniumhq.selenium/selenium-server "3.0.1" :exclusions [commons-logging
-                                                                                               org.apache.httpcomponents/httpmime
                                                                                                org.apache.httpcomponents/httpclient
-                                                                                               org.apache.httpcomponents/httpcore]]]
+                                                                                               org.apache.httpcomponents/httpcore
+                                                                                               org.apache.httpcomponents/httpmime]]
+                                 [pjstadig/humane-test-output "0.8.1"]
+                                 [ring/ring-mock "0.3.0"]]
                   :plugins [[com.jakemccrary/lein-test-refresh "0.14.0"]
                             [lein-cloverage "1.0.9" :exclusions [org.clojure/clojure]]]
 

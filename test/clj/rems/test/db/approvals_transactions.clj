@@ -2,21 +2,21 @@
   "Approvals tests that require transactions.
 
   Regular tests can use the DB resetting fixture."
-  (:require [rems.db.core :as db]
+  (:require [cheshire.core :refer :all]
+            [clojure.java.jdbc :as jdbc]
+            [clojure.test :refer :all]
+            [conman.core :as conman]
+            [luminus-migrations.core :as migrations]
+            [mount.core :as mount]
+            [rems.config :refer [env]]
             [rems.context :as context]
             [rems.contents :as contents]
             [rems.db.applications :as applications]
             [rems.db.approvals :as approvals]
+            [rems.db.core :as db]
             [rems.db.roles :as roles]
             [rems.env :refer [*db*]]
-            [rems.util :refer [get-user-id]]
-            [luminus-migrations.core :as migrations]
-            [clojure.test :refer :all]
-            [clojure.java.jdbc :as jdbc]
-            [rems.config :refer [env]]
-            [mount.core :as mount]
-            [conman.core :as conman]
-            [cheshire.core :refer :all]))
+            [rems.util :refer [get-user-id]]))
 
 (use-fixtures
   :once
