@@ -1,4 +1,5 @@
-(ns rems.auth.util)
+(ns rems.auth.util
+  (:require [rems.auth.NotAuthorizedException]))
 
 (defn throw-unauthorized
   "Helper for throwing `NotAuthorizedException`."
