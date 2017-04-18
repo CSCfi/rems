@@ -65,7 +65,8 @@
   [:div.alert
    {:class (case status
              :success "alert-success"
-             :warning "alert-warning")}
+             :warning "alert-warning"
+             :info "alert-info")}
    contents])
 
 (defn- page-template
@@ -101,7 +102,7 @@
                  (footer))
         message (when-not (:bare params)
                   (when context/*flash*
-                    (flash-message context/*flash*)))
+                    (map flash-message context/*flash*)))
         content-type (:content-type params "text/html; charset=utf-8")
         status (:status params 200)
         headers (:headers params {})]

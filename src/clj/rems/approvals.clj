@@ -102,7 +102,7 @@
             :approve (approve id round comment)
             :reject (reject id round comment))
           (assoc (redirect "/approvals" :see-other)
-                 :flash {:status :success
+                 :flash [{:status :success
                          :contents (case action
                                      :approve (text :t.approvals/approve-success)
-                                     :reject (text :t.approvals/reject-success))}))))
+                                     :reject (text :t.approvals/reject-success))}]))))
