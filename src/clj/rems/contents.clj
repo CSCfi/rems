@@ -7,7 +7,7 @@
             [rems.context :as context]))
 
 (defn login [context]
-  [:div.jumbotron
+  [:div.m-auto.jumbotron
    [:h2 (text :t.login/title)]
    [:p (text :t.login/text)]
    (link-to (str context "/Shibboleth.sso/Login") (image {:class "login-btn"} "/img/haka-logo.jpg"))])

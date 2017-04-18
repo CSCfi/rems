@@ -32,12 +32,22 @@ a, button {
 html {
   position: relative;
   min-width: 320px;
-  min-height: 100%;
+  height: 100%;
 }
 
 body {
-  margin-bottom: 53.6px;
   font-family: 'Lato', sans-serif;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: none;
+  min-height: 300px;
+  flex-grow: 1;
 }
 
 .container {
@@ -96,11 +106,6 @@ body {
   -moz-background-size: contain;
   -o-background-size: contain;
   background-size: contain;
-}
-
-body > footer {
-  position: absolute;
-  bottom: 0;
 }
 
 footer {

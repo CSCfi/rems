@@ -86,7 +86,7 @@
            [:div.container nav]
            (logo)
            [:div.container message]
-           [:div.container content]
+           [:div.container.main-content content]
            footer
            (include-js "/assets/jquery/jquery.min.js")
            (include-js "/assets/tether/dist/js/tether.min.js")
