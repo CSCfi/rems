@@ -392,6 +392,7 @@ ul.comments {
   list-style-type: none;
 }
 
+/* These must be last as the parsing fails when the first non-standard element is met */
 .form-control::placeholder { /* Standard */
   color: #ccc;
 }
