@@ -33,8 +33,9 @@
 (defn approve-buttons [app]
   [:form.inline (approve-form-attrs app)
    (anti-forgery-field)
-   (approve-button)
-   (reject-button)])
+   [:div.form-actions
+    (approve-button)
+    (reject-button)]])
 
 (defn approve-form [app]
   [:form (approve-form-attrs app)
