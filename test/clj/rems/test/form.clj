@@ -124,7 +124,7 @@
           (let [resp (run "/form/7/save" {"field61" "x"
                                           "field62" "y"
                                           "license70" "approved"})
-                flash (:flash resp)
+                flash (first (:flash resp))
                 flash-text (hiccup-text (:contents flash))]
             (is (= 303 (:status resp)))
             (testing flash
@@ -137,7 +137,7 @@
           (let [resp (run "/form/7/save" {"field61" ""
                                           "field62" "z"
                                           "license70" "approved"})
-                flash (:flash resp)
+                flash (first (:flash resp))
                 flash-text (hiccup-text (:contents flash))]
             (is (= 303 (:status resp)))
             (testing flash
@@ -149,13 +149,16 @@
         (testing "save with unchecked license"
           (let [resp (run "/form/7/save" {"field61" "x"
                                           "field62" "y"})
-                flash (:flash resp)
-                flash-text (hiccup-text (:contents flash))]
+                [flash1 flash2] (:flash resp)
+                flash1-text (hiccup-text (:contents flash1))
+                flash2-text (hiccup-text (:contents flash2))]
             (is (= 303 (:status resp)))
-            (testing flash
-              (is (= :warning (:status flash)))
-              (is (.contains flash-text "\"KielipankkiTerms\""))
-              (is (.contains flash-text "saved")))
+            (testing flash1
+              (is (= :success (:status flash1)))
+              (is (.contains flash1-text "saved")))
+            (testing flash2
+              (is (= :info (:status flash2)))
+              (is (.contains flash2-text "\"KielipankkiTerms\"")))
             (is (= {:states {2 "draft"} :values {2 {61 "x", 62 "y"}}}
                    @world))))
 
@@ -163,12 +166,15 @@
           (let [resp (run "/form/7/2/save" {"field61" "w"
                                             "field62" ""
                                             "license70" "approved"})
-                flash (:flash resp)
-                flash-text (hiccup-text (:contents flash))]
-            (testing flash
-              (is (= :warning (:status flash)))
-              (is (.contains flash-text "\"B\""))
-              (is (.contains flash-text "saved")))
+                [flash1 flash2] (:flash resp)
+                flash1-text (hiccup-text (:contents flash1))
+                flash2-text (hiccup-text (:contents flash2))]
+            (testing flash1
+              (is (= :success (:status flash1)))
+              (is (.contains flash1-text "saved")))
+            (testing flash2
+              (is (= :info (:status flash2)))
+              (is (.contains flash2-text "\"B\"")))
             (is (= {:states {2 "draft"} :values {2 {61 "w", 62 ""}} :approvals {2 {70 "approved"}}}
                    @world))))
 
@@ -177,13 +183,16 @@
                                             "field62" ""
                                             "license70" "approved"
                                             "submit" "true"})
-                flash (:flash resp)
-                flash-text (hiccup-text (:contents flash))]
-            (testing flash
-              (is (= :warning (:status flash)))
-              (is (.contains flash-text "\"B\""))
-              (is (.contains flash-text "saved"))
-              (is (not (.contains flash-text "submitted"))))
+                [flash1 flash2] (:flash resp)
+                flash1-text (hiccup-text (:contents flash1))
+                flash2-text (hiccup-text (:contents flash2))]
+            (testing flash1
+              (is (= :warning (:status flash1)))
+              (is (.contains flash1-text "saved"))
+              (is (not (.contains flash1-text "submitted"))))
+            (testing flash2
+              (is (= :warning (:status flash2)))
+              (is (.contains flash2-text "\"B\"")))
             (is (= {:states {2 "draft"} :values {2 {61 "u", 62 ""}} :approvals {2 {70 "approved"}}}
                    @world))))
 
@@ -191,12 +200,16 @@
           (let [resp (run "/form/7/2/save" {"field61" ""
                                             "field62" "v"
                                             "submit" "true"})
-                flash (:flash resp)
-                flash-text (hiccup-text (:contents flash))]
-            (testing flash
-              (is (= :warning (:status flash)))
-              (is (.contains flash-text "saved"))
-              (is (not (.contains flash-text "submitted"))))
+                [flash1 flash2] (:flash resp)
+                flash1-text (hiccup-text (:contents flash1))
+                flash2-text (hiccup-text (:contents flash2))]
+            (testing flash1
+              (is (= :warning (:status flash1)))
+              (is (.contains flash1-text "saved"))
+              (is (not (.contains flash1-text "submitted"))))
+            (testing flash2
+              (is (= :warning (:status flash2)))
+              (is (.contains flash2-text "\"KielipankkiTerms\"")))
             (is (= {:states {2 "draft"} :values {2 {61 "", 62 "v"}}}
                    @world))))
 
@@ -205,7 +218,7 @@
                                             "field62" "v"
                                             "license70" "approved"
                                             "submit" "true"})
-                flash (:flash resp)
+                flash (first (:flash resp))
                 flash-text (hiccup-text (:contents flash))]
             (testing flash
               (is (= :success (:status flash)))
