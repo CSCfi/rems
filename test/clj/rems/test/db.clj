@@ -256,7 +256,7 @@
           approvals (fn [app-id]
                       (sort-by :round
                                (map #(select-keys % [:catappid :appruserid :round :comment :state])
-                                    (db/get-application-approvals {:id app-id}))))]
+                                    (db/get-application-approvals {:application app-id}))))]
       (db/create-workflow-approver! {:wfid wfid-a :appruserid uid :round 0})
       (db/create-workflow-approver! {:wfid wfid-a :appruserid uid :round 1})
       (db/create-workflow-approver! {:wfid wfid-b :appruserid uid2 :round 0})

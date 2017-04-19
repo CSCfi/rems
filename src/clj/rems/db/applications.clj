@@ -112,7 +112,7 @@
          applicant? (= (:applicantuserid application) (get-user-id))
          comments (when application-id
                     (mapv process-comment (db/get-application-approvals
-                                           {:id application-id})))]
+                                           {:application application-id})))]
      (when application-id
        (when-not (or applicant?
                      (approver? application-id))
