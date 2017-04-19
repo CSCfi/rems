@@ -177,7 +177,10 @@ WHERE app.id = :id
 SELECT
  *
 FROM catalogue_item_application_approvers
-WHERE catAppId = :id
+WHERE catAppId = :application
+/*~ (when (:round params) */
+  AND round = :round
+/*~ ) ~*/
 
 -- :name add-entitlement! :!
 -- TODO remove resId from this table to make it normalized?
@@ -254,6 +257,16 @@ INSERT INTO workflow_approvers
 (wfid, appruserid, round)
 VALUES
 (:wfid, :appruserid, :round)
+
+-- :name get-workflow-approvers :? :n
+SELECT
+  wfa.appruserid
+FROM workflow_approvers wfa
+LEFT OUTER JOIN workflow wf on wf.id = wfa.wfid
+LEFT OUTER JOIN catalogue_item cat ON cat.wfid = wf.id
+LEFT OUTER JOIN catalogue_item_application app ON app.catid = cat.id
+WHERE app.id = :application
+  AND wfa.round = :round
 
 -- :name clear-field-value! :!
 DELETE FROM application_text_values

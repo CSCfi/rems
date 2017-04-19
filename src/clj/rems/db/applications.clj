@@ -2,7 +2,8 @@
   "Query functions for forms and applications."
   (:require [rems.auth.util :refer [throw-unauthorized]]
             [rems.context :as context]
-            [rems.db.approvals :refer [approver?]]
+            [rems.db.approvals :refer [approver?
+                                       process-application]]
             [rems.db.catalogue :refer [get-localized-catalogue-item]]
             [rems.db.core :as db]
             [rems.util :refer [get-user-id index-by]]))
@@ -112,7 +113,7 @@
          applicant? (= (:applicantuserid application) (get-user-id))
          comments (when application-id
                     (mapv process-comment (db/get-application-approvals
-                                           {:id application-id})))]
+                                           {:application application-id})))]
      (when application-id
        (when-not (or applicant?
                      (approver? application-id))
@@ -131,3 +132,8 @@
                  {:item resource-id :user uid}))]
     (db/update-application-state! {:id id :user uid :state "draft" :curround 0})
     id))
+
+(defn submit-application [application-id]
+  (db/update-application-state! {:id application-id :user (get-user-id)
+                                 :state "applied" :curround 0})
+  (process-application application-id))
