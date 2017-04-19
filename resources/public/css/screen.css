@@ -377,3 +377,21 @@ form.inline .btn-link {
 .color-title {
   padding-top: 0.8rem;
 }
+
+.form-control::placeholder { /* Standard */
+  color: #ccc;
+}
+.form-control::-webkit-input-placeholder { /* WebKit, Blink, Edge */
+  color: #ccc;
+}
+.form-control:-moz-placeholder { /* Mozilla Firefox 4 to 18 */
+  color: #ccc;
+  opacity:  1;
+}
+.form-control::-moz-placeholder { /* Mozilla Firefox 19+ */
+  color: #ccc;
+  opacity:  1;
+}
+.form-control:-ms-input-placeholder { /* Internet Explorer 10-11 */
+  color:    #ccc;
+}
