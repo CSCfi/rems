@@ -131,3 +131,7 @@
                  {:item resource-id :user uid}))]
     (db/update-application-state! {:id id :user uid :state "draft" :curround 0})
     id))
+
+(defn submit-application [application-id]
+  (db/update-application-state! {:id application-id :user (get-user-id)
+                                 :state "applied" :curround 0}))

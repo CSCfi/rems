@@ -5,7 +5,8 @@
             [rems.approvals :as approvals]
             [rems.db.applications :refer [create-new-draft
                                           get-draft-id-for
-                                          get-form-for]]
+                                          get-form-for
+                                          submit-application]]
             [rems.db.core :as db]
             [rems.guide :refer :all]
             [rems.layout :as layout]
@@ -193,7 +194,7 @@
                    :contents (list message
                                    (format-validation-messages validation))})]
       (when perform-submit
-        (db/update-application-state! {:id application-id :user (get-user-id) :state "applied" :curround 0}))
+        (submit-application application-id))
       (->
        (redirect-to-application resource-id application-id)
        (assoc :flash flash)

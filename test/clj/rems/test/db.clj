@@ -263,7 +263,7 @@
       (db/create-workflow-approver! {:wfid wfid-b :appruserid uid :round 1})
 
       (doseq [a [app-a-1 app-a-2 app-b]]
-        (db/update-application-state! {:id a :user uid :state "applied" :curround 0}))
+        (applications/submit-application a))
 
       (approvals/approve app-a-1 0 "comment")
       (is (= {:state "applied" :curround 1} (get app-a-1)))
