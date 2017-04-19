@@ -198,8 +198,10 @@
           message (if perform-submit
                    (text :t.form/submitted)
                    (text :t.form/saved))
-          flash [(when (or valid (not submit))
+          flash [(if (or valid (not submit))
                   {:status :success
+                   :contents message}
+                  {:status :warning
                    :contents message})
                  (when-not valid
                    (if submit
