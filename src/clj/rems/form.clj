@@ -46,27 +46,25 @@
   [:div.form-group
    [:label title]])
 
-(defn- checkbox [id readonly approved]
-  [:input (merge {:type "checkbox" :name (str "license" id) :value "approved"
-                  :disabled readonly}
-                 (when approved {:checked ""}))])
+(defn- license [id readonly approved content]
+  [:div.row
+   [:div.col-1
+    [:input (merge {:type "checkbox" :name (str "license" id) :value "approved"
+                    :disabled readonly}
+                   (when approved {:checked ""}))]]
+   [:div.col
+    content]])
 
-(defn- license [{title :title id :id textcontent :textcontent approved :approved
+(defn- link-license [{title :title id :id textcontent :textcontent approved :approved
                  readonly :readonly}]
-  [:div.checkbox
-   [:label
-    (checkbox id readonly approved)
-    [:a {:href textcontent :target "_blank"} (str " " title)]]])
+  (license id readonly approved
+           [:a {:href textcontent :target "_blank"} (str " " title)]))
 
 (defn- text-license [{title :title id :id textcontent :textcontent approved :approved
                       readonly :readonly}]
-  (list
-   [:h4 title]
-   [:p textcontent]
-   [:label
-    (checkbox id readonly approved)
-    " "
-    (text :t.form/accept)]))
+  (license id readonly approved
+           (list [:h6 title]
+                 [:p textcontent])))
 
 (defn- unsupported-field
   [f]
@@ -78,7 +76,7 @@
     "texta" (texta-field f)
     "label" (label f)
     "license" (case (:licensetype f)
-                "link" (license f)
+                "link" (link-license f)
                 "text" (text-license f)
                 (unsupported-field f))
     (unsupported-field f)))
@@ -101,7 +99,7 @@
         (field (assoc i :readonly readonly)))
       (when-let [licenses (not-empty (:licenses form))]
         [:div.form-group
-         [:label (text :t.form/licenses)]
+         [:h4 (text :t.form/licenses)]
          (for [l licenses]
            (field (assoc l :readonly readonly)))])
       (when-not (empty? comments)
