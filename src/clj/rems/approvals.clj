@@ -8,6 +8,7 @@
             [rems.layout :as layout]
             [rems.text :refer [text]]
             [rems.util :refer [errorf]]
+            [rems.role-switcher :refer [when-role]]
             [ring.util.response :refer [redirect]]))
 
 (def ^:private time-format (format/formatter "yyyy-MM-dd HH:mm"
@@ -25,6 +26,9 @@
 (defn- reject-button []
   [:button.btn.btn-secondary {:type "submit" :name "reject"}
    (text :t.approvals/reject)])
+
+(defn- back-to-approvals-button []
+  [:a.btn.btn-secondary.pull-left {:href "/approvals"} (text :t.form/back-approvals)])
 
 (defn- approve-form-attrs [app]
   {:method "post"
@@ -44,6 +48,8 @@
     [:label {:for "comment"} (text :t.approvals/comment)]
     [:textarea.form-control {:name "comment"}]]
    [:div.actions
+    (when-role :approver
+      (back-to-approvals-button))
     (approve-button)
     (reject-button)]])
 

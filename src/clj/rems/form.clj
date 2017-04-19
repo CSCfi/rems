@@ -123,7 +123,7 @@
        (list
         (when approvable
           (approvals/approve-form (:application form)))
-        [:a.btn.btn-secondary {:href "/approvals"} (text :t.form/back-approvals)])))))
+        )))))
 
 (defn link-to-item [item]
   (str "/form/" (:id item)))
