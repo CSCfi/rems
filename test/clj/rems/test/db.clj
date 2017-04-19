@@ -238,16 +238,20 @@
   (binding [context/*user* {"eppn" "tester"}]
     (db/create-resource! {:id 3 :resid "" :prefix "" :modifieruserid 1})
     (db/create-resource! {:id 5 :resid "" :prefix "" :modifieruserid 1})
+    (db/create-resource! {:id 7 :resid "" :prefix "" :modifieruserid 1})
     (let [uid (get-user-id)
           uid2 "pekka"
           wfid-a (:id (db/create-workflow! {:owneruserid "" :modifieruserid "" :title "" :fnlround 1}))
           wfid-b (:id (db/create-workflow! {:owneruserid "" :modifieruserid "" :title "" :fnlround 0}))
+          wfid-c (:id (db/create-workflow! {:owneruserid "" :modifieruserid "" :title "" :fnlround 1}))
           item-a (:id (db/create-catalogue-item! {:title "" :form nil :resid 3 :wfid wfid-a}))
           item-b (:id (db/create-catalogue-item! {:title "" :form nil :resid 5 :wfid wfid-b}))
+          item-c (:id (db/create-catalogue-item! {:title "" :form nil :resid 7 :wfid wfid-c}))
           app-a-1 (applications/create-new-draft item-a)
           app-a-2 (applications/create-new-draft item-a)
           draft (applications/create-new-draft item-a)
           app-b (applications/create-new-draft item-b)
+          app-c (applications/create-new-draft item-c)
 
           get (fn [app-id]
                 (let [apps (db/get-applications {:id app-id})]
@@ -257,6 +261,7 @@
                       (sort-by :round
                                (map #(select-keys % [:catappid :appruserid :round :comment :state])
                                     (db/get-application-approvals {:application app-id}))))]
+
       (db/create-workflow-approver! {:wfid wfid-a :appruserid uid :round 0})
       (db/create-workflow-approver! {:wfid wfid-a :appruserid uid :round 1})
       (db/create-workflow-approver! {:wfid wfid-b :appruserid uid2 :round 0})
@@ -296,7 +301,13 @@
           "shouldn't be able to approve when not approver")
       (is (thrown? rems.auth.NotAuthorizedException
                    (approvals/approve draft 0 "comment"))
-          "shouldn't be able to approve draft"))))
+          "shouldn't be able to approve draft")
+
+      (testing "workflow without approvers"
+        (applications/submit-application app-c)
+        (is (= {:state "approved" :curround 1} (get app-c)))
+        (is (= [{:resid 7 :catappid app-c :userid uid}]
+               (filter #(= 7 (:resid %)) (db/get-entitlements))))))))
 
 (deftest test-users
   (db/add-user! {:user "pekka", :userattrs nil})

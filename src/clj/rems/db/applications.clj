@@ -2,7 +2,8 @@
   "Query functions for forms and applications."
   (:require [rems.auth.util :refer [throw-unauthorized]]
             [rems.context :as context]
-            [rems.db.approvals :refer [approver?]]
+            [rems.db.approvals :refer [approver?
+                                       process-application]]
             [rems.db.catalogue :refer [get-localized-catalogue-item]]
             [rems.db.core :as db]
             [rems.util :refer [get-user-id index-by]]))
@@ -134,4 +135,5 @@
 
 (defn submit-application [application-id]
   (db/update-application-state! {:id application-id :user (get-user-id)
-                                 :state "applied" :curround 0}))
+                                 :state "applied" :curround 0})
+  (process-application application-id))

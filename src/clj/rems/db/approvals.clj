@@ -68,12 +68,13 @@
    {:id (:id application) :user (get-user-id)
     :curround round :state "rejected"}))
 
-(defn- process-application
-  "Take the application to the next round if necessary approvals are in place.
+(defn process-application
+  "Take the application to the next round (and the next, and so on) if necessary
+   approvals are in place.
 
    Also handles updaring the application status (applied ->
-  approved/rejected) and creating the entitlements for approved
-  applications."
+   approved/rejected) and creating the entitlements for approved
+   applications."
   [application-id]
   (let [application (first (db/get-applications {:id application-id}))
         round (:curround application)]
@@ -82,8 +83,10 @@
       (log/infof "Application %s in state %s: does not need processing"
                 application-id (:state application))
       (case (get-round-approval-state application-id round)
-        :approved (process-approved application round)
-        :rejected (process-rejected application round)
+        :approved (do (process-approved application round)
+                      (recur application-id))
+        :rejected (do (process-rejected application round)
+                      (recur application-id))
         :pending (log/infof "Application %s pending on round %s" application-id round)))))
 
 (defn- handle [application-id round state comment]

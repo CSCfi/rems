@@ -3,6 +3,7 @@
             [hiccup-find.core :refer :all]
             [rems.context :as context]
             [rems.db.core :as db]
+            [rems.db.approvals :as approvals]
             [rems.form :as form]
             [rems.test.tempura :refer [with-fake-tempura]]
             [ring.mock.request :refer :all]))
@@ -118,7 +119,9 @@
            (swap! world assoc-in [:states id] state))
 
          db/create-application!
-         (constantly {:id 2})]
+         (constantly {:id 2})
+
+         approvals/process-application (constantly nil)]
 
         (testing "first save"
           (let [resp (run "/form/7/save" {"field61" "x"
