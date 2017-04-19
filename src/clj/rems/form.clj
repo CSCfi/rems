@@ -88,13 +88,23 @@
         approvable (= state "applied")
         comments (keep :comment (:comments form))]
     (list
+     (when state
+       (let [content (list [:h4 (text (applications/localize-state state))]
+                           (when-not (empty? comments)
+                             (list
+                              [:h4 (text :t.form/comments)]
+                              [:ul
+                               (for [c comments]
+                                 [:li c])])))]
+         (case state
+           "approved" [:div.alert.alert-success content]
+           "rejected" [:div.alert.alert-danger content]
+           [:div.alert.alert-info content])))
+     [:h3 (:title form)]
      [:form {:method "post"
              :action (if-let [app (:id (:application form))]
                        (str "/form/" (:catalogue-item form) "/" app "/save")
                        (str "/form/" (:catalogue-item form) "/save"))}
-      [:h3 (:title form)]
-      (when state
-        [:h4 (text (applications/localize-state state))])
       (for [i (:items form)]
         (field (assoc i :readonly readonly)))
       (when-let [licenses (not-empty (:licenses form))]
@@ -102,12 +112,6 @@
          [:h4 (text :t.form/licenses)]
          (for [l licenses]
            (field (assoc l :readonly readonly)))])
-      (when-not (empty? comments)
-        (list
-         [:h4 (text :t.form/comments)]
-         [:ul
-          (for [c comments]
-            [:li c])]))
       (anti-forgery-field)
       (when-role :applicant
         [:div.row
