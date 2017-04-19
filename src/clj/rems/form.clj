@@ -229,6 +229,15 @@
   (POST "/form/:id/save" req (save req))
   (POST "/form/:id/:application/save" req (save req)))
 
+(def ^:private lipsum
+  (str "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod "
+       "tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim "
+       "veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex "
+       "ea commodo consequat. Duis aute irure dolor in reprehenderit in "
+       "voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur "
+       "sint occaecat cupidatat non proident, sunt in culpa qui officia "
+       "deserunt mollit anim id est laborum."))
+
 (defn guide
   []
   (list
@@ -244,9 +253,13 @@
    (example "field of type \"label\""
             [:form
              (field {:type "label" :title "Lorem ipsum dolor sit amet"})])
-   (example "field of type \"license\""
+   (example "link license"
             [:form
              (field {:type "license" :title "Link to license" :licensetype "link" :textcontent "/guide"})])
+   (example "text license"
+            [:form
+             (field {:type "license" :title "A Text License" :licensetype "text"
+                     :textcontent lipsum})])
    (example "field of unsupported type"
             [:form
              (field {:type "unsupported" :title "Title" :inputprompt "prompt"})])
@@ -257,7 +270,9 @@
                            {:type "label" :title "Please input your wishes below."}
                            {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2"}
                            {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]
-                   :licenses [{:type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
+                   :licenses [{:type "license" :title "A Text License" :licensetype "text"
+                               :textcontent lipsum}
+                              {:type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
                                :approved true}]}))
    (example "applied form"
             (form {:title "Form title"
@@ -266,6 +281,8 @@
                            {:type "label" :title "Please input your wishes below."}
                            {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2" :value "def"}
                            {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]
-                   :licenses [{:type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
+                   :licenses [{:type "license" :title "A Text License" :licensetype "text"
+                               :textcontent lipsum}
+                              {:type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
                                :approved true}]
                    :comments [{:comment "a comment"}]}))))
