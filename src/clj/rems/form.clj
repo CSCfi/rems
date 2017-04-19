@@ -198,17 +198,22 @@
           message (if perform-submit
                    (text :t.form/submitted)
                    (text :t.form/saved))
-          flash (if valid
+          flash [(if (or valid (not submit))
                   {:status :success
                    :contents message}
                   {:status :warning
-                   :contents (list message
-                                   (format-validation-messages validation))})]
+                   :contents message})
+                 (when-not valid
+                   (if submit
+                     {:status :warning
+                      :contents (format-validation-messages validation)}
+                     {:status :info
+                      :contents (format-validation-messages validation)}))]]
       (when perform-submit
         (db/update-application-state! {:id application-id :user (get-user-id) :state "applied" :curround 0}))
       (->
        (redirect-to-application resource-id application-id)
-       (assoc :flash flash)
+       (assoc :flash (remove nil? flash))
        (assoc :session (update session :cart disj resource-id))))))
 
 (defn- form-page [id application]
