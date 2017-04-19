@@ -93,9 +93,9 @@
                            (when-not (empty? comments)
                              (list
                               [:h4 (text :t.form/comments)]
-                              [:ul
+                              [:ul.comments
                                (for [c comments]
-                                 [:li c])])))]
+                                 [:li.comment c])])))]
          (case state
            "approved" [:div.alert.alert-success content]
            "rejected" [:div.alert.alert-danger content]

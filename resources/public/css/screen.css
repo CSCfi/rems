@@ -388,6 +388,10 @@ form.inline .btn-link {
   margin-bottom: 0;
 }
 
+ul.comments {
+  list-style-type: none;
+}
+
 .form-control::placeholder { /* Standard */
   color: #ccc;
 }
