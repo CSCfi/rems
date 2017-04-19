@@ -46,14 +46,25 @@
   [:div.form-group
    [:label title]])
 
-(defn- license [{title :title id :id textcontent :textcontent approved :approved
-                 readonly :readonly}]
-  [:div.checkbox
-   [:label
+(defn- license [id readonly approved content]
+  [:div.row
+   [:div.col-1
     [:input (merge {:type "checkbox" :name (str "license" id) :value "approved"
                     :disabled readonly}
-                   (when approved {:checked ""}))]
-    [:a {:href textcontent :target "_blank"} (str " " title)]]])
+                   (when approved {:checked ""}))]]
+   [:div.col
+    content]])
+
+(defn- link-license [{title :title id :id textcontent :textcontent approved :approved
+                 readonly :readonly}]
+  (license id readonly approved
+           [:a {:href textcontent :target "_blank"} (str " " title)]))
+
+(defn- text-license [{title :title id :id textcontent :textcontent approved :approved
+                      readonly :readonly}]
+  (license id readonly approved
+           (list [:h6 title]
+                 [:p textcontent])))
 
 (defn- unsupported-field
   [f]
@@ -64,8 +75,9 @@
     "text" (text-field f)
     "texta" (texta-field f)
     "label" (label f)
-    "license" (if (= "link" (:licensetype f))
-                (license f)
+    "license" (case (:licensetype f)
+                "link" (link-license f)
+                "text" (text-license f)
                 (unsupported-field f))
     (unsupported-field f)))
 
@@ -87,7 +99,7 @@
         (field (assoc i :readonly readonly)))
       (when-let [licenses (not-empty (:licenses form))]
         [:div.form-group
-         [:label (text :t.form/licenses)]
+         [:h4 (text :t.form/licenses)]
          (for [l licenses]
            (field (assoc l :readonly readonly)))])
       (when-not (empty? comments)
@@ -215,6 +227,15 @@
   (POST "/form/:id/save" req (save req))
   (POST "/form/:id/:application/save" req (save req)))
 
+(def ^:private lipsum
+  (str "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod "
+       "tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim "
+       "veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex "
+       "ea commodo consequat. Duis aute irure dolor in reprehenderit in "
+       "voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur "
+       "sint occaecat cupidatat non proident, sunt in culpa qui officia "
+       "deserunt mollit anim id est laborum."))
+
 (defn guide
   []
   (list
@@ -230,9 +251,13 @@
    (example "field of type \"label\""
             [:form
              (field {:type "label" :title "Lorem ipsum dolor sit amet"})])
-   (example "field of type \"license\""
+   (example "link license"
             [:form
              (field {:type "license" :title "Link to license" :licensetype "link" :textcontent "/guide"})])
+   (example "text license"
+            [:form
+             (field {:type "license" :title "A Text License" :licensetype "text"
+                     :textcontent lipsum})])
    (example "field of unsupported type"
             [:form
              (field {:type "unsupported" :title "Title" :inputprompt "prompt"})])
@@ -243,7 +268,9 @@
                            {:type "label" :title "Please input your wishes below."}
                            {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2"}
                            {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]
-                   :licenses [{:type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
+                   :licenses [{:type "license" :title "A Text License" :licensetype "text"
+                               :textcontent lipsum}
+                              {:type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
                                :approved true}]}))
    (example "applied form"
             (form {:title "Form title"
@@ -252,6 +279,8 @@
                            {:type "label" :title "Please input your wishes below."}
                            {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2" :value "def"}
                            {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]
-                   :licenses [{:type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
+                   :licenses [{:type "license" :title "A Text License" :licensetype "text"
+                               :textcontent lipsum}
+                              {:type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
                                :approved true}]
                    :comments [{:comment "a comment"}]}))))
