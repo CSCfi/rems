@@ -14,16 +14,16 @@
                                              (time/default-time-zone)))
 
 (defn view-button [app]
-  [:a.btn.btn-primary
+  [:a.btn.btn-secondary
    {:href (str "/form/" (:catid app) "/" (:id app))}
    (text :t.applications/view)])
 
 (defn- approve-button []
-  [:button.btn.btn-success {:type "submit" :name "approve"}
+  [:button.btn.btn-primary {:type "submit" :name "approve"}
    (text :t.approvals/approve)])
 
 (defn- reject-button []
-  [:button.btn.btn-danger {:type "submit" :name "reject"}
+  [:button.btn.btn-secondary {:type "submit" :name "reject"}
    (text :t.approvals/reject)])
 
 (defn- approve-form-attrs [app]
