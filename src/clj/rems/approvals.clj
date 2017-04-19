@@ -8,23 +8,27 @@
             [rems.layout :as layout]
             [rems.text :refer [text]]
             [rems.util :refer [errorf]]
+            [rems.role-switcher :refer [when-role]]
             [ring.util.response :refer [redirect]]))
 
 (def ^:private time-format (format/formatter "yyyy-MM-dd HH:mm"
                                              (time/default-time-zone)))
 
 (defn view-button [app]
-  [:a.btn.btn-primary
+  [:a.btn.btn-secondary
    {:href (str "/form/" (:catid app) "/" (:id app))}
    (text :t.applications/view)])
 
 (defn- approve-button []
-  [:button.btn.btn-success {:type "submit" :name "approve"}
+  [:button.btn.btn-primary {:type "submit" :name "approve"}
    (text :t.approvals/approve)])
 
 (defn- reject-button []
-  [:button.btn.btn-danger {:type "submit" :name "reject"}
+  [:button.btn.btn-secondary {:type "submit" :name "reject"}
    (text :t.approvals/reject)])
+
+(defn- back-to-approvals-button []
+  [:a.btn.btn-secondary.pull-left {:href "/approvals"} (text :t.form/back-approvals)])
 
 (defn- approve-form-attrs [app]
   {:method "post"
@@ -33,16 +37,19 @@
 (defn approve-buttons [app]
   [:form.inline (approve-form-attrs app)
    (anti-forgery-field)
-   (approve-button)
-   (reject-button)])
+   [:div.form-actions
+    (approve-button)
+    (reject-button)]])
 
 (defn approve-form [app]
   [:form (approve-form-attrs app)
    (anti-forgery-field)
    [:div.form-group
-    [:label {:for "comment"} (text :t.approvals/comment)]
+    [:label {:for "comment"} (text :t.approvals/add-comments)]
     [:textarea.form-control {:name "comment"}]]
    [:div.actions
+    (when-role :approver
+      (back-to-approvals-button))
     (approve-button)
     (reject-button)]])
 
