@@ -72,7 +72,7 @@
   "Take the application to the next round (and the next, and so on) if necessary
    approvals are in place.
 
-   Also handles updaring the application status (applied ->
+   Also handles updating the application status (applied ->
    approved/rejected) and creating the entitlements for approved
    applications."
   [application-id]
