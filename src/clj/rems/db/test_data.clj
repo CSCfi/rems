@@ -55,15 +55,36 @@
     (db/link-form-item! {:form (:id form-fi) :itemorder 2 :optional true :item (:id duration-fi) :user "owner"})
     (:id meta)))
 
+(defn- create-workflows! []
+  (let [minimal (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner":title "minimal" :fnlround 1}))
+        simple (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner" :title "simple" :fnlround 1}))
+        two-round (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner" :title "two rounds" :fnlround 2}))
+        different (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner" :title "two rounds, different approvers" :fnlround 2}))]
+    ;; either bob or developer can approve
+    (db/create-workflow-approver! {:wfid simple :appruserid "developer" :round 0})
+    (db/create-workflow-approver! {:wfid simple :appruserid "bob" :round 0})
+    ;; only developer can approve
+    (db/create-workflow-approver! {:wfid two-round :appruserid "developer" :round 0})
+    (db/create-workflow-approver! {:wfid two-round :appruserid "developer" :round 1})
+    ;; first bob, then developer
+    (db/create-workflow-approver! {:wfid different :appruserid "bob" :round 0})
+    (db/create-workflow-approver! {:wfid different :appruserid "developer" :round 1})
+
+    {:minimal minimal
+     :simple simple
+     :two-round two-round
+     :different different}))
+
 (defn create-test-data! []
   (create-users-and-roles!)
-  (let [meta (create-basic-form!)]
+  (let [meta (create-basic-form!)
+        workflows (create-workflows!)]
     (db/create-resource! {:id 1 :resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1})
-    (db/create-catalogue-item! {:title "ELFA Corpus"
+    (db/create-catalogue-item! {:title "ELFA Corpus, direct approval"
                                 :form (:id meta)
                                 :resid 1
-                                :wfid nil})
-    (db/create-catalogue-item! {:title "B"
-                                :form nil
-                                :resid nil
-                                :wfid nil})))
+                                :wfid (:minimal workflows)})
+    (db/create-catalogue-item! {:title "ELFA Corpus, two rounds of approvals by different approvers"
+                                :form (:id meta)
+                                :resid 1
+                                :wfid (:different workflows)})))
