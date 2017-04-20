@@ -18,8 +18,8 @@
 (defn- create-basic-form! []
   "Creates a bilingual form with all supported field types. Returns id of the form meta."
   (let [meta (db/create-form-meta! {:title "metatitle" :user "owner"})
-        form-en (db/create-form! {:title "Yksinkertainen lomake" :user "owner"})
-        form-fi (db/create-form! {:title "Basic application" :user "owner"})
+        form-en (db/create-form! {:title "Basic application" :user "owner"})
+        form-fi (db/create-form! {:title "Yksinkertainen lomake" :user "owner"})
 
         name-fi (db/create-form-item!
                  {:title "Projektin nimi" :type "text" :inputprompt "Projekti"
@@ -70,6 +70,30 @@
     (db/create-workflow-approver! {:wfid different :appruserid "bob" :round 0})
     (db/create-workflow-approver! {:wfid different :appruserid "developer" :round 1})
 
+    ;; attach both kinds of licenses to all workflows
+    (let [link (:id (db/create-license!
+                     {:modifieruserid "owner" :owneruserid "owner" :title "non-localized license"
+                      :type "link" :textcontent "http://invalid"}))
+          text (:id (db/create-license!
+                     {:modifieruserid "owner" :owneruserid "owner" :title "non-localized license"
+                      :type "text" :textcontent "non-localized content"}))]
+      (db/create-license-localization!
+       {:licid link :langcode "en" :title "CC Attribution 4.0"
+        :textcontent "https://creativecommons.org/licenses/by/4.0/legalcode"})
+      (db/create-license-localization!
+       {:licid link :langcode "fi" :title "CC Nimeä 4.0"
+        :textcontent "https://creativecommons.org/licenses/by/4.0/legalcode.fi"})
+      (db/create-license-localization!
+       {:licid text :langcode "fi" :title "Lisenssi"
+        :textcontent (apply str (repeat 10 "Suomenkielinen lisenssiteksti. "))})
+      (db/create-license-localization!
+       {:licid text :langcode "en" :title "License"
+        :textcontent (apply str (repeat 10 "License text in English. "))})
+
+      (doseq [wf [minimal simple two-round different]]
+        (db/create-workflow-license! {:wfid wf :licid link :round 0})
+        (db/create-workflow-license! {:wfid wf :licid text :round 0})))
+
     {:minimal minimal
      :simple simple
      :two-round two-round
@@ -81,10 +105,14 @@
         workflows (create-workflows!)]
     (db/create-resource! {:id 1 :resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1})
     (db/create-catalogue-item! {:title "ELFA Corpus, direct approval"
-                                :form (:id meta)
+                                :form meta
                                 :resid 1
                                 :wfid (:minimal workflows)})
+    (db/create-catalogue-item! {:title "ELFA Corpus, one approval"
+                                :form meta
+                                :resid 1
+                                :wfid (:simple workflows)})
     (db/create-catalogue-item! {:title "ELFA Corpus, two rounds of approvals by different approvers"
-                                :form (:id meta)
+                                :form meta
                                 :resid 1
                                 :wfid (:different workflows)})))
