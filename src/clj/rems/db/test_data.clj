@@ -1,7 +1,11 @@
 (ns rems.db.test-data
   "Populating the database with nice test data."
-  (:require [rems.db.core :as db]
-            [rems.db.roles :as roles]))
+  (:require [rems.context :as context]
+            [rems.db.applications :as applications]
+            [rems.db.approvals :as approvals]
+            [rems.db.core :as db]
+            [rems.db.roles :as roles]
+            [rems.util :refer [get-user-id]]))
 
 (defn- create-users-and-roles! []
   ;; users provided by the fake login
@@ -110,19 +114,48 @@
   (let [id (:id (db/create-catalogue-item!
                  {:title "non-localized title" :resid resource :wfid workflow :form form}))]
     (doseq [[lang title] localizations]
-      (db/create-catalogue-item-localization! {:id id :langcode lang :title title}))))
+      (db/create-catalogue-item-localization! {:id id :langcode lang :title title}))
+    id))
+
+(defn- create-draft! [catalogue-id field-value]
+  (let [app-id (applications/create-new-draft catalogue-id)
+        form (binding [context/*lang* :en]
+               (applications/get-form-for catalogue-id))]
+    (doseq [{item-id :id} (:items form)]
+      (db/save-field-value! {:application app-id :form (:id form)
+                             :item item-id :user (get-user-id) :value field-value}))
+    (doseq [{license-id :id} (:licenses form)]
+      (db/save-license-approval! {:catappid app-id
+                                  :round 0
+                                  :licid license-id
+                                  :actoruserid (get-user-id)
+                                  :state "approved"}))
+    app-id))
+
+(defn- create-applications! [item user]
+  (binding [context/*user* {"eppn" user}]
+    (create-draft! item "draft application")
+    (doto (create-draft! item "applied application")
+      applications/submit-application)
+    (doto (create-draft! item "rejected application")
+      applications/submit-application
+      (approvals/reject 0 "comment for rejection"))
+    (doto (create-draft! item "accepted application")
+      applications/submit-application
+      (approvals/approve 0 "comment for approval"))))
 
 (defn create-test-data! []
   (create-users-and-roles!)
+  (db/create-resource! {:id 1 :resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1})
   (let [meta (create-basic-form!)
-        workflows (create-workflows!)]
-    (db/create-resource! {:id 1 :resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1})
-    (create-catalogue-item! 1 (:minimal workflows) meta
-                            {"en" "ELFA Corpus, direct approval"
-                             "fi" "ELFA-korpus, suora hyväksyntä"})
-    (create-catalogue-item! 1 (:simple workflows) meta
-                            {"en" "ELFA Corpus, one approval"
-                             "fi" "ELFA-korpus, yksi hyväksyntä"})
-    (create-catalogue-item! 1 (:different workflows) meta
-                            {"en" "ELFA Corpus, two rounds of approval by different approvers"
-                             "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})))
+        workflows (create-workflows!)
+        minimal (create-catalogue-item! 1 (:minimal workflows) meta
+                                       {"en" "ELFA Corpus, direct approval"
+                                        "fi" "ELFA-korpus, suora hyväksyntä"})
+        simple (create-catalogue-item! 1 (:simple workflows) meta
+                                       {"en" "ELFA Corpus, one approval"
+                                        "fi" "ELFA-korpus, yksi hyväksyntä"})
+        different (create-catalogue-item! 1 (:different workflows) meta
+                                          {"en" "ELFA Corpus, two rounds of approval by different approvers"
+                                           "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})]
+    (create-applications! simple "developer")))
