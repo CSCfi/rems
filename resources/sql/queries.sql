@@ -101,9 +101,9 @@ VALUES
 
 -- :name link-form-item! :insert
 INSERT INTO application_form_item_map
-(formId, formItemId, modifierUserId, itemOrder)
+(formId, formItemId, modifierUserId, itemOrder, formItemOptional)
 VALUES
-(:form, :item, :user, :itemorder)
+(:form, :item, :user, :itemorder, :optional)
 
 -- :name create-application! :insert
 -- TODO: what is fnlround?
