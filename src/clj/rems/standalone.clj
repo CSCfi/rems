@@ -8,6 +8,7 @@
             [mount.core :as mount]
             [rems.config :refer [env]]
             [rems.db.core :as db]
+            [rems.db.test-data :as test-data]
             [rems.handler :as handler])
   (:gen-class))
 
@@ -54,16 +55,16 @@
   "Arguments can be either arguments to mount/start-with-args, or one of
      \"migrate\" -- migrate database
      \"rollback\" -- roll back database migration
-     \"populate\" -- insert test data into database"
+     \"test-data\" -- insert test data into database"
   [& args]
   (cond
     (#{"migrate" "rollback"} (first args))
     (do
       (mount/start #'rems.config/env)
       (migrations/migrate args (select-keys env [:database-url])))
-    (= "populate" (first args))
+    (= "test-data" (first args))
     (do
       (mount/start #'rems.config/env #'rems.env/*db*)
-      (db/create-test-data!))
+      (test-data/create-test-data!))
     :else
     (apply start-app args)))
