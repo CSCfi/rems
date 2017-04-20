@@ -68,10 +68,10 @@
           app-id (applications/create-new-draft (:id item))]
       (db/link-form-meta! {:meta (:id meta) :form (:id form-en) :lang "en" :user uid})
       (db/link-form-meta! {:meta (:id meta) :form (:id form-fi) :lang "fi" :user uid})
-      (db/link-form-item! {:form (:id form-en) :itemorder 2 :item (:id item-b) :user uid})
-      (db/link-form-item! {:form (:id form-en) :itemorder 1 :item (:id item-a) :user uid})
-      (db/link-form-item! {:form (:id form-en) :itemorder 3 :item (:id item-c) :user uid})
-      (db/link-form-item! {:form (:id form-fi) :itemorder 1 :item (:id item-a) :user uid})
+      (db/link-form-item! {:form (:id form-en) :itemorder 2 :item (:id item-b) :user uid :optional false})
+      (db/link-form-item! {:form (:id form-en) :itemorder 1 :item (:id item-a) :user uid :optional false})
+      (db/link-form-item! {:form (:id form-en) :itemorder 3 :item (:id item-c) :user uid :optional false})
+      (db/link-form-item! {:form (:id form-fi) :itemorder 1 :item (:id item-a) :user uid :optional false})
 
       (db/create-workflow-approver! {:wfid (:id wf) :appruserid uid :round 0})
 

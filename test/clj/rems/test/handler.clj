@@ -8,6 +8,7 @@
             [rems.config :refer [env]]
             [rems.db.core :as db]
             [rems.db.roles :as roles]
+            [rems.db.test-data :as test-data]
             [rems.handler :refer :all]
             [ring.mock.request :refer :all]
             [ring.util.codec :refer [form-decode]]))
@@ -20,7 +21,7 @@
       #'rems.env/*db*)
     (db/assert-test-database!)
     (migrations/migrate ["reset"] (select-keys env [:database-url]))
-    (db/create-test-data!)
+    (test-data/create-test-data!)
     (f)
     (mount/stop)))
 
@@ -211,20 +212,17 @@
             (is (= 403 (:status ctx)) "bob shouldn't be authorized")))))))
 
 (deftest test-roles
-  (is (= (list {:userid "bob"}) (db/get-users)))
   (testing "when applicant logs in"
     (let [ctx (-> (new-context app)
-                  (login "alice" :applicant)
+                  (login "test-roles-applicant" :applicant)
                   (follow-redirect)
                   (follow-redirect))]
       (is (not-empty (hiccup-find [:.catalogue] (ctx->html ctx))) "applicant sees catalogue initially")
-      (is (= (list {:userid "bob"} {:userid "alice"}) (db/get-users)))
-      ))
+      (is (contains? (set (db/get-users)) {:userid "test-roles-applicant"}))))
   (testing "when approver logs in"
     (let [ctx (-> (new-context app)
-                  (login "bob" :approver)
+                  (login "test-roles-approver" :approver)
                   (follow-redirect)
                   (follow-redirect))]
       (is (not-empty (hiccup-find [:.approvals] (ctx->html ctx))) "approver sees approvals initially")
-      (is (= 2 (count (db/get-users))))
-      )))
+      (is (contains? (set (db/get-users)) {:userid "test-roles-approver"})))))
