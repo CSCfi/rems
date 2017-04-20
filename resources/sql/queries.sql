@@ -28,6 +28,11 @@ SELECT current_database()
 SELECT catid, langcode, title
 FROM catalogue_item_localization
 
+-- :name create-catalogue-item-localization! :insert
+INSERT INTO catalogue_item_localization
+  (catid, langcode, title)
+VALUES (:id, :langcode, :title)
+
 -- :name get-forms :? :*
 SELECT
   meta.id as metaid,

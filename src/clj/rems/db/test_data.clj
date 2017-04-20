@@ -13,7 +13,14 @@
   (db/add-user! {:user "bob" :userattrs nil})
   (roles/add-role! "bob" :approver)
   ;; a user to own things
-  (db/add-user! {:user "owner" :userattrs nil}))
+  (db/add-user! {:user "owner" :userattrs nil})
+  ;; users used on remsdemo
+  (doseq [applicant ["RDapplicant1" "RDapplicant2"]]
+    (db/add-user! {:user applicant :userattrs nil})
+    (roles/add-role! applicant :applicant))
+  (doseq [approver ["RDapprover1" "RDapprover2"]]
+    (db/add-user! {:user approver :userattrs nil})
+    (roles/add-role! approver :approver)))
 
 (defn- create-basic-form! []
   "Creates a bilingual form with all supported field types. Returns id of the form meta."
@@ -99,20 +106,23 @@
      :two-round two-round
      :different different}))
 
+(defn- create-catalogue-item! [resource workflow form localizations]
+  (let [id (:id (db/create-catalogue-item!
+                 {:title "non-localized title" :resid resource :wfid workflow :form form}))]
+    (doseq [[lang title] localizations]
+      (db/create-catalogue-item-localization! {:id id :langcode lang :title title}))))
+
 (defn create-test-data! []
   (create-users-and-roles!)
   (let [meta (create-basic-form!)
         workflows (create-workflows!)]
     (db/create-resource! {:id 1 :resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1})
-    (db/create-catalogue-item! {:title "ELFA Corpus, direct approval"
-                                :form meta
-                                :resid 1
-                                :wfid (:minimal workflows)})
-    (db/create-catalogue-item! {:title "ELFA Corpus, one approval"
-                                :form meta
-                                :resid 1
-                                :wfid (:simple workflows)})
-    (db/create-catalogue-item! {:title "ELFA Corpus, two rounds of approvals by different approvers"
-                                :form meta
-                                :resid 1
-                                :wfid (:different workflows)})))
+    (create-catalogue-item! 1 (:minimal workflows) meta
+                            {"en" "ELFA Corpus, direct approval"
+                             "fi" "ELFA-korpus, suora hyväksyntä"})
+    (create-catalogue-item! 1 (:simple workflows) meta
+                            {"en" "ELFA Corpus, one approval"
+                             "fi" "ELFA-korpus, yksi hyväksyntä"})
+    (create-catalogue-item! 1 (:different workflows) meta
+                            {"en" "ELFA Corpus, two rounds of approval by different approvers"
+                             "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})))
