@@ -8,6 +8,7 @@
             [rems.config :refer [env]]
             [rems.db.core :as db]
             [rems.db.roles :as roles]
+            [rems.db.test-data :as test-data]
             [rems.handler :refer :all]
             [ring.mock.request :refer :all]
             [ring.util.codec :refer [form-decode]]))
@@ -20,7 +21,7 @@
       #'rems.env/*db*)
     (db/assert-test-database!)
     (migrations/migrate ["reset"] (select-keys env [:database-url]))
-    (db/create-test-data!)
+    (test-data/create-test-data!)
     (f)
     (mount/stop)))
 
