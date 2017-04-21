@@ -67,6 +67,11 @@
       dest: /etc/httpd/conf.d/welcome.conf
       content: "#DON'T REMOVE THIS FILE! IT IS INTENTIONALLY LEFT EMPTY"
 
+  - name: Configure httpd.conf
+    template:
+      src: httpd.conf
+      dest: /etc/httpd/conf/
+
   - name: Configure ssl.conf
     template:
       src: ssl.conf
