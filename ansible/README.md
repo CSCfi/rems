@@ -7,9 +7,10 @@
   * using the ansible `--private-key` command line flag
   * adding it to your `.ssh/config`
   * adding it to your `ssh-agent`
-3. Run `ansible -m ping all` to check you can reach the host
-4. Deploy latest version of rems: `ansible-playbook -vv rems.yml`
-5. See it run on <http://vm0773.kaj.pouta.csc.fi/> (not publicly accessible)
+3. To use an inventory beside the default one add `-i <inventory-name>` command line flag
+4. Run `ansible -m ping all` to check you can reach the host
+5. Deploy latest version of rems: `ansible-playbook -vv rems.yml`
+6. See it run on <http://vm0773.kaj.pouta.csc.fi/> (not publicly accessible)
 
 ## Setting up server
 If you already have setup the server you can ignore this step.
