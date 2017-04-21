@@ -263,7 +263,7 @@ INSERT INTO workflow_approvers
 VALUES
 (:wfid, :appruserid, :round)
 
--- :name get-workflow-approvers :? :n
+-- :name get-workflow-approvers :? :*
 SELECT
   wfa.appruserid
 FROM workflow_approvers wfa

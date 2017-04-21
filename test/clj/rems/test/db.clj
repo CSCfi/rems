@@ -342,6 +342,7 @@
 (deftest test-application-events
   (binding [context/*user* {"eppn" "event-test"}]
     (db/add-user! {:user "event-test", :userattrs nil})
+    (db/add-user! {:user "event-test-approver", :userattrs nil})
     (let [uid (get-user-id)
           wf (:id (db/create-workflow! {:modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 1}))
           item (:id (db/create-catalogue-item! {:title "A" :form nil :resid nil :wfid wf}))
@@ -351,16 +352,32 @@
           check (fn [app round state]
                   (is (= (assoc (get-base app) :state state :curround round)
                          (applications/get-application-state app))))]
+      (db/create-workflow-approver! {:wfid wf :appruserid uid :round 0})
+      (db/create-workflow-approver! {:wfid wf :appruserid "event-test-approver" :round 1})
+
       (check app1 0 "draft")
-      (db/add-application-event! {:application app1 :user uid :round 0 :event "apply" :comment ""})
+
+      (is (thrown? Exception (applications/new-approve-application app1 0 ""))
+          "Should not be able to approve draft")
+
+      (applications/new-submit-application app1)
       (check app1 0 "applied")
-      (db/add-application-event! {:application app1 :user uid :round 0 :event "approve" :comment ""})
+
+      (is (thrown? Exception (applications/new-approve-application app1 1 ""))
+          "Should not be able to approve wrong round")
+
+      (applications/new-approve-application app1 0 "")
       (check app1 1 "applied")
-      (db/add-application-event! {:application app1 :user uid :round 1 :event "approve" :comment ""})
+
+      (is (thrown? Exception (applications/new-approve-application app1 1 ""))
+          "Should not be able to approve if not approver")
+
+      (binding [context/*user* {"eppn" "event-test-approver"}]
+        (applications/new-approve-application app1 1 ""))
       (check app1 1 "approved")
 
       (check app2 0 "draft")
-      (db/add-application-event! {:application app2 :user uid :round 0 :event "apply" :comment ""})
+      (applications/new-submit-application app2)
       (check app2 0 "applied")
-      (db/add-application-event! {:application app2 :user uid :round 0 :event "reject" :comment ""})
+      (applications/new-reject-application app2 0 "comment")
       (check app2 0 "rejected"))))

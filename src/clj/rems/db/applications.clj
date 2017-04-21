@@ -175,6 +175,8 @@
 
 ;; TODO: "return" event
 
+;; TODO: auto approver event (when no approvers for round)
+
 (defn- apply-events [application events]
   (reduce apply-event application events))
 
@@ -186,3 +188,32 @@
     (apply-events
      application
      (db/get-application-events {:application application-id}))))
+
+(defn new-submit-application [application-id]
+  (let [application (first (db/get-applications {:id application-id}))
+        uid (get-user-id)]
+    (when-not (= uid (:applicantuserid application))
+      (throw-unauthorized))
+    (db/add-application-event! {:application application-id :user uid
+                                :round 0 :event "apply" :comment nil})))
+
+(defn- new-approver? [application round]
+  (contains? (set (db/get-workflow-approvers {:application application :round round}))
+             {:appruserid (get-user-id)}))
+
+(defn- judge-application [application-id event round comment]
+  (when-not (new-approver? application-id round)
+    (throw-unauthorized))
+  (let [state (get-application-state application-id)]
+    (when-not (= round (:curround state))
+      (throw-unauthorized))
+    (when-not (= "applied" (:state state))
+      (throw-unauthorized))
+    (db/add-application-event! {:application application-id :user (get-user-id)
+                                :round round :event event :comment comment})))
+
+(defn new-approve-application [application-id round comment]
+  (judge-application application-id "approve" round comment))
+
+(defn new-reject-application [application-id round comment]
+  (judge-application application-id "reject" round comment))
