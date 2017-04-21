@@ -336,3 +336,14 @@ FROM users
 SELECT userAttrs::TEXT
 FROM users
 WHERE userId = :user
+
+-- :name get-application-events :? :*
+SELECT
+  userId, round, event, comment, time
+FROM application_event
+WHERE appId = :application
+ORDER BY id ASC
+
+-- :name add-application-event! :insert
+INSERT INTO application_event (appId, userId, round, event, comment)
+VALUES (:application, :user, :round, CAST (:event AS application_event_type), :comment)

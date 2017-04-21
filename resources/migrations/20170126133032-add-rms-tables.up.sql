@@ -10,6 +10,13 @@ CREATE TYPE license_state AS ENUM ('created','approved','rejected');
 --;;
 CREATE TYPE reviewers_state AS ENUM ('created','commented');
 --;;
+CREATE TYPE application_event_type AS ENUM (
+  'apply',   -- draft --> applied
+  'approve', -- applied --> applied or approved
+  'reject',  -- applied --> rejected
+  'return'   -- applied --> returned
+);
+--;;
 CREATE TYPE application_state AS ENUM ('applied','approved','rejected','returned','closed','draft','onhold');
 --;;
 CREATE TYPE item_state AS ENUM ('disabled','enabled','copied');
@@ -533,3 +540,14 @@ CREATE TABLE active_role (
   role varchar(255) NOT NULL,
   FOREIGN KEY (userId, role) REFERENCES roles
 )
+--;;
+CREATE TABLE application_event (
+  id serial NOT NULL PRIMARY KEY, -- for ordering events
+  appId integer REFERENCES catalogue_item_application (id),
+  userId varchar(255) REFERENCES users (userId),
+  round integer NOT NULL,
+  event application_event_type NOT NULL,
+  comment varchar(4096) DEFAULT NULL,
+  time timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+)
+--;;

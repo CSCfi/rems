@@ -137,3 +137,52 @@
   (db/update-application-state! {:id application-id :user (get-user-id)
                                  :state "applied" :curround 0})
   (process-application application-id))
+
+;;; new event-based functions
+
+(defmulti ^:private apply-event
+  "Applies an event to an application state."
+  ;; dispatch by event type
+  (fn [_application event] (:event event)))
+
+(defmethod apply-event "apply"
+  [application event]
+  (assert (= (:state application) "draft")
+          (str "Can't submit application " (pr-str application)))
+  (assert (= (:round event) 0)
+          (str "Apply event should have round 0" (pr-str event)))
+  (assoc application :state "applied" :curround 0))
+
+(defmethod apply-event "approve"
+  [application event]
+  (assert (= (:state application) "applied")
+          (str "Can't approve application " (pr-str application)))
+  (assert (= (:curround application) (:round event))
+          (str "Application and approval rounds don't match: "
+               (pr-str application) " vs. " (pr-str event)))
+  (if (= (:curround application) (:fnlround application))
+    (assoc application :state "approved")
+    (assoc application :state "applied" :curround (inc (:curround application)))))
+
+(defmethod apply-event "reject"
+  [application event]
+  (assert (= (:state application) "applied")
+          (str "Can't reject application " (pr-str application)))
+  (assert (= (:curround application) (:round event))
+          (str "Application and rejection rounds don't match: "
+               (pr-str application) " vs. " (pr-str event)))
+  (assoc application :state "rejected"))
+
+;; TODO: "return" event
+
+(defn- apply-events [application events]
+  (reduce apply-event application events))
+
+(defn get-application-state [application-id]
+  (let [application (-> {:id application-id}
+                        db/get-applications
+                        first
+                        (assoc :state "draft" :curround 0))] ;; reset state
+    (apply-events
+     application
+     (db/get-application-events {:application application-id}))))

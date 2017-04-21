@@ -338,3 +338,29 @@
   ;; a sql constraint violation causes the current transaction to go
   ;; to aborted state, thus we test this last
   (is (thrown? Exception (roles/set-active-role! "pekka" :approver))))
+
+(deftest test-application-events
+  (binding [context/*user* {"eppn" "event-test"}]
+    (db/add-user! {:user "event-test", :userattrs nil})
+    (let [uid (get-user-id)
+          wf (:id (db/create-workflow! {:modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 1}))
+          item (:id (db/create-catalogue-item! {:title "A" :form nil :resid nil :wfid wf}))
+          app1 (applications/create-new-draft item)
+          app2 (applications/create-new-draft item)
+          get-base (fn [app] (first (db/get-applications {:id app})))
+          check (fn [app round state]
+                  (is (= (assoc (get-base app) :state state :curround round)
+                         (applications/get-application-state app))))]
+      (check app1 0 "draft")
+      (db/add-application-event! {:application app1 :user uid :round 0 :event "apply" :comment ""})
+      (check app1 0 "applied")
+      (db/add-application-event! {:application app1 :user uid :round 0 :event "approve" :comment ""})
+      (check app1 1 "applied")
+      (db/add-application-event! {:application app1 :user uid :round 1 :event "approve" :comment ""})
+      (check app1 1 "approved")
+
+      (check app2 0 "draft")
+      (db/add-application-event! {:application app2 :user uid :round 0 :event "apply" :comment ""})
+      (check app2 0 "applied")
+      (db/add-application-event! {:application app2 :user uid :round 0 :event "reject" :comment ""})
+      (check app2 0 "rejected"))))
