@@ -6,6 +6,7 @@
             [rems.db.core :as db]
             [rems.util :refer [get-user-id index-by]]))
 
+;; TODO cache application state in db instead of always computing it from events
 (declare get-application-state)
 
 ;;; Query functions
