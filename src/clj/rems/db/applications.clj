@@ -204,9 +204,11 @@
      (db/get-application-events {:application application-id}))))
 
 (defn new-submit-application [application-id]
-  (let [application (first (db/get-applications {:id application-id}))
+  (let [application (get-application-state application-id)
         uid (get-user-id)]
     (when-not (= uid (:applicantuserid application))
+      (throw-unauthorized))
+    (when-not (= "draft" (:state application))
       (throw-unauthorized))
     (db/add-application-event! {:application application-id :user uid
                                 :round 0 :event "apply" :comment nil})))

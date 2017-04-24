@@ -247,82 +247,6 @@
           (is (not (applications/approver? app1)))
           (is (not (applications/approver? app2))))))))
 
-#_
-(deftest test-approve
-  (binding [context/*user* {"eppn" "tester"}]
-    (db/create-resource! {:id 3 :resid "" :prefix "" :modifieruserid 1})
-    (db/create-resource! {:id 5 :resid "" :prefix "" :modifieruserid 1})
-    (db/create-resource! {:id 7 :resid "" :prefix "" :modifieruserid 1})
-    (let [uid (get-user-id)
-          uid2 "pekka"
-          wfid-a (:id (db/create-workflow! {:owneruserid "" :modifieruserid "" :title "" :fnlround 1}))
-          wfid-b (:id (db/create-workflow! {:owneruserid "" :modifieruserid "" :title "" :fnlround 0}))
-          wfid-c (:id (db/create-workflow! {:owneruserid "" :modifieruserid "" :title "" :fnlround 1}))
-          item-a (:id (db/create-catalogue-item! {:title "" :form nil :resid 3 :wfid wfid-a}))
-          item-b (:id (db/create-catalogue-item! {:title "" :form nil :resid 5 :wfid wfid-b}))
-          item-c (:id (db/create-catalogue-item! {:title "" :form nil :resid 7 :wfid wfid-c}))
-          app-a-1 (applications/create-new-draft item-a)
-          app-a-2 (applications/create-new-draft item-a)
-          draft (applications/create-new-draft item-a)
-          app-b (applications/create-new-draft item-b)
-          app-c (applications/create-new-draft item-c)
-
-          get (fn [app-id]
-                (let [apps (db/get-applications {:id app-id})]
-                  (is (= 1 (count apps)))
-                  (select-keys (first apps) [:state :curround])))
-          approvals (fn [app-id]
-                      (sort-by :round
-                               (map #(select-keys % [:catappid :appruserid :round :comment :state])
-                                    (db/get-application-approvals {:application app-id}))))]
-
-      (db/create-workflow-approver! {:wfid wfid-a :appruserid uid :round 0})
-      (db/create-workflow-approver! {:wfid wfid-a :appruserid uid :round 1})
-      (db/create-workflow-approver! {:wfid wfid-b :appruserid uid2 :round 0})
-      (db/create-workflow-approver! {:wfid wfid-b :appruserid uid :round 1})
-
-      (doseq [a [app-a-1 app-a-2 app-b]]
-        (applications/submit-application a))
-
-      (approvals/approve app-a-1 0 "comment")
-      (is (= {:state "applied" :curround 1} (get app-a-1)))
-      (is (= [{:catappid app-a-1 :appruserid uid :round 0 :comment "comment" :state "approved"}]
-             (approvals app-a-1)))
-      (is (= {:state "applied" :curround 0} (get app-a-2)))
-      (is (empty? (approvals app-a-2)))
-      (is (empty? (db/get-entitlements)))
-
-      (is (thrown? Exception
-                   (approvals/approve 0 "comment3"))
-          "shouldn't be able to approve same round again")
-
-      (approvals/approve app-a-1 1 "comment2")
-      (is (= {:state "approved" :curround 1} (get app-a-1)))
-      (is (= [{:catappid app-a-1 :appruserid uid :round 0 :comment "comment" :state "approved"}
-              {:catappid app-a-1 :appruserid uid :round 1 :comment "comment2" :state "approved"}]
-             (approvals app-a-1)))
-      (is (= [{:resid 3 :catappid app-a-1 :userid uid}] (db/get-entitlements)))
-      (is (= {:state "applied" :curround 0} (get app-a-2)))
-      (is (empty? (approvals app-a-2)))
-
-      (approvals/reject app-a-2 0 "comment4")
-      (is (= {:state "rejected" :curround 0} (get app-a-2)))
-      (is (= [{:catappid app-a-2 :appruserid uid :round 0 :comment "comment4" :state "rejected"}]
-             (approvals app-a-2)))
-
-      (is (thrown? rems.auth.NotAuthorizedException
-                   (approvals/approve app-b 0 "comment"))
-          "shouldn't be able to approve when not approver")
-      (is (thrown? rems.auth.NotAuthorizedException
-                   (approvals/approve draft 0 "comment"))
-          "shouldn't be able to approve draft")
-
-      (testing "workflow without approvers"
-        (applications/submit-application app-c)
-        (is (= {:state "approved" :curround 1} (get app-c)))
-        (is (= [{:resid 7 :catappid app-c :userid uid}]
-               (filter #(= 7 (:resid %)) (db/get-entitlements))))))))
-
 (deftest test-users
   (db/add-user! {:user "pekka", :userattrs nil})
   (db/add-user! {:user "simo", :userattrs nil})
@@ -374,8 +298,15 @@
       (is (thrown? Exception (applications/new-approve-application app1 0 ""))
           "Should not be able to approve draft")
 
+      (binding [context/*user* {"eppn" "event-test-approver"}]
+        (is (thrown? Exception (applications/new-submit-application app1))
+            "Should not be able to submit when not applicant"))
+
       (applications/new-submit-application app1)
       (check app1 0 "applied")
+
+      (is (thrown? Exception (applications/new-submit-application app1))
+          "Should not be able to submit twice")
 
       (is (thrown? Exception (applications/new-approve-application app1 1 ""))
           "Should not be able to approve wrong round")
