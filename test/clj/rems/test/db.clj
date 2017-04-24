@@ -285,9 +285,12 @@
     (db/add-user! {:user "event-test-approver", :userattrs nil})
     (let [uid (get-user-id)
           wf (:id (db/create-workflow! {:modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 1}))
+          auto-wf (:id (db/create-workflow! {:modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 1}))
           item (:id (db/create-catalogue-item! {:title "A" :form nil :resid nil :wfid wf}))
+          auto-item (:id (db/create-catalogue-item! {:title "A" :form nil :resid nil :wfid auto-wf}))
           app1 (applications/create-new-draft item)
           app2 (applications/create-new-draft item)
+          auto-app (applications/create-new-draft auto-item)
           fetch (fn [app] (select-keys (applications/get-application-state app)
                                        [:state :curround]))]
       (db/create-workflow-approver! {:wfid wf :appruserid uid :round 0})
@@ -305,6 +308,10 @@
       (applications/submit-application app1)
       (is (= (fetch app1) {:curround 0 :state "applied"}))
 
+      (applications/try-autoapprove-application app1)
+      (is (= (fetch app1) {:curround 0 :state "applied"})
+          "Autoapprove should do nothing")
+
       (is (thrown? Exception (applications/submit-application app1))
           "Should not be able to submit twice")
 
@@ -313,7 +320,6 @@
 
       (applications/approve-application app1 0 "c1")
       (is (= (fetch app1) {:curround 1 :state "applied"}))
-
 
       (is (thrown? Exception (applications/approve-application app1 1 ""))
           "Should not be able to approve if not approver")
@@ -333,4 +339,15 @@
       (applications/submit-application app2)
       (is (= (fetch app2) {:curround 0 :state "applied"}))
       (applications/reject-application app2 0 "comment")
-      (is (= (fetch app2) {:curround 0 :state "rejected"})))))
+      (is (= (fetch app2) {:curround 0 :state "rejected"}))
+
+      (testing "autoapprove"
+        (is (= (fetch auto-app) {:curround 0 :state "draft"}))
+        (applications/submit-application auto-app)
+        (is (= (fetch auto-app) {:curround 1 :state "approved"}))
+        (is (= (->> (applications/get-application-state auto-app)
+                  :events
+                  (map #(select-keys % [:round :event])))
+             [{:round 0 :event "apply"}
+              {:round 0 :event "autoapprove"}
+              {:round 1 :event "autoapprove"}]))))))

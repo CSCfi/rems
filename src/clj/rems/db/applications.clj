@@ -161,8 +161,7 @@
           (str "Apply event should have round 0" (pr-str event)))
   (assoc application :state "applied" :curround 0))
 
-(defmethod apply-event "approve"
-  [application event]
+(defn- apply-approve [application event]
   (assert (= (:state application) "applied")
           (str "Can't approve application " (pr-str application)))
   (assert (= (:curround application) (:round event))
@@ -171,6 +170,14 @@
   (if (= (:curround application) (:fnlround application))
     (assoc application :state "approved")
     (assoc application :state "applied" :curround (inc (:curround application)))))
+
+(defmethod apply-event "approve"
+  [application event]
+  (apply-approve application event))
+
+(defmethod apply-event "autoapprove"
+  [application event]
+  (apply-approve application event))
 
 (defmethod apply-event "reject"
   [application event]
@@ -182,8 +189,6 @@
   (assoc application :state "rejected"))
 
 ;; TODO: "return" event
-
-;; TODO: auto approver event (when no approvers for round)
 
 (defn- apply-events [application events]
   (reduce apply-event application events))
@@ -201,6 +206,19 @@
      application
      events)))
 
+(defn try-autoapprove-application
+  "If application can be autoapproved (round has no approvers), add an
+   autoapprove event. Otherwise do nothing."
+  [application-id]
+  (let [application (get-application-state application-id)
+        round (:curround application)
+        state (:state application)]
+    (when (= "applied" state)
+      (when (empty? (db/get-workflow-approvers {:application application-id :round round}))
+        (db/add-application-event! {:application application-id :user (get-user-id)
+                                    :round round :event "autoapprove" :comment nil})
+        (try-autoapprove-application application-id)))))
+
 (defn submit-application [application-id]
   (let [application (get-application-state application-id)
         uid (get-user-id)]
@@ -209,7 +227,8 @@
     (when-not (= "draft" (:state application))
       (throw-unauthorized))
     (db/add-application-event! {:application application-id :user uid
-                                :round 0 :event "apply" :comment nil})))
+                                :round 0 :event "apply" :comment nil})
+    (try-autoapprove-application application-id)))
 
 (defn- judge-application [application-id event round comment]
   (when-not (approver? application-id)
@@ -218,7 +237,8 @@
     (when-not (= round (:curround state))
       (throw-unauthorized))
     (db/add-application-event! {:application application-id :user (get-user-id)
-                                :round round :event event :comment comment})))
+                                :round round :event event :comment comment})
+    (try-autoapprove-application application-id)))
 
 (defn approve-application [application-id round comment]
   (judge-application application-id "approve" round comment))
