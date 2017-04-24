@@ -9,7 +9,6 @@
             [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.applications :as applications]
-            [rems.db.approvals :as approvals]
             [rems.db.core :as db]
             [rems.db.roles :as roles]
             [rems.util :refer [get-user-id]]))
@@ -189,15 +188,15 @@
              (map #(select-keys % [:id :state :catid])
                   (applications/get-applications)))))))
 
-(deftest test-approvals
+(deftest test-get-approvals
   (binding [context/*user* {"eppn" "test-user"}]
     (let [uid (get-user-id)
           uid2 "another-user"
           wfid1 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 0}))
           wfid2 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 1}))
           _ (db/create-workflow-approver! {:wfid wfid1 :appruserid uid :round 0})
+          _ (db/create-workflow-approver! {:wfid wfid2 :appruserid uid2 :round 0})
           _ (db/create-workflow-approver! {:wfid wfid2 :appruserid uid :round 1})
-          _ (db/create-workflow-approver! {:wfid wfid2 :appruserid uid2 :round 1})
           item1 (:id (db/create-catalogue-item! {:title "item1" :form nil :resid nil :wfid wfid1}))
           item2 (:id (db/create-catalogue-item! {:title "item2" :form nil :resid nil :wfid wfid2}))
           item3 (:id (db/create-catalogue-item! {:title "item3" :form nil :resid nil :wfid wfid1}))
@@ -206,38 +205,47 @@
           app2 (applications/create-new-draft item2) ; should see as approver for round 1
           app3 (applications/create-new-draft item3) ; should not see draft
           app4 (applications/create-new-draft item4)] ; should not see approved
-      (db/update-application-state! {:id app1 :user uid :state "applied" :curround 0})
-      (db/update-application-state! {:id app2 :user uid :state "applied" :curround 0})
-      (db/update-application-state! {:id app3 :user uid :state "draft" :curround 0})
-      (db/update-application-state! {:id app4 :user uid :state "approved" :curround 0})
+      (db/add-user! {:user uid :userattrs nil})
+      (db/add-user! {:user uid2 :userattrs nil})
+
+      (applications/new-submit-application app1)
+      (applications/new-submit-application app2)
+
+      (applications/new-submit-application app4)
+      (binding [context/*user* {"eppn" uid2}]
+        (applications/new-approve-application app4 0 ""))
+      (applications/new-approve-application app4 1 "")
+
       (is (= [{:id app1 :state "applied" :catid item1 :curround 0}]
              (map #(select-keys % [:id :state :catid :curround])
-                  (approvals/get-approvals)))
+                  (applications/get-approvals)))
           "should only see app1")
-      (testing "approvals/approver?"
-        (is (approvals/approver? app1))
-        (is (not (approvals/approver? app2)))
-        (is (not (approvals/approver? app3)))
-        (is (not (approvals/approver? app4)))
+      (testing "applications/approver?"
+        (is (applications/approver? app1))
+        (is (not (applications/approver? app2)))
+        (is (not (applications/approver? app3)))
+        (is (not (applications/approver? app4)))
         (binding [context/*user* {"eppn" uid2}]
-          (is (not (approvals/approver? app1)))
-          (is (not (approvals/approver? app2)))))
-      (db/update-application-state! {:id app1 :user uid :state "applied" :curround 1})
-      (db/update-application-state! {:id app2 :user uid :state "applied" :curround 1})
-      (db/update-application-state! {:id app3 :user uid :state "draft" :curround 1})
-      (db/update-application-state! {:id app4 :user uid :state "approved" :curround 1})
+          (is (not (applications/approver? app1)))
+          (is (applications/approver? app2))))
+
+      ;; move app1 and app2 to round 1
+      (applications/new-approve-application app1 0 "")
+      (binding [context/*user* {"eppn" uid2}]
+        (applications/new-approve-application app2 0 ""))
+
       (is (= [{:id app2 :state "applied" :catid item2 :curround 1}]
              (map #(select-keys % [:id :state :catid :curround])
-                  (approvals/get-approvals)))
+                  (applications/get-approvals)))
           "should only see app2")
       (testing "approvals/approver?"
-        (is (not (approvals/approver? app1)))
-        (is (approvals/approver? app2))
-        (is (not (approvals/approver? app3)))
-        (is (not (approvals/approver? app4)))
+        (is (not (applications/approver? app1)))
+        (is (applications/approver? app2))
+        (is (not (applications/approver? app3)))
+        (is (not (applications/approver? app4)))
         (binding [context/*user* {"eppn" uid2}]
-          (is (not (approvals/approver? app1)))
-          (is (approvals/approver? app2)))))))
+          (is (not (applications/approver? app1)))
+          (is (not (applications/approver? app2))))))))
 
 #_
 (deftest test-approve

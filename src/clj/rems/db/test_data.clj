@@ -2,7 +2,6 @@
   "Populating the database with nice test data."
   (:require [rems.context :as context]
             [rems.db.applications :as applications]
-            [rems.db.approvals :as approvals]
             [rems.db.core :as db]
             [rems.db.roles :as roles]
             [rems.util :refer [get-user-id]]))

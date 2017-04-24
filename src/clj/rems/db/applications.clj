@@ -2,20 +2,36 @@
   "Query functions for forms and applications."
   (:require [rems.auth.util :refer [throw-unauthorized]]
             [rems.context :as context]
-            [rems.db.approvals :refer [approver?]]
             [rems.db.catalogue :refer [get-localized-catalogue-item]]
             [rems.db.core :as db]
             [rems.util :refer [get-user-id index-by]]))
 
-(declare get-application-state new-approver?)
+(declare get-application-state)
 
-(defn get-applications []
+(defn approver? [application]
+  (let [state (get-application-state application)
+        round (:curround state)]
+    (and (= "applied" (:state state))
+         (contains? (set (db/get-workflow-approvers {:application application :round round}))
+                    {:appruserid (get-user-id)}))))
+
+;; TODO hacky
+(defn- get-applications-impl [query-params]
   (doall
-   (for [a (db/get-applications {:applicant (get-user-id)})]
-     (assoc (get-application-state (:id a)) ;; TODO: hacky
+   (for [a (db/get-applications query-params)]
+     (assoc (get-application-state (:id a))
             :catalogue-item
             (get-in (get-localized-catalogue-item {:id (:catid a)})
                     [:localizations context/*lang*])))))
+
+
+(defn get-applications []
+  (get-applications-impl {:applicant (get-user-id)}))
+
+(defn get-approvals []
+  (filterv
+   (fn [app] (approver? (:id app)))
+   (get-applications-impl {})))
 
 (defn get-draft-id-for ;; TODO: hacky
   "Finds applications in the draft state for the given catalogue item.
@@ -120,7 +136,7 @@
                                            {:application application-id})))]
      (when application-id
        (when-not (or applicant?
-                     (new-approver? application-id (:curround application)))
+                     (approver? application-id))
          (throw-unauthorized)))
      {:id form-id
       :catalogue-item catalogue-item
@@ -195,17 +211,11 @@
     (db/add-application-event! {:application application-id :user uid
                                 :round 0 :event "apply" :comment nil})))
 
-(defn- new-approver? [application round]
-  (contains? (set (db/get-workflow-approvers {:application application :round round}))
-             {:appruserid (get-user-id)}))
-
 (defn- judge-application [application-id event round comment]
-  (when-not (new-approver? application-id round)
+  (when-not (approver? application-id)
     (throw-unauthorized))
   (let [state (get-application-state application-id)]
     (when-not (= round (:curround state))
-      (throw-unauthorized))
-    (when-not (= "applied" (:state state))
       (throw-unauthorized))
     (db/add-application-event! {:application application-id :user (get-user-id)
                                 :round round :event event :comment comment})))

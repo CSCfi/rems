@@ -8,7 +8,6 @@
             [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.applications :as applications]
-            [rems.db.approvals :as approvals]
             [rems.db.core :as db]
             [rems.util :refer [get-user-id]]))
 

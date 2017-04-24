@@ -4,7 +4,6 @@
             [compojure.core :refer [GET POST defroutes]]
             [rems.anti-forgery :refer [anti-forgery-field]]
             [rems.db.applications :as applications]
-            [rems.db.approvals :refer [get-approvals]]
             [rems.guide :refer :all]
             [rems.layout :as layout]
             [rems.text :refer [text]]
@@ -66,7 +65,7 @@
 
 (defn approvals
   ([]
-   (approvals (get-approvals)))
+   (approvals (applications/get-approvals)))
   ([apps]
    (if (empty? apps)
      [:div.approvals.alert.alert-success (text :t/approvals.empty)]
