@@ -47,7 +47,8 @@
           "should find catalogue item by id"))))
 
 (deftest test-form
-  (binding [context/*user* {"eppn" "test-user"}]
+  (binding [context/*user* {"eppn" "test-user"}
+            context/*lang* :en]
     (let [uid (get-user-id)
           meta (db/create-form-meta! {:title "metatitle" :user uid})
           wf (db/create-workflow! {:modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 0})
@@ -96,61 +97,53 @@
           (is (= "http://test.org" (:textcontent (first (:licenses form-ru)))) "link should point to default license site")))
 
       (testing "get partially filled form"
-        (binding [context/*lang* :en]
-          (is app-id "sanity check")
-          (db/save-field-value! {:application app-id
-                                 :form (:id form-en)
-                                 :item (:id item-b)
-                                 :user uid
-                                 :value "B"})
+        (is app-id "sanity check")
+        (db/save-field-value! {:application app-id
+                               :form (:id form-en)
+                               :item (:id item-b)
+                               :user uid
+                               :value "B"})
+        (db/save-license-approval! {:catappid app-id
+                                    :licid (:id license)
+                                    :actoruserid uid
+                                    :round 0
+                                    :state "approved"})
+        (let [f (applications/get-form-for (:id item) app-id)]
+          (is (= app-id (:id (:application f))))
+          (is (= "draft" (:state (:application f))))
+          (is (= [nil "B" nil] (map :value (:items f))))
+          (is (= [true] (map :approved (:licenses f)))))
+
+        (testing "license field"
           (db/save-license-approval! {:catappid app-id
                                       :licid (:id license)
                                       :actoruserid uid
                                       :round 0
                                       :state "approved"})
-          (db/add-application-approval! {:id app-id
-                                         :user uid
-                                         :comment "comment"
-                                         :round 0
-                                         :state "rejected"})
-          (let [f (applications/get-form-for (:id item) app-id)]
-            (is (= app-id (:id (:application f))))
-            (is (= "draft" (:state (:application f))))
-            (is (= [nil "B" nil] (map :value (:items f))))
-            (is (= [true] (map :approved (:licenses f))))
-            (is (= [{:comment "comment" :round 0 :state "rejected"}]
-                   (:comments f))))
-
-          (testing "license field"
-            (db/save-license-approval! {:catappid app-id
+          (is (= 1 (count (db/get-application-license-approval {:catappid app-id
+                                                                :licid (:id license)
+                                                                :actoruserid uid})))
+              "saving a license approval twice should only create one row")
+          (db/delete-license-approval! {:catappid app-id
                                         :licid (:id license)
-                                        :actoruserid uid
-                                        :round 0
-                                        :state "approved"})
-            (is (= 1 (count (db/get-application-license-approval {:catappid app-id
-                                                                  :licid (:id license)
-                                                                  :actoruserid uid})))
-                "saving a license approval twice should only create one row")
-            (db/delete-license-approval! {:catappid app-id
-                                          :licid (:id license)
-                                          :actoruserid uid})
-            (is (empty? (db/get-application-license-approval {:catappid app-id
-                                                                  :licid (:id license)
-                                                                  :actoruserid uid}))
-                "after deletion there should not be saved approvals")
-            (let [f (applications/get-form-for (:id item) app-id)]
-              (is (= [false] (map :approved (:licenses f))))))
-          (testing "reset field value"
-            (db/clear-field-value! {:application app-id
-                                    :form (:id form-en)
-                                    :item (:id item-b)})
-            (db/save-field-value! {:application app-id
-                                   :form (:id form-en)
-                                   :item (:id item-b)
-                                   :user uid
-                                   :value "X"})
-            (let [f (applications/get-form-for (:id item) app-id)]
-              (is (= [nil "X" nil] (map :value (:items f))))))))
+                                        :actoruserid uid})
+          (is (empty? (db/get-application-license-approval {:catappid app-id
+                                                            :licid (:id license)
+                                                            :actoruserid uid}))
+              "after deletion there should not be saved approvals")
+          (let [f (applications/get-form-for (:id item) app-id)]
+            (is (= [false] (map :approved (:licenses f))))))
+        (testing "reset field value"
+          (db/clear-field-value! {:application app-id
+                                  :form (:id form-en)
+                                  :item (:id item-b)})
+          (db/save-field-value! {:application app-id
+                                 :form (:id form-en)
+                                 :item (:id item-b)
+                                 :user uid
+                                 :value "X"})
+          (let [f (applications/get-form-for (:id item) app-id)]
+            (is (= [nil "X" nil] (map :value (:items f)))))))
 
       (testing "get submitted form as approver"
         (db/create-workflow-approver! {:wfid (:id wf) :appruserid "approver" :round 0})
@@ -160,12 +153,21 @@
                                     :round 0
                                     :state "approved"})
         (applications/new-submit-application app-id)
-        (binding [context/*user* {"eppn" "approver"}
-                  context/*lang* :en]
+        (binding [context/*user* {"eppn" "approver"}]
           (let [form (applications/get-form-for (:id item) app-id)]
             (is (= "applied" (get-in form [:application :state])))
             (is (= [nil "X" nil] (map :value (:items form))))
-            (is (get-in form [:licenses 0 :approved]))))))))
+            (is (get-in form [:licenses 0 :approved])))))
+
+      (testing "get approved form as applicant"
+        (db/add-user! {:user "approver" :userattrs nil})
+        (binding [context/*user* {"eppn" "approver"}]
+          (applications/new-approve-application app-id 0 "comment"))
+        (let [form (applications/get-form-for (:id item) app-id)]
+          (is (= "approved" (get-in form [:application :state])))
+          (is (= [nil "X" nil] (map :value (:items form))))
+          (is (= [nil "comment"]
+                 (->> form :application :events (map :comment)))))))))
 
 (deftest test-applications
   (binding [context/*user* {"eppn" "test-user"}]
@@ -286,14 +288,12 @@
           item (:id (db/create-catalogue-item! {:title "A" :form nil :resid nil :wfid wf}))
           app1 (applications/create-new-draft item)
           app2 (applications/create-new-draft item)
-          get-base (fn [app] (first (db/get-applications {:id app})))
-          check (fn [app round state]
-                  (is (= (assoc (get-base app) :state state :curround round)
-                         (applications/get-application-state app))))]
+          fetch (fn [app] (select-keys (applications/get-application-state app)
+                                       [:state :curround]))]
       (db/create-workflow-approver! {:wfid wf :appruserid uid :round 0})
       (db/create-workflow-approver! {:wfid wf :appruserid "event-test-approver" :round 1})
 
-      (check app1 0 "draft")
+      (is (= (fetch app1) {:curround 0 :state "draft"}))
 
       (is (thrown? Exception (applications/new-approve-application app1 0 ""))
           "Should not be able to approve draft")
@@ -303,7 +303,7 @@
             "Should not be able to submit when not applicant"))
 
       (applications/new-submit-application app1)
-      (check app1 0 "applied")
+      (is (= (fetch app1) {:curround 0 :state "applied"}))
 
       (is (thrown? Exception (applications/new-submit-application app1))
           "Should not be able to submit twice")
@@ -311,18 +311,26 @@
       (is (thrown? Exception (applications/new-approve-application app1 1 ""))
           "Should not be able to approve wrong round")
 
-      (applications/new-approve-application app1 0 "")
-      (check app1 1 "applied")
+      (applications/new-approve-application app1 0 "c1")
+      (is (= (fetch app1) {:curround 1 :state "applied"}))
+
 
       (is (thrown? Exception (applications/new-approve-application app1 1 ""))
           "Should not be able to approve if not approver")
 
       (binding [context/*user* {"eppn" "event-test-approver"}]
-        (applications/new-approve-application app1 1 ""))
-      (check app1 1 "approved")
+        (applications/new-approve-application app1 1 "c2"))
+      (is (= (fetch app1) {:curround 1 :state "approved"}))
 
-      (check app2 0 "draft")
+      (is (= (->> (applications/get-application-state app1)
+                  :events
+                  (map #(select-keys % [:round :event :comment])))
+             [{:round 0 :event "apply" :comment nil}
+              {:round 0 :event "approve" :comment "c1"}
+              {:round 1 :event "approve" :comment "c2"}]))
+
+      (is (= (fetch app2) {:curround 0 :state "draft"}))
       (applications/new-submit-application app2)
-      (check app2 0 "applied")
+      (is (= (fetch app2) {:curround 0 :state "applied"}))
       (applications/new-reject-application app2 0 "comment")
-      (check app2 0 "rejected"))))
+      (is (= (fetch app2) {:curround 0 :state "rejected"})))))

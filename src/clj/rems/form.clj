@@ -87,7 +87,7 @@
         editable (or (nil? state) (= state "draft"))
         readonly (not editable)
         approvable (= state "applied")
-        comments (keep :comment (:comments form))]
+        comments (keep :comment (get-in form [:application :events]))]
     (list
      (when state
        (let [content (list [:h4 (text (applications/localize-state state))]

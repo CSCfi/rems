@@ -90,9 +90,6 @@
                                                            :licid (:id license)
                                                            :actoruserid app-user}))))}))
 
-(defn- process-comment [approval]
-  (select-keys approval [:round :comment :state]))
-
 (defn get-form-for
   "Returns a form structure like this:
 
@@ -113,8 +110,7 @@
                  :licensetype \"link\"
                  :title \"LGPL\"
                  :textcontent \"http://foo\"
-                 :approved false}]
-     :comments [{:round 0 :comment \"blah\" :state \"approved\"}]"
+                 :approved false}]"
   ([catalogue-item]
    (get-form-for catalogue-item nil))
   ([catalogue-item application-id]
@@ -130,10 +126,7 @@
                                     (index-by [:licid :langcode]))
          licenses (mapv #(process-license application license-localizations %)
                         (db/get-workflow-licenses {:catId catalogue-item}))
-         applicant? (= (:applicantuserid application) (get-user-id))
-         comments (when application-id
-                    (mapv process-comment (db/get-application-approvals
-                                           {:application application-id})))]
+         applicant? (= (:applicantuserid application) (get-user-id))]
      (when application-id
        (when-not (or applicant?
                      (approver? application-id))
@@ -143,8 +136,7 @@
       :application application
       :title (or (:formtitle form) (:metatitle form))
       :items items
-      :licenses licenses
-      :comments comments})))
+      :licenses licenses})))
 
 (defn create-new-draft [resource-id]
   (let [uid (get-user-id)
@@ -195,13 +187,15 @@
   (reduce apply-event application events))
 
 (defn get-application-state [application-id]
-  (let [application (-> {:id application-id}
+  (let [events (db/get-application-events {:application application-id})
+        application (-> {:id application-id}
                         db/get-applications
                         first
-                        (assoc :state "draft" :curround 0))] ;; reset state
+                        (assoc :state "draft" :curround 0) ;; reset state
+                        (assoc :events events))]
     (apply-events
      application
-     (db/get-application-events {:application application-id}))))
+     events)))
 
 (defn new-submit-application [application-id]
   (let [application (get-application-state application-id)
