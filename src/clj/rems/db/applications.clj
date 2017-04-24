@@ -8,6 +8,8 @@
 
 (declare get-application-state)
 
+;;; Query functions
+
 (defn approver? [application]
   (let [state (get-application-state application)
         round (:curround state)]
@@ -15,7 +17,6 @@
          (contains? (set (db/get-workflow-approvers {:application application :round round}))
                     {:appruserid (get-user-id)}))))
 
-;; TODO hacky
 (defn- get-applications-impl [query-params]
   (doall
    (for [a (db/get-applications query-params)]
@@ -33,12 +34,12 @@
    (fn [app] (approver? (:id app)))
    (get-applications-impl {})))
 
-(defn get-draft-id-for ;; TODO: hacky
+(defn get-draft-id-for
   "Finds applications in the draft state for the given catalogue item.
    Returns an id of an arbitrary one of them, or nil if there are none."
   [catalogue-item]
-  (->> (get-applications)
-       (filter #(and (= catalogue-item (:catid %)) (= "draft" (:state %))))
+  (->> (get-applications-impl {:resource catalogue-item})
+       (filter #(= "draft" (:state %)))
        first
        :id))
 
@@ -144,7 +145,7 @@
                  {:item resource-id :user uid}))]
     id))
 
-;;; new event-based functions
+;;; Applying events
 
 (defmulti ^:private apply-event
   "Applies an event to an application state."
@@ -185,6 +186,8 @@
 
 (defn- apply-events [application events]
   (reduce apply-event application events))
+
+;;; Public event api
 
 (defn get-application-state [application-id]
   (let [events (db/get-application-events {:application application-id})
