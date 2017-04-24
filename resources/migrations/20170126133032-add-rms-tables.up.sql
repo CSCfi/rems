@@ -188,20 +188,6 @@ CREATE TABLE workflow_approvers (
   CONSTRAINT workflow_approvers_ibfk_1 FOREIGN KEY (wfId) REFERENCES workflow (id)
 );
 --;;
-CREATE TABLE catalogue_item_application_approvers (
-  id serial NOT NULL PRIMARY KEY,
-  catAppId integer DEFAULT NULL,
-  wfApprId integer DEFAULT NULL,
-  apprUserId varchar(255) NOT NULL,
-  round integer NOT NULL,
-  comment varchar(4096) DEFAULT NULL,
-  state approval_status DEFAULT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT catalogue_item_application_approvers_ibfk_1 FOREIGN KEY (catAppId) REFERENCES catalogue_item_application (id),
-  CONSTRAINT catalogue_item_application_approvers_ibfk_2 FOREIGN KEY (wfApprId) REFERENCES workflow_approvers (id)
-);
---;;
 CREATE TABLE catalogue_item_application_catid_overflow (
   id serial NOT NULL PRIMARY KEY,
   catAppId integer DEFAULT NULL,
@@ -268,31 +254,6 @@ CREATE TABLE catalogue_item_application_predecessor (
   endt timestamp NULL DEFAULT NULL,
   CONSTRAINT catalogue_item_application_predecessor_ibfk_1 FOREIGN KEY (pre_catAppId) REFERENCES catalogue_item_application (id),
   CONSTRAINT catalogue_item_application_predecessor_ibfk_2 FOREIGN KEY (suc_catAppId) REFERENCES catalogue_item_application (id)
-);
---;;
-CREATE TABLE catalogue_item_application_reviewers (
-  id serial NOT NULL PRIMARY KEY,
-  catAppId integer DEFAULT NULL,
-  revUserId varchar(255) NOT NULL,
-  modifierUserId varchar(255) DEFAULT NULL,
-  round integer NOT NULL,
-  comment varchar(4096) DEFAULT NULL,
-  state reviewers_state NOT NULL DEFAULT 'created',
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT catalogue_item_application_reviewers_ibfk_1 FOREIGN KEY (catAppId) REFERENCES catalogue_item_application (id)
-);
---;;
-CREATE TABLE catalogue_item_application_state (
-  id serial NOT NULL PRIMARY KEY,
-  catAppId integer DEFAULT NULL,
-  modifierUserId varchar(255) NOT NULL,
-  curround integer NOT NULL,
-  state application_state DEFAULT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT catalogue_item_application_state_ibfk_1 FOREIGN KEY (catAppId) REFERENCES catalogue_item_application (id),
-  UNIQUE (catAppId)
 );
 --;;
 CREATE TABLE catalogue_item_localization (
