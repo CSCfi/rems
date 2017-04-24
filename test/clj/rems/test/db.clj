@@ -73,6 +73,7 @@
       (db/link-form-item! {:form (:id form-en) :itemorder 3 :item (:id item-c) :user uid :optional false})
       (db/link-form-item! {:form (:id form-fi) :itemorder 1 :item (:id item-a) :user uid :optional false})
 
+      (db/add-user! {:user uid :userattrs nil})
       (db/create-workflow-approver! {:wfid (:id wf) :appruserid uid :round 0})
 
       (is (:id item) "sanity check")
@@ -154,12 +155,12 @@
 
       (testing "get submitted form as approver"
         (db/create-workflow-approver! {:wfid (:id wf) :appruserid "approver" :round 0})
-        (db/update-application-state! {:id app-id :user uid :state "applied" :curround 0})
         (db/save-license-approval! {:catappid app-id
                                     :licid (:id license)
                                     :actoruserid uid
                                     :round 0
                                     :state "approved"})
+        (applications/new-submit-application app-id)
         (binding [context/*user* {"eppn" "approver"}
                   context/*lang* :en]
           (let [form (applications/get-form-for (:id item) app-id)]
@@ -169,16 +170,20 @@
 
 (deftest test-applications
   (binding [context/*user* {"eppn" "test-user"}]
+    (db/add-user! {:user "test-user" :userattrs nil})
     (let [uid (get-user-id)
-          item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid nil}))
+          wf (:id (db/create-workflow! {:owneruserid uid :modifieruserid uid :title "" :fnlround 0}))
+          item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
           app (applications/create-new-draft item)]
+      (db/create-workflow-approver! {:wfid wf :appruserid uid :round 0})
+
       (is (= app (applications/get-draft-id-for item)))
       (is (= [{:id app :state "draft" :catid item}]
              (map #(select-keys % [:id :state :catid])
                   (applications/get-applications))))
-      (db/update-application-state! {:id app :user uid :state "applied" :curround 0})
+      (applications/new-submit-application app)
       (is (nil? (applications/get-draft-id-for item)))
-      (db/update-application-state! {:id app :user uid :state "approved" :curround 0})
+      (applications/new-approve-application app 0 "comment")
       (is (nil? (applications/get-draft-id-for item)))
       (is (= [{:id app :state "approved" :catid item}]
              (map #(select-keys % [:id :state :catid])
@@ -234,6 +239,7 @@
           (is (not (approvals/approver? app1)))
           (is (approvals/approver? app2)))))))
 
+#_
 (deftest test-approve
   (binding [context/*user* {"eppn" "tester"}]
     (db/create-resource! {:id 3 :resid "" :prefix "" :modifieruserid 1})

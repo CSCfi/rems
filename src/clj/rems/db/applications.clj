@@ -2,25 +2,29 @@
   "Query functions for forms and applications."
   (:require [rems.auth.util :refer [throw-unauthorized]]
             [rems.context :as context]
-            [rems.db.approvals :refer [approver?
-                                       process-application]]
+            [rems.db.approvals :refer [approver?]]
             [rems.db.catalogue :refer [get-localized-catalogue-item]]
             [rems.db.core :as db]
             [rems.util :refer [get-user-id index-by]]))
 
+(declare get-application-state new-approver?)
+
 (defn get-applications []
   (doall
    (for [a (db/get-applications {:applicant (get-user-id)})]
-     (assoc a :catalogue-item
+     (assoc (get-application-state (:id a)) ;; TODO: hacky
+            :catalogue-item
             (get-in (get-localized-catalogue-item {:id (:catid a)})
                     [:localizations context/*lang*])))))
 
-(defn get-draft-id-for
+(defn get-draft-id-for ;; TODO: hacky
   "Finds applications in the draft state for the given catalogue item.
    Returns an id of an arbitrary one of them, or nil if there are none."
   [catalogue-item]
-  (when-let [app (first (db/get-applications {:resource catalogue-item :state "draft" :applicant (get-user-id)}))]
-    (:id app)))
+  (->> (get-applications)
+       (filter #(and (= catalogue-item (:catid %)) (= "draft" (:state %))))
+       first
+       :id))
 
 (defn- process-item
   "Returns an item structure like this:
@@ -101,7 +105,7 @@
    (let [form (db/get-form-for-catalogue-item
                {:id catalogue-item :lang (name context/*lang*)})
          application (when application-id
-                       (first (db/get-applications {:id application-id})))
+                       (get-application-state application-id))
          form-id (:formid form)
          items (mapv #(process-item application-id form-id %)
                      (db/get-form-items {:id form-id}))
@@ -116,7 +120,7 @@
                                            {:application application-id})))]
      (when application-id
        (when-not (or applicant?
-                     (approver? application-id))
+                     (new-approver? application-id (:curround application)))
          (throw-unauthorized)))
      {:id form-id
       :catalogue-item catalogue-item
@@ -130,13 +134,7 @@
   (let [uid (get-user-id)
         id (:id (db/create-application!
                  {:item resource-id :user uid}))]
-    (db/update-application-state! {:id id :user uid :state "draft" :curround 0})
     id))
-
-(defn submit-application [application-id]
-  (db/update-application-state! {:id application-id :user (get-user-id)
-                                 :state "applied" :curround 0})
-  (process-application application-id))
 
 ;;; new event-based functions
 

@@ -136,13 +136,13 @@
   (binding [context/*user* {"eppn" user}]
     (create-draft! item "draft application")
     (doto (create-draft! item "applied application")
-      applications/submit-application)
+      applications/new-submit-application)
     (doto (create-draft! item "rejected application")
-      applications/submit-application
-      (approvals/reject 0 "comment for rejection"))
+      applications/new-submit-application
+      (applications/new-reject-application 0 "comment for rejection"))
     (doto (create-draft! item "accepted application")
-      applications/submit-application
-      (approvals/approve 0 "comment for approval"))))
+      applications/new-submit-application
+      (applications/new-approve-application 0 "comment for approval"))))
 
 (defn create-test-data! []
   (create-users-and-roles!)

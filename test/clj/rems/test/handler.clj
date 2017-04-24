@@ -188,28 +188,31 @@
 
 
 (deftest test-authz
-  (testing "when alice makes an application"
+  (testing "when jack makes an application"
     (-> (new-context app)
-        (login "alice")
+        (login "jack")
         (follow-redirect)
         (follow-redirect)
         (dispatch (request :post "/cart/add" {"id" "1"}))
         (follow-redirect)
         (dispatch (request :get "/form/1"))
-        (dispatch (request :post "/form/1/save" {"field2" "alice field2"}))
+        (dispatch (request :post "/form/1/save" {"field2" "jack field2"}))
         (follow-redirect))
-    (testing "and bob goes to view applications"
-      (let [ctx (-> (new-context app)
-                    (login "bob")
+    (testing "and jill goes to view applications"
+      (let [application (:id (first (db/get-applications {:applicant "jack"})))
+            ctx (-> (new-context app)
+                    (login "jill")
                     (follow-redirect)
                     (dispatch (request :get "/applications")))]
-        (is (empty? (hiccup-find [:.application] (ctx->html ctx))) "bob shouldn't see alice's application")
-        (testing "bob tries to open alice's application"
-          (let [ctx (dispatch ctx (request :get "/form/1/1"))]
-            (is (= 403 (:status ctx)) "bob shouldn't be authorized")))
-        (testing "bob tries to write to alice's application"
-          (let [ctx (dispatch ctx (request :post "/form/1/1/save" {"field2" "bob field2"}))]
-            (is (= 403 (:status ctx)) "bob shouldn't be authorized")))))))
+        (is (empty? (hiccup-find [:.application] (ctx->html ctx))) "jill shouldn't see jack's application")
+        (testing "jill tries to open jack's application"
+          (let [url (format "/form/1/%s" application)
+                ctx (dispatch ctx (request :get url))]
+            (is (= 403 (:status ctx)) "jill shouldn't be authorized")))
+        (testing "jill tries to write to jack's application"
+          (let [url (format "/form/1/%s/save" application)
+                ctx (dispatch ctx (request :post url {"field2" "jill field2"}))]
+            (is (= 403 (:status ctx)) "jill shouldn't be authorized")))))))
 
 (deftest test-roles
   (testing "when applicant logs in"
