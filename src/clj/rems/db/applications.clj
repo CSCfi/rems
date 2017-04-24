@@ -200,7 +200,7 @@
      application
      events)))
 
-(defn new-submit-application [application-id]
+(defn submit-application [application-id]
   (let [application (get-application-state application-id)
         uid (get-user-id)]
     (when-not (= uid (:applicantuserid application))
@@ -219,8 +219,8 @@
     (db/add-application-event! {:application application-id :user (get-user-id)
                                 :round round :event event :comment comment})))
 
-(defn new-approve-application [application-id round comment]
+(defn approve-application [application-id round comment]
   (judge-application application-id "approve" round comment))
 
-(defn new-reject-application [application-id round comment]
+(defn reject-application [application-id round comment]
   (judge-application application-id "reject" round comment))

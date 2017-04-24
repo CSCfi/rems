@@ -152,7 +152,7 @@
                                     :actoruserid uid
                                     :round 0
                                     :state "approved"})
-        (applications/new-submit-application app-id)
+        (applications/submit-application app-id)
         (binding [context/*user* {"eppn" "approver"}]
           (let [form (applications/get-form-for (:id item) app-id)]
             (is (= "applied" (get-in form [:application :state])))
@@ -162,7 +162,7 @@
       (testing "get approved form as applicant"
         (db/add-user! {:user "approver" :userattrs nil})
         (binding [context/*user* {"eppn" "approver"}]
-          (applications/new-approve-application app-id 0 "comment"))
+          (applications/approve-application app-id 0 "comment"))
         (let [form (applications/get-form-for (:id item) app-id)]
           (is (= "approved" (get-in form [:application :state])))
           (is (= [nil "X" nil] (map :value (:items form))))
@@ -182,9 +182,9 @@
       (is (= [{:id app :state "draft" :catid item}]
              (map #(select-keys % [:id :state :catid])
                   (applications/get-applications))))
-      (applications/new-submit-application app)
+      (applications/submit-application app)
       (is (nil? (applications/get-draft-id-for item)))
-      (applications/new-approve-application app 0 "comment")
+      (applications/approve-application app 0 "comment")
       (is (nil? (applications/get-draft-id-for item)))
       (is (= [{:id app :state "approved" :catid item}]
              (map #(select-keys % [:id :state :catid])
@@ -210,13 +210,13 @@
       (db/add-user! {:user uid :userattrs nil})
       (db/add-user! {:user uid2 :userattrs nil})
 
-      (applications/new-submit-application app1)
-      (applications/new-submit-application app2)
+      (applications/submit-application app1)
+      (applications/submit-application app2)
 
-      (applications/new-submit-application app4)
+      (applications/submit-application app4)
       (binding [context/*user* {"eppn" uid2}]
-        (applications/new-approve-application app4 0 ""))
-      (applications/new-approve-application app4 1 "")
+        (applications/approve-application app4 0 ""))
+      (applications/approve-application app4 1 "")
 
       (is (= [{:id app1 :state "applied" :catid item1 :curround 0}]
              (map #(select-keys % [:id :state :catid :curround])
@@ -232,9 +232,9 @@
           (is (applications/approver? app2))))
 
       ;; move app1 and app2 to round 1
-      (applications/new-approve-application app1 0 "")
+      (applications/approve-application app1 0 "")
       (binding [context/*user* {"eppn" uid2}]
-        (applications/new-approve-application app2 0 ""))
+        (applications/approve-application app2 0 ""))
 
       (is (= [{:id app2 :state "applied" :catid item2 :curround 1}]
              (map #(select-keys % [:id :state :catid :curround])
@@ -295,31 +295,31 @@
 
       (is (= (fetch app1) {:curround 0 :state "draft"}))
 
-      (is (thrown? Exception (applications/new-approve-application app1 0 ""))
+      (is (thrown? Exception (applications/approve-application app1 0 ""))
           "Should not be able to approve draft")
 
       (binding [context/*user* {"eppn" "event-test-approver"}]
-        (is (thrown? Exception (applications/new-submit-application app1))
+        (is (thrown? Exception (applications/submit-application app1))
             "Should not be able to submit when not applicant"))
 
-      (applications/new-submit-application app1)
+      (applications/submit-application app1)
       (is (= (fetch app1) {:curround 0 :state "applied"}))
 
-      (is (thrown? Exception (applications/new-submit-application app1))
+      (is (thrown? Exception (applications/submit-application app1))
           "Should not be able to submit twice")
 
-      (is (thrown? Exception (applications/new-approve-application app1 1 ""))
+      (is (thrown? Exception (applications/approve-application app1 1 ""))
           "Should not be able to approve wrong round")
 
-      (applications/new-approve-application app1 0 "c1")
+      (applications/approve-application app1 0 "c1")
       (is (= (fetch app1) {:curround 1 :state "applied"}))
 
 
-      (is (thrown? Exception (applications/new-approve-application app1 1 ""))
+      (is (thrown? Exception (applications/approve-application app1 1 ""))
           "Should not be able to approve if not approver")
 
       (binding [context/*user* {"eppn" "event-test-approver"}]
-        (applications/new-approve-application app1 1 "c2"))
+        (applications/approve-application app1 1 "c2"))
       (is (= (fetch app1) {:curround 1 :state "approved"}))
 
       (is (= (->> (applications/get-application-state app1)
@@ -330,7 +330,7 @@
               {:round 1 :event "approve" :comment "c2"}]))
 
       (is (= (fetch app2) {:curround 0 :state "draft"}))
-      (applications/new-submit-application app2)
+      (applications/submit-application app2)
       (is (= (fetch app2) {:curround 0 :state "applied"}))
-      (applications/new-reject-application app2 0 "comment")
+      (applications/reject-application app2 0 "comment")
       (is (= (fetch app2) {:curround 0 :state "rejected"})))))

@@ -106,8 +106,8 @@
               comment (get input "comment")
               comment (when-not (empty? comment) comment)]
           (case action
-            :approve (applications/new-approve-application id round comment)
-            :reject (applications/new-reject-application id round comment))
+            :approve (applications/approve-application id round comment)
+            :reject (applications/reject-application id round comment))
           (assoc (redirect "/approvals" :see-other)
                  :flash [{:status :success
                          :contents (case action

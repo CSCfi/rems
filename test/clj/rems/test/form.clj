@@ -117,7 +117,7 @@
          db/create-application!
          (constantly {:id 2})
 
-         applications/new-submit-application
+         applications/submit-application
          (fn [application-id]
            (swap! world update :submitted conj application-id))]
 
