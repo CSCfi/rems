@@ -410,3 +410,22 @@ ul.comments {
 .form-control:-ms-input-placeholder { /* Internet Explorer 10-11 */
   color:    #ccc;
 }
+
+.license-panel {
+  display: inline-block;
+  width: inherit;
+}
+
+.license-header:after {
+  font-family: 'FontAwesome';
+  float: right;
+  content: "\f068";
+}
+
+.license-header.collapsed:after {
+  content: "\f067";
+}
+
+.license-title {
+  margin-top: 3px; /* hax for opening misalignment */
+}
