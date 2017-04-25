@@ -188,7 +188,14 @@
                (pr-str application) " vs. " (pr-str event)))
   (assoc application :state "rejected"))
 
-;; TODO: "return" event
+(defmethod apply-event "return"
+  [application event]
+  (assert (= (:state application) "applied")
+          (str "Can't return application " (pr-str application)))
+  (assert (= (:curround application) (:round event))
+          (str "Application and rejection rounds don't match: "
+               (pr-str application) " vs. " (pr-str event)))
+  (assoc application :state "returned" :curround 0))
 
 (defn- apply-events [application events]
   (reduce apply-event application events))
@@ -245,3 +252,6 @@
 
 (defn reject-application [application-id round comment]
   (judge-application application-id "reject" round comment))
+
+(defn return-application [application-id round comment]
+  (judge-application application-id "return" round comment))

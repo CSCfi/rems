@@ -45,6 +45,7 @@
                               :applied "Applied"
                               :approved "Approved"
                               :rejected "Rejected"
+                              :returned "Returned to applicant"
                               :unknown "Unknown"}
                      :empty "You don't have any applications."}
       :approvals {:application "Application"
@@ -54,8 +55,10 @@
                   :created "Created"
                   :approve "Approve"
                   :reject "Reject"
+                  :return "Return to applicant"
                   :approve-success "Application approved"
                   :reject-success "Application rejected"
+                  :return-success "Application returned"
                   :empty "You don't have any applications to process."}
       :roles {:header "Select role:"
               :names {:approver "Approver"
@@ -102,6 +105,7 @@
                               :applied "Haettu"
                               :approved "Hyväksytty"
                               :rejected "Hylätty"
+                              :returned "Palautettu hakijalle"
                               :unknown "Tuntematon"}
                      :empty "Sinulla ei ole hakemuksia."}
       :approvals {:application "Hakemus"
@@ -111,8 +115,10 @@
                   :created "Luotu"
                   :approve "Hyväksy"
                   :reject "Hylkää"
+                  :return "Palauta hakijalle"
                   :approve-success "Hakemus hyväksytty"
                   :reject-success "Hakemus hylätty"
+                  :return-success "Hakemus palautettu"
                   :empty "Sinulla ei ole hakemuksia käsiteltäväksi."}
       :roles {:header "Valitse rooli:"
               :names {:approver "Hyväksyjä"

@@ -11,6 +11,7 @@
     "applied" :t.applications.states/applied
     "approved" :t.applications.states/approved
     "rejected" :t.applications.states/rejected
+    "returned" :t.applications.states/returned
     :t.applications.states/unknown))
 
 (def ^:private time-format (format/formatter "yyyy-MM-dd HH:mm"
