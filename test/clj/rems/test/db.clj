@@ -285,12 +285,9 @@
     (db/add-user! {:user "event-test-approver", :userattrs nil})
     (let [uid (get-user-id)
           wf (:id (db/create-workflow! {:modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 1}))
-          auto-wf (:id (db/create-workflow! {:modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 1}))
           item (:id (db/create-catalogue-item! {:title "A" :form nil :resid nil :wfid wf}))
-          auto-item (:id (db/create-catalogue-item! {:title "A" :form nil :resid nil :wfid auto-wf}))
           app1 (applications/create-new-draft item)
           app2 (applications/create-new-draft item)
-          auto-app (applications/create-new-draft auto-item)
           fetch (fn [app] (select-keys (applications/get-application-state app)
                                        [:state :curround]))]
       (db/create-workflow-approver! {:wfid wf :appruserid uid :round 0})
@@ -342,12 +339,15 @@
       (is (= (fetch app2) {:curround 0 :state "rejected"}))
 
       (testing "autoapprove"
-        (is (= (fetch auto-app) {:curround 0 :state "draft"}))
-        (applications/submit-application auto-app)
-        (is (= (fetch auto-app) {:curround 1 :state "approved"}))
-        (is (= (->> (applications/get-application-state auto-app)
-                  :events
-                  (map #(select-keys % [:round :event])))
-             [{:round 0 :event "apply"}
-              {:round 0 :event "autoapprove"}
-              {:round 1 :event "autoapprove"}]))))))
+        (let [auto-wf (:id (db/create-workflow! {:modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 1}))
+              auto-item (:id (db/create-catalogue-item! {:title "A" :form nil :resid nil :wfid auto-wf}))
+              auto-app (applications/create-new-draft auto-item)]
+          (is (= (fetch auto-app) {:curround 0 :state "draft"}))
+          (applications/submit-application auto-app)
+          (is (= (fetch auto-app) {:curround 1 :state "approved"}))
+          (is (= (->> (applications/get-application-state auto-app)
+                      :events
+                      (map #(select-keys % [:round :event])))
+                 [{:round 0 :event "apply"}
+                  {:round 0 :event "autoapprove"}
+                  {:round 1 :event "autoapprove"}])))))))
