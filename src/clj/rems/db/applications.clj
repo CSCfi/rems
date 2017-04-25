@@ -155,7 +155,7 @@
 
 (defmethod apply-event "apply"
   [application event]
-  (assert (= (:state application) "draft")
+  (assert (#{"draft" "returned"} (:state application))
           (str "Can't submit application " (pr-str application)))
   (assert (= (:round event) 0)
           (str "Apply event should have round 0" (pr-str event)))
@@ -231,7 +231,7 @@
         uid (get-user-id)]
     (when-not (= uid (:applicantuserid application))
       (throw-unauthorized))
-    (when-not (= "draft" (:state application))
+    (when-not (#{"draft" "returned"} (:state application))
       (throw-unauthorized))
     (db/add-application-event! {:application application-id :user uid
                                 :round 0 :event "apply" :comment nil})

@@ -340,11 +340,23 @@
           (applications/reject-application app 0 "comment")
           (is (= (fetch app) {:curround 0 :state "rejected"}))))
 
-      (testing "returning"
+      (testing "returning, resubmitting"
         (let [app (applications/create-new-draft item)]
           (applications/submit-application app)
+
+          (binding [context/*user* {"eppn" "event-test-approver"}]
+            (is (thrown? Exception (applications/return-application app 0 "comment"))
+                "Should not be able to return when not approver"))
+
           (applications/return-application app 0 "comment")
-          (is (= (fetch app) {:curround 0 :state "returned"}))))
+          (is (= (fetch app) {:curround 0 :state "returned"}))
+
+          (binding [context/*user* {"eppn" "event-test-approver"}]
+            (is (thrown? Exception (applications/submit-application app))
+                "Should not be able to resubmit when not approver"))
+
+          (applications/submit-application app)
+          (is (= (fetch app) {:curround 0 :state "applied"}))))
 
       (testing "autoapprove"
         (let [auto-wf (:id (db/create-workflow! {:modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 1}))
