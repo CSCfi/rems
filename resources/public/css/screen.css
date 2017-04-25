@@ -413,4 +413,19 @@ ul.comments {
 
 .license-panel {
   display: inline-block;
+  width: inherit;
+}
+
+.license-header:after {
+  font-family: 'FontAwesome';
+  float: right;
+  content: "\f068";
+}
+
+.license-header.collapsed:after {
+  content: "\f067";
+}
+
+.license-title {
+  margin-top: 3px; /* hax for opening misalignment */
 }

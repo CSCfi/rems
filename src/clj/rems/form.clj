@@ -65,9 +65,8 @@
                       readonly :readonly}]
   (license id readonly approved
             [:div.license-panel
-             [:div.license-header
-              [:h6.title
-               [:a.collapsed {:data-toggle "collapse" :href (str "#collapse" id) :aria-expanded "false" :aria-controls (str "collapse" id)} title]]]
+             [:h6.license-title
+              [:a.license-header.collapsed {:data-toggle "collapse" :href (str "#collapse" id) :aria-expanded "false" :aria-controls (str "collapse" id)} title]]
              [:div.collapse {:id (str "collapse" id) }
               [:div.license-block textcontent]]]))
 
