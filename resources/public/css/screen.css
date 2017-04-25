@@ -410,3 +410,7 @@ ul.comments {
 .form-control:-ms-input-placeholder { /* Internet Explorer 10-11 */
   color:    #ccc;
 }
+
+.license-panel {
+  display: inline-block;
+}
