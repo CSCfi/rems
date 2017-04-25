@@ -1,6 +1,7 @@
 (ns rems.routes.guide
   (:require [compojure.core :refer [GET defroutes]]
             [hiccup.core :as h]
+            [hiccup.page :refer (include-js)]
             [rems.applications :as applications]
             [rems.approvals :as approvals]
             [rems.cart :as cart]
@@ -64,7 +65,10 @@
 
           [:h2 "Misc components"]
           (example "login" (contents/login "/"))
-          (example "about" (contents/about))]]]))))
+          (example "about" (contents/about))
+          (include-js "/assets/jquery/jquery.min.js")
+          (include-js "/assets/tether/dist/js/tether.min.js")
+          (include-js "/assets/bootstrap/js/bootstrap.min.js")]]]))))
 
 (defroutes guide-routes
   (GET "/guide" [] (guide-page)))

@@ -266,7 +266,7 @@
              (field {:type "license" :title "Link to license" :licensetype "link" :textcontent "/guide"})])
    (example "text license"
             [:form
-             (field {:type "license" :title "A Text License" :licensetype "text"
+             (field {:type "license" :id 1 :title "A Text License" :licensetype "text"
                      :textcontent lipsum})])
    (example "field of unsupported type"
             [:form
@@ -278,7 +278,7 @@
                            {:type "label" :title "Please input your wishes below."}
                            {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2"}
                            {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]
-                   :licenses [{:type "license" :title "A Text License" :licensetype "text"
+                   :licenses [{:type "license" :title "A Text License" :licensetype "text" :id 2
                                :textcontent lipsum}
                               {:type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
                                :approved true}]}))
@@ -289,7 +289,7 @@
                            {:type "label" :title "Please input your wishes below."}
                            {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2" :value "def"}
                            {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]
-                   :licenses [{:type "license" :title "A Text License" :licensetype "text"
+                   :licenses [{:type "license" :title "A Text License" :licensetype "text" :id 3
                                :textcontent lipsum}
                               {:type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
                                :approved true}]
