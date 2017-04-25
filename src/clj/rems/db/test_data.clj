@@ -2,7 +2,6 @@
   "Populating the database with nice test data."
   (:require [rems.context :as context]
             [rems.db.applications :as applications]
-            [rems.db.approvals :as approvals]
             [rems.db.core :as db]
             [rems.db.roles :as roles]
             [rems.util :refer [get-user-id]]))
@@ -67,10 +66,10 @@
     (:id meta)))
 
 (defn- create-workflows! []
-  (let [minimal (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner":title "minimal" :fnlround 1}))
-        simple (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner" :title "simple" :fnlround 1}))
-        two-round (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner" :title "two rounds" :fnlround 2}))
-        different (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner" :title "two rounds, different approvers" :fnlround 2}))]
+  (let [minimal (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner":title "minimal" :fnlround 0}))
+        simple (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner" :title "simple" :fnlround 0}))
+        two-round (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner" :title "two rounds" :fnlround 1}))
+        different (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner" :title "two rounds, different approvers" :fnlround 1}))]
     ;; either bob or developer can approve
     (db/create-workflow-approver! {:wfid simple :appruserid "developer" :round 0})
     (db/create-workflow-approver! {:wfid simple :appruserid "bob" :round 0})
@@ -139,10 +138,10 @@
       applications/submit-application)
     (doto (create-draft! item "rejected application")
       applications/submit-application
-      (approvals/reject 0 "comment for rejection"))
+      (applications/reject-application 0 "comment for rejection"))
     (doto (create-draft! item "accepted application")
       applications/submit-application
-      (approvals/approve 0 "comment for approval"))))
+      (applications/approve-application 0 "comment for approval"))))
 
 (defn create-test-data! []
   (create-users-and-roles!)

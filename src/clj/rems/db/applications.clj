@@ -2,25 +2,47 @@
   "Query functions for forms and applications."
   (:require [rems.auth.util :refer [throw-unauthorized]]
             [rems.context :as context]
-            [rems.db.approvals :refer [approver?
-                                       process-application]]
             [rems.db.catalogue :refer [get-localized-catalogue-item]]
             [rems.db.core :as db]
             [rems.util :refer [get-user-id index-by]]))
 
-(defn get-applications []
+;; TODO cache application state in db instead of always computing it from events
+(declare get-application-state)
+
+;;; Query functions
+
+(defn approver? [application]
+  (let [state (get-application-state application)
+        round (:curround state)]
+    (and (= "applied" (:state state))
+         (contains? (set (db/get-workflow-approvers {:application application :round round}))
+                    {:appruserid (get-user-id)}))))
+
+(defn- get-applications-impl [query-params]
   (doall
-   (for [a (db/get-applications {:applicant (get-user-id)})]
-     (assoc a :catalogue-item
+   (for [a (db/get-applications query-params)]
+     (assoc (get-application-state (:id a))
+            :catalogue-item
             (get-in (get-localized-catalogue-item {:id (:catid a)})
                     [:localizations context/*lang*])))))
+
+
+(defn get-applications []
+  (get-applications-impl {:applicant (get-user-id)}))
+
+(defn get-approvals []
+  (filterv
+   (fn [app] (approver? (:id app)))
+   (get-applications-impl {})))
 
 (defn get-draft-id-for
   "Finds applications in the draft state for the given catalogue item.
    Returns an id of an arbitrary one of them, or nil if there are none."
   [catalogue-item]
-  (when-let [app (first (db/get-applications {:resource catalogue-item :state "draft" :applicant (get-user-id)}))]
-    (:id app)))
+  (->> (get-applications-impl {:resource catalogue-item})
+       (filter #(= "draft" (:state %)))
+       first
+       :id))
 
 (defn- process-item
   "Returns an item structure like this:
@@ -70,9 +92,6 @@
                                                            :licid (:id license)
                                                            :actoruserid app-user}))))}))
 
-(defn- process-comment [approval]
-  (select-keys approval [:round :comment :state]))
-
 (defn get-form-for
   "Returns a form structure like this:
 
@@ -93,15 +112,14 @@
                  :licensetype \"link\"
                  :title \"LGPL\"
                  :textcontent \"http://foo\"
-                 :approved false}]
-     :comments [{:round 0 :comment \"blah\" :state \"approved\"}]"
+                 :approved false}]"
   ([catalogue-item]
    (get-form-for catalogue-item nil))
   ([catalogue-item application-id]
    (let [form (db/get-form-for-catalogue-item
                {:id catalogue-item :lang (name context/*lang*)})
          application (when application-id
-                       (first (db/get-applications {:id application-id})))
+                       (get-application-state application-id))
          form-id (:formid form)
          items (mapv #(process-item application-id form-id %)
                      (db/get-form-items {:id form-id}))
@@ -110,10 +128,7 @@
                                     (index-by [:licid :langcode]))
          licenses (mapv #(process-license application license-localizations %)
                         (db/get-workflow-licenses {:catId catalogue-item}))
-         applicant? (= (:applicantuserid application) (get-user-id))
-         comments (when application-id
-                    (mapv process-comment (db/get-application-approvals
-                                           {:application application-id})))]
+         applicant? (= (:applicantuserid application) (get-user-id))]
      (when application-id
        (when-not (or applicant?
                      (approver? application-id))
@@ -123,17 +138,110 @@
       :application application
       :title (or (:formtitle form) (:metatitle form))
       :items items
-      :licenses licenses
-      :comments comments})))
+      :licenses licenses})))
 
 (defn create-new-draft [resource-id]
   (let [uid (get-user-id)
         id (:id (db/create-application!
                  {:item resource-id :user uid}))]
-    (db/update-application-state! {:id id :user uid :state "draft" :curround 0})
     id))
 
+;;; Applying events
+
+(defmulti ^:private apply-event
+  "Applies an event to an application state."
+  ;; dispatch by event type
+  (fn [_application event] (:event event)))
+
+(defmethod apply-event "apply"
+  [application event]
+  (assert (= (:state application) "draft")
+          (str "Can't submit application " (pr-str application)))
+  (assert (= (:round event) 0)
+          (str "Apply event should have round 0" (pr-str event)))
+  (assoc application :state "applied" :curround 0))
+
+(defn- apply-approve [application event]
+  (assert (= (:state application) "applied")
+          (str "Can't approve application " (pr-str application)))
+  (assert (= (:curround application) (:round event))
+          (str "Application and approval rounds don't match: "
+               (pr-str application) " vs. " (pr-str event)))
+  (if (= (:curround application) (:fnlround application))
+    (assoc application :state "approved")
+    (assoc application :state "applied" :curround (inc (:curround application)))))
+
+(defmethod apply-event "approve"
+  [application event]
+  (apply-approve application event))
+
+(defmethod apply-event "autoapprove"
+  [application event]
+  (apply-approve application event))
+
+(defmethod apply-event "reject"
+  [application event]
+  (assert (= (:state application) "applied")
+          (str "Can't reject application " (pr-str application)))
+  (assert (= (:curround application) (:round event))
+          (str "Application and rejection rounds don't match: "
+               (pr-str application) " vs. " (pr-str event)))
+  (assoc application :state "rejected"))
+
+;; TODO: "return" event
+
+(defn- apply-events [application events]
+  (reduce apply-event application events))
+
+;;; Public event api
+
+(defn get-application-state [application-id]
+  (let [events (db/get-application-events {:application application-id})
+        application (-> {:id application-id}
+                        db/get-applications
+                        first
+                        (assoc :state "draft" :curround 0) ;; reset state
+                        (assoc :events events))]
+    (apply-events
+     application
+     events)))
+
+(defn try-autoapprove-application
+  "If application can be autoapproved (round has no approvers), add an
+   autoapprove event. Otherwise do nothing."
+  [application-id]
+  (let [application (get-application-state application-id)
+        round (:curround application)
+        state (:state application)]
+    (when (= "applied" state)
+      (when (empty? (db/get-workflow-approvers {:application application-id :round round}))
+        (db/add-application-event! {:application application-id :user (get-user-id)
+                                    :round round :event "autoapprove" :comment nil})
+        (try-autoapprove-application application-id)))))
+
 (defn submit-application [application-id]
-  (db/update-application-state! {:id application-id :user (get-user-id)
-                                 :state "applied" :curround 0})
-  (process-application application-id))
+  (let [application (get-application-state application-id)
+        uid (get-user-id)]
+    (when-not (= uid (:applicantuserid application))
+      (throw-unauthorized))
+    (when-not (= "draft" (:state application))
+      (throw-unauthorized))
+    (db/add-application-event! {:application application-id :user uid
+                                :round 0 :event "apply" :comment nil})
+    (try-autoapprove-application application-id)))
+
+(defn- judge-application [application-id event round comment]
+  (when-not (approver? application-id)
+    (throw-unauthorized))
+  (let [state (get-application-state application-id)]
+    (when-not (= round (:curround state))
+      (throw-unauthorized))
+    (db/add-application-event! {:application application-id :user (get-user-id)
+                                :round round :event event :comment comment})
+    (try-autoapprove-application application-id)))
+
+(defn approve-application [application-id round comment]
+  (judge-application application-id "approve" round comment))
+
+(defn reject-application [application-id round comment]
+  (judge-application application-id "reject" round comment))

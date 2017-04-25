@@ -3,7 +3,7 @@
             [clj-time.format :as format]
             [compojure.core :refer [GET POST defroutes]]
             [rems.anti-forgery :refer [anti-forgery-field]]
-            [rems.db.approvals :refer [approve get-approvals reject]]
+            [rems.db.applications :as applications]
             [rems.guide :refer :all]
             [rems.layout :as layout]
             [rems.text :refer [text]]
@@ -65,7 +65,7 @@
 
 (defn approvals
   ([]
-   (approvals (get-approvals)))
+   (approvals (applications/get-approvals)))
   ([apps]
    (if (empty? apps)
      [:div.approvals.alert.alert-success (text :t/approvals.empty)]
@@ -106,8 +106,8 @@
               comment (get input "comment")
               comment (when-not (empty? comment) comment)]
           (case action
-            :approve (approve id round comment)
-            :reject (reject id round comment))
+            :approve (applications/approve-application id round comment)
+            :reject (applications/reject-application id round comment))
           (assoc (redirect "/approvals" :see-other)
                  :flash [{:status :success
                          :contents (case action

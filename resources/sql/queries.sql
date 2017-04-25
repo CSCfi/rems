@@ -111,39 +111,25 @@ VALUES
 (:form, :item, :user, :itemorder, :optional)
 
 -- :name create-application! :insert
--- TODO: what is fnlround?
+-- TODO: set fnlround based on workflow?
 INSERT INTO catalogue_item_application
 (catId, applicantUserId, fnlround)
 VALUES
 (:item, :user, 0)
 RETURNING id
 
--- :name update-application-state! :!
-INSERT INTO catalogue_item_application_state
-(catAppId, modifierUserId, curround, state)
-VALUES
-(:id, :user, :curround, CAST (:state as application_state))
-ON CONFLICT (catAppId)
-DO UPDATE
-SET (modifierUserId, curround, state) = (:user, :curround, CAST (:state as application_state))
-
 -- :name get-applications :? :*
 -- :doc
 -- - Pass in no arguments to get all applications.
 -- - Use {:id id} to get a specific application
 -- - Use {:resource id} to get applications for a specific resource
--- - Use {:state state} to filter by application state
 -- - Use {:applicant user} to filter by applicant
--- - Use {:approver user} to filter by possible approver
+-- TODO: use fnlround from application?
 SELECT
-  app.id, app.catId, app.applicantUserId, app.start, state.state, state.curround, wf.fnlround
+  app.id, app.catId, app.applicantUserId, app.start, wf.fnlround
 FROM catalogue_item_application app
-LEFT OUTER JOIN catalogue_item_application_state state ON app.id = state.catAppId
 LEFT OUTER JOIN catalogue_item cat ON app.catid = cat.id
 LEFT OUTER JOIN workflow wf ON cat.wfid = wf.id
-/*~ (when (:approver params) */
-LEFT OUTER JOIN workflow_approvers wfa ON wf.id = wfa.wfid
-/*~ ) ~*/
 WHERE 1=1
 /*~ (when (:id params) */
   AND app.id = :id
@@ -151,40 +137,8 @@ WHERE 1=1
 /*~ (when (:resource params) */
   AND app.catId = :resource
 /*~ ) ~*/
-/*~ (when (:state params) */
-  AND state.state = CAST (:state AS application_state)
-/*~ ) ~*/
 /*~ (when (:applicant params) */
   AND app.applicantUserId = :applicant
-/*~ ) ~*/
-/*~ (when (:approver params) */
-  AND wfa.apprUserId = :approver
-  AND state.curround = wfa.round
-/*~ ) ~*/
-
--- :name add-application-approval! :!
--- TODO: This table is denormalized and bad. Should either only have
--- wfApprId (and not apprUserId and round) or, my favourite, get rid
--- of the workflow_approvers.id column all together.
-INSERT INTO catalogue_item_application_approvers
-  (catAppId, wfApprId, apprUserId, round, comment, state)
-SELECT
-  :id, wfa.id, :user, :round, :comment, CAST (:state AS approval_status)
-FROM catalogue_item_application app
-LEFT OUTER JOIN catalogue_item cat ON app.catid = cat.id
-LEFT OUTER JOIN workflow wf ON cat.wfid = wf.id
-LEFT OUTER JOIN workflow_approvers wfa ON wf.id = wfa.wfid
-WHERE app.id = :id
-  AND wfa.apprUserId = :user
-  AND wfa.round = :round
-
--- :name get-application-approvals :? :*
-SELECT
- *
-FROM catalogue_item_application_approvers
-WHERE catAppId = :application
-/*~ (when (:round params) */
-  AND round = :round
 /*~ ) ~*/
 
 -- :name add-entitlement! :!
@@ -263,7 +217,7 @@ INSERT INTO workflow_approvers
 VALUES
 (:wfid, :appruserid, :round)
 
--- :name get-workflow-approvers :? :n
+-- :name get-workflow-approvers :? :*
 SELECT
   wfa.appruserid
 FROM workflow_approvers wfa
@@ -336,3 +290,14 @@ FROM users
 SELECT userAttrs::TEXT
 FROM users
 WHERE userId = :user
+
+-- :name get-application-events :? :*
+SELECT
+  userId, round, event, comment, time
+FROM application_event
+WHERE appId = :application
+ORDER BY id ASC
+
+-- :name add-application-event! :insert
+INSERT INTO application_event (appId, userId, round, event, comment)
+VALUES (:application, :user, :round, CAST (:event AS application_event_type), :comment)

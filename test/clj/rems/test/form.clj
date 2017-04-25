@@ -3,7 +3,7 @@
             [hiccup-find.core :refer :all]
             [rems.context :as context]
             [rems.db.core :as db]
-            [rems.db.approvals :as approvals]
+            [rems.db.applications :as applications]
             [rems.form :as form]
             [rems.test.tempura :refer [with-fake-tempura]]
             [ring.mock.request :refer :all]))
@@ -69,7 +69,7 @@
 (deftest test-save
   (with-fake-tempura
     ;; simple mock db
-    (let [world (atom {})
+    (let [world (atom {:submitted #{}})
           run (fn [path params]
                 (form/form-routes
                  (assoc (request :post path)
@@ -114,14 +114,12 @@
               licid :licid}]
            (swap! world dissoc :approvals))
 
-         db/update-application-state!
-         (fn [{id :id state :state}]
-           (swap! world assoc-in [:states id] state))
-
          db/create-application!
          (constantly {:id 2})
 
-         approvals/process-application (constantly nil)]
+         applications/submit-application
+         (fn [application-id]
+           (swap! world update :submitted conj application-id))]
 
         (testing "first save"
           (let [resp (run "/form/7/save" {"field61" "x"
@@ -133,7 +131,7 @@
             (testing flash
               (is (= :success (:status flash)))
               (is (.contains flash-text "saved")))
-            (is (= {:states {2 "draft"} :values {2 {61 "x", 62 "y"}} :approvals {2 {70 "approved"}}}
+            (is (= {:submitted #{} :values {2 {61 "x", 62 "y"}} :approvals {2 {70 "approved"}}}
                    @world))))
 
         (testing "second save, with missing optional field. shouldn't create new draft"
@@ -146,7 +144,7 @@
             (testing flash
               (is (= :success (:status flash)))
               (is (.contains flash-text "saved")))
-            (is (= {:states {2 "draft"} :values {2 {61 "", 62 "z"}} :approvals {2 {70 "approved"}}}
+            (is (= {:submitted #{} :values {2 {61 "", 62 "z"}} :approvals {2 {70 "approved"}}}
                    @world))))
 
         (testing "save with unchecked license"
@@ -162,7 +160,7 @@
             (testing flash2
               (is (= :info (:status flash2)))
               (is (.contains flash2-text "\"KielipankkiTerms\"")))
-            (is (= {:states {2 "draft"} :values {2 {61 "x", 62 "y"}}}
+            (is (= {:submitted #{} :values {2 {61 "x", 62 "y"}}}
                    @world))))
 
         (testing "save with missing mandatory field"
@@ -178,7 +176,7 @@
             (testing flash2
               (is (= :info (:status flash2)))
               (is (.contains flash2-text "\"B\"")))
-            (is (= {:states {2 "draft"} :values {2 {61 "w", 62 ""}} :approvals {2 {70 "approved"}}}
+            (is (= {:submitted #{} :values {2 {61 "w", 62 ""}} :approvals {2 {70 "approved"}}}
                    @world))))
 
         (testing "submit with missing mandatory field"
@@ -196,7 +194,7 @@
             (testing flash2
               (is (= :warning (:status flash2)))
               (is (.contains flash2-text "\"B\"")))
-            (is (= {:states {2 "draft"} :values {2 {61 "u", 62 ""}} :approvals {2 {70 "approved"}}}
+            (is (= {:submitted #{} :values {2 {61 "u", 62 ""}} :approvals {2 {70 "approved"}}}
                    @world))))
 
         (testing "submit with unchecked license"
@@ -213,7 +211,7 @@
             (testing flash2
               (is (= :warning (:status flash2)))
               (is (.contains flash2-text "\"KielipankkiTerms\"")))
-            (is (= {:states {2 "draft"} :values {2 {61 "", 62 "v"}}}
+            (is (= {:submitted #{} :values {2 {61 "", 62 "v"}}}
                    @world))))
 
         (testing "successful submit"
@@ -227,7 +225,7 @@
               (is (= :success (:status flash)))
               (is (not (.contains flash-text "saved")))
               (is (.contains flash-text "submitted")))
-            (is (= {:states {2 "applied"} :values {2 {61 "", 62 "v"}} :approvals {2 {70 "approved"}}}
+            (is (= {:submitted #{2} :values {2 {61 "", 62 "v"}} :approvals {2 {70 "approved"}}}
                    @world))))))))
 
 (def form #'form/form)

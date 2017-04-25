@@ -10,6 +10,14 @@ CREATE TYPE license_state AS ENUM ('created','approved','rejected');
 --;;
 CREATE TYPE reviewers_state AS ENUM ('created','commented');
 --;;
+CREATE TYPE application_event_type AS ENUM (
+  'apply',   -- draft --> applied
+  'approve', -- applied --> applied or approved
+  'autoapprove', -- like approve but when there are no approvers for the round
+  'reject',  -- applied --> rejected
+  'return'   -- applied --> returned
+);
+--;;
 CREATE TYPE application_state AS ENUM ('applied','approved','rejected','returned','closed','draft','onhold');
 --;;
 CREATE TYPE item_state AS ENUM ('disabled','enabled','copied');
@@ -181,20 +189,6 @@ CREATE TABLE workflow_approvers (
   CONSTRAINT workflow_approvers_ibfk_1 FOREIGN KEY (wfId) REFERENCES workflow (id)
 );
 --;;
-CREATE TABLE catalogue_item_application_approvers (
-  id serial NOT NULL PRIMARY KEY,
-  catAppId integer DEFAULT NULL,
-  wfApprId integer DEFAULT NULL,
-  apprUserId varchar(255) NOT NULL,
-  round integer NOT NULL,
-  comment varchar(4096) DEFAULT NULL,
-  state approval_status DEFAULT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT catalogue_item_application_approvers_ibfk_1 FOREIGN KEY (catAppId) REFERENCES catalogue_item_application (id),
-  CONSTRAINT catalogue_item_application_approvers_ibfk_2 FOREIGN KEY (wfApprId) REFERENCES workflow_approvers (id)
-);
---;;
 CREATE TABLE catalogue_item_application_catid_overflow (
   id serial NOT NULL PRIMARY KEY,
   catAppId integer DEFAULT NULL,
@@ -261,31 +255,6 @@ CREATE TABLE catalogue_item_application_predecessor (
   endt timestamp NULL DEFAULT NULL,
   CONSTRAINT catalogue_item_application_predecessor_ibfk_1 FOREIGN KEY (pre_catAppId) REFERENCES catalogue_item_application (id),
   CONSTRAINT catalogue_item_application_predecessor_ibfk_2 FOREIGN KEY (suc_catAppId) REFERENCES catalogue_item_application (id)
-);
---;;
-CREATE TABLE catalogue_item_application_reviewers (
-  id serial NOT NULL PRIMARY KEY,
-  catAppId integer DEFAULT NULL,
-  revUserId varchar(255) NOT NULL,
-  modifierUserId varchar(255) DEFAULT NULL,
-  round integer NOT NULL,
-  comment varchar(4096) DEFAULT NULL,
-  state reviewers_state NOT NULL DEFAULT 'created',
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT catalogue_item_application_reviewers_ibfk_1 FOREIGN KEY (catAppId) REFERENCES catalogue_item_application (id)
-);
---;;
-CREATE TABLE catalogue_item_application_state (
-  id serial NOT NULL PRIMARY KEY,
-  catAppId integer DEFAULT NULL,
-  modifierUserId varchar(255) NOT NULL,
-  curround integer NOT NULL,
-  state application_state DEFAULT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT catalogue_item_application_state_ibfk_1 FOREIGN KEY (catAppId) REFERENCES catalogue_item_application (id),
-  UNIQUE (catAppId)
 );
 --;;
 CREATE TABLE catalogue_item_localization (
@@ -533,3 +502,14 @@ CREATE TABLE active_role (
   role varchar(255) NOT NULL,
   FOREIGN KEY (userId, role) REFERENCES roles
 )
+--;;
+CREATE TABLE application_event (
+  id serial NOT NULL PRIMARY KEY, -- for ordering events
+  appId integer REFERENCES catalogue_item_application (id),
+  userId varchar(255) REFERENCES users (userId),
+  round integer NOT NULL,
+  event application_event_type NOT NULL,
+  comment varchar(4096) DEFAULT NULL,
+  time timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+)
+--;;
