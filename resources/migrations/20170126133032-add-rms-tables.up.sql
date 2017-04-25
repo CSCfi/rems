@@ -2,8 +2,6 @@ CREATE TYPE scope AS ENUM ('private', 'public');
 --;;
 CREATE TYPE itemtype AS ENUM ('text','texta','label','license','attachment','referee','checkbox','dropdown','date');
 --;;
-CREATE TYPE approval_status AS ENUM ('created','approved','rejected','returned','rerouted','closed');
---;;
 CREATE TYPE license_status AS ENUM ('approved','rejected');
 --;;
 CREATE TYPE license_state AS ENUM ('created','approved','rejected');
