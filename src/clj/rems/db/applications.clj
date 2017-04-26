@@ -155,7 +155,7 @@
 
 (defmethod apply-event "apply"
   [application event]
-  (assert (= (:state application) "draft")
+  (assert (#{"draft" "returned"} (:state application))
           (str "Can't submit application " (pr-str application)))
   (assert (= (:round event) 0)
           (str "Apply event should have round 0" (pr-str event)))
@@ -188,7 +188,14 @@
                (pr-str application) " vs. " (pr-str event)))
   (assoc application :state "rejected"))
 
-;; TODO: "return" event
+(defmethod apply-event "return"
+  [application event]
+  (assert (= (:state application) "applied")
+          (str "Can't return application " (pr-str application)))
+  (assert (= (:curround application) (:round event))
+          (str "Application and rejection rounds don't match: "
+               (pr-str application) " vs. " (pr-str event)))
+  (assoc application :state "returned" :curround 0))
 
 (defn- apply-events [application events]
   (reduce apply-event application events))
@@ -224,7 +231,7 @@
         uid (get-user-id)]
     (when-not (= uid (:applicantuserid application))
       (throw-unauthorized))
-    (when-not (= "draft" (:state application))
+    (when-not (#{"draft" "returned"} (:state application))
       (throw-unauthorized))
     (db/add-application-event! {:application application-id :user uid
                                 :round 0 :event "apply" :comment nil})
@@ -245,3 +252,6 @@
 
 (defn reject-application [application-id round comment]
   (judge-application application-id "reject" round comment))
+
+(defn return-application [application-id round comment]
+  (judge-application application-id "return" round comment))

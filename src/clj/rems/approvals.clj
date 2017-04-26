@@ -27,6 +27,10 @@
   [:button.btn.btn-secondary {:type "submit" :name "reject"}
    (text :t.approvals/reject)])
 
+(defn- return-button []
+  [:button.btn.btn-secondary {:type "submit" :name "return"}
+   (text :t.approvals/return)])
+
 (defn- back-to-approvals-button []
   [:a.btn.btn-secondary.pull-left {:href "/approvals"} (text :t.form/back-approvals)])
 
@@ -51,7 +55,8 @@
     (when-role :approver
       (back-to-approvals-button))
     (approve-button)
-    (reject-button)]])
+    (reject-button)
+    (return-button)]])
 
 (defn- approvals-item [app]
   [:tr.approval
@@ -102,14 +107,17 @@
               input (:form-params request)
               action (cond (get input "approve") :approve
                            (get input "reject") :reject
+                           (get input "return") :return
                            :else (errorf "Unknown action!"))
               comment (get input "comment")
               comment (when-not (empty? comment) comment)]
           (case action
             :approve (applications/approve-application id round comment)
-            :reject (applications/reject-application id round comment))
+            :reject (applications/reject-application id round comment)
+            :return (applications/return-application id round comment))
           (assoc (redirect "/approvals" :see-other)
                  :flash [{:status :success
                          :contents (case action
                                      :approve (text :t.approvals/approve-success)
-                                     :reject (text :t.approvals/reject-success))}]))))
+                                     :reject (text :t.approvals/reject-success)
+                                     :return (text :t.approvals/return-success))}]))))

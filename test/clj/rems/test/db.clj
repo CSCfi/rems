@@ -286,57 +286,77 @@
     (let [uid (get-user-id)
           wf (:id (db/create-workflow! {:modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 1}))
           item (:id (db/create-catalogue-item! {:title "A" :form nil :resid nil :wfid wf}))
-          app1 (applications/create-new-draft item)
-          app2 (applications/create-new-draft item)
           fetch (fn [app] (select-keys (applications/get-application-state app)
                                        [:state :curround]))]
       (db/create-workflow-approver! {:wfid wf :appruserid uid :round 0})
       (db/create-workflow-approver! {:wfid wf :appruserid "event-test-approver" :round 1})
 
-      (is (= (fetch app1) {:curround 0 :state "draft"}))
+      (testing "submitting, approving"
+        (let [app (applications/create-new-draft item)]
+          (is (= (fetch app) {:curround 0 :state "draft"}))
 
-      (is (thrown? Exception (applications/approve-application app1 0 ""))
-          "Should not be able to approve draft")
+          (is (thrown? Exception (applications/approve-application app 0 ""))
+              "Should not be able to approve draft")
 
-      (binding [context/*user* {"eppn" "event-test-approver"}]
-        (is (thrown? Exception (applications/submit-application app1))
-            "Should not be able to submit when not applicant"))
+          (binding [context/*user* {"eppn" "event-test-approver"}]
+            (is (thrown? Exception (applications/submit-application app))
+                "Should not be able to submit when not applicant"))
 
-      (applications/submit-application app1)
-      (is (= (fetch app1) {:curround 0 :state "applied"}))
+          (applications/submit-application app)
+          (is (= (fetch app) {:curround 0 :state "applied"}))
 
-      (applications/try-autoapprove-application app1)
-      (is (= (fetch app1) {:curround 0 :state "applied"})
-          "Autoapprove should do nothing")
+          (applications/try-autoapprove-application app)
+          (is (= (fetch app) {:curround 0 :state "applied"})
+              "Autoapprove should do nothing")
 
-      (is (thrown? Exception (applications/submit-application app1))
-          "Should not be able to submit twice")
+          (is (thrown? Exception (applications/submit-application app))
+              "Should not be able to submit twice")
 
-      (is (thrown? Exception (applications/approve-application app1 1 ""))
-          "Should not be able to approve wrong round")
+          (is (thrown? Exception (applications/approve-application app 1 ""))
+              "Should not be able to approve wrong round")
 
-      (applications/approve-application app1 0 "c1")
-      (is (= (fetch app1) {:curround 1 :state "applied"}))
+          (applications/approve-application app 0 "c1")
+          (is (= (fetch app) {:curround 1 :state "applied"}))
 
-      (is (thrown? Exception (applications/approve-application app1 1 ""))
-          "Should not be able to approve if not approver")
+          (is (thrown? Exception (applications/approve-application app 1 ""))
+              "Should not be able to approve if not approver")
 
-      (binding [context/*user* {"eppn" "event-test-approver"}]
-        (applications/approve-application app1 1 "c2"))
-      (is (= (fetch app1) {:curround 1 :state "approved"}))
+          (binding [context/*user* {"eppn" "event-test-approver"}]
+            (applications/approve-application app 1 "c2"))
+          (is (= (fetch app) {:curround 1 :state "approved"}))
 
-      (is (= (->> (applications/get-application-state app1)
-                  :events
-                  (map #(select-keys % [:round :event :comment])))
-             [{:round 0 :event "apply" :comment nil}
-              {:round 0 :event "approve" :comment "c1"}
-              {:round 1 :event "approve" :comment "c2"}]))
+          (is (= (->> (applications/get-application-state app)
+                      :events
+                      (map #(select-keys % [:round :event :comment])))
+                 [{:round 0 :event "apply" :comment nil}
+                  {:round 0 :event "approve" :comment "c1"}
+                  {:round 1 :event "approve" :comment "c2"}]))))
 
-      (is (= (fetch app2) {:curround 0 :state "draft"}))
-      (applications/submit-application app2)
-      (is (= (fetch app2) {:curround 0 :state "applied"}))
-      (applications/reject-application app2 0 "comment")
-      (is (= (fetch app2) {:curround 0 :state "rejected"}))
+      (testing "rejecting"
+        (let [app (applications/create-new-draft item)]
+          (is (= (fetch app) {:curround 0 :state "draft"}))
+          (applications/submit-application app)
+          (is (= (fetch app) {:curround 0 :state "applied"}))
+          (applications/reject-application app 0 "comment")
+          (is (= (fetch app) {:curround 0 :state "rejected"}))))
+
+      (testing "returning, resubmitting"
+        (let [app (applications/create-new-draft item)]
+          (applications/submit-application app)
+
+          (binding [context/*user* {"eppn" "event-test-approver"}]
+            (is (thrown? Exception (applications/return-application app 0 "comment"))
+                "Should not be able to return when not approver"))
+
+          (applications/return-application app 0 "comment")
+          (is (= (fetch app) {:curround 0 :state "returned"}))
+
+          (binding [context/*user* {"eppn" "event-test-approver"}]
+            (is (thrown? Exception (applications/submit-application app))
+                "Should not be able to resubmit when not approver"))
+
+          (applications/submit-application app)
+          (is (= (fetch app) {:curround 0 :state "applied"}))))
 
       (testing "autoapprove"
         (let [auto-wf (:id (db/create-workflow! {:modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 1}))

@@ -87,7 +87,7 @@
 
 (defn- form [form]
   (let [state (:state (:application form))
-        editable (or (nil? state) (= state "draft"))
+        editable (or (nil? state) (#{"draft" "returned"} state))
         readonly (not editable)
         approvable (= state "applied")
         comments (keep :comment (get-in form [:application :events]))]

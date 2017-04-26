@@ -141,7 +141,10 @@
       (applications/reject-application 0 "comment for rejection"))
     (doto (create-draft! item "accepted application")
       applications/submit-application
-      (applications/approve-application 0 "comment for approval"))))
+      (applications/approve-application 0 "comment for approval"))
+    (doto (create-draft! item "returned application")
+      applications/submit-application
+      (applications/return-application 0 "comment for return"))))
 
 (defn create-test-data! []
   (create-users-and-roles!)
