@@ -11,13 +11,14 @@
   Recommended way to pass Shibboleth env vars to JVM is by
   AJP protocol."
   [names req]
-  (let [^ServletRequest request (:servlet-request req)]
-    (when (some? request)
+  (when-let [^ServletRequest request (:servlet-request req)]
       (into {}
-            (filter
-             #(not-blank? (last %))
-             (map #(let [val (.getAttribute request %)]
-                     [% (when (some? val) (cast String val))]) names))))))
+            (for [n names
+                  :let [val (.getAttribute request n)]
+                  :when val]
+              [n
+               ;;Hax to fix tomcat double utf-8 encoding problem
+               (new String (.getBytes val "ISO-8859-1") "UTF-8")]))))
 
 (defn get-attributes [request env & {:keys [names] :or {names shibbo-attribs}}]
   (get-ajp-attributes names request))
