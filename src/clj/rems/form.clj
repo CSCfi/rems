@@ -106,7 +106,7 @@
            [:div.alert.alert-info content])))
       [:div
        [:h3.card-header
-        [:a {:data-toggle "collapse" :data-parent "#accordion" :href "#form" :aria-expanded "true" :aria-controls="form"}(:title form)]]
+        [:a.card-title {:data-toggle "collapse" :data-parent "#accordion" :href "#form" :aria-expanded "true" :aria-controls="form"}(:title form)]]
        [:div#form.collapse.show
         [:form {:method "post"
                 :action (if-let [app (:id (:application form))]
