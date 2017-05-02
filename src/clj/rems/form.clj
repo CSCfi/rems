@@ -89,7 +89,8 @@
         editable (or (nil? state) (#{"draft" "returned"} state))
         readonly (not editable)
         approvable (= state "applied")
-        comments (keep :comment (get-in form [:application :events]))]
+        comments (keep :comment (get-in form [:application :events]))
+        user-attributes (:applicant-attributes form)]
     (list
      (when state
        (let [content (list [:h4 (text (applications/localize-state state))]
@@ -103,6 +104,9 @@
            "approved" [:div.alert.alert-success content]
            "rejected" [:div.alert.alert-danger content]
            [:div.alert.alert-info content])))
+      (when user-attributes
+       (list
+         [:h3 (str "Applicant: " (get user-attributes "commonName"))]))
       [:div
        [:h3.card-header
         [:a.card-title {:data-toggle "collapse" :data-parent "#accordion" :href "#form" :aria-expanded "true" :aria-controls="form"}(:title form)]]

@@ -5,6 +5,7 @@
             [rems.db.catalogue :refer [get-catalogue-item-title
                                        get-localized-catalogue-item]]
             [rems.db.core :as db]
+            [rems.db.users :as users]
             [rems.util :refer [get-user-id index-by]]))
 
 ;; TODO cache application state in db instead of always computing it from events
@@ -137,6 +138,7 @@
      {:id form-id
       :catalogue-item catalogue-item
       :application application
+      :applicant-attributes (users/get-user-attributes (:applicantuserid application))
       :title (get-catalogue-item-title
                (get-localized-catalogue-item {:id catalogue-item}))
       :items items
