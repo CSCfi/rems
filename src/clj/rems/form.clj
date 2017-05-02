@@ -106,7 +106,12 @@
            [:div.alert.alert-info content])))
       (when user-attributes
        (list
-         [:h3 (str "Applicant: " (get user-attributes "commonName"))]))
+         [:h3 (str "Applicant: " (get user-attributes "commonName"))]
+         (when-role :approver
+           (for [[k v] user-attributes]
+             [:div.row
+              [:div.col-2 (str k ":")]
+              [:div.col v]]))))
       [:div
        [:h3.card-header
         [:a.card-title {:data-toggle "collapse" :data-parent "#accordion" :href "#form" :aria-expanded "true" :aria-controls="form"}(:title form)]]
