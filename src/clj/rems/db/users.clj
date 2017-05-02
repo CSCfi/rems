@@ -1,8 +1,6 @@
 (ns rems.db.users
-  (:require [cheshire.core :refer [generate-string
-                                   parse-string]]
-            [rems.db.core :as db]
-            [rems.util :refer [get-user-id]]))
+  (:require [cheshire.core :refer [generate-string parse-string]]
+            [rems.db.core :as db]))
 
 (defn add-user! [user userattrs]
   (assert (and userattrs user) "User or user attributes missing!")

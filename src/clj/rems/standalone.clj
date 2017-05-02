@@ -7,7 +7,6 @@
             [luminus.repl-server :as repl]
             [mount.core :as mount]
             [rems.config :refer [env]]
-            [rems.db.core :as db]
             [rems.db.test-data :as test-data]
             [rems.handler :as handler])
   (:gen-class))

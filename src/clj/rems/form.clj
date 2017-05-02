@@ -4,8 +4,7 @@
             [rems.applications :as applications]
             [rems.approvals :as approvals]
             [rems.db.applications :refer [create-new-draft
-                                          get-draft-id-for
-                                          get-form-for
+                                          get-draft-id-for get-form-for
                                           submit-application]]
             [rems.db.core :as db]
             [rems.guide :refer :all]

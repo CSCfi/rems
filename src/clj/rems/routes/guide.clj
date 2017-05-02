@@ -1,7 +1,7 @@
 (ns rems.routes.guide
   (:require [compojure.core :refer [GET defroutes]]
             [hiccup.core :as h]
-            [hiccup.page :refer (include-js)]
+            [hiccup.page :refer [include-js]]
             [rems.applications :as applications]
             [rems.approvals :as approvals]
             [rems.cart :as cart]
