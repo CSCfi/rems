@@ -13,6 +13,7 @@
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.roles :as roles]
+            [rems.db.users :as users]
             [rems.util :refer [get-user-id]]))
 
 (use-fixtures
@@ -262,7 +263,7 @@
   (db/add-user! {:user "pekka", :userattrs (generate-string {"key" "value"})})
   (db/add-user! {:user "simo", :userattrs nil})
   (is (= 2 (count (db/get-users))))
-  (is (= {"key" "value"} (parse-string (:userattrs(db/get-user-attributes {:user "pekka"}))))))
+  (is (= {"key" "value"} (users/get-user-attributes "pekka"))))
 
 (deftest test-roles
   (db/add-user! {:user "pekka", :userattrs nil})
