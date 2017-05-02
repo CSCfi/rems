@@ -84,7 +84,7 @@
 
       (testing "get form for catalogue item"
         (with-redefs [catalogue/cached
-                      (memo/ttl catalogue/get-cache :ttl/threshold 1)]
+                      {:localizations (catalogue/load-catalogue-item-localizations!)}]
           (let [form-fi (binding [context/*lang* :fi]
                           (applications/get-form-for (:id item)))
                 form-en (binding [context/*lang* :en]
