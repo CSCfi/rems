@@ -9,7 +9,8 @@
             [rems.db.core :as db]
             [rems.guide :refer :all]
             [rems.layout :as layout]
-            [rems.role-switcher :refer [when-role]]
+            [rems.role-switcher :refer [has-roles?
+                                        when-role]]
             [rems.text :refer :all]
             [rems.util :refer [get-user-id]]
             [ring.util.response :refer [redirect]]))
@@ -105,16 +106,19 @@
            "rejected" [:div.alert.alert-danger content]
            [:div.alert.alert-info content])))
       (when user-attributes
-       (list
-         [:h3 (str "Applicant: " (get user-attributes "commonName"))]
-         (when-role :approver
-           [:form.applicant-info
-            (for [[k v] user-attributes]
-              (text-field {:title k :value v :readonly true})
-              )])))
+         (if (has-roles? :approver)
+           (list
+             [:h3.card-header
+              [:a.card-title.collapsed {:data-toggle "collapse" :data-parent "#accordion" :href "#applicant-info" :aria-expanded "false" :aria-controls "applicant-info"}
+               (str "Applicant: " (get user-attributes "commonName"))]]
+             [:form#applicant-info.collapse
+              (for [[k v] user-attributes]
+                (text-field {:title k :value v :readonly true})
+                )])
+           [:h3 (str "Applicant: " (get user-attributes "commonName"))]))
       [:div
        [:h3.card-header
-        [:a.card-title {:data-toggle "collapse" :data-parent "#accordion" :href "#form" :aria-expanded "true" :aria-controls="form"}(:title form)]]
+        [:a.card-title {:data-toggle "collapse" :data-parent "#accordion" :href "#form" :aria-expanded "true" :aria-controls "form"}(:title form)]]
        [:div#form.collapse.show
         [:form {:method "post"
                 :action (if-let [app (:id (:application form))]
