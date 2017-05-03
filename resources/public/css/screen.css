@@ -429,3 +429,13 @@ ul.comments {
 .license-title {
   margin-top: 3px; /* hax for opening misalignment */
 }
+
+#accordion .card-title:after {
+  font-family: 'FontAwesome';
+  float: right;
+  content: "\f068";
+}
+
+#accordion .card-title.collapsed:after {
+  content: "\f067";
+}

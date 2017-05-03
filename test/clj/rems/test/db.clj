@@ -1,6 +1,7 @@
 (ns ^:integration rems.test.db
   "Namespace for tests that use an actual database."
   (:require [cheshire.core :refer :all]
+            [clojure.core.memoize :as memo]
             [clojure.java.jdbc :as jdbc]
             [clojure.test :refer :all]
             [conman.core :as conman]
@@ -9,6 +10,7 @@
             [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.applications :as applications]
+            [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.roles :as roles]
             [rems.util :refer [get-user-id]]))
@@ -75,26 +77,30 @@
 
       (db/add-user! {:user uid :userattrs nil})
       (db/create-workflow-approver! {:wfid (:id wf) :appruserid uid :round 0})
+      (db/create-catalogue-item-localization! {:id (:id item) :langcode "en" :title "item-en"})
+      (db/create-catalogue-item-localization! {:id (:id item) :langcode "fi" :title "item-fi"})
 
       (is (:id item) "sanity check")
 
       (testing "get form for catalogue item"
-        (let [form-fi (binding [context/*lang* :fi]
-                        (applications/get-form-for (:id item)))
-              form-en (binding [context/*lang* :en]
-                        (applications/get-form-for (:id item)))
-              form-ru (binding [context/*lang* :ru]
-                        (applications/get-form-for (:id item)))]
-          (is (= "entitle" (:title form-en)) "title")
-          (is (= ["A" "B" "C"] (map :title (:items form-en))) "items should be in order")
-          (is (= "fititle" (:title form-fi)) "title")
-          (is (= ["A"] (map :title (:items form-fi))) "there should be only one item")
-          (is (= ["Testi lisenssi"] (map :title (:licenses form-fi))) "there should only be one license in Finnish")
-          (is (= "http://testi.fi" (:textcontent (first (:licenses form-fi)))) "link should point to Finnish site")
-          (is (= "Test license" (:title (first (:licenses form-en)))) "title should be in English")
-          (is (= "http://test.com" (:textcontent (first (:licenses form-en)))) "link should point to English site")
-          (is (= "non-localized license" (:title (first (:licenses form-ru)))) "default title used when no localization is found")
-          (is (= "http://test.org" (:textcontent (first (:licenses form-ru)))) "link should point to default license site")))
+        (with-redefs [catalogue/cached
+                      {:localizations (catalogue/load-catalogue-item-localizations!)}]
+          (let [form-fi (binding [context/*lang* :fi]
+                          (applications/get-form-for (:id item)))
+                form-en (binding [context/*lang* :en]
+                          (applications/get-form-for (:id item)))
+                form-ru (binding [context/*lang* :ru]
+                          (applications/get-form-for (:id item)))]
+            (is (= "item-en" (:title form-en)) "title")
+            (is (= ["A" "B" "C"] (map :title (:items form-en))) "items should be in order")
+            (is (= "item-fi" (:title form-fi)) "title")
+            (is (= ["A"] (map :title (:items form-fi))) "there should be only one item")
+            (is (= ["Testi lisenssi"] (map :title (:licenses form-fi))) "there should only be one license in Finnish")
+            (is (= "http://testi.fi" (:textcontent (first (:licenses form-fi)))) "link should point to Finnish site")
+            (is (= "Test license" (:title (first (:licenses form-en)))) "title should be in English")
+            (is (= "http://test.com" (:textcontent (first (:licenses form-en)))) "link should point to English site")
+            (is (= "non-localized license" (:title (first (:licenses form-ru)))) "default title used when no localization is found")
+            (is (= "http://test.org" (:textcontent (first (:licenses form-ru)))) "link should point to default license site"))))
 
       (testing "get partially filled form"
         (is app-id "sanity check")

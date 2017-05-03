@@ -2,7 +2,8 @@
   "Query functions for forms and applications."
   (:require [rems.auth.util :refer [throw-unauthorized]]
             [rems.context :as context]
-            [rems.db.catalogue :refer [get-localized-catalogue-item]]
+            [rems.db.catalogue :refer [get-catalogue-item-title
+                                       get-localized-catalogue-item]]
             [rems.db.core :as db]
             [rems.util :refer [get-user-id index-by]]))
 
@@ -136,7 +137,8 @@
      {:id form-id
       :catalogue-item catalogue-item
       :application application
-      :title (or (:formtitle form) (:metatitle form))
+      :title (get-catalogue-item-title
+               (get-localized-catalogue-item {:id catalogue-item}))
       :items items
       :licenses licenses})))
 
