@@ -85,6 +85,13 @@
                 (unsupported-field f))
     (unsupported-field f)))
 
+(defn- collapse-header
+  [href expanded aria-controls title]
+  [:h3.card-header
+   [:a.card-title (merge {:data-toggle "collapse" :data-parent "#accordion" :href href :aria-expanded expanded :aria-controls aria-controls}
+                         (when-not expanded {:class "collapsed"}))
+    title]])
+
 (defn- form [form]
   (let [state (:state (:application form))
         editable (or (nil? state) (#{"draft" "returned"} state))
@@ -106,19 +113,17 @@
            "rejected" [:div.alert.alert-danger content]
            [:div.alert.alert-info content])))
       (when user-attributes
-         (if (has-roles? :approver)
-           (list
-             [:h3.card-header
-              [:a.card-title.collapsed {:data-toggle "collapse" :data-parent "#accordion" :href "#applicant-info" :aria-expanded "false" :aria-controls "applicant-info"}
-               (str "Applicant: " (get user-attributes "commonName"))]]
-             [:form#applicant-info.collapse
-              (for [[k v] user-attributes]
-                (text-field {:title k :value v :readonly true})
-                )])
-           [:h3 (str "Applicant: " (get user-attributes "commonName"))]))
+         (let [applicant-title (str "Applicant: " (get user-attributes "commonName"))]
+           (if (has-roles? :approver)
+             (list
+               (collapse-header "#applicant-info" false "applicant-info" applicant-title)
+               [:form#applicant-info.collapse
+                (for [[k v] user-attributes]
+                  (text-field {:title k :value v :readonly true})
+                  )])
+             [:h3 applicant-title])))
       [:div
-       [:h3.card-header
-        [:a.card-title {:data-toggle "collapse" :data-parent "#accordion" :href "#form" :aria-expanded "true" :aria-controls "form"}(:title form)]]
+       (collapse-header "#form" true "form" (:title form))
        [:div#form.collapse.show
         [:form {:method "post"
                 :action (if-let [app (:id (:application form))]
