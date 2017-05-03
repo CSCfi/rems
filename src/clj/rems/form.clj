@@ -108,10 +108,10 @@
        (list
          [:h3 (str "Applicant: " (get user-attributes "commonName"))]
          (when-role :approver
-           (for [[k v] user-attributes]
-             [:div.row
-              [:div.col-2 (str k ":")]
-              [:div.col v]]))))
+           [:form.applicant-info
+            (for [[k v] user-attributes]
+              (text-field {:title k :value v :readonly true})
+              )])))
       [:div
        [:h3.card-header
         [:a.card-title {:data-toggle "collapse" :data-parent "#accordion" :href "#form" :aria-expanded "true" :aria-controls="form"}(:title form)]]
