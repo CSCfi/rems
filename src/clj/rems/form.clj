@@ -103,6 +103,7 @@
         events (when-role :approver (get-in form [:application :events]))
         user-attributes (:applicant-attributes form)]
     (list
+     ;; TODO extract state internal component
      (when state
        (let [status-title (text (applications/localize-state state))
              content (if (or (not-empty comments) (not-empty events))
