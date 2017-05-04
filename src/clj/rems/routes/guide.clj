@@ -2,6 +2,7 @@
   (:require [compojure.core :refer [GET defroutes]]
             [hiccup.core :as h]
             [hiccup.page :refer [include-js]]
+            [rems.applicant-info :as applicant-info]
             [rems.applications :as applications]
             [rems.approvals :as approvals]
             [rems.cart :as cart]
@@ -56,6 +57,9 @@
 
           [:h2 "Approvals list"]
           (approvals/guide)
+
+          [:h2 "Applicant Information"]
+          (applicant-info/guide)
 
           [:h2 "Forms"]
           (form/guide)

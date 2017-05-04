@@ -1,6 +1,7 @@
 (ns rems.form
   (:require [compojure.core :refer [GET POST defroutes]]
             [rems.anti-forgery :refer [anti-forgery-field]]
+            [rems.applicant-info :as applicant-info]
             [rems.applications :as applications]
             [rems.approvals :as approvals]
             [rems.collapsible :as collapsible]
@@ -10,8 +11,7 @@
             [rems.db.core :as db]
             [rems.guide :refer :all]
             [rems.layout :as layout]
-            [rems.role-switcher :refer [has-roles?
-                                        when-role]]
+            [rems.role-switcher :refer [when-role]]
             [rems.text :refer :all]
             [rems.util :refer [get-user-id]]
             [ring.util.response :refer [redirect]]))
@@ -108,16 +108,8 @@
            "approved" [:div.alert.alert-success content]
            "rejected" [:div.alert.alert-danger content]
            [:div.alert.alert-info content])))
-      (when user-attributes
-         (let [applicant-title (str "Applicant: " (get user-attributes "commonName"))]
-           (if (has-roles? :approver)
-             (list
-               (collapsible/header "#applicant-info" false "applicant-info" applicant-title)
-               [:form#applicant-info.collapse
-                (for [[k v] user-attributes]
-                  (text-field {:title k :value v :readonly true})
-                  )])
-             [:h3 applicant-title])))
+
+      (applicant-info/details user-attributes)
       [:div
        (collapsible/header "#form" true "form" (:title form))
        [:div#form.collapse.show
