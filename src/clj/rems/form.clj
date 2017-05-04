@@ -3,6 +3,7 @@
             [rems.anti-forgery :refer [anti-forgery-field]]
             [rems.applications :as applications]
             [rems.approvals :as approvals]
+            [rems.collapsible :as collapsible]
             [rems.db.applications :refer [create-new-draft
                                           get-draft-id-for get-form-for
                                           submit-application]]
@@ -85,12 +86,7 @@
                 (unsupported-field f))
     (unsupported-field f)))
 
-(defn- collapse-header
-  [href expanded aria-controls title]
-  [:h3.card-header
-   [:a.card-title (merge {:data-toggle "collapse" :data-parent "#accordion" :href href :aria-expanded expanded :aria-controls aria-controls}
-                         (when-not expanded {:class "collapsed"}))
-    title]])
+
 
 (defn- form [form]
   (let [state (:state (:application form))
@@ -116,14 +112,14 @@
          (let [applicant-title (str "Applicant: " (get user-attributes "commonName"))]
            (if (has-roles? :approver)
              (list
-               (collapse-header "#applicant-info" false "applicant-info" applicant-title)
+               (collapsible/header "#applicant-info" false "applicant-info" applicant-title)
                [:form#applicant-info.collapse
                 (for [[k v] user-attributes]
                   (text-field {:title k :value v :readonly true})
                   )])
              [:h3 applicant-title])))
       [:div
-       (collapse-header "#form" true "form" (:title form))
+       (collapsible/header "#form" true "form" (:title form))
        [:div#form.collapse.show
         [:form {:method "post"
                 :action (if-let [app (:id (:application form))]
