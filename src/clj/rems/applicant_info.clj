@@ -1,7 +1,6 @@
 (ns rems.applicant-info
   (:require [rems.collapsible :as collapsible]
-            [rems.context :refer [*active-role*
-                                  *roles*]]
+            [rems.context :as context]
             [rems.guide :refer :all]
             [rems.role-switcher :refer [has-roles?]]))
 
