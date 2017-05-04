@@ -96,6 +96,7 @@
         comments (keep :comment (get-in form [:application :events]))
         user-attributes (:applicant-attributes form)]
     (list
+     ;; TODO extract state internal component
      (when state
        (let [content (list [:h4 (text (applications/localize-state state))]
                            (when-not (empty? comments)
