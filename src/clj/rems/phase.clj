@@ -14,14 +14,17 @@
 (defn guide
   []
   (list
-   (example "1 / 4"
+   (example "phase 1 / 4"
             (phases #{"alpha"} ["alpha" "beta" "gamma" "delta"]))
-   (example "2 / 4"
+   (example "phase 2 / 4"
             (phases #{"alpha" "beta"} ["alpha" "beta" "gamma" "delta"]))
-   (example "3 / 4"
+   (example "phase 3 / 4"
             (phases #{"alpha" "beta" "gamma"} ["alpha" "beta" "gamma" "delta"]))
-   (example "4 / 4"
+   (example "phase 4 / 4"
             (phases #{"alpha" "beta" "gamma" "delta"} ["alpha" "beta" "gamma" "delta"]))
 
-   (example "2 / 3"
-            (phases #{"alpha" "beta"} ["alpha" "beta" "gamma"]))))
+   (example "phase 2 / 3"
+            (phases #{"alpha" "beta"} ["alpha" "beta" "gamma"]))
+
+   (example "phase with complicated flow"
+            (phases #{"apply" "review"} ["apply" "review" "approve" "approve" "done"]))))
