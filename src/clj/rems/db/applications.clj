@@ -101,6 +101,11 @@
      :title \"Title\"
      :application {:id 3
                    :state \"draft\"}
+     :applicant-attributes {\"eppn\" \"developer\"
+                            \"email\" \"developer@e.mail\"
+                            \"displayName\" \"deve\"
+                            \"surname\" \"loper\"
+                            ...}
      :catalogue-item 3
      :items [{:id 123
               :type \"texta\"
