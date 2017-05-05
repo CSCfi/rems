@@ -7,6 +7,7 @@
             [rems.approvals :as approvals]
             [rems.cart :as cart]
             [rems.catalogue :as catalogue]
+            [rems.collapsible :as collapsible]
             [rems.contents :as contents]
             [rems.context :as context]
             [rems.form :as form]
@@ -57,6 +58,9 @@
 
           [:h2 "Approvals list"]
           (approvals/guide)
+
+          [:h2 "Collapsible component"]
+          (collapsible/guide)
 
           [:h2 "Applicant Information"]
           (applicant-info/guide)
