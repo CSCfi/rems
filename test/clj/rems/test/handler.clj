@@ -211,8 +211,7 @@
             (is (= 403 (:status ctx)) "jill shouldn't be authorized")))
         (testing "jill should still be able to make her own application"
           (let [ctx (->> (request :get "/form/1")
-                         (dispatch ctx)
-                         (follow-redirect))]
+                         (dispatch ctx))]
             (is (= 200 (:status ctx)))))
         (testing "jill tries to write to jack's application"
           (let [url (format "/form/1/%s/save" application)
