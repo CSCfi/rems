@@ -15,10 +15,12 @@
       (if (has-roles? :approver)
         (list
           (collapsible/header "#applicant-info" false "applicant-info" applicant-title)
-          [:form#applicant-info.collapse
-           (for [[k v] user-attributes]
-             (info-field k v)
-             )])
+          (collapsible/block "applicant-info"
+                             false
+                             [:form
+                              (for [[k v] user-attributes]
+                                (info-field k v)
+                                )]))
         [:h3 applicant-title]))))
 
 (defn guide
