@@ -2,7 +2,8 @@
   (:require [rems.collapsible :as collapsible]
             [rems.context :as context]
             [rems.guide :refer :all]
-            [rems.role-switcher :refer [has-roles?]]))
+            [rems.role-switcher :refer [has-roles?]]
+            [rems.util :refer [get-username]]))
 
 (defn- info-field [title value]
   [:div.form-group
@@ -11,7 +12,7 @@
 
 (defn details [user-attributes]
   (when user-attributes
-    (let [applicant-title (str "Applicant: " (get user-attributes "commonName"))]
+    (let [applicant-title (str "Applicant: " (get-username user-attributes))]
       (if (has-roles? :approver)
         (list
           (collapsible/header "#applicant-info" false "applicant-info" applicant-title)
