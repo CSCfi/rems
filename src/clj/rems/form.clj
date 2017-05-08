@@ -113,9 +113,12 @@
                          (if (has-roles? :approver)
                            (list
                              [:h4 (text :t.form/events)]
-                             [:ul.events
                               (for [e events]
-                                [:li.event (str "User: " (:userid e) " | Event: " (:event e) " | Comment: " (:comment e) " | Time: " (format/unparse time-format (:time e)))])])
+                                [:div.row
+                                 [:div.col (str "User: " (:userid e))]
+                                 [:div.col (str "Event: " (:event e))]
+                                 [:div.col (str "Comment: " (:comment e))]
+                                 [:div.col (str "Time: " (format/unparse time-format (:time e)))]]))
                            (list
                              [:h4 (text :t.form/comments)]
                              [:ul.comments
