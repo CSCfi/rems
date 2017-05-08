@@ -10,7 +10,7 @@
         (for [phase phases]
           [:div.phase {:class (cond (:active? phase) "active"
                                     (:completed? phase) "completed")}
-           [:span (:id phase)]])))
+           [:span (when (:completed? phase) [:i.fa.fa-check]) (:id phase)]])))
 
 (defn guide
   []
