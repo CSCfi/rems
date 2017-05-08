@@ -35,6 +35,10 @@
              :back "Back to catalogue"
              :back-approvals "Back to approvals"
              :validation {:required "Field \"%1\" is required."}}
+      :phases {:apply "Apply"
+               :approve "Approval"
+               :review "Review"
+               :approved "Approved"}
       :applications {:application "Application"
                      :resource "Resource"
                      :user "User"
@@ -95,6 +99,10 @@
              :back "Takaisin kielivaroihin"
              :back-approvals "Takaisin hyväksyntiin"
              :validation {:required "Kenttä \"%1\" on pakollinen."}}
+      :phases {:apply "Hae"
+               :approve "Hyväksyntä"
+               :review "Katselmointi"
+               :approved "Hyväksytty"}
       :applications {:application "Hakemus"
                      :resource "Kielivara"
                      :user "Käyttäjä"
