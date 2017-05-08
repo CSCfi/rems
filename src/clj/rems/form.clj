@@ -11,7 +11,8 @@
             [rems.db.core :as db]
             [rems.guide :refer :all]
             [rems.layout :as layout]
-            [rems.role-switcher :refer [when-role]]
+            [rems.role-switcher :refer [has-roles?
+                                        when-role]]
             [rems.text :refer :all]
             [rems.util :refer [get-user-id]]
             [ring.util.response :refer [redirect]]))
@@ -94,21 +95,28 @@
         readonly (not editable)
         approvable (= state "applied")
         comments (keep :comment (get-in form [:application :events]))
+        events (when-role :approver (get-in form [:application :events]))
         user-attributes (:applicant-attributes form)]
     (list
      (when state
        (let [status-title (text (applications/localize-state state))
-             content (if-not (empty? comments)
+             content (if (or (not-empty comments) (not-empty events))
                        (collapsible/component
                          "events"
                          false
                          status-title
-                         (list
-                           [:h4 (text :t.form/comments)]
-                           [:ul.comments
-                            (for [c comments]
-                              [:li.comment c])]))
-                       status-title)]
+                         (if (has-roles? :approver)
+                           (list
+                             [:h4 (text :t.form/events)]
+                             [:ul.events
+                              (for [e events]
+                                [:li.event (str e)])])
+                           (list
+                             [:h4 (text :t.form/comments)]
+                             [:ul.comments
+                              (for [c comments]
+                                [:li.comment c])])))
+                         status-title)]
          (case state
            "approved" [:div.alert.alert-success content]
            "rejected" [:div.alert.alert-danger content]
