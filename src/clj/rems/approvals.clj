@@ -49,7 +49,7 @@
   [:form (approve-form-attrs app)
    (anti-forgery-field)
    [:div.form-group
-    [:label {:for "comment"} (text :t.approvals/add-comments)]
+    [:label {:for "comment"} (text :t.form/add-comments)]
     [:textarea.form-control {:name "comment"}]]
    [:div.actions
     (when-role :approver
