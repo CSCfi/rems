@@ -218,6 +218,7 @@ VALUES
 (:wfid, :appruserid, :round)
 
 -- :name get-workflow-approvers :? :*
+/*~ (when (:application params) */
 SELECT
   wfa.appruserid
 FROM workflow_approvers wfa
@@ -226,6 +227,37 @@ LEFT OUTER JOIN catalogue_item cat ON cat.wfid = wf.id
 LEFT OUTER JOIN catalogue_item_application app ON app.catid = cat.id
 WHERE app.id = :application
   AND wfa.round = :round
+/*~ ) ~*/
+/*~ (when (:wfid params) */
+SELECT wfa.appruserid, wfa.round
+FROM workflow_approvers wfa
+WHERE wfa.wfid = :wfid
+AND wfa.round = :round
+/*~ ) ~*/
+
+-- :name get-workflow-reviewers :? :*
+/*~ (when (:application params) */
+SELECT
+  wfr.revuserid, wfr.round
+FROM workflow_reviewers wfr
+LEFT OUTER JOIN workflow wf on wf.id = wfr.wfid
+LEFT OUTER JOIN catalogue_item cat ON cat.wfid = wf.id
+LEFT OUTER JOIN catalogue_item_application app ON app.catid = cat.id
+WHERE app.id = :application
+  AND wfr.round = :round
+/*~ ) ~*/
+/*~ (when (:wfid params) */
+SELECT wfr.revuserid
+FROM workflow_reviewers wfr
+WHERE wfr.wfid = :wfid
+AND wfr.round = :round
+/*~ ) ~*/
+
+-- :name get-workflow :? :1
+SELECT
+  wf.id, wf.owneruserid, wf.modifieruserid, wf.title, wf.fnlround, wf.visibility, wf.start, wf.endt
+FROM workflow wf
+WHERE wf.id = :wfid
 
 -- :name clear-field-value! :!
 DELETE FROM application_text_values
