@@ -471,10 +471,16 @@ ul.comments {
   border-right: none;
 }
 
-.phases .phase.ok {
+.phases .phase.active {
+  background-color: #CAD2E6;
+  border-color: #7A90C3;
+  color: #000;
+}
+
+.phases .phase.completed {
   background-color: #7A90C3;
   border-color: #7A90C3;
-  color: white;
+  color: #fff;
 }
 
 .phases .phase {
