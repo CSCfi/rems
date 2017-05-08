@@ -22,5 +22,9 @@
 (defn get-user-id []
   (get context/*user* "eppn"))
 
-(defn get-username []
-  (get context/*user* "commonName"))
+(defn get-username
+  ([]
+   (get context/*user* "commonName"))
+  ([user]
+   (binding [context/*user* user]
+     (get-username))))

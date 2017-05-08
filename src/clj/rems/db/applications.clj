@@ -5,8 +5,8 @@
             [rems.db.catalogue :refer [get-catalogue-item-title
                                        get-localized-catalogue-item]]
             [rems.db.core :as db]
-            [rems.util :refer [get-user-id index-by]]
-            [clojure.tools.logging :as log]))
+            [rems.db.users :as users]
+            [rems.util :refer [get-user-id index-by]]))
 
 ;; TODO cache application state in db instead of always computing it from events
 (declare get-application-state)
@@ -101,6 +101,11 @@
      :title \"Title\"
      :application {:id 3
                    :state \"draft\"}
+     :applicant-attributes {\"eppn\" \"developer\"
+                            \"email\" \"developer@e.mail\"
+                            \"displayName\" \"deve\"
+                            \"surname\" \"loper\"
+                            ...}
      :catalogue-item 3
      :items [{:id 123
               :type \"texta\"
@@ -138,6 +143,7 @@
      {:id form-id
       :catalogue-item catalogue-item
       :application application
+      :applicant-attributes (users/get-user-attributes (:applicantuserid application))
       :title (get-catalogue-item-title
                (get-localized-catalogue-item {:id catalogue-item}))
       :items items

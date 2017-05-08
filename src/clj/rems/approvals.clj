@@ -6,9 +6,9 @@
             [rems.db.applications :as applications]
             [rems.guide :refer :all]
             [rems.layout :as layout]
+            [rems.role-switcher :refer [when-role]]
             [rems.text :refer [text]]
             [rems.util :refer [errorf]]
-            [rems.role-switcher :refer [when-role]]
             [ring.util.response :refer [redirect]]))
 
 (def ^:private time-format (format/formatter "yyyy-MM-dd HH:mm"

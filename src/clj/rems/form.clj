@@ -1,11 +1,12 @@
 (ns rems.form
   (:require [compojure.core :refer [GET POST defroutes]]
             [rems.anti-forgery :refer [anti-forgery-field]]
+            [rems.applicant-info :as applicant-info]
             [rems.applications :as applications]
             [rems.approvals :as approvals]
+            [rems.collapsible :as collapsible]
             [rems.db.applications :refer [create-new-draft
-                                          get-draft-id-for
-                                          get-form-for
+                                          get-draft-id-for get-form-for
                                           submit-application]]
             [rems.db.core :as db]
             [rems.guide :refer :all]
@@ -85,12 +86,15 @@
                 (unsupported-field f))
     (unsupported-field f)))
 
+
+
 (defn- form [form]
   (let [state (:state (:application form))
         editable (or (nil? state) (#{"draft" "returned"} state))
         readonly (not editable)
         approvable (= state "applied")
-        comments (keep :comment (get-in form [:application :events]))]
+        comments (keep :comment (get-in form [:application :events]))
+        user-attributes (:applicant-attributes form)]
     (list
      (when state
        (let [content (list [:h4 (text (applications/localize-state state))]
@@ -104,30 +108,32 @@
            "approved" [:div.alert.alert-success content]
            "rejected" [:div.alert.alert-danger content]
            [:div.alert.alert-info content])))
+
+      (applicant-info/details user-attributes)
       [:div
-       [:h3.card-header
-        [:a.card-title {:data-toggle "collapse" :data-parent "#accordion" :href "#form" :aria-expanded "true" :aria-controls="form"}(:title form)]]
-       [:div#form.collapse.show
-        [:form {:method "post"
-                :action (if-let [app (:id (:application form))]
-                          (str "/form/" (:catalogue-item form) "/" app "/save")
-                          (str "/form/" (:catalogue-item form) "/save"))}
-         (for [i (:items form)]
-           (field (assoc i :readonly readonly)))
-         (when-let [licenses (not-empty (:licenses form))]
-           [:div.form-group
-            [:h4 (text :t.form/licenses)]
-            (for [l licenses]
-              (field (assoc l :readonly readonly)))])
-         (anti-forgery-field)
-         (when-role :applicant
-                    [:div.row
-                     [:div.col
-                      [:a.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
-                     (when editable
-                       [:div.col.actions
-                        [:button.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)]
-                        [:button.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)]])])]]]
+       (collapsible/component "form"
+                          true
+                          (:title form)
+                          [:form {:method "post"
+                                  :action (if-let [app (:id (:application form))]
+                                            (str "/form/" (:catalogue-item form) "/" app "/save")
+                                            (str "/form/" (:catalogue-item form) "/save"))}
+                           (for [i (:items form)]
+                             (field (assoc i :readonly readonly)))
+                           (when-let [licenses (not-empty (:licenses form))]
+                             [:div.form-group
+                              [:h4 (text :t.form/licenses)]
+                              (for [l licenses]
+                                (field (assoc l :readonly readonly)))])
+                           (anti-forgery-field)
+                           (when-role :applicant
+                                      [:div.row
+                                       [:div.col
+                                        [:a.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
+                                       (when editable
+                                         [:div.col.actions
+                                          [:button.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)]
+                                          [:button.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)]])])])]
      ;; The approve buttons need to be outside the form since they're
      ;; implemented as forms
      (when-role :approver
