@@ -228,16 +228,21 @@
         reviewers (db/get-workflow-reviewers {:wfid wfid :round curround})]
     (cond (= state "approved") :approved
           (= state "draft") :apply
-          (seq approvers) (keyword (str "approval" curround)) ;; any approvers for this round means waiting for an approval
-          (seq reviewers) (keyword (str "review" curround)) ;; any reviewers for this round means waiting for review
+          (seq approvers) (keyword (str "approval" curround)) ; any approvers for this round means waiting for an approval
+          (seq reviewers) (keyword (str "review" curround)) ; any reviewers for this round means waiting for review
           :else (keyword (str "autoapprove" curround))
           )))
 
-(defn get-application-completed-phases [application-id]
+(defn get-application-phases [application-id]
   (let [{:keys [wfid]} (first (db/get-applications {:application application-id}))
         current-phase (get-application-phase application-id)
-        [completed more] (split-with #(not= current-phase %) (get-workflow-phases wfid))]
-    (conj (vec completed) (first more))))
+        workflow-phases (get-workflow-phases wfid)
+        completed? (set (take-while #(not= current-phase %) workflow-phases))]
+    (for [phase workflow-phases]
+      (cond (completed? phase) {:id phase :completed? true}
+            (= :approved current-phase phase) {:id phase :completed? true}
+            (= current-phase phase) {:id phase :active? true}
+            :else {:id phase}))))
 
 ;;; Public event api
 
