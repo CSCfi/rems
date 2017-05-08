@@ -1,5 +1,7 @@
 (ns rems.form
-  (:require [compojure.core :refer [GET POST defroutes]]
+  (:require [clj-time.core :as time]
+            [clj-time.format :as format]
+            [compojure.core :refer [GET POST defroutes]]
             [rems.anti-forgery :refer [anti-forgery-field]]
             [rems.applicant-info :as applicant-info]
             [rems.applications :as applications]
@@ -16,6 +18,9 @@
             [rems.text :refer :all]
             [rems.util :refer [get-user-id]]
             [ring.util.response :refer [redirect]]))
+
+(def ^:private time-format (format/formatter "yyyy-MM-dd HH:mm"
+                                             (time/default-time-zone)))
 
 (defn- id-to-name [id]
   (str "field" id))
@@ -110,7 +115,7 @@
                              [:h4 (text :t.form/events)]
                              [:ul.events
                               (for [e events]
-                                [:li.event (str e)])])
+                                [:li.event (str "User: " (:userid e) " | Event: " (:event e) " | Comment: " (:comment e) " | Time: " (format/unparse time-format (:time e)))])])
                            (list
                              [:h4 (text :t.form/comments)]
                              [:ul.comments
