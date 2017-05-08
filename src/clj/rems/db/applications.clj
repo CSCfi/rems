@@ -238,7 +238,6 @@
         current-phase (get-application-phase application-id)
         workflow-phases (get-workflow-phases wfid)
         completed? (set (map :id (take-while #(not= (:id current-phase) (:id %)) workflow-phases)))]
-    (println (:id current-phase))
     (for [phase workflow-phases]
       (merge phase
              (cond (completed? (:id phase)) {:completed? true}
