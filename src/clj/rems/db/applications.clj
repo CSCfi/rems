@@ -242,7 +242,7 @@
     (for [phase workflow-phases]
       (merge phase
              (cond (completed? (:id phase)) {:completed? true}
-                   (= :approved (:state current-phase)) {:completed? true}
+                   (= :approved (:phase current-phase)) {:completed? true}
                    (= (:id current-phase) (:id phase)) {:active? true}
                    )))))
 
