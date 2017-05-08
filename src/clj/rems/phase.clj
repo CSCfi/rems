@@ -5,26 +5,29 @@
   "Component for phase progress bar.
 
   done? - is this phase completed"
-  [done? phases]
+  [phases]
   (into [:div.phases]
         (for [phase phases]
-          [:div.phase {:class (when (done? phase) "ok")}
-           [:span phase]])))
+          [:div.phase {:class (cond (:active? phase) "active"
+                                    (:completed? phase) "completed")}
+           [:span (:id phase)]])))
 
 (defn guide
   []
   (list
-   (example "phase 1 / 4"
-            (phases #{"alpha"} ["alpha" "beta" "gamma" "delta"]))
-   (example "phase 2 / 4"
-            (phases #{"alpha" "beta"} ["alpha" "beta" "gamma" "delta"]))
-   (example "phase 3 / 4"
-            (phases #{"alpha" "beta" "gamma"} ["alpha" "beta" "gamma" "delta"]))
-   (example "phase 4 / 4"
-            (phases #{"alpha" "beta" "gamma" "delta"} ["alpha" "beta" "gamma" "delta"]))
+   (example "phase, nothing yet"
+            (phases [{:id :alpha} {:id :beta} {:id :gamma} {:id :delta}]))
+   (example "phase 0 / 4, first active"
+            (phases [{:id :alpha :active? true} {:id :beta} {:id :gamma} {:id :delta}]))
+   (example "phase 1 / 4, second active"
+            (phases [{:id :alpha :completed? true} {:id :beta :active? true} {:id :gamma} {:id :delta}]))
+   (example "phase 2 / 4, third active"
+            (phases [{:id :alpha :completed? true} {:id :beta :completed? true} {:id :gamma :active? true} {:id :delta}]))
+   (example "phase 3 / 4, fourth active"
+            (phases [{:id :alpha :completed? true} {:id :beta :completed? true} {:id :gamma :completed? true} {:id :delta :active? true}]))
+   (example "phase 4 / 4, all done"
+            (phases [{:id :alpha :completed? true} {:id :beta :completed? true} {:id :gamma :completed? true} {:id :delta :completed? true}]))
 
-   (example "phase 2 / 3"
-            (phases #{"alpha" "beta"} ["alpha" "beta" "gamma"]))
-
-   (example "phase with complicated flow"
-            (phases #{"apply" "review"} ["apply" "review" "approve" "approve" "done"]))))
+   (example "phase 2 / 3, second active"
+            (phases [{:id :alpha :completed? true} {:id :beta :active? true} {:id :gamma}]))
+   ))
