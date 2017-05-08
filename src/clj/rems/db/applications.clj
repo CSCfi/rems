@@ -211,14 +211,14 @@
 
 (defn get-workflow-phases [wfid]
   (let [fnlround (:fnlround (db/get-workflow {:wfid wfid}))]
-    (concat [:apply]
+    (concat [{:id "draft" :phase :apply}]
             (for [round (range (inc fnlround))]
               (let [approvers (db/get-workflow-approvers {:wfid wfid :round round})
                     reviewers (db/get-workflow-reviewers {:wfid wfid :round round})]
-                (cond (seq approvers) (keyword (str "approval" round))
-                      (seq reviewers) (keyword (str "review" round))
-                      :else (keyword (str "autoapprove" round)))))
-            [:approved])))
+                (cond (seq approvers) {:id (str "approve" round) :phase :approve :round round}
+                      (seq reviewers) {:id (str "review" round) :phase :review :round round}
+                      :else {:id (str "autoapprove" round) :phase :autoapprove :round round})))
+            [{:id "approved" :phase :approved}])))
 
 ;; TODO should only be able to see the phase if applicant, approver, reviewer etc.
 (defn get-application-phase [application-id]
@@ -226,23 +226,25 @@
         {:keys [wfid]} (first (db/get-applications {:application application-id}))
         approvers (db/get-workflow-approvers {:wfid wfid :round curround})
         reviewers (db/get-workflow-reviewers {:wfid wfid :round curround})]
-    (cond (= state "approved") :approved
-          (= state "draft") :apply
-          (seq approvers) (keyword (str "approval" curround)) ; any approvers for this round means waiting for an approval
-          (seq reviewers) (keyword (str "review" curround)) ; any reviewers for this round means waiting for review
-          :else (keyword (str "autoapprove" curround))
+    (cond (= state "approved") {:id "approved" :phase :approved}
+          (= state "draft") {:id "draft" :phase :apply}
+          (seq approvers) {:id (str "approve" curround) :phase :approve :round curround} ; any approvers for this round means waiting for an approval
+          (seq reviewers) {:id (str "review" curround) :phase :review :round curround} ; any reviewers for this round means waiting for review
+          :else {:id (str "autoapprove" curround) :phase :approve :round curround}
           )))
 
 (defn get-application-phases [application-id]
   (let [{:keys [wfid]} (first (db/get-applications {:application application-id}))
         current-phase (get-application-phase application-id)
         workflow-phases (get-workflow-phases wfid)
-        completed? (set (take-while #(not= current-phase %) workflow-phases))]
+        completed? (set (map :id (take-while #(not= (:id current-phase) (:id %)) workflow-phases)))]
+    (println (:id current-phase))
     (for [phase workflow-phases]
-      (cond (completed? phase) {:id phase :completed? true}
-            (= :approved current-phase phase) {:id phase :completed? true}
-            (= current-phase phase) {:id phase :active? true}
-            :else {:id phase}))))
+      (merge phase
+             (cond (completed? (:id phase)) {:completed? true}
+                   (= :approved (:state current-phase)) {:completed? true}
+                   (= (:id current-phase) (:id phase)) {:active? true}
+                   )))))
 
 ;;; Public event api
 
