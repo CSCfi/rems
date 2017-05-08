@@ -111,9 +111,9 @@
 
       (applicant-info/details user-attributes)
       [:div
-       (collapsible/header "#form" true "form" (:title form))
-       (collapsible/block "form"
+       (collapsible/component "form"
                           true
+                          (:title form)
                           [:form {:method "post"
                                   :action (if-let [app (:id (:application form))]
                                             (str "/form/" (:catalogue-item form) "/" app "/save")

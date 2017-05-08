@@ -1,27 +1,30 @@
 (ns rems.collapsible
   (:require [rems.guide :refer :all]))
 
-(defn header
-  [href expanded aria-controls title]
+(defn- header
+  [id expanded title]
   [:h3.card-header
-   [:a.card-title (merge {:data-toggle "collapse" :data-parent "#accordion" :href href :aria-expanded expanded :aria-controls aria-controls}
+   [:a.card-title (merge {:data-toggle "collapse" :data-parent "#accordion" :href (str "#" id) :aria-expanded expanded :aria-controls id}
                          (when-not expanded {:class "collapsed"}))
     title]])
 
-(defn block [id expanded content]
+(defn- block [id expanded content]
   (let [classes (str "collapse" (when expanded " show"))]
     [:div {:id id :class classes}
      content]))
+
+(defn component [id expanded title content]
+  (list
+    (header id expanded title)
+    (block id expanded content)))
 
 (defn guide
   []
   (list (example "Collapsible component expanded by default"
            (list
              [:div#accordion
-              (header "#hello" true "hello" "Collapse expanded")
-              (block "hello" true [:p "I am content"])]))
+              (component "hello" true "Collapse expanded" [:p "I am content"])]))
         (example "Collapsible component closed by default"
            (list
              [:div#accordion
-              (header "#hello2" false "hello2" "Collapse minimized")
-              (block "hello2" false [:p "I am content"])]))))
+              (component "hello2" false "Collapse minimized" [:p "I am content"])]))))

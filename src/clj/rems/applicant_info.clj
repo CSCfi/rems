@@ -15,13 +15,13 @@
     (let [applicant-title (str "Applicant: " (get-username user-attributes))]
       (if (has-roles? :approver)
         (list
-          (collapsible/header "#applicant-info" false "applicant-info" applicant-title)
-          (collapsible/block "applicant-info"
-                             false
-                             [:form
-                              (for [[k v] user-attributes]
-                                (info-field k v)
-                                )]))
+          (collapsible/component "applicant-info"
+                                 false
+                                 applicant-title
+                                 [:form
+                                  (for [[k v] user-attributes]
+                                    (info-field k v)
+                                    )]))
         [:h3 applicant-title]))))
 
 (defn guide
