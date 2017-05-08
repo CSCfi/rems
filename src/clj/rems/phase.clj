@@ -1,5 +1,6 @@
 (ns rems.phase
-  (:require [rems.guide :refer :all]))
+  (:require [rems.guide :refer :all]
+            [rems.text :refer :all]))
 
 (defn phases
   "Component for phase progress bar.
@@ -10,7 +11,9 @@
         (for [phase phases]
           [:div.phase {:class (cond (:active? phase) "active"
                                     (:completed? phase) "completed")}
-           [:span (when (:completed? phase) [:i.fa.fa-check]) (or (:phase phase) (:id phase))]])))
+           [:span (when (:completed? phase) [:i.fa.fa-check]) (if (:phase phase)
+                                                                (text (keyword "t.phases" (name (:phase phase))))
+                                                                (:id phase))]])))
 
 (defn guide
   []
