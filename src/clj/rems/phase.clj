@@ -10,7 +10,7 @@
         (for [phase phases]
           [:div.phase {:class (cond (:active? phase) "active"
                                     (:completed? phase) "completed")}
-           [:span (when (:completed? phase) [:i.fa.fa-check]) (:id phase)]])))
+           [:span (when (:completed? phase) [:i.fa.fa-check]) (or (:phase phase) (:id phase))]])))
 
 (defn guide
   []
@@ -30,4 +30,7 @@
 
    (example "phase 2 / 3, second active"
             (phases [{:id :alpha :completed? true} {:id :beta :active? true} {:id :gamma}]))
+
+   (example "phase with separate names for each phase"
+            (phases [{:id :alpha :phase :apply :completed? true} {:id :beta :phase :approve :active? true} {:id :gamma :phase :approved}]))
    ))
