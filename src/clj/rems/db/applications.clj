@@ -217,7 +217,7 @@
                     reviewers (db/get-workflow-reviewers {:wfid wfid :round round})]
                 (cond (seq approvers) {:id (str "approve" round) :phase :approve :round round}
                       (seq reviewers) {:id (str "review" round) :phase :review :round round}
-                      :else {:id (str "autoapprove" round) :phase :autoapprove :round round})))
+                      :else {:id (str "autoapprove" round) :phase :approve :round round})))
             [{:id "approved" :phase :approved}])))
 
 ;; TODO should only be able to see the phase if applicant, approver, reviewer etc.
@@ -230,7 +230,7 @@
           (= state "draft") {:id "draft" :phase :apply}
           (seq approvers) {:id (str "approve" curround) :phase :approve :round curround} ; any approvers for this round means waiting for an approval
           (seq reviewers) {:id (str "review" curround) :phase :review :round curround} ; any reviewers for this round means waiting for review
-          :else {:id (str "autoapprove" curround) :phase :approve :round curround}
+          :else {:id (str "autopprove" curround) :phase :approve :round curround}
           )))
 
 (defn get-application-phases [application-id]
