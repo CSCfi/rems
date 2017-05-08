@@ -6,12 +6,14 @@
             [rems.approvals :as approvals]
             [rems.collapsible :as collapsible]
             [rems.db.applications :refer [create-new-draft
+                                          get-application-phases
                                           get-draft-id-for get-form-for
                                           submit-application]]
             [rems.db.core :as db]
             [rems.guide :refer :all]
             [rems.layout :as layout]
             [rems.role-switcher :refer [when-role]]
+            [rems.phase :refer [phases]]
             [rems.text :refer :all]
             [rems.util :refer [get-user-id]]
             [ring.util.response :refer [redirect]]))
@@ -109,6 +111,9 @@
            "approved" [:div.alert.alert-success content]
            "rejected" [:div.alert.alert-danger content]
            [:div.alert.alert-info content])))
+
+     [:div.mb-3
+      (phases (get-application-phases (:id (:application form))))]
 
      (applicant-info/details user-attributes)
      [:div
