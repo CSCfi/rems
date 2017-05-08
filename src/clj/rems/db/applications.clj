@@ -41,7 +41,7 @@
   "Finds applications in the draft state for the given catalogue item.
    Returns an id of an arbitrary one of them, or nil if there are none."
   [catalogue-item]
-  (->> (get-applications-impl {:resource catalogue-item})
+  (->> (get-applications-impl {:resource catalogue-item :applicant (get-user-id)})
        (filter #(= "draft" (:state %)))
        first
        :id))
