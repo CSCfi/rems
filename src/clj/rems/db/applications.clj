@@ -209,6 +209,36 @@
 (defn- apply-events [application events]
   (reduce apply-event application events))
 
+(defn get-workflow-phases [wfid]
+  (let [fnlround (:fnlround (db/get-workflow {:wfid wfid}))]
+    (concat [:apply]
+            (for [round (range (inc fnlround))]
+              (let [approvers (db/get-workflow-approvers {:wfid wfid :round round})
+                    reviewers (db/get-workflow-reviewers {:wfid wfid :round round})]
+                (cond (seq approvers) (keyword (str "approval" round))
+                      (seq reviewers) (keyword (str "review" round))
+                      :else (keyword (str "autoapprove" round)))))
+            [:approved])))
+
+;; TODO should only be able to see the phase if applicant, approver, reviewer etc.
+(defn get-application-phase [application-id]
+  (let [{:keys [state curround]} (get-application-state application-id)
+        {:keys [wfid]} (first (db/get-applications {:application application-id}))
+        approvers (db/get-workflow-approvers {:wfid wfid :round curround})
+        reviewers (db/get-workflow-reviewers {:wfid wfid :round curround})]
+    (cond (= state "approved") :approved
+          (= state "draft") :apply
+          (seq approvers) (keyword (str "approval" curround)) ;; any approvers for this round means waiting for an approval
+          (seq reviewers) (keyword (str "review" curround)) ;; any reviewers for this round means waiting for review
+          :else (keyword (str "autoapprove" curround))
+          )))
+
+(defn get-application-completed-phases [application-id]
+  (let [{:keys [wfid]} (first (db/get-applications {:application application-id}))
+        current-phase (get-application-phase application-id)
+        [completed more] (split-with #(not= current-phase %) (get-workflow-phases wfid))]
+    (conj (vec completed) (first more))))
+
 ;;; Public event api
 
 (defn get-application-state [application-id]
