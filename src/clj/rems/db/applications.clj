@@ -5,7 +5,8 @@
             [rems.db.catalogue :refer [get-catalogue-item-title
                                        get-localized-catalogue-item]]
             [rems.db.core :as db]
-            [rems.util :refer [get-user-id index-by]]))
+            [rems.util :refer [get-user-id index-by]]
+            [clojure.tools.logging :as log]))
 
 ;; TODO cache application state in db instead of always computing it from events
 (declare get-application-state)
@@ -40,7 +41,7 @@
   "Finds applications in the draft state for the given catalogue item.
    Returns an id of an arbitrary one of them, or nil if there are none."
   [catalogue-item]
-  (->> (get-applications-impl {:resource catalogue-item})
+  (->> (get-applications-impl {:resource catalogue-item :applicant (get-user-id)})
        (filter #(= "draft" (:state %)))
        first
        :id))
