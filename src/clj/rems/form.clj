@@ -97,13 +97,18 @@
         user-attributes (:applicant-attributes form)]
     (list
      (when state
-       (let [content (list [:h4 (text (applications/localize-state state))]
-                           (when-not (empty? comments)
-                             (list
-                              [:h4 (text :t.form/comments)]
-                              [:ul.comments
-                               (for [c comments]
-                                 [:li.comment c])])))]
+       (let [status-title (text (applications/localize-state state))
+             content (if-not (empty? comments)
+                       (collapsible/component
+                         "events"
+                         false
+                         status-title
+                         (list
+                           [:h4 (text :t.form/comments)]
+                           [:ul.comments
+                            (for [c comments]
+                              [:li.comment c])]))
+                       status-title)]
          (case state
            "approved" [:div.alert.alert-success content]
            "rejected" [:div.alert.alert-danger content]
