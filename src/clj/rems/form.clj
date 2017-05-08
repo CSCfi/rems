@@ -115,10 +115,10 @@
                              [:h4 (text :t.form/events)]
                               (for [e events]
                                 [:div.row
-                                 [:div.col (str "User: " (:userid e))]
-                                 [:div.col (str "Event: " (:event e))]
-                                 [:div.col (str "Comment: " (:comment e))]
-                                 [:div.col (str "Time: " (format/unparse time-format (:time e)))]]))
+                                 [:div.col (str (text :t.form/user) (:userid e))]
+                                 [:div.col (str (text :t.form/event) (:event e))]
+                                 [:div.col (str (text :t.form/comment) (:comment e))]
+                                 [:div.col (str (text :t.form/date) (format/unparse time-format (:time e)))]]))
                            (list
                              [:h4 (text :t.form/comments)]
                              [:ul.comments
