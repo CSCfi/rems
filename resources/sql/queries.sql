@@ -126,7 +126,7 @@ RETURNING id
 -- - Use {:applicant user} to filter by applicant
 -- TODO: use fnlround from application?
 SELECT
-  app.id, app.catId, app.applicantUserId, app.start, wf.fnlround
+  app.id, app.catId, app.applicantUserId, app.start, wf.id as wfid, wf.fnlround
 FROM catalogue_item_application app
 LEFT OUTER JOIN catalogue_item cat ON app.catid = cat.id
 LEFT OUTER JOIN workflow wf ON cat.wfid = wf.id
