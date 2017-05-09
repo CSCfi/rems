@@ -210,40 +210,40 @@
       (db/create-workflow-approver! {:wfid wf :appruserid "approver2" :round 1})
 
       (testing "initially the application is in draft phase"
-        (is (= {:id "draft" :phase :apply} (applications/get-application-phase app)))
-        (is (= [{:id "draft" :phase :apply :active? true}
-                {:id "approve0" :phase :approve :round 0}
-                {:id "approve1" :phase :approve :round 1}
-                {:id "approved" :phase :approved}] (applications/get-application-phases app))))
+        (is (= {:id "apply" :phase :apply} (applications/get-application-phase app)))
+        (is (= [{:id "apply" :phase :apply :active? true :text :t.phases/apply}
+                {:id "approve0" :phase :approve :round 0 :text :t.phases/approve}
+                {:id "approve1" :phase :approve :round 1 :text :t.phases/approve}
+                {:id "result" :phase :result :text :t.phases/approved}] (applications/get-application-phases app))))
 
       (applications/submit-application app)
 
       (testing "after submission the application is in first approval round"
         (is (= {:id "approve0" :phase :approve :round 0} (applications/get-application-phase app)))
-        (is (= [{:id "draft" :phase :apply :completed? true}
-                {:id "approve0" :phase :approve :active? true :round 0}
-                {:id "approve1" :phase :approve :round 1}
-                {:id "approved" :phase :approved}] (applications/get-application-phases app))))
+        (is (= [{:id "apply" :phase :apply :completed? true :text :t.phases/apply}
+                {:id "approve0" :phase :approve :active? true :round 0 :text :t.phases/approve}
+                {:id "approve1" :phase :approve :round 1 :text :t.phases/approve}
+                {:id "result" :phase :result :text :t.phases/approved}] (applications/get-application-phases app))))
 
       (binding [context/*user* {"eppn" "approver1"}]
         (applications/approve-application app 0 "it's good"))
 
       (testing "after first approval the application is in the second approval round"
         (is (= {:id "approve1" :phase :approve :round 1} (applications/get-application-phase app)))
-        (is (= [{:id "draft" :phase :apply :completed? true}
-                {:id "approve0" :phase :approve :completed? true :round 0}
-                {:id "approve1" :phase :approve :active? true :round 1}
-                {:id "approved" :phase :approved}] (applications/get-application-phases app))))
+        (is (= [{:id "apply" :phase :apply :completed? true :text :t.phases/apply}
+                {:id "approve0" :phase :approve :completed? true :approved? true :round 0 :text :t.phases/approve}
+                {:id "approve1" :phase :approve :active? true :round 1 :text :t.phases/approve}
+                {:id "result" :phase :result :text :t.phases/approved}] (applications/get-application-phases app))))
 
       (binding [context/*user* {"eppn" "approver2"}]
         (applications/approve-application app 1 "it's good"))
 
       (testing "after both approvals the application is in approved phase"
-        (is (= {:id "approved" :phase :approved} (applications/get-application-phase app)))
-        (is (= [{:id "draft" :phase :apply :completed? true}
-                {:id "approve0" :phase :approve :completed? true :round 0}
-                {:id "approve1" :phase :approve :completed? true :round 1}
-                {:id "approved" :phase :approved :completed? true}] (applications/get-application-phases app))))
+        (is (= {:id "result" :phase :result :approved? true} (applications/get-application-phase app)))
+        (is (= [{:id "apply" :phase :apply :completed? true :text :t.phases/apply}
+                {:id "approve0" :phase :approve :completed? true :approved? true :round 0 :text :t.phases/approve}
+                {:id "approve1" :phase :approve :completed? true :approved? true :round 1 :text :t.phases/approve}
+                {:id "result" :phase :result :completed? true :approved? true :text :t.phases/approved}] (applications/get-application-phases app))))
       )))
 
 (deftest test-get-approvals
