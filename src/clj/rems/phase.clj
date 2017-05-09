@@ -10,10 +10,14 @@
   (into [:div.phases]
         (for [phase phases]
           [:div.phase {:class (cond (:active? phase) "active"
-                                    (:completed? phase) "completed")}
-           [:span (when (:completed? phase) [:i.fa.fa-check]) (if (:phase phase)
-                                                                (text (keyword "t.phases" (name (:phase phase))))
-                                                                (:id phase))]])))
+                                    (:rejected? phase) "rejected"
+                                    (:completed? phase) "completed"
+                                    (:returned? phase) "returned")}
+           [:span (cond (:rejected? phase)  [:i.fa.fa-times]
+                        (:completed? phase) [:i.fa.fa-check])
+            (if (:text phase)
+              (text (:text phase))
+              (:id phase))]])))
 
 (defn guide
   []
@@ -34,6 +38,13 @@
    (example "phase 2 / 3, second active"
             (phases [{:id :alpha :completed? true} {:id :beta :active? true} {:id :gamma}]))
 
-   (example "phase with separate names for each phase"
-            (phases [{:id :alpha :phase :apply :completed? true} {:id :beta :phase :approve :active? true} {:id :gamma :phase :approved}]))
+   (example "phase with localized names for each phase"
+            (phases [{:id :alpha :phase :apply :completed? true :text :t.phases/apply}
+                     {:id :beta :phase :approve :active? true :text :t.phases/approve}
+                     {:id :gamma :phase :result :text :t.phases/approved}]))
+
+   (example "phase with rejected application"
+            (phases [{:id :alpha :phase :apply :completed? true :text :t.phases/apply}
+                     {:id :beta :phase :approve :completed? true :rejected? true :text :t.phases/approve}
+                     {:id :gamma :phase :result :completed? true :rejected? true :text :t.phases/rejected}]))
    ))
