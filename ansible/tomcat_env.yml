@@ -118,6 +118,9 @@
       src: tomcat.service
       dest: /etc/systemd/system
 
+  - name: Reload Systemd to load the Tomcat unit file
+    command: systemctl daemon-reload
+
   - name: Copy tomcat context.xml
     copy:
       src: context.xml
