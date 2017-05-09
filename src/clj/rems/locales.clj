@@ -50,7 +50,7 @@
                               :applied "Applied"
                               :approved "Approved"
                               :rejected "Rejected"
-                              :returned "Returned to applicant"
+                              :returned "Returned"
                               :unknown "Unknown"}
                      :empty "You don't have any applications."}
       :approvals {:application "Application"
@@ -115,7 +115,7 @@
                               :applied "Haettu"
                               :approved "Hyväksytty"
                               :rejected "Hylätty"
-                              :returned "Palautettu hakijalle"
+                              :returned "Palautettu"
                               :unknown "Tuntematon"}
                      :empty "Sinulla ei ole hakemuksia."}
       :approvals {:application "Hakemus"
