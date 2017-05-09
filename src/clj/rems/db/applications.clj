@@ -255,6 +255,7 @@
              (when (= :result (:phase phase)) {:text (cond approved? :t.phases/approved
                                                            rejected? :t.phases/rejected
                                                            :else :t.phases/approved)})
+             (when  (and (completed? (:id phase)) (contains? #{:approve :review} (:phase phase))) {:approved? true})
              (cond (completed? (:id phase)) {:completed? true}
                    (= (:id current-phase) (:id phase)) {:active? true})
              ))))
