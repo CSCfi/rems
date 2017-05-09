@@ -131,6 +131,11 @@
       src: catalina.properties
       dest: /opt/tomcat/conf
 
+  - name: Delete tomcat examples
+    file:
+      path: /opt/tomcat/webapps/examples
+      state: absent
+
   - name: Change ownership files in /opt/tomcat to tomcat user
     file:
       path: /opt/tomcat
