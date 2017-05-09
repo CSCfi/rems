@@ -145,7 +145,7 @@
       :application application
       :applicant-attributes (users/get-user-attributes (:applicantuserid application))
       :title (get-catalogue-item-title
-               (get-localized-catalogue-item {:id catalogue-item}))
+              (get-localized-catalogue-item {:id catalogue-item}))
       :items items
       :licenses licenses})))
 
@@ -209,16 +209,19 @@
 (defn- apply-events [application events]
   (reduce apply-event application events))
 
+
+;;; Application phases
+
 (defn get-workflow-phases [wfid]
   (let [fnlround (:fnlround (db/get-workflow {:wfid wfid}))]
-    (concat [{:id "draft" :phase :apply}]
+    (concat [{:id "apply" :phase :apply :text :t.phases/apply}]
             (for [round (range (inc fnlround))]
               (let [approvers (db/get-workflow-approvers {:wfid wfid :round round})
                     reviewers (db/get-workflow-reviewers {:wfid wfid :round round})]
-                (cond (seq approvers) {:id (str "approve" round) :phase :approve :round round}
-                      (seq reviewers) {:id (str "review" round) :phase :review :round round}
-                      :else {:id (str "autoapprove" round) :phase :approve :round round})))
-            [{:id "approved" :phase :approved}])))
+                (cond (seq approvers) {:id (str "approve" round) :phase :approve :round round :text :t.phases/approve}
+                      (seq reviewers) {:id (str "review" round) :phase :review :round round :text :t.phases/review}
+                      :else {:id (str "autoapprove" round) :phase :approve :round round :text :t.phases/approve})))
+            [{:id "approved" :phase :result}])))
 
 ;; TODO should only be able to see the phase if applicant, approver, reviewer etc.
 (defn get-application-phase [application-id]
@@ -226,8 +229,10 @@
         {:keys [wfid]} (first (db/get-applications {:application application-id}))
         approvers (db/get-workflow-approvers {:wfid wfid :round curround})
         reviewers (db/get-workflow-reviewers {:wfid wfid :round curround})]
-    (cond (= state "approved") {:id "approved" :phase :approved}
-          (= state "draft") {:id "draft" :phase :apply}
+    (cond (= state "rejected") {:id "approved" :phase :result :rejected? true}
+          (= state "approved") {:id "approved" :phase :result :approved? true}
+          (= state "draft") {:id "apply" :phase :apply}
+          (= state "returned") {:id "apply" :phase :apply}
           (seq approvers) {:id (str "approve" curround) :phase :approve :round curround} ; any approvers for this round means waiting for an approval
           (seq reviewers) {:id (str "review" curround) :phase :review :round curround} ; any reviewers for this round means waiting for review
           :else {:id (str "autopprove" curround) :phase :approve :round curround}
@@ -237,13 +242,21 @@
   (let [{:keys [wfid]} (first (db/get-applications {:application application-id}))
         current-phase (get-application-phase application-id)
         workflow-phases (get-workflow-phases wfid)
-        completed? (set (map :id (take-while #(not= (:id current-phase) (:id %)) workflow-phases)))]
+        completed? (set (map :id (take-while #(or (not= (:id current-phase) (:id %))
+                                                  (= :result (:phase %)))
+                                             workflow-phases)))
+        approved? (:approved? current-phase)
+        rejected? (:rejected? current-phase)]
     (for [phase workflow-phases]
       (merge phase
+             ;;(println phase completed? approved? rejected?)
+             (when (and approved? (contains? #{:approve :review :result} (:phase phase))) {:approved? true})
+             (when (and rejected? (contains? #{:approve :review :result} (:phase phase))) {:rejected? true})
+             (when (= :result (:phase phase)) {:text (cond approved? :t.phases/approved
+                                                           rejected? :t.phases/rejected)})
              (cond (completed? (:id phase)) {:completed? true}
-                   (= :approved (:phase current-phase)) {:completed? true}
-                   (= (:id current-phase) (:id phase)) {:active? true}
-                   )))))
+                   (= (:id current-phase) (:id phase)) {:active? true})
+             ))))
 
 ;;; Public event api
 
