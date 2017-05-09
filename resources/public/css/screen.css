@@ -477,7 +477,8 @@ ul.comments {
   color: #000;
 }
 
-.phases .phase.completed {
+.phases .phase.completed,
+.phases .phase.rejected {
   background-color: #7A90C3;
   border-color: #7A90C3;
   color: #fff;

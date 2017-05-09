@@ -38,7 +38,8 @@
       :phases {:apply "Apply"
                :approve "Approval"
                :review "Review"
-               :approved "Approved"}
+               :approved "Approved"
+               :rejected "Rejected"}
       :applications {:application "Application"
                      :resource "Resource"
                      :user "User"
@@ -102,7 +103,8 @@
       :phases {:apply "Hae"
                :approve "Hyväksyntä"
                :review "Katselmointi"
-               :approved "Hyväksytty"}
+               :approved "Hyväksytty"
+               :rejected "Hylätty"}
       :applications {:application "Hakemus"
                      :resource "Kielivara"
                      :user "Käyttäjä"
