@@ -21,6 +21,16 @@
       - mod_proxy_html
       - mod_ssl
 
+  - name: Ensures /var/www/html/css dir exists
+    file:
+      path: /var/www/html/css
+      state: directory
+
+  - name: Ensures /var/www/html/img dir exists
+    file:
+      path: /var/www/html/img
+      state: directory
+
   - name: Copy maintenance page files
     copy: src={{item.src}} dest={{item.dest}}
     with_items:
