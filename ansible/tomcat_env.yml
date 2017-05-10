@@ -136,6 +136,11 @@
       src: context.xml
       dest: /opt/tomcat/conf
 
+  - name: Copy tomcat-users.xml
+    template:
+      src: tomcat-users.xml
+      dest: /opt/tomcat/conf
+
   - name: Copy tomcat catalina.properties
     copy:
       src: catalina.properties
