@@ -136,6 +136,11 @@
       path: /opt/tomcat/webapps/examples
       state: absent
 
+  - name: Delete tomcat documentation
+    file:
+      path: /opt/tomcat/webapps/docs
+      state: absent
+
   - name: Change ownership files in /opt/tomcat to tomcat user
     file:
       path: /opt/tomcat
