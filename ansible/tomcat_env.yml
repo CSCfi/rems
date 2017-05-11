@@ -11,6 +11,10 @@
     args:
       creates: /etc/yum.repos.d/shibboleth.repo
 
+  - name: Enable EPEL yum repository
+    yum:
+      name: epel-release
+
   - name: Install packages
     yum:
       name: "{{item}}"
@@ -22,6 +26,7 @@
       - shibboleth
       - mod_proxy_html
       - mod_ssl
+      - tomcat-native.x86_64
 
   - name: Ensures /var/www/html/css dir exists
     file:
@@ -118,6 +123,7 @@
       owner: tomcat
       group: tomcat
 
+  #TODO check if newer tomcat bundles work with tomcat-native
   - name: Install tomcat
     unarchive:
       src: http://archive.apache.org/dist/tomcat/tomcat-8/v8.0.30/bin/apache-tomcat-8.0.30.tar.gz
