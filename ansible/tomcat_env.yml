@@ -1,6 +1,8 @@
 ---
 
 - hosts: all
+  vars_files:
+    - vault.yml
   become: yes
   tasks:
 
@@ -8,6 +10,10 @@
     shell: "yum-config-manager --add-repo https://download.opensuse.org/repositories/security://shibboleth/CentOS_7/security:shibboleth.repo"
     args:
       creates: /etc/yum.repos.d/shibboleth.repo
+
+  - name: Enable EPEL yum repository
+    yum:
+      name: epel-release
 
   - name: Install packages
     yum:
@@ -20,6 +26,17 @@
       - shibboleth
       - mod_proxy_html
       - mod_ssl
+      - tomcat-native.x86_64
+
+  - name: Ensures /var/www/html/css dir exists
+    file:
+      path: /var/www/html/css
+      state: directory
+
+  - name: Ensures /var/www/html/img dir exists
+    file:
+      path: /var/www/html/img
+      state: directory
 
   - name: Copy maintenance page files
     copy: src={{item.src}} dest={{item.dest}}
@@ -106,6 +123,7 @@
       owner: tomcat
       group: tomcat
 
+  #TODO check if newer tomcat bundles work with tomcat-native
   - name: Install tomcat
     unarchive:
       src: http://archive.apache.org/dist/tomcat/tomcat-8/v8.0.30/bin/apache-tomcat-8.0.30.tar.gz
@@ -118,15 +136,33 @@
       src: tomcat.service
       dest: /etc/systemd/system
 
+  - name: Reload Systemd to load the Tomcat unit file
+    command: systemctl daemon-reload
+
   - name: Copy tomcat context.xml
     copy:
       src: context.xml
+      dest: /opt/tomcat/conf
+
+  - name: Copy tomcat-users.xml
+    template:
+      src: tomcat-users.xml
       dest: /opt/tomcat/conf
 
   - name: Copy tomcat catalina.properties
     copy:
       src: catalina.properties
       dest: /opt/tomcat/conf
+
+  - name: Delete tomcat examples
+    file:
+      path: /opt/tomcat/webapps/examples
+      state: absent
+
+  - name: Delete tomcat documentation
+    file:
+      path: /opt/tomcat/webapps/docs
+      state: absent
 
   - name: Change ownership files in /opt/tomcat to tomcat user
     file:
