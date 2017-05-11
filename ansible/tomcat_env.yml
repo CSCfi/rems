@@ -1,6 +1,8 @@
 ---
 
 - hosts: all
+  vars_files:
+    - vault.yml
   become: yes
   tasks:
 
