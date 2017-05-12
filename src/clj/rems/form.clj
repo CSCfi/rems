@@ -134,7 +134,7 @@
            [:div.alert.alert-info content])))
 
      [:div.mb-3
-      (phases (get-application-phases (:id (:application form))))]
+      (phases (get-application-phases (:id (:application form)) (:catalogue-item form)))]
 
      (applicant-info/details user-attributes)
      [:div
