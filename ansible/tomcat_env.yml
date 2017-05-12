@@ -27,6 +27,7 @@
       - mod_proxy_html
       - mod_ssl
       - tomcat-native.x86_64
+      - fail2ban
 
   - name: Ensures /var/www/html/css dir exists
     file:
@@ -100,6 +101,12 @@
   - name: Enable httpd service
     service:
       name: httpd
+      state: started
+      enabled: yes
+
+  - name: Enable fail2ban
+    service:
+      name: fail2ban
       state: started
       enabled: yes
 
