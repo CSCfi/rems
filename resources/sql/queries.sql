@@ -257,7 +257,16 @@ AND wfr.round = :round
 SELECT
   wf.id, wf.owneruserid, wf.modifieruserid, wf.title, wf.fnlround, wf.visibility, wf.start, wf.endt
 FROM workflow wf
-WHERE wf.id = :wfid
+/*~ (when (:catid params) */
+JOIN catalogue_item ci ON (wf.id = ci.wfid)
+/*~ ) ~*/
+WHERE 1=1
+/*~ (when (:wfid params) */
+AND wf.id = :wfid
+/*~ ) ~*/
+/*~ (when (:catid params) */
+AND ci.id = :catid
+/*~ ) ~*/
 
 -- :name clear-field-value! :!
 DELETE FROM application_text_values
