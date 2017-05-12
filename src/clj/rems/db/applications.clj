@@ -238,27 +238,54 @@
           :else {:id (str "autopprove" curround) :phase :approve :round curround}
           )))
 
-(defn get-application-phases [application-id]
-  (let [{:keys [wfid]} (first (db/get-applications {:application application-id}))
-        current-phase (get-application-phase application-id)
+(defn event->phase [event round]
+  (case event
+    "apply" {:id "apply" :completed? true}
+    "approve" {:id (str "approve" round) :completed? true :approved? true}
+    "reject" {:id (str "approve" round) :completed? true :rejected? true}
+    "autoapprove" {:id (str "approve" round) :completed? true :approved? true}
+    "return" nil))
+
+(defn phase-reset? [event]
+  (#{"return"} event))
+
+(defn walk-events-to-phases
+  ([events]
+   (walk-events-to-phases nil events))
+  ([phases events]
+   (if-not (seq events)
+     (reverse phases)
+     (let [{:keys [event round]} (first events)]
+       (recur (when-not (phase-reset? event)
+                (conj phases (event->phase event round)))
+              (rest events))))))
+
+(defn get-application-phases [application-id catalogue-item-id]
+  (let [wfid (:id (db/get-workflow {:catid catalogue-item-id}))
+        current-phase (if application-id
+                        (get-application-phase application-id)
+                        {:id "apply" :phase :apply :active? true})
         workflow-phases (get-workflow-phases wfid)
-        completed? (set (map :id (take-while #(or (not= (:id current-phase) (:id %))
-                                                  (= :result (:phase %)))
-                                             workflow-phases)))
-        approved? (:approved? current-phase)
-        rejected? (:rejected? current-phase)]
+        event-phases (if application-id
+                       (walk-events-to-phases (db/get-application-events {:application application-id}))
+                       [])
+        completed? (set (map :id event-phases))
+        approved? (set (map :id (filter :approved? event-phases)))
+        rejected? (set (map :id (filter :rejected? event-phases)))]
     (for [phase workflow-phases]
-      (merge phase
-             ;;(println phase completed? approved? rejected?)
-             (when (and approved? (contains? #{:approve :review :result} (:phase phase))) {:approved? true})
-             (when (and rejected? (contains? #{:approve :review :result} (:phase phase))) {:rejected? true})
-             (when (= :result (:phase phase)) {:text (cond approved? :t.phases/approved
-                                                           rejected? :t.phases/rejected
-                                                           :else :t.phases/approved)})
-             (when  (and (completed? (:id phase)) (contains? #{:approve :review} (:phase phase))) {:approved? true})
-             (cond (completed? (:id phase)) {:completed? true}
-                   (= (:id current-phase) (:id phase)) {:active? true})
-             ))))
+      (let [earlier-phase-rejected? (some :rejected? (take-while #(not= (:id %) (:id phase)) event-phases))]
+        (merge phase
+               (when (= :result (:phase phase)) {:text (cond (approved? (:id phase)) :t.phases/approved
+                                                             (rejected? (:id phase)) :t.phases/rejected
+                                                             earlier-phase-rejected? :t.phases/rejected
+                                                             :else :t.phases/approved)})
+               (when (approved? (:id phase)) {:approved? true :completed? true})
+               (when (rejected? (:id phase)) {:rejected? true :completed? true})
+               (when (completed? (:id phase)) {:completed? true})
+               (when #_(= :result (:phase phase)) earlier-phase-rejected? {:rejected? true :completed? true})
+               (when (and (not= :result (:phase phase))
+                          (= (:id current-phase) (:id phase))) {:active? true})
+               )))))
 
 ;;; Public event api
 
