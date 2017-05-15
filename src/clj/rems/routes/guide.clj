@@ -12,6 +12,7 @@
             [rems.context :as context]
             [rems.form :as form]
             [rems.guide :refer :all]
+            [rems.phase :as phase]
             [rems.layout :as layout]
             [rems.role-switcher :as role-switcher]))
 
@@ -72,6 +73,7 @@
           (role-switcher/guide)
 
           [:h2 "Misc components"]
+          (phase/guide)
           (example "login" (contents/login "/"))
           (example "about" (contents/about))
           (include-js "/assets/jquery/jquery.min.js")

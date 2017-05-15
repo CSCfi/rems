@@ -40,6 +40,11 @@
              :events "Application events"
              :user "User: "
              :validation {:required "Field \"%1\" is required."}}
+      :phases {:apply "Apply"
+               :approve "Approval"
+               :review "Review"
+               :approved "Approved"
+               :rejected "Rejected"}
       :applications {:application "Application"
                      :resource "Resource"
                      :user "User"
@@ -50,7 +55,7 @@
                               :applied "Applied"
                               :approved "Approved"
                               :rejected "Rejected"
-                              :returned "Returned to applicant"
+                              :returned "Returned"
                               :unknown "Unknown"}
                      :empty "You don't have any applications."}
       :approvals {:application "Application"
@@ -105,6 +110,11 @@
              :events "Hakemuksen tapahtumat"
              :user "Käyttäjä: "
              :validation {:required "Kenttä \"%1\" on pakollinen."}}
+      :phases {:apply "Hae"
+               :approve "Hyväksyntä"
+               :review "Katselmointi"
+               :approved "Hyväksytty"
+               :rejected "Hylätty"}
       :applications {:application "Hakemus"
                      :resource "Kielivara"
                      :user "Käyttäjä"
@@ -115,7 +125,7 @@
                               :applied "Haettu"
                               :approved "Hyväksytty"
                               :rejected "Hylätty"
-                              :returned "Palautettu hakijalle"
+                              :returned "Palautettu"
                               :unknown "Tuntematon"}
                      :empty "Sinulla ei ole hakemuksia."}
       :approvals {:application "Hakemus"

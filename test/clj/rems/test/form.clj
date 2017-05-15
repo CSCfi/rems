@@ -44,11 +44,11 @@
                        :licenses [{:title "LGPL"}]})))
 
     (is (= :valid (validate
-                      {:items [{:title "A"
-                                :optional false
-                                :value "a"}]
-                       :licenses [{:title "LGPL"
-                                  :approved true}]})))
+                   {:items [{:title "A"
+                             :optional false
+                             :value "a"}]
+                    :licenses [{:title "LGPL"
+                                :approved true}]})))
 
     (let [res (validate
                {:items [{:title "A"
@@ -111,7 +111,7 @@
 
          db/delete-license-approval!
          (fn [{application :catappid
-              licid :licid}]
+               licid :licid}]
            (swap! world dissoc :approvals))
 
          db/create-application!
@@ -231,39 +231,40 @@
 (def form #'form/form)
 
 (deftest test-editable
-  (with-fake-tempura
-    (binding [context/*active-role* :applicant]
-      (let [readonly? (fn [[_tag attrs]]
-                        (case (:type attrs)
-                          "checkbox" (:disabled attrs) ;; checkboxes are special
-                          (:readonly attrs)))
-            all-inputs (fn [body] (concat (hiccup-find [:div.form-group :input] body)
-                                          (hiccup-find [:div.form-group :textarea] body)))
-            submit-button #(first (hiccup-find [:.submit-button] %))
-            collapsible-block #(hiccup-find [:div#events.collapse] %)
-            data {:items [{:type "text"}
-                          {:type "texta"}]
-                  :licenses [{:type "license" :licensetype "link"
-                              :textcontent "" :title ""}]}]
-        (testing "new form"
-          (let [body (form data)]
-            (is (= [false false false] (map readonly? (all-inputs body))))
-            (is (submit-button body))))
-        (testing "draft"
-          (let [body (form (assoc data :application {:state "draft"}))]
-            (is (= [false false false] (map readonly? (all-inputs body))))
-            (is (submit-button body))))
-        (doseq [state ["applied" "approved" "rejected"]]
-          (testing state
-            (let [body (form (assoc data :application {:state state}))]
-              (is (= [true true true] (map readonly? (all-inputs body))))
-              (is (nil? (submit-button body))))))
-        (testing "Status with comments when role is undefined"
-          (let [body (form (assoc data :application {:state "applied" :events {:comment "hello"}}))]
-            (is (empty? (collapsible-block body)) "Should not see collapsible events block")))
-        (testing "Status with comments for role approver"
-          (binding [context/*roles* #{:approver}
-                    context/*active-role* :approver]
+  (with-redefs [applications/get-application-phases (fn [& args] [])]
+    (with-fake-tempura
+      (binding [context/*active-role* :applicant]
+        (let [readonly? (fn [[_tag attrs]]
+                          (case (:type attrs)
+                            "checkbox" (:disabled attrs) ;; checkboxes are special
+                            (:readonly attrs)))
+              all-inputs (fn [body] (concat (hiccup-find [:div.form-group :input] body)
+                                            (hiccup-find [:div.form-group :textarea] body)))
+              submit-button #(first (hiccup-find [:.submit-button] %))
+              collapsible-block #(hiccup-find [:div#events.collapse] %)
+              data {:items [{:type "text"}
+                            {:type "texta"}]
+                    :licenses [{:type "license" :licensetype "link"
+                                :textcontent "" :title ""}]}]
+          (testing "new form"
+            (let [body (form data)]
+              (is (= [false false false] (map readonly? (all-inputs body))))
+              (is (submit-button body))))
+          (testing "draft"
+            (let [body (form (assoc data :application {:state "draft"}))]
+              (is (= [false false false] (map readonly? (all-inputs body))))
+              (is (submit-button body))))
+          (doseq [state ["applied" "approved" "rejected"]]
+            (testing state
+              (let [body (form (assoc data :application {:state state}))]
+                (is (= [true true true] (map readonly? (all-inputs body))))
+                (is (nil? (submit-button body))))))
+          (testing "Status with comments when role is undefined"
             (let [body (form (assoc data :application {:state "applied" :events {:comment "hello"}}))]
-              (is (not-empty (collapsible-block body)) "Should see collapsible events block"))))
-        ))))
+              (is (empty? (collapsible-block body)) "Should not see collapsible events block")))
+          (testing "Status with comments for role approver"
+            (binding [context/*roles* #{:approver}
+                      context/*active-role* :approver]
+              (let [body (form (assoc data :application {:state "applied" :events {:comment "hello"}}))]
+                (is (not-empty (collapsible-block body)) "Should see collapsible events block"))))
+          )))))
