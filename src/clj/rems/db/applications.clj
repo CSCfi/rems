@@ -213,29 +213,33 @@
 ;;; Application phases
 
 ;; TODO should only be able to see the phase if applicant, approver, reviewer etc.
-(defn get-application-phases [application-id]
-  (let [{:keys [state]} (get-application-state application-id)]
-    (cond (= state "rejected")
-          [{:phase :apply :completed? true :text :t.phases/apply}
-           {:phase :approve :completed? true :rejected? true :text :t.phases/approve}
-           {:phase :result :completed? true :rejected? true :text :t.phases/rejected}]
+(defn get-application-phases [state]
+  (cond (= state "rejected")
+        [{:phase :apply :completed? true :text :t.phases/apply}
+         {:phase :approve :completed? true :rejected? true :text :t.phases/approve}
+         {:phase :result :completed? true :rejected? true :text :t.phases/rejected}]
 
-          (= state "approved")
-          [{:phase :apply :completed? true :text :t.phases/apply}
-           {:phase :approve :completed? true :approved? true :text :t.phases/approve}
-           {:phase :result :completed? true :approved? true :text :t.phases/approved}]
+        (= state "approved")
+        [{:phase :apply :completed? true :text :t.phases/apply}
+         {:phase :approve :completed? true :approved? true :text :t.phases/approve}
+         {:phase :result :completed? true :approved? true :text :t.phases/approved}]
 
-          (contains? #{"draft" "returned"} state)
-          [{:phase :apply :active? true :text :t.phases/apply}
-           {:phase :approve :text :t.phases/approve}
-           {:phase :result :text :t.phases/approved}]
+        (contains? #{"draft" "returned"} state)
+        [{:phase :apply :active? true :text :t.phases/apply}
+         {:phase :approve :text :t.phases/approve}
+         {:phase :result :text :t.phases/approved}]
 
-          :else
-          [{:phase :apply :completed? true :text :t.phases/apply}
-           {:phase :approve :active? true :text :t.phases/approve}
-           {:phase :result :text :t.phases/approved}]
+        (= "applied" state)
+        [{:phase :apply :completed? true :text :t.phases/apply}
+         {:phase :approve :active? true :text :t.phases/approve}
+         {:phase :result :text :t.phases/approved}]
 
-          )))
+        :else
+        [{:phase :apply :active? true :text :t.phases/apply}
+         {:phase :approve :text :t.phases/approve}
+         {:phase :result :text :t.phases/approved}]
+
+        ))
 
 ;;; Public event api
 
