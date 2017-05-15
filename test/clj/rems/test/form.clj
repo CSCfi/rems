@@ -44,11 +44,11 @@
                        :licenses [{:title "LGPL"}]})))
 
     (is (= :valid (validate
-                      {:items [{:title "A"
-                                :optional false
-                                :value "a"}]
-                       :licenses [{:title "LGPL"
-                                  :approved true}]})))
+                   {:items [{:title "A"
+                             :optional false
+                             :value "a"}]
+                    :licenses [{:title "LGPL"
+                                :approved true}]})))
 
     (let [res (validate
                {:items [{:title "A"
@@ -111,7 +111,7 @@
 
          db/delete-license-approval!
          (fn [{application :catappid
-              licid :licid}]
+               licid :licid}]
            (swap! world dissoc :approvals))
 
          db/create-application!

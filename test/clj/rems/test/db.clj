@@ -20,8 +20,8 @@
   :once
   (fn [f]
     (mount/start
-      #'rems.config/env
-      #'rems.env/*db*)
+     #'rems.config/env
+     #'rems.env/*db*)
     (db/assert-test-database!)
     (migrations/migrate ["reset"] (select-keys env [:database-url]))
     (f)
@@ -196,6 +196,127 @@
       (is (= [{:id app :state "approved" :catid item}]
              (map #(select-keys % [:id :state :catid])
                   (applications/get-applications)))))))
+
+(deftest test-phases
+  (binding [context/*user* {"eppn" "applicant"}]
+    ;; TODO add review when reviewing is supported
+    (db/add-user! {:user "approver1" :userattrs nil})
+    (db/add-user! {:user "approver2" :userattrs nil})
+    (db/add-user! {:user "applicant" :userattrs nil})
+    (testing "approval flow"
+      (let [wf (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner" :title "" :fnlround 1}))
+            item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
+            app (applications/create-new-draft item)
+            get-phases (fn [] (applications/get-application-phases (:state (applications/get-application-state app))))]
+        (db/create-workflow-approver! {:wfid wf :appruserid "approver1" :round 0})
+        (db/create-workflow-approver! {:wfid wf :appruserid "approver2" :round 1})
+
+        (testing "initially the application is in draft phase"
+          (is (= [{:phase :apply :active? true :text :t.phases/apply}
+                  {:phase :approve :text :t.phases/approve}
+                  {:phase :result :text :t.phases/approved}]
+                 (get-phases))))
+
+        (applications/submit-application app)
+
+        (testing "after submission the application is in first approval round"
+          (is (= [{:phase :apply :completed? true :text :t.phases/apply}
+                  {:phase :approve :active? true :text :t.phases/approve}
+                  {:phase :result :text :t.phases/approved}]
+                 (get-phases))))
+
+        (binding [context/*user* {"eppn" "approver1"}]
+          (applications/approve-application app 0 "it's good"))
+
+        (testing "after first approval the application is in the second approval round"
+          (is (= [{:phase :apply :completed? true :text :t.phases/apply}
+                  {:phase :approve :active? true :text :t.phases/approve}
+                  {:phase :result :text :t.phases/approved}]
+                 (get-phases))))
+
+        (binding [context/*user* {"eppn" "approver2"}]
+          (applications/approve-application app 1 "it's good"))
+
+        (testing "after both approvals the application is in approved phase"
+          (is (= [{:phase :apply :completed? true :text :t.phases/apply}
+                  {:phase :approve :completed? true :approved? true :text :t.phases/approve}
+                  {:phase :result :completed? true :approved? true :text :t.phases/approved}]
+                 (get-phases))))
+        ))
+
+    (testing "return flow"
+      (let [wf (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner" :title "" :fnlround 1}))
+            item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
+            app (applications/create-new-draft item)
+            get-phases (fn [] (applications/get-application-phases (:state (applications/get-application-state app))))]
+        (db/create-workflow-approver! {:wfid wf :appruserid "approver1" :round 0})
+        (db/create-workflow-approver! {:wfid wf :appruserid "approver2" :round 1})
+
+        (testing "initially the application is in draft phase"
+          (is (= [{:phase :apply :active? true :text :t.phases/apply}
+                  {:phase :approve :text :t.phases/approve}
+                  {:phase :result :text :t.phases/approved}]
+                 (get-phases))))
+
+        (applications/submit-application app)
+
+        (testing "after submission the application is in first approval round"
+          (is (= [{:phase :apply :completed? true :text :t.phases/apply}
+                  {:phase :approve :active? true :text :t.phases/approve}
+                  {:phase :result :text :t.phases/approved}]
+                 (get-phases))))
+
+        (binding [context/*user* {"eppn" "approver1"}]
+          (applications/return-application app 0 "it must be changed"))
+
+        (testing "after return the application is in the draft phase again"
+          (is (= [{:phase :apply :active? true :text :t.phases/apply}
+                  {:phase :approve :text :t.phases/approve}
+                  {:phase :result :text :t.phases/approved}]
+                 (get-phases))))
+        ))
+
+    (testing "rejection flow"
+      (let [wf (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner" :title "" :fnlround 1}))
+            item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
+            app (applications/create-new-draft item)
+            get-phases (fn [] (applications/get-application-phases (:state (applications/get-application-state app))))]
+        (db/create-workflow-approver! {:wfid wf :appruserid "approver1" :round 0})
+        (db/create-workflow-approver! {:wfid wf :appruserid "approver2" :round 1})
+
+        (testing "initially the application is in draft phase"
+          (is (= [{:phase :apply :active? true :text :t.phases/apply}
+                  {:phase :approve :text :t.phases/approve}
+                  {:phase :result :text :t.phases/approved}]
+                 (get-phases))))
+
+        (applications/submit-application app)
+
+        (testing "after submission the application is in first approval round"
+          (is (= [{:phase :apply :completed? true :text :t.phases/apply}
+                  {:phase :approve :active? true :text :t.phases/approve}
+                  {:phase :result :text :t.phases/approved}]
+                 (get-phases))))
+
+        (binding [context/*user* {"eppn" "approver1"}]
+          (applications/approve-application app 0 "it's good"))
+
+        (testing "after first approval the application is in the second approval round"
+          (is (= [{:phase :apply :completed? true :text :t.phases/apply}
+                  {:phase :approve :active? true :text :t.phases/approve}
+                  {:phase :result :text :t.phases/approved}]
+                 (get-phases))))
+
+        (binding [context/*user* {"eppn" "approver2"}]
+          (applications/reject-application app 1 "is no good"))
+
+        (testing "after second round rejection the application is in rejected phase"
+          (is (= [{:phase :apply :completed? true :text :t.phases/apply}
+                  {:phase :approve :completed? true :rejected? true :text :t.phases/approve}
+                  {:phase :result :completed? true :rejected? true :text :t.phases/rejected}]
+                 (get-phases))))
+        ))
+    ))
 
 (deftest test-get-approvals
   (binding [context/*user* {"eppn" "test-user"}]
