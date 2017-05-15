@@ -282,7 +282,7 @@
                (when (approved? (:id phase)) {:approved? true :completed? true})
                (when (rejected? (:id phase)) {:rejected? true :completed? true})
                (when (completed? (:id phase)) {:completed? true})
-               (when #_(= :result (:phase phase)) earlier-phase-rejected? {:rejected? true :completed? true})
+               (when earlier-phase-rejected? {:rejected? true :completed? true})
                (when (and (not= :result (:phase phase))
                           (= (:id current-phase) (:id phase))) {:active? true})
                )))))
