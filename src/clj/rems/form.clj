@@ -1,5 +1,7 @@
 (ns rems.form
-  (:require [compojure.core :refer [GET POST defroutes]]
+  (:require [clj-time.core :as time]
+            [clj-time.format :as format]
+            [compojure.core :refer [GET POST defroutes]]
             [rems.anti-forgery :refer [anti-forgery-field]]
             [rems.applicant-info :as applicant-info]
             [rems.applications :as applications]
@@ -12,11 +14,15 @@
             [rems.db.core :as db]
             [rems.guide :refer :all]
             [rems.layout :as layout]
-            [rems.role-switcher :refer [when-role]]
             [rems.phase :refer [phases]]
+            [rems.role-switcher :refer [has-roles?
+                                        when-role]]
             [rems.text :refer :all]
             [rems.util :refer [get-user-id]]
             [ring.util.response :refer [redirect]]))
+
+(def ^:private time-format (format/formatter "yyyy-MM-dd HH:mm"
+                                             (time/default-time-zone)))
 
 (defn- id-to-name [id]
   (str "field" id))
@@ -96,17 +102,32 @@
         readonly (not editable)
         approvable (= state "applied")
         comments (keep :comment (get-in form [:application :events]))
+        events (when-role :approver (get-in form [:application :events]))
         user-attributes (:applicant-attributes form)]
     (list
      ;; TODO extract state internal component
      (when state
-       (let [content (list [:h4 (text (applications/localize-state state))]
-                           (when-not (empty? comments)
-                             (list
-                              [:h4 (text :t.form/comments)]
-                              [:ul.comments
-                               (for [c comments]
-                                 [:li.comment c])])))]
+       (let [status-title (text (applications/localize-state state))
+             content (if (or (not-empty comments) (not-empty events))
+                       (collapsible/component
+                         "events"
+                         false
+                         status-title
+                         (if (has-roles? :approver)
+                           (list
+                             [:h4 (text :t.form/events)]
+                              (for [e events]
+                                [:div.row
+                                 [:div.col (str (text :t.form/user) (:userid e))]
+                                 [:div.col (str (text :t.form/event) (:event e))]
+                                 [:div.col (str (text :t.form/comment) (:comment e))]
+                                 [:div.col (str (text :t.form/date) (format/unparse time-format (:time e)))]]))
+                           (list
+                             [:h4 (text :t.form/comments)]
+                             [:ul.comments
+                              (for [c comments]
+                                [:li.comment c])])))
+                         status-title)]
          (case state
            "approved" [:div.alert.alert-success content]
            "rejected" [:div.alert.alert-danger content]
