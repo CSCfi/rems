@@ -104,6 +104,11 @@
       state: started
       enabled: yes
 
+  - name: Add local jail configurations for fail2ban
+    copy:
+      src: jail.local
+      dest: /etc/fail2ban
+
   - name: Enable fail2ban
     service:
       name: fail2ban
