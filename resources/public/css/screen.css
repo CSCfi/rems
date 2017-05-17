@@ -430,6 +430,10 @@ ul.comments {
   content: "\f067";
 }
 
+.card-header.clickable {
+  cursor: pointer;
+}
+
 .license-title {
   margin-top: 3px; /* hax for opening misalignment */
 }

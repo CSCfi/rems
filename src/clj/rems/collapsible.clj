@@ -3,7 +3,7 @@
 
 (defn- header
   [id expanded title]
-  [:div.card-header
+  [:div.card-header.clickable {:onclick (str "$('#" id "').collapse('toggle')")}
    [:a.card-title (merge {:data-toggle "collapse" :data-parent "#accordion" :href (str "#" id) :aria-expanded expanded :aria-controls id}
                          (when-not expanded {:class "collapsed"}))
     title]])
