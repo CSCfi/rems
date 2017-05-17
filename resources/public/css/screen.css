@@ -440,6 +440,10 @@ ul.comments {
   content: "\f067";
 }
 
+.card-header {
+  border-bottom: none;
+}
+
 .phases {
   width: 100%;
   height: 40px;

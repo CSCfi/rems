@@ -3,14 +3,14 @@
 
 (defn- header
   [id expanded title]
-  [:h3.card-header
+  [:div.card-header
    [:a.card-title (merge {:data-toggle "collapse" :data-parent "#accordion" :href (str "#" id) :aria-expanded expanded :aria-controls id}
                          (when-not expanded {:class "collapsed"}))
     title]])
 
 (defn- block [id expanded content]
   (let [classes (str "collapse" (when expanded " show"))]
-    [:div {:id id :class classes}
+    [:div.m-3 {:id id :class classes}
      content]))
 
 (defn component [id expanded title content]

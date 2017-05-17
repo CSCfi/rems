@@ -129,12 +129,9 @@
                               (for [c comments]
                                 [:li.comment c])])))
                          status-title)]
-         (case state
-           "approved" [:div.alert.alert-success content]
-           "rejected" [:div.alert.alert-danger content]
-           [:div.alert.alert-info content])))
+         [:div {:class state} content]))
 
-     [:div.mb-3
+     [:div.my-3
       (phases (get-application-phases (:state (:application form))))]
 
      (applicant-info/details user-attributes)
