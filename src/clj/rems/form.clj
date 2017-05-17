@@ -106,6 +106,7 @@
         user-attributes (:applicant-attributes form)]
     (list
      ;; TODO extract state internal component
+     [:h2 (text :t.applications/application)]
      (when state
        (let [status-title (text (applications/localize-state state))
              content (if (or (not-empty comments) (not-empty events))
