@@ -116,20 +116,26 @@
                          status-title
                          (if (has-roles? :approver)
                            (list
-                             [:h4 (text :t.form/events)]
+                            [:h4 (text :t.form/events)]
+                            (into [:table.table.table-hover.mb-0
+                                   [:tr
+                                    [:th (text :t.form/user)]
+                                    [:th (text :t.form/event)]
+                                    [:th (text :t.form/comment)]
+                                    [:th (text :t.form/date)]]]
                               (for [e events]
-                                [:div.row
-                                 [:div.col (str (text :t.form/user) (:userid e))]
-                                 [:div.col (str (text :t.form/event) (:event e))]
-                                 [:div.col (str (text :t.form/comment) (:comment e))]
-                                 [:div.col (str (text :t.form/date) (format/unparse time-format (:time e)))]]))
+                                [:tr
+                                 [:td (:userid e)]
+                                 [:td (:event e)]
+                                 [:td (:comment e)]
+                                 [:td (format/unparse time-format (:time e))]])))
                            (list
                              [:h4 (text :t.form/comments)]
                              [:ul.comments
                               (for [c comments]
                                 [:li.comment c])])))
                          status-title)]
-         [:div {:class state} content]))
+         [:div {:class (str "state-" state)} content]))
 
      [:div.my-3
       (phases (get-application-phases (:state (:application form))))]
