@@ -29,6 +29,10 @@ a, button {
   cursor: pointer;
 }
 
+a {
+  color: #4D5A91;
+}
+
 html {
   position: relative;
   min-width: 320px;
