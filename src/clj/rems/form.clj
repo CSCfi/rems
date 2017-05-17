@@ -108,7 +108,7 @@
      ;; TODO extract state internal component
      [:h2 (text :t.applications/application)]
      (when state
-       (let [status-title (text (applications/localize-state state))
+       (let [status-title (str (text :t.applications/state) ": " (text (applications/localize-state state)))
              content (if (or (not-empty comments) (not-empty events))
                        (collapsible/component
                          "events"
