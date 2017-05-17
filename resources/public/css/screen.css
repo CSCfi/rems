@@ -70,6 +70,25 @@ body {
   outline-color: transparent;
 }
 
+.alert-info {
+  color: #4D5A91;
+  background-color: #CAD2E6;
+}
+
+.alert-success {
+  background-color: #cee798;
+}
+
+.alert-warning {
+  color: #6f572f;
+  background-color: #e7d96f;
+}
+
+.alert-danger {
+  color: #79302f;
+  background-color: #e28b83;
+}
+
 .nav-link, .btn-link, .nav-link a {
   color: #4D5A91;
   border: 0;   /* for button links */

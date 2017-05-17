@@ -29,6 +29,14 @@
    (color-box "color-3" "#4D5A91")
    (color-box "color-4" "#F16522")])
 
+(defn alerts []
+  [:div
+   [:div.alert.alert-success "Success level message"]
+   [:div.alert.alert-info "Info level message"]
+   [:div.alert.alert-warning "Warning level message"]
+   [:div.alert.alert-danger "Danger level message"]
+   ])
+
 (defn guide-page []
   (binding [context/*root-path* "path/"]
     (with-language :en
@@ -44,6 +52,7 @@
 
           [:h2 "Colors"]
           (example "" (color-boxes))
+          (example "Alerts" (alerts))
 
           [:h2 "Layout components"]
           (layout/guide)
