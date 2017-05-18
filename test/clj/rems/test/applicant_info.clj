@@ -7,17 +7,20 @@
 (defn find-from-details [pattern]
   (hiccup-find pattern (details {"eppn" "developer" "commonName" "Deve Loper"})))
 
+(defn children-of [hiccups]
+  (remove nil? (mapcat (partial drop 2) hiccups)))
+
 (deftest test-applicant-details
   (testing "Info without role information"
-    (is (empty? (find-from-details [:h3.card-header])) "Should not see collapsible header")
-    (is (empty? (find-from-details [:div.collapse])) "Shouldn't see collapsible block"))
+    (is (not-empty (find-from-details [:.card-header])) "Should see collapsible header")
+    (is (empty? (children-of (find-from-details [:.collapse-content]))) "Shouldn't see collapsible block"))
   (testing "Info as an applicant"
     (binding [context/*roles* #{:applicant}
               context/*active-role* :applicant]
-      (is (empty? (find-from-details [:h3.card-header])) "Should not see collapsible header")
-      (is (empty? (find-from-details [:div.collapse])) "Shouldn't see collapsible block")))
+      (is (not-empty (find-from-details [:.card-header])) "Should see collapsible header")
+      (is (empty? (children-of (find-from-details [:.collapse-content]))) "Shouldn't see collapsible block")))
   (testing "Info as an approver"
     (binding [context/*roles* #{:approver}
               context/*active-role* :approver]
-      (is (not-empty (find-from-details [:h3.card-header])) "Collapsible header should be visible.")
-      (is (not-empty (find-from-details [:div.collapse])) "Collapsible block should be visible."))))
+      (is (not-empty (find-from-details [:.card-header])) "Collapsible header should be visible.")
+      (is (not-empty (children-of (find-from-details [:.collapse-content]))) "Collapsible block should be visible."))))
