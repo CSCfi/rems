@@ -74,12 +74,13 @@ body {
   outline-color: transparent;
 }
 
-.alert-info {
+.alert-info, state-info {
   color: #4D5A91;
   background-color: #CAD2E6;
 }
 
-.alert-success {
+.alert-success, .state-approved .card-header {
+  color: #3c763d;
   background-color: #cee798;
 }
 
@@ -88,7 +89,7 @@ body {
   background-color: #e7d96f;
 }
 
-.alert-danger {
+.alert-danger, .state-rejected .card-header {
   color: #79302f;
   background-color: #e28b83;
 }
@@ -434,6 +435,10 @@ ul.comments {
   cursor: pointer;
 }
 
+.card-header a {
+  color: inherit;
+}
+
 .license-title {
   margin-top: 3px; /* hax for opening misalignment */
 }
@@ -450,6 +455,10 @@ ul.comments {
 
 .card-header {
   border-bottom: none;
+}
+
+.collapse-content > * {
+  margin-bottom: 0;
 }
 
 .phases {

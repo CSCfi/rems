@@ -108,40 +108,38 @@
      ;; TODO extract state internal component
      [:h2 (text :t.applications/application)]
      (when state
-       (let [status-title (str (text :t.applications/state) ": " (text (applications/localize-state state)))
-             content (if (or (not-empty comments) (not-empty events))
-                       (collapsible/component
-                         "events"
-                         false
-                         status-title
-                         (if (has-roles? :approver)
-                           (list
-                            [:h4 (text :t.form/events)]
-                            (into [:table.table.table-hover.mb-0
-                                   [:tr
-                                    [:th (text :t.form/user)]
-                                    [:th (text :t.form/event)]
-                                    [:th (text :t.form/comment)]
-                                    [:th (text :t.form/date)]]]
-                              (for [e events]
-                                [:tr
-                                 [:td (:userid e)]
-                                 [:td (:event e)]
-                                 [:td (:comment e)]
-                                 [:td (format/unparse time-format (:time e))]])))
-                           (list
-                             [:h4 (text :t.form/comments)]
-                             [:ul.comments
-                              (for [c comments]
-                                [:li.comment c])])))
-                         status-title)]
-         [:div {:class (str "state-" state)} content]))
+       [:div {:class (str "state-" state)}
+        (collapsible/component
+         "events"
+         false
+         (str (text :t.applications/state) ": " (text (applications/localize-state state)))
+         (when-role :approver
+           (when (seq events)
+             [:h4 (text :t.form/events)]
+             (into [:table.table.table-hover.mb-0
+                    [:tr
+                     [:th (text :t.form/user)]
+                     [:th (text :t.form/event)]
+                     [:th (text :t.form/comment)]
+                     [:th (text :t.form/date)]]]
+                   (for [e events]
+                     [:tr
+                      [:td (:userid e)]
+                      [:td (:event e)]
+                      [:td (:comment e)]
+                      [:td (format/unparse time-format (:time e))]])))
+           (when (seq comments)
+             (list
+              [:h4 (text :t.form/comments)]
+              [:ul.comments
+               (for [c comments]
+                 [:li.comment c])]))))])
 
      [:div.my-3
       (phases (get-application-phases (:state (:application form))))]
 
      (applicant-info/details user-attributes)
-     [:div
+     [:div.my-3
       (collapsible/component "form"
                              true
                              (:title form)
