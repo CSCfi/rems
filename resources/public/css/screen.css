@@ -453,14 +453,18 @@ ul.comments {
   content: "\f067";
 }
 
-.card-header {
+.collapse-wrapper .card-header {
   border-bottom: none;
   border-radius: 8px;
+  font-weight: 500;
+  font-size: 1.5rem;
+  line-height: 1.1;
+  font-family: 'Lato';
 }
 
 .collapse-wrapper {
-  border-radius: 8px;
-  border: 1px solid #f7f7f9;
+  border-radius: calc(.25rem - 1px);
+  border: 1px solid #ccc;
 }
 
 .collapse-content {
