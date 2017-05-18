@@ -19,7 +19,8 @@
                                         when-role]]
             [rems.text :refer :all]
             [rems.util :refer [get-user-id]]
-            [ring.util.response :refer [redirect]]))
+            [ring.util.response :refer [redirect]]
+            [rems.context :as context]))
 
 (def ^:private time-format (format/formatter "yyyy-MM-dd HH:mm"
                                              (time/default-time-zone)))
@@ -103,7 +104,7 @@
         approvable (= state "applied")
         comments (keep :comment (get-in form [:application :events]))
         events (when-role :approver (get-in form [:application :events]))
-        user-attributes (:applicant-attributes form)]
+        user-attributes (or (:applicant-attributes form) context/*user*)]
     (list
      ;; TODO extract state internal component
      [:h2 (text :t.applications/application)]
