@@ -29,6 +29,10 @@ a, button {
   cursor: pointer;
 }
 
+a {
+  color: #4D5A91;
+}
+
 html {
   position: relative;
   min-width: 320px;
@@ -68,6 +72,26 @@ body {
   background-color: #d84f0e;
   border-color: #F16522;
   outline-color: transparent;
+}
+
+.alert-info, state-info {
+  color: #4D5A91;
+  background-color: #CAD2E6;
+}
+
+.alert-success, .state-approved .card-header {
+  color: #3c763d;
+  background-color: #cee798;
+}
+
+.alert-warning {
+  color: #6f572f;
+  background-color: #e7d96f;
+}
+
+.alert-danger, .state-rejected .card-header {
+  color: #79302f;
+  background-color: #e28b83;
 }
 
 .nav-link, .btn-link, .nav-link a {
@@ -158,7 +182,7 @@ footer {
   min-width: 100%;
   background-color: #7A90C3;
   color: #fff;
-  border-radius: .4em;
+  border-radius: .4rem;
   overflow: hidden;
 }
 
@@ -295,7 +319,7 @@ footer {
 
 .outer-cart {
   border: 1px solid #CAD2E6;
-  border-radius: .4em;
+  border-radius: .4rem;
 }
 
 form:not(.inline) {
@@ -407,18 +431,49 @@ ul.comments {
   content: "\f067";
 }
 
+.card-header.clickable {
+  cursor: pointer;
+}
+
+.card-header a {
+  color: inherit;
+}
+
 .license-title {
   margin-top: 3px; /* hax for opening misalignment */
 }
 
-#accordion .card-title:after {
+#accordion .clickable .card-title:after {
   font-family: 'FontAwesome';
   float: right;
   content: "\f068";
 }
 
-#accordion .card-title.collapsed:after {
+#accordion .clickable .card-title.collapsed:after {
   content: "\f067";
+}
+
+.collapse-wrapper .card-header {
+  border-bottom: none;
+  border-radius: .4rem;
+  font-weight: 500;
+  font-size: 1.5rem;
+  line-height: 1.1;
+  font-family: 'Lato';
+}
+
+.collapse-wrapper {
+  border-radius: .4rem;
+  border: 1px solid #ccc;
+}
+
+.collapse-content {
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.collapse-content > * {
+  margin-bottom: 0;
 }
 
 .phases {

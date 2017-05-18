@@ -240,7 +240,7 @@
             all-inputs (fn [body] (concat (hiccup-find [:div.form-group :input] body)
                                           (hiccup-find [:div.form-group :textarea] body)))
             submit-button #(first (hiccup-find [:.submit-button] %))
-            collapsible-block #(hiccup-find [:div#events.collapse] %)
+            children-of #(remove nil? (mapcat (partial drop 2) %))
             data {:items [{:type "text"}
                           {:type "texta"}]
                   :licenses [{:type "license" :licensetype "link"
@@ -258,12 +258,6 @@
             (let [body (form (assoc data :application {:state state}))]
               (is (= [true true true] (map readonly? (all-inputs body))))
               (is (nil? (submit-button body))))))
-        (testing "Status with comments when role is undefined"
-          (let [body (form (assoc data :application {:state "applied" :events {:comment "hello"}}))]
-            (is (empty? (collapsible-block body)) "Should not see collapsible events block")))
-        (testing "Status with comments for role approver"
-          (binding [context/*roles* #{:approver}
-                    context/*active-role* :approver]
-            (let [body (form (assoc data :application {:state "applied" :events {:comment "hello"}}))]
-              (is (not-empty (collapsible-block body)) "Should see collapsible events block"))))
-        ))))
+        (testing "sees events"
+          (let [body (form (assoc data :application {:state "applied" :events [{:comment "hello"}]}))]
+            (is (not-empty (children-of (hiccup-find [:#events] body))) "Should see collapsible events block")))))))
