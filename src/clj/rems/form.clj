@@ -103,7 +103,7 @@
         readonly (not editable)
         approvable (= state "applied")
         comments (keep :comment (get-in form [:application :events]))
-        events (when-role :approver (get-in form [:application :events]))
+        events (get-in form [:application :events])
         user-attributes (or (:applicant-attributes form) context/*user*)]
     (list
      ;; TODO extract state internal component
@@ -114,29 +114,28 @@
          "events"
          false
          (str (text :t.applications/state) ": " (text (applications/localize-state state)))
-         (when-role :approver
-           (list
-            (when (seq events)
-              (list
-               [:h4 (text :t.form/events)]
-               (into [:table.table.table-hover.mb-0
-                      [:tr
-                       [:th (text :t.form/user)]
-                       [:th (text :t.form/event)]
-                       [:th (text :t.form/comment)]
-                       [:th (text :t.form/date)]]]
-                     (for [e events]
-                       [:tr
-                        [:td (:userid e)]
-                        [:td (:event e)]
-                        [:td (:comment e)]
-                        [:td (format/unparse time-format (:time e))]]))))
-            (when (seq comments)
-              (list
-               [:h4 (text :t.form/comments)]
-               [:ul.comments
-                (for [c comments]
-                  [:li.comment c])])))))])
+         (list
+          (when (seq events)
+            (list
+             [:h4 (text :t.form/events)]
+             (into [:table.table.table-hover.mb-0
+                    [:tr
+                     [:th (text :t.form/user)]
+                     [:th (text :t.form/event)]
+                     [:th (text :t.form/comment)]
+                     [:th (text :t.form/date)]]]
+                   (for [e events]
+                     [:tr
+                      [:td (:userid e)]
+                      [:td (:event e)]
+                      [:td (:comment e)]
+                      [:td (format/unparse time-format (:time e))]]))))
+          (when (seq comments)
+            (list
+             [:h4 (text :t.form/comments)]
+             [:ul.comments
+              (for [c comments]
+                [:li.comment c])]))))])
 
      [:div.my-3
       (phases (get-application-phases (:state (:application form))))]

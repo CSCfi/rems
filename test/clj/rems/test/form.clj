@@ -258,12 +258,6 @@
             (let [body (form (assoc data :application {:state state}))]
               (is (= [true true true] (map readonly? (all-inputs body))))
               (is (nil? (submit-button body))))))
-        (testing "Status with comments when role is undefined"
+        (testing "sees comments"
           (let [body (form (assoc data :application {:state "applied" :events [{:comment "hello"}]}))]
-            (is (empty? (children-of (hiccup-find [:#events] body))) "Should not see collapsible events block")))
-        (testing "Status with comments for role approver"
-          (binding [context/*roles* #{:approver}
-                    context/*active-role* :approver]
-            (let [body (form (assoc data :application {:state "applied" :events [{:comment "hello"}]}))]
-              (is (not-empty (children-of (hiccup-find [:#events] body))) "Should see collapsible events block"))))
-        ))))
+            (is (not-empty (children-of (hiccup-find [:#events] body))) "Should see collapsible events block")))))))
