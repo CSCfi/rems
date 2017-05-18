@@ -20,8 +20,21 @@
    (text :t.applications/view)])
 
 (defn- approve-button []
-  [:button.btn.btn-primary {:type "submit" :name "approve"}
+  [:button.btn.btn-primary {:type "button" :name "approve" :data-toggle "modal" :data-target "#approve-modal"}
    (text :t.approvals/approve)])
+
+(defn- confirm-modal []
+  [:div#approve-modal.modal.fade {:tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
+   [:div.modal-dialog {:role "document"}
+    [:div.modal-content
+     [:div.modal-header
+      [:h5#confirmModalLabel.modal-title "Modal title"]
+      [:button.close {:type "button" :data-dismiss "modal" :aria-label "Close"}
+       [:span {:aria-hidden "true"} "&times;"]]]
+     [:div.modal-body]
+     [:div.modal-footer
+      [:button.btn.btn-secondary {:data-dismiss "modal"} "Close"]
+      [:button.btn.btn-primary {:type "submit" :name "approve"} "Submit"]]]]])
 
 (defn- reject-button []
   [:button.btn.btn-secondary {:type "submit" :name "reject"}
