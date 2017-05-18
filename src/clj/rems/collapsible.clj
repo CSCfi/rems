@@ -10,13 +10,13 @@
 
 (defn- block [id expanded content]
   (let [classes (str "collapse" (when expanded " show"))]
-    [:div.m-3.collapse-content {:id id :class classes}
+    [:div.collapse-content {:id id :class classes}
      content]))
 
 (defn component [id expanded title content]
-  (list
+   [:div.collapse-wrapper
     (header id expanded title)
-    (block id expanded content)))
+    (block id expanded content)])
 
 (defn guide
   []

@@ -455,6 +455,17 @@ ul.comments {
 
 .card-header {
   border-bottom: none;
+  border-radius: 8px;
+}
+
+.collapse-wrapper {
+  border-radius: 8px;
+  border: 1px solid #f7f7f9;
+}
+
+.collapse-content {
+  padding: 1rem;
+  margin-top: 1rem;
 }
 
 .collapse-content > * {
