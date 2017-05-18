@@ -10,11 +10,14 @@
             [rems.landing-page :as landing-page]
             [rems.language-switcher :as language-switcher]
             [rems.layout :as layout]
-            [rems.role-switcher :as role-switcher]))
+            [rems.role-switcher :as role-switcher]
+            [ring.util.response :refer [redirect]]))
 
 (defn home-page []
-  (layout/render
-    "home" (contents/login context/*root-path*)))
+  (if context/*user*
+    (redirect "/landing_page")
+    (layout/render
+      "home" (contents/login context/*root-path*))))
 
 (defn about-page []
   (layout/render

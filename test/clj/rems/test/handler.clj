@@ -143,7 +143,14 @@
           (let [landing-ctx (follow-redirect login-ctx)]
             (testing "successfully"
               (let [catalogue-ctx (follow-redirect landing-ctx)]
-                (is (= 200 (:status catalogue-ctx)) "should return 200 OK"))))))))
+                (is (= 200 (:status catalogue-ctx)) "should return 200 OK")))))
+        (testing "redirect logged in users accessing root context"
+          (let [home-ctx (dispatch
+                           (follow-redirect login-ctx)
+                           (request :get "/"))]
+            (is (= 302 (:status home-ctx)))
+            (is (= "http://localhost/landing_page"
+                   (get-in home-ctx [:response :headers "Location"]))))))))
 
   (testing "not-found route"
     (let [response (app (request :get "/invalid"))]
