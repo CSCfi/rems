@@ -102,7 +102,6 @@
         editable (or (nil? state) (#{"draft" "returned"} state))
         readonly (not editable)
         approvable (= state "applied")
-        comments (keep :comment (get-in form [:application :events]))
         events (get-in form [:application :events])
         user-attributes (or (:applicant-attributes form) context/*user*)]
     (list
@@ -114,28 +113,21 @@
          "events"
          false
          (str (text :t.applications/state) ": " (text (applications/localize-state state)))
-         (list
-          (when (seq events)
-            (list
-             [:h4 (text :t.form/events)]
-             (into [:table.table.table-hover.mb-0
+         (when (seq events)
+           (list
+            [:h4 (text :t.form/events)]
+            (into [:table.table.table-hover.mb-0
+                   [:tr
+                    [:th (text :t.form/user)]
+                    [:th (text :t.form/event)]
+                    [:th (text :t.form/comment)]
+                    [:th (text :t.form/date)]]]
+                  (for [e events]
                     [:tr
-                     [:th (text :t.form/user)]
-                     [:th (text :t.form/event)]
-                     [:th (text :t.form/comment)]
-                     [:th (text :t.form/date)]]]
-                   (for [e events]
-                     [:tr
-                      [:td (:userid e)]
-                      [:td (:event e)]
-                      [:td (:comment e)]
-                      [:td (format/unparse time-format (:time e))]]))))
-          (when (seq comments)
-            (list
-             [:h4 (text :t.form/comments)]
-             [:ul.comments
-              (for [c comments]
-                [:li.comment c])]))))])
+                     [:td (:userid e)]
+                     [:td (:event e)]
+                     [:td (:comment e)]
+                     [:td (format/unparse time-format (:time e))]])))))])
 
      [:div.my-3
       (phases (get-application-phases (:state (:application form))))]

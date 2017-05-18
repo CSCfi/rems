@@ -258,6 +258,6 @@
             (let [body (form (assoc data :application {:state state}))]
               (is (= [true true true] (map readonly? (all-inputs body))))
               (is (nil? (submit-button body))))))
-        (testing "sees comments"
+        (testing "sees events"
           (let [body (form (assoc data :application {:state "applied" :events [{:comment "hello"}]}))]
             (is (not-empty (children-of (hiccup-find [:#events] body))) "Should see collapsible events block")))))))
