@@ -443,13 +443,13 @@ ul.comments {
   margin-top: 3px; /* hax for opening misalignment */
 }
 
-#accordion .card-title:after {
+#accordion .clickable .card-title:after {
   font-family: 'FontAwesome';
   float: right;
   content: "\f068";
 }
 
-#accordion .card-title.collapsed:after {
+#accordion .clickable .card-title.collapsed:after {
   content: "\f067";
 }
 
