@@ -42,8 +42,8 @@
   [:form.inline (approve-form-attrs app)
    (anti-forgery-field)
    [:div.form-actions
-    (approve-button)
-    (reject-button)]])
+    (reject-button)
+    (approve-button)]])
 
 (defn approve-form [app]
   [:form (approve-form-attrs app)
@@ -54,9 +54,9 @@
    [:div.actions
     (when-role :approver
       (back-to-approvals-button))
-    (approve-button)
     (reject-button)
-    (return-button)]])
+    (return-button)
+    (approve-button)]])
 
 (defn- approvals-item [app]
   [:tr.approval
