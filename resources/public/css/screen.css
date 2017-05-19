@@ -326,13 +326,17 @@ form:not(.inline) {
     padding-bottom: 1em;
 }
 
-form.inline {
+form.inline, .form-actions.inline {
   display: inline-block;
 }
 
-form.inline .btn-link {
+form.inline .btn-link, .form-actions.inline .btn-link {
   border: none;
   padding: 0;
+}
+
+.modal-title {
+  color: #292b2c;
 }
 
 .language-switcher form + form {
