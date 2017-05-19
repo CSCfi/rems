@@ -10,14 +10,14 @@
    [:label title]
    [:input.form-control {:type "text" :value value :readonly true}]])
 
-(defn details [user-attributes]
+(defn details [id user-attributes]
   (let [title (str "Applicant: " (get-username user-attributes))
         content (when-role :approver
                   [:form
                    (for [[k v] user-attributes]
                      (info-field k v)
                      )])]
-    (collapsible/component "applicant-info"
+    (collapsible/component id
                            false
                            title
                            content)))
@@ -26,10 +26,10 @@
   []
   (list
    (example "applicant-info for applicant shows no details"
-            (details {"eppn" "developer@uu.id" "commonName" "Deve Loper"}))
+            (details "info1" {"eppn" "developer@uu.id" "commonName" "Deve Loper"}))
    (example "applicant-info for approver shows attributes"
             (binding [context/*roles* #{:approver}
                       context/*active-role* :approver]
               ;; Accordion is needed so that the +/- icons are shown in the guide page
               [:div#accordion
-               (details {"eppn" "developer@uu.id" "commonName" "Deve Loper"})]))))
+               (details "info2" {"eppn" "developer@uu.id" "commonName" "Deve Loper"})]))))

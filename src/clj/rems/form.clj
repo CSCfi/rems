@@ -132,7 +132,7 @@
      [:div.my-3
       (phases (get-application-phases (:state (:application form))))]
 
-     (applicant-info/details user-attributes)
+     (applicant-info/details "applicant-info" user-attributes)
      [:div.my-3
       (collapsible/component "form"
                              true
