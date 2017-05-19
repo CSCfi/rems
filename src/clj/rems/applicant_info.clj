@@ -25,9 +25,9 @@
 (defn guide
   []
   (list
-   (example "General view"
+   (example "applicant-info for applicant shows no details"
             (details {"eppn" "developer@uu.id" "commonName" "Deve Loper"}))
-   (example "Approver view"
+   (example "applicant-info for approver shows attributes"
             (binding [context/*roles* #{:approver}
                       context/*active-role* :approver]
               ;; Accordion is needed so that the +/- icons are shown in the guide page
