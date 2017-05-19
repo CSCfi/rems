@@ -18,7 +18,7 @@
                  [luminus/ring-ttl-session "0.3.2"]
                  [macroz/hiccup-find "0.5.0" :exclusions [org.clojure/clojurescript]]
                  [markdown-clj "0.9.98"]
-                 [metosin/ring-http-response "0.8.2"]
+                 [metosin/ring-http-response "0.9.0"]
                  [mount "0.1.11"]
                  [org.clojure/clojure "1.8.0"]
                  [org.clojure/core.memoize "0.5.9"]
@@ -31,10 +31,10 @@
                  [org.webjars/jquery "3.2.0"]
                  [prone "1.1.4"]
                  [ring-middleware-format "0.7.2"]
-                 [ring-webjars "0.1.1"]
-                 [ring/ring-defaults "0.2.3"]
-                 [ring/ring-devel "1.5.1"]
-                 [ring/ring-servlet "1.5.1"]]
+                 [ring-webjars "0.2.0"]
+                 [ring/ring-defaults "0.3.0"]
+                 [ring/ring-devel "1.6.1"]
+                 [ring/ring-servlet "1.6.1"]]
 
   :min-lein-version "2.0.0"
 
