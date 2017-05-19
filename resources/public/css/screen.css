@@ -294,15 +294,20 @@ footer {
 }
 
 .example-page {
-  margin: 2em;
+  margin: 2rem;
 }
 
-.example-page h1, .example-page h2, .example-page h3 {
-  margin-bottom: 1rem;
+.example-page > h1 {
+  margin: 4rem 0;
 }
 
-.example-page h2 {
+.example-page > h2 {
   margin-top: 8rem;
+  margin-bottom: 2rem;
+}
+
+.example-page > h3 {
+  margin-bottom: 1rem;
 }
 
 .example-page .example {
