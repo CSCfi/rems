@@ -11,15 +11,16 @@
    [:input.form-control {:type "text" :value value :readonly true}]])
 
 (defn details [user-attributes]
-  (let [applicant-title (str "Applicant: " (get-username user-attributes))]
+  (let [title (str "Applicant: " (get-username user-attributes))
+        content (when-role :approver
+                  [:form
+                   (for [[k v] user-attributes]
+                     (info-field k v)
+                     )])]
     (collapsible/component "applicant-info"
                            false
-                           applicant-title
-                           (when-role :approver
-                             [:form
-                              (for [[k v] user-attributes]
-                                (info-field k v)
-                                )]))))
+                           title
+                           content)))
 
 (defn guide
   []
