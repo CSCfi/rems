@@ -164,11 +164,8 @@
 
      (applicant-info/details "applicant-info" user-attributes)
 
-     [:div.my-3
-      (form-fields form)]
+     [:div.my-3 (form-fields form)]
 
-     ;; The approve buttons need to be outside the form since they're
-     ;; implemented as forms
      (when-role :approver
        (list
         (when approvable
