@@ -326,10 +326,6 @@ footer {
   border-radius: .4rem;
 }
 
-form:not(.inline) {
-    padding-bottom: 1em;
-}
-
 form.inline, .form-actions.inline {
   display: inline-block;
 }
@@ -477,11 +473,6 @@ ul.comments {
 
 .collapse-content {
   padding: 1rem;
-  margin-top: 1rem;
-}
-
-.collapse-content > * {
-  margin-bottom: 0;
 }
 
 .phases {
