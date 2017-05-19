@@ -19,63 +19,60 @@
    {:href (str "/form/" (:catid app) "/" (:id app))}
    (text :t.applications/view)])
 
-(defn- confirm-modal [name action-title]
-  [:div.modal.fade {:id (str name "-modal") :tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
-   [:div.modal-dialog {:role "document"}
-    [:div.modal-content
-     [:div.modal-header
-      [:h5#confirmModalLabel.modal-title "Modal title"]
-      [:button.close {:type "button" :data-dismiss "modal" :aria-label "Close"}
-       [:span {:aria-hidden "true"} "&times;"]]]
-     [:div.modal-body]
-     [:div.modal-footer
-      [:button.btn.btn-secondary {:data-dismiss "modal"} "Close"]
-      [:button.btn.btn-primary {:type "submit" :name name} action-title]]]]])
-
-(defn- approve-button []
-  (list
-    [:button.btn.btn-primary {:type "button" :name "approve" :data-toggle "modal" :data-target "#approve-modal"}
-     (text :t.approvals/approve)]
-    (confirm-modal "approve" (text :t.approvals/approve))))
-
-(defn- reject-button []
-  (list
-    [:button.btn.btn-secondary {:type "button" :name "reject" :data-toggle "modal" :data-target "#reject-modal"}
-     (text :t.approvals/reject)]
-    (confirm-modal "reject" (text :t.approvals/reject))))
-
-(defn- return-button []
-  (list
-    [:button.btn.btn-secondary {:type "button" :name "return" :data-toggle "modal" :data-target "#return-modal"}
-     (text :t.approvals/return)]
-    (confirm-modal "return" (text :t.approvals/return))))
-
-(defn- back-to-approvals-button []
-  [:a.btn.btn-secondary.pull-left {:href "/approvals"} (text :t.form/back-approvals)])
-
 (defn- approve-form-attrs [app]
   {:method "post"
    :action (str "/approvals/" (:id app) "/" (:curround app))})
 
+(defn- confirm-modal [name-field action-title app]
+  [:div.modal.fade {:id (str name-field "-modal") :tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
+   [:div.modal-dialog {:role "document"}
+    [:div.modal-content
+     [:form (approve-form-attrs app)
+      (anti-forgery-field)
+      [:div.modal-header
+       [:h5#confirmModalLabel.modal-title (text :t.form/add-comments)]
+       [:button.close {:type "button" :data-dismiss "modal" :aria-label "Close"}
+        [:span {:aria-hidden "true"} "&times;"]]]
+      [:div.modal-body
+       [:div.form-group
+        [:textarea.form-control {:name "comment"}]]]
+      [:div.modal-footer
+       [:button.btn.btn-secondary {:data-dismiss "modal"} "Close"]
+       [:button.btn.btn-primary {:type "submit" :name name-field} action-title]]]]]])
+
+(defn- approve-button [app]
+  (list
+    [:button.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#approve-modal"}
+     (text :t.approvals/approve)]
+    (confirm-modal "approve" (text :t.approvals/approve) app)))
+
+(defn- reject-button [app]
+  (list
+    [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#reject-modal"}
+     (text :t.approvals/reject)]
+    (confirm-modal "reject" (text :t.approvals/reject) app)))
+
+(defn- return-button [app]
+  (list
+    [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#return-modal"}
+     (text :t.approvals/return)]
+    (confirm-modal "return" (text :t.approvals/return) app)))
+
+(defn- back-to-approvals-button []
+  [:a.btn.btn-secondary.pull-left {:href "/approvals"} (text :t.form/back-approvals)])
+
 (defn approve-buttons [app]
-  [:form.inline (approve-form-attrs app)
-   (anti-forgery-field)
-   [:div.form-actions
-    (reject-button)
-    (approve-button)]])
+   [:div.form-actions.inline
+    (reject-button app)
+    (approve-button app)])
 
 (defn approve-form [app]
-  [:form (approve-form-attrs app)
-   (anti-forgery-field)
-   [:div.form-group
-    [:label {:for "comment"} (text :t.form/add-comments)]
-    [:textarea.form-control {:name "comment"}]]
    [:div.actions
     (when-role :approver
       (back-to-approvals-button))
-    (reject-button)
-    (return-button)
-    (approve-button)]])
+    (reject-button app)
+    (return-button app)
+    (approve-button app)])
 
 (defn- approvals-item [app]
   [:tr.approval
