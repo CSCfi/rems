@@ -8,6 +8,7 @@
                  [clj-time "0.13.0"]
                  [compojure "1.6.0"]
                  [com.taoensso/tempura "1.1.2"]
+                 ;;TODO: updating conman 0.6.3 -> 0.6.4 or luminus-migrations 0.3.0 -> 0.3.3 breaks tests
                  [conman "0.6.3"]
                  [cprop "0.1.10"]
                  [hiccup "1.0.5"]
