@@ -14,3 +14,8 @@
           rems_vm_flavor: "{{ rems_vm_flavor }}"
           key_name: "{{ key_name }}"
           vol_size: "{{ vol_size }}"
+# TODO
+#    - name: Assign floating IP to REMS machine
+#      os_floating_ip:
+#        server: #TODO
+#        floating_ip_address: #TODO
