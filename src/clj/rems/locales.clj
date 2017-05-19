@@ -72,7 +72,8 @@
       :roles {:header "Select role:"
               :names {:approver "Approver"
                       :reviewer "Reviewer"
-                      :applicant "Applicant"}}}}
+                      :applicant "Applicant"}}
+      :applicant-info {:applicant "Applicant"}}}
     :fi
     {:t
      {:missing "Käännös puuttuu"
@@ -141,5 +142,6 @@
       :roles {:header "Valitse rooli:"
               :names {:approver "Hyväksyjä"
                       :reviewer "Katselmoija"
-                      :applicant "Hakija"}}}}
+                      :applicant "Hakija"}}
+      :applicant-info {:applicant "Hakija"}}}
     :en :en-GB}})

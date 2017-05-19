@@ -294,15 +294,24 @@ footer {
 }
 
 .example-page {
-  margin: 2em;
+  margin: 2rem;
 }
 
-.example-page h1, .example-page h2, .example-page h3 {
-  margin-bottom: 1em;
+.example-page > h1 {
+  margin: 4rem 0;
 }
 
-.example {
-  margin: 2em 0;
+.example-page > h2 {
+  margin-top: 8rem;
+  margin-bottom: 2rem;
+}
+
+.example-page > h3 {
+  margin-bottom: 1rem;
+}
+
+.example-page .example {
+  margin-bottom: 4rem;
 }
 
 .example-content {
@@ -320,10 +329,6 @@ footer {
 .outer-cart {
   border: 1px solid #CAD2E6;
   border-radius: .4rem;
-}
-
-form:not(.inline) {
-    padding-bottom: 1em;
 }
 
 form.inline, .form-actions.inline {
@@ -473,11 +478,6 @@ ul.comments {
 
 .collapse-content {
   padding: 1rem;
-  margin-top: 1rem;
-}
-
-.collapse-content > * {
-  margin-bottom: 0;
 }
 
 .phases {

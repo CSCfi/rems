@@ -25,11 +25,15 @@
 
 (defn guide
   []
-  (list (example "Collapsible component expanded by default"
+  (list (example "collapsible expanded by default"
                  (list
                   [:div#accordion
                    (component "hello" true "Collapse expanded" [:p "I am content"])]))
-        (example "Collapsible component closed by default"
+        (example "collapsible closed by default"
                  (list
                   [:div#accordion
-                   (component "hello2" false "Collapse minimized" [:p "I am content"])]))))
+                   (component "hello2" false "Collapse minimized" [:p "I am content"])]))
+        (example "collapsible without children can't be opened"
+                 (list
+                  [:div#accordion
+                   (component "hello3" false "Collapse without children" nil)]))))

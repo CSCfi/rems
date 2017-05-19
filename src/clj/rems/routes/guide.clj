@@ -51,7 +51,7 @@
           [:h1 "Component Guide"]
 
           [:h2 "Colors"]
-          (example "" (color-boxes))
+          (example "Brand colors" (color-boxes))
           (example "Alerts" (alerts))
 
           [:h2 "Layout components"]
