@@ -73,7 +73,7 @@
               :names {:approver "Approver"
                       :reviewer "Reviewer"
                       :applicant "Applicant"}}
-      :applicant-info {:applicant "Applicant"}}
+      :applicant-info {:applicant "Applicant"}}}
     :fi
     {:t
      {:missing "Käännös puuttuu"
@@ -143,5 +143,5 @@
               :names {:approver "Hyväksyjä"
                       :reviewer "Katselmoija"
                       :applicant "Hakija"}}
-      :applicant-info {:applicant "Hakija"}}}}
+      :applicant-info {:applicant "Hakija"}}}
     :en :en-GB}})
