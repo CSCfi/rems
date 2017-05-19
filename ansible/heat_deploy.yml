@@ -1,0 +1,16 @@
+---
+- hosts: localhost
+  connection: local
+  tasks:
+    - name: Build the Heat stack for REMS
+      register: heat_stack
+      os_stack:
+        name: "{{ stack_name }}"
+        state: present
+        template: "files/rems_heat_stack.yaml"
+        parameters:
+          rems_secgroup_rules: "{{ rems_secgroup_rules }}"
+          rems_vm_image: "{{ rems_vm_image }}"
+          rems_vm_flavor: "{{ rems_vm_flavor }}"
+          key_name: "{{ key_name }}"
+          vol_size: "{{ vol_size }}"

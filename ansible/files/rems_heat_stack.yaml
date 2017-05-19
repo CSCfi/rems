@@ -1,0 +1,64 @@
+---
+heat_template_version: 2015-10-15
+
+description: >
+  Provision Heat stack for REMS.
+
+parameters:
+  rems_secgroup_rules:
+    description: >
+      Security group rules for the REMS machine.
+    type: json
+  rems_vm_image:
+    description: >
+      What VM image to use for the REMS machine.
+    type: string
+    default: 'CentOS-7.0'
+  rems_vm_flavor:
+    description: >
+      What VM flavor to use for the REMS machine.
+    type: string
+    default: 'standard.small'
+  key_name:
+    description: >
+      What SSH key to insert to the REMS machine.
+    type: string
+    default: 'Rems'
+  vol_size:
+    description: >
+      The size of the volume to create for the REMS machine.
+    type: number
+    default: 10
+
+resources:
+
+  rems_secgroup:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name: { get_param: 'OS::stack_name' }
+      rules: { get_param: rems_secgroup_rules }
+
+  rems_instance:
+    type: OS::Nova::Server
+    properties:
+      name: { get_param: 'OS::stack_name' }
+      image: { get_param: rems_vm_image }
+      networks:
+      flavor: { get_param: rems_vm_flavor }
+      key_name: { get_param: key_name }
+      security_groups:
+        - { get_resource: rems_secgroup }
+
+  rems_volume:
+    type: OS::Cinder::Volume
+    properties:
+      name: { get_param: 'OS::stack_name' }
+      size: { get_param: vol_size }
+
+  volume_attachment:
+    type: OS::Cinder::VolumeAttachment
+    properties:
+      instance_uuid: { get_resource: rems_instance }
+      volume_id: { get_resource: rems_volume }
+
+outputs:
