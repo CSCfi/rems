@@ -6,7 +6,7 @@
   :dependencies [[buddy "1.3.0" :exclusions [cheshire]]
                  [ch.qos.logback/logback-classic "1.2.3"]
                  [clj-time "0.13.0"]
-                 [compojure "1.5.2"]
+                 [compojure "1.6.0"]
                  [com.taoensso/tempura "1.1.2"]
                  [conman "0.6.3"]
                  [cprop "0.1.10"]
