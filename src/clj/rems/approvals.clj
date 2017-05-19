@@ -63,16 +63,16 @@
 
 (defn approve-buttons [app]
    [:div.form-actions.inline
-    (map #(% app) [reject-button
-                   approve-button])])
+    (reject-button app)
+    (approve-button app)])
 
 (defn approve-form [app]
    [:div.actions
     (when-role :approver
       (back-to-approvals-button))
-    (map #(% app) [reject-button
-                   return-button
-                   approve-button])])
+    (reject-button app)
+    (return-button app)
+    (approve-button app)])
 
 (defn- approvals-item [app]
   [:tr.approval
