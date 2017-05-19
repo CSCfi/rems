@@ -3,7 +3,8 @@
             [rems.context :as context]
             [rems.guide :refer :all]
             [rems.role-switcher :refer [when-role]]
-            [rems.util :refer [get-username]]))
+            [rems.util :refer [get-username]]
+            [rems.text :refer :all]))
 
 (defn- info-field [title value]
   [:div.form-group
@@ -11,7 +12,7 @@
    [:input.form-control {:type "text" :value value :readonly true}]])
 
 (defn details [id user-attributes]
-  (let [title (str "Applicant: " (get-username user-attributes))
+  (let [title (str (text :t.applicant-info/applicant) ": " (get-username user-attributes))
         content (when-role :approver
                   [:form
                    (for [[k v] user-attributes]
