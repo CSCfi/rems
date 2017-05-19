@@ -298,11 +298,15 @@ footer {
 }
 
 .example-page h1, .example-page h2, .example-page h3 {
-  margin-bottom: 1em;
+  margin-bottom: 1rem;
 }
 
-.example {
-  margin: 2em 0;
+.example-page h2 {
+  margin-top: 8rem;
+}
+
+.example-page .example {
+  margin-bottom: 4rem;
 }
 
 .example-content {
