@@ -121,46 +121,52 @@
                   [:td (format/unparse time-format (:time e))]])))))]))
 
 
+(defn- form-fields [form]
+  (let [state (:state (:application form))
+        editable (or (nil? state) (#{"draft" "returned"} state))
+        readonly (not editable)]
+    (collapsible/component "form"
+                           true
+                           (:title form)
+                           [:form {:method "post"
+                                   :action (if-let [app (:id (:application form))]
+                                             (str "/form/" (:catalogue-item form) "/" app "/save")
+                                             (str "/form/" (:catalogue-item form) "/save"))}
+                            (for [i (:items form)]
+                              (field (assoc i :readonly readonly)))
+                            (when-let [licenses (not-empty (:licenses form))]
+                              [:div.form-group
+                               [:h4 (text :t.form/licenses)]
+                               (for [l licenses]
+                                 (field (assoc l :readonly readonly)))])
+                            (anti-forgery-field)
+                            (when-role :applicant
+                              [:div.row
+                               [:div.col
+                                [:a.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
+                               (when editable
+                                 [:div.col.actions
+                                  [:button.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)]
+                                  [:button.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)]])])])))
+
 
 (defn- form [form]
   (let [state (:state (:application form))
-        editable (or (nil? state) (#{"draft" "returned"} state))
-        readonly (not editable)
         approvable (= state "applied")
         events (get-in form [:application :events])
         user-attributes (or (:applicant-attributes form) context/*user*)]
     (list
      [:h2 (text :t.applications/application)]
+
      (application-state state events)
 
-     [:div.my-3
-      (phases (get-application-phases (:state (:application form))))]
+     [:div.my-3 (phases (get-application-phases state))]
 
      (applicant-info/details "applicant-info" user-attributes)
+
      [:div.my-3
-      (collapsible/component "form"
-                             true
-                             (:title form)
-                             [:form {:method "post"
-                                     :action (if-let [app (:id (:application form))]
-                                               (str "/form/" (:catalogue-item form) "/" app "/save")
-                                               (str "/form/" (:catalogue-item form) "/save"))}
-                              (for [i (:items form)]
-                                (field (assoc i :readonly readonly)))
-                              (when-let [licenses (not-empty (:licenses form))]
-                                [:div.form-group
-                                 [:h4 (text :t.form/licenses)]
-                                 (for [l licenses]
-                                   (field (assoc l :readonly readonly)))])
-                              (anti-forgery-field)
-                              (when-role :applicant
-                                [:div.row
-                                 [:div.col
-                                  [:a.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
-                                 (when editable
-                                   [:div.col.actions
-                                    [:button.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)]
-                                    [:button.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)]])])])]
+      (form-fields form)]
+
      ;; The approve buttons need to be outside the form since they're
      ;; implemented as forms
      (when-role :approver
