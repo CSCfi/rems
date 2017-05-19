@@ -19,12 +19,6 @@
    {:href (str "/form/" (:catid app) "/" (:id app))}
    (text :t.applications/view)])
 
-(defn- approve-button []
-  (list
-    [:button.btn.btn-primary {:type "button" :name "approve" :data-toggle "modal" :data-target "#approve-modal"}
-     (text :t.approvals/approve)]
-    (confirm-modal "approve" (text :t.approvals/approve))))
-
 (defn- confirm-modal [name action-title]
   [:div.modal.fade {:id (str name "-modal") :tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
    [:div.modal-dialog {:role "document"}
@@ -37,6 +31,12 @@
      [:div.modal-footer
       [:button.btn.btn-secondary {:data-dismiss "modal"} "Close"]
       [:button.btn.btn-primary {:type "submit" :name name} action-title]]]]])
+
+(defn- approve-button []
+  (list
+    [:button.btn.btn-primary {:type "button" :name "approve" :data-toggle "modal" :data-target "#approve-modal"}
+     (text :t.approvals/approve)]
+    (confirm-modal "approve" (text :t.approvals/approve))))
 
 (defn- reject-button []
   (list
