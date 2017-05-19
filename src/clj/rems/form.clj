@@ -97,6 +97,31 @@
 
 
 
+(defn- application-state [state events]
+  (when state
+    [:div {:class (str "state-" state)}
+     (collapsible/component
+      "events"
+      false
+      (str (text :t.applications/state) ": " (text (applications/localize-state state)))
+      (when (seq events)
+        (list
+         [:h4 (text :t.form/events)]
+         (into [:table.table.table-hover.mb-0
+                [:tr
+                 [:th (text :t.form/user)]
+                 [:th (text :t.form/event)]
+                 [:th (text :t.form/comment)]
+                 [:th (text :t.form/date)]]]
+               (for [e events]
+                 [:tr
+                  [:td (:userid e)]
+                  [:td (:event e)]
+                  [:td (:comment e)]
+                  [:td (format/unparse time-format (:time e))]])))))]))
+
+
+
 (defn- form [form]
   (let [state (:state (:application form))
         editable (or (nil? state) (#{"draft" "returned"} state))
@@ -105,29 +130,8 @@
         events (get-in form [:application :events])
         user-attributes (or (:applicant-attributes form) context/*user*)]
     (list
-     ;; TODO extract state internal component
      [:h2 (text :t.applications/application)]
-     (when state
-       [:div {:class (str "state-" state)}
-        (collapsible/component
-         "events"
-         false
-         (str (text :t.applications/state) ": " (text (applications/localize-state state)))
-         (when (seq events)
-           (list
-            [:h4 (text :t.form/events)]
-            (into [:table.table.table-hover.mb-0
-                   [:tr
-                    [:th (text :t.form/user)]
-                    [:th (text :t.form/event)]
-                    [:th (text :t.form/comment)]
-                    [:th (text :t.form/date)]]]
-                  (for [e events]
-                    [:tr
-                     [:td (:userid e)]
-                     [:td (:event e)]
-                     [:td (:comment e)]
-                     [:td (format/unparse time-format (:time e))]])))))])
+     (application-state state events)
 
      [:div.my-3
       (phases (get-application-phases (:state (:application form))))]
