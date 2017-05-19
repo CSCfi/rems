@@ -20,11 +20,13 @@
    (text :t.applications/view)])
 
 (defn- approve-button []
-  [:button.btn.btn-primary {:type "button" :name "approve" :data-toggle "modal" :data-target "#approve-modal"}
-   (text :t.approvals/approve)])
+  (list
+    [:button.btn.btn-primary {:type "button" :name "approve" :data-toggle "modal" :data-target "#approve-modal"}
+     (text :t.approvals/approve)]
+    (confirm-modal "approve" (text :t.approvals/approve))))
 
-(defn- confirm-modal []
-  [:div#approve-modal.modal.fade {:tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
+(defn- confirm-modal [name action-title]
+  [:div.modal.fade {:id (str name "-modal") :tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
    [:div.modal-dialog {:role "document"}
     [:div.modal-content
      [:div.modal-header
@@ -34,15 +36,19 @@
      [:div.modal-body]
      [:div.modal-footer
       [:button.btn.btn-secondary {:data-dismiss "modal"} "Close"]
-      [:button.btn.btn-primary {:type "submit" :name "approve"} "Submit"]]]]])
+      [:button.btn.btn-primary {:type "submit" :name name} action-title]]]]])
 
 (defn- reject-button []
-  [:button.btn.btn-secondary {:type "submit" :name "reject"}
-   (text :t.approvals/reject)])
+  (list
+    [:button.btn.btn-secondary {:type "button" :name "reject" :data-toggle "modal" :data-target "#reject-modal"}
+     (text :t.approvals/reject)]
+    (confirm-modal "reject" (text :t.approvals/reject))))
 
 (defn- return-button []
-  [:button.btn.btn-secondary {:type "submit" :name "return"}
-   (text :t.approvals/return)])
+  (list
+    [:button.btn.btn-secondary {:type "button" :name "return" :data-toggle "modal" :data-target "#return-modal"}
+     (text :t.approvals/return)]
+    (confirm-modal "return" (text :t.approvals/return))))
 
 (defn- back-to-approvals-button []
   [:a.btn.btn-secondary.pull-left {:href "/approvals"} (text :t.form/back-approvals)])
