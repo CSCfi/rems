@@ -33,8 +33,8 @@
                  [ring-middleware-format "0.7.2"]
                  [ring-webjars "0.2.0"]
                  [ring/ring-defaults "0.3.0"]
-                 [ring/ring-devel "1.6.1"]
-                 [ring/ring-servlet "1.6.1"]]
+                 [ring/ring-devel "1.6.1" :exclusions [ring/ring-core]]
+                 [ring/ring-servlet "1.6.1" :exclusions [ring/ring-core]]]
 
   :min-lein-version "2.0.0"
 
