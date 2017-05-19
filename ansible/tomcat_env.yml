@@ -27,6 +27,7 @@
       - mod_proxy_html
       - mod_ssl
       - tomcat-native.x86_64
+      - fail2ban
 
   - name: Ensures /var/www/html/css dir exists
     file:
@@ -102,6 +103,32 @@
       name: httpd
       state: started
       enabled: yes
+
+  - name: Add local jail configurations for fail2ban
+    copy:
+      src: jail.local
+      dest: /etc/fail2ban
+
+  - name: Enable fail2ban
+    service:
+      name: fail2ban
+      state: started
+      enabled: yes
+
+  - name: Restart firewalld service
+    service:
+      name: firewalld
+      state: restarted
+
+  #TODO this could probably be done with changes to fail2ban jail.local conf
+  - name: Enable https and http in ports 443 and 80
+    command: "{{ item }}"
+    with_items:
+      - firewall-cmd --permanent --add-port=80/tcp
+      - firewall-cmd --permanent --add-port=443/tcp
+      - firewall-cmd --permanent --add-service=https
+      - firewall-cmd --permanent --add-service=http
+      - firewall-cmd --reload
 
   - name: Add tomcat group
     group:
