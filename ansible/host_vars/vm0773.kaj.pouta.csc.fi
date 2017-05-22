@@ -3,3 +3,4 @@ shib_keyname: remsdev.kaj.pouta.csc.fi.key
 shib_metadata_provider: https://haka.funet.fi/metadata/haka_test_metadata_signed.xml
 shib_discovery_url: https://testsp.funet.fi/shibboleth/WAYF
 shib_hostname: remsdev.kaj.pouta.csc.fi
+cert_chain_file: ""
