@@ -1,0 +1,69 @@
+{:t
+     {:missing "Käännös puuttuu"
+      :footer "CSC - IT Center for Science"
+      :navigation {:login "Kirjaudu sisään"
+                   :logout "Kirjaudu ulos"
+                   :about "Info"
+                   :home "Etusivu"
+                   :catalogue "Kielivarat"
+                   :applications "Hakemukset"
+                   :approvals "Hyväksynnät"}
+      :login {:title "Kirjaudu sisään"
+              :text "Kirjaudu sisään Haka-tunnuksillasi"}
+      :about {:text "hauki on kala"}
+      :cart {:header "%1 kielivaraa korissa"
+             :add "Lisää koriin"
+             :remove "Poista"
+             :apply "Hae"
+             :checkout "Lähetä"}
+      :catalogue {:header "Kielivarat"}
+      :form {:save "Tallenna luonnos"
+             :optional "(ei pakollinen)"
+             :licenses "Lisenssiehdot"
+             :comment "Kommentti"
+             :add-comments "Lisää päätökseen kommentti (näkyy hakijalle)"
+             :saved "Luonnos tallennettu."
+             :submit "Lähetä hakemus"
+             :submitted "Hakemus lähetetty."
+             :back "Takaisin kielivaroihin"
+             :back-approvals "Takaisin hyväksyntiin"
+             :date "Aika"
+             :event "Tapahtuma"
+             :events "Hakemuksen tapahtumat"
+             :user "Käyttäjä"
+             :validation {:required "Kenttä \"%1\" on pakollinen."}}
+      :phases {:apply "Hae"
+               :approve "Hyväksyntä"
+               :review "Katselmointi"
+               :approved "Hyväksytty"
+               :rejected "Hylätty"}
+      :applications {:application "Hakemus"
+                     :resource "Kielivara"
+                     :user "Käyttäjä"
+                     :state "Tila"
+                     :view "Näytä"
+                     :created "Luotu"
+                     :states {:draft "Luonnos"
+                              :applied "Haettu"
+                              :approved "Hyväksytty"
+                              :rejected "Hylätty"
+                              :returned "Palautettu"
+                              :unknown "Tuntematon"}
+                     :empty "Sinulla ei ole hakemuksia."}
+      :approvals {:application "Hakemus"
+                  :resource "Kielivara"
+                  :applicant "Hakija"
+                  :view "Näytä"
+                  :created "Luotu"
+                  :approve "Hyväksy"
+                  :reject "Hylkää"
+                  :return "Palauta hakijalle"
+                  :approve-success "Hakemus hyväksytty"
+                  :reject-success "Hakemus hylätty"
+                  :return-success "Hakemus palautettu"
+                  :empty "Sinulla ei ole hakemuksia käsiteltäväksi."}
+      :roles {:header "Valitse rooli:"
+              :names {:approver "Hyväksyjä"
+                      :reviewer "Katselmoija"
+                      :applicant "Hakija"}}
+      :applicant-info {:applicant "Hakija"}}}
