@@ -278,21 +278,21 @@
                                 :round 0 :event "apply" :comment nil})
     (try-autoapprove-application application-id)))
 
-(defn- judge-application [application-id event round comment]
+(defn- judge-application [application-id event round msg]
   (when-not (approver? application-id)
     (throw-unauthorized))
   (let [state (get-application-state application-id)]
     (when-not (= round (:curround state))
       (throw-unauthorized))
     (db/add-application-event! {:application application-id :user (get-user-id)
-                                :round round :event event :comment comment})
+                                :round round :event event :comment msg})
     (try-autoapprove-application application-id)))
 
-(defn approve-application [application-id round comment]
-  (judge-application application-id "approve" round comment))
+(defn approve-application [application-id round msg]
+  (judge-application application-id "approve" round msg))
 
-(defn reject-application [application-id round comment]
-  (judge-application application-id "reject" round comment))
+(defn reject-application [application-id round msg]
+  (judge-application application-id "reject" round msg))
 
-(defn return-application [application-id round comment]
-  (judge-application application-id "return" round comment))
+(defn return-application [application-id round msg]
+  (judge-application application-id "return" round msg))

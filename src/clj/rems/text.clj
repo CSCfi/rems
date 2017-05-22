@@ -4,10 +4,10 @@
 (defn text
   "Return the tempura translation for a given key. Additional fallback
   keys can be given."
-  [& keys]
-  (context/*tempura* (conj (vec keys) :t/missing)))
+  [& ks]
+  (context/*tempura* (conj (vec ks) :t/missing)))
 
 (defn text-format
   "Return the tempura translation for a given key & format arguments"
-  [key & args]
-  (context/*tempura* [key :t/missing] (vec args)))
+  [k & args]
+  (context/*tempura* [k :t/missing] (vec args)))
