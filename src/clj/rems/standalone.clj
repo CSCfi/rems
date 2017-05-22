@@ -54,7 +54,8 @@
   "Arguments can be either arguments to mount/start-with-args, or one of
      \"migrate\" -- migrate database
      \"rollback\" -- roll back database migration
-     \"test-data\" -- insert test data into database"
+     \"test-data\" -- insert test data into database
+     \"demo-data\" -- insert data for demoing purposes into database"
   [& args]
   (cond
     (#{"migrate" "rollback"} (first args))
@@ -65,5 +66,9 @@
     (do
       (mount/start #'rems.config/env #'rems.env/*db*)
       (test-data/create-test-data!))
+    (= "demo-data" (first args))
+    (do
+      (mount/start #'rems.config/env #'rems.env/*db*)
+      (test-data/create-demo-data!))
     :else
     (apply start-app args)))

@@ -16,12 +16,16 @@
   (db/add-user! {:user "bob" :userattrs nil})
   (roles/add-role! "bob" :approver)
   ;; a user to own things
+  (db/add-user! {:user "owner" :userattrs nil}))
+
+(defn- create-demo-users-and-roles! []
+  ;; a user to own things
   (db/add-user! {:user "owner" :userattrs nil})
   ;; users used on remsdemo
-  (doseq [applicant ["RDapplicant1" "RDapplicant2"]]
+  (doseq [applicant ["RDapplicant1@funet.fi" "RDapplicant2@funet.fi"]]
     (db/add-user! {:user applicant :userattrs nil})
     (roles/add-role! applicant :applicant))
-  (doseq [approver ["RDapprover1" "RDapprover2"]]
+  (doseq [approver ["RDapprover1@funet.fi" "RDapprover2@funet.fi"]]
     (db/add-user! {:user approver :userattrs nil})
     (roles/add-role! approver :approver)))
 
@@ -65,20 +69,20 @@
     (db/link-form-item! {:form (:id form-fi) :itemorder 2 :optional true :item (:id duration-fi) :user "owner"})
     (:id meta)))
 
-(defn- create-workflows! []
+(defn- create-workflows! [user1 user2]
   (let [minimal (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner":title "minimal" :fnlround 0}))
         simple (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner" :title "simple" :fnlround 0}))
         two-round (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner" :title "two rounds" :fnlround 1}))
         different (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner" :title "two rounds, different approvers" :fnlround 1}))]
-    ;; either bob or developer can approve
-    (db/create-workflow-approver! {:wfid simple :appruserid "developer" :round 0})
-    (db/create-workflow-approver! {:wfid simple :appruserid "bob" :round 0})
-    ;; only developer can approve
-    (db/create-workflow-approver! {:wfid two-round :appruserid "developer" :round 0})
-    (db/create-workflow-approver! {:wfid two-round :appruserid "developer" :round 1})
-    ;; first bob, then developer
-    (db/create-workflow-approver! {:wfid different :appruserid "bob" :round 0})
-    (db/create-workflow-approver! {:wfid different :appruserid "developer" :round 1})
+    ;; either user1 or user2 can approve
+    (db/create-workflow-approver! {:wfid simple :appruserid user1 :round 0})
+    (db/create-workflow-approver! {:wfid simple :appruserid user2 :round 0})
+    ;; only user1 can approve
+    (db/create-workflow-approver! {:wfid two-round :appruserid user1 :round 0})
+    (db/create-workflow-approver! {:wfid two-round :appruserid user1 :round 1})
+    ;; first user2, then user1
+    (db/create-workflow-approver! {:wfid different :appruserid user2 :round 0})
+    (db/create-workflow-approver! {:wfid different :appruserid user1 :round 1})
 
     ;; attach both kinds of licenses to all workflows
     (let [link (:id (db/create-license!
@@ -131,26 +135,28 @@
                                   :state "approved"}))
     app-id))
 
-(defn- create-applications! [item user]
-  (binding [context/*user* {"eppn" user}]
+(defn- create-applications! [item applicant approver]
+  (binding [context/*user* {"eppn" applicant}]
     (create-draft! item "draft application")
-    (doto (create-draft! item "applied application")
-      applications/submit-application)
-    (doto (create-draft! item "rejected application")
-      applications/submit-application
-      (applications/reject-application 0 "comment for rejection"))
-    (doto (create-draft! item "accepted application")
-      applications/submit-application
-      (applications/approve-application 0 "comment for approval"))
-    (doto (create-draft! item "returned application")
-      applications/submit-application
-      (applications/return-application 0 "comment for return"))))
+    (applications/submit-application (create-draft! item "applied application"))
+    (let [application (create-draft! item "rejected application")]
+      (applications/submit-application application)
+      (binding [context/*user* {"eppn" approver}]
+        (applications/reject-application application 0 "comment for rejection")))
+    (let [application (create-draft! item "accepted application")]
+      (applications/submit-application application)
+      (binding [context/*user* {"eppn" approver}]
+        (applications/approve-application application 0 "comment for approval")))
+    (let [application (create-draft! item "returned application")]
+      (applications/submit-application application)
+      (binding [context/*user* {"eppn" approver}]
+         (applications/return-application application 0 "comment for return")))))
 
 (defn create-test-data! []
   (create-users-and-roles!)
   (db/create-resource! {:id 1 :resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1})
   (let [meta (create-basic-form!)
-        workflows (create-workflows!)
+        workflows (create-workflows! "developer" "bob")
         minimal (create-catalogue-item! 1 (:minimal workflows) meta
                                        {"en" "ELFA Corpus, direct approval"
                                         "fi" "ELFA-korpus, suora hyväksyntä"})
@@ -160,4 +166,20 @@
         different (create-catalogue-item! 1 (:different workflows) meta
                                           {"en" "ELFA Corpus, two rounds of approval by different approvers"
                                            "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})]
-    (create-applications! simple "developer")))
+    (create-applications! simple "developer" "developer")))
+
+(defn create-demo-data! []
+  (create-demo-users-and-roles!)
+  (db/create-resource! {:id 1 :resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1})
+  (let [meta (create-basic-form!)
+        workflows (create-workflows! "RDapprover1@funet.fi" "RDapprover2@funet.fi")
+        minimal (create-catalogue-item! 1 (:minimal workflows) meta
+                                       {"en" "ELFA Corpus, direct approval"
+                                        "fi" "ELFA-korpus, suora hyväksyntä"})
+        simple (create-catalogue-item! 1 (:simple workflows) meta
+                                       {"en" "ELFA Corpus, one approval"
+                                        "fi" "ELFA-korpus, yksi hyväksyntä"})
+        different (create-catalogue-item! 1 (:different workflows) meta
+                                          {"en" "ELFA Corpus, two rounds of approval by different approvers"
+                                           "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})]
+    (create-applications! simple "RDapplicant1@funet.fi" "RDapprover1@funet.fi")))
