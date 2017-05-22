@@ -27,7 +27,8 @@
     (roles/add-role! applicant :applicant))
   (doseq [approver ["RDapprover1@funet.fi" "RDapprover2@funet.fi"]]
     (db/add-user! {:user approver :userattrs nil})
-    (roles/add-role! approver :approver)))
+    (roles/add-role! approver :approver)
+    (roles/add-role! approver :applicant)))
 
 (defn- create-basic-form! []
   "Creates a bilingual form with all supported field types. Returns id of the form meta."
