@@ -1,0 +1,22 @@
+---
+- hosts: localhost
+  connection: local
+  tasks:
+    - name: Build the Heat stack for REMS
+      register: heat_stack
+      os_stack:
+        name: "{{ stack_name }}"
+        state: present
+        template: "files/rems_heat_stack.yaml"
+        parameters:
+          rems_secgroup_rules: "{{ rems_secgroup_rules }}"
+          # TODO set these as vars instead of using static defaults
+          #rems_vm_image: "{{ rems_vm_image }}"
+          #rems_vm_flavor: "{{ rems_vm_flavor }}"
+          #key_name: "{{ key_name }}"
+          #vol_size: "{{ vol_size }}"
+# TODO automate assign of a floating ip
+#    - name: Assign floating IP to REMS machine
+#      os_floating_ip:
+#        server: #TODO
+#        floating_ip_address: #TODO
