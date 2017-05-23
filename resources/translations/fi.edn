@@ -10,7 +10,53 @@
                    :approvals "Hyväksynnät"}
       :login {:title "Kirjaudu sisään"
               :text "Kirjaudu sisään Haka-tunnuksillasi"}
-      :about {:text "hauki on kala"}
+      :about {:text "<p>&nbsp;</p>
+              <p><span style=\"font-size:16px;1\"><strong>REMS-DEMO</strong></span></p>
+              <p><span style=\"font-size:14px;\">Tämä on demo-ympäristö, joka on tarkoitettu REMS-ohjelmiston kokeilemiseen. Demo-ympäristöön on luotu valmiiksi joitain kuvitteellisia tietoaineistoja, joihin voit hakea käyttöoikeutta. Kullekin tietoaineistolle on luotu hakulomake, jonka hakija täyttää ja lähettää, sekä työnkulku, joka määrittelee, minkälaisen käsittelypolun lähetetty lomake kulkee. &nbsp;</span></p>
+              <p><span style=\"font-size:14px;\">Demo-ympäristöön voi kirjautua eri rooleissa alla olevilla käyttäjätunnuksilla ja salasanoilla. REMS-demo ei kontrolloi minkään todellisen tietoaineiston käyttöoikeuksia. Demo-ympäristöstä ei myöskään lähetetä sähköposti-ilmoituksia käyttöoikeuden hakijoille, kommentoijille tai hyväksyjille.</span></p>
+              <p><span style=\"font-size:14px;\"><strong>Demoympäristö saatetaan nollata ajoittain </strong>, jolloin kaikki tehdyt hakemukset ja käyttöoikeudet pyyhkiytyvät. Huomioi kuitenkin, että demotunnuksilla tekemäsi hakemukset ja muutokset saattavat sitä ennen näkyä muille kokeilijoille.</span></p>
+              <p><span style=\"font-size:14px;\"><a href=\"http://www.csc.fi/rems\">Lisätietoa REMS-ohjelmistosta</a>.</span></p>
+              <p><span style=\"font-size:14px;\">REMS-tuki: rems@csc.fi</span></p>
+              <p>&nbsp;</p>
+              <p><span style=\"font-size:16px;\"><strong>DEMON TESTITILIT JA ROOLIT</strong></span></p>
+              <p><span style=\"font-size:14px;\">Hakan testi-IdP:ltä löytyy seuraavia testitunnuksia:</span></p>
+              <p><span style=\"font-size:14px;\"><strong>1. REMS Demo käyttöluvanhakija 1</strong><br />
+                                                            käyttäjätunnus: RDapplicant1<br />
+                                                            salasana: RDapplicant1<br />
+                                                            Kuvaus: Kirjaudu tällä tunnuksella hakeaksesi tietoaineiston käyttöoikeutta.
+              </span></p>
+              <p><span style=\"font-size:14px;\"><strong>2. REMS Demo käyttöluvanhakija 2</strong><br />
+                                                            käyttäjätunnus: RDapplicant2<br />
+                                                            salasana: RDapplicant2<br />
+                                                            Kuvaus: Toinen tunnus tietoaineiston käyttöoikeuden hakemiseen. RDapplicant1 voi vaikkapa kutsua tämän käyttäjän käyttölupahakemuksensa toiseksi jäseneksi, jolloin käyttöoikeuksia anotaan samalla myös hänelle.
+              </span></p>
+              <p><span style=\"font-size:14px;\"><strong>3. REMS Demo hyväksyjä 1</strong><br />
+                                                            käyttäjätunnus: RDapprover1<br />
+                                                            salasana: RDapprover1<br />
+                                                            Kuvaus: Hyväksyjä hyväksyy tai hylkää saapuneen käyttölupahakemuksen tai palauttaa sen täydennettäväksi.
+              </span></p>
+              <p><span style=\"font-size:14px;\"><strong>4. REMS Demo hyväksyjä 2</strong><br />
+                                                            käyttäjätunnus: RDapprover2<br />
+                                                            salasana: RDapprover2<br />
+                                                            Kuvaus: Demon eräillä tietoaineistoilla on useita rinnakkaisia tai vaihtoehtoisia hyväksyjiä.
+              </span></p>
+              <p>&nbsp;</p>
+              <p><span style=\"font-size:16px;\"><strong>DEMON AINEISTOT</strong></span></p>
+              <p><span style=\"font-size:14px;\"><strong>ELFA-korpus, suora hyväksyntä</strong><br />
+                                                         Kuvaus: Tässä aineistossa on minimi työkulku. Käyttäjä sitoutuu lisenssin ehtoihin ja saa käyttöluvan.</span></p>
+              <p><span style=\"font-size:14px;\"><strong>ELFA-korpus, yksi hyväksyntä</strong><br />
+                                                         Kuvaus: Tässä aineistossa on yksinkertainen työkulku. Hakemus lähetetään yhdelle henkilölle (RDapprover1) hyväksyttäväksi.</span></p>
+              <p><span style=\"font-size:14px;\"><span style=\"font-size:14px;\"><strong>ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä</strong><br />
+                                                                                         Kuvaus: Tässä aineistossa on kaksivaiheinen hyväksyntä. Hakemuksen hyväksyy ensin käyttäjä RDapprover1 ja sitten käyttäjä RDapprover2.</span></span></p>
+              <p>&nbsp;</p>
+              <p><span style=\"font-size:16px;\"><strong>REMS-DEMON KÄYTTÖEHDOT</strong></span></p>
+              <p><span style=\"font-size:14px;\">Sitoudut siihen, että et tee REMS-demossa mitään sellaista joka loukkaa lakeja tai asetuksia tai kolmannen osapuolen oikeuksia (kuten tekijänoikeuksia) tai on säädytöntä, uhkaavaa, väkivaltaista, herjaavaa, vihamielistä, häiritsevää tai muulla tavalla paheksuttavaa.<br />
+              <br />
+              Sitoudut siihen, että et syötä REMS-demoon mitään tunnistettua tai tunnistettavissa olevaa luonnollista henkilöä koskevaa tietoa.</span></p>
+              <p>&nbsp;</p>
+              <p><strong><span style=\"font-size:16px;\">RAHOITTAJA</span></strong></p>
+              <p><span style=\"font-size:14px;\">CSC:n REMS-tuote on saanut rahoitusta Opetus- ja kulttuuriministeriöltä ja Suomen akatemialta (apurahat 271642 ja 263164 Biomedinfraa varten, joka on Suomen ELIXIR, BBMRI ja EATRIS-tutkimusinfrastruktuurisolmujen muodostama konsortio).</span></p>
+              "}
       :cart {:header "%1 kielivaraa korissa"
              :add "Lisää koriin"
              :remove "Poista"
