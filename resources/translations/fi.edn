@@ -91,6 +91,7 @@
   :approvals {:application "Hakemus"
               :resource "Kielivara"
               :applicant "Hakija"
+              :state "Tila"
               :view "Näytä"
               :created "Luotu"
               :handled "Käsitelty"

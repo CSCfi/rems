@@ -90,6 +90,7 @@
   :approvals {:application "Application"
               :resource "Resource"
               :applicant "Applicant"
+              :state "State"
               :view "View"
               :created "Created"
               :handled "Handled"

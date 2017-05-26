@@ -3,6 +3,7 @@
             [clj-time.format :as format]
             [compojure.core :refer [GET POST defroutes]]
             [rems.anti-forgery :refer [anti-forgery-field]]
+            [rems.applications :refer [localize-state]]
             [rems.collapsible :as collapsible]
             [rems.db.applications :as applications]
             [rems.guide :refer :all]
@@ -90,6 +91,7 @@
    [:td {:data-th (text :t.approvals/application)} (:id app)]
    [:td {:data-th (text :t.approvals/resource)} (get-in app [:catalogue-item :title])]
    [:td {:data-th (text :t.approvals/applicant)} (:applicantuserid app)]
+   [:td {:data-th (text :t.approvals/state)} (text (localize-state (:state app)))]
    [:td {:data-th (text :t.approvals/handled)} (format/unparse time-format (:handled app))]
    [:td.actions
     (view-button app)]])
@@ -121,6 +123,7 @@
        [:th (text :t.approvals/application)]
        [:th (text :t.approvals/resource)]
        [:th (text :t.approvals/applicant)]
+       [:th (text :t.approvals/state)]
        [:th (text :t.approvals/handled)]
        [:th]]
       (for [app (sort-by :handled apps)]
@@ -138,7 +141,7 @@
    (example "handled approvals"
             (handled-approvals
              [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid "alice"}
-              {:id 3 :catalogue-item {:title "bbbbbb"} :applicantuserid "bob"}]))))
+              {:id 3 :catalogue-item {:title "bbbbbb"} :state "approved" :applicantuserid "bob"}]))))
 
 (defn approvals-page []
   (layout/render
