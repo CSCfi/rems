@@ -140,11 +140,15 @@
   (layout/render
    "approvals"
    [:div
-    (approvals)
-    (collapsible/component "handled-approvals"
-                           false
-                           (text :t.approvals/handled-approvals)
-                           (handled-approvals))]))
+    (collapsible/component "open-approvals"
+                           true
+                           (text :t.approvals/open-approvals)
+                           (approvals))
+    [:div.mt-3
+     (collapsible/component "handled-approvals"
+                            false
+                            (text :t.approvals/handled-approvals)
+                            (handled-approvals))]]))
 
 (defroutes approvals-routes
   (GET "/approvals" [] (approvals-page))

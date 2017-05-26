@@ -94,6 +94,7 @@
               :created "Created"
               :handled "Handled"
               :handled-approvals "Handled applications"
+              :open-approvals "Open applications"
               :approve "Approve"
               :reject "Reject"
               :return "Return to applicant"

@@ -95,6 +95,7 @@
               :created "Luotu"
               :handled "Käsitelty"
               :handled-approvals "Käsitellyt hakemukset"
+              :open-approvals "Avoimet hakemukset"
               :approve "Hyväksy"
               :reject "Hylkää"
               :return "Palauta hakijalle"
