@@ -13,12 +13,16 @@
 
 ;;; Query functions
 
-(defn approver? [application]
+(defn can-approve? [application]
   (let [state (get-application-state application)
         round (:curround state)]
     (and (= "applied" (:state state))
          (contains? (set (db/get-workflow-approvers {:application application :round round}))
                     {:appruserid (get-user-id)}))))
+
+(defn is-approver? [application]
+  (contains? (set (db/get-workflow-approvers {:application application}))
+             {:appruserid (get-user-id)}))
 
 (defn- get-applications-impl [query-params]
   (doall
@@ -34,8 +38,17 @@
 
 (defn get-approvals []
   (filterv
-   (fn [app] (approver? (:id app)))
+   (fn [app] (can-approve? (:id app)))
    (get-applications-impl {})))
+
+(defn get-handled-approvals []
+  (->> (get-applications-impl {})
+       (filterv (fn [app] (is-approver? (:id app))))
+       (filterv (fn [app] (contains? #{"approved" "rejected"} (:state app))))
+       (mapv (fn [app]
+               (let [my-events (filter #(= (get-user-id) (:userid %))
+                                       (:events app))]
+                 (assoc app :handled (:time (last my-events))))))))
 
 (defn get-draft-id-for
   "Finds applications in the draft state for the given catalogue item.
@@ -138,7 +151,7 @@
          applicant? (= (:applicantuserid application) (get-user-id))]
      (when application-id
        (when-not (or applicant?
-                     (approver? application-id))
+                     (is-approver? application-id))
          (throw-unauthorized)))
      {:id form-id
       :catalogue-item catalogue-item
@@ -279,7 +292,7 @@
     (try-autoapprove-application application-id)))
 
 (defn- judge-application [application-id event round msg]
-  (when-not (approver? application-id)
+  (when-not (can-approve? application-id)
     (throw-unauthorized))
   (let [state (get-application-state application-id)]
     (when-not (= round (:curround state))

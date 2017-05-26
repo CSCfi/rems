@@ -263,7 +263,7 @@
 (defn- form-page [id application]
   (layout/render
    "form"
-   [:div#accordion (form (get-form-for id application))]))
+   (form (get-form-for id application))))
 
 (defroutes form-routes
   (GET "/form/:id/:application" [id application]

@@ -3,6 +3,8 @@
             [clj-time.format :as format]
             [compojure.core :refer [GET POST defroutes]]
             [rems.anti-forgery :refer [anti-forgery-field]]
+            [rems.applications :refer [localize-state]]
+            [rems.collapsible :as collapsible]
             [rems.db.applications :as applications]
             [rems.guide :refer :all]
             [rems.layout :as layout]
@@ -84,6 +86,16 @@
     (view-button app)
     (approve-buttons app)]])
 
+(defn- handled-approvals-item [app]
+  [:tr.approval
+   [:td {:data-th (text :t.approvals/application)} (:id app)]
+   [:td {:data-th (text :t.approvals/resource)} (get-in app [:catalogue-item :title])]
+   [:td {:data-th (text :t.approvals/applicant)} (:applicantuserid app)]
+   [:td {:data-th (text :t.approvals/state)} (text (localize-state (:state app)))]
+   [:td {:data-th (text :t.approvals/handled)} (format/unparse time-format (:handled app))]
+   [:td.actions
+    (view-button app)]])
+
 (defn approvals
   ([]
    (approvals (applications/get-approvals)))
@@ -100,6 +112,23 @@
       (for [app (sort-by :id apps)]
         (approvals-item app))])))
 
+(defn handled-approvals
+  ([]
+   (handled-approvals (applications/get-handled-approvals)))
+  ([apps]
+   (if (empty? apps)
+     nil
+     [:table.rems-table.approvals
+      [:tr
+       [:th (text :t.approvals/application)]
+       [:th (text :t.approvals/resource)]
+       [:th (text :t.approvals/applicant)]
+       [:th (text :t.approvals/state)]
+       [:th (text :t.approvals/handled)]
+       [:th]]
+      (for [app (sort-by :handled apps)]
+        (handled-approvals-item app))])))
+
 (defn guide
   []
   (list
@@ -108,12 +137,25 @@
    (example "approvals"
             (approvals
              [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid "alice"}
-              {:id 3 :catalogue-item {:title "bbbbbb"} :applicantuserid "bob"}]))))
+              {:id 3 :catalogue-item {:title "bbbbbb"} :applicantuserid "bob"}]))
+   (example "handled approvals"
+            (handled-approvals
+             [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid "alice"}
+              {:id 3 :catalogue-item {:title "bbbbbb"} :state "approved" :applicantuserid "bob"}]))))
 
 (defn approvals-page []
   (layout/render
    "approvals"
-   (approvals)))
+   [:div
+    (collapsible/component "open-approvals"
+                           true
+                           (text :t.approvals/open-approvals)
+                           (approvals))
+    [:div.mt-3
+     (collapsible/component "handled-approvals"
+                            false
+                            (text :t.approvals/handled-approvals)
+                            (handled-approvals))]]))
 
 (defroutes approvals-routes
   (GET "/approvals" [] (approvals-page))
