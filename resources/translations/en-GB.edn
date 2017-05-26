@@ -93,6 +93,7 @@
               :view "View"
               :created "Created"
               :handled "Handled"
+              :handled-approvals "Handled applications"
               :approve "Approve"
               :reject "Reject"
               :return "Return to applicant"

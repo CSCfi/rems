@@ -3,6 +3,7 @@
             [clj-time.format :as format]
             [compojure.core :refer [GET POST defroutes]]
             [rems.anti-forgery :refer [anti-forgery-field]]
+            [rems.collapsible :as collapsible]
             [rems.db.applications :as applications]
             [rems.guide :refer :all]
             [rems.layout :as layout]
@@ -140,7 +141,10 @@
    "approvals"
    [:div
     (approvals)
-    (handled-approvals)]))
+    (collapsible/component "handled-approvals"
+                           false
+                           (text :t.approvals/handled-approvals)
+                           (handled-approvals))]))
 
 (defroutes approvals-routes
   (GET "/approvals" [] (approvals-page))

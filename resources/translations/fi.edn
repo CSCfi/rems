@@ -94,6 +94,7 @@
               :view "Näytä"
               :created "Luotu"
               :handled "Käsitelty"
+              :handled-approvals "Käsitellyt hakemukset"
               :approve "Hyväksy"
               :reject "Hylkää"
               :return "Palauta hakijalle"
