@@ -546,6 +546,10 @@ ul.comments {
   background-color: #eee;
 }
 
+.document h3 {
+  margin-top: 4rem;
+}
+
 /* These must be last as the parsing fails when the first non-standard element is met */
 .form-control::placeholder { /* Standard */
   color: #ccc;
