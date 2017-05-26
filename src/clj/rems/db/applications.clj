@@ -44,6 +44,7 @@
 (defn get-handled-approvals []
   (->> (get-applications-impl {})
        (filterv (fn [app] (is-approver? (:id app))))
+       (filterv (fn [app] (contains? #{"approved" "rejected"} (:state app))))
        (mapv (fn [app]
                (let [my-events (filter #(= (get-user-id) (:userid %))
                                        (:events app))]
