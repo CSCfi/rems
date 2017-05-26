@@ -123,7 +123,7 @@
        [:th (text :t.approvals/applicant)]
        [:th (text :t.approvals/handled)]
        [:th]]
-      (for [app (sort-by :id apps)]
+      (for [app (sort-by :handled apps)]
         (handled-approvals-item app))])))
 
 (defn guide
