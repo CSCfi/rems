@@ -350,14 +350,14 @@
              (map #(select-keys % [:id :state :catid :curround])
                   (applications/get-approvals)))
           "should only see app1")
-      (testing "applications/approver?"
-        (is (applications/approver? app1))
-        (is (not (applications/approver? app2)))
-        (is (not (applications/approver? app3)))
-        (is (not (applications/approver? app4)))
+      (testing "applications/can-approve?"
+        (is (applications/can-approve? app1))
+        (is (not (applications/can-approve? app2)))
+        (is (not (applications/can-approve? app3)))
+        (is (not (applications/can-approve? app4)))
         (binding [context/*user* {"eppn" uid2}]
-          (is (not (applications/approver? app1)))
-          (is (applications/approver? app2))))
+          (is (not (applications/can-approve? app1)))
+          (is (applications/can-approve? app2))))
 
       ;; move app1 and app2 to round 1
       (applications/approve-application app1 0 "")
@@ -368,14 +368,16 @@
              (map #(select-keys % [:id :state :catid :curround])
                   (applications/get-approvals)))
           "should only see app2")
-      (testing "approvals/approver?"
-        (is (not (applications/approver? app1)))
-        (is (applications/approver? app2))
-        (is (not (applications/approver? app3)))
-        (is (not (applications/approver? app4)))
+      (testing "applications/can-approve?"
+        (is (not (applications/can-approve? app1)))
+        (is (applications/can-approve? app2))
+        (is (not (applications/can-approve? app3)))
+        (is (not (applications/can-approve? app4)))
         (binding [context/*user* {"eppn" uid2}]
-          (is (not (applications/approver? app1)))
-          (is (not (applications/approver? app2))))))))
+          (is (not (applications/can-approve? app1)))
+          (is (not (applications/can-approve? app2))))))))
+
+;; TODO test handled approvals
 
 (deftest test-users
   (db/add-user! {:user "pekka", :userattrs nil})
