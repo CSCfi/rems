@@ -133,8 +133,7 @@
         (is (= 403 (:status response)) "should return 403 unauthorized)")))
 
     (testing "when logging in"
-      (let [login-ctx (-> (new-context app)
-                          (login "bob"))]
+      (let [login-ctx (login (new-context app) "bob")]
         (is (= 302 (:status login-ctx)) "should return redirect")
         (is (= "http://localhost/landing_page"
                (get-in login-ctx [:response :headers "Location"]))
@@ -217,8 +216,7 @@
                 ctx (dispatch ctx (request :get url))]
             (is (= 403 (:status ctx)) "jill shouldn't be authorized")))
         (testing "jill should still be able to make her own application"
-          (let [ctx (->> (request :get "/form/1")
-                         (dispatch ctx))]
+          (let [ctx (dispatch ctx (request :get "/form/1"))]
             (is (= 200 (:status ctx)))))
         (testing "jill tries to write to jack's application"
           (let [url (format "/form/1/%s/save" application)
