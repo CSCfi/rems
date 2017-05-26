@@ -19,7 +19,7 @@
                  [:p "REMS support: rems@csc.fi"]
                  [:h3 "User Accounts and Roles"]
                  [:p "Following test user accounts (roles) can be used when singing in using Haka test IdP:"]
-                 [:p [:strong "1. REMS Demo Dataset Applicant"] " 1" [:br]
+                 [:p [:strong "1. REMS Demo Dataset Applicant 1"] [:br]
                   "Username: RDapplicant1" [:br]
                   "Password: RDapplicant1" [:br]
                   "Description: Use this account to apply for access rights to a dataset."]
