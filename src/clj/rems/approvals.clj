@@ -134,6 +134,10 @@
    (example "approvals"
             (approvals
              [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid "alice"}
+              {:id 3 :catalogue-item {:title "bbbbbb"} :applicantuserid "bob"}]))
+   (example "handled approvals"
+            (handled-approvals
+             [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid "alice"}
               {:id 3 :catalogue-item {:title "bbbbbb"} :applicantuserid "bob"}]))))
 
 (defn approvals-page []
