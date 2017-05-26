@@ -93,6 +93,7 @@
               :applicant "Hakija"
               :view "Näytä"
               :created "Luotu"
+              :handled "Käsitelty"
               :approve "Hyväksy"
               :reject "Hylkää"
               :return "Palauta hakijalle"

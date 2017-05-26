@@ -92,6 +92,7 @@
               :applicant "Applicant"
               :view "View"
               :created "Created"
+              :handled "Handled"
               :approve "Approve"
               :reject "Reject"
               :return "Return to applicant"

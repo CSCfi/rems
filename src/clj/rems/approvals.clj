@@ -84,6 +84,15 @@
     (view-button app)
     (approve-buttons app)]])
 
+(defn- handled-approvals-item [app]
+  [:tr.approval
+   [:td {:data-th (text :t.approvals/application)} (:id app)]
+   [:td {:data-th (text :t.approvals/resource)} (get-in app [:catalogue-item :title])]
+   [:td {:data-th (text :t.approvals/applicant)} (:applicantuserid app)]
+   [:td {:data-th (text :t.approvals/handled)} (format/unparse time-format (:handled app))]
+   [:td.actions
+    (view-button app)]])
+
 (defn approvals
   ([]
    (approvals (applications/get-approvals)))
@@ -100,6 +109,22 @@
       (for [app (sort-by :id apps)]
         (approvals-item app))])))
 
+(defn handled-approvals
+  ([]
+   (handled-approvals (applications/get-handled-approvals)))
+  ([apps]
+   (if (empty? apps)
+     [:div.approvals.alert.alert-success (text :t/approvals.empty)]
+     [:table.rems-table.approvals
+      [:tr
+       [:th (text :t.approvals/application)]
+       [:th (text :t.approvals/resource)]
+       [:th (text :t.approvals/applicant)]
+       [:th (text :t.approvals/handled)]
+       [:th]]
+      (for [app (sort-by :id apps)]
+        (handled-approvals-item app))])))
+
 (defn guide
   []
   (list
@@ -113,7 +138,9 @@
 (defn approvals-page []
   (layout/render
    "approvals"
-   (approvals)))
+   [:div
+    (approvals)
+    (handled-approvals)]))
 
 (defroutes approvals-routes
   (GET "/approvals" [] (approvals-page))
