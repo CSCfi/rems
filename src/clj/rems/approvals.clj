@@ -115,7 +115,7 @@
    (handled-approvals (applications/get-handled-approvals)))
   ([apps]
    (if (empty? apps)
-     [:div.approvals.alert.alert-success (text :t/approvals.empty)]
+     nil
      [:table.rems-table.approvals
       [:tr
        [:th (text :t.approvals/application)]
