@@ -10,13 +10,13 @@
             [ring.util.response :refer [redirect]]))
 
 (defn- button
-  [class action text value & [disabled?]]
+  [cls action text value & [disabled?]]
   [:form.inline {:method "post" :action action}
    (anti-forgery-field)
    [:input {:type "hidden" :name "id" :value value}]
    [:button.btn {:type "submit"
                  :disabled disabled?
-                 :class (str class (if disabled? " disabled" ""))} text]])
+                 :class (str cls (if disabled? " disabled" ""))} text]])
 
 (def ^:private button-primary
   (partial button "btn-primary"))

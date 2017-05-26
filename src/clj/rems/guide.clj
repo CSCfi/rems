@@ -3,9 +3,9 @@
   (:require [taoensso.tempura :as tempura]
             [rems.locales :as locales]))
 
-(defmacro example [name content]
+(defmacro example [title content]
   `[:div.example
-    [:h3 ~name]
+    [:h3 ~title]
     [:pre.example-source
      ~(with-out-str (clojure.pprint/write content :dispatch clojure.pprint/code-dispatch))]
     [:div.example-content ~content
