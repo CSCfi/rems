@@ -452,13 +452,13 @@ ul.comments {
   margin-top: 3px; /* hax for opening misalignment */
 }
 
-#accordion .clickable .card-title:after {
+.collapse-wrapper .clickable .card-title:after {
   font-family: 'FontAwesome';
   float: right;
   content: "\f068";
 }
 
-#accordion .clickable .card-title.collapsed:after {
+.collapse-wrapper .clickable .card-title.collapsed:after {
   content: "\f067";
 }
 

@@ -31,6 +31,4 @@
    (example "applicant-info for approver shows attributes"
             (binding [context/*roles* #{:approver}
                       context/*active-role* :approver]
-              ;; Accordion is needed so that the +/- icons are shown in the guide page
-              [:div#accordion
-               (details "info2" {"eppn" "developer@uu.id" "commonName" "Deve Loper"})]))))
+              (details "info2" {"eppn" "developer@uu.id" "commonName" "Deve Loper"})))))
