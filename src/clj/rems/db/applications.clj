@@ -20,6 +20,10 @@
          (contains? (set (db/get-workflow-approvers {:application application :round round}))
                     {:appruserid (get-user-id)}))))
 
+(defn is-approver? [application]
+  (contains? (set (db/get-workflow-approvers {:application application}))
+             {:appruserid (get-user-id)}))
+
 (defn- get-applications-impl [query-params]
   (doall
    (for [a (db/get-applications query-params)]
@@ -39,7 +43,7 @@
 
 (defn get-handled-approvals []
   (->> (get-applications-impl {})
-       (filterv (fn [app] (was-approver? (:id app))))
+       (filterv (fn [app] (is-approver? (:id app))))
        (mapv (fn [app]
                (let [my-events (filter #(= (get-user-id) (:userid %))
                                        (:events app))]
@@ -146,7 +150,7 @@
          applicant? (= (:applicantuserid application) (get-user-id))]
      (when application-id
        (when-not (or applicant?
-                     (can-approve? application-id)
+                     (is-approver? application-id))
          (throw-unauthorized)))
      {:id form-id
       :catalogue-item catalogue-item
