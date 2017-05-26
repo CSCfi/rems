@@ -13,6 +13,9 @@
 
 ;;; Query functions
 
+(defn handled? [app]
+  (contains? #{"approved" "rejected"} (:state app)))
+
 (defn can-approve? [application]
   (let [state (get-application-state application)
         round (:curround state)]
@@ -44,7 +47,7 @@
 (defn get-handled-approvals []
   (->> (get-applications-impl {})
        (filterv (fn [app] (is-approver? (:id app))))
-       (filterv (fn [app] (contains? #{"approved" "rejected"} (:state app))))
+       (filterv handled?)
        (mapv (fn [app]
                (let [my-events (filter #(= (get-user-id) (:userid %))
                                        (:events app))]
