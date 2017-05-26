@@ -1,16 +1,16 @@
 {:t
-     {:missing "Missing translation"
-      :footer "Powered by CSC - IT Center for Science"
-      :navigation {:login "Login"
-                   :logout "Sign Out"
-                   :about "About"
-                   :home "Home"
-                   :catalogue "Catalogue"
-                   :applications "Applications"
-                   :approvals "Approvals"}
-      :login {:title "Login"
-              :text "Login by using your Haka credentials"}
-      :about {:text "<p>&nbsp;</p>
+ {:missing "Missing translation"
+  :footer "Powered by CSC - IT Center for Science"
+  :navigation {:login "Login"
+               :logout "Sign Out"
+               :about "About"
+               :home "Home"
+               :catalogue "Catalogue"
+               :applications "Applications"
+               :approvals "Approvals"}
+  :login {:title "Login"
+          :text "Login by using your Haka credentials"}
+  :about {:text "<p>&nbsp;</p>
               <p><span style=\"font-size:16px;\"><strong>REMS DEMO</strong></span></p>
               <p><span style=\"font-size:14px;\">This is a demo environment for testing the REMS software. The demo environment has a couple of fictional datasets to which you can apply for access. For each dataset, there is an application form that the applicant fills in and submits and a workflow that determines how and to whom the submitted application is circulated for approval.</span></p>
               <p><span style=\"font-size:14px;\">You can use the demo usernames and passwords below to log in to the demo in various roles. The demo environment does not control access to any real datasets and does not send any email notifications to the applicants or reviewers and approvers of the applications.</span></p>
@@ -61,59 +61,59 @@
               <p><span style=\"font-size:14px;\">CSC’s work for REMS has been supported by the Ministry of Education and Culture of Finland and by Academy of Finland grants 271642 and 263164 to construct Biomedinfra, the Finnish consortium for ELIXIR, BBMRI and EATRIS ESFRI.</span></p>
               <p>&nbsp;</p>
               "}
-      :cart {:header "%1 resources in cart"
-             :add "Add to cart"
-             :remove "Remove"
-             :apply "Apply"
-             :checkout "Check out"}
-      :catalogue {:header "Resource"}
-      :form {:save "Save as draft"
-             :optional "(optional)"
-             :licenses "Licenses"
-             :comment "Comment"
-             :add-comments "Add comment to the decision (shown to applicant)"
-             :saved "Draft saved."
-             :submit "Send application"
-             :submitted "Application submitted."
-             :back "Back to catalogue"
-             :back-approvals "Back to approvals"
-             :date "Time"
-             :event "Event"
-             :events "Application events"
-             :user "User"
-             :validation {:required "Field \"%1\" is required."}}
-      :phases {:apply "Apply"
-               :approve "Approval"
-               :review "Review"
-               :approved "Approved"
-               :rejected "Rejected"}
-      :applications {:application "Application"
-                     :resource "Resource"
-                     :user "User"
-                     :state "State"
-                     :view "View"
-                     :created "Created"
-                     :states {:draft "Draft"
-                              :applied "Applied"
-                              :approved "Approved"
-                              :rejected "Rejected"
-                              :returned "Returned"
-                              :unknown "Unknown"}
-                     :empty "You don't have any applications."}
-      :approvals {:application "Application"
-                  :resource "Resource"
-                  :applicant "Applicant"
-                  :view "View"
-                  :created "Created"
-                  :approve "Approve"
-                  :reject "Reject"
-                  :return "Return to applicant"
-                  :approve-success "Application approved"
-                  :reject-success "Application rejected"
-                  :return-success "Application returned"
-                  :empty "You don't have any applications to process."}
-      :roles {:header "Select role:"
-              :names {:approver "Approver"
-                      :reviewer "Reviewer"
-                      :applicant "Applicant"}}
-      :applicant-info {:applicant "Applicant"}}}
+  :cart {:header "%1 resources in cart"
+         :add "Add to cart"
+         :remove "Remove"
+         :apply "Apply"
+         :checkout "Check out"}
+  :catalogue {:header "Resource"}
+  :form {:save "Save as draft"
+         :optional "(optional)"
+         :licenses "Licenses"
+         :comment "Comment"
+         :add-comments "Add comment to the decision (shown to applicant)"
+         :saved "Draft saved."
+         :submit "Send application"
+         :submitted "Application submitted."
+         :back "Back to catalogue"
+         :back-approvals "Back to approvals"
+         :date "Time"
+         :event "Event"
+         :events "Application events"
+         :user "User"
+         :validation {:required "Field \"%1\" is required."}}
+  :phases {:apply "Apply"
+           :approve "Approval"
+           :review "Review"
+           :approved "Approved"
+           :rejected "Rejected"}
+  :applications {:application "Application"
+                 :resource "Resource"
+                 :user "User"
+                 :state "State"
+                 :view "View"
+                 :created "Created"
+                 :states {:draft "Draft"
+                          :applied "Applied"
+                          :approved "Approved"
+                          :rejected "Rejected"
+                          :returned "Returned"
+                          :unknown "Unknown"}
+                 :empty "You don't have any applications."}
+  :approvals {:application "Application"
+              :resource "Resource"
+              :applicant "Applicant"
+              :view "View"
+              :created "Created"
+              :approve "Approve"
+              :reject "Reject"
+              :return "Return to applicant"
+              :approve-success "Application approved"
+              :reject-success "Application rejected"
+              :return-success "Application returned"
+              :empty "You don't have any applications to process."}
+  :roles {:header "Select role:"
+          :names {:approver "Approver"
+                  :reviewer "Reviewer"
+                  :applicant "Applicant"}}
+  :applicant-info {:applicant "Applicant"}}}

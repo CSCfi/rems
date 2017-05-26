@@ -1,16 +1,16 @@
 {:t
-     {:missing "Käännös puuttuu"
-      :footer "CSC - IT Center for Science"
-      :navigation {:login "Kirjaudu sisään"
-                   :logout "Kirjaudu ulos"
-                   :about "Info"
-                   :home "Etusivu"
-                   :catalogue "Kielivarat"
-                   :applications "Hakemukset"
-                   :approvals "Hyväksynnät"}
-      :login {:title "Kirjaudu sisään"
-              :text "Kirjaudu sisään Haka-tunnuksillasi"}
-      :about {:text "<p>&nbsp;</p>
+ {:missing "Käännös puuttuu"
+  :footer "CSC - IT Center for Science"
+  :navigation {:login "Kirjaudu sisään"
+               :logout "Kirjaudu ulos"
+               :about "Info"
+               :home "Etusivu"
+               :catalogue "Kielivarat"
+               :applications "Hakemukset"
+               :approvals "Hyväksynnät"}
+  :login {:title "Kirjaudu sisään"
+          :text "Kirjaudu sisään Haka-tunnuksillasi"}
+  :about {:text "<p>&nbsp;</p>
               <p><span style=\"font-size:16px;1\"><strong>REMS-DEMO</strong></span></p>
               <p><span style=\"font-size:14px;\">Tämä on demo-ympäristö, joka on tarkoitettu REMS-ohjelmiston kokeilemiseen. Demo-ympäristöön on luotu valmiiksi joitain kuvitteellisia tietoaineistoja, joihin voit hakea käyttöoikeutta. Kullekin tietoaineistolle on luotu hakulomake, jonka hakija täyttää ja lähettää, sekä työnkulku, joka määrittelee, minkälaisen käsittelypolun lähetetty lomake kulkee. &nbsp;</span></p>
               <p><span style=\"font-size:14px;\">Demo-ympäristöön voi kirjautua eri rooleissa alla olevilla käyttäjätunnuksilla ja salasanoilla. REMS-demo ei kontrolloi minkään todellisen tietoaineiston käyttöoikeuksia. Demo-ympäristöstä ei myöskään lähetetä sähköposti-ilmoituksia käyttöoikeuden hakijoille, kommentoijille tai hyväksyjille.</span></p>
@@ -57,59 +57,59 @@
               <p><strong><span style=\"font-size:16px;\">RAHOITTAJA</span></strong></p>
               <p><span style=\"font-size:14px;\">CSC:n REMS-tuote on saanut rahoitusta Opetus- ja kulttuuriministeriöltä ja Suomen akatemialta (apurahat 271642 ja 263164 Biomedinfraa varten, joka on Suomen ELIXIR, BBMRI ja EATRIS-tutkimusinfrastruktuurisolmujen muodostama konsortio).</span></p>
               "}
-      :cart {:header "%1 kielivaraa korissa"
-             :add "Lisää koriin"
-             :remove "Poista"
-             :apply "Hae"
-             :checkout "Lähetä"}
-      :catalogue {:header "Kielivarat"}
-      :form {:save "Tallenna luonnos"
-             :optional "(ei pakollinen)"
-             :licenses "Lisenssiehdot"
-             :comment "Kommentti"
-             :add-comments "Lisää päätökseen kommentti (näkyy hakijalle)"
-             :saved "Luonnos tallennettu."
-             :submit "Lähetä hakemus"
-             :submitted "Hakemus lähetetty."
-             :back "Takaisin kielivaroihin"
-             :back-approvals "Takaisin hyväksyntiin"
-             :date "Aika"
-             :event "Tapahtuma"
-             :events "Hakemuksen tapahtumat"
-             :user "Käyttäjä"
-             :validation {:required "Kenttä \"%1\" on pakollinen."}}
-      :phases {:apply "Hae"
-               :approve "Hyväksyntä"
-               :review "Katselmointi"
-               :approved "Hyväksytty"
-               :rejected "Hylätty"}
-      :applications {:application "Hakemus"
-                     :resource "Kielivara"
-                     :user "Käyttäjä"
-                     :state "Tila"
-                     :view "Näytä"
-                     :created "Luotu"
-                     :states {:draft "Luonnos"
-                              :applied "Haettu"
-                              :approved "Hyväksytty"
-                              :rejected "Hylätty"
-                              :returned "Palautettu"
-                              :unknown "Tuntematon"}
-                     :empty "Sinulla ei ole hakemuksia."}
-      :approvals {:application "Hakemus"
-                  :resource "Kielivara"
-                  :applicant "Hakija"
-                  :view "Näytä"
-                  :created "Luotu"
-                  :approve "Hyväksy"
-                  :reject "Hylkää"
-                  :return "Palauta hakijalle"
-                  :approve-success "Hakemus hyväksytty"
-                  :reject-success "Hakemus hylätty"
-                  :return-success "Hakemus palautettu"
-                  :empty "Sinulla ei ole hakemuksia käsiteltäväksi."}
-      :roles {:header "Valitse rooli:"
-              :names {:approver "Hyväksyjä"
-                      :reviewer "Katselmoija"
-                      :applicant "Hakija"}}
-      :applicant-info {:applicant "Hakija"}}}
+  :cart {:header "%1 kielivaraa korissa"
+         :add "Lisää koriin"
+         :remove "Poista"
+         :apply "Hae"
+         :checkout "Lähetä"}
+  :catalogue {:header "Kielivarat"}
+  :form {:save "Tallenna luonnos"
+         :optional "(ei pakollinen)"
+         :licenses "Lisenssiehdot"
+         :comment "Kommentti"
+         :add-comments "Lisää päätökseen kommentti (näkyy hakijalle)"
+         :saved "Luonnos tallennettu."
+         :submit "Lähetä hakemus"
+         :submitted "Hakemus lähetetty."
+         :back "Takaisin kielivaroihin"
+         :back-approvals "Takaisin hyväksyntiin"
+         :date "Aika"
+         :event "Tapahtuma"
+         :events "Hakemuksen tapahtumat"
+         :user "Käyttäjä"
+         :validation {:required "Kenttä \"%1\" on pakollinen."}}
+  :phases {:apply "Hae"
+           :approve "Hyväksyntä"
+           :review "Katselmointi"
+           :approved "Hyväksytty"
+           :rejected "Hylätty"}
+  :applications {:application "Hakemus"
+                 :resource "Kielivara"
+                 :user "Käyttäjä"
+                 :state "Tila"
+                 :view "Näytä"
+                 :created "Luotu"
+                 :states {:draft "Luonnos"
+                          :applied "Haettu"
+                          :approved "Hyväksytty"
+                          :rejected "Hylätty"
+                          :returned "Palautettu"
+                          :unknown "Tuntematon"}
+                 :empty "Sinulla ei ole hakemuksia."}
+  :approvals {:application "Hakemus"
+              :resource "Kielivara"
+              :applicant "Hakija"
+              :view "Näytä"
+              :created "Luotu"
+              :approve "Hyväksy"
+              :reject "Hylkää"
+              :return "Palauta hakijalle"
+              :approve-success "Hakemus hyväksytty"
+              :reject-success "Hakemus hylätty"
+              :return-success "Hakemus palautettu"
+              :empty "Sinulla ei ole hakemuksia käsiteltäväksi."}
+  :roles {:header "Valitse rooli:"
+          :names {:approver "Hyväksyjä"
+                  :reviewer "Katselmoija"
+                  :applicant "Hakija"}}
+  :applicant-info {:applicant "Hakija"}}}
