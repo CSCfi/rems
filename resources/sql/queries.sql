@@ -218,21 +218,24 @@ VALUES
 (:wfid, :appruserid, :round)
 
 -- :name get-workflow-approvers :? :*
-/*~ (when (:application params) */
 SELECT
   wfa.appruserid
+/*~ (when (:wfid params) */
+, wfa.round
+/*~ ) ~*/
 FROM workflow_approvers wfa
+/*~ (when (:application params) */
 LEFT OUTER JOIN workflow wf on wf.id = wfa.wfid
 LEFT OUTER JOIN catalogue_item cat ON cat.wfid = wf.id
 LEFT OUTER JOIN catalogue_item_application app ON app.catid = cat.id
 WHERE app.id = :application
-  AND wfa.round = :round
 /*~ ) ~*/
 /*~ (when (:wfid params) */
-SELECT wfa.appruserid, wfa.round
 FROM workflow_approvers wfa
 WHERE wfa.wfid = :wfid
-AND wfa.round = :round
+/*~ ) ~*/
+/*~ (when (:round params) */
+  AND wfa.round = :round
 /*~ ) ~*/
 
 -- :name get-workflow-reviewers :? :*
