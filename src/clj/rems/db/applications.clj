@@ -222,6 +222,10 @@
                (pr-str application) " vs. " (pr-str event)))
   (assoc application :state "returned" :curround 0))
 
+(defmethod apply-event "close"
+  [application event]
+  (assoc application :state "closed"))
+
 (defn- apply-events [application events]
   (reduce apply-event application events))
 
@@ -239,6 +243,11 @@
         [{:phase :apply :completed? true :text :t.phases/apply}
          {:phase :approve :completed? true :approved? true :text :t.phases/approve}
          {:phase :result :completed? true :approved? true :text :t.phases/approved}]
+
+        (= state "closed")
+        [{:phase :apply :closed? true :text :t.phases/apply}
+         {:phase :approve :closed? true :text :t.phases/approve}
+         {:phase :result :closed? true :text :t.phases/approved}]
 
         (contains? #{"draft" "returned"} state)
         [{:phase :apply :active? true :text :t.phases/apply}

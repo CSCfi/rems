@@ -85,6 +85,7 @@
                           :approved "Approved"
                           :rejected "Rejected"
                           :returned "Returned"
+                          :closed "Closed"
                           :unknown "Unknown"}
                  :empty "You don't have any applications."}
   :approvals {:application "Application"

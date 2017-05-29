@@ -86,6 +86,7 @@
                           :approved "Hyväksytty"
                           :rejected "Hylätty"
                           :returned "Palautettu"
+                          :closed "Suljettu"
                           :unknown "Tuntematon"}
                  :empty "Sinulla ei ole hakemuksia."}
   :approvals {:application "Hakemus"
