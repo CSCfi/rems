@@ -100,9 +100,11 @@
               :approve "Approve"
               :reject "Reject"
               :return "Return to applicant"
+              :close "Close"
               :approve-success "Application approved"
               :reject-success "Application rejected"
               :return-success "Application returned"
+              :close-success "Application closed"
               :empty "You don't have any applications to process."}
   :roles {:header "Select role:"
           :names {:approver "Approver"

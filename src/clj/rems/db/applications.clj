@@ -321,3 +321,6 @@
 
 (defn return-application [application-id round msg]
   (judge-application application-id "return" round msg))
+
+(defn close-application [application-id round msg]
+  (judge-application application-id "close" round msg))

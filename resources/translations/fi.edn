@@ -101,9 +101,11 @@
               :approve "Hyväksy"
               :reject "Hylkää"
               :return "Palauta hakijalle"
+              :close "Sulje"
               :approve-success "Hakemus hyväksytty"
               :reject-success "Hakemus hylätty"
               :return-success "Hakemus palautettu"
+              :close-success "Hakemus suljettu"
               :empty "Sinulla ei ole hakemuksia käsiteltäväksi."}
   :roles {:header "Valitse rooli:"
           :names {:approver "Hyväksyjä"

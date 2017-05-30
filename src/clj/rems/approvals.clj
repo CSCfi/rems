@@ -25,6 +25,8 @@
   {:method "post"
    :action (str "/approvals/" (:id app) "/" (:curround app))})
 
+;; TODO translate buttons
+;; TODO conflicting button name in Close
 (defn- confirm-modal [name-field action-title app]
   [:div.modal.fade {:id (str name-field "-modal") :tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
    [:div.modal-dialog {:role "document"}
@@ -60,6 +62,12 @@
      (text :t.approvals/return)]
     (confirm-modal "return" (text :t.approvals/return) app)))
 
+(defn- close-button [app]
+  (list
+    [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
+     (text :t.approvals/close)]
+    (confirm-modal "close" (text :t.approvals/close) app)))
+
 (defn- back-to-approvals-button []
   [:a.btn.btn-secondary.pull-left {:href "/approvals"} (text :t.form/back-approvals)])
 
@@ -74,6 +82,7 @@
       (back-to-approvals-button))
     (reject-button app)
     (return-button app)
+    (close-button app)
     (approve-button app)])
 
 (defn- approvals-item [app]
@@ -166,16 +175,19 @@
               action (cond (get input "approve") :approve
                            (get input "reject") :reject
                            (get input "return") :return
+                           (get input "close") :close
                            :else (errorf "Unknown action!"))
               comment (get input "comment")
               comment (when-not (empty? comment) comment)]
           (case action
             :approve (applications/approve-application id round comment)
             :reject (applications/reject-application id round comment)
-            :return (applications/return-application id round comment))
+            :return (applications/return-application id round comment)
+            :close (applications/close-application id round comment))
           (assoc (redirect "/approvals" :see-other)
                  :flash [{:status :success
                          :contents (case action
                                      :approve (text :t.approvals/approve-success)
                                      :reject (text :t.approvals/reject-success)
-                                     :return (text :t.approvals/return-success))}]))))
+                                     :return (text :t.approvals/return-success)
+                                     :close (text :t.approvals/close-success))}]))))
