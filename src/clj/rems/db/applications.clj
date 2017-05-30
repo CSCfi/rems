@@ -14,7 +14,7 @@
 ;;; Query functions
 
 (defn handled? [app]
-  (contains? #{"approved" "rejected"} (:state app)))
+  (contains? #{"approved" "rejected" "closed"} (:state app)))
 
 (defn can-approve? [application]
   (let [state (get-application-state application)
