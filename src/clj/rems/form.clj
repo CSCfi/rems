@@ -167,10 +167,9 @@
      [:div.my-3 (form-fields form)]
 
      (when-role :approver
-       (list
         (when approvable
           (approvals/approve-form (:application form)))
-        )))))
+        ))))
 
 (defn link-to-item [item]
   (str "/form/" (:id item)))
