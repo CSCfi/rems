@@ -124,30 +124,38 @@
 (defn- form-fields [form]
   (let [state (:state (:application form))
         editable (or (nil? state) (#{"draft" "returned"} state))
-        readonly (not editable)]
+        readonly (not editable)
+        withdrawable? (= "applied" state)
+        closeable? (not= "closed" state)]
     (collapsible/component "form"
                            true
                            (:title form)
-                           [:form {:method "post"
-                                   :action (if-let [app (:id (:application form))]
-                                             (str "/form/" (:catalogue-item form) "/" app "/save")
-                                             (str "/form/" (:catalogue-item form) "/save"))}
-                            (for [i (:items form)]
-                              (field (assoc i :readonly readonly)))
-                            (when-let [licenses (not-empty (:licenses form))]
-                              [:div.form-group
-                               [:h4 (text :t.form/licenses)]
-                               (for [l licenses]
-                                 (field (assoc l :readonly readonly)))])
-                            (anti-forgery-field)
-                            (when-role :applicant
-                              [:div.row
-                               [:div.col
-                                [:a.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
-                               (when editable
-                                 [:div.col.actions
-                                  [:button.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)]
-                                  [:button.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)]])])])))
+                           (list
+                            (approvals/confirm-modal "close" (text :t.approvals/close) (:application form))
+                            (approvals/confirm-modal "return" (text :t.approvals/withdraw) (:application form))
+                            [:form {:method "post"
+                                    :action (if-let [app (:id (:application form))]
+                                              (str "/form/" (:catalogue-item form) "/" app "/save")
+                                              (str "/form/" (:catalogue-item form) "/save"))}
+                             (for [i (:items form)]
+                               (field (assoc i :readonly readonly)))
+                             (when-let [licenses (not-empty (:licenses form))]
+                               [:div.form-group
+                                [:h4 (text :t.form/licenses)]
+                                (for [l licenses]
+                                  (field (assoc l :readonly readonly)))])
+                             (anti-forgery-field)
+                             (when-role :applicant
+                               [:div.row
+                                [:div.col
+                                 [:a.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
+                                (into [:div.col.actions]
+                                      [(when closeable? [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
+                                                         (text :t.approvals/close)])
+                                       (when editable [:button.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)])
+                                       (when editable [:button.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)])
+                                       (when withdrawable? [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#return-modal"} (text :t.approvals/withdraw)])
+                                       ])])]))))
 
 
 (defn- form [form]
@@ -167,9 +175,9 @@
      [:div.my-3 (form-fields form)]
 
      (when-role :approver
-        (when approvable
-          (approvals/approve-form (:application form)))
-        ))))
+       (when approvable
+         (approvals/approve-form (:application form)))
+       ))))
 
 (defn link-to-item [item]
   (str "/form/" (:id item)))

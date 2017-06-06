@@ -319,8 +319,19 @@
 (defn reject-application [application-id round msg]
   (judge-application application-id "reject" round msg))
 
+(defn- unjudge-application [application-id event round msg]
+  (let [application (get-application-state application-id)
+        applicant? (= (:applicantuserid application) (get-user-id))]
+    (when-not (or applicant? (can-approve? application-id))
+      (throw-unauthorized))
+    (let [state (get-application-state application-id)]
+      (when-not (= round (:curround state))
+        (throw-unauthorized))
+      (db/add-application-event! {:application application-id :user (get-user-id)
+                                  :round round :event event :comment msg}))))
+
 (defn return-application [application-id round msg]
-  (judge-application application-id "return" round msg))
+  (unjudge-application application-id "return" round msg))
 
 (defn close-application [application-id round msg]
-  (judge-application application-id "close" round msg))
+  (unjudge-application application-id "close" round msg))

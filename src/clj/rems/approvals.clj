@@ -8,7 +8,7 @@
             [rems.db.applications :as applications]
             [rems.guide :refer :all]
             [rems.layout :as layout]
-            [rems.role-switcher :refer [when-role]]
+            [rems.role-switcher :refer [when-role has-roles?]]
             [rems.text :refer [text]]
             [rems.util :refer [errorf]]
             [ring.util.response :refer [redirect]]))
@@ -27,7 +27,8 @@
 
 ;; TODO translate buttons
 ;; TODO conflicting button name in Close
-(defn- confirm-modal [name-field action-title app]
+;; TODO handle applicant closing (another modal or parametrization?)
+(defn confirm-modal [name-field action-title app]
   [:div.modal.fade {:id (str name-field "-modal") :tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
    [:div.modal-dialog {:role "document"}
     [:div.modal-content
@@ -35,55 +36,55 @@
       (anti-forgery-field)
       [:div.modal-header
        [:h5#confirmModalLabel.modal-title (text :t.form/add-comments)]
-       [:button.close {:type "button" :data-dismiss "modal" :aria-label "Close"}
+       [:button.close {:type "button" :data-dismiss "modal" :aria-label (text :t.approvals/cancel)}
         [:span {:aria-hidden "true"} "&times;"]]]
       [:div.modal-body
        [:div.form-group
         [:textarea.form-control {:name "comment"}]]]
       [:div.modal-footer
-       [:button.btn.btn-secondary {:data-dismiss "modal"} "Close"]
+       [:button.btn.btn-secondary {:data-dismiss "modal"} (text :t.approvals/cancel)]
        [:button.btn.btn-primary {:type "submit" :name name-field} action-title]]]]]])
 
 (defn- approve-button [app]
   (list
-    [:button.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#approve-modal"}
-     (text :t.approvals/approve)]
-    (confirm-modal "approve" (text :t.approvals/approve) app)))
+   [:button.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#approve-modal"}
+    (text :t.approvals/approve)]
+   (confirm-modal "approve" (text :t.approvals/approve) app)))
 
 (defn- reject-button [app]
   (list
-    [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#reject-modal"}
-     (text :t.approvals/reject)]
-    (confirm-modal "reject" (text :t.approvals/reject) app)))
+   [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#reject-modal"}
+    (text :t.approvals/reject)]
+   (confirm-modal "reject" (text :t.approvals/reject) app)))
 
 (defn- return-button [app]
   (list
-    [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#return-modal"}
-     (text :t.approvals/return)]
-    (confirm-modal "return" (text :t.approvals/return) app)))
+   [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#return-modal"}
+    (text :t.approvals/return)]
+   (confirm-modal "return" (text :t.approvals/return) app)))
 
 (defn- close-button [app]
   (list
-    [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
-     (text :t.approvals/close)]
-    (confirm-modal "close" (text :t.approvals/close) app)))
+   [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
+    (text :t.approvals/close)]
+   (confirm-modal "close" (text :t.approvals/close) app)))
 
 (defn- back-to-approvals-button []
   [:a.btn.btn-secondary.pull-left {:href "/approvals"} (text :t.form/back-approvals)])
 
 (defn approve-buttons [app]
-   [:div.form-actions.inline
-    (reject-button app)
-    (approve-button app)])
+  [:div.form-actions.inline
+   (reject-button app)
+   (approve-button app)])
 
 (defn approve-form [app]
-   [:div.actions
-    (when-role :approver
-      (back-to-approvals-button))
-    (reject-button app)
-    (return-button app)
-    (close-button app)
-    (approve-button app)])
+  [:div.actions
+   (when-role :approver
+     (back-to-approvals-button))
+   (reject-button app)
+   (return-button app)
+   (close-button app)
+   (approve-button app)])
 
 (defn- approvals-item [app]
   [:tr.approval
@@ -166,6 +167,7 @@
                             (text :t.approvals/handled-approvals)
                             (handled-approvals))]]))
 
+;; TODO handle closing when no draft or anything saved yet
 (defroutes approvals-routes
   (GET "/approvals" [] (approvals-page))
   (POST "/approvals/:id/:round" [id round :as request]
@@ -184,10 +186,11 @@
             :reject (applications/reject-application id round comment)
             :return (applications/return-application id round comment)
             :close (applications/close-application id round comment))
-          (assoc (redirect "/approvals" :see-other)
+          (assoc (redirect (if (has-roles? :approver) "/approvals" "/applications") :see-other)
                  :flash [{:status :success
-                         :contents (case action
-                                     :approve (text :t.approvals/approve-success)
-                                     :reject (text :t.approvals/reject-success)
-                                     :return (text :t.approvals/return-success)
-                                     :close (text :t.approvals/close-success))}]))))
+                          :contents (case action
+                                      :approve (text :t.approvals/approve-success)
+                                      :reject (text :t.approvals/reject-success)
+                                      :return (text :t.approvals/return-success)
+                                      :close (text :t.approvals/close-success))}]))
+        ))
