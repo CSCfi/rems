@@ -29,10 +29,10 @@
 
 (defn- get-applications-impl [query-params]
   (doall
-   (for [a (db/get-applications query-params)]
-     (assoc (get-application-state (:id a))
+   (for [app (db/get-applications query-params)]
+     (assoc (get-application-state (:id app))
             :catalogue-item
-            (get-in (get-localized-catalogue-item {:id (:catid a)})
+            (get-in (get-localized-catalogue-item {:id (:catid app)})
                     [:localizations context/*lang*])))))
 
 
