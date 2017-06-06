@@ -123,8 +123,8 @@
 
 (defn- form-fields [form]
   (let [state (:state (:application form))
-        editable (or (nil? state) (#{"draft" "returned"} state))
-        readonly (not editable)
+        editable? (or (nil? state) (#{"draft" "returned"} state))
+        readonly? (not editable?)
         withdrawable? (= "applied" state)
         closeable? (not= "closed" state)]
     (collapsible/component "form"
@@ -138,12 +138,12 @@
                                               (str "/form/" (:catalogue-item form) "/" app "/save")
                                               (str "/form/" (:catalogue-item form) "/save"))}
                              (for [i (:items form)]
-                               (field (assoc i :readonly readonly)))
+                               (field (assoc i :readonly readonly?)))
                              (when-let [licenses (not-empty (:licenses form))]
                                [:div.form-group
                                 [:h4 (text :t.form/licenses)]
                                 (for [l licenses]
-                                  (field (assoc l :readonly readonly)))])
+                                  (field (assoc l :readonly readonly?)))])
                              (anti-forgery-field)
                              (when-role :applicant
                                [:div.row
@@ -152,8 +152,8 @@
                                 (into [:div.col.actions]
                                       [(when closeable? [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
                                                          (text :t.approvals/close)])
-                                       (when editable [:button.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)])
-                                       (when editable [:button.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)])
+                                       (when editable? [:button.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)])
+                                       (when editable? [:button.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)])
                                        (when withdrawable? [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#return-modal"} (text :t.approvals/withdraw)])
                                        ])])]))))
 
