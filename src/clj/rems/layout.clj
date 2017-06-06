@@ -59,7 +59,7 @@
    [:div.container [:nav.navbar [:div.navbar-text (text :t/footer)]]]])
 
 (defn- logo []
-  [:div.logo [:div.img]])
+  [:div.logo [:div.container.img]])
 
 (defn- flash-message [{status :status contents :contents}]
   [:div.alert
