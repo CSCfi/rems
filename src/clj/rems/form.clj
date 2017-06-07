@@ -123,7 +123,7 @@
 
 (defn- form-fields [form]
   (let [state (:state (:application form))
-        editable? (or (nil? state) (#{"draft" "returned"} state))
+        editable? (or (nil? state) (#{"draft" "returned" "withdrawn"} state))
         readonly? (not editable?)
         withdrawable? (= "applied" state)
         closeable? (not= "closed" state)]
@@ -132,7 +132,7 @@
                            (:title form)
                            (list
                             (approvals/confirm-modal "close" (text :t.approvals/close) (:application form))
-                            (approvals/confirm-modal "return" (text :t.approvals/withdraw) (:application form))
+                            (approvals/confirm-modal "withdraw" (text :t.approvals/withdraw) (:application form))
                             [:form {:method "post"
                                     :action (if-let [app (:id (:application form))]
                                               (str "/form/" (:catalogue-item form) "/" app "/save")
@@ -154,7 +154,7 @@
                                                          (text :t.approvals/close)])
                                        (when editable? [:button.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)])
                                        (when editable? [:button.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)])
-                                       (when withdrawable? [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#return-modal"} (text :t.approvals/withdraw)])
+                                       (when withdrawable? [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#withdraw-modal"} (text :t.approvals/withdraw)])
                                        ])])]))))
 
 

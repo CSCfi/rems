@@ -86,6 +86,7 @@
                           :approved "Hyväksytty"
                           :rejected "Hylätty"
                           :returned "Palautettu"
+                          :withdrawn "Vedetty takaisin"
                           :closed "Suljettu"
                           :unknown "Tuntematon"}
                  :empty "Sinulla ei ole hakemuksia."}
@@ -108,7 +109,7 @@
               :reject-success "Hakemus hylätty"
               :return-success "Hakemus palautettu"
               :close-success "Hakemus suljettu"
-              :withdraw-success "Hakemus peruttu"
+              :withdraw-success "Hakemus vedetty takaisin"
               :empty "Sinulla ei ole hakemuksia käsiteltäväksi."}
   :roles {:header "Valitse rooli:"
           :names {:approver "Hyväksyjä"

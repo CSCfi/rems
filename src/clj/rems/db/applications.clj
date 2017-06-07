@@ -180,7 +180,7 @@
 
 (defmethod apply-event "apply"
   [application event]
-  (assert (#{"draft" "returned"} (:state application))
+  (assert (#{"draft" "returned" "withdrawn"} (:state application))
           (str "Can't submit application " (pr-str application)))
   (assert (= (:round event) 0)
           (str "Apply event should have round 0" (pr-str event)))
@@ -222,6 +222,15 @@
                (pr-str application) " vs. " (pr-str event)))
   (assoc application :state "returned" :curround 0))
 
+(defmethod apply-event "withdraw"
+  [application event]
+  (assert (= (:state application) "applied")
+          (str "Can't withdraw application " (pr-str application)))
+  (assert (= (:curround application) (:round event))
+          (str "Application and withdrawal rounds don't match: "
+               (pr-str application) " vs. " (pr-str event)))
+  (assoc application :state "withdrawn" :curround 0))
+
 (defmethod apply-event "close"
   [application event]
   (assoc application :state "closed"))
@@ -249,7 +258,7 @@
          {:phase :approve :closed? true :text :t.phases/approve}
          {:phase :result :closed? true :text :t.phases/approved}]
 
-        (contains? #{"draft" "returned"} state)
+        (contains? #{"draft" "returned" "withdrawn"} state)
         [{:phase :apply :active? true :text :t.phases/apply}
          {:phase :approve :text :t.phases/approve}
          {:phase :result :text :t.phases/approved}]
@@ -297,7 +306,7 @@
         uid (get-user-id)]
     (when-not (= uid (:applicantuserid application))
       (throw-unauthorized))
-    (when-not (#{"draft" "returned"} (:state application))
+    (when-not (#{"draft" "returned" "withdrawn"} (:state application))
       (throw-unauthorized))
     (db/add-application-event! {:application application-id :user uid
                                 :round 0 :event "apply" :comment nil})
@@ -319,7 +328,14 @@
 (defn reject-application [application-id round msg]
   (judge-application application-id "reject" round msg))
 
-(defn- unjudge-application [application-id event round msg]
+(defn return-application [application-id round msg]
+  (judge-application application-id "return" round msg))
+
+;; TODO better name
+;; TODO consider refactoring together with judge
+(defn- unjudge-application
+  "Action handling for both approver and applicant."
+  [application-id event round msg]
   (let [application (get-application-state application-id)
         applicant? (= (:applicantuserid application) (get-user-id))]
     (when-not (or applicant? (can-approve? application-id))
@@ -330,8 +346,8 @@
       (db/add-application-event! {:application application-id :user (get-user-id)
                                   :round round :event event :comment msg}))))
 
-(defn return-application [application-id round msg]
-  (unjudge-application application-id "return" round msg))
+(defn withdraw-application [application-id round msg]
+  (unjudge-application application-id "withdraw" round msg))
 
 (defn close-application [application-id round msg]
   (unjudge-application application-id "close" round msg))

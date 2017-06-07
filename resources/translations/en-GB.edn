@@ -85,6 +85,7 @@
                           :approved "Approved"
                           :rejected "Rejected"
                           :returned "Returned"
+                          :withdrawn "Withdrawn"
                           :closed "Closed"
                           :unknown "Unknown"}
                  :empty "You don't have any applications."}

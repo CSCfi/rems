@@ -12,6 +12,7 @@
     "approved" :t.applications.states/approved
     "rejected" :t.applications.states/rejected
     "returned" :t.applications.states/returned
+    "withdrawn" :t.applications.states/withdrawn
     "closed" :t.applications.states/closed
     :t.applications.states/unknown))
 

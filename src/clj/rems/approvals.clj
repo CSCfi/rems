@@ -177,6 +177,7 @@
               action (cond (get input "approve") :approve
                            (get input "reject") :reject
                            (get input "return") :return
+                           (get input "withdraw") :withdraw
                            (get input "close") :close
                            :else (errorf "Unknown action!"))
               comment (get input "comment")
@@ -185,6 +186,7 @@
             :approve (applications/approve-application id round comment)
             :reject (applications/reject-application id round comment)
             :return (applications/return-application id round comment)
+            :withdraw (applications/withdraw-application id round comment)
             :close (applications/close-application id round comment))
           (assoc (redirect (if (has-roles? :approver) "/approvals" "/applications") :see-other)
                  :flash [{:status :success
@@ -192,5 +194,6 @@
                                       :approve (text :t.approvals/approve-success)
                                       :reject (text :t.approvals/reject-success)
                                       :return (text :t.approvals/return-success)
+                                      :withdraw (text :t.approvals/withdraw-success)
                                       :close (text :t.approvals/close-success))}]))
         ))

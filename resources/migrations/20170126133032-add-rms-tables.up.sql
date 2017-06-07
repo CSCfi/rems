@@ -14,10 +14,11 @@ CREATE TYPE application_event_type AS ENUM (
   'autoapprove', -- like approve but when there are no approvers for the round
   'reject',  -- applied --> rejected
   'return',   -- applied --> returned
+  'withdraw',   -- applied --> withdrawn
   'close'   -- any --> closed
 );
 --;;
-CREATE TYPE application_state AS ENUM ('applied','approved','rejected','returned','closed','draft','onhold');
+CREATE TYPE application_state AS ENUM ('applied','approved','rejected','returned','withdrawn','closed','draft','onhold');
 --;;
 CREATE TYPE item_state AS ENUM ('disabled','enabled','copied');
 --;;
