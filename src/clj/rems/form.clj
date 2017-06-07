@@ -155,12 +155,13 @@
                                        (when editable? [:button.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)])
                                        (when editable? [:button.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)])
                                        (when withdrawable? [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#withdraw-modal"} (text :t.approvals/withdraw)])
-                                       ])])]))))
+                                       ])])
+                             ]))))
 
 
 (defn- form [form]
   (let [state (:state (:application form))
-        approvable (= state "applied")
+        approvable? (= state "applied")
         events (get-in form [:application :events])
         user-attributes (or (:applicant-attributes form) context/*user*)]
     (list
@@ -174,9 +175,14 @@
 
      [:div.my-3 (form-fields form)]
 
+     ;; TODO resource owner should be able to close
+
      (when-role :approver
-       (when approvable
-         (approvals/approve-form (:application form)))
+       (if approvable?
+         (approvals/approve-form (:application form))
+         [:div.row
+          [:div.col.actions
+           (approvals/back-to-approvals-button)]])
        ))))
 
 (defn link-to-item [item]

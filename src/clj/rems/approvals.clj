@@ -69,7 +69,7 @@
     (text :t.approvals/close)]
    (confirm-modal "close" (text :t.approvals/close) app)))
 
-(defn- back-to-approvals-button []
+(defn back-to-approvals-button []
   [:a.btn.btn-secondary.pull-left {:href "/approvals"} (text :t.form/back-approvals)])
 
 (defn approve-buttons [app]
@@ -81,9 +81,9 @@
   [:div.actions
    (when-role :approver
      (back-to-approvals-button))
+   (close-button app)
    (reject-button app)
    (return-button app)
-   (close-button app)
    (approve-button app)])
 
 (defn- approvals-item [app]
