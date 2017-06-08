@@ -439,6 +439,9 @@
           (is (thrown? Exception (applications/approve-application app 0 ""))
               "Should not be able to approve draft")
 
+          (is (thrown? Exception (applications/withdraw-application app))
+              "Should not be able to withdraw draft")
+
           (binding [context/*user* {"eppn" "event-test-approver"}]
             (is (thrown? Exception (applications/submit-application app))
                 "Should not be able to submit when not applicant"))
@@ -456,6 +459,13 @@
           (is (thrown? Exception (applications/approve-application app 1 ""))
               "Should not be able to approve wrong round")
 
+          (testing "withdrawing and resubmitting"
+            (applications/withdraw-application app 0 "test withdraw")
+            (is (= (fetch app) {:curround 0 :state "withdrawn"}))
+
+            (applications/submit-application app)
+            (is (= (fetch app) {:curround 0 :state "applied"})))
+
           (applications/approve-application app 0 "c1")
           (is (= (fetch app) {:curround 1 :state "applied"}))
 
@@ -470,6 +480,8 @@
                       :events
                       (map #(select-keys % [:round :event :comment])))
                  [{:round 0 :event "apply" :comment nil}
+                  {:round 0 :event "withdraw" :comment "test withdraw"}
+                  {:round 0 :event "apply" :comment nil}
                   {:round 0 :event "approve" :comment "c1"}
                   {:round 1 :event "approve" :comment "c2"}]))))
 
