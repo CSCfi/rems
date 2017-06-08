@@ -60,6 +60,7 @@
          :licenses "Lisenssiehdot"
          :comment "Kommentti"
          :add-comments "Lisää päätökseen kommentti (näkyy hakijalle)"
+         :add-comments-applicant "Lisää päätökseen kommentti"
          :saved "Luonnos tallennettu."
          :submit "Lähetä hakemus"
          :submitted "Hakemus lähetetty."

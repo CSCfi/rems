@@ -59,6 +59,7 @@
          :licenses "Licenses"
          :comment "Comment"
          :add-comments "Add comment to the decision (shown to applicant)"
+         :add-comments-applicant "Add comment to the decision"
          :saved "Draft saved."
          :submit "Send application"
          :submitted "Application submitted."

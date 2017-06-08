@@ -35,7 +35,7 @@
      [:form (approve-form-attrs app)
       (anti-forgery-field)
       [:div.modal-header
-       [:h5#confirmModalLabel.modal-title (text :t.form/add-comments)]
+       [:h5#confirmModalLabel.modal-title (if (has-roles? :approver) (text :t.form/add-comments) (text :t.form/add-comments-applicant))]
        [:button.close {:type "button" :data-dismiss "modal" :aria-label (text :t.approvals/cancel)}
         [:span {:aria-hidden "true"} "&times;"]]]
       [:div.modal-body
