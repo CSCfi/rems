@@ -427,6 +427,18 @@ ul.comments {
   list-style-type: none;
 }
 
+.inline-comment {
+  font-size: 1rem;
+}
+
+p.inline-comment:last-child {
+  margin-bottom: 0;
+}
+
+.inline-comment-content {
+  display: inline-block;
+}
+
 .license-panel {
   display: inline-block;
   width: inherit;
@@ -454,13 +466,13 @@ ul.comments {
   margin-top: 3px; /* hax for opening misalignment */
 }
 
-.collapse-wrapper .clickable .card-title:after {
+.collapse-wrapper .clickable .card-title:before {
   font-family: 'FontAwesome';
   float: right;
   content: "\f068";
 }
 
-.collapse-wrapper .clickable .card-title.collapsed:after {
+.collapse-wrapper .clickable .card-title.collapsed:before {
   content: "\f067";
 }
 

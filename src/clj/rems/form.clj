@@ -103,7 +103,8 @@
      (collapsible/component
       "events"
       false
-      (str (text :t.applications/state) ": " (text (applications/localize-state state)))
+      [:span (text :t.applications/state) ": " (text (applications/localize-state state))
+       (when-let [c (:comment (last events))] [:p.inline-comment [:br] (text :t.form/comment) ": " [:span.inline-comment-content] c])]
       (when (seq events)
         (list
          [:h4 (text :t.form/events)]
