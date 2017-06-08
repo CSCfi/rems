@@ -513,9 +513,19 @@
 
       (testing "closing"
         (let [app (applications/create-new-draft item)]
+          (applications/close-application app 0 "closing draft")
+          (is (= (fetch app) {:curround 0 :state "closed"})))
+        (let [app (applications/create-new-draft item)]
           (applications/submit-application app)
-          (applications/close-application app 0 "closing comment")
-          (is (= (fetch app) {:curround 0 :state "closed"}))))
+          (applications/close-application app 0 "closing applied")
+          (is (= (fetch app) {:curround 0 :state "closed"})))
+        (let [app (applications/create-new-draft item)]
+          (applications/submit-application app)
+          (applications/approve-application app 0 "c1")
+          (binding [context/*user* {"eppn" "event-test-approver"}]
+            (applications/approve-application app 1 "c2"))
+          (applications/close-application app 1 "closing approved")
+          (is (= (fetch app) {:curround 1 :state "closed"}))))
 
       (testing "autoapprove"
         (let [auto-wf (:id (db/create-workflow! {:modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 1}))
