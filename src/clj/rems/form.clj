@@ -324,7 +324,7 @@
    (example "field of unsupported type"
             [:form
              (field {:type "unsupported" :title "Title" :inputprompt "prompt"})])
-   (example "partially filled form"
+   (example "form, partially filled"
             (form {:title "Form title"
                    :application {:id 17 :state "draft"}
                    :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
@@ -335,9 +335,22 @@
                                :textcontent lipsum}
                               {:type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
                                :approved true}]}))
-   (example "applied form"
+   (example "form, applied"
             (form {:title "Form title"
                    :application {:id 17 :state "applied"}
+                   :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
+                           {:type "label" :title "Please input your wishes below."}
+                           {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2" :value "def"}
+                           {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]
+                   :licenses [{:type "license" :title "A Text License" :licensetype "text" :id 3
+                               :textcontent lipsum}
+                              {:type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
+                               :approved true}]
+                   :comments [{:comment "a comment"}]}))
+
+   (example "form, approved"
+            (form {:title "Form title"
+                   :application {:id 17 :state "approved" :events [{:comment "Looking good, approved!"}]}
                    :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
                            {:type "label" :title "Please input your wishes below."}
                            {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2" :value "def"}
