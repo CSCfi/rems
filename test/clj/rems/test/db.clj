@@ -511,6 +511,12 @@
           (applications/submit-application app)
           (is (= (fetch app) {:curround 0 :state "applied"}))))
 
+      (testing "closing"
+        (let [app (applications/create-new-draft item)]
+          (applications/submit-application app)
+          (applications/close-application app 0 "closing comment")
+          (is (= (fetch app) {:curround 0 :state "closed"}))))
+
       (testing "autoapprove"
         (let [auto-wf (:id (db/create-workflow! {:modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 1}))
               auto-item (:id (db/create-catalogue-item! {:title "A" :form nil :resid nil :wfid auto-wf}))
