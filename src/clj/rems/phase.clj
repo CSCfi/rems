@@ -13,7 +13,7 @@
                                    (when (:rejected? phase) "rejected ")
                                    (when (:completed? phase) "completed ")
                                    (when (:returned? phase) "returned ")
-                                   (when (:closed? phase) "cloased "))}
+                                   (when (:closed? phase) "closed "))}
            [:span (cond (:rejected? phase)  [:i.fa.fa-times]
                         (:completed? phase) [:i.fa.fa-check])
             (if (:text phase)
