@@ -127,7 +127,9 @@
         editable? (or (nil? state) (#{"draft" "returned" "withdrawn"} state))
         readonly? (not editable?)
         withdrawable? (= "applied" state)
-        closeable? (not= "closed" state)]
+        closeable? (and
+                     (not (nil? state))
+                     (not= "closed" state))]
     (collapsible/component "form"
                            true
                            (:title form)
