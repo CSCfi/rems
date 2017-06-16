@@ -60,6 +60,7 @@
          :licenses "Lisenssiehdot"
          :comment "Kommentti"
          :add-comments "Lisää päätökseen kommentti (näkyy hakijalle)"
+         :add-comments-applicant "Lisää päätökseen kommentti"
          :saved "Luonnos tallennettu."
          :submit "Lähetä hakemus"
          :submitted "Hakemus lähetetty."
@@ -86,6 +87,8 @@
                           :approved "Hyväksytty"
                           :rejected "Hylätty"
                           :returned "Palautettu"
+                          :withdrawn "Vedetty takaisin"
+                          :closed "Suljettu"
                           :unknown "Tuntematon"}
                  :empty "Sinulla ei ole hakemuksia."}
   :approvals {:application "Hakemus"
@@ -100,9 +103,14 @@
               :approve "Hyväksy"
               :reject "Hylkää"
               :return "Palauta hakijalle"
+              :close "Sulje"
+              :cancel "Peruuta"
+              :withdraw "Vedä takaisin"
               :approve-success "Hakemus hyväksytty"
               :reject-success "Hakemus hylätty"
               :return-success "Hakemus palautettu"
+              :close-success "Hakemus suljettu"
+              :withdraw-success "Hakemus vedetty takaisin"
               :empty "Sinulla ei ole hakemuksia käsiteltäväksi."}
   :roles {:header "Valitse rooli:"
           :names {:approver "Hyväksyjä"

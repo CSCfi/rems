@@ -103,7 +103,8 @@
      (collapsible/component
       "events"
       false
-      (str (text :t.applications/state) ": " (text (applications/localize-state state)))
+      [:span (text :t.applications/state) ": " (text (applications/localize-state state))
+       (when-let [c (:comment (last events))] [:p.inline-comment [:br] (text :t.form/comment) ": " [:span.inline-comment-content] c])]
       (when (seq events)
         (list
          [:h4 (text :t.form/events)]
@@ -123,36 +124,47 @@
 
 (defn- form-fields [form]
   (let [state (:state (:application form))
-        editable (or (nil? state) (#{"draft" "returned"} state))
-        readonly (not editable)]
+        editable? (or (nil? state) (#{"draft" "returned" "withdrawn"} state))
+        readonly? (not editable?)
+        withdrawable? (= "applied" state)
+        closeable? (and
+                     (not (nil? state))
+                     (not= "closed" state))]
     (collapsible/component "form"
                            true
                            (:title form)
-                           [:form {:method "post"
-                                   :action (if-let [app (:id (:application form))]
-                                             (str "/form/" (:catalogue-item form) "/" app "/save")
-                                             (str "/form/" (:catalogue-item form) "/save"))}
-                            (for [i (:items form)]
-                              (field (assoc i :readonly readonly)))
-                            (when-let [licenses (not-empty (:licenses form))]
-                              [:div.form-group
-                               [:h4 (text :t.form/licenses)]
-                               (for [l licenses]
-                                 (field (assoc l :readonly readonly)))])
-                            (anti-forgery-field)
-                            (when-role :applicant
-                              [:div.row
-                               [:div.col
-                                [:a.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
-                               (when editable
-                                 [:div.col.actions
-                                  [:button.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)]
-                                  [:button.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)]])])])))
+                           (list
+                            (approvals/confirm-modal "close" (text :t.approvals/close) (:application form))
+                            (approvals/confirm-modal "withdraw" (text :t.approvals/withdraw) (:application form))
+                            [:form {:method "post"
+                                    :action (if-let [app (:id (:application form))]
+                                              (str "/form/" (:catalogue-item form) "/" app "/save")
+                                              (str "/form/" (:catalogue-item form) "/save"))}
+                             (for [i (:items form)]
+                               (field (assoc i :readonly readonly?)))
+                             (when-let [licenses (not-empty (:licenses form))]
+                               [:div.form-group
+                                [:h4 (text :t.form/licenses)]
+                                (for [l licenses]
+                                  (field (assoc l :readonly readonly?)))])
+                             (anti-forgery-field)
+                             (when-role :applicant
+                               [:div.row
+                                [:div.col
+                                 [:a.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
+                                (into [:div.col.actions]
+                                      [(when closeable? [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
+                                                         (text :t.approvals/close)])
+                                       (when editable? [:button.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)])
+                                       (when editable? [:button.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)])
+                                       (when withdrawable? [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#withdraw-modal"} (text :t.approvals/withdraw)])
+                                       ])])
+                             ]))))
 
 
 (defn- form [form]
   (let [state (:state (:application form))
-        approvable (= state "applied")
+        approvable? (= state "applied")
         events (get-in form [:application :events])
         user-attributes (or (:applicant-attributes form) context/*user*)]
     (list
@@ -166,11 +178,15 @@
 
      [:div.my-3 (form-fields form)]
 
+     ;; TODO resource owner should be able to close
+
      (when-role :approver
-       (list
-        (when approvable
-          (approvals/approve-form (:application form)))
-        )))))
+       (if approvable?
+         (approvals/approve-form (:application form))
+         [:div.row
+          [:div.col.actions
+           (approvals/back-to-approvals-button)]])
+       ))))
 
 (defn link-to-item [item]
   (str "/form/" (:id item)))
@@ -310,7 +326,7 @@
    (example "field of unsupported type"
             [:form
              (field {:type "unsupported" :title "Title" :inputprompt "prompt"})])
-   (example "partially filled form"
+   (example "form, partially filled"
             (form {:title "Form title"
                    :application {:id 17 :state "draft"}
                    :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
@@ -321,9 +337,22 @@
                                :textcontent lipsum}
                               {:type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
                                :approved true}]}))
-   (example "applied form"
+   (example "form, applied"
             (form {:title "Form title"
                    :application {:id 17 :state "applied"}
+                   :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
+                           {:type "label" :title "Please input your wishes below."}
+                           {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2" :value "def"}
+                           {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]
+                   :licenses [{:type "license" :title "A Text License" :licensetype "text" :id 3
+                               :textcontent lipsum}
+                              {:type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
+                               :approved true}]
+                   :comments [{:comment "a comment"}]}))
+
+   (example "form, approved"
+            (form {:title "Form title"
+                   :application {:id 17 :state "approved" :events [{:comment "Looking good, approved!"}]}
                    :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
                            {:type "label" :title "Please input your wishes below."}
                            {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2" :value "def"}

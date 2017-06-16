@@ -13,6 +13,9 @@
 
 ;;; Query functions
 
+(defn handled? [app]
+  (contains? #{"approved" "rejected" "returned" "closed"} (:state app)))
+
 (defn can-approve? [application]
   (let [state (get-application-state application)
         round (:curround state)]
@@ -26,10 +29,10 @@
 
 (defn- get-applications-impl [query-params]
   (doall
-   (for [a (db/get-applications query-params)]
-     (assoc (get-application-state (:id a))
+   (for [app (db/get-applications query-params)]
+     (assoc (get-application-state (:id app))
             :catalogue-item
-            (get-in (get-localized-catalogue-item {:id (:catid a)})
+            (get-in (get-localized-catalogue-item {:id (:catid app)})
                     [:localizations context/*lang*])))))
 
 
@@ -44,7 +47,7 @@
 (defn get-handled-approvals []
   (->> (get-applications-impl {})
        (filterv (fn [app] (is-approver? (:id app))))
-       (filterv (fn [app] (contains? #{"approved" "rejected"} (:state app))))
+       (filterv handled?)
        (mapv (fn [app]
                (let [my-events (filter #(= (get-user-id) (:userid %))
                                        (:events app))]
@@ -177,7 +180,7 @@
 
 (defmethod apply-event "apply"
   [application event]
-  (assert (#{"draft" "returned"} (:state application))
+  (assert (#{"draft" "returned" "withdrawn"} (:state application))
           (str "Can't submit application " (pr-str application)))
   (assert (= (:round event) 0)
           (str "Apply event should have round 0" (pr-str event)))
@@ -219,6 +222,19 @@
                (pr-str application) " vs. " (pr-str event)))
   (assoc application :state "returned" :curround 0))
 
+(defmethod apply-event "withdraw"
+  [application event]
+  (assert (= (:state application) "applied")
+          (str "Can't withdraw application " (pr-str application)))
+  (assert (= (:curround application) (:round event))
+          (str "Application and withdrawal rounds don't match: "
+               (pr-str application) " vs. " (pr-str event)))
+  (assoc application :state "withdrawn" :curround 0))
+
+(defmethod apply-event "close"
+  [application event]
+  (assoc application :state "closed"))
+
 (defn- apply-events [application events]
   (reduce apply-event application events))
 
@@ -237,7 +253,12 @@
          {:phase :approve :completed? true :approved? true :text :t.phases/approve}
          {:phase :result :completed? true :approved? true :text :t.phases/approved}]
 
-        (contains? #{"draft" "returned"} state)
+        (= state "closed")
+        [{:phase :apply :closed? true :text :t.phases/apply}
+         {:phase :approve :closed? true :text :t.phases/approve}
+         {:phase :result :closed? true :text :t.phases/approved}]
+
+        (contains? #{"draft" "returned" "withdrawn"} state)
         [{:phase :apply :active? true :text :t.phases/apply}
          {:phase :approve :text :t.phases/approve}
          {:phase :result :text :t.phases/approved}]
@@ -285,7 +306,7 @@
         uid (get-user-id)]
     (when-not (= uid (:applicantuserid application))
       (throw-unauthorized))
-    (when-not (#{"draft" "returned"} (:state application))
+    (when-not (#{"draft" "returned" "withdrawn"} (:state application))
       (throw-unauthorized))
     (db/add-application-event! {:application application-id :user uid
                                 :round 0 :event "apply" :comment nil})
@@ -309,3 +330,24 @@
 
 (defn return-application [application-id round msg]
   (judge-application application-id "return" round msg))
+
+;; TODO better name
+;; TODO consider refactoring together with judge
+(defn- unjudge-application
+  "Action handling for both approver and applicant."
+  [application-id event round msg]
+  (let [application (get-application-state application-id)
+        applicant? (= (:applicantuserid application) (get-user-id))]
+    (when-not (or applicant? (can-approve? application-id))
+      (throw-unauthorized))
+    (let [state (get-application-state application-id)]
+      (when-not (= round (:curround state))
+        (throw-unauthorized))
+      (db/add-application-event! {:application application-id :user (get-user-id)
+                                  :round round :event event :comment msg}))))
+
+(defn withdraw-application [application-id round msg]
+  (unjudge-application application-id "withdraw" round msg))
+
+(defn close-application [application-id round msg]
+  (unjudge-application application-id "close" round msg))

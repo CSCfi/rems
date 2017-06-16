@@ -59,6 +59,7 @@
          :licenses "Licenses"
          :comment "Comment"
          :add-comments "Add comment to the decision (shown to applicant)"
+         :add-comments-applicant "Add comment to the decision"
          :saved "Draft saved."
          :submit "Send application"
          :submitted "Application submitted."
@@ -85,6 +86,8 @@
                           :approved "Approved"
                           :rejected "Rejected"
                           :returned "Returned"
+                          :withdrawn "Withdrawn"
+                          :closed "Closed"
                           :unknown "Unknown"}
                  :empty "You don't have any applications."}
   :approvals {:application "Application"
@@ -99,9 +102,14 @@
               :approve "Approve"
               :reject "Reject"
               :return "Return to applicant"
+              :close "Close"
+              :cancel "Cancel"
+              :withdraw "Withdraw"
               :approve-success "Application approved"
               :reject-success "Application rejected"
               :return-success "Application returned"
+              :close-success "Application closed"
+              :withdraw-success "Application withdrawn"
               :empty "You don't have any applications to process."}
   :roles {:header "Select role:"
           :names {:approver "Approver"
