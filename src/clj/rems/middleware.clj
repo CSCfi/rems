@@ -5,7 +5,7 @@
             [buddy.auth.middleware :refer [wrap-authentication
                                            wrap-authorization]]
             [clojure.tools.logging :as log]
-            [rems.auth.backend :refer [authz-backend shibbo-backend]]
+            [haka-buddy.backend :refer [authz-backend shibbo-backend]]
             [rems.cart :refer [get-cart-from-session]]
             [rems.config :refer [env]]
             [rems.context :as context]
@@ -107,7 +107,7 @@
   [handler]
   (let [authentication (if (:fake-shibboleth +defaults+)
                          (session-backend)
-                         (shibbo-backend))
+                         (shibbo-backend env))
         authorization (if (:fake-shibboleth +defaults+)
                         authentication
                         (authz-backend))]
