@@ -111,7 +111,13 @@
               :return-success "Hakemus palautettu"
               :close-success "Hakemus suljettu"
               :withdraw-success "Hakemus vedetty takaisin"
-              :empty "Sinulla ei ole hakemuksia käsiteltäväksi."}
+              :empty "Sinulla ei ole hakemuksia käsiteltäväksi."
+              :export-pdf "Lataa PDF"
+              :load-application-states "Lataa hakemusten tilat"
+              :view-rights "Näytä käyttöoikeudet"
+              :show-publications "Näytä julkaisut"
+              :show-throughput-times "Näytä läpimenoajat"
+              :not-implemented "Ei vielä toteutettu"}
   :roles {:header "Valitse rooli:"
           :names {:approver "Hyväksyjä"
                   :reviewer "Katselmoija"
