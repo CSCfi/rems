@@ -25,9 +25,6 @@
   {:method "post"
    :action (str "/approvals/" (:id app) "/" (:curround app))})
 
-;; TODO translate buttons
-;; TODO conflicting button name in Close
-;; TODO handle applicant closing (another modal or parametrization?)
 (defn confirm-modal [name-field action-title app]
   [:div.modal.fade {:id (str name-field "-modal") :tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
    [:div.modal-dialog {:role "document"}
