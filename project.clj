@@ -20,6 +20,8 @@
                  [luminus/ring-ttl-session "0.3.2" :exclusions [ring/ring-core]]
                  [macroz/hiccup-find "0.5.0" :exclusions [org.clojure/clojurescript]]
                  [markdown-clj "0.9.98"]
+                 [metosin/compojure-api "1.1.10"]
+                 [metosin/muuntaja "0.2.1"]
                  [metosin/ring-http-response "0.9.0"]
                  [mount "0.1.11"]
                  [org.clojure/clojure "1.8.0"]

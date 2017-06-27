@@ -8,7 +8,8 @@
             [rems.middleware :as middleware]
             [rems.routes.fake-shibboleth :refer [fake-shibboleth-routes]]
             [rems.routes.guide :refer [guide-routes]]
-            [rems.routes.home :refer [public-routes secured-routes]]))
+            [rems.routes.home :refer [public-routes secured-routes]]
+            [rems.routes.services :refer [service-routes]]))
 
 (mount/defstate init-app
   :start ((or (:init +defaults+) identity))
@@ -39,7 +40,8 @@
 (def normal-routes
   (routes
    #'public-routes
-   (wrap-routes #'secured-routes middleware/wrap-restricted)))
+   (wrap-routes #'secured-routes middleware/wrap-restricted)
+   #'service-routes))
 
 (def never-match-route
   (constantly nil))
