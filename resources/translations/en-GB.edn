@@ -110,7 +110,13 @@
               :return-success "Application returned"
               :close-success "Application closed"
               :withdraw-success "Application withdrawn"
-              :empty "You don't have any applications to process."}
+              :empty "You don't have any applications to process."
+              :export-pdf "Export PDF"
+              :load-application-states "Load application states"
+              :view-rights "View rights"
+              :show-publications "Show publications"
+              :show-throughput-times "Show throughput times"
+              :not-implemented "Not implemented yet"}
   :roles {:header "Select role:"
           :names {:approver "Approver"
                   :reviewer "Reviewer"

@@ -25,9 +25,6 @@
   {:method "post"
    :action (str "/approvals/" (:id app) "/" (:curround app))})
 
-;; TODO translate buttons
-;; TODO conflicting button name in Close
-;; TODO handle applicant closing (another modal or parametrization?)
 (defn confirm-modal [name-field action-title app]
   [:div.modal.fade {:id (str name-field "-modal") :tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
    [:div.modal-dialog {:role "document"}
@@ -44,6 +41,18 @@
       [:div.modal-footer
        [:button.btn.btn-secondary {:data-dismiss "modal"} (text :t.approvals/cancel)]
        [:button.btn.btn-primary {:type "submit" :name name-field} action-title]]]]]])
+
+(defn not-implemented-modal [name-field action-title]
+  [:div.modal.fade {:id (str name-field "-modal") :tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
+   [:div.modal-dialog {:role "document"}
+    [:div.modal-content
+     [:div.modal-header
+      [:h5#confirmModalLabel.modal-title (text :t.approvals/not-implemented) " " action-title]
+      [:button.close {:type "button" :data-dismiss "modal" :aria-label (text :t.approvals/cancel)}
+       [:span {:aria-hidden "true"} "&times;"]]]
+     [:div.modal-footer
+      [:button.btn.btn-secondary {:data-dismiss "modal"} (text :t.approvals/cancel)]
+      ]]]])
 
 (defn- approve-button [app]
   (list
@@ -77,6 +86,43 @@
    (reject-button app)
    (approve-button app)])
 
+(defn- export-pdf-button [app]
+  (list
+   [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#not-implemented-export-pdf-modal"}
+    (text :t.approvals/export-pdf)]
+   (not-implemented-modal "not-implemented-export-pdf" (text :t.approvals/export-pdf))))
+
+(defn- load-application-states-button []
+  (list
+   [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#load-application-states-modal"}
+    (text :t.approvals/load-application-states)]
+   (not-implemented-modal "load-application-states" (text :t.approvals/load-application-states))))
+
+(defn- view-rights-button []
+  (list
+   [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#view-rights-modal"}
+    (text :t.approvals/view-rights)]
+   (not-implemented-modal "view-rights" (text :t.approvals/view-rights))))
+
+(defn- show-publications-button []
+  (list
+   [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#show-publications-modal"}
+    (text :t.approvals/show-publications)]
+   (not-implemented-modal "show-publications" (text :t.approvals/show-publications))))
+
+(defn- show-throughput-times-button []
+  (list
+   [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#show-throughput-times-modal"}
+    (text :t.approvals/show-throughput-times)]
+   (not-implemented-modal "show-throughput-times" (text :t.approvals/show-throughput-times))))
+
+(defn report-buttons []
+  [:div.form-actions.inline
+   (load-application-states-button)
+   (view-rights-button)
+   (show-publications-button)
+   (show-throughput-times-button)])
+
 (defn approve-form [app]
   [:div.actions
    (when-role :approver
@@ -104,7 +150,8 @@
    [:td {:data-th (text :t.approvals/state)} (text (localize-state (:state app)))]
    [:td {:data-th (text :t.approvals/handled)} (format/unparse time-format (:handled app))]
    [:td.actions
-    (view-button app)]])
+    (view-button app)
+    (export-pdf-button app)]])
 
 (defn approvals
   ([]
@@ -128,16 +175,19 @@
   ([apps]
    (if (empty? apps)
      nil
-     [:table.rems-table.approvals
-      [:tr
-       [:th (text :t.approvals/application)]
-       [:th (text :t.approvals/resource)]
-       [:th (text :t.approvals/applicant)]
-       [:th (text :t.approvals/state)]
-       [:th (text :t.approvals/handled)]
-       [:th]]
-      (for [app (sort-by :handled apps)]
-        (handled-approvals-item app))])))
+     (list
+      (report-buttons)
+      [:table.rems-table.approvals
+       [:tr
+        [:th (text :t.approvals/application)]
+        [:th (text :t.approvals/resource)]
+        [:th (text :t.approvals/applicant)]
+        [:th (text :t.approvals/state)]
+        [:th (text :t.approvals/handled)]
+        [:th]]
+       (for [app (sort-by :handled apps)]
+         (handled-approvals-item app))
+       ]))))
 
 (defn guide
   []
