@@ -1,7 +1,31 @@
 (ns rems.routes.services
   (:require [ring.util.http-response :refer :all]
             [compojure.api.sweet :refer :all]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [rems.db.applications :refer [get-draft-id-for
+                                          get-form-for]]))
+
+(def License {:id Long
+              :type s/Str
+              :licensetype s/Str
+              :title s/Str
+              :textcontent s/Str
+              :approved s/Bool})
+
+(def Item {:id Long
+           :title s/Str
+           :inputprompt (s/maybe s/Str)
+           :optional s/Bool
+           :type s/Str
+           :value (s/maybe s/Str)})
+
+(def Form {:id Long
+           :catalogue-item Long
+           :applicant-attributes s/Any
+           :application (s/maybe Long)
+           :licenses [License]
+           :title s/Str
+           :items [Item]})
 
 (defapi service-routes
   {:swagger {:ui "/swagger-ui"
@@ -11,34 +35,19 @@
                            :description "Sample Services"}}}}
 
   (context "/api" []
-    :tags ["thingie"]
+           :tags ["form"]
 
-    (GET "/plus" []
-      :return       Long
-      :query-params [x :- Long, {y :- Long 1}]
-      :summary      "x+y with query-parameters. y defaults to 1."
-      (ok (+ x y)))
+           (GET "/form/:id" []
+                :return       Form
+                :path-params [id :- Long]
+                :summary      "Form for a draft"
+                (ok (let [app (get-draft-id-for id)]
+                      (get-form-for id app))))
 
-    (POST "/minus" []
-      :return      Long
-      :body-params [x :- Long, y :- Long]
-      :summary     "x-y with body-parameters."
-      (ok (- x y)))
-
-    (GET "/times/:x/:y" []
-      :return      Long
-      :path-params [x :- Long, y :- Long]
-      :summary     "x*y with path-parameters"
-      (ok (* x y)))
-
-    (POST "/divide" []
-      :return      Double
-      :form-params [x :- Long, y :- Long]
-      :summary     "x/y with form-parameters"
-      (ok (/ x y)))
-
-    (GET "/power" []
-      :return      Long
-      :header-params [x :- Long, y :- Long]
-      :summary     "x^y with header-parameters"
-      (ok (long (Math/pow x y))))))
+           (GET "/form/:id/:application" []
+                :return       Form
+                :path-params [id :- Long, application :- Long]
+                :summary      "Form for an application"
+                (ok (let [app (get-draft-id-for id)]
+                      (get-form-for id app))))
+           ))
