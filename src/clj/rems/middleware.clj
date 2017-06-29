@@ -107,7 +107,7 @@
   [handler]
   (let [authentication (if (:fake-shibboleth +defaults+)
                          (session-backend)
-                         (shibbo-backend env))
+                         (shibbo-backend))
         authorization (if (:fake-shibboleth +defaults+)
                         authentication
                         (authz-backend))]
