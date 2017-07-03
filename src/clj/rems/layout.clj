@@ -79,7 +79,8 @@
           (include-css "/assets/font-awesome/css/font-awesome.min.css")
           (include-css "/css/screen.css")
           [:body
-           [:div.container nav]
+           [:div.fixed-top
+            [:div.container nav]]
            (logo)
            [:div.container message]
            [:div.container.main-content content]

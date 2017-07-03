@@ -44,6 +44,12 @@ body {
   min-height: 100%;
   display: flex;
   flex-direction: column;
+  padding-top: 56px;
+}
+
+.fixed-top {
+  background-color: #fff;
+  border-bottom: 1px solid #CAD2E6;
 }
 
 .main-content {
