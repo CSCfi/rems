@@ -11,7 +11,7 @@
                  ;;TODO: updating conman 0.6.3 -> 0.6.4 or luminus-migrations 0.3.0 -> 0.3.3 breaks tests
                  [conman "0.6.3"]
                  [cprop "0.1.10"]
-                 [haka-buddy "0.1.0"]
+                 [haka-buddy "0.2.0"]
                  [hiccup "1.0.5"]
                  [hickory "0.7.1" :exclusions [org.clojure/clojurescript]]
                  [luminus-jetty "0.1.4" :exclusions [org.clojure/tools.reader]]
