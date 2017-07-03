@@ -356,6 +356,10 @@ form.inline .btn-link, .form-actions.inline .btn-link {
   margin-left: 0.5rem;
 }
 
+.role-switcher {
+  margin-right: 1rem;
+}
+
 .role-switcher form {
   margin-left: 0.5rem;
 }
