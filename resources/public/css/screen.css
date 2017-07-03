@@ -50,6 +50,7 @@ body {
 .fixed-top {
   background-color: #fff;
   border-bottom: 1px solid #CAD2E6;
+  min-height: 56px;
 }
 
 .main-content {
@@ -248,6 +249,12 @@ footer {
   background-color: #8a9dca;
 }
 
+/* Has to be defined before the following media queries */
+.language-switcher, .role-switcher {
+  padding: .5em 0;
+}
+
+
 @media (max-width: 480px) {
   .rems-table.cart tr {
     border-bottom: none;
@@ -273,6 +280,10 @@ footer {
 
   .rems-table th, .rems-table td {
     display: table-cell;
+  }
+
+  .language-switcher, .role-switcher {
+    padding: .5em .5em;
   }
 }
 
@@ -354,10 +365,6 @@ form.inline .btn-link, .form-actions.inline .btn-link {
 
 .language-switcher form + form {
   margin-left: 0.5rem;
-}
-
-.role-switcher {
-  margin-right: 1rem;
 }
 
 .role-switcher form {

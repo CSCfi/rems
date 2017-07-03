@@ -40,7 +40,7 @@
       (nav-link "/" (text :t.navigation/home) (= page-name "home")))
     (nav-link "/about" (text :t.navigation/about) (= page-name "about"))]
    (role-switcher)
-   [:div.navbar-text (language-switcher)]])
+   (language-switcher)])
 
 (defn- navbar
   [page-name user]
