@@ -59,8 +59,8 @@
 
 (defn wrap-formats [handler]
   (let [wrapped (wrap-restful-format
-                  handler
-                  {:formats [:json-kw :transit-json :transit-msgpack]})]
+                 handler
+                 {:formats [:json-kw :transit-json :transit-msgpack]})]
     (fn [request]
       ;; disable wrap-formats for websockets
       ;; since they're not compatible with this middleware
@@ -68,8 +68,8 @@
 
 (defn on-unauthorized-error [request response]
   (error-page
-    {:status 403
-     :title (str "Access to " (:uri request) " is not authorized")}))
+   {:status 403
+    :title (str "Access to " (:uri request) " is not authorized")}))
 
 (defn wrap-restricted [handler]
   (restrict handler {:handler authenticated?
@@ -112,8 +112,8 @@
                         authentication
                         (authz-backend))]
     (-> (fn [request]
-            (binding [context/*user* (:identity request)]
-              (handler request)))
+          (binding [context/*user* (:identity request)]
+            (handler request)))
         (wrap-authentication authentication)
         (wrap-authorization authorization))))
 
