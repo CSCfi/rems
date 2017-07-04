@@ -16,6 +16,7 @@
             [rems.locales :refer [tconfig]]
             [rems.util :refer [get-user-id]]
             [ring-ttl-session.core :refer [ttl-memory-store]]
+            [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
             [ring.middleware.defaults :refer [site-defaults
                                               wrap-defaults]]
             [ring.middleware.format :refer [wrap-restful-format]]
@@ -136,9 +137,22 @@
                   (or (get-in response [:headers "Location"]) ""))
         response))))
 
+;; TODO proper API key handling
+(defn valid-api-key? [key]
+  (= "42" key))
+
+(defn wrap-csrf
+  "Custom wrapper for CSRF so that the API requests with valid `x-rems-api-key` don't need to provide CSRF token."
+  [handler]
+  (let [csrf-handler (wrap-anti-forgery handler)]
+    (fn [request]
+      (if (valid-api-key? (get-in request [:headers "x-rems-api-key"]))
+        (handler request)
+        (csrf-handler request)))))
+
 (def +wrap-defaults-settings+
   (-> site-defaults
-      (assoc-in [:security :anti-forgery] true)
+      (assoc-in [:security :anti-forgery] false)
       (assoc-in [:session :store] (ttl-memory-store (* 60 30)))
       (assoc-in [:session :flash] true)))
 
@@ -150,6 +164,7 @@
       wrap-context
       wrap-auth
       wrap-webjars
+      wrap-csrf
       (wrap-defaults +wrap-defaults-settings+)
       wrap-internal-error
       wrap-formats))
