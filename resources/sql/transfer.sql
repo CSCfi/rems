@@ -28,7 +28,6 @@ AS IMPLICIT;
 
 -- data created by the app that might reference data we want to clear
 DELETE FROM public.application_text_values CASCADE;
-DELETE FROM public.catalogue_item_application_state CASCADE;
 DELETE FROM public.catalogue_item_application CASCADE;
 
 -- clear existing data
