@@ -6,8 +6,6 @@ CREATE TYPE license_status AS ENUM ('approved','rejected');
 --;;
 CREATE TYPE license_state AS ENUM ('created','approved','rejected');
 --;;
-CREATE TYPE reviewers_state AS ENUM ('created','commented');
---;;
 CREATE TYPE application_event_type AS ENUM (
   'apply',   -- draft or returned --> applied
   'approve', -- applied --> applied or approved
