@@ -23,20 +23,26 @@
 
 (def Form {:id Long
            :catalogue-item Long
-           :applicant-attributes s/Any
+           :applicant-attributes {s/Str s/Str}
            :application s/Any
            :licenses [License]
            :title s/Str
            :items [Item]})
 
-(def Field {:name s/Str
-            :value s/Str})
+(def ValidationError s/Str)
 
 (def SaveFormRequest {:operation s/Str
                       (s/optional-key :application-id) Long
-                      :fields [Field]})
+                      :fields {s/Keyword s/Str}}) ;; NOTE: compojure-api only supports keywords here
 
-(def SaveFormResponse {:success s/Bool})
+(def SaveFormResponse {:success s/Bool
+                       :valid s/Bool
+                       (s/optional-key :validation) [ValidationError]})
+
+(defn fix-fields-keys [form]
+  (update-in form [:fields] (fn [m]
+                              (into {} (for [[k v] m]
+                                         [(Long/parseLong (name k)) v])))))
 
 (defapi service-routes
   {:swagger {:ui "/swagger-ui"
@@ -66,5 +72,5 @@
                 :path-params [resource-id :- Long]
                 :body        [form SaveFormRequest]
                 :return      SaveFormResponse
-                (ok (form/form-save resource-id form)))
+                (ok (form/form-save resource-id (fix-fields-keys form))))
            ))

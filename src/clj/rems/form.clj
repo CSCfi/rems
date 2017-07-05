@@ -25,6 +25,7 @@
 (def ^:private time-format (format/formatter "yyyy-MM-dd HH:mm"
                                              (time/default-time-zone)))
 
+;; TODO remove id-to-name when no more forms submitted by SPA
 (defn- id-to-name [id]
   (str "field" id))
 
@@ -128,8 +129,8 @@
         readonly? (not editable?)
         withdrawable? (= "applied" state)
         closeable? (and
-                     (not (nil? state))
-                     (not= "closed" state))]
+                    (not (nil? state))
+                    (not= "closed" state))]
     (collapsible/component "form"
                            true
                            (:title form)
@@ -223,7 +224,7 @@
   [resource-id application-id input]
   (let [form (get-form-for resource-id)]
     (doseq [{item-id :id :as item} (:items form)]
-      (when-let [value (get input (id-to-name item-id))]
+      (when-let [value (get input item-id (get input (id-to-name item-id)))]
         (db/save-field-value! {:application application-id
                                :form (:id form)
                                :item item-id
@@ -251,8 +252,8 @@
   (let [{:keys [application-id fields operation]
          :or {application-id (create-new-draft resource-id)}}
         form]
-    #_(save-fields resource-id application-id input)
-    #_(save-licenses resource-id application-id input)
+    (save-fields resource-id application-id (:fields form))
+    (save-licenses resource-id application-id (:licences form))
     (let [submit? (= operation "send")
           validation (validate (get-form-for resource-id application-id))
           valid? (= :valid validation)
@@ -268,13 +269,12 @@
                   :else ;; invalid draft
                   [{:status :success :contents (text :t.form/saved)}
                    {:status :info :contents (format-validation-messages validation)}])]
-      #_(when perform-submit?
+      (when perform-submit?
         (submit-application application-id))
-      #_(->
-       (redirect-to-application resource-id application-id)
-       (assoc :flash flash)
-       (assoc :session (update session :cart disj resource-id)))
-      {:success true})))
+      (cond-> {:success (or (not submit?) perform-submit?)
+               :valid valid?}
+          (not valid?) (assoc :validation validation))
+      )))
 
 (defn- save [{params :params input :form-params session :session}]
   (let [resource-id (Long/parseLong (get params :id))

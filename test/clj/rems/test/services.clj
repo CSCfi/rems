@@ -23,8 +23,8 @@
                          (assoc-in [:headers "x-rems-user-id"] user-id)
                          (content-type "application/json")
                          (body (generate-string {:operation "send"
-                                                 :fields []}))
+                                                 :fields [{:id "field2" :value "ensimmäinen"}]}))
                          app)
             cmd-response (parse-stream (clojure.java.io/reader (:body response)) true)]
         (is (:success cmd-response)))
-        )))
+      )))
