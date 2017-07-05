@@ -247,6 +247,35 @@
 (defn- redirect-to-application [resource-id application-id]
   (redirect (str "/form/" resource-id "/" application-id) :see-other))
 
+(defn form-save [resource-id form]
+  (let [{:keys [application-id fields operation]
+         :or {application-id (create-new-draft resource-id)}}
+        form]
+    #_(save-fields resource-id application-id input)
+    #_(save-licenses resource-id application-id input)
+    (let [submit? (= operation "send")
+          validation (validate (get-form-for resource-id application-id))
+          valid? (= :valid validation)
+          perform-submit? (and submit? valid?)
+          flash (cond
+                  perform-submit? ;; valid submit
+                  [{:status :success :contents (text :t.form/submitted)}]
+                  submit? ;; invalid submit
+                  [{:status :warning :contents (text :t.form/saved)}
+                   {:status :warning :contents (format-validation-messages validation)}]
+                  valid? ;; valid draft
+                  [{:status :success :contents (text :t.form/saved)}]
+                  :else ;; invalid draft
+                  [{:status :success :contents (text :t.form/saved)}
+                   {:status :info :contents (format-validation-messages validation)}])]
+      #_(when perform-submit?
+        (submit-application application-id))
+      #_(->
+       (redirect-to-application resource-id application-id)
+       (assoc :flash flash)
+       (assoc :session (update session :cart disj resource-id)))
+      {:success true})))
+
 (defn- save [{params :params input :form-params session :session}]
   (let [resource-id (Long/parseLong (get params :id))
         application-id (if-let [s (get params :application)]

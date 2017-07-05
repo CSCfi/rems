@@ -36,12 +36,29 @@
     ;; instead
     (:app-context env)))
 
-(defn wrap-context [handler]
+(defn wrap-webapp-context
+  "Wraps context with data specific to the webapp usage. I.e. not things needed by REST service or SPA."
+  [handler]
   (fn [request]
     (binding [context/*root-path* (calculate-root-path request)
               context/*cart* (get-cart-from-session request)
-              context/*flash* (:flash request)
-              context/*roles* (when context/*user*
+              context/*flash* (:flash request)]
+      (handler request))))
+
+;; TODO handle using API-key and representing someone
+(defn wrap-service-context
+  "Wraps context with data specific to the service usage. I.e. things needed by REST service or SPA."
+  [handler]
+  (fn [request]
+    (if (and (:uri request) (.startsWith (:uri request) "/api"))
+      (binding [context/*lang* (get-in request [:params :lang])
+                context/*user* {"eppn" (get-in request [:headers "x-rems-user-id"])}]
+        (handler request))
+      (handler request))))
+
+(defn wrap-context [handler]
+  (fn [request]
+    (binding [context/*roles* (when context/*user*
                                 (roles/get-roles (get-user-id)))
               context/*active-role* (when context/*user*
                                       (roles/get-active-role (get-user-id)))]
@@ -162,6 +179,8 @@
       wrap-logging
       wrap-i18n
       wrap-context
+      wrap-webapp-context
+      wrap-service-context
       wrap-auth
       wrap-webjars
       wrap-csrf

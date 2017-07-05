@@ -3,7 +3,9 @@
             [compojure.api.sweet :refer :all]
             [schema.core :as s]
             [rems.db.applications :refer [get-draft-id-for
-                                          get-form-for]]))
+                                          get-form-for]]
+            [rems.form :as form]
+            [rems.context :as context]))
 
 (def License {:id Long
               :type s/Str
@@ -22,10 +24,19 @@
 (def Form {:id Long
            :catalogue-item Long
            :applicant-attributes s/Any
-           :application (s/maybe Long)
+           :application s/Any
            :licenses [License]
            :title s/Str
            :items [Item]})
+
+(def Field {:name s/Str
+            :value s/Str})
+
+(def SaveFormRequest {:operation s/Str
+                      (s/optional-key :application-id) Long
+                      :fields [Field]})
+
+(def SaveFormResponse {:success s/Bool})
 
 (defapi service-routes
   {:swagger {:ui "/swagger-ui"
@@ -37,17 +48,23 @@
   (context "/api" []
            :tags ["form"]
 
-           (GET "/form/:id" []
-                :return       Form
-                :path-params [id :- Long]
-                :summary      "Form for a draft"
-                (ok (let [app (get-draft-id-for id)]
-                      (get-form-for id app))))
+           (GET "/form/:resource-id" []
+                :summary     "Form for a draft"
+                :path-params [resource-id :- Long]
+                :return      Form
+                (let [app (get-draft-id-for resource-id)]
+                  (ok (get-form-for resource-id app))))
 
-           (GET "/form/:id/:application" []
-                :return       Form
-                :path-params [id :- Long, application :- Long]
-                :summary      "Form for an application"
-                (ok (let [app (get-draft-id-for id)]
-                      (get-form-for id app))))
+           (GET "/form/:resource-id/:application-id" []
+                :summary     "Form for an application"
+                :path-params [resource-id :- Long, application-id :- Long]
+                :return      Form
+                (ok (get-form-for resource-id application-id)))
+
+           (PUT "/form/:resource-id" []
+                :summary     "Save a form"
+                :path-params [resource-id :- Long]
+                :body        [form SaveFormRequest]
+                :return      SaveFormResponse
+                (ok (form/form-save resource-id form)))
            ))
