@@ -22,8 +22,6 @@ CREATE TYPE application_state AS ENUM ('applied','approved','rejected','returned
 --;;
 CREATE TYPE item_state AS ENUM ('disabled','enabled','copied');
 --;;
-CREATE TYPE prefix_state AS ENUM ('applied','approved','denied');
---;;
 CREATE TYPE license_type AS ENUM ('text','attachment','link');
 --;;
 CREATE TABLE resource_prefix (
@@ -319,88 +317,6 @@ CREATE TABLE resource_licenses (
   endt timestamp NULL DEFAULT NULL,
   CONSTRAINT resource_licenses_ibfk_1 FOREIGN KEY (resId) REFERENCES resource (id),
   CONSTRAINT resource_licenses_ibfk_2 FOREIGN KEY (licId) REFERENCES license (id)
-);
---;;
-CREATE TABLE resource_prefix_allow_members (
-  id serial NOT NULL PRIMARY KEY,
-  rsPrId integer DEFAULT NULL,
-  enabled bit(1) DEFAULT NULL,
-  modifierUserId varchar(255) NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT resource_prefix_allow_members_ibfk_1 FOREIGN KEY (rsPrId) REFERENCES resource_prefix (id)
-);
---;;
-CREATE TABLE resource_prefix_allow_updates (
-  id serial NOT NULL PRIMARY KEY,
-  rsPrId integer DEFAULT NULL,
-  enabled bit(1) DEFAULT NULL,
-  modifierUserId varchar(255) NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT resource_prefix_allow_updates_ibfk_1 FOREIGN KEY (rsPrId) REFERENCES resource_prefix (id)
-);
---;;
-CREATE TABLE resource_prefix_application (
-  id serial NOT NULL PRIMARY KEY,
-  rsPrId integer DEFAULT NULL,
-  application varchar(2048) DEFAULT NULL,
-  modifierUserId varchar(255) NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT resource_prefix_application_ibfk_1 FOREIGN KEY (rsPrId) REFERENCES resource_prefix (id)
-);
---;;
-CREATE TABLE resource_prefix_certificates (
-  id serial NOT NULL PRIMARY KEY,
-  rsPrId integer DEFAULT NULL,
-  subjectDn varchar(256) DEFAULT NULL,
-  base64content varchar(16384) DEFAULT NULL,
-  modifierUserId varchar(255) NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT resource_prefix_certificates_ibfk_1 FOREIGN KEY (rsPrId) REFERENCES resource_prefix (id)
-);
---;;
-CREATE TABLE resource_prefix_default_form (
-  id serial NOT NULL PRIMARY KEY,
-  rsPrId integer DEFAULT NULL,
-  metaFormId integer DEFAULT NULL,
-  modifierUserId varchar(255) NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT resource_prefix_default_form_ibfk_1 FOREIGN KEY (rsPrId) REFERENCES resource_prefix (id),
-  CONSTRAINT resource_prefix_default_form_ibfk_2 FOREIGN KEY (metaFormId) REFERENCES application_form_meta (id)
-);
---;;
-CREATE TABLE resource_prefix_owners (
-  id serial NOT NULL PRIMARY KEY,
-  rsPrId integer DEFAULT NULL,
-  ownerUserId varchar(255) NOT NULL,
-  modifierUserId varchar(255) NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT resource_prefix_owners_ibfk_1 FOREIGN KEY (rsPrId) REFERENCES resource_prefix (id)
-);
---;;
-CREATE TABLE resource_prefix_reporters (
-  id serial NOT NULL PRIMARY KEY,
-  rsPrId integer DEFAULT NULL,
-  reporterUserId varchar(255) NOT NULL,
-  modifierUserId varchar(255) NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT resource_prefix_reporters_ibfk_1 FOREIGN KEY (rsPrId) REFERENCES resource_prefix (id)
-);
---;;
-CREATE TABLE resource_prefix_state (
-  id serial NOT NULL PRIMARY KEY,
-  rsPrId integer DEFAULT NULL,
-  modifierUserId varchar(255) NOT NULL,
-  state prefix_state NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT resource_prefix_state_ibfk_1 FOREIGN KEY (rsPrId) REFERENCES resource_prefix (id)
 );
 --;;
 CREATE TABLE resource_refresh_period (
