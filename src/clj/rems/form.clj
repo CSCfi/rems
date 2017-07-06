@@ -10,6 +10,7 @@
             [rems.db.applications :refer [create-new-draft
                                           get-application-phases
                                           get-draft-id-for get-form-for
+                                          get-application-state
                                           submit-application]]
             [rems.db.core :as db]
             [rems.guide :refer :all]
@@ -249,20 +250,22 @@
   (redirect (str "/form/" resource-id "/" application-id) :see-other))
 
 (defn form-save [resource-id form]
-  (let [{:keys [application-id items licenses operation]
-         :or {application-id (create-new-draft resource-id)}}
-        form]
+  (let [{:keys [application-id items licenses operation]} form
+        application-id (or application-id (create-new-draft resource-id))]
     (save-fields resource-id application-id items)
     (save-licenses resource-id application-id licenses)
     (let [submit? (= operation "send")
           validation (validate (get-form-for resource-id application-id))
           valid? (= :valid validation)
-          perform-submit? (and submit? valid?)]
+          perform-submit? (and submit? valid?)
+          success? (or (not submit?) perform-submit?)]
       (when perform-submit?
         (submit-application application-id))
-      (cond-> {:success (or (not submit?) perform-submit?)
+      (cond-> {:success success?
                :valid valid?}
-          (not valid?) (assoc :validation validation))
+        (not valid?) (assoc :validation validation)
+        success? (assoc :id application-id
+                        :state (:state (get-application-state application-id))))
       )))
 
 (defn- save [{params :params input :form-params session :session}]

@@ -5,7 +5,8 @@
             [rems.db.applications :refer [get-draft-id-for
                                           get-form-for]]
             [rems.form :as form]
-            [rems.context :as context]))
+            [rems.context :as context])
+  (:import (org.joda.time DateTime)))
 
 (def License
   {:id Long
@@ -23,11 +24,24 @@
    :type s/Str
    :value (s/maybe s/Str)})
 
+(def Event Long)
+
 (def Application
+  {:id Long
+   :state s/Str
+   :catid Long
+   :applicantuserid s/Str
+   :start DateTime
+   :wfid Long
+   :curround Long
+   :fnlround Long
+   :events [Event]})
+
+(def GetApplicationResponse
   {:id Long
    :catalogue-item Long
    :applicant-attributes {s/Str s/Str}
-   :application s/Any
+   :application Application
    :licenses [License]
    :title s/Str
    :items [Item]})
@@ -43,6 +57,8 @@
 (def SaveApplicationResponse
   {:success s/Bool
    :valid s/Bool
+   (s/optional-key :id) Long
+   (s/optional-key :state) s/Str
    (s/optional-key :validation) [ValidationError]})
 
 (defn fix-items-keys [application]
@@ -63,16 +79,16 @@
            :tags ["application"]
 
            (GET "/application/:resource-id" []
-                :summary     "Get application by resource-id"
+                :summary     "Get application draft by resource-id"
                 :path-params [resource-id :- Long]
-                :return      Application
+                :return      GetApplicationResponse
                 (let [app (get-draft-id-for resource-id)]
                   (ok (get-form-for resource-id app))))
 
            (GET "/application/:resource-id/:application-id" []
                 :summary     "Get application by resource-id and application-id"
                 :path-params [resource-id :- Long, application-id :- Long]
-                :return      Application
+                :return      GetApplicationResponse
                 (ok (get-form-for resource-id application-id)))
 
            (PUT "/application/:resource-id" []

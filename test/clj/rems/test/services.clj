@@ -20,40 +20,43 @@
 
 (deftest service-application-test
   (let [api-key "42"
-        user-id "alice"]
+        user-id "alice"
+        resource-id 2]
     (testing "saving application"
-      (let [response (-> (request :put "/api/application/2")
+      (let [response (-> (request :put (str "/api/application/" resource-id))
                          (authenticate api-key user-id)
                          (json {:operation "save"
-                                :fields {2 "ensimmäinen"}})
+                                :items {2 "ensimmäinen"}})
                          app)
             cmd-response (read-body response)
             application-id (:id cmd-response)]
+        (println "application-id" application-id)
         (is (:success cmd-response))
-        (is (= :draft (:state cmd-response)))
+        (is (= "draft" (:state cmd-response)))
         (is (not (:valid cmd-response)))
         (is (= ["Field \"Additional Information\" is required."]
                (:validation cmd-response)))
-        ))
-    (testing "retrieving application"
-      (let [response (-> (request :get "/api/application/2")
-                         (authenticate api-key user-id)
-                         app)
-            application (read-body response)]
-        (is (= 2 (:id application)))
-        (is (= :draft (:state application)))
-        (is (empty? (:licenses application)))
-        (is (= 2 (count (:items application))))
-        ))
-    (testing "sending application"
-      (let [response (-> (request :put "/api/application/2")
-                         (authenticate api-key user-id)
-                         (json {:operation "send"
-                                :fields {2 "ensimmäinen"
-                                         8 "second"}})
-                         app)
-            cmd-response (read-body response)]
-        (is (= :applied (:state cmd-response)))
-        (is (:success cmd-response))
-        (is (:valid cmd-response))
-        ))))
+        (testing "retrieving application"
+          (let [response (-> (request :get (str "/api/application/" resource-id "/" application-id))
+                             (authenticate api-key user-id)
+                             app)
+                application (read-body response)]
+            (is (= 2 (:id application)))
+            (is (= "draft" (:state (:application application))))
+            (is (empty? (:licenses application)))
+            (is (= 2 (count (:items application))))
+            ))
+        (testing "sending application"
+          (let [response (-> (request :put (str "/api/application/" resource-id))
+                             (authenticate api-key user-id)
+                             (json {:operation "send"
+                                    :application-id application-id
+                                    :items {2 "ensimmäinen"
+                                            8 "second"}})
+                             app)
+                cmd-response (read-body response)]
+            (is (= application-id (:id cmd-response)))
+            (is (= "applied" (:state cmd-response)))
+            (is (:success cmd-response))
+            (is (:valid cmd-response))
+            ))))))
