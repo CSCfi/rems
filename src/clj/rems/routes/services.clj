@@ -40,7 +40,7 @@
 (def GetApplicationResponse
   {:id Long
    :catalogue-item Long
-   :applicant-attributes {s/Str s/Str}
+   :applicant-attributes (s/maybe {s/Str s/Str})
    :application Application
    :licenses [License]
    :title s/Str
@@ -52,6 +52,7 @@
   {:operation s/Str
    (s/optional-key :application-id) Long
    :items {s/Keyword s/Str}  ;; NOTE: compojure-api only supports keywords here
+   (s/optional-key :licenses) {s/Keyword s/Str}  ;; NOTE: compojure-api only supports keywords here
    })
 
 (def SaveApplicationResponse
@@ -61,12 +62,14 @@
    (s/optional-key :state) s/Str
    (s/optional-key :validation) [ValidationError]})
 
-(defn fix-items-keys [application]
-  (update-in application
-             [:items]
-             (fn [m]
-               (into {} (for [[k v] m]
-                          [(Long/parseLong (name k)) v])))))
+(defn longify-keys [m]
+  (into {} (for [[k v] m]
+             [(Long/parseLong (name k)) v])))
+
+(defn fix-keys [application]
+  (-> application
+      (update-in [:items] longify-keys)
+      (update-in [:licenses] longify-keys)))
 
 (defapi service-routes
   {:swagger {:ui "/swagger-ui"
@@ -96,5 +99,5 @@
                 :path-params [resource-id :- Long]
                 :body        [request SaveApplicationRequest]
                 :return      SaveApplicationResponse
-                (ok (form/form-save resource-id (fix-items-keys request))))
+                (ok (form/form-save resource-id (fix-keys request))))
            ))

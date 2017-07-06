@@ -236,7 +236,7 @@
   [resource-id application-id input]
   (let [form (get-form-for resource-id)]
     (doseq [{licid :id :as license} (:licenses form)]
-      (if-let [state (get input (str "license" licid))]
+      (if-let [state (get input licid (get input (str "license" licid)))]
         (db/save-license-approval! {:catappid application-id
                                     :round 0
                                     :licid licid
