@@ -5,26 +5,55 @@
             [rems.handler :refer :all]
             [ring.mock.request :refer :all]))
 
-(deftest form-service-test
+(defn authenticate [request api-key user-id]
+  (-> request
+      (assoc-in [:headers "x-rems-api-key"] api-key)
+      (assoc-in [:headers "x-rems-user-id"] user-id)))
+
+(defn json [request m]
+  (-> request
+      (content-type "application/json")
+      (body (generate-string m))))
+
+(defn read-body [response]
+  (parse-stream (clojure.java.io/reader (:body response)) true))
+
+(deftest service-application-test
   (let [api-key "42"
         user-id "alice"]
-    (testing "retrieving form"
-      (let [response (-> (request :get "/api/form/2")
-                         (assoc-in [:headers "x-rems-api-key"] api-key)
-                         (assoc-in [:headers "x-rems-user-id"] user-id)
+    (testing "saving application"
+      (let [response (-> (request :put "/api/application/2")
+                         (authenticate api-key user-id)
+                         (json {:operation "save"
+                                :fields {2 "ensimmäinen"}})
                          app)
-            form (parse-stream (clojure.java.io/reader (:body response)) true)]
-        (is (= 2 (:id form)))
-        (is (empty? (:licenses form)))
-        (is (= 2 (count (:items form))))))
-    (testing "sending form"
-      (let [response (-> (request :put "/api/form/2")
-                         (assoc-in [:headers "x-rems-api-key"] api-key)
-                         (assoc-in [:headers "x-rems-user-id"] user-id)
-                         (content-type "application/json")
-                         (body (generate-string {:operation "send"
-                                                 :fields [{:id "field2" :value "ensimmäinen"}]}))
+            cmd-response (read-body response)
+            application-id (:id cmd-response)]
+        (is (:success cmd-response))
+        (is (= :draft (:state cmd-response)))
+        (is (not (:valid cmd-response)))
+        (is (= ["Field \"Additional Information\" is required."]
+               (:validation cmd-response)))
+        ))
+    (testing "retrieving application"
+      (let [response (-> (request :get "/api/application/2")
+                         (authenticate api-key user-id)
                          app)
-            cmd-response (parse-stream (clojure.java.io/reader (:body response)) true)]
-        (is (:success cmd-response)))
-      )))
+            application (read-body response)]
+        (is (= 2 (:id application)))
+        (is (= :draft (:state application)))
+        (is (empty? (:licenses application)))
+        (is (= 2 (count (:items application))))
+        ))
+    (testing "sending application"
+      (let [response (-> (request :put "/api/application/2")
+                         (authenticate api-key user-id)
+                         (json {:operation "send"
+                                :fields {2 "ensimmäinen"
+                                         8 "second"}})
+                         app)
+            cmd-response (read-body response)]
+        (is (= :applied (:state cmd-response)))
+        (is (:success cmd-response))
+        (is (:valid cmd-response))
+        ))))

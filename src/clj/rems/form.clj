@@ -249,26 +249,15 @@
   (redirect (str "/form/" resource-id "/" application-id) :see-other))
 
 (defn form-save [resource-id form]
-  (let [{:keys [application-id fields operation]
+  (let [{:keys [application-id items licenses operation]
          :or {application-id (create-new-draft resource-id)}}
         form]
-    (save-fields resource-id application-id (:fields form))
-    (save-licenses resource-id application-id (:licences form))
+    (save-fields resource-id application-id items)
+    (save-licenses resource-id application-id licenses)
     (let [submit? (= operation "send")
           validation (validate (get-form-for resource-id application-id))
           valid? (= :valid validation)
-          perform-submit? (and submit? valid?)
-          flash (cond
-                  perform-submit? ;; valid submit
-                  [{:status :success :contents (text :t.form/submitted)}]
-                  submit? ;; invalid submit
-                  [{:status :warning :contents (text :t.form/saved)}
-                   {:status :warning :contents (format-validation-messages validation)}]
-                  valid? ;; valid draft
-                  [{:status :success :contents (text :t.form/saved)}]
-                  :else ;; invalid draft
-                  [{:status :success :contents (text :t.form/saved)}
-                   {:status :info :contents (format-validation-messages validation)}])]
+          perform-submit? (and submit? valid?)]
       (when perform-submit?
         (submit-application application-id))
       (cond-> {:success (or (not submit?) perform-submit?)

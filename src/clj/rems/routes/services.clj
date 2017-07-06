@@ -7,42 +7,50 @@
             [rems.form :as form]
             [rems.context :as context]))
 
-(def License {:id Long
-              :type s/Str
-              :licensetype s/Str
-              :title s/Str
-              :textcontent s/Str
-              :approved s/Bool})
+(def License
+  {:id Long
+   :type s/Str
+   :licensetype s/Str
+   :title s/Str
+   :textcontent s/Str
+   :approved s/Bool})
 
-(def Item {:id Long
-           :title s/Str
-           :inputprompt (s/maybe s/Str)
-           :optional s/Bool
-           :type s/Str
-           :value (s/maybe s/Str)})
+(def Item
+  {:id Long
+   :title s/Str
+   :inputprompt (s/maybe s/Str)
+   :optional s/Bool
+   :type s/Str
+   :value (s/maybe s/Str)})
 
-(def Form {:id Long
-           :catalogue-item Long
-           :applicant-attributes {s/Str s/Str}
-           :application s/Any
-           :licenses [License]
-           :title s/Str
-           :items [Item]})
+(def Application
+  {:id Long
+   :catalogue-item Long
+   :applicant-attributes {s/Str s/Str}
+   :application s/Any
+   :licenses [License]
+   :title s/Str
+   :items [Item]})
 
 (def ValidationError s/Str)
 
-(def SaveFormRequest {:operation s/Str
-                      (s/optional-key :application-id) Long
-                      :fields {s/Keyword s/Str}}) ;; NOTE: compojure-api only supports keywords here
+(def SaveApplicationRequest
+  {:operation s/Str
+   (s/optional-key :application-id) Long
+   :items {s/Keyword s/Str}  ;; NOTE: compojure-api only supports keywords here
+   })
 
-(def SaveFormResponse {:success s/Bool
-                       :valid s/Bool
-                       (s/optional-key :validation) [ValidationError]})
+(def SaveApplicationResponse
+  {:success s/Bool
+   :valid s/Bool
+   (s/optional-key :validation) [ValidationError]})
 
-(defn fix-fields-keys [form]
-  (update-in form [:fields] (fn [m]
-                              (into {} (for [[k v] m]
-                                         [(Long/parseLong (name k)) v])))))
+(defn fix-items-keys [application]
+  (update-in application
+             [:items]
+             (fn [m]
+               (into {} (for [[k v] m]
+                          [(Long/parseLong (name k)) v])))))
 
 (defapi service-routes
   {:swagger {:ui "/swagger-ui"
@@ -52,25 +60,25 @@
                            :description "Sample Services"}}}}
 
   (context "/api" []
-           :tags ["form"]
+           :tags ["application"]
 
-           (GET "/form/:resource-id" []
-                :summary     "Form for a draft"
+           (GET "/application/:resource-id" []
+                :summary     "Get application by resource-id"
                 :path-params [resource-id :- Long]
-                :return      Form
+                :return      Application
                 (let [app (get-draft-id-for resource-id)]
                   (ok (get-form-for resource-id app))))
 
-           (GET "/form/:resource-id/:application-id" []
-                :summary     "Form for an application"
+           (GET "/application/:resource-id/:application-id" []
+                :summary     "Get application by resource-id and application-id"
                 :path-params [resource-id :- Long, application-id :- Long]
-                :return      Form
+                :return      Application
                 (ok (get-form-for resource-id application-id)))
 
-           (PUT "/form/:resource-id" []
-                :summary     "Save a form"
+           (PUT "/application/:resource-id" []
+                :summary     "Put application by resource-id"
                 :path-params [resource-id :- Long]
-                :body        [form SaveFormRequest]
-                :return      SaveFormResponse
-                (ok (form/form-save resource-id (fix-fields-keys form))))
+                :body        [request SaveApplicationRequest]
+                :return      SaveApplicationResponse
+                (ok (form/form-save resource-id (fix-items-keys request))))
            ))
