@@ -22,23 +22,12 @@ CREATE TYPE item_state AS ENUM ('disabled','enabled','copied');
 --;;
 CREATE TYPE license_type AS ENUM ('text','attachment','link');
 --;;
-CREATE TABLE resource_prefix (
-  id serial NOT NULL PRIMARY KEY,
-  modifierUserId varchar(255) NOT NULL,
-  prefix varchar(255) DEFAULT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL
-);
---;;
 CREATE TABLE resource (
   id serial NOT NULL PRIMARY KEY,
   modifierUserId varchar(255) NOT NULL,
-  rsPrId integer DEFAULT NULL,
-  prefix varchar(255) NOT NULL,
   resId varchar(255) NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT resource_ibfk_1 FOREIGN KEY (rsPrId) REFERENCES resource_prefix (id)
+  endt timestamp NULL DEFAULT NULL
 );
 --;;
 CREATE TABLE workflow (
