@@ -27,7 +27,7 @@
   []
   (when (< 1 (count context/*roles*))
     [:div.role-switcher
-     [:span.navbar-text
+     [:span
       (text :t.roles/header)]
      (doall
       (for [role (sort context/*roles*)]

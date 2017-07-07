@@ -39,7 +39,8 @@
          (nav-link "/approvals" (text :t.navigation/approvals) (= page-name "approvals"))))
       (nav-link "/" (text :t.navigation/home) (= page-name "home")))
     (nav-link "/about" (text :t.navigation/about) (= page-name "about"))]
-   [:div.navbar-text (language-switcher)]])
+   (role-switcher)
+   (language-switcher)])
 
 (defn- navbar
   [page-name user]
@@ -51,8 +52,7 @@
       "&#9776;"]
      (navbar-items :div#big-navbar.collapse.navbar-collapse page-name user)]
     [:div.navbar (user-switcher user)]]
-   (navbar-items :div#small-navbar.collapse.navbar-collapse.collapse.hidden-md-up page-name user)
-   [:div.px-md-2 (role-switcher)]))
+   (navbar-items :div#small-navbar.collapse.navbar-collapse.collapse.hidden-md-up page-name user)))
 
 (defn- footer []
   [:footer.footer
@@ -79,7 +79,8 @@
           (include-css "/assets/font-awesome/css/font-awesome.min.css")
           (include-css "/css/screen.css")
           [:body
-           [:div.container nav]
+           [:div.fixed-top
+            [:div.container nav]]
            (logo)
            [:div.container message]
            [:div.container.main-content content]
