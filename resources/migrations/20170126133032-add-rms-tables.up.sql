@@ -25,6 +25,7 @@ CREATE TYPE license_type AS ENUM ('text','attachment','link');
 CREATE TABLE resource (
   id serial NOT NULL PRIMARY KEY,
   modifierUserId varchar(255) NOT NULL,
+  prefix varchar(255) NOT NULL,
   resId varchar(255) NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL

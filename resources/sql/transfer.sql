@@ -47,8 +47,8 @@ DELETE FROM public.application_form CASCADE;
 INSERT INTO public.workflow
 SELECT * FROM transfer.rms_workflow;
 
-INSERT INTO public.resource (id, modifierUserId, resId, start, endt)
-SELECT id, modifierUserId, resId, start, "end" FROM transfer.rms_resource;
+INSERT INTO public.resource (id, modifierUserId, prefix, resId, start, endt)
+SELECT id, modifierUserId, prefix, resId, start, "end" FROM transfer.rms_resource;
 
 INSERT INTO public.application_form
 SELECT * FROM transfer.rms_application_form;
