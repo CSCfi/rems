@@ -28,7 +28,6 @@ AS IMPLICIT;
 
 -- data created by the app that might reference data we want to clear
 DELETE FROM public.application_text_values CASCADE;
-DELETE FROM public.catalogue_item_application_state CASCADE;
 DELETE FROM public.catalogue_item_application CASCADE;
 
 -- clear existing data
@@ -38,7 +37,6 @@ DELETE FROM public.license CASCADE;
 DELETE FROM public.catalogue_item_localization CASCADE;
 DELETE FROM public.catalogue_item CASCADE;
 DELETE FROM public.resource CASCADE;
-DELETE FROM public.resource_prefix CASCADE;
 DELETE FROM public.workflow CASCADE;
 DELETE FROM public.application_form_item_map CASCADE;
 DELETE FROM public.application_form_item CASCADE;
@@ -49,11 +47,8 @@ DELETE FROM public.application_form CASCADE;
 INSERT INTO public.workflow
 SELECT * FROM transfer.rms_workflow;
 
-INSERT INTO public.resource_prefix
-SELECT * FROM transfer.rms_resource_prefix;
-
-INSERT INTO public.resource
-SELECT * FROM transfer.rms_resource;
+INSERT INTO public.resource (id, modifierUserId, prefix, resId, start, endt)
+SELECT id, modifierUserId, prefix, resId, start, "end" FROM transfer.rms_resource;
 
 INSERT INTO public.application_form
 SELECT * FROM transfer.rms_application_form;
