@@ -10,6 +10,7 @@
             [rems.db.applications :refer [create-new-draft
                                           get-application-phases
                                           get-draft-id-for get-form-for
+                                          get-application-state
                                           submit-application]]
             [rems.db.core :as db]
             [rems.guide :refer :all]
@@ -25,6 +26,7 @@
 (def ^:private time-format (format/formatter "yyyy-MM-dd HH:mm"
                                              (time/default-time-zone)))
 
+;; TODO remove id-to-name when no more forms submitted by SPA
 (defn- id-to-name [id]
   (str "field" id))
 
@@ -128,8 +130,8 @@
         readonly? (not editable?)
         withdrawable? (= "applied" state)
         closeable? (and
-                     (not (nil? state))
-                     (not= "closed" state))]
+                    (not (nil? state))
+                    (not= "closed" state))]
     (collapsible/component "form"
                            true
                            (:title form)
@@ -223,7 +225,7 @@
   [resource-id application-id input]
   (let [form (get-form-for resource-id)]
     (doseq [{item-id :id :as item} (:items form)]
-      (when-let [value (get input (id-to-name item-id))]
+      (when-let [value (get input item-id (get input (id-to-name item-id)))]
         (db/save-field-value! {:application application-id
                                :form (:id form)
                                :item item-id
@@ -234,7 +236,7 @@
   [resource-id application-id input]
   (let [form (get-form-for resource-id)]
     (doseq [{licid :id :as license} (:licenses form)]
-      (if-let [state (get input (str "license" licid))]
+      (if-let [state (get input licid (get input (str "license" licid)))]
         (db/save-license-approval! {:catappid application-id
                                     :round 0
                                     :licid licid
@@ -246,6 +248,25 @@
 
 (defn- redirect-to-application [resource-id application-id]
   (redirect (str "/form/" resource-id "/" application-id) :see-other))
+
+(defn form-save [resource-id form]
+  (let [{:keys [application-id items licenses operation]} form
+        application-id (or application-id (create-new-draft resource-id))]
+    (save-fields resource-id application-id items)
+    (save-licenses resource-id application-id licenses)
+    (let [submit? (= operation "send")
+          validation (validate (get-form-for resource-id application-id))
+          valid? (= :valid validation)
+          perform-submit? (and submit? valid?)
+          success? (or (not submit?) perform-submit?)]
+      (when perform-submit?
+        (submit-application application-id))
+      (cond-> {:success success?
+               :valid valid?}
+        (not valid?) (assoc :validation validation)
+        success? (assoc :id application-id
+                        :state (:state (get-application-state application-id))))
+      )))
 
 (defn- save [{params :params input :form-params session :session}]
   (let [resource-id (Long/parseLong (get params :id))
