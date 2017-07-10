@@ -13,3 +13,4 @@ profiles.clj
 *~
 *.retry
 .DS_Store
+resources/public/css/screen.css
