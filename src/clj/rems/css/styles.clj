@@ -1,5 +1,6 @@
 (ns rems.css.styles
   (:require [garden.core :as g]
+            [garden.def :refer [defstyles]]
             [garden.selectors :as s]
             [garden.stylesheet :as stylesheet]
             [garden.units :as u]))
@@ -143,8 +144,7 @@
     [:.cart-title {:margin-left (u/em 1)
                    :font-weight "bold"}]))
 
-(defn generate-css []
-  (g/css {:output-to "resources/public/css/screen.css"}
+(defstyles screen
          (generate-at-font-faces)
          [:* {:margin "0"}]
          [:a
@@ -332,4 +332,9 @@
          (generate-phase-styles)
          [(s/descendant :.document :h3) {:margin-top (u/rem 4)}]
          ;These must be last as the parsing fails when the first non-standard element is met
-         (generate-form-placeholder-styles)))
+         (generate-form-placeholder-styles))
+
+(defn generate-css []
+  (g/css {:output-to "resources/public/css/screen.css"
+          :pretty-print? false}
+         screen))
