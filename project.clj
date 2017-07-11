@@ -61,12 +61,11 @@
                      :compiler {:output-to "resources/public/css/compiled/screen.css"
                                 :pretty-print? true}}]}
 
-   :uberwar
-     {:handler rems.handler/app
-      :init rems.handler/init
-      :destroy rems.handler/destroy
-      :web-xml "web.xml"
-      :name "rems.war"}
+  :uberwar {:handler rems.handler/app
+            :init rems.handler/init
+            :destroy rems.handler/destroy
+            :web-xml "web.xml"
+            :name "rems.war"}
 
   ;; flag tests that need a db with ^:integration
   :test-selectors {:default (complement :integration)
