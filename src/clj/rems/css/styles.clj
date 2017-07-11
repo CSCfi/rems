@@ -69,36 +69,36 @@
              :flex-direction "row"
              :justify-content "stretch"
              :align-items "center"}
-   [:.phase {:flex-grow 1
+   [:.phase {:background-color "#eee"
+             :flex-grow 1
              :height (u/px 40)
              :display "flex"
              :flex-direction "row"
              :justify-content "stretch"
-             :align-items "center"}]
-   [(s/descendant :.phase :span) {:flex-grow 1
-                                  :text-align "center"
-                                  :min-width (u/px 100)}]
-   [".phase:not(:last-of-type):after" {:content "\"\""
+             :align-items "center"}
+    [:span {:flex-grow 1
+            :text-align "center"
+            :min-width (u/px 100)}]
+    [(s/& ":not(:last-of-type):after") {:content "\"\""
                                        :border-top "20px solid white"
                                        :border-left "10px solid transparent"
                                        :border-bottom "20px solid white"
                                        :border-right "none"}]
-   [".phase:first-of-type" {:border-top-left-radius (u/px 4)
+    [(s/& ":first-of-type") {:border-top-left-radius (u/px 4)
                             :border-bottom-left-radius (u/px 4)}]
-   [".phase:last-of-type" {:border-top-right-radius (u/px 4)
+    [(s/& ":last-of-type") {:border-top-right-radius (u/px 4)
                            :border-bottom-right-radius (u/px 4)}]
-   [".phase:not(:first-of-type):before" {:content "\"\""
+    [(s/& ":not(:first-of-type):before") {:content "\"\""
                                          :border-top "20px solid transparent"
                                          :border-left "10px solid white"
                                          :border-bottom "20px solid transparent"
                                          :border-right "none"}]
-   [:.phase.active {:background-color "#CAD2E6"
+    [:&.active {:background-color "#CAD2E6"
+                :border-color "#7A90C3"
+                :color "#000"}]
+    [:&.completed {:background-color "#7A90C3"
                     :border-color "#7A90C3"
-                    :color "#000"}]
-   [:.phase.completed {:background-color "#7A90C3"
-                       :border-color "#7A90C3"
-                       :color "#fff"}]
-   [:.phase {:background-color "#eee"}]])
+                    :color "#fff"}]]])
 
 (defn- generate-rems-table-styles []
   (list
@@ -316,18 +316,20 @@
          [(s/descendant :.card-header :a) {:color "inherit"}]
          ;hax for opening misalignment
          [:.license-title {:margin-top (u/px 3)}]
-         [(s/descendant :.collapse-wrapper :.clickable ".card-title:before") {:font-family "'FontAwesome'"
-                                                                              :float "right"
-                                                                              :content "\"\\f068\""}]
-         [(s/descendant :.collapse-wrapper :.clickable ".card-title.collapsed:before") {:content "\"\\f067\""}]
-         [(s/descendant :.collapse-wrapper :.card-header) {:border-bottom "none"
-                                                           :border-radius (u/rem 0.4)
-                                                           :font-weight 500
-                                                           :font-size (u/rem 1.5)
-                                                           :line-height 1.1
-                                                           :font-family "'Lato'"}]
          [:.collapse-wrapper {:border-radius (u/rem 0.4)
-                              :border "1px solid #ccc"}]
+                              :border "1px solid #ccc"}
+          [:.clickable
+           [:.card-title
+            [(s/& ".collapsed:before") {:content "\"\\f067\""}]
+            [:&:before {:font-family "'FontAwesome'"
+                        :float "right"
+                        :content "\"\\f068\""}]]]
+          [:.card-header {:border-bottom "none"
+                          :border-radius (u/rem 0.4)
+                          :font-weight 500
+                          :font-size (u/rem 1.5)
+                          :line-height 1.1
+                          :font-family "'Lato'"}]]
          [:.collapse-content {:padding (u/rem 1)}]
          (generate-phase-styles)
          [(s/descendant :.document :h3) {:margin-top (u/rem 4)}]
