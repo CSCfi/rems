@@ -80,18 +80,18 @@
             :text-align "center"
             :min-width (u/px 100)}]
     [(s/& ":not(:last-of-type):after") {:content "\"\""
-                                       :border-top "20px solid white"
-                                       :border-left "10px solid transparent"
-                                       :border-bottom "20px solid white"
+                                       :border-top [[(u/px 20) :solid :white]]
+                                       :border-left [[(u/px 10) :solid :transparent]]
+                                       :border-bottom [[(u/px 20) :solid :white]]
                                        :border-right "none"}]
     [(s/& ":first-of-type") {:border-top-left-radius (u/px 4)
                             :border-bottom-left-radius (u/px 4)}]
     [(s/& ":last-of-type") {:border-top-right-radius (u/px 4)
                            :border-bottom-right-radius (u/px 4)}]
     [(s/& ":not(:first-of-type):before") {:content "\"\""
-                                         :border-top "20px solid transparent"
-                                         :border-left "10px solid white"
-                                         :border-bottom "20px solid transparent"
+                                         :border-top [[(u/px 20) :solid :transparent]]
+                                         :border-left [[(u/px 10) :solid :white]]
+                                         :border-bottom [[(u/px 20) :solid :transparent]]
                                          :border-right "none"}]
     [:&.active {:background-color "#CAD2E6"
                 :border-color "#7A90C3"
@@ -105,7 +105,7 @@
     [:.rems-table.cart {:background "#fff"
                         :color "#000"
                         :margin 0}
-     [:tr {:border-bottom "1px solid #CAD2E6"}]
+     [:tr {:border-bottom [[(u/px 1) :solid :#CAD2E6]]}]
      [:td:before {:content "initial"}]
      [:th
       :td:before
@@ -139,7 +139,7 @@
                               :padding-right (u/rem 1)}]
      ]
     [:.inner-cart {:margin (u/em 1)}]
-    [:.outer-cart {:border "1px solid #CAD2E6"
+    [:.outer-cart {:border [[(u/px 1) :solid :#CAD2E6]]
                    :border-radius (u/rem 0.4)}]
     [:.cart-title {:margin-left (u/em 1)
                    :font-weight "bold"}]))
@@ -160,7 +160,7 @@
           :flex-direction "column"
           :padding-top (u/px 56)}]
   [:.fixed-top {:background-color "#fff"
-                :border-bottom "1px solid #CAD2E6"
+                :border-bottom [[(u/px 1) :solid :#CAD2E6]]
                 :min-height (u/px 56)}]
   [:.main-content {:display "flex"
                    :flex-direction "column"
