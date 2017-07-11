@@ -25,6 +25,7 @@ script:
   # run all tests with coverage tracking:
   - lein with-profile test cloverage
   - lein uberwar
+  - lein garden once
 after_success:
   - ./.travis-deploy.sh
 notifications:

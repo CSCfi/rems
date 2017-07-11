@@ -11,6 +11,7 @@
                  ;;TODO: updating conman 0.6.3 -> 0.6.4 or luminus-migrations 0.3.0 -> 0.3.3 breaks tests
                  [conman "0.6.3"]
                  [cprop "0.1.10"]
+                 [garden "1.3.2"]
                  [haka-buddy "0.2.0"]
                  [hiccup "1.0.5"]
                  [hickory "0.7.1" :exclusions [org.clojure/clojurescript]]
@@ -51,15 +52,24 @@
   :migratus {:store :database :db ~(get (System/getenv) "DATABASE_URL")}
 
   :plugins [[lein-cprop "1.0.1"]
+            [lein-garden "0.3.0"]
             [lein-uberwar "0.2.0"]
             [migratus-lein "0.4.3"]]
 
-   :uberwar
-     {:handler rems.handler/app
-      :init rems.handler/init
-      :destroy rems.handler/destroy
-      :web-xml "web.xml"
-      :name "rems.war"}
+  :garden {:builds [{:source-paths ["src/clj"]
+                     :stylesheet rems.css.styles/screen
+                     :compiler {:output-to "resources/public/css/compiled/screen.css"
+                                :pretty-print? true}}]}
+
+  :clean-targets ^{:protect false} ["resources/public/js/compiled"
+                                  "resources/public/css/compiled"
+                                  "target"]
+
+  :uberwar {:handler rems.handler/app
+            :init rems.handler/init
+            :destroy rems.handler/destroy
+            :web-xml "web.xml"
+            :name "rems.war"}
 
   ;; flag tests that need a db with ^:integration
   :test-selectors {:default (complement :integration)

@@ -2,6 +2,7 @@
   (:require [compojure.core :refer [GET defroutes]]
             [rems.applications :as applications]
             [rems.approvals :as approvals]
+            [rems.css.styles :as styles]
             [rems.cart :as cart]
             [rems.catalogue :as catalogue]
             [rems.contents :as contents]
@@ -11,7 +12,9 @@
             [rems.language-switcher :as language-switcher]
             [rems.layout :as layout]
             [rems.role-switcher :as role-switcher]
-            [ring.util.response :refer [redirect]]))
+            [ring.util.response :refer [content-type
+                                        redirect
+                                        response]]))
 
 (defn home-page []
   (if context/*user*
@@ -35,6 +38,9 @@
 (defroutes public-routes
   (GET "/" [] (home-page))
   (GET "/about" [] (about-page))
+  (GET "/css/screen.css" [] (-> (styles/generate-css)
+                                (response)
+                                (content-type "text/css")))
   language-switcher/switcher-routes)
 
 (defroutes secured-routes
