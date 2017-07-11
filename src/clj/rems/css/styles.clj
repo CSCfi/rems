@@ -339,6 +339,4 @@
   (generate-form-placeholder-styles))
 
 (defn generate-css []
-  (g/css {:output-to "resources/public/css/screen.css"
-          :pretty-print? false}
-         screen))
+  (g/css {:pretty-print? false} screen))
