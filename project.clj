@@ -58,7 +58,7 @@
 
   :garden {:builds [{:source-paths ["src/clj"]
                      :stylesheet rems.css.styles/screen
-                     :compiler {:output-to "resources/public/css/screen.css"
+                     :compiler {:output-to "resources/public/css/compiled/screen.css"
                                 :pretty-print? true}}]}
 
    :uberwar
