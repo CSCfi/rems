@@ -38,7 +38,9 @@
 (defroutes public-routes
   (GET "/" [] (home-page))
   (GET "/about" [] (about-page))
-  (GET "/css/screen.css" [] (content-type (response (styles/generate-css)) "text/css"))
+  (GET "/css/screen.css" [] (-> (styles/generate-css)
+                                (response)
+                                (content-type "text/css")))
   language-switcher/switcher-routes)
 
 (defroutes secured-routes
