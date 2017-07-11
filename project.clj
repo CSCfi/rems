@@ -61,6 +61,10 @@
                      :compiler {:output-to "resources/public/css/compiled/screen.css"
                                 :pretty-print? true}}]}
 
+  :clean-targets ^{:protect false} ["resources/public/js/compiled"
+                                  "resources/public/css/compiled"
+                                  "target"]
+
   :uberwar {:handler rems.handler/app
             :init rems.handler/init
             :destroy rems.handler/destroy
