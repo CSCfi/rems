@@ -145,196 +145,196 @@
                    :font-weight "bold"}]))
 
 (defstyles screen
-         (generate-at-font-faces)
-         [:* {:margin "0"}]
-         [:a
-          :button
-          {:cursor "pointer"}]
-         [:a {:color "#4D5A91"}]
-         [:html {:position "relative"
-                 :min-width (u/px 320)
-                 :height "100%"}]
-         [:body {:font-family "'Lato', sans-serif"
-                 :min-height "100%"
-                 :display "flex"
-                 :flex-direction "column"
-                 :padding-top (u/px 56)}]
-         [:.fixed-top {:background-color "#fff"
-                       :border-bottom "1px solid #CAD2E6"
-                       :min-height (u/px 56)}]
-         [:.main-content {:display "flex"
-                          :flex-direction "column"
-                          :flex-wrap "none"
-                          :min-height (u/px 300)
-                          :flex-grow "1"}]
-         [:.container {:max-width (u/px 891)}]
-         [:.btn-primary
-          [:&:hover
-           :&:focus
-           :&:active:hover
-           {:background-color "#d84f0e"
-            :border-color "#F16522"
-            :outline-color "transparent"}]
-          {:background-color "#F16522"
-                         :border-color "#F16522"
-                         :outline-color "transparent"}]
-         [:.btn-secondary
-          [:&:hover
-           :&:focus
-           :&:active:hover
-           {:outline-color "transparent"}]]
-         [:.alert-info
-          :state-info
-          {:color "#4D5A91"
-           :background-color "#CAD2E6"}]
-         [:.alert-success
-          (s/descendant :.state-approved :.card-header)
-          {:color "#3c763d"
-           :background-color "#cee798"}]
-         [:.alert-warning {:color "#6f572f"
-                           :background-color "#e7d96f"}]
-         [:.alert-danger
-          (s/descendant :.state-rejected :.card-header)
-          {:color "#79302f"
-           :background-color "#e28b83"}]
-         [:.nav-link
-          :.btn-link
-          (s/descendant :.nav-link :a)
-          {:color "#4D5A91"
-           :border 0 }] ;for button links
-         [:.navbar
-          [:.nav-link :.btn-link
-          {:text-transform "uppercase"}]]
-         [:.navbar-toggler {:border-color "#CAD2E6"}]
-         [:.nav-link
-          :.btn-link
-          [:&.active
-           {:color "#F16522"}]
-          [:&:hover
-           {:color "#F16522"}]]
-         [:.logo {:height (u/px 140)
-                 :background-color "#CAD2E6"
-                 :padding "0 20px"
-                 :margin-bottom (u/em 1)}]
-         [(s/descendant :.logo :.img) {:height "100%"
-                                       :background "#CAD2E6 url(\"/img/logo2.png\") left center no-repeat"
-                                       :-webkit-background-size "contain"
-                                       :-moz-o-background-size "contain"
-                                       :-o-background-size "contain"
-                                       :background-size "contain"
-                                       :background-origin "content-box"
-                                       :padding-left (u/px 20)
-                                       :padding-right (u/px 20)}]
-         [:footer {:width "100%"
-                   :height (u/px 53.6)
-                   :background-color "#CAD2E6"
-                   :text-align "center"
-                   :margin-top (u/em 1)}]
-         [:.jumbotron
-          {:background-color "#fff"
-           :text-align "center"
-           :max-width (u/px 420)
-           :margin "30px auto"
-           :color "#000"
-           :border-style "solid"
-           :border-width (u/px 1)
-           :box-shadow "0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)"}
-          [:h2 {:margin-bottom (u/px 20)}]]
-         [:.login-btn {:max-height (u/px 70)}
-          [:&:hover {:filter "brightness(80%)"}]]
-         (generate-rems-table-styles)
-         [:.btn.disabled {:opacity 0.25}]
-         [:.catalogue-item-link {:color "#fff"
-                                 :text-decoration "underline"}]
-         ;Has to be defined before the following media queries
-         [:.language-switcher
-          :.role-switcher
-          {:padding ".5em 0"}]
-         (generate-media-queries)
-         [:.user
-          :.language-switcher
-          {:white-space "nowrap"}]
-         [(s/descendant :.user :.nav-link) {:display "inline-block"}]
-         [:.user-name {:text-transform "none"}]
-         [:.fa
-          :.user-name
-          {:margin-right (u/px 5)}]
-         [:.navbar {:padding-left 0
-                    :padding-right 0}]
-         [(s/descendant :.navbar-text :.language-switcher)
-          {:margin-right (u/rem 1)}]
-         [:.example-page {:margin (u/rem 2)}]
-         [(s/> :.example-page :h1) {:margin "4rem 0"}]
-         [(s/> :.example-page :h2) {:margin-top (u/rem 8)
-                                    :margin-bottom (u/rem 2)}]
-         [(s/> :.example-page :h3) {:margin-bottom (u/rem 1)}]
-         [(s/descendant :.example-page :.example) {:margin-bottom (u/rem 4)}]
-         [:.example-content {:border "1px dashed black"}]
-         [:.example-content-end {:clear "both"}]
-         [:form.inline
-          :.form-actions.inline
-          {:display "inline-block"}
-          [:.btn-link
-           {:border "none"
-            :padding 0}]]
-         [:.modal-title {:color "#292b2c"}]
-         [(s/+
-            (s/descendant :.language-switcher :form)
-            :form)
-          {:margin-left (u/rem 0.5)}]
-         [(s/descendant :.role-switcher :form) {:margin-left (u/rem 0.5)}]
-         [:.actions {:text-align "right"
-                     :padding "0 1rem"}]
-         [:.navbar-flex {:display "flex"
-                         :flex-direction "row"
-                         :justify-content "space-between"
-                         :min-width "100%"}
-          [:nav {:flex 1}]]
-         [(s/> :.form-actions "*:not(:first-child)")
-          (s/> :.actions "*:not(:first-child)")
-          {:margin-left (u/em 0.5)}]
-         [:.full {:width "100%"}]
-         [:.rectangle {:width (u/px 50)
-                       :height (u/px 50)}]
-         [:.color-1 {:background-color "#CAD2E6"}]
-         [:.color-2 {:background-color "#7A90C3"}]
-         [:.color-3 {:background-color "#4D5A91"}]
-         [:.color-4 {:background-color "#F16522"}]
-         [:.color-title {:padding-top (u/rem 0.8)}]
-         [(s/descendant :.alert :ul ) {:margin-bottom 0}]
-         [:ul.comments {:list-style-type "none"}]
-         [:.inline-comment {:font-size (u/rem 1)}]
-         [(s/& :p.inline-comment ":last-child") {:margin-bottom 0}]
-         [:.inline-comment-content {:display "inline-block"}]
-         [:.license-panel {:display "inline-block"
-                           :width "inherit"}]
-         [".license-header:after" {:font-family "'FontAwesome'"
-                                   :float "right"
-                                   :content "\"\\f068\""}]
-         [".license-header.collapsed:after" {:content "\"\\f067\""}]
-         [:.card-header.clickable {:cursor "pointer"}]
-         [(s/descendant :.card-header :a) {:color "inherit"}]
-         ;hax for opening misalignment
-         [:.license-title {:margin-top (u/px 3)}]
-         [:.collapse-wrapper {:border-radius (u/rem 0.4)
-                              :border "1px solid #ccc"}
-          [:.clickable
-           [:.card-title
-            [(s/& ".collapsed:before") {:content "\"\\f067\""}]
-            [:&:before {:font-family "'FontAwesome'"
-                        :float "right"
-                        :content "\"\\f068\""}]]]
-          [:.card-header {:border-bottom "none"
-                          :border-radius (u/rem 0.4)
-                          :font-weight 500
-                          :font-size (u/rem 1.5)
-                          :line-height 1.1
-                          :font-family "'Lato'"}]]
-         [:.collapse-content {:padding (u/rem 1)}]
-         (generate-phase-styles)
-         [(s/descendant :.document :h3) {:margin-top (u/rem 4)}]
-         ;These must be last as the parsing fails when the first non-standard element is met
-         (generate-form-placeholder-styles))
+  (generate-at-font-faces)
+  [:* {:margin "0"}]
+  [:a
+   :button
+   {:cursor "pointer"}]
+  [:a {:color "#4D5A91"}]
+  [:html {:position "relative"
+          :min-width (u/px 320)
+          :height "100%"}]
+  [:body {:font-family "'Lato', sans-serif"
+          :min-height "100%"
+          :display "flex"
+          :flex-direction "column"
+          :padding-top (u/px 56)}]
+  [:.fixed-top {:background-color "#fff"
+                :border-bottom "1px solid #CAD2E6"
+                :min-height (u/px 56)}]
+  [:.main-content {:display "flex"
+                   :flex-direction "column"
+                   :flex-wrap "none"
+                   :min-height (u/px 300)
+                   :flex-grow "1"}]
+  [:.container {:max-width (u/px 891)}]
+  [:.btn-primary
+   [:&:hover
+    :&:focus
+    :&:active:hover
+    {:background-color "#d84f0e"
+     :border-color "#F16522"
+     :outline-color "transparent"}]
+   {:background-color "#F16522"
+    :border-color "#F16522"
+    :outline-color "transparent"}]
+  [:.btn-secondary
+   [:&:hover
+    :&:focus
+    :&:active:hover
+    {:outline-color "transparent"}]]
+  [:.alert-info
+   :state-info
+   {:color "#4D5A91"
+    :background-color "#CAD2E6"}]
+  [:.alert-success
+   (s/descendant :.state-approved :.card-header)
+   {:color "#3c763d"
+    :background-color "#cee798"}]
+  [:.alert-warning {:color "#6f572f"
+                    :background-color "#e7d96f"}]
+  [:.alert-danger
+   (s/descendant :.state-rejected :.card-header)
+   {:color "#79302f"
+    :background-color "#e28b83"}]
+  [:.nav-link
+   :.btn-link
+   (s/descendant :.nav-link :a)
+   {:color "#4D5A91"
+    :border 0 }] ;for button links
+  [:.navbar
+   [:.nav-link :.btn-link
+    {:text-transform "uppercase"}]]
+  [:.navbar-toggler {:border-color "#CAD2E6"}]
+  [:.nav-link
+   :.btn-link
+   [:&.active
+    {:color "#F16522"}]
+   [:&:hover
+    {:color "#F16522"}]]
+  [:.logo {:height (u/px 140)
+           :background-color "#CAD2E6"
+           :padding "0 20px"
+           :margin-bottom (u/em 1)}]
+  [(s/descendant :.logo :.img) {:height "100%"
+                                :background "#CAD2E6 url(\"/img/logo2.png\") left center no-repeat"
+                                :-webkit-background-size "contain"
+                                :-moz-o-background-size "contain"
+                                :-o-background-size "contain"
+                                :background-size "contain"
+                                :background-origin "content-box"
+                                :padding-left (u/px 20)
+                                :padding-right (u/px 20)}]
+  [:footer {:width "100%"
+            :height (u/px 53.6)
+            :background-color "#CAD2E6"
+            :text-align "center"
+            :margin-top (u/em 1)}]
+  [:.jumbotron
+   {:background-color "#fff"
+    :text-align "center"
+    :max-width (u/px 420)
+    :margin "30px auto"
+    :color "#000"
+    :border-style "solid"
+    :border-width (u/px 1)
+    :box-shadow "0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)"}
+   [:h2 {:margin-bottom (u/px 20)}]]
+  [:.login-btn {:max-height (u/px 70)}
+   [:&:hover {:filter "brightness(80%)"}]]
+  (generate-rems-table-styles)
+  [:.btn.disabled {:opacity 0.25}]
+  [:.catalogue-item-link {:color "#fff"
+                          :text-decoration "underline"}]
+  ;Has to be defined before the following media queries
+  [:.language-switcher
+   :.role-switcher
+   {:padding ".5em 0"}]
+  (generate-media-queries)
+  [:.user
+   :.language-switcher
+   {:white-space "nowrap"}]
+  [(s/descendant :.user :.nav-link) {:display "inline-block"}]
+  [:.user-name {:text-transform "none"}]
+  [:.fa
+   :.user-name
+   {:margin-right (u/px 5)}]
+  [:.navbar {:padding-left 0
+             :padding-right 0}]
+  [(s/descendant :.navbar-text :.language-switcher)
+   {:margin-right (u/rem 1)}]
+  [:.example-page {:margin (u/rem 2)}]
+  [(s/> :.example-page :h1) {:margin "4rem 0"}]
+  [(s/> :.example-page :h2) {:margin-top (u/rem 8)
+                             :margin-bottom (u/rem 2)}]
+  [(s/> :.example-page :h3) {:margin-bottom (u/rem 1)}]
+  [(s/descendant :.example-page :.example) {:margin-bottom (u/rem 4)}]
+  [:.example-content {:border "1px dashed black"}]
+  [:.example-content-end {:clear "both"}]
+  [:form.inline
+   :.form-actions.inline
+   {:display "inline-block"}
+   [:.btn-link
+    {:border "none"
+     :padding 0}]]
+  [:.modal-title {:color "#292b2c"}]
+  [(s/+
+     (s/descendant :.language-switcher :form)
+     :form)
+   {:margin-left (u/rem 0.5)}]
+  [(s/descendant :.role-switcher :form) {:margin-left (u/rem 0.5)}]
+  [:.actions {:text-align "right"
+              :padding "0 1rem"}]
+  [:.navbar-flex {:display "flex"
+                  :flex-direction "row"
+                  :justify-content "space-between"
+                  :min-width "100%"}
+   [:nav {:flex 1}]]
+  [(s/> :.form-actions "*:not(:first-child)")
+   (s/> :.actions "*:not(:first-child)")
+   {:margin-left (u/em 0.5)}]
+  [:.full {:width "100%"}]
+  [:.rectangle {:width (u/px 50)
+                :height (u/px 50)}]
+  [:.color-1 {:background-color "#CAD2E6"}]
+  [:.color-2 {:background-color "#7A90C3"}]
+  [:.color-3 {:background-color "#4D5A91"}]
+  [:.color-4 {:background-color "#F16522"}]
+  [:.color-title {:padding-top (u/rem 0.8)}]
+  [(s/descendant :.alert :ul ) {:margin-bottom 0}]
+  [:ul.comments {:list-style-type "none"}]
+  [:.inline-comment {:font-size (u/rem 1)}]
+  [(s/& :p.inline-comment ":last-child") {:margin-bottom 0}]
+  [:.inline-comment-content {:display "inline-block"}]
+  [:.license-panel {:display "inline-block"
+                    :width "inherit"}]
+  [".license-header:after" {:font-family "'FontAwesome'"
+                            :float "right"
+                            :content "\"\\f068\""}]
+  [".license-header.collapsed:after" {:content "\"\\f067\""}]
+  [:.card-header.clickable {:cursor "pointer"}]
+  [(s/descendant :.card-header :a) {:color "inherit"}]
+  ;hax for opening misalignment
+  [:.license-title {:margin-top (u/px 3)}]
+  [:.collapse-wrapper {:border-radius (u/rem 0.4)
+                       :border "1px solid #ccc"}
+   [:.clickable
+    [:.card-title
+     [(s/& ".collapsed:before") {:content "\"\\f067\""}]
+     [:&:before {:font-family "'FontAwesome'"
+                 :float "right"
+                 :content "\"\\f068\""}]]]
+   [:.card-header {:border-bottom "none"
+                   :border-radius (u/rem 0.4)
+                   :font-weight 500
+                   :font-size (u/rem 1.5)
+                   :line-height 1.1
+                   :font-family "'Lato'"}]]
+  [:.collapse-content {:padding (u/rem 1)}]
+  (generate-phase-styles)
+  [(s/descendant :.document :h3) {:margin-top (u/rem 4)}]
+  ;These must be last as the parsing fails when the first non-standard element is met
+  (generate-form-placeholder-styles))
 
 (defn generate-css []
   (g/css {:output-to "resources/public/css/screen.css"
