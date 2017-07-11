@@ -105,7 +105,7 @@
     [:.rems-table.cart {:background "#fff"
                         :color "#000"
                         :margin 0}
-     [:tr {:border-bottom [[(u/px 1) :solid :#CAD2E6]]}]
+     [:tr {:border-bottom [[(u/px 1) :solid "#CAD2E6"]]}]
      [:td:before {:content "initial"}]
      [:th
       :td:before
@@ -139,7 +139,7 @@
                               :padding-right (u/rem 1)}]
      ]
     [:.inner-cart {:margin (u/em 1)}]
-    [:.outer-cart {:border [[(u/px 1) :solid :#CAD2E6]]
+    [:.outer-cart {:border [[(u/px 1) :solid "#CAD2E6"]]
                    :border-radius (u/rem 0.4)}]
     [:.cart-title {:margin-left (u/em 1)
                    :font-weight "bold"}]))
@@ -160,7 +160,7 @@
           :flex-direction "column"
           :padding-top (u/px 56)}]
   [:.fixed-top {:background-color "#fff"
-                :border-bottom [[(u/px 1) :solid :#CAD2E6]]
+                :border-bottom [[(u/px 1) :solid "#CAD2E6"]]
                 :min-height (u/px 56)}]
   [:.main-content {:display "flex"
                    :flex-direction "column"
