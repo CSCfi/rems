@@ -1,6 +1,14 @@
 (ns rems.middleware.dev
   (:require [prone.middleware :refer [wrap-exceptions]]
+            [rems.context :as context]
             [ring.middleware.reload :refer [wrap-reload]]))
+
+(defn wrap-styles-context
+  "Wraps context with the current theme configuration for rapid theme prototyping purposes."
+  [handler]
+  (fn [request]
+    (binding [context/*theme* (read-string (slurp "resources/themes/default.edn"))]
+      (handler request))))
 
 (defn wrap-some-exceptions
   "Wrap some exceptions in the prone.middleware/wrap-exceptions,
@@ -15,8 +23,9 @@
         ((wrap-exceptions (fn [& _] (throw e))) req)))))
 
 (defn wrap-dev
-  "Middleware for dev use. Autoreload, nicer errors."
+  "Middleware for dev use. Autoreload, style reloading, nicer errors."
   [handler]
   (-> handler
       wrap-reload
+      wrap-styles-context
       wrap-some-exceptions))
