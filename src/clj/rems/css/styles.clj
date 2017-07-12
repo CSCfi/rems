@@ -3,7 +3,8 @@
             [garden.def :refer [defstyles]]
             [garden.selectors :as s]
             [garden.stylesheet :as stylesheet]
-            [garden.units :as u]))
+            [garden.units :as u]
+            [rems.context :as context]))
 
 (defn- generate-at-font-faces []
   (list
@@ -41,7 +42,7 @@
                            [(s/descendant :.rems-table.cart :tr)
                             {:border-bottom "none"}]
                            [(s/descendant :.logo :.img)
-                            {:background "#CAD2E6 url(\"/img/Logo-matala.png\") center center no-repeat"
+                            {:background [[(:color1 context/*theme*) "url(\"/img/Logo-matala.png\")" :center :center :no-repeat]]
                              :-webkit-background-size "contain"
                              :-moz-background-size "contain"
                              :-o-background-size "contain"
@@ -93,11 +94,11 @@
                                          :border-left [[(u/px 10) :solid :white]]
                                          :border-bottom [[(u/px 20) :solid :transparent]]
                                          :border-right "none"}]
-    [:&.active {:background-color "#CAD2E6"
-                :border-color "#7A90C3"
+    [:&.active {:background-color (:color1 context/*theme*)
+                :border-color (:color2 context/*theme*)
                 :color "#000"}]
-    [:&.completed {:background-color "#7A90C3"
-                    :border-color "#7A90C3"
+    [:&.completed {:background-color (:color2 context/*theme*)
+                    :border-color (:color2 context/*theme*)
                     :color "#fff"}]]])
 
 (defn- generate-rems-table-styles []
@@ -105,7 +106,7 @@
     [:.rems-table.cart {:background "#fff"
                         :color "#000"
                         :margin 0}
-     [:tr {:border-bottom [[(u/px 1) :solid "#CAD2E6"]]}]
+     [:tr {:border-bottom [[(u/px 1) :solid (:color1 context/*theme*)]]}]
      [:td:before {:content "initial"}]
      [:th
       :td:before
@@ -115,7 +116,7 @@
      ]
     [:.rems-table {:margin "1em 0"
                    :min-width "100%"
-                   :background-color "#7A90C3"
+                   :background-color (:color2 context/*theme*)
                    :color "#fff"
                    :border-radius (u/rem 0.4)
                    :overflow "hidden"}
@@ -139,7 +140,7 @@
                               :padding-right (u/rem 1)}]
      ]
     [:.inner-cart {:margin (u/em 1)}]
-    [:.outer-cart {:border [[(u/px 1) :solid "#CAD2E6"]]
+    [:.outer-cart {:border [[(u/px 1) :solid (:color1 context/*theme*)]]
                    :border-radius (u/rem 0.4)}]
     [:.cart-title {:margin-left (u/em 1)
                    :font-weight "bold"}]))
@@ -150,7 +151,7 @@
   [:a
    :button
    {:cursor "pointer"}]
-  [:a {:color "#4D5A91"}]
+  [:a {:color (:color3 context/*theme*)}]
   [:html {:position "relative"
           :min-width (u/px 320)
           :height "100%"}]
@@ -160,7 +161,7 @@
           :flex-direction "column"
           :padding-top (u/px 56)}]
   [:.fixed-top {:background-color "#fff"
-                :border-bottom [[(u/px 1) :solid "#CAD2E6"]]
+                :border-bottom [[(u/px 1) :solid (:color1 context/*theme*)]]
                 :min-height (u/px 56)}]
   [:.main-content {:display "flex"
                    :flex-direction "column"
@@ -173,10 +174,10 @@
     :&:focus
     :&:active:hover
     {:background-color "#d84f0e"
-     :border-color "#F16522"
+     :border-color (:color4 context/*theme*)
      :outline-color "transparent"}]
-   {:background-color "#F16522"
-    :border-color "#F16522"
+   {:background-color (:color4 context/*theme*)
+    :border-color (:color4 context/*theme*)
     :outline-color "transparent"}]
   [:.btn-secondary
    [:&:hover
@@ -185,8 +186,8 @@
     {:outline-color "transparent"}]]
   [:.alert-info
    :state-info
-   {:color "#4D5A91"
-    :background-color "#CAD2E6"}]
+   {:color (:color3 context/*theme*)
+    :background-color (:color1 context/*theme*)}]
   [:.alert-success
    (s/descendant :.state-approved :.card-header)
    {:color "#3c763d"
@@ -200,24 +201,24 @@
   [:.nav-link
    :.btn-link
    (s/descendant :.nav-link :a)
-   {:color "#4D5A91"
+   {:color (:color3 context/*theme*)
     :border 0 }] ;for button links
   [:.navbar
    [:.nav-link :.btn-link
     {:text-transform "uppercase"}]]
-  [:.navbar-toggler {:border-color "#CAD2E6"}]
+  [:.navbar-toggler {:border-color (:color1 context/*theme*)}]
   [:.nav-link
    :.btn-link
    [:&.active
-    {:color "#F16522"}]
+    {:color (:color4 context/*theme*)}]
    [:&:hover
-    {:color "#F16522"}]]
+    {:color (:color4 context/*theme*)}]]
   [:.logo {:height (u/px 140)
-           :background-color "#CAD2E6"
+           :background-color (:color1 context/*theme*)
            :padding "0 20px"
            :margin-bottom (u/em 1)}]
   [(s/descendant :.logo :.img) {:height "100%"
-                                :background "#CAD2E6 url(\"/img/logo2.png\") left center no-repeat"
+                                :background [[(:color1 context/*theme*) "url(\"/img/logo2.png\")" :left :center :no-repeat]]
                                 :-webkit-background-size "contain"
                                 :-moz-o-background-size "contain"
                                 :-o-background-size "contain"
@@ -227,7 +228,7 @@
                                 :padding-right (u/px 20)}]
   [:footer {:width "100%"
             :height (u/px 53.6)
-            :background-color "#CAD2E6"
+            :background-color (:color1 context/*theme*)
             :text-align "center"
             :margin-top (u/em 1)}]
   [:.jumbotron
@@ -296,10 +297,10 @@
   [:.full {:width "100%"}]
   [:.rectangle {:width (u/px 50)
                 :height (u/px 50)}]
-  [:.color-1 {:background-color "#CAD2E6"}]
-  [:.color-2 {:background-color "#7A90C3"}]
-  [:.color-3 {:background-color "#4D5A91"}]
-  [:.color-4 {:background-color "#F16522"}]
+  [:.color-1 {:background-color (:color1 context/*theme*)}]
+  [:.color-2 {:background-color (:color2 context/*theme*)}]
+  [:.color-3 {:background-color (:color3 context/*theme*)}]
+  [:.color-4 {:background-color (:color4 context/*theme*)}]
   [:.color-title {:padding-top (u/rem 0.8)}]
   [(s/descendant :.alert :ul ) {:margin-bottom 0}]
   [:ul.comments {:list-style-type "none"}]

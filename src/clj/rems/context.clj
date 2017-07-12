@@ -24,3 +24,5 @@
 (def ^:dynamic ^{:doc "Contents of the cart."} *cart*)
 
 (def ^:dynamic ^{:doc "Flash session."} *flash*)
+
+(def ^:dynamic ^{:doc "Theme related stylings for the site."} *theme* (read-string (slurp "resources/themes/lbr.edn")))
