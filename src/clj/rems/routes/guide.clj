@@ -24,10 +24,10 @@
 
 (defn color-boxes []
   [:div.row
-   (color-box "color-1" "#CAD2E6")
-   (color-box "color-2" "#7A90C3")
-   (color-box "color-3" "#4D5A91")
-   (color-box "color-4" "#F16522")])
+   (color-box "color-1" (:color1 context/*theme*))
+   (color-box "color-2" (:color2 context/*theme*))
+   (color-box "color-3" (:color3 context/*theme*))
+   (color-box "color-4" (:color4 context/*theme*))])
 
 (defn alerts []
   [:div
