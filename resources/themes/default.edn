@@ -1,0 +1,18 @@
+{:color1 "#cbd0d5"
+ :color2 "#b6cfd7"
+ :color3 "#64727e"
+ :color4 "#983b6b"
+ :info-bgcolor "#d9edf7"
+ :danger-bgcolor "#f2dede"
+ :success-bgcolor "#dff0d8"
+ :warning-bgcolor "#fcf8e3"
+ :info-color "#31708f"
+ :danger-color "#a94442"
+ :success-color "#3c763d"
+ :warning-color "#8a6d3b"
+ :logo-bgcolor nil
+ :phase-color "#cbd0d5"
+ :phase-color-active "#7eadba"
+ :phase-color-completed "#007887"
+ :table-bgcolor "#a4acb5"
+ :table-stripe-color "#cbd0d5"}
