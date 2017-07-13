@@ -11,6 +11,9 @@
  :success-color "#3c763d"
  :warning-color "#8a6d3b"
  :logo-bgcolor nil
+ :logo-name "rems_logo_en.png"
+ :logo-name-sm "rems_logo_en.png"
+ :logo-content-origin "initial"
  :phase-color "#cbd0d5"
  :phase-color-active "#7eadba"
  :phase-color-completed "#007887"

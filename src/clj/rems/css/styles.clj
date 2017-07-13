@@ -42,7 +42,7 @@
                            [(s/descendant :.rems-table.cart :tr)
                             {:border-bottom "none"}]
                            [(s/descendant :.logo :.img)
-                            {:background [[(:logo-bgcolor context/*theme*) "url(\"/img/Logo-matala.png\")" :center :center :no-repeat]]
+                            {:background [[(:logo-bgcolor context/*theme*) (str "url(\"/img/" (:logo-name-sm context/*theme*) "\")") :center :center :no-repeat]]
                              :-webkit-background-size "contain"
                              :-moz-background-size "contain"
                              :-o-background-size "contain"
@@ -218,12 +218,12 @@
            :padding "0 20px"
            :margin-bottom (u/em 1)}]
   [(s/descendant :.logo :.img) {:height "100%"
-                                :background [[(:logo-bgcolor context/*theme*) "url(\"/img/logo2.png\")" :left :center :no-repeat]]
+                                :background [[(:logo-bgcolor context/*theme*) (str "url(\"/img/" (:logo-name context/*theme*) "\")") :left :center :no-repeat]]
                                 :-webkit-background-size "contain"
                                 :-moz-o-background-size "contain"
                                 :-o-background-size "contain"
                                 :background-size "contain"
-                                :background-origin "content-box"
+                                :background-origin (:logo-content-origin context/*theme*)
                                 :padding-left (u/px 20)
                                 :padding-right (u/px 20)}]
   [:footer {:width "100%"
