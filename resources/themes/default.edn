@@ -10,6 +10,7 @@
  :danger-color "#a94442"
  :success-color "#3c763d"
  :warning-color "#8a6d3b"
+ :img-path "/img/"
  :logo-bgcolor nil
  :logo-name "rems_logo_en.png"
  :logo-name-sm "rems_logo_en.png"

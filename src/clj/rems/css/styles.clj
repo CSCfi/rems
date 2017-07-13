@@ -42,7 +42,7 @@
                            [(s/descendant :.rems-table.cart :tr)
                             {:border-bottom "none"}]
                            [(s/descendant :.logo :.img)
-                            {:background [[(:logo-bgcolor context/*theme*) (str "url(\"/img/" (:logo-name-sm context/*theme*) "\")") :center :center :no-repeat]]
+                            {:background [[(:logo-bgcolor context/*theme*) (str "url(\"" (:img-path context/*theme*) (:logo-name-sm context/*theme*) "\")") :center :center :no-repeat]]
                              :-webkit-background-size "contain"
                              :-moz-background-size "contain"
                              :-o-background-size "contain"
@@ -218,7 +218,7 @@
            :padding "0 20px"
            :margin-bottom (u/em 1)}]
   [(s/descendant :.logo :.img) {:height "100%"
-                                :background [[(:logo-bgcolor context/*theme*) (str "url(\"/img/" (:logo-name context/*theme*) "\")") :left :center :no-repeat]]
+                                :background [[(:logo-bgcolor context/*theme*) (str "url(\"" (:img-path context/*theme*) (:logo-name context/*theme*) "\")") :left :center :no-repeat]]
                                 :-webkit-background-size "contain"
                                 :-moz-o-background-size "contain"
                                 :-o-background-size "contain"
