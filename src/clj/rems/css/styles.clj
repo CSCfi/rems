@@ -42,7 +42,7 @@
                            [(s/descendant :.rems-table.cart :tr)
                             {:border-bottom "none"}]
                            [(s/descendant :.logo :.img)
-                            {:background [[(:color1 context/*theme*) "url(\"/img/Logo-matala.png\")" :center :center :no-repeat]]
+                            {:background [[(:logo-bgcolor context/*theme*) "url(\"/img/Logo-matala.png\")" :center :center :no-repeat]]
                              :-webkit-background-size "contain"
                              :-moz-background-size "contain"
                              :-o-background-size "contain"
