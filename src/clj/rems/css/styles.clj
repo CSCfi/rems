@@ -4,7 +4,7 @@
             [garden.selectors :as s]
             [garden.stylesheet :as stylesheet]
             [garden.units :as u]
-            [rems.context :as context]))
+            [rems.util :as util]))
 
 (defn- generate-at-font-faces []
   (list
@@ -42,7 +42,7 @@
                            [(s/descendant :.rems-table.cart :tr)
                             {:border-bottom "none"}]
                            [(s/descendant :.logo :.img)
-                            {:background [[(:logo-bgcolor context/*theme*) (str "url(\"" (:img-path context/*theme*) (:logo-name-sm context/*theme*) "\")") :center :center :no-repeat]]
+                            {:background [[(util/get-theme-attribute :logo-bgcolor) (str "url(\"" (util/get-theme-attribute :img-path) (util/get-theme-attribute :logo-name-sm) "\")") :center :center :no-repeat]]
                              :-webkit-background-size "contain"
                              :-moz-background-size "contain"
                              :-o-background-size "contain"
@@ -70,7 +70,7 @@
              :flex-direction "row"
              :justify-content "stretch"
              :align-items "center"}
-   [:.phase {:background-color (:phase-color context/*theme*)
+   [:.phase {:background-color (util/get-theme-attribute :phase-color)
              :flex-grow 1
              :height (u/px 40)
              :display "flex"
@@ -94,11 +94,11 @@
                                          :border-left [[(u/px 10) :solid :white]]
                                          :border-bottom [[(u/px 20) :solid :transparent]]
                                          :border-right "none"}]
-    [:&.active {:background-color (:phase-color-active context/*theme*)
-                :border-color (:phase-color-active context/*theme*)
+    [:&.active {:background-color (util/get-theme-attribute :phase-color-active)
+                :border-color (util/get-theme-attribute :phase-color-active)
                 :color "#000"}]
-    [:&.completed {:background-color (:phase-color-completed context/*theme*)
-                    :border-color (:phase-color-completed context/*theme*)
+    [:&.completed {:background-color (util/get-theme-attribute :phase-color-completed)
+                    :border-color (util/get-theme-attribute :phase-color-completed)
                     :color "#fff"}]]])
 
 (defn- generate-rems-table-styles []
@@ -106,7 +106,7 @@
     [:.rems-table.cart {:background "#fff"
                         :color "#000"
                         :margin 0}
-     [:tr {:border-bottom [[(u/px 1) :solid (:color1 context/*theme*)]]}]
+     [:tr {:border-bottom [[(u/px 1) :solid (util/get-theme-attribute :color1)]]}]
      [:td:before {:content "initial"}]
      [:th
       :td:before
@@ -116,7 +116,7 @@
      ]
     [:.rems-table {:margin "1em 0"
                    :min-width "100%"
-                   :background-color (:table-bgcolor context/*theme*)
+                   :background-color (util/get-theme-attribute :table-bgcolor)
                    :color "#fff"
                    :border-radius (u/rem 0.4)
                    :overflow "hidden"}
@@ -135,12 +135,12 @@
       :td:before
       {:color "#fff"}]
      [:tr {:margin "0 1rem"}
-      [(s/& (s/nth-child "2n")) {:background-color (:table-stripe-color context/*theme*)}]]
+      [(s/& (s/nth-child "2n")) {:background-color (util/get-theme-attribute :table-stripe-color)}]]
      [:td.actions:last-child {:text-align "right"
                               :padding-right (u/rem 1)}]
      ]
     [:.inner-cart {:margin (u/em 1)}]
-    [:.outer-cart {:border [[(u/px 1) :solid (:color1 context/*theme*)]]
+    [:.outer-cart {:border [[(u/px 1) :solid (util/get-theme-attribute :color1)]]
                    :border-radius (u/rem 0.4)}]
     [:.cart-title {:margin-left (u/em 1)
                    :font-weight "bold"}]))
@@ -151,7 +151,7 @@
   [:a
    :button
    {:cursor "pointer"}]
-  [:a {:color (:color3 context/*theme*)}]
+  [:a {:color (:color3 util/get-theme-attribute)}]
   [:html {:position "relative"
           :min-width (u/px 320)
           :height "100%"}]
@@ -161,7 +161,7 @@
           :flex-direction "column"
           :padding-top (u/px 56)}]
   [:.fixed-top {:background-color "#fff"
-                :border-bottom [[(u/px 1) :solid (:color1 context/*theme*)]]
+                :border-bottom [[(u/px 1) :solid (util/get-theme-attribute :color1)]]
                 :min-height (u/px 56)}]
   [:.main-content {:display "flex"
                    :flex-direction "column"
@@ -174,10 +174,10 @@
     :&:focus
     :&:active:hover
     {:background-color "#d84f0e"
-     :border-color (:color4 context/*theme*)
+     :border-color (util/get-theme-attribute :color4)
      :outline-color "transparent"}]
-   {:background-color (:color4 context/*theme*)
-    :border-color (:color4 context/*theme*)
+   {:background-color (util/get-theme-attribute :color4)
+    :border-color (util/get-theme-attribute :color4)
     :outline-color "transparent"}]
   [:.btn-secondary
    [:&:hover
@@ -186,49 +186,49 @@
     {:outline-color "transparent"}]]
   [:.alert-info
    :state-info
-   {:color (:info-color context/*theme*)
-    :background-color (:info-bgcolor context/*theme*)}]
+   {:color (util/get-theme-attribute :info-color)
+    :background-color (util/get-theme-attribute :info-bgcolor)}]
   [:.alert-success
    (s/descendant :.state-approved :.card-header)
-   {:color (:success-color context/*theme*)
-    :background-color (:success-bgcolor context/*theme*)}]
-  [:.alert-warning {:color (:warning-color context/*theme*)
-                    :background-color (:warning-bgcolor context/*theme*)}]
+   {:color (util/get-theme-attribute :success-color)
+    :background-color (util/get-theme-attribute :success-bgcolor)}]
+  [:.alert-warning {:color (util/get-theme-attribute :warning-color)
+                    :background-color (util/get-theme-attribute :warning-bgcolor)}]
   [:.alert-danger
    (s/descendant :.state-rejected :.card-header)
-   {:color (:danger-color context/*theme*)
-    :background-color (:danger-bgcolor context/*theme*)}]
+   {:color (util/get-theme-attribute :danger-color)
+    :background-color (util/get-theme-attribute :danger-bgcolor)}]
   [:.nav-link
    :.btn-link
    (s/descendant :.nav-link :a)
-   {:color (:color3 context/*theme*)
+   {:color (util/get-theme-attribute :color3)
     :border 0 }] ;for button links
   [:.navbar
    [:.nav-link :.btn-link
     {:text-transform "uppercase"}]]
-  [:.navbar-toggler {:border-color (:color1 context/*theme*)}]
+  [:.navbar-toggler {:border-color (util/get-theme-attribute :color1)}]
   [:.nav-link
    :.btn-link
    [:&.active
-    {:color (:color4 context/*theme*)}]
+    {:color (util/get-theme-attribute :color4)}]
    [:&:hover
-    {:color (:color4 context/*theme*)}]]
+    {:color (util/get-theme-attribute :color4)}]]
   [:.logo {:height (u/px 140)
-           :background-color (:logo-bgcolor context/*theme*)
+           :background-color (util/get-theme-attribute :logo-bgcolor)
            :padding "0 20px"
            :margin-bottom (u/em 1)}]
   [(s/descendant :.logo :.img) {:height "100%"
-                                :background [[(:logo-bgcolor context/*theme*) (str "url(\"" (:img-path context/*theme*) (:logo-name context/*theme*) "\")") :left :center :no-repeat]]
+                                :background [[(util/get-theme-attribute :logo-bgcolor) (str "url(\"" (util/get-theme-attribute :img-path) (util/get-theme-attribute :logo-name) "\")") :left :center :no-repeat]]
                                 :-webkit-background-size "contain"
                                 :-moz-o-background-size "contain"
                                 :-o-background-size "contain"
                                 :background-size "contain"
-                                :background-origin (:logo-content-origin context/*theme*)
+                                :background-origin (util/get-theme-attribute :logo-content-origin)
                                 :padding-left (u/px 20)
                                 :padding-right (u/px 20)}]
   [:footer {:width "100%"
             :height (u/px 53.6)
-            :background-color (:color1 context/*theme*)
+            :background-color (util/get-theme-attribute :color1)
             :text-align "center"
             :margin-top (u/em 1)}]
   [:.jumbotron
@@ -297,10 +297,10 @@
   [:.full {:width "100%"}]
   [:.rectangle {:width (u/px 50)
                 :height (u/px 50)}]
-  [:.color-1 {:background-color (:color1 context/*theme*)}]
-  [:.color-2 {:background-color (:color2 context/*theme*)}]
-  [:.color-3 {:background-color (:color3 context/*theme*)}]
-  [:.color-4 {:background-color (:color4 context/*theme*)}]
+  [:.color-1 {:background-color (util/get-theme-attribute :color1)}]
+  [:.color-2 {:background-color (util/get-theme-attribute :color2)}]
+  [:.color-3 {:background-color (util/get-theme-attribute :color3)}]
+  [:.color-4 {:background-color (util/get-theme-attribute :color4)}]
   [:.color-title {:padding-top (u/rem 0.8)}]
   [(s/descendant :.alert :ul ) {:margin-bottom 0}]
   [:ul.comments {:list-style-type "none"}]

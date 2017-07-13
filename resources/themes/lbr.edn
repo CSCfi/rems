@@ -10,7 +10,6 @@
  :danger-color "#79302f"
  :success-color "#3c763d"
  :warning-color "#6f572f"
- :img-path "/img/"
  :logo-bgcolor "#cad2e6"
  :logo-name "logo2.png"
  :logo-name-sm "Logo-matala.png"

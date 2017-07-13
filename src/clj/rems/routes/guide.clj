@@ -14,7 +14,8 @@
             [rems.guide :refer :all]
             [rems.phase :as phase]
             [rems.layout :as layout]
-            [rems.role-switcher :as role-switcher]))
+            [rems.role-switcher :as role-switcher]
+            [rems.util :as util]))
 
 (defn color-box [id hex]
   [:div.col-md-3
@@ -24,10 +25,10 @@
 
 (defn color-boxes []
   [:div.row
-   (color-box "color-1" (:color1 context/*theme*))
-   (color-box "color-2" (:color2 context/*theme*))
-   (color-box "color-3" (:color3 context/*theme*))
-   (color-box "color-4" (:color4 context/*theme*))])
+   (color-box "color-1" (util/get-theme-attribute :color1))
+   (color-box "color-2" (util/get-theme-attribute :color2))
+   (color-box "color-3" (util/get-theme-attribute :color3))
+   (color-box "color-4" (util/get-theme-attribute :color4))])
 
 (defn alerts []
   [:div
