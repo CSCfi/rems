@@ -1,5 +1,6 @@
 (ns rems.middleware.dev
   (:require [prone.middleware :refer [wrap-exceptions]]
+            [rems.config :refer [env]]
             [rems.context :as context]
             [ring.middleware.reload :refer [wrap-reload]]))
 
@@ -7,7 +8,7 @@
   "Wraps context with the current theme configuration for rapid theme prototyping purposes."
   [handler]
   (fn [request]
-    (binding [context/*theme* (read-string (slurp "resources/themes/default.edn"))]
+    (binding [context/*theme* (context/load-theme)]
       (handler request))))
 
 (defn wrap-some-exceptions

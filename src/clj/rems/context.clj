@@ -2,7 +2,22 @@
   "Collection of the global variables for REMS.
 
    When referring, please make your use greppable with the prefix context,
-   i.e. context/*root-path*.")
+   i.e. context/*root-path*."
+  (:require [cprop.core :refer [load-config]]))
+
+(defn load-default-theme []
+  (read-string (slurp "resources/themes/default.edn")))
+
+(defn load-theme
+  ([theme]
+     (if theme
+       (try
+         (read-string (slurp (str "resources/themes/" theme ".edn")))
+         (catch java.io.FileNotFoundException e
+           (load-default-theme)))
+       (load-default-theme)))
+  ([]
+   (load-theme (:theme (load-config)))))
 
 (def ^:dynamic ^{:doc "Application root path also known as context-path.
 
@@ -25,4 +40,4 @@
 
 (def ^:dynamic ^{:doc "Flash session."} *flash*)
 
-(def ^:dynamic ^{:doc "Theme related stylings for the site."} *theme* (read-string (slurp "resources/themes/lbr.edn")))
+(def ^:dynamic ^{:doc "Theme related stylings for the site."} *theme* (load-theme (:theme (load-config))))

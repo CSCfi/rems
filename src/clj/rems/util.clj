@@ -34,5 +34,5 @@
   [attr-name]
   (if-let [value (get context/*theme* attr-name)]
     value
-    (get (read-string (slurp "resources/themes/default.edn"))
+    (get (context/load-theme "default")
          attr-name)))
