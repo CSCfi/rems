@@ -3,7 +3,8 @@
 
    When referring, please make your use greppable with the prefix context,
    i.e. context/*root-path*."
-  (:require [cprop.core :refer [load-config]]
+  (:require [clojure.tools.logging :as log]
+            [cprop.core :refer [load-config]]
             [cprop.source :refer [from-file]]))
 
 (defn load-default-theme []
@@ -15,7 +16,15 @@
    (merge (load-default-theme)
           (when theme
             (try (from-file (str "resources/themes/" theme ".edn"))
-              (catch java.io.FileNotFoundException e {})))))
+              (catch java.util.MissingResourceException e
+                (log/error (str "Could not locate a theme file by the name: "
+                                (str theme ".edn")))
+                {})
+              (catch java.lang.IllegalArgumentException e
+                (log/error (str "Could not read the theme configuration for resource"
+                                (str " \"" theme ".edn\". ")
+                                "Make sure that the file does not contain syntax errors."))
+                {})))))
   ([]
    (load-theme (:theme (load-config)))))
 
