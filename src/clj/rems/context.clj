@@ -3,16 +3,17 @@
 
    When referring, please make your use greppable with the prefix context,
    i.e. context/*root-path*."
-  (:require [cprop.core :refer [load-config]]))
+  (:require [cprop.core :refer [load-config]]
+            [cprop.source :refer [from-file]]))
 
 (defn load-default-theme []
-  (read-string (slurp "resources/themes/default.edn")))
+  (from-file "resources/themes/default.edn"))
 
 (defn load-theme
   ([theme]
      (if theme
        (try
-         (read-string (slurp (str "resources/themes/" theme ".edn")))
+         (from-file (str "resources/themes/" theme ".edn"))
          (catch java.io.FileNotFoundException e
            (load-default-theme)))
        (load-default-theme)))
@@ -40,4 +41,4 @@
 
 (def ^:dynamic ^{:doc "Flash session."} *flash*)
 
-(def ^:dynamic ^{:doc "Theme related stylings for the site."} *theme* (load-theme (:theme (load-config))))
+(def ^:dynamic ^{:doc "Theme related stylings for the site."} *theme* (load-theme))
