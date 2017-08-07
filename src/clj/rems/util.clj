@@ -28,3 +28,8 @@
   ([user]
    (binding [context/*user* user]
      (get-username))))
+
+(defn get-theme-attribute
+  "Fetch the attribute value from the current theme."
+  [attr-name]
+  (get context/*theme* attr-name))

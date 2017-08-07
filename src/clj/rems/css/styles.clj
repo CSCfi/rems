@@ -3,7 +3,8 @@
             [garden.def :refer [defstyles]]
             [garden.selectors :as s]
             [garden.stylesheet :as stylesheet]
-            [garden.units :as u]))
+            [garden.units :as u]
+            [rems.util :as util]))
 
 (defn- generate-at-font-faces []
   (list
@@ -41,7 +42,7 @@
                            [(s/descendant :.rems-table.cart :tr)
                             {:border-bottom "none"}]
                            [(s/descendant :.logo :.img)
-                            {:background "#CAD2E6 url(\"/img/Logo-matala.png\") center center no-repeat"
+                            {:background [[(util/get-theme-attribute :logo-bgcolor) (str "url(\"" (util/get-theme-attribute :img-path) (util/get-theme-attribute :logo-name-sm) "\")") :center :center :no-repeat]]
                              :-webkit-background-size "contain"
                              :-moz-background-size "contain"
                              :-o-background-size "contain"
@@ -69,7 +70,7 @@
              :flex-direction "row"
              :justify-content "stretch"
              :align-items "center"}
-   [:.phase {:background-color "#eee"
+   [:.phase {:background-color (util/get-theme-attribute :phase-color)
              :flex-grow 1
              :height (u/px 40)
              :display "flex"
@@ -93,11 +94,11 @@
                                          :border-left [[(u/px 10) :solid :white]]
                                          :border-bottom [[(u/px 20) :solid :transparent]]
                                          :border-right "none"}]
-    [:&.active {:background-color "#CAD2E6"
-                :border-color "#7A90C3"
+    [:&.active {:background-color (util/get-theme-attribute :phase-color-active)
+                :border-color (util/get-theme-attribute :phase-color-active)
                 :color "#000"}]
-    [:&.completed {:background-color "#7A90C3"
-                    :border-color "#7A90C3"
+    [:&.completed {:background-color (util/get-theme-attribute :phase-color-completed)
+                    :border-color (util/get-theme-attribute :phase-color-completed)
                     :color "#fff"}]]])
 
 (defn- generate-rems-table-styles []
@@ -105,7 +106,7 @@
     [:.rems-table.cart {:background "#fff"
                         :color "#000"
                         :margin 0}
-     [:tr {:border-bottom [[(u/px 1) :solid "#CAD2E6"]]}]
+     [:tr {:border-bottom [[(u/px 1) :solid (util/get-theme-attribute :color1)]]}]
      [:td:before {:content "initial"}]
      [:th
       :td:before
@@ -115,7 +116,7 @@
      ]
     [:.rems-table {:margin "1em 0"
                    :min-width "100%"
-                   :background-color "#7A90C3"
+                   :background-color (util/get-theme-attribute :table-bgcolor)
                    :color "#fff"
                    :border-radius (u/rem 0.4)
                    :overflow "hidden"}
@@ -134,12 +135,12 @@
       :td:before
       {:color "#fff"}]
      [:tr {:margin "0 1rem"}
-      [(s/& (s/nth-child "2n")) {:background-color "#8a9dca"}]]
+      [(s/& (s/nth-child "2n")) {:background-color (util/get-theme-attribute :table-stripe-color)}]]
      [:td.actions:last-child {:text-align "right"
                               :padding-right (u/rem 1)}]
      ]
     [:.inner-cart {:margin (u/em 1)}]
-    [:.outer-cart {:border [[(u/px 1) :solid "#CAD2E6"]]
+    [:.outer-cart {:border [[(u/px 1) :solid (util/get-theme-attribute :color1)]]
                    :border-radius (u/rem 0.4)}]
     [:.cart-title {:margin-left (u/em 1)
                    :font-weight "bold"}]))
@@ -150,7 +151,7 @@
   [:a
    :button
    {:cursor "pointer"}]
-  [:a {:color "#4D5A91"}]
+  [:a {:color (:color3 util/get-theme-attribute)}]
   [:html {:position "relative"
           :min-width (u/px 320)
           :height "100%"}]
@@ -160,7 +161,7 @@
           :flex-direction "column"
           :padding-top (u/px 56)}]
   [:.fixed-top {:background-color "#fff"
-                :border-bottom [[(u/px 1) :solid "#CAD2E6"]]
+                :border-bottom [[(u/px 1) :solid (util/get-theme-attribute :color1)]]
                 :min-height (u/px 56)}]
   [:.main-content {:display "flex"
                    :flex-direction "column"
@@ -173,10 +174,10 @@
     :&:focus
     :&:active:hover
     {:background-color "#d84f0e"
-     :border-color "#F16522"
+     :border-color (util/get-theme-attribute :color4)
      :outline-color "transparent"}]
-   {:background-color "#F16522"
-    :border-color "#F16522"
+   {:background-color (util/get-theme-attribute :color4)
+    :border-color (util/get-theme-attribute :color4)
     :outline-color "transparent"}]
   [:.btn-secondary
    [:&:hover
@@ -185,49 +186,49 @@
     {:outline-color "transparent"}]]
   [:.alert-info
    :state-info
-   {:color "#4D5A91"
-    :background-color "#CAD2E6"}]
+   {:color (util/get-theme-attribute :info-color)
+    :background-color (util/get-theme-attribute :info-bgcolor)}]
   [:.alert-success
    (s/descendant :.state-approved :.card-header)
-   {:color "#3c763d"
-    :background-color "#cee798"}]
-  [:.alert-warning {:color "#6f572f"
-                    :background-color "#e7d96f"}]
+   {:color (util/get-theme-attribute :success-color)
+    :background-color (util/get-theme-attribute :success-bgcolor)}]
+  [:.alert-warning {:color (util/get-theme-attribute :warning-color)
+                    :background-color (util/get-theme-attribute :warning-bgcolor)}]
   [:.alert-danger
    (s/descendant :.state-rejected :.card-header)
-   {:color "#79302f"
-    :background-color "#e28b83"}]
+   {:color (util/get-theme-attribute :danger-color)
+    :background-color (util/get-theme-attribute :danger-bgcolor)}]
   [:.nav-link
    :.btn-link
    (s/descendant :.nav-link :a)
-   {:color "#4D5A91"
+   {:color (util/get-theme-attribute :color3)
     :border 0 }] ;for button links
   [:.navbar
    [:.nav-link :.btn-link
     {:text-transform "uppercase"}]]
-  [:.navbar-toggler {:border-color "#CAD2E6"}]
+  [:.navbar-toggler {:border-color (util/get-theme-attribute :color1)}]
   [:.nav-link
    :.btn-link
    [:&.active
-    {:color "#F16522"}]
+    {:color (util/get-theme-attribute :color4)}]
    [:&:hover
-    {:color "#F16522"}]]
+    {:color (util/get-theme-attribute :color4)}]]
   [:.logo {:height (u/px 140)
-           :background-color "#CAD2E6"
+           :background-color (util/get-theme-attribute :logo-bgcolor)
            :padding "0 20px"
            :margin-bottom (u/em 1)}]
   [(s/descendant :.logo :.img) {:height "100%"
-                                :background "#CAD2E6 url(\"/img/logo2.png\") left center no-repeat"
+                                :background [[(util/get-theme-attribute :logo-bgcolor) (str "url(\"" (util/get-theme-attribute :img-path) (util/get-theme-attribute :logo-name) "\")") :left :center :no-repeat]]
                                 :-webkit-background-size "contain"
                                 :-moz-o-background-size "contain"
                                 :-o-background-size "contain"
                                 :background-size "contain"
-                                :background-origin "content-box"
+                                :background-origin (util/get-theme-attribute :logo-content-origin)
                                 :padding-left (u/px 20)
                                 :padding-right (u/px 20)}]
   [:footer {:width "100%"
             :height (u/px 53.6)
-            :background-color "#CAD2E6"
+            :background-color (util/get-theme-attribute :color1)
             :text-align "center"
             :margin-top (u/em 1)}]
   [:.jumbotron
@@ -296,10 +297,10 @@
   [:.full {:width "100%"}]
   [:.rectangle {:width (u/px 50)
                 :height (u/px 50)}]
-  [:.color-1 {:background-color "#CAD2E6"}]
-  [:.color-2 {:background-color "#7A90C3"}]
-  [:.color-3 {:background-color "#4D5A91"}]
-  [:.color-4 {:background-color "#F16522"}]
+  [:.color-1 {:background-color (util/get-theme-attribute :color1)}]
+  [:.color-2 {:background-color (util/get-theme-attribute :color2)}]
+  [:.color-3 {:background-color (util/get-theme-attribute :color3)}]
+  [:.color-4 {:background-color (util/get-theme-attribute :color4)}]
   [:.color-title {:padding-top (u/rem 0.8)}]
   [(s/descendant :.alert :ul ) {:margin-bottom 0}]
   [:ul.comments {:list-style-type "none"}]

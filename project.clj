@@ -52,14 +52,8 @@
   :migratus {:store :database :db ~(get (System/getenv) "DATABASE_URL")}
 
   :plugins [[lein-cprop "1.0.1"]
-            [lein-garden "0.3.0"]
             [lein-uberwar "0.2.0"]
             [migratus-lein "0.4.3"]]
-
-  :garden {:builds [{:source-paths ["src/clj"]
-                     :stylesheet rems.css.styles/screen
-                     :compiler {:output-to "resources/public/css/compiled/screen.css"
-                                :pretty-print? true}}]}
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled"
                                   "resources/public/css/compiled"
