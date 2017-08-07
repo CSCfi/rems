@@ -10,10 +10,12 @@
   (from-file "resources/themes/default.edn"))
 
 (defn load-theme
+  "Tries to load the default theme and override default values by merging them with the values from the theme given as a parameter."
   ([theme]
      (if theme
        (try
-         (from-file (str "resources/themes/" theme ".edn"))
+         (merge (load-default-theme)
+                (from-file (str "resources/themes/" theme ".edn")))
          (catch java.io.FileNotFoundException e
            (load-default-theme)))
        (load-default-theme)))

@@ -30,9 +30,6 @@
      (get-username))))
 
 (defn get-theme-attribute
-  "Tries to first fetch a value from the current theme and falls back to default theme if a value is missing."
+  "Fetch the attribute value from the current theme."
   [attr-name]
-  (if-let [value (get context/*theme* attr-name)]
-    value
-    (get (context/load-theme "default")
-         attr-name)))
+  (get context/*theme* attr-name))
