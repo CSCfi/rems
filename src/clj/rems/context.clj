@@ -5,17 +5,17 @@
    i.e. context/*root-path*."
   (:require [clojure.tools.logging :as log]
             [cprop.core :refer [load-config]]
-            [cprop.source :refer [from-file]]))
+            [cprop.source :refer [from-resource]]))
 
 (defn load-default-theme []
-  (from-file "resources/themes/default.edn"))
+  (from-resource "themes/default.edn"))
 
 (defn load-theme
   "Tries to load the default theme and override default values by merging them with the values from the theme given as a parameter."
   ([theme]
    (merge (load-default-theme)
           (when theme
-            (try (from-file (str "resources/themes/" theme ".edn"))
+            (try (from-resource (str "themes/" theme ".edn"))
               (catch java.util.MissingResourceException e
                 (log/error (str "Could not locate a theme file by the name: "
                                 (str theme ".edn")))
