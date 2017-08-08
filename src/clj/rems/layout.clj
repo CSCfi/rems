@@ -74,6 +74,8 @@
   (html5 [:head
           [:meta {:http-equiv "Content-Type" :content "text/html; charset=UTF-8"}]
           [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
+          [:link {:rel "icon" :href "/img/favicon.ico" :type "image/x-icon"}]
+          [:link {:rel "shortcut icon" :href "/img/favicon.ico" :type "image/x-icon"}]
           [:title "Welcome to rems"]
           (include-css "/assets/bootstrap/css/bootstrap.min.css")
           (include-css "/assets/font-awesome/css/font-awesome.min.css")
