@@ -15,6 +15,8 @@
   (roles/add-role! "alice" :applicant)
   (db/add-user! {:user "bob" :userattrs nil})
   (roles/add-role! "bob" :approver)
+  (db/add-user! {:user "carl" :userattrs nil})
+  (roles/add-role! "carl" :reviewer)
   ;; a user to own things
   (db/add-user! {:user "owner" :userattrs nil}))
 
