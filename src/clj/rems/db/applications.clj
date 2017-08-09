@@ -296,7 +296,8 @@
         round (:curround application)
         state (:state application)]
     (when (= "applied" state)
-      (when (empty? (db/get-workflow-approvers {:application application-id :round round}))
+      (when (and (empty? (db/get-workflow-approvers {:application application-id :round round}))
+                 (empty? (db/get-workflow-reviewers {:application application-id :round round})))
         (db/add-application-event! {:application application-id :user (get-user-id)
                                     :round round :event "autoapprove" :comment nil})
         (try-autoapprove-application application-id)))))
