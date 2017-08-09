@@ -72,14 +72,18 @@
     (db/link-form-item! {:form (:id form-fi) :itemorder 2 :optional true :item (:id duration-fi) :user "owner"})
     (:id meta)))
 
-(defn- create-workflows! [user1 user2]
+(defn- create-workflows! [user1 user2 user3]
   (let [minimal (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner":title "minimal" :fnlround 0}))
         simple (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner" :title "simple" :fnlround 0}))
+        with-review (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner" :title "with review" :fnlround 1}))
         two-round (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner" :title "two rounds" :fnlround 1}))
         different (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner" :title "two rounds, different approvers" :fnlround 1}))]
     ;; either user1 or user2 can approve
     (db/create-workflow-approver! {:wfid simple :appruserid user1 :round 0})
     (db/create-workflow-approver! {:wfid simple :appruserid user2 :round 0})
+    ;; first user3 reviews, then user1 can approve
+    (db/create-workflow-reviewer! {:wfid with-review :revuserid user3 :round 0})
+    (db/create-workflow-approver! {:wfid with-review :appruserid user1 :round 1})
     ;; only user1 can approve
     (db/create-workflow-approver! {:wfid two-round :appruserid user1 :round 0})
     (db/create-workflow-approver! {:wfid two-round :appruserid user1 :round 1})
@@ -107,12 +111,13 @@
        {:licid text :langcode "en" :title "License"
         :textcontent (apply str (repeat 10 "License text in English. "))})
 
-      (doseq [wf [minimal simple two-round different]]
+      (doseq [wf [minimal simple with-review two-round different]]
         (db/create-workflow-license! {:wfid wf :licid link :round 0})
         (db/create-workflow-license! {:wfid wf :licid text :round 0})))
 
     {:minimal minimal
      :simple simple
+     :with-review with-review
      :two-round two-round
      :different different}))
 
@@ -159,13 +164,16 @@
   (create-users-and-roles!)
   (db/create-resource! {:id 1 :resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1})
   (let [meta (create-basic-form!)
-        workflows (create-workflows! "developer" "bob")
+        workflows (create-workflows! "developer" "bob" "carl")
         minimal (create-catalogue-item! 1 (:minimal workflows) meta
                                        {"en" "ELFA Corpus, direct approval"
                                         "fi" "ELFA-korpus, suora hyväksyntä"})
         simple (create-catalogue-item! 1 (:simple workflows) meta
                                        {"en" "ELFA Corpus, one approval"
                                         "fi" "ELFA-korpus, yksi hyväksyntä"})
+        with-review (create-catalogue-item! 1 (:with-review workflows) meta
+                                            {"en" "ELFA Corpus, with review"
+                                             "fi" "ELFA-korpus, katselmoinnilla"})
         different (create-catalogue-item! 1 (:different workflows) meta
                                           {"en" "ELFA Corpus, two rounds of approval by different approvers"
                                            "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})]
@@ -175,7 +183,7 @@
   (create-demo-users-and-roles!)
   (db/create-resource! {:id 1 :resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1})
   (let [meta (create-basic-form!)
-        workflows (create-workflows! "RDapprover1@funet.fi" "RDapprover2@funet.fi")
+        workflows (create-workflows! "RDapprover1@funet.fi" "RDapprover2@funet.fi" "RDreview@funet.fi")
         minimal (create-catalogue-item! 1 (:minimal workflows) meta
                                        {"en" "ELFA Corpus, direct approval"
                                         "fi" "ELFA-korpus, suora hyväksyntä"})

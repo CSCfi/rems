@@ -238,6 +238,12 @@ WHERE wfa.wfid = :wfid
   AND wfa.round = :round
 /*~ ) ~*/
 
+-- :name create-workflow-reviewer! :insert
+INSERT INTO workflow_reviewers
+(wfid, revuserid, round)
+VALUES
+(:wfid, :revuserid, :round)
+
 -- :name get-workflow-reviewers :? :*
 /*~ (when (:application params) */
 SELECT
