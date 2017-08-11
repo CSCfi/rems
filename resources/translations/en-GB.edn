@@ -8,7 +8,7 @@
                :catalogue "Catalogue"
                :applications "Applications"
                :approvals "Approvals"
-               :reviewals "Reviewals"}
+               :reviews "Reviews"}
   :login {:title "Login"
           :text "Login by using your Haka credentials"}
   :about {:text [:div.document

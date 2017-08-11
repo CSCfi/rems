@@ -38,7 +38,7 @@
        (when-role :approver
          (nav-link "/approvals" (text :t.navigation/approvals) (= page-name "approvals")))
        (when-role :reviewer
-         (nav-link "/reviewals" (text :t.navigation/reviewals) (= page-name "reviewals"))))
+         (nav-link "/reviews" (text :t.navigation/reviews) (= page-name "reviews"))))
       (nav-link "/" (text :t.navigation/home) (= page-name "home")))
     (nav-link "/about" (text :t.navigation/about) (= page-name "about"))]
    (role-switcher)

@@ -1,11 +1,11 @@
-(ns rems.reviewals
+(ns rems.reviews
   (:require [compojure.core :refer [GET defroutes]]
             [rems.layout :as layout]))
 
-(defn reviewals-page []
+(defn reviews-page []
   (layout/render
-    "reviewals"
+    "reviews"
     [:p "hello world"]))
 
-(defroutes reviewals-routes
-  (GET "/reviewals" [] (reviewals-page)))
+(defroutes reviews-routes
+  (GET "/reviews" [] (reviews-page)))

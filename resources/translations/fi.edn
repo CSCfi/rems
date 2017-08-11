@@ -8,7 +8,7 @@
                :catalogue "Kielivarat"
                :applications "Hakemukset"
                :approvals "Hyväksynnät"
-               :reviewals "Katselmoinnit"}
+               :reviews "Katselmoinnit"}
   :login {:title "Kirjaudu sisään"
           :text "Kirjaudu sisään Haka-tunnuksillasi"}
   :about {:text [:div.document
