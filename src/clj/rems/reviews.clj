@@ -8,14 +8,18 @@
 
 (def ^:private time-format (format/formatter "yyyy-MM-dd HH:mm"
                                              (time/default-time-zone)))
+(defn view-button [app]
+  [:a.btn.btn-secondary
+   {:href (str "/form/" (:catid app) "/" (:id app))}
+   (text :t.applications/view)])
 
-(defn- review-item [rev]
+(defn- review-item [app]
   [:tr.review
-   [:td {:data-th (text :t.reviews/application)} (:id rev)]
-   [:td {:data-th (text :t.reviews/resource)} (get-in rev [:catalogue-item :title])]
-   [:td {:data-th (text :t.reviews/applicant)} (:applicantuserid rev)]
-   [:td {:data-th (text :t.reviews/created)} (format/unparse time-format (:start rev))]
-   [:td.actions ""]])
+   [:td {:data-th (text :t.reviews/application)} (:id app)]
+   [:td {:data-th (text :t.reviews/resource)} (get-in app [:catalogue-item :title])]
+   [:td {:data-th (text :t.reviews/applicant)} (:applicantuserid app)]
+   [:td {:data-th (text :t.reviews/created)} (format/unparse time-format (:start app))]
+   [:td.actions (view-button app)]])
 
 (defn reviews
   ([]

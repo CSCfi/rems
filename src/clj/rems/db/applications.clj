@@ -34,6 +34,10 @@
          (contains? (set (db/get-workflow-reviewers {:application application :round round}))
                     {:revuserid (get-user-id)}))))
 
+(defn is-reviewer? [application]
+  (contains? (set (db/get-workflow-reviewers {:application application}))
+             {:revuserid (get-user-id)}))
+
 (defn- get-applications-impl [query-params]
   (doall
    (for [app (db/get-applications query-params)]
@@ -166,7 +170,8 @@
          applicant? (= (:applicantuserid application) (get-user-id))]
      (when application-id
        (when-not (or applicant?
-                     (is-approver? application-id))
+                     (is-approver? application-id)
+                     (is-reviewer? application-id))
          (throw-unauthorized)))
      {:id form-id
       :catalogue-item catalogue-item

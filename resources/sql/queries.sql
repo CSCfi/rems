@@ -256,10 +256,8 @@ LEFT OUTER JOIN workflow wf on wf.id = wfr.wfid
 LEFT OUTER JOIN catalogue_item cat ON cat.wfid = wf.id
 LEFT OUTER JOIN catalogue_item_application app ON app.catid = cat.id
 WHERE app.id = :application
-  AND wfr.round = :round
 /*~ ) ~*/
 /*~ (when (:wfid params) */
-SELECT wfr.revuserid
 FROM workflow_reviewers wfr
 WHERE wfr.wfid = :wfid
 /*~ ) ~*/
