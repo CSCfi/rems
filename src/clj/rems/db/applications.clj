@@ -234,6 +234,15 @@
                (pr-str application) " vs. " (pr-str event)))
   (assoc application :state "returned" :curround 0))
 
+(defmethod apply-event "review"
+  [application event]
+  (assert (= (:state application) "applied")
+          (str "Can't review application " (pr-str application)))
+  (assert (= (:curround application) (:round event))
+          (str "Application and review rounds don't match: "
+               (pr-str application) " vs. " (pr-str event)))
+  (assoc application :state "applied" :curround (inc (:curround application))))
+
 (defmethod apply-event "withdraw"
   [application event]
   (assert (= (:state application) "applied")
@@ -326,7 +335,8 @@
     (try-autoapprove-application application-id)))
 
 (defn- judge-application [application-id event round msg]
-  (when-not (can-approve? application-id)
+  (when-not (or (can-approve? application-id)
+                (can-review? application-id))
     (throw-unauthorized))
   (let [state (get-application-state application-id)]
     (when-not (= round (:curround state))
