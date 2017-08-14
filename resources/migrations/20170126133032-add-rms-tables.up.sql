@@ -12,6 +12,7 @@ CREATE TYPE application_event_type AS ENUM (
   'autoapprove', -- like approve but when there are no approvers for the round
   'reject',  -- applied --> rejected
   'return',   -- applied --> returned
+  'review',   -- applied --> applied or approved
   'withdraw',   -- applied --> withdrawn
   'close'   -- any --> closed
 );

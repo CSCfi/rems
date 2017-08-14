@@ -344,6 +344,9 @@
 (defn return-application [application-id round msg]
   (judge-application application-id "return" round msg))
 
+(defn review-application [application-id round msg]
+  (judge-application application-id "review" round msg))
+
 ;; TODO better name
 ;; TODO consider refactoring together with judge
 (defn- unjudge-application

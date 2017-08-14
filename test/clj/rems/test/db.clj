@@ -424,6 +424,7 @@
   (binding [context/*user* {"eppn" "event-test"}]
     (db/add-user! {:user "event-test", :userattrs nil})
     (db/add-user! {:user "event-test-approver", :userattrs nil})
+    (db/add-user! {:user "event-test-reviewer", :userattrs nil})
     (let [uid (get-user-id)
           wf (:id (db/create-workflow! {:modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 1}))
           item (:id (db/create-catalogue-item! {:title "A" :form nil :resid nil :wfid wf}))
@@ -510,6 +511,37 @@
 
           (applications/submit-application app)
           (is (= (fetch app) {:curround 0 :state "applied"}))))
+
+      (testing "review"
+        (let [rev-wf (:id (db/create-workflow! {:owneruserid uid :modifieruserid uid :title "Review workflow" :fnlround 1}))
+              rev-item (:id (db/create-catalogue-item! {:title "Review item" :resid nil :wfid rev-wf :form nil}))
+              rev-app (applications/create-new-draft rev-item)]
+          (db/create-workflow-reviewer! {:wfid rev-wf :revuserid "event-test-reviewer" :round 0})
+          (db/create-workflow-approver! {:wfid rev-wf :appruserid uid :round 1})
+          (is (= (fetch rev-app) {:curround 0 :state "draft"}))
+          (binding [context/*user* {"eppn" "event-test-reviewer"}]
+            (is (thrown? Exception (applications/review-application rev-app))
+                "Should not be able to review a draft"))
+          (is (thrown? Exception (applications/review-application rev-app))
+              "Should not be able to review if not reviewer")
+          (applications/submit-application rev-app)
+          (is (= (fetch rev-app) {:curround 0 :state "applied"}))
+          (binding [context/*user* {"eppn" "event-test-reviewer"}]
+            (is (thrown? Exception (applications/review-application rev-app 1 ""))
+                "Should not be able to review wrong round")
+            (applications/review-application rev-app 0 "looks good to me"))
+          (is (= (fetch rev-app) {:curround 1 :state "applied"}))
+          (applications/return-application rev-app 1 "comment")
+          (is (= (fetch rev-app) {:curround 0 :state "returned"}))
+          (binding [context/*user* {"eppn" "event-test-reviewer"}]
+            (is (thrown? Exception (applications/review-application rev-app))
+                "Should not be able to review when returned"))
+          (applications/submit-application rev-app)
+          (applications/withdraw-application rev-app 0 "test withdraw")
+          (is (= (fetch rev-app) {:curround 0 :state "withdrawn"}))
+          (binding [context/*user* {"eppn" "event-test-reviewer"}]
+            (is (thrown? Exception (applications/review-application rev-app))
+                "Should not be able to review when withdrawn"))))
 
       (testing "closing"
         (let [app (applications/create-new-draft item)]
