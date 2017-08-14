@@ -118,6 +118,11 @@
               :show-publications "Show publications"
               :show-throughput-times "Show throughput times"
               :not-implemented "Not implemented yet"}
+  :reviews {:applicant "Applicant"
+            :application "Application"
+            :created "Created"
+            :empty "You don't have any reviews to process."
+            :resource "Resource"}
   :roles {:header "Select role:"
           :names {:approver "Approver"
                   :reviewer "Reviewer"

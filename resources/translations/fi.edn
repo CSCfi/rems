@@ -119,6 +119,11 @@
               :show-publications "Näytä julkaisut"
               :show-throughput-times "Näytä läpimenoajat"
               :not-implemented "Ei vielä toteutettu"}
+  :reviews {:applicant "Hakija"
+            :application "Hakemus"
+            :created "Luotu"
+            :empty "Sinulla ei ole katselmointeja käsiteltäväksi."
+            :resource "Kielivara"}
   :roles {:header "Valitse rooli:"
           :names {:approver "Hyväksyjä"
                   :reviewer "Katselmoija"

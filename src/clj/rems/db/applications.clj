@@ -27,6 +27,13 @@
   (contains? (set (db/get-workflow-approvers {:application application}))
              {:appruserid (get-user-id)}))
 
+(defn can-review? [application]
+  (let [state (get-application-state application)
+        round (:curround state)]
+    (and (= "applied" (:state state))
+         (contains? (set (db/get-workflow-reviewers {:application application :round round}))
+                    {:revuserid (get-user-id)}))))
+
 (defn- get-applications-impl [query-params]
   (doall
    (for [app (db/get-applications query-params)]
@@ -52,6 +59,11 @@
                (let [my-events (filter #(= (get-user-id) (:userid %))
                                        (:events app))]
                  (assoc app :handled (:time (last my-events))))))))
+
+(defn get-reviews []
+  (filterv
+    (fn [app] (can-review? (:id app)))
+    (get-applications-impl {})))
 
 (defn get-draft-id-for
   "Finds applications in the draft state for the given catalogue item.

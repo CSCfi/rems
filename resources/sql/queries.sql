@@ -245,10 +245,13 @@ VALUES
 (:wfid, :revuserid, :round)
 
 -- :name get-workflow-reviewers :? :*
-/*~ (when (:application params) */
 SELECT
-  wfr.revuserid, wfr.round
+  wfr.revuserid
+/*~ (when (:wfid params) */
+, wfr.round
+/*~ ) ~*/
 FROM workflow_reviewers wfr
+/*~ (when (:application params) */
 LEFT OUTER JOIN workflow wf on wf.id = wfr.wfid
 LEFT OUTER JOIN catalogue_item cat ON cat.wfid = wf.id
 LEFT OUTER JOIN catalogue_item_application app ON app.catid = cat.id
@@ -259,7 +262,9 @@ WHERE app.id = :application
 SELECT wfr.revuserid
 FROM workflow_reviewers wfr
 WHERE wfr.wfid = :wfid
-AND wfr.round = :round
+/*~ ) ~*/
+/*~ (when (:round params) */
+  AND wfr.round = :round
 /*~ ) ~*/
 
 -- :name get-workflow :? :1
