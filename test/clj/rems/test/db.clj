@@ -390,6 +390,66 @@
           (is (not (applications/can-approve? app2)))))
       )))
 
+(deftest test-get-reviews
+  (binding [context/*user* {"eppn" "test-user"}]
+    (let [uid (get-user-id)
+          uid2 "another-user"
+          wfid1 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 1}))
+          wfid2 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 2}))
+          _ (db/create-workflow-reviewer! {:wfid wfid1 :revuserid uid :round 0})
+          _ (db/create-workflow-reviewer! {:wfid wfid2 :revuserid uid2 :round 0})
+          _ (db/create-workflow-reviewer! {:wfid wfid2 :revuserid uid :round 1})
+          item1 (:id (db/create-catalogue-item! {:title "item1" :form nil :resid nil :wfid wfid1}))
+          item2 (:id (db/create-catalogue-item! {:title "item2" :form nil :resid nil :wfid wfid2}))
+          item3 (:id (db/create-catalogue-item! {:title "item3" :form nil :resid nil :wfid wfid1}))
+          item4 (:id (db/create-catalogue-item! {:title "item4" :form nil :resid nil :wfid wfid2}))
+          app1 (applications/create-new-draft item1) ; should see as reviewer for round 0
+          app2 (applications/create-new-draft item2) ; should see as reviewer for round 1
+          app3 (applications/create-new-draft item3) ; should not see draft
+          app4 (applications/create-new-draft item4)]
+      (db/add-user! {:user uid :userattrs nil})
+      (db/add-user! {:user uid2 :userattrs nil})
+
+      (applications/submit-application app1)
+      (applications/submit-application app2)
+
+      (applications/submit-application app4)
+      (binding [context/*user* {"eppn" uid2}]
+        (applications/review-application app4 0 ""))
+      (applications/review-application app4 1 "")
+
+      (is (= [{:id app1 :state "applied" :catid item1 :curround 0}]
+             (map #(select-keys % [:id :state :catid :curround])
+                  (applications/get-reviews)))
+          "should only see app1")
+
+      (testing "applications/can-review?"
+        (is (applications/can-review? app1))
+        (is (not (applications/can-review? app2)))
+        (is (not (applications/can-review? app3)))
+        (is (not (applications/can-review? app4)))
+        (binding [context/*user* {"eppn" uid2}]
+          (is (not (applications/can-review? app1)))
+          (is (applications/can-review? app2))))
+
+      ;; move app1 and app2 to round 1
+      (applications/review-application app1 0 "")
+      (binding [context/*user* {"eppn" uid2}]
+        (applications/review-application app2 0 ""))
+
+      (is (= [{:id app2 :state "applied" :catid item2 :curround 1}]
+             (map #(select-keys % [:id :state :catid :curround])
+                  (applications/get-reviews)))
+          "should only see app2")
+      (testing "applications/can-review? after changes"
+        (is (not (applications/can-review? app1)))
+        (is (applications/can-review? app2))
+        (is (not (applications/can-review? app3)))
+        (is (not (applications/can-review? app4)))
+        (binding [context/*user* {"eppn" uid2}]
+          (is (not (applications/can-review? app1)))
+          (is (not (applications/can-review? app2))))))))
+
 (deftest test-users
   (db/add-user! {:user "pekka", :userattrs nil})
   (db/add-user! {:user "simo", :userattrs nil})
