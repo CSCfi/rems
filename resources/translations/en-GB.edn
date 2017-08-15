@@ -125,7 +125,8 @@
             :created "Created"
             :empty "You don't have any reviews to process."
             :resource "Resource"
-            :review "Review"}
+            :review "Review"
+            :review-success "Application reviewed"}
   :roles {:header "Select role:"
           :names {:approver "Approver"
                   :reviewer "Reviewer"

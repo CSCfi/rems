@@ -1,12 +1,14 @@
 (ns rems.reviews
   (:require [clj-time.core :as time]
             [clj-time.format :as format]
-            [compojure.core :refer [GET defroutes]]
+            [compojure.core :refer [GET POST defroutes]]
             [rems.anti-forgery :refer [anti-forgery-field]]
             [rems.db.applications :as applications]
             [rems.layout :as layout]
             [rems.role-switcher :refer [when-role has-roles?]]
-            [rems.text :refer [text]]))
+            [rems.text :refer [text]]
+            [rems.util :refer [errorf]]
+            [ring.util.response :refer [redirect]]))
 
 (def ^:private time-format (format/formatter "yyyy-MM-dd HH:mm"
                                              (time/default-time-zone)))
@@ -83,4 +85,17 @@
     (reviews)))
 
 (defroutes reviews-routes
-  (GET "/reviews" [] (reviews-page)))
+  (GET "/reviews" [] (reviews-page))
+  (POST "/reviews/:id/:round" [id round :as request]
+        (let [id (Long/parseLong id)
+              round (Long/parseLong round)
+              input (:form-params request)
+              comment-msg (get input "comment")
+              comment-msg (when-not (empty? comment-msg) comment-msg)]
+          (when-not (get input "review")
+            (errorf "Unknown action!"))
+          (applications/review-application id round comment-msg)
+          (assoc (redirect (if (has-roles? :reviewer) "/reviews" "/applications") :see-other)
+                 :flash [{:status :success
+                          :contents (text :t.reviews/review-success)}]))
+        ))

@@ -126,7 +126,8 @@
             :created "Luotu"
             :empty "Sinulla ei ole katselmointeja käsiteltäväksi."
             :resource "Kielivara"
-            :review "Katselmoi"}
+            :review "Katselmoi"
+            :review-success "Hakemus katselmoitu"}
   :roles {:header "Valitse rooli:"
           :names {:approver "Hyväksyjä"
                   :reviewer "Katselmoija"
