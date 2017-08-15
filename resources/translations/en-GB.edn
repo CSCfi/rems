@@ -66,6 +66,7 @@
          :submitted "Application submitted."
          :back "Back to catalogue"
          :back-approvals "Back to approvals"
+         :back-reviews "Back to reviews"
          :date "Time"
          :event "Event"
          :events "Application events"
@@ -120,9 +121,11 @@
               :not-implemented "Not implemented yet"}
   :reviews {:applicant "Applicant"
             :application "Application"
+            :cancel "Cancel"
             :created "Created"
             :empty "You don't have any reviews to process."
-            :resource "Resource"}
+            :resource "Resource"
+            :review "Review"}
   :roles {:header "Select role:"
           :names {:approver "Approver"
                   :reviewer "Reviewer"

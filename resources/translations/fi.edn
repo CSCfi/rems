@@ -67,6 +67,7 @@
          :submitted "Hakemus lähetetty."
          :back "Takaisin kielivaroihin"
          :back-approvals "Takaisin hyväksyntiin"
+         :back-reviews "Takaisin katselmointeihin"
          :date "Aika"
          :event "Tapahtuma"
          :events "Hakemuksen tapahtumat"
@@ -121,9 +122,11 @@
               :not-implemented "Ei vielä toteutettu"}
   :reviews {:applicant "Hakija"
             :application "Hakemus"
+            :cancel "Peruuta"
             :created "Luotu"
             :empty "Sinulla ei ole katselmointeja käsiteltäväksi."
-            :resource "Kielivara"}
+            :resource "Kielivara"
+            :review "Katselmoi"}
   :roles {:header "Valitse rooli:"
           :names {:approver "Hyväksyjä"
                   :reviewer "Katselmoija"

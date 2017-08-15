@@ -16,6 +16,7 @@
             [rems.guide :refer :all]
             [rems.layout :as layout]
             [rems.phase :refer [phases]]
+            [rems.reviews :as reviews]
             [rems.role-switcher :refer [has-roles?
                                         when-role]]
             [rems.text :refer :all]
@@ -166,7 +167,7 @@
 
 (defn- form [form]
   (let [state (:state (:application form))
-        approvable? (= state "applied")
+        actionable? (= state "applied")
         events (get-in form [:application :events])
         user-attributes (or (:applicant-attributes form) context/*user*)]
     (list
@@ -183,11 +184,18 @@
      ;; TODO resource owner should be able to close
 
      (when-role :approver
-       (if approvable?
+       (if actionable?
          (approvals/approve-form (:application form))
          [:div.row
           [:div.col.actions
            (approvals/back-to-approvals-button)]])
+       )
+     (when-role :reviewer
+       (if actionable?
+         (reviews/review-form (:application form))
+         [:div.row
+          [:div.col.actions
+           (reviews/back-to-reviews-button)]])
        ))))
 
 (defn link-to-item [item]
