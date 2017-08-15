@@ -124,7 +124,7 @@
             :application "Hakemus"
             :cancel "Peruuta"
             :created "Luotu"
-            :empty "Sinulla ei ole katselmointeja käsiteltäväksi."
+            :empty "Sinulla ei ole hakemuksia katselmoitavaksi."
             :resource "Kielivara"
             :review "Katselmoi"
             :review-success "Hakemus katselmoitu"}

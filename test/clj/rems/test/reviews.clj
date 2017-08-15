@@ -9,7 +9,7 @@
 (defn check-row-text [row text]
   (is (= text (hiccup-text (first (hiccup-find [:td] row))))))
 
-(deftest test-revies
+(deftest test-reviews
   (let [c (#'rems.reviews/reviews [{:id 2 :catalogue-item {:title "A"} :applicantuserid "tester"}
                                    {:id 3 :catalogue-item {:title "B"} :applicantuserid "tester"}
                                    {:id 1 :catalogue-item {:title "C"} :applicantuserid "tester"}])

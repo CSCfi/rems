@@ -243,5 +243,5 @@
                   (login "test-roles-reviewer" :reviewer)
                   (follow-redirect)
                   (follow-redirect))]
-      (is (not-empty (hiccup-find [:.reviews] (ctx->html ctx))) "approver sees reviews initially")
+      (is (not-empty (hiccup-find [:.reviews] (ctx->html ctx))) "reviewer sees reviews initially")
       (is (contains? (set (db/get-users)) {:userid "test-roles-reviewer"})))))

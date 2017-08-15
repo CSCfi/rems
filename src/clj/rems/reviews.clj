@@ -66,7 +66,7 @@
 
 (defn reviews
   ([]
-   (reviews (applications/get-reviews)))
+   (reviews (applications/get-application-to-review)))
   ([revs]
    (if (empty? revs)
      [:div.reviews.alert.alert-success (text :t/reviews.empty)]

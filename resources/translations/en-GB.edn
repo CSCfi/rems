@@ -123,7 +123,7 @@
             :application "Application"
             :cancel "Cancel"
             :created "Created"
-            :empty "You don't have any reviews to process."
+            :empty "You don't have any applications to review."
             :resource "Resource"
             :review "Review"
             :review-success "Application reviewed"}

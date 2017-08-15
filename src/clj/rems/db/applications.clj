@@ -64,7 +64,7 @@
                                        (:events app))]
                  (assoc app :handled (:time (last my-events))))))))
 
-(defn get-reviews []
+(defn get-application-to-review []
   (filterv
     (fn [app] (can-review? (:id app)))
     (get-applications-impl {})))
