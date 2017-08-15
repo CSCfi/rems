@@ -394,8 +394,8 @@
   (binding [context/*user* {"eppn" "test-user"}]
     (let [uid (get-user-id)
           uid2 "another-user"
-          wfid1 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 1}))
-          wfid2 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 2}))
+          wfid1 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 0}))
+          wfid2 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 1}))
           _ (db/create-workflow-reviewer! {:wfid wfid1 :revuserid uid :round 0})
           _ (db/create-workflow-reviewer! {:wfid wfid2 :revuserid uid2 :round 0})
           _ (db/create-workflow-reviewer! {:wfid wfid2 :revuserid uid :round 1})

@@ -246,7 +246,9 @@
   (assert (= (:curround application) (:round event))
           (str "Application and review rounds don't match: "
                (pr-str application) " vs. " (pr-str event)))
-  (assoc application :state "applied" :curround (inc (:curround application))))
+  (if (= (:curround application) (:fnlround application))
+    (assoc application :state "approver")
+    (assoc application :state "applied" :curround (inc (:curround application)))))
 
 (defmethod apply-event "withdraw"
   [application event]
