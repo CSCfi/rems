@@ -538,6 +538,8 @@
             (applications/submit-application app)
             (is (= (fetch app) {:curround 0 :state "applied"})))
 
+          (is (thrown? Exception (applications/review-application app 0 ""))
+              "Should not be able to review as an approver")
           (applications/approve-application app 0 "c1")
           (is (= (fetch app) {:curround 1 :state "applied"}))
 
@@ -600,6 +602,8 @@
           (binding [context/*user* {"eppn" "event-test-reviewer"}]
             (is (thrown? Exception (applications/review-application rev-app 1 ""))
                 "Should not be able to review wrong round")
+            (is (thrown? Exception (applications/approve-application rev-app 0 ""))
+                "Should not be able to approve as reviewer")
             (applications/review-application rev-app 0 "looks good to me"))
           (is (= (fetch rev-app) {:curround 1 :state "applied"}))
           (applications/return-application rev-app 1 "comment")
