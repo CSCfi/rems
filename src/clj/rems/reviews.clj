@@ -4,6 +4,7 @@
             [compojure.core :refer [GET POST defroutes]]
             [rems.anti-forgery :refer [anti-forgery-field]]
             [rems.db.applications :as applications]
+            [rems.guide :refer :all]
             [rems.layout :as layout]
             [rems.role-switcher :refer [when-role has-roles?]]
             [rems.text :refer [text]]
@@ -78,6 +79,17 @@
        [:th]]
       (for [rev (sort-by :id revs)]
         (review-item rev))])))
+
+(defn guide
+  []
+  (list
+   (example "reviews empty"
+             (reviews []))
+   (example "reviews"
+            (reviews
+             [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid "alice"}
+              {:id 3 :catalogue-item {:title "bbbbbb"} :applicantuserid "bob"}]))
+    ))
 
 (defn reviews-page []
   (layout/render
