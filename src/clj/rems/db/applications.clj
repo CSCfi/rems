@@ -340,9 +340,6 @@
     (try-autoapprove-application application-id)))
 
 (defn- judge-application [application-id event round msg]
-  (when-not (or (can-approve? application-id)
-                (can-review? application-id))
-    (throw-unauthorized))
   (let [state (get-application-state application-id)]
     (when-not (= round (:curround state))
       (throw-unauthorized))
@@ -351,15 +348,23 @@
     (try-autoapprove-application application-id)))
 
 (defn approve-application [application-id round msg]
+  (when-not (can-approve? application-id)
+    (throw-unauthorized))
   (judge-application application-id "approve" round msg))
 
 (defn reject-application [application-id round msg]
+  (when-not (can-approve? application-id)
+    (throw-unauthorized))
   (judge-application application-id "reject" round msg))
 
 (defn return-application [application-id round msg]
+  (when-not (can-approve? application-id)
+    (throw-unauthorized))
   (judge-application application-id "return" round msg))
 
 (defn review-application [application-id round msg]
+  (when-not (can-review? application-id)
+    (throw-unauthorized))
   (judge-application application-id "review" round msg))
 
 ;; TODO better name
