@@ -17,27 +17,28 @@
 (defn handled? [app]
   (contains? #{"approved" "rejected" "returned" "closed"} (:state app)))
 
-(defn can-approve? [application]
-  (let [state (get-application-state application)
+(defn- can-act-as? [application role]
+    (let [state (get-application-state application)
         round (:curround state)]
     (and (= "applied" (:state state))
-         (contains? (set (map :actoruserid (actors/get-by-role  application round "approver")))
+         (contains? (set (map :actoruserid (actors/get-by-role application round role)))
                     (get-user-id)))))
+
+(defn- is-actor? [application role]
+  (contains? (set (map :actoruserid (actors/get-by-role application role)))
+             (get-user-id)))
+
+(defn can-approve? [application]
+  (can-act-as? application "approver"))
 
 (defn is-approver? [application]
-  (contains? (set (map :actoruserid (actors/get-by-role application "approver")))
-             (get-user-id)))
+  (is-actor? application "approver"))
 
 (defn can-review? [application]
-  (let [state (get-application-state application)
-        round (:curround state)]
-    (and (= "applied" (:state state))
-         (contains? (set (map :actoruserid (actors/get-by-role  application round "reviewer")))
-                    (get-user-id)))))
+  (can-act-as? application "reviewer"))
 
 (defn is-reviewer? [application]
-  (contains? (set (map :actoruserid (actors/get-by-role application "reviewer")))
-             (get-user-id)))
+  (is-actor? application "reviewer"))
 
 (defn- get-applications-impl [query-params]
   (doall
