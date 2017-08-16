@@ -14,6 +14,7 @@
             [rems.db.core :as db]
             [rems.db.roles :as roles]
             [rems.db.users :as users]
+            [rems.db.workflow-actors :as actors]
             [rems.util :refer [get-user-id]]))
 
 (use-fixtures
@@ -77,7 +78,7 @@
       (db/link-form-item! {:form (:id form-fi) :itemorder 1 :item (:id item-a) :user uid :optional false})
 
       (db/add-user! {:user uid :userattrs nil})
-      (db/create-workflow-approver! {:wfid (:id wf) :appruserid uid :round 0})
+      (actors/add-approver! (:id wf) uid 0)
       (db/create-catalogue-item-localization! {:id (:id item) :langcode "en" :title "item-en"})
       (db/create-catalogue-item-localization! {:id (:id item) :langcode "fi" :title "item-fi"})
 
@@ -153,7 +154,7 @@
             (is (= [nil "X" nil] (map :value (:items f)))))))
 
       (testing "get submitted form as approver"
-        (db/create-workflow-approver! {:wfid (:id wf) :appruserid "approver" :round 0})
+        (actors/add-approver! (:id wf) "approver" 0)
         (db/save-license-approval! {:catappid app-id
                                     :licid (:id license)
                                     :actoruserid uid
@@ -183,7 +184,7 @@
           wf (:id (db/create-workflow! {:owneruserid uid :modifieruserid uid :title "" :fnlround 0}))
           item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
           app (applications/create-new-draft item)]
-      (db/create-workflow-approver! {:wfid wf :appruserid uid :round 0})
+      (actors/add-approver! wf uid 0)
 
       (is (= app (applications/get-draft-id-for item)))
       (is (= [{:id app :state "draft" :catid item}]
@@ -208,8 +209,8 @@
             item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
             app (applications/create-new-draft item)
             get-phases (fn [] (applications/get-application-phases (:state (applications/get-application-state app))))]
-        (db/create-workflow-approver! {:wfid wf :appruserid "approver1" :round 0})
-        (db/create-workflow-approver! {:wfid wf :appruserid "approver2" :round 1})
+        (actors/add-approver! wf "approver1" 0)
+        (actors/add-approver! wf "approver2" 1)
 
         (testing "initially the application is in draft phase"
           (is (= [{:phase :apply :active? true :text :t.phases/apply}
@@ -249,8 +250,8 @@
             item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
             app (applications/create-new-draft item)
             get-phases (fn [] (applications/get-application-phases (:state (applications/get-application-state app))))]
-        (db/create-workflow-approver! {:wfid wf :appruserid "approver1" :round 0})
-        (db/create-workflow-approver! {:wfid wf :appruserid "approver2" :round 1})
+        (actors/add-approver! wf "approver1" 0)
+        (actors/add-approver! wf "approver2" 1)
 
         (testing "initially the application is in draft phase"
           (is (= [{:phase :apply :active? true :text :t.phases/apply}
@@ -281,8 +282,8 @@
             item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
             app (applications/create-new-draft item)
             get-phases (fn [] (applications/get-application-phases (:state (applications/get-application-state app))))]
-        (db/create-workflow-approver! {:wfid wf :appruserid "approver1" :round 0})
-        (db/create-workflow-approver! {:wfid wf :appruserid "approver2" :round 1})
+        (actors/add-approver! wf "approver1" 0)
+        (actors/add-approver! wf "approver2" 1)
 
         (testing "initially the application is in draft phase"
           (is (= [{:phase :apply :active? true :text :t.phases/apply}
@@ -324,9 +325,9 @@
           uid2 "another-user"
           wfid1 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 0}))
           wfid2 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 1}))
-          _ (db/create-workflow-approver! {:wfid wfid1 :appruserid uid :round 0})
-          _ (db/create-workflow-approver! {:wfid wfid2 :appruserid uid2 :round 0})
-          _ (db/create-workflow-approver! {:wfid wfid2 :appruserid uid :round 1})
+          _ (actors/add-approver! wfid1 uid 0)
+          _ (actors/add-approver! wfid2 uid2 0)
+          _ (actors/add-approver! wfid2 uid 1)
           item1 (:id (db/create-catalogue-item! {:title "item1" :form nil :resid nil :wfid wfid1}))
           item2 (:id (db/create-catalogue-item! {:title "item2" :form nil :resid nil :wfid wfid2}))
           item3 (:id (db/create-catalogue-item! {:title "item3" :form nil :resid nil :wfid wfid1}))
@@ -396,9 +397,9 @@
           uid2 "another-user"
           wfid1 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 0}))
           wfid2 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 1}))
-          _ (db/create-workflow-reviewer! {:wfid wfid1 :revuserid uid :round 0})
-          _ (db/create-workflow-reviewer! {:wfid wfid2 :revuserid uid2 :round 0})
-          _ (db/create-workflow-reviewer! {:wfid wfid2 :revuserid uid :round 1})
+          _ (actors/add-reviewer! wfid1 uid 0)
+          _ (actors/add-reviewer! wfid2 uid2 0)
+          _ (actors/add-reviewer! wfid2 uid 1)
           item1 (:id (db/create-catalogue-item! {:title "item1" :form nil :resid nil :wfid wfid1}))
           item2 (:id (db/create-catalogue-item! {:title "item2" :form nil :resid nil :wfid wfid2}))
           item3 (:id (db/create-catalogue-item! {:title "item3" :form nil :resid nil :wfid wfid1}))
@@ -501,8 +502,8 @@
           item (:id (db/create-catalogue-item! {:title "A" :form nil :resid nil :wfid wf}))
           fetch (fn [app] (select-keys (applications/get-application-state app)
                                        [:state :curround]))]
-      (db/create-workflow-approver! {:wfid wf :appruserid uid :round 0})
-      (db/create-workflow-approver! {:wfid wf :appruserid "event-test-approver" :round 1})
+      (actors/add-approver! wf uid 0)
+      (actors/add-approver! wf "event-test-approver" 1)
 
       (testing "submitting, approving"
         (let [app (applications/create-new-draft item)]
@@ -589,8 +590,8 @@
         (let [rev-wf (:id (db/create-workflow! {:owneruserid uid :modifieruserid uid :title "Review workflow" :fnlround 1}))
               rev-item (:id (db/create-catalogue-item! {:title "Review item" :resid nil :wfid rev-wf :form nil}))
               rev-app (applications/create-new-draft rev-item)]
-          (db/create-workflow-reviewer! {:wfid rev-wf :revuserid "event-test-reviewer" :round 0})
-          (db/create-workflow-approver! {:wfid rev-wf :appruserid uid :round 1})
+          (actors/add-reviewer! rev-wf "event-test-reviewer" 0)
+          (actors/add-approver! rev-wf  uid  1)
           (is (= (fetch rev-app) {:curround 0 :state "draft"}))
           (binding [context/*user* {"eppn" "event-test-reviewer"}]
             (is (thrown? Exception (applications/review-application rev-app))

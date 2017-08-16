@@ -20,22 +20,22 @@
   (let [state (get-application-state application)
         round (:curround state)]
     (and (= "applied" (:state state))
-         (contains? (set (db/get-workflow-approvers {:application application :round round}))
+         (contains? (set (db/get-workflow-actors {:application application :round round}))
                     {:appruserid (get-user-id)}))))
 
 (defn is-approver? [application]
-  (contains? (set (db/get-workflow-approvers {:application application}))
+  (contains? (set (db/get-workflow-actors {:application application}))
              {:appruserid (get-user-id)}))
 
 (defn can-review? [application]
   (let [state (get-application-state application)
         round (:curround state)]
     (and (= "applied" (:state state))
-         (contains? (set (db/get-workflow-reviewers {:application application :round round}))
+         (contains? (set (db/get-workflow-actors {:application application :round round}))
                     {:revuserid (get-user-id)}))))
 
 (defn is-reviewer? [application]
-  (contains? (set (db/get-workflow-reviewers {:application application}))
+  (contains? (set (db/get-workflow-actors {:application application}))
              {:revuserid (get-user-id)}))
 
 (defn- get-applications-impl [query-params]
@@ -324,8 +324,8 @@
         round (:curround application)
         state (:state application)]
     (when (= "applied" state)
-      (when (and (empty? (db/get-workflow-approvers {:application application-id :round round}))
-                 (empty? (db/get-workflow-reviewers {:application application-id :round round})))
+      (when (and (empty? (db/get-workflow-actors {:application application-id :round round})) ;;approvers
+                 (empty? (db/get-workflow-actors {:application application-id :round round}))) ;;reviewers
         (db/add-application-event! {:application application-id :user (get-user-id)
                                     :round round :event "autoapprove" :comment nil})
         (try-autoapprove-application application-id)))))

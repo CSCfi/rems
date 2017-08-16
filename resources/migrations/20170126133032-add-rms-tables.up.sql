@@ -172,7 +172,7 @@ CREATE TABLE workflow_actors (
   id serial NOT NULL PRIMARY KEY,
   wfId integer DEFAULT NULL,
   actorUserId varchar(255) NOT NULL,
-  type workflow_actor_role NOT NULL,
+  role workflow_actor_role NOT NULL,
   round integer NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,

@@ -4,6 +4,7 @@
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.roles :as roles]
+            [rems.db.workflow-actors :as actors]
             [rems.util :refer [get-user-id]]))
 
 (defn- create-users-and-roles! []
@@ -79,17 +80,17 @@
         two-round (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner" :title "two rounds" :fnlround 1}))
         different (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner" :title "two rounds, different approvers" :fnlround 1}))]
     ;; either user1 or user2 can approve
-    (db/create-workflow-approver! {:wfid simple :appruserid user1 :round 0})
-    (db/create-workflow-approver! {:wfid simple :appruserid user2 :round 0})
+    (actors/add-approver! simple user1 0)
+    (actors/add-approver! simple user2 0)
     ;; first user3 reviews, then user1 can approve
-    (db/create-workflow-reviewer! {:wfid with-review :revuserid user3 :round 0})
-    (db/create-workflow-approver! {:wfid with-review :appruserid user1 :round 1})
+    (actors/add-reviewer! with-review user3 0)
+    (actors/add-approver! with-review user1 1)
     ;; only user1 can approve
-    (db/create-workflow-approver! {:wfid two-round :appruserid user1 :round 0})
-    (db/create-workflow-approver! {:wfid two-round :appruserid user1 :round 1})
+    (actors/add-approver! two-round user1 0)
+    (actors/add-approver! two-round user1 1)
     ;; first user2, then user1
-    (db/create-workflow-approver! {:wfid different :appruserid user2 :round 0})
-    (db/create-workflow-approver! {:wfid different :appruserid user1 :round 1})
+    (actors/add-approver! different user2 0)
+    (actors/add-approver! different user1 1)
 
     ;; attach both kinds of licenses to all workflows
     (let [link (:id (db/create-license!
