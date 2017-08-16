@@ -6,6 +6,7 @@
                                        get-localized-catalogue-item]]
             [rems.db.core :as db]
             [rems.db.users :as users]
+            [rems.db.workflow-actors :as actors]
             [rems.util :refer [get-user-id index-by]]))
 
 ;; TODO cache application state in db instead of always computing it from events
@@ -20,23 +21,23 @@
   (let [state (get-application-state application)
         round (:curround state)]
     (and (= "applied" (:state state))
-         (contains? (set (db/get-workflow-actors {:application application :round round}))
-                    {:appruserid (get-user-id)}))))
+         (contains? (set (map :actoruserid (actors/get-by-role  application round "approver")))
+                    (get-user-id)))))
 
 (defn is-approver? [application]
-  (contains? (set (db/get-workflow-actors {:application application}))
-             {:appruserid (get-user-id)}))
+  (contains? (set (map :actoruserid (actors/get-by-role application "approver")))
+             (get-user-id)))
 
 (defn can-review? [application]
   (let [state (get-application-state application)
         round (:curround state)]
     (and (= "applied" (:state state))
-         (contains? (set (db/get-workflow-actors {:application application :round round}))
-                    {:revuserid (get-user-id)}))))
+         (contains? (set (map :actoruserid (actors/get-by-role  application round "reviewer")))
+                    (get-user-id)))))
 
 (defn is-reviewer? [application]
-  (contains? (set (db/get-workflow-actors {:application application}))
-             {:revuserid (get-user-id)}))
+  (contains? (set (map :actoruserid (actors/get-by-role application "reviewer")))
+             (get-user-id)))
 
 (defn- get-applications-impl [query-params]
   (doall
@@ -324,8 +325,8 @@
         round (:curround application)
         state (:state application)]
     (when (= "applied" state)
-      (when (and (empty? (db/get-workflow-actors {:application application-id :round round})) ;;approvers
-                 (empty? (db/get-workflow-actors {:application application-id :round round}))) ;;reviewers
+      (when (and (empty? (actors/get-by-role application-id round "approver"))
+                 (empty? (actors/get-by-role application-id round "reviewer")))
         (db/add-application-event! {:application application-id :user (get-user-id)
                                     :round round :event "autoapprove" :comment nil})
         (try-autoapprove-application application-id)))))

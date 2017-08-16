@@ -219,7 +219,8 @@ VALUES
 
 -- :name get-workflow-actors :? :*
 SELECT
-  wfa.actoruserid
+  wfa.actoruserid,
+  wfa.role
 /*~ (when (:wfid params) */
 , wfa.round
 /*~ ) ~*/

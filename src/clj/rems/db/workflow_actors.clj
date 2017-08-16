@@ -6,3 +6,9 @@
 
 (defn add-reviewer! [wfid userid round]
   (db/create-workflow-actor! {:wfid wfid :actoruserid userid :role "reviewer" :round round}))
+
+(defn get-by-role
+  ([application role]
+   (filter #(= role (:role %)) (db/get-workflow-actors {:application application})))
+  ([application round role]
+   (filter #(= role (:role %)) (db/get-workflow-actors {:application application :round round}))))
