@@ -9,7 +9,7 @@
 (defn- landing-page [req]
   (users/add-user! (get-user-id) context/*user*)
   (cond
-    (has-roles? :approver) (redirect "/approvals")
+    (has-roles? :approver) (redirect "/actions")
     (has-roles? :reviewer) (redirect "/reviews")
     :else (redirect "/catalogue")))
 
