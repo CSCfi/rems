@@ -5,7 +5,7 @@
             [rems.anti-forgery :refer [anti-forgery-field]]
             [rems.applicant-info :as applicant-info]
             [rems.applications :as applications]
-            [rems.approvals :as approvals]
+            [rems.actions :as actions]
             [rems.collapsible :as collapsible]
             [rems.db.applications :refer [create-new-draft
                                           get-application-phases
@@ -137,8 +137,8 @@
                            true
                            (:title form)
                            (list
-                            (approvals/confirm-modal "close" (text :t.approvals/close) (:application form))
-                            (approvals/confirm-modal "withdraw" (text :t.approvals/withdraw) (:application form))
+                            (actions/confirm-modal "close" (text :t.actions/close) (:application form))
+                            (actions/confirm-modal "withdraw" (text :t.actions/withdraw) (:application form))
                             [:form {:method "post"
                                     :action (if-let [app (:id (:application form))]
                                               (str "/form/" (:catalogue-item form) "/" app "/save")
@@ -157,10 +157,10 @@
                                  [:a.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
                                 (into [:div.col.actions]
                                       [(when closeable? [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
-                                                         (text :t.approvals/close)])
+                                                         (text :t.actions/close)])
                                        (when editable? [:button.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)])
                                        (when editable? [:button.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)])
-                                       (when withdrawable? [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#withdraw-modal"} (text :t.approvals/withdraw)])
+                                       (when withdrawable? [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#withdraw-modal"} (text :t.actions/withdraw)])
                                        ])])
                              ]))))
 
@@ -185,10 +185,10 @@
 
      (when-role :approver
        (if actionable?
-         (approvals/approve-form (:application form))
+         (actions/approve-form (:application form))
          [:div.row
           [:div.col.actions
-           (approvals/back-to-approvals-button)]])
+           (actions/back-to-approvals-button)]])
        )
      (when-role :reviewer
        (if actionable?

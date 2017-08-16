@@ -7,7 +7,7 @@
                :home "Etusivu"
                :catalogue "Kielivarat"
                :applications "Hakemukset"
-               :approvals "Hyväksynnät"
+               :actions "Toiminnot"
                :reviews "Katselmoinnit"}
   :login {:title "Kirjaudu sisään"
           :text "Kirjaudu sisään Haka-tunnuksillasi"}
@@ -66,7 +66,7 @@
          :submit "Lähetä hakemus"
          :submitted "Hakemus lähetetty."
          :back "Takaisin kielivaroihin"
-         :back-approvals "Takaisin hyväksyntiin"
+         :back-actions "Takaisin hyväksyntiin"
          :back-reviews "Takaisin katselmointeihin"
          :date "Aika"
          :event "Tapahtuma"
@@ -93,7 +93,7 @@
                           :closed "Suljettu"
                           :unknown "Tuntematon"}
                  :empty "Sinulla ei ole hakemuksia."}
-  :approvals {:application "Hakemus"
+  :actions {:application "Hakemus"
               :resource "Kielivara"
               :applicant "Hakija"
               :state "Tila"

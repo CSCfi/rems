@@ -36,7 +36,7 @@
        (when-role :applicant
          (nav-link "/applications" (text :t.navigation/applications) (= page-name "applications")))
        (when-role :approver
-         (nav-link "/approvals" (text :t.navigation/approvals) (= page-name "approvals")))
+         (nav-link "/actions" (text :t.navigation/actions) (= page-name "actions")))
        (when-role :reviewer
          (nav-link "/reviews" (text :t.navigation/reviews) (= page-name "reviews"))))
       (nav-link "/" (text :t.navigation/home) (= page-name "home")))

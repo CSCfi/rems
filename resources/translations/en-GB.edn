@@ -7,7 +7,7 @@
                :home "Home"
                :catalogue "Catalogue"
                :applications "Applications"
-               :approvals "Approvals"
+               :actions "Actions"
                :reviews "Reviews"}
   :login {:title "Login"
           :text "Login by using your Haka credentials"}
@@ -65,7 +65,7 @@
          :submit "Send application"
          :submitted "Application submitted."
          :back "Back to catalogue"
-         :back-approvals "Back to approvals"
+         :back-actions "Back to actions"
          :back-reviews "Back to reviews"
          :date "Time"
          :event "Event"
@@ -92,7 +92,7 @@
                           :closed "Closed"
                           :unknown "Unknown"}
                  :empty "You don't have any applications."}
-  :approvals {:application "Application"
+  :actions {:application "Application"
               :resource "Resource"
               :applicant "Applicant"
               :state "State"
