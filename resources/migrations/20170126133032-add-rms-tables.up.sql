@@ -23,6 +23,8 @@ CREATE TYPE item_state AS ENUM ('disabled','enabled','copied');
 --;;
 CREATE TYPE license_type AS ENUM ('text','attachment','link');
 --;;
+CREATE TYPE workflow_actor_role AS ENUM ('approver','reviewer');
+--;;
 CREATE TABLE resource (
   id serial NOT NULL PRIMARY KEY,
   modifierUserId varchar(255) NOT NULL,
@@ -166,14 +168,15 @@ CREATE TABLE application_text_values (
   UNIQUE (catAppId, formMapId)
 );
 --;;
-CREATE TABLE workflow_approvers (
+CREATE TABLE workflow_actors (
   id serial NOT NULL PRIMARY KEY,
   wfId integer DEFAULT NULL,
   apprUserId varchar(255) NOT NULL,
+  type workflow_actor_role NOT NULL,
   round integer NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT workflow_approvers_ibfk_1 FOREIGN KEY (wfId) REFERENCES workflow (id)
+  CONSTRAINT workflow_actors_ibfk_1 FOREIGN KEY (wfId) REFERENCES workflow (id)
 );
 --;;
 CREATE TABLE catalogue_item_application_catid_overflow (
@@ -353,7 +356,7 @@ CREATE TABLE workflow_approver_options (
   optionValue varchar(256) NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT workflow_approver_options_ibfk_1 FOREIGN KEY (wfApprId) REFERENCES workflow_approvers (id)
+  CONSTRAINT workflow_approver_options_ibfk_1 FOREIGN KEY (wfApprId) REFERENCES workflow_actors (id)
 );
 --;;
 CREATE TABLE workflow_licenses (
@@ -366,16 +369,6 @@ CREATE TABLE workflow_licenses (
   endt timestamp NULL DEFAULT NULL,
   CONSTRAINT workflow_licenses_ibfk_1 FOREIGN KEY (wfId) REFERENCES workflow (id),
   CONSTRAINT workflow_licenses_ibfk_2 FOREIGN KEY (licId) REFERENCES license (id)
-);
---;;
-CREATE TABLE workflow_reviewers (
-  id serial NOT NULL PRIMARY KEY,
-  wfId integer DEFAULT NULL,
-  revUserId varchar(255) NOT NULL,
-  round integer NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT workflow_reviewers_ibfk_1 FOREIGN KEY (wfId) REFERENCES workflow (id)
 );
 --;;
 CREATE TABLE workflow_round_min (
