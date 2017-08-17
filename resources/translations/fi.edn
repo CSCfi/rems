@@ -7,8 +7,7 @@
                :home "Etusivu"
                :catalogue "Kielivarat"
                :applications "Hakemukset"
-               :actions "Toiminnot"
-               :reviews "Katselmoinnit"}
+               :actions "Toiminnot"}
   :login {:title "Kirjaudu sisään"
           :text "Kirjaudu sisään Haka-tunnuksillasi"}
   :about {:text [:div.document
@@ -105,12 +104,14 @@
             :approve "Hyväksy"
             :reject "Hylkää"
             :return "Palauta hakijalle"
+            :review "Katselmoi"
             :close "Sulje"
             :cancel "Peruuta"
             :withdraw "Vedä takaisin"
             :approve-success "Hakemus hyväksytty"
             :reject-success "Hakemus hylätty"
             :return-success "Hakemus palautettu"
+            :review-success "Hakemus katselmoitu"
             :close-success "Hakemus suljettu"
             :withdraw-success "Hakemus vedetty takaisin"
             :empty "Sinulla ei ole hakemuksia käsiteltäväksi."
@@ -120,14 +121,6 @@
             :show-publications "Näytä julkaisut"
             :show-throughput-times "Näytä läpimenoajat"
             :not-implemented "Ei vielä toteutettu"}
-  :reviews {:applicant "Hakija"
-            :application "Hakemus"
-            :cancel "Peruuta"
-            :created "Luotu"
-            :empty "Sinulla ei ole hakemuksia katselmoitavaksi."
-            :resource "Kielivara"
-            :review "Katselmoi"
-            :review-success "Hakemus katselmoitu"}
   :roles {:header "Valitse rooli:"
           :names {:approver "Hyväksyjä"
                   :reviewer "Katselmoija"

@@ -7,8 +7,7 @@
                :home "Home"
                :catalogue "Catalogue"
                :applications "Applications"
-               :actions "Actions"
-               :reviews "Reviews"}
+               :actions "Actions"}
   :login {:title "Login"
           :text "Login by using your Haka credentials"}
   :about {:text [:div.document
@@ -104,12 +103,14 @@
             :approve "Approve"
             :reject "Reject"
             :return "Return to applicant"
+            :review "Review"
             :close "Close"
             :cancel "Cancel"
             :withdraw "Withdraw"
             :approve-success "Application approved"
             :reject-success "Application rejected"
             :return-success "Application returned"
+            :review-success "Application reviewed"
             :close-success "Application closed"
             :withdraw-success "Application withdrawn"
             :empty "You don't have any applications to process."
@@ -119,14 +120,6 @@
             :show-publications "Show publications"
             :show-throughput-times "Show throughput times"
             :not-implemented "Not implemented yet"}
-  :reviews {:applicant "Applicant"
-            :application "Application"
-            :cancel "Cancel"
-            :created "Created"
-            :empty "You don't have any applications to review."
-            :resource "Resource"
-            :review "Review"
-            :review-success "Application reviewed"}
   :roles {:header "Select role:"
           :names {:approver "Approver"
                   :reviewer "Reviewer"

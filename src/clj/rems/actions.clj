@@ -75,8 +75,8 @@
 (defn review-button [app]
   (list
    [:button.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#review-modal"}
-    (text :t.reviews/review)]
-   (review-confirm-modal "review" (text :t.reviews/review) app)))
+    (text :t.actions/review)]
+   (review-confirm-modal "review" (text :t.actions/review) app)))
 
 (defn- return-button [app]
   (list
@@ -282,7 +282,7 @@
                                       :approve (text :t.actions/approve-success)
                                       :reject (text :t.actions/reject-success)
                                       :return (text :t.actions/return-success)
-                                      :review (text :t.reviews/review-success)
+                                      :review (text :t.actions/review-success)
                                       :withdraw (text :t.actions/withdraw-success)
                                       :close (text :t.actions/close-success))}]))
         ))
