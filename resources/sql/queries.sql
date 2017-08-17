@@ -238,6 +238,9 @@ WHERE wfa.wfid = :wfid
 /*~ (when (:round params) */
   AND wfa.round = :round
 /*~ ) ~*/
+/*~ (when (:role params) */
+  AND wfa.role = CAST (:role as workflow_actor_role)
+/*~ ) ~*/
 
 -- :name get-workflow :? :1
 SELECT
