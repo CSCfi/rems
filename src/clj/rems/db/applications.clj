@@ -21,11 +21,11 @@
     (let [state (get-application-state application)
         round (:curround state)]
     (and (= "applied" (:state state))
-         (contains? (set (map :actoruserid (actors/get-by-role application round role)))
+         (contains? (set (actors/get-by-role application round role))
                     (get-user-id)))))
 
 (defn- is-actor? [application role]
-  (contains? (set (map :actoruserid (actors/get-by-role application role)))
+  (contains? (set (actors/get-by-role application role))
              (get-user-id)))
 
 (defn can-approve? [application]

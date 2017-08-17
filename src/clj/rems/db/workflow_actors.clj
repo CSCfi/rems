@@ -9,6 +9,6 @@
 
 (defn get-by-role
   ([application role]
-   (filter #(= role (:role %)) (db/get-workflow-actors {:application application})))
+   (map :actoruserid (filter #(= role (:role %)) (db/get-workflow-actors {:application application}))))
   ([application round role]
-   (filter #(= role (:role %)) (db/get-workflow-actors {:application application :round round}))))
+   (map :actoruserid (filter #(= role (:role %)) (db/get-workflow-actors {:application application :round round})))))
