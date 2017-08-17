@@ -31,7 +31,7 @@
                  [:p [:strong "3. REMS Demo Approver 1"] [:br]
                   "Username: RDapprover1" [:br]
                   "Password: RDapprover1" [:br]
-                  "Description: A reviewer can provide comments on an application to the approver but cannot approve or reject the application."]
+                  "Description: An approver can approve, reject, close and return applications"]
                  [:p [:strong "4. REMS Demo Approver 2"] [:br]
                   "Username: RDapprover2" [:br]
                   "Password: RDapprover2" [:br]

@@ -67,7 +67,7 @@
           [:h2 "Applications list"]
           (applications/guide)
 
-          [:h2 "Approvals list"]
+          [:h2 "Actions list"]
           (actions/guide)
 
           [:h2 "Collapsible component"]
