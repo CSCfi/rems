@@ -148,16 +148,6 @@
    (back-to-actions-button)
    (review-button app)])
 
-(defn- actions-item [app btn-fns]
-  [:tr.action
-   [:td {:data-th (text :t.actions/application)} (:id app)]
-   [:td {:data-th (text :t.actions/resource)} (get-in app [:catalogue-item :title])]
-   [:td {:data-th (text :t.actions/applicant)} (:applicantuserid app)]
-   [:td {:data-th (text :t.actions/created)} (format/unparse time-format (:start app))]
-   [:td.commands
-    (view-button app)
-    (btn-fns app)]])
-
 (defn- handled-approvals-item [app]
   [:tr.approval
    [:td {:data-th (text :t.actions/application)} (:id app)]
@@ -180,7 +170,14 @@
       [:th (text :t.actions/created)]
       [:th]]
      (for [app (sort-by :id apps)]
-       (actions-item app btn-fns))]))
+       [:tr.action
+        [:td {:data-th (text :t.actions/application)} (:id app)]
+        [:td {:data-th (text :t.actions/resource)} (get-in app [:catalogue-item :title])]
+        [:td {:data-th (text :t.actions/applicant)} (:applicantuserid app)]
+        [:td {:data-th (text :t.actions/created)} (format/unparse time-format (:start app))]
+        [:td.commands
+         (view-button app)
+         (btn-fns app)]])]))
 
 (defn reviews
   ([]
