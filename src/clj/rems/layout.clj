@@ -35,10 +35,8 @@
          (nav-link "/catalogue" (text :t.navigation/catalogue) (= page-name "catalogue")))
        (when-role :applicant
          (nav-link "/applications" (text :t.navigation/applications) (= page-name "applications")))
-       (when-role :approver
-         (nav-link "/actions" (text :t.navigation/actions) (= page-name "actions")))
-       (when-role :reviewer
-         (nav-link "/reviews" (text :t.navigation/reviews) (= page-name "reviews"))))
+       (when-roles #{:approver :reviewer}
+         (nav-link "/actions" (text :t.navigation/actions) (= page-name "actions"))))
       (nav-link "/" (text :t.navigation/home) (= page-name "home")))
     (nav-link "/about" (text :t.navigation/about) (= page-name "about"))]
    (role-switcher)

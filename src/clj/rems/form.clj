@@ -16,7 +16,6 @@
             [rems.guide :refer :all]
             [rems.layout :as layout]
             [rems.phase :refer [phases]]
-            [rems.reviews :as reviews]
             [rems.role-switcher :refer [has-roles?
                                         when-role]]
             [rems.text :refer :all]
@@ -137,8 +136,8 @@
                            true
                            (:title form)
                            (list
-                            (actions/confirm-modal "close" (text :t.actions/close) (:application form))
-                            (actions/confirm-modal "withdraw" (text :t.actions/withdraw) (:application form))
+                            (actions/approval-confirm-modal "close" (text :t.actions/close) (:application form))
+                            (actions/approval-confirm-modal "withdraw" (text :t.actions/withdraw) (:application form))
                             [:form {:method "post"
                                     :action (if-let [app (:id (:application form))]
                                               (str "/form/" (:catalogue-item form) "/" app "/save")
@@ -188,14 +187,14 @@
          (actions/approve-form (:application form))
          [:div.row
           [:div.col.actions
-           (actions/back-to-approvals-button)]])
+           (actions/back-to-actions-button)]])
        )
      (when-role :reviewer
        (if actionable?
-         (reviews/review-form (:application form))
+         (actions/review-form (:application form))
          [:div.row
           [:div.col.actions
-           (reviews/back-to-reviews-button)]])
+           (actions/back-to-actions-button)]])
        ))))
 
 (defn link-to-item [item]

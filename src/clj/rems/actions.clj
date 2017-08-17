@@ -21,18 +21,18 @@
    {:href (str "/form/" (:catid app) "/" (:id app))}
    (text :t.applications/view)])
 
-(defn- approve-form-attrs [app]
+(defn- actions-form-attrs [app]
   {:method "post"
-   :action (str "/actions/" (:id app) "/" (:curround app))})
+   :action (str "/event/" (:id app) "/" (:curround app))})
 
-(defn confirm-modal [name-field action-title app]
+(defn- confirm-modal [name-field action-title app role]
   [:div.modal.fade {:id (str name-field "-modal") :tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
    [:div.modal-dialog {:role "document"}
     [:div.modal-content
-     [:form (approve-form-attrs app)
+     [:form (actions-form-attrs app)
       (anti-forgery-field)
       [:div.modal-header
-       [:h5#confirmModalLabel.modal-title (if (has-roles? :approver) (text :t.form/add-comments) (text :t.form/add-comments-applicant))]
+       [:h5#confirmModalLabel.modal-title (if (has-roles? role) (text :t.form/add-comments) (text :t.form/add-comments-applicant))]
        [:button.close {:type "button" :data-dismiss "modal" :aria-label (text :t.actions/cancel)}
         [:span {:aria-hidden "true"} "&times;"]]]
       [:div.modal-body
@@ -41,6 +41,12 @@
       [:div.modal-footer
        [:button.btn.btn-secondary {:data-dismiss "modal"} (text :t.actions/cancel)]
        [:button.btn.btn-primary {:type "submit" :name name-field} action-title]]]]]])
+
+(defn approval-confirm-modal [name-field action-title app]
+  (confirm-modal name-field action-title app :approver))
+
+(defn review-confirm-modal [name-field action-title app]
+  (confirm-modal name-field action-title app :reviewer))
 
 (defn not-implemented-modal [name-field action-title]
   [:div.modal.fade {:id (str name-field "-modal") :tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
@@ -58,27 +64,33 @@
   (list
    [:button.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#approve-modal"}
     (text :t.actions/approve)]
-   (confirm-modal "approve" (text :t.actions/approve) app)))
+   (approval-confirm-modal "approve" (text :t.actions/approve) app)))
 
 (defn- reject-button [app]
   (list
    [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#reject-modal"}
     (text :t.actions/reject)]
-   (confirm-modal "reject" (text :t.actions/reject) app)))
+   (approval-confirm-modal "reject" (text :t.actions/reject) app)))
+
+(defn review-button [app]
+  (list
+   [:button.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#review-modal"}
+    (text :t.reviews/review)]
+   (review-confirm-modal "review" (text :t.reviews/review) app)))
 
 (defn- return-button [app]
   (list
    [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#return-modal"}
     (text :t.actions/return)]
-   (confirm-modal "return" (text :t.actions/return) app)))
+   (approval-confirm-modal "return" (text :t.actions/return) app)))
 
 (defn- close-button [app]
   (list
    [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
     (text :t.actions/close)]
-   (confirm-modal "close" (text :t.actions/close) app)))
+   (approval-confirm-modal "close" (text :t.actions/close) app)))
 
-(defn back-to-approvals-button []
+(defn back-to-actions-button []
   [:a.btn.btn-secondary.pull-left {:href "/actions"} (text :t.form/back-actions)])
 
 (defn approve-buttons [app]
@@ -126,21 +138,27 @@
 (defn approve-form [app]
   [:div.actions
    (when-role :approver
-     (back-to-approvals-button))
+     (back-to-actions-button))
    (close-button app)
    (reject-button app)
    (return-button app)
    (approve-button app)])
 
-(defn- approvals-item [app]
-  [:tr.approval
+(defn review-form [app]
+  [:div.actions
+   (when-role :reviewer
+     (back-to-actions-button))
+   (review-button app)])
+
+(defn- actions-item [app btn-fns]
+  [:tr.action
    [:td {:data-th (text :t.actions/application)} (:id app)]
    [:td {:data-th (text :t.actions/resource)} (get-in app [:catalogue-item :title])]
    [:td {:data-th (text :t.actions/applicant)} (:applicantuserid app)]
    [:td {:data-th (text :t.actions/created)} (format/unparse time-format (:start app))]
    [:td.actions
     (view-button app)
-    (approve-buttons app)]])
+    (btn-fns app)]])
 
 (defn- handled-approvals-item [app]
   [:tr.approval
@@ -153,21 +171,30 @@
     (view-button app)
     (export-pdf-button app)]])
 
+(defn actions [apps btn-fns]
+  (if (empty? apps)
+    [:div.actions.alert.alert-success (text :t.actions/empty)]
+    [:table.rems-table.actions
+     [:tr
+      [:th (text :t.actions/application)]
+      [:th (text :t.actions/resource)]
+      [:th (text :t.actions/applicant)]
+      [:th (text :t.actions/created)]
+      [:th]]
+     (for [app (sort-by :id apps)]
+       (actions-item app btn-fns))]))
+
+(defn reviews
+  ([]
+   (reviews (applications/get-application-to-review)))
+  ([apps]
+   (actions apps review-button)))
+
 (defn approvals
   ([]
    (approvals (applications/get-approvals)))
   ([apps]
-   (if (empty? apps)
-     [:div.approvals.alert.alert-success (text :t.actions/empty)]
-     [:table.rems-table.approvals
-      [:tr
-       [:th (text :t.actions/application)]
-       [:th (text :t.actions/resource)]
-       [:th (text :t.actions/applicant)]
-       [:th (text :t.actions/created)]
-       [:th]]
-      (for [app (sort-by :id apps)]
-        (approvals-item app))])))
+   (actions apps approve-buttons)))
 
 (defn handled-approvals
   ([]
@@ -192,6 +219,12 @@
 (defn guide
   []
   (list
+   (example "reviews empty"
+             (reviews []))
+   (example "reviews"
+            (reviews
+             [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid "alice"}
+              {:id 3 :catalogue-item {:title "bbbbbb"} :applicantuserid "bob"}]))
    (example "approvals empty"
             (approvals []))
    (example "approvals"
@@ -203,30 +236,34 @@
              [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid "alice"}
               {:id 3 :catalogue-item {:title "bbbbbb"} :state "approved" :applicantuserid "bob"}]))))
 
-(defn approvals-page []
+(defn actions-page []
   (layout/render
-   "approvals"
+   "actions"
    [:div
-    (collapsible/component "open-approvals"
-                           true
-                           (text :t.actions/open-approvals)
-                           (approvals))
-    [:div.mt-3
-     (collapsible/component "handled-approvals"
-                            false
-                            (text :t.actions/handled-approvals)
-                            (handled-approvals))]]))
+    (when-role :reviewer (reviews))
+    (when-role :approver
+               (list
+                 (collapsible/component "open-approvals"
+                                        true
+                                        (text :t.actions/open-approvals)
+                                        (approvals))
+                 [:div.mt-3
+                  (collapsible/component "handled-approvals"
+                                         false
+                                         (text :t.actions/handled-approvals)
+                                         (handled-approvals))]))]))
 
 ;; TODO handle closing when no draft or anything saved yet
-(defroutes approvals-routes
-  (GET "/actions" [] (approvals-page))
-  (POST "/actions/:id/:round" [id round :as request]
+(defroutes actions-routes
+  (GET "/actions" [] (actions-page))
+  (POST "/event/:id/:round" [id round :as request]
         (let [id (Long/parseLong id)
               round (Long/parseLong round)
               input (:form-params request)
               action (cond (get input "approve") :approve
                            (get input "reject") :reject
                            (get input "return") :return
+                           (get input "review") :review
                            (get input "withdraw") :withdraw
                            (get input "close") :close
                            :else (errorf "Unknown action!"))
@@ -236,14 +273,16 @@
             :approve (applications/approve-application id round comment)
             :reject (applications/reject-application id round comment)
             :return (applications/return-application id round comment)
+            :review (applications/review-application id round comment)
             :withdraw (applications/withdraw-application id round comment)
             :close (applications/close-application id round comment))
-          (assoc (redirect (if (has-roles? :approver) "/actions" "/applications") :see-other)
+          (assoc (redirect (if (or (has-roles? :approver) (has-roles? :reviewer)) "/actions" "/applications") :see-other)
                  :flash [{:status :success
                           :contents (case action
                                       :approve (text :t.actions/approve-success)
                                       :reject (text :t.actions/reject-success)
                                       :return (text :t.actions/return-success)
+                                      :review (text :t.reviews/review-success)
                                       :withdraw (text :t.actions/withdraw-success)
                                       :close (text :t.actions/close-success))}]))
         ))

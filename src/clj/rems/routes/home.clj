@@ -11,7 +11,6 @@
             [rems.landing-page :as landing-page]
             [rems.language-switcher :as language-switcher]
             [rems.layout :as layout]
-            [rems.reviews :as reviews]
             [rems.role-switcher :as role-switcher]
             [ring.util.response :refer [content-type
                                         redirect
@@ -48,8 +47,7 @@
   (GET "/applications" [] (applications-page))
   (GET "/catalogue" [] (catalogue-page))
   landing-page/landing-page-routes
-  actions/approvals-routes
-  reviews/reviews-routes
+  actions/actions-routes
   cart/cart-routes
   form/form-routes
   role-switcher/role-switcher-routes)

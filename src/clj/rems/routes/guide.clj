@@ -14,7 +14,6 @@
             [rems.guide :refer :all]
             [rems.phase :as phase]
             [rems.layout :as layout]
-            [rems.reviews :as reviews]
             [rems.role-switcher :as role-switcher]
             [rems.util :as util]))
 
@@ -70,9 +69,6 @@
 
           [:h2 "Approvals list"]
           (actions/guide)
-
-          [:h2 "Reviews list"]
-          (reviews/guide)
 
           [:h2 "Collapsible component"]
           (collapsible/guide)
