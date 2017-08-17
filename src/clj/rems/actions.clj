@@ -25,14 +25,14 @@
   {:method "post"
    :action (str "/event/" (:id app) "/" (:curround app))})
 
-(defn- confirm-modal [name-field action-title app role]
+(defn- confirm-modal [name-field action-title app title-txt]
   [:div.modal.fade {:id (str name-field "-modal") :tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
    [:div.modal-dialog {:role "document"}
     [:div.modal-content
      [:form (actions-form-attrs app)
       (anti-forgery-field)
       [:div.modal-header
-       [:h5#confirmModalLabel.modal-title (if (has-roles? role) (text :t.form/add-comments) (text :t.form/add-comments-applicant))]
+       [:h5#confirmModalLabel.modal-title title-txt]
        [:button.close {:type "button" :data-dismiss "modal" :aria-label (text :t.actions/cancel)}
         [:span {:aria-hidden "true"} "&times;"]]]
       [:div.modal-body
@@ -43,10 +43,10 @@
        [:button.btn.btn-primary {:type "submit" :name name-field} action-title]]]]]])
 
 (defn approval-confirm-modal [name-field action-title app]
-  (confirm-modal name-field action-title app :approver))
+  (confirm-modal name-field action-title app (if (has-roles? :approver) (text :t.form/add-comments) (text :t.form/add-comments-applicant))))
 
 (defn review-confirm-modal [name-field action-title app]
-  (confirm-modal name-field action-title app :reviewer))
+  (confirm-modal name-field action-title app (if (has-roles? :reviewer) (text :t.form/add-comments) (text :t.form/add-comments-applicant))))
 
 (defn not-implemented-modal [name-field action-title]
   [:div.modal.fade {:id (str name-field "-modal") :tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
