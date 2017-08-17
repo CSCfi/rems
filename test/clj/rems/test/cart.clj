@@ -2,10 +2,10 @@
   (:require [clojure.test :refer :all]
             [hiccup-find.core :refer :all]
             [rems.cart :as cart]
-            rems.test.tempura
+            [rems.test.tempura :refer [fake-tempura-fixture]]
             [ring.mock.request :refer :all]))
 
-(use-fixtures :once rems.test.tempura/fake-tempura-fixture)
+(use-fixtures :once fake-tempura-fixture)
 
 (defn check-row-text [row text]
   (is (= text (hiccup-text (first (hiccup-find [:td] row))))))

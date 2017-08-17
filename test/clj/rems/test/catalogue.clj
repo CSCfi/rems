@@ -3,9 +3,9 @@
             [hiccup-find.core :refer :all]
             [rems.catalogue :refer :all]
             [rems.context :as context]
-            rems.test.tempura))
+            [rems.test.tempura :refer [fake-tempura-fixture]]))
 
-(use-fixtures :once rems.test.tempura/fake-tempura-fixture)
+(use-fixtures :once fake-tempura-fixture)
 
 (defn check-catalogue-item-text [props]
   (hiccup-text (first (hiccup-find [:td] (#'rems.catalogue/catalogue-item props)))))

@@ -2,9 +2,9 @@
   (:require [clojure.test :refer :all]
             [hiccup-find.core :refer :all]
             [rems.approvals :as approvals]
-            rems.test.tempura))
+            [rems.test.tempura :refer [fake-tempura-fixture]]))
 
-(use-fixtures :once rems.test.tempura/fake-tempura-fixture)
+(use-fixtures :once fake-tempura-fixture)
 
 (defn check-row-text [row text]
   (is (= text (hiccup-text (first (hiccup-find [:td] row))))))
