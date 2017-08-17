@@ -19,7 +19,7 @@
                     title)]
     [:tr
      [:td {:data-th (text :t.catalogue/header)} component]
-     [:td.actions {:data-th ""} (cart/add-to-cart-button item)]]))
+     [:td.commands {:data-th ""} (cart/add-to-cart-button item)]]))
 
 (defn- catalogue-list [items]
   [:table.rems-table.catalogue

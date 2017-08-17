@@ -154,7 +154,7 @@
                                [:div.row
                                 [:div.col
                                  [:a.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
-                                (into [:div.col.actions]
+                                (into [:div.col.commands]
                                       [(when closeable? [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
                                                          (text :t.actions/close)])
                                        (when editable? [:button.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)])
@@ -186,14 +186,14 @@
        (if actionable?
          (actions/approve-form (:application form))
          [:div.row
-          [:div.col.actions
+          [:div.col.commands
            (actions/back-to-actions-button)]])
        )
      (when-role :reviewer
        (if actionable?
          (actions/review-form (:application form))
          [:div.row
-          [:div.col.actions
+          [:div.col.commands
            (actions/back-to-actions-button)]])
        ))))
 

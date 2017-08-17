@@ -61,7 +61,7 @@
                             :.role-switcher
                             {:padding ".5em .5em"}]))
     (stylesheet/at-media {:min-width (u/px 480)}
-                         [:.actions {:white-space "nowrap"}])))
+                         [:.commands {:white-space "nowrap"}])))
 
 (defn- generate-phase-styles []
   [:.phases {:width "100%"
@@ -136,7 +136,7 @@
       {:color "#fff"}]
      [:tr {:margin "0 1rem"}
       [(s/& (s/nth-child "2n")) {:background-color (util/get-theme-attribute :table-stripe-color)}]]
-     [:td.actions:last-child {:text-align "right"
+     [:td.commands:last-child {:text-align "right"
                               :padding-right (u/rem 1)}]
      ]
     [:.inner-cart {:margin (u/em 1)}]
@@ -284,7 +284,7 @@
      :form)
    {:margin-left (u/rem 0.5)}]
   [(s/descendant :.role-switcher :form) {:margin-left (u/rem 0.5)}]
-  [:.actions {:text-align "right"
+  [:.commands {:text-align "right"
               :padding "0 1rem"}]
   [:.navbar-flex {:display "flex"
                   :flex-direction "row"
@@ -292,7 +292,7 @@
                   :min-width "100%"}
    [:nav {:flex 1}]]
   [(s/> :.form-actions "*:not(:first-child)")
-   (s/> :.actions "*:not(:first-child)")
+   (s/> :.commands "*:not(:first-child)")
    {:margin-left (u/em 0.5)}]
   [:.full {:width "100%"}]
   [:.rectangle {:width (u/px 50)
