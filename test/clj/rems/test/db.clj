@@ -503,6 +503,7 @@
           fetch (fn [app] (select-keys (applications/get-application-state app)
                                        [:state :curround]))]
       (actors/add-approver! wf uid 0)
+      (actors/add-reviewer! wf "event-test-reviewer" 0)
       (actors/add-approver! wf "event-test-approver" 1)
 
       (testing "submitting, approving"
@@ -591,6 +592,7 @@
               rev-item (:id (db/create-catalogue-item! {:title "Review item" :resid nil :wfid rev-wf :form nil}))
               rev-app (applications/create-new-draft rev-item)]
           (actors/add-reviewer! rev-wf "event-test-reviewer" 0)
+          (actors/add-approver! rev-wf uid 0)
           (actors/add-approver! rev-wf  uid  1)
           (is (= (fetch rev-app) {:curround 0 :state "draft"}))
           (binding [context/*user* {"eppn" "event-test-reviewer"}]
