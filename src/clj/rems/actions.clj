@@ -137,8 +137,7 @@
 
 (defn approve-form [app]
   [:div.commands
-   (when-role :approver
-     (back-to-actions-button))
+   (back-to-actions-button)
    (close-button app)
    (reject-button app)
    (return-button app)
@@ -146,8 +145,7 @@
 
 (defn review-form [app]
   [:div.commands
-   (when-role :reviewer
-     (back-to-actions-button))
+   (back-to-actions-button)
    (review-button app)])
 
 (defn- actions-item [app btn-fns]
