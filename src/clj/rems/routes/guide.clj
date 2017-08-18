@@ -4,7 +4,7 @@
             [hiccup.page :refer [include-js]]
             [rems.applicant-info :as applicant-info]
             [rems.applications :as applications]
-            [rems.approvals :as approvals]
+            [rems.actions :as actions]
             [rems.cart :as cart]
             [rems.catalogue :as catalogue]
             [rems.collapsible :as collapsible]
@@ -67,8 +67,8 @@
           [:h2 "Applications list"]
           (applications/guide)
 
-          [:h2 "Approvals list"]
-          (approvals/guide)
+          [:h2 "Actions list"]
+          (actions/guide)
 
           [:h2 "Collapsible component"]
           (collapsible/guide)

@@ -48,7 +48,7 @@ a:visited { color: #fff; }
                [:body
                 [:div.login
                  [:h1 "Development Login"]
-                 [:ul (map user-selection ["developer" "alice" "bob"])]]])
+                 [:ul (map user-selection ["developer" "alice" "bob" "carl"])]]])
         (response)
         (content-type "text/html; charset=utf-8"))))
 

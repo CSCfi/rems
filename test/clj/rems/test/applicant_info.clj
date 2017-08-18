@@ -25,4 +25,9 @@
       (binding [context/*roles* #{:approver}
                 context/*active-role* :approver]
         (is (not-empty (find-from-details [:.card-header])) "Collapsible header should be visible.")
-        (is (not-empty (children-of (find-from-details [:.collapse-content]))) "Collapsible block should be visible.")))))
+        (is (not-empty (children-of (find-from-details [:.collapse-content]))) "Collapsible block should be visible.")))
+    (testing "Info as a reviewer"
+      (binding [context/*roles* #{:reviewe}
+                context/*active-role* :reviewer]
+        (is (not-empty (find-from-details [:.card-header])) "Should see collapsible header")
+        (is (empty? (children-of (find-from-details [:.collapse-content]))) "Shouldn't see collapsible block")))))

@@ -211,19 +211,20 @@ INSERT INTO workflow_licenses
 VALUES
 (:wfid, :licid, :round)
 
--- :name create-workflow-approver! :insert
-INSERT INTO workflow_approvers
-(wfid, appruserid, round)
+-- :name create-workflow-actor! :insert
+INSERT INTO workflow_actors
+(wfid, actoruserid, role, round)
 VALUES
-(:wfid, :appruserid, :round)
+(:wfid, :actoruserid, CAST (:role as workflow_actor_role), :round)
 
--- :name get-workflow-approvers :? :*
+-- :name get-workflow-actors :? :*
 SELECT
-  wfa.appruserid
+  wfa.actoruserid,
+  wfa.role
 /*~ (when (:wfid params) */
 , wfa.round
 /*~ ) ~*/
-FROM workflow_approvers wfa
+FROM workflow_actors wfa
 /*~ (when (:application params) */
 LEFT OUTER JOIN workflow wf on wf.id = wfa.wfid
 LEFT OUTER JOIN catalogue_item cat ON cat.wfid = wf.id
@@ -231,29 +232,14 @@ LEFT OUTER JOIN catalogue_item_application app ON app.catid = cat.id
 WHERE app.id = :application
 /*~ ) ~*/
 /*~ (when (:wfid params) */
-FROM workflow_approvers wfa
+FROM workflow_actors wfa
 WHERE wfa.wfid = :wfid
 /*~ ) ~*/
 /*~ (when (:round params) */
   AND wfa.round = :round
 /*~ ) ~*/
-
--- :name get-workflow-reviewers :? :*
-/*~ (when (:application params) */
-SELECT
-  wfr.revuserid, wfr.round
-FROM workflow_reviewers wfr
-LEFT OUTER JOIN workflow wf on wf.id = wfr.wfid
-LEFT OUTER JOIN catalogue_item cat ON cat.wfid = wf.id
-LEFT OUTER JOIN catalogue_item_application app ON app.catid = cat.id
-WHERE app.id = :application
-  AND wfr.round = :round
-/*~ ) ~*/
-/*~ (when (:wfid params) */
-SELECT wfr.revuserid
-FROM workflow_reviewers wfr
-WHERE wfr.wfid = :wfid
-AND wfr.round = :round
+/*~ (when (:role params) */
+  AND wfa.role = CAST (:role as workflow_actor_role)
 /*~ ) ~*/
 
 -- :name get-workflow :? :1

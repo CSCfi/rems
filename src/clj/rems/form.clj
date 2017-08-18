@@ -5,7 +5,7 @@
             [rems.anti-forgery :refer [anti-forgery-field]]
             [rems.applicant-info :as applicant-info]
             [rems.applications :as applications]
-            [rems.approvals :as approvals]
+            [rems.actions :as actions]
             [rems.collapsible :as collapsible]
             [rems.db.applications :refer [create-new-draft
                                           get-application-phases
@@ -136,8 +136,8 @@
                            true
                            (:title form)
                            (list
-                            (approvals/confirm-modal "close" (text :t.approvals/close) (:application form))
-                            (approvals/confirm-modal "withdraw" (text :t.approvals/withdraw) (:application form))
+                            (actions/approval-confirm-modal "close" (text :t.actions/close) (:application form))
+                            (actions/approval-confirm-modal "withdraw" (text :t.actions/withdraw) (:application form))
                             [:form {:method "post"
                                     :action (if-let [app (:id (:application form))]
                                               (str "/form/" (:catalogue-item form) "/" app "/save")
@@ -154,19 +154,19 @@
                                [:div.row
                                 [:div.col
                                  [:a.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
-                                (into [:div.col.actions]
+                                (into [:div.col.commands]
                                       [(when closeable? [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
-                                                         (text :t.approvals/close)])
+                                                         (text :t.actions/close)])
                                        (when editable? [:button.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)])
                                        (when editable? [:button.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)])
-                                       (when withdrawable? [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#withdraw-modal"} (text :t.approvals/withdraw)])
+                                       (when withdrawable? [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#withdraw-modal"} (text :t.actions/withdraw)])
                                        ])])
                              ]))))
 
 
 (defn- form [form]
   (let [state (:state (:application form))
-        approvable? (= state "applied")
+        actionable? (= state "applied")
         events (get-in form [:application :events])
         user-attributes (or (:applicant-attributes form) context/*user*)]
     (list
@@ -183,11 +183,18 @@
      ;; TODO resource owner should be able to close
 
      (when-role :approver
-       (if approvable?
-         (approvals/approve-form (:application form))
+       (if actionable?
+         (actions/approve-form (:application form))
          [:div.row
-          [:div.col.actions
-           (approvals/back-to-approvals-button)]])
+          [:div.col.commands
+           (actions/back-to-actions-button)]])
+       )
+     (when-role :reviewer
+       (if actionable?
+         (actions/review-form (:application form))
+         [:div.row
+          [:div.col.commands
+           (actions/back-to-actions-button)]])
        ))))
 
 (defn link-to-item [item]

@@ -6,6 +6,7 @@
                                        get-localized-catalogue-item]]
             [rems.db.core :as db]
             [rems.db.users :as users]
+            [rems.db.workflow-actors :as actors]
             [rems.util :refer [get-user-id index-by]]))
 
 ;; TODO cache application state in db instead of always computing it from events
@@ -16,16 +17,28 @@
 (defn handled? [app]
   (contains? #{"approved" "rejected" "returned" "closed"} (:state app)))
 
-(defn can-approve? [application]
-  (let [state (get-application-state application)
+(defn- can-act-as? [application role]
+    (let [state (get-application-state application)
         round (:curround state)]
     (and (= "applied" (:state state))
-         (contains? (set (db/get-workflow-approvers {:application application :round round}))
-                    {:appruserid (get-user-id)}))))
+         (contains? (set (actors/get-by-role application round role))
+                    (get-user-id)))))
+
+(defn- is-actor? [application role]
+  (contains? (set (actors/get-by-role application role))
+             (get-user-id)))
+
+(defn can-approve? [application]
+  (can-act-as? application "approver"))
 
 (defn is-approver? [application]
-  (contains? (set (db/get-workflow-approvers {:application application}))
-             {:appruserid (get-user-id)}))
+  (is-actor? application "approver"))
+
+(defn can-review? [application]
+  (can-act-as? application "reviewer"))
+
+(defn is-reviewer? [application]
+  (is-actor? application "reviewer"))
 
 (defn- get-applications-impl [query-params]
   (doall
@@ -52,6 +65,11 @@
                (let [my-events (filter #(= (get-user-id) (:userid %))
                                        (:events app))]
                  (assoc app :handled (:time (last my-events))))))))
+
+(defn get-application-to-review []
+  (filterv
+    (fn [app] (can-review? (:id app)))
+    (get-applications-impl {})))
 
 (defn get-draft-id-for
   "Finds applications in the draft state for the given catalogue item.
@@ -154,7 +172,8 @@
          applicant? (= (:applicantuserid application) (get-user-id))]
      (when application-id
        (when-not (or applicant?
-                     (is-approver? application-id))
+                     (is-approver? application-id)
+                     (is-reviewer? application-id))
          (throw-unauthorized)))
      {:id form-id
       :catalogue-item catalogue-item
@@ -221,6 +240,17 @@
           (str "Application and rejection rounds don't match: "
                (pr-str application) " vs. " (pr-str event)))
   (assoc application :state "returned" :curround 0))
+
+(defmethod apply-event "review"
+  [application event]
+  (assert (= (:state application) "applied")
+          (str "Can't review application " (pr-str application)))
+  (assert (= (:curround application) (:round event))
+          (str "Application and review rounds don't match: "
+               (pr-str application) " vs. " (pr-str event)))
+  (if (= (:curround application) (:fnlround application))
+    (assoc application :state "approver")
+    (assoc application :state "applied" :curround (inc (:curround application)))))
 
 (defmethod apply-event "withdraw"
   [application event]
@@ -296,7 +326,8 @@
         round (:curround application)
         state (:state application)]
     (when (= "applied" state)
-      (when (empty? (db/get-workflow-approvers {:application application-id :round round}))
+      (when (and (empty? (actors/get-by-role application-id round "approver"))
+                 (empty? (actors/get-by-role application-id round "reviewer")))
         (db/add-application-event! {:application application-id :user (get-user-id)
                                     :round round :event "autoapprove" :comment nil})
         (try-autoapprove-application application-id)))))
@@ -313,8 +344,6 @@
     (try-autoapprove-application application-id)))
 
 (defn- judge-application [application-id event round msg]
-  (when-not (can-approve? application-id)
-    (throw-unauthorized))
   (let [state (get-application-state application-id)]
     (when-not (= round (:curround state))
       (throw-unauthorized))
@@ -323,13 +352,24 @@
     (try-autoapprove-application application-id)))
 
 (defn approve-application [application-id round msg]
+  (when-not (can-approve? application-id)
+    (throw-unauthorized))
   (judge-application application-id "approve" round msg))
 
 (defn reject-application [application-id round msg]
+  (when-not (can-approve? application-id)
+    (throw-unauthorized))
   (judge-application application-id "reject" round msg))
 
 (defn return-application [application-id round msg]
+  (when-not (can-approve? application-id)
+    (throw-unauthorized))
   (judge-application application-id "return" round msg))
+
+(defn review-application [application-id round msg]
+  (when-not (can-review? application-id)
+    (throw-unauthorized))
+  (judge-application application-id "review" round msg))
 
 ;; TODO better name
 ;; TODO consider refactoring together with judge

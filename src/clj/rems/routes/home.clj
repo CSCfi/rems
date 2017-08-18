@@ -1,7 +1,7 @@
 (ns rems.routes.home
   (:require [compojure.core :refer [GET defroutes]]
             [rems.applications :as applications]
-            [rems.approvals :as approvals]
+            [rems.actions :as actions]
             [rems.css.styles :as styles]
             [rems.cart :as cart]
             [rems.catalogue :as catalogue]
@@ -47,7 +47,7 @@
   (GET "/applications" [] (applications-page))
   (GET "/catalogue" [] (catalogue-page))
   landing-page/landing-page-routes
-  approvals/approvals-routes
+  actions/actions-routes
   cart/cart-routes
   form/form-routes
   role-switcher/role-switcher-routes)

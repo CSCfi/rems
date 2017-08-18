@@ -4,6 +4,7 @@
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.roles :as roles]
+            [rems.db.workflow-actors :as actors]
             [rems.util :refer [get-user-id]]))
 
 (defn- create-users-and-roles! []
@@ -15,6 +16,8 @@
   (roles/add-role! "alice" :applicant)
   (db/add-user! {:user "bob" :userattrs nil})
   (roles/add-role! "bob" :approver)
+  (db/add-user! {:user "carl" :userattrs nil})
+  (roles/add-role! "carl" :reviewer)
   ;; a user to own things
   (db/add-user! {:user "owner" :userattrs nil}))
 
@@ -70,20 +73,24 @@
     (db/link-form-item! {:form (:id form-fi) :itemorder 2 :optional true :item (:id duration-fi) :user "owner"})
     (:id meta)))
 
-(defn- create-workflows! [user1 user2]
+(defn- create-workflows! [user1 user2 user3]
   (let [minimal (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner":title "minimal" :fnlround 0}))
         simple (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner" :title "simple" :fnlround 0}))
+        with-review (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner" :title "with review" :fnlround 1}))
         two-round (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner" :title "two rounds" :fnlround 1}))
         different (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner" :title "two rounds, different approvers" :fnlround 1}))]
     ;; either user1 or user2 can approve
-    (db/create-workflow-approver! {:wfid simple :appruserid user1 :round 0})
-    (db/create-workflow-approver! {:wfid simple :appruserid user2 :round 0})
+    (actors/add-approver! simple user1 0)
+    (actors/add-approver! simple user2 0)
+    ;; first user3 reviews, then user1 can approve
+    (actors/add-reviewer! with-review user3 0)
+    (actors/add-approver! with-review user1 1)
     ;; only user1 can approve
-    (db/create-workflow-approver! {:wfid two-round :appruserid user1 :round 0})
-    (db/create-workflow-approver! {:wfid two-round :appruserid user1 :round 1})
+    (actors/add-approver! two-round user1 0)
+    (actors/add-approver! two-round user1 1)
     ;; first user2, then user1
-    (db/create-workflow-approver! {:wfid different :appruserid user2 :round 0})
-    (db/create-workflow-approver! {:wfid different :appruserid user1 :round 1})
+    (actors/add-approver! different user2 0)
+    (actors/add-approver! different user1 1)
 
     ;; attach both kinds of licenses to all workflows
     (let [link (:id (db/create-license!
@@ -105,12 +112,13 @@
        {:licid text :langcode "en" :title "License"
         :textcontent (apply str (repeat 10 "License text in English. "))})
 
-      (doseq [wf [minimal simple two-round different]]
+      (doseq [wf [minimal simple with-review two-round different]]
         (db/create-workflow-license! {:wfid wf :licid link :round 0})
         (db/create-workflow-license! {:wfid wf :licid text :round 0})))
 
     {:minimal minimal
      :simple simple
+     :with-review with-review
      :two-round two-round
      :different different}))
 
@@ -157,13 +165,16 @@
   (create-users-and-roles!)
   (db/create-resource! {:id 1 :resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1})
   (let [meta (create-basic-form!)
-        workflows (create-workflows! "developer" "bob")
+        workflows (create-workflows! "developer" "bob" "carl")
         minimal (create-catalogue-item! 1 (:minimal workflows) meta
                                        {"en" "ELFA Corpus, direct approval"
                                         "fi" "ELFA-korpus, suora hyväksyntä"})
         simple (create-catalogue-item! 1 (:simple workflows) meta
                                        {"en" "ELFA Corpus, one approval"
                                         "fi" "ELFA-korpus, yksi hyväksyntä"})
+        with-review (create-catalogue-item! 1 (:with-review workflows) meta
+                                            {"en" "ELFA Corpus, with review"
+                                             "fi" "ELFA-korpus, katselmoinnilla"})
         different (create-catalogue-item! 1 (:different workflows) meta
                                           {"en" "ELFA Corpus, two rounds of approval by different approvers"
                                            "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})]
@@ -173,7 +184,7 @@
   (create-demo-users-and-roles!)
   (db/create-resource! {:id 1 :resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1})
   (let [meta (create-basic-form!)
-        workflows (create-workflows! "RDapprover1@funet.fi" "RDapprover2@funet.fi")
+        workflows (create-workflows! "RDapprover1@funet.fi" "RDapprover2@funet.fi" "RDreview@funet.fi")
         minimal (create-catalogue-item! 1 (:minimal workflows) meta
                                        {"en" "ELFA Corpus, direct approval"
                                         "fi" "ELFA-korpus, suora hyväksyntä"})

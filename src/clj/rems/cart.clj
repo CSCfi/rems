@@ -61,7 +61,7 @@
 (defn- cart-item [item]
   [:tr
    [:td {:data-th ""} (get-catalogue-item-title item)]
-   [:td.actions {:data-th ""}
+   [:td.commands {:data-th ""}
     (apply-button item)
     (remove-from-cart-button item)]])
 

@@ -10,8 +10,6 @@ cache:
     - $HOME/.cache/pip
 jdk:
   - oraclejdk8
-env:
-  - DOCKER_REPOSITORY=673230199239.dkr.ecr.eu-central-1.amazonaws.com
 addons:
   postgresql: "9.5"
 services:

@@ -7,7 +7,7 @@
                :home "Home"
                :catalogue "Catalogue"
                :applications "Applications"
-               :approvals "Approvals"}
+               :actions "Actions"}
   :login {:title "Login"
           :text "Login by using your Haka credentials"}
   :about {:text [:div.document
@@ -30,7 +30,7 @@
                  [:p [:strong "3. REMS Demo Approver 1"] [:br]
                   "Username: RDapprover1" [:br]
                   "Password: RDapprover1" [:br]
-                  "Description: A reviewer can provide comments on an application to the approver but cannot approve or reject the application."]
+                  "Description: An approver can approve, reject, close and return applications"]
                  [:p [:strong "4. REMS Demo Approver 2"] [:br]
                   "Username: RDapprover2" [:br]
                   "Password: RDapprover2" [:br]
@@ -64,7 +64,8 @@
          :submit "Send application"
          :submitted "Application submitted."
          :back "Back to catalogue"
-         :back-approvals "Back to approvals"
+         :back-actions "Back to actions"
+         :back-reviews "Back to reviews"
          :date "Time"
          :event "Event"
          :events "Application events"
@@ -90,33 +91,35 @@
                           :closed "Closed"
                           :unknown "Unknown"}
                  :empty "You don't have any applications."}
-  :approvals {:application "Application"
-              :resource "Resource"
-              :applicant "Applicant"
-              :state "State"
-              :view "View"
-              :created "Created"
-              :handled "Handled"
-              :handled-approvals "Handled applications"
-              :open-approvals "Open applications"
-              :approve "Approve"
-              :reject "Reject"
-              :return "Return to applicant"
-              :close "Close"
-              :cancel "Cancel"
-              :withdraw "Withdraw"
-              :approve-success "Application approved"
-              :reject-success "Application rejected"
-              :return-success "Application returned"
-              :close-success "Application closed"
-              :withdraw-success "Application withdrawn"
-              :empty "You don't have any applications to process."
-              :export-pdf "Export PDF"
-              :load-application-states "Load application states"
-              :view-rights "View rights"
-              :show-publications "Show publications"
-              :show-throughput-times "Show throughput times"
-              :not-implemented "Not implemented yet"}
+  :actions {:application "Application"
+            :resource "Resource"
+            :applicant "Applicant"
+            :state "State"
+            :view "View"
+            :created "Created"
+            :handled "Handled"
+            :handled-approvals "Handled applications"
+            :open-approvals "Open applications"
+            :approve "Approve"
+            :reject "Reject"
+            :return "Return to applicant"
+            :review "Review"
+            :close "Close"
+            :cancel "Cancel"
+            :withdraw "Withdraw"
+            :approve-success "Application approved"
+            :reject-success "Application rejected"
+            :return-success "Application returned"
+            :review-success "Application reviewed"
+            :close-success "Application closed"
+            :withdraw-success "Application withdrawn"
+            :empty "You don't have any applications to process."
+            :export-pdf "Export PDF"
+            :load-application-states "Load application states"
+            :view-rights "View rights"
+            :show-publications "Show publications"
+            :show-throughput-times "Show throughput times"
+            :not-implemented "Not implemented yet"}
   :roles {:header "Select role:"
           :names {:approver "Approver"
                   :reviewer "Reviewer"
