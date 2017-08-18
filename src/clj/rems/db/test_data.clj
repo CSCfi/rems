@@ -31,7 +31,10 @@
   (doseq [approver ["RDapprover1@funet.fi" "RDapprover2@funet.fi"]]
     (db/add-user! {:user approver :userattrs nil})
     (roles/add-role! approver :approver)
-    (roles/add-role! approver :applicant)))
+    (roles/add-role! approver :applicant))
+  (let [reviewer "RDreview@funet.fi"]
+    (db/add-user! {:user reviewer :userattrs nil})
+    (roles/add-role! reviewer :reviewer)))
 
 (defn- create-basic-form! []
   "Creates a bilingual form with all supported field types. Returns id of the form meta."
@@ -191,6 +194,9 @@
         simple (create-catalogue-item! 1 (:simple workflows) meta
                                        {"en" "ELFA Corpus, one approval"
                                         "fi" "ELFA-korpus, yksi hyväksyntä"})
+        with-review (create-catalogue-item! 1 (:with-review workflows) meta
+                                            {"en" "ELFA Corpus, with review"
+                                             "fi" "ELFA-korpus, katselmoinnilla"})
         different (create-catalogue-item! 1 (:different workflows) meta
                                           {"en" "ELFA Corpus, two rounds of approval by different approvers"
                                            "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})]
