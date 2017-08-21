@@ -154,17 +154,6 @@
    (back-to-actions-button)
    (review-button app)])
 
-(defn- handled-approvals-item [app]
-  [:tr.approval
-   [:td {:data-th (text :t.actions/application)} (:id app)]
-   [:td {:data-th (text :t.actions/resource)} (get-in app [:catalogue-item :title])]
-   [:td {:data-th (text :t.actions/applicant)} (:applicantuserid app)]
-   [:td {:data-th (text :t.actions/state)} (text (localize-state (:state app)))]
-   [:td {:data-th (text :t.actions/handled)} (format/unparse time-format (:handled app))]
-   [:td.commands
-    (view-button app)
-    (export-pdf-button app)]])
-
 (defn actions [apps btn-fns]
   (if (empty? apps)
     [:div.actions.alert.alert-success (text :t.actions/empty)]
@@ -220,7 +209,7 @@
          [:th (text :t.actions/handled)]
          [:th]]
         (for [app (sort-by :handled apps)]
-          [:tr.approval
+          [:tr.action
            [:td {:data-th (text :t.actions/application)} (:id app)]
            [:td {:data-th (text :t.actions/resource)} (get-in app [:catalogue-item :title])]
            [:td {:data-th (text :t.actions/applicant)} (:applicantuserid app)]

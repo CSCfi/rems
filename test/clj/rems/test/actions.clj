@@ -24,11 +24,14 @@
   (let [c (#'rems.actions/approvals data)
         rows (hiccup-find [:tr.action] c)
         c2 (#'rems.actions/handled-approvals data)
-        rows2 (hiccup-find [:tr.approval] c2)]
+        rows2 (hiccup-find [:tr.action] c2)]
     (check-data rows)
     (check-data rows2)))
 
 (deftest test-reviews
   (let [c (#'rems.actions/reviews data)
-        rows (hiccup-find [:tr.action] c)]
-    (check-data rows)))
+        rows (hiccup-find [:tr.action] c)
+        c2 (#'rems.actions/handled-reviews data)
+        rows2 (hiccup-find [:tr.action] c2)]
+    (check-data rows)
+    (check-data rows2)))
