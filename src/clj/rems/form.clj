@@ -7,7 +7,8 @@
             [rems.applications :as applications]
             [rems.actions :as actions]
             [rems.collapsible :as collapsible]
-            [rems.db.applications :refer [create-new-draft
+            [rems.db.applications :refer [can-review?
+                                          create-new-draft
                                           get-application-phases
                                           get-draft-id-for get-form-for
                                           get-application-state
@@ -190,7 +191,7 @@
            (actions/back-to-actions-button)]])
        )
      (when-role :reviewer
-       (if actionable?
+       (if (and actionable? (can-review? (:id (:application form))))
          (actions/review-form (:application form))
          [:div.row
           [:div.col.commands
