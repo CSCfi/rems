@@ -8,7 +8,6 @@
                  [clj-time "0.14.0"]
                  [compojure "1.6.0" :exclusions [ring/ring-core]]
                  [com.taoensso/tempura "1.1.2"]
-                 ;;TODO: updating conman 0.6.3 -> 0.6.4 or luminus-migrations 0.3.0 -> 0.3.3 breaks tests
                  [conman "0.6.7"]
                  [cprop "0.1.11"]
                  [garden "1.3.2"]
