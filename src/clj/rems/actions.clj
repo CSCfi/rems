@@ -263,8 +263,15 @@
    [:div
     (when-role :reviewer
                (list
-                 (reviews)
-                 (handled-reviews)))
+                 (collapsible/component "open-reviews"
+                                        true
+                                        (text :t.actions/open-reviews)
+                                        (reviews))
+                 [:div.mt-3
+                  (collapsible/component "handled-reviews"
+                                         false
+                                         (text :t.actions/handled-reviews)
+                                         (handled-reviews))]))
     (when-role :approver
                (list
                  (collapsible/component "open-approvals"
