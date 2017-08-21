@@ -18,7 +18,7 @@
   (contains? #{"approved" "rejected" "returned" "closed"} (:state app)))
 
 (defn- can-act-as? [application role]
-    (let [state (get-application-state application)
+  (let [state (get-application-state application)
         round (:curround state)]
     (and (= "applied" (:state state))
          (contains? (set (actors/get-by-role application round role))
@@ -68,8 +68,8 @@
 
 (defn get-application-to-review []
   (filterv
-    (fn [app] (can-review? (:id app)))
-    (get-applications-impl {})))
+   (fn [app] (can-review? (:id app)))
+   (get-applications-impl {})))
 
 (defn get-draft-id-for
   "Finds applications in the draft state for the given catalogue item.
