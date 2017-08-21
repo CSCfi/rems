@@ -5,20 +5,20 @@
 
   :dependencies [[ch.qos.logback/logback-classic "1.2.3"]
                  [clj-time "0.14.0"]
-                 [compojure "1.6.0" :exclusions [ring/ring-core]]
+                 [compojure "1.6.0"]
                  [com.taoensso/tempura "1.1.2"]
                  [conman "0.6.7"]
                  [cprop "0.1.11"]
                  [garden "1.3.2"]
-                 [haka-buddy "0.2.0"]
+                 [haka-buddy "0.2.0" :exclusions [cheshire commons-codec]]
                  [hiccup "1.0.5"]
-                 [hickory "0.7.1" :exclusions [org.clojure/clojurescript]]
+                 [hickory "0.7.1" :exclusions [org.clojure/tools.reader]]
                  [luminus-jetty "0.1.4" :exclusions [org.clojure/tools.reader]]
                  [luminus-migrations "0.4.0" :exclusions [org.clojure/java.jdbc]]
                  [luminus-nrepl "0.1.4"]
-                 [luminus/ring-ttl-session "0.3.2" :exclusions [ring/ring-core]]
-                 [macroz/hiccup-find "0.5.0" :exclusions [org.clojure/clojurescript]]
-                 [metosin/compojure-api "1.1.11"]
+                 [luminus/ring-ttl-session "0.3.2"]
+                 [macroz/hiccup-find "0.5.0" :exclusions [org.clojure/tools.reader]]
+                 [metosin/compojure-api "1.1.11" :exclusions [cheshire commons-codec com.google.code.findbugs/jsr305]]
                  [mount "0.1.11"]
                  [org.clojure/clojure "1.8.0"]
                  [org.clojure/core.memoize "0.5.9"]
@@ -30,7 +30,7 @@
                  [org.webjars/font-awesome "4.7.0"]
                  [org.webjars/jquery "3.2.1"]
                  [prone "1.1.4"]
-                 [ring-middleware-format "0.7.2"]
+                 [ring-middleware-format "0.7.2" :exclusions [commons-codec]]
                  [ring-webjars "0.2.0"]
                  [ring/ring-core "1.6.2"]
                  [ring/ring-defaults "0.3.1"]
@@ -75,9 +75,11 @@
    :dev           [:project/dev :profiles/dev]
    :test          [:project/dev :project/test :profiles/test]
 
-   :project/dev  {:dependencies [[clj-webdriver/clj-webdriver "0.7.2" :exclusions [commons-logging]]
+   :project/dev  {:dependencies [[clj-webdriver/clj-webdriver "0.7.2" :exclusions [commons-logging commons-codec]]
                                  [directory-naming/naming-java "0.8"]
-                                 [org.seleniumhq.selenium/selenium-server "3.0.1" :exclusions [commons-logging
+                                 [org.seleniumhq.selenium/selenium-server "3.0.1" :exclusions [com.google.code.gson/gson
+                                                                                               commons-logging
+                                                                                               commons-codec
                                                                                                org.apache.httpcomponents/httpclient
                                                                                                org.apache.httpcomponents/httpcore
                                                                                                org.apache.httpcomponents/httpmime]]
