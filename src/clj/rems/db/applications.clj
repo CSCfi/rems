@@ -14,8 +14,15 @@
 
 ;;; Query functions
 
+(defn handling-event? [app e]
+  (or (contains? #{"approve" "autoapprove" "reject" "return" "review"} (:event e)) ;; definitely not by applicant
+      (and (= "close" (:event e)) (not= (:applicantuserid app) (:userid e))) ;; not by applicant
+      ))
+
 (defn handled? [app]
-  (contains? #{"approved" "rejected" "returned" "closed"} (:state app)))
+  (or (contains? #{"approved" "rejected" "returned"} (:state app)) ;; by approver action
+      (and (contains? #{"closed" "withdrawn"} (:state app))
+           (some (partial handling-event? app) (:events app)))))
 
 (defn- can-act-as? [application role]
   (let [state (get-application-state application)
