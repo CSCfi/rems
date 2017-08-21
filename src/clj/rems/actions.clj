@@ -242,6 +242,10 @@
             (reviews
              [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid "alice"}
               {:id 3 :catalogue-item {:title "bbbbbb"} :applicantuserid "bob"}]))
+   (example "handled reviews"
+            (handled-reviews
+             [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid "alice"}
+              {:id 3 :catalogue-item {:title "bbbbbb"} :state "approved" :applicantuserid "bob"}]))
    (example "approvals empty"
             (approvals []))
    (example "approvals"
