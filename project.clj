@@ -3,8 +3,7 @@
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
 
-  :dependencies [[buddy "1.3.0" :exclusions [cheshire]]
-                 [ch.qos.logback/logback-classic "1.2.3"]
+  :dependencies [[ch.qos.logback/logback-classic "1.2.3"]
                  [clj-time "0.14.0"]
                  [compojure "1.6.0" :exclusions [ring/ring-core]]
                  [com.taoensso/tempura "1.1.2"]
@@ -19,10 +18,7 @@
                  [luminus-nrepl "0.1.4"]
                  [luminus/ring-ttl-session "0.3.2" :exclusions [ring/ring-core]]
                  [macroz/hiccup-find "0.5.0" :exclusions [org.clojure/clojurescript]]
-                 [markdown-clj "0.9.98"]
                  [metosin/compojure-api "1.1.11"]
-                 [metosin/muuntaja "0.2.1"]
-                 [metosin/ring-http-response "0.9.0"]
                  [mount "0.1.11"]
                  [org.clojure/clojure "1.8.0"]
                  [org.clojure/core.memoize "0.5.9"]
