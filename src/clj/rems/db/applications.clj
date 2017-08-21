@@ -17,6 +17,9 @@
 (defn handled? [app]
   (contains? #{"approved" "rejected" "returned" "closed"} (:state app)))
 
+(defn reviewed? [app]
+  (empty (filter #(= "review" (:event %)) (:events app))))
+
 (defn- can-act-as? [application role]
     (let [state (get-application-state application)
         round (:curround state)]
@@ -61,6 +64,15 @@
   (->> (get-applications-impl {})
        (filterv (fn [app] (is-approver? (:id app))))
        (filterv handled?)
+       (mapv (fn [app]
+               (let [my-events (filter #(= (get-user-id) (:userid %))
+                                       (:events app))]
+                 (assoc app :handled (:time (last my-events))))))))
+
+(defn get-handled-reviews []
+  (->> (get-applications-impl {})
+       (filterv (fn [app] (is-reviewer? (:id app))))
+       (filterv reviewed?)
        (mapv (fn [app]
                (let [my-events (filter #(= (get-user-id) (:userid %))
                                        (:events app))]

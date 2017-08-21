@@ -197,39 +197,52 @@
   ([apps]
    (actions apps approve-buttons)))
 
-(defn handled-actions [apps btn-fns top-btns]
+(defn handled-actions
   "Creates a table containing a list of handled applications. The function takes the following parameters as arguments:
   apps:    collection of apps to be shown
   btn-fns: a set of functionality buttons that are available for each application
   top-btns: a set of extra buttons that will be shown on top of the table. This could include f.ex 'export as pdf' button."
-  (if (empty? apps)
-    nil
-    (list
-      top-btns
-      [:table.rems-table.actions
-       [:tr
-        [:th (text :t.actions/application)]
-        [:th (text :t.actions/resource)]
-        [:th (text :t.actions/applicant)]
-        [:th (text :t.actions/state)]
-        [:th (text :t.actions/handled)]
-        [:th]]
-       (for [app (sort-by :handled apps)]
-         [:tr.approval
-          [:td {:data-th (text :t.actions/application)} (:id app)]
-          [:td {:data-th (text :t.actions/resource)} (get-in app [:catalogue-item :title])]
-          [:td {:data-th (text :t.actions/applicant)} (:applicantuserid app)]
-          [:td {:data-th (text :t.actions/state)} (text (localize-state (:state app)))]
-          [:td {:data-th (text :t.actions/handled)} (format/unparse time-format (:handled app))]
-          [:td.commands
-           (view-button app)
-           (btn-fns app)]])])))
+  ([apps]
+   (handled-actions apps nil nil))
+  ([apps btn-fns]
+   (handled-actions apps btn-fns nil))
+  ([apps btn-fns top-btns]
+   (if (empty? apps)
+     nil
+     (list
+       top-btns
+       [:table.rems-table.actions
+        [:tr
+         [:th (text :t.actions/application)]
+         [:th (text :t.actions/resource)]
+         [:th (text :t.actions/applicant)]
+         [:th (text :t.actions/state)]
+         [:th (text :t.actions/handled)]
+         [:th]]
+        (for [app (sort-by :handled apps)]
+          [:tr.approval
+           [:td {:data-th (text :t.actions/application)} (:id app)]
+           [:td {:data-th (text :t.actions/resource)} (get-in app [:catalogue-item :title])]
+           [:td {:data-th (text :t.actions/applicant)} (:applicantuserid app)]
+           [:td {:data-th (text :t.actions/state)} (text (localize-state (:state app)))]
+           [:td {:data-th (text :t.actions/handled)} (format/unparse time-format (:handled app))]
+           [:td.commands
+            (view-button app)
+            (when btn-fns
+              (btn-fns app))]])]))))
 
 (defn handled-approvals
   ([]
    (handled-approvals (applications/get-handled-approvals)))
   ([apps]
    (handled-actions apps export-pdf-button (report-buttons))))
+
+(defn handled-reviews
+  ([]
+   (handled-reviews (applications/get-handled-reviews)))
+  ([apps]
+   (handled-actions apps)))
+
 
 (defn guide
   []
@@ -255,7 +268,10 @@
   (layout/render
    "actions"
    [:div
-    (when-role :reviewer (reviews))
+    (when-role :reviewer
+               (list
+                 (reviews)
+                 (handled-reviews)))
     (when-role :approver
                (list
                  (collapsible/component "open-approvals"
