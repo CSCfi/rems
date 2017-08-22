@@ -261,7 +261,7 @@
           (str "Application and review rounds don't match: "
                (pr-str application) " vs. " (pr-str event)))
   (if (= (:curround application) (:fnlround application))
-    (assoc application :state "approver")
+    (assoc application :state "approved")
     (assoc application :state "applied" :curround (inc (:curround application)))))
 
 (defmethod apply-event "withdraw"
