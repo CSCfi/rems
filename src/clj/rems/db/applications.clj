@@ -18,7 +18,8 @@
   (contains? #{"approved" "rejected" "returned" "closed"} (:state app)))
 
 (defn reviewed? [app]
-  (empty (filter #(= "review" (:event %)) (:events app))))
+  (let [not-empty? (complement empty?)]
+    (not-empty? (filter #(= "review" (:event %)) (:events app)))))
 
 (defn- can-act-as? [application role]
     (let [state (get-application-state application)
