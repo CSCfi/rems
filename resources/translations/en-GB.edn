@@ -27,11 +27,15 @@
                   "Username: RDapplicant2" [:br]
                   "Password: RDapplicant2" [:br]
                   "Description: Another account for applying for access rights. For instance, RDapplicant1 can add this user to an application as a member to whom equal access rights are applied as well."]
-                 [:p [:strong "3. REMS Demo Approver 1"] [:br]
+                 [:p [:strong "3. REMS Demo Reviewer"] [:br]
+                  "Username: RDreview" [:br]
+                  "Password: RDreview" [:br]
+                  "Description: A reviewer can provide comments on an application to the approver but cannot approve or reject the application."]
+                 [:p [:strong "4. REMS Demo Approver 1"] [:br]
                   "Username: RDapprover1" [:br]
                   "Password: RDapprover1" [:br]
                   "Description: An approver can approve, reject, close and return applications"]
-                 [:p [:strong "4. REMS Demo Approver 2"] [:br]
+                 [:p [:strong "5. REMS Demo Approver 2"] [:br]
                   "Username: RDapprover2" [:br]
                   "Password: RDapprover2" [:br]
                   "Description: Some datasets in the demo have several parallel or alternative approvers."]
@@ -99,7 +103,9 @@
             :created "Created"
             :handled "Handled"
             :handled-approvals "Handled applications"
+            :handled-reviews "Handled reviews"
             :open-approvals "Open applications"
+            :open-reviews "Open reviews"
             :approve "Approve"
             :reject "Reject"
             :return "Return to applicant"

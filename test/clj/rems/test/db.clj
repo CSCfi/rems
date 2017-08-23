@@ -352,6 +352,11 @@
                   (applications/get-approvals)))
           "should only see app1")
 
+      (is (= [{:id app4 :state "approved" :curround 1}]
+             (map #(select-keys % [:id :state :curround])
+                  (applications/get-handled-approvals)))
+          "should only see app4 in handled approvals")
+
       (testing "applications/can-approve?"
         (is (applications/can-approve? app1))
         (is (not (applications/can-approve? app2)))
@@ -376,6 +381,12 @@
       (applications/approve-application app1 0 "")
       (binding [context/*user* {"eppn" uid2}]
         (applications/approve-application app2 0 ""))
+
+      (is (= [{:id app1 :state "approved" :curround 0}
+              {:id app4 :state "approved" :curround 1}]
+          (map #(select-keys % [:id :state :curround])
+               (applications/get-handled-approvals)))
+          "should see app1 and app4 in handled approvals")
 
       (is (= [{:id app2 :state "applied" :catid item2 :curround 1}]
              (map #(select-keys % [:id :state :catid :curround])
@@ -423,6 +434,10 @@
              (map #(select-keys % [:id :state :catid :curround])
                   (applications/get-application-to-review)))
           "should only see app1")
+      (is (= [{:id app4 :state "approved" :curround 1}]
+             (map #(select-keys % [:id :state :curround])
+                  (applications/get-handled-reviews)))
+          "should only see app4 in handled reviews")
 
       (testing "applications/can-review?"
         (is (applications/can-review? app1))
@@ -448,6 +463,13 @@
       (applications/review-application app1 0 "")
       (binding [context/*user* {"eppn" uid2}]
         (applications/review-application app2 0 ""))
+
+      (is (= [{:id app1 :state "approved" :curround 0}
+              {:id app2 :state "applied" :curround 1}
+              {:id app4 :state "approved" :curround 1}]
+             (map #(select-keys % [:id :state :curround])
+                  (applications/get-handled-reviews)))
+          "should see app1, app2 and app4 in handled reviews")
 
       (is (= [{:id app2 :state "applied" :catid item2 :curround 1}]
              (map #(select-keys % [:id :state :catid :curround])

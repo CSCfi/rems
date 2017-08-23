@@ -7,7 +7,9 @@
             [rems.applications :as applications]
             [rems.actions :as actions]
             [rems.collapsible :as collapsible]
-            [rems.db.applications :refer [create-new-draft
+            [rems.db.applications :refer [can-approve?
+                                          can-review?
+                                          create-new-draft
                                           get-application-phases
                                           get-draft-id-for get-form-for
                                           get-application-state
@@ -183,14 +185,14 @@
      ;; TODO resource owner should be able to close
 
      (when-role :approver
-       (if actionable?
+       (if (and actionable? (can-approve? (:id (:application form))))
          (actions/approve-form (:application form))
          [:div.row
           [:div.col.commands
            (actions/back-to-actions-button)]])
        )
      (when-role :reviewer
-       (if actionable?
+       (if (and actionable? (can-review? (:id (:application form))))
          (actions/review-form (:application form))
          [:div.row
           [:div.col.commands

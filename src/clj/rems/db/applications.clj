@@ -17,6 +17,10 @@
 (defn handled? [app]
   (contains? #{"approved" "rejected" "returned" "closed"} (:state app)))
 
+(defn reviewed? [app]
+  (let [not-empty? (complement empty?)]
+    (not-empty? (filter #(= "review" (:event %)) (:events app)))))
+
 (defn- can-act-as? [application role]
     (let [state (get-application-state application)
         round (:curround state)]
@@ -61,6 +65,15 @@
   (->> (get-applications-impl {})
        (filterv (fn [app] (is-approver? (:id app))))
        (filterv handled?)
+       (mapv (fn [app]
+               (let [my-events (filter #(= (get-user-id) (:userid %))
+                                       (:events app))]
+                 (assoc app :handled (:time (last my-events))))))))
+
+(defn get-handled-reviews []
+  (->> (get-applications-impl {})
+       (filterv (fn [app] (is-reviewer? (:id app))))
+       (filterv reviewed?)
        (mapv (fn [app]
                (let [my-events (filter #(= (get-user-id) (:userid %))
                                        (:events app))]
@@ -249,7 +262,7 @@
           (str "Application and review rounds don't match: "
                (pr-str application) " vs. " (pr-str event)))
   (if (= (:curround application) (:fnlround application))
-    (assoc application :state "approver")
+    (assoc application :state "approved")
     (assoc application :state "applied" :curround (inc (:curround application)))))
 
 (defmethod apply-event "withdraw"

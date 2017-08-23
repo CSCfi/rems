@@ -237,11 +237,13 @@
                   (follow-redirect)
                   (follow-redirect))]
       (is (not-empty (hiccup-find [:.actions] (ctx->html ctx))) "approver sees approvals initially")
-      (is (contains? (set (db/get-users)) {:userid "test-roles-approver"}))))
+      (is (contains? (set (db/get-users)) {:userid "test-roles-approver"}))
+      (is (not-empty (hiccup-find [:#handled-approvals] (ctx->html ctx))) "approver sees handled approvals initially")))
   (testing "when reviewer logs in"
     (let [ctx (-> (new-context app)
                   (login "test-roles-reviewer" :reviewer)
                   (follow-redirect)
                   (follow-redirect))]
       (is (not-empty (hiccup-find [:.actions] (ctx->html ctx))) "reviewer sees reviews initially")
-      (is (contains? (set (db/get-users)) {:userid "test-roles-reviewer"})))))
+      (is (contains? (set (db/get-users)) {:userid "test-roles-reviewer"}))
+      (is (not-empty (hiccup-find [:#handled-reviews] (ctx->html ctx))) "reviewer sees handled reviews initially"))))
