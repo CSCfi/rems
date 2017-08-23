@@ -10,7 +10,7 @@
                  [conman "0.6.7"]
                  [cprop "0.1.11"]
                  [garden "1.3.2"]
-                 [haka-buddy "0.2.0" :exclusions [cheshire commons-codec]]
+                 [haka-buddy "0.2.1" :exclusions [cheshire commons-codec]]
                  [hiccup "1.0.5"]
                  [hickory "0.7.1" :exclusions [org.clojure/tools.reader]]
                  [luminus-jetty "0.1.4" :exclusions [org.clojure/tools.reader]]
