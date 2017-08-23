@@ -263,29 +263,32 @@
           (let [body (form (assoc data :application {:state "applied" :events [{:comment "hello"}]}))]
             (is (not-empty (children-of (hiccup-find [:#events] body))) "Should see collapsible events block")))))))
 
-(defn- action-button-check [emptyness-fn action-buttons msg-prefix msg-suffix msg]
-  (is (emptyness-fn (hiccup-find [:button#close.btn.btn-secondary] action-buttons)) (str msg-prefix msg "close button for " msg-suffix))
-  (is (emptyness-fn (hiccup-find [:button#reject.btn.btn-secondary] action-buttons)) (str msg-prefix msg "reject button for " msg-suffix))
-  (is (emptyness-fn (hiccup-find [:button#return.btn.btn-secondary] action-buttons)) (str msg-prefix msg "return button for " msg-suffix))
-  (is (emptyness-fn (hiccup-find [:button#approve.btn.btn-primary] action-buttons)) (str msg-prefix msg "approve button for " msg-suffix)))
+(defn- get-action-buttons [form-data]
+  (hiccup-find [:.commands] (form form-data)))
 
-(defn- validate-approver-actions-absence [action-buttons msg-prefix msg-suffix]
-  (action-button-check empty? action-buttons msg-prefix msg-suffix "should not see "))
+(defn- action-button-check [emptyness-fn action-buttons msg]
+  (is (emptyness-fn (hiccup-find [:button#close.btn.btn-secondary] action-buttons)) (str msg "close button"))
+  (is (emptyness-fn (hiccup-find [:button#reject.btn.btn-secondary] action-buttons)) (str msg "reject button"))
+  (is (emptyness-fn (hiccup-find [:button#return.btn.btn-secondary] action-buttons)) (str msg "return button"))
+  (is (emptyness-fn (hiccup-find [:button#approve.btn.btn-primary] action-buttons)) (str msg "approve button")))
 
-(defn- validate-approver-actions-presence [action-buttons msg-prefix msg-suffix]
-  (action-button-check not-empty action-buttons msg-prefix msg-suffix "should see "))
+(defn- validate-approver-actions-absence [form-data]
+  (action-button-check empty? (get-action-buttons form-data) "Should not see "))
 
-(defn- validate-review-actions-absence [action-buttons msg-prefix msg-suffix]
-  (is (empty? (hiccup-find [:button#review.btn.btn-primary] action-buttons)) (str msg-prefix "should not see review button for " msg-suffix)))
+(defn- validate-approver-actions-presence [form-data]
+  (action-button-check not-empty (get-action-buttons form-data) "Should see "))
 
-(defn- validate-review-actions-presence [action-buttons msg-prefix msg-suffix]
-  (is (not-empty (hiccup-find [:button#review.btn.btn-primary] action-buttons)) (str msg-prefix "should see review button for " msg-suffix)))
+(defn- validate-review-actions-absence [form-data]
+  (is (empty? (hiccup-find [:button#review.btn.btn-primary] (get-action-buttons form-data))) "should not see review button"))
 
-(defn- validate-back-button-absence [action-buttons msg-prefix msg-suffix]
-  (is (empty? (hiccup-find [:a#back] action-buttons)) (str msg-prefix "should not see back button for " msg-suffix)))
+(defn- validate-review-actions-presence [form-data]
+  (is (not-empty (hiccup-find [:button#review.btn.btn-primary] (get-action-buttons form-data))) "should see review button"))
 
-(defn- validate-back-button-presence [action-buttons msg-prefix msg-suffix]
-  (is (not-empty (hiccup-find [:a#back] action-buttons)) (str msg-prefix "should see back button for " msg-suffix)))
+(defn- validate-back-button-absence [form-data]
+  (is (empty? (hiccup-find [:a#back] (get-action-buttons form-data))) "should not see back button"))
+
+(defn- validate-back-button-presence [form-data]
+  (is (not-empty (hiccup-find [:a#back] (get-action-buttons form-data))) "should see back button"))
 
 (deftest test-form-actions
   (with-fake-tempura
@@ -321,9 +324,7 @@
                                              :round 0
                                              :event "approved"
                                              :comment nil
-                                             :time nil}]}}
-          asuffix "actionable form."
-          uasuffix "unactionable form."]
+                                             :time nil}]}}]
       (with-redefs [rems.db.workflow-actors/get-by-role
                     (fn [appid round role]
                       (let [data [{:id 2 :actoruserid "carl" :role "reviewer" :round 0}
@@ -337,58 +338,47 @@
                     (fn [_]
                       (:application actionable-data))]
 
-        ;; Tests for applicant seeing the form
-        (let [ msg-prefix "Applicant "]
-          (let [action-buttons (hiccup-find [:.commands] (form actionable-data))]
-            (validate-back-button-absence action-buttons msg-prefix asuffix)
-            (validate-approver-actions-absence action-buttons msg-prefix asuffix)
-            (validate-review-actions-absence action-buttons msg-prefix asuffix))
-          ;; Test for applicant seeing unactionable form
-          (let [action-buttons (hiccup-find [:.commands] (form unactionable-data))]
-            (validate-back-button-absence action-buttons msg-prefix uasuffix)
-            (validate-approver-actions-absence action-buttons msg-prefix uasuffix)
-            (validate-review-actions-absence action-buttons msg-prefix uasuffix)))
-        ;; Tests for current round approver seeing the form
+        (testing "As an applicant"
+          (testing "on an actionable form"
+            (validate-back-button-absence actionable-data)
+            (validate-approver-actions-absence actionable-data)
+            (validate-review-actions-absence actionable-data))
+          (testing "on an unactionable form"
+            (validate-back-button-absence unactionable-data)
+            (validate-approver-actions-absence unactionable-data)
+            (validate-review-actions-absence unactionable-data)))
         (binding [context/*user* {"eppn" "bob"}
                   context/*active-role* :approver]
-          (let [action-buttons (hiccup-find [:.commands] (form actionable-data))
-                msg-prefix "Approver for current round "]
-            (validate-back-button-presence action-buttons msg-prefix asuffix)
-            (validate-approver-actions-presence action-buttons msg-prefix asuffix)
-            (validate-review-actions-absence action-buttons msg-prefix asuffix))
-          ;; Test for approver seeing unactionable form
-          (let [action-buttons (hiccup-find [:.commands] (form unactionable-data))
-                msg-prefix "Approver "]
-            (validate-back-button-presence action-buttons msg-prefix uasuffix)
-            (validate-approver-actions-absence action-buttons msg-prefix uasuffix)
-            (validate-review-actions-absence action-buttons msg-prefix uasuffix)))
-        ;; Test for approver, who is not set for the current round, seeing the form
-        (binding [context/*user* {"eppn" "carl"}
-                  context/*active-role* :approver]
-          (let [action-buttons (hiccup-find [:.commands] (form actionable-data))
-                msg-prefix "Approver, who is not set for current round, "]
-            (validate-back-button-presence action-buttons msg-prefix asuffix)
-            (validate-approver-actions-absence action-buttons msg-prefix asuffix)
-            (validate-review-actions-absence action-buttons msg-prefix asuffix)))
-        ;; Tests for current round reviewer seeing the form
-        (binding [context/*user* {"eppn" "carl"}
-                  context/*active-role* :reviewer]
-          (let [action-buttons (hiccup-find [:.commands] (form actionable-data))
-                msg-prefix "Reviewer for current round "]
-            (validate-back-button-presence action-buttons msg-prefix asuffix)
-            (validate-approver-actions-absence action-buttons msg-prefix asuffix)
-            (validate-review-actions-presence action-buttons msg-prefix asuffix))
-          ;; Test for reviewer seeing unactionable form
-          (let [action-buttons (hiccup-find [:.commands] (form unactionable-data))
-                msg-prefix "Reviewer"]
-            (validate-back-button-presence action-buttons msg-prefix uasuffix)
-            (validate-approver-actions-absence action-buttons msg-prefix uasuffix)
-            (validate-review-actions-absence action-buttons msg-prefix uasuffix)))
-        ;; Test for reviewer, who is not set for the current round, seeing the form
-        (binding [context/*user* {"eppn" "bob"}
-                  context/*active-role* :reviewer]
-          (let [action-buttons (hiccup-find [:.commands] (form actionable-data))
-                msg-prefix "Reviewer, who is not set for current round, "]
-            (validate-back-button-presence action-buttons msg-prefix asuffix)
-            (validate-approver-actions-absence action-buttons msg-prefix asuffix)
-            (validate-review-actions-absence action-buttons msg-prefix asuffix)))))))
+          (testing "As a current round approver"
+            (testing "on an actionable form"
+              (validate-back-button-presence actionable-data)
+              (validate-approver-actions-presence actionable-data)
+              (validate-review-actions-absence actionable-data)))
+          (testing "As an approver"
+            (testing "on an unactionable form"
+              (validate-back-button-presence unactionable-data)
+              (validate-approver-actions-absence unactionable-data)
+              (validate-review-actions-absence unactionable-data))))
+        (testing "As an approver, who is not set for the current round, on an actionable form"
+          (binding [context/*user* {"eppn" "carl"}
+                    context/*active-role* :approver]
+            (validate-back-button-presence actionable-data)
+            (validate-approver-actions-absence actionable-data)
+            (validate-review-actions-absence actionable-data)))
+        (testing "As a reviewer"
+          (binding [context/*user* {"eppn" "carl"}
+                    context/*active-role* :reviewer]
+            (testing "on an actionable form"
+              (validate-back-button-presence actionable-data)
+              (validate-approver-actions-absence actionable-data)
+              (validate-review-actions-presence actionable-data))
+            (testing "on an unactionable form"
+              (validate-back-button-presence unactionable-data)
+              (validate-approver-actions-absence unactionable-data)
+              (validate-review-actions-absence unactionable-data))))
+        (testing "As a reviwer, who is not set for the current round, on an actionable form"
+          (binding [context/*user* {"eppn" "bob"}
+                    context/*active-role* :reviewer]
+            (validate-back-button-presence actionable-data)
+            (validate-approver-actions-absence actionable-data)
+            (validate-review-actions-absence actionable-data)))))))
