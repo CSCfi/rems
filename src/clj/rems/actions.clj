@@ -68,36 +68,36 @@
 
 (defn- approve-button [app]
   (list
-   [:button.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#approve-modal"}
+   [:button#approve.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#approve-modal"}
     (text :t.actions/approve)]
    (approval-confirm-modal "approve" (text :t.actions/approve) app)))
 
 (defn- reject-button [app]
   (list
-   [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#reject-modal"}
+   [:button#reject.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#reject-modal"}
     (text :t.actions/reject)]
    (approval-confirm-modal "reject" (text :t.actions/reject) app)))
 
 (defn review-button [app]
   (list
-   [:button.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#review-modal"}
+   [:button#review.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#review-modal"}
     (text :t.actions/review)]
    (review-confirm-modal "review" (text :t.actions/review) app)))
 
 (defn- return-button [app]
   (list
-   [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#return-modal"}
+   [:button#return.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#return-modal"}
     (text :t.actions/return)]
    (approval-confirm-modal "return" (text :t.actions/return) app)))
 
 (defn- close-button [app]
   (list
-   [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
+   [:button#close.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
     (text :t.actions/close)]
    (approval-confirm-modal "close" (text :t.actions/close) app)))
 
 (defn back-to-actions-button []
-  [:a.btn.btn-secondary.pull-left {:href "/actions"} (text :t.form/back-actions)])
+  [:a#back.btn.btn-secondary.pull-left {:href "/actions"} (text :t.form/back-actions)])
 
 (defn approve-buttons [app]
   [:div.form-actions.inline
