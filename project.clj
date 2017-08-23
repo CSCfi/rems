@@ -3,44 +3,39 @@
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
 
-  :dependencies [[buddy "1.3.0" :exclusions [cheshire]]
-                 [ch.qos.logback/logback-classic "1.2.3"]
-                 [clj-time "0.13.0"]
-                 [compojure "1.6.0" :exclusions [ring/ring-core]]
+  :dependencies [[ch.qos.logback/logback-classic "1.2.3"]
+                 [clj-time "0.14.0"]
+                 [compojure "1.6.0"]
                  [com.taoensso/tempura "1.1.2"]
-                 ;;TODO: updating conman 0.6.3 -> 0.6.4 or luminus-migrations 0.3.0 -> 0.3.3 breaks tests
-                 [conman "0.6.3"]
-                 [cprop "0.1.10"]
+                 [conman "0.6.7"]
+                 [cprop "0.1.11"]
                  [garden "1.3.2"]
-                 [haka-buddy "0.2.0"]
+                 [haka-buddy "0.2.1" :exclusions [cheshire commons-codec]]
                  [hiccup "1.0.5"]
-                 [hickory "0.7.1" :exclusions [org.clojure/clojurescript]]
+                 [hickory "0.7.1" :exclusions [org.clojure/tools.reader]]
                  [luminus-jetty "0.1.4" :exclusions [org.clojure/tools.reader]]
-                 [luminus-migrations "0.3.0" :exclusions [org.clojure/java.jdbc]]
+                 [luminus-migrations "0.4.0" :exclusions [org.clojure/java.jdbc]]
                  [luminus-nrepl "0.1.4"]
-                 [luminus/ring-ttl-session "0.3.2" :exclusions [ring/ring-core]]
-                 [macroz/hiccup-find "0.5.0" :exclusions [org.clojure/clojurescript]]
-                 [markdown-clj "0.9.98"]
-                 [metosin/compojure-api "1.1.10"]
-                 [metosin/muuntaja "0.2.1"]
-                 [metosin/ring-http-response "0.9.0"]
+                 [luminus/ring-ttl-session "0.3.2"]
+                 [macroz/hiccup-find "0.5.0" :exclusions [org.clojure/tools.reader]]
+                 [metosin/compojure-api "1.1.11" :exclusions [cheshire commons-codec com.google.code.findbugs/jsr305]]
                  [mount "0.1.11"]
                  [org.clojure/clojure "1.8.0"]
                  [org.clojure/core.memoize "0.5.9"]
                  [org.clojure/tools.cli "0.3.5"]
-                 [org.clojure/tools.logging "0.3.1"]
+                 [org.clojure/tools.logging "0.4.0"]
                  [org.postgresql/postgresql "9.4.1212"]
                  [org.webjars.bower/tether "1.4.0"]
                  [org.webjars/bootstrap "4.0.0-alpha.6"]
                  [org.webjars/font-awesome "4.7.0"]
-                 [org.webjars/jquery "3.2.0"]
+                 [org.webjars/jquery "3.2.1"]
                  [prone "1.1.4"]
-                 [ring-middleware-format "0.7.2"]
+                 [ring-middleware-format "0.7.2" :exclusions [commons-codec]]
                  [ring-webjars "0.2.0"]
-                 [ring/ring-core "1.6.1"]
-                 [ring/ring-defaults "0.3.0"]
-                 [ring/ring-devel "1.6.1"]
-                 [ring/ring-servlet "1.6.1"]]
+                 [ring/ring-core "1.6.2"]
+                 [ring/ring-defaults "0.3.1"]
+                 [ring/ring-devel "1.6.2"]
+                 [ring/ring-servlet "1.6.2"]]
 
   :min-lein-version "2.0.0"
 
@@ -80,14 +75,16 @@
    :dev           [:project/dev :profiles/dev]
    :test          [:project/dev :project/test :profiles/test]
 
-   :project/dev  {:dependencies [[clj-webdriver/clj-webdriver "0.7.2" :exclusions [commons-logging]]
+   :project/dev  {:dependencies [[clj-webdriver/clj-webdriver "0.7.2" :exclusions [commons-logging commons-codec]]
                                  [directory-naming/naming-java "0.8"]
-                                 [org.seleniumhq.selenium/selenium-server "3.0.1" :exclusions [commons-logging
+                                 [org.seleniumhq.selenium/selenium-server "3.0.1" :exclusions [com.google.code.gson/gson
+                                                                                               commons-logging
+                                                                                               commons-codec
                                                                                                org.apache.httpcomponents/httpclient
                                                                                                org.apache.httpcomponents/httpcore
                                                                                                org.apache.httpcomponents/httpmime]]
                                  [pjstadig/humane-test-output "0.8.1"]
-                                 [ring/ring-mock "0.3.0"]]
+                                 [ring/ring-mock "0.3.1"]]
                   :plugins [[com.jakemccrary/lein-test-refresh "0.14.0"]
                             [lein-cloverage "1.0.9" :exclusions [org.clojure/clojure]]]
 
