@@ -28,11 +28,15 @@
                   "Käyttäjätunnus: RDapplicant2" [:br]
                   "Salasana: RDapplicant2" [:br]
                   "Kuvaus: Toinen tunnus tietoaineiston käyttöoikeuden hakemiseen. RDapplicant1 voi vaikkapa kutsua tämän käyttäjän käyttölupahakemuksensa toiseksi jäseneksi, jolloin käyttöoikeuksia anotaan samalla myös hänelle."]
-                 [:p [:strong "3. REMS Demo hyväksyjä 1"] [:br]
+                 [:p [:strong "3. REMS Demo katselmoija"] [:br]
+                  "Käyttäjätunnus: RDreview" [:br]
+                  "Salasana: RDreview" [:br]
+                  "Kuvaus: Katselmoija voi kommentoida saapunutta käyttölupahakemusta mutta ei voi hyväksyä tai hylätä sitä."]
+                 [:p [:strong "4. REMS Demo hyväksyjä 1"] [:br]
                   "Käyttäjätunnus: RDapprover1" [:br]
                   "Salasana: RDapprover1" [:br]
                   "Kuvaus: Hyväksyjä hyväksyy tai hylkää saapuneen käyttölupahakemuksen tai palauttaa sen täydennettäväksi."]
-                 [:p [:strong "4. REMS Demo hyväksyjä 2"] [:br]
+                 [:p [:strong "5. REMS Demo hyväksyjä 2"] [:br]
                   "Käyttäjätunnus: RDapprover2" [:br]
                   "Salasana: RDapprover2" [:br]
                   "Kuvaus: Demon eräillä tietoaineistoilla on useita rinnakkaisia tai vaihtoehtoisia hyväksyjiä."]
@@ -100,7 +104,9 @@
             :created "Luotu"
             :handled "Käsitelty"
             :handled-approvals "Käsitellyt hakemukset"
+            :handled-reviews "Käsitellyt katselmoinnit"
             :open-approvals "Avoimet hakemukset"
+            :open-reviews "Avoimet katselmoinnit"
             :approve "Hyväksy"
             :reject "Hylkää"
             :return "Palauta hakijalle"

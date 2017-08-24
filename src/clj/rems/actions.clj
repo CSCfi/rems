@@ -68,36 +68,36 @@
 
 (defn- approve-button [app]
   (list
-   [:button.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#approve-modal"}
+   [:button#approve.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#approve-modal"}
     (text :t.actions/approve)]
    (approval-confirm-modal "approve" (text :t.actions/approve) app)))
 
 (defn- reject-button [app]
   (list
-   [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#reject-modal"}
+   [:button#reject.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#reject-modal"}
     (text :t.actions/reject)]
    (approval-confirm-modal "reject" (text :t.actions/reject) app)))
 
 (defn review-button [app]
   (list
-   [:button.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#review-modal"}
+   [:button#review.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#review-modal"}
     (text :t.actions/review)]
    (review-confirm-modal "review" (text :t.actions/review) app)))
 
 (defn- return-button [app]
   (list
-   [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#return-modal"}
+   [:button#return.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#return-modal"}
     (text :t.actions/return)]
    (approval-confirm-modal "return" (text :t.actions/return) app)))
 
 (defn- close-button [app]
   (list
-   [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
+   [:button#close.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
     (text :t.actions/close)]
    (approval-confirm-modal "close" (text :t.actions/close) app)))
 
 (defn back-to-actions-button []
-  [:a.btn.btn-secondary.pull-left {:href "/actions"} (text :t.form/back-actions)])
+  [:a#back.btn.btn-secondary.pull-left {:href "/actions"} (text :t.form/back-actions)])
 
 (defn approve-buttons [app]
   [:div.form-actions.inline
@@ -154,17 +154,6 @@
    (back-to-actions-button)
    (review-button app)])
 
-(defn- handled-approvals-item [app]
-  [:tr.approval
-   [:td {:data-th (text :t.actions/application)} (:id app)]
-   [:td {:data-th (text :t.actions/resource)} (get-in app [:catalogue-item :title])]
-   [:td {:data-th (text :t.actions/applicant)} (:applicantuserid app)]
-   [:td {:data-th (text :t.actions/state)} (text (localize-state (:state app)))]
-   [:td {:data-th (text :t.actions/handled)} (format/unparse time-format (:handled app))]
-   [:td.commands
-    (view-button app)
-    (export-pdf-button app)]])
-
 (defn actions [apps btn-fns]
   (if (empty? apps)
     [:div.actions.alert.alert-success (text :t.actions/empty)]
@@ -197,25 +186,52 @@
   ([apps]
    (actions apps approve-buttons)))
 
+(defn handled-actions
+  "Creates a table containing a list of handled applications. The function takes the following parameters as arguments:
+  apps:    collection of apps to be shown
+  btn-fns: a set of functionality buttons that are available for each application
+  top-btns: a set of extra buttons that will be shown on top of the table. This could include f.ex 'export as pdf' button."
+  ([apps]
+   (handled-actions apps nil nil))
+  ([apps btn-fns]
+   (handled-actions apps btn-fns nil))
+  ([apps btn-fns top-btns]
+   (if (empty? apps)
+     nil
+     (list
+       top-btns
+       [:table.rems-table.actions
+        [:tr
+         [:th (text :t.actions/application)]
+         [:th (text :t.actions/resource)]
+         [:th (text :t.actions/applicant)]
+         [:th (text :t.actions/state)]
+         [:th (text :t.actions/handled)]
+         [:th]]
+        (for [app (sort-by :handled apps)]
+          [:tr.action
+           [:td {:data-th (text :t.actions/application)} (:id app)]
+           [:td {:data-th (text :t.actions/resource)} (get-in app [:catalogue-item :title])]
+           [:td {:data-th (text :t.actions/applicant)} (:applicantuserid app)]
+           [:td {:data-th (text :t.actions/state)} (text (localize-state (:state app)))]
+           [:td {:data-th (text :t.actions/handled)} (format/unparse time-format (:handled app))]
+           [:td.commands
+            (view-button app)
+            (when btn-fns
+              (btn-fns app))]])]))))
+
 (defn handled-approvals
   ([]
    (handled-approvals (applications/get-handled-approvals)))
   ([apps]
-   (if (empty? apps)
-     nil
-     (list
-      (report-buttons)
-      [:table.rems-table.approvals
-       [:tr
-        [:th (text :t.actions/application)]
-        [:th (text :t.actions/resource)]
-        [:th (text :t.actions/applicant)]
-        [:th (text :t.actions/state)]
-        [:th (text :t.actions/handled)]
-        [:th]]
-       (for [app (sort-by :handled apps)]
-         (handled-approvals-item app))
-       ]))))
+   (handled-actions apps export-pdf-button (report-buttons))))
+
+(defn handled-reviews
+  ([]
+   (handled-reviews (applications/get-handled-reviews)))
+  ([apps]
+   (handled-actions apps)))
+
 
 (defn guide
   []
@@ -226,6 +242,10 @@
             (reviews
              [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid "alice"}
               {:id 3 :catalogue-item {:title "bbbbbb"} :applicantuserid "bob"}]))
+   (example "handled reviews"
+            (handled-reviews
+             [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid "alice"}
+              {:id 3 :catalogue-item {:title "bbbbbb"} :state "approved" :applicantuserid "bob"}]))
    (example "approvals empty"
             (approvals []))
    (example "approvals"
@@ -241,7 +261,17 @@
   (layout/render
    "actions"
    [:div
-    (when-role :reviewer (reviews))
+    (when-role :reviewer
+               (list
+                 (collapsible/component "open-reviews"
+                                        true
+                                        (text :t.actions/open-reviews)
+                                        (reviews))
+                 [:div.mt-3
+                  (collapsible/component "handled-reviews"
+                                         false
+                                         (text :t.actions/handled-reviews)
+                                         (handled-reviews))]))
     (when-role :approver
                (list
                  (collapsible/component "open-approvals"
