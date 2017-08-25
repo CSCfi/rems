@@ -29,6 +29,7 @@
                  [org.webjars/bootstrap "4.0.0-alpha.6"]
                  [org.webjars/font-awesome "4.7.0"]
                  [org.webjars/jquery "3.2.1"]
+                 [com.draines/postal "2.0.2"]
                  [prone "1.1.4"]
                  [ring-middleware-format "0.7.2" :exclusions [commons-codec]]
                  [ring-webjars "0.2.0"]
