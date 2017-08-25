@@ -25,8 +25,8 @@ If you already have setup the server you can ignore this step.
 1. Make sure your server is setup (see above)
 2. Deploy latest version of rems: `ansible-playbook -vv rems.yml`
 
-## Database reset
-<span style="color:red"> *Possible danger zone.* </span>
+## Database reset (*Possible danger zone*)
+
 This step might be needed if the newly deployed application version contains database changes. If the database in the server in question can be reset (such as in rems2demo), then the following commands can be run:
 ```
 ssh -i path-to-private-key -L localhost:5432:localhost:5432 insert-username@insert-host
