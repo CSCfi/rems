@@ -10,11 +10,13 @@
             [rems.db.roles :as roles]
             [rems.db.test-data :as test-data]
             [rems.handler :refer :all]
+            [rems.test.tempura :refer [fake-tempura-fixture]]
             [ring.mock.request :refer :all]
             [ring.util.codec :refer [form-decode]]))
 
 (use-fixtures
   :once
+  fake-tempura-fixture
   (fn [f]
     (mount/start
       #'rems.config/env
