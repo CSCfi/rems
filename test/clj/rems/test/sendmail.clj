@@ -48,7 +48,8 @@
               item2 (:id (db/create-catalogue-item! {:title "item2" :form nil :resid nil :wfid wfid2}))
               app1 (applications/create-new-draft item1)
               app2 (applications/create-new-draft item2)
-              app3 (applications/create-new-draft item2)]
+              app3 (applications/create-new-draft item2)
+              app4 (applications/create-new-draft item2)]
           (db/add-user! {:user uid :userattrs (generate-string {"mail" "appr-invalid"})})
           (db/add-user! {:user uid2 :userattrs (generate-string {"mail" "rev-invalid"})})
           (db/add-user! {:user "test-user" :userattrs (generate-string context/*user*)})
@@ -77,4 +78,14 @@
             (testing "Applicant gets notified when application is returned to him/her"
               (applications/return-application app3 0 "")
               (conjure/verify-call-times-for email/send-mail 8)
-              (conjure/verify-nth-call-args-for 8 email/send-mail "invalid-addr" "([:t.email/status-changed-subject :t/missing])" "([:t.email/status-changed-msg :t/missing])")))))))
+              (conjure/verify-nth-call-args-for 8 email/send-mail "invalid-addr" "([:t.email/status-changed-subject :t/missing])" "([:t.email/status-changed-msg :t/missing])"))
+            (testing "Emails should not be sent when actions fail"
+              (is (thrown? Exception (applications/approve-application app4 1 ""))
+                  "Approval should fail")
+              (is (thrown? Exception (applications/reject-application app4 1 ""))
+                  "Rejection should fail")
+              (is (thrown? Exception (applications/review-application app4 1 ""))
+                  "Review should fail")
+              (is (thrown? Exception (applications/return-application app4 1 ""))
+                  "Return should fail")
+              (conjure/verify-call-times-for email/send-mail 8)))))))
