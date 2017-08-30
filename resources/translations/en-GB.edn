@@ -107,7 +107,7 @@
           :review-request-msg "Dear %1,
                                %2 has requested you to review the application %3 to access the resource %4.
                                You can review the application: %5
-                               Please do not reply to this automatically generated message." ;%1 recipient %2 applicant, %3 catAppId, %4 catalogueItemTitle, %5 link
+                               Please do not reply to this automatically generated message."
           :review-request-subject "Review request"
           :status-changed-msg "Dear %1,
                                Your application %2 to access the resource %3 has progressed to the state %4.
