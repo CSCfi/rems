@@ -119,7 +119,7 @@
                                                   "invalid-addr"
                                                   "([:t.email/status-changed-subject :t/missing])"
                                                   (str "([:t.email/status-changed-msg :t/missing] [\"Test User\" " app1 " \"item\" \":t.applications.states/closed\" \"localhost:3000/form/" item1 "/" app1 "\"])")))
-            (testing "Applicant is notified of closed application"
+            (testing "Applicant is notified of withdrawn application"
               (applications/submit-application app4)
               (applications/withdraw-application app4 0 "")
               (conjure/verify-call-times-for email/send-mail 14)
