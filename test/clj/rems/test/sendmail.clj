@@ -111,4 +111,19 @@
                     "Review should fail")
                 (is (thrown? Exception (applications/return-application app4 1 ""))
                     "Return should fail")
-                (conjure/verify-call-times-for email/send-mail 10))))))))
+                (conjure/verify-call-times-for email/send-mail 10)))
+            (testing "Applicant is notified of closed application"
+              (applications/close-application app1 1 "")
+              (conjure/verify-call-times-for email/send-mail 11)
+              (conjure/verify-nth-call-args-for 11 email/send-mail
+                                                  "invalid-addr"
+                                                  "([:t.email/status-changed-subject :t/missing])"
+                                                  (str "([:t.email/status-changed-msg :t/missing] [\"Test User\" " app1 " \"item\" \":t.applications.states/closed\" \"localhost:3000/form/" item1 "/" app1 "\"])")))
+            (testing "Applicant is notified of closed application"
+              (applications/submit-application app4)
+              (applications/withdraw-application app4 0 "")
+              (conjure/verify-call-times-for email/send-mail 14)
+              (conjure/verify-nth-call-args-for 14 email/send-mail
+                                                  "invalid-addr"
+                                                  "([:t.email/status-changed-subject :t/missing])"
+                                                  (str "([:t.email/status-changed-msg :t/missing] [\"Test User\" " app4 " \"item2\" \":t.applications.states/withdrawn\" \"localhost:3000/form/" item2 "/" app4 "\"])"))))))))
