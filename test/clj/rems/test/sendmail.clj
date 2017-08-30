@@ -67,7 +67,7 @@
                                                 email/send-mail
                                                 "rev-invalid"
                                                 "([:t.email/review-request-subject :t/missing])"
-                                                (str "([:t.email/review-request-msg :t/missing]) [\"Rev Iwer\" \"Test User\" " app1 " \"item\" localhost:3000/form/" item1 "/" app1 "\"]")))
+                                                (str "([:t.email/review-request-msg :t/missing] [\"Rev Iwer\" \"Test User\" " app1 " \"item\" \"localhost:3000/form/" item1 "/" app1 "\"])")))
             (binding [context/*user* {"eppn" "reviewer"}]
               (applications/review-application app1 0 "")
               (testing "Approver gets notified after review round"
@@ -75,7 +75,7 @@
                 (conjure/verify-nth-call-args-for 3 email/send-mail
                                                   "appr-invalid"
                                                   "([:t.email/approval-request-subject :t/missing])"
-                                                  (str "([:t.email/approval-request-msg :t/missing] [\"App Rover\" \"Test User\" " app1 " \"item\" localhost:3000/form/" item1 "/" app1 "\"])"))))
+                                                  (str "([:t.email/approval-request-msg :t/missing] [\"App Rover\" \"Test User\" " app1 " \"item\" \"localhost:3000/form/" item1 "/" app1 "\"])"))))
             (binding [context/*user* {"eppn" "approver"}]
               (applications/approve-application app1 1 "")
               (testing "Applicant gets notified when application is approved"
@@ -83,7 +83,7 @@
                 (conjure/verify-nth-call-args-for 4 email/send-mail
                                                   "invalid-addr"
                                                   "([:t.email/status-changed-subject :t/missing])"
-                                                  (str "([:t.email/status-changed-msg :t/missing] [\"Test User\" \"" app1 "\" \"item\" \"Approved\" \"localhost:3000/form/" item1 "/" app1 "\"])"))))
+                                                  (str "([:t.email/status-changed-msg :t/missing] [\"Test User\" " app1 " \"item\" \":t.applications.states/approved\" \"localhost:3000/form/" item1 "/" app1 "\"])"))))
             (applications/submit-application app2)
             (applications/submit-application app3)
             (binding [context/*user* {"eppn" "approver"}]
@@ -94,14 +94,14 @@
                 (conjure/verify-nth-call-args-for 9 email/send-mail
                                                   "invalid-addr"
                                                   "([:t.email/status-changed-subject :t/missing])"
-                                                  (str "([:t.email/status-changed-msg :t/missing] [\"Test User\" \"" app2 "\" \"item2\" \"Rejected\" \"localhost:3000/form/" item2 "/" app2 "\"])")))
+                                                  (str "([:t.email/status-changed-msg :t/missing] [\"Test User\" " app2 " \"item2\" \":t.applications.states/rejected\" \"localhost:3000/form/" item2 "/" app2 "\"])")))
               (testing "Applicant gets notified when application is returned to him/her"
                 (applications/return-application app3 0 "")
                 (conjure/verify-call-times-for email/send-mail 10)
                 (conjure/verify-nth-call-args-for 10 email/send-mail
                                                   "invalid-addr"
                                                   "([:t.email/status-changed-subject :t/missing])"
-                                                  (str "([:t.email/status-changed-msg :t/missing] [\"Test User\" \"" app3 "\" \"item\" \"Returned\" \"localhost:3000/form/" item2 "/" app3 "\"])")))
+                                                  (str "([:t.email/status-changed-msg :t/missing] [\"Test User\" " app3 " \"item2\" \":t.applications.states/returned\" \"localhost:3000/form/" item2 "/" app3 "\"])")))
               (testing "Emails should not be sent when actions fail"
                 (is (thrown? Exception (applications/approve-application app4 1 ""))
                     "Approval should fail")

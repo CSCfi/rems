@@ -3,13 +3,12 @@
             [clj-time.format :as format]
             [compojure.core :refer [GET POST defroutes]]
             [rems.anti-forgery :refer [anti-forgery-field]]
-            [rems.applications :refer [localize-state]]
             [rems.collapsible :as collapsible]
             [rems.db.applications :as applications]
             [rems.guide :refer :all]
             [rems.layout :as layout]
             [rems.role-switcher :refer [when-role has-roles?]]
-            [rems.text :refer [text]]
+            [rems.text :refer [localize-state text]]
             [rems.util :refer [errorf]]
             [ring.util.response :refer [redirect]]))
 

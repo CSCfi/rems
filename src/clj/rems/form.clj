@@ -4,7 +4,6 @@
             [compojure.core :refer [GET POST defroutes]]
             [rems.anti-forgery :refer [anti-forgery-field]]
             [rems.applicant-info :as applicant-info]
-            [rems.applications :as applications]
             [rems.actions :as actions]
             [rems.collapsible :as collapsible]
             [rems.db.applications :refer [can-approve?
@@ -107,7 +106,7 @@
      (collapsible/component
       "events"
       false
-      [:span (text :t.applications/state) ": " (text (applications/localize-state state))
+      [:span (text :t.applications/state) ": " (text (localize-state state))
        (when-let [c (:comment (last events))] [:p.inline-comment [:br] (text :t.form/comment) ": " [:span.inline-comment-content] c])]
       (when (seq events)
         (list
