@@ -89,15 +89,16 @@
             (binding [context/*user* {"eppn" "approver"}]
               (testing "Applicant gets notified when application is rejected"
                 (applications/reject-application app2 0 "")
-                (conjure/verify-call-times-for email/send-mail 7)
-                (conjure/verify-nth-call-args-for 7 email/send-mail
+                ;; Four other mails should have been sent before the previous reject action.
+                (conjure/verify-call-times-for email/send-mail 9)
+                (conjure/verify-nth-call-args-for 9 email/send-mail
                                                   "invalid-addr"
                                                   "([:t.email/status-changed-subject :t/missing])"
                                                   (str "([:t.email/status-changed-msg :t/missing] [\"Test User\" \"" app2 "\" \"item2\" \"Rejected\" \"localhost:3000/form/" item2 "/" app2 "\"])")))
               (testing "Applicant gets notified when application is returned to him/her"
                 (applications/return-application app3 0 "")
-                (conjure/verify-call-times-for email/send-mail 8)
-                (conjure/verify-nth-call-args-for 8 email/send-mail
+                (conjure/verify-call-times-for email/send-mail 10)
+                (conjure/verify-nth-call-args-for 10 email/send-mail
                                                   "invalid-addr"
                                                   "([:t.email/status-changed-subject :t/missing])"
                                                   (str "([:t.email/status-changed-msg :t/missing] [\"Test User\" \"" app3 "\" \"item\" \"Returned\" \"localhost:3000/form/" item2 "/" app3 "\"])")))
@@ -110,4 +111,4 @@
                     "Review should fail")
                 (is (thrown? Exception (applications/return-application app4 1 ""))
                     "Return should fail")
-                (conjure/verify-call-times-for email/send-mail 8))))))))
+                (conjure/verify-call-times-for email/send-mail 10))))))))
