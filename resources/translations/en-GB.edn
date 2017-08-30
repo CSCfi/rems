@@ -94,6 +94,26 @@
          :header "%1 resources in cart"
          :remove "Remove"}
   :catalogue {:header "Resource"}
+  :email {:application-sent-msg "Dear %1,
+                                 An application to access the resource %2 has been created.
+                                 You will receive messages about the application's progress. You can also check its status: %3
+                                 Please do not reply to this automatically generated message."
+          :application-sent-subject "New application created"
+          :approval-request-msg "Dear %1,
+                                 %2 has submitted the application %3 to access the resource %4 and your attention is required.
+                                 You can approve or reject the application: %5
+                                 Please do not reply to this automatically generated message."
+          :approval-request-subject "Approval request"
+          :review-request-msg "Dear %1,
+                               %2 has requested you to review the application %3 to access the resource %4.
+                               You can review the application: %5
+                               Please do not reply to this automatically generated message." ;%1 recipient %2 applicant, %3 catAppId, %4 catalogueItemTitle, %5 link
+          :review-request-subject "Review request"
+          :status-changed-msg "Dear %1,
+                               Your application %2 to access the resource %3 has progressed to the state %4.
+                               You can view the application: %5
+                               Please do not reply to this automatically generated message."
+          :status-changed-subject "Application state change"}
   :footer "Powered by CSC - IT Center for Science"
   :form {:add-comments "Add comment to the decision (shown to applicant)"
          :add-comments-applicant "Add comment to the decision"
