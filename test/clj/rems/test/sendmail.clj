@@ -14,8 +14,7 @@
             [rems.db.core :as db]
             [rems.db.workflow-actors :as actors]
             [rems.email :as email]
-            [rems.test.tempura :refer [fake-tempura-fixture]]
-            [rems.util :refer [get-user-id]]))
+            [rems.test.tempura :refer [fake-tempura-fixture]]))
 
 (use-fixtures
   :once

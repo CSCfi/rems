@@ -2,27 +2,26 @@
   (:require [clj-time.core :as time]
             [clj-time.format :as format]
             [compojure.core :refer [GET POST defroutes]]
+            [rems.actions :as actions]
             [rems.anti-forgery :refer [anti-forgery-field]]
             [rems.applicant-info :as applicant-info]
-            [rems.actions :as actions]
             [rems.collapsible :as collapsible]
+            [rems.context :as context]
             [rems.db.applications :refer [can-approve?
                                           can-review?
                                           create-new-draft
                                           get-application-phases
-                                          get-draft-id-for get-form-for
                                           get-application-state
+                                          get-draft-id-for get-form-for
                                           submit-application]]
             [rems.db.core :as db]
             [rems.guide :refer :all]
             [rems.layout :as layout]
             [rems.phase :refer [phases]]
-            [rems.role-switcher :refer [has-roles?
-                                        when-role]]
+            [rems.role-switcher :refer [when-role]]
             [rems.text :refer :all]
             [rems.util :refer [get-user-id]]
-            [ring.util.response :refer [redirect]]
-            [rems.context :as context]))
+            [ring.util.response :refer [redirect]]))
 
 (def ^:private time-format (format/formatter "yyyy-MM-dd HH:mm"
                                              (time/default-time-zone)))

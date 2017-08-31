@@ -3,8 +3,8 @@
             [rems.context :as context]
             [rems.guide :refer :all]
             [rems.role-switcher :refer [when-role]]
-            [rems.util :refer [get-username]]
-            [rems.text :refer :all]))
+            [rems.text :refer :all]
+            [rems.util :refer [get-username]]))
 
 (defn- info-field [title value]
   [:div.form-group

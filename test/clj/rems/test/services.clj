@@ -1,6 +1,5 @@
 (ns ^:integration rems.test.services
   (:require [cheshire.core :refer [generate-string parse-stream]]
-            [clojure.java.io]
             [clojure.test :refer :all]
             [luminus-migrations.core :as migrations]
             [mount.core :as mount]

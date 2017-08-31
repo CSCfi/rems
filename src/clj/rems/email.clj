@@ -3,8 +3,8 @@
             [rems.config :refer [env]]
             [rems.context :as context]
             [rems.text :refer :all]
-            [rems.util :refer [get-username
-                               get-user-mail]]))
+            [rems.util :refer [get-user-mail
+                               get-username]]))
 
 (defn send-mail [to subject msg]
   (when-let [host (:smtp-host env)]

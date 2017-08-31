@@ -1,7 +1,6 @@
 (ns ^:integration rems.test.db
   "Namespace for tests that use an actual database."
   (:require [cheshire.core :refer :all]
-            [clojure.core.memoize :as memo]
             [clojure.java.jdbc :as jdbc]
             [clojure.test :refer :all]
             [conman.core :as conman]

@@ -8,8 +8,8 @@
             [rems.db.users :as users]
             [rems.db.workflow-actors :as actors]
             [rems.email :as email]
-            [rems.util :refer [get-username
-                               get-user-id
+            [rems.util :refer [get-user-id
+                               get-username
                                index-by]]))
 
 ;; TODO cache application state in db instead of always computing it from events
