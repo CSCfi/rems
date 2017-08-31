@@ -444,7 +444,18 @@
       (when-not (= round (:curround state))
         (throw-unauthorized))
       (db/add-application-event! {:application application-id :user (get-user-id)
-                                  :round round :event event :comment msg}))))
+                                  :round round :event event :comment msg})
+      (let [application (get-application-state application-id)
+            user-attrs (users/get-user-attributes (:applicantuserid application))]
+        (email/send-mail (get-user-mail user-attrs)
+                         (text :t.email/status-changed-subject)
+                         (text-format :t.email/status-changed-msg
+                                      (get-username user-attrs)
+                                      application-id
+                                      (get-catalogue-item-title
+                                        (get-localized-catalogue-item {:id (:catid application)}))
+                                      (clojure.string/lower-case (localize-state (:state application)))
+                                      (str context/*root-path* "/form/" (:catid application) "/" application-id)))))))
 
 (defn withdraw-application [application-id round msg]
   (unjudge-application application-id "withdraw" round msg))
