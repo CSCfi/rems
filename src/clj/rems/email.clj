@@ -11,7 +11,7 @@
     (when-let [port (:smtp-port env)]
       (postal/send-message {:host host
                             :port port}
-                           {:from "rems-admin@csc.fi"
+                           {:from (:mail-from env)
                             :to to
                             :subject subject
                             :body msg}))))
