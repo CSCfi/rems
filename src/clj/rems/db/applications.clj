@@ -8,10 +8,8 @@
             [rems.db.users :as users]
             [rems.db.workflow-actors :as actors]
             [rems.email :as email]
-            [rems.text :refer :all]
             [rems.util :refer [get-username
                                get-user-id
-                               get-user-mail
                                index-by]]))
 
 ;; TODO cache application state in db instead of always computing it from events
@@ -344,46 +342,30 @@
         round (:curround application)
         state (:state application)]
     (if (= "applied" state)
-      (do (let [approvers (actors/get-by-role application-id round "approver")
-                reviewers (actors/get-by-role application-id round "reviewer")]
-            (if (and (empty? approvers)
-                     (empty? reviewers))
-              (do
-                (db/add-application-event! {:application application-id :user (get-user-id)
-                                            :round round :event "autoapprove" :comment nil})
-                (try-autoapprove-application application-id))
-              (do
-                (doseq [approver approvers] (let [user-attrs (users/get-user-attributes approver)]
-                                              (email/send-mail (get-user-mail user-attrs)
-                                                               (text :t.email/approval-request-subject)
-                                                               (text-format :t.email/approval-request-msg
-                                                                            (get-username user-attrs)
-                                                                            (get-username (users/get-user-attributes (:applicantuserid application)))
-                                                                            application-id
-                                                                            (get-catalogue-item-title
-                                                                              (get-localized-catalogue-item {:id (:catid application)}))
-                                                                            (str context/*root-path* "/form/" (:catid application) "/" application-id)))))
-                (doseq [reviewer reviewers] (let [user-attrs (users/get-user-attributes reviewer)]
-                                              (email/send-mail (get-user-mail user-attrs)
-                                                               (text :t.email/review-request-subject)
-                                                               (text-format :t.email/review-request-msg
-                                                                            (get-username user-attrs)
-                                                                            (get-username (users/get-user-attributes (:applicantuserid application)))
-                                                                            application-id
-                                                                            (get-catalogue-item-title
-                                                                              (get-localized-catalogue-item {:id (:catid application)}))
-                                                                            (str context/*root-path* "/form/" (:catid application) "/" application-id)))))))))
+      (let [approvers (actors/get-by-role application-id round "approver")
+            reviewers (actors/get-by-role application-id round "reviewer")
+            applicant-name (get-username (users/get-user-attributes (:applicantuserid application)))
+            item-title (get-catalogue-item-title
+                         (get-localized-catalogue-item {:id (:catid application)}))
+            item-id (:catid application)]
+        (if (and (empty? approvers)
+                 (empty? reviewers))
+          (do
+            (db/add-application-event! {:application application-id :user (get-user-id)
+                                        :round round :event "autoapprove" :comment nil})
+            (try-autoapprove-application application-id))
+          (do
+            (doseq [approver approvers] (let [user-attrs (users/get-user-attributes approver)]
+                                          (email/approval-request user-attrs applicant-name application-id item-title item-id)))
+            (doseq [reviewer reviewers] (let [user-attrs (users/get-user-attributes reviewer)]
+                                          (email/review-request user-attrs applicant-name application-id item-title item-id))))))
       (let [user-attrs (users/get-user-attributes (:applicantuserid application))]
-        (email/send-mail (get-user-mail user-attrs)
-                         (text :t.email/status-changed-subject)
-                         (text-format :t.email/status-changed-msg
-                                      (get-username user-attrs)
-                                      application-id
-                                      (get-catalogue-item-title
-                                        (get-localized-catalogue-item {:id (:catid application)}))
-                                      (clojure.string/lower-case (localize-state (:state application)))
-                                      (str context/*root-path* "/form/" (:catid application) "/" application-id))))
-      )))
+        (email/status-change-alert user-attrs
+                                   application-id
+                                   (get-catalogue-item-title
+                                     (get-localized-catalogue-item {:id (:catid application)}))
+                                   (:state application)
+                                   (:catid application))))))
 
 (defn submit-application [application-id]
   (let [application (get-application-state application-id)
@@ -394,13 +376,10 @@
       (throw-unauthorized))
     (db/add-application-event! {:application application-id :user uid
                                 :round 0 :event "apply" :comment nil})
-    (email/send-mail (get-user-mail)
-                     (text :t.email/application-sent-subject)
-                     (text-format :t.email/application-sent-msg
-                                  (get-username)
-                                  (get-catalogue-item-title
-                                    (get-localized-catalogue-item {:id (:catid application)}))
-                                  (str context/*root-path* "/form/" (:catid application) "/" application-id)))
+    (email/confirm-application-creation (get-catalogue-item-title
+                                          (get-localized-catalogue-item {:id (:catid application)}))
+                                        (:catid application)
+                                        application-id)
     (try-autoapprove-application application-id)))
 
 (defn- judge-application [application-id event round msg]
@@ -447,15 +426,12 @@
                                   :round round :event event :comment msg})
       (let [application (get-application-state application-id)
             user-attrs (users/get-user-attributes (:applicantuserid application))]
-        (email/send-mail (get-user-mail user-attrs)
-                         (text :t.email/status-changed-subject)
-                         (text-format :t.email/status-changed-msg
-                                      (get-username user-attrs)
-                                      application-id
-                                      (get-catalogue-item-title
-                                        (get-localized-catalogue-item {:id (:catid application)}))
-                                      (clojure.string/lower-case (localize-state (:state application)))
-                                      (str context/*root-path* "/form/" (:catid application) "/" application-id)))))))
+        (email/status-change-alert user-attrs
+                                        application-id
+                                        (get-catalogue-item-title
+                                          (get-localized-catalogue-item {:id (:catid application)}))
+                                        (:state application)
+                                        (:catid application))))))
 
 (defn withdraw-application [application-id round msg]
   (unjudge-application application-id "withdraw" round msg))

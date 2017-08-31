@@ -35,6 +35,12 @@
       (jdbc/db-set-rollback-only! rems.env/*db*)
       (f))))
 
+(defn- subject-to-check [subject]
+  (str "([:t.email/" subject "-subject :t/missing])"))
+
+(defn- status-msg-to-check [username appid catid item-title status-key]
+  (str "([:t.email/status-changed-msg :t/missing] [\"" username "\" " appid " \"" item-title "\" \":t.applications.states/" status-key "\" \"localhost:3000/form/" catid "/" appid "\"])"))
+
 (deftest test-sending-email
     (conjure/mocking [email/send-mail]
       (with-redefs [catalogue/cached {:localizations (catalogue/load-catalogue-item-localizations!)}]
@@ -61,12 +67,12 @@
               (conjure/verify-call-times-for email/send-mail 2)
               (conjure/verify-first-call-args-for email/send-mail
                                                   "invalid-addr"
-                                                  "([:t.email/application-sent-subject :t/missing])"
+                                                  (subject-to-check "application-sent")
                                                   (str "([:t.email/application-sent-msg :t/missing] [\"Test User\" \"item\" \"localhost:3000/form/" item1 "/" app1 "\"])"))
               (conjure/verify-nth-call-args-for 2
                                                 email/send-mail
                                                 "rev-invalid"
-                                                "([:t.email/review-request-subject :t/missing])"
+                                                (subject-to-check "review-request")
                                                 (str "([:t.email/review-request-msg :t/missing] [\"Rev Iwer\" \"Test User\" " app1 " \"item\" \"localhost:3000/form/" item1 "/" app1 "\"])")))
             (binding [context/*user* {"eppn" "reviewer"}]
               (applications/review-application app1 0 "")
@@ -74,16 +80,13 @@
                 (conjure/verify-call-times-for email/send-mail 3)
                 (conjure/verify-nth-call-args-for 3 email/send-mail
                                                   "appr-invalid"
-                                                  "([:t.email/approval-request-subject :t/missing])"
+                                                  (subject-to-check "approval-request")
                                                   (str "([:t.email/approval-request-msg :t/missing] [\"App Rover\" \"Test User\" " app1 " \"item\" \"localhost:3000/form/" item1 "/" app1 "\"])"))))
             (binding [context/*user* {"eppn" "approver"}]
               (applications/approve-application app1 1 "")
               (testing "Applicant gets notified when application is approved"
                 (conjure/verify-call-times-for email/send-mail 4)
-                (conjure/verify-nth-call-args-for 4 email/send-mail
-                                                  "invalid-addr"
-                                                  "([:t.email/status-changed-subject :t/missing])"
-                                                  (str "([:t.email/status-changed-msg :t/missing] [\"Test User\" " app1 " \"item\" \":t.applications.states/approved\" \"localhost:3000/form/" item1 "/" app1 "\"])"))))
+                (conjure/verify-nth-call-args-for 4 email/send-mail "invalid-addr" (subject-to-check "status-changed") (status-msg-to-check "Test User" app1 item1 "item" "approved"))))
             (applications/submit-application app2)
             (applications/submit-application app3)
             (binding [context/*user* {"eppn" "approver"}]
@@ -91,17 +94,11 @@
                 (applications/reject-application app2 0 "")
                 ;; Four other mails should have been sent before the previous reject action.
                 (conjure/verify-call-times-for email/send-mail 9)
-                (conjure/verify-nth-call-args-for 9 email/send-mail
-                                                  "invalid-addr"
-                                                  "([:t.email/status-changed-subject :t/missing])"
-                                                  (str "([:t.email/status-changed-msg :t/missing] [\"Test User\" " app2 " \"item2\" \":t.applications.states/rejected\" \"localhost:3000/form/" item2 "/" app2 "\"])")))
+                (conjure/verify-nth-call-args-for 9 email/send-mail "invalid-addr" (subject-to-check "status-changed") (status-msg-to-check "Test User" app2 item2 "item2" "rejected")))
               (testing "Applicant gets notified when application is returned to him/her"
                 (applications/return-application app3 0 "")
                 (conjure/verify-call-times-for email/send-mail 10)
-                (conjure/verify-nth-call-args-for 10 email/send-mail
-                                                  "invalid-addr"
-                                                  "([:t.email/status-changed-subject :t/missing])"
-                                                  (str "([:t.email/status-changed-msg :t/missing] [\"Test User\" " app3 " \"item2\" \":t.applications.states/returned\" \"localhost:3000/form/" item2 "/" app3 "\"])")))
+                (conjure/verify-nth-call-args-for 10 email/send-mail "invalid-addr" (subject-to-check "status-changed") (status-msg-to-check "Test User" app3 item2 "item2" "returned")))
               (testing "Emails should not be sent when actions fail"
                 (is (thrown? Exception (applications/approve-application app4 1 ""))
                     "Approval should fail")
@@ -112,22 +109,16 @@
                 (is (thrown? Exception (applications/return-application app4 1 ""))
                     "Return should fail")
                 (is (thrown? Exception (applications/close-application app4 2 ""))
-                  "closing should fail")
+                    "closing should fail")
                 (is (thrown? Exception (applications/withdraw-application app1 2 ""))
                     "withdraw should fail")
                 (conjure/verify-call-times-for email/send-mail 10)))
             (testing "Applicant is notified of closed application"
               (applications/close-application app1 1 "")
               (conjure/verify-call-times-for email/send-mail 11)
-              (conjure/verify-nth-call-args-for 11 email/send-mail
-                                                  "invalid-addr"
-                                                  "([:t.email/status-changed-subject :t/missing])"
-                                                  (str "([:t.email/status-changed-msg :t/missing] [\"Test User\" " app1 " \"item\" \":t.applications.states/closed\" \"localhost:3000/form/" item1 "/" app1 "\"])")))
+              (conjure/verify-nth-call-args-for 11 email/send-mail "invalid-addr" (subject-to-check "status-changed") (status-msg-to-check "Test User" app1 item1 "item" "closed")))
             (testing "Applicant is notified of withdrawn application"
               (applications/submit-application app4)
               (applications/withdraw-application app4 0 "")
               (conjure/verify-call-times-for email/send-mail 14)
-              (conjure/verify-nth-call-args-for 14 email/send-mail
-                                                  "invalid-addr"
-                                                  "([:t.email/status-changed-subject :t/missing])"
-                                                  (str "([:t.email/status-changed-msg :t/missing] [\"Test User\" " app4 " \"item2\" \":t.applications.states/withdrawn\" \"localhost:3000/form/" item2 "/" app4 "\"])"))))))))
+              (conjure/verify-nth-call-args-for 14 email/send-mail "invalid-addr" (subject-to-check "status-changed") (status-msg-to-check "Test User" app4 item2 "item2" "withdrawn"))))))))
