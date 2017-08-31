@@ -111,6 +111,10 @@
                     "Review should fail")
                 (is (thrown? Exception (applications/return-application app4 1 ""))
                     "Return should fail")
+                (is (thrown? Exception (applications/close-application app4 2 ""))
+                  "closing should fail")
+                (is (thrown? Exception (applications/withdraw-application app1 2 ""))
+                    "withdraw should fail")
                 (conjure/verify-call-times-for email/send-mail 10)))
             (testing "Applicant is notified of closed application"
               (applications/close-application app1 1 "")
