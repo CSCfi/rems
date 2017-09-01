@@ -350,7 +350,7 @@
                    (empty? reviewers))
             (db/add-application-event! {:application application-id :user (get-user-id)
                                         :round round :event "autoapprove" :comment nil})
-            (handle-state-change application-id))))))
+            true)))))
 
 (defn- send-emails-for [application]
   (let [applicant-attrs (users/get-user-attributes (:applicantuserid application))
@@ -376,8 +376,9 @@
 
 (defn handle-state-change [application-id]
   (let [application (get-application-state application-id)]
-    (try-autoapprove-application application)
-    (send-emails-for application)))
+    (send-emails-for application)
+    (when (try-autoapprove-application application)
+      (recur application-id))))
 
 (defn submit-application [application-id]
   (let [application (get-application-state application-id)
