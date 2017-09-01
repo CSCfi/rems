@@ -124,7 +124,7 @@
          :date "Time"
          :event "Event"
          :events "Application events"
-         :licenses "Licenses"
+         :licenses "Terms of Use"
          :optional "(optional)"
          :save "Save as draft"
          :saved "Draft saved."

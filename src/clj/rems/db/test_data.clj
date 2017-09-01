@@ -109,10 +109,10 @@
        {:licid link :langcode "fi" :title "CC Nimeä 4.0"
         :textcontent "https://creativecommons.org/licenses/by/4.0/legalcode.fi"})
       (db/create-license-localization!
-       {:licid text :langcode "fi" :title "Lisenssi"
+       {:licid text :langcode "fi" :title "Yleiset käyttöehdot"
         :textcontent (apply str (repeat 10 "Suomenkielinen lisenssiteksti. "))})
       (db/create-license-localization!
-       {:licid text :langcode "en" :title "License"
+       {:licid text :langcode "en" :title "General Terms of Use"
         :textcontent (apply str (repeat 10 "License text in English. "))})
 
       (doseq [wf [minimal simple with-review two-round different]]

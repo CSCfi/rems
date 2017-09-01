@@ -125,7 +125,7 @@
          :date "Aika"
          :event "Tapahtuma"
          :events "Hakemuksen tapahtumat"
-         :licenses "Lisenssiehdot"
+         :licenses "Käyttöehdot"
          :optional "(ei pakollinen)"
          :save "Tallenna luonnos"
          :saved "Luonnos tallennettu."
