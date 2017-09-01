@@ -24,10 +24,15 @@
 
 (defn get-username
   ([]
-   (get context/*user* "commonName"))
+   (get-username context/*user*))
   ([user]
-   (binding [context/*user* user]
-     (get-username))))
+   (get user "commonName")))
+
+(defn get-user-mail
+  ([]
+   (get-user-mail context/*user*))
+  ([user]
+   (get user "mail")))
 
 (defn get-theme-attribute
   "Fetch the attribute value from the current theme."

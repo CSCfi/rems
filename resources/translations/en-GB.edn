@@ -1,16 +1,5 @@
 {:t
- {:missing "Missing translation"
-  :footer "Powered by CSC - IT Center for Science"
-  :navigation {:login "Login"
-               :logout "Sign Out"
-               :about "About"
-               :home "Home"
-               :catalogue "Catalogue"
-               :applications "Applications"
-               :actions "Actions"}
-  :login {:title "Login"
-          :text "Login by using your Haka credentials"}
-  :about {:text [:div.document
+ {:about {:text [:div.document
                  [:h2 "REMS-Demo"]
                  [:p "This is a demo environment for testing the REMS software. The demo environment has a couple of fictional datasets to which you can apply for access. For each dataset, there is an application form that the applicant fills in and submits and a workflow that determines how and to whom the submitted application is circulated for approval."]
                  [:p "You can use the demo usernames and passwords below to log in to the demo in various roles. The demo environment does not control access to any real datasets and does not send any email notifications to the applicants or reviewers and approvers of the applications."]
@@ -52,82 +41,113 @@
                  [:h3 "Acknowledgements"]
                  [:p "CSC’s work for REMS has been supported by the Ministry of Education and Culture of Finland and by Academy of Finland grants 271642 and 263164 to construct Biomedinfra, the Finnish consortium for ELIXIR, BBMRI and EATRIS ESFRI."]
                  ]}
-  :cart {:header "%1 resources in cart"
-         :add "Add to cart"
-         :remove "Remove"
-         :apply "Apply"
-         :checkout "Check out"}
-  :catalogue {:header "Resource"}
-  :form {:save "Save as draft"
-         :optional "(optional)"
-         :licenses "Licenses"
-         :comment "Comment"
-         :add-comments "Add comment to the decision (shown to applicant)"
-         :add-comments-applicant "Add comment to the decision"
-         :saved "Draft saved."
-         :submit "Send application"
-         :submitted "Application submitted."
-         :back "Back to catalogue"
-         :back-actions "Back to actions"
-         :back-reviews "Back to reviews"
-         :date "Time"
-         :event "Event"
-         :events "Application events"
-         :user "User"
-         :validation {:required "Field \"%1\" is required."}}
-  :phases {:apply "Apply"
-           :approve "Approval"
-           :review "Review"
-           :approved "Approved"
-           :rejected "Rejected"}
-  :applications {:application "Application"
-                 :resource "Resource"
-                 :user "User"
-                 :state "State"
-                 :view "View"
-                 :created "Created"
-                 :states {:draft "Draft"
-                          :applied "Applied"
-                          :approved "Approved"
-                          :rejected "Rejected"
-                          :returned "Returned"
-                          :withdrawn "Withdrawn"
-                          :closed "Closed"
-                          :unknown "Unknown"}
-                 :empty "You don't have any applications."}
-  :actions {:application "Application"
-            :resource "Resource"
-            :applicant "Applicant"
-            :state "State"
-            :view "View"
+  :actions {:applicant "Applicant"
+            :application "Application"
+            :approve "Approve"
+            :approve-success "Application approved"
+            :cancel "Cancel"
+            :close "Close"
+            :close-success "Application closed"
             :created "Created"
+            :empty "You don't have any applications to process."
+            :export-pdf "Export PDF"
             :handled "Handled"
             :handled-approvals "Handled applications"
             :handled-reviews "Handled reviews"
+            :load-application-states "Load application states"
+            :not-implemented "Not implemented yet"
             :open-approvals "Open applications"
             :open-reviews "Open reviews"
-            :approve "Approve"
             :reject "Reject"
-            :return "Return to applicant"
-            :review "Review"
-            :close "Close"
-            :cancel "Cancel"
-            :withdraw "Withdraw"
-            :approve-success "Application approved"
             :reject-success "Application rejected"
+            :resource "Resource"
+            :return "Return to applicant"
             :return-success "Application returned"
+            :review "Review"
             :review-success "Application reviewed"
-            :close-success "Application closed"
-            :withdraw-success "Application withdrawn"
-            :empty "You don't have any applications to process."
-            :export-pdf "Export PDF"
-            :load-application-states "Load application states"
-            :view-rights "View rights"
             :show-publications "Show publications"
             :show-throughput-times "Show throughput times"
-            :not-implemented "Not implemented yet"}
+            :state "State"
+            :view "View"
+            :view-rights "View rights"
+            :withdraw "Withdraw"
+            :withdraw-success "Application withdrawn"}
+  :applicant-info {:applicant "Applicant"}
+  :applications {:application "Application"
+                 :created "Created"
+                 :empty "You don't have any applications."
+                 :resource "Resource"
+                 :state "State"
+                 :states {:applied "Applied"
+                          :approved "Approved"
+                          :closed "Closed"
+                          :draft "Draft"
+                          :rejected "Rejected"
+                          :returned "Returned"
+                          :unknown "Unknown"
+                          :withdrawn "Withdrawn"}
+                 :user "User"
+                 :view "View"}
+  :cart {:add "Add to cart"
+         :apply "Apply"
+         :checkout "Check out"
+         :header "%1 resources in cart"
+         :remove "Remove"}
+  :catalogue {:header "Resource"}
+  :email {:application-sent-msg "Dear %1,
+                                 An application to access the resource %2 has been created.
+                                 You will receive messages about the application's progress. You can also check its status: %3
+                                 Please do not reply to this automatically generated message."
+          :application-sent-subject "New application created"
+          :approval-request-msg "Dear %1,
+                                 %2 has submitted the application %3 to access the resource %4 and your attention is required.
+                                 You can approve or reject the application: %5
+                                 Please do not reply to this automatically generated message."
+          :approval-request-subject "Approval request"
+          :review-request-msg "Dear %1,
+                               %2 has requested you to review the application %3 to access the resource %4.
+                               You can review the application: %5
+                               Please do not reply to this automatically generated message."
+          :review-request-subject "Review request"
+          :status-changed-msg "Dear %1,
+                               Your application %2 to access the resource %3 has progressed to the state %4.
+                               You can view the application: %5
+                               Please do not reply to this automatically generated message."
+          :status-changed-subject "Application state change"}
+  :footer "Powered by CSC - IT Center for Science"
+  :form {:add-comments "Add comment to the decision (shown to applicant)"
+         :add-comments-applicant "Add comment to the decision"
+         :back "Back to catalogue"
+         :back-actions "Back to actions"
+         :back-reviews "Back to reviews"
+         :comment "Comment"
+         :date "Time"
+         :event "Event"
+         :events "Application events"
+         :licenses "Licenses"
+         :optional "(optional)"
+         :save "Save as draft"
+         :saved "Draft saved."
+         :submit "Send application"
+         :submitted "Application submitted."
+         :user "User"
+         :validation {:required "Field \"%1\" is required."}}
+  :login {:text "Login by using your Haka credentials"
+          :title "Login"}
+  :missing "Missing translation"
+  :navigation {:about "About"
+               :actions "Actions"
+               :applications "Applications"
+               :catalogue "Catalogue"
+               :home "Home"
+               :login "Login"
+               :logout "Sign Out"}
+  :phases {:apply "Apply"
+           :approve "Approval"
+           :approved "Approved"
+           :rejected "Rejected"
+           :review "Review"}
   :roles {:header "Select role:"
-          :names {:approver "Approver"
-                  :reviewer "Reviewer"
-                  :applicant "Applicant"}}
-  :applicant-info {:applicant "Applicant"}}}
+          :names {:applicant "Applicant"
+                  :approver "Approver"
+                  :reviewer "Reviewer"}}}}

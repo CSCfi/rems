@@ -2,9 +2,9 @@
   (:require [compojure.core :refer [GET defroutes]]
             [hiccup.core :as h]
             [hiccup.page :refer [include-js]]
+            [rems.actions :as actions]
             [rems.applicant-info :as applicant-info]
             [rems.applications :as applications]
-            [rems.actions :as actions]
             [rems.cart :as cart]
             [rems.catalogue :as catalogue]
             [rems.collapsible :as collapsible]
@@ -12,8 +12,8 @@
             [rems.context :as context]
             [rems.form :as form]
             [rems.guide :refer :all]
-            [rems.phase :as phase]
             [rems.layout :as layout]
+            [rems.phase :as phase]
             [rems.role-switcher :as role-switcher]
             [rems.util :as util]))
 

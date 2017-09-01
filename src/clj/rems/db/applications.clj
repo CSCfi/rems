@@ -7,7 +7,10 @@
             [rems.db.core :as db]
             [rems.db.users :as users]
             [rems.db.workflow-actors :as actors]
-            [rems.util :refer [get-user-id index-by]]))
+            [rems.email :as email]
+            [rems.util :refer [get-user-id
+                               get-username
+                               index-by]]))
 
 ;; TODO cache application state in db instead of always computing it from events
 (declare get-application-state)
@@ -331,19 +334,51 @@
      application
      events)))
 
+(declare handle-state-change)
+
 (defn try-autoapprove-application
   "If application can be autoapproved (round has no approvers), add an
    autoapprove event. Otherwise do nothing."
-  [application-id]
-  (let [application (get-application-state application-id)
+  [application]
+  (let [application-id (:id application)
         round (:curround application)
         state (:state application)]
     (when (= "applied" state)
-      (when (and (empty? (actors/get-by-role application-id round "approver"))
-                 (empty? (actors/get-by-role application-id round "reviewer")))
-        (db/add-application-event! {:application application-id :user (get-user-id)
-                                    :round round :event "autoapprove" :comment nil})
-        (try-autoapprove-application application-id)))))
+      (let [approvers (actors/get-by-role application-id round "approver")
+            reviewers (actors/get-by-role application-id round "reviewer")]
+        (when (and (empty? approvers)
+                   (empty? reviewers))
+            (db/add-application-event! {:application application-id :user (get-user-id)
+                                        :round round :event "autoapprove" :comment nil})
+            true)))))
+
+(defn- send-emails-for [application]
+  (let [applicant-attrs (users/get-user-attributes (:applicantuserid application))
+        application-id (:id application)
+        item-title (get-catalogue-item-title
+                     (get-localized-catalogue-item {:id (:catid application)}))
+        round (:curround application)
+        state (:state application)]
+    (if (= "applied" state)
+      (let [approvers (actors/get-by-role application-id round "approver")
+            reviewers (actors/get-by-role application-id round "reviewer")
+            applicant-name (get-username applicant-attrs)
+            item-id (:catid application)]
+        (doseq [approver approvers] (let [user-attrs (users/get-user-attributes approver)]
+                                      (email/approval-request user-attrs applicant-name application-id item-title item-id)))
+        (doseq [reviewer reviewers] (let [user-attrs (users/get-user-attributes reviewer)]
+                                      (email/review-request user-attrs applicant-name application-id item-title item-id))))
+      (email/status-change-alert applicant-attrs
+                                 application-id
+                                 item-title
+                                 state
+                                 (:catid application)))))
+
+(defn handle-state-change [application-id]
+  (let [application (get-application-state application-id)]
+    (send-emails-for application)
+    (when (try-autoapprove-application application)
+      (recur application-id))))
 
 (defn submit-application [application-id]
   (let [application (get-application-state application-id)
@@ -354,7 +389,11 @@
       (throw-unauthorized))
     (db/add-application-event! {:application application-id :user uid
                                 :round 0 :event "apply" :comment nil})
-    (try-autoapprove-application application-id)))
+    (email/confirm-application-creation (get-catalogue-item-title
+                                          (get-localized-catalogue-item {:id (:catid application)}))
+                                        (:catid application)
+                                        application-id)
+    (handle-state-change application-id)))
 
 (defn- judge-application [application-id event round msg]
   (let [state (get-application-state application-id)]
@@ -362,7 +401,7 @@
       (throw-unauthorized))
     (db/add-application-event! {:application application-id :user (get-user-id)
                                 :round round :event event :comment msg})
-    (try-autoapprove-application application-id)))
+    (handle-state-change application-id)))
 
 (defn approve-application [application-id round msg]
   (when-not (can-approve? application-id)
@@ -397,7 +436,15 @@
       (when-not (= round (:curround state))
         (throw-unauthorized))
       (db/add-application-event! {:application application-id :user (get-user-id)
-                                  :round round :event event :comment msg}))))
+                                  :round round :event event :comment msg})
+      (let [application (get-application-state application-id)
+            user-attrs (users/get-user-attributes (:applicantuserid application))]
+        (email/status-change-alert user-attrs
+                                        application-id
+                                        (get-catalogue-item-title
+                                          (get-localized-catalogue-item {:id (:catid application)}))
+                                        (:state application)
+                                        (:catid application))))))
 
 (defn withdraw-application [application-id round msg]
   (unjudge-application application-id "withdraw" round msg))

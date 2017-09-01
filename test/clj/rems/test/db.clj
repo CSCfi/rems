@@ -1,7 +1,6 @@
 (ns ^:integration rems.test.db
   "Namespace for tests that use an actual database."
   (:require [cheshire.core :refer :all]
-            [clojure.core.memoize :as memo]
             [clojure.java.jdbc :as jdbc]
             [clojure.test :refer :all]
             [conman.core :as conman]
@@ -15,10 +14,12 @@
             [rems.db.roles :as roles]
             [rems.db.users :as users]
             [rems.db.workflow-actors :as actors]
+            [rems.test.tempura :refer [fake-tempura-fixture]]
             [rems.util :refer [get-user-id]]))
 
 (use-fixtures
   :once
+  fake-tempura-fixture
   (fn [f]
     (mount/start
      #'rems.config/env

@@ -1,6 +1,5 @@
 (ns rems.routes.services
   (:require [compojure.api.sweet :refer :all]
-            [rems.context :as context]
             [rems.db.applications :refer [get-draft-id-for
                                           get-form-for]]
             [rems.form :as form]

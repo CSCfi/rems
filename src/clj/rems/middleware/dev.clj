@@ -1,6 +1,5 @@
 (ns rems.middleware.dev
   (:require [prone.middleware :refer [wrap-exceptions]]
-            [rems.config :refer [env]]
             [rems.context :as context]
             [ring.middleware.reload :refer [wrap-reload]]))
 

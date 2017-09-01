@@ -2,8 +2,8 @@
   (:require [clojure.test :refer :all]
             [hiccup-find.core :refer :all]
             [rems.applicant-info :refer :all]
-            [rems.test.tempura :refer [with-fake-tempura]]
-            [rems.context :as context]))
+            [rems.context :as context]
+            [rems.test.tempura :refer [with-fake-tempura]]))
 
 (defn find-from-details [pattern]
   (hiccup-find pattern (details "applicant-info" {"eppn" "developer" "commonName" "Deve Loper"})))

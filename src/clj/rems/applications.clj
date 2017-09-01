@@ -3,18 +3,7 @@
             [clj-time.format :as format]
             [rems.db.applications :refer [get-applications]]
             [rems.guide :refer :all]
-            [rems.text :refer [text]]))
-
-(defn localize-state [state]
-  (case state
-    "draft" :t.applications.states/draft
-    "applied" :t.applications.states/applied
-    "approved" :t.applications.states/approved
-    "rejected" :t.applications.states/rejected
-    "returned" :t.applications.states/returned
-    "withdrawn" :t.applications.states/withdrawn
-    "closed" :t.applications.states/closed
-    :t.applications.states/unknown))
+            [rems.text :refer [localize-state text]]))
 
 (def ^:private time-format (format/formatter "yyyy-MM-dd HH:mm"
                                              (time/default-time-zone)))

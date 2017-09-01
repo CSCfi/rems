@@ -1,6 +1,5 @@
 (ns ^:integration rems.test.services
   (:require [cheshire.core :refer [generate-string parse-stream]]
-            [clojure.java.io]
             [clojure.test :refer :all]
             [luminus-migrations.core :as migrations]
             [mount.core :as mount]
@@ -8,10 +7,12 @@
             [rems.db.core :as db]
             [rems.db.test-data :as test-data]
             [rems.handler :refer :all]
+            [rems.test.tempura :refer [fake-tempura-fixture]]
             [ring.mock.request :refer :all]))
 
 (use-fixtures
   :once
+  fake-tempura-fixture
   (fn [f]
     (mount/start
      #'rems.config/env
