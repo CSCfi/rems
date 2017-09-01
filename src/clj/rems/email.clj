@@ -37,6 +37,7 @@
                           (clojure.string/lower-case (localize-state state))
                           (form-link item-id app-id))))
 
+;; TODO: send message localized according to recipient's preferences, when those are stored
 (defn- send-request [subject msg recipient-attrs applicant-name app-id item-title item-id]
   (send-mail (get-user-mail recipient-attrs)
              (text subject)
