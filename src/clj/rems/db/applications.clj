@@ -364,12 +364,10 @@
             reviewers (actors/get-by-role application-id round "reviewer")
             applicant-name (get-username applicant-attrs)
             item-id (:catid application)]
-        (when-not (and (empty? approvers)
-                       (empty? reviewers))
-          (doseq [approver approvers] (let [user-attrs (users/get-user-attributes approver)]
-                                        (email/approval-request user-attrs applicant-name application-id item-title item-id)))
-          (doseq [reviewer reviewers] (let [user-attrs (users/get-user-attributes reviewer)]
-                                        (email/review-request user-attrs applicant-name application-id item-title item-id)))))
+        (doseq [approver approvers] (let [user-attrs (users/get-user-attributes approver)]
+                                      (email/approval-request user-attrs applicant-name application-id item-title item-id)))
+        (doseq [reviewer reviewers] (let [user-attrs (users/get-user-attributes reviewer)]
+                                      (email/review-request user-attrs applicant-name application-id item-title item-id))))
       (email/status-change-alert applicant-attrs
                                  application-id
                                  item-title
