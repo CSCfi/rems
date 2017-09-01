@@ -5,6 +5,7 @@
             [rems.db.core :as db]
             [rems.db.roles :as roles]
             [rems.db.workflow-actors :as actors]
+            [rems.locales :as locales]
             [rems.util :refer [get-user-id]]))
 
 (defn- create-users-and-roles! []
@@ -148,7 +149,8 @@
     app-id))
 
 (defn- create-applications! [item applicant approver]
-  (binding [context/*user* {"eppn" applicant}]
+  (binding [context/*tempura* locales/tconfig
+            context/*user* {"eppn" applicant}]
     (create-draft! item "draft application")
     (applications/submit-application (create-draft! item "applied application"))
     (let [application (create-draft! item "rejected application")]
