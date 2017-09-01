@@ -54,7 +54,7 @@
         (is (not (:valid cmd-response)))
         (is (= ["Field \"Purpose of the project\" is required."
                 "Field \"CC Attribution 4.0\" is required."
-                "Field \"License\" is required."]
+                "Field \"General Terms of Use\" is required."]
                (:validation cmd-response)))
         (testing "retrieving"
           (let [response (-> (request :get (str "/api/application/" resource-id "/" application-id))
