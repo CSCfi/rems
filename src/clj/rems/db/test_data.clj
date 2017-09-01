@@ -5,6 +5,7 @@
             [rems.db.core :as db]
             [rems.db.roles :as roles]
             [rems.db.workflow-actors :as actors]
+            [rems.locales :as locales]
             [rems.util :refer [get-user-id]]))
 
 (defn- create-users-and-roles! []
@@ -109,10 +110,10 @@
        {:licid link :langcode "fi" :title "CC Nimeä 4.0"
         :textcontent "https://creativecommons.org/licenses/by/4.0/legalcode.fi"})
       (db/create-license-localization!
-       {:licid text :langcode "fi" :title "Lisenssi"
+       {:licid text :langcode "fi" :title "Yleiset käyttöehdot"
         :textcontent (apply str (repeat 10 "Suomenkielinen lisenssiteksti. "))})
       (db/create-license-localization!
-       {:licid text :langcode "en" :title "License"
+       {:licid text :langcode "en" :title "General Terms of Use"
         :textcontent (apply str (repeat 10 "License text in English. "))})
 
       (doseq [wf [minimal simple with-review two-round different]]
@@ -148,7 +149,8 @@
     app-id))
 
 (defn- create-applications! [item applicant approver]
-  (binding [context/*user* {"eppn" applicant}]
+  (binding [context/*tempura* locales/tconfig
+            context/*user* {"eppn" applicant}]
     (create-draft! item "draft application")
     (applications/submit-application (create-draft! item "applied application"))
     (let [application (create-draft! item "rejected application")]

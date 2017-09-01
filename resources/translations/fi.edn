@@ -6,26 +6,25 @@
                  [:p [:strong "Demoympäristö saatetaan nollata ajoittain "] ", jolloin kaikki tehdyt hakemukset ja käyttöoikeudet pyyhkiytyvät. Huomioi kuitenkin, että demotunnuksilla tekemäsi hakemukset ja muutokset saattavat sitä ennen näkyä muille kokeilijoille."]
                  [:p [:a {:href "http://www.csc.fi/rems"} "Lisätietoa REMS-ohjelmistosta"] "."]
                  [:p "REMS-tuki: rems@csc.fi"]
-
                  [:h3 "Testitilit ja roolit"]
                  [:p "Hakan testi-IdP:ltä löytyy seuraavia testitunnuksia:"]
-                 [:p [:strong "1. REMS Demo käyttöluvanhakija 1"] [:br]
+                 [:p [:strong "1. Käyttöluvanhakija 1"] [:br]
                   "Käyttäjätunnus: RDapplicant1" [:br]
                   "Salasana: RDapplicant1" [:br]
                   "Kuvaus: Kirjaudu tällä tunnuksella hakeaksesi tietoaineiston käyttöoikeutta."]
-                 [:p [:strong "2. REMS Demo käyttöluvanhakija 2"] [:br]
+                 [:p [:strong "2. Käyttöluvanhakija 2"] [:br]
                   "Käyttäjätunnus: RDapplicant2" [:br]
                   "Salasana: RDapplicant2" [:br]
                   "Kuvaus: Toinen tunnus tietoaineiston käyttöoikeuden hakemiseen. RDapplicant1 voi vaikkapa kutsua tämän käyttäjän käyttölupahakemuksensa toiseksi jäseneksi, jolloin käyttöoikeuksia anotaan samalla myös hänelle."]
-                 [:p [:strong "3. REMS Demo katselmoija"] [:br]
+                 [:p [:strong "3. Katselmoija"] [:br]
                   "Käyttäjätunnus: RDreview" [:br]
                   "Salasana: RDreview" [:br]
                   "Kuvaus: Katselmoija voi kommentoida saapunutta käyttölupahakemusta mutta ei voi hyväksyä tai hylätä sitä."]
-                 [:p [:strong "4. REMS Demo hyväksyjä 1"] [:br]
+                 [:p [:strong "4. Hyväksyjä 1"] [:br]
                   "Käyttäjätunnus: RDapprover1" [:br]
                   "Salasana: RDapprover1" [:br]
                   "Kuvaus: Hyväksyjä hyväksyy tai hylkää saapuneen käyttölupahakemuksen tai palauttaa sen täydennettäväksi."]
-                 [:p [:strong "5. REMS Demo hyväksyjä 2"] [:br]
+                 [:p [:strong "5. Hyväksyjä 2"] [:br]
                   "Käyttäjätunnus: RDapprover2" [:br]
                   "Salasana: RDapprover2" [:br]
                   "Kuvaus: Demon eräillä tietoaineistoilla on useita rinnakkaisia tai vaihtoehtoisia hyväksyjiä."]
@@ -126,7 +125,7 @@
          :date "Aika"
          :event "Tapahtuma"
          :events "Hakemuksen tapahtumat"
-         :licenses "Lisenssiehdot"
+         :licenses "Käyttöehdot"
          :optional "(ei pakollinen)"
          :save "Tallenna luonnos"
          :saved "Luonnos tallennettu."
