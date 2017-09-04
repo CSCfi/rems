@@ -384,8 +384,8 @@
 
       (is (= [{:id app1 :state "approved" :curround 0}
               {:id app4 :state "approved" :curround 1}]
-          (map #(select-keys % [:id :state :curround])
-               (applications/get-handled-approvals)))
+             (map #(select-keys % [:id :state :curround])
+                  (applications/get-handled-approvals)))
           "should see app1 and app4 in handled approvals")
 
       (is (= [{:id app2 :state "applied" :catid item2 :curround 1}]
