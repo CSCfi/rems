@@ -154,7 +154,7 @@
    (back-to-actions-button)
    (review-button app)])
 
-(defn actions [apps btn-fns]
+(defn actions [apps buttons]
   (if (empty? apps)
     [:div.actions.alert.alert-success (text :t.actions/empty)]
     [:table.rems-table.actions
@@ -172,7 +172,7 @@
         [:td {:data-th (text :t.actions/created)} (format/unparse time-format (:start app))]
         [:td.commands
          (view-button app)
-         (btn-fns app)]])]))
+         (buttons app)]])]))
 
 (defn reviews
   ([]
@@ -186,58 +186,60 @@
   ([apps]
    (actions apps approve-buttons)))
 
-(defn handled-actions
-  "Creates a table containing a list of handled applications. The function takes the following parameters as arguments:
-  apps:    collection of apps to be shown
-  btn-fns: a set of functionality buttons that are available for each application
-  top-btns: a set of extra buttons that will be shown on top of the table. This could include f.ex 'export as pdf' button."
+(defn handled-applications
+  "Creates a table containing a list of handled applications.
+
+  The function takes the following parameters as arguments:
+  apps:        collection of apps to be shown
+  buttons:     a set of functionality buttons that are available for each application
+  top-buttons: a set of extra buttons that will be shown on top of the table. This could include f.ex 'export as pdf' button."
   ([apps]
-   (handled-actions apps nil nil))
-  ([apps btn-fns]
-   (handled-actions apps btn-fns nil))
-  ([apps btn-fns top-btns]
+   (handled-applications apps nil nil))
+  ([apps buttons]
+   (handled-applications apps buttons nil))
+  ([apps buttons top-buttons]
    (if (empty? apps)
      nil
      (list
-       top-btns
-       [:table.rems-table.actions
-        [:tr
-         [:th (text :t.actions/application)]
-         [:th (text :t.actions/resource)]
-         [:th (text :t.actions/applicant)]
-         [:th (text :t.actions/state)]
-         [:th (text :t.actions/handled)]
-         [:th]]
-        (for [app (sort-by :handled apps)]
-          [:tr.action
-           [:td {:data-th (text :t.actions/application)} (:id app)]
-           [:td {:data-th (text :t.actions/resource)} (get-in app [:catalogue-item :title])]
-           [:td {:data-th (text :t.actions/applicant)} (:applicantuserid app)]
-           [:td {:data-th (text :t.actions/state)} (text (localize-state (:state app)))]
-           [:td {:data-th (text :t.actions/handled)} (format/unparse time-format (:handled app))]
-           [:td.commands
-            (view-button app)
-            (when btn-fns
-              (btn-fns app))]])]))))
+      top-buttons
+      [:table.rems-table.actions
+       [:tr
+        [:th (text :t.actions/application)]
+        [:th (text :t.actions/resource)]
+        [:th (text :t.actions/applicant)]
+        [:th (text :t.actions/state)]
+        [:th (text :t.actions/handled)]
+        [:th]]
+       (for [app (sort-by :handled apps)]
+         [:tr.action
+          [:td {:data-th (text :t.actions/application)} (:id app)]
+          [:td {:data-th (text :t.actions/resource)} (get-in app [:catalogue-item :title])]
+          [:td {:data-th (text :t.actions/applicant)} (:applicantuserid app)]
+          [:td {:data-th (text :t.actions/state)} (text (localize-state (:state app)))]
+          [:td {:data-th (text :t.actions/handled)} (format/unparse time-format (:handled app))]
+          [:td.commands
+           (view-button app)
+           (when buttons
+             (buttons app))]])]))))
 
 (defn handled-approvals
   ([]
    (handled-approvals (applications/get-handled-approvals)))
   ([apps]
-   (handled-actions apps export-pdf-button (report-buttons))))
+   (handled-applications apps export-pdf-button (report-buttons))))
 
 (defn handled-reviews
   ([]
    (handled-reviews (applications/get-handled-reviews)))
   ([apps]
-   (handled-actions apps)))
+   (handled-applications apps)))
 
 
 (defn guide
   []
   (list
    (example "reviews empty"
-             (reviews []))
+            (reviews []))
    (example "reviews"
             (reviews
              [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid "alice"}
@@ -262,27 +264,27 @@
    "actions"
    [:div
     (when-role :reviewer
-               (list
-                 (collapsible/component "open-reviews"
-                                        true
-                                        (text :t.actions/open-reviews)
-                                        (reviews))
-                 [:div.mt-3
-                  (collapsible/component "handled-reviews"
-                                         false
-                                         (text :t.actions/handled-reviews)
-                                         (handled-reviews))]))
+      (list
+       (collapsible/component "open-reviews"
+                              true
+                              (text :t.actions/open-reviews)
+                              (reviews))
+       [:div.mt-3
+        (collapsible/component "handled-reviews"
+                               false
+                               (text :t.actions/handled-reviews)
+                               (handled-reviews))]))
     (when-role :approver
-               (list
-                 (collapsible/component "open-approvals"
-                                        true
-                                        (text :t.actions/open-approvals)
-                                        (approvals))
-                 [:div.mt-3
-                  (collapsible/component "handled-approvals"
-                                         false
-                                         (text :t.actions/handled-approvals)
-                                         (handled-approvals))]))]))
+      (list
+       (collapsible/component "open-approvals"
+                              true
+                              (text :t.actions/open-approvals)
+                              (approvals))
+       [:div.mt-3
+        (collapsible/component "handled-approvals"
+                               false
+                               (text :t.actions/handled-approvals)
+                               (handled-approvals))]))]))
 
 ;; TODO handle closing when no draft or anything saved yet
 (defroutes actions-routes

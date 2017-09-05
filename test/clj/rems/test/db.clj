@@ -319,7 +319,7 @@
         ))
     ))
 
-(deftest test-get-approvals
+(deftest test-actions
   (binding [context/*user* {"eppn" "test-user"}]
     (let [uid (get-user-id)
           uid2 "another-user"
