@@ -5,11 +5,13 @@
             [rems.anti-forgery :refer [anti-forgery-field]]
             [rems.collapsible :as collapsible]
             [rems.db.applications :as applications]
+            [rems.db.core :as db]
+            [rems.db.users :as users]
             [rems.guide :refer :all]
             [rems.layout :as layout]
             [rems.role-switcher :refer [has-roles? when-role]]
             [rems.text :refer [localize-state text]]
-            [rems.util :refer [errorf]]
+            [rems.util :refer :all]
             [ring.util.response :refer [redirect]]))
 
 (def ^:private time-format (format/formatter "yyyy-MM-dd HH:mm"
@@ -53,6 +55,35 @@
 (defn review-confirm-modal [name-field action-title app]
   (confirm-modal name-field action-title app (if (has-roles? :reviewer) (text :t.form/add-comments) (text :t.form/add-comments-applicant))))
 
+(defn- reviewer-selection [user-attrs]
+  (let [username (get-username user-attrs)
+        mail (get-user-mail user-attrs)]
+    (when (and username mail)
+      [:option {:value (get-user-id user-attrs)} (str username " (" mail ")")])))
+
+(defn- review-request-modal []
+  [:div.modal.fade {:id "review-request-modal" :tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
+   [:div.modal-dialog {:role "document"}
+    [:div.modal-content
+     [:form
+      (anti-forgery-field)
+      [:div.modal-header
+       [:h5#confirmModalLabel.modal-title (text :t.form/add-comments)]
+       [:button.close {:type "button" :data-dismiss "modal" :aria-label (text :t.actions/cancel)}
+        [:span {:aria-hidden "true"} "&times;"]]]
+      [:div.modal-body
+       [:div.form-group
+        [:textarea.form-control {:name "comment"}]]
+       [:div.form-group
+        [:label (text :t.actions/review-request-selection)]
+        [:select.form-control {:multiple "multiple"} (let [other-users (filter #(not (= (get-user-id) %)) (map :userid (db/get-users)))
+                                                           users-attrs (map users/get-user-attributes other-users)]
+                                                       (for [user-attrs users-attrs]
+                                                         (reviewer-selection user-attrs)))]]]
+      [:div.modal-footer
+       [:button.btn.btn-secondary {:data-dismiss "modal"} (text :t.actions/cancel)]
+       [:button.btn.btn-primary (text :t.actions/review-request)]]]]]])
+
 (defn not-implemented-modal [name-field action-title]
   [:div.modal.fade {:id (str name-field "-modal") :tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
    [:div.modal-dialog {:role "document"}
@@ -82,6 +113,12 @@
    [:button#review.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#review-modal"}
     (text :t.actions/review)]
    (review-confirm-modal "review" (text :t.actions/review) app)))
+
+(defn review-request-button [app]
+  (list
+    [:button#review-request.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#review-request-modal"}
+     (text :t.actions/review-request)]
+    (review-request-modal)))
 
 (defn- return-button [app]
   (list
@@ -146,6 +183,7 @@
    (close-button app)
    (reject-button app)
    (return-button app)
+   (review-request-button app)
    (approve-button app)])
 
 (defn review-form [app]

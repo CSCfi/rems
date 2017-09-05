@@ -64,6 +64,8 @@
             :return "Return to applicant"
             :return-success "Application returned"
             :review "Review"
+            :review-request "Request review"
+            :review-request-selection "Send review request to user(s):"
             :review-success "Application reviewed"
             :show-publications "Show publications"
             :show-throughput-times "Show throughput times"
