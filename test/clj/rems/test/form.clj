@@ -337,7 +337,13 @@
                              (map :actoruserid))))
                     rems.db.applications/get-application-state
                     (fn [_]
-                      (:application actionable-data))]
+                      (:application actionable-data))
+                    rems.db.core/get-users
+                    (fn []
+                      nil)
+                    rems.db.users/get-user-attributes
+                    (fn [_]
+                      nil)]
 
         (testing "As an applicant"
           (testing "on an actionable form"

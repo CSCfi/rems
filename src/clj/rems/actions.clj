@@ -61,7 +61,7 @@
     (when (and username mail)
       [:option {:value (get-user-id user-attrs)} (str username " (" mail ")")])))
 
-(defn- review-request-modal []
+(defn review-request-modal []
   [:div.modal.fade {:id "review-request-modal" :tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
    [:div.modal-dialog {:role "document"}
     [:div.modal-content
