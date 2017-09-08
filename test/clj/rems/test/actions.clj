@@ -48,7 +48,7 @@
                                                             "developer" {"eppn" "developer" "mail" "deve@lo.per" "commonName" "Deve Loper"}}
                                                            uid))]
       (binding [context/*user* {"eppn" "developer" "mail" "deve@lo.per" "commonName" "Deve Loper"}]
-        (let [selectables (hiccup-find [:option] (actions/review-request-modal))
+        (let [selectables (hiccup-find [:option] (actions/review-request-button 1))
               str-selectables (str (list selectables))]
           (is (= 2 (count selectables)) "selectable list should only consist of alice and bob.")
           (is (.contains str-selectables "alice"))

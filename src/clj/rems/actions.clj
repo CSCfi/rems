@@ -61,11 +61,11 @@
     (when (and username mail)
       [:option {:value (get-user-id user-attrs)} (str username " (" mail ")")])))
 
-(defn review-request-modal []
+(defn review-request-modal [app]
   [:div.modal.fade {:id "review-request-modal" :tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
    [:div.modal-dialog {:role "document"}
     [:div.modal-content
-     [:form
+     [:form (actions-form-attrs app)
       (anti-forgery-field)
       [:div.modal-header
        [:h5#confirmModalLabel.modal-title (text :t.form/add-comments)]
@@ -76,13 +76,14 @@
         [:textarea.form-control {:name "comment"}]]
        [:div.form-group
         [:label (text :t.actions/review-request-selection)]
-        [:select.form-control {:multiple "multiple"} (let [other-users (filter #(not (= (get-user-id) %)) (map :userid (db/get-users)))
-                                                           users-attrs (map users/get-user-attributes other-users)]
-                                                       (for [user-attrs users-attrs]
-                                                         (reviewer-selection user-attrs)))]]]
+        [:select.form-control {:name "recipients" :multiple "multiple"}
+         (let [other-users (filter #(not (= (get-user-id) %)) (map :userid (db/get-users)))
+               users-attrs (map users/get-user-attributes other-users)]
+           (for [user-attrs users-attrs]
+             (reviewer-selection user-attrs)))]]]
       [:div.modal-footer
        [:button.btn.btn-secondary {:data-dismiss "modal"} (text :t.actions/cancel)]
-       [:button.btn.btn-primary (text :t.actions/review-request)]]]]]])
+       [:button.btn.btn-primary {:type "submit" :name "review-request"} (text :t.actions/review-request)]]]]]])
 
 (defn not-implemented-modal [name-field action-title]
   [:div.modal.fade {:id (str name-field "-modal") :tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
@@ -118,7 +119,7 @@
   (list
     [:button#review-request.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#review-request-modal"}
      (text :t.actions/review-request)]
-    (review-request-modal)))
+    (review-request-modal app)))
 
 (defn- return-button [app]
   (list
@@ -334,6 +335,7 @@
                            (get input "reject") :reject
                            (get input "return") :return
                            (get input "review") :review
+                           (get input "review-request") :review-request
                            (get input "withdraw") :withdraw
                            (get input "close") :close
                            :else (errorf "Unknown action!"))
@@ -344,6 +346,7 @@
             :reject (applications/reject-application id round comment)
             :return (applications/return-application id round comment)
             :review (applications/review-application id round comment)
+            :review-request (applications/send-review-request id round comment (get input "recipients"))
             :withdraw (applications/withdraw-application id round comment)
             :close (applications/close-application id round comment))
           (assoc (redirect (if (or (has-roles? :approver) (has-roles? :reviewer)) "/actions" "/applications") :see-other)
@@ -353,6 +356,7 @@
                                       :reject (text :t.actions/reject-success)
                                       :return (text :t.actions/return-success)
                                       :review (text :t.actions/review-success)
+                                      :review-request (text :t.actions/review-request-success)
                                       :withdraw (text :t.actions/withdraw-success)
                                       :close (text :t.actions/close-success))}]))
         ))

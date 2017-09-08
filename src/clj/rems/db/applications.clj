@@ -5,6 +5,7 @@
             [rems.db.catalogue :refer [get-catalogue-item-title
                                        get-localized-catalogue-item]]
             [rems.db.core :as db]
+            [rems.db.roles :as roles]
             [rems.db.users :as users]
             [rems.db.workflow-actors :as actors]
             [rems.email :as email]
@@ -275,6 +276,15 @@
     (assoc application :state "approved")
     (assoc application :state "applied" :curround (inc (:curround application)))))
 
+(defmethod apply-event "review-request"
+  [application event]
+  (assert (= (:state application) "applied")
+          (str "Can't send a review request " (pr-str application)))
+  (assert (= (:curround application) (:round event))
+          (str "Application and review request rounds don't match: "
+               (pr-str application) " vs. " (pr-str event)))
+  (assoc application :state "applied"))
+
 (defmethod apply-event "withdraw"
   [application event]
   (assert (= (:state application) "applied")
@@ -429,6 +439,27 @@
   (when-not (can-review? application-id)
     (throw-unauthorized))
   (judge-application application-id "review" round msg))
+
+(defn send-review-request [application-id round msg recipients]
+  (let [state (get-application-state application-id)]
+    (when-not (can-approve? application-id)
+      (throw-unauthorized))
+    (when-not (= round (:curround state))
+      (throw-unauthorized))
+    (assert (not (empty? recipients))
+            (str "Can't send a review request without recipients."))
+    (let [send-to (if (vector? recipients)
+                    recipients
+                    (vector recipients))]
+      (doseq [recipient send-to]
+        (db/add-application-event! {:application application-id :user recipient
+                                    :round round :event "review-request" :comment msg})
+        (email/review-request (users/get-user-attributes recipient)
+                              (get-username (users/get-user-attributes (:applicantuserid state)))
+                              application-id
+                              (get-catalogue-item-title
+                                (get-localized-catalogue-item {:id (:catid state)}))
+                              (:catid state))))))
 
 ;; TODO better name
 ;; TODO consider refactoring together with judge

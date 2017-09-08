@@ -66,6 +66,7 @@
             :review "Review"
             :review-request "Request review"
             :review-request-selection "Send review request to user(s):"
+            :review-request-success "Review request sent"
             :review-success "Application reviewed"
             :show-publications "Show publications"
             :show-throughput-times "Show throughput times"

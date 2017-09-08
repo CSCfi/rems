@@ -672,4 +672,88 @@
                       (map #(select-keys % [:round :event])))
                  [{:round 0 :event "apply"}
                   {:round 0 :event "autoapprove"}
-                  {:round 1 :event "autoapprove"}])))))))
+                  {:round 1 :event "autoapprove"}]))))
+      (let [new-wf (:id (db/create-workflow! {:modifieruserid uid :owneruserid uid :title "3rd party review workflow" :fnlround 0}))
+            new-item (:id (db/create-catalogue-item! {:title "A" :form nil :resid nil :wfid new-wf}))]
+        (actors/add-approver! new-wf uid 0)
+        (db/add-user! {:user "3rd-party-reviewer", :userattrs (generate-string {"eppn" "3rd-party-reviewer" "mail" ""})})
+        (db/add-user! {:user "another-reviewer", :userattrs (generate-string {"eppn" "another-reviewer" "mail" ""})})
+        (testing "3rd party review"
+          (let [new-app (applications/create-new-draft new-item)]
+            (applications/submit-application new-app)
+            (applications/send-review-request new-app 0 "can you please review this?" ["3rd-party-reviewer" "another-reviewer"])
+            (applications/send-review-request new-app 0 "second request?" "3rd-party-reviewer") ; make sure that adding twice only adds once
+            (is (= (fetch new-app) {:curround 0 :state "applied"}))
+            ;(binding [context/*user* {"eppn" "3rd-party-reviewer"}]
+            ;  (applications/review-application new-app 0 "comment"))
+            (is (= (fetch new-app) {:curround 0 :state "applied"}))
+            (applications/approve-application new-app 0 "")
+            (is (= (fetch new-app) {:curround 0 :state "approved"}))
+            (binding [context/*user* {"eppn" "3rd-party-reviewer"}]
+              (is (thrown? Exception (applications/review-application new-app 0 "another comment"))
+                  "Should not be able to review when approved"))
+            (binding [context/*user* {"eppn" "other-reviewer"}]
+              (is (thrown? Exception (applications/review-application new-app 0 "too late comment"))
+                  "Should not be able to review when approved"))
+            (is (= (->> (applications/get-application-state new-app)
+                        :events
+                        (map #(select-keys % [:round :event :comment])))
+                   [{:round 0 :event "apply" :comment nil}
+                    {:round 0 :event "review-request" :comment "can you please review this?"}
+                    {:round 0 :event "review-request" :comment "can you please review this?"}
+                    {:round 0 :event "review" :comment "comment"}
+                    {:round 0 :event "approve" :comment nil}]))))
+        (testing "lazy 3rd party reviewer"
+          (let [app-to-close (applications/create-new-draft new-item)
+                app-to-approve (applications/create-new-draft new-item)
+                app-to-reject (applications/create-new-draft new-item)
+                app-to-return (applications/create-new-draft new-item)]
+            (applications/submit-application app-to-close)
+            (applications/submit-application app-to-approve)
+            (applications/submit-application app-to-reject)
+            (applications/submit-application app-to-return)
+            (applications/send-review-request app-to-close 0 "can you please review this?" "3rd-party-reviewer")
+            (applications/send-review-request app-to-approve 0 "can you please review this?" "3rd-party-reviewer")
+            (applications/send-review-request app-to-reject 0 "can you please review this?" "3rd-party-reviewer")
+            (applications/send-review-request app-to-return 0 "can you please review this?" "3rd-party-reviewer")
+            (applications/close-application app-to-close 0 "closing")
+            (is (= (fetch app-to-close) {:curround 0 :state "closed"}) "should be able to close application even without review")
+            (applications/approve-application app-to-approve 0 "approving")
+            (is (= (fetch app-to-approve) {:curround 0 :state "approved"}) "should be able to approve application even without review")
+            (applications/reject-application app-to-reject 0 "rejecting")
+            (is (= (fetch app-to-reject) {:curround 0 :state "rejected"}) "should be able to reject application even without review")
+            (applications/return-application app-to-return 0 "returning")
+            (is (= (fetch app-to-close) {:curround 0 :state "returned"}) "should be able to return application even without review")
+            (binding [context/*user* {"eppn" "3rd-party-reviewer"}]
+              (is (thrown? Exception (applications/review-application app-to-close 0 "comment"))
+                  "Should not be able to review when closed")
+              (is (thrown? Exception (applications/review-application app-to-approve 0 "comment"))
+                  "Should not be able to review when approved")
+              (is (thrown? Exception (applications/review-application app-to-reject 0 "comment"))
+                  "Should not be able to review when rejected")
+              (is (thrown? Exception (applications/review-application app-to-return 0 "another comment"))
+                  "Should not be able to review when returned"))
+            (is (= (->> (applications/get-application-state app-to-close)
+                        :events
+                        (map #(select-keys % [:round :event :comment])))
+                   [{:round 0 :event "apply" :comment nil}
+                    {:round 0 :event "review-request" :comment "can you please review this?"}
+                    {:round 0 :event "close" :comment "closing"}]))
+            (is (= (->> (applications/get-application-state app-to-approve)
+                        :events
+                        (map #(select-keys % [:round :event :comment])))
+                   [{:round 0 :event "apply" :comment nil}
+                    {:round 0 :event "review-request" :comment "can you please review this?"}
+                    {:round 0 :event "approve" :comment "approving"}]))
+            (is (= (->> (applications/get-application-state app-to-reject)
+                        :events
+                        (map #(select-keys % [:round :event :comment])))
+                   [{:round 0 :event "apply" :comment nil}
+                    {:round 0 :event "review-request" :comment "can you please review this?"}
+                    {:round 0 :event "reject" :comment "rejecting"}]))
+            (is (= (->> (applications/get-application-state app-to-return)
+                        :events
+                        (map #(select-keys % [:round :event :comment])))
+                   [{:round 0 :event "apply" :comment nil}
+                    {:round 0 :event "review-request" :comment "can you please review this?"}
+                    {:round 0 :event "return" :comment "returning"}]))))))))
