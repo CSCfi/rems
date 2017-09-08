@@ -16,6 +16,9 @@
 ;; TODO cache application state in db instead of always computing it from events
 (declare get-application-state)
 
+(defn- not-empty? [args]
+  ((complement empty?) args))
+
 ;;; Query functions
 
 (defn handling-event? [app e]
@@ -29,8 +32,13 @@
            (some (partial handling-event? app) (:events app)))))
 
 (defn reviewed? [app]
-  (let [not-empty? (complement empty?)]
-    (not-empty? (filter #(= "review" (:event %)) (:events app)))))
+    (not-empty? (filter #(= "review" (:event %)) (:events app))))
+
+(defn review-requested-from? [user round events]
+  (->> events
+       (filter #(= round (:round %)))
+       (filter #(and (= "review-request" (:event %)) (= user (:userid %))))
+       (not-empty?)))
 
 (defn- can-act-as? [application role]
   (let [state (get-application-state application)
@@ -446,20 +454,21 @@
       (throw-unauthorized))
     (when-not (= round (:curround state))
       (throw-unauthorized))
-    (assert (not (empty? recipients))
+    (assert (not-empty? recipients)
             (str "Can't send a review request without recipients."))
     (let [send-to (if (vector? recipients)
                     recipients
                     (vector recipients))]
       (doseq [recipient send-to]
-        (db/add-application-event! {:application application-id :user recipient
-                                    :round round :event "review-request" :comment msg})
-        (email/review-request (users/get-user-attributes recipient)
-                              (get-username (users/get-user-attributes (:applicantuserid state)))
-                              application-id
-                              (get-catalogue-item-title
-                                (get-localized-catalogue-item {:id (:catid state)}))
-                              (:catid state))))))
+        (when-not (review-requested-from? recipient (:curround state) (:events state))
+          (db/add-application-event! {:application application-id :user recipient
+                                      :round round :event "review-request" :comment msg})
+          (email/review-request (users/get-user-attributes recipient)
+                                (get-username (users/get-user-attributes (:applicantuserid state)))
+                                application-id
+                                (get-catalogue-item-title
+                                  (get-localized-catalogue-item {:id (:catid state)}))
+                                (:catid state)))))))
 
 ;; TODO better name
 ;; TODO consider refactoring together with judge

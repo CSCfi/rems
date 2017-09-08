@@ -681,8 +681,8 @@
         (testing "3rd party review"
           (let [new-app (applications/create-new-draft new-item)]
             (applications/submit-application new-app)
-            (applications/send-review-request new-app 0 "can you please review this?" ["3rd-party-reviewer" "another-reviewer"])
-            (applications/send-review-request new-app 0 "second request?" "3rd-party-reviewer") ; make sure that adding twice only adds once
+            (applications/send-review-request new-app 0 "review?" "3rd-party-reviewer")
+            (applications/send-review-request new-app 0 "can you please review this?" ["3rd-party-reviewer" "another-reviewer"]) ;should not send twice to 3rd-party-reviewer, but another-reviewer should still be added
             (is (= (fetch new-app) {:curround 0 :state "applied"}))
             ;(binding [context/*user* {"eppn" "3rd-party-reviewer"}]
             ;  (applications/review-application new-app 0 "comment"))
@@ -699,7 +699,7 @@
                         :events
                         (map #(select-keys % [:round :event :comment])))
                    [{:round 0 :event "apply" :comment nil}
-                    {:round 0 :event "review-request" :comment "can you please review this?"}
+                    {:round 0 :event "review-request" :comment "review?"}
                     {:round 0 :event "review-request" :comment "can you please review this?"}
                     {:round 0 :event "review" :comment "comment"}
                     {:round 0 :event "approve" :comment nil}]))))
@@ -723,7 +723,7 @@
             (applications/reject-application app-to-reject 0 "rejecting")
             (is (= (fetch app-to-reject) {:curround 0 :state "rejected"}) "should be able to reject application even without review")
             (applications/return-application app-to-return 0 "returning")
-            (is (= (fetch app-to-close) {:curround 0 :state "returned"}) "should be able to return application even without review")
+            (is (= (fetch app-to-return) {:curround 0 :state "returned"}) "should be able to return application even without review")
             (binding [context/*user* {"eppn" "3rd-party-reviewer"}]
               (is (thrown? Exception (applications/review-application app-to-close 0 "comment"))
                   "Should not be able to review when closed")
