@@ -463,14 +463,18 @@
       ;; move app1 and app2 to round 1
       (applications/review-application app1 0 "")
       (binding [context/*user* {"eppn" uid2}]
-        (applications/review-application app2 0 ""))
+        (applications/review-application app2 0 "")
+        (is (= [{:id app2 :state "applied" :curround 1}
+                {:id app4 :state "approved" :curround 1}]
+               (map #(select-keys % [:id :state :curround])
+                    (applications/get-handled-reviews)))
+            (str uid2 " should see app2 and app4 in handled reviews")))
 
       (is (= [{:id app1 :state "approved" :curround 0}
-              {:id app2 :state "applied" :curround 1}
               {:id app4 :state "approved" :curround 1}]
              (map #(select-keys % [:id :state :curround])
                   (applications/get-handled-reviews)))
-          "should see app1, app2 and app4 in handled reviews")
+          (str uid " should see app1 and app4 in handled reviews"))
 
       (is (= [{:id app2 :state "applied" :catid item2 :curround 1}]
              (map #(select-keys % [:id :state :catid :curround])

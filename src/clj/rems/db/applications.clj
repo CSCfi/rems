@@ -32,7 +32,7 @@
            (some (partial handling-event? app) (:events app)))))
 
 (defn reviewed? [app]
-    (not-empty? (filter #(= "review" (:event %)) (:events app))))
+    (not-empty? (filter #(and (= (get-user-id) (:userid %))(= "review" (:event %))) (:events app))))
 
 (defn review-requested-from?
   ([user events]
@@ -102,7 +102,8 @@
 
 (defn get-handled-reviews []
   (->> (get-applications-impl {})
-       (filterv (fn [app] (is-reviewer? (:id app))))
+       (filterv (fn [app] (or (is-reviewer? (:id app))
+                              (review-requested-from? (get-user-id) (:events app)))))
        (filterv reviewed?)
        (mapv (fn [app]
                (let [my-events (filter #(= (get-user-id) (:userid %))
@@ -111,7 +112,8 @@
 
 (defn get-application-to-review []
   (filterv
-   (fn [app] (can-review? (:id app)))
+   (fn [app] (and (not (reviewed? app))
+                  (can-review? (:id app))))
    (get-applications-impl {})))
 
 (defn get-draft-id-for
