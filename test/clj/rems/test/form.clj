@@ -306,6 +306,11 @@
                                            :round 0
                                            :event "apply"
                                            :comment nil
+                                           :time nil}
+                                          {:userid "lenny"
+                                           :round 0
+                                           :event "review-request"
+                                           :comment nil
                                            :time nil}]}}
           unactionable-data {:application {:id 2
                                            :catid 2
@@ -319,6 +324,11 @@
                                            [{:userid "developer"
                                              :round 0
                                              :event "apply"
+                                             :comment nil
+                                             :time nil}
+                                            {:userid "lenny"
+                                             :round 0
+                                             :event "review-request"
                                              :comment nil
                                              :time nil}
                                             {:userid "bob"
@@ -388,4 +398,15 @@
                     context/*active-role* :reviewer]
             (validate-back-button-presence actionable-data)
             (validate-approver-actions-absence actionable-data)
-            (validate-review-actions-absence actionable-data)))))))
+            (validate-review-actions-absence actionable-data)))
+        (testing "As a 3d party reviewer"
+          (binding [context/*user* {"eppn" "lenny"}
+                    context/*active-role* :reviewer]
+            (testing "on an actionable form"
+              (validate-back-button-presence actionable-data)
+              (validate-approver-actions-absence actionable-data)
+              (validate-review-actions-presence actionable-data))
+            (testing "on an unactionable form"
+              (validate-back-button-presence unactionable-data)
+              (validate-approver-actions-absence unactionable-data)
+              (validate-review-actions-absence unactionable-data))))))))

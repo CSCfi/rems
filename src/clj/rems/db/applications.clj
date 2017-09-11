@@ -34,11 +34,13 @@
 (defn reviewed? [app]
     (not-empty? (filter #(= "review" (:event %)) (:events app))))
 
-(defn review-requested-from? [user round events]
-  (->> events
-       (filter #(= round (:round %)))
-       (filter #(and (= "review-request" (:event %)) (= user (:userid %))))
-       (not-empty?)))
+(defn review-requested-from?
+  ([user events]
+   (->> events
+        (filter #(and (= "review-request" (:event %)) (= user (:userid %))))
+        (not-empty?)))
+  ([user round events]
+   (review-requested-from? user (filter #(= round (:round %)) events))))
 
 (defn- can-act-as? [application role]
   (let [state (get-application-state application)
@@ -214,7 +216,8 @@
      (when application-id
        (when-not (or applicant?
                      (is-approver? application-id)
-                     (is-reviewer? application-id))
+                     (is-reviewer? application-id)
+                     (review-requested-from? (get-user-id) (:events application)))
          (throw-unauthorized)))
      {:id form-id
       :catalogue-item catalogue-item
