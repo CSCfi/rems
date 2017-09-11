@@ -47,6 +47,9 @@
          (contains? (set (actors/get-by-role application round role))
                     (get-user-id)))))
 
+(defn- round-has-approvers? [application round]
+  (not-empty? (actors/get-by-role application round "approver")))
+
 (defn- is-actor? [application role]
   (contains? (set (actors/get-by-role application role))
              (get-user-id)))
@@ -57,8 +60,14 @@
 (defn is-approver? [application]
   (is-actor? application "approver"))
 
+(defn- has-review-request? [application]
+  (let [state (get-application-state application)]
+    (and (= "applied" (:state state))
+         (review-requested-from? (get-user-id) (:curround state) (:events state)))))
+
 (defn can-review? [application]
-  (can-act-as? application "reviewer"))
+  (or (can-act-as? application "reviewer")
+      (has-review-request? application)))
 
 (defn is-reviewer? [application]
   (is-actor? application "reviewer"))
@@ -280,9 +289,11 @@
   (assert (= (:curround application) (:round event))
           (str "Application and review rounds don't match: "
                (pr-str application) " vs. " (pr-str event)))
-  (if (= (:curround application) (:fnlround application))
-    (assoc application :state "approved")
-    (assoc application :state "applied" :curround (inc (:curround application)))))
+  (if (round-has-approvers? (:id application) (:curround application))
+    (assoc application :state "applied")
+    (if (= (:curround application) (:fnlround application))
+      (assoc application :state "approved")
+      (assoc application :state "applied" :curround (inc (:curround application))))))
 
 (defmethod apply-event "review-request"
   [application event]
@@ -463,6 +474,8 @@
         (when-not (review-requested-from? recipient (:curround state) (:events state))
           (db/add-application-event! {:application application-id :user recipient
                                       :round round :event "review-request" :comment msg})
+          (when-not (contains? (roles/get-roles recipient) :reviewer)
+            (roles/add-role! recipient :reviewer))
           (email/review-request (users/get-user-attributes recipient)
                                 (get-username (users/get-user-attributes (:applicantuserid state)))
                                 application-id

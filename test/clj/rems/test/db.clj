@@ -615,7 +615,6 @@
               rev-item (:id (db/create-catalogue-item! {:title "Review item" :resid nil :wfid rev-wf :form nil}))
               rev-app (applications/create-new-draft rev-item)]
           (actors/add-reviewer! rev-wf "event-test-reviewer" 0)
-          (actors/add-approver! rev-wf uid 0)
           (actors/add-approver! rev-wf  uid  1)
           (is (= (fetch rev-app) {:curround 0 :state "draft"}))
           (binding [context/*user* {"eppn" "event-test-reviewer"}]
@@ -681,11 +680,17 @@
         (testing "3rd party review"
           (let [new-app (applications/create-new-draft new-item)]
             (applications/submit-application new-app)
+            (is (= #{} (roles/get-roles "3rd-party-reviewer")))
+            (is (= #{} (roles/get-roles "another-reviewer")))
             (applications/send-review-request new-app 0 "review?" "3rd-party-reviewer")
-            (applications/send-review-request new-app 0 "can you please review this?" ["3rd-party-reviewer" "another-reviewer"]) ;should not send twice to 3rd-party-reviewer, but another-reviewer should still be added
+            (is (= #{:reviewer} (roles/get-roles "3rd-party-reviewer")))
+            ;should not send twice to 3rd-party-reviewer, but another-reviewer should still be added
+            (applications/send-review-request new-app 0 "can you please review this?" ["3rd-party-reviewer" "another-reviewer"])
+            (is (= #{:reviewer} (roles/get-roles "3rd-party-reviewer")))
+            (is (= #{:reviewer} (roles/get-roles "another-reviewer")))
             (is (= (fetch new-app) {:curround 0 :state "applied"}))
-            ;(binding [context/*user* {"eppn" "3rd-party-reviewer"}]
-            ;  (applications/review-application new-app 0 "comment"))
+            (binding [context/*user* {"eppn" "3rd-party-reviewer"}]
+              (applications/review-application new-app 0 "comment"))
             (is (= (fetch new-app) {:curround 0 :state "applied"}))
             (applications/approve-application new-app 0 "")
             (is (= (fetch new-app) {:curround 0 :state "approved"}))
@@ -702,7 +707,7 @@
                     {:round 0 :event "review-request" :comment "review?"}
                     {:round 0 :event "review-request" :comment "can you please review this?"}
                     {:round 0 :event "review" :comment "comment"}
-                    {:round 0 :event "approve" :comment nil}]))))
+                    {:round 0 :event "approve" :comment ""}]))))
         (testing "lazy 3rd party reviewer"
           (let [app-to-close (applications/create-new-draft new-item)
                 app-to-approve (applications/create-new-draft new-item)

@@ -13,6 +13,7 @@ CREATE TYPE application_event_type AS ENUM (
   'reject',  -- applied --> rejected
   'return',   -- applied --> returned
   'review',   -- applied --> applied or approved
+  'review-request', -- applied --> applied
   'withdraw',   -- applied --> withdrawn
   'close'   -- any --> closed
 );
