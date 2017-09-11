@@ -77,7 +77,7 @@
        [:div.form-group
         [:label (text :t.actions/review-request-selection)]
         [:select.form-control {:name "recipients" :multiple "multiple"}
-         (let [other-users (filter #(not (= (get-user-id) %)) (map :userid (db/get-users)))
+         (let [other-users (filter #(not= (get-user-id) %) (map :userid (db/get-users)))
                users-attrs (map users/get-user-attributes other-users)]
            (for [user-attrs users-attrs]
              (reviewer-selection user-attrs)))]]]
