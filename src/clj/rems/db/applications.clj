@@ -32,7 +32,7 @@
            (some (partial handling-event? app) (:events app)))))
 
 (defn reviewed? [app]
-    (not-empty? (filter #(and (= (get-user-id) (:userid %))(= "review" (:event %))) (:events app))))
+  (not-empty? (filter #(and (= (get-user-id) (:userid %))(= "review" (:event %))) (:events app))))
 
 (defn review-requested-from?
   ([user events]
@@ -389,9 +389,9 @@
             reviewers (actors/get-by-role application-id round "reviewer")]
         (when (and (empty? approvers)
                    (empty? reviewers))
-            (db/add-application-event! {:application application-id :user (get-user-id)
-                                        :round round :event "autoapprove" :comment nil})
-            true)))))
+          (db/add-application-event! {:application application-id :user (get-user-id)
+                                      :round round :event "autoapprove" :comment nil})
+          true)))))
 
 (defn- send-emails-for [application]
   (let [applicant-attrs (users/get-user-attributes (:applicantuserid application))
@@ -506,11 +506,11 @@
       (let [application (get-application-state application-id)
             user-attrs (users/get-user-attributes (:applicantuserid application))]
         (email/status-change-alert user-attrs
-                                        application-id
-                                        (get-catalogue-item-title
-                                          (get-localized-catalogue-item {:id (:catid application)}))
-                                        (:state application)
-                                        (:catid application))))))
+                                   application-id
+                                   (get-catalogue-item-title
+                                     (get-localized-catalogue-item {:id (:catid application)}))
+                                   (:state application)
+                                   (:catid application))))))
 
 (defn withdraw-application [application-id round msg]
   (unjudge-application application-id "withdraw" round msg))
