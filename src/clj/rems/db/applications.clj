@@ -437,7 +437,8 @@
       (throw-unauthorized))
     (db/add-application-event! {:application application-id :user (get-user-id)
                                 :round round :event event :comment msg})
-    (handle-state-change application-id)))
+    (when-not (and (= event "review") (review-requested-from? (get-user-id) round (:events state)))
+      (handle-state-change application-id))))
 
 (defn approve-application [application-id round msg]
   (when-not (can-approve? application-id)
