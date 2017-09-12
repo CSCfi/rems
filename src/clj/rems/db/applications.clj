@@ -480,8 +480,7 @@
         (when-not (review-requested-from? recipient (:curround state) (:events state))
           (db/add-application-event! {:application application-id :user recipient
                                       :round round :event "review-request" :comment msg})
-          (when-not (contains? (roles/get-roles recipient) :reviewer)
-            (roles/add-role! recipient :reviewer))
+          (roles/add-role! recipient :reviewer)
           (email/review-request (users/get-user-attributes recipient)
                                 (get-username (users/get-user-attributes (:applicantuserid state)))
                                 application-id
