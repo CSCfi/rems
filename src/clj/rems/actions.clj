@@ -2,6 +2,7 @@
   (:require [clj-time.core :as time]
             [clj-time.format :as format]
             [compojure.core :refer [GET POST defroutes]]
+            [hiccup.core :as hiccup]
             [rems.anti-forgery :refer [anti-forgery-field]]
             [rems.collapsible :as collapsible]
             [rems.db.applications :as applications]
@@ -59,7 +60,7 @@
   (let [username (get-username user-attrs)
         mail (get-user-mail user-attrs)]
     (when (and username mail)
-      [:option {:value (get-user-id user-attrs)} (str username " (" mail ")")])))
+      [:option {:value (get-user-id user-attrs)} (str username (hiccup/h " <") mail (hiccup/h ">"))])))
 
 (defn review-request-modal [app]
   [:div.modal.fade {:id "review-request-modal" :tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
@@ -214,7 +215,7 @@
 
 (defn reviews
   ([]
-   (reviews (applications/get-application-to-review)))
+   (reviews (applications/get-applications-to-review)))
   ([apps]
    (actions apps review-button)))
 

@@ -403,7 +403,7 @@
           (is (not (applications/can-approve? app2)))))
       )))
 
-(deftest test-get-application-to-review
+(deftest test-get-applications-to-review
   (binding [context/*user* {"eppn" "test-user"}]
     (let [uid (get-user-id)
           uid2 "another-user"
@@ -433,7 +433,7 @@
 
       (is (= [{:id app1 :state "applied" :catid item1 :curround 0}]
              (map #(select-keys % [:id :state :catid :curround])
-                  (applications/get-application-to-review)))
+                  (applications/get-applications-to-review)))
           "should only see app1")
       (is (= [{:id app4 :state "approved" :curround 1}]
              (map #(select-keys % [:id :state :curround])
@@ -478,7 +478,7 @@
 
       (is (= [{:id app2 :state "applied" :catid item2 :curround 1}]
              (map #(select-keys % [:id :state :catid :curround])
-                  (applications/get-application-to-review)))
+                  (applications/get-applications-to-review)))
           "should only see app2")
       (testing "applications/can-review? after changes"
         (is (not (applications/can-review? app1)))
