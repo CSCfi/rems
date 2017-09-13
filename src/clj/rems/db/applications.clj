@@ -113,6 +113,7 @@
                                        (:events app))]
                  (assoc app :handled (:time (last my-events))))))))
 
+; TODO: consider refactoring to finding the review events from the current user and mapping those to applications
 (defn get-handled-reviews []
   (->> (get-applications-impl {})
        (filterv (fn [app] (or (is-reviewer? (:id app))
