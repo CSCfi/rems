@@ -31,9 +31,10 @@
       (and (contains? #{"closed" "withdrawn"} (:state app))
            (some (partial handling-event? app) (:events app)))))
 
-(defn reviewed? [app]
+(defn reviewed?
   "Returns true if the application, given as parameter, has already been reviewed normally or as a 3rd party actor by the current user.
    Otherwise, current hasn't yet provided feedback and false is returned."
+  [app]
   (not-empty? (filter #(and (= (get-user-id) (:userid %))
                             (or (= "review" (:event %))
                                 (= "3rd-party-review" (:event %))))
@@ -66,20 +67,20 @@
   (is-actor? application "reviewer"))
 
 (defn is-3rd-party-reviewer?
+  "Checks if a given user has been requested to review the given application. If no user is provided, the function checks review requests for the current user.
+   Additionally a specific round can be provided to narrow the check to apply only to the given round."
   ([application]
-   "Checks if the current user has been requested to review the given application."
    (is-3rd-party-reviewer? (get-user-id) (:events application)))
   ([user events]
-   "Checks if the given events contain a review request for the specified user."
    (->> events
         (filter #(and (= "review-request" (:event %)) (= user (:userid %))))
         (not-empty?)))
   ([user round events]
-   "Checks if the given events contain a review request for the specified user for a specific round."
    (is-3rd-party-reviewer? user (filter #(= round (:round %)) events))))
 
-(defn can-3rd-party-review? [application]
+(defn can-3rd-party-review?
   "Checks if the current user can perform a 3rd party review action on the current round for the given application."
+  [application]
   (let [state (get-application-state application)]
     (and (= "applied" (:state state))
          (is-3rd-party-reviewer? (get-user-id) (:curround state) (:events state)))))
@@ -129,7 +130,10 @@
                                        (:events app))]
                  (assoc app :handled (:time (last my-events))))))))
 
-(defn get-applications-to-review []
+(defn get-applications-to-review
+  "Returns applications that are waiting for a normal or 3rd party review. Type of the review, with key :review and values :normal or :3rd-party,
+  are added to each application's attributes"
+  []
   (->> (get-applications-impl {})
        (filterv
          (fn [app] (and (not (reviewed? app))
