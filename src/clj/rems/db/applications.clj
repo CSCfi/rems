@@ -32,6 +32,8 @@
            (some (partial handling-event? app) (:events app)))))
 
 (defn reviewed? [app]
+  "Returns true if the application, given as parameter, has already been reviewed normally or as a 3rd party actor by the current user.
+   Otherwise, current hasn't yet provided feedback and false is returned."
   (not-empty? (filter #(and (= (get-user-id) (:userid %))
                             (or (= "review" (:event %))
                                 (= "3rd-party-review" (:event %))))
@@ -64,16 +66,20 @@
   (is-actor? application "reviewer"))
 
 (defn is-3rd-party-reviewer?
+  "Checks if the current user has been requested to review the given application."
   ([application]
    (is-3rd-party-reviewer? (get-user-id) (:events application)))
+  "Checks if the given events contain a review request for the specified user."
   ([user events]
    (->> events
         (filter #(and (= "review-request" (:event %)) (= user (:userid %))))
         (not-empty?)))
+  "Checks if the given events contain a review request for the specified user for a specific round."
   ([user round events]
    (is-3rd-party-reviewer? user (filter #(= round (:round %)) events))))
 
 (defn can-3rd-party-review? [application]
+  "Checks if the current user can perform a 3rd party review action on the current round for the given application."
   (let [state (get-application-state application)]
     (and (= "applied" (:state state))
          (is-3rd-party-reviewer? (get-user-id) (:curround state) (:events state)))))
