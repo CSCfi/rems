@@ -70,20 +70,20 @@
   "Checks if a given user has been requested to review the given application. If no user is provided, the function checks review requests for the current user.
    Additionally a specific round can be provided to narrow the check to apply only to the given round."
   ([application]
-   (is-3rd-party-reviewer? (get-user-id) (:events application)))
-  ([user events]
-   (->> events
+   (is-3rd-party-reviewer? (get-user-id) application))
+  ([user application]
+   (->> (:events application)
         (filter #(and (= "review-request" (:event %)) (= user (:userid %))))
         (not-empty?)))
-  ([user round events]
-   (is-3rd-party-reviewer? user (filter #(= round (:round %)) events))))
+  ([user round application]
+   (is-3rd-party-reviewer? user (update application :events (fn [events] (filter #(= round (:round %)) events))))))
 
 (defn can-3rd-party-review?
   "Checks if the current user can perform a 3rd party review action on the current round for the given application."
   [application]
   (let [state (get-application-state application)]
     (and (= "applied" (:state state))
-         (is-3rd-party-reviewer? (get-user-id) (:curround state) (:events state)))))
+         (is-3rd-party-reviewer? (get-user-id) (:curround state) state))))
 
 (defn may-see-application? [application]
   (let [applicant? (= (:applicantuserid application) (get-user-id))
@@ -123,7 +123,7 @@
 (defn get-handled-reviews []
   (->> (get-applications-impl {})
        (filterv (fn [app] (or (is-reviewer? (:id app))
-                              (is-3rd-party-reviewer? (get-user-id) (:events app)))))
+                              (is-3rd-party-reviewer? (get-user-id) app))))
        (filterv reviewed?)
        (mapv (fn [app]
                (let [my-events (filter #(= (get-user-id) (:userid %))
@@ -516,7 +516,7 @@
                     recipients
                     (vector recipients))]
       (doseq [recipient send-to]
-        (when-not (is-3rd-party-reviewer? recipient (:curround state) (:events state))
+        (when-not (is-3rd-party-reviewer? recipient (:curround state) state)
           (db/add-application-event! {:application application-id :user recipient
                                       :round round :event "review-request" :comment msg})
           (roles/add-role! recipient :reviewer)
