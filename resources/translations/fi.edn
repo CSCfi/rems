@@ -65,7 +65,7 @@
             :return-success "Hakemus palautettu"
             :review "Katselmoi"
             :review-request "Pyydä katselmointia"
-            :review-request-selection "Lähetä katselmointi pyyntö henkilölle/henkilöille:"
+            :review-request-selection "Lähetä katselmointipyyntö henkilölle/henkilöille:"
             :review-request-success "Katselmointipyyntö lähetetty"
             :review-success "Hakemus katselmoitu"
             :show-publications "Näytä julkaisut"
