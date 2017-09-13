@@ -66,16 +66,16 @@
   (is-actor? application "reviewer"))
 
 (defn is-3rd-party-reviewer?
-  "Checks if the current user has been requested to review the given application."
   ([application]
+   "Checks if the current user has been requested to review the given application."
    (is-3rd-party-reviewer? (get-user-id) (:events application)))
-  "Checks if the given events contain a review request for the specified user."
   ([user events]
+   "Checks if the given events contain a review request for the specified user."
    (->> events
         (filter #(and (= "review-request" (:event %)) (= user (:userid %))))
         (not-empty?)))
-  "Checks if the given events contain a review request for the specified user for a specific round."
   ([user round events]
+   "Checks if the given events contain a review request for the specified user for a specific round."
    (is-3rd-party-reviewer? user (filter #(= round (:round %)) events))))
 
 (defn can-3rd-party-review? [application]
