@@ -402,8 +402,8 @@
         (testing "As a reviewer"
           (binding [context/*user* {"eppn" "carl"}
                     context/*active-role* :reviewer]
-            (let [actionable-data (assoc-in actionable-data [:application :type] "normal")
-                  unactionable-data (assoc-in unactionable-data [:application :type] "normal")]
+            (let [actionable-data (assoc-in actionable-data [:application :review] :normal)
+                  unactionable-data (assoc-in unactionable-data [:application :review] :normal)]
               (testing "on an actionable form"
                 (validate-back-button-presence actionable-data)
                 (validate-approver-actions-absence actionable-data)

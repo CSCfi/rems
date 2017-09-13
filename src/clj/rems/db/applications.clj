@@ -130,9 +130,9 @@
                         (or (can-review? (:id app))
                             (can-3rd-party-review? (:id app))))))
        (mapv (fn [app]
-               (assoc app :type (if (is-reviewer? (:id app))
-                                   "normal"
-                                   "3rd-party"))))))
+               (assoc app :review (if (is-reviewer? (:id app))
+                                   :normal
+                                   :3rd-party))))))
 
 (defn get-draft-id-for
   "Finds applications in the draft state for the given catalogue item.

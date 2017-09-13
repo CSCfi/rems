@@ -111,7 +111,7 @@
    (approval-confirm-modal "reject" (text :t.actions/reject) app)))
 
 (defn review-button [app]
-  (if (= "normal" (:type app))
+  (if (= :normal (:review app))
     (list
       [:button#review.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#review-modal"}
        (text :t.actions/review)]
