@@ -356,7 +356,7 @@
             :review-request (applications/send-review-request id round comment (get input "recipients"))
             :withdraw (applications/withdraw-application id round comment)
             :close (applications/close-application id round comment)
-            :3rd-party-review (applications/send-3rd-party-review id round comment))
+            :3rd-party-review (applications/perform-3rd-party-review id round comment))
           (assoc (redirect (if (or (has-roles? :approver) (has-roles? :reviewer)) "/actions" "/applications") :see-other)
                  :flash [{:status :success
                           :contents (case action

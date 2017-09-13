@@ -485,7 +485,7 @@
     (throw-unauthorized))
   (judge-application application-id "review" round msg))
 
-(defn send-3rd-party-review [application-id round msg]
+(defn perform-3rd-party-review [application-id round msg]
   (when-not (can-3rd-party-review? application-id)
     (throw-unauthorized))
   (let [state (get-application-state application-id)]
