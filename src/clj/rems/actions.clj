@@ -77,7 +77,7 @@
         [:textarea.form-control {:name "comment"}]]
        [:div.form-group
         [:label (text :t.actions/review-request-selection)]
-        [:select.form-control {:name "recipients" :multiple "multiple"}
+        [:select.form-control {:name "recipients" :multiple "multiple" :required true}
          (let [other-users (filter #(not= (get-user-id) %) (map :userid (db/get-users)))
                users-attrs (map users/get-user-attributes other-users)]
            (for [user-attrs users-attrs]
