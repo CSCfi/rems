@@ -13,7 +13,7 @@
                                           get-application-phases
                                           get-application-state
                                           get-draft-id-for get-form-for
-                                          has-review-request?
+                                          can-3rd-party-review?
                                           submit-application]]
             [rems.db.core :as db]
             [rems.guide :refer :all]
@@ -192,7 +192,7 @@
        )
      (when-role :reviewer
        (if (and actionable? (or (can-review? (:id (:application form)))
-                                (has-review-request? (:id (:application form)))))
+                                (can-3rd-party-review? (:id (:application form)))))
          (actions/review-form (:application form))
          [:div.row
           [:div.col.commands
