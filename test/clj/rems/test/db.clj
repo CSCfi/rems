@@ -694,15 +694,17 @@
             (is (= #{:reviewer} (roles/get-roles "another-reviewer")))
             (is (= (fetch new-app) {:curround 0 :state "applied"}))
             (binding [context/*user* {"eppn" "3rd-party-reviewer"}]
-              (applications/review-application new-app 0 "comment"))
+              (applications/send-3rd-party-review new-app 0 "comment")
+              (is (thrown? Exception (applications/review-application new-app 0 "another comment"))
+                  "Should not be able to do normal review"))
             (is (= (fetch new-app) {:curround 0 :state "applied"}))
             (applications/approve-application new-app 0 "")
             (is (= (fetch new-app) {:curround 0 :state "approved"}))
             (binding [context/*user* {"eppn" "3rd-party-reviewer"}]
-              (is (thrown? Exception (applications/review-application new-app 0 "another comment"))
+              (is (thrown? Exception (applications/send-3rd-party-review new-app 0 "another comment"))
                   "Should not be able to review when approved"))
             (binding [context/*user* {"eppn" "other-reviewer"}]
-              (is (thrown? Exception (applications/review-application new-app 0 "too late comment"))
+              (is (thrown? Exception (applications/send-3rd-party-review new-app 0 "too late comment"))
                   "Should not be able to review when approved"))
             (is (= (->> (applications/get-application-state new-app)
                         :events
@@ -710,7 +712,7 @@
                    [{:round 0 :event "apply" :comment nil}
                     {:round 0 :event "review-request" :comment "review?"}
                     {:round 0 :event "review-request" :comment "can you please review this?"}
-                    {:round 0 :event "review" :comment "comment"}
+                    {:round 0 :event "3rd-party-review" :comment "comment"}
                     {:round 0 :event "approve" :comment ""}]))))
         (testing "lazy 3rd party reviewer"
           (let [app-to-close (applications/create-new-draft new-item)
@@ -734,13 +736,13 @@
             (applications/return-application app-to-return 0 "returning")
             (is (= (fetch app-to-return) {:curround 0 :state "returned"}) "should be able to return application even without review")
             (binding [context/*user* {"eppn" "3rd-party-reviewer"}]
-              (is (thrown? Exception (applications/review-application app-to-close 0 "comment"))
+              (is (thrown? Exception (applications/send-3rd-party-review app-to-close 0 "comment"))
                   "Should not be able to review when closed")
-              (is (thrown? Exception (applications/review-application app-to-approve 0 "comment"))
+              (is (thrown? Exception (applications/send-3rd-party-review app-to-approve 0 "comment"))
                   "Should not be able to review when approved")
-              (is (thrown? Exception (applications/review-application app-to-reject 0 "comment"))
+              (is (thrown? Exception (applications/send-3rd-party-review app-to-reject 0 "comment"))
                   "Should not be able to review when rejected")
-              (is (thrown? Exception (applications/review-application app-to-return 0 "another comment"))
+              (is (thrown? Exception (applications/send-3rd-party-review app-to-return 0 "another comment"))
                   "Should not be able to review when returned"))
             (is (= (->> (applications/get-application-state app-to-close)
                         :events

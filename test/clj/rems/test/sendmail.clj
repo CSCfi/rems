@@ -141,5 +141,5 @@
                                               (subject-to-check "review-request")
                                               (str "([:t.email/review-request-msg :t/missing] [\"Rev Iwer\" \"Test User\" " app4 " \"item2\" \"localhost:3000/form/" item2 "/" app4 "\"])"))
             (binding [context/*user* {"eppn" "reviewer"}]
-              (applications/review-application app4 0 ""))
+              (applications/send-3rd-party-review app4 0 ""))
             (conjure/verify-call-times-for email/send-mail 3)))))))

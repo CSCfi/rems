@@ -32,7 +32,10 @@
            (some (partial handling-event? app) (:events app)))))
 
 (defn reviewed? [app]
-  (not-empty? (filter #(and (= (get-user-id) (:userid %))(= "review" (:event %))) (:events app))))
+  (not-empty? (filter #(and (= (get-user-id) (:userid %))
+                            (or (= "review" (:event %))
+                                (= "3rd-party-review" (:event %))))
+                      (:events app))))
 
 (defn review-requested-from?
   ([user events]
@@ -62,17 +65,27 @@
 (defn is-approver? [application]
   (is-actor? application "approver"))
 
-(defn- has-review-request? [application]
+(defn has-review-request? [application]
   (let [state (get-application-state application)]
     (and (= "applied" (:state state))
          (review-requested-from? (get-user-id) (:curround state) (:events state)))))
 
 (defn can-review? [application]
-  (or (can-act-as? application "reviewer")
-      (has-review-request? application)))
+  (can-act-as? application "reviewer"))
 
 (defn is-reviewer? [application]
   (is-actor? application "reviewer"))
+
+(defn is-3rd-party-reviewer? [application]
+  (review-requested-from? (get-user-id) (:events application)))
+
+(defn may-see-application? [application]
+  (let [applicant? (= (:applicantuserid application) (get-user-id))
+        application-id (:id application)]
+    (or applicant?
+        (is-approver? application-id)
+        (is-reviewer? application-id)
+        (is-3rd-party-reviewer? application))))
 
 (defn- get-applications-impl [query-params]
   (doall
@@ -111,10 +124,15 @@
                  (assoc app :handled (:time (last my-events))))))))
 
 (defn get-applications-to-review []
-  (filterv
-   (fn [app] (and (not (reviewed? app))
-                  (can-review? (:id app))))
-   (get-applications-impl {})))
+  (->> (get-applications-impl {})
+       (filterv
+         (fn [app] (and (not (reviewed? app))
+                        (or (can-review? (:id app))
+                            (has-review-request? (:id app))))))
+       (mapv (fn [app]
+               (assoc app :type (if (is-reviewer? (:id app))
+                                   "normal"
+                                   "3rd-party"))))))
 
 (defn get-draft-id-for
   "Finds applications in the draft state for the given catalogue item.
@@ -213,13 +231,9 @@
                                     (map #(update-in % [:langcode] keyword))
                                     (index-by [:licid :langcode]))
          licenses (mapv #(process-license application license-localizations %)
-                        (db/get-workflow-licenses {:catId catalogue-item}))
-         applicant? (= (:applicantuserid application) (get-user-id))]
+                        (db/get-workflow-licenses {:catId catalogue-item}))]
      (when application-id
-       (when-not (or applicant?
-                     (is-approver? application-id)
-                     (is-reviewer? application-id)
-                     (review-requested-from? (get-user-id) (:events application)))
+       (when-not (may-see-application? application)
          (throw-unauthorized)))
      {:id form-id
       :catalogue-item catalogue-item
@@ -294,11 +308,18 @@
   (assert (= (:curround application) (:round event))
           (str "Application and review rounds don't match: "
                (pr-str application) " vs. " (pr-str event)))
-  (if (round-has-approvers? (:id application) (:curround application))
-    (assoc application :state "applied")
-    (if (= (:curround application) (:fnlround application))
-      (assoc application :state "approved")
-      (assoc application :state "applied" :curround (inc (:curround application))))))
+  (if (= (:curround application) (:fnlround application))
+    (assoc application :state "approved")
+    (assoc application :state "applied" :curround (inc (:curround application)))))
+
+(defmethod apply-event "3rd-party-review"
+  [application event]
+  (assert (= (:state application) "applied")
+          (str "Can't review application " (pr-str application)))
+  (assert (= (:curround application) (:round event))
+          (str "Application and review rounds don't match: "
+               (pr-str application) " vs. " (pr-str event)))
+  (assoc application :state "applied"))
 
 (defmethod apply-event "review-request"
   [application event]
@@ -442,8 +463,7 @@
       (throw-unauthorized))
     (db/add-application-event! {:application application-id :user (get-user-id)
                                 :round round :event event :comment msg})
-    (when-not (and (= event "review") (review-requested-from? (get-user-id) round (:events state)))
-      (handle-state-change application-id))))
+    (handle-state-change application-id)))
 
 (defn approve-application [application-id round msg]
   (when-not (can-approve? application-id)
@@ -464,6 +484,15 @@
   (when-not (can-review? application-id)
     (throw-unauthorized))
   (judge-application application-id "review" round msg))
+
+(defn send-3rd-party-review [application-id round msg]
+  (when-not (has-review-request? application-id)
+    (throw-unauthorized))
+  (let [state (get-application-state application-id)]
+    (when-not (= round (:curround state))
+      (throw-unauthorized))
+    (db/add-application-event! {:application application-id :user (get-user-id)
+                                :round round :event "3rd-party-review" :comment msg})))
 
 (defn send-review-request [application-id round msg recipients]
   (let [state (get-application-state application-id)]
