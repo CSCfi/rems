@@ -127,4 +127,19 @@
             (applications/submit-application app4)
             (applications/withdraw-application app4 0 "")
             (conjure/verify-call-times-for email/send-mail 3)
-            (conjure/verify-nth-call-args-for 3 email/send-mail "invalid-addr" (subject-to-check "status-changed") (status-msg-to-check "Test User" app4 item2 "item2" "withdrawn"))))))))
+            (conjure/verify-nth-call-args-for 3 email/send-mail "invalid-addr" (subject-to-check "status-changed") (status-msg-to-check "Test User" app4 item2 "item2" "withdrawn"))))
+        (testing "3rd party reviewer is notified after a review request"
+          (conjure/mocking [email/send-mail]
+            (applications/submit-application app4)
+            (binding [context/*user* {"eppn" "approver"}]
+              (applications/send-review-request app4 0 "" uid2)
+              (applications/send-review-request app4 0 "" uid2))
+            (conjure/verify-call-times-for email/send-mail 3)
+            (conjure/verify-nth-call-args-for 3
+                                              email/send-mail
+                                              "rev-invalid"
+                                              (subject-to-check "review-request")
+                                              (str "([:t.email/review-request-msg :t/missing] [\"Rev Iwer\" \"Test User\" " app4 " \"item2\" \"localhost:3000/form/" item2 "/" app4 "\"])"))
+            (binding [context/*user* {"eppn" "reviewer"}]
+              (applications/perform-3rd-party-review app4 0 ""))
+            (conjure/verify-call-times-for email/send-mail 3)))))))

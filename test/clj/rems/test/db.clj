@@ -403,7 +403,7 @@
           (is (not (applications/can-approve? app2)))))
       )))
 
-(deftest test-get-application-to-review
+(deftest test-get-applications-to-review
   (binding [context/*user* {"eppn" "test-user"}]
     (let [uid (get-user-id)
           uid2 "another-user"
@@ -433,7 +433,7 @@
 
       (is (= [{:id app1 :state "applied" :catid item1 :curround 0}]
              (map #(select-keys % [:id :state :catid :curround])
-                  (applications/get-application-to-review)))
+                  (applications/get-applications-to-review)))
           "should only see app1")
       (is (= [{:id app4 :state "approved" :curround 1}]
              (map #(select-keys % [:id :state :curround])
@@ -463,18 +463,22 @@
       ;; move app1 and app2 to round 1
       (applications/review-application app1 0 "")
       (binding [context/*user* {"eppn" uid2}]
-        (applications/review-application app2 0 ""))
+        (applications/review-application app2 0 "")
+        (is (= [{:id app2 :state "applied" :curround 1}
+                {:id app4 :state "approved" :curround 1}]
+               (map #(select-keys % [:id :state :curround])
+                    (applications/get-handled-reviews)))
+            (str uid2 " should see app2 and app4 in handled reviews")))
 
       (is (= [{:id app1 :state "approved" :curround 0}
-              {:id app2 :state "applied" :curround 1}
               {:id app4 :state "approved" :curround 1}]
              (map #(select-keys % [:id :state :curround])
                   (applications/get-handled-reviews)))
-          "should see app1, app2 and app4 in handled reviews")
+          (str uid " should see app1 and app4 in handled reviews"))
 
       (is (= [{:id app2 :state "applied" :catid item2 :curround 1}]
              (map #(select-keys % [:id :state :catid :curround])
-                  (applications/get-application-to-review)))
+                  (applications/get-applications-to-review)))
           "should only see app2")
       (testing "applications/can-review? after changes"
         (is (not (applications/can-review? app1)))
@@ -615,7 +619,6 @@
               rev-item (:id (db/create-catalogue-item! {:title "Review item" :resid nil :wfid rev-wf :form nil}))
               rev-app (applications/create-new-draft rev-item)]
           (actors/add-reviewer! rev-wf "event-test-reviewer" 0)
-          (actors/add-approver! rev-wf uid 0)
           (actors/add-approver! rev-wf  uid  1)
           (is (= (fetch rev-app) {:curround 0 :state "draft"}))
           (binding [context/*user* {"eppn" "event-test-reviewer"}]
@@ -672,4 +675,96 @@
                       (map #(select-keys % [:round :event])))
                  [{:round 0 :event "apply"}
                   {:round 0 :event "autoapprove"}
-                  {:round 1 :event "autoapprove"}])))))))
+                  {:round 1 :event "autoapprove"}]))))
+      (let [new-wf (:id (db/create-workflow! {:modifieruserid uid :owneruserid uid :title "3rd party review workflow" :fnlround 0}))
+            new-item (:id (db/create-catalogue-item! {:title "A" :form nil :resid nil :wfid new-wf}))]
+        (actors/add-approver! new-wf uid 0)
+        (db/add-user! {:user "3rd-party-reviewer", :userattrs (generate-string {"eppn" "3rd-party-reviewer" "mail" ""})})
+        (db/add-user! {:user "another-reviewer", :userattrs (generate-string {"eppn" "another-reviewer" "mail" ""})})
+        (testing "3rd party review"
+          (let [new-app (applications/create-new-draft new-item)]
+            (applications/submit-application new-app)
+            (is (= #{} (roles/get-roles "3rd-party-reviewer")))
+            (is (= #{} (roles/get-roles "another-reviewer")))
+            (applications/send-review-request new-app 0 "review?" "3rd-party-reviewer")
+            (is (= #{:reviewer} (roles/get-roles "3rd-party-reviewer")))
+            ;should not send twice to 3rd-party-reviewer, but another-reviewer should still be added
+            (applications/send-review-request new-app 0 "can you please review this?" ["3rd-party-reviewer" "another-reviewer"])
+            (is (= #{:reviewer} (roles/get-roles "3rd-party-reviewer")))
+            (is (= #{:reviewer} (roles/get-roles "another-reviewer")))
+            (is (= (fetch new-app) {:curround 0 :state "applied"}))
+            (binding [context/*user* {"eppn" "3rd-party-reviewer"}]
+              (applications/perform-3rd-party-review new-app 0 "comment")
+              (is (thrown? Exception (applications/review-application new-app 0 "another comment"))
+                  "Should not be able to do normal review"))
+            (is (= (fetch new-app) {:curround 0 :state "applied"}))
+            (applications/approve-application new-app 0 "")
+            (is (= (fetch new-app) {:curround 0 :state "approved"}))
+            (binding [context/*user* {"eppn" "3rd-party-reviewer"}]
+              (is (thrown? Exception (applications/perform-3rd-party-review new-app 0 "another comment"))
+                  "Should not be able to review when approved"))
+            (binding [context/*user* {"eppn" "other-reviewer"}]
+              (is (thrown? Exception (applications/perform-3rd-party-review new-app 0 "too late comment"))
+                  "Should not be able to review when approved"))
+            (is (= (->> (applications/get-application-state new-app)
+                        :events
+                        (map #(select-keys % [:round :event :comment])))
+                   [{:round 0 :event "apply" :comment nil}
+                    {:round 0 :event "review-request" :comment "review?"}
+                    {:round 0 :event "review-request" :comment "can you please review this?"}
+                    {:round 0 :event "3rd-party-review" :comment "comment"}
+                    {:round 0 :event "approve" :comment ""}]))))
+        (testing "lazy 3rd party reviewer"
+          (let [app-to-close (applications/create-new-draft new-item)
+                app-to-approve (applications/create-new-draft new-item)
+                app-to-reject (applications/create-new-draft new-item)
+                app-to-return (applications/create-new-draft new-item)]
+            (applications/submit-application app-to-close)
+            (applications/submit-application app-to-approve)
+            (applications/submit-application app-to-reject)
+            (applications/submit-application app-to-return)
+            (applications/send-review-request app-to-close 0 "can you please review this?" "3rd-party-reviewer")
+            (applications/send-review-request app-to-approve 0 "can you please review this?" "3rd-party-reviewer")
+            (applications/send-review-request app-to-reject 0 "can you please review this?" "3rd-party-reviewer")
+            (applications/send-review-request app-to-return 0 "can you please review this?" "3rd-party-reviewer")
+            (applications/close-application app-to-close 0 "closing")
+            (is (= (fetch app-to-close) {:curround 0 :state "closed"}) "should be able to close application even without review")
+            (applications/approve-application app-to-approve 0 "approving")
+            (is (= (fetch app-to-approve) {:curround 0 :state "approved"}) "should be able to approve application even without review")
+            (applications/reject-application app-to-reject 0 "rejecting")
+            (is (= (fetch app-to-reject) {:curround 0 :state "rejected"}) "should be able to reject application even without review")
+            (applications/return-application app-to-return 0 "returning")
+            (is (= (fetch app-to-return) {:curround 0 :state "returned"}) "should be able to return application even without review")
+            (binding [context/*user* {"eppn" "3rd-party-reviewer"}]
+              (is (thrown? Exception (applications/perform-3rd-party-review app-to-close 0 "comment"))
+                  "Should not be able to review when closed")
+              (is (thrown? Exception (applications/perform-3rd-party-review app-to-approve 0 "comment"))
+                  "Should not be able to review when approved")
+              (is (thrown? Exception (applications/perform-3rd-party-review app-to-reject 0 "comment"))
+                  "Should not be able to review when rejected")
+              (is (thrown? Exception (applications/perform-3rd-party-review app-to-return 0 "another comment"))
+                  "Should not be able to review when returned"))
+            (is (= (->> (applications/get-application-state app-to-close)
+                        :events
+                        (map #(select-keys % [:round :event :comment])))
+                   [{:round 0 :event "apply" :comment nil}
+                    {:round 0 :event "review-request" :comment "can you please review this?"}
+                    {:round 0 :event "close" :comment "closing"}]))
+            (is (= (->> (applications/get-application-state app-to-approve)
+                        :events
+                        (map #(select-keys % [:round :event :comment])))
+                   [{:round 0 :event "apply" :comment nil}
+                    {:round 0 :event "review-request" :comment "can you please review this?"}
+                    {:round 0 :event "approve" :comment "approving"}]))
+            (is (= (->> (applications/get-application-state app-to-reject)
+                        :events
+                        (map #(select-keys % [:round :event :comment])))
+                   [{:round 0 :event "apply" :comment nil}
+                    {:round 0 :event "review-request" :comment "can you please review this?"}
+                    {:round 0 :event "reject" :comment "rejecting"}]))
+            (is (= (->> (applications/get-application-state app-to-return)
+                        :events
+                        (map #(select-keys % [:round :event :comment])))
+                   [{:round 0 :event "apply" :comment nil}
+                    {:round 0 :event "review-request" :comment "can you please review this?"}
+                    {:round 0 :event "return" :comment "returning"}]))))))))

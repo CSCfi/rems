@@ -286,6 +286,7 @@
   [(s/descendant :.role-switcher :form) {:margin-left (u/rem 0.5)}]
   [:.commands {:text-align "right"
               :padding "0 1rem"}]
+  [:.form-group {:text-align "initial"}]
   [:.navbar-flex {:display "flex"
                   :flex-direction "row"
                   :justify-content "space-between"

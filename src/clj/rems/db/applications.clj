@@ -5,6 +5,7 @@
             [rems.db.catalogue :refer [get-catalogue-item-title
                                        get-localized-catalogue-item]]
             [rems.db.core :as db]
+            [rems.db.roles :as roles]
             [rems.db.users :as users]
             [rems.db.workflow-actors :as actors]
             [rems.email :as email]
@@ -14,6 +15,9 @@
 
 ;; TODO cache application state in db instead of always computing it from events
 (declare get-application-state)
+
+(defn- not-empty? [args]
+  ((complement empty?) args))
 
 ;;; Query functions
 
@@ -27,9 +31,14 @@
       (and (contains? #{"closed" "withdrawn"} (:state app))
            (some (partial handling-event? app) (:events app)))))
 
-(defn reviewed? [app]
-  (let [not-empty? (complement empty?)]
-    (not-empty? (filter #(= "review" (:event %)) (:events app)))))
+(defn reviewed?
+  "Returns true if the application, given as parameter, has already been reviewed normally or as a 3rd party actor by the current user.
+   Otherwise, current hasn't yet provided feedback and false is returned."
+  [app]
+  (not-empty? (filter #(and (= (get-user-id) (:userid %))
+                            (or (= "review" (:event %))
+                                (= "3rd-party-review" (:event %))))
+                      (:events app))))
 
 (defn- can-act-as? [application role]
   (let [state (get-application-state application)
@@ -37,6 +46,9 @@
     (and (= "applied" (:state state))
          (contains? (set (actors/get-by-role application round role))
                     (get-user-id)))))
+
+(defn- round-has-approvers? [application round]
+  (not-empty? (actors/get-by-role application round "approver")))
 
 (defn- is-actor? [application role]
   (contains? (set (actors/get-by-role application role))
@@ -53,6 +65,33 @@
 
 (defn is-reviewer? [application]
   (is-actor? application "reviewer"))
+
+(defn is-3rd-party-reviewer?
+  "Checks if a given user has been requested to review the given application. If no user is provided, the function checks review requests for the current user.
+   Additionally a specific round can be provided to narrow the check to apply only to the given round."
+  ([application]
+   (is-3rd-party-reviewer? (get-user-id) application))
+  ([user application]
+   (->> (:events application)
+        (filter #(and (= "review-request" (:event %)) (= user (:userid %))))
+        (not-empty?)))
+  ([user round application]
+   (is-3rd-party-reviewer? user (update application :events (fn [events] (filter #(= round (:round %)) events))))))
+
+(defn can-3rd-party-review?
+  "Checks if the current user can perform a 3rd party review action on the current round for the given application."
+  [application]
+  (let [state (get-application-state application)]
+    (and (= "applied" (:state state))
+         (is-3rd-party-reviewer? (get-user-id) (:curround state) state))))
+
+(defn may-see-application? [application]
+  (let [applicant? (= (:applicantuserid application) (get-user-id))
+        application-id (:id application)]
+    (or applicant?
+        (is-approver? application-id)
+        (is-reviewer? application-id)
+        (is-3rd-party-reviewer? application))))
 
 (defn- get-applications-impl [query-params]
   (doall
@@ -80,19 +119,30 @@
                                        (:events app))]
                  (assoc app :handled (:time (last my-events))))))))
 
+; TODO: consider refactoring to finding the review events from the current user and mapping those to applications
 (defn get-handled-reviews []
   (->> (get-applications-impl {})
-       (filterv (fn [app] (is-reviewer? (:id app))))
+       (filterv (fn [app] (or (is-reviewer? (:id app))
+                              (is-3rd-party-reviewer? (get-user-id) app))))
        (filterv reviewed?)
        (mapv (fn [app]
                (let [my-events (filter #(= (get-user-id) (:userid %))
                                        (:events app))]
                  (assoc app :handled (:time (last my-events))))))))
 
-(defn get-application-to-review []
-  (filterv
-   (fn [app] (can-review? (:id app)))
-   (get-applications-impl {})))
+(defn get-applications-to-review
+  "Returns applications that are waiting for a normal or 3rd party review. Type of the review, with key :review and values :normal or :3rd-party,
+  are added to each application's attributes"
+  []
+  (->> (get-applications-impl {})
+       (filterv
+         (fn [app] (and (not (reviewed? app))
+                        (or (can-review? (:id app))
+                            (can-3rd-party-review? (:id app))))))
+       (mapv (fn [app]
+               (assoc app :review (if (is-reviewer? (:id app))
+                                   :normal
+                                   :3rd-party))))))
 
 (defn get-draft-id-for
   "Finds applications in the draft state for the given catalogue item.
@@ -191,12 +241,9 @@
                                     (map #(update-in % [:langcode] keyword))
                                     (index-by [:licid :langcode]))
          licenses (mapv #(process-license application license-localizations %)
-                        (db/get-workflow-licenses {:catId catalogue-item}))
-         applicant? (= (:applicantuserid application) (get-user-id))]
+                        (db/get-workflow-licenses {:catId catalogue-item}))]
      (when application-id
-       (when-not (or applicant?
-                     (is-approver? application-id)
-                     (is-reviewer? application-id))
+       (when-not (may-see-application? application)
          (throw-unauthorized)))
      {:id form-id
       :catalogue-item catalogue-item
@@ -274,6 +321,24 @@
   (if (= (:curround application) (:fnlround application))
     (assoc application :state "approved")
     (assoc application :state "applied" :curround (inc (:curround application)))))
+
+(defmethod apply-event "3rd-party-review"
+  [application event]
+  (assert (= (:state application) "applied")
+          (str "Can't review application " (pr-str application)))
+  (assert (= (:curround application) (:round event))
+          (str "Application and review rounds don't match: "
+               (pr-str application) " vs. " (pr-str event)))
+  (assoc application :state "applied"))
+
+(defmethod apply-event "review-request"
+  [application event]
+  (assert (= (:state application) "applied")
+          (str "Can't send a review request " (pr-str application)))
+  (assert (= (:curround application) (:round event))
+          (str "Application and review request rounds don't match: "
+               (pr-str application) " vs. " (pr-str event)))
+  (assoc application :state "applied"))
 
 (defmethod apply-event "withdraw"
   [application event]
@@ -355,9 +420,9 @@
             reviewers (actors/get-by-role application-id round "reviewer")]
         (when (and (empty? approvers)
                    (empty? reviewers))
-            (db/add-application-event! {:application application-id :user (get-user-id)
-                                        :round round :event "autoapprove" :comment nil})
-            true)))))
+          (db/add-application-event! {:application application-id :user (get-user-id)
+                                      :round round :event "autoapprove" :comment nil})
+          true)))))
 
 (defn- send-emails-for [application]
   (let [applicant-attrs (users/get-user-attributes (:applicantuserid application))
@@ -430,6 +495,38 @@
     (throw-unauthorized))
   (judge-application application-id "review" round msg))
 
+(defn perform-3rd-party-review [application-id round msg]
+  (when-not (can-3rd-party-review? application-id)
+    (throw-unauthorized))
+  (let [state (get-application-state application-id)]
+    (when-not (= round (:curround state))
+      (throw-unauthorized))
+    (db/add-application-event! {:application application-id :user (get-user-id)
+                                :round round :event "3rd-party-review" :comment msg})))
+
+(defn send-review-request [application-id round msg recipients]
+  (let [state (get-application-state application-id)]
+    (when-not (can-approve? application-id)
+      (throw-unauthorized))
+    (when-not (= round (:curround state))
+      (throw-unauthorized))
+    (assert (not-empty? recipients)
+            (str "Can't send a review request without recipients."))
+    (let [send-to (if (vector? recipients)
+                    recipients
+                    (vector recipients))]
+      (doseq [recipient send-to]
+        (when-not (is-3rd-party-reviewer? recipient (:curround state) state)
+          (db/add-application-event! {:application application-id :user recipient
+                                      :round round :event "review-request" :comment msg})
+          (roles/add-role! recipient :reviewer)
+          (email/review-request (users/get-user-attributes recipient)
+                                (get-username (users/get-user-attributes (:applicantuserid state)))
+                                application-id
+                                (get-catalogue-item-title
+                                  (get-localized-catalogue-item {:id (:catid state)}))
+                                (:catid state)))))))
+
 ;; TODO better name
 ;; TODO consider refactoring together with judge
 (defn- unjudge-application
@@ -447,11 +544,11 @@
       (let [application (get-application-state application-id)
             user-attrs (users/get-user-attributes (:applicantuserid application))]
         (email/status-change-alert user-attrs
-                                        application-id
-                                        (get-catalogue-item-title
-                                          (get-localized-catalogue-item {:id (:catid application)}))
-                                        (:state application)
-                                        (:catid application))))))
+                                   application-id
+                                   (get-catalogue-item-title
+                                     (get-localized-catalogue-item {:id (:catid application)}))
+                                   (:state application)
+                                   (:catid application))))))
 
 (defn withdraw-application [application-id round msg]
   (unjudge-application application-id "withdraw" round msg))

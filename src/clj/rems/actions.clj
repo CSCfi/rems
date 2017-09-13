@@ -2,14 +2,17 @@
   (:require [clj-time.core :as time]
             [clj-time.format :as format]
             [compojure.core :refer [GET POST defroutes]]
+            [hiccup.core :as hiccup]
             [rems.anti-forgery :refer [anti-forgery-field]]
             [rems.collapsible :as collapsible]
             [rems.db.applications :as applications]
+            [rems.db.core :as db]
+            [rems.db.users :as users]
             [rems.guide :refer :all]
             [rems.layout :as layout]
             [rems.role-switcher :refer [has-roles? when-role]]
             [rems.text :refer [localize-state text]]
-            [rems.util :refer [errorf]]
+            [rems.util :refer :all]
             [ring.util.response :refer [redirect]]))
 
 (def ^:private time-format (format/formatter "yyyy-MM-dd HH:mm"
@@ -53,6 +56,36 @@
 (defn review-confirm-modal [name-field action-title app]
   (confirm-modal name-field action-title app (if (has-roles? :reviewer) (text :t.form/add-comments) (text :t.form/add-comments-applicant))))
 
+(defn- reviewer-selection [user-attrs]
+  (let [username (get-username user-attrs)
+        mail (get-user-mail user-attrs)]
+    (when (and username mail)
+      [:option {:value (get-user-id user-attrs)} (str username (hiccup/h " <") mail (hiccup/h ">"))])))
+
+(defn review-request-modal [app]
+  [:div.modal.fade {:id "review-request-modal" :tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
+   [:div.modal-dialog {:role "document"}
+    [:div.modal-content
+     [:form (actions-form-attrs app)
+      (anti-forgery-field)
+      [:div.modal-header
+       [:h5#confirmModalLabel.modal-title (text :t.form/add-comments)]
+       [:button.close {:type "button" :data-dismiss "modal" :aria-label (text :t.actions/cancel)}
+        [:span {:aria-hidden "true"} "&times;"]]]
+      [:div.modal-body
+       [:div.form-group
+        [:textarea.form-control {:name "comment"}]]
+       [:div.form-group
+        [:label (text :t.actions/review-request-selection)]
+        [:select.form-control {:name "recipients" :multiple "multiple" :required true}
+         (let [other-users (filter #(not= (get-user-id) %) (map :userid (db/get-users)))
+               users-attrs (map users/get-user-attributes other-users)]
+           (for [user-attrs users-attrs]
+             (reviewer-selection user-attrs)))]]]
+      [:div.modal-footer
+       [:button.btn.btn-secondary {:data-dismiss "modal"} (text :t.actions/cancel)]
+       [:button.btn.btn-primary {:type "submit" :name "review-request"} (text :t.actions/review-request)]]]]]])
+
 (defn not-implemented-modal [name-field action-title]
   [:div.modal.fade {:id (str name-field "-modal") :tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
    [:div.modal-dialog {:role "document"}
@@ -78,10 +111,21 @@
    (approval-confirm-modal "reject" (text :t.actions/reject) app)))
 
 (defn review-button [app]
+  (if (= :normal (:review app))
+    (list
+      [:button#review.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#review-modal"}
+       (text :t.actions/review)]
+      (review-confirm-modal "review" (text :t.actions/review) app))
+    (list
+      [:button#3rd-party-review.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#3rd-party-review-modal"}
+       (text :t.actions/review)]
+      (review-confirm-modal "3rd-party-review" (text :t.actions/review) app))))
+
+(defn review-request-button [app]
   (list
-   [:button#review.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#review-modal"}
-    (text :t.actions/review)]
-   (review-confirm-modal "review" (text :t.actions/review) app)))
+    [:button#review-request.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#review-request-modal"}
+     (text :t.actions/review-request)]
+    (review-request-modal app)))
 
 (defn- return-button [app]
   (list
@@ -146,6 +190,7 @@
    (close-button app)
    (reject-button app)
    (return-button app)
+   (review-request-button app)
    (approve-button app)])
 
 (defn review-form [app]
@@ -175,7 +220,7 @@
 
 (defn reviews
   ([]
-   (reviews (applications/get-application-to-review)))
+   (reviews (applications/get-applications-to-review)))
   ([apps]
    (actions apps review-button)))
 
@@ -296,8 +341,10 @@
                            (get input "reject") :reject
                            (get input "return") :return
                            (get input "review") :review
+                           (get input "review-request") :review-request
                            (get input "withdraw") :withdraw
                            (get input "close") :close
+                           (get input "3rd-party-review") :3rd-party-review
                            :else (errorf "Unknown action!"))
               comment (get input "comment")
               comment (when-not (empty? comment) comment)]
@@ -306,8 +353,10 @@
             :reject (applications/reject-application id round comment)
             :return (applications/return-application id round comment)
             :review (applications/review-application id round comment)
+            :review-request (applications/send-review-request id round comment (get input "recipients"))
             :withdraw (applications/withdraw-application id round comment)
-            :close (applications/close-application id round comment))
+            :close (applications/close-application id round comment)
+            :3rd-party-review (applications/perform-3rd-party-review id round comment))
           (assoc (redirect (if (or (has-roles? :approver) (has-roles? :reviewer)) "/actions" "/applications") :see-other)
                  :flash [{:status :success
                           :contents (case action
@@ -315,6 +364,8 @@
                                       :reject (text :t.actions/reject-success)
                                       :return (text :t.actions/return-success)
                                       :review (text :t.actions/review-success)
+                                      :review-request (text :t.actions/review-request-success)
                                       :withdraw (text :t.actions/withdraw-success)
-                                      :close (text :t.actions/close-success))}]))
+                                      :close (text :t.actions/close-success)
+                                      :3rd-party-review (text :t.actions/review-success))}]))
         ))

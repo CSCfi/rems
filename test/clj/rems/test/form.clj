@@ -270,6 +270,7 @@
   (is (emptyness-fn (hiccup-find [:button#close.btn.btn-secondary] action-buttons)) (str msg "close button"))
   (is (emptyness-fn (hiccup-find [:button#reject.btn.btn-secondary] action-buttons)) (str msg "reject button"))
   (is (emptyness-fn (hiccup-find [:button#return.btn.btn-secondary] action-buttons)) (str msg "return button"))
+  (is (emptyness-fn (hiccup-find [:button#review-request.btn.btn-secondary] action-buttons)) (str msg "review request button"))
   (is (emptyness-fn (hiccup-find [:button#approve.btn.btn-primary] action-buttons)) (str msg "approve button")))
 
 (defn- validate-approver-actions-absence [form-data]
@@ -290,6 +291,12 @@
 (defn- validate-back-button-presence [form-data]
   (is (not-empty (hiccup-find [:a#back] (get-action-buttons form-data))) "should see back button"))
 
+(defn- validate-3rd-party-review-actions-absence [form-data]
+  (is (empty? (hiccup-find [:button#3rd-party-review.btn.btn-primary] (get-action-buttons form-data))) "should not see 3rd-party review button"))
+
+(defn- validate-3rd-party-review-actions-presence [form-data]
+  (is (not-empty (hiccup-find [:button#3rd-party-review.btn.btn-primary] (get-action-buttons form-data))) "should see 3rd-party review button"))
+
 (deftest test-form-actions
   (with-fake-tempura
     (let [actionable-data {:application {:id 2
@@ -304,6 +311,11 @@
                                          [{:userid "developer"
                                            :round 0
                                            :event "apply"
+                                           :comment nil
+                                           :time nil}
+                                          {:userid "lenny"
+                                           :round 0
+                                           :event "review-request"
                                            :comment nil
                                            :time nil}]}}
           unactionable-data {:application {:id 2
@@ -320,65 +332,105 @@
                                              :event "apply"
                                              :comment nil
                                              :time nil}
+                                            {:userid "lenny"
+                                             :round 0
+                                             :event "review-request"
+                                             :comment nil
+                                             :time nil}
                                             {:userid "bob"
                                              :round 0
                                              :event "approved"
                                              :comment nil
                                              :time nil}]}}]
       (with-redefs [rems.db.workflow-actors/get-by-role
-                    (fn [appid round role]
-                      (let [data [{:id 2 :actoruserid "carl" :role "reviewer" :round 0}
-                                  {:id 2 :actoruserid "carl" :role "approver" :round 1}
-                                  {:id 2 :actoruserid "bob" :role "approver" :round 0}
-                                  {:id 2 :actoruserid "bob" :role "reviewer" :round 1}]]
-                        (->> data
-                             (filterv (fn [app] (and (= round (:round app)) (= role (:role app)))))
-                             (map :actoruserid))))
+                    (fn ([appid round role]
+                         (let [data [{:id 2 :actoruserid "carl" :role "reviewer" :round 0}
+                                     {:id 2 :actoruserid "carl" :role "approver" :round 1}
+                                     {:id 2 :actoruserid "bob" :role "approver" :round 0}
+                                     {:id 2 :actoruserid "bob" :role "reviewer" :round 1}]]
+                           (->> data
+                                (filterv (fn [app] (and (= round (:round app)) (= role (:role app)))))
+                                (map :actoruserid))))
+                      ([appid role]
+                       (let  [data [{:id 2 :actoruserid "carl" :role "reviewer" :round 0}
+                                    {:id 2 :actoruserid "carl" :role "approver" :round 1}
+                                    {:id 2 :actoruserid "bob" :role "approver" :round 0}
+                                    {:id 2 :actoruserid "bob" :role "reviewer" :round 1}]]
+                         (map :actoruserid data))))
                     rems.db.applications/get-application-state
                     (fn [_]
-                      (:application actionable-data))]
+                      (:application actionable-data))
+                    rems.db.core/get-users
+                    (fn []
+                      nil)
+                    rems.db.users/get-user-attributes
+                    (fn [_]
+                      nil)]
 
         (testing "As an applicant"
           (testing "on an actionable form"
             (validate-back-button-absence actionable-data)
             (validate-approver-actions-absence actionable-data)
-            (validate-review-actions-absence actionable-data))
+            (validate-review-actions-absence actionable-data)
+            (validate-3rd-party-review-actions-absence actionable-data))
           (testing "on an unactionable form"
             (validate-back-button-absence unactionable-data)
             (validate-approver-actions-absence unactionable-data)
-            (validate-review-actions-absence unactionable-data)))
+            (validate-review-actions-absence unactionable-data)
+            (validate-3rd-party-review-actions-absence unactionable-data)))
         (binding [context/*user* {"eppn" "bob"}
                   context/*active-role* :approver]
           (testing "As a current round approver"
             (testing "on an actionable form"
               (validate-back-button-presence actionable-data)
               (validate-approver-actions-presence actionable-data)
-              (validate-review-actions-absence actionable-data)))
+              (validate-review-actions-absence actionable-data)
+              (validate-3rd-party-review-actions-absence actionable-data)))
           (testing "As an approver"
             (testing "on an unactionable form"
               (validate-back-button-presence unactionable-data)
               (validate-approver-actions-absence unactionable-data)
-              (validate-review-actions-absence unactionable-data))))
+              (validate-review-actions-absence unactionable-data)
+              (validate-3rd-party-review-actions-absence unactionable-data))))
         (testing "As an approver, who is not set for the current round, on an actionable form"
           (binding [context/*user* {"eppn" "carl"}
                     context/*active-role* :approver]
             (validate-back-button-presence actionable-data)
             (validate-approver-actions-absence actionable-data)
-            (validate-review-actions-absence actionable-data)))
+            (validate-review-actions-absence actionable-data)
+            (validate-3rd-party-review-actions-absence actionable-data)))
         (testing "As a reviewer"
           (binding [context/*user* {"eppn" "carl"}
                     context/*active-role* :reviewer]
-            (testing "on an actionable form"
-              (validate-back-button-presence actionable-data)
-              (validate-approver-actions-absence actionable-data)
-              (validate-review-actions-presence actionable-data))
-            (testing "on an unactionable form"
-              (validate-back-button-presence unactionable-data)
-              (validate-approver-actions-absence unactionable-data)
-              (validate-review-actions-absence unactionable-data))))
-        (testing "As a reviwer, who is not set for the current round, on an actionable form"
+            (let [actionable-data (assoc-in actionable-data [:application :review] :normal)
+                  unactionable-data (assoc-in unactionable-data [:application :review] :normal)]
+              (testing "on an actionable form"
+                (validate-back-button-presence actionable-data)
+                (validate-approver-actions-absence actionable-data)
+                (validate-review-actions-presence actionable-data)
+                (validate-3rd-party-review-actions-absence actionable-data))
+              (testing "on an unactionable form"
+                (validate-back-button-presence unactionable-data)
+                (validate-approver-actions-absence unactionable-data)
+                (validate-review-actions-absence unactionable-data)
+                (validate-3rd-party-review-actions-absence unactionable-data)))))
+        (testing "As a reviewer, who is not set for the current round, on an actionable form"
           (binding [context/*user* {"eppn" "bob"}
                     context/*active-role* :reviewer]
             (validate-back-button-presence actionable-data)
             (validate-approver-actions-absence actionable-data)
-            (validate-review-actions-absence actionable-data)))))))
+            (validate-review-actions-absence actionable-data)
+            (validate-3rd-party-review-actions-absence actionable-data)))
+        (testing "As a 3d party reviewer"
+          (binding [context/*user* {"eppn" "lenny"}
+                    context/*active-role* :reviewer]
+            (testing "on an actionable form"
+              (validate-back-button-presence actionable-data)
+              (validate-approver-actions-absence actionable-data)
+              (validate-review-actions-absence actionable-data)
+              (validate-3rd-party-review-actions-presence actionable-data))
+            (testing "on an unactionable form"
+              (validate-back-button-presence unactionable-data)
+              (validate-approver-actions-absence unactionable-data)
+              (validate-review-actions-absence unactionable-data)
+              (validate-3rd-party-review-actions-absence unactionable-data))))))))
