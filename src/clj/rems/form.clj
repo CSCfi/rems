@@ -7,7 +7,8 @@
             [rems.applicant-info :as applicant-info]
             [rems.collapsible :as collapsible]
             [rems.context :as context]
-            [rems.db.applications :refer [can-approve?
+            [rems.db.applications :refer [assoc-review-type-to-app
+                                          can-approve?
                                           can-review?
                                           create-new-draft
                                           get-application-phases
@@ -193,7 +194,7 @@
      (when-role :reviewer
        (if (and actionable? (or (can-review? (:id (:application form)))
                                 (can-3rd-party-review? (:id (:application form)))))
-         (actions/review-form (:application form))
+         (actions/review-form (assoc-review-type-to-app (:application form)))
          [:div.row
           [:div.col.commands
            (actions/back-to-actions-button)]])

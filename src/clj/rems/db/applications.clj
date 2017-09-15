@@ -130,6 +130,9 @@
                                        (:events app))]
                  (assoc app :handled (:time (last my-events))))))))
 
+(defn assoc-review-type-to-app [app]
+  (assoc app :review (if (is-reviewer? (:id app)) :normal :3rd-party)))
+
 (defn get-applications-to-review
   "Returns applications that are waiting for a normal or 3rd party review. Type of the review, with key :review and values :normal or :3rd-party,
   are added to each application's attributes"
@@ -139,10 +142,7 @@
          (fn [app] (and (not (reviewed? app))
                         (or (can-review? (:id app))
                             (can-3rd-party-review? (:id app))))))
-       (mapv (fn [app]
-               (assoc app :review (if (is-reviewer? (:id app))
-                                   :normal
-                                   :3rd-party))))))
+       (mapv assoc-review-type-to-app)))
 
 (defn get-draft-id-for
   "Finds applications in the draft state for the given catalogue item.
