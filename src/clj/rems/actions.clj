@@ -27,13 +27,14 @@
   {:method "post"
    :action (str "/event/" (:id app) "/" (:curround app))})
 
-(defn- confirm-modal [name-field action-title app title-txt]
+(defn- confirm-modal
   "Creates a confimation pop-up for actions that could potentially cause harm if triggered by mistake.
    Takes the following arguments:
    name-field:   name of the button
    action-title: text for the button shown to user
    app:          application id the modal refers to
    title-txt:    desired text for the title of the pop-up"
+  [name-field action-title app title-txt]
   [:div.modal.fade {:id (str name-field "-modal") :tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
    [:div.modal-dialog {:role "document"}
     [:div.modal-content
