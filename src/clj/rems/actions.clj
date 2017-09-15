@@ -243,8 +243,7 @@
   ([apps buttons]
    (handled-applications apps buttons nil))
   ([apps buttons top-buttons]
-   (if (empty? apps)
-     nil
+   (when-not (empty? apps)
      (list
       top-buttons
       [:table.rems-table.actions
