@@ -13,7 +13,7 @@ parameters:
     description: >
       What VM image to use for the REMS machine.
     type: string
-    default: 'CentOS-7.0'
+    default: 'CentOS-7'
   rems_vm_flavor:
     description: >
       What VM flavor to use for the REMS machine.
