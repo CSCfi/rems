@@ -402,18 +402,16 @@
         (testing "As a reviewer"
           (binding [context/*user* {"eppn" "carl"}
                     context/*active-role* :reviewer]
-            (let [actionable-data (assoc-in actionable-data [:application :review] :normal)
-                  unactionable-data (assoc-in unactionable-data [:application :review] :normal)]
-              (testing "on an actionable form"
-                (validate-back-button-presence actionable-data)
-                (validate-approver-actions-absence actionable-data)
-                (validate-review-actions-presence actionable-data)
-                (validate-3rd-party-review-actions-absence actionable-data))
-              (testing "on an unactionable form"
-                (validate-back-button-presence unactionable-data)
-                (validate-approver-actions-absence unactionable-data)
-                (validate-review-actions-absence unactionable-data)
-                (validate-3rd-party-review-actions-absence unactionable-data)))))
+            (testing "on an actionable form"
+              (validate-back-button-presence actionable-data)
+              (validate-approver-actions-absence actionable-data)
+              (validate-review-actions-presence actionable-data)
+              (validate-3rd-party-review-actions-absence actionable-data))
+            (testing "on an unactionable form"
+              (validate-back-button-presence unactionable-data)
+              (validate-approver-actions-absence unactionable-data)
+              (validate-review-actions-absence unactionable-data)
+              (validate-3rd-party-review-actions-absence unactionable-data))))
         (testing "As a reviewer, who is not set for the current round, on an actionable form"
           (binding [context/*user* {"eppn" "bob"}
                     context/*active-role* :reviewer]
