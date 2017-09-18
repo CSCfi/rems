@@ -97,9 +97,10 @@
          :header "%1 kielivaraa korissa"
          :remove "Poista"}
   :catalogue {:header "Kielivarat"}
-  :email {:action-not-needed "Hyvä %1,
-                              Hakijan %2 hakemus %3 ei enää vaadi huomiotanne.
-                              Älkää vastatko tähän automaattisesti luotuun viestiin."
+  :email {:action-not-needed-msg "Hyvä %1,
+                                  Hakijan %2 hakemus %3 ei enää vaadi huomiotanne.
+                                  Älkää vastatko tähän automaattisesti luotuun viestiin."
+          :action-not-needed-subject "Toimenpiteitä ei enää tarvita"
           :application-sent-msg "Hyvä %1,
                                  Hakemuksenne käyttää resurssia %2 on lähetetty käsiteltäväksi.
                                  Saatte sähköpostitse tietoa hakemuksen etenemisestä. Voitte myös seurata sitä itse: %3
