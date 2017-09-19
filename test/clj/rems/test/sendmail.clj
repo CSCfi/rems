@@ -49,23 +49,31 @@
             wfid1 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 1}))
             wfid2 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 0}))
             wfid3 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 1}))
+            wfid4 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 1}))
             _ (actors/add-reviewer! wfid1 uid2 0)
             _ (actors/add-approver! wfid1 uid 1)
             _ (actors/add-approver! wfid2 uid 0)
             _ (actors/add-approver! wfid3 uid2 0)
             _ (actors/add-approver! wfid3 uid 0)
             _ (actors/add-approver! wfid3 uid 1)
+            _ (actors/add-approver! wfid4 uid 0)
+            _ (actors/add-approver! wfid4 uid2 0)
+            _ (actors/add-approver! wfid4 uid 1)
+            _ (actors/add-approver! wfid4 uid2 1)
             item1 (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wfid1}))
             item2 (:id (db/create-catalogue-item! {:title "item2" :form nil :resid nil :wfid wfid2}))
             item3 (:id (db/create-catalogue-item! {:title "item3" :form nil :resid nil :wfid wfid3}))
+            item4 (:id (db/create-catalogue-item! {:title "item4" :form nil :resid nil :wfid wfid4}))
             app1 (applications/create-new-draft item1)
             app2 (applications/create-new-draft item2)
             app3 (applications/create-new-draft item2)
             app4 (applications/create-new-draft item2)
-            app5 (applications/create-new-draft item3)]
+            app5 (applications/create-new-draft item3)
+            app6 (applications/create-new-draft item4)]
         (db/add-user! {:user uid :userattrs (generate-string {"eppn" "approver" "mail" "appr-invalid" "commonName" "App Rover"})})
         (db/add-user! {:user uid2 :userattrs (generate-string {"eppn" "reviewer" "mail" "rev-invalid" "commonName" "Rev Iwer"})})
         (db/add-user! {:user "test-user" :userattrs (generate-string context/*user*)})
+        (db/add-user! {:user "outside-reviewer" :userattrs (generate-string {"eppn" "outside-reviewer" "mail" "out-invalid" "commonName" "Out Sider"})})
         (testing "Applicant and reviewer should receive an email about the new application"
           (conjure/mocking [email/send-mail]
             (applications/submit-application app1)
@@ -168,4 +176,16 @@
                                               email/send-mail
                                               "rev-invalid"
                                               (subject-to-check "action-not-needed")
-                                              (str "([:t.email/action-not-needed-msg :t/missing] [\"Rev Iwer\" \"Test User\" " app5 "])"))))))))
+                                              (str "([:t.email/action-not-needed-msg :t/missing] [\"Rev Iwer\" \"Test User\" " app5 "])"))))
+        (testing "Multiple rounds with lazy actors"
+          (conjure/mocking [email/send-mail]
+            (applications/submit-application app6)
+            (binding [context/*user* {"eppn" "approver"}]
+              (applications/send-review-request app6 0 "" "outside-reviewer")
+              (applications/approve-application app6 0 "")
+              (applications/send-review-request app6 1 "" "outside-reviewer"))
+            (binding [context/*user* {"eppn" "outside-reviewer"}]
+              (applications/perform-3rd-party-review app6 1 ""))
+            (binding [context/*user* {"eppn" "approver"}]
+              (applications/approve-application app6 1 ""))
+              (conjure/verify-call-times-for email/send-mail 11)))))))

@@ -102,8 +102,9 @@
   "Takes as an argument a structure containing application information and a workflow round. Then returns userids for all users that have been requested to review for the given round."
   [application round]
   (->> (:events application)
-       (filter #(= "review-request" (:event %)))
-       (map :userid)))
+       (filter #(and (= "review-request" (:event %)) (= round (:round %))))
+       (map :userid)
+       (set)))
 
 (defn may-see-application? [application]
   (let [applicant? (= (:applicantuserid application) (get-user-id))
@@ -150,7 +151,7 @@
                                        (:events app))]
                  (assoc app :handled (:time (last my-events))))))))
 
-(defn check-for-unneeded-actions
+(defn- check-for-unneeded-actions
   "Checks whether the current event will advance into the next workflow round and notifies to all actors, who didn't react, by email that their attention is no longer needed."
   [application-id round event]
   (when (or (= "approve" event)
