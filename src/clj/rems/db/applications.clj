@@ -161,12 +161,8 @@
           approvers (filter (fn [userid] (not (approved? application (users/get-user-attributes userid) round))) (actors/get-by-role application-id round "approver"))
           reviewers (filter (fn [userid] (not (reviewed? application (users/get-user-attributes userid) round))) (actors/get-by-role application-id round "reviewer"))
           requestees (filter (fn [userid] (not (reviewed? application (users/get-user-attributes userid) round))) (get-3rd-party-reviewers application round))]
-      (doseq [approver approvers] (let [user-attrs (users/get-user-attributes approver)]
-                                    (email/action-not-needed user-attrs applicant-name application-id)))
-      (doseq [reviewer reviewers] (let [user-attrs (users/get-user-attributes reviewer)]
-                                    (email/action-not-needed user-attrs applicant-name application-id)))
-      (doseq [requestee requestees] (let [user-attrs (users/get-user-attributes requestee)]
-                                      (email/action-not-needed user-attrs applicant-name application-id))))))
+      (doseq [user (concat approvers reviewers requestees)] (let [user-attrs (users/get-user-attributes user)]
+                                    (email/action-not-needed user-attrs applicant-name application-id))))))
 
 (defn assoc-review-type-to-app [app]
   (assoc app :review (if (is-reviewer? (:id app)) :normal :3rd-party)))
