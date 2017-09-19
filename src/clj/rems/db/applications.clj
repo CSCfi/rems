@@ -31,14 +31,27 @@
       (and (contains? #{"closed" "withdrawn"} (:state app))
            (some (partial handling-event? app) (:events app)))))
 
+(defn approved?
+  "Return true if the user, given as parameter, has approved the application in question. Optionally a round parameter can be provided to focus the search only to a certain round's events."
+  ([app userid]
+   (not-empty? (filter #(and (= (get-user-id userid) (:userid %))
+                             (= "approve" (:event %)))
+                       (:events app))))
+  ([app userid round]
+   (approved? (update app :events (fn [events] (filter #(= round (:round %)) events))) userid)))
+
 (defn reviewed?
   "Returns true if the application, given as parameter, has already been reviewed normally or as a 3rd party actor by the current user.
    Otherwise, current hasn't yet provided feedback and false is returned."
-  [app]
-  (not-empty? (filter #(and (= (get-user-id) (:userid %))
-                            (or (= "review" (:event %))
-                                (= "3rd-party-review" (:event %))))
-                      (:events app))))
+  ([app]
+   (reviewed? app context/*user*))
+  ([app userid]
+   (not-empty? (filter #(and (= (get-user-id userid) (:userid %))
+                             (or (= "review" (:event %))
+                                 (= "3rd-party-review" (:event %))))
+                       (:events app))))
+  ([app userid round]
+   (reviewed? (update app :events (fn [events] (filter #(= round (:round %)) events))) userid)))
 
 (defn- can-act-as? [application role]
   (let [state (get-application-state application)
@@ -85,6 +98,13 @@
     (and (= "applied" (:state state))
          (is-3rd-party-reviewer? (get-user-id) (:curround state) state))))
 
+(defn get-3rd-party-reviewers
+  "Takes as an argument a structure containing application information and a workflow round. Then returns userids for all users that have been requested to review for the given round."
+  [application round]
+  (->> (:events application)
+       (filter #(= "review-request" (:event %)))
+       (map :userid)))
+
 (defn may-see-application? [application]
   (let [applicant? (= (:applicantuserid application) (get-user-id))
         application-id (:id application)]
@@ -129,6 +149,23 @@
                (let [my-events (filter #(= (get-user-id) (:userid %))
                                        (:events app))]
                  (assoc app :handled (:time (last my-events))))))))
+
+(defn check-for-unneeded-actions
+  "Checks whether the current event will advance into the next workflow round and notifies to all actors, who didn't react, by email that their attention is no longer needed."
+  [application-id round event]
+  (when (or (= "approve" event)
+            (= "review" event))
+    (let [application (get-application-state application-id)
+          applicant-name (get-username (users/get-user-attributes (:applicantuserid application)))
+          approvers (filter (fn [userid] (not (approved? application (users/get-user-attributes userid) round))) (actors/get-by-role application-id round "approver"))
+          reviewers (filter (fn [userid] (not (reviewed? application (users/get-user-attributes userid) round))) (actors/get-by-role application-id round "reviewer"))
+          requestees (filter (fn [userid] (not (reviewed? application (users/get-user-attributes userid) round))) (get-3rd-party-reviewers application round))]
+      (doseq [approver approvers] (let [user-attrs (users/get-user-attributes approver)]
+                                    (email/action-not-needed user-attrs applicant-name application-id)))
+      (doseq [reviewer reviewers] (let [user-attrs (users/get-user-attributes reviewer)]
+                                    (email/action-not-needed user-attrs applicant-name application-id)))
+      (doseq [requestee requestees] (let [user-attrs (users/get-user-attributes requestee)]
+                                      (email/action-not-needed user-attrs applicant-name application-id))))))
 
 (defn assoc-review-type-to-app [app]
   (assoc app :review (if (is-reviewer? (:id app)) :normal :3rd-party)))
@@ -473,6 +510,7 @@
       (throw-unauthorized))
     (db/add-application-event! {:application application-id :user (get-user-id)
                                 :round round :event event :comment msg})
+    (check-for-unneeded-actions application-id round event)
     (handle-state-change application-id)))
 
 (defn approve-application [application-id round msg]
