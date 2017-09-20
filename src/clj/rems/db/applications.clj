@@ -1,6 +1,7 @@
 (ns rems.db.applications
   "Query functions for forms and applications."
-  (:require [clojure.set :refer [difference]]
+  (:require [clojure.set :refer [difference
+                                 union]]
             [rems.auth.util :refer [throw-unauthorized]]
             [rems.context :as context]
             [rems.db.catalogue :refer [get-catalogue-item-title
@@ -33,9 +34,11 @@
            (some (partial handling-event? app) (:events app)))))
 
 (defn- get-events-of-type
-  "Returns all events of a given type within a specific round of an application."
-  [app round event]
-  (filter #(and (= event (:event %)) (= round (:round %))) (:events app)))
+  "Returns all events of a given type that have occured in an application. Optionally a round parameter can be provided to focus on events occuring during a given round."
+  ([app event]
+   (filter #(= event (:event %)) (:events app)))
+  ([app round event]
+   (filter #(and (= event (:event %)) (= round (:round %))) (:events app))))
 
 (defn get-approval-events
   "Returns all approve events within a specific round of an application."
@@ -43,14 +46,18 @@
   (get-events-of-type app round "approve"))
 
 (defn get-review-events
-  "Returns all review events within a specific round of an application."
-  [app round]
-  (get-events-of-type app round "review"))
+  "Returns all review events that have occured in an application. Optionally a round parameter can be provided to focus on reviews occuring during a given round."
+  ([app]
+   (get-events-of-type app "review"))
+  ([app round]
+   (get-events-of-type app round "review")))
 
 (defn get-3rd-party-review-events
-  "Returns all 3rd-party-review events within a specific round of an application."
-  [app round]
-  (get-events-of-type app round "3rd-party-review"))
+  "Returns all 3rd-party-review events that have occured in an application. Optionally a round parameter can be provided to focus on 3rd-party-reviews occuring during a given round."
+  ([app]
+   (get-events-of-type app "3rd-party-review"))
+  ([app round]
+   (get-events-of-type app round "3rd-party-review")))
 
 (defn reviewed?
   "Returns true if the application, given as parameter, has already been reviewed normally or as a 3rd party actor by the current user.
@@ -58,10 +65,8 @@
   ([app]
    (reviewed? app context/*user*))
   ([app userid]
-   (not-empty? (filter #(and (= (get-user-id userid) (:userid %))
-                             (or (= "review" (:event %))
-                                 (= "3rd-party-review" (:event %))))
-                       (:events app))))
+   (contains? (set (map :userid (concat (get-review-events app) (get-3rd-party-review-events app))))
+              (get-user-id userid)))
   ([app userid round]
    (reviewed? (update app :events (fn [events] (filter #(= round (:round %)) events))) userid)))
 
@@ -113,10 +118,7 @@
 (defn get-3rd-party-reviewers
   "Takes as an argument a structure containing application information and a workflow round. Then returns userids for all users that have been requested to review for the given round."
   [application round]
-  (->> (:events application)
-       (filter #(and (= "review-request" (:event %)) (= round (:round %))))
-       (map :userid)
-       (set)))
+  (set (map :userid (get-events-of-type application round "review-request"))))
 
 (defn may-see-application? [application]
   (let [applicant? (= (:applicantuserid application) (get-user-id))
@@ -177,7 +179,7 @@
                                 (set (map :userid (get-review-events application round))))
           requestees (difference (get-3rd-party-reviewers application round)
                                  (set (map :userid (get-3rd-party-review-events application round))))]
-      (doseq [user (concat approvers reviewers requestees)] (let [user-attrs (users/get-user-attributes user)]
+      (doseq [user (union approvers reviewers requestees)] (let [user-attrs (users/get-user-attributes user)]
                                                               (email/action-not-needed user-attrs applicant-name application-id))))))
 
 (defn assoc-review-type-to-app [app]
