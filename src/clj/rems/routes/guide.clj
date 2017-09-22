@@ -14,7 +14,6 @@
             [rems.guide :refer :all]
             [rems.layout :as layout]
             [rems.phase :as phase]
-            [rems.role-switcher :as role-switcher]
             [rems.util :as util]))
 
 (defn color-box [id hex]
@@ -78,9 +77,6 @@
 
           [:h2 "Forms"]
           (form/guide)
-
-          [:h2 "Role switcher"]
-          (role-switcher/guide)
 
           [:h2 "Misc components"]
           (phase/guide)

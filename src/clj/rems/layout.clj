@@ -4,8 +4,7 @@
             [rems.context :as context]
             [rems.guide :refer :all]
             [rems.language-switcher :refer [language-switcher]]
-            [rems.role-switcher :refer [role-switcher when-role
-                                        when-roles]]
+            [rems.role-switcher :refer [when-role when-roles]]
             [rems.text :refer :all]
             [rems.util :refer [get-username]]
             [ring.util.http-response :as response]))
@@ -39,7 +38,6 @@
          (nav-link "/actions" (text :t.navigation/actions) (= page-name "actions"))))
       (nav-link "/" (text :t.navigation/home) (= page-name "home")))
     (nav-link "/about" (text :t.navigation/about) (= page-name "about"))]
-   (role-switcher)
    (language-switcher)])
 
 (defn- navbar

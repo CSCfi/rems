@@ -12,7 +12,6 @@
             [rems.landing-page :as landing-page]
             [rems.language-switcher :as language-switcher]
             [rems.layout :as layout]
-            [rems.role-switcher :as role-switcher]
             [ring.util.response :refer [content-type
                                         redirect
                                         response]]))
@@ -51,5 +50,4 @@
   landing-page/landing-page-routes
   events/events-routes
   cart/cart-routes
-  form/form-routes
-  role-switcher/role-switcher-routes)
+  form/form-routes)
