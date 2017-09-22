@@ -133,6 +133,7 @@
    (back-to-actions-button)
    (review-button app)])
 
+;; TODO handle closing when no draft or anything saved yet
 (defroutes events-routes
   (POST "/event/:id/:round" [id round :as request]
         (let [id (Long/parseLong id)

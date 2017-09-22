@@ -183,5 +183,3 @@
                                false
                                (text :t.actions/handled-approvals)
                                (handled-approvals))]))]))
-
-;; TODO handle closing when no draft or anything saved yet
