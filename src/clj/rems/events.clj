@@ -122,7 +122,6 @@
 (defn approve-form [app]
   [:div.commands
    (back-to-actions-button)
-   (close-button app)
    (reject-button app)
    (return-button app)
    (review-request-button app)

@@ -267,7 +267,6 @@
   (hiccup-find [:.commands] (form form-data)))
 
 (defn- action-button-check [emptyness-fn action-buttons msg]
-  (is (emptyness-fn (hiccup-find [:button#close.btn.btn-secondary] action-buttons)) (str msg "close button"))
   (is (emptyness-fn (hiccup-find [:button#reject.btn.btn-secondary] action-buttons)) (str msg "reject button"))
   (is (emptyness-fn (hiccup-find [:button#return.btn.btn-secondary] action-buttons)) (str msg "return button"))
   (is (emptyness-fn (hiccup-find [:button#review-request.btn.btn-secondary] action-buttons)) (str msg "review request button"))
