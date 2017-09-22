@@ -185,5 +185,3 @@
                                (handled-approvals))]))]))
 
 ;; TODO handle closing when no draft or anything saved yet
-(defroutes actions-routes
-  (GET "/actions" [] (actions-page)))

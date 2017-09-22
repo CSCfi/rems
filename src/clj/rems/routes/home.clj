@@ -47,8 +47,8 @@
 (defroutes secured-routes
   (GET "/applications" [] (applications-page))
   (GET "/catalogue" [] (catalogue-page))
+  (GET "/actions" [] (actions/actions-page))
   landing-page/landing-page-routes
-  actions/actions-routes
   events/events-routes
   cart/cart-routes
   form/form-routes
