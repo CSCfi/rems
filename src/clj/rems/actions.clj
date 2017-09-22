@@ -1,19 +1,14 @@
 (ns rems.actions
+  "The /actions page that shows a list of applications you can act on."
   (:require [clj-time.core :as time]
             [clj-time.format :as format]
-            [compojure.core :refer [GET POST defroutes]]
-            [hiccup.core :as hiccup]
-            [rems.anti-forgery :refer [anti-forgery-field]]
+            [compojure.core :refer [GET defroutes]]
             [rems.collapsible :as collapsible]
             [rems.db.applications :as applications]
-            [rems.db.core :as db]
-            [rems.db.users :as users]
             [rems.guide :refer :all]
             [rems.layout :as layout]
-            [rems.role-switcher :refer [has-roles? when-role]]
-            [rems.text :refer [localize-state text]]
-            [rems.util :refer :all]
-            [ring.util.response :refer [redirect]]))
+            [rems.role-switcher :refer [when-role]]
+            [rems.text :refer [localize-state text]]))
 
 (def ^:private time-format (format/formatter "yyyy-MM-dd HH:mm"
                                              (time/default-time-zone)))
@@ -22,70 +17,6 @@
   [:a.btn.btn-secondary
    {:href (str "/form/" (:catid app) "/" (:id app))}
    (text :t.applications/view)])
-
-(defn- actions-form-attrs [app]
-  {:method "post"
-   :action (str "/event/" (:id app) "/" (:curround app))})
-
-(defn- confirm-modal
-  "Creates a confimation pop-up for actions that could potentially cause harm if triggered by mistake.
-   Takes the following arguments:
-   name-field:   name of the button
-   action-title: text for the button shown to user
-   app:          application id the modal refers to
-   title-txt:    desired text for the title of the pop-up"
-  [name-field action-title app title-txt]
-  [:div.modal.fade {:id (str name-field "-modal") :tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
-   [:div.modal-dialog {:role "document"}
-    [:div.modal-content
-     [:form (actions-form-attrs app)
-      (anti-forgery-field)
-      [:div.modal-header
-       [:h5#confirmModalLabel.modal-title title-txt]
-       [:button.close {:type "button" :data-dismiss "modal" :aria-label (text :t.actions/cancel)}
-        [:span {:aria-hidden "true"} "&times;"]]]
-      [:div.modal-body
-       [:div.form-group
-        [:textarea.form-control {:name "comment"}]]]
-      [:div.modal-footer
-       [:button.btn.btn-secondary {:data-dismiss "modal"} (text :t.actions/cancel)]
-       [:button.btn.btn-primary {:type "submit" :name name-field} action-title]]]]]])
-
-(defn approval-confirm-modal [name-field action-title app]
-  (confirm-modal name-field action-title app (if (has-roles? :approver) (text :t.form/add-comments) (text :t.form/add-comments-applicant))))
-
-(defn review-confirm-modal [name-field action-title app]
-  (confirm-modal name-field action-title app (if (has-roles? :reviewer) (text :t.form/add-comments) (text :t.form/add-comments-applicant))))
-
-(defn- reviewer-selection [user-attrs]
-  (let [username (get-username user-attrs)
-        mail (get-user-mail user-attrs)]
-    (when (and username mail)
-      [:option {:value (get-user-id user-attrs)} (str username (hiccup/h " <") mail (hiccup/h ">"))])))
-
-(defn review-request-modal [app]
-  [:div.modal.fade {:id "review-request-modal" :tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
-   [:div.modal-dialog {:role "document"}
-    [:div.modal-content
-     [:form (actions-form-attrs app)
-      (anti-forgery-field)
-      [:div.modal-header
-       [:h5#confirmModalLabel.modal-title (text :t.form/add-comments)]
-       [:button.close {:type "button" :data-dismiss "modal" :aria-label (text :t.actions/cancel)}
-        [:span {:aria-hidden "true"} "&times;"]]]
-      [:div.modal-body
-       [:div.form-group
-        [:textarea.form-control {:name "comment"}]]
-       [:div.form-group
-        [:label (text :t.actions/review-request-selection)]
-        [:select.form-control {:name "recipients" :multiple "multiple" :required true}
-         (let [other-users (filter #(not= (get-user-id) %) (map :userid (db/get-users)))
-               users-attrs (map users/get-user-attributes other-users)]
-           (for [user-attrs users-attrs]
-             (reviewer-selection user-attrs)))]]]
-      [:div.modal-footer
-       [:button.btn.btn-secondary {:data-dismiss "modal"} (text :t.actions/cancel)]
-       [:button.btn.btn-primary {:type "submit" :name "review-request"} (text :t.actions/review-request)]]]]]])
 
 (defn not-implemented-modal [name-field action-title]
   [:div.modal.fade {:id (str name-field "-modal") :tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
@@ -98,61 +29,6 @@
      [:div.modal-footer
       [:button.btn.btn-secondary {:data-dismiss "modal"} (text :t.actions/cancel)]
       ]]]])
-
-(defn- approve-button [app]
-  (list
-   [:button#approve.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#approve-modal"}
-    (text :t.actions/approve)]
-   (approval-confirm-modal "approve" (text :t.actions/approve) app)))
-
-(defn- reject-button [app]
-  (list
-   [:button#reject.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#reject-modal"}
-    (text :t.actions/reject)]
-   (approval-confirm-modal "reject" (text :t.actions/reject) app)))
-
-(defn review-button [app]
-  (if (= :normal (:review app))
-    (list
-      [:button#review.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#review-modal"}
-       (text :t.actions/review)]
-      (review-confirm-modal "review" (text :t.actions/review) app))
-    (list
-      [:button#3rd-party-review.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#3rd-party-review-modal"}
-       (text :t.actions/review)]
-      (review-confirm-modal "3rd-party-review" (text :t.actions/review) app))))
-
-(defn review-request-button [app]
-  (list
-    [:button#review-request.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#review-request-modal"}
-     (text :t.actions/review-request)]
-    (review-request-modal app)))
-
-(defn- return-button [app]
-  (list
-   [:button#return.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#return-modal"}
-    (text :t.actions/return)]
-   (approval-confirm-modal "return" (text :t.actions/return) app)))
-
-(defn- close-button [app]
-  (list
-   [:button#close.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
-    (text :t.actions/close)]
-   (approval-confirm-modal "close" (text :t.actions/close) app)))
-
-(defn back-to-actions-button []
-  [:a#back.btn.btn-secondary.pull-left {:href "/actions"} (text :t.form/back-actions)])
-
-(defn approve-buttons [app]
-  [:div.form-actions.inline
-   (reject-button app)
-   (approve-button app)])
-
-(defn- export-pdf-button [app]
-  (list
-   [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#not-implemented-export-pdf-modal"}
-    (text :t.actions/export-pdf)]
-   (not-implemented-modal "not-implemented-export-pdf" (text :t.actions/export-pdf))))
 
 (defn- load-application-states-button []
   (list
@@ -185,21 +61,7 @@
    (show-publications-button)
    (show-throughput-times-button)])
 
-(defn approve-form [app]
-  [:div.commands
-   (back-to-actions-button)
-   (close-button app)
-   (reject-button app)
-   (return-button app)
-   (review-request-button app)
-   (approve-button app)])
-
-(defn review-form [app]
-  [:div.commands
-   (back-to-actions-button)
-   (review-button app)])
-
-(defn actions [apps buttons]
+(defn actions [apps]
   (if (empty? apps)
     [:div.actions.alert.alert-success (text :t.actions/empty)]
     [:table.rems-table.actions
@@ -215,34 +77,29 @@
         [:td {:data-th (text :t.actions/resource)} (get-in app [:catalogue-item :title])]
         [:td {:data-th (text :t.actions/applicant)} (:applicantuserid app)]
         [:td {:data-th (text :t.actions/created)} (format/unparse time-format (:start app))]
-        [:td.commands
-         (view-button app)
-         (buttons app)]])]))
+        [:td.commands (view-button app)]])]))
 
 (defn reviews
   ([]
    (reviews (applications/get-applications-to-review)))
   ([apps]
-   (actions apps review-button)))
+   (actions apps)))
 
 (defn approvals
   ([]
    (approvals (applications/get-approvals)))
   ([apps]
-   (actions apps approve-buttons)))
+   (actions apps)))
 
 (defn handled-applications
   "Creates a table containing a list of handled applications.
 
   The function takes the following parameters as arguments:
   apps:        collection of apps to be shown
-  buttons:     a set of functionality buttons that are available for each application
   top-buttons: a set of extra buttons that will be shown on top of the table. This could include f.ex 'export as pdf' button."
   ([apps]
-   (handled-applications apps nil nil))
-  ([apps buttons]
-   (handled-applications apps buttons nil))
-  ([apps buttons top-buttons]
+   (handled-applications apps nil))
+  ([apps top-buttons]
    (when-not (empty? apps)
      (list
       top-buttons
@@ -261,16 +118,13 @@
           [:td {:data-th (text :t.actions/applicant)} (:applicantuserid app)]
           [:td {:data-th (text :t.actions/state)} (text (localize-state (:state app)))]
           [:td {:data-th (text :t.actions/handled)} (format/unparse time-format (:handled app))]
-          [:td.commands
-           (view-button app)
-           (when buttons
-             (buttons app))]])]))))
+          [:td.commands (view-button app)]])]))))
 
 (defn handled-approvals
   ([]
    (handled-approvals (applications/get-handled-approvals)))
   ([apps]
-   (handled-applications apps export-pdf-button (report-buttons))))
+   (handled-applications apps (report-buttons))))
 
 (defn handled-reviews
   ([]
@@ -329,43 +183,3 @@
                                false
                                (text :t.actions/handled-approvals)
                                (handled-approvals))]))]))
-
-;; TODO handle closing when no draft or anything saved yet
-(defroutes actions-routes
-  (GET "/actions" [] (actions-page))
-  (POST "/event/:id/:round" [id round :as request]
-        (let [id (Long/parseLong id)
-              round (Long/parseLong round)
-              input (:form-params request)
-              action (cond (get input "approve") :approve
-                           (get input "reject") :reject
-                           (get input "return") :return
-                           (get input "review") :review
-                           (get input "review-request") :review-request
-                           (get input "withdraw") :withdraw
-                           (get input "close") :close
-                           (get input "3rd-party-review") :3rd-party-review
-                           :else (errorf "Unknown action!"))
-              comment (get input "comment")
-              comment (when-not (empty? comment) comment)]
-          (case action
-            :approve (applications/approve-application id round comment)
-            :reject (applications/reject-application id round comment)
-            :return (applications/return-application id round comment)
-            :review (applications/review-application id round comment)
-            :review-request (applications/send-review-request id round comment (get input "recipients"))
-            :withdraw (applications/withdraw-application id round comment)
-            :close (applications/close-application id round comment)
-            :3rd-party-review (applications/perform-3rd-party-review id round comment))
-          (assoc (redirect (if (or (has-roles? :approver) (has-roles? :reviewer)) "/actions" "/applications") :see-other)
-                 :flash [{:status :success
-                          :contents (case action
-                                      :approve (text :t.actions/approve-success)
-                                      :reject (text :t.actions/reject-success)
-                                      :return (text :t.actions/return-success)
-                                      :review (text :t.actions/review-success)
-                                      :review-request (text :t.actions/review-request-success)
-                                      :withdraw (text :t.actions/withdraw-success)
-                                      :close (text :t.actions/close-success)
-                                      :3rd-party-review (text :t.actions/review-success))}]))
-        ))

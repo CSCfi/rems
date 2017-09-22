@@ -7,6 +7,7 @@
             [rems.contents :as contents]
             [rems.context :as context]
             [rems.css.styles :as styles]
+            [rems.events :as events]
             [rems.form :as form]
             [rems.landing-page :as landing-page]
             [rems.language-switcher :as language-switcher]
@@ -46,8 +47,9 @@
 (defroutes secured-routes
   (GET "/applications" [] (applications-page))
   (GET "/catalogue" [] (catalogue-page))
+  (GET "/actions" [] (actions/actions-page))
   landing-page/landing-page-routes
-  actions/actions-routes
+  events/events-routes
   cart/cart-routes
   form/form-routes
   role-switcher/role-switcher-routes)

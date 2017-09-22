@@ -2,7 +2,7 @@
   (:require [clj-time.core :as time]
             [clj-time.format :as format]
             [compojure.core :refer [GET POST defroutes]]
-            [rems.actions :as actions]
+            [rems.events :as events]
             [rems.anti-forgery :refer [anti-forgery-field]]
             [rems.applicant-info :as applicant-info]
             [rems.collapsible :as collapsible]
@@ -138,8 +138,8 @@
                            true
                            (:title form)
                            (list
-                            (actions/approval-confirm-modal "close" (text :t.actions/close) (:application form))
-                            (actions/approval-confirm-modal "withdraw" (text :t.actions/withdraw) (:application form))
+                            (events/approval-confirm-modal "close" (text :t.actions/close) (:application form))
+                            (events/approval-confirm-modal "withdraw" (text :t.actions/withdraw) (:application form))
                             [:form {:method "post"
                                     :action (if-let [app (:id (:application form))]
                                               (str "/form/" (:catalogue-item form) "/" app "/save")
@@ -186,18 +186,18 @@
 
      (when-role :approver
        (if (and actionable? (can-approve? (:id (:application form))))
-         (actions/approve-form (:application form))
+         (events/approve-form (:application form))
          [:div.row
           [:div.col.commands
-           (actions/back-to-actions-button)]])
+           (events/back-to-actions-button)]])
        )
      (when-role :reviewer
        (if (and actionable? (or (can-review? (:id (:application form)))
                                 (can-3rd-party-review? (:id (:application form)))))
-         (actions/review-form (assoc-review-type-to-app (:application form)))
+         (events/review-form (assoc-review-type-to-app (:application form)))
          [:div.row
           [:div.col.commands
-           (actions/back-to-actions-button)]])
+           (events/back-to-actions-button)]])
        ))))
 
 (defn link-to-item [item]
