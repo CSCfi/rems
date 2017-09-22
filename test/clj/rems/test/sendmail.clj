@@ -7,6 +7,7 @@
             [conman.core :as conman]
             [luminus-migrations.core :as migrations]
             [mount.core :as mount]
+            [rems.auth.NotAuthorizedException]
             [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.applications :as applications]
@@ -14,7 +15,8 @@
             [rems.db.core :as db]
             [rems.db.workflow-actors :as actors]
             [rems.email :as email]
-            [rems.test.tempura :refer [fake-tempura-fixture]]))
+            [rems.test.tempura :refer [fake-tempura-fixture]])
+  (:import rems.auth.NotAuthorizedException))
 
 (use-fixtures
   :once
@@ -118,17 +120,17 @@
               (conjure/verify-first-call-args-for email/send-mail "invalid-addr" (subject-to-check "status-changed") (status-msg-to-check "Test User" app3 item2 "item2" "returned"))))
           (testing "Emails should not be sent when actions fail"
             (conjure/mocking [email/send-mail]
-              (is (thrown? Exception (applications/approve-application app4 1 ""))
+              (is (thrown? NotAuthorizedException (applications/approve-application app4 1 ""))
                   "Approval should fail")
-              (is (thrown? Exception (applications/reject-application app4 1 ""))
+              (is (thrown? NotAuthorizedException (applications/reject-application app4 1 ""))
                   "Rejection should fail")
-              (is (thrown? Exception (applications/review-application app4 1 ""))
+              (is (thrown? NotAuthorizedException (applications/review-application app4 1 ""))
                   "Review should fail")
-              (is (thrown? Exception (applications/return-application app4 1 ""))
+              (is (thrown? NotAuthorizedException (applications/return-application app4 1 ""))
                   "Return should fail")
-              (is (thrown? Exception (applications/close-application app4 2 ""))
+              (is (thrown? NotAuthorizedException (applications/close-application app4 2 ""))
                   "closing should fail")
-              (is (thrown? Exception (applications/withdraw-application app1 2 ""))
+              (is (thrown? NotAuthorizedException (applications/withdraw-application app1 2 ""))
                   "withdraw should fail")
               (conjure/verify-call-times-for email/send-mail 0))))
         (testing "Applicant is notified of closed application"

@@ -6,6 +6,7 @@
             [conman.core :as conman]
             [luminus-migrations.core :as migrations]
             [mount.core :as mount]
+            [rems.auth.NotAuthorizedException]
             [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.applications :as applications]
@@ -15,7 +16,8 @@
             [rems.db.users :as users]
             [rems.db.workflow-actors :as actors]
             [rems.test.tempura :refer [fake-tempura-fixture]]
-            [rems.util :refer [get-user-id]]))
+            [rems.util :refer [get-user-id]])
+  (:import rems.auth.NotAuthorizedException))
 
 (use-fixtures
   :once
@@ -537,14 +539,14 @@
         (let [app (applications/create-new-draft item)]
           (is (= (fetch app) {:curround 0 :state "draft"}))
 
-          (is (thrown? Exception (applications/approve-application app 0 ""))
+          (is (thrown? NotAuthorizedException (applications/approve-application app 0 ""))
               "Should not be able to approve draft")
 
-          (is (thrown? Exception (applications/withdraw-application app))
+          (is (thrown? NotAuthorizedException (applications/withdraw-application app 0 ""))
               "Should not be able to withdraw draft")
 
           (binding [context/*user* {"eppn" "event-test-approver"}]
-            (is (thrown? Exception (applications/submit-application app))
+            (is (thrown? NotAuthorizedException (applications/submit-application app))
                 "Should not be able to submit when not applicant"))
 
           (applications/submit-application app)
@@ -554,10 +556,10 @@
           (is (= (fetch app) {:curround 0 :state "applied"})
               "Autoapprove should do nothing")
 
-          (is (thrown? Exception (applications/submit-application app))
+          (is (thrown? NotAuthorizedException (applications/submit-application app))
               "Should not be able to submit twice")
 
-          (is (thrown? Exception (applications/approve-application app 1 ""))
+          (is (thrown? NotAuthorizedException (applications/approve-application app 1 ""))
               "Should not be able to approve wrong round")
 
           (testing "withdrawing and resubmitting"
@@ -567,12 +569,12 @@
             (applications/submit-application app)
             (is (= (fetch app) {:curround 0 :state "applied"})))
 
-          (is (thrown? Exception (applications/review-application app 0 ""))
+          (is (thrown? NotAuthorizedException (applications/review-application app 0 ""))
               "Should not be able to review as an approver")
           (applications/approve-application app 0 "c1")
           (is (= (fetch app) {:curround 1 :state "applied"}))
 
-          (is (thrown? Exception (applications/approve-application app 1 ""))
+          (is (thrown? NotAuthorizedException (applications/approve-application app 1 ""))
               "Should not be able to approve if not approver")
 
           (binding [context/*user* {"eppn" "event-test-approver"}]
@@ -601,14 +603,14 @@
           (applications/submit-application app)
 
           (binding [context/*user* {"eppn" "event-test-approver"}]
-            (is (thrown? Exception (applications/return-application app 0 "comment"))
+            (is (thrown? NotAuthorizedException (applications/return-application app 0 "comment"))
                 "Should not be able to return when not approver"))
 
           (applications/return-application app 0 "comment")
           (is (= (fetch app) {:curround 0 :state "returned"}))
 
           (binding [context/*user* {"eppn" "event-test-approver"}]
-            (is (thrown? Exception (applications/submit-application app))
+            (is (thrown? NotAuthorizedException (applications/submit-application app))
                 "Should not be able to resubmit when not approver"))
 
           (applications/submit-application app)
@@ -622,29 +624,29 @@
           (actors/add-approver! rev-wf  uid  1)
           (is (= (fetch rev-app) {:curround 0 :state "draft"}))
           (binding [context/*user* {"eppn" "event-test-reviewer"}]
-            (is (thrown? Exception (applications/review-application rev-app))
+            (is (thrown? NotAuthorizedException (applications/review-application rev-app 0 ""))
                 "Should not be able to review a draft"))
-          (is (thrown? Exception (applications/review-application rev-app))
+          (is (thrown? NotAuthorizedException (applications/review-application rev-app 0 ""))
               "Should not be able to review if not reviewer")
           (applications/submit-application rev-app)
           (is (= (fetch rev-app) {:curround 0 :state "applied"}))
           (binding [context/*user* {"eppn" "event-test-reviewer"}]
-            (is (thrown? Exception (applications/review-application rev-app 1 ""))
+            (is (thrown? NotAuthorizedException (applications/review-application rev-app 1 ""))
                 "Should not be able to review wrong round")
-            (is (thrown? Exception (applications/approve-application rev-app 0 ""))
+            (is (thrown? NotAuthorizedException (applications/approve-application rev-app 0 ""))
                 "Should not be able to approve as reviewer")
             (applications/review-application rev-app 0 "looks good to me"))
           (is (= (fetch rev-app) {:curround 1 :state "applied"}))
           (applications/return-application rev-app 1 "comment")
           (is (= (fetch rev-app) {:curround 0 :state "returned"}))
           (binding [context/*user* {"eppn" "event-test-reviewer"}]
-            (is (thrown? Exception (applications/review-application rev-app))
+            (is (thrown? NotAuthorizedException (applications/review-application rev-app 0 ""))
                 "Should not be able to review when returned"))
           (applications/submit-application rev-app)
           (applications/withdraw-application rev-app 0 "test withdraw")
           (is (= (fetch rev-app) {:curround 0 :state "withdrawn"}))
           (binding [context/*user* {"eppn" "event-test-reviewer"}]
-            (is (thrown? Exception (applications/review-application rev-app))
+            (is (thrown? NotAuthorizedException (applications/review-application rev-app 0 ""))
                 "Should not be able to review when withdrawn"))))
 
       (testing "closing"
@@ -695,16 +697,16 @@
             (is (= (fetch new-app) {:curround 0 :state "applied"}))
             (binding [context/*user* {"eppn" "3rd-party-reviewer"}]
               (applications/perform-3rd-party-review new-app 0 "comment")
-              (is (thrown? Exception (applications/review-application new-app 0 "another comment"))
+              (is (thrown? NotAuthorizedException (applications/review-application new-app 0 "another comment"))
                   "Should not be able to do normal review"))
             (is (= (fetch new-app) {:curround 0 :state "applied"}))
             (applications/approve-application new-app 0 "")
             (is (= (fetch new-app) {:curround 0 :state "approved"}))
             (binding [context/*user* {"eppn" "3rd-party-reviewer"}]
-              (is (thrown? Exception (applications/perform-3rd-party-review new-app 0 "another comment"))
+              (is (thrown? NotAuthorizedException (applications/perform-3rd-party-review new-app 0 "another comment"))
                   "Should not be able to review when approved"))
             (binding [context/*user* {"eppn" "other-reviewer"}]
-              (is (thrown? Exception (applications/perform-3rd-party-review new-app 0 "too late comment"))
+              (is (thrown? NotAuthorizedException (applications/perform-3rd-party-review new-app 0 "too late comment"))
                   "Should not be able to review when approved"))
             (is (= (->> (applications/get-application-state new-app)
                         :events
@@ -736,13 +738,13 @@
             (applications/return-application app-to-return 0 "returning")
             (is (= (fetch app-to-return) {:curround 0 :state "returned"}) "should be able to return application even without review")
             (binding [context/*user* {"eppn" "3rd-party-reviewer"}]
-              (is (thrown? Exception (applications/perform-3rd-party-review app-to-close 0 "comment"))
+              (is (thrown? NotAuthorizedException (applications/perform-3rd-party-review app-to-close 0 "comment"))
                   "Should not be able to review when closed")
-              (is (thrown? Exception (applications/perform-3rd-party-review app-to-approve 0 "comment"))
+              (is (thrown? NotAuthorizedException (applications/perform-3rd-party-review app-to-approve 0 "comment"))
                   "Should not be able to review when approved")
-              (is (thrown? Exception (applications/perform-3rd-party-review app-to-reject 0 "comment"))
+              (is (thrown? NotAuthorizedException (applications/perform-3rd-party-review app-to-reject 0 "comment"))
                   "Should not be able to review when rejected")
-              (is (thrown? Exception (applications/perform-3rd-party-review app-to-return 0 "another comment"))
+              (is (thrown? NotAuthorizedException (applications/perform-3rd-party-review app-to-return 0 "another comment"))
                   "Should not be able to review when returned"))
             (is (= (->> (applications/get-application-state app-to-close)
                         :events
