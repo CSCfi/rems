@@ -397,12 +397,6 @@ CREATE TABLE roles (
   FOREIGN KEY (userId) REFERENCES users
 )
 --;;
-CREATE TABLE active_role (
-  userId varchar(255) PRIMARY KEY,
-  role varchar(255) NOT NULL,
-  FOREIGN KEY (userId, role) REFERENCES roles
-)
---;;
 CREATE TABLE application_event (
   id serial NOT NULL PRIMARY KEY, -- for ordering events
   appId integer REFERENCES catalogue_item_application (id),

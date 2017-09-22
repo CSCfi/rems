@@ -17,17 +17,18 @@
     :t.roles.names/unknown))
 
 (defn has-roles?
-  "Checks that the `context/*active-role*` matches one of the given roles."
+  "Checks that the `context/*roles*` contains one of the given roles."
   [& roles]
-  (contains? (set roles) context/*active-role*))
+  (assert (bound? #'context/*roles*) "context/*roles* is not defined")
+  (boolean (some (set roles) context/*roles*)))
 
 (defmacro when-roles
-  "Executes the body when the active role is one of the given roles."
+  "Executes the body when one of the given roles is present."
   [roles & body]
   `(when (has-roles? ~@roles)
      ~@body))
 
 (defmacro when-role
-  "Executes the body when the active role is the given role."
+  "Executes the body when the given role is present."
   [role & body]
   `(when-roles #{~role} ~@body))

@@ -507,17 +507,8 @@
   (roles/add-role! "simo" :approver)
   (is (= #{:applicant :reviewer} (roles/get-roles "pekka")))
   (is (= #{:approver} (roles/get-roles "simo")))
-  (is (empty? (roles/get-roles "juho")))
-  (is (thrown? RuntimeException (roles/add-role! "pekka" :unknown-role)))
-
-  (is (= :applicant (roles/get-active-role "pekka")) "applicant is the default active role")
-  (roles/set-active-role! "pekka" :applicant)
-  (is (= :applicant (roles/get-active-role "pekka")))
-  (roles/set-active-role! "pekka" :reviewer)
-  (is (= :reviewer (roles/get-active-role "pekka")))
-  ;; a sql constraint violation causes the current transaction to go
-  ;; to aborted state, thus we test this last
-  (is (thrown? Exception (roles/set-active-role! "pekka" :approver))))
+  (is (= #{:applicant} (roles/get-roles "juho"))) ;; default role
+  (is (thrown? RuntimeException (roles/add-role! "pekka" :unknown-role))))
 
 (deftest test-application-events
   (binding [context/*user* {"eppn" "event-test"}]
@@ -684,8 +675,8 @@
         (testing "3rd party review"
           (let [new-app (applications/create-new-draft new-item)]
             (applications/submit-application new-app)
-            (is (= #{} (roles/get-roles "3rd-party-reviewer")))
-            (is (= #{} (roles/get-roles "another-reviewer")))
+            (is (= #{:applicant} (roles/get-roles "3rd-party-reviewer"))) ;; default role
+            (is (= #{:applicant} (roles/get-roles "another-reviewer")))   ;; default role
             (applications/send-review-request new-app 0 "review?" "3rd-party-reviewer")
             (is (= #{:reviewer} (roles/get-roles "3rd-party-reviewer")))
             ;should not send twice to 3rd-party-reviewer, but another-reviewer should still be added

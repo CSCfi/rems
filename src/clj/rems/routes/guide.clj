@@ -38,7 +38,8 @@
    ])
 
 (defn guide-page []
-  (binding [context/*root-path* "path/"]
+  (binding [context/*root-path* "path/"
+            context/*roles* #{:applicant}]
     (with-language :en
       (h/html
        [:head

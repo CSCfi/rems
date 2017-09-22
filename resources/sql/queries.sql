@@ -295,17 +295,6 @@ VALUES (:user, :role)
 ON CONFLICT (userId, role)
 DO NOTHING
 
--- :name get-active-role :? :1
-SELECT role
-FROM active_role
-WHERE userId = :user
-
--- :name set-active-role! :!
-INSERT INTO active_role (userId, role)
-VALUES (:user, :role)
-ON CONFLICT (userId)
-DO UPDATE SET role = :role
-
 -- :name add-user! :!
 INSERT INTO users (userId, userAttrs)
 VALUES (:user, :userattrs::jsonb)

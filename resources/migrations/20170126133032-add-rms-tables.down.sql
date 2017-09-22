@@ -140,8 +140,6 @@ DROP TABLE IF EXISTS workflow_actors CASCADE;
 --;;
 DROP TABLE IF EXISTS application_event CASCADE;
 --;;
-DROP TABLE IF EXISTS active_role CASCADE;
---;;
 DROP TABLE IF EXISTS roles CASCADE;
 --;;
 DROP TABLE IF EXISTS users CASCADE;

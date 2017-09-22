@@ -59,9 +59,7 @@
 (defn wrap-context [handler]
   (fn [request]
     (binding [context/*roles* (when context/*user*
-                                (roles/get-roles (get-user-id)))
-              context/*active-role* (when context/*user*
-                                      (roles/get-active-role (get-user-id)))]
+                                (roles/get-roles (get-user-id)))]
       (handler request))))
 
 (defn wrap-internal-error [handler]
@@ -144,8 +142,7 @@
       (log/info ">" (:request-method request) uri
                 "lang:" context/*lang*
                 "user:" context/*user*
-                "roles:" context/*roles*
-                "active:" context/*active-role*)
+                "roles:" context/*roles*)
       (log/debug "session" (pr-str (:session request)))
       (when-not (empty? (:form-params request))
         (log/debug "form params" (pr-str (:form-params request))))

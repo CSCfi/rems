@@ -156,16 +156,13 @@
             (binding [context/*roles* nil]
               (navbar "example-page" nil)))
    (example "navbar for applicant"
-            (binding [context/*roles* #{:applicant}
-                      context/*active-role* :applicant]
+            (binding [context/*roles* #{:applicant}]
               (navbar "example-page" "Eero Esimerkki")))
    (example "navbar for approver"
-            (binding [context/*roles* #{:approver}
-                      context/*active-role* :approver]
+            (binding [context/*roles* #{:approver}]
               (navbar "example-page" "Aimo Approver")))
    (example "navbar for admin"
-            (binding [context/*roles* #{:applicant :approver :reviewer}
-                      context/*active-role* :approver]
+            (binding [context/*roles* #{:applicant :approver :reviewer}]
               (navbar "example-page" "Antero Admin")))
    (example "footer"
             (footer))
