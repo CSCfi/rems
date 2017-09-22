@@ -183,6 +183,16 @@
       path: /opt/tomcat/webapps/docs
       state: absent
 
+  - name: Delete tomcat manager app
+    file:
+      path: /opt/tomcat/webapps/manager
+      state: absent
+
+  - name: Delete tomcat host-manager app
+    file:
+      path: /opt/tomcat/webapps/host-manager
+      state: absent
+
   - name: Change ownership files in /opt/tomcat to tomcat user
     file:
       path: /opt/tomcat
