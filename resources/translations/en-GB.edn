@@ -33,6 +33,8 @@
                   "Description: This dataset has a minimal workflow. The user just commits to licence terms and receives an entitlement."]
                  [:p [:strong "ELFA Corpus, one approval"] [:br]
                   "Description: This dataset has a simple workflow. The application is sent to a single person (RDapprover1) for approval."]
+                 [:p [:strong "ELFA Corpus, with review"] [:br]
+                  "Description: This dataset has a simple workflow with a reviewer (RDreview), who can just provide comments to the approver (RDapprover1) on the application."]
                  [:p [:strong "ELFA Corpus, two rounds of approval by different approvers"] [:br]
                   "Description: This dataset has two approval phases. The application must be first approved by RDapprover1 and then by RDapprover2."]
                  [:h3 "Terms of Use"]
