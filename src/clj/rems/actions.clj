@@ -54,12 +54,6 @@
     (text :t.actions/show-throughput-times)]
    (not-implemented-modal "show-throughput-times" (text :t.actions/show-throughput-times))))
 
-(defn- export-pdf-button [app] ;; TODO: unused
-  (list
-   [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#not-implemented-export-pdf-modal"}
-    (text :t.actions/export-pdf)]
-   (not-implemented-modal "not-implemented-export-pdf" (text :t.actions/export-pdf))))
-
 (defn report-buttons []
   [:div.form-actions.inline
    (load-application-states-button)

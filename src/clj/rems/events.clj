@@ -119,11 +119,6 @@
 (defn back-to-actions-button []
   [:a#back.btn.btn-secondary.pull-left {:href "/actions"} (text :t.form/back-actions)])
 
-(defn approve-buttons [app]
-  [:div.form-actions.inline
-   (reject-button app)
-   (approve-button app)])
-
 (defn approve-form [app]
   [:div.commands
    (back-to-actions-button)
