@@ -2,8 +2,7 @@
   (:require [clj-time.core :as time]
             [clojure.test :refer :all]
             [hiccup-find.core :refer :all]
-            [rems.actions :as actions]
-            [rems.context :as context]
+            [rems.actions]
             [rems.test.tempura :refer [fake-tempura-fixture]]))
 
 (use-fixtures :once fake-tempura-fixture)

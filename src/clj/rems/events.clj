@@ -1,18 +1,13 @@
 (ns rems.events
   "Components and endpoints for submitting events (review, approve, etc.) for applications"
-  (:require [clj-time.core :as time]
-            [clj-time.format :as format]
-            [compojure.core :refer [GET POST defroutes]]
+  (:require [compojure.core :refer [POST defroutes]]
             [hiccup.core :as hiccup]
             [rems.anti-forgery :refer [anti-forgery-field]]
-            [rems.collapsible :as collapsible]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.users :as users]
-            [rems.guide :refer :all]
-            [rems.layout :as layout]
-            [rems.role-switcher :refer [has-roles? when-role]]
-            [rems.text :refer [localize-state text]]
+            [rems.role-switcher :refer [has-roles?]]
+            [rems.text :refer [text]]
             [rems.util :refer :all]
             [ring.util.response :refer [redirect]]))
 

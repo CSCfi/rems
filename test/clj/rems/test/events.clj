@@ -1,9 +1,8 @@
 (ns rems.test.events
-  (:require [clj-time.core :as time]
-            [clojure.test :refer :all]
+  (:require [clojure.test :refer :all]
             [hiccup-find.core :refer :all]
-            [rems.events :as events]
             [rems.context :as context]
+            [rems.events :as events]
             [rems.test.tempura :refer [fake-tempura-fixture]]))
 
 (use-fixtures :once fake-tempura-fixture)

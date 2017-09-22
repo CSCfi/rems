@@ -2,19 +2,13 @@
   "The /actions page that shows a list of applications you can act on."
   (:require [clj-time.core :as time]
             [clj-time.format :as format]
-            [compojure.core :refer [GET POST defroutes]]
-            [hiccup.core :as hiccup]
-            [rems.anti-forgery :refer [anti-forgery-field]]
+            [compojure.core :refer [GET defroutes]]
             [rems.collapsible :as collapsible]
             [rems.db.applications :as applications]
-            [rems.db.core :as db]
-            [rems.db.users :as users]
             [rems.guide :refer :all]
             [rems.layout :as layout]
-            [rems.role-switcher :refer [has-roles? when-role]]
-            [rems.text :refer [localize-state text]]
-            [rems.util :refer :all]
-            [ring.util.response :refer [redirect]]))
+            [rems.role-switcher :refer [when-role]]
+            [rems.text :refer [localize-state text]]))
 
 (def ^:private time-format (format/formatter "yyyy-MM-dd HH:mm"
                                              (time/default-time-zone)))
