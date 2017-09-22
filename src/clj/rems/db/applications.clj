@@ -590,6 +590,9 @@
     (when-not (or applicant? (can-approve? application-id))
       (throw-unauthorized))
     (let [state (get-application-state application-id)]
+      (when (= event "withdraw")
+        (when-not (= (:state state) "applied")
+          (throw-unauthorized)))
       (when-not (= round (:curround state))
         (throw-unauthorized))
       (db/add-application-event! {:application application-id :user (get-user-id)
