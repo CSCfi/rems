@@ -1,8 +1,6 @@
 ---
 
 - hosts: all
-  vars_files:
-    - vault.yml
   become: yes
   tasks:
 
@@ -168,11 +166,6 @@
   - name: Copy tomcat context.xml
     copy:
       src: context.xml
-      dest: /opt/tomcat/conf
-
-  - name: Copy tomcat-users.xml
-    template:
-      src: tomcat-users.xml
       dest: /opt/tomcat/conf
 
   - name: Copy tomcat catalina.properties
