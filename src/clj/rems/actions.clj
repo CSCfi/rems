@@ -199,7 +199,7 @@
    (back-to-actions-button)
    (review-button app)])
 
-(defn actions [apps buttons]
+(defn actions [apps]
   (if (empty? apps)
     [:div.actions.alert.alert-success (text :t.actions/empty)]
     [:table.rems-table.actions
@@ -215,34 +215,29 @@
         [:td {:data-th (text :t.actions/resource)} (get-in app [:catalogue-item :title])]
         [:td {:data-th (text :t.actions/applicant)} (:applicantuserid app)]
         [:td {:data-th (text :t.actions/created)} (format/unparse time-format (:start app))]
-        [:td.commands
-         (view-button app)
-         (buttons app)]])]))
+        [:td.commands (view-button app)]])]))
 
 (defn reviews
   ([]
    (reviews (applications/get-applications-to-review)))
   ([apps]
-   (actions apps review-button)))
+   (actions apps)))
 
 (defn approvals
   ([]
    (approvals (applications/get-approvals)))
   ([apps]
-   (actions apps approve-buttons)))
+   (actions apps)))
 
 (defn handled-applications
   "Creates a table containing a list of handled applications.
 
   The function takes the following parameters as arguments:
   apps:        collection of apps to be shown
-  buttons:     a set of functionality buttons that are available for each application
   top-buttons: a set of extra buttons that will be shown on top of the table. This could include f.ex 'export as pdf' button."
   ([apps]
-   (handled-applications apps nil nil))
-  ([apps buttons]
-   (handled-applications apps buttons nil))
-  ([apps buttons top-buttons]
+   (handled-applications apps nil))
+  ([apps top-buttons]
    (when-not (empty? apps)
      (list
       top-buttons
@@ -261,16 +256,13 @@
           [:td {:data-th (text :t.actions/applicant)} (:applicantuserid app)]
           [:td {:data-th (text :t.actions/state)} (text (localize-state (:state app)))]
           [:td {:data-th (text :t.actions/handled)} (format/unparse time-format (:handled app))]
-          [:td.commands
-           (view-button app)
-           (when buttons
-             (buttons app))]])]))))
+          [:td.commands (view-button app)]])]))))
 
 (defn handled-approvals
   ([]
    (handled-approvals (applications/get-handled-approvals)))
   ([apps]
-   (handled-applications apps export-pdf-button (report-buttons))))
+   (handled-applications apps (report-buttons))))
 
 (defn handled-reviews
   ([]
