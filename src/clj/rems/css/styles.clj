@@ -57,8 +57,7 @@
                             [:th
                              :td
                              {:display "table-cell"}]]
-                           [:.language-switcher
-                            {:padding ".5em .5em"}]))
+                           [:.language-switcher {:padding ".5em .5em"}]))
     (stylesheet/at-media {:min-width (u/px 480)}
                          [:.commands {:white-space "nowrap"}])))
 
@@ -247,8 +246,7 @@
   [:.catalogue-item-link {:color "#fff"
                           :text-decoration "underline"}]
   ;Has to be defined before the following media queries
-  [:.language-switcher
-   {:padding ".5em 0"}]
+  [:.language-switcher {:padding ".5em 0"}]
   (generate-media-queries)
   [:.user
    :.language-switcher
