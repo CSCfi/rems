@@ -7,7 +7,7 @@
             [rems.db.applications :as applications]
             [rems.guide :refer :all]
             [rems.layout :as layout]
-            [rems.role-switcher :refer [when-role]]
+            [rems.roles :refer [when-role]]
             [rems.text :refer [localize-state text]]))
 
 (def ^:private time-format (format/formatter "yyyy-MM-dd HH:mm"

@@ -2,7 +2,7 @@
   (:require [rems.collapsible :as collapsible]
             [rems.context :as context]
             [rems.guide :refer :all]
-            [rems.role-switcher :refer [when-role]]
+            [rems.roles :refer [when-role]]
             [rems.text :refer :all]
             [rems.util :refer [get-username]]))
 

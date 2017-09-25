@@ -20,7 +20,7 @@
             [rems.guide :refer :all]
             [rems.layout :as layout]
             [rems.phase :refer [phases]]
-            [rems.role-switcher :refer [when-role]]
+            [rems.roles :refer [when-role]]
             [rems.text :refer :all]
             [rems.util :refer [get-user-id]]
             [ring.util.response :refer [redirect]]))

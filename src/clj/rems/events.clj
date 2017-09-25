@@ -6,7 +6,7 @@
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.users :as users]
-            [rems.role-switcher :refer [has-roles?]]
+            [rems.roles :refer [has-roles?]]
             [rems.text :refer [text]]
             [rems.util :refer :all]
             [ring.util.response :refer [redirect]]))
