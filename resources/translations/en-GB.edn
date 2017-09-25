@@ -155,7 +155,4 @@
            :approve "Approval"
            :approved "Approved"
            :rejected "Rejected"
-           :review "Review"}
-  :roles {:names {:applicant "Applicant"
-                  :approver "Approver"
-                  :reviewer "Reviewer"}}}}
+           :review "Review"}}}

@@ -1,14 +1,6 @@
 (ns rems.roles
   (:require [rems.context :as context]))
 
-(defn- localize-role
-  [role]
-  (case role
-    :applicant :t.roles.names/applicant
-    :reviewer :t.roles.names/reviewer
-    :approver :t.roles.names/approver
-    :t.roles.names/unknown))
-
 (defn has-roles?
   "Checks that the `context/*roles*` contains one of the given roles."
   [& roles]
