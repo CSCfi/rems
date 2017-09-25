@@ -155,8 +155,4 @@
            :approve "Approval"
            :approved "Approved"
            :rejected "Rejected"
-           :review "Review"}
-  :roles {:header "Select role:"
-          :names {:applicant "Applicant"
-                  :approver "Approver"
-                  :reviewer "Reviewer"}}}}
+           :review "Review"}}}

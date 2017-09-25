@@ -156,8 +156,4 @@
            :approve "Hyväksyntä"
            :approved "Hyväksytty"
            :rejected "Hylätty"
-           :review "Katselmointi"}
-  :roles {:header "Valitse rooli:"
-          :names {:applicant "Hakija"
-                  :approver "Hyväksyjä"
-                  :reviewer "Katselmoija"}}}}
+           :review "Katselmointi"}}}

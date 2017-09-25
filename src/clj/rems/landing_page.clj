@@ -2,7 +2,7 @@
   (:require [compojure.core :refer [GET defroutes]]
             [rems.context :as context]
             [rems.db.users :as users]
-            [rems.role-switcher :refer [has-roles?]]
+            [rems.roles :refer [has-roles?]]
             [rems.util :refer [get-user-id]]
             [ring.util.response :refer [redirect]]))
 

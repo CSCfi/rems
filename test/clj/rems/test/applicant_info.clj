@@ -14,20 +14,18 @@
 (deftest test-applicant-details
   (with-fake-tempura
     (testing "Info without role information"
-      (is (not-empty (find-from-details [:.card-header])) "Should see collapsible header")
-      (is (empty? (children-of (find-from-details [:.collapse-content]))) "Shouldn't see collapsible block"))
+      (binding [context/*roles* #{}]
+        (is (not-empty (find-from-details [:.card-header])) "Should see collapsible header")
+        (is (empty? (children-of (find-from-details [:.collapse-content]))) "Shouldn't see collapsible block")))
     (testing "Info as an applicant"
-      (binding [context/*roles* #{:applicant}
-                context/*active-role* :applicant]
+      (binding [context/*roles* #{:applicant}]
         (is (not-empty (find-from-details [:.card-header])) "Should see collapsible header")
         (is (empty? (children-of (find-from-details [:.collapse-content]))) "Shouldn't see collapsible block")))
     (testing "Info as an approver"
-      (binding [context/*roles* #{:approver}
-                context/*active-role* :approver]
+      (binding [context/*roles* #{:approver}]
         (is (not-empty (find-from-details [:.card-header])) "Collapsible header should be visible.")
         (is (not-empty (children-of (find-from-details [:.collapse-content]))) "Collapsible block should be visible.")))
     (testing "Info as a reviewer"
-      (binding [context/*roles* #{:reviewe}
-                context/*active-role* :reviewer]
+      (binding [context/*roles* #{:reviewe}]
         (is (not-empty (find-from-details [:.card-header])) "Should see collapsible header")
         (is (empty? (children-of (find-from-details [:.collapse-content]))) "Shouldn't see collapsible block")))))

@@ -2,7 +2,7 @@
   (:require [rems.collapsible :as collapsible]
             [rems.context :as context]
             [rems.guide :refer :all]
-            [rems.role-switcher :refer [when-role]]
+            [rems.roles :refer [when-role]]
             [rems.text :refer :all]
             [rems.util :refer [get-username]]))
 
@@ -27,8 +27,8 @@
   []
   (list
    (example "applicant-info for applicant shows no details"
-            (details "info1" {"eppn" "developer@uu.id" "commonName" "Deve Loper"}))
+            (binding [context/*roles* #{:applicant}]
+              (details "info1" {"eppn" "developer@uu.id" "commonName" "Deve Loper"})))
    (example "applicant-info for approver shows attributes"
-            (binding [context/*roles* #{:approver}
-                      context/*active-role* :approver]
+            (binding [context/*roles* #{:approver}]
               (details "info2" {"eppn" "developer@uu.id" "commonName" "Deve Loper"})))))

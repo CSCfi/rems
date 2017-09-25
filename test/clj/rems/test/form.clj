@@ -232,7 +232,7 @@
 
 (deftest test-editable
   (with-fake-tempura
-    (binding [context/*active-role* :applicant]
+    (binding [context/*roles* #{:applicant}]
       (let [readonly? (fn [[_tag attrs]]
                         (case (:type attrs)
                           "checkbox" (:disabled attrs) ;; checkboxes are special
@@ -366,19 +366,20 @@
                     (fn [_]
                       nil)]
 
-        (testing "As an applicant"
-          (testing "on an actionable form"
-            (validate-back-button-absence actionable-data)
-            (validate-approver-actions-absence actionable-data)
-            (validate-review-actions-absence actionable-data)
-            (validate-3rd-party-review-actions-absence actionable-data))
-          (testing "on an unactionable form"
-            (validate-back-button-absence unactionable-data)
-            (validate-approver-actions-absence unactionable-data)
-            (validate-review-actions-absence unactionable-data)
-            (validate-3rd-party-review-actions-absence unactionable-data)))
+        (binding [context/*roles* #{:applicant}]
+          (testing "As an applicant"
+            (testing "on an actionable form"
+              (validate-back-button-absence actionable-data)
+              (validate-approver-actions-absence actionable-data)
+              (validate-review-actions-absence actionable-data)
+              (validate-3rd-party-review-actions-absence actionable-data))
+            (testing "on an unactionable form"
+              (validate-back-button-absence unactionable-data)
+              (validate-approver-actions-absence unactionable-data)
+              (validate-review-actions-absence unactionable-data)
+              (validate-3rd-party-review-actions-absence unactionable-data))))
         (binding [context/*user* {"eppn" "bob"}
-                  context/*active-role* :approver]
+                  context/*roles* #{:approver}]
           (testing "As a current round approver"
             (testing "on an actionable form"
               (validate-back-button-presence actionable-data)
@@ -393,14 +394,14 @@
               (validate-3rd-party-review-actions-absence unactionable-data))))
         (testing "As an approver, who is not set for the current round, on an actionable form"
           (binding [context/*user* {"eppn" "carl"}
-                    context/*active-role* :approver]
+                    context/*roles* #{:approver}]
             (validate-back-button-presence actionable-data)
             (validate-approver-actions-absence actionable-data)
             (validate-review-actions-absence actionable-data)
             (validate-3rd-party-review-actions-absence actionable-data)))
         (testing "As a reviewer"
           (binding [context/*user* {"eppn" "carl"}
-                    context/*active-role* :reviewer]
+                    context/*roles* #{:reviewer}]
             (testing "on an actionable form"
               (validate-back-button-presence actionable-data)
               (validate-approver-actions-absence actionable-data)
@@ -413,14 +414,14 @@
               (validate-3rd-party-review-actions-absence unactionable-data))))
         (testing "As a reviewer, who is not set for the current round, on an actionable form"
           (binding [context/*user* {"eppn" "bob"}
-                    context/*active-role* :reviewer]
+                    context/*roles* #{:reviewer}]
             (validate-back-button-presence actionable-data)
             (validate-approver-actions-absence actionable-data)
             (validate-review-actions-absence actionable-data)
             (validate-3rd-party-review-actions-absence actionable-data)))
         (testing "As a 3d party reviewer"
           (binding [context/*user* {"eppn" "lenny"}
-                    context/*active-role* :reviewer]
+                    context/*roles* #{:reviewer}]
             (testing "on an actionable form"
               (validate-back-button-presence actionable-data)
               (validate-approver-actions-absence actionable-data)
