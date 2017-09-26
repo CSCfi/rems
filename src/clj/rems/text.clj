@@ -34,5 +34,5 @@
     "review" :t.applications.events/review
     "review-request" :t.applications.events/review-request
     "withdraw" :t.applications.events/withdraw
-    "3rd-party-review" :t.applications.events/3rd-party-review
+    "third-party-review" :t.applications.events/third-party-review
     :t.applications.events/unknown))
