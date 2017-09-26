@@ -39,7 +39,9 @@
          (->> (rems.db.core/get-application-states)
               (map :unnest)
               (map keyword)
-              (sort)))))
+              (sort))))
+  (is (not (contains? (set (map rems.text/localize-state (map :unnest (rems.db.core/get-application-states))))
+                      :t.applications.states/unknown))))
 
 (deftest test-all-event-localizations
   (is (= (-> (:events (:applications (:t loc-en)))
@@ -49,4 +51,6 @@
          (->> (rems.db.core/get-application-event-types)
               (map :unnest)
               (map keyword)
-              (sort)))))
+              (sort))))
+  (is (not (contains? (set (map rems.text/localize-event (map :unnest (rems.db.core/get-application-event-types))))
+                      :t.applications.events/unknown))))
