@@ -52,12 +52,12 @@
   ([app round]
    (get-events-of-type app round "review")))
 
-(defn get-3rd-party-review-events
-  "Returns all 3rd-party-review events that have occured in an application. Optionally a round parameter can be provided to focus on 3rd-party-reviews occuring during a given round."
+(defn get-third-party-review-events
+  "Returns all third-party-review events that have occured in an application. Optionally a round parameter can be provided to focus on third-party-reviews occuring during a given round."
   ([app]
-   (get-events-of-type app "3rd-party-review"))
+   (get-events-of-type app "third-party-review"))
   ([app round]
-   (get-events-of-type app round "3rd-party-review")))
+   (get-events-of-type app round "third-party-review")))
 
 (defn reviewed?
   "Returns true if the application, given as parameter, has already been reviewed normally or as a 3rd party actor by the current user.
@@ -65,7 +65,7 @@
   ([app]
    (reviewed? app context/*user*))
   ([app userid]
-   (contains? (set (map :userid (concat (get-review-events app) (get-3rd-party-review-events app))))
+   (contains? (set (map :userid (concat (get-review-events app) (get-third-party-review-events app))))
               (get-user-id userid)))
   ([app userid round]
    (reviewed? (update app :events (fn [events] (filter #(= round (:round %)) events))) userid)))
@@ -96,26 +96,26 @@
 (defn is-reviewer? [application]
   (is-actor? application "reviewer"))
 
-(defn is-3rd-party-reviewer?
+(defn is-third-party-reviewer?
   "Checks if a given user has been requested to review the given application. If no user is provided, the function checks review requests for the current user.
    Additionally a specific round can be provided to narrow the check to apply only to the given round."
   ([application]
-   (is-3rd-party-reviewer? (get-user-id) application))
+   (is-third-party-reviewer? (get-user-id) application))
   ([user application]
    (->> (:events application)
         (filter #(and (= "review-request" (:event %)) (= user (:userid %))))
         (not-empty?)))
   ([user round application]
-   (is-3rd-party-reviewer? user (update application :events (fn [events] (filter #(= round (:round %)) events))))))
+   (is-third-party-reviewer? user (update application :events (fn [events] (filter #(= round (:round %)) events))))))
 
-(defn can-3rd-party-review?
+(defn can-third-party-review?
   "Checks if the current user can perform a 3rd party review action on the current round for the given application."
   [application]
   (let [state (get-application-state application)]
     (and (= "applied" (:state state))
-         (is-3rd-party-reviewer? (get-user-id) (:curround state) state))))
+         (is-third-party-reviewer? (get-user-id) (:curround state) state))))
 
-(defn get-3rd-party-reviewers
+(defn get-third-party-reviewers
   "Takes as an argument a structure containing application information and a workflow round. Then returns userids for all users that have been requested to review for the given round."
   [application round]
   (set (map :userid (get-events-of-type application round "review-request"))))
@@ -126,7 +126,7 @@
     (or applicant?
         (is-approver? application-id)
         (is-reviewer? application-id)
-        (is-3rd-party-reviewer? application))))
+        (is-third-party-reviewer? application))))
 
 (defn- get-applications-impl [query-params]
   (doall
@@ -158,7 +158,7 @@
 (defn get-handled-reviews []
   (->> (get-applications-impl {})
        (filterv (fn [app] (or (is-reviewer? (:id app))
-                              (is-3rd-party-reviewer? (get-user-id) app))))
+                              (is-third-party-reviewer? (get-user-id) app))))
        (filterv reviewed?)
        (mapv (fn [app]
                (let [my-events (filter #(= (get-user-id) (:userid %))
@@ -177,23 +177,23 @@
                                 (set (map :userid (get-approval-events application round))))
           reviewers (difference (set (actors/get-by-role application-id round "reviewer"))
                                 (set (map :userid (get-review-events application round))))
-          requestees (difference (get-3rd-party-reviewers application round)
-                                 (set (map :userid (get-3rd-party-review-events application round))))]
+          requestees (difference (get-third-party-reviewers application round)
+                                 (set (map :userid (get-third-party-review-events application round))))]
       (doseq [user (union approvers reviewers requestees)] (let [user-attrs (users/get-user-attributes user)]
                                                               (email/action-not-needed user-attrs applicant-name application-id))))))
 
 (defn assoc-review-type-to-app [app]
-  (assoc app :review (if (is-reviewer? (:id app)) :normal :3rd-party)))
+  (assoc app :review (if (is-reviewer? (:id app)) :normal :third-party)))
 
 (defn get-applications-to-review
-  "Returns applications that are waiting for a normal or 3rd party review. Type of the review, with key :review and values :normal or :3rd-party,
+  "Returns applications that are waiting for a normal or 3rd party review. Type of the review, with key :review and values :normal or :third-party,
   are added to each application's attributes"
   []
   (->> (get-applications-impl {})
        (filterv
          (fn [app] (and (not (reviewed? app))
                         (or (can-review? (:id app))
-                            (can-3rd-party-review? (:id app))))))
+                            (can-third-party-review? (:id app))))))
        (mapv assoc-review-type-to-app)))
 
 (defn get-draft-id-for
@@ -374,7 +374,7 @@
     (assoc application :state "approved")
     (assoc application :state "applied" :curround (inc (:curround application)))))
 
-(defmethod apply-event "3rd-party-review"
+(defmethod apply-event "third-party-review"
   [application event]
   (assert (= (:state application) "applied")
           (str "Can't review application " (pr-str application)))
@@ -548,14 +548,14 @@
     (throw-unauthorized))
   (judge-application application-id "review" round msg))
 
-(defn perform-3rd-party-review [application-id round msg]
-  (when-not (can-3rd-party-review? application-id)
+(defn perform-third-party-review [application-id round msg]
+  (when-not (can-third-party-review? application-id)
     (throw-unauthorized))
   (let [state (get-application-state application-id)]
     (when-not (= round (:curround state))
       (throw-unauthorized))
     (db/add-application-event! {:application application-id :user (get-user-id)
-                                :round round :event "3rd-party-review" :comment msg})))
+                                :round round :event "third-party-review" :comment msg})))
 
 (defn send-review-request [application-id round msg recipients]
   (let [state (get-application-state application-id)]
@@ -569,7 +569,7 @@
                     recipients
                     (vector recipients))]
       (doseq [recipient send-to]
-        (when-not (is-3rd-party-reviewer? recipient (:curround state) state)
+        (when-not (is-third-party-reviewer? recipient (:curround state) state)
           (db/add-application-event! {:application application-id :user recipient
                                       :round round :event "review-request" :comment msg})
           (roles/add-role! recipient :reviewer)

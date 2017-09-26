@@ -16,7 +16,7 @@ CREATE TYPE application_event_type AS ENUM (
   'review-request', -- applied --> applied
   'withdraw',   -- applied --> withdrawn
   'close',   -- any --> closed
-  '3rd-party-review' -- applied --> applied
+  'third-party-review' -- applied --> applied
 );
 --;;
 CREATE TYPE application_state AS ENUM ('applied','approved','rejected','returned','withdrawn','closed','draft','onhold');

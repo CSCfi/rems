@@ -94,9 +94,9 @@
        (text :t.actions/review)]
       (review-confirm-modal "review" (text :t.actions/review) app))
     (list
-      [:button#3rd-party-review.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#3rd-party-review-modal"}
+      [:button#third-party-review.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#third-party-review-modal"}
        (text :t.actions/review)]
-      (review-confirm-modal "3rd-party-review" (text :t.actions/review) app))))
+      (review-confirm-modal "third-party-review" (text :t.actions/review) app))))
 
 (defn review-request-button [app]
   (list
@@ -145,7 +145,7 @@
                            (get input "review-request") :review-request
                            (get input "withdraw") :withdraw
                            (get input "close") :close
-                           (get input "3rd-party-review") :3rd-party-review
+                           (get input "third-party-review") :third-party-review
                            :else (errorf "Unknown action!"))
               comment (get input "comment")
               comment (when-not (empty? comment) comment)]
@@ -157,7 +157,7 @@
             :review-request (applications/send-review-request id round comment (get input "recipients"))
             :withdraw (applications/withdraw-application id round comment)
             :close (applications/close-application id round comment)
-            :3rd-party-review (applications/perform-3rd-party-review id round comment))
+            :third-party-review (applications/perform-third-party-review id round comment))
           (assoc (redirect (if (or (has-roles? :approver) (has-roles? :reviewer)) "/actions" "/applications") :see-other)
                  :flash [{:status :success
                           :contents (case action
@@ -168,4 +168,4 @@
                                       :review-request (text :t.actions/review-request-success)
                                       :withdraw (text :t.actions/withdraw-success)
                                       :close (text :t.actions/close-success)
-                                      :3rd-party-review (text :t.actions/review-success))}]))))
+                                      :third-party-review (text :t.actions/review-success))}]))))

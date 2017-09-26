@@ -672,32 +672,32 @@
       (let [new-wf (:id (db/create-workflow! {:modifieruserid uid :owneruserid uid :title "3rd party review workflow" :fnlround 0}))
             new-item (:id (db/create-catalogue-item! {:title "A" :form nil :resid nil :wfid new-wf}))]
         (actors/add-approver! new-wf uid 0)
-        (db/add-user! {:user "3rd-party-reviewer", :userattrs (generate-string {"eppn" "3rd-party-reviewer" "mail" ""})})
+        (db/add-user! {:user "third-party-reviewer", :userattrs (generate-string {"eppn" "third-party-reviewer" "mail" ""})})
         (db/add-user! {:user "another-reviewer", :userattrs (generate-string {"eppn" "another-reviewer" "mail" ""})})
         (testing "3rd party review"
           (let [new-app (applications/create-new-draft new-item)]
             (applications/submit-application new-app)
-            (is (= #{:applicant} (roles/get-roles "3rd-party-reviewer"))) ;; default role
+            (is (= #{:applicant} (roles/get-roles "third-party-reviewer"))) ;; default role
             (is (= #{:applicant} (roles/get-roles "another-reviewer")))   ;; default role
-            (applications/send-review-request new-app 0 "review?" "3rd-party-reviewer")
-            (is (= #{:reviewer} (roles/get-roles "3rd-party-reviewer")))
-            ;should not send twice to 3rd-party-reviewer, but another-reviewer should still be added
-            (applications/send-review-request new-app 0 "can you please review this?" ["3rd-party-reviewer" "another-reviewer"])
-            (is (= #{:reviewer} (roles/get-roles "3rd-party-reviewer")))
+            (applications/send-review-request new-app 0 "review?" "third-party-reviewer")
+            (is (= #{:reviewer} (roles/get-roles "third-party-reviewer")))
+            ;should not send twice to third-party-reviewer, but another-reviewer should still be added
+            (applications/send-review-request new-app 0 "can you please review this?" ["third-party-reviewer" "another-reviewer"])
+            (is (= #{:reviewer} (roles/get-roles "third-party-reviewer")))
             (is (= #{:reviewer} (roles/get-roles "another-reviewer")))
             (is (= (fetch new-app) {:curround 0 :state "applied"}))
-            (binding [context/*user* {"eppn" "3rd-party-reviewer"}]
-              (applications/perform-3rd-party-review new-app 0 "comment")
+            (binding [context/*user* {"eppn" "third-party-reviewer"}]
+              (applications/perform-third-party-review new-app 0 "comment")
               (is (thrown? NotAuthorizedException (applications/review-application new-app 0 "another comment"))
                   "Should not be able to do normal review"))
             (is (= (fetch new-app) {:curround 0 :state "applied"}))
             (applications/approve-application new-app 0 "")
             (is (= (fetch new-app) {:curround 0 :state "approved"}))
-            (binding [context/*user* {"eppn" "3rd-party-reviewer"}]
-              (is (thrown? NotAuthorizedException (applications/perform-3rd-party-review new-app 0 "another comment"))
+            (binding [context/*user* {"eppn" "third-party-reviewer"}]
+              (is (thrown? NotAuthorizedException (applications/perform-third-party-review new-app 0 "another comment"))
                   "Should not be able to review when approved"))
             (binding [context/*user* {"eppn" "other-reviewer"}]
-              (is (thrown? NotAuthorizedException (applications/perform-3rd-party-review new-app 0 "too late comment"))
+              (is (thrown? NotAuthorizedException (applications/perform-third-party-review new-app 0 "too late comment"))
                   "Should not be able to review when approved"))
             (is (= (->> (applications/get-application-state new-app)
                         :events
@@ -705,7 +705,7 @@
                    [{:round 0 :event "apply" :comment nil}
                     {:round 0 :event "review-request" :comment "review?"}
                     {:round 0 :event "review-request" :comment "can you please review this?"}
-                    {:round 0 :event "3rd-party-review" :comment "comment"}
+                    {:round 0 :event "third-party-review" :comment "comment"}
                     {:round 0 :event "approve" :comment ""}]))))
         (testing "lazy 3rd party reviewer"
           (let [app-to-close (applications/create-new-draft new-item)
@@ -716,10 +716,10 @@
             (applications/submit-application app-to-approve)
             (applications/submit-application app-to-reject)
             (applications/submit-application app-to-return)
-            (applications/send-review-request app-to-close 0 "can you please review this?" "3rd-party-reviewer")
-            (applications/send-review-request app-to-approve 0 "can you please review this?" "3rd-party-reviewer")
-            (applications/send-review-request app-to-reject 0 "can you please review this?" "3rd-party-reviewer")
-            (applications/send-review-request app-to-return 0 "can you please review this?" "3rd-party-reviewer")
+            (applications/send-review-request app-to-close 0 "can you please review this?" "third-party-reviewer")
+            (applications/send-review-request app-to-approve 0 "can you please review this?" "third-party-reviewer")
+            (applications/send-review-request app-to-reject 0 "can you please review this?" "third-party-reviewer")
+            (applications/send-review-request app-to-return 0 "can you please review this?" "third-party-reviewer")
             (applications/close-application app-to-close 0 "closing")
             (is (= (fetch app-to-close) {:curround 0 :state "closed"}) "should be able to close application even without review")
             (applications/approve-application app-to-approve 0 "approving")
@@ -728,14 +728,14 @@
             (is (= (fetch app-to-reject) {:curround 0 :state "rejected"}) "should be able to reject application even without review")
             (applications/return-application app-to-return 0 "returning")
             (is (= (fetch app-to-return) {:curround 0 :state "returned"}) "should be able to return application even without review")
-            (binding [context/*user* {"eppn" "3rd-party-reviewer"}]
-              (is (thrown? NotAuthorizedException (applications/perform-3rd-party-review app-to-close 0 "comment"))
+            (binding [context/*user* {"eppn" "third-party-reviewer"}]
+              (is (thrown? NotAuthorizedException (applications/perform-third-party-review app-to-close 0 "comment"))
                   "Should not be able to review when closed")
-              (is (thrown? NotAuthorizedException (applications/perform-3rd-party-review app-to-approve 0 "comment"))
+              (is (thrown? NotAuthorizedException (applications/perform-third-party-review app-to-approve 0 "comment"))
                   "Should not be able to review when approved")
-              (is (thrown? NotAuthorizedException (applications/perform-3rd-party-review app-to-reject 0 "comment"))
+              (is (thrown? NotAuthorizedException (applications/perform-third-party-review app-to-reject 0 "comment"))
                   "Should not be able to review when rejected")
-              (is (thrown? NotAuthorizedException (applications/perform-3rd-party-review app-to-return 0 "another comment"))
+              (is (thrown? NotAuthorizedException (applications/perform-third-party-review app-to-return 0 "another comment"))
                   "Should not be able to review when returned"))
             (is (= (->> (applications/get-application-state app-to-close)
                         :events

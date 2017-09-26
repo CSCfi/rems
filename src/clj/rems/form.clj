@@ -14,7 +14,7 @@
                                           get-application-phases
                                           get-application-state
                                           get-draft-id-for get-form-for
-                                          can-3rd-party-review?
+                                          can-third-party-review?
                                           submit-application]]
             [rems.db.core :as db]
             [rems.guide :refer :all]
@@ -121,7 +121,7 @@
                (for [e events]
                  [:tr
                   [:td (:userid e)]
-                  [:td (:event e)]
+                  [:td (text (localize-event (:event e)))]
                   [:td (:comment e)]
                   [:td (format/unparse time-format (:time e))]])))))]))
 
@@ -193,7 +193,7 @@
        )
      (when-role :reviewer
        (if (and actionable? (or (can-review? (:id (:application form)))
-                                (can-3rd-party-review? (:id (:application form)))))
+                                (can-third-party-review? (:id (:application form)))))
          (events/review-form (assoc-review-type-to-app (:application form)))
          [:div.row
           [:div.col.commands

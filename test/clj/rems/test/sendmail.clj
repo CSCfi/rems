@@ -157,7 +157,7 @@
                                               (subject-to-check "review-request")
                                               (str "([:t.email/review-request-msg :t/missing] [\"Rev Iwer\" \"Test User\" " app4 " \"item2\" \"localhost:3000/form/" item2 "/" app4 "\"])"))
             (binding [context/*user* {"eppn" "reviewer"}]
-              (applications/perform-3rd-party-review app4 0 ""))
+              (applications/perform-third-party-review app4 0 ""))
             (conjure/verify-call-times-for email/send-mail 3)))
         (testing "Actors are notified when their attention is no longer required"
           (conjure/mocking [email/send-mail]
@@ -187,7 +187,7 @@
               (applications/approve-application app6 0 "")
               (applications/send-review-request app6 1 "" "outside-reviewer"))
             (binding [context/*user* {"eppn" "outside-reviewer"}]
-              (applications/perform-3rd-party-review app6 1 ""))
+              (applications/perform-third-party-review app6 1 ""))
             (binding [context/*user* {"eppn" "approver"}]
               (applications/approve-application app6 1 ""))
               (conjure/verify-call-times-for email/send-mail 11)))))))
