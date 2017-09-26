@@ -22,3 +22,17 @@
     "withdrawn" :t.applications.states/withdrawn
     "closed" :t.applications.states/closed
     :t.applications.states/unknown))
+
+(defn localize-event [event]
+  (case event
+    "apply" :t.applications.events/apply
+    "approve" :t.applications.events/approve
+    "autoapprove" :t.applications.events/autoapprove
+    "close" :t.applications.events/close
+    "reject" :t.applications.events/reject
+    "return" :t.applications.events/return
+    "review" :t.applications.events/review
+    "review-request" :t.applications.events/review-request
+    "withdraw" :t.applications.events/withdraw
+    "3rd-party-review" :t.applications.events/3rd-party-review
+    :t.applications.events/unknown))

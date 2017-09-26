@@ -121,7 +121,7 @@
                (for [e events]
                  [:tr
                   [:td (:userid e)]
-                  [:td (:event e)]
+                  [:td (localize-event (:event e))]
                   [:td (:comment e)]
                   [:td (format/unparse time-format (:time e))]])))))]))
 
