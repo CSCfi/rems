@@ -38,3 +38,16 @@
   "Fetch the attribute value from the current theme."
   [attr-name]
   (get context/*theme* attr-name))
+
+(defn getx
+  "Like get but throws an exception if the key is not found."
+  [m k]
+  (let [e (get m k ::sentinel)]
+    (if-not (= e ::sentinel)
+      e
+      (throw (ex-info "Missing required key" {:map m :key k})))))
+
+(defn getx-in
+  "Like get-in but throws an exception if the key is not found."
+  [m ks]
+  (reduce getx m ks))

@@ -10,14 +10,15 @@
             [rems.role-switcher :refer [has-roles? when-role]]
             [rems.text :refer [localize-state text]]
             [rems.util :refer [errorf]]
-            [ring.util.response :refer [redirect]]))
+            [ring.util.response :refer [redirect]]
+            [clojure.string :as str]))
 
 (def ^:private time-format (format/formatter "yyyy-MM-dd HH:mm"
                                              (time/default-time-zone)))
 
 (defn view-button [app]
   [:a.btn.btn-secondary
-   {:href (str "/form/" (:catid app) "/" (:id app))}
+   {:href (str "/form/" (:id app))}
    (text :t.applications/view)])
 
 (defn- actions-form-attrs [app]
@@ -166,7 +167,7 @@
      (for [app (sort-by :id apps)]
        [:tr.action
         [:td {:data-th (text :t.actions/application)} (:id app)]
-        [:td {:data-th (text :t.actions/resource)} (get-in app [:catalogue-item :title])]
+        [:td {:data-th (text :t.actions/resource)} (str/join ", " (map :title (:catalogue-items app)))]
         [:td {:data-th (text :t.actions/applicant)} (:applicantuserid app)]
         [:td {:data-th (text :t.actions/created)} (format/unparse time-format (:start app))]
         [:td.commands

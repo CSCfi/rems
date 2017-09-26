@@ -15,7 +15,7 @@
    [:td {:data-th (text :t.applications/state)} (text (localize-state (:state app)))]
    [:td {:data-th (text :t.applications/created)} (format/unparse time-format (:start app))]
    [:td [:a.btn.btn-primary
-         {:href (str "/form/" (:catid app) "/" (:id app))}
+         {:href (str "/form/" (:id app))}
          (text :t/applications.view)]]])
 
 (defn applications

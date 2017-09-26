@@ -8,60 +8,60 @@
 
 (defn- generate-at-font-faces []
   (list
-    (stylesheet/at-font-face {:font-family "'Lato'"
-                              :src "url('/font/Lato-Light.eot')"}
-                             {:src "url('/font/Lato-Light.eot') format('embedded-opentype'), url('/font/Lato-Light.woff2') format('woff2'), url('/font/Lato-Light.woff') format('woff'), url('/font/Lato-Light.ttf') format('truetype')"
-                              :font-weight 300
-                              :font-style "normal"})
-    (stylesheet/at-font-face {:font-family "'Lato'"
-                              :src "url('/font/Lato-Regular.eot')"}
-                             {:src "url('/font/Lato-Regular.eot') format('embedded-opentype'), url('/font/Lato-Regular.woff2') format('woff2'), url('/font/Lato-Regular.woff') format('woff'), url('/font/Lato-Regular.ttf') format('truetype')"
-                              :font-weight 400
-                              :font-style "normal"})
-    (stylesheet/at-font-face {:font-family "'Lato'"
-                              :src "url('/font/Lato-Bold.eot')"}
-                             {:src "url('/font/Lato-Bold.eot') format('embedded-opentype'), url('/font/Lato-Bold.woff2') format('woff2'), url('/font/Lato-Bold.woff') format('woff'), url('/font/Lato-Bold.ttf') format('truetype')"
-                              :font-weight 700
-                              :font-style "normal"})))
+   (stylesheet/at-font-face {:font-family "'Lato'"
+                             :src "url('/font/Lato-Light.eot')"}
+                            {:src "url('/font/Lato-Light.eot') format('embedded-opentype'), url('/font/Lato-Light.woff2') format('woff2'), url('/font/Lato-Light.woff') format('woff'), url('/font/Lato-Light.ttf') format('truetype')"
+                             :font-weight 300
+                             :font-style "normal"})
+   (stylesheet/at-font-face {:font-family "'Lato'"
+                             :src "url('/font/Lato-Regular.eot')"}
+                            {:src "url('/font/Lato-Regular.eot') format('embedded-opentype'), url('/font/Lato-Regular.woff2') format('woff2'), url('/font/Lato-Regular.woff') format('woff'), url('/font/Lato-Regular.ttf') format('truetype')"
+                             :font-weight 400
+                             :font-style "normal"})
+   (stylesheet/at-font-face {:font-family "'Lato'"
+                             :src "url('/font/Lato-Bold.eot')"}
+                            {:src "url('/font/Lato-Bold.eot') format('embedded-opentype'), url('/font/Lato-Bold.woff2') format('woff2'), url('/font/Lato-Bold.woff') format('woff'), url('/font/Lato-Bold.ttf') format('truetype')"
+                             :font-weight 700
+                             :font-style "normal"})))
 
 (defn- generate-form-placeholder-styles []
   (list
-    [".form-control::placeholder" {:color "#ccc"}] ; Standard
-    [".form-control::-webkit-input-placeholder" {:color "#ccc"}] ; WebKit, Blink, Edge
-    [".form-control:-moz-placeholder" {:color "#ccc"
-                                       :opacity 1}] ; Mozilla Firefox 4 to 18
-    [".form-control::-moz-placeholder" {:color "#ccc"
-                                        :opacity 1}]; Mozilla Firefox 19+
-    [".form-control:-ms-input-placeholder" {:color "#ccc"}]; Internet Explorer 10-11
-    ))
+   [".form-control::placeholder" {:color "#ccc"}] ; Standard
+   [".form-control::-webkit-input-placeholder" {:color "#ccc"}] ; WebKit, Blink, Edge
+   [".form-control:-moz-placeholder" {:color "#ccc"
+                                      :opacity 1}] ; Mozilla Firefox 4 to 18
+   [".form-control::-moz-placeholder" {:color "#ccc"
+                                       :opacity 1}]; Mozilla Firefox 19+
+   [".form-control:-ms-input-placeholder" {:color "#ccc"}]; Internet Explorer 10-11
+   ))
 
 (defn- generate-media-queries []
   (list
-    (stylesheet/at-media {:max-width (u/px 480)}
-                         (list
-                           [(s/descendant :.rems-table.cart :tr)
-                            {:border-bottom "none"}]
-                           [(s/descendant :.logo :.img)
-                            {:background [[(util/get-theme-attribute :logo-bgcolor) (str "url(\"" (util/get-theme-attribute :img-path) (util/get-theme-attribute :logo-name-sm) "\")") :center :center :no-repeat]]
-                             :-webkit-background-size "contain"
-                             :-moz-background-size "contain"
-                             :-o-background-size "contain"
-                             :background-size "contain"}]
-                           [:.logo
-                            {:height (u/px 150)}]))
-    (stylesheet/at-media {:min-width (u/px 768)}
-                         (list
-                           [(s/descendant :.rems-table :td:before)
-                            {:display "none"}]
-                           [:.rems-table
-                            [:th
-                             :td
-                             {:display "table-cell"}]]
-                           [:.language-switcher
-                            :.role-switcher
-                            {:padding ".5em .5em"}]))
-    (stylesheet/at-media {:min-width (u/px 480)}
-                         [:.commands {:white-space "nowrap"}])))
+   (stylesheet/at-media {:max-width (u/px 480)}
+                        (list
+                         [(s/descendant :.rems-table.cart :tr)
+                          {:border-bottom "none"}]
+                         [(s/descendant :.logo :.img)
+                          {:background [[(util/get-theme-attribute :logo-bgcolor) (str "url(\"" (util/get-theme-attribute :img-path) (util/get-theme-attribute :logo-name-sm) "\")") :center :center :no-repeat]]
+                           :-webkit-background-size "contain"
+                           :-moz-background-size "contain"
+                           :-o-background-size "contain"
+                           :background-size "contain"}]
+                         [:.logo
+                          {:height (u/px 150)}]))
+   (stylesheet/at-media {:min-width (u/px 768)}
+                        (list
+                         [(s/descendant :.rems-table :td:before)
+                          {:display "none"}]
+                         [:.rems-table
+                          [:th
+                           :td
+                           {:display "table-cell"}]]
+                         [:.language-switcher
+                          :.role-switcher
+                          {:padding ".5em .5em"}]))
+   (stylesheet/at-media {:min-width (u/px 480)}
+                        [:.commands {:white-space "nowrap"}])))
 
 (defn- generate-phase-styles []
   [:.phases {:width "100%"
@@ -81,69 +81,71 @@
             :text-align "center"
             :min-width (u/px 100)}]
     [(s/& ":not(:last-of-type):after") {:content "\"\""
-                                       :border-top [[(u/px 20) :solid :white]]
-                                       :border-left [[(u/px 10) :solid :transparent]]
-                                       :border-bottom [[(u/px 20) :solid :white]]
-                                       :border-right "none"}]
+                                        :border-top [[(u/px 20) :solid :white]]
+                                        :border-left [[(u/px 10) :solid :transparent]]
+                                        :border-bottom [[(u/px 20) :solid :white]]
+                                        :border-right "none"}]
     [(s/& ":first-of-type") {:border-top-left-radius (u/px 4)
-                            :border-bottom-left-radius (u/px 4)}]
+                             :border-bottom-left-radius (u/px 4)}]
     [(s/& ":last-of-type") {:border-top-right-radius (u/px 4)
-                           :border-bottom-right-radius (u/px 4)}]
+                            :border-bottom-right-radius (u/px 4)}]
     [(s/& ":not(:first-of-type):before") {:content "\"\""
-                                         :border-top [[(u/px 20) :solid :transparent]]
-                                         :border-left [[(u/px 10) :solid :white]]
-                                         :border-bottom [[(u/px 20) :solid :transparent]]
-                                         :border-right "none"}]
+                                          :border-top [[(u/px 20) :solid :transparent]]
+                                          :border-left [[(u/px 10) :solid :white]]
+                                          :border-bottom [[(u/px 20) :solid :transparent]]
+                                          :border-right "none"}]
     [:&.active {:background-color (util/get-theme-attribute :phase-color-active)
                 :border-color (util/get-theme-attribute :phase-color-active)
                 :color "#000"}]
     [:&.completed {:background-color (util/get-theme-attribute :phase-color-completed)
-                    :border-color (util/get-theme-attribute :phase-color-completed)
-                    :color "#fff"}]]])
+                   :border-color (util/get-theme-attribute :phase-color-completed)
+                   :color "#fff"}]]])
 
 (defn- generate-rems-table-styles []
   (list
-    [:.rems-table.cart {:background "#fff"
-                        :color "#000"
-                        :margin 0}
-     [:tr {:border-bottom [[(u/px 1) :solid (util/get-theme-attribute :color1)]]}]
-     [:td:before {:content "initial"}]
-     [:th
-      :td:before
-      {:color "#000"}]
-     [:tr
-      [(s/& (s/nth-child "2n")) {:background "#fff"}]]
-     ]
-    [:.rems-table {:margin "1em 0"
-                   :min-width "100%"
-                   :background-color (util/get-theme-attribute :table-bgcolor)
-                   :color "#fff"
-                   :border-radius (u/rem 0.4)
-                   :overflow "hidden"}
-     [:th {:display "none"}]
-     [:td {:display "block"}
-      [:&:before {:content "attr(data-th)\":\""
-                  :font-weight "bold"
-                  :margin-right (u/rem 0.5)
-                  :display "inline-block"}]
-      [:&:last-child:before {:content "attr(data-th)\"\""}]]
-     [:th
-      :td
-      {:text-align "left"
-       :padding "0.5em 1em"}]
-     [:th
-      :td:before
-      {:color "#fff"}]
-     [:tr {:margin "0 1rem"}
-      [(s/& (s/nth-child "2n")) {:background-color (util/get-theme-attribute :table-stripe-color)}]]
-     [:td.commands:last-child {:text-align "right"
+   [:.rems-table.cart {:background "#fff"
+                       :color "#000"
+                       :margin 0}
+    [:tr {:border-bottom [[(u/px 1) :solid (util/get-theme-attribute :color1)]]}]
+    [:td:before {:content "initial"}]
+    [:th
+     :td:before
+     {:color "#000"}]
+    [:tr
+     [(s/& (s/nth-child "2n")) {:background "#fff"}]]
+    ]
+   [:.rems-table {:margin "1em 0"
+                  :min-width "100%"
+                  :background-color (util/get-theme-attribute :table-bgcolor)
+                  :color "#fff"
+                  :border-radius (u/rem 0.4)
+                  :overflow "hidden"}
+    [:th {:display "none"}]
+    [:td {:display "block"}
+     [:&:before {:content "attr(data-th)\":\""
+                 :font-weight "bold"
+                 :margin-right (u/rem 0.5)
+                 :display "inline-block"}]
+     [:&:last-child:before {:content "attr(data-th)\"\""}]]
+    [:th
+     :td
+     {:text-align "left"
+      :padding "0.5em 1em"}]
+    [:th
+     :td:before
+     {:color "#fff"}]
+    [:tr {:margin "0 1rem"}
+     [(s/& (s/nth-child "2n")) {:background-color (util/get-theme-attribute :table-stripe-color)}]]
+    [:td.commands:last-child {:text-align "right"
                               :padding-right (u/rem 1)}]
-     ]
-    [:.inner-cart {:margin (u/em 1)}]
-    [:.outer-cart {:border [[(u/px 1) :solid (util/get-theme-attribute :color1)]]
-                   :border-radius (u/rem 0.4)}]
-    [:.cart-title {:margin-left (u/em 1)
-                   :font-weight "bold"}]))
+    ]
+   [:.inner-cart {:margin (u/em 1)}]
+   [:.outer-cart {:border [[(u/px 1) :solid (util/get-theme-attribute :color1)]]
+                  :border-radius (u/rem 0.4)}]
+   [:.cart-title {:margin-left (u/em 1)
+                  :font-weight "bold"}]
+   [:.cart-item {:padding-right (u/em 1)}
+    [:>span {:display :inline-block :vertical-align :middle}]]))
 
 (defstyles screen
   (generate-at-font-faces)
@@ -247,7 +249,7 @@
   [:.btn.disabled {:opacity 0.25}]
   [:.catalogue-item-link {:color "#fff"
                           :text-decoration "underline"}]
-  ;Has to be defined before the following media queries
+                                        ;Has to be defined before the following media queries
   [:.language-switcher
    :.role-switcher
    {:padding ".5em 0"}]
@@ -280,12 +282,12 @@
      :padding 0}]]
   [:.modal-title {:color "#292b2c"}]
   [(s/+
-     (s/descendant :.language-switcher :form)
-     :form)
+    (s/descendant :.language-switcher :form)
+    :form)
    {:margin-left (u/rem 0.5)}]
   [(s/descendant :.role-switcher :form) {:margin-left (u/rem 0.5)}]
   [:.commands {:text-align "right"
-              :padding "0 1rem"}]
+               :padding "0 1rem"}]
   [:.navbar-flex {:display "flex"
                   :flex-direction "row"
                   :justify-content "space-between"
@@ -311,13 +313,13 @@
                     :width "inherit"}]
   [:.license-header
    [:&:after {:font-family "'FontAwesome'"
-                            :float "right"
-                            :content "\"\\f068\""}]
+              :float "right"
+              :content "\"\\f068\""}]
    [:&.collapsed
     [:&:after {:content "\"\\f067\""}]]]
   [:.card-header.clickable {:cursor "pointer"}]
   [(s/descendant :.card-header :a) {:color "inherit"}]
-  ;hax for opening misalignment
+                                        ;hax for opening misalignment
   [:.license-title {:margin-top (u/px 3)}]
   [:.collapse-wrapper {:border-radius (u/rem 0.4)
                        :border "1px solid #ccc"}
@@ -336,7 +338,7 @@
   [:.collapse-content {:padding (u/rem 1)}]
   (generate-phase-styles)
   [(s/descendant :.document :h3) {:margin-top (u/rem 4)}]
-  ;These must be last as the parsing fails when the first non-standard element is met
+                                        ;These must be last as the parsing fails when the first non-standard element is met
   (generate-form-placeholder-styles))
 
 (defn generate-css []

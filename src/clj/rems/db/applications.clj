@@ -54,14 +54,22 @@
 (defn is-reviewer? [application]
   (is-actor? application "reviewer"))
 
+(defn translate-catalogue-item [item-id]
+  (let [item (get-localized-catalogue-item {:id item-id})]
+    (merge item
+           (get-in item [:localizations context/*lang*]))))
+
+(defn- get-catalogue-items [ids]
+  (mapv (comp translate-catalogue-item :id)
+        (db/get-catalogue-items {:items ids})))
+
 (defn- get-applications-impl [query-params]
   (doall
    (for [app (db/get-applications query-params)]
      (assoc (get-application-state (:id app))
-            :catalogue-item
-            (get-in (get-localized-catalogue-item {:id (:catid app)})
-                    [:localizations context/*lang*])))))
-
+            :catalogue-items (let [items (db/get-application-items {:application (:id app)})]
+                               (when (seq items) (get-catalogue-items (mapv :item items)))
+                               )))))
 
 (defn get-applications []
   (get-applications-impl {:applicant (get-user-id)}))
@@ -97,11 +105,21 @@
 (defn get-draft-id-for
   "Finds applications in the draft state for the given catalogue item.
    Returns an id of an arbitrary one of them, or nil if there are none."
-  [catalogue-item]
-  (->> (get-applications-impl {:resource catalogue-item :applicant (get-user-id)})
+  [items]
+  (->> nil ;; TODO implement (get-applications-impl {:resource catalogue-item :applicant (get-user-id)})
        (filter #(= "draft" (:state %)))
        first
        :id))
+
+(defn make-draft-application
+  "Make a draft application with an initial set of catalogue items."
+  [application-id catalogue-item-ids]
+  (let [items (get-catalogue-items catalogue-item-ids)]
+    (assert (= 1 (count (distinct (mapv :wfid items)))))
+    {:id application-id
+     :state "draft"
+     :wfid (:wfid (first items))
+     :catalogue-items items}))
 
 (defn- process-item
   "Returns an item structure like this:
@@ -118,7 +136,7 @@
    :inputprompt (:inputprompt item)
    :optional (:formitemoptional item)
    :type (:type item)
-   :value (when application-id
+   :value (when (pos? application-id)
             (:value
              (db/get-field-value {:item (:id item)
                                   :form form-id
@@ -177,40 +195,58 @@
                  :title \"LGPL\"
                  :textcontent \"http://foo\"
                  :approved false}]"
-  ([catalogue-item]
-   (get-form-for catalogue-item nil))
-  ([catalogue-item application-id]
-   (let [form (db/get-form-for-catalogue-item
-               {:id catalogue-item :lang (name context/*lang*)})
-         application (when application-id
-                       (get-application-state application-id))
+  ([application-id]
+   (let [form (db/get-form-for-application {:application application-id :lang (name context/*lang*)})
+         _ (assert form)
+         application (get-application-state application-id)
+         _ (assert application)
          form-id (:formid form)
+         _ (assert form-id)
+         catalogue-items (db/get-application-items {:application application-id})
          items (mapv #(process-item application-id form-id %)
                      (db/get-form-items {:id form-id}))
-         license-localizations (->> (db/get-license-localizations)
-                                    (map #(update-in % [:langcode] keyword))
-                                    (index-by [:licid :langcode]))
-         licenses (mapv #(process-license application license-localizations %)
-                        (db/get-workflow-licenses {:catId catalogue-item}))
+         license-localizations nil #_(->> (db/get-license-localizations)
+                                          (map #(update-in % [:langcode] keyword))
+                                          (index-by [:licid :langcode]))
+         licenses nil #_(mapv #(process-license application license-localizations %)
+                              (db/get-workflow-licenses {:catId catalogue-item}))
          applicant? (= (:applicantuserid application) (get-user-id))]
-     (when application-id
-       (when-not (or applicant?
-                     (is-approver? application-id)
-                     (is-reviewer? application-id))
-         (throw-unauthorized)))
+     (when-not (or applicant?
+                   (is-approver? application-id)
+                   (is-reviewer? application-id))
+       (throw-unauthorized))
      {:id form-id
-      :catalogue-item catalogue-item
+      :catalogue-items catalogue-items
       :application application
       :applicant-attributes (users/get-user-attributes (:applicantuserid application))
-      :title (get-catalogue-item-title
-              (get-localized-catalogue-item {:id catalogue-item}))
       :items items
       :licenses licenses})))
 
-(defn create-new-draft [resource-id]
+(defn get-draft-form-for
+  "Returns a draft form structure like `get-form-for` used when a new application is created."
+  ([application]
+   (let [application-id (:id application)
+         item-id (:catid (first (:catalogue-items application)))
+         form (db/get-form-for-item {:item item-id :lang (name context/*lang*)})
+         form-id (:formid form)
+         catalogue-items (db/get-application-items {:application application-id})
+         items (mapv #(process-item application-id form-id %)
+                     (db/get-form-items {:id form-id}))
+         license-localizations nil #_(->> (db/get-license-localizations)
+                                          (map #(update-in % [:langcode] keyword))
+                                          (index-by [:licid :langcode]))
+         licenses nil #_(mapv #(process-license application license-localizations %)
+                              (db/get-workflow-licenses {:catId catalogue-item}))]
+     {:id form-id
+      :catalogue-items catalogue-items
+      :application application
+      :applicant-attributes (users/get-user-attributes (:applicantuserid application))
+      :items items
+      :licenses licenses})))
+
+(defn create-new-draft [wfid]
   (let [uid (get-user-id)
-        id (:id (db/create-application!
-                 {:item resource-id :user uid}))]
+        id (:id (db/create-application! {:user uid :wfid wfid}))]
     id))
 
 ;;; Applying events
@@ -349,21 +385,23 @@
   [application]
   (let [application-id (:id application)
         round (:curround application)
+        fnlround (:fnlround application)
         state (:state application)]
     (when (= "applied" state)
       (let [approvers (actors/get-by-role application-id round "approver")
             reviewers (actors/get-by-role application-id round "reviewer")]
         (when (and (empty? approvers)
-                   (empty? reviewers))
-            (db/add-application-event! {:application application-id :user (get-user-id)
-                                        :round round :event "autoapprove" :comment nil})
-            true)))))
+                   (empty? reviewers)
+                   (< round fnlround))
+          (db/add-application-event! {:application application-id :user (get-user-id)
+                                      :round round :event "autoapprove" :comment nil})
+          true)))))
 
 (defn- send-emails-for [application]
   (let [applicant-attrs (users/get-user-attributes (:applicantuserid application))
         application-id (:id application)
         item-title (get-catalogue-item-title
-                     (get-localized-catalogue-item {:id (:catid application)}))
+                    (get-localized-catalogue-item {:id (:catid application)}))
         round (:curround application)
         state (:state application)]
     (if (= "applied" state)
@@ -394,13 +432,16 @@
       (throw-unauthorized))
     (when-not (#{"draft" "returned" "withdrawn"} (:state application))
       (throw-unauthorized))
+    (println 1)
     (db/add-application-event! {:application application-id :user uid
                                 :round 0 :event "apply" :comment nil})
-    (email/confirm-application-creation (get-catalogue-item-title
-                                          (get-localized-catalogue-item {:id (:catid application)}))
-                                        (:catid application)
-                                        application-id)
-    (handle-state-change application-id)))
+    (println 2)
+    #_(email/confirm-application-creation (get-catalogue-item-title
+                                           (get-localized-catalogue-item {:id (:catid application)}))
+                                          (:catid application)
+                                          application-id)
+    (handle-state-change application-id)
+    (println 3)))
 
 (defn- judge-application [application-id event round msg]
   (let [state (get-application-state application-id)]
@@ -447,11 +488,11 @@
       (let [application (get-application-state application-id)
             user-attrs (users/get-user-attributes (:applicantuserid application))]
         (email/status-change-alert user-attrs
-                                        application-id
-                                        (get-catalogue-item-title
-                                          (get-localized-catalogue-item {:id (:catid application)}))
-                                        (:state application)
-                                        (:catid application))))))
+                                   application-id
+                                   (get-catalogue-item-title
+                                    (get-localized-catalogue-item {:id (:catid application)}))
+                                   (:state application)
+                                   (:catid application))))))
 
 (defn withdraw-application [application-id round msg]
   (unjudge-application application-id "withdraw" round msg))

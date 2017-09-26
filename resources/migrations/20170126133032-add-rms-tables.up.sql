@@ -70,13 +70,12 @@ CREATE TABLE catalogue_item (
 --;;
 CREATE TABLE catalogue_item_application (
   id serial NOT NULL PRIMARY KEY,
-  catId integer DEFAULT NULL,
   applicantUserId varchar(255) NOT NULL,
-  fnlround integer NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
   modifierUserId varchar(255) DEFAULT NULL,
-  CONSTRAINT catalogue_item_application_ibfk_1 FOREIGN KEY (catId) REFERENCES catalogue_item (id)
+  wfid integer DEFAULT NULL,
+  CONSTRAINT catalogue_item_application_ibfk_1 FOREIGN KEY (wfid) REFERENCES workflow (id)
 );
 --;;
 CREATE TABLE application_form (
@@ -179,15 +178,11 @@ CREATE TABLE workflow_actors (
   CONSTRAINT workflow_actors_ibfk_1 FOREIGN KEY (wfId) REFERENCES workflow (id)
 );
 --;;
-CREATE TABLE catalogue_item_application_catid_overflow (
-  id serial NOT NULL PRIMARY KEY,
+CREATE TABLE catalogue_item_application_items (
   catAppId integer DEFAULT NULL,
-  catId integer DEFAULT NULL,
-  modifierUserId varchar(255) NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT catalogue_item_application_catid_overflow_ibfk_1 FOREIGN KEY (catAppId) REFERENCES catalogue_item_application (id),
-  CONSTRAINT catalogue_item_application_catid_overflow_ibfk_2 FOREIGN KEY (catId) REFERENCES catalogue_item (id)
+  catItemId integer DEFAULT NULL,
+  CONSTRAINT catalogue_item_application_items_catAppId FOREIGN KEY (catAppId) REFERENCES catalogue_item_application (id),
+  CONSTRAINT catalogue_item_application_items_catItemId FOREIGN KEY (catItemId) REFERENCES catalogue_item (id)
 );
 --;;
 CREATE TABLE catalogue_item_application_free_comment_values (

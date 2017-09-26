@@ -7,22 +7,27 @@
             [rems.form :as form]
             [rems.guide :refer :all]
             [rems.text :refer :all]
-            [ring.util.response :refer [redirect]]))
+            [ring.util.response :refer [redirect]]
+            [clojure.string :as str]))
 
-(defn- button
-  [cls action text value & [disabled?]]
+(defn- button-primary
+  [action text value & [disabled?]]
   [:form.inline {:method "post" :action action}
    (anti-forgery-field)
    [:input {:type "hidden" :name "id" :value value}]
    [:button.btn {:type "submit"
                  :disabled disabled?
-                 :class (str cls (if disabled? " disabled" ""))} text]])
+                 :class (str "btn-primary" (if disabled? " disabled" ""))} text]])
 
-(def ^:private button-primary
-  (partial button "btn-primary"))
-
-(def ^:private button-secondary
-  (partial button "btn-secondary"))
+(defn- button-close
+  [action text value & [disabled?]]
+  [:form.inline {:method "post" :action action}
+   (anti-forgery-field)
+   [:input {:type "hidden" :name "id" :value value}]
+   [:button.btn {:type "submit"
+                 :disabled disabled?
+                 :aria-label text
+                 :class (str "close" (if disabled? " disabled" ""))} "&times;"]])
 
 (defn add-to-cart-button
   "Hiccup fragment that contains a button that adds the given item to the cart"
@@ -33,7 +38,7 @@
 (defn remove-from-cart-button
   "Hiccup fragment that contains a button that removes the given item from the cart"
   [item]
-  (button-secondary "/cart/remove" (text :t.cart/remove) (:id item)))
+  (button-close "/cart/remove" (text :t.cart/remove) (:id item)))
 
 (defn get-cart-from-session
   "Computes the value for context/*cart*: a set of integer ids."
@@ -55,15 +60,19 @@
   (POST "/cart/add" session (handler conj session))
   (POST "/cart/remove" session (handler disj session)))
 
-(defn- apply-button [item]
-  [:a.btn.btn-primary {:href (form/link-to-item item)} (text :t.cart/apply)])
+(defn- apply-button [items]
+  [:a.btn.btn-primary {:href (form/link-to-application items)} (text :t.cart/apply)])
 
-(defn- cart-item [item]
+(defn- item-view [item]
+  [:span.cart-item
+   [:span.title (get-catalogue-item-title item)]
+   [:span (remove-from-cart-button item)]])
+
+(defn- group-view [items]
   [:tr
-   [:td {:data-th ""} (get-catalogue-item-title item)]
+   [:td {:data-th ""} (map item-view items)]
    [:td.commands {:data-th ""}
-    (apply-button item)
-    (remove-from-cart-button item)]])
+    (apply-button items)]])
 
 (defn cart-list [items]
   (when-not (empty? items)
@@ -73,15 +82,20 @@
        [:i.fa.fa-shopping-cart]
        [:span (text-format :t.cart/header (count items))]]
       [:table.rems-table.cart
-       (for [item (sort-by get-catalogue-item-title items)]
-         (cart-item item))]]]))
+       (for [group (vals (group-by :wfid items))]
+         (group-view (sort-by get-catalogue-item-title group)))]]]))
 
 (defn guide []
   (list
-   (example "cart-item"
+   (example "item-view"
             [:table.rems-table.cart
-             (cart-item {:title "Item title"})])
+             (item-view {:title "Item title"})])
+   (example "group-view"
+            [:table.rems-table.cart
+             (group-view [{:title "Item title"}])])
    (example "cart-list empty"
             (cart-list []))
-   (example "cart-list with two items"
-            (cart-list [{:title "Item title"} {:title "Another title"}]))))
+   (example "cart-list with two items of same workflow"
+            (cart-list [{:title "Item title" :wfid 1} {:title "Another title" :wfid 1}]))
+   (example "cart-list with two items of different workflow"
+            (cart-list [{:title "Item title" :wfid 1} {:title "Another title" :wfid 2}]))))
