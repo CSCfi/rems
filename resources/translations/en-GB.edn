@@ -89,9 +89,9 @@
                           :return "Changes requested"
                           :review "Reviewed"
                           :review-request "Review requested"
+                          :third-party-review "Reviewed by a third party"
                           :unknown "Unknown"
-                          :withdraw "Withdrawn for modifying"
-                          :third-party-review "Reviewed by a third party"}
+                          :withdraw "Withdrawn for modifying"}
                  :resource "Resource"
                  :state "State"
                  :states {:applied "Applied"
