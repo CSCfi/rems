@@ -85,7 +85,7 @@
                           :approve "Hyväksytty"
                           :autoapprove "Automaattisesti hyväksytty"
                           :close "Suljettu"
-                          :reject "Evätty"
+                          :reject "Hylätty"
                           :return "Muutoksia pyydetty"
                           :review "Katselmoitu"
                           :review-request "Lähetetty katselmoitavaksi"
