@@ -498,9 +498,15 @@
                                  state
                                  (:catid application)))))
 
+(defn- add-entitlements-for [application]
+  (when (= "approved" (:state application))
+    (db/add-entitlement! {:application (:id application)
+                          :user (:applicantuserid application)})))
+
 (defn handle-state-change [application-id]
   (let [application (get-application-state application-id)]
     (send-emails-for application)
+    (add-entitlements-for application)
     (when (try-autoapprove-application application)
       (recur application-id))))
 
