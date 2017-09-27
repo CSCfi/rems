@@ -568,9 +568,13 @@
           (is (thrown? NotAuthorizedException (applications/approve-application app 1 ""))
               "Should not be able to approve if not approver")
 
+          (is (empty? (db/get-entitlements)))
+
           (binding [context/*user* {"eppn" "event-test-approver"}]
             (applications/approve-application app 1 "c2"))
           (is (= (fetch app) {:curround 1 :state "approved"}))
+
+          (is (= (db/get-entitlements) [{:catappid app :resid nil :userid uid}]))
 
           (is (= (->> (applications/get-application-state app)
                       :events
@@ -657,8 +661,9 @@
           (is (= (fetch app) {:curround 1 :state "closed"}))))
 
       (testing "autoapprove"
+        (db/create-resource! {:id 1995 :resid "ABC" :prefix "abc" :modifieruserid uid})
         (let [auto-wf (:id (db/create-workflow! {:modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 1}))
-              auto-item (:id (db/create-catalogue-item! {:title "A" :form nil :resid nil :wfid auto-wf}))
+              auto-item (:id (db/create-catalogue-item! {:title "A" :form nil :resid 1995 :wfid auto-wf}))
               auto-app (applications/create-new-draft auto-item)]
           (is (= (fetch auto-app) {:curround 0 :state "draft"}))
           (applications/submit-application auto-app)
@@ -668,7 +673,8 @@
                       (map #(select-keys % [:round :event])))
                  [{:round 0 :event "apply"}
                   {:round 0 :event "autoapprove"}
-                  {:round 1 :event "autoapprove"}]))))
+                  {:round 1 :event "autoapprove"}]))
+          (is (contains? (set (db/get-entitlements)) {:catappid auto-app :resid 1995 :userid uid}))))
       (let [new-wf (:id (db/create-workflow! {:modifieruserid uid :owneruserid uid :title "3rd party review workflow" :fnlround 0}))
             new-item (:id (db/create-catalogue-item! {:title "A" :form nil :resid nil :wfid new-wf}))]
         (actors/add-approver! new-wf uid 0)
