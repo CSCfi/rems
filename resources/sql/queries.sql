@@ -156,6 +156,9 @@ VALUES
 -- :name get-entitlements :?
 SELECT resId, catAppId, userId FROM entitlement
 
+-- :name get-entitlements-for-export
+SELECT resId, userId, start FROM entitlement
+
 -- :name save-field-value! :!
 INSERT INTO application_text_values
 (catAppId, modifierUserId, value, formMapId)

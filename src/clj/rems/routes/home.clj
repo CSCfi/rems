@@ -7,6 +7,7 @@
             [rems.contents :as contents]
             [rems.context :as context]
             [rems.css.styles :as styles]
+            [rems.entitlements :as entitlements]
             [rems.events :as events]
             [rems.form :as form]
             [rems.landing-page :as landing-page]
@@ -50,4 +51,5 @@
   landing-page/landing-page-routes
   events/events-routes
   cart/cart-routes
-  form/form-routes)
+  form/form-routes
+  entitlements/entitlements-routes)
