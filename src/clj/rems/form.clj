@@ -311,6 +311,7 @@
     (save-fields db-application-id input)
     (save-licenses db-application-id input)
     (let [submit? (get input "submit")
+          form (get-form-for db-application-id) ; reload form after saving
           validation (validate form)
           valid? (= :valid validation)
           perform-submit? (and submit? valid?)
