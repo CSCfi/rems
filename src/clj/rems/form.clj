@@ -228,7 +228,7 @@
     (text-format :t.form.validation/required (:title license))))
 
 (defn- validate
-  "Validates a filled in form from (get-form-for resource application).
+  "Validates a filled in form from (get-form-for application).
 
    Returns either :valid or a sequence of validation errors."
   [form]
