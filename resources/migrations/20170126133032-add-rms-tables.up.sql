@@ -19,7 +19,7 @@ CREATE TYPE application_event_type AS ENUM (
   'third-party-review' -- applied --> applied
 );
 --;;
-CREATE TYPE application_state AS ENUM ('applied','approved','rejected','returned','withdrawn','closed','draft','onhold');
+CREATE TYPE application_state AS ENUM ('applied','approved','rejected','returned','withdrawn','closed','draft');
 --;;
 CREATE TYPE item_state AS ENUM ('disabled','enabled','copied');
 --;;

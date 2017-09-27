@@ -2,6 +2,10 @@
   (:require [clojure.java.io :as io]
             [clojure.test :refer :all]))
 
+(def loc-en (read-string (slurp (io/resource "translations/en-GB.edn"))))
+
+(def loc-fi (read-string (slurp (io/resource "translations/fi.edn"))))
+
 (defn map-structure
   "Recurse into map m and replace all leaves with true."
   [m]
@@ -9,5 +13,5 @@
     (reduce-kv (fn [m k v] (assoc m k (transform v))) {} m)))
 
 (deftest test-all-languages-defined
-  (is (= (map-structure (read-string (slurp (io/resource "translations/en-GB.edn"))))
-         (map-structure (read-string (slurp (io/resource "translations/fi.edn")))))))
+  (is (= (map-structure loc-en)
+         (map-structure loc-fi))))

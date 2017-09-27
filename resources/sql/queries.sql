@@ -320,3 +320,9 @@ ORDER BY id ASC
 -- :name add-application-event! :insert
 INSERT INTO application_event (appId, userId, round, event, comment)
 VALUES (:application, :user, :round, CAST (:event AS application_event_type), :comment)
+
+-- :name get-application-event-types :? :*
+SELECT unnest(enum_range(NULL::application_event_type));
+
+-- :name get-application-states :? :*
+SELECT unnest(enum_range(NULL::application_state));
