@@ -10,24 +10,20 @@
             [ring.util.response :refer [redirect]]
             [clojure.string :as str]))
 
-(defn- button-primary
-  [action text value & [disabled?]]
+(defn- button
+  [cls action text value & [disabled?]]
   [:form.inline {:method "post" :action action}
    (anti-forgery-field)
    [:input {:type "hidden" :name "id" :value value}]
    [:button.btn {:type "submit"
                  :disabled disabled?
-                 :class (str "btn-primary" (if disabled? " disabled" ""))} text]])
+                 :class (str cls (if disabled? " disabled" ""))} text]])
 
-(defn- button-close
-  [action text value & [disabled?]]
-  [:form.inline {:method "post" :action action}
-   (anti-forgery-field)
-   [:input {:type "hidden" :name "id" :value value}]
-   [:button.btn {:type "submit"
-                 :disabled disabled?
-                 :aria-label text
-                 :class (str "close" (if disabled? " disabled" ""))} "&times;"]])
+(def ^:private button-primary
+  (partial button "btn-primary"))
+
+(def ^:private button-secondary
+  (partial button "btn-secondary"))
 
 (defn add-to-cart-button
   "Hiccup fragment that contains a button that adds the given item to the cart"
@@ -38,7 +34,7 @@
 (defn remove-from-cart-button
   "Hiccup fragment that contains a button that removes the given item from the cart"
   [item]
-  (button-close "/cart/remove" (text :t.cart/remove) (:id item)))
+  (button-secondary "/cart/remove" (text :t.cart/remove) (:id item)))
 
 (defn get-cart-from-session
   "Computes the value for context/*cart*: a set of integer ids."
@@ -63,16 +59,18 @@
 (defn- apply-button [items]
   [:a.btn.btn-primary {:href (form/link-to-application items)} (text :t.cart/apply)])
 
-(defn- item-view [item]
-  [:span.cart-item
-   [:span.title (get-catalogue-item-title item)]
-   [:span (remove-from-cart-button item)]])
+(defn- item-view [item & [apply-button?]]
+  [:tr.cart-item {:class (if apply-button? "separator" "")}
+   [:td.title (get-catalogue-item-title item)]
+   [:td.commands
+    (remove-from-cart-button item)
+    (when apply-button? (apply-button [item]))]])
 
 (defn- group-view [items]
-  [:tr
-   [:td {:data-th ""} (map item-view items)]
-   [:td.commands {:data-th ""}
-    (apply-button items)]])
+  (if (= 1 (count items))
+    (list (item-view (first items) true))
+    (concat (map item-view items)
+            [[:tr.separator [:td.commands.text-right {:colspan 2} (text-format :t.cart/apply-for-bundle (count items)) [:span.mr-3] (apply-button items)]]])))
 
 (defn cart-list [items]
   (when-not (empty? items)
@@ -82,12 +80,16 @@
        [:i.fa.fa-shopping-cart]
        [:span (text-format :t.cart/header (count items))]]
       [:table.rems-table.cart
-       (for [group (vals (group-by :wfid items))]
-         (group-view (sort-by get-catalogue-item-title group)))]]]))
+       (apply concat
+              (for [group (vals (group-by :wfid items))]
+                (group-view (sort-by get-catalogue-item-title group))))]]]))
 
 (defn guide []
   (list
-   (example "item-view"
+   (example "item-view, single"
+            [:table.rems-table.cart
+             (item-view {:title "Item title"} true)])
+   (example "item-view, one of many has no apply button"
             [:table.rems-table.cart
              (item-view {:title "Item title"})])
    (example "group-view"
@@ -95,7 +97,8 @@
              (group-view [{:title "Item title"}])])
    (example "cart-list empty"
             (cart-list []))
-   (example "cart-list with two items of same workflow"
-            (cart-list [{:title "Item title" :wfid 1} {:title "Another title" :wfid 1}]))
    (example "cart-list with two items of different workflow"
-            (cart-list [{:title "Item title" :wfid 1} {:title "Another title" :wfid 2}]))))
+            (cart-list [{:title "Item title" :wfid 1} {:title "Another title" :wfid 2}]))
+   (example "cart-list with three items of same workflow and two of different"
+            (cart-list [{:title "First title" :wfid 2} {:title "Second title" :wfid 1} {:title "Third title" :wfid 1} {:title "Fourth title" :wfid 1} {:title "Fifth title" :wfid 3}]))
+   ))

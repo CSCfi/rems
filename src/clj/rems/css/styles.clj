@@ -106,7 +106,7 @@
    [:.rems-table.cart {:background "#fff"
                        :color "#000"
                        :margin 0}
-    [:tr {:border-bottom [[(u/px 1) :solid (util/get-theme-attribute :color1)]]}]
+    [:tr.separator {:border-bottom [[(u/px 1) :solid (util/get-theme-attribute :color1)]]}]
     [:td:before {:content "initial"}]
     [:th
      :td:before

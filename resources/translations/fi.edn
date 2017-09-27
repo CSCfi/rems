@@ -90,6 +90,7 @@
                  :view "Näytä"}
   :cart {:add "Lisää koriin"
          :apply "Hae"
+         :apply-for-bundle "Nae näitä kielivaroja (%1 kpl) yhdessä "
          :checkout "Lähetä"
          :header "%1 kielivaraa korissa"
          :remove "Poista"}
