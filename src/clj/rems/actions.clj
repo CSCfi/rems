@@ -1,17 +1,13 @@
 (ns rems.actions
   "The /actions page that shows a list of applications you can act on."
-  (:require [clj-time.core :as time]
-            [clj-time.format :as format]
-            [compojure.core :refer [GET defroutes]]
+  (:require [compojure.core :refer [GET defroutes]]
             [rems.collapsible :as collapsible]
             [rems.db.applications :as applications]
             [rems.guide :refer :all]
             [rems.layout :as layout]
             [rems.roles :refer [when-role]]
-            [rems.text :refer [localize-state text]]))
+            [rems.text :refer [localize-state localize-time text]]))
 
-(def ^:private time-format (format/formatter "yyyy-MM-dd HH:mm"
-                                             (time/default-time-zone)))
 
 (defn view-button [app]
   [:a.btn.btn-secondary
@@ -76,7 +72,7 @@
         [:td {:data-th (text :t.actions/application)} (:id app)]
         [:td {:data-th (text :t.actions/resource)} (get-in app [:catalogue-item :title])]
         [:td {:data-th (text :t.actions/applicant)} (:applicantuserid app)]
-        [:td {:data-th (text :t.actions/created)} (format/unparse time-format (:start app))]
+        [:td {:data-th (text :t.actions/created)} (localize-time (:start app))]
         [:td.commands (view-button app)]])]))
 
 (defn reviews
@@ -117,7 +113,7 @@
           [:td {:data-th (text :t.actions/resource)} (get-in app [:catalogue-item :title])]
           [:td {:data-th (text :t.actions/applicant)} (:applicantuserid app)]
           [:td {:data-th (text :t.actions/state)} (text (localize-state (:state app)))]
-          [:td {:data-th (text :t.actions/handled)} (format/unparse time-format (:handled app))]
+          [:td {:data-th (text :t.actions/handled)} (localize-time (:handled app))]
           [:td.commands (view-button app)]])]))))
 
 (defn handled-approvals
