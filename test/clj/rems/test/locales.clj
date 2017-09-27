@@ -1,21 +1,6 @@
-(ns ^:integration rems.test.locales
+(ns rems.test.locales
   (:require [clojure.java.io :as io]
-            [clojure.test :refer :all]
-            [luminus-migrations.core :as migrations]
-            [mount.core :as mount]
-            [rems.config :refer [env]]
-            [rems.db.core :as db]))
-
-(use-fixtures
-  :once
-  (fn [f]
-    (mount/start
-     #'rems.config/env
-     #'rems.env/*db*)
-    (db/assert-test-database!)
-    (migrations/migrate ["reset"] (select-keys env [:database-url]))
-    (f)
-    (mount/stop)))
+            [clojure.test :refer :all]))
 
 (def loc-en (read-string (slurp (io/resource "translations/en-GB.edn"))))
 
@@ -30,27 +15,3 @@
 (deftest test-all-languages-defined
   (is (= (map-structure loc-en)
          (map-structure loc-fi))))
-
-(deftest test-all-state-localizations
-  (is (= (-> (:states (:applications (:t loc-en)))
-             (dissoc :unknown)
-             (keys)
-             (sort))
-         (->> (rems.db.core/get-application-states)
-              (map :unnest)
-              (map keyword)
-              (sort))))
-  (is (not (contains? (set (map rems.text/localize-state (map :unnest (rems.db.core/get-application-states))))
-                      :t.applications.states/unknown))))
-
-(deftest test-all-event-localizations
-  (is (= (-> (:events (:applications (:t loc-en)))
-             (dissoc :unknown)
-             (keys)
-             (sort))
-         (->> (rems.db.core/get-application-event-types)
-              (map :unnest)
-              (map keyword)
-              (sort))))
-  (is (not (contains? (set (map rems.text/localize-event (map :unnest (rems.db.core/get-application-event-types))))
-                      :t.applications.events/unknown))))
