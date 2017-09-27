@@ -1,6 +1,8 @@
 (ns rems.entitlements
   (:require [compojure.core :refer [GET POST defroutes]]
+            [clj-time.format :as format]
             [rems.db.core :as db]
+            [rems.text :as text]
             [ring.util.http-response :as response]))
 
 (defn- get-entitlements-for-export []
@@ -9,8 +11,7 @@
     (with-out-str
       (println "resource,user,start")
       (doseq [e ents]
-        ;; TODO date formatting
-        (println (:resid e) \, (:userid e) \, (:start e))))))
+        (println (:resid e) \, (:userid e) \, (text/localize-time (:start e)))))))
 
 (defroutes entitlements-routes
   (GET "/entitlements.csv" []

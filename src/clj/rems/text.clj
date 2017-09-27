@@ -1,5 +1,7 @@
 (ns rems.text
-  (:require [rems.context :as context]))
+  (:require [clj-time.core :as time]
+            [clj-time.format :as format]
+            [rems.context :as context]))
 
 (defn text
   "Return the tempura translation for a given key. Additional fallback
@@ -36,3 +38,9 @@
     "withdraw" :t.applications.events/withdraw
     "third-party-review" :t.applications.events/third-party-review
     :t.applications.events/unknown))
+
+(def ^:private time-format (format/formatter "yyyy-MM-dd HH:mm"
+                                             (time/default-time-zone)))
+
+(defn localize-time [time]
+  (format/unparse time-format time))
