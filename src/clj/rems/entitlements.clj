@@ -1,5 +1,6 @@
 (ns rems.entitlements
-  (:require [compojure.core :refer [GET defroutes]]
+  (:require [clojure.string :refer [join]]
+            [compojure.core :refer [GET defroutes]]
             [rems.auth.util :refer [throw-unauthorized]]
             [rems.db.core :as db]
             [rems.roles :refer [has-roles?]]
@@ -11,9 +12,9 @@
     (throw-unauthorized))
   (let [ents (db/get-entitlements-for-export)]
     (with-out-str
-      (println "resource,user,start")
+      (println "resource,application,user,start")
       (doseq [e ents]
-        (println (:resid e) \, (:userid e) \, (text/localize-time (:start e)))))))
+        (println (join "," [(:resid e) (:catappid e) (:userid e) (text/localize-time (:start e))]))))))
 
 (defroutes entitlements-routes
   (GET "/entitlements.csv" []
