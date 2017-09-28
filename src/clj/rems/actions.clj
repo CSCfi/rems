@@ -32,11 +32,10 @@
     (text :t.actions/load-application-states)]
    (not-implemented-modal "load-application-states" (text :t.actions/load-application-states))))
 
-(defn- view-rights-button []
-  (list
-   [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#view-rights-modal"}
-    (text :t.actions/view-rights)]
-   (not-implemented-modal "view-rights" (text :t.actions/view-rights))))
+(defn- export-entitlements-button []
+  [:a.btn.btn-secondary
+   {:href "/entitlements.csv"}
+   (text :t.actions/export-entitlements)])
 
 (defn- show-publications-button []
   (list
@@ -53,7 +52,7 @@
 (defn report-buttons []
   [:div.form-actions.inline
    (load-application-states-button)
-   (view-rights-button)
+   (export-entitlements-button)
    (show-publications-button)
    (show-throughput-times-button)])
 
