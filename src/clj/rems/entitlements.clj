@@ -1,12 +1,15 @@
 (ns rems.entitlements
   (:require [compojure.core :refer [GET POST defroutes]]
             [clj-time.format :as format]
+            [rems.auth.util :refer [throw-unauthorized]]
             [rems.db.core :as db]
+            [rems.roles :refer [has-roles?]]
             [rems.text :as text]
             [ring.util.http-response :as response]))
 
 (defn- get-entitlements-for-export []
-  ;; TODO auth
+  (when-not (has-roles? :approver)
+    (throw-unauthorized))
   (let [ents (db/get-entitlements-for-export)]
     (with-out-str
       (println "resource,user,start")
