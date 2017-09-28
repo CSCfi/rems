@@ -52,7 +52,6 @@
             :close-success "Application closed"
             :created "Created"
             :empty "You don't have any applications to process."
-            :export-pdf "Export PDF"
             :handled "Handled"
             :handled-approvals "Handled applications"
             :handled-reviews "Handled reviews"

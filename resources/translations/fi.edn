@@ -52,7 +52,6 @@
             :close-success "Hakemus suljettu"
             :created "Luotu"
             :empty "Sinulla ei ole hakemuksia käsiteltäväksi."
-            :export-pdf "Lataa PDF"
             :handled "Käsitelty"
             :handled-approvals "Käsitellyt hakemukset"
             :handled-reviews "Käsitellyt katselmoinnit"
