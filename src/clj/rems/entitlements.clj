@@ -1,6 +1,5 @@
 (ns rems.entitlements
-  (:require [compojure.core :refer [GET POST defroutes]]
-            [clj-time.format :as format]
+  (:require [compojure.core :refer [GET defroutes]]
             [rems.auth.util :refer [throw-unauthorized]]
             [rems.db.core :as db]
             [rems.roles :refer [has-roles?]]
