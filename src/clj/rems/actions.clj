@@ -1,17 +1,13 @@
 (ns rems.actions
   "The /actions page that shows a list of applications you can act on."
-  (:require [clj-time.core :as time]
-            [clj-time.format :as format]
-            [compojure.core :refer [GET defroutes]]
+  (:require [compojure.core :refer [GET defroutes]]
             [rems.collapsible :as collapsible]
             [rems.db.applications :as applications]
             [rems.guide :refer :all]
             [rems.layout :as layout]
             [rems.roles :refer [when-role]]
-            [rems.text :refer [localize-state text]]))
+            [rems.text :refer [localize-state localize-time text]]))
 
-(def ^:private time-format (format/formatter "yyyy-MM-dd HH:mm"
-                                             (time/default-time-zone)))
 
 (defn view-button [app]
   [:a.btn.btn-secondary
@@ -36,11 +32,10 @@
     (text :t.actions/load-application-states)]
    (not-implemented-modal "load-application-states" (text :t.actions/load-application-states))))
 
-(defn- view-rights-button []
-  (list
-   [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#view-rights-modal"}
-    (text :t.actions/view-rights)]
-   (not-implemented-modal "view-rights" (text :t.actions/view-rights))))
+(defn- export-entitlements-button []
+  [:a.btn.btn-secondary
+   {:href "/entitlements.csv"}
+   (text :t.actions/export-entitlements)])
 
 (defn- show-publications-button []
   (list
@@ -57,7 +52,7 @@
 (defn report-buttons []
   [:div.form-actions.inline
    (load-application-states-button)
-   (view-rights-button)
+   (export-entitlements-button)
    (show-publications-button)
    (show-throughput-times-button)])
 
@@ -76,7 +71,7 @@
         [:td {:data-th (text :t.actions/application)} (:id app)]
         [:td {:data-th (text :t.actions/resource)} (get-in app [:catalogue-item :title])]
         [:td {:data-th (text :t.actions/applicant)} (:applicantuserid app)]
-        [:td {:data-th (text :t.actions/created)} (format/unparse time-format (:start app))]
+        [:td {:data-th (text :t.actions/created)} (localize-time (:start app))]
         [:td.commands (view-button app)]])]))
 
 (defn reviews
@@ -117,7 +112,7 @@
           [:td {:data-th (text :t.actions/resource)} (get-in app [:catalogue-item :title])]
           [:td {:data-th (text :t.actions/applicant)} (:applicantuserid app)]
           [:td {:data-th (text :t.actions/state)} (text (localize-state (:state app)))]
-          [:td {:data-th (text :t.actions/handled)} (format/unparse time-format (:handled app))]
+          [:td {:data-th (text :t.actions/handled)} (localize-time (:handled app))]
           [:td.commands (view-button app)]])]))))
 
 (defn handled-approvals

@@ -52,7 +52,7 @@
             :close-success "Hakemus suljettu"
             :created "Luotu"
             :empty "Sinulla ei ole hakemuksia käsiteltäväksi."
-            :export-pdf "Lataa PDF"
+            :export-entitlements "Lataa käyttöoikeudet csv-tiedostona"
             :handled "Käsitelty"
             :handled-approvals "Käsitellyt hakemukset"
             :handled-reviews "Käsitellyt katselmoinnit"
@@ -74,7 +74,6 @@
             :show-throughput-times "Näytä läpimenoajat"
             :state "Tila"
             :view "Näytä"
-            :view-rights "Näytä käyttöoikeudet"
             :withdraw "Vedä takaisin"
             :withdraw-success "Hakemus vedetty takaisin"}
   :applicant-info {:applicant "Hakija"}

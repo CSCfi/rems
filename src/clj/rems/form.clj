@@ -1,7 +1,5 @@
 (ns rems.form
-  (:require [clj-time.core :as time]
-            [clj-time.format :as format]
-            [compojure.core :refer [GET POST defroutes]]
+  (:require [compojure.core :refer [GET POST defroutes]]
             [rems.events :as events]
             [rems.anti-forgery :refer [anti-forgery-field]]
             [rems.applicant-info :as applicant-info]
@@ -24,9 +22,6 @@
             [rems.text :refer :all]
             [rems.util :refer [get-user-id]]
             [ring.util.response :refer [redirect]]))
-
-(def ^:private time-format (format/formatter "yyyy-MM-dd HH:mm"
-                                             (time/default-time-zone)))
 
 ;; TODO remove id-to-name when no more forms submitted by SPA
 (defn- id-to-name [id]
@@ -123,7 +118,7 @@
                   [:td (:userid e)]
                   [:td (text (localize-event (:event e)))]
                   [:td (:comment e)]
-                  [:td (format/unparse time-format (:time e))]])))))]))
+                  [:td (localize-time (:time e))]])))))]))
 
 
 (defn- form-fields [form]

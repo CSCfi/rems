@@ -52,7 +52,7 @@
             :close-success "Application closed"
             :created "Created"
             :empty "You don't have any applications to process."
-            :export-pdf "Export PDF"
+            :export-entitlements "Export entitlements as csv"
             :handled "Handled"
             :handled-approvals "Handled applications"
             :handled-reviews "Handled reviews"
@@ -74,7 +74,6 @@
             :show-throughput-times "Show throughput times"
             :state "State"
             :view "View"
-            :view-rights "View rights"
             :withdraw "Withdraw"
             :withdraw-success "Application withdrawn"}
   :applicant-info {:applicant "Applicant"}
