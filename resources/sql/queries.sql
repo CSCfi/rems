@@ -308,12 +308,31 @@ WHERE textvalues.catAppId = :application
   AND itemmap.formItemId = :item
   AND itemmap.formId = :form
 
--- :name get-workflow-licenses :? :*
-SELECT
-  lic.id, lic.title, lic.type, lic.textcontent
+-- :name get-application-licenses :? :*
+SELECT lic.id, lic.title, lic.type, lic.textcontent
+FROM license lic
+INNER JOIN workflow_licenses wl ON lic.id = wl.licid
+INNER JOIN catalogue_item_application app ON (wl.wfid = app.wfid)
+WHERE app.id = :id
+UNION
+SELECT lic.id, lic.title, lic.type, lic.textcontent
+FROM license lic
+INNER JOIN resource_licenses rl ON lic.id = rl.licid
+INNER JOIN catalogue_item item ON (item.resid = rl.resid)
+INNER JOIN catalogue_item_application_items ciai ON (ciai.catitemid = item.id)
+WHERE ciai.catappid = :id
+
+-- :name get-draft-licenses :? :*
+SELECT lic.id, lic.title, lic.type, lic.textcontent
 FROM license lic
 INNER JOIN workflow_licenses wl ON lic.id = wl.licid
 WHERE wl.wfid = :wfid
+UNION
+SELECT lic.id, lic.title, lic.type, lic.textcontent
+FROM license lic
+INNER JOIN resource_licenses rl ON lic.id = rl.licid
+INNER JOIN catalogue_item item ON (item.resid = rl.resid)
+WHERE item.id IN (:v*:items)
 
 -- :name get-license-localizations :? :*
 SELECT licid, langcode, title, textcontent

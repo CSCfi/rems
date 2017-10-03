@@ -181,7 +181,7 @@
                             \"displayName\" \"deve\"
                             \"surname\" \"loper\"
                             ...}
-     :catalogue-item 3
+     :catalogue-items [{:application 3 :item 123}]
      :items [{:id 123
               :type \"texta\"
               :title \"Item title\"
@@ -202,14 +202,15 @@
          _ (assert application)
          form-id (:formid form)
          _ (assert form-id)
-         catalogue-items (db/get-application-items {:application application-id})
+         catalogue-item-ids (mapv :item (db/get-application-items {:application application-id}))
+         catalogue-items (get-catalogue-items catalogue-item-ids)
          items (mapv #(process-item application-id form-id %)
                      (db/get-form-items {:id form-id}))
-         license-localizations nil #_(->> (db/get-license-localizations)
-                                          (map #(update-in % [:langcode] keyword))
-                                          (index-by [:licid :langcode]))
-         licenses nil #_(mapv #(process-license application license-localizations %)
-                              (db/get-workflow-licenses {:catId catalogue-item}))
+         license-localizations (->> (db/get-license-localizations)
+                                    (map #(update-in % [:langcode] keyword))
+                                    (index-by [:licid :langcode]))
+         licenses (mapv #(process-license application license-localizations %)
+                        (db/get-application-licenses {:id application-id}))
          applicant? (= (:applicantuserid application) (get-user-id))]
      (when-not (or applicant?
                    (is-approver? application-id)
@@ -226,17 +227,19 @@
   "Returns a draft form structure like `get-form-for` used when a new application is created."
   ([application]
    (let [application-id (:id application)
-         item-id (:catid (first (:catalogue-items application)))
+         catalogue-item-ids (map :id (:catalogue-items application))
+         item-id (first catalogue-item-ids)
          form (db/get-form-for-item {:item item-id :lang (name context/*lang*)})
          form-id (:formid form)
-         catalogue-items (db/get-application-items {:application application-id})
+         wfid (:wfid application)
+         catalogue-items (:catalogue-items application) #_(db/get-application-items {:application application-id})
          items (mapv #(process-item application-id form-id %)
                      (db/get-form-items {:id form-id}))
-         license-localizations nil #_(->> (db/get-license-localizations)
-                                          (map #(update-in % [:langcode] keyword))
-                                          (index-by [:licid :langcode]))
-         licenses nil #_(mapv #(process-license application license-localizations %)
-                              (db/get-workflow-licenses {:catId catalogue-item}))]
+         license-localizations (->> (db/get-license-localizations)
+                                    (map #(update-in % [:langcode] keyword))
+                                    (index-by [:licid :langcode]))
+         licenses (mapv #(process-license application license-localizations %)
+                        (db/get-draft-licenses {:wfid wfid :items catalogue-item-ids}))]
      {:id form-id
       :catalogue-items catalogue-items
       :application application

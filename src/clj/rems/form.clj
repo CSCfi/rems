@@ -169,13 +169,13 @@
                                        ])])
                              ]))))
 
-(defn- applied-resources [application]
+(defn- applied-resources [catalogue-items]
   (collapsible/component "resources"
                          true
                          (text :t.form/resources)
                          [:div.form-items.form-group
                           [:ul
-                           (for [item (:catalogue-items application)]
+                           (for [item catalogue-items]
                              [:li (:title item)])]]))
 
 
@@ -193,7 +193,7 @@
 
      (applicant-info/details "applicant-info" user-attributes)
 
-     [:div.mt-3 (applied-resources (:application form))]
+     [:div.mt-3 (applied-resources (:catalogue-items form))]
 
      [:div.my-3 (form-fields form)]
 
@@ -354,8 +354,7 @@
              catalogue-item-ids (map #(Long/parseLong %) (s/split catalogue-items #"[,]"))]
          (if-let [app (get-draft-id-for catalogue-item-ids)]
            (redirect-to-application app)
-           (let [_ (prn session)
-                 new-app-id (dec (apply min (keys (merge (:applications session) {0 nil}))))
+           (let [new-app-id (dec (apply min (keys (merge (:applications session) {0 nil}))))
                  draft (make-draft-application new-app-id catalogue-item-ids)]
              (-> (redirect-to-application new-app-id)
                  (assoc :session (assoc-in session [:applications new-app-id] draft)))))))
