@@ -1,8 +1,6 @@
 ---
 
 - hosts: all
-  vars_files:
-    - vault.yml
   become: yes
   tasks:
 
@@ -152,7 +150,7 @@
   #TODO check if newer tomcat bundles work with tomcat-native
   - name: Install tomcat
     unarchive:
-      src: http://archive.apache.org/dist/tomcat/tomcat-8/v8.5.15/bin/apache-tomcat-8.5.15.tar.gz
+      src: http://archive.apache.org/dist/tomcat/tomcat-8/v8.5.23/bin/apache-tomcat-8.5.23.tar.gz
       dest: /opt/tomcat
       remote_src: yes
       extra_opts: --strip-components=1
@@ -170,11 +168,6 @@
       src: context.xml
       dest: /opt/tomcat/conf
 
-  - name: Copy tomcat-users.xml
-    template:
-      src: tomcat-users.xml
-      dest: /opt/tomcat/conf
-
   - name: Copy tomcat catalina.properties
     copy:
       src: catalina.properties
@@ -188,6 +181,16 @@
   - name: Delete tomcat documentation
     file:
       path: /opt/tomcat/webapps/docs
+      state: absent
+
+  - name: Delete tomcat manager app
+    file:
+      path: /opt/tomcat/webapps/manager
+      state: absent
+
+  - name: Delete tomcat host-manager app
+    file:
+      path: /opt/tomcat/webapps/host-manager
       state: absent
 
   - name: Change ownership files in /opt/tomcat to tomcat user
