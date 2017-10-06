@@ -395,7 +395,7 @@
             reviewers (actors/get-by-role application-id round "reviewer")]
         (when (and (empty? approvers)
                    (empty? reviewers)
-                   (< round fnlround))
+                   (<= round fnlround))
           (db/add-application-event! {:application application-id :user (get-user-id)
                                       :round round :event "autoapprove" :comment nil})
           true)))))
