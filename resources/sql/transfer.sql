@@ -31,6 +31,7 @@ DELETE FROM public.application_text_values CASCADE;
 DELETE FROM public.catalogue_item_application CASCADE;
 
 -- clear existing data
+DELETE FROM public.workflow_actors CASCADE;
 DELETE FROM public.workflow_licenses CASCADE;
 DELETE FROM public.license_localization CASCADE;
 DELETE FROM public.license CASCADE;
@@ -79,6 +80,12 @@ SELECT * FROM transfer.rms_license_localization;
 
 INSERT INTO public.workflow_licenses
 SELECT * FROM transfer.rms_workflow_licenses;
+
+INSERT INTO public.workflow_actors (wfId, actorUserId, role, round, start, endt)
+SELECT wfId, apprUserId, 'approver' AS ROLE, round, start, "end" FROM transfer.rms_workflow_approvers;
+
+INSERT INTO public.workflow_actors (wfId, actorUserId, role, round, start, endt)
+SELECT wfId, revUserId, 'reviewer' AS ROLE, round, start, "end" FROM transfer.rms_workflow_reviewers;
 
 -- if all casts are not dropped, the next pgloader run might fail
 -- (can't drop a type that is referenced by a cast)
