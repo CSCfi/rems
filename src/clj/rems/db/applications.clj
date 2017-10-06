@@ -70,31 +70,31 @@
   ([app userid round]
    (reviewed? (update app :events (fn [events] (filter #(= round (:round %)) events))) userid)))
 
-(defn- can-act-as? [application role]
-  (let [state (get-application-state application)
+(defn- can-act-as? [application-id role]
+  (let [state (get-application-state application-id)
         round (:curround state)]
     (and (= "applied" (:state state))
-         (contains? (set (actors/get-by-role application round role))
+         (contains? (set (actors/get-by-role application-id round role))
                     (get-user-id)))))
 
-(defn- round-has-approvers? [application round]
-  (not-empty? (actors/get-by-role application round "approver")))
+(defn- round-has-approvers? [application-id round]
+  (not-empty? (actors/get-by-role application-id round "approver")))
 
-(defn- is-actor? [application role]
-  (contains? (set (actors/get-by-role application role))
+(defn- is-actor? [application-id role]
+  (contains? (set (actors/get-by-role application-id role))
              (get-user-id)))
 
-(defn can-approve? [application]
-  (can-act-as? application "approver"))
+(defn can-approve? [application-id]
+  (can-act-as? application-id "approver"))
 
-(defn is-approver? [application]
-  (is-actor? application "approver"))
+(defn is-approver? [application-id]
+  (is-actor? application-id "approver"))
 
-(defn can-review? [application]
-  (can-act-as? application "reviewer"))
+(defn can-review? [application-id]
+  (can-act-as? application-id "reviewer"))
 
-(defn is-reviewer? [application]
-  (is-actor? application "reviewer"))
+(defn is-reviewer? [application-id]
+  (is-actor? application-id "reviewer"))
 
 (defn is-third-party-reviewer?
   "Checks if a given user has been requested to review the given application. If no user is provided, the function checks review requests for the current user.
@@ -120,10 +120,12 @@
   [application round]
   (set (map :userid (get-events-of-type application round "review-request"))))
 
+(defn is-applicant? [application]
+  (= (:applicantuserid application) (get-user-id)))
+
 (defn may-see-application? [application]
-  (let [applicant? (= (:applicantuserid application) (get-user-id))
-        application-id (:id application)]
-    (or applicant?
+  (let [application-id (:id application)]
+    (or (is-applicant? application)
         (is-approver? application-id)
         (is-reviewer? application-id)
         (is-third-party-reviewer? application))))
