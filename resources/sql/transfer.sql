@@ -31,6 +31,8 @@ DELETE FROM public.application_text_values CASCADE;
 DELETE FROM public.catalogue_item_application CASCADE;
 
 -- clear existing data
+DELETE FROM public.entitlement CASCADE;
+DELETE FROM public.application_event CASCADE;
 DELETE FROM public.workflow_actors CASCADE;
 DELETE FROM public.workflow_licenses CASCADE;
 DELETE FROM public.license_localization CASCADE;
@@ -86,6 +88,49 @@ SELECT wfId, apprUserId, 'approver' AS ROLE, round, start, "end" FROM transfer.r
 
 INSERT INTO public.workflow_actors (wfId, actorUserId, role, round, start, endt)
 SELECT wfId, revUserId, 'reviewer' AS ROLE, round, start, "end" FROM transfer.rms_workflow_reviewers;
+
+INSERT INTO public.application_event (appId, userId, round, event, comment, time)
+SELECT catAppId, wfApprId, round, 'approve' AS EVENT, comment, start FROM transfer.rms_catalogue_item_application_approvers
+WHERE state = 'approved';
+
+INSERT INTO public.application_event (appId, userId, round, event, comment, time)
+SELECT catAppId, wfApprId, round, 'reject' AS EVENT, comment, start FROM transfer.rms_catalogue_item_application_approvers
+WHERE state = 'rejected';
+
+INSERT INTO public.application_event (appId, userId, round, event, comment, time)
+SELECT catAppId, wfApprId, round, 'return' AS EVENT, comment, start FROM transfer.rms_catalogue_item_application_approvers
+WHERE state = 'returned';
+
+INSERT INTO public.application_event (appId, userId, round, event, comment, time)
+SELECT catAppId, wfApprId, round, 'close' AS EVENT, comment, start FROM transfer.rms_catalogue_item_application_approvers
+WHERE state = 'closed';
+
+INSERT INTO public.application_event (appId, userId, round, event, comment, time)
+SELECT catAppId, revUserId, round, 'review' AS EVENT, comment, start FROM transfer.rms_catalogue_item_application_reviewers
+WHERE state = 'commented';
+
+INSERT INTO public.application_event (appId, userId, round, event, time)
+SELECT catAppId, modifierUserId, curround, 'apply' AS EVENT, start FROM transfer.rms_catalogue_item_application_state
+WHERE state = 'applied';
+
+INSERT INTO public.application_event (appId, userId, round, event, time)
+SELECT catAppId, modifierUserId, curround, 'approve' AS EVENT, start FROM transfer.rms_catalogue_item_application_state
+WHERE state = 'approved';
+
+INSERT INTO public.application_event (appId, userId, round, event, time)
+SELECT catAppId, modifierUserId, curround, 'reject' AS EVENT, start FROM transfer.rms_catalogue_item_application_state
+WHERE state = 'rejected';
+
+INSERT INTO public.application_event (appId, userId, round, event, time)
+SELECT catAppId, modifierUserId, curround, 'return' AS EVENT, start FROM transfer.rms_catalogue_item_application_state
+WHERE state = 'returned';
+
+INSERT INTO public.application_event (appId, userId, round, event, time)
+SELECT catAppId, modifierUserId, curround, 'close' AS EVENT, start FROM transfer.rms_catalogue_item_application_state
+WHERE state = 'closed';
+
+INSERT INTO public.entitlement
+SELECT * FROM transfer.rms_entitlement;
 
 -- if all casts are not dropped, the next pgloader run might fail
 -- (can't drop a type that is referenced by a cast)
