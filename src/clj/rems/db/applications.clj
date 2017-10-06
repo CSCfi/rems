@@ -435,16 +435,14 @@
       (throw-unauthorized))
     (when-not (#{"draft" "returned" "withdrawn"} (:state application))
       (throw-unauthorized))
-    (println 1)
     (db/add-application-event! {:application application-id :user uid
                                 :round 0 :event "apply" :comment nil})
-    (println 2)
+    ;; TODO fix email sending to handle multiple items
     #_(email/confirm-application-creation (get-catalogue-item-title
                                            (get-localized-catalogue-item {:id (:catid application)}))
                                           (:catid application)
                                           application-id)
-    (handle-state-change application-id)
-    (println 3)))
+    (handle-state-change application-id)))
 
 (defn- judge-application [application-id event round msg]
   (let [state (get-application-state application-id)]
