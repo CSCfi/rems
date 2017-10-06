@@ -266,17 +266,17 @@
 (defn- get-action-buttons [form-data]
   (hiccup-find [:.commands] (form form-data)))
 
-(defn- action-button-check [emptyness-fn action-buttons msg]
+(defn- approver-button-check [emptyness-fn action-buttons msg]
   (is (emptyness-fn (hiccup-find [:button#reject.btn.btn-secondary] action-buttons)) (str msg "reject button"))
   (is (emptyness-fn (hiccup-find [:button#return.btn.btn-secondary] action-buttons)) (str msg "return button"))
   (is (emptyness-fn (hiccup-find [:button#review-request.btn.btn-secondary] action-buttons)) (str msg "review request button"))
   (is (emptyness-fn (hiccup-find [:button#approve.btn.btn-primary] action-buttons)) (str msg "approve button")))
 
 (defn- validate-approver-actions-absence [form-data]
-  (action-button-check empty? (get-action-buttons form-data) "Should not see "))
+  (approver-button-check empty? (get-action-buttons form-data) "Should not see "))
 
 (defn- validate-approver-actions-presence [form-data]
-  (action-button-check not-empty (get-action-buttons form-data) "Should see "))
+  (approver-button-check not-empty (get-action-buttons form-data) "Should see "))
 
 (defn- validate-review-actions-absence [form-data]
   (is (empty? (hiccup-find [:button#review.btn.btn-primary] (get-action-buttons form-data))) "should not see review button"))
@@ -295,6 +295,12 @@
 
 (defn- validate-third-party-review-actions-presence [form-data]
   (is (not-empty (hiccup-find [:button#third-party-review.btn.btn-primary] (get-action-buttons form-data))) "should see third-party review button"))
+
+(defn- validate-withdraw-button-presence [form-data]
+  (is (not-empty (hiccup-find [:button#withdraw.btn.btn-secondary] (get-action-buttons form-data))) "should see withdraw button"))
+
+(defn- validate-withdraw-button-absence [form-data]
+  (is (empty? (hiccup-find [:button#withdraw.btn.btn-secondary] (get-action-buttons form-data))) "should not see withdraw button"))
 
 (deftest test-form-actions
   (with-fake-tempura
@@ -366,28 +372,33 @@
                     (fn [_]
                       nil)]
 
-        (binding [context/*roles* #{:applicant}]
-          (testing "As an applicant"
+        (binding [context/*user* {"eppn" "developer"}
+                  context/*roles* #{:applicant}]
+          (testing "As the applicant"
             (testing "on an actionable form"
+              (validate-withdraw-button-presence actionable-data)
               (validate-back-button-absence actionable-data)
               (validate-approver-actions-absence actionable-data)
               (validate-review-actions-absence actionable-data)
               (validate-third-party-review-actions-absence actionable-data))
             (testing "on an unactionable form"
+              (validate-withdraw-button-absence unactionable-data)
               (validate-back-button-absence unactionable-data)
               (validate-approver-actions-absence unactionable-data)
               (validate-review-actions-absence unactionable-data)
               (validate-third-party-review-actions-absence unactionable-data))))
         (binding [context/*user* {"eppn" "bob"}
-                  context/*roles* #{:approver}]
-          (testing "As a current round approver"
+                  context/*roles* #{:approver :applicant}]
+          (testing "As a current round approver (who is also an applicant)"
             (testing "on an actionable form"
+              (validate-withdraw-button-absence actionable-data)
               (validate-back-button-presence actionable-data)
               (validate-approver-actions-presence actionable-data)
               (validate-review-actions-absence actionable-data)
               (validate-third-party-review-actions-absence actionable-data)))
-          (testing "As an approver"
+          (testing "As an approver (who is also an applicant)"
             (testing "on an unactionable form"
+              (validate-withdraw-button-absence unactionable-data)
               (validate-back-button-presence unactionable-data)
               (validate-approver-actions-absence unactionable-data)
               (validate-review-actions-absence unactionable-data)
@@ -395,6 +406,7 @@
         (testing "As an approver, who is not set for the current round, on an actionable form"
           (binding [context/*user* {"eppn" "carl"}
                     context/*roles* #{:approver}]
+            (validate-withdraw-button-absence actionable-data)
             (validate-back-button-presence actionable-data)
             (validate-approver-actions-absence actionable-data)
             (validate-review-actions-absence actionable-data)
@@ -403,11 +415,13 @@
           (binding [context/*user* {"eppn" "carl"}
                     context/*roles* #{:reviewer}]
             (testing "on an actionable form"
+              (validate-withdraw-button-absence actionable-data)
               (validate-back-button-presence actionable-data)
               (validate-approver-actions-absence actionable-data)
               (validate-review-actions-presence actionable-data)
               (validate-third-party-review-actions-absence actionable-data))
             (testing "on an unactionable form"
+              (validate-withdraw-button-absence actionable-data)
               (validate-back-button-presence unactionable-data)
               (validate-approver-actions-absence unactionable-data)
               (validate-review-actions-absence unactionable-data)
@@ -415,6 +429,7 @@
         (testing "As a reviewer, who is not set for the current round, on an actionable form"
           (binding [context/*user* {"eppn" "bob"}
                     context/*roles* #{:reviewer}]
+            (validate-withdraw-button-absence actionable-data)
             (validate-back-button-presence actionable-data)
             (validate-approver-actions-absence actionable-data)
             (validate-review-actions-absence actionable-data)
@@ -423,11 +438,13 @@
           (binding [context/*user* {"eppn" "lenny"}
                     context/*roles* #{:reviewer}]
             (testing "on an actionable form"
+              (validate-withdraw-button-absence actionable-data)
               (validate-back-button-presence actionable-data)
               (validate-approver-actions-absence actionable-data)
               (validate-review-actions-absence actionable-data)
               (validate-third-party-review-actions-presence actionable-data))
             (testing "on an unactionable form"
+              (validate-withdraw-button-absence actionable-data)
               (validate-back-button-presence unactionable-data)
               (validate-approver-actions-absence unactionable-data)
               (validate-review-actions-absence unactionable-data)
