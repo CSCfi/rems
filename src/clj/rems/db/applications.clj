@@ -592,30 +592,31 @@
 ;; TODO consider refactoring together with judge
 (defn- unjudge-application
   "Action handling for both approver and applicant."
-  [application-id event round msg]
-  (let [application (get-application-state application-id)
-        applicant? (= (:applicantuserid application) (get-user-id))]
-    (when-not (or applicant? (can-approve? application-id))
+  [application event round msg]
+  (let [application-id (:id application)]
+    (when-not (= round (:curround application))
       (throw-unauthorized))
-    (let [state (get-application-state application-id)]
-      (when (= event "withdraw")
-        (when-not (= (:state state) "applied")
-          (throw-unauthorized)))
-      (when-not (= round (:curround state))
-        (throw-unauthorized))
-      (db/add-application-event! {:application application-id :user (get-user-id)
-                                  :round round :event event :comment msg})
-      (let [application (get-application-state application-id)
-            user-attrs (users/get-user-attributes (:applicantuserid application))]
-        (email/status-change-alert user-attrs
-                                   application-id
-                                   (get-catalogue-item-title
-                                     (get-localized-catalogue-item {:id (:catid application)}))
-                                   (:state application)
-                                   (:catid application))))))
+    (db/add-application-event! {:application application-id :user (get-user-id)
+                                :round round :event event :comment msg})
+    (let [user-attrs (users/get-user-attributes (:applicantuserid application))
+          new-state (get-application-state application-id)]
+      (email/status-change-alert user-attrs
+                                 application-id
+                                 (get-catalogue-item-title
+                                  (get-localized-catalogue-item {:id (:catid new-state)}))
+                                 (:state new-state)
+                                 (:catid new-state)))))
 
 (defn withdraw-application [application-id round msg]
-  (unjudge-application application-id "withdraw" round msg))
+  (let [application (get-application-state application-id)]
+    (when-not (is-applicant? application)
+      (throw-unauthorized))
+    (when-not (= (:state application) "applied")
+      (throw-unauthorized))
+    (unjudge-application application "withdraw" round msg)))
 
 (defn close-application [application-id round msg]
-  (unjudge-application application-id "close" round msg))
+  (let [application (get-application-state application-id)]
+    (when-not (or (is-applicant? application) (can-approve? application-id))
+      (throw-unauthorized))
+    (unjudge-application application "close" round msg)))

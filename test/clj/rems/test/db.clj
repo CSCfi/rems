@@ -568,6 +568,10 @@
           (is (thrown? NotAuthorizedException (applications/approve-application app 1 ""))
               "Should not be able to approve if not approver")
 
+          (binding [context/*user* {"eppn" "event-test-approver"}]
+            (is (thrown? NotAuthorizedException (applications/withdraw-application app 1 ""))
+                "Should not be able to withdraw as approver"))
+
           (is (empty? (db/get-entitlements)))
 
           (binding [context/*user* {"eppn" "event-test-approver"}]
