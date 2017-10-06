@@ -74,8 +74,8 @@
             :show-throughput-times "Näytä läpimenoajat"
             :state "Tila"
             :view "Näytä"
-            :withdraw "Vedä takaisin"
-            :withdraw-success "Hakemus vedetty takaisin"}
+            :withdraw "Palauta muokattavaksi"
+            :withdraw-success "Hakemus palautettu muokattavaksi"}
   :applicant-info {:applicant "Hakija"}
   :applications {:application "Hakemus"
                  :created "Luotu"
@@ -100,7 +100,7 @@
                           :rejected "Hylätty"
                           :returned "Palautettu"
                           :unknown "Tuntematon"
-                          :withdrawn "Vedetty takaisin"}
+                          :withdrawn "Palautettu takaisin"}
                  :user "Käyttäjä"
                  :view "Näytä"}
   :cart {:add "Lisää koriin"
