@@ -370,15 +370,15 @@
           (is (applications/can-approve? app2))))
 
       (testing "applications/is-approver?"
-        (is (applications/is-approver? app1))
-        (is (applications/is-approver? app2))
-        (is (applications/is-approver? app3))
-        (is (applications/is-approver? app4))
+        (is (#'applications/is-approver? app1))
+        (is (#'applications/is-approver? app2))
+        (is (#'applications/is-approver? app3))
+        (is (#'applications/is-approver? app4))
         (binding [context/*user* {"eppn" uid2}]
-          (is (not (applications/is-approver? app1)))
-          (is (applications/is-approver? app2))
-          (is (not (applications/is-approver? app3)))
-          (is (applications/is-approver? app4))))
+          (is (not (#'applications/is-approver? app1)))
+          (is (#'applications/is-approver? app2))
+          (is (not (#'applications/is-approver? app3)))
+          (is (#'applications/is-approver? app4))))
 
       ;; move app1 and app2 to round 1
       (applications/approve-application app1 0 "")
@@ -452,15 +452,15 @@
           (is (applications/can-review? app2))))
 
       (testing "applications/is-reviewer?"
-        (is (applications/is-reviewer? app1))
-        (is (applications/is-reviewer? app2))
-        (is (applications/is-reviewer? app3))
-        (is (applications/is-reviewer? app4))
+        (is (#'applications/is-reviewer? app1))
+        (is (#'applications/is-reviewer? app2))
+        (is (#'applications/is-reviewer? app3))
+        (is (#'applications/is-reviewer? app4))
         (binding [context/*user* {"eppn" uid2}]
-          (is (not (applications/is-reviewer? app1)))
-          (is (applications/is-reviewer? app2))
-          (is (not (applications/is-reviewer? app3)))
-          (is (applications/is-reviewer? app4))))
+          (is (not (#'applications/is-reviewer? app1)))
+          (is (#'applications/is-reviewer? app2))
+          (is (not (#'applications/is-reviewer? app3)))
+          (is (#'applications/is-reviewer? app4))))
 
       ;; move app1 and app2 to round 1
       (applications/review-application app1 0 "")

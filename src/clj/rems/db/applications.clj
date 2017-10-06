@@ -87,16 +87,16 @@
 (defn can-approve? [application-id]
   (can-act-as? application-id "approver"))
 
-(defn is-approver? [application-id]
+(defn- is-approver? [application-id]
   (is-actor? application-id "approver"))
 
 (defn can-review? [application-id]
   (can-act-as? application-id "reviewer"))
 
-(defn is-reviewer? [application-id]
+(defn- is-reviewer? [application-id]
   (is-actor? application-id "reviewer"))
 
-(defn is-third-party-reviewer?
+(defn- is-third-party-reviewer?
   "Checks if a given user has been requested to review the given application. If no user is provided, the function checks review requests for the current user.
    Additionally a specific round can be provided to narrow the check to apply only to the given round."
   ([application]
