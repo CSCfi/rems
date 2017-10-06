@@ -1,8 +1,12 @@
 (ns rems.db.applications
   "Query functions for forms and applications."
-  (:require [clojure.set :refer [difference
+  (:require [cheshire.core :as cheshire]
+            [clj-http.client :as http]
+            [clojure.set :refer [difference
                                  union]]
+            [clojure.tools.logging :as log]
             [rems.auth.util :refer [throw-unauthorized]]
+            [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.catalogue :refer [get-catalogue-item-title
                                        get-localized-catalogue-item]]
@@ -498,10 +502,23 @@
                                  state
                                  (:catid application)))))
 
+;; TODO this should be in its own namespace
 (defn- add-entitlements-for [application]
   (when (= "approved" (:state application))
     (db/add-entitlement! {:application (:id application)
-                          :user (:applicantuserid application)})))
+                          :user (:applicantuserid application)})
+    (when-let [target (get env :entitlements-target)]
+      (let [payload {:application (:id application)
+                     ;; TODO: resource
+                     :user (:applicantuserid application)}]
+        (log/infof "Posting entitlement %s to %s" payload target)
+        (try
+          (http/post target
+                     {:body (cheshire/generate-string payload)
+                      :content-type :json
+                      :timeout 2500})
+          (catch Exception e
+            (log/error "POST failed" e)))))))
 
 (defn handle-state-change [application-id]
   (let [application (get-application-state application-id)]
