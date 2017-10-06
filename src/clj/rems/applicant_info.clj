@@ -2,7 +2,7 @@
   (:require [rems.collapsible :as collapsible]
             [rems.context :as context]
             [rems.guide :refer :all]
-            [rems.roles :refer [when-role]]
+            [rems.roles :refer [when-roles]]
             [rems.text :refer :all]
             [rems.util :refer [get-username]]))
 
@@ -13,7 +13,7 @@
 
 (defn details [id user-attributes]
   (let [title (str (text :t.applicant-info/applicant) ": " (get-username user-attributes))
-        content (when-role :approver
+        content (when-roles #{:approver :reviewer}
                   [:form
                    (for [[k v] user-attributes]
                      (info-field k v)
