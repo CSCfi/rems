@@ -70,7 +70,8 @@
                   {:title "A" :type "text" :inputprompt "prompt" :user uid :value 0})
           item-b (db/create-form-item!
                   {:title "B" :type "text" :inputprompt "prompt" :user uid :value 0})
-          app-id (applications/create-new-draft (:id item))]
+          app-id (applications/create-new-draft wf)]
+      (db/add-catalogue-item! {:application app-id :item (:id item)})
       (db/link-form-meta! {:meta (:id meta) :form (:id form-en) :lang "en" :user uid})
       (db/link-form-meta! {:meta (:id meta) :form (:id form-fi) :lang "fi" :user uid})
       (db/link-form-item! {:form (:id form-en) :itemorder 2 :item (:id item-b) :user uid :optional false})
@@ -184,7 +185,8 @@
     (let [uid (get-user-id)
           wf (:id (db/create-workflow! {:owneruserid uid :modifieruserid uid :title "" :fnlround 0}))
           item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
-          app (applications/create-new-draft item)]
+          app (applications/create-new-draft wf)]
+      (db/add-catalogue-item! {:application app :item item})
       (actors/add-approver! wf uid 0)
 
       (is (= app (applications/get-draft-id-for item)))
@@ -208,8 +210,9 @@
     (testing "approval flow"
       (let [wf (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner" :title "" :fnlround 1}))
             item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
-            app (applications/create-new-draft item)
+            app (applications/create-new-draft wf)
             get-phases (fn [] (applications/get-application-phases (:state (applications/get-application-state app))))]
+        (db/add-catalogue-item! {:application app :item item})
         (actors/add-approver! wf "approver1" 0)
         (actors/add-approver! wf "approver2" 1)
 
@@ -249,8 +252,9 @@
     (testing "return flow"
       (let [wf (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner" :title "" :fnlround 1}))
             item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
-            app (applications/create-new-draft item)
+            app (applications/create-new-draft wf)
             get-phases (fn [] (applications/get-application-phases (:state (applications/get-application-state app))))]
+        (db/add-catalogue-item! {:application app :item item})
         (actors/add-approver! wf "approver1" 0)
         (actors/add-approver! wf "approver2" 1)
 
@@ -281,8 +285,9 @@
     (testing "rejection flow"
       (let [wf (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner" :title "" :fnlround 1}))
             item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
-            app (applications/create-new-draft item)
+            app (applications/create-new-draft wf)
             get-phases (fn [] (applications/get-application-phases (:state (applications/get-application-state app))))]
+        (db/add-catalogue-item! {:application app :item item})
         (actors/add-approver! wf "approver1" 0)
         (actors/add-approver! wf "approver2" 1)
 
@@ -422,10 +427,14 @@
           item2 (:id (db/create-catalogue-item! {:title "item2" :form nil :resid nil :wfid wfid2}))
           item3 (:id (db/create-catalogue-item! {:title "item3" :form nil :resid nil :wfid wfid1}))
           item4 (:id (db/create-catalogue-item! {:title "item4" :form nil :resid nil :wfid wfid2}))
-          app1 (applications/create-new-draft item1) ; should see as reviewer for round 0
-          app2 (applications/create-new-draft item2) ; should see as reviewer for round 1
-          app3 (applications/create-new-draft item3) ; should not see draft
-          app4 (applications/create-new-draft item4)]
+          app1 (applications/create-new-draft wfid1) ; should see as reviewer for round 0
+          app2 (applications/create-new-draft wfid2) ; should see as reviewer for round 1
+          app3 (applications/create-new-draft wfid1) ; should not see draft
+          app4 (applications/create-new-draft wfid2)]
+      (db/add-catalogue-item! {:application app1 :item item1})
+      (db/add-catalogue-item! {:application app2 :item item2})
+      (db/add-catalogue-item! {:application app3 :item item3})
+      (db/add-catalogue-item! {:application app4 :item item4})
       (db/add-user! {:user uid :userattrs nil})
       (db/add-user! {:user uid2 :userattrs nil})
 
@@ -536,8 +545,10 @@
       (actors/add-approver! wf "event-test-approver" 1)
 
       (testing "submitting, approving"
-        (let [app (applications/create-new-draft item)]
-          (is (= (fetch app) {:curround 0 :state "draft"}))
+        (let [app (applications/create-new-draft wf)]
+          (db/add-catalogue-item! {:application app :item item})
+
+          (is (= {:curround 0 :state "draft"} (fetch app)))
 
           (is (thrown? Exception (applications/approve-application app 0 ""))
               "Should not be able to approve draft")
@@ -550,10 +561,10 @@
                 "Should not be able to submit when not applicant"))
 
           (applications/submit-application app)
-          (is (= (fetch app) {:curround 0 :state "applied"}))
+          (is (= {:curround 0 :state "applied"} (fetch app)))
 
           (applications/try-autoapprove-application app)
-          (is (= (fetch app) {:curround 0 :state "applied"})
+          (is (= {:curround 0 :state "applied"} (fetch app))
               "Autoapprove should do nothing")
 
           (is (thrown? Exception (applications/submit-application app))
@@ -564,42 +575,46 @@
 
           (testing "withdrawing and resubmitting"
             (applications/withdraw-application app 0 "test withdraw")
-            (is (= (fetch app) {:curround 0 :state "withdrawn"}))
+            (is (= {:curround 0 :state "withdrawn"} (fetch app)))
 
             (applications/submit-application app)
-            (is (= (fetch app) {:curround 0 :state "applied"})))
+            (is (= {:curround 0 :state "applied"} (fetch app))))
 
           (is (thrown? Exception (applications/review-application app 0 ""))
               "Should not be able to review as an approver")
           (applications/approve-application app 0 "c1")
-          (is (= (fetch app) {:curround 1 :state "applied"}))
+          (is (= {:curround 1 :state "applied"} (fetch app)))
 
           (is (thrown? Exception (applications/approve-application app 1 ""))
               "Should not be able to approve if not approver")
 
           (binding [context/*user* {"eppn" "event-test-approver"}]
             (applications/approve-application app 1 "c2"))
-          (is (= (fetch app) {:curround 1 :state "approved"}))
+          (is (= {:curround 1 :state "approved"} (fetch app)))
 
-          (is (= (->> (applications/get-application-state app)
-                      :events
-                      (map #(select-keys % [:round :event :comment])))
-                 [{:round 0 :event "apply" :comment nil}
+          (is (= [{:round 0 :event "apply" :comment nil}
                   {:round 0 :event "withdraw" :comment "test withdraw"}
                   {:round 0 :event "apply" :comment nil}
                   {:round 0 :event "approve" :comment "c1"}
-                  {:round 1 :event "approve" :comment "c2"}]))))
+                  {:round 1 :event "approve" :comment "c2"}]
+                 (->> (applications/get-application-state app)
+                      :events
+                      (map #(select-keys % [:round :event :comment])))))))
 
       (testing "rejecting"
-        (let [app (applications/create-new-draft item)]
-          (is (= (fetch app) {:curround 0 :state "draft"}))
+        (let [app (applications/create-new-draft wf)]
+          (db/add-catalogue-item! {:application app :item item})
+
+          (is (= {:curround 0 :state "draft"} (fetch app)))
           (applications/submit-application app)
-          (is (= (fetch app) {:curround 0 :state "applied"}))
+          (is (= {:curround 0 :state "applied"} (fetch app)))
           (applications/reject-application app 0 "comment")
-          (is (= (fetch app) {:curround 0 :state "rejected"}))))
+          (is (= {:curround 0 :state "rejected"} (fetch app)))))
 
       (testing "returning, resubmitting"
-        (let [app (applications/create-new-draft item)]
+        (let [app (applications/create-new-draft wf)]
+          (db/add-catalogue-item! {:application app :item item})
+
           (applications/submit-application app)
 
           (binding [context/*user* {"eppn" "event-test-approver"}]
@@ -607,75 +622,82 @@
                 "Should not be able to return when not approver"))
 
           (applications/return-application app 0 "comment")
-          (is (= (fetch app) {:curround 0 :state "returned"}))
+          (is (= {:curround 0 :state "returned"} (fetch app)))
 
           (binding [context/*user* {"eppn" "event-test-approver"}]
             (is (thrown? Exception (applications/submit-application app))
                 "Should not be able to resubmit when not approver"))
 
           (applications/submit-application app)
-          (is (= (fetch app) {:curround 0 :state "applied"}))))
+          (is (= {:curround 0 :state "applied"} (fetch app)))))
 
       (testing "review"
         (let [rev-wf (:id (db/create-workflow! {:owneruserid uid :modifieruserid uid :title "Review workflow" :fnlround 1}))
               rev-item (:id (db/create-catalogue-item! {:title "Review item" :resid nil :wfid rev-wf :form nil}))
-              rev-app (applications/create-new-draft rev-item)]
+              rev-app (applications/create-new-draft rev-wf)]
+          (db/add-catalogue-item! {:application rev-app :item rev-item})
           (actors/add-reviewer! rev-wf "event-test-reviewer" 0)
           (actors/add-approver! rev-wf uid 0)
           (actors/add-approver! rev-wf  uid  1)
-          (is (= (fetch rev-app) {:curround 0 :state "draft"}))
+          (is (= {:curround 0 :state "draft"} (fetch rev-app)))
           (binding [context/*user* {"eppn" "event-test-reviewer"}]
             (is (thrown? Exception (applications/review-application rev-app))
                 "Should not be able to review a draft"))
           (is (thrown? Exception (applications/review-application rev-app))
               "Should not be able to review if not reviewer")
           (applications/submit-application rev-app)
-          (is (= (fetch rev-app) {:curround 0 :state "applied"}))
+          (is (= {:curround 0 :state "applied"} (fetch rev-app)))
           (binding [context/*user* {"eppn" "event-test-reviewer"}]
             (is (thrown? Exception (applications/review-application rev-app 1 ""))
                 "Should not be able to review wrong round")
             (is (thrown? Exception (applications/approve-application rev-app 0 ""))
                 "Should not be able to approve as reviewer")
             (applications/review-application rev-app 0 "looks good to me"))
-          (is (= (fetch rev-app) {:curround 1 :state "applied"}))
+          (is (= {:curround 1 :state "applied"} (fetch rev-app)))
           (applications/return-application rev-app 1 "comment")
-          (is (= (fetch rev-app) {:curround 0 :state "returned"}))
+          (is (= {:curround 0 :state "returned"} (fetch rev-app)))
           (binding [context/*user* {"eppn" "event-test-reviewer"}]
             (is (thrown? Exception (applications/review-application rev-app))
                 "Should not be able to review when returned"))
           (applications/submit-application rev-app)
           (applications/withdraw-application rev-app 0 "test withdraw")
-          (is (= (fetch rev-app) {:curround 0 :state "withdrawn"}))
+          (is (= {:curround 0 :state "withdrawn"} (fetch rev-app)))
           (binding [context/*user* {"eppn" "event-test-reviewer"}]
             (is (thrown? Exception (applications/review-application rev-app))
                 "Should not be able to review when withdrawn"))))
 
       (testing "closing"
-        (let [app (applications/create-new-draft item)]
+        (let [app (applications/create-new-draft wf)]
+          (db/add-catalogue-item! {:application app :item item})
           (applications/close-application app 0 "closing draft")
-          (is (= (fetch app) {:curround 0 :state "closed"})))
-        (let [app (applications/create-new-draft item)]
+          (is (= {:curround 0 :state "closed"} (fetch app))))
+        (let [app (applications/create-new-draft wf)]
+          (db/add-catalogue-item! {:application app :item item})
           (applications/submit-application app)
           (applications/close-application app 0 "closing applied")
-          (is (= (fetch app) {:curround 0 :state "closed"})))
-        (let [app (applications/create-new-draft item)]
+          (is (= {:curround 0 :state "closed"} (fetch app))))
+        (let [app (applications/create-new-draft wf)]
+          (db/add-catalogue-item! {:application app :item item})
           (applications/submit-application app)
           (applications/approve-application app 0 "c1")
           (binding [context/*user* {"eppn" "event-test-approver"}]
             (applications/approve-application app 1 "c2"))
           (applications/close-application app 1 "closing approved")
-          (is (= (fetch app) {:curround 1 :state "closed"}))))
+          (is (= {:curround 1 :state "closed"} (fetch app)))))
 
       (testing "autoapprove"
         (let [auto-wf (:id (db/create-workflow! {:modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 1}))
               auto-item (:id (db/create-catalogue-item! {:title "A" :form nil :resid nil :wfid auto-wf}))
-              auto-app (applications/create-new-draft auto-item)]
-          (is (= (fetch auto-app) {:curround 0 :state "draft"}))
+              auto-app (applications/create-new-draft auto-wf)]
+          (db/add-catalogue-item! {:application auto-app :item auto-item})
+          (is (= {:curround 0 :state "draft"} (fetch auto-app)))
           (applications/submit-application auto-app)
-          (is (= (fetch auto-app) {:curround 1 :state "approved"}))
-          (is (= (->> (applications/get-application-state auto-app)
-                      :events
-                      (map #(select-keys % [:round :event])))
-                 [{:round 0 :event "apply"}
-                  {:round 0 :event "autoapprove"}
-                  {:round 1 :event "autoapprove"}])))))))
+
+          (is (= {:curround 1 :state "approved"} (fetch auto-app)))
+          (is (=[{:round 0 :event "apply"}
+                 {:round 0 :event "autoapprove"}
+                 {:round 1 :event "autoapprove"}]
+                (->> (applications/get-application-state auto-app)
+                     :events
+                     (map #(select-keys % [:round :event])))
+                )))))))
