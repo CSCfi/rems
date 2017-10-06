@@ -8,11 +8,13 @@
             [rems.db.applications :refer [assoc-review-type-to-app
                                           can-approve?
                                           can-review?
+                                          can-third-party-review?
                                           create-new-draft
                                           get-application-phases
                                           get-application-state
-                                          get-draft-id-for get-form-for
-                                          can-third-party-review?
+                                          get-draft-id-for
+                                          get-form-for
+                                          is-applicant?
                                           submit-application]]
             [rems.db.core :as db]
             [rems.guide :refer :all]
@@ -123,42 +125,43 @@
 
 (defn- form-fields [form]
   (let [state (:state (:application form))
-        editable? (or (nil? state) (#{"draft" "returned" "withdrawn"} state))
+        new-application? (nil? state)
+        editable? (or new-application? (#{"draft" "returned" "withdrawn"} state))
         readonly? (not editable?)
         withdrawable? (= "applied" state)
         closeable? (and
-                    (not (nil? state))
+                    (not new-application?)
                     (not= "closed" state))]
-    (collapsible/component "form"
-                           true
-                           (:title form)
-                           (list
-                            (events/approval-confirm-modal "close" (text :t.actions/close) (:application form))
-                            (events/approval-confirm-modal "withdraw" (text :t.actions/withdraw) (:application form))
-                            [:form {:method "post"
-                                    :action (if-let [app (:id (:application form))]
-                                              (str "/form/" (:catalogue-item form) "/" app "/save")
-                                              (str "/form/" (:catalogue-item form) "/save"))}
-                             (for [i (:items form)]
-                               (field (assoc i :readonly readonly?)))
-                             (when-let [licenses (not-empty (:licenses form))]
-                               [:div.form-group
-                                [:h4 (text :t.form/licenses)]
-                                (for [l licenses]
-                                  (field (assoc l :readonly readonly?)))])
-                             (anti-forgery-field)
-                             (when-role :applicant
-                               [:div.row
-                                [:div.col
-                                 [:a.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
-                                (into [:div.col.commands]
-                                      [(when closeable? [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
-                                                         (text :t.actions/close)])
-                                       (when editable? [:button.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)])
-                                       (when editable? [:button.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)])
-                                       (when withdrawable? [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#withdraw-modal"} (text :t.actions/withdraw)])
-                                       ])])
-                             ]))))
+    (collapsible/component
+     "form"
+     true
+     (:title form)
+     (list
+      (events/approval-confirm-modal "close" (text :t.actions/close) (:application form))
+      (events/approval-confirm-modal "withdraw" (text :t.actions/withdraw) (:application form))
+      [:form {:method "post"
+              :action (if-let [app (:id (:application form))]
+                        (str "/form/" (:catalogue-item form) "/" app "/save")
+                        (str "/form/" (:catalogue-item form) "/save"))}
+       (for [i (:items form)]
+         (field (assoc i :readonly readonly?)))
+       (when-let [licenses (not-empty (:licenses form))]
+         [:div.form-group
+          [:h4 (text :t.form/licenses)]
+          (for [l licenses]
+            (field (assoc l :readonly readonly?)))])
+       (anti-forgery-field)
+       (when (or new-application?
+                 (is-applicant? (:application form)))
+         [:div.row
+          [:div.col
+           [:a#back.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
+          (into [:div.col.commands]
+                [(when closeable? [:button#close.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
+                                   (text :t.actions/close)])
+                 (when editable? [:button#save.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)])
+                 (when editable? [:button#submit.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)])
+                 (when withdrawable? [:button#withdraw.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#withdraw-modal"} (text :t.actions/withdraw)])])])]))))
 
 
 (defn- form [form]

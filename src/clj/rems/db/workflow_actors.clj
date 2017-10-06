@@ -13,9 +13,9 @@
 
 (defn get-by-role
   "Returns a structure containing actoruserids.
-   [application role]: Gets all the possible actors with the specified role that are set as actors in the workflow rounds the given application contains.
-   [application round role]: Gets all the actors that have been defined for the specified workflow round in the given application."
-  ([application role]
-   (map :actoruserid (db/get-workflow-actors {:application application :role role})))
-  ([application round role]
-   (map :actoruserid (db/get-workflow-actors {:application application :round round :role role}))))
+   [application-id role]: Gets all the possible actors with the specified role that are set as actors in the workflow rounds the given application contains.
+   [application-id round role]: Gets all the actors that have been defined for the specified workflow round in the given application."
+  ([application-id role]
+   (map :actoruserid (db/get-workflow-actors {:application application-id :role role})))
+  ([application-id round role]
+   (map :actoruserid (db/get-workflow-actors {:application application-id :round round :role role}))))

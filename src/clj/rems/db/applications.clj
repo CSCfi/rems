@@ -70,33 +70,33 @@
   ([app userid round]
    (reviewed? (update app :events (fn [events] (filter #(= round (:round %)) events))) userid)))
 
-(defn- can-act-as? [application role]
-  (let [state (get-application-state application)
+(defn- can-act-as? [application-id role]
+  (let [state (get-application-state application-id)
         round (:curround state)]
     (and (= "applied" (:state state))
-         (contains? (set (actors/get-by-role application round role))
+         (contains? (set (actors/get-by-role application-id round role))
                     (get-user-id)))))
 
-(defn- round-has-approvers? [application round]
-  (not-empty? (actors/get-by-role application round "approver")))
+(defn- round-has-approvers? [application-id round]
+  (not-empty? (actors/get-by-role application-id round "approver")))
 
-(defn- is-actor? [application role]
-  (contains? (set (actors/get-by-role application role))
+(defn- is-actor? [application-id role]
+  (contains? (set (actors/get-by-role application-id role))
              (get-user-id)))
 
-(defn can-approve? [application]
-  (can-act-as? application "approver"))
+(defn can-approve? [application-id]
+  (can-act-as? application-id "approver"))
 
-(defn is-approver? [application]
-  (is-actor? application "approver"))
+(defn- is-approver? [application-id]
+  (is-actor? application-id "approver"))
 
-(defn can-review? [application]
-  (can-act-as? application "reviewer"))
+(defn can-review? [application-id]
+  (can-act-as? application-id "reviewer"))
 
-(defn is-reviewer? [application]
-  (is-actor? application "reviewer"))
+(defn- is-reviewer? [application-id]
+  (is-actor? application-id "reviewer"))
 
-(defn is-third-party-reviewer?
+(defn- is-third-party-reviewer?
   "Checks if a given user has been requested to review the given application. If no user is provided, the function checks review requests for the current user.
    Additionally a specific round can be provided to narrow the check to apply only to the given round."
   ([application]
@@ -120,10 +120,12 @@
   [application round]
   (set (map :userid (get-events-of-type application round "review-request"))))
 
+(defn is-applicant? [application]
+  (= (:applicantuserid application) (get-user-id)))
+
 (defn may-see-application? [application]
-  (let [applicant? (= (:applicantuserid application) (get-user-id))
-        application-id (:id application)]
-    (or applicant?
+  (let [application-id (:id application)]
+    (or (is-applicant? application)
         (is-approver? application-id)
         (is-reviewer? application-id)
         (is-third-party-reviewer? application))))
@@ -590,30 +592,31 @@
 ;; TODO consider refactoring together with judge
 (defn- unjudge-application
   "Action handling for both approver and applicant."
-  [application-id event round msg]
-  (let [application (get-application-state application-id)
-        applicant? (= (:applicantuserid application) (get-user-id))]
-    (when-not (or applicant? (can-approve? application-id))
+  [application event round msg]
+  (let [application-id (:id application)]
+    (when-not (= round (:curround application))
       (throw-unauthorized))
-    (let [state (get-application-state application-id)]
-      (when (= event "withdraw")
-        (when-not (= (:state state) "applied")
-          (throw-unauthorized)))
-      (when-not (= round (:curround state))
-        (throw-unauthorized))
-      (db/add-application-event! {:application application-id :user (get-user-id)
-                                  :round round :event event :comment msg})
-      (let [application (get-application-state application-id)
-            user-attrs (users/get-user-attributes (:applicantuserid application))]
-        (email/status-change-alert user-attrs
-                                   application-id
-                                   (get-catalogue-item-title
-                                     (get-localized-catalogue-item {:id (:catid application)}))
-                                   (:state application)
-                                   (:catid application))))))
+    (db/add-application-event! {:application application-id :user (get-user-id)
+                                :round round :event event :comment msg})
+    (let [user-attrs (users/get-user-attributes (:applicantuserid application))
+          new-state (get-application-state application-id)]
+      (email/status-change-alert user-attrs
+                                 application-id
+                                 (get-catalogue-item-title
+                                  (get-localized-catalogue-item {:id (:catid new-state)}))
+                                 (:state new-state)
+                                 (:catid new-state)))))
 
 (defn withdraw-application [application-id round msg]
-  (unjudge-application application-id "withdraw" round msg))
+  (let [application (get-application-state application-id)]
+    (when-not (is-applicant? application)
+      (throw-unauthorized))
+    (when-not (= (:state application) "applied")
+      (throw-unauthorized))
+    (unjudge-application application "withdraw" round msg)))
 
 (defn close-application [application-id round msg]
-  (unjudge-application application-id "close" round msg))
+  (let [application (get-application-state application-id)]
+    (when-not (or (is-applicant? application) (can-approve? application-id))
+      (throw-unauthorized))
+    (unjudge-application application "close" round msg)))
