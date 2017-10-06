@@ -125,11 +125,12 @@
 
 (defn- form-fields [form]
   (let [state (:state (:application form))
-        editable? (or (nil? state) (#{"draft" "returned" "withdrawn"} state))
+        new-application? (nil? state)
+        editable? (or new-application? (#{"draft" "returned" "withdrawn"} state))
         readonly? (not editable?)
         withdrawable? (= "applied" state)
         closeable? (and
-                    (not (nil? state))
+                    (not new-application?)
                     (not= "closed" state))]
     (collapsible/component
      "form"
@@ -150,7 +151,8 @@
           (for [l licenses]
             (field (assoc l :readonly readonly?)))])
        (anti-forgery-field)
-       (when (is-applicant? (:application form))
+       (when (or new-application?
+                 (is-applicant? (:application form)))
          [:div.row
           [:div.col
            [:a#back.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]

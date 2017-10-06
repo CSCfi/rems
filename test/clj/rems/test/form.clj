@@ -273,7 +273,15 @@
 
 (deftest test-form-actions
   (with-fake-tempura
-    (let [applied-data {:application {:id 2
+    (let [draft-data {:application {:id 2
+                                    :catid 2
+                                    :applicantuserid "developer"
+                                    :state "draft"
+                                    :curround 0
+                                    :fnlround 1
+                                    :wfid 2
+                                    :events []}}
+          applied-data {:application {:id 2
                                       :catid 2
                                       :applicantuserid "developer"
                                       :start nil
@@ -344,6 +352,10 @@
         (binding [context/*user* {"eppn" "developer"}
                   context/*roles* #{:applicant}]
           (testing "As the applicant"
+            (testing "on a new form"
+              (is (= #{"save" "back" "submit"} (get-actions {}))))
+            (testing "on a draft"
+              (is (= #{"save" "back" "submit" "close"} (get-actions draft-data))))
             (testing "on an applied form"
               (is (= #{"withdraw" "close" "back"} (get-actions applied-data))))
             (testing "on an approved form"
