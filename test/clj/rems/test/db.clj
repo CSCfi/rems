@@ -333,10 +333,16 @@
           item2 (:id (db/create-catalogue-item! {:title "item2" :form nil :resid nil :wfid wfid2}))
           item3 (:id (db/create-catalogue-item! {:title "item3" :form nil :resid nil :wfid wfid1}))
           item4 (:id (db/create-catalogue-item! {:title "item4" :form nil :resid nil :wfid wfid2}))
-          app1 (applications/create-new-draft item1) ; should see as approver for round 0
-          app2 (applications/create-new-draft item2) ; should see as approver for round 1
-          app3 (applications/create-new-draft item3) ; should not see draft
-          app4 (applications/create-new-draft item4)] ; should not see approved
+          app1 (applications/create-new-draft wfid1) ; should see as approver for round 0
+          app2 (applications/create-new-draft wfid2) ; should see as approver for round 1
+          app3 (applications/create-new-draft wfid1) ; should not see draft
+          app4 (applications/create-new-draft wfid2)] ; should not see approved
+
+      (db/add-catalogue-item! {:application app1 :item (:id item1)})
+      (db/add-catalogue-item! {:application app2 :item (:id item2)})
+      (db/add-catalogue-item! {:application app3 :item (:id item3)})
+      (db/add-catalogue-item! {:application app4 :item (:id item4)})
+
       (db/add-user! {:user uid :userattrs nil})
       (db/add-user! {:user uid2 :userattrs nil})
 
@@ -348,7 +354,7 @@
         (applications/approve-application app4 0 ""))
       (applications/approve-application app4 1 "")
 
-      (is (= [{:id app1 :state "applied" :catid item1 :curround 0}]
+      (is (= [{:id app1 :state "applied" :curround 0}]
              (map #(select-keys % [:id :state :catid :curround])
                   (applications/get-approvals)))
           "should only see app1")
@@ -389,7 +395,7 @@
                   (applications/get-handled-approvals)))
           "should see app1 and app4 in handled approvals")
 
-      (is (= [{:id app2 :state "applied" :catid item2 :curround 1}]
+      (is (= [{:id app2 :state "applied" :curround 1}]
              (map #(select-keys % [:id :state :catid :curround])
                   (applications/get-approvals)))
           "should only see app2")
