@@ -81,7 +81,7 @@
        [:span (text-format :t.cart/header (count items))]]
       [:table.rems-table.cart
        (apply concat
-              (for [group (vals (group-by :wfid items))]
+              (for [group (sort-by (comp :wfid first) (vals (group-by :wfid items)))]
                 (group-view (sort-by get-catalogue-item-title group))))]]]))
 
 (defn guide []

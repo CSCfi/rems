@@ -11,12 +11,14 @@
   (is (= text (hiccup-text (first (hiccup-find [:td] row))))))
 
 (deftest test-cart-list
-  (let [c (cart/cart-list [{:title "D"} {:title "C"}])
+  (let [c (cart/cart-list [{:title "D" :wfid 2}
+                           {:title "C" :wfid 1}])
         rows (hiccup-find [:tr] c)
         title (first (hiccup-find [:div.cart-title] c))]
     (is (= 2 (count rows)))
-    (check-row-text (first rows) "C")
-    (check-row-text (second rows) "D")
+    (testing "rows should be sorted"
+      (check-row-text (first rows) "C")
+      (check-row-text (second rows) "D"))
     (testing title
       (is title)
       (is (.contains (hiccup-text title) "2")))))
