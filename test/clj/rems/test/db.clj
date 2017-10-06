@@ -70,7 +70,7 @@
                   {:title "A" :type "text" :inputprompt "prompt" :user uid :value 0})
           item-b (db/create-form-item!
                   {:title "B" :type "text" :inputprompt "prompt" :user uid :value 0})
-          app-id (applications/create-new-draft wf)]
+          app-id (applications/create-new-draft (:id wf))]
       (db/add-catalogue-item! {:application app-id :item (:id item)})
       (db/link-form-meta! {:meta (:id meta) :form (:id form-en) :lang "en" :user uid})
       (db/link-form-meta! {:meta (:id meta) :form (:id form-fi) :lang "fi" :user uid})
@@ -90,11 +90,11 @@
         (with-redefs [catalogue/cached
                       {:localizations (catalogue/load-catalogue-item-localizations!)}]
           (let [form-fi (binding [context/*lang* :fi]
-                          (applications/get-form-for (:id item)))
+                          (applications/get-form-for app-id))
                 form-en (binding [context/*lang* :en]
-                          (applications/get-form-for (:id item)))
+                          (applications/get-form-for app-id))
                 form-ru (binding [context/*lang* :ru]
-                          (applications/get-form-for (:id item)))]
+                          (applications/get-form-for app-id))]
             (is (= "item-en" (:title form-en)) "title")
             (is (= ["A" "B" "C"] (map :title (:items form-en))) "items should be in order")
             (is (= "item-fi" (:title form-fi)) "title")
@@ -189,16 +189,16 @@
       (db/add-catalogue-item! {:application app :item item})
       (actors/add-approver! wf uid 0)
 
-      (is (= app (applications/get-draft-id-for item)))
-      (is (= [{:id app :state "draft" :catid item}]
-             (map #(select-keys % [:id :state :catid])
+      (is (= [{:id app :state "draft"}]
+             (map #(select-keys % [:id :state])
                   (applications/get-applications))))
       (applications/submit-application app)
-      (is (nil? (applications/get-draft-id-for item)))
+      (is (= [{:id app :state "applied"}]
+             (map #(select-keys % [:id :state])
+                  (applications/get-applications))))
       (applications/approve-application app 0 "comment")
-      (is (nil? (applications/get-draft-id-for item)))
-      (is (= [{:id app :state "approved" :catid item}]
-             (map #(select-keys % [:id :state :catid])
+      (is (= [{:id app :state "approved"}]
+             (map #(select-keys % [:id :state])
                   (applications/get-applications)))))))
 
 (deftest test-phases
