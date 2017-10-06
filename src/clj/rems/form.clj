@@ -153,7 +153,7 @@
        (when (is-applicant? (:application form))
          [:div.row
           [:div.col
-           [:a.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
+           [:a#back.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
           (into [:div.col.commands]
                 [(when closeable? [:button#close.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
                                    (text :t.actions/close)])

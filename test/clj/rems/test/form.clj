@@ -263,90 +263,59 @@
           (let [body (form (assoc data :application {:state "applied" :events [{:comment "hello"}]}))]
             (is (not-empty (children-of (hiccup-find [:#events] body))) "Should see collapsible events block")))))))
 
-(defn- get-action-buttons [form-data]
-  (hiccup-find [:.commands] (form form-data)))
-
-(defn- approver-button-check [emptyness-fn action-buttons msg]
-  (is (emptyness-fn (hiccup-find [:button#reject.btn.btn-secondary] action-buttons)) (str msg "reject button"))
-  (is (emptyness-fn (hiccup-find [:button#return.btn.btn-secondary] action-buttons)) (str msg "return button"))
-  (is (emptyness-fn (hiccup-find [:button#review-request.btn.btn-secondary] action-buttons)) (str msg "review request button"))
-  (is (emptyness-fn (hiccup-find [:button#approve.btn.btn-primary] action-buttons)) (str msg "approve button")))
-
-(defn- validate-approver-actions-absence [form-data]
-  (approver-button-check empty? (get-action-buttons form-data) "Should not see "))
-
-(defn- validate-approver-actions-presence [form-data]
-  (approver-button-check not-empty (get-action-buttons form-data) "Should see "))
-
-(defn- validate-review-actions-absence [form-data]
-  (is (empty? (hiccup-find [:button#review.btn.btn-primary] (get-action-buttons form-data))) "should not see review button"))
-
-(defn- validate-review-actions-presence [form-data]
-  (is (not-empty (hiccup-find [:button#review.btn.btn-primary] (get-action-buttons form-data))) "should see review button"))
-
-(defn- validate-back-button-absence [form-data]
-  (is (empty? (hiccup-find [:a#back] (get-action-buttons form-data))) "should not see back button"))
-
-(defn- validate-back-button-presence [form-data]
-  (is (not-empty (hiccup-find [:a#back] (get-action-buttons form-data))) "should see back button"))
-
-(defn- validate-third-party-review-actions-absence [form-data]
-  (is (empty? (hiccup-find [:button#third-party-review.btn.btn-primary] (get-action-buttons form-data))) "should not see third-party review button"))
-
-(defn- validate-third-party-review-actions-presence [form-data]
-  (is (not-empty (hiccup-find [:button#third-party-review.btn.btn-primary] (get-action-buttons form-data))) "should see third-party review button"))
-
-(defn- validate-withdraw-button-presence [form-data]
-  (is (not-empty (hiccup-find [:button#withdraw.btn.btn-secondary] (get-action-buttons form-data))) "should see withdraw button"))
-
-(defn- validate-withdraw-button-absence [form-data]
-  (is (empty? (hiccup-find [:button#withdraw.btn.btn-secondary] (get-action-buttons form-data))) "should not see withdraw button"))
+(defn- get-actions [form-data]
+  ;; TODO could look at button actions too
+  (->> (form form-data)
+       (hiccup-find [:.btn])
+       (map hiccup-attrs)
+       (keep :id)
+       (set)))
 
 (deftest test-form-actions
   (with-fake-tempura
-    (let [actionable-data {:application {:id 2
-                                         :catid 2
-                                         :applicantuserid "developer"
-                                         :start nil
-                                         :wfid 2
-                                         :fnlround 1
-                                         :state "applied"
-                                         :curround 0
-                                         :events
-                                         [{:userid "developer"
-                                           :round 0
-                                           :event "apply"
-                                           :comment nil
-                                           :time nil}
-                                          {:userid "lenny"
-                                           :round 0
-                                           :event "review-request"
-                                           :comment nil
-                                           :time nil}]}}
-          unactionable-data {:application {:id 2
-                                           :catid 2
-                                           :applicantuserid "developer"
-                                           :start nil
-                                           :wfid 2
-                                           :fnlround 0
-                                           :state "approved"
-                                           :curround 0
-                                           :events
-                                           [{:userid "developer"
-                                             :round 0
-                                             :event "apply"
-                                             :comment nil
-                                             :time nil}
-                                            {:userid "lenny"
-                                             :round 0
-                                             :event "review-request"
-                                             :comment nil
-                                             :time nil}
-                                            {:userid "bob"
-                                             :round 0
-                                             :event "approved"
-                                             :comment nil
-                                             :time nil}]}}]
+    (let [applied-data {:application {:id 2
+                                      :catid 2
+                                      :applicantuserid "developer"
+                                      :start nil
+                                      :wfid 2
+                                      :fnlround 1
+                                      :state "applied"
+                                      :curround 0
+                                      :events
+                                      [{:userid "developer"
+                                        :round 0
+                                        :event "apply"
+                                        :comment nil
+                                        :time nil}
+                                       {:userid "lenny"
+                                        :round 0
+                                        :event "review-request"
+                                        :comment nil
+                                        :time nil}]}}
+          approved-data {:application {:id 2
+                                       :catid 2
+                                       :applicantuserid "developer"
+                                       :start nil
+                                       :wfid 2
+                                       :fnlround 0
+                                       :state "approved"
+                                       :curround 0
+                                       :events
+                                       [{:userid "developer"
+                                         :round 0
+                                         :event "apply"
+                                         :comment nil
+                                         :time nil}
+                                        {:userid "lenny"
+                                         :round 0
+                                         :event "review-request"
+                                         :comment nil
+                                         :time nil}
+                                        {:userid "bob"
+                                         :round 0
+                                         :event "approved"
+                                         :comment nil
+                                         :time nil}]}}]
       (with-redefs [rems.db.workflow-actors/get-by-role
                     (fn ([appid round role]
                          (let [data [{:id 2 :actoruserid "carl" :role "reviewer" :round 0}
@@ -364,7 +333,7 @@
                          (map :actoruserid data))))
                     rems.db.applications/get-application-state
                     (fn [_]
-                      (:application actionable-data))
+                      (:application applied-data))
                     rems.db.core/get-users
                     (fn []
                       nil)
@@ -375,77 +344,38 @@
         (binding [context/*user* {"eppn" "developer"}
                   context/*roles* #{:applicant}]
           (testing "As the applicant"
-            (testing "on an actionable form"
-              (validate-withdraw-button-presence actionable-data)
-              (validate-back-button-absence actionable-data)
-              (validate-approver-actions-absence actionable-data)
-              (validate-review-actions-absence actionable-data)
-              (validate-third-party-review-actions-absence actionable-data))
-            (testing "on an unactionable form"
-              (validate-withdraw-button-absence unactionable-data)
-              (validate-back-button-absence unactionable-data)
-              (validate-approver-actions-absence unactionable-data)
-              (validate-review-actions-absence unactionable-data)
-              (validate-third-party-review-actions-absence unactionable-data))))
+            (testing "on an applied form"
+              (is (= #{"withdraw" "close" "back"} (get-actions applied-data))))
+            (testing "on an approved form"
+              (is (= #{"close" "back"} (get-actions approved-data))))))
         (binding [context/*user* {"eppn" "bob"}
                   context/*roles* #{:approver :applicant}]
           (testing "As a current round approver (who is also an applicant)"
-            (testing "on an actionable form"
-              (validate-withdraw-button-absence actionable-data)
-              (validate-back-button-presence actionable-data)
-              (validate-approver-actions-presence actionable-data)
-              (validate-review-actions-absence actionable-data)
-              (validate-third-party-review-actions-absence actionable-data)))
+            (testing "on an applied form"
+              (is (= #{"back" "reject" "approve" "review-request" "return"}
+                     (get-actions applied-data)))))
           (testing "As an approver (who is also an applicant)"
-            (testing "on an unactionable form"
-              (validate-withdraw-button-absence unactionable-data)
-              (validate-back-button-presence unactionable-data)
-              (validate-approver-actions-absence unactionable-data)
-              (validate-review-actions-absence unactionable-data)
-              (validate-third-party-review-actions-absence unactionable-data))))
-        (testing "As an approver, who is not set for the current round, on an actionable form"
+            (testing "on an approved form"
+              (is (= #{"back"} (get-actions approved-data))))))
+        (testing "As an approver, who is not set for the current round, on an applied form"
           (binding [context/*user* {"eppn" "carl"}
                     context/*roles* #{:approver}]
-            (validate-withdraw-button-absence actionable-data)
-            (validate-back-button-presence actionable-data)
-            (validate-approver-actions-absence actionable-data)
-            (validate-review-actions-absence actionable-data)
-            (validate-third-party-review-actions-absence actionable-data)))
+            (is (= #{"back"} (get-actions applied-data)))))
         (testing "As a reviewer"
           (binding [context/*user* {"eppn" "carl"}
                     context/*roles* #{:reviewer}]
-            (testing "on an actionable form"
-              (validate-withdraw-button-absence actionable-data)
-              (validate-back-button-presence actionable-data)
-              (validate-approver-actions-absence actionable-data)
-              (validate-review-actions-presence actionable-data)
-              (validate-third-party-review-actions-absence actionable-data))
-            (testing "on an unactionable form"
-              (validate-withdraw-button-absence actionable-data)
-              (validate-back-button-presence unactionable-data)
-              (validate-approver-actions-absence unactionable-data)
-              (validate-review-actions-absence unactionable-data)
-              (validate-third-party-review-actions-absence unactionable-data))))
-        (testing "As a reviewer, who is not set for the current round, on an actionable form"
+            (testing "on an applied form"
+              (is (= #{"back" "review"} (get-actions applied-data))))
+            (testing "on an approved form"
+              (is (= #{"back"} (get-actions approved-data))))))
+        (testing "As a reviewer, who is not set for the current round, on an applied form"
           (binding [context/*user* {"eppn" "bob"}
                     context/*roles* #{:reviewer}]
-            (validate-withdraw-button-absence actionable-data)
-            (validate-back-button-presence actionable-data)
-            (validate-approver-actions-absence actionable-data)
-            (validate-review-actions-absence actionable-data)
-            (validate-third-party-review-actions-absence actionable-data)))
+            (is (= #{"back"} (get-actions applied-data)))))
         (testing "As a 3d party reviewer"
           (binding [context/*user* {"eppn" "lenny"}
                     context/*roles* #{:reviewer}]
-            (testing "on an actionable form"
-              (validate-withdraw-button-absence actionable-data)
-              (validate-back-button-presence actionable-data)
-              (validate-approver-actions-absence actionable-data)
-              (validate-review-actions-absence actionable-data)
-              (validate-third-party-review-actions-presence actionable-data))
-            (testing "on an unactionable form"
-              (validate-withdraw-button-absence actionable-data)
-              (validate-back-button-presence unactionable-data)
-              (validate-approver-actions-absence unactionable-data)
-              (validate-review-actions-absence unactionable-data)
-              (validate-third-party-review-actions-absence unactionable-data))))))))
+            (testing "on an applied form"
+              (is (= #{"back" "third-party-review"} (get-actions applied-data))))
+            (testing "on an approved form"
+              (is (= #{"back"} (get-actions approved-data))))))))))
