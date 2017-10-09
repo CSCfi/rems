@@ -26,11 +26,24 @@ CREATE CAST (transfer.rms_license_visibility AS public.scope)
 WITH INOUT
 AS IMPLICIT;
 
+CREATE TABLE transfer.migrated_application_event (
+  id serial NOT NULL PRIMARY KEY, -- for ordering events
+  appId integer REFERENCES catalogue_item_application (id),
+  userId varchar(255) REFERENCES users (userId),
+  round integer NOT NULL,
+  event application_event_type NOT NULL,
+  comment varchar(4096) DEFAULT NULL,
+  time timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 -- data created by the app that might reference data we want to clear
 DELETE FROM public.application_text_values CASCADE;
 DELETE FROM public.catalogue_item_application CASCADE;
 
 -- clear existing data
+DELETE FROM public.entitlement CASCADE;
+DELETE FROM public.application_event CASCADE;
+DELETE FROM public.workflow_actors CASCADE;
 DELETE FROM public.workflow_licenses CASCADE;
 DELETE FROM public.license_localization CASCADE;
 DELETE FROM public.license CASCADE;
@@ -80,8 +93,62 @@ SELECT * FROM transfer.rms_license_localization;
 INSERT INTO public.workflow_licenses
 SELECT * FROM transfer.rms_workflow_licenses;
 
+INSERT INTO public.workflow_actors (wfId, actorUserId, role, round, start, endt)
+SELECT wfId, apprUserId, 'approver' AS ROLE, round, start, "end" FROM transfer.rms_workflow_approvers;
+
+INSERT INTO public.workflow_actors (wfId, actorUserId, role, round, start, endt)
+SELECT wfId, revUserId, 'reviewer' AS ROLE, round, start, "end" FROM transfer.rms_workflow_reviewers;
+
+INSERT INTO transfer.migrated_application_event (appId, userId, round, event, comment, time)
+SELECT catAppId, wfApprId, round, 'approve' AS EVENT, comment, start FROM transfer.rms_catalogue_item_application_approvers
+WHERE state = 'approved';
+
+INSERT INTO transfer.migrated_application_event (appId, userId, round, event, comment, time)
+SELECT catAppId, wfApprId, round, 'reject' AS EVENT, comment, start FROM transfer.rms_catalogue_item_application_approvers
+WHERE state = 'rejected';
+
+INSERT INTO transfer.migrated_application_event (appId, userId, round, event, comment, time)
+SELECT catAppId, wfApprId, round, 'return' AS EVENT, comment, start FROM transfer.rms_catalogue_item_application_approvers
+WHERE state = 'returned';
+
+INSERT INTO transfer.migrated_application_event (appId, userId, round, event, comment, time)
+SELECT catAppId, wfApprId, round, 'close' AS EVENT, comment, start FROM transfer.rms_catalogue_item_application_approvers
+WHERE state = 'closed';
+
+INSERT INTO transfer.migrated_application_event (appId, userId, round, event, comment, time)
+SELECT catAppId, revUserId, round, 'review' AS EVENT, comment, start FROM transfer.rms_catalogue_item_application_reviewers
+WHERE state = 'commented';
+
+INSERT INTO transfer.migrated_application_event (appId, userId, round, event, time)
+SELECT catAppId, modifierUserId, curround, 'apply' AS EVENT, start FROM transfer.rms_catalogue_item_application_state
+WHERE state = 'applied';
+
+INSERT INTO transfer.migrated_application_event (appId, userId, round, event, time)
+SELECT catAppId, modifierUserId, curround, 'approve' AS EVENT, start FROM transfer.rms_catalogue_item_application_state
+WHERE state = 'approved';
+
+INSERT INTO transfer.migrated_application_event (appId, userId, round, event, time)
+SELECT catAppId, modifierUserId, curround, 'reject' AS EVENT, start FROM transfer.rms_catalogue_item_application_state
+WHERE state = 'rejected';
+
+INSERT INTO transfer.migrated_application_event (appId, userId, round, event, time)
+SELECT catAppId, modifierUserId, curround, 'return' AS EVENT, start FROM transfer.rms_catalogue_item_application_state
+WHERE state = 'returned';
+
+INSERT INTO transfer.migrated_application_event (appId, userId, round, event, time)
+SELECT catAppId, modifierUserId, curround, 'close' AS EVENT, start FROM transfer.rms_catalogue_item_application_state
+WHERE state = 'closed';
+
+INSERT INTO public.application_event
+SELECT * FROM transfer.migrated_application_event
+ORDER BY time;
+
+INSERT INTO public.entitlement
+SELECT * FROM transfer.rms_entitlement;
+
 -- if all casts are not dropped, the next pgloader run might fail
 -- (can't drop a type that is referenced by a cast)
+DROP TABLE IF EXISTS transfer.migrated_application_event CASCADE;
 DROP CAST IF EXISTS (transfer.rms_workflow_visibility AS public.scope);
 DROP CAST IF EXISTS (transfer.rms_application_form_meta_visibility AS public.scope);
 DROP CAST IF EXISTS (transfer.rms_application_form_visibility AS public.scope);
