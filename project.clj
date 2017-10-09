@@ -4,6 +4,7 @@
   :url "http://example.com/FIXME"
 
   :dependencies [[ch.qos.logback/logback-classic "1.2.3"]
+                 [clj-http "3.7.0"]
                  [clj-time "0.14.0"]
                  [org.clojars.runa/conjure "2.2.0"]
                  [compojure "1.6.0"]
@@ -86,7 +87,8 @@
                                                                                                org.apache.httpcomponents/httpcore
                                                                                                org.apache.httpcomponents/httpmime]]
                                  [pjstadig/humane-test-output "0.8.1"]
-                                 [ring/ring-mock "0.3.1"]]
+                                 [ring/ring-mock "0.3.1"]
+                                 [se.haleby/stub-http "0.2.3"]]
                   :plugins [[com.jakemccrary/lein-test-refresh "0.14.0"]
                             [lein-cloverage "1.0.9" :exclusions [org.clojure/clojure]]]
 

@@ -5,6 +5,7 @@
             [rems.middleware.dev :refer [wrap-dev]]
             [rems.config :refer [env]]))
 
+;; TODO these could be moved to config.edn
 (def +defaults+
   {:init
    (fn []
