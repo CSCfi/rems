@@ -1,6 +1,5 @@
 (ns rems.form
   (:require [compojure.core :refer [GET POST defroutes]]
-            [rems.events :as events]
             [rems.anti-forgery :refer [anti-forgery-field]]
             [rems.applicant-info :as applicant-info]
             [rems.collapsible :as collapsible]
@@ -17,6 +16,7 @@
                                           is-applicant?
                                           submit-application]]
             [rems.db.core :as db]
+            [rems.events :as events]
             [rems.guide :refer :all]
             [rems.layout :as layout]
             [rems.phase :refer [phases]]
