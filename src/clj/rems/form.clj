@@ -404,6 +404,7 @@
    (example "form, partially filled"
             (form {:title "Form title"
                    :application {:id 17 :state "draft"}
+                   :catalogue-items [{:title "An applied item"}]
                    :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
                            {:type "label" :title "Please input your wishes below."}
                            {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2"}
@@ -415,6 +416,7 @@
    (example "form, applied"
             (form {:title "Form title"
                    :application {:id 17 :state "applied"}
+                   :catalogue-items [{:title "An applied item"}]
                    :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
                            {:type "label" :title "Please input your wishes below."}
                            {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2" :value "def"}
@@ -427,6 +429,7 @@
 
    (example "form, approved"
             (form {:title "Form title"
+                   :catalogue-items [{:title "An applied item"}]
                    :application {:id 17 :state "approved" :events [{:comment "Looking good, approved!"}]}
                    :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
                            {:type "label" :title "Please input your wishes below."}
