@@ -11,7 +11,7 @@
             [rems.text :refer [localize-state text]]
             [rems.util :refer [errorf]]
             [ring.util.response :refer [redirect]]
-            [clojure.string :as str]))
+            [clojure.string :as string]))
 
 (def ^:private time-format (format/formatter "yyyy-MM-dd HH:mm"
                                              (time/default-time-zone)))
@@ -167,7 +167,7 @@
      (for [app (sort-by :id apps)]
        [:tr.action
         [:td {:data-th (text :t.actions/application)} (:id app)]
-        [:td {:data-th (text :t.actions/resource)} (str/join ", " (map :title (:catalogue-items app)))]
+        [:td {:data-th (text :t.actions/resource)} (string/join ", " (map :title (:catalogue-items app)))]
         [:td {:data-th (text :t.actions/applicant)} (:applicantuserid app)]
         [:td {:data-th (text :t.actions/created)} (format/unparse time-format (:start app))]
         [:td.commands
@@ -213,7 +213,7 @@
        (for [app (sort-by :handled apps)]
          [:tr.action
           [:td {:data-th (text :t.actions/application)} (:id app)]
-          [:td {:data-th (text :t.actions/resource)} (get-in app [:catalogue-item :title])]
+          [:td {:data-th (text :t.actions/resource)} (string/join ", " (map :title (:catalogue-items app)))]
           [:td {:data-th (text :t.actions/applicant)} (:applicantuserid app)]
           [:td {:data-th (text :t.actions/state)} (text (localize-state (:state app)))]
           [:td {:data-th (text :t.actions/handled)} (format/unparse time-format (:handled app))]
@@ -242,22 +242,22 @@
             (reviews []))
    (example "reviews"
             (reviews
-             [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid "alice"}
-              {:id 3 :catalogue-item {:title "bbbbbb"} :applicantuserid "bob"}]))
+             [{:id 1 :catalogue-items [{:title "AAAAAAAAAAAAAA"}] :applicantuserid "alice"}
+              {:id 3 :catalogue-items [{:title "bbbbbb"}] :applicantuserid "bob"}]))
    (example "handled reviews"
             (handled-reviews
-             [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid "alice"}
-              {:id 3 :catalogue-item {:title "bbbbbb"} :state "approved" :applicantuserid "bob"}]))
+             [{:id 1 :catalogue-items [{:title "AAAAAAAAAAAAAA"}] :applicantuserid "alice"}
+              {:id 3 :catalogue-items [{:title "bbbbbb"}] :state "approved" :applicantuserid "bob"}]))
    (example "approvals empty"
             (approvals []))
    (example "approvals"
             (approvals
-             [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid "alice"}
-              {:id 3 :catalogue-item {:title "bbbbbb"} :applicantuserid "bob"}]))
+             [{:id 1 :catalogue-items [{:title "AAAAAAAAAAAAAA"}] :applicantuserid "alice"}
+              {:id 3 :catalogue-items [{:title "bbbbbb"}] :applicantuserid "bob"}]))
    (example "handled approvals"
             (handled-approvals
-             [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid "alice"}
-              {:id 3 :catalogue-item {:title "bbbbbb"} :state "approved" :applicantuserid "bob"}]))))
+             [{:id 1 :catalogue-items [{:title "AAAAAAAAAAAAAA"}] :applicantuserid "alice"}
+              {:id 3 :catalogue-items [{:title "bbbbbb"}] :state "approved" :applicantuserid "bob"}]))))
 
 (defn actions-page []
   (layout/render

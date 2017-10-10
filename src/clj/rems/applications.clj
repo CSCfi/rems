@@ -1,6 +1,7 @@
 (ns rems.applications
   (:require [clj-time.core :as time]
             [clj-time.format :as format]
+            [clojure.string :as string]
             [rems.db.applications :refer [get-applications]]
             [rems.guide :refer :all]
             [rems.text :refer [localize-state text]]))
@@ -11,7 +12,7 @@
 (defn- applications-item [app]
   [:tr.application
    [:td {:data-th (text :t.applications/application)} (:id app)]
-   [:td {:data-th (text :t.applications/resource)} (get-in app [:catalogue-item :title])]
+   [:td {:data-th (text :t.applications/resource)} (string/join ", " (map :title (:catalogue-items app)))]
    [:td {:data-th (text :t.applications/state)} (text (localize-state (:state app)))]
    [:td {:data-th (text :t.applications/created)} (format/unparse time-format (:start app))]
    [:td [:a.btn.btn-primary
@@ -40,8 +41,8 @@
             (applications []))
    (example "applications"
             (applications
-             [{:id 1 :catalogue-item {:title "Draft application"} :state "draft" :applicantuserid "alice"}
-              {:id 2 :catalogue-item {:title "Applied application"} :state "applied" :applicantuserid "bob"}
-              {:id 3 :catalogue-item {:title "Approved application"} :state "approved" :applicantuserid "charlie"}
-              {:id 4 :catalogue-item {:title "Rejected application"} :state "rejected" :applicantuserid "david"}
-              {:id 5 :catalogue-item {:title "Closed application"} :state "closed" :applicantuserid "ernie"}]))))
+             [{:id 1 :catalogue-items [{:title "Draft application"}] :state "draft" :applicantuserid "alice"}
+              {:id 2 :catalogue-items [{:title "Applied application"}] :state "applied" :applicantuserid "bob"}
+              {:id 3 :catalogue-items [{:title "Approved application"}] :state "approved" :applicantuserid "charlie"}
+              {:id 4 :catalogue-items [{:title "Rejected application"}] :state "rejected" :applicantuserid "david"}
+              {:id 5 :catalogue-items [{:title "Closed application"}] :state "closed" :applicantuserid "ernie"}]))))
