@@ -96,23 +96,23 @@
          :remove "Poista"}
   :catalogue {:header "Kielivarat"}
   :email {:application-sent-msg "Hyvä %1,
-                                 Hakemuksenne käyttää resurssia %2 on lähetetty käsiteltäväksi.
+                                 Hakemuksenne käyttää resursseja (%2) on lähetetty käsiteltäväksi.
                                  Saatte sähköpostitse tietoa hakemuksen etenemisestä. Voitte myös seurata sitä itse: %3
                                  Älkää vastatko tähän automaattisesti luotuun viestiin."
           :application-sent-subject "Uusi hakemus lähetetty"
           :approval-request-msg "Hyvä %1,
-                                 %2 on tehnyt huomiotanne vaativan hakemuksen %3 käyttää resurssia %4.
+                                 %2 on tehnyt huomiotanne vaativan hakemuksen %3 käyttää resursseja %4.
                                  Voitte hyväksyä tai hylätä hakemuksen: %5
                                  Älkää vastatko tähän automaattisesti luotuun viestiin."
           :approval-request-subject "Hyväksymispyyntö"
           :review-request-msg "Hyvä %1,
-                               %2 on tehnyt huomiotanne vaativan hakemuksen %3 käyttää resurssia %4.
+                               %2 on tehnyt huomiotanne vaativan hakemuksen %3 käyttää resursseja %4.
                                Voitte katselmoida hakemuksen: %5
                                Älkää vastatko tähän automaattisesti luotuun viestiin."
 
           :review-request-subject "Katselmointi pyyntö"
           :status-changed-msg "Hyvä %1,
-                               Hakemuksenne %2 käyttää resurssia %3 on edennyt tilaan %4.
+                               Hakemuksenne %2 käyttää resursseja (%3) on edennyt tilaan %4.
                                Voitte seurata hakemustanne: %5
                                Älkää vastatko tähän automaattisesti luotuun viestiin."
           :status-changed-subject "Hakemuksen tila on muuttunut"}

@@ -63,13 +63,16 @@
   (mapv (comp translate-catalogue-item :id)
         (db/get-catalogue-items {:items ids})))
 
+(defn- get-catalogue-items-by-application-id [app-id]
+  (let [items (db/get-application-items {:application app-id})]
+    (when (seq items) (get-catalogue-items (mapv :item items)))
+    ))
+
 (defn- get-applications-impl [query-params]
   (doall
    (for [app (db/get-applications query-params)]
      (assoc (get-application-state (:id app))
-            :catalogue-items (let [items (db/get-application-items {:application (:id app)})]
-                               (when (seq items) (get-catalogue-items (mapv :item items)))
-                               )))))
+            :catalogue-items (get-catalogue-items-by-application-id (:id app))))))
 
 (defn get-applications []
   (get-applications-impl {:applicant (get-user-id)}))
@@ -101,15 +104,6 @@
   (filterv
    (fn [app] (can-review? (:id app)))
    (get-applications-impl {})))
-
-(defn get-draft-id-for
-  "Finds applications in the draft state for the given catalogue item.
-   Returns an id of an arbitrary one of them, or nil if there are none."
-  [items]
-  (->> nil ;; TODO implement (get-applications-impl {:resource catalogue-item :applicant (get-user-id)})
-       (filter #(= "draft" (:state %)))
-       first
-       :id))
 
 (defn make-draft-application
   "Make a draft application with an initial set of catalogue items."
@@ -197,6 +191,7 @@
                  :approved false}]"
   ([application-id]
    (let [form (db/get-form-for-application {:application application-id :lang (name context/*lang*)})
+         form (or form (db/get-form-for-application {:application application-id :lang "en"}))
          _ (assert form)
          application (get-application-state application-id)
          _ (assert application)
@@ -217,6 +212,7 @@
                    (is-reviewer? application-id))
        (throw-unauthorized))
      {:id form-id
+      :title (:formtitle form)
       :catalogue-items catalogue-items
       :application application
       :applicant-attributes (users/get-user-attributes (:applicantuserid application))
@@ -241,6 +237,7 @@
          licenses (mapv #(process-license application license-localizations %)
                         (db/get-draft-licenses {:wfid wfid :items catalogue-item-ids}))]
      {:id form-id
+      :title (:formtitle form)
       :catalogue-items catalogue-items
       :application application
       :applicant-attributes (users/get-user-attributes (:applicantuserid application))
@@ -375,10 +372,11 @@
                         db/get-applications
                         first
                         (assoc :state "draft" :curround 0) ;; reset state
-                        (assoc :events events))]
-    (apply-events
-     application
-     events)))
+                        (assoc :events events))
+        result (apply-events
+                application
+                events)]
+    result))
 
 (declare handle-state-change)
 
@@ -403,24 +401,21 @@
 (defn- send-emails-for [application]
   (let [applicant-attrs (users/get-user-attributes (:applicantuserid application))
         application-id (:id application)
-        item-title (get-catalogue-item-title
-                    (get-localized-catalogue-item {:id (:catid application)}))
+        items (get-catalogue-items-by-application-id application-id)
         round (:curround application)
         state (:state application)]
     (if (= "applied" state)
       (let [approvers (actors/get-by-role application-id round "approver")
             reviewers (actors/get-by-role application-id round "reviewer")
-            applicant-name (get-username applicant-attrs)
-            item-id (:catid application)]
+            applicant-name (get-username applicant-attrs)]
         (doseq [approver approvers] (let [user-attrs (users/get-user-attributes approver)]
-                                      (email/approval-request user-attrs applicant-name application-id item-title item-id)))
+                                      (email/approval-request user-attrs applicant-name application-id items)))
         (doseq [reviewer reviewers] (let [user-attrs (users/get-user-attributes reviewer)]
-                                      (email/review-request user-attrs applicant-name application-id item-title item-id))))
+                                      (email/review-request user-attrs applicant-name application-id items))))
       (email/status-change-alert applicant-attrs
                                  application-id
-                                 item-title
-                                 state
-                                 (:catid application)))))
+                                 items
+                                 state))))
 
 (defn handle-state-change [application-id]
   (let [application (get-application-state application-id)]
@@ -437,11 +432,7 @@
       (throw-unauthorized))
     (db/add-application-event! {:application application-id :user uid
                                 :round 0 :event "apply" :comment nil})
-    ;; TODO fix email sending to handle multiple items
-    #_(email/confirm-application-creation (get-catalogue-item-title
-                                           (get-localized-catalogue-item {:id (:catid application)}))
-                                          (:catid application)
-                                          application-id)
+    (email/confirm-application-creation application-id (get-catalogue-items-by-application-id application-id))
     (handle-state-change application-id)))
 
 (defn- judge-application [application-id event round msg]
@@ -490,10 +481,8 @@
             user-attrs (users/get-user-attributes (:applicantuserid application))]
         (email/status-change-alert user-attrs
                                    application-id
-                                   (get-catalogue-item-title
-                                    (get-localized-catalogue-item {:id (:catid application)}))
-                                   (:state application)
-                                   (:catid application))))))
+                                   (get-catalogue-items-by-application-id application-id)
+                                   (:state application))))))
 
 (defn withdraw-application [application-id round msg]
   (unjudge-application application-id "withdraw" round msg))

@@ -95,9 +95,9 @@
                           (applications/get-form-for app-id))
                 form-ru (binding [context/*lang* :ru]
                           (applications/get-form-for app-id))]
-            (is (= "item-en" (:title form-en)) "title")
+            (is (= "entitle" (:title form-en)) "title")
             (is (= ["A" "B" "C"] (map :title (:items form-en))) "items should be in order")
-            (is (= "item-fi" (:title form-fi)) "title")
+            (is (= "fititle" (:title form-fi)) "title")
             (is (= ["A"] (map :title (:items form-fi))) "there should be only one item")
             (is (= ["Testi lisenssi"] (map :title (:licenses form-fi))) "there should only be one license in Finnish")
             (is (= "http://testi.fi" (:textcontent (first (:licenses form-fi)))) "link should point to Finnish site")
@@ -118,7 +118,7 @@
                                     :actoruserid uid
                                     :round 0
                                     :state "approved"})
-        (let [f (applications/get-form-for (:id item) app-id)]
+        (let [f (applications/get-form-for app-id)]
           (is (= app-id (:id (:application f))))
           (is (= "draft" (:state (:application f))))
           (is (= [nil "B" nil] (map :value (:items f))))
@@ -141,7 +141,7 @@
                                                             :licid (:id license)
                                                             :actoruserid uid}))
               "after deletion there should not be saved approvals")
-          (let [f (applications/get-form-for (:id item) app-id)]
+          (let [f (applications/get-form-for app-id)]
             (is (= [false] (map :approved (:licenses f))))))
         (testing "reset field value"
           (db/clear-field-value! {:application app-id
@@ -152,7 +152,7 @@
                                  :item (:id item-b)
                                  :user uid
                                  :value "X"})
-          (let [f (applications/get-form-for (:id item) app-id)]
+          (let [f (applications/get-form-for app-id)]
             (is (= [nil "X" nil] (map :value (:items f)))))))
 
       (testing "get submitted form as approver"
@@ -164,7 +164,7 @@
                                     :state "approved"})
         (applications/submit-application app-id)
         (binding [context/*user* {"eppn" "approver"}]
-          (let [form (applications/get-form-for (:id item) app-id)]
+          (let [form (applications/get-form-for app-id)]
             (is (= "applied" (get-in form [:application :state])))
             (is (= [nil "X" nil] (map :value (:items form))))
             (is (get-in form [:licenses 0 :approved])))))
@@ -173,7 +173,7 @@
         (db/add-user! {:user "approver" :userattrs nil})
         (binding [context/*user* {"eppn" "approver"}]
           (applications/approve-application app-id 0 "comment"))
-        (let [form (applications/get-form-for (:id item) app-id)]
+        (let [form (applications/get-form-for app-id)]
           (is (= "approved" (get-in form [:application :state])))
           (is (= [nil "X" nil] (map :value (:items form))))
           (is (= [nil "comment"]
@@ -419,7 +419,7 @@
     (let [uid (get-user-id)
           uid2 "another-user"
           wfid1 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 0}))
-          wfid2 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 1}))
+          wfid2 (:id (db/create-workflow! {:modifieruserid "workflow-owner" :owneruserid "workflow-owner" :title "" :fnlround 1}))
           _ (actors/add-reviewer! wfid1 uid 0)
           _ (actors/add-reviewer! wfid2 uid2 0)
           _ (actors/add-reviewer! wfid2 uid 1)
@@ -446,8 +446,8 @@
         (applications/review-application app4 0 ""))
       (applications/review-application app4 1 "")
 
-      (is (= [{:id app1 :state "applied" :catid item1 :curround 0}]
-             (map #(select-keys % [:id :state :catid :curround])
+      (is (= [{:id app1 :state "applied" :curround 0}]
+             (map #(select-keys % [:id :state :curround])
                   (applications/get-application-to-review)))
           "should only see app1")
       (is (= [{:id app4 :state "approved" :curround 1}]
@@ -487,8 +487,8 @@
                   (applications/get-handled-reviews)))
           "should see app1, app2 and app4 in handled reviews")
 
-      (is (= [{:id app2 :state "applied" :catid item2 :curround 1}]
-             (map #(select-keys % [:id :state :catid :curround])
+      (is (= [{:id app2 :state "applied" :curround 1}]
+             (map #(select-keys % [:id :state :curround])
                   (applications/get-application-to-review)))
           "should only see app2")
       (testing "applications/can-review? after changes"

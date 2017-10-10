@@ -116,9 +116,9 @@
        {:licid text :langcode "en" :title "General Terms of Use"
         :textcontent (apply str (repeat 10 "License text in English. "))})
 
-      (doseq [wf [minimal simple with-review two-round different]]
-        (db/create-workflow-license! {:wfid wf :licid link :round 0})
-        (db/create-workflow-license! {:wfid wf :licid text :round 0})))
+      (doseq [wfid [minimal simple with-review two-round different]]
+        (db/create-workflow-license! {:wfid wfid :licid link :round 0})
+        (db/create-workflow-license! {:wfid wfid :licid text :round 0})))
 
     {:minimal minimal
      :simple simple
@@ -133,10 +133,11 @@
       (db/create-catalogue-item-localization! {:id id :langcode lang :title title}))
     id))
 
-(defn- create-draft! [catalogue-id field-value]
-  (let [app-id (applications/create-new-draft catalogue-id)
+(defn- create-draft! [catid wfid field-value]
+  (let [app-id (applications/create-new-draft wfid)
+        _ (db/add-catalogue-item! {:application app-id :item catid})
         form (binding [context/*lang* :en]
-               (applications/get-form-for catalogue-id))]
+               (applications/get-form-for app-id))]
     (doseq [{item-id :id} (:items form)]
       (db/save-field-value! {:application app-id :form (:id form)
                              :item item-id :user (get-user-id) :value field-value}))
@@ -148,23 +149,23 @@
                                   :state "approved"}))
     app-id))
 
-(defn- create-applications! [item applicant approver]
+(defn- create-applications! [catid wfid applicant approver]
   (binding [context/*tempura* locales/tconfig
             context/*user* {"eppn" applicant}]
-    (create-draft! item "draft application")
-    (applications/submit-application (create-draft! item "applied application"))
-    (let [application (create-draft! item "rejected application")]
+    (create-draft! catid wfid "draft application")
+    (applications/submit-application (create-draft! catid wfid "applied application"))
+    (let [application (create-draft! catid wfid "rejected application")]
       (applications/submit-application application)
       (binding [context/*user* {"eppn" approver}]
         (applications/reject-application application 0 "comment for rejection")))
-    (let [application (create-draft! item "accepted application")]
+    (let [application (create-draft! catid wfid "accepted application")]
       (applications/submit-application application)
       (binding [context/*user* {"eppn" approver}]
         (applications/approve-application application 0 "comment for approval")))
-    (let [application (create-draft! item "returned application")]
+    (let [application (create-draft! catid wfid "returned application")]
       (applications/submit-application application)
       (binding [context/*user* {"eppn" approver}]
-         (applications/return-application application 0 "comment for return")))))
+        (applications/return-application application 0 "comment for return")))))
 
 (defn create-test-data! []
   (create-users-and-roles!)
@@ -172,8 +173,8 @@
   (let [meta (create-basic-form!)
         workflows (create-workflows! "developer" "bob" "carl")
         minimal (create-catalogue-item! 1 (:minimal workflows) meta
-                                       {"en" "ELFA Corpus, direct approval"
-                                        "fi" "ELFA-korpus, suora hyväksyntä"})
+                                        {"en" "ELFA Corpus, direct approval"
+                                         "fi" "ELFA-korpus, suora hyväksyntä"})
         simple (create-catalogue-item! 1 (:simple workflows) meta
                                        {"en" "ELFA Corpus, one approval"
                                         "fi" "ELFA-korpus, yksi hyväksyntä"})
@@ -183,7 +184,7 @@
         different (create-catalogue-item! 1 (:different workflows) meta
                                           {"en" "ELFA Corpus, two rounds of approval by different approvers"
                                            "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})]
-    (create-applications! simple "developer" "developer")))
+    (create-applications! simple (:simple workflows) "developer" "developer")))
 
 (defn create-demo-data! []
   (create-demo-users-and-roles!)
@@ -191,8 +192,8 @@
   (let [meta (create-basic-form!)
         workflows (create-workflows! "RDapprover1@funet.fi" "RDapprover2@funet.fi" "RDreview@funet.fi")
         minimal (create-catalogue-item! 1 (:minimal workflows) meta
-                                       {"en" "ELFA Corpus, direct approval"
-                                        "fi" "ELFA-korpus, suora hyväksyntä"})
+                                        {"en" "ELFA Corpus, direct approval"
+                                         "fi" "ELFA-korpus, suora hyväksyntä"})
         simple (create-catalogue-item! 1 (:simple workflows) meta
                                        {"en" "ELFA Corpus, one approval"
                                         "fi" "ELFA-korpus, yksi hyväksyntä"})
@@ -202,4 +203,4 @@
         different (create-catalogue-item! 1 (:different workflows) meta
                                           {"en" "ELFA Corpus, two rounds of approval by different approvers"
                                            "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})]
-    (create-applications! simple "RDapplicant1@funet.fi" "RDapprover1@funet.fi")))
+    (create-applications! simple (:simple workflows) "RDapplicant1@funet.fi" "RDapprover1@funet.fi")))
