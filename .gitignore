@@ -14,3 +14,4 @@ profiles.clj
 *.retry
 .DS_Store
 resources/public/css/compiled/screen.css
+ansible/galaxy-roles

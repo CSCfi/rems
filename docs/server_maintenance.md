@@ -11,6 +11,15 @@ Common additional arguments:
 2. To use an inventory instead the default one add `-i <inventory-name>` command line flag
 3. Run `ansible -m ping all` to check you can reach the host
 
+## Preinstall step
+
+Note that these steps will create the deploy user and as such these steps need to be run with a different user.
+Admin and normal users can be created to a server by running the `preinstall.yml` with these steps:
+
+1. Run `ansible-galaxy install -f -r requirements.yaml`
+2. Specify the users to be added in variables. For more information check the documentation at https://github.com/CSCfi/ansible-role-users.
+3. Run `ansible-playbook -vv -e "ansible_user=<user-name>" preinstall.yml`
+
 ## Setting up a server
 If you already have setup the server you can ignore this step.
 

@@ -1,0 +1,6 @@
+---
+
+- name: Configure users
+  hosts: all
+  roles:
+    - ansible-role-users
