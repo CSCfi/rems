@@ -1,11 +1,13 @@
 (ns rems.test.db.entitlements
-  (:require [clj-time.core :as time]
+  (:require [cheshire.core :as cheshire]
+            [clj-time.core :as time]
             [clojure.string :refer [split-lines]]
             [clojure.test :refer :all]
             [rems.auth.NotAuthorizedException]
             [rems.context :as context]
             [rems.db.core :as db]
-            [rems.db.entitlements :as entitlements])
+            [rems.db.entitlements :as entitlements]
+            [stub-http.core :as stub])
   (:import rems.auth.NotAuthorizedException))
 
 (deftest test-get-entitlements-for-export
@@ -25,3 +27,24 @@
     (binding [context/*roles* #{:applicant :reviewer}]
       (is (thrown? NotAuthorizedException
                    (entitlements/get-entitlements-for-export))))))
+
+(deftest test-add-entitlements-for
+  (with-redefs [rems.db.core/add-entitlement! #(throw (Error. "don't call me"))]
+    (entitlements/add-entitlements-for {:id 3
+                                        :state "applied"
+                                        :applicantuserid "bob"}))
+  (let [db (atom [])]
+    (with-open [server (stub/start! {"/entitlements" {:status 200}})]
+      (with-redefs [rems.db.core/add-entitlement! #(swap! db conj %)
+                    rems.config/env {:entitlements-target
+                                     (str (:uri server) "/entitlements")}]
+        (entitlements/add-entitlements-for {:id 3
+                                                      :state "approved"
+                                                      :applicantuserid "bob"})
+        (is (= [{:application 3 :user "bob"}] @db))
+        (let [data (-> (stub/recorded-requests server)
+                       first
+                       :body
+                       (get "postData")
+                       cheshire/parse-string)]
+          (is (= {"application" 3 "user" "bob"} data)))))))
