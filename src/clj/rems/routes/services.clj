@@ -103,9 +103,7 @@
                 :summary     "Get application by `application-id`"
                 :path-params [application-id :- Long]
                 :return      GetApplicationResponse
-                (do (println "kakkelis" application-id)
-                    (println (get-form-for application-id))
-                    (ok (get-form-for application-id))))
+                (ok (get-form-for application-id)))
 
            (PUT "/application" []
                 :summary     "Create a new application or change an existing one"
