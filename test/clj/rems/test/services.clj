@@ -39,17 +39,16 @@
 (deftest service-application-test
   (let [api-key "42"
         user-id "alice"
-        resource-id 2]
+        catid 2]
     (testing "saving"
       (let [response (-> (request :put (str "/api/application"))
                          (authenticate api-key user-id)
                          (json {:operation "save"
-                                :catalogue-items [resource-id]
+                                :catalogue-items [catid]
                                 :items {2 "REST-Test"}})
                          app)
             cmd-response (read-body response)
             application-id (:id cmd-response)]
-        (println "kokkeli" cmd-response)
         (is (:success cmd-response))
         (is (not (:errors cmd-response)))
         (is (= "draft" (:state cmd-response)))
@@ -74,7 +73,7 @@
                              (authenticate api-key user-id)
                              (json {:operation "send"
                                     :application-id application-id
-                                    :catalogue-items [resource-id]
+                                    :catalogue-items [catid]
                                     :items {2 "REST-Test"
                                             5 "2017-2018"
                                             4 "The purpose is to test this REST service.}"}

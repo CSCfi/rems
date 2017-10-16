@@ -5,7 +5,8 @@
                                           make-draft-application]]
             [rems.form :as form]
             [ring.util.http-response :refer :all]
-            [schema.core :as s])
+            [schema.core :as s]
+            [rems.context :as context])
   (:import (org.joda.time DateTime)))
 
 (def License
@@ -38,11 +39,10 @@
 
 (def CatalogueItem
   {:id Long
-   :langcode s/Keyword
    :title s/Str
    :wfid Long
    :resid s/Str
-   :localizations {s/Any s/Any}
+   :localizations (s/maybe {s/Any s/Any})
    })
 
 (def GetApplicationResponse
@@ -102,7 +102,8 @@
                 :summary     "Get application by `application-id`"
                 :path-params [application-id :- Long]
                 :return      GetApplicationResponse
-                (ok (get-form-for application-id)))
+                (binding [context/*lang* :en]
+                  (ok (get-form-for application-id))))
 
            (PUT "/application" []
                 :summary     "Create a new application or change an existing one"
