@@ -38,7 +38,6 @@
 
 (def CatalogueItem
   {:id Long
-   :catid Long
    :langcode s/Keyword
    :title s/Str
    :wfid Long

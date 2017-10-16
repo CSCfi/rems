@@ -30,7 +30,7 @@ VALUES (:id, :resid, :prefix, :modifieruserid)
 SELECT current_database()
 
 -- :name get-catalogue-item-localizations :? :*
-SELECT catid, langcode, title
+SELECT catid AS id, langcode, title
 FROM catalogue_item_localization
 
 -- :name create-catalogue-item-localization! :insert

@@ -11,7 +11,7 @@
   []
   (->> (db/get-catalogue-item-localizations)
        (map #(update-in % [:langcode] keyword))
-       (index-by [:catid :langcode])))
+       (index-by [:id :langcode])))
 
 (defn get-cache [cache-key]
   (case cache-key
