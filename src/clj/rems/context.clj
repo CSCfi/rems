@@ -36,8 +36,6 @@
 
 (def ^:dynamic ^{:doc "User data available from request."} *user*)
 
-(def ^:dynamic ^{:doc "Active role for user or nil"} *active-role*)
-
 (def ^:dynamic ^{:doc "Set of roles for user (or nil)"} *roles*)
 
 (def ^:dynamic ^{:doc "Tempura object initialized with user's preferred language."}

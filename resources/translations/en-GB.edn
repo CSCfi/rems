@@ -33,6 +33,8 @@
                   "Description: This dataset has a minimal workflow. The user just commits to licence terms and receives an entitlement."]
                  [:p [:strong "ELFA Corpus, one approval"] [:br]
                   "Description: This dataset has a simple workflow. The application is sent to a single person (RDapprover1) for approval."]
+                 [:p [:strong "ELFA Corpus, with review"] [:br]
+                  "Description: This dataset has a simple workflow with a reviewer (RDreview), who can just provide comments to the approver (RDapprover1) on the application."]
                  [:p [:strong "ELFA Corpus, two rounds of approval by different approvers"] [:br]
                   "Description: This dataset has two approval phases. The application must be first approved by RDapprover1 and then by RDapprover2."]
                  [:h3 "Terms of Use"]
@@ -50,7 +52,7 @@
             :close-success "Application closed"
             :created "Created"
             :empty "You don't have any applications to process."
-            :export-pdf "Export PDF"
+            :export-entitlements "Export entitlements as csv"
             :handled "Handled"
             :handled-approvals "Handled applications"
             :handled-reviews "Handled reviews"
@@ -64,18 +66,31 @@
             :return "Return to applicant"
             :return-success "Application returned"
             :review "Review"
+            :review-request "Request review"
+            :review-request-selection "Send review request to user(s):"
+            :review-request-success "Review request sent"
             :review-success "Application reviewed"
             :show-publications "Show publications"
             :show-throughput-times "Show throughput times"
             :state "State"
             :view "View"
-            :view-rights "View rights"
             :withdraw "Withdraw"
             :withdraw-success "Application withdrawn"}
   :applicant-info {:applicant "Applicant"}
   :applications {:application "Application"
                  :created "Created"
                  :empty "You don't have any applications."
+                 :events {:apply "Applied"
+                          :approve "Approved"
+                          :autoapprove "Automatically approved"
+                          :close "Closed"
+                          :reject "Rejected"
+                          :return "Changes requested"
+                          :review "Reviewed"
+                          :review-request "Review requested"
+                          :third-party-review "Reviewed by a third party"
+                          :unknown "Unknown"
+                          :withdraw "Withdrawn for modifying"}
                  :resource "Resource"
                  :state "State"
                  :states {:applied "Applied"
@@ -95,7 +110,11 @@
          :header "%1 resources in cart"
          :remove "Remove"}
   :catalogue {:header "Resource"}
-  :email {:application-sent-msg "Dear %1,
+  :email {:action-not-needed-msg "Dear %1,
+                                  Applicant's %2 submitted application %3 no longer requires your attention.
+                                  Please do not reply to this automatically generated message."
+          :action-not-needed-subject "Action no longer required"
+          :application-sent-msg "Dear %1,
                                  An application to access the resource %2 has been created.
                                  You will receive messages about the application's progress. You can also check its status: %3
                                  Please do not reply to this automatically generated message."
@@ -149,8 +168,4 @@
            :approve "Approval"
            :approved "Approved"
            :rejected "Rejected"
-           :review "Review"}
-  :roles {:header "Select role:"
-          :names {:applicant "Applicant"
-                  :approver "Approver"
-                  :reviewer "Reviewer"}}}}
+           :review "Review"}}}

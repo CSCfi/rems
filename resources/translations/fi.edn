@@ -33,6 +33,8 @@
                   "Kuvaus: Tässä aineistossa on minimi työkulku. Käyttäjä sitoutuu lisenssin ehtoihin ja saa käyttöluvan."]
                  [:p [:strong "ELFA-korpus, yksi hyväksyntä"] [:br]
                   "Kuvaus: Tässä aineistossa on yksinkertainen työkulku. Hakemus lähetetään yhdelle henkilölle (RDapprover1) hyväksyttäväksi."]
+                 [:p [:strong "ELFA-korpus, katselmoinnilla"] [:br]
+                  "Kuvaus: Tässä aineistossa on yksinkertainen työkulku. Katselmoija (RDreview) voi vain kommentoida hyväksyjälle (RDapprover1) menevää hakemusta."]
                  [:p [:strong "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"] [:br]
                   "Kuvaus: Tässä aineistossa on kaksivaiheinen hyväksyntä. Hakemuksen hyväksyy ensin käyttäjä RDapprover1 ja sitten käyttäjä RDapprover2."]
                  [:h3 "Käyttöehdot"]
@@ -50,7 +52,7 @@
             :close-success "Hakemus suljettu"
             :created "Luotu"
             :empty "Sinulla ei ole hakemuksia käsiteltäväksi."
-            :export-pdf "Lataa PDF"
+            :export-entitlements "Lataa käyttöoikeudet csv-tiedostona"
             :handled "Käsitelty"
             :handled-approvals "Käsitellyt hakemukset"
             :handled-reviews "Käsitellyt katselmoinnit"
@@ -64,18 +66,31 @@
             :return "Palauta hakijalle"
             :return-success "Hakemus palautettu"
             :review "Katselmoi"
+            :review-request "Pyydä katselmointia"
+            :review-request-selection "Lähetä katselmointipyyntö henkilölle/henkilöille:"
+            :review-request-success "Katselmointipyyntö lähetetty"
             :review-success "Hakemus katselmoitu"
             :show-publications "Näytä julkaisut"
             :show-throughput-times "Näytä läpimenoajat"
             :state "Tila"
             :view "Näytä"
-            :view-rights "Näytä käyttöoikeudet"
             :withdraw "Vedä takaisin"
             :withdraw-success "Hakemus vedetty takaisin"}
   :applicant-info {:applicant "Hakija"}
   :applications {:application "Hakemus"
                  :created "Luotu"
                  :empty "Sinulla ei ole hakemuksia."
+                 :events {:apply "Lähetetty hyväksyttäväksi"
+                          :approve "Hyväksytty"
+                          :autoapprove "Automaattisesti hyväksytty"
+                          :close "Suljettu"
+                          :reject "Hylätty"
+                          :return "Muutoksia pyydetty"
+                          :review "Katselmoitu"
+                          :review-request "Lähetetty katselmoitavaksi"
+                          :third-party-review "Katselmoitu ulkoisen toimijan toimesta"
+                          :unknown "Unknown"
+                          :withdraw "Palautettu muokattavaksi"}
                  :resource "Kielivara"
                  :state "Tila"
                  :states {:applied "Haettu"
@@ -95,7 +110,11 @@
          :header "%1 kielivaraa korissa"
          :remove "Poista"}
   :catalogue {:header "Kielivarat"}
-  :email {:application-sent-msg "Hyvä %1,
+  :email {:action-not-needed-msg "Hyvä %1,
+                                  Hakijan %2 hakemus %3 ei enää vaadi huomiotanne.
+                                  Älkää vastatko tähän automaattisesti luotuun viestiin."
+          :action-not-needed-subject "Toimenpiteitä ei enää tarvita"
+          :application-sent-msg "Hyvä %1,
                                  Hakemuksenne käyttää resursseja (%2) on lähetetty käsiteltäväksi.
                                  Saatte sähköpostitse tietoa hakemuksen etenemisestä. Voitte myös seurata sitä itse: %3
                                  Älkää vastatko tähän automaattisesti luotuun viestiin."
@@ -150,8 +169,4 @@
            :approve "Hyväksyntä"
            :approved "Hyväksytty"
            :rejected "Hylätty"
-           :review "Katselmointi"}
-  :roles {:header "Valitse rooli:"
-          :names {:applicant "Hakija"
-                  :approver "Hyväksyjä"
-                  :reviewer "Katselmoija"}}}}
+           :review "Katselmointi"}}}

@@ -13,11 +13,13 @@ CREATE TYPE application_event_type AS ENUM (
   'reject',  -- applied --> rejected
   'return',   -- applied --> returned
   'review',   -- applied --> applied or approved
+  'review-request', -- applied --> applied
   'withdraw',   -- applied --> withdrawn
-  'close'   -- any --> closed
+  'close',   -- any --> closed
+  'third-party-review' -- applied --> applied
 );
 --;;
-CREATE TYPE application_state AS ENUM ('applied','approved','rejected','returned','withdrawn','closed','draft','onhold');
+CREATE TYPE application_state AS ENUM ('applied','approved','rejected','returned','withdrawn','closed','draft');
 --;;
 CREATE TYPE item_state AS ENUM ('disabled','enabled','copied');
 --;;
@@ -388,12 +390,6 @@ CREATE TABLE roles (
   role varchar(255),
   PRIMARY KEY (userId, role),
   FOREIGN KEY (userId) REFERENCES users
-)
---;;
-CREATE TABLE active_role (
-  userId varchar(255) PRIMARY KEY,
-  role varchar(255) NOT NULL,
-  FOREIGN KEY (userId, role) REFERENCES roles
 )
 --;;
 CREATE TABLE application_event (

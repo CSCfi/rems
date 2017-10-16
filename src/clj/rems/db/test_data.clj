@@ -37,8 +37,9 @@
     (db/add-user! {:user reviewer :userattrs nil})
     (roles/add-role! reviewer :reviewer)))
 
-(defn- create-basic-form! []
+(defn- create-basic-form!
   "Creates a bilingual form with all supported field types. Returns id of the form meta."
+  []
   (let [meta (db/create-form-meta! {:title "metatitle" :user "owner"})
         form-en (db/create-form! {:title "Basic application" :user "owner"})
         form-fi (db/create-form! {:title "Yksinkertainen lomake" :user "owner"})

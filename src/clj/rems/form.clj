@@ -10,26 +10,27 @@
             [rems.applicant-info :as applicant-info]
             [rems.collapsible :as collapsible]
             [rems.context :as context]
-            [rems.db.applications :refer [can-approve?
+            [rems.db.applications :refer [assoc-review-type-to-app
+                                          can-approve?
                                           can-review?
+                                          can-third-party-review?
                                           create-new-draft
                                           get-application-phases
                                           get-application-state
                                           get-draft-form-for
                                           get-form-for
                                           make-draft-application
+                                          is-applicant?
                                           submit-application]]
             [rems.db.core :as db]
+            [rems.events :as events]
             [rems.guide :refer :all]
             [rems.layout :as layout]
             [rems.phase :refer [phases]]
-            [rems.role-switcher :refer [when-role]]
+            [rems.roles :refer [when-role]]
             [rems.text :refer :all]
             [rems.util :refer [get-user-id getx getx-in]]
             [ring.util.response :refer [redirect]]))
-
-(def ^:private time-format (format/formatter "yyyy-MM-dd HH:mm"
-                                             (time/default-time-zone)))
 
 ;; TODO remove id-to-name when no more forms submitted by SPA
 (defn- id-to-name [id]
@@ -124,20 +125,27 @@
                (for [e events]
                  [:tr
                   [:td (:userid e)]
-                  [:td (:event e)]
+                  [:td (text (localize-event (:event e)))]
                   [:td (:comment e)]
-                  [:td (format/unparse time-format (:time e))]])))))]))
+                  [:td (localize-time (:time e))]])))))]))
 
 
 (defn- form-fields [form]
+<<<<<<< HEAD
   (let [application (:application form)
         state (:state application)
         editable? (or (nil? state) (#{"draft" "returned" "withdrawn"} state))
+=======
+  (let [state (:state (:application form))
+        new-application? (nil? state)
+        editable? (or new-application? (#{"draft" "returned" "withdrawn"} state))
+>>>>>>> master
         readonly? (not editable?)
         withdrawable? (= "applied" state)
         closeable? (and
-                    (not (nil? state))
+                    (not new-application?)
                     (not= "closed" state))]
+<<<<<<< HEAD
     (collapsible/component "form"
                            true
                            (text :t.form/application)
@@ -167,6 +175,38 @@
                                        (when withdrawable? [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#withdraw-modal"} (text :t.actions/withdraw)])
                                        ])])
                              ]))))
+=======
+    (collapsible/component
+     "form"
+     true
+     (:title form)
+     (list
+      (events/approval-confirm-modal "close" (text :t.actions/close) (:application form))
+      (events/approval-confirm-modal "withdraw" (text :t.actions/withdraw) (:application form))
+      [:form {:method "post"
+              :action (if-let [app (:id (:application form))]
+                        (str "/form/" (:catalogue-item form) "/" app "/save")
+                        (str "/form/" (:catalogue-item form) "/save"))}
+       (for [i (:items form)]
+         (field (assoc i :readonly readonly?)))
+       (when-let [licenses (not-empty (:licenses form))]
+         [:div.form-group
+          [:h4 (text :t.form/licenses)]
+          (for [l licenses]
+            (field (assoc l :readonly readonly?)))])
+       (anti-forgery-field)
+       (when (or new-application?
+                 (is-applicant? (:application form)))
+         [:div.row
+          [:div.col
+           [:a#back.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
+          (into [:div.col.commands]
+                [(when closeable? [:button#close.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
+                                   (text :t.actions/close)])
+                 (when editable? [:button#save.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)])
+                 (when editable? [:button#submit.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)])
+                 (when withdrawable? [:button#withdraw.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#withdraw-modal"} (text :t.actions/withdraw)])])])]))))
+>>>>>>> master
 
 (defn- applied-resources [catalogue-items]
   (collapsible/component "resources"
@@ -200,16 +240,17 @@
 
      (when-role :approver
        (if (and actionable? (can-approve? (:id (:application form))))
-         (actions/approve-form (:application form))
+         (events/approve-form (:application form))
          [:div.row
           [:div.col.commands
-           (actions/back-to-actions-button)]]))
+           (events/back-to-actions-button)]]))
      (when-role :reviewer
-       (if (and actionable? (can-review? (:id (:application form))))
-         (actions/review-form (:application form))
+       (if (and actionable? (or (can-review? (:id (:application form)))
+                                (can-third-party-review? (:id (:application form)))))
+         (events/review-form (assoc-review-type-to-app (:application form)))
          [:div.row
           [:div.col.commands
-           (actions/back-to-actions-button)]])
+           (events/back-to-actions-button)]])
        ))))
 
 (defn link-to-application [items]

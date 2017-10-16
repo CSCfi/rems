@@ -19,8 +19,11 @@
   [& fmt-args]
   (throw (RuntimeException. (apply format fmt-args))))
 
-(defn get-user-id []
-  (get context/*user* "eppn"))
+(defn get-user-id
+  ([]
+   (get-user-id context/*user*))
+  ([user]
+   (get user "eppn")))
 
 (defn get-username
   ([]

@@ -58,7 +58,6 @@
                            :td
                            {:display "table-cell"}]]
                          [:.language-switcher
-                          :.role-switcher
                           {:padding ".5em .5em"}]))
    (stylesheet/at-media {:min-width (u/px 480)}
                         [:.commands {:white-space "nowrap"}])))
@@ -249,10 +248,8 @@
   [:.btn.disabled {:opacity 0.25}]
   [:.catalogue-item-link {:color "#fff"
                           :text-decoration "underline"}]
-                                        ;Has to be defined before the following media queries
-  [:.language-switcher
-   :.role-switcher
-   {:padding ".5em 0"}]
+  ;; Has to be defined before the following media queries
+  [:.language-switcher {:padding ".5em 0"}]
   (generate-media-queries)
   [:.user
    :.language-switcher
@@ -285,61 +282,61 @@
     (s/descendant :.language-switcher :form)
     :form)
    {:margin-left (u/rem 0.5)}]
-  [(s/descendant :.role-switcher :form) {:margin-left (u/rem 0.5)}]
   [:.commands {:text-align "right"
                :padding "0 1rem"}]
-  [:.navbar-flex {:display "flex"
-                  :flex-direction "row"
-                  :justify-content "space-between"
-                  :min-width "100%"}
-   [:nav {:flex 1}]]
-  [(s/> :.form-actions "*:not(:first-child)")
-   (s/> :.commands "*:not(:first-child)")
-   {:margin-left (u/em 0.5)}]
-  [:.full {:width "100%"}]
-  [:.rectangle {:width (u/px 50)
-                :height (u/px 50)}]
-  [:.color-1 {:background-color (util/get-theme-attribute :color1)}]
-  [:.color-2 {:background-color (util/get-theme-attribute :color2)}]
-  [:.color-3 {:background-color (util/get-theme-attribute :color3)}]
-  [:.color-4 {:background-color (util/get-theme-attribute :color4)}]
-  [:.color-title {:padding-top (u/rem 0.8)}]
-  [(s/descendant :.alert :ul ) {:margin-bottom 0}]
-  [:ul.comments {:list-style-type "none"}]
-  [:.inline-comment {:font-size (u/rem 1)}]
-  [(s/& :p.inline-comment ":last-child") {:margin-bottom 0}]
-  [:.inline-comment-content {:display "inline-block"}]
-  [:.license-panel {:display "inline-block"
-                    :width "inherit"}]
-  [:.license-header
-   [:&:after {:font-family "'FontAwesome'"
-              :float "right"
-              :content "\"\\f068\""}]
-   [:&.collapsed
-    [:&:after {:content "\"\\f067\""}]]]
-  [:.card-header.clickable {:cursor "pointer"}]
-  [(s/descendant :.card-header :a) {:color "inherit"}]
+[:.form-group {:text-align "initial"}]
+[:.navbar-flex {:display "flex"
+                :flex-direction "row"
+                :justify-content "space-between"
+                :min-width "100%"}
+ [:nav {:flex 1}]]
+[(s/> :.form-actions "*:not(:first-child)")
+ (s/> :.commands "*:not(:first-child)")
+ {:margin-left (u/em 0.5)}]
+[:.full {:width "100%"}]
+[:.rectangle {:width (u/px 50)
+              :height (u/px 50)}]
+[:.color-1 {:background-color (util/get-theme-attribute :color1)}]
+[:.color-2 {:background-color (util/get-theme-attribute :color2)}]
+[:.color-3 {:background-color (util/get-theme-attribute :color3)}]
+[:.color-4 {:background-color (util/get-theme-attribute :color4)}]
+[:.color-title {:padding-top (u/rem 0.8)}]
+[(s/descendant :.alert :ul ) {:margin-bottom 0}]
+[:ul.comments {:list-style-type "none"}]
+[:.inline-comment {:font-size (u/rem 1)}]
+[(s/& :p.inline-comment ":last-child") {:margin-bottom 0}]
+[:.inline-comment-content {:display "inline-block"}]
+[:.license-panel {:display "inline-block"
+                  :width "inherit"}]
+[:.license-header
+ [:&:after {:font-family "'FontAwesome'"
+            :float "right"
+            :content "\"\\f068\""}]
+ [:&.collapsed
+  [:&:after {:content "\"\\f067\""}]]]
+[:.card-header.clickable {:cursor "pointer"}]
+[(s/descendant :.card-header :a) {:color "inherit"}]
                                         ;hax for opening misalignment
-  [:.license-title {:margin-top (u/px 3)}]
-  [:.collapse-wrapper {:border-radius (u/rem 0.4)
-                       :border "1px solid #ccc"}
-   [:.clickable
-    [:.card-title
-     [(s/& ".collapsed:before") {:content "\"\\f067\""}]
-     [:&:before {:font-family "'FontAwesome'"
-                 :float "right"
-                 :content "\"\\f068\""}]]]
-   [:.card-header {:border-bottom "none"
-                   :border-radius (u/rem 0.4)
-                   :font-weight 500
-                   :font-size (u/rem 1.5)
-                   :line-height 1.1
-                   :font-family "'Lato'"}]]
-  [:.collapse-content {:padding (u/rem 1)}]
-  (generate-phase-styles)
-  [(s/descendant :.document :h3) {:margin-top (u/rem 4)}]
+[:.license-title {:margin-top (u/px 3)}]
+[:.collapse-wrapper {:border-radius (u/rem 0.4)
+                     :border "1px solid #ccc"}
+ [:.clickable
+  [:.card-title
+   [(s/& ".collapsed:before") {:content "\"\\f067\""}]
+   [:&:before {:font-family "'FontAwesome'"
+               :float "right"
+               :content "\"\\f068\""}]]]
+ [:.card-header {:border-bottom "none"
+                 :border-radius (u/rem 0.4)
+                 :font-weight 500
+                 :font-size (u/rem 1.5)
+                 :line-height 1.1
+                 :font-family "'Lato'"}]]
+[:.collapse-content {:padding (u/rem 1)}]
+(generate-phase-styles)
+[(s/descendant :.document :h3) {:margin-top (u/rem 4)}]
                                         ;These must be last as the parsing fails when the first non-standard element is met
-  (generate-form-placeholder-styles))
+(generate-form-placeholder-styles))
 
 (defn generate-css []
   (g/css {:pretty-print? false} screen))

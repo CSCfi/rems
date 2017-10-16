@@ -33,8 +33,9 @@ a:visited { color: #fff; }
 ")
 
 (defn- fake-login [session username]
-  (assoc (redirect "/landing_page")
-         :session (assoc session :identity {"eppn" username "commonName" username})))
+  (let [mail (get {"developer" "deve@lo.per" "alice" "a@li.ce" "bob" "b@o.b" "carl" "c@a.rl"} username)]
+    (assoc (redirect "/landing_page")
+      :session (assoc session :identity {"eppn" username "commonName" username "mail" mail}))))
 
 (defn user-selection [username]
   (let [url (url "/Shibboleth.sso/Login" {:username username})]

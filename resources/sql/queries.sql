@@ -176,7 +176,6 @@ WHERE 1=1
   AND ciai.catAppId = :application
 
 
-/* TODO think these through wrt bundling
 -- :name add-entitlement! :!
 -- TODO remove resId from this table to make it normalized?
 INSERT INTO entitlement
@@ -185,13 +184,16 @@ VALUES
   (:application, :user,
    (SELECT
       cat.resid
-    FROM catalogue_item_application app
-    LEFT OUTER JOIN catalogue_item cat ON app.catid = cat.id
-    WHERE app.id = :application))
+    FROM catalogue_item_application_items ciai
+    LEFT OUTER JOIN catalogue_item_application app ON ciai.catAppId = app.id
+    LEFT OUTER JOIN catalogue_item cat ON ciai.catItemId = cat.id
+    WHERE ciai.catAppId = :application))
 
 -- :name get-entitlements :?
 SELECT resId, catAppId, userId FROM entitlement
-*/
+
+-- :name get-entitlements-for-export
+SELECT resId, catAppId, userId, start FROM entitlement
 
 -- :name save-field-value! :!
 INSERT INTO application_text_values
@@ -349,17 +351,6 @@ VALUES (:user, :role)
 ON CONFLICT (userId, role)
 DO NOTHING
 
--- :name get-active-role :? :1
-SELECT role
-FROM active_role
-WHERE userId = :user
-
--- :name set-active-role! :!
-INSERT INTO active_role (userId, role)
-VALUES (:user, :role)
-ON CONFLICT (userId)
-DO UPDATE SET role = :role
-
 -- :name add-user! :!
 INSERT INTO users (userId, userAttrs)
 VALUES (:user, :userattrs::jsonb)
@@ -385,3 +376,9 @@ ORDER BY id ASC
 -- :name add-application-event! :insert
 INSERT INTO application_event (appId, userId, round, event, comment)
 VALUES (:application, :user, :round, CAST (:event AS application_event_type), :comment)
+
+-- :name get-application-event-types :? :*
+SELECT unnest(enum_range(NULL::application_event_type));
+
+-- :name get-application-states :? :*
+SELECT unnest(enum_range(NULL::application_state));

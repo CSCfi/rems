@@ -57,3 +57,11 @@
 
 (defn review-request [recipient-attrs applicant-name app-id items]
   (send-request :t.email/review-request-subject :t.email/review-request-msg recipient-attrs applicant-name app-id items))
+
+(defn action-not-needed [recipient-attrs applicant-name app-id]
+  (send-mail (get-user-mail recipient-attrs)
+             (text :t.email/action-not-needed-subject)
+             (text-format :t.email/action-not-needed-msg
+                          (get-username recipient-attrs)
+                          applicant-name
+                          app-id)))

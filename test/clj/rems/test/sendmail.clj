@@ -7,6 +7,7 @@
             [conman.core :as conman]
             [luminus-migrations.core :as migrations]
             [mount.core :as mount]
+            [rems.auth.NotAuthorizedException]
             [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.applications :as applications]
@@ -14,7 +15,8 @@
             [rems.db.core :as db]
             [rems.db.workflow-actors :as actors]
             [rems.email :as email]
-            [rems.test.tempura :refer [fake-tempura-fixture]]))
+            [rems.test.tempura :refer [fake-tempura-fixture]])
+  (:import rems.auth.NotAuthorizedException))
 
 (use-fixtures
   :once
@@ -48,22 +50,38 @@
             uid2 "reviewer"
             wfid1 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 1}))
             wfid2 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 0}))
+            wfid3 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 1}))
+            wfid4 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 1}))
             _ (actors/add-reviewer! wfid1 uid2 0)
             _ (actors/add-approver! wfid1 uid 1)
             _ (actors/add-approver! wfid2 uid 0)
+            _ (actors/add-approver! wfid3 uid2 0)
+            _ (actors/add-approver! wfid3 uid 0)
+            _ (actors/add-approver! wfid3 uid 1)
+            _ (actors/add-approver! wfid4 uid 0)
+            _ (actors/add-approver! wfid4 uid2 0)
+            _ (actors/add-approver! wfid4 uid 1)
+            _ (actors/add-approver! wfid4 uid2 1)
             item1 (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wfid1}))
             item2 (:id (db/create-catalogue-item! {:title "item2" :form nil :resid nil :wfid wfid2}))
-            app1 (applications/create-new-draft item1)
-            app2 (applications/create-new-draft item2)
-            app3 (applications/create-new-draft item2)
-            app4 (applications/create-new-draft item2)]
+            item3 (:id (db/create-catalogue-item! {:title "item3" :form nil :resid nil :wfid wfid3}))
+            item4 (:id (db/create-catalogue-item! {:title "item4" :form nil :resid nil :wfid wfid4}))
+            app1 (applications/create-new-draft wfid1)
+            app2 (applications/create-new-draft wfid2)
+            app3 (applications/create-new-draft wfid2)
+            app4 (applications/create-new-draft wfid2)
+            app5 (applications/create-new-draft wfid3)
+            app6 (applications/create-new-draft wfid4)]
         (db/add-catalogue-item! {:application app1 :item item1})
         (db/add-catalogue-item! {:application app2 :item item2})
         (db/add-catalogue-item! {:application app3 :item item2})
         (db/add-catalogue-item! {:application app4 :item item2})
-        (db/add-user! {:user uid :userattrs (generate-string {"mail" "appr-invalid" "commonName" "App Rover"})})
-        (db/add-user! {:user uid2 :userattrs (generate-string {"mail" "rev-invalid" "commonName" "Rev Iwer"})})
+        (db/add-catalogue-item! {:application app5 :item item3})
+        (db/add-catalogue-item! {:application app6 :item item4})
+        (db/add-user! {:user uid :userattrs (generate-string {"eppn" "approver" "mail" "appr-invalid" "commonName" "App Rover"})})
+        (db/add-user! {:user uid2 :userattrs (generate-string {"eppn" "reviewer" "mail" "rev-invalid" "commonName" "Rev Iwer"})})
         (db/add-user! {:user "test-user" :userattrs (generate-string context/*user*)})
+        (db/add-user! {:user "outside-reviewer" :userattrs (generate-string {"eppn" "outside-reviewer" "mail" "out-invalid" "commonName" "Out Sider"})})
         (testing "Applicant and reviewer should receive an email about the new application"
           (conjure/mocking [email/send-mail]
             (applications/submit-application app1)
@@ -108,17 +126,17 @@
               (conjure/verify-first-call-args-for email/send-mail "invalid-addr" (subject-to-check "status-changed") (status-msg-to-check "Test User" app3 item2 "item2" "returned"))))
           (testing "Emails should not be sent when actions fail"
             (conjure/mocking [email/send-mail]
-              (is (thrown? Exception (applications/approve-application app4 1 ""))
+              (is (thrown? NotAuthorizedException (applications/approve-application app4 1 ""))
                   "Approval should fail")
-              (is (thrown? Exception (applications/reject-application app4 1 ""))
+              (is (thrown? NotAuthorizedException (applications/reject-application app4 1 ""))
                   "Rejection should fail")
-              (is (thrown? Exception (applications/review-application app4 1 ""))
+              (is (thrown? NotAuthorizedException (applications/review-application app4 1 ""))
                   "Review should fail")
-              (is (thrown? Exception (applications/return-application app4 1 ""))
+              (is (thrown? NotAuthorizedException (applications/return-application app4 1 ""))
                   "Return should fail")
-              (is (thrown? Exception (applications/close-application app4 2 ""))
+              (is (thrown? NotAuthorizedException (applications/close-application app4 2 ""))
                   "closing should fail")
-              (is (thrown? Exception (applications/withdraw-application app1 2 ""))
+              (is (thrown? NotAuthorizedException (applications/withdraw-application app1 2 ""))
                   "withdraw should fail")
               (conjure/verify-call-times-for email/send-mail 0))))
         (testing "Applicant is notified of closed application"
@@ -131,4 +149,51 @@
             (applications/submit-application app4)
             (applications/withdraw-application app4 0 "")
             (conjure/verify-call-times-for email/send-mail 3)
-            (conjure/verify-nth-call-args-for 3 email/send-mail "invalid-addr" (subject-to-check "status-changed") (status-msg-to-check "Test User" app4 item2 "item2" "withdrawn"))))))))
+            (conjure/verify-nth-call-args-for 3 email/send-mail "invalid-addr" (subject-to-check "status-changed") (status-msg-to-check "Test User" app4 item2 "item2" "withdrawn"))))
+        (testing "3rd party reviewer is notified after a review request"
+          (conjure/mocking [email/send-mail]
+            (applications/submit-application app4)
+            (binding [context/*user* {"eppn" "approver"}]
+              (applications/send-review-request app4 0 "" uid2)
+              (applications/send-review-request app4 0 "" uid2))
+            (conjure/verify-call-times-for email/send-mail 3)
+            (conjure/verify-nth-call-args-for 3
+                                              email/send-mail
+                                              "rev-invalid"
+                                              (subject-to-check "review-request")
+                                              (str "([:t.email/review-request-msg :t/missing] [\"Rev Iwer\" \"Test User\" " app4 " \"item2\" \"localhost:3000/form/" app4 "\"])"))
+            (binding [context/*user* {"eppn" "reviewer"}]
+              (applications/perform-third-party-review app4 0 ""))
+            (conjure/verify-call-times-for email/send-mail 3)))
+        (testing "Actors are notified when their attention is no longer required"
+          (conjure/mocking [email/send-mail]
+            (applications/submit-application app5)
+            (binding [context/*user* {"eppn" "approver"}]
+              (applications/approve-application app5 0 ""))
+            (conjure/verify-call-times-for email/send-mail 5)
+            (conjure/verify-nth-call-args-for 4
+                                              email/send-mail
+                                              "rev-invalid"
+                                              (subject-to-check "action-not-needed")
+                                              (str "([:t.email/action-not-needed-msg :t/missing] [\"Rev Iwer\" \"Test User\" " app5 "])"))
+            (binding [context/*user* {"eppn" "approver"}]
+              (applications/send-review-request app5 1 "" uid2)
+              (applications/approve-application app5 1 ""))
+            (conjure/verify-call-times-for email/send-mail 8)
+            (conjure/verify-nth-call-args-for 7
+                                              email/send-mail
+                                              "rev-invalid"
+                                              (subject-to-check "action-not-needed")
+                                              (str "([:t.email/action-not-needed-msg :t/missing] [\"Rev Iwer\" \"Test User\" " app5 "])"))))
+        (testing "Multiple rounds with lazy actors"
+          (conjure/mocking [email/send-mail]
+            (applications/submit-application app6)
+            (binding [context/*user* {"eppn" "approver"}]
+              (applications/send-review-request app6 0 "" "outside-reviewer")
+              (applications/approve-application app6 0 "")
+              (applications/send-review-request app6 1 "" "outside-reviewer"))
+            (binding [context/*user* {"eppn" "outside-reviewer"}]
+              (applications/perform-third-party-review app6 1 ""))
+            (binding [context/*user* {"eppn" "approver"}]
+              (applications/approve-application app6 1 ""))
+              (conjure/verify-call-times-for email/send-mail 11)))))))

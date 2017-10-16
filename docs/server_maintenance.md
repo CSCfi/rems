@@ -16,9 +16,8 @@ If you already have setup the server you can ignore this step.
 
 1. The playbook assumes that you have already copied host certs and keys to the server.
 2. If you are deploying to a new server, please add a `host_vars` file for it and add it to `inventory`.
-3. Provide vault password for tomcat_env.yml playbook either with cli arguments `--ask-vault-pass` or `--vault-password-file <path-to-pass-file>`
-4. Run `ansible-playbook -vv tomcat_env.yml`
-5. Run `ansible-playbook -vv postgres.yml`
+3. Run `ansible-playbook -vv tomcat_env.yml`
+4. Run `ansible-playbook -vv postgres.yml`
 
 ## Deploying the application
 

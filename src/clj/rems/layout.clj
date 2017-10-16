@@ -4,8 +4,7 @@
             [rems.context :as context]
             [rems.guide :refer :all]
             [rems.language-switcher :refer [language-switcher]]
-            [rems.role-switcher :refer [role-switcher when-role
-                                        when-roles]]
+            [rems.roles :refer [when-role when-roles]]
             [rems.text :refer :all]
             [rems.util :refer [get-username]]
             [ring.util.http-response :as response]))
@@ -39,7 +38,6 @@
          (nav-link "/actions" (text :t.navigation/actions) (= page-name "actions"))))
       (nav-link "/" (text :t.navigation/home) (= page-name "home")))
     (nav-link "/about" (text :t.navigation/about) (= page-name "about"))]
-   (role-switcher)
    (language-switcher)])
 
 (defn- navbar
@@ -158,16 +156,13 @@
             (binding [context/*roles* nil]
               (navbar "example-page" nil)))
    (example "navbar for applicant"
-            (binding [context/*roles* #{:applicant}
-                      context/*active-role* :applicant]
+            (binding [context/*roles* #{:applicant}]
               (navbar "example-page" "Eero Esimerkki")))
    (example "navbar for approver"
-            (binding [context/*roles* #{:approver}
-                      context/*active-role* :approver]
+            (binding [context/*roles* #{:approver}]
               (navbar "example-page" "Aimo Approver")))
    (example "navbar for admin"
-            (binding [context/*roles* #{:applicant :approver :reviewer}
-                      context/*active-role* :approver]
+            (binding [context/*roles* #{:applicant :approver :reviewer}]
               (navbar "example-page" "Antero Admin")))
    (example "footer"
             (footer))
