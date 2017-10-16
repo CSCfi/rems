@@ -131,27 +131,21 @@
 
 
 (defn- form-fields [form]
-<<<<<<< HEAD
   (let [application (:application form)
         state (:state application)
-        editable? (or (nil? state) (#{"draft" "returned" "withdrawn"} state))
-=======
-  (let [state (:state (:application form))
         new-application? (nil? state)
         editable? (or new-application? (#{"draft" "returned" "withdrawn"} state))
->>>>>>> master
         readonly? (not editable?)
         withdrawable? (= "applied" state)
         closeable? (and
                     (not new-application?)
                     (not= "closed" state))]
-<<<<<<< HEAD
     (collapsible/component "form"
                            true
                            (text :t.form/application)
                            (list
-                            (actions/approval-confirm-modal "close" (text :t.actions/close) application)
-                            (actions/approval-confirm-modal "withdraw" (text :t.actions/withdraw) application)
+                            (events/approval-confirm-modal "close" (text :t.actions/close) application)
+                            (events/approval-confirm-modal "withdraw" (text :t.actions/withdraw) application)
                             [:form {:method "post"
                                     :action (let [app (:id application)]
                                               (str "/form/" app "/save"))}
@@ -163,50 +157,19 @@
                                 (for [l licenses]
                                   (field (assoc l :readonly readonly?)))])
                              (anti-forgery-field)
-                             (when-role :applicant
+                             (when (or new-application?
+                                       (is-applicant? (:application form)))
                                [:div.row
                                 [:div.col
-                                 [:a.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
+                                 [:a#back.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
                                 (into [:div.col.commands]
-                                      [(when closeable? [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
+                                      [(when closeable? [:button#close.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
                                                          (text :t.actions/close)])
-                                       (when editable? [:button.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)])
-                                       (when editable? [:button.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)])
-                                       (when withdrawable? [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#withdraw-modal"} (text :t.actions/withdraw)])
+                                       (when editable? [:button#save.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)])
+                                       (when editable? [:button#submit.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)])
+                                       (when withdrawable? [:button#withdraw.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#withdraw-modal"} (text :t.actions/withdraw)])
                                        ])])
                              ]))))
-=======
-    (collapsible/component
-     "form"
-     true
-     (:title form)
-     (list
-      (events/approval-confirm-modal "close" (text :t.actions/close) (:application form))
-      (events/approval-confirm-modal "withdraw" (text :t.actions/withdraw) (:application form))
-      [:form {:method "post"
-              :action (if-let [app (:id (:application form))]
-                        (str "/form/" (:catalogue-item form) "/" app "/save")
-                        (str "/form/" (:catalogue-item form) "/save"))}
-       (for [i (:items form)]
-         (field (assoc i :readonly readonly?)))
-       (when-let [licenses (not-empty (:licenses form))]
-         [:div.form-group
-          [:h4 (text :t.form/licenses)]
-          (for [l licenses]
-            (field (assoc l :readonly readonly?)))])
-       (anti-forgery-field)
-       (when (or new-application?
-                 (is-applicant? (:application form)))
-         [:div.row
-          [:div.col
-           [:a#back.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
-          (into [:div.col.commands]
-                [(when closeable? [:button#close.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
-                                   (text :t.actions/close)])
-                 (when editable? [:button#save.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)])
-                 (when editable? [:button#submit.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)])
-                 (when withdrawable? [:button#withdraw.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#withdraw-modal"} (text :t.actions/withdraw)])])])]))))
->>>>>>> master
 
 (defn- applied-resources [catalogue-items]
   (collapsible/component "resources"
