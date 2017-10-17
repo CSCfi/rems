@@ -4,7 +4,7 @@
 (defn select-values
   "Select values specified by give keys `ks`."
   [m ks]
-  (remove nil? (reduce #(conj %1 (m %2)) [] ks)))
+  (vec (remove nil? (reduce #(conj %1 (m %2)) [] ks))))
 
 (defn index-by
   "Index the collection coll with given keys `ks`.
