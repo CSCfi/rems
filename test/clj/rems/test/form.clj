@@ -261,7 +261,7 @@
             (is (submit-button body))))
         (doseq [state ["applied" "approved" "rejected"]]
           (testing state
-            (let [body (form (assoc data :application {:state state}))]
+            (let [body (form (assoc data :application {:id 1 :state state}))]
               (is (= [true true true] (map readonly? (all-inputs body))))
               (is (nil? (submit-button body))))))
         (testing "sees events"
@@ -279,7 +279,6 @@
 (deftest test-form-actions
   (with-fake-tempura
     (let [draft-data {:application {:id 2
-                                    :catid 2
                                     :applicantuserid "developer"
                                     :state "draft"
                                     :curround 0
@@ -287,7 +286,6 @@
                                     :wfid 2
                                     :events []}}
           applied-data {:application {:id 2
-                                      :catid 2
                                       :applicantuserid "developer"
                                       :start nil
                                       :wfid 2
@@ -306,7 +304,6 @@
                                         :comment nil
                                         :time nil}]}}
           approved-data {:application {:id 2
-                                       :catid 2
                                        :applicantuserid "developer"
                                        :start nil
                                        :wfid 2
