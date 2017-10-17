@@ -20,7 +20,7 @@
          (into {}))))
 
 (defn errorf
-  "Throw a RuntimeException, args passed to clojure.core/format."
+  "Throw a RuntimeException, args passed to `clojure.core/format`."
   [& fmt-args]
   (throw (RuntimeException. (apply format fmt-args))))
 
@@ -48,7 +48,7 @@
   (get context/*theme* attr-name))
 
 (defn getx
-  "Like get but throws an exception if the key is not found."
+  "Like `get` but throws an exception if the key is not found."
   [m k]
   (let [e (get m k ::sentinel)]
     (if-not (= e ::sentinel)
@@ -56,6 +56,6 @@
       (throw (ex-info "Missing required key" {:map m :key k})))))
 
 (defn getx-in
-  "Like get-in but throws an exception if the key is not found."
+  "Like `get-in` but throws an exception if the key is not found."
   [m ks]
   (reduce getx m ks))
