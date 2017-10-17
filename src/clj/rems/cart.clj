@@ -7,8 +7,9 @@
             [rems.form :as form]
             [rems.guide :refer :all]
             [rems.text :refer :all]
+            [rems.util :refer [select-values]]
             [ring.util.response :refer [redirect]]
-            [clojure.string :as str]))
+            ))
 
 (defn- button
   [cls action text value & [disabled?]]
@@ -81,7 +82,7 @@
        [:span (text-format :t.cart/header (count items))]]
       [:table.rems-table.cart
        (apply concat
-              (for [group (sort-by (comp :wfid first) (vals (group-by :wfid items)))]
+              (for [group (sort-by (comp :wfid first) (vals (group-by #(select-values % [:wfid :formid]) items)))]
                 (group-view (sort-by get-catalogue-item-title group))))]]]))
 
 (defn guide []

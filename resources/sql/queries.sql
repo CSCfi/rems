@@ -1,5 +1,5 @@
 -- :name get-catalogue-items :? :*
-SELECT ci.id, ci.title, res.resid, ci.wfid
+SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid
 FROM catalogue_item ci
 LEFT OUTER JOIN resource res ON (ci.resid = res.id)
 WHERE 1=1
@@ -9,7 +9,7 @@ WHERE 1=1
 
 
 -- :name get-catalogue-item :? :1
-SELECT ci.id, ci.title, res.resid, ci.wfid
+SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid
 FROM catalogue_item ci
 LEFT OUTER JOIN resource res ON (ci.resid = res.id)
 WHERE ci.id = :id

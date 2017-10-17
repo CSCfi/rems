@@ -221,6 +221,7 @@
     {:id application-id
      :state "draft"
      :wfid (:wfid (first items))
+     :formid (:formid (first items))
      :catalogue-items items}))
 
 (defn- process-item
