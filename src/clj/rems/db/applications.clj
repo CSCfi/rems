@@ -218,6 +218,7 @@
   [application-id catalogue-item-ids]
   (let [items (get-catalogue-items catalogue-item-ids)]
     (assert (= 1 (count (distinct (mapv :wfid items)))))
+    (assert (= 1 (count (distinct (mapv :formid items)))))
     {:id application-id
      :state "draft"
      :wfid (:wfid (first items))
