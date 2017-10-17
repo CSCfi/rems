@@ -133,7 +133,8 @@
 (defn- form-fields [form]
   (let [application (:application form)
         state (:state application)
-        new-application? (nil? state)
+        new-application? (or (nil? (:id application))
+                             (neg? (:id application)))
         editable? (or new-application? (#{"draft" "returned" "withdrawn"} state))
         readonly? (not editable?)
         withdrawable? (= "applied" state)
