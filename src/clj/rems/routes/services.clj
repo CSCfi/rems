@@ -41,6 +41,7 @@
   {:id Long
    :title s/Str
    :wfid Long
+   :formid Long
    :resid s/Str
    (s/optional-key :langcode) s/Keyword
    :localizations (s/maybe {s/Any s/Any})
