@@ -82,8 +82,10 @@
        [:span (text-format :t.cart/header (count items))]]
       [:table.rems-table.cart
        (apply concat
-              (for [group (sort-by (comp :wfid first) (vals (group-by #(select-values % [:wfid :formid]) items)))]
-                (group-view (sort-by get-catalogue-item-title group))))]]]))
+              (let [key-fn #(select-values % [:wfid :formid])]
+                (for [group (sort-by (comp key-fn first)
+                                     (vals (group-by key-fn items)))]
+                  (group-view (sort-by get-catalogue-item-title group)))))]]]))
 
 (defn guide []
   (list
@@ -102,4 +104,6 @@
             (cart-list [{:title "Item title" :wfid 1} {:title "Another title" :wfid 2}]))
    (example "cart-list with three items of same workflow and two of different"
             (cart-list [{:title "First title" :wfid 2} {:title "Second title" :wfid 1} {:title "Third title" :wfid 1} {:title "Fourth title" :wfid 1} {:title "Fifth title" :wfid 3}]))
+   (example "cart-list with five items of same workflow but of two different forms"
+            (cart-list [{:title "First form" :wfid 1 :formid 1} {:title "Second form" :wfid 1 :formid 2} {:title "First form" :wfid 1 :formid 1} {:title "Second form" :wfid 1 :formid 2} {:title "First form" :wfid 1 :formid 1}]))
    ))
