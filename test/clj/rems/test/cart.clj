@@ -11,8 +11,8 @@
   (is (= text (hiccup-text (first (hiccup-find [:td] row))))))
 
 (deftest test-cart-list
-  (let [c (cart/cart-list [{:title "D" :wfid 2}
-                           {:title "C" :wfid 1}])
+  (let [c (cart/cart-list [{:title "D" :wfid 1 :formid 2}
+                           {:title "C" :wfid 1 :formid 1}])
         rows (hiccup-find [:tr] c)
         title (first (hiccup-find [:div.cart-title] c))]
     (is (= 2 (count rows)))
