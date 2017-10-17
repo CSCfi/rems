@@ -1,8 +1,13 @@
 (ns rems.util
   (:require [rems.context :as context]))
 
+(defn select-values
+  "Select values specified by give keys `ks`."
+  [m ks]
+  (remove nil? (reduce #(conj %1 (m %2)) [] ks)))
+
 (defn index-by
-  "Index the collection coll with given keys ks.
+  "Index the collection coll with given keys `ks`.
 
   Result is a map indexed by the first key
   that contains a map indexed by the second key."
