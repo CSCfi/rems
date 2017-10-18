@@ -167,7 +167,7 @@ WHERE 1=1
 
 -- :name get-application-items :? :*
 -- :doc
--- - Use {:application id} to get pass application
+-- - Use {:application id} to pass application
 SELECT
   catAppId AS application,
   catItemId AS item
