@@ -2,7 +2,9 @@
   (:require [rems.context :as context]))
 
 (defn select-values
-  "Select values specified by give keys `ks`."
+  "Select values in map `m` specified by given keys `ks`.
+
+  Values will be returned in the order specified by `ks`."
   [m ks]
   (vec (remove nil? (reduce #(conj %1 (m %2)) [] ks))))
 
