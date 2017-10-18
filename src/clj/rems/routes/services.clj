@@ -1,12 +1,12 @@
 (ns rems.routes.services
   (:require [compojure.api.sweet :refer :all]
+            [rems.context :as context]
             [rems.db.applications :refer [get-draft-form-for
                                           get-form-for
                                           make-draft-application]]
             [rems.form :as form]
             [ring.util.http-response :refer :all]
-            [schema.core :as s]
-            [rems.context :as context])
+            [schema.core :as s])
   (:import (org.joda.time DateTime)))
 
 (def License
