@@ -337,7 +337,7 @@
          form (db/get-form-for-item {:item item-id :lang (name context/*lang*)})
          form-id (:formid form)
          wfid (:wfid application)
-         catalogue-items (:catalogue-items application) #_(db/get-application-items {:application application-id})
+         catalogue-items (:catalogue-items application)
          items (mapv #(process-item application-id form-id %)
                      (db/get-form-items {:id form-id}))
          license-localizations (->> (db/get-license-localizations)

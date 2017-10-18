@@ -155,7 +155,6 @@ RETURNING catAppId, catItemId
 SELECT
   app.id, app.applicantUserId, app.start, wf.id as wfid, wf.fnlround
 FROM catalogue_item_application app
---LEFT OUTER JOIN catalogue_item cat ON app.catid = cat.id
 LEFT OUTER JOIN workflow wf ON app.wfid = wf.id
 WHERE 1=1
 /*~ (when (:id params) */
