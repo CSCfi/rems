@@ -140,7 +140,7 @@ VALUES
 (:user, :wfid)
 RETURNING id
 
--- :name add-catalogue-item! :insert
+-- :name add-application-item! :insert
 INSERT INTO catalogue_item_application_items
 (catAppId, catItemId)
 VALUES

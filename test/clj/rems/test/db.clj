@@ -73,7 +73,7 @@
           item-b (db/create-form-item!
                   {:title "B" :type "text" :inputprompt "prompt" :user uid :value 0})
           app-id (applications/create-new-draft (:id wf))]
-      (db/add-catalogue-item! {:application app-id :item (:id item)})
+      (db/add-application-item! {:application app-id :item (:id item)})
       (db/link-form-meta! {:meta (:id meta) :form (:id form-en) :lang "en" :user uid})
       (db/link-form-meta! {:meta (:id meta) :form (:id form-fi) :lang "fi" :user uid})
       (db/link-form-item! {:form (:id form-en) :itemorder 2 :item (:id item-b) :user uid :optional false})
@@ -188,7 +188,7 @@
           wf (:id (db/create-workflow! {:owneruserid uid :modifieruserid uid :title "" :fnlround 0}))
           item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
           app (applications/create-new-draft wf)]
-      (db/add-catalogue-item! {:application app :item item})
+      (db/add-application-item! {:application app :item item})
       (actors/add-approver! wf uid 0)
 
       (is (= [{:id app :state "draft"}]
@@ -214,7 +214,7 @@
             item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
             app (applications/create-new-draft wf)
             get-phases (fn [] (applications/get-application-phases (:state (applications/get-application-state app))))]
-        (db/add-catalogue-item! {:application app :item item})
+        (db/add-application-item! {:application app :item item})
         (actors/add-approver! wf "approver1" 0)
         (actors/add-approver! wf "approver2" 1)
 
@@ -256,7 +256,7 @@
             item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
             app (applications/create-new-draft wf)
             get-phases (fn [] (applications/get-application-phases (:state (applications/get-application-state app))))]
-        (db/add-catalogue-item! {:application app :item item})
+        (db/add-application-item! {:application app :item item})
         (actors/add-approver! wf "approver1" 0)
         (actors/add-approver! wf "approver2" 1)
 
@@ -289,7 +289,7 @@
             item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
             app (applications/create-new-draft wf)
             get-phases (fn [] (applications/get-application-phases (:state (applications/get-application-state app))))]
-        (db/add-catalogue-item! {:application app :item item})
+        (db/add-application-item! {:application app :item item})
         (actors/add-approver! wf "approver1" 0)
         (actors/add-approver! wf "approver2" 1)
 
@@ -345,10 +345,10 @@
           app3 (applications/create-new-draft wfid1) ; should not see draft
           app4 (applications/create-new-draft wfid2)] ; should not see approved
 
-      (db/add-catalogue-item! {:application app1 :item (:id item1)})
-      (db/add-catalogue-item! {:application app2 :item (:id item2)})
-      (db/add-catalogue-item! {:application app3 :item (:id item3)})
-      (db/add-catalogue-item! {:application app4 :item (:id item4)})
+      (db/add-application-item! {:application app1 :item (:id item1)})
+      (db/add-application-item! {:application app2 :item (:id item2)})
+      (db/add-application-item! {:application app3 :item (:id item3)})
+      (db/add-application-item! {:application app4 :item (:id item4)})
 
       (db/add-user! {:user uid :userattrs nil})
       (db/add-user! {:user uid2 :userattrs nil})
@@ -433,10 +433,10 @@
           app2 (applications/create-new-draft wfid2) ; should see as reviewer for round 1
           app3 (applications/create-new-draft wfid1) ; should not see draft
           app4 (applications/create-new-draft wfid2)]
-      (db/add-catalogue-item! {:application app1 :item item1})
-      (db/add-catalogue-item! {:application app2 :item item2})
-      (db/add-catalogue-item! {:application app3 :item item3})
-      (db/add-catalogue-item! {:application app4 :item item4})
+      (db/add-application-item! {:application app1 :item item1})
+      (db/add-application-item! {:application app2 :item item2})
+      (db/add-application-item! {:application app3 :item item3})
+      (db/add-application-item! {:application app4 :item item4})
       (db/add-user! {:user uid :userattrs nil})
       (db/add-user! {:user uid2 :userattrs nil})
 
@@ -543,7 +543,7 @@
 
       (testing "submitting, approving"
         (let [app (applications/create-new-draft wf)]
-          (db/add-catalogue-item! {:application app :item item})
+          (db/add-application-item! {:application app :item item})
 
           (is (= {:curround 0 :state "draft"} (fetch app)))
 
@@ -611,7 +611,7 @@
 
       (testing "rejecting"
         (let [app (applications/create-new-draft wf)]
-          (db/add-catalogue-item! {:application app :item item})
+          (db/add-application-item! {:application app :item item})
 
           (is (= {:curround 0 :state "draft"} (fetch app)))
           (applications/submit-application app)
@@ -621,7 +621,7 @@
 
       (testing "returning, resubmitting"
         (let [app (applications/create-new-draft wf)]
-          (db/add-catalogue-item! {:application app :item item})
+          (db/add-application-item! {:application app :item item})
 
           (applications/submit-application app)
 
@@ -643,7 +643,7 @@
         (let [rev-wf (:id (db/create-workflow! {:owneruserid uid :modifieruserid uid :title "Review workflow" :fnlround 1}))
               rev-item (:id (db/create-catalogue-item! {:title "Review item" :resid nil :wfid rev-wf :form nil}))
               rev-app (applications/create-new-draft rev-wf)]
-          (db/add-catalogue-item! {:application rev-app :item rev-item})
+          (db/add-application-item! {:application rev-app :item rev-item})
           (actors/add-reviewer! rev-wf "event-test-reviewer" 0)
           (actors/add-approver! rev-wf  uid  1)
           (is (= {:curround 0 :state "draft"} (fetch rev-app)))
@@ -675,16 +675,16 @@
 
       (testing "closing"
         (let [app (applications/create-new-draft wf)]
-          (db/add-catalogue-item! {:application app :item item})
+          (db/add-application-item! {:application app :item item})
           (applications/close-application app 0 "closing draft")
           (is (= {:curround 0 :state "closed"} (fetch app))))
         (let [app (applications/create-new-draft wf)]
-          (db/add-catalogue-item! {:application app :item item})
+          (db/add-application-item! {:application app :item item})
           (applications/submit-application app)
           (applications/close-application app 0 "closing applied")
           (is (= {:curround 0 :state "closed"} (fetch app))))
         (let [app (applications/create-new-draft wf)]
-          (db/add-catalogue-item! {:application app :item item})
+          (db/add-application-item! {:application app :item item})
           (applications/submit-application app)
           (applications/approve-application app 0 "c1")
           (binding [context/*user* {"eppn" "event-test-approver"}]
@@ -697,7 +697,7 @@
         (let [auto-wf (:id (db/create-workflow! {:modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 1}))
               auto-item (:id (db/create-catalogue-item! {:title "A" :form nil :resid 1995 :wfid auto-wf}))
               auto-app (applications/create-new-draft auto-wf)]
-          (db/add-catalogue-item! {:application auto-app :item auto-item})
+          (db/add-application-item! {:application auto-app :item auto-item})
           (is (= (fetch auto-app) {:curround 0 :state "draft"}))
           (applications/submit-application auto-app)
           (is (= (fetch auto-app) {:curround 1 :state "approved"}))
@@ -715,7 +715,7 @@
         (db/add-user! {:user "another-reviewer", :userattrs (generate-string {"eppn" "another-reviewer" "mail" ""})})
         (testing "3rd party review"
           (let [new-app (applications/create-new-draft new-wf)]
-            (db/add-catalogue-item! {:application new-app :item new-item})
+            (db/add-application-item! {:application new-app :item new-item})
             (applications/submit-application new-app)
             (is (= #{:applicant} (roles/get-roles "third-party-reviewer"))) ;; default role
             (is (= #{:applicant} (roles/get-roles "another-reviewer")))   ;; default role
@@ -752,10 +752,10 @@
                 app-to-approve (applications/create-new-draft new-wf)
                 app-to-reject (applications/create-new-draft new-wf)
                 app-to-return (applications/create-new-draft new-wf)]
-            (db/add-catalogue-item! {:application app-to-close :item new-item})
-            (db/add-catalogue-item! {:application app-to-approve :item new-item})
-            (db/add-catalogue-item! {:application app-to-reject :item new-item})
-            (db/add-catalogue-item! {:application app-to-return :item new-item})
+            (db/add-application-item! {:application app-to-close :item new-item})
+            (db/add-application-item! {:application app-to-approve :item new-item})
+            (db/add-application-item! {:application app-to-reject :item new-item})
+            (db/add-application-item! {:application app-to-return :item new-item})
             (applications/submit-application app-to-close)
             (applications/submit-application app-to-approve)
             (applications/submit-application app-to-reject)

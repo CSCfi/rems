@@ -250,7 +250,7 @@
 
 (defn save-catalogue-items [application-id catalogue-item-ids]
   (doseq [catalogue-item-id catalogue-item-ids]
-    (db/add-catalogue-item! {:application application-id :item catalogue-item-id})))
+    (db/add-application-item! {:application application-id :item catalogue-item-id})))
 
 (defn- save-fields
   [application-id input]

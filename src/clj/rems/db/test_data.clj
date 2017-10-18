@@ -136,7 +136,7 @@
 
 (defn- create-draft! [catid wfid field-value]
   (let [app-id (applications/create-new-draft wfid)
-        _ (db/add-catalogue-item! {:application app-id :item catid})
+        _ (db/add-application-item! {:application app-id :item catid})
         form (binding [context/*lang* :en]
                (applications/get-form-for app-id))]
     (doseq [{item-id :id} (:items form)]
