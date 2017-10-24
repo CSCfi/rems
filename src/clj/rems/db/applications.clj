@@ -647,12 +647,12 @@
       (throw-unauthorized))
     (db/add-application-event! {:application application-id :user (get-user-id)
                                 :round round :event event :comment msg})
-    (let [application (get-application-state application-id)
+    (let [new-state (:state (get-application-state application-id))
           user-attrs (users/get-user-attributes (:applicantuserid application))]
       (email/status-change-alert user-attrs
                                  application-id
                                  (get-catalogue-items-by-application-id application-id)
-                                 (:state application)))))
+                                 new-state))))
 
 (defn withdraw-application [application-id round msg]
   (let [application (get-application-state application-id)]
