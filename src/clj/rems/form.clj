@@ -15,6 +15,7 @@
                                           can-review?
                                           can-third-party-review?
                                           create-new-draft
+                                          draft?
                                           get-application-phases
                                           get-application-state
                                           get-draft-form-for
@@ -133,8 +134,7 @@
 (defn- form-fields [form]
   (let [application (:application form)
         state (:state application)
-        new-application? (or (nil? (:id application))
-                             (neg? (:id application)))
+        new-application? (draft? (:id application))
         editable? (or new-application? (#{"draft" "returned" "withdrawn"} state))
         readonly? (not editable?)
         withdrawable? (= "applied" state)
@@ -319,7 +319,7 @@
         application (make-draft-application -1 catalogue-items)
         items (if (= operation "send") (assoc items "submit" true) items)
         wfid (getx application :wfid)
-        application-id (if (and application-id (pos? application-id)) application-id (create-new-draft wfid))
+        application-id (if (draft? application-id) (create-new-draft wfid) application-id)
         application (assoc application :id application-id)
         {:keys [success? valid? validation]} (save-internal application items licenses)]
     (cond-> {:success success?
@@ -331,15 +331,15 @@
 
 (defn- form-save [{params :params input :form-params session :session}]
   (let [application-id (Long/parseLong (getx params :application))
-        application (if (pos? application-id)
-                      (get-application-state application-id)
-                      (getx-in session [:applications application-id]))
-        form (if (pos? application-id)
-               (get-form-for application-id)
-               (get-draft-form-for application))
-        db-application-id (if (pos? application-id)
-                            application-id
-                            (create-new-draft (getx application :wfid)))
+        application (if (draft? application-id)
+                      (getx-in session [:applications application-id])
+                      (get-application-state application-id))
+        form (if (draft? application-id)
+               (get-draft-form-for application)
+               (get-form-for application-id))
+        db-application-id (if (draft? application-id)
+                            (create-new-draft (getx application :wfid))
+                            application-id)
         application (assoc application :id db-application-id)]
     (let [{:keys [flash]} (save-internal application input input)
           new-session (-> session
@@ -360,9 +360,10 @@
 (defroutes form-routes
   (GET "/form/:application" [application :as req]
        (let [application-id (Long/parseLong application)]
-         (if (pos? application-id)
+         (if (draft? application-id)
+           (form-page (get-draft-form-for (get-in req [:session :applications application-id])))
            (form-page (get-form-for application-id))
-           (form-page (get-draft-form-for (get-in req [:session :applications application-id]))))))
+           )))
   (GET "/form" req
        (let [{session :session {:keys [catalogue-items]} :params} req
              catalogue-item-ids (map #(Long/parseLong %) (s/split catalogue-items #"[,]"))

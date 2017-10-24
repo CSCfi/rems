@@ -19,6 +19,12 @@
                                get-username
                                index-by]]))
 
+(defn draft?
+  "Is the given `application-id` for a draft application?"
+  [application-id]
+  (or (nil? application-id)
+      (neg? application-id)))
+
 ;; TODO cache application state in db instead of always computing it from events
 (declare get-application-state)
 
@@ -240,7 +246,7 @@
    :inputprompt (:inputprompt item)
    :optional (:formitemoptional item)
    :type (:type item)
-   :value (when (pos? application-id)
+   :value (when-not (draft? application-id)
             (:value
              (db/get-field-value {:item (:id item)
                                   :form form-id
