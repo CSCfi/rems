@@ -7,7 +7,7 @@
             [rems.form :as form]
             [rems.guide :refer :all]
             [rems.text :refer :all]
-            [rems.util :refer [select-values]]
+            [rems.util :refer [select-vals]]
             [ring.util.response :refer [redirect]]
             ))
 
@@ -82,7 +82,7 @@
        [:span (text-format :t.cart/header (count items))]]
       [:table.rems-table.cart
        (apply concat
-              (let [key-fn #(select-values % [:wfid :formid])]
+              (let [key-fn #(select-vals % [:wfid :formid])]
                 (for [group (sort-by (comp key-fn first)
                                      (vals (group-by key-fn items)))]
                   (group-view (sort-by get-catalogue-item-title group)))))]]]))

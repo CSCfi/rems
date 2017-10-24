@@ -1,12 +1,15 @@
 (ns rems.util
   (:require [rems.context :as context]))
 
-(defn select-values
+(defn select-vals
   "Select values in map `m` specified by given keys `ks`.
 
-  Values will be returned in the order specified by `ks`."
-  [m ks]
-  (vec (remove nil? (reduce #(conj %1 (m %2)) [] ks))))
+  Values will be returned in the order specified by `ks`.
+
+  You can specify a `default-value` that will be used if the
+  key is not found in the map. This is like `get` function."
+  [m ks & [default-value]]
+  (vec (reduce #(conj %1 (get m %2 default-value)) [] ks)))
 
 (defn index-by
   "Index the collection coll with given keys `ks`.
