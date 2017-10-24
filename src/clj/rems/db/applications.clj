@@ -315,7 +315,7 @@
                                     (map #(update-in % [:langcode] keyword))
                                     (index-by [:licid :langcode]))
          licenses (mapv #(process-license application license-localizations %)
-                        (db/get-application-licenses {:id application-id}))
+                        (db/get-licenses {:wfid (:wfid application) :items catalogue-item-ids}))
          applicant? (= (:applicantuserid application) (get-user-id))]
      (when application-id
        (when-not (may-see-application? application)
@@ -344,7 +344,7 @@
                                     (map #(update-in % [:langcode] keyword))
                                     (index-by [:licid :langcode]))
          licenses (mapv #(process-license application license-localizations %)
-                        (db/get-draft-licenses {:wfid wfid :items catalogue-item-ids}))]
+                        (db/get-licenses {:wfid wfid :items catalogue-item-ids}))]
      {:id form-id
       :title (:formtitle form)
       :catalogue-items catalogue-items
