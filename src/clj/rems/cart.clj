@@ -83,8 +83,7 @@
       [:table.rems-table.cart
        (let [key-fn #(select-vals % [:wfid :formid])]
          (apply concat
-                (for [group (sort-by (comp key-fn first)
-                                     (vals (group-by key-fn items)))]
+                (for [group (vals (into (sorted-map) (group-by key-fn items)))]
                   (group-view (sort-by get-catalogue-item-title group)))))]]]))
 
 (defn guide []
