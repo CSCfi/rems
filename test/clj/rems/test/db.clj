@@ -203,6 +203,40 @@
              (map #(select-keys % [:id :state])
                   (applications/get-applications)))))))
 
+(deftest test-multi-applications
+  (binding [context/*user* {"eppn" "test-user"}]
+    (db/add-user! {:user "test-user" :userattrs nil})
+    (let [uid (get-user-id)
+          wf (:id (db/create-workflow! {:owneruserid uid :modifieruserid uid :title "" :fnlround 0}))
+          _ (db/create-resource! {:id 111 :resid "resid111" :prefix "abc" :modifieruserid uid})
+          _ (db/create-resource! {:id 222 :resid "resid222" :prefix "abc" :modifieruserid uid})
+          item1 (:id (db/create-catalogue-item! {:title "item" :form nil :resid 111 :wfid wf}))
+          item2 (:id (db/create-catalogue-item! {:title "item" :form nil :resid 222 :wfid wf}))
+          app (applications/create-new-draft wf)]
+      ;; apply for two items at the same time
+      (db/add-application-item! {:application app :item item1})
+      (db/add-application-item! {:application app :item item2})
+      (actors/add-approver! wf uid 0)
+
+      (let [applications (applications/get-applications)]
+        (is (= [{:id app :state "draft"}]
+               (map #(select-keys % [:id :state]) applications)))
+        (is (= [item1 item2] (sort (map :id (:catalogue-items (first applications)))))
+            "includes both catalogue items"))
+
+      (applications/submit-application app)
+      (is (= [{:id app :state "applied"}]
+             (map #(select-keys % [:id :state])
+                  (applications/get-applications))))
+
+      (applications/approve-application app 0 "comment")
+      (is (= [{:id app :state "approved"}]
+             (map #(select-keys % [:id :state])
+                  (applications/get-applications))))
+
+      (is (= [111 222] (sort (map :resid (db/get-entitlements {:application app}))))
+          "should create entitlements for both resources"))))
+
 (deftest test-phases
   (binding [context/*user* {"eppn" "applicant"}]
     ;; TODO add review when reviewing is supported
