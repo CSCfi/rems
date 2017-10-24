@@ -248,7 +248,7 @@
    (for [m msgs]
      [:li m])])
 
-(defn save-catalogue-items [application-id catalogue-item-ids]
+(defn save-application-items [application-id catalogue-item-ids]
   (doseq [catalogue-item-id catalogue-item-ids]
     (db/add-application-item! {:application application-id :item catalogue-item-id})))
 
@@ -283,7 +283,7 @@
 (defn- save-internal [application items licenses]
   (let [application-id (:id application)
         item-ids (mapv :id (:catalogue-items application))]
-    (save-catalogue-items application-id item-ids)
+    (save-application-items application-id item-ids)
     (save-fields application-id items)
     (save-licenses application-id licenses)
     (let [submit? (get items "submit")
