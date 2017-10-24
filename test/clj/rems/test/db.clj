@@ -721,7 +721,7 @@
             (is (= #{:applicant} (roles/get-roles "another-reviewer")))   ;; default role
             (applications/send-review-request new-app 0 "review?" "third-party-reviewer")
             (is (= #{:reviewer} (roles/get-roles "third-party-reviewer")))
-                                        ;should not send twice to third-party-reviewer, but another-reviewer should still be added
+            ;; should not send twice to third-party-reviewer, but another-reviewer should still be added
             (applications/send-review-request new-app 0 "can you please review this?" ["third-party-reviewer" "another-reviewer"])
             (is (= #{:reviewer} (roles/get-roles "third-party-reviewer")))
             (is (= #{:reviewer} (roles/get-roles "another-reviewer")))
