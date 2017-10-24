@@ -1,4 +1,7 @@
 -- :name get-catalogue-items :? :*
+-- :doc
+-- - Get catalogue items
+-- - :items vector of item ids
 SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid
 FROM catalogue_item ci
 LEFT OUTER JOIN resource res ON (ci.resid = res.id)
@@ -309,7 +312,7 @@ WHERE textvalues.catAppId = :application
 -- :doc
 -- - Gets application licenses by workflow and catalogue item ids
 -- - :wfid workflow id for workflow licenses
--- - :items catalogue item ids for resource licenses
+-- - :items vector of catalogue item ids for resource licenses
 SELECT lic.id, lic.title, lic.type, lic.textcontent
 FROM license lic
 INNER JOIN workflow_licenses wl ON lic.id = wl.licid
