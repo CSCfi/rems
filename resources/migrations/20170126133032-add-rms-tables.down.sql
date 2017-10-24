@@ -32,6 +32,8 @@ DROP TABLE IF EXISTS catalogue_item_application_approvers CASCADE;
 --;;
 DROP TABLE IF EXISTS catalogue_item_application_items CASCADE;
 --;;
+DROP TABLE IF EXISTS catalogue_item_application_catid_overflow CASCADE;
+--;;
 DROP TABLE IF EXISTS catalogue_item_application_free_comment_values CASCADE;
 --;;
 DROP TABLE IF EXISTS catalogue_item_application_licenses CASCADE;
