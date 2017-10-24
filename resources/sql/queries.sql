@@ -188,7 +188,13 @@ LEFT OUTER JOIN catalogue_item cat ON ciai.catItemId = cat.id
 WHERE ciai.catAppId = :application
 
 -- :name get-entitlements :?
+-- :doc
+-- - Use {:application id} to optionally pass application
 SELECT resId, catAppId, userId FROM entitlement
+WHERE 1=1
+/*~ (when (:application params) */
+  AND catAppId = :application
+/*~ ) ~*/
 
 -- :name get-entitlements-for-export
 SELECT resId, catAppId, userId, start FROM entitlement
