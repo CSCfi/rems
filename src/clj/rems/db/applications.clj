@@ -499,11 +499,8 @@
                         db/get-applications
                         first
                         (assoc :state "draft" :curround 0) ;; reset state
-                        (assoc :events events))
-        result (apply-events
-                application
-                events)]
-    result))
+                        (assoc :events events))]
+    (apply-events application events)))
 
 (declare handle-state-change)
 
