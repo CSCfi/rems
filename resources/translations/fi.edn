@@ -48,8 +48,8 @@
             :approve "Hyväksy"
             :approve-success "Hakemus hyväksytty"
             :cancel "Peruuta"
-            :close "Sulje"
-            :close-success "Hakemus suljettu"
+            :close "Poista"
+            :close-success "Hakemus poistettu"
             :created "Luotu"
             :empty "Sinulla ei ole hakemuksia käsiteltäväksi."
             :export-entitlements "Lataa käyttöoikeudet csv-tiedostona"
@@ -74,8 +74,8 @@
             :show-throughput-times "Näytä läpimenoajat"
             :state "Tila"
             :view "Näytä"
-            :withdraw "Vedä takaisin"
-            :withdraw-success "Hakemus vedetty takaisin"}
+            :withdraw "Palauta muokattavaksi"
+            :withdraw-success "Hakemus palautettu muokattavaksi"}
   :applicant-info {:applicant "Hakija"}
   :applications {:application "Hakemus"
                  :created "Luotu"
@@ -83,7 +83,7 @@
                  :events {:apply "Lähetetty hyväksyttäväksi"
                           :approve "Hyväksytty"
                           :autoapprove "Automaattisesti hyväksytty"
-                          :close "Suljettu"
+                          :close "Poistettu"
                           :reject "Hylätty"
                           :return "Muutoksia pyydetty"
                           :review "Katselmoitu"
@@ -95,12 +95,12 @@
                  :state "Tila"
                  :states {:applied "Haettu"
                           :approved "Hyväksytty"
-                          :closed "Suljettu"
+                          :closed "Poistettu"
                           :draft "Luonnos"
                           :rejected "Hylätty"
                           :returned "Palautettu"
                           :unknown "Tuntematon"
-                          :withdrawn "Vedetty takaisin"}
+                          :withdrawn "Palautettu takaisin"}
                  :user "Käyttäjä"
                  :view "Näytä"}
   :cart {:add "Lisää koriin"
