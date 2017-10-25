@@ -40,7 +40,7 @@
   (str "([:t.email/" subject "-subject :t/missing])"))
 
 (defn- status-msg-to-check [username appid catid item-title status-key]
-  (str "([:t.email/status-changed-msg :t/missing] [\"" username "\" " appid " \"" item-title "\" \":t.applications.states/" status-key "\" \"localhost:3000/form/" catid "/" appid "\"])"))
+  (str "([:t.email/status-changed-msg :t/missing] [\"" username "\" " appid " \"" item-title "\" \":t.applications.states/" status-key "\" \"localhost:3000/form/" appid "\"])"))
 
 (deftest test-sending-email
   (with-redefs [catalogue/cached {:localizations (catalogue/load-catalogue-item-localizations!)}]
@@ -66,12 +66,18 @@
             item2 (:id (db/create-catalogue-item! {:title "item2" :form nil :resid nil :wfid wfid2}))
             item3 (:id (db/create-catalogue-item! {:title "item3" :form nil :resid nil :wfid wfid3}))
             item4 (:id (db/create-catalogue-item! {:title "item4" :form nil :resid nil :wfid wfid4}))
-            app1 (applications/create-new-draft item1)
-            app2 (applications/create-new-draft item2)
-            app3 (applications/create-new-draft item2)
-            app4 (applications/create-new-draft item2)
-            app5 (applications/create-new-draft item3)
-            app6 (applications/create-new-draft item4)]
+            app1 (applications/create-new-draft wfid1)
+            app2 (applications/create-new-draft wfid2)
+            app3 (applications/create-new-draft wfid2)
+            app4 (applications/create-new-draft wfid2)
+            app5 (applications/create-new-draft wfid3)
+            app6 (applications/create-new-draft wfid4)]
+        (db/add-application-item! {:application app1 :item item1})
+        (db/add-application-item! {:application app2 :item item2})
+        (db/add-application-item! {:application app3 :item item2})
+        (db/add-application-item! {:application app4 :item item2})
+        (db/add-application-item! {:application app5 :item item3})
+        (db/add-application-item! {:application app6 :item item4})
         (db/add-user! {:user uid :userattrs (generate-string {"eppn" "approver" "mail" "appr-invalid" "commonName" "App Rover"})})
         (db/add-user! {:user uid2 :userattrs (generate-string {"eppn" "reviewer" "mail" "rev-invalid" "commonName" "Rev Iwer"})})
         (db/add-user! {:user "test-user" :userattrs (generate-string context/*user*)})
@@ -83,12 +89,12 @@
             (conjure/verify-first-call-args-for email/send-mail
                                                 "invalid-addr"
                                                 (subject-to-check "application-sent")
-                                                (str "([:t.email/application-sent-msg :t/missing] [\"Test User\" \"item\" \"localhost:3000/form/" item1 "/" app1 "\"])"))
+                                                (str "([:t.email/application-sent-msg :t/missing] [\"Test User\" \"item\" \"localhost:3000/form/" app1 "\"])"))
             (conjure/verify-nth-call-args-for 2
                                               email/send-mail
                                               "rev-invalid"
                                               (subject-to-check "review-request")
-                                              (str "([:t.email/review-request-msg :t/missing] [\"Rev Iwer\" \"Test User\" " app1 " \"item\" \"localhost:3000/form/" item1 "/" app1 "\"])"))))
+                                              (str "([:t.email/review-request-msg :t/missing] [\"Rev Iwer\" \"Test User\" " app1 " \"item\" \"localhost:3000/form/" app1 "\"])"))))
         (testing "Approver gets notified after review round"
           (conjure/mocking [email/send-mail]
             (binding [context/*user* {"eppn" "reviewer"}]
@@ -97,7 +103,7 @@
               (conjure/verify-first-call-args-for email/send-mail
                                                   "appr-invalid"
                                                   (subject-to-check "approval-request")
-                                                  (str "([:t.email/approval-request-msg :t/missing] [\"App Rover\" \"Test User\" " app1 " \"item\" \"localhost:3000/form/" item1 "/" app1 "\"])")))))
+                                                  (str "([:t.email/approval-request-msg :t/missing] [\"App Rover\" \"Test User\" " app1 " \"item\" \"localhost:3000/form/" app1 "\"])")))))
         (testing "Applicant gets notified when application is approved"
           (conjure/mocking [email/send-mail]
             (binding [context/*user* {"eppn" "approver"}]
@@ -155,7 +161,7 @@
                                               email/send-mail
                                               "rev-invalid"
                                               (subject-to-check "review-request")
-                                              (str "([:t.email/review-request-msg :t/missing] [\"Rev Iwer\" \"Test User\" " app4 " \"item2\" \"localhost:3000/form/" item2 "/" app4 "\"])"))
+                                              (str "([:t.email/review-request-msg :t/missing] [\"Rev Iwer\" \"Test User\" " app4 " \"item2\" \"localhost:3000/form/" app4 "\"])"))
             (binding [context/*user* {"eppn" "reviewer"}]
               (applications/perform-third-party-review app4 0 ""))
             (conjure/verify-call-times-for email/send-mail 3)))

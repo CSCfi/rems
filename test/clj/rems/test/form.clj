@@ -76,9 +76,9 @@
                         :form-params params)))]
       (with-redefs
         [rems.db.applications/get-form-for
-         (fn [_ & [application]]
+         (fn [application]
            {:id 137
-            :application application
+            :application (get-in @world [:applications application])
             :state (get-in @world [:states application])
             :items [{:id 61
                      :title "A"
@@ -96,6 +96,11 @@
                         :title "KielipankkiTerms"
                         :textcontent "https://kitwiki.csc.fi/twiki/bin/view/FinCLARIN/KielipankkiTerms"
                         :approved (get-in @world [:approvals application 70])}]})
+
+         rems.db.applications/get-application-state
+         (fn [application]
+           {:id application :applicantuserid "alice" :start nil :wfid 1 :fnlround 0 :state (get-in @world [:states application])
+            :curround 0 :events ()})
 
          db/save-field-value!
          (fn [{application :application
@@ -122,7 +127,7 @@
            (swap! world update :submitted conj application-id))]
 
         (testing "first save"
-          (let [resp (run "/form/7/save" {"field61" "x"
+          (let [resp (run "/form/2/save" {"field61" "x"
                                           "field62" "y"
                                           "license70" "approved"})
                 flash (first (:flash resp))
@@ -135,7 +140,7 @@
                    @world))))
 
         (testing "second save, with missing optional field. shouldn't create new draft"
-          (let [resp (run "/form/7/save" {"field61" ""
+          (let [resp (run "/form/2/save" {"field61" ""
                                           "field62" "z"
                                           "license70" "approved"})
                 flash (first (:flash resp))
@@ -148,7 +153,7 @@
                    @world))))
 
         (testing "save with unchecked license"
-          (let [resp (run "/form/7/save" {"field61" "x"
+          (let [resp (run "/form/2/save" {"field61" "x"
                                           "field62" "y"})
                 [flash1 flash2] (:flash resp)
                 flash1-text (hiccup-text (:contents flash1))
@@ -164,9 +169,9 @@
                    @world))))
 
         (testing "save with missing mandatory field"
-          (let [resp (run "/form/7/2/save" {"field61" "w"
-                                            "field62" ""
-                                            "license70" "approved"})
+          (let [resp (run "/form/2/save" {"field61" "w"
+                                          "field62" ""
+                                          "license70" "approved"})
                 [flash1 flash2] (:flash resp)
                 flash1-text (hiccup-text (:contents flash1))
                 flash2-text (hiccup-text (:contents flash2))]
@@ -180,10 +185,10 @@
                    @world))))
 
         (testing "submit with missing mandatory field"
-          (let [resp (run "/form/7/2/save" {"field61" "u"
-                                            "field62" ""
-                                            "license70" "approved"
-                                            "submit" "true"})
+          (let [resp (run "/form/2/save" {"field61" "u"
+                                          "field62" ""
+                                          "license70" "approved"
+                                          "submit" "true"})
                 [flash1 flash2] (:flash resp)
                 flash1-text (hiccup-text (:contents flash1))
                 flash2-text (hiccup-text (:contents flash2))]
@@ -198,9 +203,9 @@
                    @world))))
 
         (testing "submit with unchecked license"
-          (let [resp (run "/form/7/2/save" {"field61" ""
-                                            "field62" "v"
-                                            "submit" "true"})
+          (let [resp (run "/form/2/save" {"field61" ""
+                                          "field62" "v"
+                                          "submit" "true"})
                 [flash1 flash2] (:flash resp)
                 flash1-text (hiccup-text (:contents flash1))
                 flash2-text (hiccup-text (:contents flash2))]
@@ -215,10 +220,10 @@
                    @world))))
 
         (testing "successful submit"
-          (let [resp (run "/form/7/2/save" {"field61" ""
-                                            "field62" "v"
-                                            "license70" "approved"
-                                            "submit" "true"})
+          (let [resp (run "/form/2/save" {"field61" ""
+                                          "field62" "v"
+                                          "license70" "approved"
+                                          "submit" "true"})
                 flash (first (:flash resp))
                 flash-text (hiccup-text (:contents flash))]
             (testing flash
@@ -256,7 +261,7 @@
             (is (submit-button body))))
         (doseq [state ["applied" "approved" "rejected"]]
           (testing state
-            (let [body (form (assoc data :application {:state state}))]
+            (let [body (form (assoc data :application {:id 1 :state state}))]
               (is (= [true true true] (map readonly? (all-inputs body))))
               (is (nil? (submit-button body))))))
         (testing "sees events"
@@ -274,7 +279,6 @@
 (deftest test-form-actions
   (with-fake-tempura
     (let [draft-data {:application {:id 2
-                                    :catid 2
                                     :applicantuserid "developer"
                                     :state "draft"
                                     :curround 0
@@ -282,7 +286,6 @@
                                     :wfid 2
                                     :events []}}
           applied-data {:application {:id 2
-                                      :catid 2
                                       :applicantuserid "developer"
                                       :start nil
                                       :wfid 2
@@ -301,7 +304,6 @@
                                         :comment nil
                                         :time nil}]}}
           approved-data {:application {:id 2
-                                       :catid 2
                                        :applicantuserid "developer"
                                        :start nil
                                        :wfid 2

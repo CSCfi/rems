@@ -1,5 +1,6 @@
 (ns rems.email
-  (:require [postal.core :as postal]
+  (:require [clojure.string :as string]
+            [postal.core :as postal]
             [rems.config :refer [env]]
             [rems.context :as context]
             [rems.text :refer :all]
@@ -16,43 +17,46 @@
                             :subject subject
                             :body msg}))))
 
-(defn- form-link [item-id app-id]
-  (str context/*root-path* "/form/" item-id "/" app-id))
+(defn- form-link [app-id]
+  (str context/*root-path* "/form/" app-id))
 
-(defn confirm-application-creation [item-title item-id app-id]
+(defn- format-items [items]
+  (string/join "," (map :title items)))
+
+(defn confirm-application-creation [app-id items]
   (send-mail (get-user-mail)
              (text :t.email/application-sent-subject)
              (text-format :t.email/application-sent-msg
                           (get-username)
-                          item-title
-                          (form-link item-id app-id))))
+                          (format-items items)
+                          (form-link app-id))))
 
-(defn status-change-alert [recipient-attrs app-id item-title state item-id]
+(defn status-change-alert [recipient-attrs app-id items state]
   (send-mail (get-user-mail recipient-attrs)
              (text :t.email/status-changed-subject)
              (text-format :t.email/status-changed-msg
                           (get-username recipient-attrs)
                           app-id
-                          item-title
-                          (clojure.string/lower-case (localize-state state))
-                          (form-link item-id app-id))))
+                          (format-items items)
+                          (string/lower-case (localize-state state))
+                          (form-link app-id))))
 
 ;; TODO: send message localized according to recipient's preferences, when those are stored
-(defn- send-request [subject msg recipient-attrs applicant-name app-id item-title item-id]
+(defn- send-request [subject msg recipient-attrs applicant-name app-id items]
   (send-mail (get-user-mail recipient-attrs)
              (text subject)
              (text-format msg
                           (get-username recipient-attrs)
                           applicant-name
                           app-id
-                          item-title
-                          (form-link item-id app-id))))
+                          (format-items items)
+                          (form-link app-id))))
 
-(defn approval-request [recipient-attrs applicant-name app-id item-title item-id]
-  (send-request :t.email/approval-request-subject :t.email/approval-request-msg recipient-attrs applicant-name app-id item-title item-id))
+(defn approval-request [recipient-attrs applicant-name app-id items]
+  (send-request :t.email/approval-request-subject :t.email/approval-request-msg recipient-attrs applicant-name app-id items))
 
-(defn review-request [recipient-attrs applicant-name app-id item-title item-id]
-  (send-request :t.email/review-request-subject :t.email/review-request-msg recipient-attrs applicant-name app-id item-title item-id))
+(defn review-request [recipient-attrs applicant-name app-id items]
+  (send-request :t.email/review-request-subject :t.email/review-request-msg recipient-attrs applicant-name app-id items))
 
 (defn action-not-needed [recipient-attrs applicant-name app-id]
   (send-mail (get-user-mail recipient-attrs)

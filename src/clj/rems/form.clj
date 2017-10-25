@@ -1,5 +1,11 @@
 (ns rems.form
-  (:require [compojure.core :refer [GET POST defroutes]]
+  (:require [clj-time.core :as time]
+            [clj-time.format :as format]
+            [clojure.string :as s]
+            [clojure.set :refer [difference]]
+            [compojure.core :refer [GET POST defroutes]]
+            [hiccup.util :refer [url]]
+            [rems.actions :as actions]
             [rems.anti-forgery :refer [anti-forgery-field]]
             [rems.applicant-info :as applicant-info]
             [rems.collapsible :as collapsible]
@@ -9,10 +15,12 @@
                                           can-review?
                                           can-third-party-review?
                                           create-new-draft
+                                          draft?
                                           get-application-phases
                                           get-application-state
-                                          get-draft-id-for
+                                          get-draft-form-for
                                           get-form-for
+                                          make-draft-application
                                           is-applicant?
                                           submit-application]]
             [rems.db.core :as db]
@@ -22,7 +30,7 @@
             [rems.phase :refer [phases]]
             [rems.roles :refer [when-role]]
             [rems.text :refer :all]
-            [rems.util :refer [get-user-id]]
+            [rems.util :refer [get-user-id getx getx-in]]
             [ring.util.response :refer [redirect]]))
 
 ;; TODO remove id-to-name when no more forms submitted by SPA
@@ -124,44 +132,54 @@
 
 
 (defn- form-fields [form]
-  (let [state (:state (:application form))
-        new-application? (nil? state)
+  (let [application (:application form)
+        state (:state application)
+        new-application? (draft? (:id application))
         editable? (or new-application? (#{"draft" "returned" "withdrawn"} state))
         readonly? (not editable?)
         withdrawable? (= "applied" state)
         closeable? (and
                     (not new-application?)
                     (not= "closed" state))]
-    (collapsible/component
-     "form"
-     true
-     (:title form)
-     (list
-      (events/approval-confirm-modal "close" (text :t.actions/close) (:application form))
-      (events/approval-confirm-modal "withdraw" (text :t.actions/withdraw) (:application form))
-      [:form {:method "post"
-              :action (if-let [app (:id (:application form))]
-                        (str "/form/" (:catalogue-item form) "/" app "/save")
-                        (str "/form/" (:catalogue-item form) "/save"))}
-       (for [i (:items form)]
-         (field (assoc i :readonly readonly?)))
-       (when-let [licenses (not-empty (:licenses form))]
-         [:div.form-group
-          [:h4 (text :t.form/licenses)]
-          (for [l licenses]
-            (field (assoc l :readonly readonly?)))])
-       (anti-forgery-field)
-       (when (or new-application?
-                 (is-applicant? (:application form)))
-         [:div.row
-          [:div.col
-           [:a#back.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
-          (into [:div.col.commands]
-                [(when closeable? [:button#close.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
-                                   (text :t.actions/close)])
-                 (when editable? [:button#save.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)])
-                 (when editable? [:button#submit.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)])
-                 (when withdrawable? [:button#withdraw.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#withdraw-modal"} (text :t.actions/withdraw)])])])]))))
+    (collapsible/component "form"
+                           true
+                           (text :t.form/application)
+                           (list
+                            (events/approval-confirm-modal "close" (text :t.actions/close) application)
+                            (events/approval-confirm-modal "withdraw" (text :t.actions/withdraw) application)
+                            [:form {:method "post"
+                                    :action (let [app (:id application)]
+                                              (str "/form/" app "/save"))}
+                             (for [i (:items form)]
+                               (field (assoc i :readonly readonly?)))
+                             (when-let [licenses (not-empty (:licenses form))]
+                               [:div.form-group
+                                [:h4 (text :t.form/licenses)]
+                                (for [l licenses]
+                                  (field (assoc l :readonly readonly?)))])
+                             (anti-forgery-field)
+                             (when (or new-application?
+                                       (is-applicant? (:application form)))
+                               [:div.row
+                                [:div.col
+                                 [:a#back.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
+                                (into [:div.col.commands]
+                                      [(when closeable? [:button#close.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
+                                                         (text :t.actions/close)])
+                                       (when editable? [:button#save.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)])
+                                       (when editable? [:button#submit.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)])
+                                       (when withdrawable? [:button#withdraw.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#withdraw-modal"} (text :t.actions/withdraw)])
+                                       ])])
+                             ]))))
+
+(defn- applied-resources [catalogue-items]
+  (collapsible/component "resources"
+                         true
+                         (text :t.form/resources)
+                         [:div.form-items.form-group
+                          [:ul
+                           (for [item catalogue-items]
+                             [:li (:title item)])]]))
 
 
 (defn- form [form]
@@ -178,6 +196,8 @@
 
      (applicant-info/details "applicant-info" user-attributes)
 
+     [:div.mt-3 (applied-resources (:catalogue-items form))]
+
      [:div.my-3 (form-fields form)]
 
      ;; TODO resource owner should be able to close
@@ -187,8 +207,7 @@
          (events/approve-form (:application form))
          [:div.row
           [:div.col.commands
-           (events/back-to-actions-button)]])
-       )
+           (events/back-to-actions-button)]]))
      (when-role :reviewer
        (if (and actionable? (or (can-review? (:id (:application form)))
                                 (can-third-party-review? (:id (:application form)))))
@@ -198,8 +217,8 @@
            (events/back-to-actions-button)]])
        ))))
 
-(defn link-to-item [item]
-  (str "/form/" (:id item)))
+(defn link-to-application [items]
+  (url "/form" {:catalogue-items (s/join "," (mapv :id items))}))
 
 (defn- validate-item
   [item]
@@ -213,12 +232,12 @@
     (text-format :t.form.validation/required (:title license))))
 
 (defn- validate
-  "Validates a filled in form from (get-form-for resource application).
+  "Validates a filled in form from (get-form-for application).
 
    Returns either :valid or a sequence of validation errors."
   [form]
-  (let [messages (vec (concat (filterv identity (map validate-item (:items form)))
-                              (filterv identity (map validate-license (:licenses form)))))]
+  (let [messages (vec (concat (filterv identity (mapv validate-item (sort-by :id (:items form))))
+                              (filterv identity (mapv validate-license (sort-by :id (:licenses form))))))]
     (if (empty? messages)
       :valid
       messages)))
@@ -229,9 +248,13 @@
    (for [m msgs]
      [:li m])])
 
+(defn save-application-items [application-id catalogue-item-ids]
+  (doseq [catalogue-item-id catalogue-item-ids]
+    (db/add-application-item! {:application application-id :item catalogue-item-id})))
+
 (defn- save-fields
-  [resource-id application-id input]
-  (let [form (get-form-for resource-id)]
+  [application-id input]
+  (let [form (get-form-for application-id)]
     (doseq [{item-id :id :as item} (:items form)]
       (when-let [value (get input item-id (get input (id-to-name item-id)))]
         (db/save-field-value! {:application application-id
@@ -241,9 +264,9 @@
                                :value value})))))
 
 (defn save-licenses
-  [resource-id application-id input]
-  (let [form (get-form-for resource-id)]
-    (doseq [{licid :id :as license} (:licenses form)]
+  [application-id input]
+  (let [form (get-form-for application-id)]
+    (doseq [{licid :id :as license} (sort-by :id (:licenses form))]
       (if-let [state (get input licid (get input (str "license" licid)))]
         (db/save-license-approval! {:catappid application-id
                                     :round 0
@@ -254,72 +277,101 @@
                                       :licid licid
                                       :actoruserid (get-user-id)})))))
 
-(defn- redirect-to-application [resource-id application-id]
-  (redirect (str "/form/" resource-id "/" application-id) :see-other))
+(defn- redirect-to-application [application-id]
+  (redirect (str "/form/" application-id) :see-other))
 
-(defn form-save [resource-id form]
-  (let [{:keys [application-id items licenses operation]} form
-        application-id (or application-id (create-new-draft resource-id))]
-    (save-fields resource-id application-id items)
-    (save-licenses resource-id application-id licenses)
-    (let [submit? (= operation "send")
-          validation (validate (get-form-for resource-id application-id))
+(defn- save-internal [application items licenses]
+  (let [application-id (:id application)
+        item-ids (mapv :id (:catalogue-items application))]
+    (save-application-items application-id item-ids)
+    (save-fields application-id items)
+    (save-licenses application-id licenses)
+    (let [submit? (get items "submit")
+          form (get-form-for application-id)
+          validation (validate form)
           valid? (= :valid validation)
           perform-submit? (and submit? valid?)
-          success? (or (not submit?) perform-submit?)]
-      (when perform-submit?
-        (submit-application application-id))
-      (cond-> {:success success?
-               :valid valid?}
-        (not valid?) (assoc :validation validation)
-        success? (assoc :id application-id
-                        :state (:state (get-application-state application-id))))
-      )))
-
-(defn- save [{params :params input :form-params session :session}]
-  (let [resource-id (Long/parseLong (get params :id))
-        application-id (if-let [s (get params :application)]
-                         (Long/parseLong s)
-                         (create-new-draft resource-id))]
-    (save-fields resource-id application-id input)
-    (save-licenses resource-id application-id input)
-    (let [submit (get input "submit")
-          validation (validate (get-form-for resource-id application-id))
-          valid (= :valid validation)
-          perform-submit (and submit valid)
+          success? (or (not submit?) perform-submit?)
           flash (cond
-                  perform-submit ;; valid submit
+                  perform-submit? ;; valid submit
                   [{:status :success :contents (text :t.form/submitted)}]
-                  submit ;; invalid submit
+                  submit? ;; invalid submit
                   [{:status :warning :contents (text :t.form/saved)}
                    {:status :warning :contents (format-validation-messages validation)}]
-                  valid ;; valid draft
+                  valid? ;; valid draft
                   [{:status :success :contents (text :t.form/saved)}]
                   :else ;; invalid draft
                   [{:status :success :contents (text :t.form/saved)}
                    {:status :info :contents (format-validation-messages validation)}])]
-      (when perform-submit
+      (when perform-submit?
         (submit-application application-id))
-      (->
-       (redirect-to-application resource-id application-id)
-       (assoc :flash flash)
-       (assoc :session (update session :cart disj resource-id))))))
+      {:submit? submit?
+       :form form
+       :validation validation
+       :valid? valid?
+       :perform-submit? perform-submit?
+       :success? success?
+       :flash flash}
+      )))
 
-(defn- form-page [id application]
+(defn api-save [request]
+  (let [{:keys [application-id items licenses operation catalogue-items]} request
+        application (make-draft-application -1 catalogue-items)
+        items (if (= operation "send") (assoc items "submit" true) items)
+        wfid (getx application :wfid)
+        application-id (if (draft? application-id) (create-new-draft wfid) application-id)
+        application (assoc application :id application-id)
+        {:keys [success? valid? validation]} (save-internal application items licenses)]
+    (cond-> {:success success?
+             :valid valid?}
+      (not valid?) (assoc :validation validation)
+      success? (assoc :id application-id
+                      :state (:state (get-application-state application-id))))
+    ))
+
+(defn- form-save [{params :params input :form-params session :session}]
+  (let [application-id (Long/parseLong (getx params :application))
+        application (if (draft? application-id)
+                      (getx-in session [:applications application-id])
+                      (get-application-state application-id))
+        form (if (draft? application-id)
+               (get-draft-form-for application)
+               (get-form-for application-id))
+        db-application-id (if (draft? application-id)
+                            (create-new-draft (getx application :wfid))
+                            application-id)
+        application (assoc application :id db-application-id)]
+    (let [{:keys [flash]} (save-internal application input input)
+          new-session (-> session
+                          (update :applications dissoc application-id) ; remove temporary application
+                          (update :cart difference (set (mapv :id (:catalogue-items application)))) ; remove applied items from cart
+                          )]
+      (->
+       (redirect-to-application db-application-id)
+       (assoc :flash flash)
+       (assoc :session new-session)
+       ))))
+
+(defn- form-page [application]
   (layout/render
    "form"
-   (form (get-form-for id application))))
+   (form application)))
 
 (defroutes form-routes
-  (GET "/form/:id/:application" [id application]
-       (form-page (Long/parseLong id) (Long/parseLong application)))
-  (GET "/form/:id" [id]
-       (let [resource-id (Long/parseLong id)]
-         (if-let [app (get-draft-id-for resource-id)]
-           (redirect-to-application id app)
-           (form-page resource-id nil))))
-  (POST "/form/:id/save" req (save req))
-  (POST "/form/:id/:application/save" req (save req)))
+  (GET "/form/:application" [application :as req]
+       (let [application-id (Long/parseLong application)]
+         (if (draft? application-id)
+           (form-page (get-draft-form-for (get-in req [:session :applications application-id])))
+           (form-page (get-form-for application-id))
+           )))
+  (GET "/form" req
+       (let [{session :session {:keys [catalogue-items]} :params} req
+             catalogue-item-ids (map #(Long/parseLong %) (s/split catalogue-items #"[,]"))
+             new-app-id (dec (apply min (keys (merge (:applications session) {0 nil}))))
+             draft (make-draft-application new-app-id catalogue-item-ids)]
+         (-> (redirect-to-application new-app-id)
+             (assoc :session (assoc-in session [:applications new-app-id] draft)))))
+  (POST "/form/:application/save" req (form-save req)))
 
 (def ^:private lipsum
   (str "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod "
@@ -358,6 +410,7 @@
    (example "form, partially filled"
             (form {:title "Form title"
                    :application {:id 17 :state "draft"}
+                   :catalogue-items [{:title "An applied item"}]
                    :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
                            {:type "label" :title "Please input your wishes below."}
                            {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2"}
@@ -369,6 +422,7 @@
    (example "form, applied"
             (form {:title "Form title"
                    :application {:id 17 :state "applied"}
+                   :catalogue-items [{:title "An applied item"}]
                    :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
                            {:type "label" :title "Please input your wishes below."}
                            {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2" :value "def"}
@@ -381,6 +435,7 @@
 
    (example "form, approved"
             (form {:title "Form title"
+                   :catalogue-items [{:title "An applied item"}]
                    :application {:id 17 :state "approved" :events [{:comment "Looking good, approved!"}]}
                    :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
                            {:type "label" :title "Please input your wishes below."}

@@ -1,0 +1,12 @@
+(ns rems.test.util
+  (:require [rems.util :refer :all]
+            [clojure.test :refer :all]))
+
+(deftest select-vals-test
+  (is (= [] (select-vals nil nil)))
+  (is (= [] (select-vals {:a 1 :b 2} nil)))
+  (is (= [nil nil] (select-vals nil [:a :b])))
+  (is (= [:happy :path] (select-vals {:a :happy :b :path} [:a :b])))
+  (testing "with default-value"
+    (is [1 :nope 2 :nope 3]
+        (= (select-vals {:e 3 :b 2 :c 3 :a 1} [:a :e :b :d :e] :nope)))))

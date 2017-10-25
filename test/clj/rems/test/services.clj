@@ -39,11 +39,12 @@
 (deftest service-application-test
   (let [api-key "42"
         user-id "alice"
-        resource-id 2]
+        catid 2]
     (testing "saving"
-      (let [response (-> (request :put (str "/api/application/" resource-id))
+      (let [response (-> (request :put (str "/api/application"))
                          (authenticate api-key user-id)
                          (json {:operation "save"
+                                :catalogue-items [catid]
                                 :items {2 "REST-Test"}})
                          app)
             cmd-response (read-body response)
@@ -57,7 +58,7 @@
                 "Field \"General Terms of Use\" is required."]
                (:validation cmd-response)))
         (testing "retrieving"
-          (let [response (-> (request :get (str "/api/application/" resource-id "/" application-id))
+          (let [response (-> (request :get (str "/api/application/" application-id))
                              (authenticate api-key user-id)
                              app)
                 application (read-body response)]
@@ -68,10 +69,11 @@
             (is (= 3 (count (:items application))))
             ))
         (testing "sending"
-          (let [response (-> (request :put (str "/api/application/" resource-id))
+          (let [response (-> (request :put (str "/api/application"))
                              (authenticate api-key user-id)
                              (json {:operation "send"
                                     :application-id application-id
+                                    :catalogue-items [catid]
                                     :items {2 "REST-Test"
                                             5 "2017-2018"
                                             4 "The purpose is to test this REST service.}"}

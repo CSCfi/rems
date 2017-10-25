@@ -1,7 +1,9 @@
 (ns rems.routes.services
   (:require [compojure.api.sweet :refer :all]
-            [rems.db.applications :refer [get-draft-id-for
-                                          get-form-for]]
+            [rems.context :as context]
+            [rems.db.applications :refer [get-draft-form-for
+                                          get-form-for
+                                          make-draft-application]]
             [rems.form :as form]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
@@ -28,7 +30,6 @@
 (def Application
   {:id Long
    :state s/Str
-   :catid Long
    :applicantuserid s/Str
    :start DateTime
    :wfid Long
@@ -36,9 +37,19 @@
    :fnlround Long
    :events [Event]})
 
+(def CatalogueItem
+  {:id Long
+   :title s/Str
+   :wfid Long
+   :formid Long
+   :resid s/Str
+   (s/optional-key :langcode) s/Keyword
+   :localizations (s/maybe {s/Any s/Any})
+   })
+
 (def GetApplicationResponse
   {:id Long
-   :catalogue-item Long
+   :catalogue-items [CatalogueItem]
    :applicant-attributes (s/maybe {s/Str s/Str})
    :application Application
    :licenses [License]
@@ -50,6 +61,7 @@
 (def SaveApplicationRequest
   {:operation s/Str
    (s/optional-key :application-id) Long
+   (s/optional-key :catalogue-items) [Long]
    :items {s/Keyword s/Str}  ;; NOTE: compojure-api only supports keywords here
    (s/optional-key :licenses) {s/Keyword s/Str}  ;; NOTE: compojure-api only supports keywords here
    })
@@ -80,23 +92,24 @@
   (context "/api" []
            :tags ["application"]
 
-           (GET "/application/:resource-id" []
-                :summary     "Get application draft by resource-id"
-                :path-params [resource-id :- Long]
+           (GET "/application/" []
+                :summary     "Get application draft by `catalogue-items`"
+                :query-params [catalogue-items :- Long]
                 :return      GetApplicationResponse
-                (let [app (get-draft-id-for resource-id)]
-                  (ok (get-form-for resource-id app))))
+                (let [app (make-draft-application -1 catalogue-items)
+                      wfid (:wfid app)]
+                  (ok (get-draft-form-for app))))
 
-           (GET "/application/:resource-id/:application-id" []
-                :summary     "Get application by resource-id and application-id"
-                :path-params [resource-id :- Long, application-id :- Long]
+           (GET "/application/:application-id" []
+                :summary     "Get application by `application-id`"
+                :path-params [application-id :- Long]
                 :return      GetApplicationResponse
-                (ok (get-form-for resource-id application-id)))
+                (binding [context/*lang* :en]
+                  (ok (get-form-for application-id))))
 
-           (PUT "/application/:resource-id" []
-                :summary     "Put application by resource-id"
-                :path-params [resource-id :- Long]
+           (PUT "/application" []
+                :summary     "Create a new application or change an existing one"
                 :body        [request SaveApplicationRequest]
                 :return      SaveApplicationResponse
-                (ok (form/form-save resource-id (fix-keys request))))
+                (ok (form/api-save (fix-keys request))))
            ))

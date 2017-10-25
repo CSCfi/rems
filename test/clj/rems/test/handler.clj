@@ -203,8 +203,9 @@
         (follow-redirect)
         (dispatch (request :post "/cart/add" {"id" "1"}))
         (follow-redirect)
-        (dispatch (request :get "/form/1"))
-        (dispatch (request :post "/form/1/save" {"field2" "jack field2"}))
+        (dispatch (request :get "/form?catalogue-items=1"))
+        (follow-redirect)
+        (dispatch (request :post "/form/-1/save" {"field2" "jack field2"}))
         (follow-redirect))
     (testing "and jill goes to view applications"
       (let [application (:id (first (db/get-applications {:applicant "jack"})))
@@ -214,14 +215,15 @@
                     (dispatch (request :get "/applications")))]
         (is (empty? (hiccup-find [:.application] (ctx->html ctx))) "jill shouldn't see jack's application")
         (testing "jill tries to open jack's application"
-          (let [url (format "/form/1/%s" application)
+          (let [url (format "/form/%s" application)
                 ctx (dispatch ctx (request :get url))]
             (is (= 403 (:status ctx)) "jill shouldn't be authorized")))
         (testing "jill should still be able to make her own application"
-          (let [ctx (dispatch ctx (request :get "/form/1"))]
+          (let [ctx (dispatch ctx (request :get "/form?catalogue-items=1"))
+                ctx (follow-redirect ctx)]
             (is (= 200 (:status ctx)))))
         (testing "jill tries to write to jack's application"
-          (let [url (format "/form/1/%s/save" application)
+          (let [url (format "/form/%s/save" application)
                 ctx (dispatch ctx (request :post url {"field2" "jill field2"}))]
             (is (= 403 (:status ctx)) "jill shouldn't be authorized")))))))
 

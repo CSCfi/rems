@@ -7,7 +7,9 @@
             [rems.form :as form]
             [rems.guide :refer :all]
             [rems.text :refer :all]
-            [ring.util.response :refer [redirect]]))
+            [rems.util :refer [select-vals]]
+            [ring.util.response :refer [redirect]]
+            ))
 
 (defn- button
   [cls action text value & [disabled?]]
@@ -55,15 +57,21 @@
   (POST "/cart/add" session (handler conj session))
   (POST "/cart/remove" session (handler disj session)))
 
-(defn- apply-button [item]
-  [:a.btn.btn-primary {:href (form/link-to-item item)} (text :t.cart/apply)])
+(defn- apply-button [items]
+  [:a.btn.btn-primary {:href (form/link-to-application items)} (text :t.cart/apply)])
 
-(defn- cart-item [item]
-  [:tr
-   [:td {:data-th ""} (get-catalogue-item-title item)]
-   [:td.commands {:data-th ""}
-    (apply-button item)
-    (remove-from-cart-button item)]])
+(defn- item-view [item & [apply-button?]]
+  [:tr.cart-item {:class (if apply-button? "separator" "")}
+   [:td.title (get-catalogue-item-title item)]
+   [:td.commands
+    (remove-from-cart-button item)
+    (when apply-button? (apply-button [item]))]])
+
+(defn- group-view [items]
+  (if (= 1 (count items))
+    (list (item-view (first items) true))
+    (concat (map item-view items)
+            [[:tr.separator [:td.commands.text-right {:colspan 2} (text-format :t.cart/apply-for-bundle (count items)) [:span.mr-3] (apply-button items)]]])))
 
 (defn cart-list [items]
   (when-not (empty? items)
@@ -73,15 +81,28 @@
        [:i.fa.fa-shopping-cart]
        [:span (text-format :t.cart/header (count items))]]
       [:table.rems-table.cart
-       (for [item (sort-by get-catalogue-item-title items)]
-         (cart-item item))]]]))
+       (let [key-fn #(select-vals % [:wfid :formid])]
+         (apply concat
+                (for [group (vals (into (sorted-map) (group-by key-fn items)))]
+                  (group-view (sort-by get-catalogue-item-title group)))))]]]))
 
 (defn guide []
   (list
-   (example "cart-item"
+   (example "item-view, single"
             [:table.rems-table.cart
-             (cart-item {:title "Item title"})])
+             (item-view {:title "Item title"} true)])
+   (example "item-view, one of many has no apply button"
+            [:table.rems-table.cart
+             (item-view {:title "Item title"})])
+   (example "group-view"
+            [:table.rems-table.cart
+             (group-view [{:title "Item title"}])])
    (example "cart-list empty"
             (cart-list []))
-   (example "cart-list with two items"
-            (cart-list [{:title "Item title"} {:title "Another title"}]))))
+   (example "cart-list with two items of different workflow"
+            (cart-list [{:title "Item title" :wfid 1} {:title "Another title" :wfid 2}]))
+   (example "cart-list with three items of same workflow and two of different"
+            (cart-list [{:title "First title" :wfid 2} {:title "Second title" :wfid 1} {:title "Third title" :wfid 1} {:title "Fourth title" :wfid 1} {:title "Fifth title" :wfid 3}]))
+   (example "cart-list with five items of same workflow but of two different forms"
+            (cart-list [{:title "First form" :wfid 1 :formid 1} {:title "Second form" :wfid 1 :formid 2} {:title "First form" :wfid 1 :formid 1} {:title "Second form" :wfid 1 :formid 2} {:title "First form" :wfid 1 :formid 1}]))
+   ))

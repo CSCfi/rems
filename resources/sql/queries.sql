@@ -1,10 +1,18 @@
 -- :name get-catalogue-items :? :*
-SELECT ci.id, ci.title, res.resid
+-- :doc
+-- - Get catalogue items
+-- - :items vector of item ids
+SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid
 FROM catalogue_item ci
 LEFT OUTER JOIN resource res ON (ci.resid = res.id)
+WHERE 1=1
+/*~ (when (:items params) */
+  AND ci.id IN (:v*:items)
+/*~ ) ~*/
+
 
 -- :name get-catalogue-item :? :1
-SELECT ci.id, ci.title, res.resid
+SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid
 FROM catalogue_item ci
 LEFT OUTER JOIN resource res ON (ci.resid = res.id)
 WHERE ci.id = :id
@@ -25,7 +33,7 @@ VALUES (:id, :resid, :prefix, :modifieruserid)
 SELECT current_database()
 
 -- :name get-catalogue-item-localizations :? :*
-SELECT catid, langcode, title
+SELECT catid AS id, langcode, title
 FROM catalogue_item_localization
 
 -- :name create-catalogue-item-localization! :insert
@@ -46,7 +54,25 @@ FROM application_form_meta meta
 LEFT OUTER JOIN application_form_meta_map metamap ON meta.id = metamap.metaFormId
 LEFT OUTER JOIN application_form form ON form.id = metamap.formId
 
--- :name get-form-for-catalogue-item :? :1
+-- :name get-form-for-application :? :1
+SELECT
+  meta.id as metaid,
+  form.id as formid,
+  meta.title as metatitle,
+  form.title as formtitle,
+  meta.visibility as metavisibility,
+  form.visibility as formvisibility,
+  langcode
+FROM catalogue_item_application_items ciai
+LEFT OUTER JOIN catalogue_item ci ON ci.id = ciai.catItemId
+LEFT OUTER JOIN application_form_meta meta ON ci.formId = meta.id
+LEFT OUTER JOIN application_form_meta_map metamap ON meta.id = metamap.metaFormId
+LEFT OUTER JOIN application_form form ON form.id = metamap.formId
+WHERE ciai.catAppId = :application
+  AND (langcode = :lang
+       OR langcode is NULL) -- nonlocalized form
+
+-- :name get-form-for-item :? :1
 SELECT
   meta.id as metaid,
   form.id as formid,
@@ -59,7 +85,7 @@ FROM catalogue_item ci
 LEFT OUTER JOIN application_form_meta meta ON ci.formId = meta.id
 LEFT OUTER JOIN application_form_meta_map metamap ON meta.id = metamap.metaFormId
 LEFT OUTER JOIN application_form form ON form.id = metamap.formId
-WHERE ci.id = :id
+WHERE ci.id = :item
   AND (langcode = :lang
        OR langcode is NULL) -- nonlocalized form
 
@@ -111,50 +137,64 @@ VALUES
 (:form, :item, :user, :itemorder, :optional)
 
 -- :name create-application! :insert
--- TODO: set fnlround based on workflow?
 INSERT INTO catalogue_item_application
-(catId, applicantUserId, fnlround)
+(applicantUserId, wfid)
 VALUES
-(:item, :user, 0)
+(:user, :wfid)
 RETURNING id
+
+-- :name add-application-item! :insert
+INSERT INTO catalogue_item_application_items
+(catAppId, catItemId)
+VALUES
+(:application, :item)
+RETURNING catAppId, catItemId
 
 -- :name get-applications :? :*
 -- :doc
 -- - Pass in no arguments to get all applications.
 -- - Use {:id id} to get a specific application
--- - Use {:resource id} to get applications for a specific resource
 -- - Use {:applicant user} to filter by applicant
--- TODO: use fnlround from application?
 SELECT
-  app.id, app.catId, app.applicantUserId, app.start, wf.id as wfid, wf.fnlround
+  app.id, app.applicantUserId, app.start, wf.id as wfid, wf.fnlround
 FROM catalogue_item_application app
-LEFT OUTER JOIN catalogue_item cat ON app.catid = cat.id
-LEFT OUTER JOIN workflow wf ON cat.wfid = wf.id
+LEFT OUTER JOIN workflow wf ON app.wfid = wf.id
 WHERE 1=1
 /*~ (when (:id params) */
   AND app.id = :id
-/*~ ) ~*/
-/*~ (when (:resource params) */
-  AND app.catId = :resource
 /*~ ) ~*/
 /*~ (when (:applicant params) */
   AND app.applicantUserId = :applicant
 /*~ ) ~*/
 
+-- :name get-application-items :? :*
+-- :doc
+-- - Use {:application id} to pass application
+SELECT
+  catAppId AS application,
+  catItemId AS item
+FROM catalogue_item_application_items ciai
+WHERE 1=1
+  AND ciai.catAppId = :application
+
+
 -- :name add-entitlement! :!
 -- TODO remove resId from this table to make it normalized?
-INSERT INTO entitlement
-  (catAppId, userId, resId)
-VALUES
-  (:application, :user,
-   (SELECT
-      cat.resid
-    FROM catalogue_item_application app
-    LEFT OUTER JOIN catalogue_item cat ON app.catid = cat.id
-    WHERE app.id = :application))
+INSERT INTO entitlement (catAppId, userId, resId)
+SELECT :application, :user, cat.resid
+FROM catalogue_item_application_items ciai
+LEFT OUTER JOIN catalogue_item_application app ON ciai.catAppId = app.id
+LEFT OUTER JOIN catalogue_item cat ON ciai.catItemId = cat.id
+WHERE ciai.catAppId = :application
 
 -- :name get-entitlements :?
+-- :doc
+-- - Use {:application id} to optionally pass application
 SELECT resId, catAppId, userId FROM entitlement
+WHERE 1=1
+/*~ (when (:application params) */
+  AND catAppId = :application
+/*~ ) ~*/
 
 -- :name get-entitlements-for-export
 SELECT resId, catAppId, userId, start FROM entitlement
@@ -230,8 +270,7 @@ SELECT
 FROM workflow_actors wfa
 /*~ (when (:application params) */
 LEFT OUTER JOIN workflow wf on wf.id = wfa.wfid
-LEFT OUTER JOIN catalogue_item cat ON cat.wfid = wf.id
-LEFT OUTER JOIN catalogue_item_application app ON app.catid = cat.id
+LEFT OUTER JOIN catalogue_item_application app ON app.wfid = wf.id
 WHERE app.id = :application
 /*~ ) ~*/
 /*~ (when (:wfid params) */
@@ -275,13 +314,21 @@ WHERE textvalues.catAppId = :application
   AND itemmap.formItemId = :item
   AND itemmap.formId = :form
 
--- :name get-workflow-licenses :? :*
-SELECT
-  lic.id, lic.title, lic.type, lic.textcontent
+-- :name get-licenses :? :*
+-- :doc
+-- - Gets application licenses by workflow and catalogue item ids
+-- - :wfid workflow id for workflow licenses
+-- - :items vector of catalogue item ids for resource licenses
+SELECT lic.id, lic.title, lic.type, lic.textcontent
 FROM license lic
-INNER JOIN workflow_licenses wl ON lic.id = wl.licId
-INNER JOIN catalogue_item cat ON wl.wfId = cat.wfId
-WHERE cat.id = :catId
+INNER JOIN workflow_licenses wl ON lic.id = wl.licid
+WHERE wl.wfid = :wfid
+UNION
+SELECT lic.id, lic.title, lic.type, lic.textcontent
+FROM license lic
+INNER JOIN resource_licenses rl ON lic.id = rl.licid
+INNER JOIN catalogue_item item ON (item.resid = rl.resid)
+WHERE item.id IN (:v*:items)
 
 -- :name get-license-localizations :? :*
 SELECT licid, langcode, title, textcontent

@@ -1,6 +1,7 @@
 (ns rems.actions
   "The /actions page that shows a list of applications you can act on."
-  (:require [rems.collapsible :as collapsible]
+  (:require [clojure.string :as string]
+            [rems.collapsible :as collapsible]
             [rems.db.applications :as applications]
             [rems.guide :refer :all]
             [rems.layout :as layout]
@@ -10,7 +11,7 @@
 
 (defn view-button [app]
   [:a.btn.btn-secondary
-   {:href (str "/form/" (:catid app) "/" (:id app))}
+   {:href (str "/form/" (:id app))}
    (text :t.applications/view)])
 
 (defn not-implemented-modal [name-field action-title]
@@ -68,7 +69,7 @@
      (for [app (sort-by :id apps)]
        [:tr.action
         [:td {:data-th (text :t.actions/application)} (:id app)]
-        [:td {:data-th (text :t.actions/resource)} (get-in app [:catalogue-item :title])]
+        [:td {:data-th (text :t.actions/resource)} (string/join ", " (map :title (:catalogue-items app)))]
         [:td {:data-th (text :t.actions/applicant)} (:applicantuserid app)]
         [:td {:data-th (text :t.actions/created)} (localize-time (:start app))]
         [:td.commands (view-button app)]])]))
@@ -108,7 +109,7 @@
        (for [app (sort-by :handled apps)]
          [:tr.action
           [:td {:data-th (text :t.actions/application)} (:id app)]
-          [:td {:data-th (text :t.actions/resource)} (get-in app [:catalogue-item :title])]
+          [:td {:data-th (text :t.actions/resource)} (string/join ", " (map :title (:catalogue-items app)))]
           [:td {:data-th (text :t.actions/applicant)} (:applicantuserid app)]
           [:td {:data-th (text :t.actions/state)} (text (localize-state (:state app)))]
           [:td {:data-th (text :t.actions/handled)} (localize-time (:handled app))]
@@ -134,22 +135,22 @@
             (reviews []))
    (example "reviews"
             (reviews
-             [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid "alice"}
-              {:id 3 :catalogue-item {:title "bbbbbb"} :applicantuserid "bob"}]))
+             [{:id 1 :catalogue-items [{:title "AAAAAAAAAAAAAA"}] :applicantuserid "alice"}
+              {:id 3 :catalogue-items [{:title "bbbbbb"}] :applicantuserid "bob"}]))
    (example "handled reviews"
             (handled-reviews
-             [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid "alice"}
-              {:id 3 :catalogue-item {:title "bbbbbb"} :state "approved" :applicantuserid "bob"}]))
+             [{:id 1 :catalogue-items [{:title "AAAAAAAAAAAAAA"}] :applicantuserid "alice"}
+              {:id 3 :catalogue-items [{:title "bbbbbb"}] :state "approved" :applicantuserid "bob"}]))
    (example "approvals empty"
             (approvals []))
    (example "approvals"
             (approvals
-             [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid "alice"}
-              {:id 3 :catalogue-item {:title "bbbbbb"} :applicantuserid "bob"}]))
+             [{:id 1 :catalogue-items [{:title "AAAAAAAAAAAAAA"}] :applicantuserid "alice"}
+              {:id 3 :catalogue-items [{:title "bbbbbb"}] :applicantuserid "bob"}]))
    (example "handled approvals"
             (handled-approvals
-             [{:id 1 :catalogue-item {:title "AAAAAAAAAAAAAA"} :applicantuserid "alice"}
-              {:id 3 :catalogue-item {:title "bbbbbb"} :state "approved" :applicantuserid "bob"}]))))
+             [{:id 1 :catalogue-items [{:title "AAAAAAAAAAAAAA"}] :applicantuserid "alice"}
+              {:id 3 :catalogue-items [{:title "bbbbbb"}] :state "approved" :applicantuserid "bob"}]))))
 
 (defn actions-page []
   (layout/render
