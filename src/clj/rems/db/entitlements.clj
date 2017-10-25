@@ -15,7 +15,7 @@
   []
   (when-not (has-roles? :approver)
     (throw-unauthorized))
-  (let [ents (db/get-entitlements-for-export)]
+  (let [ents (db/get-entitlements)]
     (with-out-str
       (println "resource,application,user,start")
       (doseq [e ents]
@@ -29,10 +29,12 @@
     (db/add-entitlement! {:application (:id application)
                           :user (:applicantuserid application)})
     (when-let [target (get env :entitlements-target)]
-      (let [payload {:application (:id application)
-                     ;; TODO: resource
-                     :user (:applicantuserid application)}]
-        (log/infof "Posting entitlement %s to %s" payload target)
+      (let [entitlements (db/get-entitlements {:application (:id application)})
+            payload (for [e entitlements]
+                      {:application (:catappid e)
+                       :resource (:resid e)
+                       :user (:userid e)})]
+        (log/infof "Posting entitlements to %s:" target payload)
         (try
           (http/post target
                      {:body (cheshire/generate-string payload)
