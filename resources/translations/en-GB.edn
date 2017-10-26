@@ -168,4 +168,6 @@
            :approve "Approval"
            :approved "Approved"
            :rejected "Rejected"
-           :review "Review"}}}
+           :review "Review"}
+  :collapse {:show-more "Näytä lisää"
+             :show-less "Näytä vähemmän"}}}

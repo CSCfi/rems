@@ -169,4 +169,6 @@
            :approve "Hyväksyntä"
            :approved "Hyväksytty"
            :rejected "Hylätty"
-           :review "Katselmointi"}}}
+           :review "Katselmointi"}
+  :collapse {:show-more "Näytä lisää"
+             :show-less "Näytä vähemmän"}}}
