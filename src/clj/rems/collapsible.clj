@@ -11,11 +11,11 @@
   [:div.collapse-content
    [:div.collapse {:id id :class (when expanded "show")}
     content]
-   [:div.collapse {:id (str id "more") :class (when-not expanded "show")}
-    [:a {:onclick (str "$('#" id "').collapse('show'), $('#" id "more').collapse('hide'), $('#" id "less').collapse('show')")}
+   [:div.collapse.collapse-toggle {:id (str id "more") :class (when-not expanded "show")}
+    [:a.text-primary {:onclick (str "$('#" id "').collapse('show'), $('#" id "more').collapse('hide'), $('#" id "less').collapse('show')")}
      (text :t.collapse/show-more)]]
-   [:div.collapse {:id (str id "less") :class (when expanded "show")}
-    [:a {:onclick (str "$('#" id "').collapse('hide'), $('#" id "more').collapse('show'), $('#" id "less').collapse('hide')")}
+   [:div.collapse.collapse-toggle {:id (str id "less") :class (when expanded "show")}
+    [:a.text-primary {:onclick (str "$('#" id "').collapse('hide'), $('#" id "more').collapse('show'), $('#" id "less').collapse('hide')")}
      (text :t.collapse/show-less)]
     ]])
 
