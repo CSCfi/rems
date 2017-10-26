@@ -320,12 +320,6 @@
   [:.license-title {:margin-top (u/px 3)}]
   [:.collapse-wrapper {:border-radius (u/rem 0.4)
                        :border "1px solid #ccc"}
-   [:.clickable
-    [:.card-title
-     [(s/& ".collapsed:before") {:content "\"\\f067\""}]
-     [:&:before {:font-family "'FontAwesome'"
-                 :float "right"
-                 :content "\"\\f068\""}]]]
    [:.card-header {:border-bottom "none"
                    :border-radius (u/rem 0.4)
                    :font-weight 500
