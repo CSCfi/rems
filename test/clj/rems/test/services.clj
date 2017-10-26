@@ -53,7 +53,7 @@
         (is (not (:errors cmd-response)))
         (is (= "draft" (:state cmd-response)))
         (is (not (:valid cmd-response)))
-        (is (= ["Field \"Projektin tarkoitus\" is required."
+        (is (= ["Field \"Purpose of the project\" is required."
                 "Field \"CC Attribution 4.0\" is required."
                 "Field \"General Terms of Use\" is required."]
                (:validation cmd-response)))

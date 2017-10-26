@@ -306,7 +306,7 @@
                  :textcontent \"http://foo\"
                  :approved false}]"
   ([application-id]
-   (let [form (db/get-form-for-application {:application application-id :lang (name context/*lang*)})
+   (let [form (db/get-form-for-application {:application application-id})
          form (or form (db/get-form-for-application {:application application-id :lang "en"}))
          _ (assert form)
          application (get-application-state application-id)
@@ -316,7 +316,8 @@
          catalogue-item-ids (mapv :item (db/get-application-items {:application application-id}))
          catalogue-items (get-catalogue-items catalogue-item-ids)
          items (mapv #(process-item application-id form-id %)
-                     (db/get-form-items {:id form-id}))
+                     (db/get-form-items {:id form-id
+                                         :langcode (name context/*lang*)}))
          license-localizations (->> (db/get-license-localizations)
                                     (map #(update-in % [:langcode] keyword))
                                     (index-by [:licid :langcode]))
@@ -345,7 +346,8 @@
          wfid (:wfid application)
          catalogue-items (:catalogue-items application)
          items (mapv #(process-item application-id form-id %)
-                     (db/get-form-items {:id form-id}))
+                     (db/get-form-items {:id form-id
+                                         :langcode (name context/*lang*)}))
          license-localizations (->> (db/get-license-localizations)
                                     (map #(update-in % [:langcode] keyword))
                                     (index-by [:licid :langcode]))

@@ -63,18 +63,19 @@ WHERE ci.id = :item
 -- :name get-form-items :? :*
 SELECT
   item.id,
-  item.title,
-  inputprompt,
   formitemoptional,
   type,
   value,
   itemorder,
-  tooltip,
-  item.visibility
+  item.visibility,
+  loc.title,
+  loc.inputprompt
 FROM application_form form
 LEFT OUTER JOIN application_form_item_map itemmap ON form.id = itemmap.formId
 LEFT OUTER JOIN application_form_item item ON item.id = itemmap.formItemId
+LEFT OUTER JOIN application_form_item_localization loc ON loc.itemId = item.id
 WHERE form.id = :id
+  AND loc.langCode = :langcode
 ORDER BY itemorder
 
 -- :name create-form! :insert
@@ -85,15 +86,21 @@ VALUES
 
 -- :name create-form-item! :insert
 INSERT INTO application_form_item
-(title, type, inputPrompt, value, modifierUserId, ownerUserId, visibility)
+(type, value, modifierUserId, ownerUserId, visibility)
 VALUES
-(:title, CAST (:type as itemtype), :inputprompt, :value, :user, :user, 'public')
+(CAST (:type as itemtype), :value, :user, :user, 'public')
 
 -- :name link-form-item! :insert
 INSERT INTO application_form_item_map
 (formId, formItemId, modifierUserId, itemOrder, formItemOptional)
 VALUES
 (:form, :item, :user, :itemorder, :optional)
+
+-- :name localize-form-item! :insert
+INSERT INTO application_form_item_localization
+(itemId, langCode, title, inputPrompt)
+VALUES
+(:item, :langcode, :title, :inputprompt)
 
 -- :name create-application! :insert
 INSERT INTO catalogue_item_application

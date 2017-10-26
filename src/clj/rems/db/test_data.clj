@@ -40,24 +40,31 @@
 (defn- create-basic-form!
   "Creates a bilingual form with all supported field types. Returns id of the form meta."
   []
-  (let [form-fi (db/create-form! {:title "Yksinkertainen lomake" :user "owner"})
+  (let [form (db/create-form! {:title "Yksinkertainen lomake" :user "owner"})
 
-        name-fi (db/create-form-item!
-                 {:title "Projektin nimi" :type "text" :inputprompt "Projekti"
-                  :optional false :user "owner" :value 0})
-        purpose-fi (db/create-form-item!
-                    {:title "Projektin tarkoitus" :type "texta"
-                     :inputprompt "Projektin tarkoitus on ..." :optional false
-                     :user "owner" :value 0})
-        duration-fi (db/create-form-item!
-                     {:title "Projektin kesto" :type "text"
-                      :inputprompt "YYYY-YYYY" :optional true
-                      :user "owner" :value 0})]
+        name (db/create-form-item!
+              {:type "text" :optional false :user "owner" :value 0})
+        purpose (db/create-form-item!
+                 {:type "texta" :optional false :user "owner" :value 0})
+        duration (db/create-form-item!
+                  {:type "text" :optional true :user "owner" :value 0})]
     ;; link out of order for less predictable row ids
-    (db/link-form-item! {:form (:id form-fi) :itemorder 1 :optional false :item (:id name-fi) :user "owner"})
-    (db/link-form-item! {:form (:id form-fi) :itemorder 3 :optional false :item (:id purpose-fi) :user "owner"})
-    (db/link-form-item! {:form (:id form-fi) :itemorder 2 :optional true :item (:id duration-fi) :user "owner"})
-    (:id form-fi)))
+    (db/link-form-item! {:form (:id form) :itemorder 1 :optional false :item (:id name) :user "owner"})
+    (db/link-form-item! {:form (:id form) :itemorder 3 :optional false :item (:id purpose) :user "owner"})
+    (db/link-form-item! {:form (:id form) :itemorder 2 :optional true :item (:id duration) :user "owner"})
+    ;; localize
+    (db/localize-form-item! {:item (:id name) :langcode "fi" :title "Projektin nimi" :inputprompt "Projekti"})
+    (db/localize-form-item! {:item (:id name) :langcode "en" :title "Project name" :inputprompt "Project"})
+    (db/localize-form-item! {:item (:id purpose) :langcode "fi"
+                             :title "Projektin tarkoitus"
+                             :inputprompt "Projektin tarkoitus on ..."})
+    (db/localize-form-item! {:item (:id purpose) :langcode "en"
+                             :title "Purpose of the project"
+                             :inputprompt "The purpose of the project is to ..."})
+    (db/localize-form-item! {:item (:id duration) :langcode "fi" :title "Projektin kesto" :inputprompt "YYYY-YYYY"})
+    (db/localize-form-item! {:item (:id duration) :langcode "en" :title "Duration of the project" :inputprompt "YYYY-YYYY"})
+
+    (:id form)))
 
 (defn- create-workflows! [user1 user2 user3]
   (let [minimal (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner":title "minimal" :fnlround 0}))

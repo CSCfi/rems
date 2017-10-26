@@ -51,7 +51,7 @@ CREATE TABLE application_form (
   id serial NOT NULL PRIMARY KEY,
   ownerUserId varchar(255) NOT NULL,
   modifierUserId varchar(255) NOT NULL,
-  title varchar(256) NOT NULL,
+  title varchar(256) NOT NULL, -- TODO: not localized yet, but not used either?
   visibility scope NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL
@@ -84,14 +84,23 @@ CREATE TABLE application_form_item (
   id serial NOT NULL PRIMARY KEY,
   ownerUserId varchar(255) NOT NULL,
   modifierUserId varchar(255) NOT NULL,
-  title varchar(256) NOT NULL,
-  toolTip varchar(256) DEFAULT NULL,
-  inputPrompt varchar(256) DEFAULT NULL,
   type itemtype DEFAULT NULL,
   value bigint NOT NULL,
   visibility scope NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL
+);
+--;;
+CREATE TABLE application_form_item_localization (
+  itemId integer NOT NULL,
+  langCode varchar(64) NOT NULL,
+  title varchar(256) NOT NULL,
+  -- the old schema had this, but it's not used:
+  --toolTip varchar(256) DEFAULT NULL,
+  inputPrompt varchar(256) DEFAULT NULL,
+  -- do we need ownerUserId, modifierUserId, visibility, start, end?
+  PRIMARY KEY (itemId, langCode),
+  FOREIGN KEY (itemId) REFERENCES application_form_item (id)
 );
 --;;
 CREATE TABLE application_form_item_map (
