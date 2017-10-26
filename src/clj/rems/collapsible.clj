@@ -22,8 +22,8 @@
         (text :t.collapse/show-less)]
        ]))])
 
-(defn component [{:keys [id open? title always collapse]}]
-  [:div.collapse-wrapper
+(defn component [{:keys [id class open? title always collapse]}]
+  [:div.collapse-wrapper {:class class}
    (header id open? title)
    (when (or always collapse)
      (block id open? always collapse))])
@@ -44,4 +44,10 @@
         (example "collapsible without hideable content can't be opened"
                  (component {:id "hello3"
                              :title "Collapse without children"
-                             :always [:p "I am content that is always visible"]}))))
+                             :always [:p "I am content that is always visible"]}))
+        (example "collapsible that opens slowly"
+                 (component {:id "hello4"
+                             :class "slow"
+                             :title "Collapse expanded"
+                             :always [:p "I am content that is always visible"]
+                             :collapse [:div (repeat 5 [:p "I am content that you can hide"])]}))))

@@ -318,8 +318,10 @@
   [(s/descendant :.card-header :a) {:color "inherit"}]
                                         ;hax for opening misalignment
   [:.license-title {:margin-top (u/px 3)}]
-  [:.collapse-toggle {:padding-top (u/rem 0.5)
-                      :text-align :center}]
+  [:.collapsing {:-webkit-transition "height 0.1s linear"
+                 :-o-transition "height 0.1s linear"
+                 :transition "height 0.1s linear"}]
+  [:.collapse-toggle {:text-align :center}]
   [:.collapse-wrapper {:border-radius (u/rem 0.4)
                        :border "1px solid #ccc"}
    [:.card-header {:border-bottom "none"
@@ -329,6 +331,10 @@
                    :line-height 1.1
                    :font-family "'Lato'"}]]
   [:.collapse-content {:padding (u/rem 1)}]
+  [:.collapse-wrapper.slow
+   [:.collapsing {:-webkit-transition "height 0.25s linear"
+                  :-o-transition "height 0.25s linear"
+                  :transition "height 0.25s linear"}]]
   (generate-phase-styles)
   [(s/descendant :.document :h3) {:margin-top (u/rem 4)}]
                                         ;These must be last as the parsing fails when the first non-standard element is met

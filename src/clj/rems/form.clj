@@ -152,6 +152,7 @@
                     (not= "closed" state))]
     (collapsible/component
      {:id "form"
+      :class "slow"
       :open? true
       :title (text :t.form/application)
       :collapse
