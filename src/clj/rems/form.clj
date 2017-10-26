@@ -28,7 +28,7 @@
             [rems.guide :refer :all]
             [rems.layout :as layout]
             [rems.phase :refer [phases]]
-            [rems.roles :refer [when-role]]
+            [rems.roles :refer [when-role has-roles?]]
             [rems.text :refer :all]
             [rems.util :refer [get-user-id getx getx-in]]
             [ring.util.response :refer [redirect]]))
@@ -104,7 +104,16 @@
                 (unsupported-field f))
     (unsupported-field f)))
 
+(defn- may-see-event?
+  "May the current user see this event?
 
+  Applicants can't see review events, reviewers and approvers can see everything."
+  [event]
+  ;; could implement more granular checking based on authors etc.
+  ;; now strictly role-based
+  (let [applicant-types #{"apply" "autoapprove" "approve" "reject" "return" "withdraw" "close"}]
+    (or (has-roles? :reviewer :approver) ;; reviewer and approver can see everything
+        (applicant-types (:event event)))))
 
 (defn- application-state [state events]
   (when state
@@ -117,7 +126,7 @@
       (when (seq events)
         (list
          [:h4 (text :t.form/events)]
-         (into [:table.table.table-hover.mb-0
+         (into [:table.table.table-hover.mb-0#event-table
                 [:tr
                  [:th (text :t.form/user)]
                  [:th (text :t.form/event)]
@@ -127,7 +136,7 @@
                  [:tr
                   [:td (:userid e)]
                   [:td (text (localize-event (:event e)))]
-                  [:td (:comment e)]
+                  [:td.event-comment (:comment e)]
                   [:td (localize-time (:time e))]])))))]))
 
 
@@ -190,7 +199,7 @@
     (list
      [:h2 (text :t.applications/application)]
 
-     (application-state state events)
+     (application-state state (filter may-see-event? events))
 
      [:div.my-3 (phases (get-application-phases state))]
 
