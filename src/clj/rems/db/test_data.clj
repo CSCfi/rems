@@ -40,43 +40,24 @@
 (defn- create-basic-form!
   "Creates a bilingual form with all supported field types. Returns id of the form meta."
   []
-  (let [meta (db/create-form-meta! {:title "metatitle" :user "owner"})
-        form-en (db/create-form! {:title "Basic application" :user "owner"})
-        form-fi (db/create-form! {:title "Yksinkertainen lomake" :user "owner"})
+  (let [form-fi (db/create-form! {:title "Yksinkertainen lomake" :user "owner"})
 
         name-fi (db/create-form-item!
                  {:title "Projektin nimi" :type "text" :inputprompt "Projekti"
-                  :optional false :user "owner" :value 0})
-        name-en (db/create-form-item!
-                 {:title "Project name" :type "text" :inputprompt "Project"
                   :optional false :user "owner" :value 0})
         purpose-fi (db/create-form-item!
                     {:title "Projektin tarkoitus" :type "texta"
                      :inputprompt "Projektin tarkoitus on ..." :optional false
                      :user "owner" :value 0})
-        purpose-en (db/create-form-item!
-                    {:title "Purpose of the project" :type "texta"
-                     :inputprompt "The purpose of the project is to ..." :optional false
-                     :user "owner" :value 0})
-        duration-en (db/create-form-item!
-                     {:title "Duration of the project" :type "text"
-                      :inputprompt "YYYY-YYYY" :optional true
-                      :user "owner" :value 0})
         duration-fi (db/create-form-item!
                      {:title "Projektin kesto" :type "text"
                       :inputprompt "YYYY-YYYY" :optional true
                       :user "owner" :value 0})]
-    (db/link-form-meta! {:meta (:id meta) :form (:id form-en) :lang "en" :user "owner"})
-    (db/link-form-meta! {:meta (:id meta) :form (:id form-fi) :lang "fi" :user "owner"})
-
     ;; link out of order for less predictable row ids
-    (db/link-form-item! {:form (:id form-en) :itemorder 3 :optional false :item (:id purpose-en) :user "owner"})
-    (db/link-form-item! {:form (:id form-en) :itemorder 2 :optional true :item (:id duration-en) :user "owner"})
-    (db/link-form-item! {:form (:id form-en) :itemorder 1 :optional false :item (:id name-en) :user "owner"})
     (db/link-form-item! {:form (:id form-fi) :itemorder 1 :optional false :item (:id name-fi) :user "owner"})
     (db/link-form-item! {:form (:id form-fi) :itemorder 3 :optional false :item (:id purpose-fi) :user "owner"})
     (db/link-form-item! {:form (:id form-fi) :itemorder 2 :optional true :item (:id duration-fi) :user "owner"})
-    (:id meta)))
+    (:id form-fi)))
 
 (defn- create-workflows! [user1 user2 user3]
   (let [minimal (:id (db/create-workflow! {:owneruserid "owner" :modifieruserid "owner":title "minimal" :fnlround 0}))
@@ -171,18 +152,18 @@
 (defn create-test-data! []
   (create-users-and-roles!)
   (db/create-resource! {:id 1 :resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1})
-  (let [meta (create-basic-form!)
+  (let [form (create-basic-form!)
         workflows (create-workflows! "developer" "bob" "carl")
-        minimal (create-catalogue-item! 1 (:minimal workflows) meta
+        minimal (create-catalogue-item! 1 (:minimal workflows) form
                                         {"en" "ELFA Corpus, direct approval"
                                          "fi" "ELFA-korpus, suora hyväksyntä"})
-        simple (create-catalogue-item! 1 (:simple workflows) meta
+        simple (create-catalogue-item! 1 (:simple workflows) form
                                        {"en" "ELFA Corpus, one approval"
                                         "fi" "ELFA-korpus, yksi hyväksyntä"})
-        with-review (create-catalogue-item! 1 (:with-review workflows) meta
+        with-review (create-catalogue-item! 1 (:with-review workflows) form
                                             {"en" "ELFA Corpus, with review"
                                              "fi" "ELFA-korpus, katselmoinnilla"})
-        different (create-catalogue-item! 1 (:different workflows) meta
+        different (create-catalogue-item! 1 (:different workflows) form
                                           {"en" "ELFA Corpus, two rounds of approval by different approvers"
                                            "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})]
     (create-applications! simple (:simple workflows) "developer" "developer")))
@@ -190,18 +171,18 @@
 (defn create-demo-data! []
   (create-demo-users-and-roles!)
   (db/create-resource! {:id 1 :resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1})
-  (let [meta (create-basic-form!)
+  (let [form (create-basic-form!)
         workflows (create-workflows! "RDapprover1@funet.fi" "RDapprover2@funet.fi" "RDreview@funet.fi")
-        minimal (create-catalogue-item! 1 (:minimal workflows) meta
+        minimal (create-catalogue-item! 1 (:minimal workflows) form
                                         {"en" "ELFA Corpus, direct approval"
                                          "fi" "ELFA-korpus, suora hyväksyntä"})
-        simple (create-catalogue-item! 1 (:simple workflows) meta
+        simple (create-catalogue-item! 1 (:simple workflows) form
                                        {"en" "ELFA Corpus, one approval"
                                         "fi" "ELFA-korpus, yksi hyväksyntä"})
-        with-review (create-catalogue-item! 1 (:with-review workflows) meta
+        with-review (create-catalogue-item! 1 (:with-review workflows) form
                                             {"en" "ELFA Corpus, with review"
                                              "fi" "ELFA-korpus, katselmoinnilla"})
-        different (create-catalogue-item! 1 (:different workflows) meta
+        different (create-catalogue-item! 1 (:different workflows) form
                                           {"en" "ELFA Corpus, two rounds of approval by different approvers"
                                            "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})]
     (create-applications! simple (:simple workflows) "RDapplicant1@funet.fi" "RDapprover1@funet.fi")))
