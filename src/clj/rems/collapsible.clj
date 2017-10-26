@@ -7,29 +7,41 @@
   [:div.card-header
    [:span.card-title title]])
 
-(defn- block [id expanded content]
+(defn- block [id expanded content-always content-hideable]
   [:div.collapse-content
-   [:div.collapse {:id id :class (when expanded "show")}
-    content]
-   [:div.collapse.collapse-toggle {:id (str id "more") :class (when-not expanded "show")}
-    [:a.text-primary {:onclick (str "$('#" id "').collapse('show'), $('#" id "more').collapse('hide'), $('#" id "less').collapse('show')")}
-     (text :t.collapse/show-more)]]
-   [:div.collapse.collapse-toggle {:id (str id "less") :class (when expanded "show")}
-    [:a.text-primary {:onclick (str "$('#" id "').collapse('hide'), $('#" id "more').collapse('show'), $('#" id "less').collapse('hide')")}
-     (text :t.collapse/show-less)]
-    ]])
+   [:div content-always]
+   (when-not (empty? content-hideable)
+     (list
+      [:div.collapse {:id id :class (when expanded "show")}
+       content-hideable]
+      [:div.collapse.collapse-toggle {:id (str id "more") :class (when-not expanded "show")}
+       [:a.text-primary {:onclick (str "$('#" id "').collapse('show'), $('#" id "more').collapse('hide'), $('#" id "less').collapse('show')")}
+        (text :t.collapse/show-more)]]
+      [:div.collapse.collapse-toggle {:id (str id "less") :class (when expanded "show")}
+       [:a.text-primary {:onclick (str "$('#" id "').collapse('hide'), $('#" id "more').collapse('show'), $('#" id "less').collapse('hide')")}
+        (text :t.collapse/show-less)]
+       ]))])
 
-(defn component [id expanded title content]
+(defn component [{:keys [id open? title always collapse]}]
   [:div.collapse-wrapper
-   (header id expanded title)
-   (when content
-     (block id expanded content))])
+   (header id open? title)
+   (when (or always collapse)
+     (block id open? always collapse))])
 
 (defn guide
   []
-  (list (example "collapsible expanded by default"
-                 (component "hello" true "Collapse expanded" [:p "I am content"]))
-        (example "collapsible closed by default"
-                 (component "hello2" false "Collapse minimized" [:p "I am content"]))
-        (example "collapsible without children can't be opened"
-                 (component "hello3" false "Collapse without children" nil))))
+  (list (example "collapsible closed by default"
+                 (component {:id "hello2"
+                             :title "Collapse minimized"
+                             :always [:p "I am content that is always visible"]
+                             :collapse [:p "I am content that you can hide"]}))
+        (example "collapsible expanded by default"
+                 (component {:id "hello"
+                             :open? true
+                             :title "Collapse expanded"
+                             :always [:p "I am content that is always visible"]
+                             :collapse [:p "I am content that you can hide"]}))
+        (example "collapsible without hideable content can't be opened"
+                 (component {:id "hello3"
+                             :title "Collapse without children"
+                             :always [:p "I am content that is always visible"]}))))

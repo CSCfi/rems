@@ -12,16 +12,13 @@
    [:input.form-control {:type "text" :value value :readonly true}]])
 
 (defn details [id user-attributes]
-  (let [title (str (text :t.applicant-info/applicant) ": " (get-username user-attributes))
-        content (when-roles #{:approver :reviewer}
-                  [:form
-                   (for [[k v] user-attributes]
-                     (info-field k v)
-                     )])]
-    (collapsible/component id
-                           false
-                           title
-                           content)))
+  (collapsible/component
+   {:id id
+    :title (str (text :t.applicant-info/applicant) ": " (get-username user-attributes))
+    :collapse (when-roles #{:approver :reviewer}
+                [:form
+                 (for [[k v] user-attributes]
+                   (info-field k v))])}))
 
 (defn guide
   []

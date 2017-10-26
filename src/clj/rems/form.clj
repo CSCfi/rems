@@ -106,29 +106,38 @@
 
 
 
-(defn- application-state [state events]
+(defn- application-state [state]
   (when state
     [:div {:class (str "state-" state)}
      (collapsible/component
-      "events"
-      false
-      [:span (text :t.applications/state) ": " (text (localize-state state))
-       (when-let [c (:comment (last events))] [:p.inline-comment [:br] (text :t.form/comment) ": " [:span.inline-comment-content] c])]
-      (when (seq events)
-        (list
-         [:h4 (text :t.form/events)]
-         (into [:table.table.table-hover.mb-0
-                [:tr
-                 [:th (text :t.form/user)]
-                 [:th (text :t.form/event)]
-                 [:th (text :t.form/comment)]
-                 [:th (text :t.form/date)]]]
-               (for [e events]
-                 [:tr
-                  [:td (:userid e)]
-                  [:td (text (localize-event (:event e)))]
-                  [:td (:comment e)]
-                  [:td (localize-time (:time e))]])))))]))
+      {:id "state"
+       :open? true
+       :title (text :t.applications/state)
+       :collapse [:div (text :t.applications/state) ": " (text (localize-state state))]})]))
+
+(defn- application-events [events]
+  #_(when state
+      [:div {:class (str "events-" state)}
+       (collapsible/component
+        "events"
+        false
+        [:span (text :t.applications/state) ": " (text (localize-state state))
+         (when-let [c (:comment (last events))] [:p.inline-comment [:br] (text :t.form/comment) ": " [:span.inline-comment-content] c])]
+        (when (seq events)
+          (list
+           [:h4 (text :t.form/events)]
+           (into [:table.table.table-hover.mb-0
+                  [:tr
+                   [:th (text :t.form/user)]
+                   [:th (text :t.form/event)]
+                   [:th (text :t.form/comment)]
+                   [:th (text :t.form/date)]]]
+                 (for [e events]
+                   [:tr
+                    [:td (:userid e)]
+                    [:td (text (localize-event (:event e)))]
+                    [:td (:comment e)]
+                    [:td (localize-time (:time e))]])))))]))
 
 
 (defn- form-fields [form]
@@ -141,45 +150,48 @@
         closeable? (and
                     (not new-application?)
                     (not= "closed" state))]
-    (collapsible/component "form"
-                           true
-                           (text :t.form/application)
-                           (list
-                            (events/approval-confirm-modal "close" (text :t.actions/close) application)
-                            (events/approval-confirm-modal "withdraw" (text :t.actions/withdraw) application)
-                            [:form {:method "post"
-                                    :action (let [app (:id application)]
-                                              (str "/form/" app "/save"))}
-                             (for [i (:items form)]
-                               (field (assoc i :readonly readonly?)))
-                             (when-let [licenses (not-empty (:licenses form))]
-                               [:div.form-group
-                                [:h4 (text :t.form/licenses)]
-                                (for [l licenses]
-                                  (field (assoc l :readonly readonly?)))])
-                             (anti-forgery-field)
-                             (when (or new-application?
-                                       (is-applicant? (:application form)))
-                               [:div.row
-                                [:div.col
-                                 [:a#back.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
-                                (into [:div.col.commands]
-                                      [(when closeable? [:button#close.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
-                                                         (text :t.actions/close)])
-                                       (when editable? [:button#save.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)])
-                                       (when editable? [:button#submit.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)])
-                                       (when withdrawable? [:button#withdraw.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#withdraw-modal"} (text :t.actions/withdraw)])
-                                       ])])
-                             ]))))
+    (collapsible/component
+     {:id "form"
+      :open? true
+      :title (text :t.form/application)
+      :collapse
+      (list
+       (events/approval-confirm-modal "close" (text :t.actions/close) application)
+       (events/approval-confirm-modal "withdraw" (text :t.actions/withdraw) application)
+       [:form {:method "post"
+               :action (let [app (:id application)]
+                         (str "/form/" app "/save"))}
+        (for [i (:items form)]
+          (field (assoc i :readonly readonly?)))
+        (when-let [licenses (not-empty (:licenses form))]
+          [:div.form-group
+           [:h4 (text :t.form/licenses)]
+           (for [l licenses]
+             (field (assoc l :readonly readonly?)))])
+        (anti-forgery-field)
+        (when (or new-application?
+                  (is-applicant? (:application form)))
+          [:div.row
+           [:div.col
+            [:a#back.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
+           (into [:div.col.commands]
+                 [(when closeable? [:button#close.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
+                                    (text :t.actions/close)])
+                  (when editable? [:button#save.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)])
+                  (when editable? [:button#submit.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)])
+                  (when withdrawable? [:button#withdraw.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#withdraw-modal"} (text :t.actions/withdraw)])
+                  ])])
+        ])})))
 
 (defn- applied-resources [catalogue-items]
-  (collapsible/component "resources"
-                         true
-                         (text :t.form/resources)
-                         [:div.form-items.form-group
-                          [:ul
-                           (for [item catalogue-items]
-                             [:li (:title item)])]]))
+  (collapsible/component
+   {:id "resources"
+    :open? true
+    :title (text :t.form/resources)
+    :collapse [:div.form-items.form-group
+               [:ul
+                (for [item catalogue-items]
+                  [:li (:title item)])]]}))
 
 
 (defn- form [form]
@@ -190,7 +202,9 @@
     (list
      [:h2 (text :t.applications/application)]
 
-     (application-state state events)
+     (application-state state)
+
+     (application-events events)
 
      [:div.my-3 (phases (get-application-phases state))]
 

@@ -158,23 +158,25 @@
    [:div
     (when-role :reviewer
       (list
-       (collapsible/component "open-reviews"
-                              true
-                              (text :t.actions/open-reviews)
-                              (reviews))
+       (collapsible/component
+        {:id "open-reviews"
+         :open? true
+         :title (text :t.actions/open-reviews)
+         :collapse (reviews)})
        [:div.mt-3
-        (collapsible/component "handled-reviews"
-                               false
-                               (text :t.actions/handled-reviews)
-                               (handled-reviews))]))
+        (collapsible/component
+         {:id "handled-reviews"
+          :title (text :t.actions/handled-reviews)
+          :collapse (handled-reviews)})]))
     (when-role :approver
       (list
-       (collapsible/component "open-approvals"
-                              true
-                              (text :t.actions/open-approvals)
-                              (approvals))
+       (collapsible/component
+        {:id "open-approvals"
+         :open? true
+         :title (text :t.actions/open-approvals)
+         :collapse (approvals)})
        [:div.mt-3
-        (collapsible/component "handled-approvals"
-                               false
-                               (text :t.actions/handled-approvals)
-                               (handled-approvals))]))]))
+        (collapsible/component
+         {:id "handled-approvals"
+          :title (text :t.actions/handled-approvals)
+          :collapse (handled-approvals)})]))]))
