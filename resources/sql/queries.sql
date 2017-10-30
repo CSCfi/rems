@@ -190,14 +190,12 @@ WHERE ciai.catAppId = :application
 -- :name get-entitlements :?
 -- :doc
 -- - Use {:application id} to optionally pass application
-SELECT resId, catAppId, userId FROM entitlement
+SELECT res.resId, catAppId, userId, entitlement.start FROM entitlement
+LEFT OUTER JOIN resource res ON entitlement.resId = res.id
 WHERE 1=1
 /*~ (when (:application params) */
   AND catAppId = :application
 /*~ ) ~*/
-
--- :name get-entitlements-for-export
-SELECT resId, catAppId, userId, start FROM entitlement
 
 -- :name save-field-value! :!
 INSERT INTO application_text_values

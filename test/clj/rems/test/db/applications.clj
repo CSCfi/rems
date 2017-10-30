@@ -2,8 +2,7 @@
   (:require [cheshire.core :as cheshire]
             [clojure.test :refer :all]
             [mount.core :as mount]
-            [rems.db.applications :refer :all]
-            [stub-http.core :as stub]))
+            [rems.db.applications :refer :all]))
 
 (deftest test-handling-event?
   (are [en] (handling-event? nil {:event en})
@@ -46,24 +45,3 @@
                                {:event "withdraw" :userid 123}
                                {:event "close" :userid 123}]}))
       "actions only by applicant"))
-
-(deftest test-add-entitlements-for
-  (with-redefs [rems.db.core/add-entitlement! #(throw (Error. "don't call me"))]
-    (#'rems.db.applications/add-entitlements-for {:id 3
-                                                  :state "applied"
-                                                  :applicantuserid "bob"}))
-  (let [db (atom [])]
-    (with-open [server (stub/start! {"/entitlements" {:status 200}})]
-      (with-redefs [rems.db.core/add-entitlement! #(swap! db conj %)
-                    rems.config/env {:entitlements-target
-                                     (str (:uri server) "/entitlements")}]
-        (#'rems.db.applications/add-entitlements-for {:id 3
-                                                      :state "approved"
-                                                      :applicantuserid "bob"})
-        (is (= [{:application 3 :user "bob"}] @db))
-        (let [data (-> (stub/recorded-requests server)
-                       first
-                       :body
-                       (get "postData")
-                       cheshire/parse-string)]
-          (is (= {"application" 3 "user" "bob"} data)))))))
