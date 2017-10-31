@@ -88,6 +88,7 @@
 
 (defn guide []
   (list
+   (component-info item-view)
    (example "item-view, single"
             [:table.rems-table.cart
              (item-view {:title "Item title"} true)])
@@ -97,6 +98,8 @@
    (example "group-view"
             [:table.rems-table.cart
              (group-view [{:title "Item title"}])])
+
+   (component-info cart-list)
    (example "cart-list empty"
             (cart-list []))
    (example "cart-list with two items of different workflow"

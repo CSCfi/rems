@@ -144,14 +144,19 @@
   "Component guide fragment"
   []
   (list
+   (component-info nav-link)
    (example "nav-link"
             (nav-link "example/path" "link text"))
    (example "nav-link active"
             (nav-link "example/path" "link text" "page-name" "page-name"))
    (example "nav-item"
             (nav-link "example/path" "link text" "page-name" "li-name"))
+
+   (component-info language-switcher)
    (example "language-switcher"
             (language-switcher))
+
+   (component-info navbar)
    (example "navbar guest"
             (binding [context/*roles* nil]
               (navbar "example-page" nil)))
@@ -164,14 +169,22 @@
    (example "navbar for admin"
             (binding [context/*roles* #{:applicant :approver :reviewer}]
               (navbar "example-page" "Antero Admin")))
+
+   (component-info footer)
    (example "footer"
             (footer))
+
+   (component-info logo)
    (example "logo" (logo))
+
+   (component-info flash-message)
    (example "flash success"
             (flash-message {:status :success
                             :contents [:p "Message " [:strong "contents"] " here"]}))
    (example "flash warning"
             (flash-message {:status :warning
                             :contents [:p "Message " [:strong "contents"] " here"]}))
+
+   (component-info error-content)
    (example "error-content"
             (error-content {:status 123 :title "Error title" :message "Error message"}))))

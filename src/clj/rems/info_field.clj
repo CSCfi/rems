@@ -12,5 +12,7 @@
 
 (defn guide
   []
-  (list (example "info-field with data"
-                 (component "Name" "Bob Tester"))))
+  (list
+   (component-info component)
+   (example "info-field with data"
+            (component "Name" "Bob Tester"))))
