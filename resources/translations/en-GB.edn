@@ -171,5 +171,5 @@
            :approved "Approved"
            :rejected "Rejected"
            :review "Review"}
-  :collapse {:show-more "Näytä lisää"
-             :show-less "Näytä vähemmän"}}}
+  :collapse {:show-more "Show more"
+             :show-less "Show less"}}}
