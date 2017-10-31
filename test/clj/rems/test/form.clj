@@ -252,7 +252,6 @@
                               :textcontent "" :title ""}]}]
         (testing "new form"
           (let [body (form data)]
-            (prn (all-inputs body))
             (is (= [false false false] (map readonly? (all-inputs body))))
             (is (submit-button body))))
         (testing "draft"
