@@ -464,7 +464,7 @@
    (example "form, approved"
             (form {:title "Form title"
                    :catalogue-items [{:title "An applied item"}]
-                   :application {:id 17 :state "approved" :events [{:comment "Looking good, approved!"}]}
+                   :application {:id 17 :state "approved" :events [{:event "approve" :comment "Looking good, approved!"}]}
                    :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
                            {:type "label" :title "Please input your wishes below."}
                            {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2" :value "def"}
