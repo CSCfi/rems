@@ -5,8 +5,8 @@
             [rems.info-field :as info-field]
             [rems.roles :refer [when-roles]]
             [rems.text :refer :all]
-            [rems.util :refer [get-user-id
-                               get-username]]
+            [rems.util :refer [get-username
+                               get-user-mail]]
             [rems.text :as text]))
 
 (defn details [id user-attributes]
@@ -15,7 +15,7 @@
     :title (str (text :t.applicant-info/applicant))
     :always [:div
              (info-field/component (text :t.applicant-info/username) (get-username user-attributes))
-             (info-field/component (text :t.applicant-info/userid) (get-user-id user-attributes))]
+             (info-field/component (text :t.applicant-info/email) (get-user-mail user-attributes))]
     :collapse (when-roles #{:approver :reviewer}
                 [:form
                  (for [[k v] user-attributes]

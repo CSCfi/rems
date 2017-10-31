@@ -77,7 +77,7 @@
             :withdraw "Withdraw"
             :withdraw-success "Application withdrawn"}
   :applicant-info {:applicant "Applicant"
-                   :userid "Id"
+                   :email "Email"
                    :username "Name"}
   :applications {:application "Application"
                  :created "Created"

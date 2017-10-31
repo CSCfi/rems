@@ -77,7 +77,7 @@
             :withdraw "Palauta muokattavaksi"
             :withdraw-success "Hakemus palautettu muokattavaksi"}
   :applicant-info {:applicant "Hakija"
-                   :userid "Käyttäjätunnus"
+                   :email "Sähköposti"
                    :username "Nimi"}
   :applications {:application "Hakemus"
                  :created "Luotu"
