@@ -57,7 +57,7 @@
   (binding [context/*user* {"eppn" "test-user"}
             context/*lang* :en]
     (let [uid (get-user-id)
-          form (db/create-form! {:title "fititle" :user uid})
+          form (db/create-form! {:title "internal-title" :user uid})
           wf (db/create-workflow! {:modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 0})
           license (db/create-license! {:modifieruserid uid :owneruserid uid :title "non-localized license" :type "link" :textcontent "http://test.org"})
           license-fi (db/create-license-localization! {:licid (:id license) :langcode "fi" :title "Testi lisenssi" :textcontent "http://testi.fi"})
@@ -98,9 +98,9 @@
                           (applications/get-form-for app-id))
                 form-ru (binding [context/*lang* :ru]
                           (applications/get-form-for app-id))]
-            (is (= "fititle" (:title form-en)) "title")
+            (is (= "internal-title" (:title form-en)) "title")
             (is (= ["A-en" "B-en" "C-en"] (map :title (:items form-en))) "items should be in order")
-            (is (= "fititle" (:title form-fi)) "title")
+            (is (= "internal-title" (:title form-fi)) "title")
             (is (= ["A-fi" "B-fi" "C-fi"] (map :title (:items form-fi))) "items should be in order")
             (is (= ["Testi lisenssi"] (map :title (:licenses form-fi))) "there should only be one license in Finnish")
             (is (= "http://testi.fi" (:textcontent (first (:licenses form-fi)))) "link should point to Finnish site")
