@@ -2,14 +2,12 @@
   (:require [rems.collapsible :as collapsible]
             [rems.context :as context]
             [rems.guide :refer :all]
+            [rems.info-field :as info-field]
             [rems.roles :refer [when-roles]]
             [rems.text :refer :all]
-            [rems.util :refer [get-username]]))
-
-(defn- info-field [title value]
-  [:div.form-group
-   [:label title]
-   [:input.form-control {:type "text" :value value :readonly true}]])
+            [rems.util :refer [get-user-id
+                               get-username]]
+            [rems.text :as text]))
 
 (defn details [id user-attributes]
   (collapsible/component
@@ -18,7 +16,7 @@
     :collapse (when-roles #{:approver :reviewer}
                 [:form
                  (for [[k v] user-attributes]
-                   (info-field k v))])}))
+                   (info-field/component k v))])}))
 
 (defn guide
   []
