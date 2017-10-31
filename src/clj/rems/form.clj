@@ -39,8 +39,10 @@
   (str "field" id))
 
 (defn- text-field
-  [{title :title id :id
-    prompt :inputprompt value :value
+  [{title :title
+    id :id
+    prompt :inputprompt
+    value :value
     optional :optional
     readonly :readonly}]
   [:div.form-group
@@ -52,8 +54,10 @@
                          :value value :readonly readonly}]])
 
 (defn- texta-field
-  [{title :title id :id
-    prompt :inputprompt value :value
+  [{title :title
+    id :id
+    prompt :inputprompt
+    value :value
     optional :optional
     readonly :readonly}]
   [:div.form-group
