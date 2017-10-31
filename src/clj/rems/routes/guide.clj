@@ -12,9 +12,11 @@
             [rems.context :as context]
             [rems.form :as form]
             [rems.guide :refer :all]
+            [rems.info-field :as info-field]
             [rems.layout :as layout]
             [rems.phase :as phase]
-            [rems.util :as util]))
+            [rems.util :as util]
+            [rems.info-field :as info-field]))
 
 (defn color-box [id hex]
   [:div.col-md-3
@@ -74,6 +76,7 @@
           (collapsible/guide)
 
           [:h2 "Applicant Information"]
+          (info-field/guide)
           (applicant-info/guide)
 
           [:h2 "Forms"]
