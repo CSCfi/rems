@@ -203,9 +203,9 @@
     :open? true
     :title (text :t.form/resources)
     :always [:div.form-items.form-group
-               [:ul
-                (for [item catalogue-items]
-                  [:li (:title item)])]]}))
+             [:ul
+              (for [item catalogue-items]
+                [:li (:title item)])]]}))
 
 
 (defn- form [form]
