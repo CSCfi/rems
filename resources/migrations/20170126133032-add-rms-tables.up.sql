@@ -95,8 +95,8 @@ CREATE TABLE application_form_item_localization (
   itemId integer NOT NULL,
   langCode varchar(64) NOT NULL,
   title varchar(256) NOT NULL,
-  -- the old schema had this, but it's not used:
-  --toolTip varchar(256) DEFAULT NULL,
+  -- the old schema had this, but we don't use it currently:
+  toolTip varchar(256) DEFAULT NULL,
   inputPrompt varchar(256) DEFAULT NULL,
   -- do we need ownerUserId, modifierUserId, visibility, start, end?
   PRIMARY KEY (itemId, langCode),
