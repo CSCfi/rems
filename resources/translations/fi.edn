@@ -76,7 +76,9 @@
             :view "Näytä"
             :withdraw "Palauta muokattavaksi"
             :withdraw-success "Hakemus palautettu muokattavaksi"}
-  :applicant-info {:applicant "Hakija"}
+  :applicant-info {:applicant "Hakija"
+                   :userid "Käyttäjätunnus"
+                   :username "Nimi"}
   :applications {:application "Hakemus"
                  :created "Luotu"
                  :empty "Sinulla ei ole hakemuksia."

@@ -76,7 +76,9 @@
             :view "View"
             :withdraw "Withdraw"
             :withdraw-success "Application withdrawn"}
-  :applicant-info {:applicant "Applicant"}
+  :applicant-info {:applicant "Applicant"
+                   :userid "Id"
+                   :username "Name"}
   :applications {:application "Application"
                  :created "Created"
                  :empty "You don't have any applications."

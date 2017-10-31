@@ -12,7 +12,10 @@
 (defn details [id user-attributes]
   (collapsible/component
    {:id id
-    :title (str (text :t.applicant-info/applicant) ": " (get-username user-attributes))
+    :title (str (text :t.applicant-info/applicant))
+    :always [:div
+             (info-field/component (text :t.applicant-info/username) (get-username user-attributes))
+             (info-field/component (text :t.applicant-info/userid) (get-user-id user-attributes))]
     :collapse (when-roles #{:approver :reviewer}
                 [:form
                  (for [[k v] user-attributes]
