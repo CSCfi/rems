@@ -119,28 +119,29 @@
       :always [:div.state-display {:class (str "state-" state)} (text (localize-state state))]})))
 
 (defn- application-events [events]
-  #_(when state
-      [:div {:class (str "events-" state)}
-       (collapsible/component
-        "events"
-        false
-        [:span (text :t.applications/state) ": " (text (localize-state state))
-         (when-let [c (:comment (last events))] [:p.inline-comment [:br] (text :t.form/comment) ": " [:span.inline-comment-content] c])]
-        (when (seq events)
-          (list
-           [:h4 (text :t.form/events)]
-           (into [:table.table.table-hover.mb-0
-                  [:tr
-                   [:th (text :t.form/user)]
-                   [:th (text :t.form/event)]
-                   [:th (text :t.form/comment)]
-                   [:th (text :t.form/date)]]]
-                 (for [e events]
-                   [:tr
-                    [:td (:userid e)]
-                    [:td (text (localize-event (:event e)))]
-                    [:td (:comment e)]
-                    [:td (localize-time (:time e))]])))))]))
+  (when events
+    [:div {:class "events"}
+     (collapsible/component
+      {:id "events"
+       :title (text :t.form/events)
+       :always (when-let [c (:comment (last events))]
+                 [:div [:h4 (text :t.form/comment)]
+                  [:p [:span.inline-comment-content] c]])
+       :collapse (when (seq events)
+                   (list
+                    [:h4 (text :t.form/events)]
+                    (into [:table.table.table-hover.mb-0
+                           [:tr
+                            [:th (text :t.form/user)]
+                            [:th (text :t.form/event)]
+                            [:th (text :t.form/comment)]
+                            [:th (text :t.form/date)]]]
+                          (for [e events]
+                            [:tr
+                             [:td (:userid e)]
+                             [:td (text (localize-event (:event e)))]
+                             [:td (:comment e)]
+                             [:td (localize-time (:time e))]]))))})]))
 
 
 (defn- form-fields [form]
@@ -192,7 +193,7 @@
    {:id "resources"
     :open? true
     :title (text :t.form/resources)
-    :collapse [:div.form-items.form-group
+    :always [:div.form-items.form-group
                [:ul
                 (for [item catalogue-items]
                   [:li (:title item)])]]}))
@@ -208,7 +209,7 @@
 
      (application-state state)
 
-     (application-events events)
+     [:div.mt-3 (application-events events)]
 
      [:div.my-3 (phases (get-application-phases state))]
 
