@@ -190,12 +190,14 @@
    {:color (util/get-theme-attribute :info-color)
     :background-color (util/get-theme-attribute :info-bgcolor)}]
   [:.alert-success
+   :.state-approved
    (s/descendant :.state-approved :.card-header)
    {:color (util/get-theme-attribute :success-color)
     :background-color (util/get-theme-attribute :success-bgcolor)}]
   [:.alert-warning {:color (util/get-theme-attribute :warning-color)
                     :background-color (util/get-theme-attribute :warning-bgcolor)}]
   [:.alert-danger
+   :.state-rejected
    (s/descendant :.state-rejected :.card-header)
    {:color (util/get-theme-attribute :danger-color)
     :background-color (util/get-theme-attribute :danger-bgcolor)}]
@@ -318,6 +320,8 @@
   [(s/descendant :.card-header :a) {:color "inherit"}]
                                         ;hax for opening misalignment
   [:.license-title {:margin-top (u/px 3)}]
+  [:.state-display {:padding (u/rem 0.5)
+                    :border-radius (u/rem 0.4)}]
   [:.collapsing {:-webkit-transition "height 0.1s linear"
                  :-o-transition "height 0.1s linear"
                  :transition "height 0.1s linear"}]

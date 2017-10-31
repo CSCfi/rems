@@ -111,12 +111,12 @@
 
 (defn- application-state [state]
   (when state
-    [:div {:class (str "state-" state)}
-     (collapsible/component
-      {:id "state"
-       :open? true
-       :title (text :t.applications/state)
-       :always [:div (info-field/component (text :t.applications/state) (text (localize-state state)))]})]))
+    (collapsible/component
+     {:id "state"
+      :class (str "state-" state)
+      :open? true
+      :title (text :t.applications/state)
+      :always [:div.state-display {:class (str "state-" state)} (text (localize-state state))]})))
 
 (defn- application-events [events]
   #_(when state
