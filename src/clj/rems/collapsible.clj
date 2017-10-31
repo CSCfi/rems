@@ -3,7 +3,7 @@
             [rems.text :refer :all]))
 
 (defn- header
-  [id expanded title]
+  [title]
   [:div.card-header
    [:span.card-title title]])
 
@@ -31,7 +31,7 @@
 
 (defn component [{:keys [id class open? title always collapse]}]
   [:div.collapse-wrapper {:class class}
-   (header id open? title)
+   (header title)
    (when (or always collapse)
      (block id open? always collapse))])
 
