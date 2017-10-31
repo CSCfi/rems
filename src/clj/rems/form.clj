@@ -26,6 +26,7 @@
             [rems.db.core :as db]
             [rems.events :as events]
             [rems.guide :refer :all]
+            [rems.info-field :as info-field]
             [rems.layout :as layout]
             [rems.phase :refer [phases]]
             [rems.roles :refer [when-role]]
@@ -115,7 +116,7 @@
       {:id "state"
        :open? true
        :title (text :t.applications/state)
-       :collapse [:div (text :t.applications/state) ": " (text (localize-state state))]})]))
+       :always [:div (info-field/component (text :t.applications/state) (text (localize-state state)))]})]))
 
 (defn- application-events [events]
   #_(when state
