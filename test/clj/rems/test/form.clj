@@ -243,8 +243,8 @@
                           "checkbox" (:disabled attrs) ;; checkboxes are special
                           (:readonly attrs)))
             all-inputs (fn [body] (remove #(= "comment" (:name (second %)))
-                                          (concat (hiccup-find [:div.form-group :input] body)
-                                                  (hiccup-find [:div.form-group :textarea] body))))
+                                          (concat (hiccup-find [:div.form-group.field :input] body)
+                                                  (hiccup-find [:div.form-group.field :textarea] body))))
             submit-button #(first (hiccup-find [:.submit-button] %))
             data {:items [{:type "text"}
                           {:type "texta"}]
@@ -253,16 +253,16 @@
         (testing "new form"
           (let [body (form data)]
             (prn (all-inputs body))
-            (is (= [true true false false false] (map readonly? (all-inputs body))))
+            (is (= [false false false] (map readonly? (all-inputs body))))
             (is (submit-button body))))
         (testing "draft"
           (let [body (form (assoc data :application {:state "draft"}))]
-            (is (= [true true false false false] (map readonly? (all-inputs body))))
+            (is (= [false false false] (map readonly? (all-inputs body))))
             (is (submit-button body))))
         (doseq [state ["applied" "approved" "rejected"]]
           (testing state
             (let [body (form (assoc data :application {:id 1 :state state}))]
-              (is (= [true true true true true] (map readonly? (all-inputs body))))
+              (is (= [true true true] (map readonly? (all-inputs body))))
               (is (nil? (submit-button body))))))))))
 
 (deftest test-events

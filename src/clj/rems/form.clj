@@ -45,7 +45,7 @@
     value :value
     optional :optional
     readonly :readonly}]
-  [:div.form-group
+  [:div.form-group.field
    [:label {:for (id-to-name id)}
     title " "
     (when optional
@@ -60,7 +60,7 @@
     value :value
     optional :optional
     readonly :readonly}]
-  [:div.form-group
+  [:div.form-group.field
    [:label {:for (id-to-name id)}
     title " "
     (when optional
@@ -182,7 +182,7 @@
         (for [i (:items form)]
           (field (assoc i :readonly readonly?)))
         (when-let [licenses (not-empty (:licenses form))]
-          [:div.form-group
+          [:div.form-group.field
            [:h4 (text :t.form/licenses)]
            (for [l licenses]
              (field (assoc l :readonly readonly?)))])
