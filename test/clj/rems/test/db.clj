@@ -1,7 +1,8 @@
 (ns ^:integration rems.test.db
   "Namespace for tests that use an actual database."
-  (:require [cheshire.core :refer :all]
+  (:require [cheshire.core :as cheshire]
             [clojure.java.jdbc :as jdbc]
+            [clojure.string :refer [split-lines]]
             [clojure.test :refer :all]
             [conman.core :as conman]
             [luminus-migrations.core :as migrations]
@@ -12,11 +13,13 @@
             [rems.db.applications :as applications]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
+            [rems.db.entitlements :as entitlements]
             [rems.db.roles :as roles]
             [rems.db.users :as users]
             [rems.db.workflow-actors :as actors]
             [rems.test.tempura :refer [fake-tempura-fixture]]
-            [rems.util :refer [get-user-id]])
+            [rems.util :refer [get-user-id]]
+            [stub-http.core :as stub])
   (:import rems.auth.NotAuthorizedException))
 
 (use-fixtures
@@ -234,7 +237,7 @@
              (map #(select-keys % [:id :state])
                   (applications/get-applications))))
 
-      (is (= [111 222] (sort (map :resid (db/get-entitlements {:application app}))))
+      (is (= ["resid111" "resid222"] (sort (map :resid (db/get-entitlements {:application app}))))
           "should create entitlements for both resources"))))
 
 (deftest test-phases
@@ -544,7 +547,7 @@
   (db/add-user! {:user "pekka", :userattrs nil})
   (db/add-user! {:user "simo", :userattrs nil})
   (is (= 2 (count (db/get-users))))
-  (db/add-user! {:user "pekka", :userattrs (generate-string {"key" "value"})})
+  (db/add-user! {:user "pekka", :userattrs (cheshire/generate-string {"key" "value"})})
   (db/add-user! {:user "simo", :userattrs nil})
   (is (= 2 (count (db/get-users))))
   (is (= {"key" "value"} (users/get-user-attributes "pekka"))))
@@ -629,7 +632,9 @@
             (applications/approve-application app 1 "c2"))
           (is (= {:curround 1 :state "approved"} (fetch app)))
 
-          (is (= (db/get-entitlements) [{:catappid app :resid nil :userid uid}]))
+          (is (= [{:catappid app :resid nil :userid uid}]
+                 (map #(select-keys % [:catappid :resid :userid])
+                      (db/get-entitlements))))
 
           (is (= (->> (applications/get-application-state app)
                       :events
@@ -741,12 +746,14 @@
                  [{:round 0 :event "apply"}
                   {:round 0 :event "autoapprove"}
                   {:round 1 :event "autoapprove"}]))
-          (is (contains? (set (db/get-entitlements)) {:catappid auto-app :resid 1995 :userid uid}))))
+          (is (contains? (set (map #(select-keys % [:catappid :resid :userid])
+                                   (db/get-entitlements)))
+                         {:catappid auto-app :resid "ABC" :userid uid}))))
       (let [new-wf (:id (db/create-workflow! {:modifieruserid uid :owneruserid uid :title "3rd party review workflow" :fnlround 0}))
             new-item (:id (db/create-catalogue-item! {:title "A" :form nil :resid nil :wfid new-wf}))]
         (actors/add-approver! new-wf uid 0)
-        (db/add-user! {:user "third-party-reviewer", :userattrs (generate-string {"eppn" "third-party-reviewer" "mail" ""})})
-        (db/add-user! {:user "another-reviewer", :userattrs (generate-string {"eppn" "another-reviewer" "mail" ""})})
+        (db/add-user! {:user "third-party-reviewer", :userattrs (cheshire/generate-string {"eppn" "third-party-reviewer" "mail" ""})})
+        (db/add-user! {:user "another-reviewer", :userattrs (cheshire/generate-string {"eppn" "another-reviewer" "mail" ""})})
         (testing "3rd party review"
           (let [new-app (applications/create-new-draft new-wf)]
             (db/add-application-item! {:application new-app :item new-item})
@@ -839,3 +846,76 @@
                    [{:round 0 :event "apply" :comment nil}
                     {:round 0 :event "review-request" :comment "can you please review this?"}
                     {:round 0 :event "return" :comment "returning"}]))))))))
+
+(deftest test-get-entitlements-for-export
+  (db/add-user! {:user "jack" :userattrs nil})
+  (db/add-user! {:user "jill" :userattrs nil})
+  (let [wf (:id (db/create-workflow! {:modifieruserid "owner" :owneruserid "owner" :title "Test workflow" :fnlround 1}))
+        res1 (:id (db/create-resource! {:id 18 :resid "resource1" :prefix "pre" :modifieruserid "owner"}))
+        res2 (:id (db/create-resource! {:id 33 :resid "resource2" :prefix "pre" :modifieruserid "owner"}))
+        item1 (:id (db/create-catalogue-item! {:title "item1" :form nil :resid res1 :wfid wf}))
+        item2 (:id (db/create-catalogue-item! {:title "item2" :form nil :resid res2 :wfid wf}))
+        jack-app (binding [context/*user* {"eppn" "jack"}]
+                   (applications/create-new-draft wf))
+        jill-app (binding [context/*user* {"eppn" "jill"}]
+                   (applications/create-new-draft wf))]
+    (db/add-application-item! {:application jack-app :item item1})
+    (db/add-application-item! {:application jill-app :item item1})
+    (db/add-application-item! {:application jill-app :item item2})
+    (binding [context/*user* {"eppn" "jack"}]
+      (applications/submit-application jack-app))
+    (binding [context/*user* {"eppn" "jill"}]
+      (applications/submit-application jill-app))
+    ;; entitlements should now be added via autoapprove
+    (binding [context/*roles* #{:approver}]
+      (let [lines (split-lines (entitlements/get-entitlements-for-export))]
+        (is (= 4 (count lines))) ;; header + 3 resources
+        (is (some #(and (.contains % "resource1")
+                        (.contains % "jill")
+                        (.contains % (str jill-app)))
+                  lines))
+        (is (some #(and (.contains % "resource2")
+                        (.contains % "jill")
+                        (.contains % (str jill-app)))
+                  lines))
+        (is (some #(and (.contains % "resource1")
+                        (.contains % "jack")
+                        (.contains % (str jack-app)))
+                  lines))))
+    (binding [context/*roles* #{:applicant :reviewer}]
+      (is (thrown? NotAuthorizedException
+                   (entitlements/get-entitlements-for-export))))))
+
+(deftest test-entitlements-post
+  (testing "application that is not approved should not result in entitlements"
+    (with-redefs [rems.db.core/add-entitlement! #(throw (Error. "don't call me"))]
+      (entitlements/add-entitlements-for {:id 3
+                                          :state "applied"
+                                          :applicantuserid "bob"})))
+  (testing "application that is approved should result in POST"
+    (with-open [server (stub/start! {"/entitlements" {:status 200}})]
+      (with-redefs [rems.config/env {:entitlements-target
+                                     (str (:uri server) "/entitlements")}]
+        (let [uid "bob"
+              admin "owner"
+              prefix "foo"
+              wf (:id (db/create-workflow! {:modifieruserid admin :owneruserid admin :title "Test workflow" :fnlround 1}))
+              res1 (:id (db/create-resource! {:id 17 :resid "resource1" :prefix prefix :modifieruserid admin}))
+              res2 (:id (db/create-resource! {:id 32 :resid "resource2" :prefix prefix :modifieruserid admin}))
+              item1 (:id (db/create-catalogue-item! {:title "item1" :form nil :resid res1 :wfid wf}))
+              item2 (:id (db/create-catalogue-item! {:title "item2" :form nil :resid res2 :wfid wf}))]
+          (db/add-user! {:user uid :userattrs nil})
+          (binding [context/*user* {"eppn" uid}]
+            (let [application (applications/create-new-draft wf)]
+              (db/add-application-item! {:application application :item item1})
+              (db/add-application-item! {:application application :item item2})
+              ;; should get autoapproved, which calls add-entitlements-for
+              (applications/submit-application application)
+              (let [data (-> (stub/recorded-requests server)
+                             first
+                             :body
+                             (get "postData")
+                             cheshire/parse-string)]
+                (is (= [{"resource" "resource1" "application" application "user" "bob"}
+                        {"resource" "resource2" "application" application "user" "bob"}]
+                       data))))))))))

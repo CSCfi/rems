@@ -246,7 +246,6 @@
                                           (concat (hiccup-find [:div.form-group :input] body)
                                                   (hiccup-find [:div.form-group :textarea] body))))
             submit-button #(first (hiccup-find [:.submit-button] %))
-            children-of #(remove nil? (mapcat (partial drop 2) %))
             data {:items [{:type "text"}
                           {:type "texta"}]
                   :licenses [{:type "license" :licensetype "link"
@@ -263,10 +262,40 @@
           (testing state
             (let [body (form (assoc data :application {:id 1 :state state}))]
               (is (= [true true true] (map readonly? (all-inputs body))))
-              (is (nil? (submit-button body))))))
-        (testing "sees events"
-          (let [body (form (assoc data :application {:state "applied" :events [{:comment "hello"}]}))]
-            (is (not-empty (children-of (hiccup-find [:#events] body))) "Should see collapsible events block")))))))
+              (is (nil? (submit-button body))))))))))
+
+(deftest test-events
+  (with-fake-tempura
+    (let [get-comments #(mapv hiccup-string
+                              (hiccup-find [:#event-table :.event-comment] %))
+          data {:application
+                {:id 17
+                 :state "draft" ;; hack: this means we don't need to override rems.db.applications/can-approve?
+                 :events [{:event "apply" :comment "APPLY"}
+                          {:event "withdraw" :comment "WITHDRAW"}
+                          {:event "autoapprove" :comment "AUTO"}
+                          {:event "review-request" :comment "REQUEST"}
+                          {:event "third-party-review" :comment "THIRD"}
+                          {:event "review" :comment "REVIEW"}
+                          {:event "approve" :comment "APPROVE"}
+                          {:event "close" :comment "CLOSE"}]}}]
+      (doseq [role [:approver :reviewer]]
+        (testing role
+          (testing "sees all comments"
+            (binding [context/*roles* #{role}
+                      context/*user* {"eppn" "bob"}]
+              (let [body (form data)
+                    comments (get-comments body)]
+                (is (= (map :comment (get-in data [:application :events]))
+                       comments)))))))
+      (testing "applicant"
+        (binding [context/*roles* #{:applicant}
+                  context/*user* {"eppn" "bob"}]
+          (let [body (form data)
+                comments (get-comments body)]
+            (testing "doesn't see review events"
+              (= ["APPLY" "WITHDRAW" "AUTO" "APPROVE" "CLOSE"]
+                 comments))))))))
 
 (defn- get-actions [form-data]
   ;; TODO could look at button actions too
