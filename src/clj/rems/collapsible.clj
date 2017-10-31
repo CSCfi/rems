@@ -7,20 +7,27 @@
   [:div.card-header
    [:span.card-title title]])
 
+(defn- show-more-button
+  [id expanded]
+  [:div.collapse.collapse-toggle {:id (str id "more") :class (when-not expanded "show")}
+   [:a.text-primary {:onclick (str "$('#" id "').collapse('show'), $('#" id "more').collapse('hide'), $('#" id "less').collapse('show')")}
+    (text :t.collapse/show-more)]])
+
+(defn- show-less-button
+  [id expanded]
+  [:div.collapse.collapse-toggle {:id (str id "less") :class (when expanded "show")}
+   [:a.text-primary {:onclick (str "$('#" id "').collapse('hide'), $('#" id "more').collapse('show'), $('#" id "less').collapse('hide')")}
+    (text :t.collapse/show-less)]
+   ])
+
 (defn- block [id expanded content-always content-hideable]
   [:div.collapse-content
    [:div content-always]
    (when-not (empty? content-hideable)
      (list
-      [:div.collapse {:id id :class (when expanded "show")}
-       content-hideable]
-      [:div.collapse.collapse-toggle {:id (str id "more") :class (when-not expanded "show")}
-       [:a.text-primary {:onclick (str "$('#" id "').collapse('show'), $('#" id "more').collapse('hide'), $('#" id "less').collapse('show')")}
-        (text :t.collapse/show-more)]]
-      [:div.collapse.collapse-toggle {:id (str id "less") :class (when expanded "show")}
-       [:a.text-primary {:onclick (str "$('#" id "').collapse('hide'), $('#" id "more').collapse('show'), $('#" id "less').collapse('hide')")}
-        (text :t.collapse/show-less)]
-       ]))])
+      [:div.collapse {:id id :class (when expanded "show")} content-hideable]
+      (show-more-button id expanded)
+      (show-less-button id expanded)))])
 
 (defn component [{:keys [id class open? title always collapse]}]
   [:div.collapse-wrapper {:class class}
