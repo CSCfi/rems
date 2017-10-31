@@ -139,7 +139,7 @@
        :collapse (when (seq events)
                    (list
                     [:h4 (text :t.form/events)]
-                    (into [:table.table.table-hover.mb-0#event-table
+                    (into [:table#event-table.table.table-hover.mb-0
                            [:tr
                             [:th (text :t.form/user)]
                             [:th (text :t.form/event)]
