@@ -243,8 +243,8 @@
                           "checkbox" (:disabled attrs) ;; checkboxes are special
                           (:readonly attrs)))
             all-inputs (fn [body] (remove #(= "comment" (:name (second %)))
-                                          (concat (hiccup-find [:div.form-group :input] body)
-                                                  (hiccup-find [:div.form-group :textarea] body))))
+                                          (concat (hiccup-find [:div.form-group.field :input] body)
+                                                  (hiccup-find [:div.form-group.field :textarea] body))))
             submit-button #(first (hiccup-find [:.submit-button] %))
             data {:items [{:type "text"}
                           {:type "texta"}]

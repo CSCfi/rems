@@ -76,7 +76,9 @@
             :view "Näytä"
             :withdraw "Palauta muokattavaksi"
             :withdraw-success "Hakemus palautettu muokattavaksi"}
-  :applicant-info {:applicant "Hakija"}
+  :applicant-info {:applicant "Hakija"
+                   :email "Sähköposti"
+                   :username "Nimi"}
   :applications {:application "Hakemus"
                  :created "Luotu"
                  :empty "Sinulla ei ole hakemuksia."
@@ -169,4 +171,6 @@
            :approve "Hyväksyntä"
            :approved "Hyväksytty"
            :rejected "Hylätty"
-           :review "Katselmointi"}}}
+           :review "Katselmointi"}
+  :collapse {:show-more "Näytä lisää"
+             :show-less "Näytä vähemmän"}}}

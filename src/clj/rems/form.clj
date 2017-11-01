@@ -26,6 +26,7 @@
             [rems.db.core :as db]
             [rems.events :as events]
             [rems.guide :refer :all]
+            [rems.info-field :as info-field]
             [rems.layout :as layout]
             [rems.phase :refer [phases]]
             [rems.roles :refer [when-role has-roles?]]
@@ -37,11 +38,14 @@
 (defn- id-to-name [id]
   (str "field" id))
 
-(defn- text-field [{title :title id :id
-                    prompt :inputprompt value :value
-                    optional :optional
-                    readonly :readonly}]
-  [:div.form-group
+(defn- text-field
+  [{title :title
+    id :id
+    prompt :inputprompt
+    value :value
+    optional :optional
+    readonly :readonly}]
+  [:div.form-group.field
    [:label {:for (id-to-name id)}
     title " "
     (when optional
@@ -49,11 +53,14 @@
    [:input.form-control {:type "text" :name (id-to-name id) :placeholder prompt
                          :value value :readonly readonly}]])
 
-(defn- texta-field [{title :title id :id
-                     prompt :inputprompt value :value
-                     optional :optional
-                     readonly :readonly}]
-  [:div.form-group
+(defn- texta-field
+  [{title :title
+    id :id
+    prompt :inputprompt
+    value :value
+    optional :optional
+    readonly :readonly}]
+  [:div.form-group.field
    [:label {:for (id-to-name id)}
     title " "
     (when optional
@@ -75,13 +82,13 @@
    [:div.col
     content]])
 
-(defn- link-license [{title :title id :id textcontent :textcontent approved :approved
-                      readonly :readonly}]
+(defn- link-license
+  [{title :title id :id textcontent :textcontent approved :approved readonly :readonly}]
   (license id readonly approved
            [:a {:href textcontent :target "_blank"} (str " " title)]))
 
-(defn- text-license [{title :title id :id textcontent :textcontent approved :approved
-                      readonly :readonly}]
+(defn- text-license
+  [{title :title id :id textcontent :textcontent approved :approved readonly :readonly}]
   (license id readonly approved
            [:div.license-panel
             [:h6.license-title
@@ -115,29 +122,39 @@
     (or (has-roles? :reviewer :approver) ;; reviewer and approver can see everything
         (applicant-types (:event event)))))
 
-(defn- application-state [state events]
+(defn- application-state [state]
   (when state
-    [:div {:class (str "state-" state)}
+    (collapsible/component
+     {:id "state"
+      :class (str "state-" state)
+      :open? true
+      :title (text :t.applications/state)
+      :always [:div.state-display {:class (str "state-" state)} (text (localize-state state))]})))
+
+(defn- application-events [events]
+  (when events
+    [:div {:class "events"}
      (collapsible/component
-      "events"
-      false
-      [:span (text :t.applications/state) ": " (text (localize-state state))
-       (when-let [c (:comment (last events))] [:p.inline-comment [:br] (text :t.form/comment) ": " [:span.inline-comment-content] c])]
-      (when (seq events)
-        (list
-         [:h4 (text :t.form/events)]
-         (into [:table.table.table-hover.mb-0#event-table
-                [:tr
-                 [:th (text :t.form/user)]
-                 [:th (text :t.form/event)]
-                 [:th (text :t.form/comment)]
-                 [:th (text :t.form/date)]]]
-               (for [e events]
-                 [:tr
-                  [:td (:userid e)]
-                  [:td (text (localize-event (:event e)))]
-                  [:td.event-comment (:comment e)]
-                  [:td (localize-time (:time e))]])))))]))
+      {:id "events"
+       :title (text :t.form/events)
+       :always (when-let [c (:comment (last events))]
+                 [:div [:h4 (text :t.form/comment)]
+                  [:p [:span.inline-comment-content] c]])
+       :collapse (when (seq events)
+                   (list
+                    [:h4 (text :t.form/events)]
+                    (into [:table#event-table.table.table-hover.mb-0
+                           [:tr
+                            [:th (text :t.form/user)]
+                            [:th (text :t.form/event)]
+                            [:th (text :t.form/comment)]
+                            [:th (text :t.form/date)]]]
+                          (for [e events]
+                            [:tr
+                             [:td (:userid e)]
+                             [:td (text (localize-event (:event e)))]
+                             [:td.event-comment (:comment e)]
+                             [:td (localize-time (:time e))]]))))})]))
 
 
 (defn- form-fields [form]
@@ -150,45 +167,49 @@
         closeable? (and
                     (not new-application?)
                     (not= "closed" state))]
-    (collapsible/component "form"
-                           true
-                           (text :t.form/application)
-                           (list
-                            (events/approval-confirm-modal "close" (text :t.actions/close) application)
-                            (events/approval-confirm-modal "withdraw" (text :t.actions/withdraw) application)
-                            [:form {:method "post"
-                                    :action (let [app (:id application)]
-                                              (str "/form/" app "/save"))}
-                             (for [i (:items form)]
-                               (field (assoc i :readonly readonly?)))
-                             (when-let [licenses (not-empty (:licenses form))]
-                               [:div.form-group
-                                [:h4 (text :t.form/licenses)]
-                                (for [l licenses]
-                                  (field (assoc l :readonly readonly?)))])
-                             (anti-forgery-field)
-                             (when (or new-application?
-                                       (is-applicant? (:application form)))
-                               [:div.row
-                                [:div.col
-                                 [:a#back.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
-                                (into [:div.col.commands]
-                                      [(when closeable? [:button#close.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
-                                                         (text :t.actions/close)])
-                                       (when editable? [:button#save.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)])
-                                       (when editable? [:button#submit.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)])
-                                       (when withdrawable? [:button#withdraw.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#withdraw-modal"} (text :t.actions/withdraw)])
-                                       ])])
-                             ]))))
+    (collapsible/component
+     {:id "form"
+      :class "slow"
+      :open? true
+      :title (text :t.form/application)
+      :collapse
+      (list
+       (events/approval-confirm-modal "close" (text :t.actions/close) application)
+       (events/approval-confirm-modal "withdraw" (text :t.actions/withdraw) application)
+       [:form {:method "post"
+               :action (let [app (:id application)]
+                         (str "/form/" app "/save"))}
+        (for [i (:items form)]
+          (field (assoc i :readonly readonly?)))
+        (when-let [licenses (not-empty (:licenses form))]
+          [:div.form-group.field
+           [:h4 (text :t.form/licenses)]
+           (for [l licenses]
+             (field (assoc l :readonly readonly?)))])
+        (anti-forgery-field)
+        (when (or new-application?
+                  (is-applicant? (:application form)))
+          [:div.row
+           [:div.col
+            [:a#back.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
+           (into [:div.col.commands]
+                 [(when closeable? [:button#close.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
+                                    (text :t.actions/close)])
+                  (when editable? [:button#save.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)])
+                  (when editable? [:button#submit.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)])
+                  (when withdrawable? [:button#withdraw.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#withdraw-modal"} (text :t.actions/withdraw)])
+                  ])])
+        ])})))
 
 (defn- applied-resources [catalogue-items]
-  (collapsible/component "resources"
-                         true
-                         (text :t.form/resources)
-                         [:div.form-items.form-group
-                          [:ul
-                           (for [item catalogue-items]
-                             [:li (:title item)])]]))
+  (collapsible/component
+   {:id "resources"
+    :open? true
+    :title (text :t.form/resources)
+    :always [:div.form-items.form-group
+             [:ul
+              (for [item catalogue-items]
+                [:li (:title item)])]]}))
 
 
 (defn- form [form]
@@ -199,7 +220,9 @@
     (list
      [:h2 (text :t.applications/application)]
 
-     (application-state state (filter may-see-event? events))
+     (application-state state)
+
+     [:div.mt-3 (application-events (filter may-see-event? events))]
 
      [:div.my-3 (phases (get-application-phases state))]
 
@@ -445,7 +468,7 @@
    (example "form, approved"
             (form {:title "Form title"
                    :catalogue-items [{:title "An applied item"}]
-                   :application {:id 17 :state "approved" :events [{:comment "Looking good, approved!"}]}
+                   :application {:id 17 :state "approved" :events [{:event "approve" :comment "Looking good, approved!"}]}
                    :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
                            {:type "label" :title "Please input your wishes below."}
                            {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2" :value "def"}

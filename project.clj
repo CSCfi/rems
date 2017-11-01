@@ -19,7 +19,7 @@
                  [luminus-migrations "0.4.0" :exclusions [org.clojure/java.jdbc]]
                  [luminus-nrepl "0.1.4"]
                  [luminus/ring-ttl-session "0.3.2"]
-                 [macroz/hiccup-find "0.5.0" :exclusions [org.clojure/tools.reader]]
+                 [macroz/hiccup-find "0.5.1" :exclusions [org.clojure/tools.reader]]
                  [metosin/compojure-api "1.1.11" :exclusions [cheshire commons-codec com.google.code.findbugs/jsr305]]
                  [mount "0.1.11"]
                  [org.clojure/clojure "1.8.0"]
