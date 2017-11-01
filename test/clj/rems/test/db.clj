@@ -60,29 +60,30 @@
   (binding [context/*user* {"eppn" "test-user"}
             context/*lang* :en]
     (let [uid (get-user-id)
-          meta (db/create-form-meta! {:title "metatitle" :user uid})
+          form (db/create-form! {:title "internal-title" :user uid})
           wf (db/create-workflow! {:modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 0})
           license (db/create-license! {:modifieruserid uid :owneruserid uid :title "non-localized license" :type "link" :textcontent "http://test.org"})
           license-fi (db/create-license-localization! {:licid (:id license) :langcode "fi" :title "Testi lisenssi" :textcontent "http://testi.fi"})
           license-en (db/create-license-localization! {:licid (:id license) :langcode "en" :title "Test license" :textcontent "http://test.com"})
           wf-license (db/create-workflow-license! {:wfid (:id wf) :licid (:id license) :round 0})
-          item (db/create-catalogue-item! {:title "item" :form (:id meta) :resid nil :wfid (:id wf)})
-          form-en (db/create-form! {:title "entitle" :user uid})
-          form-fi (db/create-form! {:title "fititle" :user uid})
+          item (db/create-catalogue-item! {:title "item" :form (:id form) :resid nil :wfid (:id wf)})
           item-c (db/create-form-item!
-                  {:title "C" :type "text" :inputprompt "prompt" :user uid :value 0})
+                  {:type "text" :user uid :value 0})
           item-a (db/create-form-item!
-                  {:title "A" :type "text" :inputprompt "prompt" :user uid :value 0})
+                  {:type "text" :user uid :value 0})
           item-b (db/create-form-item!
-                  {:title "B" :type "text" :inputprompt "prompt" :user uid :value 0})
+                  {:type "text" :user uid :value 0})
           app-id (applications/create-new-draft (:id wf))]
       (db/add-application-item! {:application app-id :item (:id item)})
-      (db/link-form-meta! {:meta (:id meta) :form (:id form-en) :lang "en" :user uid})
-      (db/link-form-meta! {:meta (:id meta) :form (:id form-fi) :lang "fi" :user uid})
-      (db/link-form-item! {:form (:id form-en) :itemorder 2 :item (:id item-b) :user uid :optional false})
-      (db/link-form-item! {:form (:id form-en) :itemorder 1 :item (:id item-a) :user uid :optional false})
-      (db/link-form-item! {:form (:id form-en) :itemorder 3 :item (:id item-c) :user uid :optional false})
-      (db/link-form-item! {:form (:id form-fi) :itemorder 1 :item (:id item-a) :user uid :optional false})
+      (db/link-form-item! {:form (:id form) :itemorder 2 :item (:id item-b) :user uid :optional false})
+      (db/link-form-item! {:form (:id form) :itemorder 1 :item (:id item-a) :user uid :optional false})
+      (db/link-form-item! {:form (:id form) :itemorder 3 :item (:id item-c) :user uid :optional false})
+      (db/localize-form-item! {:item (:id item-a) :langcode "fi" :title "A-fi" :inputprompt "prompt"})
+      (db/localize-form-item! {:item (:id item-b) :langcode "fi" :title "B-fi" :inputprompt "prompt"})
+      (db/localize-form-item! {:item (:id item-c) :langcode "fi" :title "C-fi" :inputprompt "prompt"})
+      (db/localize-form-item! {:item (:id item-a) :langcode "en" :title "A-en" :inputprompt "prompt"})
+      (db/localize-form-item! {:item (:id item-b) :langcode "en" :title "B-en" :inputprompt "prompt"})
+      (db/localize-form-item! {:item (:id item-c) :langcode "en" :title "C-en" :inputprompt "prompt"})
 
       (db/add-user! {:user uid :userattrs nil})
       (actors/add-approver! (:id wf) uid 0)
@@ -100,10 +101,10 @@
                           (applications/get-form-for app-id))
                 form-ru (binding [context/*lang* :ru]
                           (applications/get-form-for app-id))]
-            (is (= "entitle" (:title form-en)) "title")
-            (is (= ["A" "B" "C"] (map :title (:items form-en))) "items should be in order")
-            (is (= "fititle" (:title form-fi)) "title")
-            (is (= ["A"] (map :title (:items form-fi))) "there should be only one item")
+            (is (= "internal-title" (:title form-en)) "title")
+            (is (= ["A-en" "B-en" "C-en"] (map :title (:items form-en))) "items should be in order")
+            (is (= "internal-title" (:title form-fi)) "title")
+            (is (= ["A-fi" "B-fi" "C-fi"] (map :title (:items form-fi))) "items should be in order")
             (is (= ["Testi lisenssi"] (map :title (:licenses form-fi))) "there should only be one license in Finnish")
             (is (= "http://testi.fi" (:textcontent (first (:licenses form-fi)))) "link should point to Finnish site")
             (is (= "Test license" (:title (first (:licenses form-en)))) "title should be in English")
@@ -114,7 +115,7 @@
       (testing "get partially filled form"
         (is app-id "sanity check")
         (db/save-field-value! {:application app-id
-                               :form (:id form-en)
+                               :form (:id form)
                                :item (:id item-b)
                                :user uid
                                :value "B"})
@@ -150,10 +151,10 @@
             (is (= [false] (map :approved (:licenses f))))))
         (testing "reset field value"
           (db/clear-field-value! {:application app-id
-                                  :form (:id form-en)
+                                  :form (:id form)
                                   :item (:id item-b)})
           (db/save-field-value! {:application app-id
-                                 :form (:id form-en)
+                                 :form (:id form)
                                  :item (:id item-b)
                                  :user uid
                                  :value "X"})

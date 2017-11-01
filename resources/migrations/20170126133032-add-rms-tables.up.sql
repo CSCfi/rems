@@ -47,11 +47,11 @@ CREATE TABLE workflow (
   endt timestamp NULL DEFAULT NULL
 );
 --;;
-CREATE TABLE application_form_meta (
+CREATE TABLE application_form (
   id serial NOT NULL PRIMARY KEY,
   ownerUserId varchar(255) NOT NULL,
   modifierUserId varchar(255) NOT NULL,
-  title varchar(256) DEFAULT NULL,
+  title varchar(256) NOT NULL, -- TODO: not localized yet, but not used either?
   visibility scope NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL
@@ -67,7 +67,7 @@ CREATE TABLE catalogue_item (
   endt timestamp NULL DEFAULT NULL,
   CONSTRAINT catalogue_item_ibfk_1 FOREIGN KEY (resId) REFERENCES resource (id),
   CONSTRAINT catalogue_item_ibfk_2 FOREIGN KEY (wfId) REFERENCES workflow (id),
-  CONSTRAINT catalogue_item_ibfk_3 FOREIGN KEY (formId) REFERENCES application_form_meta (id)
+  CONSTRAINT catalogue_item_ibfk_3 FOREIGN KEY (formId) REFERENCES application_form (id)
 );
 --;;
 CREATE TABLE catalogue_item_application (
@@ -80,28 +80,27 @@ CREATE TABLE catalogue_item_application (
   CONSTRAINT catalogue_item_application_ibfk_1 FOREIGN KEY (wfid) REFERENCES workflow (id)
 );
 --;;
-CREATE TABLE application_form (
-  id serial NOT NULL PRIMARY KEY,
-  ownerUserId varchar(255) NOT NULL,
-  modifierUserId varchar(255) NOT NULL,
-  title varchar(256) NOT NULL,
-  visibility scope NOT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL
-);
---;;
 CREATE TABLE application_form_item (
   id serial NOT NULL PRIMARY KEY,
   ownerUserId varchar(255) NOT NULL,
   modifierUserId varchar(255) NOT NULL,
-  title varchar(256) NOT NULL,
-  toolTip varchar(256) DEFAULT NULL,
-  inputPrompt varchar(256) DEFAULT NULL,
   type itemtype DEFAULT NULL,
   value bigint NOT NULL,
   visibility scope NOT NULL,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL
+);
+--;;
+CREATE TABLE application_form_item_localization (
+  itemId integer NOT NULL,
+  langCode varchar(64) NOT NULL,
+  title varchar(256) NOT NULL,
+  -- the old schema had this, but we don't use it currently:
+  toolTip varchar(256) DEFAULT NULL,
+  inputPrompt varchar(256) DEFAULT NULL,
+  -- do we need ownerUserId, modifierUserId, visibility, start, end?
+  PRIMARY KEY (itemId, langCode),
+  FOREIGN KEY (itemId) REFERENCES application_form_item (id)
 );
 --;;
 CREATE TABLE application_form_item_map (
@@ -128,18 +127,6 @@ CREATE TABLE license (
   visibility scope NOT NULL DEFAULT 'private',
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL
-);
---;;
-CREATE TABLE application_form_meta_map (
-  id serial NOT NULL PRIMARY KEY,
-  metaFormId integer DEFAULT NULL,
-  modifierUserId varchar(255) NOT NULL,
-  langCode varchar(64) DEFAULT NULL,
-  formId integer DEFAULT NULL,
-  start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  endt timestamp NULL DEFAULT NULL,
-  CONSTRAINT application_form_meta_map_ibfk_1 FOREIGN KEY (metaFormId) REFERENCES application_form_meta (id),
-  CONSTRAINT application_form_meta_map_ibfk_2 FOREIGN KEY (formId) REFERENCES application_form (id)
 );
 --;;
 CREATE TABLE application_license_approval_values (

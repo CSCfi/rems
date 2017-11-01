@@ -41,69 +41,41 @@ INSERT INTO catalogue_item_localization
   (catid, langcode, title)
 VALUES (:id, :langcode, :title)
 
--- :name get-forms :? :*
-SELECT
-  meta.id as metaid,
-  form.id as formid,
-  meta.title as metatitle,
-  form.title as formtitle,
-  meta.visibility as metavisibility,
-  form.visibility as formvisibility,
-  langcode
-FROM application_form_meta meta
-LEFT OUTER JOIN application_form_meta_map metamap ON meta.id = metamap.metaFormId
-LEFT OUTER JOIN application_form form ON form.id = metamap.formId
-
 -- :name get-form-for-application :? :1
 SELECT
-  meta.id as metaid,
   form.id as formid,
-  meta.title as metatitle,
   form.title as formtitle,
-  meta.visibility as metavisibility,
-  form.visibility as formvisibility,
-  langcode
+  form.visibility as formvisibility
 FROM catalogue_item_application_items ciai
 LEFT OUTER JOIN catalogue_item ci ON ci.id = ciai.catItemId
-LEFT OUTER JOIN application_form_meta meta ON ci.formId = meta.id
-LEFT OUTER JOIN application_form_meta_map metamap ON meta.id = metamap.metaFormId
-LEFT OUTER JOIN application_form form ON form.id = metamap.formId
+LEFT OUTER JOIN application_form form ON form.id = ci.formId
 WHERE ciai.catAppId = :application
-  AND (langcode = :lang
-       OR langcode is NULL) -- nonlocalized form
 
 -- :name get-form-for-item :? :1
 SELECT
-  meta.id as metaid,
   form.id as formid,
-  meta.title as metatitle,
   form.title as formtitle,
-  meta.visibility as metavisibility,
-  form.visibility as formvisibility,
-  langcode
+  form.visibility as formvisibility
 FROM catalogue_item ci
-LEFT OUTER JOIN application_form_meta meta ON ci.formId = meta.id
-LEFT OUTER JOIN application_form_meta_map metamap ON meta.id = metamap.metaFormId
-LEFT OUTER JOIN application_form form ON form.id = metamap.formId
+LEFT OUTER JOIN application_form form ON form.id = ci.formId
 WHERE ci.id = :item
-  AND (langcode = :lang
-       OR langcode is NULL) -- nonlocalized form
 
 -- :name get-form-items :? :*
 SELECT
   item.id,
-  item.title,
-  inputprompt,
   formitemoptional,
   type,
   value,
   itemorder,
-  tooltip,
-  item.visibility
+  item.visibility,
+  loc.title,
+  loc.inputprompt
 FROM application_form form
 LEFT OUTER JOIN application_form_item_map itemmap ON form.id = itemmap.formId
 LEFT OUTER JOIN application_form_item item ON item.id = itemmap.formItemId
+LEFT OUTER JOIN application_form_item_localization loc ON loc.itemId = item.id
 WHERE form.id = :id
+  AND loc.langCode = :langcode
 ORDER BY itemorder
 
 -- :name create-form! :insert
@@ -112,29 +84,23 @@ INSERT INTO application_form
 VALUES
 (:title, :user, :user, 'public')
 
--- :name create-form-meta! :insert
-INSERT INTO application_form_meta
-(title, ownerUserId, modifierUserId, visibility)
-VALUES
-(:title, :user, :user, 'public')
-
--- :name link-form-meta! :insert
-INSERT INTO application_form_meta_map
-(metaFormId, formId, langcode, modifierUserId)
-VALUES
-(:meta, :form, :lang, :user)
-
 -- :name create-form-item! :insert
 INSERT INTO application_form_item
-(title, type, inputPrompt, value, modifierUserId, ownerUserId, visibility)
+(type, value, modifierUserId, ownerUserId, visibility)
 VALUES
-(:title, CAST (:type as itemtype), :inputprompt, :value, :user, :user, 'public')
+(CAST (:type as itemtype), :value, :user, :user, 'public')
 
 -- :name link-form-item! :insert
 INSERT INTO application_form_item_map
 (formId, formItemId, modifierUserId, itemOrder, formItemOptional)
 VALUES
 (:form, :item, :user, :itemorder, :optional)
+
+-- :name localize-form-item! :insert
+INSERT INTO application_form_item_localization
+(itemId, langCode, title, inputPrompt)
+VALUES
+(:item, :langcode, :title, :inputprompt)
 
 -- :name create-application! :insert
 INSERT INTO catalogue_item_application

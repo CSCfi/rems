@@ -8,6 +8,8 @@ DROP TABLE IF EXISTS application_form_item CASCADE;
 --;;
 DROP TABLE IF EXISTS application_form_item_map CASCADE;
 --;;
+DROP TABLE IF EXISTS application_form_item_localization CASCADE;
+--;;
 DROP TABLE IF EXISTS application_form_item_string_values CASCADE;
 --;;
 DROP TABLE IF EXISTS application_form_meta CASCADE;

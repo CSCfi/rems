@@ -45,7 +45,7 @@
                          (authenticate api-key user-id)
                          (json {:operation "save"
                                 :catalogue-items [catid]
-                                :items {2 "REST-Test"}})
+                                :items {1 "REST-Test"}})
                          app)
             cmd-response (read-body response)
             application-id (:id cmd-response)]
@@ -74,9 +74,9 @@
                              (json {:operation "send"
                                     :application-id application-id
                                     :catalogue-items [catid]
-                                    :items {2 "REST-Test"
-                                            5 "2017-2018"
-                                            4 "The purpose is to test this REST service.}"}
+                                    :items {1 "REST-Test"
+                                            2 "2017-2018"
+                                            3 "The purpose is to test this REST service.}"}
                                     :licenses {1 "approved" 2 "approved"}})
                              app)
                 cmd-response (read-body response)]
