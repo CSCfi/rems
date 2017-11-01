@@ -36,6 +36,7 @@
 
 (defn guide []
   (list
+   (component-info catalogue-item)
    (example "catalogue-item"
             [:table.rems-table
              (catalogue-item {:title "Item title"})])
@@ -51,6 +52,7 @@
              (with-language :en
                (catalogue-item {:title "Not used when there are localizations" :localizations {:fi {:title "Suomenkielinen title"} :en {:title "English title"}}}))])
 
+   (component-info catalogue-list)
    (example "catalogue-list empty"
             (catalogue-list []))
    (example "catalogue-list with two items"

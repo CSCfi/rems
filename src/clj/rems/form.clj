@@ -417,6 +417,7 @@
 (defn guide
   []
   (list
+   (component-info field)
    (example "field of type \"text\""
             [:form
              (field {:type "text" :title "Title" :inputprompt "prompt"})])
@@ -439,6 +440,8 @@
    (example "field of unsupported type"
             [:form
              (field {:type "unsupported" :title "Title" :inputprompt "prompt"})])
+
+   (component-info form)
    (example "form, partially filled"
             (form {:title "Form title"
                    :application {:id 17 :state "draft"}

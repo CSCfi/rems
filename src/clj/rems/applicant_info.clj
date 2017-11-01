@@ -24,6 +24,7 @@
 (defn guide
   []
   (list
+   (component-info details)
    (example "applicant-info for applicant shows no details"
             (binding [context/*roles* #{:applicant}]
               (details "info1" {"eppn" "developer@uu.id" "commonName" "Deve Loper"})))
