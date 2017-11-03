@@ -93,13 +93,13 @@ CREATE TABLE application_form_item (
 --;;
 CREATE TABLE application_form_item_localization (
   itemId integer NOT NULL,
-  langCode varchar(64) NOT NULL,
+  langCode varchar(64), -- null means default value
   title varchar(256) NOT NULL,
   -- the old schema had this, but we don't use it currently:
   toolTip varchar(256) DEFAULT NULL,
   inputPrompt varchar(256) DEFAULT NULL,
   -- do we need ownerUserId, modifierUserId, visibility, start, end?
-  PRIMARY KEY (itemId, langCode),
+  UNIQUE (itemId, langCode), -- can't be PRIMARY KEY since langCode can be null
   FOREIGN KEY (itemId) REFERENCES application_form_item (id)
 );
 --;;
