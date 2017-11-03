@@ -10,7 +10,7 @@
 
 
 (defn view-button [app]
-  [:a.btn.btn-secondary
+  [:a.btn.btn-primary
    {:href (str "/form/" (:id app))}
    (text :t.applications/view)])
 
