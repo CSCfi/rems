@@ -26,8 +26,10 @@ Transfer script
 
 Not it may take up to 5 minutes for the DB caches to reload, and reload e.g. localization texts. To force this you can restart the server.
 
+In case your database requires a password to function, you can provide a password by modifying the db.env file, found in the project root folder, appropriately.
+
 ```
-PGHOST=172.17.0.2 PGUSER=rems ./transfer-db.sh demo_rems-25-Jan-2017.sql
+PGHOST=172.17.0.1 PGUSER=rems PGDATABASE=rems ./transfer-db.sh demo_rems-25-Jan-2017.sql
 ```
 
 For development you can just run:
