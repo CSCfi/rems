@@ -37,13 +37,13 @@ CREATE TABLE transfer.migrated_application_event (
 );
 
 -- data created by the app that might reference data we want to clear
+DELETE FROM public.entitlement CASCADE;
 DELETE FROM public.application_text_values CASCADE;
 DELETE FROM public.catalogue_item_application_items CASCADE;
 DELETE FROM public.catalogue_item_application_licenses CASCADE;
 DELETE FROM public.catalogue_item_application CASCADE;
 
 -- clear existing data
-DELETE FROM public.entitlement CASCADE;
 DELETE FROM public.application_event CASCADE;
 DELETE FROM public.workflow_actors CASCADE;
 DELETE FROM public.workflow_licenses CASCADE;
@@ -195,7 +195,23 @@ SELECT wfId, apprUserId, 'approver' AS ROLE, round, start, "end" FROM transfer.r
 INSERT INTO public.workflow_actors (wfId, actorUserId, role, round, start, endt)
 SELECT wfId, revUserId, 'reviewer' AS ROLE, round, start, "end" FROM transfer.rms_workflow_reviewers;
 
+-- applications
+
+INSERT INTO public.catalogue_item_application (id, start, endt, applicantUserId, modifierUserId, wfid)
+SELECT cia.id, cia.start, cia.end, cia.applicantUserId, cia.modifierUserId, item.wfid
+FROM transfer.rms_catalogue_item_application cia
+LEFT JOIN transfer.rms_catalogue_item item ON cia.catId = item.id;
+
 -- events
+
+-- create fake users so that application_event foreign keys work
+-- TODO proper user migration
+INSERT INTO users (userId)
+SELECT wfApprId FROM transfer.rms_catalogue_item_application_approvers
+UNION
+SELECT revUserId FROM transfer.rms_catalogue_item_application_reviewers
+UNION
+SELECT modifierUserId FROM transfer.rms_catalogue_item_application_state;
 
 INSERT INTO transfer.migrated_application_event (appId, userId, round, event, comment, time)
 SELECT catAppId, wfApprId, round, 'approve' AS EVENT, comment, start FROM transfer.rms_catalogue_item_application_approvers
