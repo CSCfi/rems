@@ -9,18 +9,19 @@
                  [org.clojars.runa/conjure "2.2.0"]
                  [compojure "1.6.0"]
                  [com.taoensso/tempura "1.1.2"]
-                 [conman "0.6.7"]
+                 [conman "0.7.1" :exclusions [org.clojure/tools.reader]]
                  [cprop "0.1.11"]
                  [garden "1.3.2"]
-                 [haka-buddy "0.2.1" :exclusions [cheshire commons-codec]]
+                 [haka-buddy "0.2.1" :exclusions [cheshire]]
                  [hiccup "1.0.5"]
                  [hickory "0.7.1" :exclusions [org.clojure/tools.reader]]
-                 [luminus-jetty "0.1.4" :exclusions [org.clojure/tools.reader]]
-                 [luminus-migrations "0.4.0" :exclusions [org.clojure/java.jdbc]]
+                 [luminus-jetty "0.1.5" :exclusions [org.clojure/tools.reader]]
+                 [luminus-migrations "0.4.2"]
                  [luminus-nrepl "0.1.4"]
                  [luminus/ring-ttl-session "0.3.2"]
                  [macroz/hiccup-find "0.5.1" :exclusions [org.clojure/tools.reader]]
-                 [metosin/compojure-api "1.1.11" :exclusions [cheshire commons-codec com.google.code.findbugs/jsr305]]
+                 [metosin/compojure-api "1.1.11" :exclusions [cheshire
+                                                              com.google.code.findbugs/jsr305]]
                  [mount "0.1.11"]
                  [org.clojure/clojure "1.8.0"]
                  [org.clojure/core.memoize "0.5.9"]
@@ -33,12 +34,12 @@
                  [org.webjars/jquery "3.2.1"]
                  [com.draines/postal "2.0.2"]
                  [prone "1.1.4"]
-                 [ring-middleware-format "0.7.2" :exclusions [commons-codec]]
+                 [ring-middleware-format "0.7.2"]
                  [ring-webjars "0.2.0"]
-                 [ring/ring-core "1.6.2"]
+                 [ring/ring-core "1.6.3"]
                  [ring/ring-defaults "0.3.1"]
-                 [ring/ring-devel "1.6.2"]
-                 [ring/ring-servlet "1.6.2"]]
+                 [ring/ring-devel "1.6.3"]
+                 [ring/ring-servlet "1.6.3"]]
 
   :min-lein-version "2.0.0"
 
@@ -49,9 +50,9 @@
   :main rems.standalone
   :migratus {:store :database :db ~(get (System/getenv) "DATABASE_URL")}
 
-  :plugins [[lein-cprop "1.0.1"]
+  :plugins [[lein-cprop "1.0.3"]
             [lein-uberwar "0.2.0"]
-            [migratus-lein "0.4.3"]]
+            [migratus-lein "0.5.2"]]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled"
                                   "resources/public/css/compiled"
@@ -78,19 +79,15 @@
    :dev           [:project/dev :profiles/dev]
    :test          [:project/dev :project/test :profiles/test]
 
-   :project/dev  {:dependencies [[clj-webdriver/clj-webdriver "0.7.2" :exclusions [commons-logging commons-codec]]
+   :project/dev  {:dependencies [[clj-webdriver/clj-webdriver "0.7.2" :exclusions [commons-logging]]
                                  [directory-naming/naming-java "0.8"]
                                  [org.seleniumhq.selenium/selenium-server "3.0.1" :exclusions [com.google.code.gson/gson
-                                                                                               commons-logging
-                                                                                               commons-codec
-                                                                                               org.apache.httpcomponents/httpclient
-                                                                                               org.apache.httpcomponents/httpcore
-                                                                                               org.apache.httpcomponents/httpmime]]
-                                 [pjstadig/humane-test-output "0.8.1"]
+                                                                                               commons-logging]]
+                                 [pjstadig/humane-test-output "0.8.3"]
                                  [ring/ring-mock "0.3.1"]
                                  [se.haleby/stub-http "0.2.3"]]
-                  :plugins [[com.jakemccrary/lein-test-refresh "0.14.0"]
-                            [lein-cloverage "1.0.9" :exclusions [org.clojure/clojure]]]
+                  :plugins [[com.jakemccrary/lein-test-refresh "0.21.1"]
+                            [lein-cloverage "1.0.10"]]
 
                   :aot [rems.auth.NotAuthorizedException]
 
