@@ -52,7 +52,7 @@
    (if (:component-guide +defaults+)
      guide-routes
      never-match-route)
-   (if (:fake-shibboleth +defaults+)
+   (if (= (:authentication +defaults+) :fake-shibboleth)
      fake-shibboleth-routes
      never-match-route)
    (if-let [path (:serve-static +defaults+)]
