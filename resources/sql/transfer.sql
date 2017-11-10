@@ -94,8 +94,7 @@ SELECT id, ownerUserId, modifierUserId, COALESCE(title,'unknown'), visibility, s
 FROM transfer.rms_application_form_meta;
 
 -- Create a table for form items
-DROP TABLE IF EXISTS migrated_form_item;
-CREATE TABLE migrated_form_item (
+CREATE TABLE transfer.migrated_form_item (
   metaId integer,
   langCode varchar(64),
   itemOrder integer,
@@ -103,7 +102,7 @@ CREATE TABLE migrated_form_item (
   itemId integer
 );
 
-INSERT INTO migrated_form_item (metaId, langCode, itemOrder, itemMapId, itemId)
+INSERT INTO transfer.migrated_form_item (metaId, langCode, itemOrder, itemMapId, itemId)
 SELECT
   meta.id, metamap.langCode, itemmap.itemOrder, itemmap.id, item.id
 FROM transfer.rms_application_form_meta meta
@@ -113,16 +112,15 @@ LEFT JOIN transfer.rms_application_form_item_map itemmap ON itemmap.formId = for
 LEFT JOIN transfer.rms_application_form_item item ON item.id = itemmap.formItemId;
 
 -- Allocate item ids
-DROP TABLE IF EXISTS migrated_item_ids;
-CREATE TABLE migrated_item_ids (
+CREATE TABLE transfer.migrated_item_ids (
   id serial,
   metaId integer,
   itemOrder integer
 );
 
-INSERT INTO migrated_item_ids (metaId, itemOrder)
+INSERT INTO transfer.migrated_item_ids (metaId, itemOrder)
 SELECT DISTINCT metaId, itemOrder
-FROM migrated_form_item;
+FROM transfer.migrated_form_item;
 
 -- Create form items, but only one per language
 INSERT INTO public.application_form_item (id, type, value, visibility, ownerUserId, modifierUserId, start, endt)
@@ -136,8 +134,8 @@ SELECT
   item.modifierUserId,
   item.start,
   item.end
-FROM migrated_form_item mig
-LEFT JOIN migrated_item_ids ids ON ids.metaId = mig.metaId AND ids.itemOrder = mig.itemOrder
+FROM transfer.migrated_form_item mig
+LEFT JOIN transfer.migrated_item_ids ids ON ids.metaId = mig.metaId AND ids.itemOrder = mig.itemOrder
 LEFT JOIN transfer.rms_application_form_item item ON item.id = mig.itemId;
 
 -- Create form-item mappings
@@ -151,8 +149,8 @@ SELECT
   itemmap.modifierUserId,
   itemmap.start,
   itemmap.end
-FROM migrated_form_item mig
-LEFT JOIN migrated_item_ids ids ON ids.metaId = mig.metaId AND ids.itemOrder = mig.itemOrder
+FROM transfer.migrated_form_item mig
+LEFT JOIN transfer.migrated_item_ids ids ON ids.metaId = mig.metaId AND ids.itemOrder = mig.itemOrder
 LEFT JOIN transfer.rms_application_form_item_map itemmap ON itemmap.id = mig.itemMapId;
 
 -- Create localizations
@@ -165,8 +163,8 @@ SELECT
   item.toolTip,
   item.inputPrompt
 FROM public.application_form_item_map itemmap
-LEFT JOIN migrated_form_item mig ON mig.metaId = itemmap.formId AND mig.itemOrder = itemmap.itemOrder
-LEFT JOIN migrated_item_ids ids ON ids.metaId = mig.metaId AND ids.itemOrder = mig.itemOrder
+LEFT JOIN transfer.migrated_form_item mig ON mig.metaId = itemmap.formId AND mig.itemOrder = itemmap.itemOrder
+LEFT JOIN transfer.migrated_item_ids ids ON ids.metaId = mig.metaId AND ids.itemOrder = mig.itemOrder
 LEFT JOIN transfer.rms_application_form_item item ON item.id = mig.itemId;
 
 -- catalogue items
@@ -212,7 +210,7 @@ SELECT catAppId, catId FROM transfer.rms_catalogue_item_application_catid_overfl
 
 -- create fake users so that application_event foreign keys work
 -- TODO proper user migration
-INSERT INTO users (userId)
+INSERT INTO public.users (userId)
 SELECT wfApprId FROM transfer.rms_catalogue_item_application_approvers
 UNION
 SELECT revUserId FROM transfer.rms_catalogue_item_application_reviewers
@@ -268,9 +266,13 @@ ORDER BY time;
 INSERT INTO public.entitlement
 SELECT * FROM transfer.rms_entitlement;
 
+-- drop created tables
+DROP TABLE IF EXISTS transfer.migrated_application_event CASCADE;
+DROP TABLE IF EXISTS transfer.migrated_form_item;
+DROP TABLE IF EXISTS transfer.migrated_item_ids;
+
 -- if all casts are not dropped, the next pgloader run might fail
 -- (can't drop a type that is referenced by a cast)
-DROP TABLE IF EXISTS transfer.migrated_application_event CASCADE;
 DROP CAST IF EXISTS (transfer.rms_workflow_visibility AS public.scope);
 DROP CAST IF EXISTS (transfer.rms_application_form_meta_visibility AS public.scope);
 DROP CAST IF EXISTS (transfer.rms_application_form_visibility AS public.scope);
