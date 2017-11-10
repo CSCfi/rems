@@ -41,10 +41,11 @@ DELETE FROM public.entitlement CASCADE;
 DELETE FROM public.application_text_values CASCADE;
 DELETE FROM public.catalogue_item_application_items CASCADE;
 DELETE FROM public.catalogue_item_application_licenses CASCADE;
+DELETE FROM public.application_event CASCADE;
+DELETE FROM public.users CASCADE;
 DELETE FROM public.catalogue_item_application CASCADE;
 
 -- clear existing data
-DELETE FROM public.application_event CASCADE;
 DELETE FROM public.workflow_actors CASCADE;
 DELETE FROM public.workflow_licenses CASCADE;
 DELETE FROM public.license_localization CASCADE;
@@ -201,6 +202,11 @@ INSERT INTO public.catalogue_item_application (id, start, endt, applicantUserId,
 SELECT cia.id, cia.start, cia.end, cia.applicantUserId, cia.modifierUserId, item.wfid
 FROM transfer.rms_catalogue_item_application cia
 LEFT JOIN transfer.rms_catalogue_item item ON cia.catId = item.id;
+
+INSERT INTO public.catalogue_item_application_items (catAppId, catItemId)
+SELECT id, catId FROM transfer.rms_catalogue_item_application
+UNION
+SELECT catAppId, catId FROM transfer.rms_catalogue_item_application_catid_overflow;
 
 -- events
 
