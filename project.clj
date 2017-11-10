@@ -6,6 +6,7 @@
   :dependencies [[ch.qos.logback/logback-classic "1.2.3"]
                  [clj-http "3.7.0"]
                  [clj-time "0.14.0"]
+                 [org.clojars.pntblnk/clj-ldap "0.0.14"]
                  [org.clojars.runa/conjure "2.2.0"]
                  [compojure "1.6.0"]
                  [com.taoensso/tempura "1.1.2"]
