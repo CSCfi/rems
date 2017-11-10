@@ -115,6 +115,18 @@
      :two-round two-round
      :different different}))
 
+(defn- create-resource-license! [resid]
+  (let [licid (:id (db/create-license!
+                     {:modifieruserid "owner" :owneruserid "owner" :title "resource license"
+                      :type "link" :textcontent "http://invalid"}))]
+    (db/create-license-localization!
+      {:licid licid :langcode "en" :title "Apache License 2.0"
+       :textcontent "https://www.apache.org/licenses/LICENSE-2.0"})
+    (db/create-license-localization!
+      {:licid licid :langcode "fi" :title "Apache lisenssi 2.0"
+       :textcontent "https://www.apache.org/licenses/LICENSE-2.0"})
+    (db/create-resource-license! {:resid resid :licid licid})))
+
 (defn- create-catalogue-item! [resource workflow form localizations]
   (let [id (:id (db/create-catalogue-item!
                  {:title "non-localized title" :resid resource :wfid workflow :form form}))]
@@ -159,6 +171,8 @@
 (defn create-test-data! []
   (create-users-and-roles!)
   (db/create-resource! {:id 1 :resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1})
+  (db/create-resource! {:id 2 :resid "Extra Data" :prefix "nbn" :modifieruserid 1})
+  (create-resource-license! 2)
   (let [form (create-basic-form!)
         workflows (create-workflows! "developer" "bob" "carl")
         minimal (create-catalogue-item! 1 (:minimal workflows) form
@@ -167,6 +181,9 @@
         simple (create-catalogue-item! 1 (:simple workflows) form
                                        {"en" "ELFA Corpus, one approval"
                                         "fi" "ELFA-korpus, yksi hyväksyntä"})
+        bundable (create-catalogue-item! 2 (:simple workflows) form
+                                         {"en" "ELFA Corpus, one approval (extra data)"
+                                          "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti)"})
         with-review (create-catalogue-item! 1 (:with-review workflows) form
                                             {"en" "ELFA Corpus, with review"
                                              "fi" "ELFA-korpus, katselmoinnilla"})
@@ -178,6 +195,8 @@
 (defn create-demo-data! []
   (create-demo-users-and-roles!)
   (db/create-resource! {:id 1 :resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1})
+  (db/create-resource! {:id 2 :resid "Extra Data" :prefix "nbn" :modifieruserid 1})
+  (create-resource-license! 2)
   (let [form (create-basic-form!)
         workflows (create-workflows! "RDapprover1@funet.fi" "RDapprover2@funet.fi" "RDreview@funet.fi")
         minimal (create-catalogue-item! 1 (:minimal workflows) form
@@ -186,6 +205,9 @@
         simple (create-catalogue-item! 1 (:simple workflows) form
                                        {"en" "ELFA Corpus, one approval"
                                         "fi" "ELFA-korpus, yksi hyväksyntä"})
+        bundable (create-catalogue-item! 2 (:simple workflows) form
+                                         {"en" "ELFA Corpus, one approval (extra data)"
+                                          "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti)"})
         with-review (create-catalogue-item! 1 (:with-review workflows) form
                                             {"en" "ELFA Corpus, with review"
                                              "fi" "ELFA-korpus, katselmoinnilla"})

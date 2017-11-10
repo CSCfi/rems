@@ -218,6 +218,12 @@ INSERT INTO workflow_licenses
 VALUES
 (:wfid, :licid, :round)
 
+-- :name create-resource-license! :insert
+INSERT INTO resource_licenses
+(resid, licid)
+VALUES
+(:resid, :licid)
+
 -- :name create-workflow-actor! :insert
 INSERT INTO workflow_actors
 (wfid, actoruserid, role, round)
