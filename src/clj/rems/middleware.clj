@@ -14,7 +14,7 @@
             [rems.language-switcher :refer [+default-language+]]
             [rems.layout :refer [error-page]]
             [rems.locales :refer [tconfig]]
-            [rems.util :refer [get-user-id]]
+            [rems.util :refer [get-user-id getx]]
             [ring-ttl-session.core :refer [ttl-memory-store]]
             [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
             [ring.middleware.defaults :refer [site-defaults
@@ -126,7 +126,7 @@
     (binding [context/*user* (:identity request)]
       (handler request))))
 
-(defmulti wrap-auth (fn [handler type] type))
+(defmulti wrap-auth (fn [handler type] (prn :ENV env) type))
 
 (defmethod wrap-auth :fake-shibboleth [handler _]
   (let [backend (session-backend)]
@@ -185,7 +185,7 @@
       wrap-context
       wrap-webapp-context
       wrap-service-context
-      (wrap-auth (:authentication +defaults+))
+      (wrap-auth (getx env :authentication))
       wrap-webjars
       wrap-csrf
       (wrap-defaults +wrap-defaults-settings+)
