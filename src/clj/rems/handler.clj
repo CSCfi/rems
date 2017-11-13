@@ -3,6 +3,7 @@
             [compojure.core :refer [routes wrap-routes]]
             [compojure.route :as route]
             [mount.core :as mount]
+            [rems.config :refer [env]]
             [rems.env :refer [+defaults+]]
             [rems.layout :refer [error-page]]
             [rems.middleware :as middleware]
@@ -37,7 +38,7 @@
   (error-page {:status 404
                :title "Page not found"}))
 
-(def normal-routes
+(defn normal-routes []
   (routes
    #'public-routes
    (wrap-routes #'secured-routes middleware/wrap-restricted)
@@ -46,13 +47,13 @@
 (def never-match-route
   (constantly nil))
 
-(def app-routes
+(defn app-routes []
   (routes
-   normal-routes
+   (normal-routes)
    (if (:component-guide +defaults+)
      guide-routes
      never-match-route)
-   (if (:fake-shibboleth +defaults+)
+   (if (= (:authentication env) :fake-shibboleth)
      fake-shibboleth-routes
      never-match-route)
    (if-let [path (:serve-static +defaults+)]
@@ -60,4 +61,7 @@
      never-match-route)
    not-found))
 
-(def app (middleware/wrap-base #'app-routes))
+;; we use mount to construct the app so that middleware can access
+;; mount state (e.g. rems.env/config)
+(mount/defstate app
+  :start (middleware/wrap-base (app-routes)))

@@ -14,7 +14,7 @@
             [rems.language-switcher :refer [+default-language+]]
             [rems.layout :refer [error-page]]
             [rems.locales :refer [tconfig]]
-            [rems.util :refer [get-user-id]]
+            [rems.util :refer [get-user-id getx]]
             [ring-ttl-session.core :refer [ttl-memory-store]]
             [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
             [ring.middleware.defaults :refer [site-defaults
@@ -119,19 +119,25 @@
       (catch rems.auth.NotAuthorizedException e
         (on-unauthorized-error req nil)))))
 
-(defn wrap-auth
+(defn- wrap-user
+  "Binds context/*user* to the buddy identity."
   [handler]
-  (let [authentication (if (:fake-shibboleth +defaults+)
-                         (session-backend)
-                         (shibbo-backend))
-        authorization (if (:fake-shibboleth +defaults+)
-                        authentication
-                        (authz-backend))]
-    (-> (fn [request]
-          (binding [context/*user* (:identity request)]
-            (handler request)))
-        (wrap-authentication authentication)
-        (wrap-authorization authorization))))
+  (fn [request]
+    (binding [context/*user* (:identity request)]
+      (handler request))))
+
+(defmulti wrap-auth (fn [handler type] type))
+
+(defmethod wrap-auth :fake-shibboleth [handler _]
+  (let [backend (session-backend)]
+    (-> (wrap-user handler)
+        (wrap-authentication backend)
+        (wrap-authorization backend))))
+
+(defmethod wrap-auth :shibboleth [handler _]
+  (-> (wrap-user handler)
+      (wrap-authentication (shibbo-backend))
+      (wrap-authorization (authz-backend))))
 
 (defn wrap-logging
   [handler]
@@ -178,7 +184,7 @@
       wrap-context
       wrap-webapp-context
       wrap-service-context
-      wrap-auth
+      (wrap-auth (getx env :authentication))
       wrap-webjars
       wrap-csrf
       (wrap-defaults +wrap-defaults-settings+)

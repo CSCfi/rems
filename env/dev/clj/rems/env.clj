@@ -14,7 +14,6 @@
    (fn []
      (log/info "\n-=[rems has shut down successfully]=-"))
    :middleware wrap-dev
-   :fake-shibboleth true
    :component-guide true})
 
 (defstate ^:dynamic *db*

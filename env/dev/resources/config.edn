@@ -4,4 +4,5 @@
  :nrepl-port 7000
  ;; a useful default:
  :database-url "postgresql://localhost/rems?user=rems"
- :theme "lbr"}
+ :theme "lbr"
+ :authentication :fake-shibboleth}
