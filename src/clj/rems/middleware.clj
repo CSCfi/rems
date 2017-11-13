@@ -126,7 +126,7 @@
     (binding [context/*user* (:identity request)]
       (handler request))))
 
-(defmulti wrap-auth (fn [handler type] (prn :ENV env) type))
+(defmulti wrap-auth (fn [handler type] type))
 
 (defmethod wrap-auth :fake-shibboleth [handler _]
   (let [backend (session-backend)]
