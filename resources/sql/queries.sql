@@ -218,6 +218,7 @@ INSERT INTO workflow_licenses
 VALUES
 (:wfid, :licid, :round)
 
+-- TODO: consider renaming this to link-resource-license!
 -- :name create-resource-license! :insert
 INSERT INTO resource_licenses
 (resid, licid)
