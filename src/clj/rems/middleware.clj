@@ -131,14 +131,13 @@
 (defmethod wrap-auth :fake-shibboleth [handler _]
   (let [backend (session-backend)]
     (-> (wrap-user handler)
-        (wrap-authentication (session-backend))
-        (wrap-authorization (session-backend)))))
+        (wrap-authentication backend)
+        (wrap-authorization backend))))
 
 (defmethod wrap-auth :shibboleth [handler _]
-  (let [backend (session-backend)]
-    (-> (wrap-user handler)
-        (wrap-authentication (shibbo-backend))
-        (wrap-authorization (authz-backend)))))
+  (-> (wrap-user handler)
+      (wrap-authentication (shibbo-backend))
+      (wrap-authorization (authz-backend))))
 
 (defn wrap-logging
   [handler]
