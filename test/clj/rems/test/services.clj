@@ -78,7 +78,7 @@
                                     :items {1 "REST-Test"
                                             2 "2017-2018"
                                             3 "The purpose is to test this REST service.}"}
-                                    :licenses {1 "approved" 2 "approved"}})
+                                    :licenses {2 "approved" 3 "approved"}})
                              app)
                 cmd-response (read-body response)]
             (is (:success cmd-response))

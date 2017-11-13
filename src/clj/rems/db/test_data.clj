@@ -115,6 +115,18 @@
      :two-round two-round
      :different different}))
 
+(defn- create-resource-license! [resid]
+  (let [licid (:id (db/create-license!
+                     {:modifieruserid "owner" :owneruserid "owner" :title "resource license"
+                      :type "link" :textcontent "http://invalid"}))]
+    (db/create-license-localization!
+      {:licid licid :langcode "en" :title "Apache License 2.0"
+       :textcontent "https://www.apache.org/licenses/LICENSE-2.0"})
+    (db/create-license-localization!
+      {:licid licid :langcode "fi" :title "Apache lisenssi 2.0"
+       :textcontent "https://www.apache.org/licenses/LICENSE-2.0"})
+    (db/create-resource-license! {:resid resid :licid licid})))
+
 (defn- create-catalogue-item! [resource workflow form localizations]
   (let [id (:id (db/create-catalogue-item!
                  {:title "non-localized title" :resid resource :wfid workflow :form form}))]
@@ -122,9 +134,12 @@
       (db/create-catalogue-item-localization! {:id id :langcode lang :title title}))
     id))
 
-(defn- create-draft! [catid wfid field-value]
+(defn- create-draft! [catids wfid field-value]
   (let [app-id (applications/create-new-draft wfid)
-        _ (db/add-application-item! {:application app-id :item catid})
+        _ (if (vector? catids)
+            (doseq [catid catids]
+              (db/add-application-item! {:application app-id :item catid}))
+            (db/add-application-item! {:application app-id :item catids}))
         form (binding [context/*lang* :en]
                (applications/get-form-for app-id))]
     (doseq [{item-id :id} (:items form)]
@@ -156,9 +171,30 @@
       (binding [context/*user* {"eppn" approver}]
         (applications/return-application application 0 "comment for return")))))
 
+(defn- create-bundled-application! [catid catid2 wfid applicant approver]
+  (binding [context/*tempura* locales/tconfig
+            context/*user* {"eppn" applicant}]
+    (let [app-id (create-draft! [catid catid2] wfid "bundled application")]
+      (applications/submit-application app-id)
+      (binding [context/*user* {"eppn" approver}]
+        (applications/return-application app-id 0 "comment for return"))
+      (applications/submit-application app-id))))
+
+(defn- create-review-application! [catid wfid applicant reviewer approver]
+  (binding [context/*tempura* locales/tconfig
+            context/*user* {"eppn" applicant}]
+    (let [app-id (create-draft! catid wfid "application with review")]
+      (applications/submit-application app-id)
+      (binding [context/*user* {"eppn" reviewer}]
+        (applications/review-application app-id 0 "comment for review"))
+      (binding [context/*user* {"eppn" approver}]
+        (applications/approve-application app-id 1 "comment for approval")))))
+
 (defn create-test-data! []
   (create-users-and-roles!)
   (db/create-resource! {:id 1 :resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1})
+  (db/create-resource! {:id 2 :resid "Extra Data" :prefix "nbn" :modifieruserid 1})
+  (create-resource-license! 2)
   (let [form (create-basic-form!)
         workflows (create-workflows! "developer" "bob" "carl")
         minimal (create-catalogue-item! 1 (:minimal workflows) form
@@ -167,17 +203,24 @@
         simple (create-catalogue-item! 1 (:simple workflows) form
                                        {"en" "ELFA Corpus, one approval"
                                         "fi" "ELFA-korpus, yksi hyväksyntä"})
+        bundable (create-catalogue-item! 2 (:simple workflows) form
+                                         {"en" "ELFA Corpus, one approval (extra data)"
+                                          "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti)"})
         with-review (create-catalogue-item! 1 (:with-review workflows) form
                                             {"en" "ELFA Corpus, with review"
                                              "fi" "ELFA-korpus, katselmoinnilla"})
         different (create-catalogue-item! 1 (:different workflows) form
                                           {"en" "ELFA Corpus, two rounds of approval by different approvers"
                                            "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})]
-    (create-applications! simple (:simple workflows) "developer" "developer")))
+    (create-applications! simple (:simple workflows) "developer" "developer")
+    (create-bundled-application! simple bundable (:simple workflows) "alice" "developer")
+    (create-review-application! with-review (:with-review workflows) "alice" "carl" "developer")))
 
 (defn create-demo-data! []
   (create-demo-users-and-roles!)
   (db/create-resource! {:id 1 :resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1})
+  (db/create-resource! {:id 2 :resid "Extra Data" :prefix "nbn" :modifieruserid 1})
+  (create-resource-license! 2)
   (let [form (create-basic-form!)
         workflows (create-workflows! "RDapprover1@funet.fi" "RDapprover2@funet.fi" "RDreview@funet.fi")
         minimal (create-catalogue-item! 1 (:minimal workflows) form
@@ -186,10 +229,15 @@
         simple (create-catalogue-item! 1 (:simple workflows) form
                                        {"en" "ELFA Corpus, one approval"
                                         "fi" "ELFA-korpus, yksi hyväksyntä"})
+        bundable (create-catalogue-item! 2 (:simple workflows) form
+                                         {"en" "ELFA Corpus, one approval (extra data)"
+                                          "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti)"})
         with-review (create-catalogue-item! 1 (:with-review workflows) form
                                             {"en" "ELFA Corpus, with review"
                                              "fi" "ELFA-korpus, katselmoinnilla"})
         different (create-catalogue-item! 1 (:different workflows) form
                                           {"en" "ELFA Corpus, two rounds of approval by different approvers"
                                            "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})]
-    (create-applications! simple (:simple workflows) "RDapplicant1@funet.fi" "RDapprover1@funet.fi")))
+    (create-applications! simple (:simple workflows) "RDapplicant1@funet.fi" "RDapprover1@funet.fi")
+    (create-bundled-application! simple bundable (:simple workflows) "RDapplicant2@funet.fi" "RDapprover1@funet.fi")
+    (create-review-application! with-review (:with-review workflows) "RDapplicant1@funet.fi" "RDreview@funet.fi" "RDapprover1@funet.fi")))
