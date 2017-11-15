@@ -11,8 +11,8 @@
             [ring.util.response :refer [redirect]]))
 
 ;; Do these need to be configurable?
-(def ^:private +ldap-search-attributes+ [:cn :displayName :company :mail])
-(def ^:private +ldap-search-query+ "(cn=%s)")
+(def ^:private +ldap-search-attributes+ [:userPrincipalName :displayName :company :mail])
+(def ^:private +ldap-search-query+ "(userPrincipalName=%s)")
 
 (defn- get-ldap-user
   "Returns nil if login fails, map of properties if succeeds."
@@ -63,7 +63,7 @@
           (if-not user
             (login-failed)
             (let [hack-user (assoc user
-                                   "eppn" (getx user :cn)
+                                   "eppn" (getx user :userPrincipalName)
                                    "commonName" (getx user :displayName))]
               (assoc (redirect "/landing_page")
                      :session (assoc session :identity hack-user)))))))
