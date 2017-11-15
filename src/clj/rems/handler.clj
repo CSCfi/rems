@@ -6,6 +6,7 @@
             [rems.config :refer [env]]
             [rems.env :refer [+defaults+]]
             [rems.layout :refer [error-page]]
+            [rems.ldap :as ldap]
             [rems.middleware :as middleware]
             [rems.routes.fake-shibboleth :refer [fake-shibboleth-routes]]
             [rems.routes.guide :refer [guide-routes]]
@@ -55,6 +56,11 @@
      never-match-route)
    (if (= (:authentication env) :fake-shibboleth)
      fake-shibboleth-routes
+     never-match-route)
+   ;; for the time being, only expose shibboleth auth in "dev mode"
+   ;; together with fake-shibboleth
+   (if (= (:authentication env) :fake-shibboleth)
+     ldap/ldap-routes
      never-match-route)
    (if-let [path (:serve-static +defaults+)]
      (route/files "/" {:root path})

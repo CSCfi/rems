@@ -13,7 +13,6 @@
             [rems.landing-page :as landing-page]
             [rems.language-switcher :as language-switcher]
             [rems.layout :as layout]
-            [rems.ldap :as ldap]
             [ring.util.response :refer [content-type
                                         redirect
                                         response]]))
@@ -43,8 +42,7 @@
   (GET "/css/screen.css" [] (-> (styles/generate-css)
                                 (response)
                                 (content-type "text/css")))
-  language-switcher/switcher-routes
-  ldap/ldap-routes)
+  language-switcher/switcher-routes)
 
 (defroutes secured-routes
   (GET "/applications" [] (applications-page))
