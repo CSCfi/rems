@@ -3,25 +3,28 @@
             [clojure.tools.logging :as log]
             [compojure.core :refer [GET POST defroutes]]
             [rems.anti-forgery :refer [anti-forgery-field]]
+            [rems.config :refer [env]]
             [rems.guide :refer [example]]
             [rems.layout :as layout]
             [rems.text :refer [text]]
             [rems.util :refer [errorf getx getx-in]]
             [ring.util.response :refer [redirect]]))
 
-(def ^:private +ldap-params+ {:host "localhost:2636" :ssl? true})
-
-(def ^:private +ldap-search-root+ "dc=Suivohtor,dc=local")
-
+;; Do these need to be configurable?
 (def ^:private +ldap-search-attributes+ [:cn :displayName :company :mail])
+(def ^:private +ldap-search-query+ "(cn=%s)")
 
 (defn- get-ldap-user
   "Returns nil if login fails, map of properties if succeeds."
   [user password]
   (try
-    (let [conn (ldap/connect (assoc +ldap-params+ :bind-dn user :password password))
-          users (ldap/search conn +ldap-search-root+
-                             {:filter (format "(cn=%s)" user)
+    (let [connection (assoc (getx-in env [:ldap :connection])
+                            :bind-dn user :password password)
+          search-root (getx-in env [:ldap :search-root])
+
+          conn (ldap/connect connection)
+          users (ldap/search conn search-root
+                             {:filter (format +ldap-search-query+ user)
                               :attributes +ldap-search-attributes+})]
       (if (= 1 (count users))
         (first users)
