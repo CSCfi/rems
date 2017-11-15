@@ -41,12 +41,9 @@
           (anti-forgery-field)
           [:button {:type "submit"} (text :t.ldap/login)]])))
 
-(defn- login-failed-page []
-  (layout/render
-   "login-failed"
-   [:h1 (text :t.ldap/failed)]
-   {:bare true
-    :status 401}))
+(defn- login-failed []
+  (assoc (redirect "/ldaplogin")
+         :flash [{:status :failure :contents (text :t.ldap/failed)}]))
 
 (defroutes ldap-routes
   (GET "/ldaplogin" [] (login-page))
@@ -56,7 +53,7 @@
               password (getx-in req [:form-params "password"])
               user (get-ldap-user username password)]
           (if-not user
-            (login-failed-page)
+            (login-failed)
             (let [hack-user (assoc user
                                    "eppn" (getx user :cn)
                                    "commonName" (getx user :displayName))]
