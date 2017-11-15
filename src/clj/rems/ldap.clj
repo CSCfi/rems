@@ -34,6 +34,16 @@
       (log/errorf "Bind failed for user %s" user)
       nil)))
 
+;; TODO: should stop using "eppn" and instead convert both shibboleth
+;; and ldap users to a common format.
+(defn- convert-ldap-user
+  "Converts user fetched from LDAP to a Shibboleth-like format."
+  [user]
+  {"eppn" (getx user :userPrincipalName)
+   "commonName" (getx user :displayName)
+   "mail" (getx user :mail)
+   "dn" (getx user :dn)})
+
 (defn- login-component []
   [:div.m-auto.jumbotron
    [:h2 (text :t.ldap/title)]
@@ -60,13 +70,10 @@
               username (getx-in req [:form-params "username"])
               password (getx-in req [:form-params "password"])
               user (get-ldap-user username password)]
-          (if-not user
-            (login-failed)
-            (let [hack-user (assoc user
-                                   "eppn" (getx user :userPrincipalName)
-                                   "commonName" (getx user :displayName))]
-              (assoc (redirect "/landing_page")
-                     :session (assoc session :identity hack-user)))))))
+          (if user
+            (assoc (redirect "/landing_page")
+                   :session (assoc session :identity (convert-ldap-user user)))
+            (login-failed)))))
 
 (defn guide []
   (list
