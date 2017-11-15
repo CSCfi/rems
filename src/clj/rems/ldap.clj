@@ -3,6 +3,7 @@
             [clojure.tools.logging :as log]
             [compojure.core :refer [GET POST defroutes]]
             [rems.anti-forgery :refer [anti-forgery-field]]
+            [rems.guide :refer [example]]
             [rems.layout :as layout]
             [rems.text :refer [text]]
             [rems.util :refer [errorf getx getx-in]]
@@ -30,16 +31,20 @@
       (log/errorf "Bind failed for user %s" user)
       nil)))
 
+(defn- login-component []
+  [:div.m-auto.jumbotron
+   [:h2 (text :t.ldap/title)]
+   [:form
+    {:action "/ldaplogin" :method "post"}
+    [:input.form-control {:type "text" :placeholder (text :t.ldap/username) :name "username" :required true}]
+    [:input.form-control {:type "password" :placeholder (text :t.ldap/password) :name "password" :required true}]
+    (anti-forgery-field)
+    [:button.btn.btn-lg.btn-primary.btn-block {:type "submit"} (text :t.ldap/login)]]])
+
 (defn- login-page []
   (layout/render
    "login"
-   (list [:h1 (text :t.ldap/title)]
-         [:form
-          {:action "/ldaplogin" :method "post"}
-          [:input {:type "text" :placeholder (text :t.ldap/username) :name "username" :required true}]
-          [:input {:type "password" :placeholder (text :t.ldap/password) :name "password" :required true}]
-          (anti-forgery-field)
-          [:button {:type "submit"} (text :t.ldap/login)]])))
+   (login-component)))
 
 (defn- login-failed []
   (assoc (redirect "/ldaplogin")
@@ -59,3 +64,8 @@
                                    "commonName" (getx user :displayName))]
               (assoc (redirect "/landing_page")
                      :session (assoc session :identity hack-user)))))))
+
+(defn guide []
+  (list
+   (example "login component"
+            (login-component))))
