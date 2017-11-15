@@ -4,6 +4,7 @@
             [compojure.core :refer [GET POST defroutes]]
             [rems.anti-forgery :refer [anti-forgery-field]]
             [rems.layout :as layout]
+            [rems.text :refer [text]]
             [rems.util :refer [errorf getx getx-in]]
             [ring.util.response :refer [redirect]]))
 
@@ -32,18 +33,18 @@
 (defn- login-page []
   (layout/render
    "login"
-   (list [:h1 "LDAP login"]
+   (list [:h1 (text :t.ldap/title)]
          [:form
           {:action "/ldaplogin" :method "post"}
-          [:input {:type "text" :placeholder "Username" :name "username" :required true}]
-          [:input {:type "password" :placeholder "Password" :name "password" :required true}]
+          [:input {:type "text" :placeholder (text :t.ldap/username) :name "username" :required true}]
+          [:input {:type "password" :placeholder (text :t.ldap/password) :name "password" :required true}]
           (anti-forgery-field)
-          [:button {:type "submit"} "Login"]])))
+          [:button {:type "submit"} (text :t.ldap/login)]])))
 
 (defn- login-failed-page []
   (layout/render
    "login-failed"
-   [:h1 "Login failed"]
+   [:h1 (text :t.ldap/failed)]
    {:bare true
     :status 401}))
 

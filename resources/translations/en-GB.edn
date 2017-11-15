@@ -156,6 +156,11 @@
          :submitted "Application submitted."
          :user "User"
          :validation {:required "Field \"%1\" is required."}}
+  :ldap {:failed "Login failed"
+         :login "Login"
+         :password "Password"
+         :title "LDAP Login"
+         :username "Username"}
   :login {:text "Login by using your Haka credentials"
           :title "Login"}
   :missing "Missing translation"
