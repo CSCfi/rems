@@ -157,6 +157,11 @@
          :submitted "Hakemus lähetetty."
          :user "Käyttäjä"
          :validation {:required "Kenttä \"%1\" on pakollinen."}}
+  :ldap {:failed "Kirjautuminen epäonnistui"
+         :login "Kirjaudu"
+         :password "Salasana"
+         :title "LDAP-kirjautuminen"
+         :username "Käyttäjänimi"}
   :login {:text "Kirjaudu sisään Haka-tunnuksillasi"
           :title "Kirjaudu sisään"}
   :missing "Käännös puuttuu"
