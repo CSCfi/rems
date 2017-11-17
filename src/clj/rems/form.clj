@@ -204,37 +204,29 @@
 
 
 (defn- form [form]
-  (let [state (:state (:application form))
+  (let [application (:application form)
+        state (:application form)
         actionable? (= state "applied")
         events (get-in form [:application :events])
         user-attributes (or (:applicant-attributes form) context/*user*)]
     (list
      [:h2 (text :t.applications/application)]
-
      (application-header state (filter may-see-event? events))
-
      [:div.mt-3 (applicant-info/details "applicant-info" user-attributes)]
-
      [:div.mt-3 (applied-resources (:catalogue-items form))]
-
      [:div.my-3 (form-fields form)]
 
      ;; TODO resource owner should be able to close
-
-     (when-role :approver
-       (if (and actionable? (can-approve? (:id (:application form))))
-         (events/approve-form (:application form))
-         [:div.row
-          [:div.col.commands
-           (events/back-to-actions-button)]]))
-     (when-role :reviewer
-       (if (and actionable? (or (can-review? (:id (:application form)))
-                                (can-third-party-review? (:id (:application form)))))
-         (events/review-form (assoc-review-type-to-app (:application form)))
-         [:div.row
-          [:div.col.commands
-           (events/back-to-actions-button)]])
-       ))))
+     ;; TODO reviewer buttons are not shown to approver!
+     (cond
+       (getx application :can-approve?)
+       (events/approve-form application)
+       (getx application :review-type)
+       (events/review-form application)
+       :else
+       [:div.row
+        [:div.col.commands
+         (events/back-to-actions-button)]]))))
 
 (defn link-to-application [items]
   (url "/form" {:catalogue-items (s/join "," (mapv :id items))}))
@@ -431,7 +423,9 @@
    (component-info form)
    (example "form, partially filled"
             (form {:title "Form title"
-                   :application {:id 17 :state "draft"}
+                   :application {:id 17 :state "draft"
+                                 :can-approve? false
+                                 :review-type nil}
                    :catalogue-items [{:title "An applied item"}]
                    :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
                            {:type "label" :title "Please input your wishes below."}
@@ -443,7 +437,10 @@
                                :approved true}]}))
    (example "form, applied"
             (form {:title "Form title"
-                   :application {:id 17 :state "applied"}
+                   :application {:id 17 :state "applied"
+                                 ;; TODO can-approve? true requires db :(
+                                 :can-approve? false
+                                 :review-type nil}
                    :catalogue-items [{:title "An applied item"}]
                    :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
                            {:type "label" :title "Please input your wishes below."}
@@ -458,7 +455,10 @@
    (example "form, approved"
             (form {:title "Form title"
                    :catalogue-items [{:title "An applied item"}]
-                   :application {:id 17 :state "approved" :events [{:event "approve" :comment "Looking good, approved!"}]}
+                   :application {:id 17 :state "approved"
+                                 :can-approve? false
+                                 :review-type nil
+                                 :events [{:event "approve" :comment "Looking good, approved!"}]}
                    :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
                            {:type "label" :title "Please input your wishes below."}
                            {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2" :value "def"}

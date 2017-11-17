@@ -246,7 +246,9 @@
                                           (concat (hiccup-find [:div.form-group.field :input] body)
                                                   (hiccup-find [:div.form-group.field :textarea] body))))
             submit-button #(first (hiccup-find [:.submit-button] %))
-            data {:items [{:type "text"}
+            data {:application {:can-approve? false
+                                :review-type nil}
+                  :items [{:type "text"}
                           {:type "texta"}]
                   :licenses [{:type "license" :licensetype "link"
                               :textcontent "" :title ""}]}]
@@ -255,12 +257,14 @@
             (is (= [false false false] (map readonly? (all-inputs body))))
             (is (submit-button body))))
         (testing "draft"
-          (let [body (form (assoc data :application {:state "draft"}))]
+          (let [body (form (assoc-in data [:application :state] "draft"))]
             (is (= [false false false] (map readonly? (all-inputs body))))
             (is (submit-button body))))
         (doseq [state ["applied" "approved" "rejected"]]
           (testing state
-            (let [body (form (assoc data :application {:id 1 :state state}))]
+            (let [body (form (-> data
+                                 (assoc-in [:application :id] 1)
+                                 (assoc-in [:application :state] state)))]
               (is (= [true true true] (map readonly? (all-inputs body))))
               (is (nil? (submit-button body))))))))))
 
@@ -270,7 +274,8 @@
                               (hiccup-find [:#event-table :.event-comment] %))
           data {:application
                 {:id 17
-                 :state "draft" ;; hack: this means we don't need to override rems.db.applications/can-approve?
+                 :can-approve? false
+                 :review-type nil
                  :events [{:event "apply" :comment "APPLY"}
                           {:event "withdraw" :comment "WITHDRAW"}
                           {:event "autoapprove" :comment "AUTO"}
@@ -313,6 +318,8 @@
                                     :curround 0
                                     :fnlround 1
                                     :wfid 2
+                                    :can-approve? false
+                                    :review-type nil
                                     :events []}}
           applied-data {:application {:id 2
                                       :applicantuserid "developer"
@@ -321,6 +328,8 @@
                                       :fnlround 1
                                       :state "applied"
                                       :curround 0
+                                      :can-approve? false
+                                      :review-type nil
                                       :events
                                       [{:userid "developer"
                                         :round 0
@@ -339,6 +348,8 @@
                                        :fnlround 0
                                        :state "approved"
                                        :curround 0
+                                       :can-approve? false
+                                       :review-type nil
                                        :events
                                        [{:userid "developer"
                                          :round 0
@@ -355,36 +366,17 @@
                                          :event "approved"
                                          :comment nil
                                          :time nil}]}}]
-      (with-redefs [rems.db.workflow-actors/get-by-role
-                    (fn ([appid round role]
-                         (let [data [{:id 2 :actoruserid "carl" :role "reviewer" :round 0}
-                                     {:id 2 :actoruserid "carl" :role "approver" :round 1}
-                                     {:id 2 :actoruserid "bob" :role "approver" :round 0}
-                                     {:id 2 :actoruserid "bob" :role "reviewer" :round 1}]]
-                           (->> data
-                                (filterv (fn [app] (and (= round (:round app)) (= role (:role app)))))
-                                (map :actoruserid))))
-                      ([appid role]
-                       (let  [data [{:id 2 :actoruserid "carl" :role "reviewer" :round 0}
-                                    {:id 2 :actoruserid "carl" :role "approver" :round 1}
-                                    {:id 2 :actoruserid "bob" :role "approver" :round 0}
-                                    {:id 2 :actoruserid "bob" :role "reviewer" :round 1}]]
-                         (map :actoruserid data))))
-                    rems.db.applications/get-application-state
-                    (fn [_]
-                      (:application applied-data))
-                    rems.db.core/get-users
-                    (fn []
-                      nil)
-                    rems.db.users/get-user-attributes
-                    (fn [_]
-                      nil)]
-
+      (with-redefs [rems.db.core/get-users (fn [] [])
+                    rems.db.core/get-user-attributes (fn [_] nil)]
+        ;; TODO these cases can be simplified now that we have :can-approve?
+        ;; and :review-type
         (binding [context/*user* {"eppn" "developer"}
                   context/*roles* #{:applicant}]
           (testing "As the applicant"
             (testing "on a new form"
-              (is (= #{"save" "back" "submit"} (get-actions {}))))
+              (is (= #{"save" "back" "submit"}
+                     (get-actions
+                      (assoc-in draft-data [:application :id] -6)))))
             (testing "on a draft"
               (is (= #{"save" "back" "submit" "close"} (get-actions draft-data))))
             (testing "on an applied form"
@@ -396,7 +388,8 @@
           (testing "As a current round approver (who is also an applicant)"
             (testing "on an applied form"
               (is (= #{"back" "reject" "approve" "review-request" "return"}
-                     (get-actions applied-data)))))
+                     (get-actions
+                      (assoc-in applied-data [:application :can-approve?] true))))))
           (testing "As an approver (who is also an applicant)"
             (testing "on an approved form"
               (is (= #{"back"} (get-actions approved-data))))))
@@ -408,7 +401,9 @@
           (binding [context/*user* {"eppn" "carl"}
                     context/*roles* #{:reviewer}]
             (testing "on an applied form"
-              (is (= #{"back" "review"} (get-actions applied-data))))
+              (is (= #{"back" "review"}
+                     (get-actions
+                      (assoc-in applied-data [:application :review-type] :normal)))))
             (testing "on an approved form"
               (is (= #{"back"} (get-actions approved-data))))))
         (testing "As a reviewer, who is not set for the current round, on an applied form"
@@ -419,6 +414,8 @@
           (binding [context/*user* {"eppn" "lenny"}
                     context/*roles* #{:reviewer}]
             (testing "on an applied form"
-              (is (= #{"back" "third-party-review"} (get-actions applied-data))))
+              (is (= #{"back" "third-party-review"}
+                     (get-actions
+                      (assoc-in applied-data [:application :review-type] :third-party)))))
             (testing "on an approved form"
               (is (= #{"back"} (get-actions approved-data))))))))))

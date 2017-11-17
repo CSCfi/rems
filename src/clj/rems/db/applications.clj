@@ -84,6 +84,11 @@
          (contains? (set (actors/get-by-role application-id round role))
                     (get-user-id)))))
 
+(defn- can-act-as+? [application-state role]
+  (and (= "applied" (:state application-state))
+       (contains? (set (actors/get-by-role (:id application-state) (:curround application-state) role))
+                  (get-user-id))))
+
 (defn- round-has-approvers? [application-id round]
   (not-empty? (actors/get-by-role application-id round "approver")))
 
@@ -121,6 +126,12 @@
   (let [state (get-application-state application)]
     (and (= "applied" (:state state))
          (is-third-party-reviewer? (get-user-id) (:curround state) state))))
+
+(defn can-third-party-review+?
+  "Checks if the current user can perform a 3rd party review action on the current round for the given application."
+  [application-state]
+  (and (= "applied" (:state application-state))
+       (is-third-party-reviewer? (get-user-id) (:curround application-state) application-state)))
 
 (defn get-third-party-reviewers
   "Takes as an argument a structure containing application information and a workflow round. Then returns userids for all users that have been requested to review for the given round."
@@ -282,7 +293,9 @@
     {:id 7
      :title \"Title\"
      :application {:id 3
-                   :state \"draft\"}
+                   :state \"draft\"
+                   :review-type :normal
+                   :can-approve? false}
      :applicant-attributes {\"eppn\" \"developer\"
                             \"email\" \"developer@e.mail\"
                             \"displayName\" \"deve\"
@@ -301,7 +314,7 @@
                  :licensetype \"link\"
                  :title \"LGPL\"
                  :textcontent \"http://foo\"
-                 :approved false}]"
+                 :approved false}]}"
   ([application-id]
    (let [form (db/get-form-for-application {:application application-id})
          form (or form (db/get-form-for-application {:application application-id :lang "en"}))
@@ -320,14 +333,20 @@
                                     (index-by [:licid :langcode]))
          licenses (mapv #(process-license application license-localizations %)
                         (db/get-licenses {:wfid (:wfid application) :items catalogue-item-ids}))
-         applicant? (= (:applicantuserid application) (get-user-id))]
+         applicant? (= (:applicantuserid application) (get-user-id))
+         review-type (cond
+                       (can-act-as+? application "reviewer") :normal
+                       (can-third-party-review+? application) :third-party
+                       :else nil)]
      (when application-id
        (when-not (may-see-application? application)
          (throw-unauthorized)))
      {:id form-id
       :title (:formtitle form)
       :catalogue-items catalogue-items
-      :application application
+      :application (assoc application
+                          :can-approve? (can-act-as+? application "approver")
+                          :review-type review-type)
       :applicant-attributes (users/get-user-attributes (:applicantuserid application))
       :items items
       :licenses licenses})))
@@ -353,7 +372,9 @@
      {:id form-id
       :title (:formtitle form)
       :catalogue-items catalogue-items
-      :application application
+      :application (assoc application
+                          :can-approve? false
+                          :review-type nil)
       :applicant-attributes (users/get-user-attributes (:applicantuserid application))
       :items items
       :licenses licenses})))

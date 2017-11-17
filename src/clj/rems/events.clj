@@ -88,15 +88,17 @@
    (approval-confirm-modal "reject" (text :t.actions/reject) app)))
 
 (defn review-button [app]
-  (if (= :normal (:review app))
+  (case (:review-type app)
+    :normal
     (list
-      [:button#review.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#review-modal"}
-       (text :t.actions/review)]
-      (review-confirm-modal "review" (text :t.actions/review) app))
+     [:button#review.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#review-modal"}
+      (text :t.actions/review)]
+     (review-confirm-modal "review" (text :t.actions/review) app))
+    :third-party
     (list
-      [:button#third-party-review.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#third-party-review-modal"}
-       (text :t.actions/review)]
-      (review-confirm-modal "third-party-review" (text :t.actions/review) app))))
+     [:button#third-party-review.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#third-party-review-modal"}
+      (text :t.actions/review)]
+     (review-confirm-modal "third-party-review" (text :t.actions/review) app))))
 
 (defn review-request-button [app]
   (list
