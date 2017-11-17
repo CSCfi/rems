@@ -57,7 +57,7 @@
    (if (= (:authentication env) :fake-shibboleth)
      fake-shibboleth-routes
      never-match-route)
-   ;; for the time being, only expose shibboleth auth in "dev mode"
+   ;; for the time being, only expose ldap auth in "dev mode"
    ;; together with fake-shibboleth
    (if (= (:authentication env) :fake-shibboleth)
      ldap/ldap-routes

@@ -7,7 +7,7 @@
             [rems.guide :refer [example]]
             [rems.layout :as layout]
             [rems.text :refer [text]]
-            [rems.util :refer [errorf getx getx-in]]
+            [rems.util :refer [getx getx-in]]
             [ring.util.response :refer [redirect]]))
 
 ;; Do these need to be configurable?
@@ -77,5 +77,5 @@
 
 (defn guide []
   (list
-   (example "login component"
+   (example "ldap login component"
             (login-component))))
