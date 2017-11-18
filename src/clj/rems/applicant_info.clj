@@ -20,7 +20,7 @@
               (info-field/component (text :t.applicant-info/email) (get-user-mail user-attributes))]]
     :collapse (when-roles #{:approver :reviewer}
                 [:form
-                 (for [[k v] user-attributes]
+                 (for [[k v] (dissoc user-attributes "commonName" "mail")]
                    (info-field/component k v))])}))
 
 (defn guide
