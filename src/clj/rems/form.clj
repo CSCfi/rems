@@ -122,40 +122,34 @@
     (or (has-roles? :reviewer :approver) ;; reviewer and approver can see everything
         (applicant-types (:event event)))))
 
-(defn- application-state [state]
-  (when state
-    (collapsible/component
-     {:id "state"
-      :class (str "state-" state)
-      :open? true
-      :title (text :t.applications/state)
-      :always [:div.state-display {:class (str "state-" state)} (text (localize-state state))]})))
-
-(defn- application-events [events]
-  (when events
-    [:div {:class "events"}
-     (collapsible/component
-      {:id "events"
-       :title (text :t.form/events)
-       :always (when-let [c (:comment (last events))]
-                 [:div [:h4 (text :t.form/comment)]
-                  [:p [:span.inline-comment-content] c]])
-       :collapse (when (seq events)
-                   (list
-                    [:h4 (text :t.form/events)]
-                    (into [:table#event-table.table.table-hover.mb-0
-                           [:tr
-                            [:th (text :t.form/user)]
-                            [:th (text :t.form/event)]
-                            [:th (text :t.form/comment)]
-                            [:th (text :t.form/date)]]]
-                          (for [e events]
-                            [:tr
-                             [:td (:userid e)]
-                             [:td (text (localize-event (:event e)))]
-                             [:td.event-comment (:comment e)]
-                             [:td (localize-time (:time e))]]))))})]))
-
+(defn- application-header [state events]
+  (collapsible/component
+   {:id "header"
+    :title [:span
+            (text :t.applications/state)
+            (when state
+              (list
+               ": "
+               [:span.state-display.custom-control-description {:class (str "state-" state)} (text (localize-state state))]))]
+    :always [:div
+             (when-let [c (:comment (last events))]
+               (info-field/component (text :t.form/comment) c))
+             [:div.mb-3 (phases (get-application-phases state))]]
+    :collapse (when (seq events)
+                (list
+                 [:h4 (text :t.form/events)]
+                 (into [:table#event-table.table.table-hover.mb-0
+                        [:tr
+                         [:th (text :t.form/user)]
+                         [:th (text :t.form/event)]
+                         [:th (text :t.form/comment)]
+                         [:th (text :t.form/date)]]]
+                       (for [e events]
+                         [:tr
+                          [:td (:userid e)]
+                          [:td (text (localize-event (:event e)))]
+                          [:td.event-comment (:comment e)]
+                          [:td (localize-time (:time e))]]))))}))
 
 (defn- form-fields [form]
   (let [application (:application form)
@@ -220,13 +214,9 @@
     (list
      [:h2 (text :t.applications/application)]
 
-     (application-state state)
+     (application-header state (filter may-see-event? events))
 
-     [:div.mt-3 (application-events (filter may-see-event? events))]
-
-     [:div.my-3 (phases (get-application-phases state))]
-
-     (applicant-info/details "applicant-info" user-attributes)
+     [:div.mt-3 (applicant-info/details "applicant-info" user-attributes)]
 
      [:div.mt-3 (applied-resources (:catalogue-items form))]
 
