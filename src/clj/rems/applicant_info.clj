@@ -13,9 +13,11 @@
   (collapsible/component
    {:id id
     :title (str (text :t.applicant-info/applicant))
-    :always [:div
-             (info-field/component (text :t.applicant-info/username) (get-username user-attributes))
-             (info-field/component (text :t.applicant-info/email) (get-user-mail user-attributes))]
+    :always [:div.row
+             [:div.col-md-6
+              (info-field/component (text :t.applicant-info/username) (get-username user-attributes))]
+             [:div.col-md-6
+              (info-field/component (text :t.applicant-info/email) (get-user-mail user-attributes))]]
     :collapse (when-roles #{:approver :reviewer}
                 [:form
                  (for [[k v] user-attributes]
