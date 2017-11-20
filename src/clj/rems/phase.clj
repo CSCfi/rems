@@ -44,10 +44,17 @@
                      {:id :beta :phase :approve :active? true :text :t.phases/approve}
                      {:id :gamma :phase :result :text :t.phases/approved}]))
 
+   (example "phase with approved application"
+            [:div.state-approved
+             (phases [{:id :alpha :phase :apply :completed? true :text :t.phases/apply}
+                      {:id :beta :phase :approve :completed? true :text :t.phases/approve}
+                      {:id :gamma :phase :result :completed? true :approved? true :text :t.phases/approved}])])
+
    (example "phase with rejected application"
-            (phases [{:id :alpha :phase :apply :completed? true :text :t.phases/apply}
-                     {:id :beta :phase :approve :completed? true :rejected? true :text :t.phases/approve}
-                     {:id :gamma :phase :result :completed? true :rejected? true :text :t.phases/rejected}]))
+            [:div.state-rejected
+             (phases [{:id :alpha :phase :apply :completed? true :text :t.phases/apply}
+                      {:id :beta :phase :approve :completed? true :rejected? true :text :t.phases/approve}
+                      {:id :gamma :phase :result :completed? true :rejected? true :text :t.phases/rejected}])])
 
    (example "phase with closed application"
             (phases [{:id :alpha :phase :apply :closed? true :text :t.phases/apply}
