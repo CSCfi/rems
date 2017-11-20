@@ -186,19 +186,18 @@
     :&:active:hover
     {:outline-color "transparent"}]]
   [:.alert-info
-   :state-info
+   (s/descendant :.state-info :.phases :.phase.completed)
    {:color (util/get-theme-attribute :info-color)
     :background-color (util/get-theme-attribute :info-bgcolor)}]
   [:.alert-success
-   :.state-approved
-   (s/descendant :.state-approved :.card-header)
+   (s/descendant :.state-approved :.phases :.phase.completed)
    {:color (util/get-theme-attribute :success-color)
     :background-color (util/get-theme-attribute :success-bgcolor)}]
   [:.alert-warning {:color (util/get-theme-attribute :warning-color)
                     :background-color (util/get-theme-attribute :warning-bgcolor)}]
   [:.alert-danger
    :.state-rejected
-   (s/descendant :.state-rejected :.card-header)
+   (s/descendant :.state-rejected :.phases :.phase.completed)
    {:color (util/get-theme-attribute :danger-color)
     :background-color (util/get-theme-attribute :danger-bgcolor)}]
   [:.nav-link
@@ -320,8 +319,6 @@
   [(s/descendant :.card-header :a) {:color "inherit"}]
                                         ;hax for opening misalignment
   [:.license-title {:margin-top (u/px 3)}]
-  [:.state-display {:padding (u/rem 0.5)
-                    :border-radius (u/rem 0.4)}]
   [:.collapsing {:-webkit-transition "height 0.1s linear"
                  :-o-transition "height 0.1s linear"
                  :transition "height 0.1s linear"}]
@@ -334,7 +331,7 @@
                    :font-size (u/rem 1.5)
                    :line-height 1.1
                    :font-family "'Lato'"}]]
-  [:.collapse-content {:padding (u/rem 1)}]
+  [:.collapse-content {:padding (u/rem 1.25)}]
   [:.collapse-wrapper.slow
    [:.collapsing {:-webkit-transition "height 0.25s linear"
                   :-o-transition "height 0.25s linear"

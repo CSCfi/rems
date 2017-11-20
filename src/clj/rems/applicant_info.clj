@@ -13,12 +13,14 @@
   (collapsible/component
    {:id id
     :title (str (text :t.applicant-info/applicant))
-    :always [:div
-             (info-field/component (text :t.applicant-info/username) (get-username user-attributes))
-             (info-field/component (text :t.applicant-info/email) (get-user-mail user-attributes))]
+    :always [:div.row
+             [:div.col-md-6
+              (info-field/component (text :t.applicant-info/username) (get-username user-attributes))]
+             [:div.col-md-6
+              (info-field/component (text :t.applicant-info/email) (get-user-mail user-attributes))]]
     :collapse (when-roles #{:approver :reviewer}
                 [:form
-                 (for [[k v] user-attributes]
+                 (for [[k v] (dissoc user-attributes "commonName" "mail")]
                    (info-field/component k v))])}))
 
 (defn guide
@@ -27,7 +29,15 @@
    (component-info details)
    (example "applicant-info for applicant shows no details"
             (binding [context/*roles* #{:applicant}]
-              (details "info1" {"eppn" "developer@uu.id" "commonName" "Deve Loper"})))
+              (details "info1" {"eppn" "developer@uu.id"
+                                "mail" "developer@uu.id"
+                                "commonName" "Deve Loper"
+                                "organization" "Testers"
+                                "address" "Testikatu 1, 00100 Helsinki"})))
    (example "applicant-info for approver shows attributes"
             (binding [context/*roles* #{:approver}]
-              (details "info2" {"eppn" "developer@uu.id" "commonName" "Deve Loper"})))))
+              (details "info2" {"eppn" "developer@uu.id"
+                                "mail" "developer@uu.id"
+                                "commonName" "Deve Loper"
+                                "organization" "Testers"
+                                "address" "Testikatu 1, 00100 Helsinki"})))))
