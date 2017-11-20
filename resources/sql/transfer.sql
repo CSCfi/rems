@@ -186,6 +186,9 @@ SELECT * FROM transfer.rms_license_localization;
 INSERT INTO public.workflow_licenses
 SELECT * FROM transfer.rms_workflow_licenses;
 
+INSERT INTO public.resource_licenses (resId, licId, stalling, start, endt)
+SELECT resId, licId, stalling, start, "end" FROM transfer.rms_resource_licenses;
+
 -- actors
 
 INSERT INTO public.workflow_actors (wfId, actorUserId, role, round, start, endt)
