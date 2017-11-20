@@ -129,9 +129,9 @@
             (text :t.applications/state)
             (when state (list ": " (text (localize-state state))))]
     :always [:div
+             [:div.mb-3 {:class (str "state-" state)} (phases (get-application-phases state))]
              (when-let [c (:comment (last events))]
-               (info-field/component (text :t.form/comment) c))
-             [:div.mb-3 {:class (str "state-" state)} (phases (get-application-phases state))]]
+               (info-field/component (text :t.form/comment) c))]
     :collapse (when (seq events)
                 (list
                  [:h4 (text :t.form/events)]
