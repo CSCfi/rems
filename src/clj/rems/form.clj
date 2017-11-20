@@ -127,14 +127,11 @@
    {:id "header"
     :title [:span
             (text :t.applications/state)
-            (when state
-              (list
-               ": "
-               [:span.state-display.custom-control-description {:class (str "state-" state)} (text (localize-state state))]))]
+            (when state (list ": " (text (localize-state state))))]
     :always [:div
              (when-let [c (:comment (last events))]
                (info-field/component (text :t.form/comment) c))
-             [:div.mb-3 (phases (get-application-phases state))]]
+             [:div.mb-3 {:class (str "state-" state)} (phases (get-application-phases state))]]
     :collapse (when (seq events)
                 (list
                  [:h4 (text :t.form/events)]
