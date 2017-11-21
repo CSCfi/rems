@@ -22,6 +22,10 @@ CREATE CAST (transfer.rms_license_type AS public.license_type)
 WITH INOUT
 AS IMPLICIT;
 
+CREATE CAST (transfer.rms_catalogue_item_application_licenses_state AS public.license_state)
+WITH INOUT
+AS IMPLICIT;
+
 CREATE CAST (transfer.rms_license_visibility AS public.scope)
 WITH INOUT
 AS IMPLICIT;
@@ -39,6 +43,7 @@ CREATE TABLE transfer.migrated_application_event (
 -- data created by the app that might reference data we want to clear
 DELETE FROM public.entitlement CASCADE;
 DELETE FROM public.application_text_values CASCADE;
+DELETE FROM public.catalogue_item_application_licenses CASCADE;
 DELETE FROM public.catalogue_item_application_items CASCADE;
 DELETE FROM public.catalogue_item_application_licenses CASCADE;
 DELETE FROM public.application_event CASCADE;
@@ -47,6 +52,7 @@ DELETE FROM public.catalogue_item_application CASCADE;
 
 -- clear existing data
 DELETE FROM public.workflow_actors CASCADE;
+DELETE FROM public.resource_licenses CASCADE;
 DELETE FROM public.workflow_licenses CASCADE;
 DELETE FROM public.license_localization CASCADE;
 DELETE FROM public.license CASCADE;
@@ -186,6 +192,9 @@ SELECT * FROM transfer.rms_license_localization;
 INSERT INTO public.workflow_licenses
 SELECT * FROM transfer.rms_workflow_licenses;
 
+INSERT INTO public.resource_licenses (resId, licId, stalling, start, endt)
+SELECT resId, licId, stalling, start, "end" FROM transfer.rms_resource_licenses;
+
 -- actors
 
 INSERT INTO public.workflow_actors (wfId, actorUserId, role, round, start, endt)
@@ -205,6 +214,11 @@ INSERT INTO public.catalogue_item_application_items (catAppId, catItemId)
 SELECT id, catId FROM transfer.rms_catalogue_item_application
 UNION
 SELECT catAppId, catId FROM transfer.rms_catalogue_item_application_catid_overflow;
+
+-- approved application licenses
+
+INSERT INTO public.catalogue_item_application_licenses (catAppId, licId, actorUserId, round, stalling, state, start, endt)
+SELECT catAppId, licId, actorUserId, round, stalling, state, start, "end" FROM transfer.rms_catalogue_item_application_licenses;
 
 -- events
 
@@ -279,4 +293,5 @@ DROP CAST IF EXISTS (transfer.rms_application_form_visibility AS public.scope);
 DROP CAST IF EXISTS (transfer.rms_application_form_item_type AS public.itemtype);
 DROP CAST IF EXISTS (transfer.rms_application_form_item_visibility AS public.scope);
 DROP CAST IF EXISTS (transfer.rms_license_type AS public.license_type);
+DROP CAST IF EXISTS (transfer.rms_catalogue_item_application_licenses_state AS public.license_state);
 DROP CAST IF EXISTS (transfer.rms_license_visibility AS public.scope);
