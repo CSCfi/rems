@@ -182,7 +182,7 @@
                   (is-applicant? (:application form)))
           [:div.row
            [:div.col
-            [:a#back.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
+            [:a#back-catalogue.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
            (into [:div.col.commands]
                  [(when closeable? [:button#close.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
                                     (text :t.actions/close)])
@@ -223,7 +223,9 @@
        (events/approve-form application)
        (getx application :review-type)
        (events/review-form application)
-       :else
+       ;; TODO duplicates logic from form-fields
+       (not (or (draft? (:id application))
+                (is-applicant? application)))
        [:div.row
         [:div.col.commands
          (events/back-to-actions-button)]]))))

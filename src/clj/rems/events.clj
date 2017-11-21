@@ -119,7 +119,7 @@
    (approval-confirm-modal "close" (text :t.actions/close) app)))
 
 (defn back-to-actions-button []
-  [:a#back.btn.btn-secondary.pull-left {:href "/actions"} (text :t.form/back-actions)])
+  [:a#back-actions.btn.btn-secondary.pull-left {:href "/actions"} (text :t.form/back-actions)])
 
 (defn approve-form [app]
   [:div.commands

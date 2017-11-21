@@ -374,48 +374,48 @@
                   context/*roles* #{:applicant}]
           (testing "As the applicant"
             (testing "on a new form"
-              (is (= #{"save" "back" "submit"}
+              (is (= #{"save" "back-catalogue" "submit"}
                      (get-actions
                       (assoc-in draft-data [:application :id] -6)))))
             (testing "on a draft"
-              (is (= #{"save" "back" "submit" "close"} (get-actions draft-data))))
+              (is (= #{"save" "back-catalogue" "submit" "close"} (get-actions draft-data))))
             (testing "on an applied form"
-              (is (= #{"withdraw" "close" "back"} (get-actions applied-data))))
+              (is (= #{"withdraw" "close" "back-catalogue"} (get-actions applied-data))))
             (testing "on an approved form"
-              (is (= #{"close" "back"} (get-actions approved-data))))))
+              (is (= #{"close" "back-catalogue"} (get-actions approved-data))))))
         (binding [context/*user* {"eppn" "bob"}
                   context/*roles* #{:approver :applicant}]
           (testing "As a current round approver (who is also an applicant)"
             (testing "on an applied form"
-              (is (= #{"back" "reject" "approve" "review-request" "return"}
+              (is (= #{"back-actions" "reject" "approve" "review-request" "return"}
                      (get-actions
                       (assoc-in applied-data [:application :can-approve?] true))))))
           (testing "As an approver (who is also an applicant)"
             (testing "on an approved form"
-              (is (= #{"back"} (get-actions approved-data))))))
+              (is (= #{"back-actions"} (get-actions approved-data))))))
         (testing "As an approver, who is not set for the current round, on an applied form"
           (binding [context/*user* {"eppn" "carl"}
                     context/*roles* #{:approver}]
-            (is (= #{"back"} (get-actions applied-data)))))
+            (is (= #{"back-actions"} (get-actions applied-data)))))
         (testing "As a reviewer"
           (binding [context/*user* {"eppn" "carl"}
                     context/*roles* #{:reviewer}]
             (testing "on an applied form"
-              (is (= #{"back" "review"}
+              (is (= #{"back-actions" "review"}
                      (get-actions
                       (assoc-in applied-data [:application :review-type] :normal)))))
             (testing "on an approved form"
-              (is (= #{"back"} (get-actions approved-data))))))
+              (is (= #{"back-actions"} (get-actions approved-data))))))
         (testing "As a reviewer, who is not set for the current round, on an applied form"
           (binding [context/*user* {"eppn" "bob"}
                     context/*roles* #{:reviewer}]
-            (is (= #{"back"} (get-actions applied-data)))))
+            (is (= #{"back-actions"} (get-actions applied-data)))))
         (testing "As a 3d party reviewer"
           (binding [context/*user* {"eppn" "lenny"}
                     context/*roles* #{:reviewer}]
             (testing "on an applied form"
-              (is (= #{"back" "third-party-review"}
+              (is (= #{"back-actions" "third-party-review"}
                      (get-actions
                       (assoc-in applied-data [:application :review-type] :third-party)))))
             (testing "on an approved form"
-              (is (= #{"back"} (get-actions approved-data))))))))))
+              (is (= #{"back-actions"} (get-actions approved-data))))))))))
