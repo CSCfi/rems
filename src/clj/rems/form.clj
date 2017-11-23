@@ -23,6 +23,7 @@
                                           make-draft-application
                                           is-applicant?
                                           submit-application]]
+            [rems.db.catalogue :refer [disabled-catalogue-item?]]
             [rems.db.core :as db]
             [rems.events :as events]
             [rems.guide :refer :all]
@@ -202,13 +203,27 @@
               (for [item catalogue-items]
                 [:li (:title item)])]]}))
 
+(defn- disabled-items-warning [items]
+  (when-some [items (seq (filter disabled-catalogue-item? items))]
+    (layout/flash-message
+     {:status :failure
+      :contents [:div
+                 (text :t.form/alert-disabled-items)
+                 [:ul
+                  (for [item items]
+                    [:li (:title item)])]]})))
+
 
 (defn- form [form]
   (let [state (:state (:application form))
+        draft? (= state "draft")
         actionable? (= state "applied")
         events (get-in form [:application :events])
         user-attributes (or (:applicant-attributes form) context/*user*)]
     (list
+     (when draft?
+       (disabled-items-warning (:catalogue-items form)))
+
      [:h2 (text :t.applications/application)]
 
      (application-header state (filter may-see-event? events))

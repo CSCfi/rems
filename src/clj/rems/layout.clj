@@ -59,7 +59,7 @@
 (defn- logo []
   [:div.logo [:div.container.img]])
 
-(defn- flash-message [{status :status contents :contents}]
+(defn flash-message [{status :status contents :contents}]
   [:div.alert
    {:class (case status
              :success "alert-success"
