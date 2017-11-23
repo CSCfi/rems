@@ -316,6 +316,9 @@
 (defn- save-internal [application catalogue-items items licenses]
   (let [application-id (:id application)
         item-ids (mapv :id catalogue-items)
+        disabled-items (filter disabled-catalogue-item? catalogue-items)]
+    (when (seq disabled-items)
+      (throw (Exception. (str "Disabled catalogue items " (pr-str disabled-items)))))
     (save-application-items application-id item-ids)
     (save-fields application-id items)
     (save-licenses application-id licenses)
