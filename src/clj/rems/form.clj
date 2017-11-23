@@ -80,8 +80,7 @@
     [:input (merge {:type "checkbox" :name (str "license" id) :value "approved"
                     :disabled readonly}
                    (when approved {:checked ""}))]]
-   [:div.col
-    content]])
+   [:div.col content]])
 
 (defn- link-license
   [{title :title id :id textcontent :textcontent approved :approved readonly :readonly}]
