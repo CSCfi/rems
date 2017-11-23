@@ -313,9 +313,9 @@
 (defn- redirect-to-application [application-id]
   (redirect (str "/form/" application-id) :see-other))
 
-(defn- save-internal [application items licenses]
+(defn- save-internal [application catalogue-items items licenses]
   (let [application-id (:id application)
-        item-ids (mapv :id (:catalogue-items application))]
+        item-ids (mapv :id catalogue-items)
     (save-application-items application-id item-ids)
     (save-fields application-id items)
     (save-licenses application-id licenses)
@@ -370,11 +370,12 @@
         form (if (draft? application-id)
                (get-draft-form-for application)
                (get-form-for application-id))
+        catalogue-items (:catalogue-items form)
         db-application-id (if (draft? application-id)
                             (create-new-draft (getx application :wfid))
                             application-id)
         application (assoc application :id db-application-id)]
-    (let [{:keys [flash]} (save-internal application input input)
+    (let [{:keys [flash]} (save-internal application catalogue-items input input)
           new-session (-> session
                           (update :applications dissoc application-id) ; remove temporary application
                           (update :cart difference (set (mapv :id (:catalogue-items application)))) ; remove applied items from cart
