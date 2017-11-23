@@ -5,7 +5,8 @@
             [rems.form :as form]
             [rems.guide :refer :all]
             [rems.text :refer :all]
-            [rems.db.catalogue :refer [get-localized-catalogue-items
+            [rems.db.catalogue :refer [disabled-catalogue-item?
+                                       get-localized-catalogue-items
                                        get-catalogue-item-title]]))
 
 (defn- urn-catalogue-item? [{:keys [resid]}]
@@ -26,7 +27,7 @@
    [:tr
     [:th (text :t.catalogue/header)]
     [:th ""]]
-   (for [item (sort-by get-catalogue-item-title items)]
+   (for [item (sort-by get-catalogue-item-title (remove disabled-catalogue-item? items))]
      (catalogue-item item))])
 
 (defn catalogue []
@@ -56,4 +57,6 @@
    (example "catalogue-list empty"
             (catalogue-list []))
    (example "catalogue-list with two items"
-            (catalogue-list [{:title "Item title"} {:title "Another title"}]))))
+            (catalogue-list [{:title "Item title"} {:title "Another title"}]))
+   (example "catalogue-list with three items, one of which second is disabled"
+            (catalogue-list [{:title "Item 1"} {:title "Item 2 is disabled and should not be shown" :state "disabled"} {:title "Item 3"}]))))

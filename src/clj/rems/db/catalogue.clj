@@ -35,3 +35,6 @@
 (defn get-catalogue-item-title [item]
   (let [localized-title (get-in item [:localizations context/*lang* :title])]
     (or localized-title (:title item))))
+
+(defn disabled-catalogue-item? [item]
+  (= (:state item) "disabled"))
