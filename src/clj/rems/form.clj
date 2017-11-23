@@ -152,9 +152,10 @@
   (let [application (:application form)
         state (:state application)
         new-application? (draft? (:id application))
-        editable? (or new-application? (#{"draft" "returned" "withdrawn"} state))
+        contains-disabled-items? (seq (filter disabled-catalogue-item? (:catalogue-items form)))
+        editable? (and (or new-application? (#{"draft" "returned" "withdrawn"} state)) (not contains-disabled-items?))
         readonly? (not editable?)
-        withdrawable? (= "applied" state)
+        withdrawable? (and (= "applied" state) (not contains-disabled-items?))
         closeable? (and
                     (not new-application?)
                     (not= "closed" state))]
