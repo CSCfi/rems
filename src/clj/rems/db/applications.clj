@@ -77,12 +77,11 @@
   ([app userid round]
    (reviewed? (update app :events (fn [events] (filter #(= round (:round %)) events))) userid)))
 
-(defn- can-act-as? [application-id role]
-  (let [state (get-application-state application-id)
-        round (:curround state)]
-    (and (= "applied" (:state state))
-         (contains? (set (actors/get-by-role application-id round role))
-                    (get-user-id)))))
+(defn- can-act-as?
+  [application role]
+  (and (= "applied" (:state application))
+       (contains? (set (actors/get-by-role (:id application) (:curround application) role))
+                  (get-user-id))))
 
 (defn- round-has-approvers? [application-id round]
   (not-empty? (actors/get-by-role application-id round "approver")))
@@ -91,14 +90,14 @@
   (contains? (set (actors/get-by-role application-id role))
              (get-user-id)))
 
-(defn can-approve? [application-id]
-  (can-act-as? application-id "approver"))
+(defn- can-approve? [application]
+  (can-act-as? application "approver"))
 
 (defn- is-approver? [application-id]
   (is-actor? application-id "approver"))
 
-(defn can-review? [application-id]
-  (can-act-as? application-id "reviewer"))
+(defn- can-review? [application]
+  (can-act-as? application "reviewer"))
 
 (defn- is-reviewer? [application-id]
   (is-actor? application-id "reviewer"))
@@ -115,12 +114,11 @@
   ([user round application]
    (is-third-party-reviewer? user (update application :events (fn [events] (filter #(= round (:round %)) events))))))
 
-(defn can-third-party-review?
+(defn- can-third-party-review?
   "Checks if the current user can perform a 3rd party review action on the current round for the given application."
   [application]
-  (let [state (get-application-state application)]
-    (and (= "applied" (:state state))
-         (is-third-party-reviewer? (get-user-id) (:curround state) state))))
+  (and (= "applied" (:state application))
+       (is-third-party-reviewer? (get-user-id) (:curround application) application)))
 
 (defn get-third-party-reviewers
   "Takes as an argument a structure containing application information and a workflow round. Then returns userids for all users that have been requested to review for the given round."
@@ -162,7 +160,7 @@
 
 (defn get-approvals []
   (filterv
-   (fn [app] (can-approve? (:id app)))
+   (fn [app] (can-approve? app))
    (get-applications-impl {})))
 
 (defn get-handled-approvals []
@@ -212,8 +210,8 @@
   (->> (get-applications-impl {})
        (filterv
         (fn [app] (and (not (reviewed? app))
-                       (or (can-review? (:id app))
-                           (can-third-party-review? (:id app))))))
+                       (or (can-review? app)
+                           (can-third-party-review? app)))))
        (mapv assoc-review-type-to-app)))
 
 (defn make-draft-application
@@ -282,7 +280,9 @@
     {:id 7
      :title \"Title\"
      :application {:id 3
-                   :state \"draft\"}
+                   :state \"draft\"
+                   :review-type :normal
+                   :can-approve? false}
      :applicant-attributes {\"eppn\" \"developer\"
                             \"email\" \"developer@e.mail\"
                             \"displayName\" \"deve\"
@@ -301,7 +301,7 @@
                  :licensetype \"link\"
                  :title \"LGPL\"
                  :textcontent \"http://foo\"
-                 :approved false}]"
+                 :approved false}]}"
   ([application-id]
    (let [form (db/get-form-for-application {:application application-id})
          form (or form (db/get-form-for-application {:application application-id :lang "en"}))
@@ -320,14 +320,20 @@
                                     (index-by [:licid :langcode]))
          licenses (mapv #(process-license application license-localizations %)
                         (db/get-licenses {:wfid (:wfid application) :items catalogue-item-ids}))
-         applicant? (= (:applicantuserid application) (get-user-id))]
+         applicant? (= (:applicantuserid application) (get-user-id))
+         review-type (cond
+                       (can-review? application) :normal
+                       (can-third-party-review? application) :third-party
+                       :else nil)]
      (when application-id
        (when-not (may-see-application? application)
          (throw-unauthorized)))
      {:id form-id
       :title (:formtitle form)
       :catalogue-items catalogue-items
-      :application application
+      :application (assoc application
+                          :can-approve? (can-approve? application)
+                          :review-type review-type)
       :applicant-attributes (users/get-user-attributes (:applicantuserid application))
       :items items
       :licenses licenses})))
@@ -353,7 +359,9 @@
      {:id form-id
       :title (:formtitle form)
       :catalogue-items catalogue-items
-      :application application
+      :application (assoc application
+                          :can-approve? false
+                          :review-type nil)
       :applicant-attributes (users/get-user-attributes (:applicantuserid application))
       :items items
       :licenses licenses})))
@@ -575,39 +583,39 @@
     (handle-state-change application-id)))
 
 (defn approve-application [application-id round msg]
-  (when-not (can-approve? application-id)
+  (when-not (can-approve? (get-application-state application-id))
     (throw-unauthorized))
   (judge-application application-id "approve" round msg))
 
 (defn reject-application [application-id round msg]
-  (when-not (can-approve? application-id)
+  (when-not (can-approve? (get-application-state application-id))
     (throw-unauthorized))
   (judge-application application-id "reject" round msg))
 
 (defn return-application [application-id round msg]
-  (when-not (can-approve? application-id)
+  (when-not (can-approve? (get-application-state application-id))
     (throw-unauthorized))
   (judge-application application-id "return" round msg))
 
 (defn review-application [application-id round msg]
-  (when-not (can-review? application-id)
+  (when-not (can-review? (get-application-state application-id))
     (throw-unauthorized))
   (judge-application application-id "review" round msg))
 
 (defn perform-third-party-review [application-id round msg]
-  (when-not (can-third-party-review? application-id)
-    (throw-unauthorized))
-  (let [state (get-application-state application-id)]
-    (when-not (= round (:curround state))
+  (let [application (get-application-state application-id)]
+    (when-not (can-third-party-review? application)
+      (throw-unauthorized))
+    (when-not (= round (:curround application))
       (throw-unauthorized))
     (db/add-application-event! {:application application-id :user (get-user-id)
                                 :round round :event "third-party-review" :comment msg})))
 
 (defn send-review-request [application-id round msg recipients]
-  (let [state (get-application-state application-id)]
-    (when-not (can-approve? application-id)
+  (let [application (get-application-state application-id)]
+    (when-not (can-approve? application)
       (throw-unauthorized))
-    (when-not (= round (:curround state))
+    (when-not (= round (:curround application))
       (throw-unauthorized))
     (assert (not-empty? recipients)
             (str "Can't send a review request without recipients."))
@@ -615,12 +623,12 @@
                     recipients
                     (vector recipients))]
       (doseq [recipient send-to]
-        (when-not (is-third-party-reviewer? recipient (:curround state) state)
+        (when-not (is-third-party-reviewer? recipient (:curround application) application)
           (db/add-application-event! {:application application-id :user recipient
                                       :round round :event "review-request" :comment msg})
           (roles/add-role! recipient :reviewer)
           (email/review-request (users/get-user-attributes recipient)
-                                (get-username (users/get-user-attributes (:applicantuserid state)))
+                                (get-username (users/get-user-attributes (:applicantuserid application)))
                                 application-id
                                 (get-catalogue-items-by-application-id application-id)))))))
 
@@ -651,6 +659,6 @@
 
 (defn close-application [application-id round msg]
   (let [application (get-application-state application-id)]
-    (when-not (or (is-applicant? application) (can-approve? application-id))
+    (when-not (or (is-applicant? application) (can-approve? application))
       (throw-unauthorized))
     (unjudge-application application "close" round msg)))
