@@ -77,17 +77,15 @@
   ([app userid round]
    (reviewed? (update app :events (fn [events] (filter #(= round (:round %)) events))) userid)))
 
-(defn- can-act-as? [application-id role]
-  (let [state (get-application-state application-id)
-        round (:curround state)]
-    (and (= "applied" (:state state))
-         (contains? (set (actors/get-by-role application-id round role))
-                    (get-user-id)))))
-
-(defn- can-act-as+? [application-state role]
+(defn- can-act-as+?
+  "Should eventually replace can-act-as?. Takes the application state instead of an application id."
+  [application-state role]
   (and (= "applied" (:state application-state))
        (contains? (set (actors/get-by-role (:id application-state) (:curround application-state) role))
                   (get-user-id))))
+
+(defn- can-act-as? [application-id role]
+  (can-act-as+? (get-application-state application-id) role))
 
 (defn- round-has-approvers? [application-id round]
   (not-empty? (actors/get-by-role application-id round "approver")))
@@ -120,18 +118,18 @@
   ([user round application]
    (is-third-party-reviewer? user (update application :events (fn [events] (filter #(= round (:round %)) events))))))
 
-(defn can-third-party-review?
-  "Checks if the current user can perform a 3rd party review action on the current round for the given application."
-  [application]
-  (let [state (get-application-state application)]
-    (and (= "applied" (:state state))
-         (is-third-party-reviewer? (get-user-id) (:curround state) state))))
-
 (defn can-third-party-review+?
-  "Checks if the current user can perform a 3rd party review action on the current round for the given application."
+  "Checks if the current user can perform a 3rd party review action on the current round for the given application.
+
+   Should eventually replace can-third-party-review?"
   [application-state]
   (and (= "applied" (:state application-state))
        (is-third-party-reviewer? (get-user-id) (:curround application-state) application-state)))
+
+(defn can-third-party-review?
+  "Checks if the current user can perform a 3rd party review action on the current round for the given application."
+  [application-id]
+  (can-third-party-review+? (get-application-state application-id)))
 
 (defn get-third-party-reviewers
   "Takes as an argument a structure containing application information and a workflow round. Then returns userids for all users that have been requested to review for the given round."
