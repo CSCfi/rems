@@ -1,10 +1,10 @@
 (ns rems.routes.home
   (:require [compojure.core :refer [GET defroutes]]
+            [hiccup.element :refer [image link-to]]
             [rems.actions :as actions]
             [rems.applications :as applications]
             [rems.cart :as cart]
             [rems.catalogue :as catalogue]
-            [rems.contents :as contents]
             [rems.context :as context]
             [rems.css.styles :as styles]
             [rems.entitlements :as entitlements]
@@ -13,19 +13,29 @@
             [rems.landing-page :as landing-page]
             [rems.language-switcher :as language-switcher]
             [rems.layout :as layout]
+            [rems.text :refer [text]]
             [ring.util.response :refer [content-type
                                         redirect
                                         response]]))
+
+(defn login [context]
+  [:div.m-auto.jumbotron
+   [:h2 (text :t.login/title)]
+   [:p (text :t.login/text)]
+   (link-to (str context "/Shibboleth.sso/Login") (image {:class "login-btn"} "/img/haka-logo.jpg"))])
 
 (defn home-page []
   (if context/*user*
     (redirect "/landing_page")
     (layout/render
-      "home" (contents/login context/*root-path*))))
+      "home" (login context/*root-path*))))
+
+(defn- about []
+  [:p (text :t.about/text)])
 
 (defn about-page []
   (layout/render
-    "about" (contents/about)))
+    "about" (about)))
 
 (defn catalogue-page []
   (layout/render

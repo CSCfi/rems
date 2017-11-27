@@ -8,7 +8,6 @@
             [rems.cart :as cart]
             [rems.catalogue :as catalogue]
             [rems.collapsible :as collapsible]
-            [rems.contents :as contents]
             [rems.context :as context]
             [rems.form :as form]
             [rems.guide :refer :all]
@@ -62,7 +61,7 @@
           (layout/guide)
 
           [:h2 "Login"]
-          (example "login" (contents/login "/"))
+          #_(example "login" (contents/login "/"))
           (ldap/guide)
 
           [:h2 "Catalogue components"]
@@ -89,7 +88,7 @@
 
           [:h2 "Misc components"]
           (phase/guide)
-          (example "about" (contents/about))
+          #_(example "about" (contents/about))
           (include-js "/assets/jquery/jquery.min.js")
           (include-js "/assets/tether/dist/js/tether.min.js")
           (include-js "/assets/bootstrap/js/bootstrap.min.js")]]]))))
