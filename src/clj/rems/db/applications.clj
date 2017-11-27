@@ -96,8 +96,8 @@
 (defn- is-approver? [application-id]
   (is-actor? application-id "approver"))
 
-(defn- can-review? [application-id]
-  (can-act-as? application-id "reviewer"))
+(defn- can-review? [application]
+  (can-act-as? application "reviewer"))
 
 (defn- is-reviewer? [application-id]
   (is-actor? application-id "reviewer"))
