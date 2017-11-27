@@ -356,17 +356,20 @@
       )))
 
 (defn api-save [request]
-  (let [{:keys [application-id items licenses operation catalogue-items]} request
-        application (make-draft-application -1 catalogue-items)
+  (let [{:keys [application-id items licenses operation]} request
+        catalogue-item-ids (:catalogue-items request)
+        application (make-draft-application -1 catalogue-item-ids)
         items (if (= operation "send") (assoc items "submit" true) items)
-        wfid (getx application :wfid)
-        application-id (if (draft? application-id) (create-new-draft wfid) application-id)
-        application (assoc application :id application-id)
-        {:keys [success? valid? validation]} (save-internal application items licenses)]
+        db-application-id (if (draft? application-id)
+                            (create-new-draft (getx application :wfid))
+                            application-id)
+        application (assoc application :id db-application-id)
+        catalogue-items (:catalogue-items application)
+        {:keys [success? valid? validation]} (save-internal application catalogue-items items licenses)]
     (cond-> {:success success?
              :valid valid?}
       (not valid?) (assoc :validation validation)
-      success? (assoc :id application-id
+      success? (assoc :id db-application-id
                       :state (:state (get-application-state application-id))))
     ))
 
