@@ -78,9 +78,9 @@
    (reviewed? (update app :events (fn [events] (filter #(= round (:round %)) events))) userid)))
 
 (defn- can-act-as?
-  [application-state role]
-  (and (= "applied" (:state application-state))
-       (contains? (set (actors/get-by-role (:id application-state) (:curround application-state) role))
+  [application role]
+  (and (= "applied" (:state application))
+       (contains? (set (actors/get-by-role (:id application) (:curround application) role))
                   (get-user-id))))
 
 (defn- round-has-approvers? [application-id round]
@@ -116,9 +116,9 @@
 
 (defn- can-third-party-review?
   "Checks if the current user can perform a 3rd party review action on the current round for the given application."
-  [application-state]
-  (and (= "applied" (:state application-state))
-       (is-third-party-reviewer? (get-user-id) (:curround application-state) application-state)))
+  [application]
+  (and (= "applied" (:state application))
+       (is-third-party-reviewer? (get-user-id) (:curround application) application)))
 
 (defn get-third-party-reviewers
   "Takes as an argument a structure containing application information and a workflow round. Then returns userids for all users that have been requested to review for the given round."
@@ -603,19 +603,19 @@
   (judge-application application-id "review" round msg))
 
 (defn perform-third-party-review [application-id round msg]
-  (let [state (get-application-state application-id)]
-    (when-not (can-third-party-review? state)
+  (let [application (get-application-state application-id)]
+    (when-not (can-third-party-review? application)
       (throw-unauthorized))
-    (when-not (= round (:curround state))
+    (when-not (= round (:curround application))
       (throw-unauthorized))
     (db/add-application-event! {:application application-id :user (get-user-id)
                                 :round round :event "third-party-review" :comment msg})))
 
 (defn send-review-request [application-id round msg recipients]
-  (let [state (get-application-state application-id)]
-    (when-not (can-approve? state)
+  (let [application (get-application-state application-id)]
+    (when-not (can-approve? application)
       (throw-unauthorized))
-    (when-not (= round (:curround state))
+    (when-not (= round (:curround application))
       (throw-unauthorized))
     (assert (not-empty? recipients)
             (str "Can't send a review request without recipients."))
@@ -623,12 +623,12 @@
                     recipients
                     (vector recipients))]
       (doseq [recipient send-to]
-        (when-not (is-third-party-reviewer? recipient (:curround state) state)
+        (when-not (is-third-party-reviewer? recipient (:curround application) application)
           (db/add-application-event! {:application application-id :user recipient
                                       :round round :event "review-request" :comment msg})
           (roles/add-role! recipient :reviewer)
           (email/review-request (users/get-user-attributes recipient)
-                                (get-username (users/get-user-attributes (:applicantuserid state)))
+                                (get-username (users/get-user-attributes (:applicantuserid application)))
                                 application-id
                                 (get-catalogue-items-by-application-id application-id)))))))
 
