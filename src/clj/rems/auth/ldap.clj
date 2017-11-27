@@ -48,11 +48,14 @@
   [:div.m-auto.jumbotron
    [:h2 (text :t.ldap/title)]
    [:form
-    {:action "/ldaplogin" :method "post"}
+    {:action "/ldap/login" :method "post"}
     [:input.form-control {:type "text" :placeholder (text :t.ldap/username) :name "username" :required true}]
     [:input.form-control {:type "password" :placeholder (text :t.ldap/password) :name "password" :required true}]
     (anti-forgery-field)
     [:button.btn.btn-lg.btn-primary.btn-block {:type "submit"} (text :t.ldap/login)]]])
+
+(defn logout-url []
+  "/ldap/logout")
 
 (defn- login-page []
   (layout/render
@@ -60,12 +63,15 @@
    (login-component)))
 
 (defn- login-failed []
-  (assoc (redirect "/ldaplogin")
+  (assoc (redirect "/ldap/login")
          :flash [{:status :failure :contents (text :t.ldap/failed)}]))
 
 (defroutes routes
-  (GET "/ldaplogin" [] (login-page))
-  (POST "/ldaplogin" req
+  (GET "/ldap/logout" req
+       (let [session (get req :session)]
+         (assoc (redirect "/") :session (dissoc session :identity))))
+  (GET "/ldap/login" [] (login-page))
+  (POST "/ldap/login" req
         (let [session (get req :session)
               username (getx-in req [:form-params "username"])
               password (getx-in req [:form-params "password"])

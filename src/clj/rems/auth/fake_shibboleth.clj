@@ -37,7 +37,7 @@ a:visited { color: #fff; }
     (assoc (redirect "/landing_page")
       :session (assoc session :identity {"eppn" username "commonName" username "mail" mail}))))
 
-(defn user-selection [username]
+(defn- user-selection [username]
   (let [url (url "/Shibboleth.sso/Login" {:username username})]
     [:li {:onclick (str "window.location.href='" url "';")}
      [:a {:href url} username]]))
@@ -55,6 +55,9 @@ a:visited { color: #fff; }
 
 (defn- fake-logout [{session :session}]
   (assoc (redirect "/") :session (dissoc session :identity)))
+
+(defn logout-url []
+  "/Shibboleth.sso/Logout")
 
 (defroutes routes
   (GET "/Shibboleth.sso/Login" req (fake-login-screen req))

@@ -17,3 +17,6 @@
   (-> handler
       (wrap-authentication (shibbo-backend))
       (wrap-authorization (authz-backend))))
+
+(defn logout-url []
+  "/Shibboleth.sso/Logout?return=%2F")
