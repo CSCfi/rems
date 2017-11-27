@@ -283,6 +283,9 @@
      [:li m])])
 
 (defn save-application-items [application-id catalogue-item-ids]
+  (assert application-id)
+  (assert (empty? (filter nil? catalogue-item-ids)) "nils sent in catalogue-item-ids")
+  (assert (not (empty? catalogue-item-ids)))
   (doseq [catalogue-item-id catalogue-item-ids]
     (db/add-application-item! {:application application-id :item catalogue-item-id})))
 
