@@ -1,4 +1,4 @@
-(ns rems.ldap
+(ns rems.auth.ldap
   (:require [clj-ldap.client :as ldap]
             [clojure.tools.logging :as log]
             [compojure.core :refer [GET POST defroutes]]

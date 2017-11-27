@@ -13,7 +13,7 @@
             [rems.guide :refer :all]
             [rems.info-field :as info-field]
             [rems.layout :as layout]
-            [rems.ldap :as ldap]
+            [rems.auth.ldap :as ldap]
             [rems.phase :as phase]
             [rems.util :as util]
             [rems.info-field :as info-field]))

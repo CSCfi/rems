@@ -6,7 +6,7 @@
             [rems.config :refer [env]]
             [rems.env :refer [+defaults+]]
             [rems.layout :refer [error-page]]
-            [rems.ldap :as ldap]
+            [rems.auth.ldap :as ldap]
             [rems.middleware :as middleware]
             [rems.routes.fake-shibboleth :refer [fake-shibboleth-routes]]
             [rems.routes.guide :refer [guide-routes]]
