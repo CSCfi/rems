@@ -118,18 +118,11 @@
   ([user round application]
    (is-third-party-reviewer? user (update application :events (fn [events] (filter #(= round (:round %)) events))))))
 
-(defn can-third-party-review+?
-  "Checks if the current user can perform a 3rd party review action on the current round for the given application.
-
-   Should eventually replace can-third-party-review?"
+(defn- can-third-party-review?
+  "Checks if the current user can perform a 3rd party review action on the current round for the given application."
   [application-state]
   (and (= "applied" (:state application-state))
        (is-third-party-reviewer? (get-user-id) (:curround application-state) application-state)))
-
-(defn can-third-party-review?
-  "Checks if the current user can perform a 3rd party review action on the current round for the given application."
-  [application-id]
-  (can-third-party-review+? (get-application-state application-id)))
 
 (defn get-third-party-reviewers
   "Takes as an argument a structure containing application information and a workflow round. Then returns userids for all users that have been requested to review for the given round."
@@ -222,7 +215,7 @@
        (filterv
         (fn [app] (and (not (reviewed? app))
                        (or (can-review? (:id app))
-                           (can-third-party-review? (:id app))))))
+                           (can-third-party-review? app)))))
        (mapv assoc-review-type-to-app)))
 
 (defn make-draft-application
@@ -334,7 +327,7 @@
          applicant? (= (:applicantuserid application) (get-user-id))
          review-type (cond
                        (can-act-as+? application "reviewer") :normal
-                       (can-third-party-review+? application) :third-party
+                       (can-third-party-review? application) :third-party
                        :else nil)]
      (when application-id
        (when-not (may-see-application? application)
@@ -614,9 +607,9 @@
   (judge-application application-id "review" round msg))
 
 (defn perform-third-party-review [application-id round msg]
-  (when-not (can-third-party-review? application-id)
-    (throw-unauthorized))
   (let [state (get-application-state application-id)]
+    (when-not (can-third-party-review? state)
+      (throw-unauthorized))
     (when-not (= round (:curround state))
       (throw-unauthorized))
     (db/add-application-event! {:application application-id :user (get-user-id)

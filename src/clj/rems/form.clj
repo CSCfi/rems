@@ -13,7 +13,6 @@
             [rems.db.applications :refer [assoc-review-type-to-app
                                           can-approve?
                                           can-review?
-                                          can-third-party-review?
                                           create-new-draft
                                           draft?
                                           get-application-phases
