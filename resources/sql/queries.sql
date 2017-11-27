@@ -2,7 +2,7 @@
 -- :doc
 -- - Get catalogue items
 -- - :items vector of item ids
-SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, cis.state
+SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, COALESCE(cis.state, 'enabled') AS state
 FROM catalogue_item ci
 LEFT OUTER JOIN resource res ON (ci.resid = res.id)
 LEFT OUTER JOIN catalogue_item_state cis ON (ci.id = cis.catid)
@@ -13,7 +13,7 @@ WHERE 1=1
 
 
 -- :name get-catalogue-item :? :1
-SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, cis.state
+SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, COALESCE(cis.state, 'enabled') AS state
 FROM catalogue_item ci
 LEFT OUTER JOIN resource res ON (ci.resid = res.id)
 LEFT OUTER JOIN catalogue_item_state cis ON (ci.id = cis.catid)
