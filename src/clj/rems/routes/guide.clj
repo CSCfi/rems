@@ -5,6 +5,7 @@
             [rems.actions :as actions]
             [rems.applicant-info :as applicant-info]
             [rems.applications :as applications]
+            [rems.auth.auth :as auth]
             [rems.cart :as cart]
             [rems.catalogue :as catalogue]
             [rems.collapsible :as collapsible]
@@ -61,8 +62,7 @@
           (layout/guide)
 
           [:h2 "Login"]
-          #_(example "login" (contents/login "/"))
-          (ldap/guide)
+          (auth/guide)
 
           [:h2 "Catalogue components"]
           (catalogue/guide)

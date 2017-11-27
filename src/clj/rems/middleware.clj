@@ -1,11 +1,8 @@
 (ns rems.middleware
   (:require [buddy.auth :refer [authenticated?]]
             [buddy.auth.accessrules :refer [restrict]]
-            [buddy.auth.backends.session :refer [session-backend]]
-            [buddy.auth.middleware :refer [wrap-authentication
-                                           wrap-authorization]]
             [clojure.tools.logging :as log]
-            [haka-buddy.backend :refer [authz-backend shibbo-backend]]
+            [rems.auth.auth :as auth]
             [rems.cart :refer [get-cart-from-session]]
             [rems.config :refer [env]]
             [rems.context :as context]
@@ -126,19 +123,6 @@
     (binding [context/*user* (:identity request)]
       (handler request))))
 
-(defmulti wrap-auth (fn [handler type] type))
-
-(defmethod wrap-auth :fake-shibboleth [handler _]
-  (let [backend (session-backend)]
-    (-> (wrap-user handler)
-        (wrap-authentication backend)
-        (wrap-authorization backend))))
-
-(defmethod wrap-auth :shibboleth [handler _]
-  (-> (wrap-user handler)
-      (wrap-authentication (shibbo-backend))
-      (wrap-authorization (authz-backend))))
-
 (defn wrap-logging
   [handler]
   (fn [request]
@@ -184,7 +168,8 @@
       wrap-context
       wrap-webapp-context
       wrap-service-context
-      (wrap-auth (getx env :authentication))
+      wrap-user
+      auth/wrap-auth
       wrap-webjars
       wrap-csrf
       (wrap-defaults +wrap-defaults-settings+)

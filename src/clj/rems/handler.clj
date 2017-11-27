@@ -3,15 +3,14 @@
             [compojure.core :refer [routes wrap-routes]]
             [compojure.route :as route]
             [mount.core :as mount]
-            [rems.auth.fake-shibboleth :refer [fake-shibboleth-routes]]
-            [rems.auth.ldap :as ldap]
             [rems.config :refer [env]]
             [rems.env :refer [+defaults+]]
             [rems.layout :refer [error-page]]
             [rems.middleware :as middleware]
             [rems.routes.guide :refer [guide-routes]]
             [rems.routes.home :refer [public-routes secured-routes]]
-            [rems.routes.services :refer [service-routes]]))
+            [rems.routes.services :refer [service-routes]]
+            [rems.util :refer [never-match-route]]))
 
 (mount/defstate init-app
   :start ((or (:init +defaults+) identity))
@@ -41,26 +40,15 @@
 
 (defn normal-routes []
   (routes
-   #'public-routes
+   (public-routes)
    (wrap-routes #'secured-routes middleware/wrap-restricted)
    #'service-routes))
-
-(def never-match-route
-  (constantly nil))
 
 (defn app-routes []
   (routes
    (normal-routes)
    (if (:component-guide +defaults+)
      guide-routes
-     never-match-route)
-   (if (= (:authentication env) :fake-shibboleth)
-     fake-shibboleth-routes
-     never-match-route)
-   ;; for the time being, only expose ldap auth in "dev mode"
-   ;; together with fake-shibboleth
-   (if (= (:authentication env) :fake-shibboleth)
-     ldap/ldap-routes
      never-match-route)
    (if-let [path (:serve-static +defaults+)]
      (route/files "/" {:root path})

@@ -64,3 +64,6 @@
   "Like `get-in` but throws an exception if the key is not found."
   [m ks]
   (reduce getx m ks))
+
+(def never-match-route
+  (constantly nil))

@@ -1,8 +1,8 @@
 (ns rems.routes.home
-  (:require [compojure.core :refer [GET defroutes]]
-            [hiccup.element :refer [image link-to]]
+  (:require [compojure.core :refer [GET routes defroutes]]
             [rems.actions :as actions]
             [rems.applications :as applications]
+            [rems.auth.auth :as auth]
             [rems.cart :as cart]
             [rems.catalogue :as catalogue]
             [rems.context :as context]
@@ -18,24 +18,17 @@
                                         redirect
                                         response]]))
 
-(defn login [context]
-  [:div.m-auto.jumbotron
-   [:h2 (text :t.login/title)]
-   [:p (text :t.login/text)]
-   (link-to (str context "/Shibboleth.sso/Login") (image {:class "login-btn"} "/img/haka-logo.jpg"))])
-
-(defn home-page []
-  (if context/*user*
-    (redirect "/landing_page")
-    (layout/render
-      "home" (login context/*root-path*))))
-
 (defn- about []
   [:p (text :t.about/text)])
 
 (defn about-page []
   (layout/render
     "about" (about)))
+
+(defn home-page []
+  (if context/*user*
+    (redirect "/landing_page")
+    (layout/render "home" (auth/login-component))))
 
 (defn catalogue-page []
   (layout/render
@@ -46,13 +39,15 @@
    "applications"
    (applications/applications)))
 
-(defroutes public-routes
-  (GET "/" [] (home-page))
-  (GET "/about" [] (about-page))
-  (GET "/css/screen.css" [] (-> (styles/generate-css)
-                                (response)
-                                (content-type "text/css")))
-  language-switcher/switcher-routes)
+(defn public-routes []
+  (routes
+   (GET "/" [] (home-page))
+   (GET "/about" [] (about-page))
+   (GET "/css/screen.css" [] (-> (styles/generate-css)
+                                 (response)
+                                 (content-type "text/css")))
+   language-switcher/switcher-routes
+   (auth/auth-routes)))
 
 (defroutes secured-routes
   (GET "/applications" [] (applications-page))

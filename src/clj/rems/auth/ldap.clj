@@ -44,7 +44,7 @@
    "mail" (getx user :mail)
    "dn" (getx user :dn)})
 
-(defn- login-component []
+(defn login-component []
   [:div.m-auto.jumbotron
    [:h2 (text :t.ldap/title)]
    [:form
@@ -63,7 +63,7 @@
   (assoc (redirect "/ldaplogin")
          :flash [{:status :failure :contents (text :t.ldap/failed)}]))
 
-(defroutes ldap-routes
+(defroutes routes
   (GET "/ldaplogin" [] (login-page))
   (POST "/ldaplogin" req
         (let [session (get req :session)
