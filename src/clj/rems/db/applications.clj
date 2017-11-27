@@ -77,15 +77,11 @@
   ([app userid round]
    (reviewed? (update app :events (fn [events] (filter #(= round (:round %)) events))) userid)))
 
-(defn- can-act-as+?
-  "Should eventually replace can-act-as?. Takes the application state instead of an application id."
+(defn- can-act-as?
   [application-state role]
   (and (= "applied" (:state application-state))
        (contains? (set (actors/get-by-role (:id application-state) (:curround application-state) role))
                   (get-user-id))))
-
-(defn- can-act-as? [application-id role]
-  (can-act-as+? (get-application-state application-id) role))
 
 (defn- round-has-approvers? [application-id round]
   (not-empty? (actors/get-by-role application-id round "approver")))
@@ -95,13 +91,13 @@
              (get-user-id)))
 
 (defn- can-approve? [application]
-  (can-act-as+? application "approver"))
+  (can-act-as? application "approver"))
 
 (defn- is-approver? [application-id]
   (is-actor? application-id "approver"))
 
 (defn- can-review? [application-id]
-  (can-act-as+? application-id "reviewer"))
+  (can-act-as? application-id "reviewer"))
 
 (defn- is-reviewer? [application-id]
   (is-actor? application-id "reviewer"))
@@ -326,7 +322,7 @@
                         (db/get-licenses {:wfid (:wfid application) :items catalogue-item-ids}))
          applicant? (= (:applicantuserid application) (get-user-id))
          review-type (cond
-                       (can-act-as+? application "reviewer") :normal
+                       (can-review? application) :normal
                        (can-third-party-review? application) :third-party
                        :else nil)]
      (when application-id
