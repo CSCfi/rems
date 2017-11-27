@@ -499,7 +499,6 @@
                   (applications/get-handled-reviews)))
           "should only see app4 in handled reviews")
 
-      ;; undb these tests
       (testing "applications/can-review?"
         (is (can-review? app1))
         (is (not (can-review? app2)))
@@ -540,7 +539,7 @@
              (map #(select-keys % [:id :state :curround])
                   (applications/get-applications-to-review)))
           "should only see app2")
-      ;; undb these tests
+
       (testing "applications/can-review? after changes"
         (is (not (can-review? app1)))
         (is (can-review? app2))

@@ -213,7 +213,7 @@
      [:div.my-3 (form-fields form)]
 
      ;; TODO resource owner should be able to close
-     ;; TODO reviewer buttons are not shown to approver!
+     ;; NB! reviewer buttons are not shown to approver!
      (cond
        (getx application :can-approve?)
        (events/approve-form application)
