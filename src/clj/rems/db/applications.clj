@@ -94,8 +94,8 @@
   (contains? (set (actors/get-by-role application-id role))
              (get-user-id)))
 
-(defn can-approve? [application-id]
-  (can-act-as? application-id "approver"))
+(defn- can-approve? [application]
+  (can-act-as+? application "approver"))
 
 (defn- is-approver? [application-id]
   (is-actor? application-id "approver"))
@@ -164,7 +164,7 @@
 
 (defn get-approvals []
   (filterv
-   (fn [app] (can-approve? (:id app)))
+   (fn [app] (can-approve? app))
    (get-applications-impl {})))
 
 (defn get-handled-approvals []
@@ -336,7 +336,7 @@
       :title (:formtitle form)
       :catalogue-items catalogue-items
       :application (assoc application
-                          :can-approve? (can-act-as+? application "approver")
+                          :can-approve? (can-approve? application)
                           :review-type review-type)
       :applicant-attributes (users/get-user-attributes (:applicantuserid application))
       :items items
@@ -587,17 +587,17 @@
     (handle-state-change application-id)))
 
 (defn approve-application [application-id round msg]
-  (when-not (can-approve? application-id)
+  (when-not (can-approve? (get-application-state application-id))
     (throw-unauthorized))
   (judge-application application-id "approve" round msg))
 
 (defn reject-application [application-id round msg]
-  (when-not (can-approve? application-id)
+  (when-not (can-approve? (get-application-state application-id))
     (throw-unauthorized))
   (judge-application application-id "reject" round msg))
 
 (defn return-application [application-id round msg]
-  (when-not (can-approve? application-id)
+  (when-not (can-approve? (get-application-state application-id))
     (throw-unauthorized))
   (judge-application application-id "return" round msg))
 
@@ -617,7 +617,7 @@
 
 (defn send-review-request [application-id round msg recipients]
   (let [state (get-application-state application-id)]
-    (when-not (can-approve? application-id)
+    (when-not (can-approve? state)
       (throw-unauthorized))
     (when-not (= round (:curround state))
       (throw-unauthorized))
@@ -663,6 +663,6 @@
 
 (defn close-application [application-id round msg]
   (let [application (get-application-state application-id)]
-    (when-not (or (is-applicant? application) (can-approve? application-id))
+    (when-not (or (is-applicant? application) (can-approve? application))
       (throw-unauthorized))
     (unjudge-application application "close" round msg)))
