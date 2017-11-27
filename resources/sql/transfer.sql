@@ -22,6 +22,10 @@ CREATE CAST (transfer.rms_license_type AS public.license_type)
 WITH INOUT
 AS IMPLICIT;
 
+CREATE CAST (transfer.rms_catalogue_item_application_licenses_state AS public.license_state)
+WITH INOUT
+AS IMPLICIT;
+
 CREATE CAST (transfer.rms_license_visibility AS public.scope)
 WITH INOUT
 AS IMPLICIT;
@@ -37,13 +41,18 @@ CREATE TABLE transfer.migrated_application_event (
 );
 
 -- data created by the app that might reference data we want to clear
+DELETE FROM public.entitlement CASCADE;
 DELETE FROM public.application_text_values CASCADE;
+DELETE FROM public.catalogue_item_application_licenses CASCADE;
+DELETE FROM public.catalogue_item_application_items CASCADE;
+DELETE FROM public.catalogue_item_application_licenses CASCADE;
+DELETE FROM public.application_event CASCADE;
+DELETE FROM public.users CASCADE;
 DELETE FROM public.catalogue_item_application CASCADE;
 
 -- clear existing data
-DELETE FROM public.entitlement CASCADE;
-DELETE FROM public.application_event CASCADE;
 DELETE FROM public.workflow_actors CASCADE;
+DELETE FROM public.resource_licenses CASCADE;
 DELETE FROM public.workflow_licenses CASCADE;
 DELETE FROM public.license_localization CASCADE;
 DELETE FROM public.license CASCADE;
@@ -51,10 +60,9 @@ DELETE FROM public.catalogue_item_localization CASCADE;
 DELETE FROM public.catalogue_item CASCADE;
 DELETE FROM public.resource CASCADE;
 DELETE FROM public.workflow CASCADE;
+DELETE FROM public.application_form_item_localization CASCADE;
 DELETE FROM public.application_form_item_map CASCADE;
 DELETE FROM public.application_form_item CASCADE;
-DELETE FROM public.application_form_meta_map CASCADE;
-DELETE FROM public.application_form_meta CASCADE;
 DELETE FROM public.application_form CASCADE;
 
 INSERT INTO public.workflow
@@ -63,26 +71,117 @@ SELECT * FROM transfer.rms_workflow;
 INSERT INTO public.resource (id, modifierUserId, prefix, resId, start, endt)
 SELECT id, modifierUserId, prefix, resId, start, "end" FROM transfer.rms_resource;
 
-INSERT INTO public.application_form
-SELECT * FROM transfer.rms_application_form;
+-- forms
 
-INSERT INTO public.application_form_meta
-SELECT * FROM transfer.rms_application_form_meta;
+-- The old data localizes per-form, whereas we localize per-item. We
+-- migrate the data so that behaviour of existing catalogue items
+-- remains the same.
+--
+--                                       form -- form_item_map -- form_item
+--                                      /
+-- catalogue_item -- form_meta -- form_meta_map
+--                                      \
+--                                       form -- form_item_map -- form_item
+--
+--                        I                             I
+--                        V                             V
+--
+--                                                        form_item_localization
+--                                                      /
+-- catalogue_item -- form -- form_item_map -- form_item
+--                                                      \
+--                                                        form_item_localization
+--
+-- Let's reuse the metaId as the formId, to make copying catalogue_item simpler
 
-INSERT INTO public.application_form_meta_map
-SELECT * FROM transfer.rms_application_form_meta_map;
+-- Create forms
+INSERT INTO public.application_form (id, ownerUserId, modifierUserId, title, visibility, start, endt)
+SELECT id, ownerUserId, modifierUserId, COALESCE(title,'unknown'), visibility, start, "end"
+FROM transfer.rms_application_form_meta;
 
-INSERT INTO public.application_form_item
-SELECT * FROM transfer.rms_application_form_item;
+-- Create a table for form items
+CREATE TABLE transfer.migrated_form_item (
+  metaId integer,
+  langCode varchar(64),
+  itemOrder integer,
+  itemMapId integer,
+  itemId integer
+);
 
-INSERT INTO public.application_form_item_map
-SELECT * FROM transfer.rms_application_form_item_map;
+INSERT INTO transfer.migrated_form_item (metaId, langCode, itemOrder, itemMapId, itemId)
+SELECT
+  meta.id, metamap.langCode, itemmap.itemOrder, itemmap.id, item.id
+FROM transfer.rms_application_form_meta meta
+LEFT JOIN transfer.rms_application_form_meta_map metamap ON metamap.metaFormId = meta.id
+LEFT JOIN transfer.rms_application_form form ON form.id = metamap.formId
+LEFT JOIN transfer.rms_application_form_item_map itemmap ON itemmap.formId = form.id
+LEFT JOIN transfer.rms_application_form_item item ON item.id = itemmap.formItemId;
+
+-- Allocate item ids
+CREATE TABLE transfer.migrated_item_ids (
+  id serial,
+  metaId integer,
+  itemOrder integer
+);
+
+INSERT INTO transfer.migrated_item_ids (metaId, itemOrder)
+SELECT DISTINCT metaId, itemOrder
+FROM transfer.migrated_form_item;
+
+-- Create form items, but only one per language
+INSERT INTO public.application_form_item (id, type, value, visibility, ownerUserId, modifierUserId, start, endt)
+SELECT
+  DISTINCT ON (mig.metaId, mig.itemOrder)
+  ids.id,
+  item.type,
+  item.value,
+  item.visibility,
+  item.ownerUserId,
+  item.modifierUserId,
+  item.start,
+  item.end
+FROM transfer.migrated_form_item mig
+LEFT JOIN transfer.migrated_item_ids ids ON ids.metaId = mig.metaId AND ids.itemOrder = mig.itemOrder
+LEFT JOIN transfer.rms_application_form_item item ON item.id = mig.itemId;
+
+-- Create form-item mappings
+INSERT INTO public.application_form_item_map (formId, formItemId, itemOrder, formItemOptional, modifierUserId, start, endt)
+SELECT
+  DISTINCT ON (mig.metaId, mig.itemOrder)
+  mig.metaId, -- becomes formId
+  ids.id,
+  mig.itemOrder,
+  itemmap.formItemOptional,
+  itemmap.modifierUserId,
+  itemmap.start,
+  itemmap.end
+FROM transfer.migrated_form_item mig
+LEFT JOIN transfer.migrated_item_ids ids ON ids.metaId = mig.metaId AND ids.itemOrder = mig.itemOrder
+LEFT JOIN transfer.rms_application_form_item_map itemmap ON itemmap.id = mig.itemMapId;
+
+-- Create localizations
+INSERT INTO public.application_form_item_localization
+  (itemId, langCode, title, toolTip, inputPrompt)
+SELECT
+  ids.id,
+  mig.langCode,
+  item.title,
+  item.toolTip,
+  item.inputPrompt
+FROM public.application_form_item_map itemmap
+LEFT JOIN transfer.migrated_form_item mig ON mig.metaId = itemmap.formId AND mig.itemOrder = itemmap.itemOrder
+LEFT JOIN transfer.migrated_item_ids ids ON ids.metaId = mig.metaId AND ids.itemOrder = mig.itemOrder
+LEFT JOIN transfer.rms_application_form_item item ON item.id = mig.itemId;
+
+-- catalogue items
 
 INSERT INTO public.catalogue_item
 SELECT * FROM transfer.rms_catalogue_item;
 
 INSERT INTO public.catalogue_item_localization
 SELECT * FROM transfer.rms_catalogue_item_localization;
+
+-- licenses
 
 INSERT INTO public.license
 SELECT * FROM transfer.rms_license;
@@ -93,11 +192,44 @@ SELECT * FROM transfer.rms_license_localization;
 INSERT INTO public.workflow_licenses
 SELECT * FROM transfer.rms_workflow_licenses;
 
+INSERT INTO public.resource_licenses (resId, licId, stalling, start, endt)
+SELECT resId, licId, stalling, start, "end" FROM transfer.rms_resource_licenses;
+
+-- actors
+
 INSERT INTO public.workflow_actors (wfId, actorUserId, role, round, start, endt)
 SELECT wfId, apprUserId, 'approver' AS ROLE, round, start, "end" FROM transfer.rms_workflow_approvers;
 
 INSERT INTO public.workflow_actors (wfId, actorUserId, role, round, start, endt)
 SELECT wfId, revUserId, 'reviewer' AS ROLE, round, start, "end" FROM transfer.rms_workflow_reviewers;
+
+-- applications
+
+INSERT INTO public.catalogue_item_application (id, start, endt, applicantUserId, modifierUserId, wfid)
+SELECT cia.id, cia.start, cia.end, cia.applicantUserId, cia.modifierUserId, item.wfid
+FROM transfer.rms_catalogue_item_application cia
+LEFT JOIN transfer.rms_catalogue_item item ON cia.catId = item.id;
+
+INSERT INTO public.catalogue_item_application_items (catAppId, catItemId)
+SELECT id, catId FROM transfer.rms_catalogue_item_application
+UNION
+SELECT catAppId, catId FROM transfer.rms_catalogue_item_application_catid_overflow;
+
+-- approved application licenses
+
+INSERT INTO public.catalogue_item_application_licenses (catAppId, licId, actorUserId, round, stalling, state, start, endt)
+SELECT catAppId, licId, actorUserId, round, stalling, state, start, "end" FROM transfer.rms_catalogue_item_application_licenses;
+
+-- events
+
+-- create fake users so that application_event foreign keys work
+-- TODO proper user migration
+INSERT INTO public.users (userId)
+SELECT wfApprId FROM transfer.rms_catalogue_item_application_approvers
+UNION
+SELECT revUserId FROM transfer.rms_catalogue_item_application_reviewers
+UNION
+SELECT modifierUserId FROM transfer.rms_catalogue_item_application_state;
 
 INSERT INTO transfer.migrated_application_event (appId, userId, round, event, comment, time)
 SELECT catAppId, wfApprId, round, 'approve' AS EVENT, comment, start FROM transfer.rms_catalogue_item_application_approvers
@@ -143,16 +275,23 @@ INSERT INTO public.application_event
 SELECT * FROM transfer.migrated_application_event
 ORDER BY time;
 
+-- entitlements
+
 INSERT INTO public.entitlement
 SELECT * FROM transfer.rms_entitlement;
 
+-- drop created tables
+DROP TABLE IF EXISTS transfer.migrated_application_event CASCADE;
+DROP TABLE IF EXISTS transfer.migrated_form_item;
+DROP TABLE IF EXISTS transfer.migrated_item_ids;
+
 -- if all casts are not dropped, the next pgloader run might fail
 -- (can't drop a type that is referenced by a cast)
-DROP TABLE IF EXISTS transfer.migrated_application_event CASCADE;
 DROP CAST IF EXISTS (transfer.rms_workflow_visibility AS public.scope);
 DROP CAST IF EXISTS (transfer.rms_application_form_meta_visibility AS public.scope);
 DROP CAST IF EXISTS (transfer.rms_application_form_visibility AS public.scope);
 DROP CAST IF EXISTS (transfer.rms_application_form_item_type AS public.itemtype);
 DROP CAST IF EXISTS (transfer.rms_application_form_item_visibility AS public.scope);
 DROP CAST IF EXISTS (transfer.rms_license_type AS public.license_type);
+DROP CAST IF EXISTS (transfer.rms_catalogue_item_application_licenses_state AS public.license_state);
 DROP CAST IF EXISTS (transfer.rms_license_visibility AS public.scope);

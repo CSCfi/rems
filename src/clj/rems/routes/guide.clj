@@ -14,6 +14,7 @@
             [rems.guide :refer :all]
             [rems.info-field :as info-field]
             [rems.layout :as layout]
+            [rems.ldap :as ldap]
             [rems.phase :as phase]
             [rems.util :as util]
             [rems.info-field :as info-field]))
@@ -60,6 +61,10 @@
           [:h2 "Layout components"]
           (layout/guide)
 
+          [:h2 "Login"]
+          (example "login" (contents/login "/"))
+          (ldap/guide)
+
           [:h2 "Catalogue components"]
           (catalogue/guide)
 
@@ -84,7 +89,6 @@
 
           [:h2 "Misc components"]
           (phase/guide)
-          (example "login" (contents/login "/"))
           (example "about" (contents/about))
           (include-js "/assets/jquery/jquery.min.js")
           (include-js "/assets/tether/dist/js/tether.min.js")

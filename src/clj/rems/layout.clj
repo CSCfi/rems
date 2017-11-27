@@ -64,6 +64,7 @@
    {:class (case status
              :success "alert-success"
              :warning "alert-warning"
+             :failure "alert-danger"
              :info "alert-info")}
    contents])
 

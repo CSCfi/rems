@@ -16,7 +16,8 @@
   (fn [f]
     (mount/start
      #'rems.config/env
-     #'rems.env/*db*)
+     #'rems.env/*db*
+     #'rems.handler/app)
     (db/assert-test-database!)
     (migrations/migrate ["reset"] (select-keys env [:database-url]))
     (test-data/create-test-data!)
@@ -77,7 +78,7 @@
                                     :items {1 "REST-Test"
                                             2 "2017-2018"
                                             3 "The purpose is to test this REST service.}"}
-                                    :licenses {1 "approved" 2 "approved"}})
+                                    :licenses {2 "approved" 3 "approved"}})
                              app)
                 cmd-response (read-body response)]
             (is (:success cmd-response))
