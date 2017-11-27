@@ -1,4 +1,4 @@
-(ns rems.routes.fake-shibboleth
+(ns rems.auth.fake-shibboleth
   (:require [compojure.core :refer [GET defroutes]]
             [hiccup.page :refer [html5]]
             [hiccup.util :refer [url]]
