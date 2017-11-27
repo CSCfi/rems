@@ -71,7 +71,7 @@
   (with-fake-tempura
     ;; simple mock db
     (let [world (atom {:submitted #{}})
-          catalogue-items (atom [])
+          catalogue-items (atom [{:id 1}])
           run (fn [path params]
                 (form/form-routes
                  (assoc (request :post path)
