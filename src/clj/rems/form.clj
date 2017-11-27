@@ -205,9 +205,8 @@
 
 (defn- form [form]
   (let [application (:application form)
-        state (:application form)
-        actionable? (= state "applied")
-        events (get-in form [:application :events])
+        state (:state application)
+        events (:events application)
         user-attributes (or (:applicant-attributes form) context/*user*)]
     (list
      [:h2 (text :t.applications/application)]
