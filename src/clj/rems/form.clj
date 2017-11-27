@@ -28,6 +28,7 @@
             [rems.events :as events]
             [rems.guide :refer :all]
             [rems.info-field :as info-field]
+            [rems.InvalidRequestException]
             [rems.layout :as layout]
             [rems.phase :refer [phases]]
             [rems.roles :refer [when-role has-roles?]]
@@ -322,7 +323,7 @@
         item-ids (mapv :id catalogue-items)
         disabled-items (filter disabled-catalogue-item? catalogue-items)]
     (when (seq disabled-items)
-      (throw (Exception. (str "Disabled catalogue items " (pr-str disabled-items)))))
+      (throw (rems.InvalidRequestException. (str "Disabled catalogue items " (pr-str disabled-items)))))
     (save-application-items application-id item-ids)
     (save-fields application-id items)
     (save-licenses application-id licenses)

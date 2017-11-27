@@ -90,7 +90,7 @@
                   :plugins [[com.jakemccrary/lein-test-refresh "0.21.1"]
                             [lein-cloverage "1.0.10"]]
 
-                  :aot [rems.auth.NotAuthorizedException]
+                  :aot [rems.InvalidRequestException rems.auth.NotAuthorizedException]
 
                   :source-paths ["env/dev/clj" "test/clj"]
                   :resource-paths ["env/dev/resources"]
