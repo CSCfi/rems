@@ -472,7 +472,9 @@
           app1 (applications/create-new-draft wfid1) ; should see as reviewer for round 0
           app2 (applications/create-new-draft wfid2) ; should see as reviewer for round 1
           app3 (applications/create-new-draft wfid1) ; should not see draft
-          app4 (applications/create-new-draft wfid2)]
+          app4 (applications/create-new-draft wfid2)
+
+          can-review? #(#'applications/can-review? (applications/get-application-state %))]
       (db/add-application-item! {:application app1 :item item1})
       (db/add-application-item! {:application app2 :item item2})
       (db/add-application-item! {:application app3 :item item3})
@@ -497,14 +499,15 @@
                   (applications/get-handled-reviews)))
           "should only see app4 in handled reviews")
 
+      ;; undb these tests
       (testing "applications/can-review?"
-        (is (applications/can-review? app1))
-        (is (not (applications/can-review? app2)))
-        (is (not (applications/can-review? app3)))
-        (is (not (applications/can-review? app4)))
+        (is (can-review? app1))
+        (is (not (can-review? app2)))
+        (is (not (can-review? app3)))
+        (is (not (can-review? app4)))
         (binding [context/*user* {"eppn" uid2}]
-          (is (not (applications/can-review? app1)))
-          (is (applications/can-review? app2))))
+          (is (not (can-review? app1)))
+          (is (can-review? app2))))
 
       (testing "applications/is-reviewer?"
         (is (#'applications/is-reviewer? app1))
@@ -537,14 +540,15 @@
              (map #(select-keys % [:id :state :curround])
                   (applications/get-applications-to-review)))
           "should only see app2")
+      ;; undb these tests
       (testing "applications/can-review? after changes"
-        (is (not (applications/can-review? app1)))
-        (is (applications/can-review? app2))
-        (is (not (applications/can-review? app3)))
-        (is (not (applications/can-review? app4)))
+        (is (not (can-review? app1)))
+        (is (can-review? app2))
+        (is (not (can-review? app3)))
+        (is (not (can-review? app4)))
         (binding [context/*user* {"eppn" uid2}]
-          (is (not (applications/can-review? app1)))
-          (is (not (applications/can-review? app2))))))))
+          (is (not (can-review? app1)))
+          (is (not (can-review? app2))))))))
 
 (deftest test-users
   (db/add-user! {:user "pekka", :userattrs nil})

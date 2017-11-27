@@ -11,7 +11,6 @@
             [rems.collapsible :as collapsible]
             [rems.context :as context]
             [rems.db.applications :refer [assoc-review-type-to-app
-                                          can-review?
                                           create-new-draft
                                           draft?
                                           get-application-phases

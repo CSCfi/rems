@@ -100,8 +100,8 @@
 (defn- is-approver? [application-id]
   (is-actor? application-id "approver"))
 
-(defn can-review? [application-id]
-  (can-act-as? application-id "reviewer"))
+(defn- can-review? [application-id]
+  (can-act-as+? application-id "reviewer"))
 
 (defn- is-reviewer? [application-id]
   (is-actor? application-id "reviewer"))
@@ -214,7 +214,7 @@
   (->> (get-applications-impl {})
        (filterv
         (fn [app] (and (not (reviewed? app))
-                       (or (can-review? (:id app))
+                       (or (can-review? app)
                            (can-third-party-review? app)))))
        (mapv assoc-review-type-to-app)))
 
@@ -602,7 +602,7 @@
   (judge-application application-id "return" round msg))
 
 (defn review-application [application-id round msg]
-  (when-not (can-review? application-id)
+  (when-not (can-review? (get-application-state application-id))
     (throw-unauthorized))
   (judge-application application-id "review" round msg))
 
