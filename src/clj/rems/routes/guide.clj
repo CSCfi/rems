@@ -5,16 +5,16 @@
             [rems.actions :as actions]
             [rems.applicant-info :as applicant-info]
             [rems.applications :as applications]
+            [rems.auth.auth :as auth]
             [rems.cart :as cart]
             [rems.catalogue :as catalogue]
             [rems.collapsible :as collapsible]
-            [rems.contents :as contents]
             [rems.context :as context]
             [rems.form :as form]
             [rems.guide :refer :all]
             [rems.info-field :as info-field]
             [rems.layout :as layout]
-            [rems.ldap :as ldap]
+            [rems.auth.ldap :as ldap]
             [rems.phase :as phase]
             [rems.util :as util]
             [rems.info-field :as info-field]))
@@ -62,8 +62,7 @@
           (layout/guide)
 
           [:h2 "Login"]
-          (example "login" (contents/login "/"))
-          (ldap/guide)
+          (auth/guide)
 
           [:h2 "Catalogue components"]
           (catalogue/guide)
@@ -89,7 +88,7 @@
 
           [:h2 "Misc components"]
           (phase/guide)
-          (example "about" (contents/about))
+          #_(example "about" (contents/about))
           (include-js "/assets/jquery/jquery.min.js")
           (include-js "/assets/tether/dist/js/tether.min.js")
           (include-js "/assets/bootstrap/js/bootstrap.min.js")]]]))))

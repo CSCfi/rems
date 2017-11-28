@@ -21,7 +21,7 @@
     [:div.user.px-2.px-sm-0
      [:i.fa.fa-user]
      [:span.user-name (str (get-username) " /")]
-     (link-to {:class (str "px-0 nav-link")} (url-dest "/Shibboleth.sso/Logout?return=%2F") (text :t.navigation/logout))]))
+     (link-to {:class (str "px-0 nav-link")} (url-dest "/logout") (text :t.navigation/logout))]))
 
 (defn- navbar-items [e page-name user]
   [e
