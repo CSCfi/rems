@@ -214,7 +214,7 @@
 
 (defn- form [form]
   (let [application (:application form)
-        state (:application form)
+        state (:state application)
         events (:events application)
         user-attributes (or (:applicant-attributes form) context/*user*)]
     (list
