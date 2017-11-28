@@ -1,4 +1,4 @@
-ALTER TABLE catalogue_item_state DROP COLUMN IF EXISTS id;
+DROP TABLE catalogue_item_state;
 --;;
-ALTER TABLE catalogue_item_state ADD PRIMARY KEY (catid);
+ALTER TABLE catalogue_item ADD state item_state DEFAULT 'enabled';
 --;;
