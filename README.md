@@ -24,6 +24,11 @@ When done you can stop (and automatically remove) the database.
 docker stop rems_test
 ```
 
+### Populating the database
+
+- You can get some nice fake data with `lein run test-data`
+- You can get an sql dump from the old system and use `./dev_transfer.sh dump.sql`
+
 ### Running interactively
 
 ```

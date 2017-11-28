@@ -35,7 +35,9 @@
    :wfid Long
    :curround Long
    :fnlround Long
-   :events [Event]})
+   :events [Event]
+   :can-approve? s/Bool
+   :review-type (s/maybe s/Keyword)})
 
 (def CatalogueItem
   {:id Long
