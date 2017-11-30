@@ -20,10 +20,12 @@
                                           make-draft-application
                                           is-applicant?
                                           submit-application]]
+            [rems.db.catalogue :refer [disabled-catalogue-item?]]
             [rems.db.core :as db]
             [rems.events :as events]
             [rems.guide :refer :all]
             [rems.info-field :as info-field]
+            [rems.InvalidRequestException]
             [rems.layout :as layout]
             [rems.phase :refer [phases]]
             [rems.roles :refer [when-role has-roles?]]
@@ -76,8 +78,7 @@
     [:input (merge {:type "checkbox" :name (str "license" id) :value "approved"
                     :disabled readonly}
                    (when approved {:checked ""}))]]
-   [:div.col
-    content]])
+   [:div.col content]])
 
 (defn- link-license
   [{title :title id :id textcontent :textcontent approved :approved readonly :readonly}]
@@ -149,9 +150,10 @@
   (let [application (:application form)
         state (:state application)
         new-application? (draft? (:id application))
-        editable? (or new-application? (#{"draft" "returned" "withdrawn"} state))
+        contains-disabled-items? (seq (filter disabled-catalogue-item? (:catalogue-items form)))
+        editable? (and (or new-application? (#{"draft" "returned" "withdrawn"} state)) (not contains-disabled-items?))
         readonly? (not editable?)
-        withdrawable? (= "applied" state)
+        withdrawable? (and (= "applied" state) (not contains-disabled-items?))
         closeable? (and
                     (not new-application?)
                     (not= "closed" state))]
@@ -199,6 +201,16 @@
               (for [item catalogue-items]
                 [:li (:title item)])]]}))
 
+(defn- disabled-items-warning [items]
+  (when-some [items (seq (filter disabled-catalogue-item? items))]
+    (layout/flash-message
+     {:status :failure
+      :contents [:div
+                 (text :t.form/alert-disabled-items)
+                 [:ul
+                  (for [item items]
+                    [:li (:title item)])]]})))
+
 
 (defn- form [form]
   (let [application (:application form)
@@ -206,6 +218,9 @@
         events (:events application)
         user-attributes (or (:applicant-attributes form) context/*user*)]
     (list
+     (when (= state "draft")
+       (disabled-items-warning (:catalogue-items form)))
+
      [:h2 (text :t.applications/application)]
      (application-header state (filter may-see-event? events))
      [:div.mt-3 (applicant-info/details "applicant-info" user-attributes)]
@@ -258,6 +273,9 @@
      [:li m])])
 
 (defn save-application-items [application-id catalogue-item-ids]
+  (assert application-id)
+  (assert (empty? (filter nil? catalogue-item-ids)) "nils sent in catalogue-item-ids")
+  (assert (not (empty? catalogue-item-ids)))
   (doseq [catalogue-item-id catalogue-item-ids]
     (db/add-application-item! {:application application-id :item catalogue-item-id})))
 
@@ -289,9 +307,12 @@
 (defn- redirect-to-application [application-id]
   (redirect (str "/form/" application-id) :see-other))
 
-(defn- save-internal [application items licenses]
+(defn- save-internal [application catalogue-items items licenses]
   (let [application-id (:id application)
-        item-ids (mapv :id (:catalogue-items application))]
+        item-ids (mapv :id catalogue-items)
+        disabled-items (filter disabled-catalogue-item? catalogue-items)]
+    (when (seq disabled-items)
+      (throw (rems.InvalidRequestException. (str "Disabled catalogue items " (pr-str disabled-items)))))
     (save-application-items application-id item-ids)
     (save-fields application-id items)
     (save-licenses application-id licenses)
@@ -324,17 +345,20 @@
       )))
 
 (defn api-save [request]
-  (let [{:keys [application-id items licenses operation catalogue-items]} request
-        application (make-draft-application -1 catalogue-items)
+  (let [{:keys [application-id items licenses operation]} request
+        catalogue-item-ids (:catalogue-items request)
+        application (make-draft-application -1 catalogue-item-ids)
         items (if (= operation "send") (assoc items "submit" true) items)
-        wfid (getx application :wfid)
-        application-id (if (draft? application-id) (create-new-draft wfid) application-id)
-        application (assoc application :id application-id)
-        {:keys [success? valid? validation]} (save-internal application items licenses)]
+        db-application-id (if (draft? application-id)
+                            (create-new-draft (getx application :wfid))
+                            application-id)
+        application (assoc application :id db-application-id)
+        catalogue-items (:catalogue-items application)
+        {:keys [success? valid? validation]} (save-internal application catalogue-items items licenses)]
     (cond-> {:success success?
              :valid valid?}
       (not valid?) (assoc :validation validation)
-      success? (assoc :id application-id
+      success? (assoc :id db-application-id
                       :state (:state (get-application-state application-id))))
     ))
 
@@ -346,11 +370,12 @@
         form (if (draft? application-id)
                (get-draft-form-for application)
                (get-form-for application-id))
+        catalogue-items (:catalogue-items form)
         db-application-id (if (draft? application-id)
                             (create-new-draft (getx application :wfid))
                             application-id)
         application (assoc application :id db-application-id)]
-    (let [{:keys [flash]} (save-internal application input input)
+    (let [{:keys [flash]} (save-internal application catalogue-items input input)
           new-session (-> session
                           (update :applications dissoc application-id) ; remove temporary application
                           (update :cart difference (set (mapv :id (:catalogue-items application)))) ; remove applied items from cart

@@ -30,8 +30,11 @@
   (map localize-catalogue-item (db/get-catalogue-items)))
 
 (defn get-localized-catalogue-item [id]
-  (localize-catalogue-item (db/get-catalogue-item id)))
+  (localize-catalogue-item (db/get-catalogue-item {:item id})))
 
 (defn get-catalogue-item-title [item]
   (let [localized-title (get-in item [:localizations context/*lang* :title])]
     (or localized-title (:title item))))
+
+(defn disabled-catalogue-item? [item]
+  (= (:state item) "disabled"))

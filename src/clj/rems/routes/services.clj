@@ -45,6 +45,7 @@
    :wfid Long
    :formid Long
    :resid s/Str
+   :state s/Str
    (s/optional-key :langcode) s/Keyword
    :localizations (s/maybe {s/Any s/Any})
    })
@@ -98,8 +99,7 @@
                 :summary     "Get application draft by `catalogue-items`"
                 :query-params [catalogue-items :- Long]
                 :return      GetApplicationResponse
-                (let [app (make-draft-application -1 catalogue-items)
-                      wfid (:wfid app)]
+                (let [app (make-draft-application -1 catalogue-items)]
                   (ok (get-draft-form-for app))))
 
            (GET "/application/:application-id" []

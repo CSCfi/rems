@@ -117,14 +117,14 @@
 
 (defn- create-resource-license! [resid]
   (let [licid (:id (db/create-license!
-                     {:modifieruserid "owner" :owneruserid "owner" :title "resource license"
-                      :type "link" :textcontent "http://invalid"}))]
+                    {:modifieruserid "owner" :owneruserid "owner" :title "resource license"
+                     :type "link" :textcontent "http://invalid"}))]
     (db/create-license-localization!
-      {:licid licid :langcode "en" :title "Apache License 2.0"
-       :textcontent "https://www.apache.org/licenses/LICENSE-2.0"})
+     {:licid licid :langcode "en" :title "Apache License 2.0"
+      :textcontent "https://www.apache.org/licenses/LICENSE-2.0"})
     (db/create-license-localization!
-      {:licid licid :langcode "fi" :title "Apache lisenssi 2.0"
-       :textcontent "https://www.apache.org/licenses/LICENSE-2.0"})
+     {:licid licid :langcode "fi" :title "Apache lisenssi 2.0"
+      :textcontent "https://www.apache.org/licenses/LICENSE-2.0"})
     (db/create-resource-license! {:resid resid :licid licid})))
 
 (defn- create-catalogue-item! [resource workflow form localizations]
@@ -171,6 +171,15 @@
       (binding [context/*user* {"eppn" approver}]
         (applications/return-application application 0 "comment for return")))))
 
+(defn- create-disabled-applications! [catid wfid applicant approver]
+  (binding [context/*tempura* locales/tconfig
+            context/*user* {"eppn" applicant}]
+    (let [application (create-draft! catid wfid "draft with disabled item")])
+    (let [application (create-draft! catid wfid "approved application with disabled item")]
+      (applications/submit-application application)
+      (binding [context/*user* {"eppn" approver}]
+        (applications/approve-application application 0 "comment for approval")))))
+
 (defn- create-bundled-application! [catid catid2 wfid applicant approver]
   (binding [context/*tempura* locales/tconfig
             context/*user* {"eppn" applicant}]
@@ -211,8 +220,13 @@
                                              "fi" "ELFA-korpus, katselmoinnilla"})
         different (create-catalogue-item! 1 (:different workflows) form
                                           {"en" "ELFA Corpus, two rounds of approval by different approvers"
-                                           "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})]
+                                           "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})
+        disabled (create-catalogue-item! 1 (:simple workflows) form
+                                         {"en" "ELFA Corpus, one approval (extra data, disabled)"
+                                          "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti, pois käytöstä)"})]
+    (db/set-catalogue-item-state! {:item disabled :state "disabled" :user "developer"})
     (create-applications! simple (:simple workflows) "developer" "developer")
+    (create-disabled-applications! disabled (:simple workflows) "developer" "developer")
     (create-bundled-application! simple bundable (:simple workflows) "alice" "developer")
     (create-review-application! with-review (:with-review workflows) "alice" "carl" "developer")))
 
@@ -237,7 +251,12 @@
                                              "fi" "ELFA-korpus, katselmoinnilla"})
         different (create-catalogue-item! 1 (:different workflows) form
                                           {"en" "ELFA Corpus, two rounds of approval by different approvers"
-                                           "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})]
+                                           "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})
+        disabled (create-catalogue-item! 1 (:simple workflows) form
+                                         {"en" "ELFA Corpus, one approval (extra data, disabled)"
+                                          "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti, pois käytöstä)"})]
+    (db/set-catalogue-item-state! {:item disabled :state "disabled" :user "developer"})
     (create-applications! simple (:simple workflows) "RDapplicant1@funet.fi" "RDapprover1@funet.fi")
+    (create-disabled-applications! disabled (:simple workflows) "RDapplicant1@funet.fi" "RDapprover1@funet.fi")
     (create-bundled-application! simple bundable (:simple workflows) "RDapplicant2@funet.fi" "RDapprover1@funet.fi")
     (create-review-application! with-review (:with-review workflows) "RDapplicant1@funet.fi" "RDreview@funet.fi" "RDapprover1@funet.fi")))

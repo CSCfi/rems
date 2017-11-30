@@ -139,6 +139,7 @@
   :footer "Powered by CSC - IT Center for Science"
   :form {:add-comments "Add comment to the decision (shown to applicant)"
          :add-comments-applicant "Add comment to the decision"
+         :alert-disabled-items "The following resources can't be applied anymore. Consider closing this draft and creating a new application."
          :application "Application"
          :back "Back to catalogue"
          :back-actions "Back to actions"

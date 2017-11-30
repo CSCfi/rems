@@ -51,7 +51,7 @@
     (is (= ["B" "ELFA Corpus"] (sort (map :title (db/get-catalogue-items))))
         "should find two items")
     (let [item-from-list (second (db/get-catalogue-items))
-          item-by-id (db/get-catalogue-item {:id (:id item-from-list)})]
+          item-by-id (db/get-catalogue-item {:item (:id item-from-list)})]
       (is (= (select-keys item-from-list [:id :title])
              (select-keys item-by-id [:id :title]))
           "should find catalogue item by id"))))

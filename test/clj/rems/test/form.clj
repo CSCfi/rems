@@ -6,7 +6,8 @@
             [rems.db.core :as db]
             [rems.form :as form]
             [rems.test.tempura :refer [with-fake-tempura]]
-            [ring.mock.request :refer :all]))
+            [ring.mock.request :refer :all])
+  (:import rems.InvalidRequestException))
 
 (def field #'form/field)
 
@@ -70,6 +71,7 @@
   (with-fake-tempura
     ;; simple mock db
     (let [world (atom {:submitted #{}})
+          catalogue-items (atom [{:id 1}])
           run (fn [path params]
                 (form/form-routes
                  (assoc (request :post path)
@@ -90,6 +92,7 @@
                      :type "text"
                      :optional false
                      :value (get-in @world [:values application 62])}]
+            :catalogue-items @catalogue-items
             :licenses [{:id 70
                         :type "license"
                         :licensetype "link"
@@ -121,6 +124,9 @@
 
          db/create-application!
          (constantly {:id 2})
+
+         db/add-application-item!
+         (fn [params])
 
          applications/submit-application
          (fn [application-id]
@@ -231,7 +237,16 @@
               (is (not (.contains flash-text "saved")))
               (is (.contains flash-text "submitted")))
             (is (= {:submitted #{2} :values {2 {61 "", 62 "v"}} :approvals {2 {70 "approved"}}}
-                   @world))))))))
+                   @world))))
+
+        (testing "submit with disabled item"
+          (swap! catalogue-items conj {:state "disabled"})
+          (is (thrown? InvalidRequestException
+                       (run "/form/2/save"
+                         {"field61" ""
+                          "field62" "v"
+                          "license70" "approved"
+                          "submit" "true"}))))))))
 
 (def form #'form/form)
 

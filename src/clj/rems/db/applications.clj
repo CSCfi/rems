@@ -136,7 +136,7 @@
         (is-third-party-reviewer? application))))
 
 (defn translate-catalogue-item [item-id]
-  (let [item (get-localized-catalogue-item {:id item-id})]
+  (let [item (get-localized-catalogue-item item-id)]
     (merge item
            (get-in item [:localizations context/*lang*]))))
 

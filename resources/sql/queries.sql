@@ -2,7 +2,7 @@
 -- :doc
 -- - Get catalogue items
 -- - :items vector of item ids
-SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid
+SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.state
 FROM catalogue_item ci
 LEFT OUTER JOIN resource res ON (ci.resid = res.id)
 WHERE 1=1
@@ -12,10 +12,16 @@ WHERE 1=1
 
 
 -- :name get-catalogue-item :? :1
-SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid
+SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.state
 FROM catalogue_item ci
 LEFT OUTER JOIN resource res ON (ci.resid = res.id)
-WHERE ci.id = :id
+WHERE ci.id = :item
+
+-- :name set-catalogue-item-state! :insert
+-- :doc Set catalogue item state enabled or disabled
+UPDATE catalogue_item ci
+SET state = CAST(:state AS item_state)
+WHERE ci.id = :item
 
 -- :name create-catalogue-item! :insert
 -- :doc Create a single catalogue item
