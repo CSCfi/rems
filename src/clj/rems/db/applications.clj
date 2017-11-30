@@ -214,6 +214,13 @@
                            (can-third-party-review? app)))))
        (mapv assoc-review-type-to-app)))
 
+(defn check-review-timeout
+  "Checks for and times out reviews that are past the associated end time."
+  [t]
+  (let [reviews (get-applications-to-review)]
+    ;; TODO implement review timeout later
+    ))
+
 (defn make-draft-application
   "Make a draft application with an initial set of catalogue items."
   [application-id catalogue-item-ids]

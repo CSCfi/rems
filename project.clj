@@ -16,11 +16,12 @@
                  [haka-buddy "0.2.1" :exclusions [cheshire]]
                  [hiccup "1.0.5"]
                  [hickory "0.7.1" :exclusions [org.clojure/tools.reader]]
+                 [im.chit/hara.io.scheduler "2.5.10"]
                  [luminus-jetty "0.1.5" :exclusions [org.clojure/tools.reader]]
                  [luminus-migrations "0.4.2"]
                  [luminus-nrepl "0.1.4"]
                  [luminus/ring-ttl-session "0.3.2"]
-                 [macroz/hiccup-find "0.5.1" :exclusions [org.clojure/tools.reader]]
+                 [macroz/hiccup-find "0.6.1" :exclusions [org.clojure/tools.reader]]
                  [metosin/compojure-api "1.1.11" :exclusions [cheshire
                                                               com.google.code.findbugs/jsr305]]
                  [mount "0.1.11"]
