@@ -15,7 +15,7 @@ WHERE 1=1
 SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.state
 FROM catalogue_item ci
 LEFT OUTER JOIN resource res ON (ci.resid = res.id)
-WHERE ci.id = :id
+WHERE ci.id = :item
 
 -- :name set-catalogue-item-state! :insert
 -- :doc Set catalogue item state enabled or disabled
