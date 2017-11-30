@@ -6,8 +6,8 @@
             [rems.guide :refer :all]
             [rems.text :refer :all]
             [rems.db.catalogue :refer [disabled-catalogue-item?
-                                       get-localized-catalogue-items
-                                       get-catalogue-item-title]]))
+                                       get-catalogue-item-title
+                                       get-localized-catalogue-items]]))
 
 (defn- urn-catalogue-item? [{:keys [resid]}]
   (and resid (.startsWith resid "http://urn.fi")))
