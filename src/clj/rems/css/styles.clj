@@ -309,12 +309,6 @@
   [:.inline-comment-content {:display "inline-block"}]
   [:.license-panel {:display "inline-block"
                     :width "inherit"}]
-  [:.license-header
-   [:&:after {:font-family "'FontAwesome'"
-              :float "right"
-              :content "\"\\f068\""}]
-   [:&.collapsed
-    [:&:after {:content "\"\\f067\""}]]]
   [:.card-header.clickable {:cursor "pointer"}]
   [(s/descendant :.card-header :a) {:color "inherit"}]
                                         ;hax for opening misalignment
