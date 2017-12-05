@@ -46,7 +46,7 @@
   "Fetch items currently in cart from database"
   []
   (doall (for [i context/*cart*]
-           (get-localized-catalogue-item {:id i}))))
+           (get-localized-catalogue-item i))))
 
 (defn- handler [modifier {session :session {id-string :id} :params :as req}]
   (let [id (Long/parseLong id-string)]

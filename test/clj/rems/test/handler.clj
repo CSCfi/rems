@@ -57,6 +57,8 @@
   See also: dispatch, login, follow-redirect"
   [app] {:app app})
 
+(def +ok-status-codes+ #{200 302 303 403})
+
 (defn dispatch
   "Send a single request in the given context returning a new context.
 
@@ -86,6 +88,7 @@
                          :=>
                          (:status response)
                          (remove nil? [(when set-cookie :set-cookie)])]]
+      (is (contains? +ok-status-codes+ (:status response)))
       (merge ctx
              {:cookie (or set-cookie cookie)
               :csrf-token (get-csrf-token response)
