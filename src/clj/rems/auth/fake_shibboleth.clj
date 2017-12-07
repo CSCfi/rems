@@ -2,19 +2,22 @@
   (:require [compojure.core :refer [GET defroutes]]
             [hiccup.page :refer [html5]]
             [hiccup.util :refer [url]]
+            [rems.db.core :as db]
             [ring.util.response :refer [content-type redirect
-                                        response]]))
+                                        response]]
+            [rems.db.core :as db]))
 
 (def ^{:private true
        :doc "Inlined CSS declaration for fake login."}
   fake-login-styles "
 html { height: 100%; color: #fff;}
 body {
-  height: 100%;
+  min-height: 100%;
   font-size: 3em;
   display: flex;
   justify-content: center;
   align-items: center;
+  overflow: none;
 }
 h1 { color: #333; text-align: center; }
 ul { padding: 0 }
@@ -35,7 +38,7 @@ a:visited { color: #fff; }
 (defn- fake-login [session username]
   (let [mail (get {"developer" "deve@lo.per" "alice" "a@li.ce" "bob" "b@o.b" "carl" "c@a.rl"} username)]
     (assoc (redirect "/landing_page")
-      :session (assoc session :identity {"eppn" username "commonName" username "mail" mail}))))
+           :session (assoc session :identity {"eppn" username "commonName" username "mail" mail}))))
 
 (defn- user-selection [username]
   (let [url (url "/Shibboleth.sso/Login" {:username username})]
@@ -49,7 +52,12 @@ a:visited { color: #fff; }
                [:body
                 [:div.login
                  [:h1 "Development Login"]
-                 [:ul (map user-selection ["developer" "alice" "bob" "carl"])]]])
+                 [:ul (->> (map :userid (db/get-users))
+                           (sort)
+                           (concat ["developer" "alice" "bob" "carl"])
+                           (distinct)
+                           (map user-selection)
+                           )]]])
         (response)
         (content-type "text/html; charset=utf-8"))))
 
