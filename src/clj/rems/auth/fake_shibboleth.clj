@@ -13,22 +13,30 @@
 html { height: 100%; color: #fff;}
 body {
   min-height: 100%;
-  font-size: 3em;
+  font-size: 1em;
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow: none;
 }
-h1 { color: #333; text-align: center; }
-ul { padding: 0 }
-li {
-  list-style-type: none;
+h1 { font-size: 3em; color: #333; text-align: center; font-variant: small-caps}
+div.users {
+  display: flex;
+  justify-content: stretch;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  padding: 0;
+  max-width: 800px;
+}
+div.user {
+  flex-grow: 1;
   text-align: center;
   background-color: #99135e;
-  margin: 0.5em;
-  padding: 0.2em;
+  margin: 0.25em;
+  padding: 0.5em;
   border-radius: 0.2em;
-  text-transform: uppercase;
+}
+div.user:hover {
+  background-color: #77125e;
   cursor: pointer;
 }
 a { text-decoration: none; color: #fff; }
@@ -42,7 +50,7 @@ a:visited { color: #fff; }
 
 (defn- user-selection [username]
   (let [url (url "/Shibboleth.sso/Login" {:username username})]
-    [:li {:onclick (str "window.location.href='" url "';")}
+    [:div.user {:onclick (str "window.location.href='" url "';")}
      [:a {:href url} username]]))
 
 (defn- fake-login-screen [{session :session :as req}]
@@ -52,12 +60,12 @@ a:visited { color: #fff; }
                [:body
                 [:div.login
                  [:h1 "Development Login"]
-                 [:ul (->> (map :userid (db/get-users))
-                           (sort)
-                           (concat ["developer" "alice" "bob" "carl"])
-                           (distinct)
-                           (map user-selection)
-                           )]]])
+                 [:div.users (map user-selection ["developer" "alice" "bob" "carl"])]
+                 [:div.users (->> (map :userid (db/get-users))
+                                  (sort)
+                                  (distinct)
+                                  (map user-selection)
+                                  )]]])
         (response)
         (content-type "text/html; charset=utf-8"))))
 
