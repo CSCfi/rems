@@ -317,6 +317,24 @@
               (= ["APPLY" "WITHDRAW" "AUTO" "APPROVE" "CLOSE"]
                  comments))))))))
 
+(deftest test-applicant-info
+  (with-fake-tempura
+    (let [get-info #(hiccup-find [:#applicant-info] %)
+          data {:application {:id 66
+                              :can-approve? false
+                              :state "draft"
+                              :review-type nil
+                              :applicantuserid "bob"
+                              :events []}}]
+      (testing "applicant doesn't see applicant details"
+        (binding [context/*user* {"eppn" "bob"}
+                  context/*roles* #{:applicant :approver}]
+          (is (empty? (get-info (form data))))))
+      (testing "others see applicant details"
+        (binding [context/*user* {"eppn" "jeff"}
+                  context/*roles* #{:applicant :approver}]
+          (is (not (empty? (get-info (form data))))))))))
+
 (defn- get-actions [form-data]
   ;; TODO could look at button actions too
   (->> (form form-data)

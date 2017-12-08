@@ -228,7 +228,8 @@
 
      [:h2 (text :t.applications/application)]
      (application-header state (filter may-see-event? events))
-     [:div.mt-3 (applicant-info/details "applicant-info" user-attributes)]
+     (when-not (is-applicant? application)
+       [:div.mt-3 (applicant-info/details "applicant-info" user-attributes)])
      [:div.mt-3 (applied-resources (:catalogue-items form))]
      [:div.my-3 (form-fields form)]
 
