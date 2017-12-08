@@ -18,6 +18,7 @@
                                               wrap-defaults]]
             [ring.middleware.format :refer [wrap-restful-format]]
             [ring.middleware.webjars :refer [wrap-webjars]]
+            [ring.util.response :refer [redirect]]
             [taoensso.tempura :as tempura])
   (:import (javax.servlet ServletContext)))
 
@@ -79,14 +80,14 @@
       ;; since they're not compatible with this middleware
       ((if (:websocket? request) handler wrapped) request))))
 
-(defn on-unauthorized-error [request response]
-  (error-page
-   {:status 403
-    :title (str "Access to " (:uri request) " is not authorized")}))
+(defn on-restricted-page [request response]
+  (assoc (redirect "/")
+         :session (assoc (:session response) :redirect-to (:uri request))))
 
-(defn wrap-restricted [handler]
+(defn wrap-restricted
+  [handler]
   (restrict handler {:handler authenticated?
-                     :on-error on-unauthorized-error}))
+                     :on-error on-restricted-page}))
 
 (defn- wrap-tempura-locales-from-session
   [handler]
@@ -107,6 +108,12 @@
         (handler request)))
     {:tr-opts tconfig})))
 
+(defn on-unauthorized-error [request]
+  (error-page
+   {:status 403
+    :title (str "Access to " (:uri request) " is not authorized")}))
+
+
 (defn wrap-unauthorized
   "Handles unauthorized exceptions by showing an error page."
   [handler]
@@ -114,7 +121,7 @@
     (try
       (handler req)
       (catch rems.auth.NotAuthorizedException e
-        (on-unauthorized-error req nil)))))
+        (on-unauthorized-error req)))))
 
 (defn- wrap-user
   "Binds context/*user* to the buddy identity."
