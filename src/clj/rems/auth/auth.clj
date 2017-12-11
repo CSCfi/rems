@@ -31,6 +31,12 @@
     :fake-shibboleth (shibboleth/login-component)
     :ldap (ldap/login-component)))
 
+(defn- login-url []
+  (case (:authentication env)
+    :shibboleth (shibboleth/login-url)
+    :fake-shibboleth (fake-shibboleth/login-url)
+    :ldap (ldap/login-url)))
+
 (defn- logout-url []
   (case (:authentication env)
     :shibboleth (shibboleth/logout-url)
@@ -40,6 +46,7 @@
 (defn auth-routes []
   (routes
    (GET "/logout" _ (redirect (logout-url)))
+   (GET "/login" _ (redirect (login-url)))
    (case (:authentication env)
      :shibboleth never-match-route ; shibboleth routes handled by tomcat
      ;; for the time being, expose ldap auth in "dev mode" together

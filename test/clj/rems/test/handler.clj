@@ -94,8 +94,8 @@
               :csrf-token (get-csrf-token response)
               :status (:status response)
               :requests (conj requests request-entry)
-              :response response}
-             ))))
+              :response response
+              :location (:uri req)}))))
 
 (defn login
   "Logs in the given user by sending a request to the fake login.
@@ -136,7 +136,7 @@
   (testing "catalogue route"
     (testing "when unauthorized"
       (let [response (app (request :get "/catalogue"))]
-        (is (= 403 (:status response)) "should return 403 unauthorized)")))
+        (is (= 302 (:status response)) "should redirect")))
 
     (testing "when logging in"
       (let [login-ctx (login (new-context app) "bob")]
@@ -161,7 +161,27 @@
     (let [response (app (request :get "/invalid"))]
       (is (= 404 (:status response))))))
 
-
+(deftest test-login-redirect
+  (testing "when landing on unauthorized page,"
+    (let [ctx (-> (new-context app)
+                  (dispatch (request :get "/form/9999"))
+                  (follow-redirect))] ;; will throw if this wasn't a redirect
+      (testing "gets redirected to login"
+        (is (= "/login" (:location ctx)))
+        (is (= "/Shibboleth.sso/Login" (:location (follow-redirect ctx)))))
+      (let [ctx (-> ctx
+                    (login "king")
+                    (follow-redirect))]
+        (testing "gets redirected back to original page after login"
+          (is (= "/landing_page" (:location ctx)))
+          (is (= 302 (:status ctx)))
+          (is (= "http://localhost/form/9999" (get-in ctx [:response :headers "Location"]))))
+        (let [ctx (-> ctx
+                      (dispatch (request :get "/"))
+                      (follow-redirect)
+                      (follow-redirect))]
+          (testing "doesn't get redirected again"
+            (is (= "/catalogue" (:location ctx)))))))))
 
 (deftest test-csrf
   (testing "cart routes"
@@ -181,8 +201,6 @@
                          :response)]
         (is (= 303 (:status response)))))))
 
-
-
 (deftest test-language-switch
   (let [ctx (-> (new-context app)
                 (login "john")
@@ -196,8 +214,6 @@
           "language switch redirects back")
       (is (.contains (get-in catalogue-ctx [:response :body]) "kori")
           "language switches to finnish"))))
-
-
 
 (deftest test-authz
   (testing "when jack makes an application"
