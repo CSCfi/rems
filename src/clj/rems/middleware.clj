@@ -113,7 +113,6 @@
    {:status 403
     :title (str "Access to " (:uri request) " is not authorized")}))
 
-
 (defn wrap-unauthorized
   "Handles unauthorized exceptions by showing an error page."
   [handler]
