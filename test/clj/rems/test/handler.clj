@@ -166,8 +166,9 @@
     (let [ctx (-> (new-context app)
                   (dispatch (request :get "/form/9999"))
                   (follow-redirect))] ;; will throw if this wasn't a redirect
-      (testing "gets redirected to root"
-        (is (= "/" (:location ctx))))
+      (testing "gets redirected to login"
+        (is (= "/login" (:location ctx)))
+        (is (= "/Shibboleth.sso/Login" (:location (follow-redirect ctx)))))
       (let [ctx (-> ctx
                     (login "king")
                     (follow-redirect))]

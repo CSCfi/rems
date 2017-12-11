@@ -81,7 +81,7 @@
       ((if (:websocket? request) handler wrapped) request))))
 
 (defn on-restricted-page [request response]
-  (assoc (redirect "/")
+  (assoc (redirect "/login")
          :session (assoc (:session response) :redirect-to (:uri request))))
 
 (defn wrap-restricted

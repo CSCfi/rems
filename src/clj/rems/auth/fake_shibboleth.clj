@@ -56,6 +56,9 @@ a:visited { color: #fff; }
 (defn- fake-logout [{session :session}]
   (assoc (redirect "/") :session (dissoc session :identity)))
 
+(defn login-url []
+  "/Shibboleth.sso/Login")
+
 (defn logout-url []
   "/Shibboleth.sso/Logout")
 

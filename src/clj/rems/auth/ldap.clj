@@ -54,6 +54,9 @@
     (anti-forgery-field)
     [:button.btn.btn-lg.btn-primary.btn-block {:type "submit"} (text :t.ldap/login)]]])
 
+(defn login-url []
+  "/ldap/login")
+
 (defn logout-url []
   "/ldap/logout")
 
