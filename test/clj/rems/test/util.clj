@@ -1,6 +1,6 @@
 (ns rems.test.util
-  (:require [rems.util :refer :all]
-            [clojure.test :refer :all]))
+  (:require [clojure.test :refer :all]
+            [rems.util :refer :all]))
 
 (deftest select-vals-test
   (is (= [] (select-vals nil nil)))

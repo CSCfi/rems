@@ -1,24 +1,20 @@
 (ns rems.form
-  (:require [clj-time.core :as time]
-            [clj-time.format :as format]
+  (:require [clojure.set :refer [difference]]
             [clojure.string :as s]
-            [clojure.set :refer [difference]]
             [compojure.core :refer [GET POST defroutes]]
             [hiccup.util :refer [url]]
-            [rems.actions :as actions]
             [rems.anti-forgery :refer [anti-forgery-field]]
             [rems.applicant-info :as applicant-info]
             [rems.collapsible :as collapsible]
             [rems.context :as context]
-            [rems.db.applications :refer [assoc-review-type-to-app
-                                          create-new-draft
+            [rems.db.applications :refer [create-new-draft
                                           draft?
                                           get-application-phases
                                           get-application-state
                                           get-draft-form-for
                                           get-form-for
-                                          make-draft-application
                                           is-applicant?
+                                          make-draft-application
                                           submit-application]]
             [rems.db.catalogue :refer [disabled-catalogue-item?]]
             [rems.db.core :as db]
@@ -28,7 +24,7 @@
             [rems.InvalidRequestException]
             [rems.layout :as layout]
             [rems.phase :refer [phases]]
-            [rems.roles :refer [when-role has-roles?]]
+            [rems.roles :refer [has-roles?]]
             [rems.text :refer :all]
             [rems.util :refer [get-user-id getx getx-in]]
             [ring.util.response :refer [redirect]]))

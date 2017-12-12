@@ -14,10 +14,8 @@
             [rems.guide :refer :all]
             [rems.info-field :as info-field]
             [rems.layout :as layout]
-            [rems.auth.ldap :as ldap]
             [rems.phase :as phase]
-            [rems.util :as util]
-            [rems.info-field :as info-field]))
+            [rems.util :as util]))
 
 (defn color-box [id hex]
   [:div.col-md-3

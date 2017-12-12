@@ -5,9 +5,8 @@
             [rems.info-field :as info-field]
             [rems.roles :refer [when-roles]]
             [rems.text :refer :all]
-            [rems.util :refer [get-username
-                               get-user-mail]]
-            [rems.text :as text]))
+            [rems.util :refer [get-user-mail
+                               get-username]]))
 
 (defn details [id user-attributes]
   (collapsible/component
