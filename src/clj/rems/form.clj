@@ -178,8 +178,7 @@
            (for [l licenses]
              (field (assoc l :readonly readonly?)))])
         (anti-forgery-field)
-        (when (or new-application?
-                  (is-applicant? (:application form)))
+        (when (is-applicant? (:application form))
           [:div.row
            [:div.col
             [:a#back-catalogue.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
@@ -188,9 +187,7 @@
                                     (text :t.actions/close)])
                   (when editable? [:button#save.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)])
                   (when editable? [:button#submit.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)])
-                  (when withdrawable? [:button#withdraw.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#withdraw-modal"} (text :t.actions/withdraw)])
-                  ])])
-        ])})))
+                  (when withdrawable? [:button#withdraw.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#withdraw-modal"} (text :t.actions/withdraw)])])])])})))
 
 (defn- applied-resources [catalogue-items]
   (collapsible/component
@@ -224,7 +221,8 @@
 
      [:h2 (text :t.applications/application)]
      (application-header state (filter may-see-event? events))
-     [:div.mt-3 (applicant-info/details "applicant-info" user-attributes)]
+     (when-not (is-applicant? application)
+       [:div.mt-3 (applicant-info/details "applicant-info" user-attributes)])
      [:div.mt-3 (applied-resources (:catalogue-items form))]
      [:div.my-3 (form-fields form)]
 
@@ -236,8 +234,7 @@
        (getx application :review-type)
        (events/review-form application)
        ;; TODO duplicates logic from form-fields
-       (not (or (draft? (:id application))
-                (is-applicant? application)))
+       (not (is-applicant? application))
        [:div.row
         [:div.col.commands
          (events/back-to-actions-button)]]))))

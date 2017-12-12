@@ -228,6 +228,7 @@
     (assert (= 1 (count (distinct (mapv :formid items)))))
     {:id application-id
      :state "draft"
+     :applicantuserid (get-user-id)
      :wfid (:wfid (first items))
      :formid (:formid (first items))
      :catalogue-items items}))
