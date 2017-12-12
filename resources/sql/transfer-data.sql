@@ -262,8 +262,9 @@ SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAS
 FROM transfer.rms_catalogue_item_application_state
 WHERE state = 'closed';
 
-INSERT INTO public.application_event
-SELECT * FROM transfer.migrated_application_event
+INSERT INTO public.application_event (appId, userId, round, event, comment, time)
+SELECT appId, userId, round, event, comment, time
+FROM transfer.migrated_application_event
 ORDER BY time;
 
 -- entitlements
