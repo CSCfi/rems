@@ -4,8 +4,7 @@
                                  union]]
             [rems.auth.util :refer [throw-unauthorized]]
             [rems.context :as context]
-            [rems.db.catalogue :refer [get-catalogue-item-title
-                                       get-localized-catalogue-item]]
+            [rems.db.catalogue :refer [get-localized-catalogue-item]]
             [rems.db.core :as db]
             [rems.db.entitlements :as entitlements]
             [rems.db.roles :as roles]

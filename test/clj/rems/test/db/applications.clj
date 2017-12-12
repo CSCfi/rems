@@ -1,7 +1,5 @@
 (ns rems.test.db.applications
-  (:require [cheshire.core :as cheshire]
-            [clojure.test :refer :all]
-            [mount.core :as mount]
+  (:require [clojure.test :refer :all]
             [rems.db.applications :refer :all]))
 
 (deftest test-handling-event?

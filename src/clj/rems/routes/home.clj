@@ -1,5 +1,5 @@
 (ns rems.routes.home
-  (:require [compojure.core :refer [GET routes defroutes]]
+  (:require [compojure.core :refer [GET defroutes routes]]
             [rems.actions :as actions]
             [rems.applications :as applications]
             [rems.auth.auth :as auth]

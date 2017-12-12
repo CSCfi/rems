@@ -3,11 +3,10 @@
             [buddy.auth.middleware :refer [wrap-authentication
                                            wrap-authorization]]
             [compojure.core :refer [GET routes]]
-            [rems.auth.shibboleth :as shibboleth]
             [rems.auth.fake-shibboleth :as fake-shibboleth]
             [rems.auth.ldap :as ldap]
+            [rems.auth.shibboleth :as shibboleth]
             [rems.config :refer [env]]
-            [rems.context :as context]
             [rems.guide :refer [example]]
             [rems.util :refer [never-match-route]]
             [ring.util.response :refer [redirect]]))

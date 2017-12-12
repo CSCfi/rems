@@ -11,7 +11,7 @@
             [rems.language-switcher :refer [+default-language+]]
             [rems.layout :refer [error-page]]
             [rems.locales :refer [tconfig]]
-            [rems.util :refer [get-user-id getx]]
+            [rems.util :refer [get-user-id]]
             [ring-ttl-session.core :refer [ttl-memory-store]]
             [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
             [ring.middleware.defaults :refer [site-defaults

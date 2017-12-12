@@ -4,7 +4,7 @@
             [mount.core :as mount]
             [rems.config :refer [env]]
             [rems.db.core :as db]
-            [rems.test.locales :refer [loc-en loc-fi]]))
+            [rems.test.locales :refer [loc-en]]))
 
 (use-fixtures
   :once
