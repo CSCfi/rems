@@ -1,36 +1,4 @@
-CREATE CAST (transfer.rms_workflow_visibility AS public.scope)
-WITH INOUT
-AS IMPLICIT;
-
-CREATE CAST (transfer.rms_application_form_meta_visibility AS public.scope)
-WITH INOUT
-AS IMPLICIT;
-
-CREATE CAST (transfer.rms_application_form_visibility AS public.scope)
-WITH INOUT
-AS IMPLICIT;
-
-CREATE CAST (transfer.rms_application_form_item_type AS public.itemtype)
-WITH INOUT
-AS IMPLICIT;
-
-CREATE CAST (transfer.rms_application_form_item_visibility AS public.scope)
-WITH INOUT
-AS IMPLICIT;
-
-CREATE CAST (transfer.rms_license_type AS public.license_type)
-WITH INOUT
-AS IMPLICIT;
-
-CREATE CAST (transfer.rms_catalogue_item_application_licenses_state AS public.license_state)
-WITH INOUT
-AS IMPLICIT;
-
-CREATE CAST (transfer.rms_license_visibility AS public.scope)
-WITH INOUT
-AS IMPLICIT;
-
-CREATE TABLE transfer.migrated_application_event (
+CREATE TABLE IF NOT EXISTS transfer.migrated_application_event (
   id serial NOT NULL PRIMARY KEY, -- for ordering events
   appId integer REFERENCES catalogue_item_application (id),
   userId varchar(255) REFERENCES users (userId),
@@ -40,6 +8,8 @@ CREATE TABLE transfer.migrated_application_event (
   time timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+DELETE FROM transfer.migrated_application_event;
+
 -- data created by the app that might reference data we want to clear
 DELETE FROM public.entitlement CASCADE;
 DELETE FROM public.application_text_values CASCADE;
@@ -47,7 +17,6 @@ DELETE FROM public.catalogue_item_application_licenses CASCADE;
 DELETE FROM public.catalogue_item_application_items CASCADE;
 DELETE FROM public.catalogue_item_application_licenses CASCADE;
 DELETE FROM public.application_event CASCADE;
-DELETE FROM public.users CASCADE;
 DELETE FROM public.catalogue_item_application CASCADE;
 
 -- clear existing data
@@ -65,11 +34,11 @@ DELETE FROM public.application_form_item_map CASCADE;
 DELETE FROM public.application_form_item CASCADE;
 DELETE FROM public.application_form CASCADE;
 
-INSERT INTO public.workflow
-SELECT * FROM transfer.rms_workflow;
+INSERT INTO public.workflow (id, owneruserid, modifieruserid, title, fnlround, visibility, start, endt)
+SELECT id, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(owneruserid AS integer)), (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifieruserid AS integer)), title, fnlround, CAST(visibility::text AS scope), start, "end" FROM transfer.rms_workflow;
 
 INSERT INTO public.resource (id, modifierUserId, prefix, resId, start, endt)
-SELECT id, modifierUserId, prefix, resId, start, "end" FROM transfer.rms_resource;
+SELECT id, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifierUserId AS integer)), prefix, resId, start, "end" FROM transfer.rms_resource;
 
 -- forms
 
@@ -96,17 +65,19 @@ SELECT id, modifierUserId, prefix, resId, start, "end" FROM transfer.rms_resourc
 
 -- Create forms
 INSERT INTO public.application_form (id, ownerUserId, modifierUserId, title, visibility, start, endt)
-SELECT id, ownerUserId, modifierUserId, COALESCE(title,'unknown'), visibility, start, "end"
+SELECT id, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(owneruserid AS integer)), (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifieruserid AS integer)), COALESCE(title,'unknown'), CAST(visibility::text AS scope), start, "end"
 FROM transfer.rms_application_form_meta;
 
 -- Create a table for form items
-CREATE TABLE transfer.migrated_form_item (
+CREATE TABLE IF NOT EXISTS transfer.migrated_form_item (
   metaId integer,
   langCode varchar(64),
   itemOrder integer,
   itemMapId integer,
   itemId integer
 );
+
+DELETE FROM transfer.migrated_form_item;
 
 INSERT INTO transfer.migrated_form_item (metaId, langCode, itemOrder, itemMapId, itemId)
 SELECT
@@ -118,11 +89,13 @@ LEFT JOIN transfer.rms_application_form_item_map itemmap ON itemmap.formId = for
 LEFT JOIN transfer.rms_application_form_item item ON item.id = itemmap.formItemId;
 
 -- Allocate item ids
-CREATE TABLE transfer.migrated_item_ids (
+CREATE TABLE IF NOT EXISTS transfer.migrated_item_ids (
   id serial,
   metaId integer,
   itemOrder integer
 );
+
+DELETE FROM transfer.migrated_item_ids;
 
 INSERT INTO transfer.migrated_item_ids (metaId, itemOrder)
 SELECT DISTINCT metaId, itemOrder
@@ -133,11 +106,11 @@ INSERT INTO public.application_form_item (id, type, value, visibility, ownerUser
 SELECT
   DISTINCT ON (mig.metaId, mig.itemOrder)
   ids.id,
-  item.type,
+  CAST(item.type::text AS itemtype),
   item.value,
-  item.visibility,
-  item.ownerUserId,
-  item.modifierUserId,
+  CAST(item.visibility::text AS scope),
+  (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(item.owneruserid AS integer)),
+  (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(item.modifieruserid AS integer)),
   item.start,
   item.end
 FROM transfer.migrated_form_item mig
@@ -152,7 +125,7 @@ SELECT
   ids.id,
   mig.itemOrder,
   itemmap.formItemOptional,
-  itemmap.modifierUserId,
+  (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(itemmap.modifieruserid AS integer)),
   itemmap.start,
   itemmap.end
 FROM transfer.migrated_form_item mig
@@ -190,8 +163,18 @@ SET state = (SELECT CAST(cis.state::text AS item_state)
 
 -- licenses
 
-INSERT INTO public.license
-SELECT * FROM transfer.rms_license;
+INSERT INTO public.license (id, owneruserid, modifieruserid, title, type, textcontent, attid, visibility, start, endt)
+SELECT id,
+  (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(owneruserid AS integer)),
+  (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifieruserid AS integer)),
+  title,
+  CAST(type::text AS license_type),
+  textcontent,
+  attid,
+  CAST(visibility::text AS scope),
+  start,
+  "end"
+FROM transfer.rms_license;
 
 INSERT INTO public.license_localization
 SELECT * FROM transfer.rms_license_localization;
@@ -205,15 +188,15 @@ SELECT resId, licId, stalling, start, "end" FROM transfer.rms_resource_licenses;
 -- actors
 
 INSERT INTO public.workflow_actors (wfId, actorUserId, role, round, start, endt)
-SELECT wfId, apprUserId, 'approver' AS ROLE, round, start, "end" FROM transfer.rms_workflow_approvers;
+SELECT wfId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(apprUserId AS integer)), 'approver' AS ROLE, round, start, "end" FROM transfer.rms_workflow_approvers;
 
 INSERT INTO public.workflow_actors (wfId, actorUserId, role, round, start, endt)
-SELECT wfId, revUserId, 'reviewer' AS ROLE, round, start, "end" FROM transfer.rms_workflow_reviewers;
+SELECT wfId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(revUserId AS integer)), 'reviewer' AS ROLE, round, start, "end" FROM transfer.rms_workflow_reviewers;
 
 -- applications
 
 INSERT INTO public.catalogue_item_application (id, start, endt, applicantUserId, modifierUserId, wfid)
-SELECT cia.id, cia.start, cia.end, cia.applicantUserId, cia.modifierUserId, item.wfid
+SELECT cia.id, cia.start, cia.end, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(cia.applicantUserId AS integer)), (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(cia.modifierUserId AS integer)), item.wfid
 FROM transfer.rms_catalogue_item_application cia
 LEFT JOIN transfer.rms_catalogue_item item ON cia.catId = item.id;
 
@@ -225,80 +208,66 @@ SELECT catAppId, catId FROM transfer.rms_catalogue_item_application_catid_overfl
 -- approved application licenses
 
 INSERT INTO public.catalogue_item_application_licenses (catAppId, licId, actorUserId, round, stalling, state, start, endt)
-SELECT catAppId, licId, actorUserId, round, stalling, state, start, "end" FROM transfer.rms_catalogue_item_application_licenses;
+SELECT catAppId, licId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(actorUserId AS integer)), round, stalling, CAST(state::text AS license_state), start, "end" FROM transfer.rms_catalogue_item_application_licenses;
 
 -- events
 
--- create fake users so that application_event foreign keys work
--- TODO proper user migration
-INSERT INTO public.users (userId)
-SELECT wfApprId FROM transfer.rms_catalogue_item_application_approvers
-UNION
-SELECT revUserId FROM transfer.rms_catalogue_item_application_reviewers
-UNION
-SELECT modifierUserId FROM transfer.rms_catalogue_item_application_state;
+INSERT INTO transfer.migrated_application_event (appId, userId, round, event, comment, time)
+SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(wfApprId AS integer)), round, 'approve' AS EVENT, comment, start
+FROM transfer.rms_catalogue_item_application_approvers
+WHERE state = 'approved' AND round >= 0;
 
 INSERT INTO transfer.migrated_application_event (appId, userId, round, event, comment, time)
-SELECT catAppId, wfApprId, round, 'approve' AS EVENT, comment, start FROM transfer.rms_catalogue_item_application_approvers
-WHERE state = 'approved';
+SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(wfApprId AS integer)), round, 'reject' AS EVENT, comment, start
+FROM transfer.rms_catalogue_item_application_approvers
+WHERE state = 'rejected' AND round >= 0;
 
 INSERT INTO transfer.migrated_application_event (appId, userId, round, event, comment, time)
-SELECT catAppId, wfApprId, round, 'reject' AS EVENT, comment, start FROM transfer.rms_catalogue_item_application_approvers
-WHERE state = 'rejected';
+SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(wfApprId AS integer)), round, 'return' AS EVENT, comment, start
+FROM transfer.rms_catalogue_item_application_approvers
+WHERE state = 'returned' AND round >= 0;
 
 INSERT INTO transfer.migrated_application_event (appId, userId, round, event, comment, time)
-SELECT catAppId, wfApprId, round, 'return' AS EVENT, comment, start FROM transfer.rms_catalogue_item_application_approvers
-WHERE state = 'returned';
+SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(wfApprId AS integer)), round, 'close' AS EVENT, comment, start
+FROM transfer.rms_catalogue_item_application_approvers
+WHERE state = 'closed' AND round >= 0;
 
 INSERT INTO transfer.migrated_application_event (appId, userId, round, event, comment, time)
-SELECT catAppId, wfApprId, round, 'close' AS EVENT, comment, start FROM transfer.rms_catalogue_item_application_approvers
-WHERE state = 'closed';
-
-INSERT INTO transfer.migrated_application_event (appId, userId, round, event, comment, time)
-SELECT catAppId, revUserId, round, 'review' AS EVENT, comment, start FROM transfer.rms_catalogue_item_application_reviewers
-WHERE state = 'commented';
+SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(revUserId AS integer)), round, 'review' AS EVENT, comment, start
+FROM transfer.rms_catalogue_item_application_reviewers
+WHERE state = 'commented' AND round >= 0;
 
 INSERT INTO transfer.migrated_application_event (appId, userId, round, event, time)
-SELECT catAppId, modifierUserId, curround, 'apply' AS EVENT, start FROM transfer.rms_catalogue_item_application_state
-WHERE state = 'applied';
+SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifierUserId AS integer)), curround, 'apply' AS EVENT, start
+FROM transfer.rms_catalogue_item_application_state
+WHERE state = 'applied' AND curround >= 0;
 
 INSERT INTO transfer.migrated_application_event (appId, userId, round, event, time)
-SELECT catAppId, modifierUserId, curround, 'approve' AS EVENT, start FROM transfer.rms_catalogue_item_application_state
-WHERE state = 'approved';
+SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifierUserId AS integer)), curround, 'approve' AS EVENT, start
+FROM transfer.rms_catalogue_item_application_state
+WHERE state = 'approved' AND curround >= 0;
 
 INSERT INTO transfer.migrated_application_event (appId, userId, round, event, time)
-SELECT catAppId, modifierUserId, curround, 'reject' AS EVENT, start FROM transfer.rms_catalogue_item_application_state
-WHERE state = 'rejected';
+SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifierUserId AS integer)), curround, 'reject' AS EVENT, start
+FROM transfer.rms_catalogue_item_application_state
+WHERE state = 'rejected' AND curround >= 0;
 
 INSERT INTO transfer.migrated_application_event (appId, userId, round, event, time)
-SELECT catAppId, modifierUserId, curround, 'return' AS EVENT, start FROM transfer.rms_catalogue_item_application_state
-WHERE state = 'returned';
+SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifierUserId AS integer)), curround, 'return' AS EVENT, start
+FROM transfer.rms_catalogue_item_application_state
+WHERE state = 'returned' AND curround >= 0;
 
 INSERT INTO transfer.migrated_application_event (appId, userId, round, event, time)
-SELECT catAppId, modifierUserId, curround, 'close' AS EVENT, start FROM transfer.rms_catalogue_item_application_state
-WHERE state = 'closed';
+SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifierUserId AS integer)), curround, 'close' AS EVENT, start
+FROM transfer.rms_catalogue_item_application_state
+WHERE state = 'closed' AND curround >= 0;
 
-INSERT INTO public.application_event
-SELECT * FROM transfer.migrated_application_event
+INSERT INTO public.application_event (appId, userId, round, event, comment, time)
+SELECT appId, userId, round, event, comment, time
+FROM transfer.migrated_application_event
 ORDER BY time;
 
 -- entitlements
 
-INSERT INTO public.entitlement
-SELECT * FROM transfer.rms_entitlement;
-
--- drop created tables
-DROP TABLE IF EXISTS transfer.migrated_application_event CASCADE;
-DROP TABLE IF EXISTS transfer.migrated_form_item;
-DROP TABLE IF EXISTS transfer.migrated_item_ids;
-
--- if all casts are not dropped, the next pgloader run might fail
--- (can't drop a type that is referenced by a cast)
-DROP CAST IF EXISTS (transfer.rms_workflow_visibility AS public.scope);
-DROP CAST IF EXISTS (transfer.rms_application_form_meta_visibility AS public.scope);
-DROP CAST IF EXISTS (transfer.rms_application_form_visibility AS public.scope);
-DROP CAST IF EXISTS (transfer.rms_application_form_item_type AS public.itemtype);
-DROP CAST IF EXISTS (transfer.rms_application_form_item_visibility AS public.scope);
-DROP CAST IF EXISTS (transfer.rms_license_type AS public.license_type);
-DROP CAST IF EXISTS (transfer.rms_catalogue_item_application_licenses_state AS public.license_state);
-DROP CAST IF EXISTS (transfer.rms_license_visibility AS public.scope);
+INSERT INTO public.entitlement (id, resid, catappid, userid, start, endt)
+SELECT id, resid, catappid, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(rms_entitlement.userid AS integer)), start, "end" FROM transfer.rms_entitlement;
