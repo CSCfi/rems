@@ -197,15 +197,18 @@
 
       (is (= [{:id app :state "draft"}]
              (map #(select-keys % [:id :state])
-                  (applications/get-applications))))
+                  (applications/get-my-applications))))
       (applications/submit-application app)
       (is (= [{:id app :state "applied"}]
              (map #(select-keys % [:id :state])
-                  (applications/get-applications))))
+                  (applications/get-my-applications))))
       (applications/approve-application app 0 "comment")
       (is (= [{:id app :state "approved"}]
              (map #(select-keys % [:id :state])
-                  (applications/get-applications)))))))
+                  (applications/get-my-applications))))
+      (testing "deleted application is not shown"
+        (applications/close-application app 0 "c")
+        (is (empty? (applications/get-my-applications)))))))
 
 (deftest test-multi-applications
   (binding [context/*user* {"eppn" "test-user"}]
@@ -222,7 +225,7 @@
       (db/add-application-item! {:application app :item item2})
       (actors/add-approver! wf uid 0)
 
-      (let [applications (applications/get-applications)]
+      (let [applications (applications/get-my-applications)]
         (is (= [{:id app :state "draft"}]
                (map #(select-keys % [:id :state]) applications)))
         (is (= [item1 item2] (sort (map :id (:catalogue-items (first applications)))))
@@ -231,12 +234,12 @@
       (applications/submit-application app)
       (is (= [{:id app :state "applied"}]
              (map #(select-keys % [:id :state])
-                  (applications/get-applications))))
+                  (applications/get-my-applications))))
 
       (applications/approve-application app 0 "comment")
       (is (= [{:id app :state "approved"}]
              (map #(select-keys % [:id :state])
-                  (applications/get-applications))))
+                  (applications/get-my-applications))))
 
       (is (= ["resid111" "resid222"] (sort (map :resid (db/get-entitlements {:application app}))))
           "should create entitlements for both resources"))))

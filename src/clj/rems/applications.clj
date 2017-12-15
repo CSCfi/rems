@@ -1,6 +1,6 @@
 (ns rems.applications
   (:require [clojure.string :as string]
-            [rems.db.applications :refer [get-applications]]
+            [rems.db.applications :refer [get-my-applications]]
             [rems.guide :refer :all]
             [rems.text :refer [localize-state localize-time text]]))
 
@@ -16,7 +16,7 @@
 
 (defn applications
   ([]
-   (applications (get-applications)))
+   (applications (get-my-applications)))
   ([apps]
    (if (empty? apps)
     [:div.applications.alert.alert-success (text :t/applications.empty)]

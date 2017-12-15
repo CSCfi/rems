@@ -154,8 +154,10 @@
      (assoc (get-application-state (:id app))
             :catalogue-items (get-catalogue-items-by-application-id (:id app))))))
 
-(defn get-applications []
-  (get-applications-impl {:applicant (get-user-id)}))
+(defn get-my-applications []
+  (filter
+   #(not= (:state %) "closed") ; don't show deleted applications
+   (get-applications-impl {:applicant (get-user-id)})))
 
 (defn get-approvals []
   (filterv
