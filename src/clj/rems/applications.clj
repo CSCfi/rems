@@ -1,6 +1,6 @@
 (ns rems.applications
-  (:require [compojure.core :refer [GET defroutes]]
-            [clojure.string :as string]
+  (:require [clojure.string :as string]
+            [compojure.core :refer [GET defroutes]]
             [rems.db.applications :refer [get-my-applications]]
             [rems.guide :refer :all]
             [rems.layout :as layout]

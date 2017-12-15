@@ -1,7 +1,7 @@
 (ns rems.actions
   "The /actions page that shows a list of applications you can act on."
-  (:require [compojure.core :refer [GET defroutes routes]]
-            [clojure.string :as string]
+  (:require [clojure.string :as string]
+            [compojure.core :refer [GET defroutes routes]]
             [rems.collapsible :as collapsible]
             [rems.db.applications :as applications]
             [rems.guide :refer :all]
