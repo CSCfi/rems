@@ -215,52 +215,52 @@ SELECT catAppId, licId, (SELECT userId FROM transfer.user_mapping WHERE expandoI
 INSERT INTO transfer.migrated_application_event (appId, userId, round, event, comment, time)
 SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(wfApprId AS integer)), round, 'approve' AS EVENT, comment, start
 FROM transfer.rms_catalogue_item_application_approvers
-WHERE state = 'approved';
+WHERE state = 'approved' AND round >= 0;
 
 INSERT INTO transfer.migrated_application_event (appId, userId, round, event, comment, time)
 SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(wfApprId AS integer)), round, 'reject' AS EVENT, comment, start
 FROM transfer.rms_catalogue_item_application_approvers
-WHERE state = 'rejected';
+WHERE state = 'rejected' AND round >= 0;
 
 INSERT INTO transfer.migrated_application_event (appId, userId, round, event, comment, time)
 SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(wfApprId AS integer)), round, 'return' AS EVENT, comment, start
 FROM transfer.rms_catalogue_item_application_approvers
-WHERE state = 'returned';
+WHERE state = 'returned' AND round >= 0;
 
 INSERT INTO transfer.migrated_application_event (appId, userId, round, event, comment, time)
 SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(wfApprId AS integer)), round, 'close' AS EVENT, comment, start
 FROM transfer.rms_catalogue_item_application_approvers
-WHERE state = 'closed';
+WHERE state = 'closed' AND round >= 0;
 
 INSERT INTO transfer.migrated_application_event (appId, userId, round, event, comment, time)
 SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(revUserId AS integer)), round, 'review' AS EVENT, comment, start
 FROM transfer.rms_catalogue_item_application_reviewers
-WHERE state = 'commented';
+WHERE state = 'commented' AND round >= 0;
 
 INSERT INTO transfer.migrated_application_event (appId, userId, round, event, time)
 SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifierUserId AS integer)), curround, 'apply' AS EVENT, start
 FROM transfer.rms_catalogue_item_application_state
-WHERE state = 'applied';
+WHERE state = 'applied' AND curround >= 0;
 
 INSERT INTO transfer.migrated_application_event (appId, userId, round, event, time)
 SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifierUserId AS integer)), curround, 'approve' AS EVENT, start
 FROM transfer.rms_catalogue_item_application_state
-WHERE state = 'approved';
+WHERE state = 'approved' AND curround >= 0;
 
 INSERT INTO transfer.migrated_application_event (appId, userId, round, event, time)
 SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifierUserId AS integer)), curround, 'reject' AS EVENT, start
 FROM transfer.rms_catalogue_item_application_state
-WHERE state = 'rejected';
+WHERE state = 'rejected' AND curround >= 0;
 
 INSERT INTO transfer.migrated_application_event (appId, userId, round, event, time)
 SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifierUserId AS integer)), curround, 'return' AS EVENT, start
 FROM transfer.rms_catalogue_item_application_state
-WHERE state = 'returned';
+WHERE state = 'returned' AND curround >= 0;
 
 INSERT INTO transfer.migrated_application_event (appId, userId, round, event, time)
 SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifierUserId AS integer)), curround, 'close' AS EVENT, start
 FROM transfer.rms_catalogue_item_application_state
-WHERE state = 'closed';
+WHERE state = 'closed' AND curround >= 0;
 
 INSERT INTO public.application_event (appId, userId, round, event, comment, time)
 SELECT appId, userId, round, event, comment, time
