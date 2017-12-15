@@ -31,7 +31,7 @@ In case your database requires a password to function, you can provide a passwor
 
 ```
 PGHOST=172.17.0.1 PGUSER=rems PGDATABASE=rems ./transfer-users.sh richer2_liferay_20171106.sql
-PGHOST=172.17.0.1 PGUSER=rems PGDATABASE=rems ./transfer-db.sh richer2_rems_20171106.sql
+PGHOST=172.17.0.1 PGUSER=rems PGDATABASE=rems ./transfer-data.sh richer2_rems_20171106.sql
 ```
 
 For development you can just run:
