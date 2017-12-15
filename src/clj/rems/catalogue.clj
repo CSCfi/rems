@@ -1,9 +1,11 @@
 (ns rems.catalogue
-  (:require [hiccup.element :refer [link-to image]]
+  (:require [compojure.core :refer [GET defroutes routes]]
+            [hiccup.element :refer [link-to image]]
             [rems.context :as context]
             [rems.cart :as cart]
             [rems.form :as form]
             [rems.guide :refer :all]
+            [rems.layout :as layout]
             [rems.text :refer :all]
             [rems.db.catalogue :refer [disabled-catalogue-item?
                                        get-catalogue-item-title
@@ -30,10 +32,17 @@
    (for [item (sort-by get-catalogue-item-title (remove disabled-catalogue-item? items))]
      (catalogue-item item))])
 
-(defn catalogue []
+(defn- catalogue []
   (list
    (cart/cart-list (cart/get-cart-items))
    (catalogue-list (get-localized-catalogue-items))))
+
+(defn- catalogue-page []
+  (layout/render
+    "catalogue" (catalogue)))
+
+(defroutes catalogue-routes
+  (GET "/catalogue" [] (catalogue-page)))
 
 (defn guide []
   (list

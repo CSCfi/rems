@@ -1,6 +1,7 @@
 (ns rems.actions
   "The /actions page that shows a list of applications you can act on."
   (:require [clojure.string :as string]
+            [compojure.core :refer [GET defroutes routes]]
             [rems.collapsible :as collapsible]
             [rems.db.applications :as applications]
             [rems.guide :refer :all]
@@ -9,12 +10,12 @@
             [rems.text :refer [localize-state localize-time text]]))
 
 
-(defn view-button [app]
+(defn- view-button [app]
   [:a.btn.btn-primary
    {:href (str "/form/" (:id app))}
    (text :t.applications/view)])
 
-(defn not-implemented-modal [name-field action-title]
+(defn- not-implemented-modal [name-field action-title]
   [:div.modal.fade {:id (str name-field "-modal") :tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
    [:div.modal-dialog {:role "document"}
     [:div.modal-content
@@ -49,14 +50,14 @@
     (text :t.actions/show-throughput-times)]
    (not-implemented-modal "show-throughput-times" (text :t.actions/show-throughput-times))))
 
-(defn report-buttons []
+(defn- report-buttons []
   [:div.form-actions.inline
    (load-application-states-button)
    (export-entitlements-button)
    (show-publications-button)
    (show-throughput-times-button)])
 
-(defn actions [apps]
+(defn- actions [apps]
   (if (empty? apps)
     [:div.actions.alert.alert-success (text :t.actions/empty)]
     [:table.rems-table.actions
@@ -74,19 +75,19 @@
         [:td {:data-th (text :t.actions/created)} (localize-time (:start app))]
         [:td.commands (view-button app)]])]))
 
-(defn reviews
+(defn- reviews
   ([]
    (reviews (applications/get-applications-to-review)))
   ([apps]
    (actions apps)))
 
-(defn approvals
+(defn- approvals
   ([]
    (approvals (applications/get-approvals)))
   ([apps]
    (actions apps)))
 
-(defn handled-applications
+(defn- handled-applications
   "Creates a table containing a list of handled applications.
 
   The function takes the following parameters as arguments:
@@ -115,13 +116,13 @@
           [:td {:data-th (text :t.actions/handled)} (localize-time (:handled app))]
           [:td.commands (view-button app)]])]))))
 
-(defn handled-approvals
+(defn- handled-approvals
   ([]
    (handled-approvals (applications/get-handled-approvals)))
   ([apps]
    (handled-applications apps (report-buttons))))
 
-(defn handled-reviews
+(defn- handled-reviews
   ([]
    (handled-reviews (applications/get-handled-reviews)))
   ([apps]
@@ -152,7 +153,7 @@
              [{:id 1 :catalogue-items [{:title "AAAAAAAAAAAAAA"}] :applicantuserid "alice"}
               {:id 3 :catalogue-items [{:title "bbbbbb"}] :state "approved" :applicantuserid "bob"}]))))
 
-(defn actions-page []
+(defn- actions-page []
   (layout/render
    "actions"
    [:div
@@ -180,3 +181,6 @@
          {:id "handled-approvals"
           :title (text :t.actions/handled-approvals)
           :collapse (handled-approvals)})]))]))
+
+(defroutes actions-routes
+  (GET "/actions" [] (actions-page)))
