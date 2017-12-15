@@ -4,8 +4,7 @@
             [hiccup.util :refer [url]]
             [rems.db.core :as db]
             [ring.util.response :refer [content-type redirect
-                                        response]]
-            [rems.db.core :as db]))
+                                        response]]))
 
 (def ^{:private true
        :doc "Inlined CSS declaration for fake login."}
