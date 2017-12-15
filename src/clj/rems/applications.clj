@@ -1,7 +1,9 @@
 (ns rems.applications
-  (:require [clojure.string :as string]
+  (:require [compojure.core :refer [GET defroutes]]
+            [clojure.string :as string]
             [rems.db.applications :refer [get-my-applications]]
             [rems.guide :refer :all]
+            [rems.layout :as layout]
             [rems.text :refer [localize-state localize-time text]]))
 
 (defn- applications-item [app]
@@ -14,7 +16,7 @@
          {:href (str "/form/" (:id app))}
          (text :t/applications.view)]]])
 
-(defn applications
+(defn- applications
   ([]
    (applications (get-my-applications)))
   ([apps]
@@ -28,6 +30,14 @@
       [:th (text :t.applications/created)]]
      (for [app apps]
        (applications-item app))])))
+
+(defn- applications-page []
+  (layout/render
+   "applications"
+   (applications)))
+
+(defroutes applications-routes
+  (GET "/applications" [] (applications-page)))
 
 (defn guide
   []

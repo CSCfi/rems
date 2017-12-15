@@ -30,15 +30,6 @@
     (redirect "/landing_page")
     (layout/render "home" (auth/login-component))))
 
-(defn catalogue-page []
-  (layout/render
-    "catalogue" (catalogue/catalogue)))
-
-(defn applications-page []
-  (layout/render
-   "applications"
-   (applications/applications)))
-
 (defn public-routes []
   (routes
    (GET "/" [] (home-page))
@@ -50,9 +41,9 @@
    (auth/auth-routes)))
 
 (defroutes secured-routes
-  (GET "/applications" [] (applications-page))
-  (GET "/catalogue" [] (catalogue-page))
-  (GET "/actions" [] (actions/actions-page))
+  catalogue/catalogue-routes
+  actions/actions-routes
+  applications/applications-routes
   landing-page/landing-page-routes
   events/events-routes
   cart/cart-routes
