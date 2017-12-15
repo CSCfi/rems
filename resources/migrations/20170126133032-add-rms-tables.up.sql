@@ -136,6 +136,8 @@ CREATE TABLE application_license_approval_values (
   licId integer NOT NULL,
   modifierUserId varchar(255) DEFAULT NULL,
   state license_status NOT NULL,
+  round integer NOT NULL DEFAULT 0,
+  stalling boolean NOT NULL DEFAULT FALSE,
   start timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   endt timestamp NULL DEFAULT NULL,
   CONSTRAINT application_license_approval_values_ibfk_1 FOREIGN KEY (catAppId) REFERENCES catalogue_item_application (id),
