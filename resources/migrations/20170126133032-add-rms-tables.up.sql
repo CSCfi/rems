@@ -132,7 +132,7 @@ CREATE TABLE license (
 CREATE TABLE application_license_approval_values (
   id serial NOT NULL PRIMARY KEY,
   catAppId integer DEFAULT NULL,
-  formMapId integer DEFAULT NULL,
+  formMapId integer DEFAULT NULL, -- this is used for form items of type `license`, we don't have those yet
   licId integer NOT NULL,
   modifierUserId varchar(255) DEFAULT NULL,
   state license_status NOT NULL,

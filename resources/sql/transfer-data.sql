@@ -210,6 +210,18 @@ SELECT catAppId, catId FROM transfer.rms_catalogue_item_application_catid_overfl
 INSERT INTO public.catalogue_item_application_licenses (catAppId, licId, actorUserId, round, stalling, state, start, endt)
 SELECT catAppId, licId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(actorUserId AS integer)), round, stalling, CAST(state::text AS license_state), start, "end" FROM transfer.rms_catalogue_item_application_licenses;
 
+INSERT INTO public.application_license_approval_values (catAppId, licId, modifierUserId, state, start, endt)
+SELECT
+  catAppId,
+  licId,
+  (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifierUserId AS integer)),
+  CAST(state::text AS license_status),
+  start,
+  "end"
+FROM transfer.rms_application_license_approval_values
+-- skip migrating license form item approvals:
+WHERE formMapId IS NULL;
+
 -- events
 
 INSERT INTO transfer.migrated_application_event (appId, userId, round, event, comment, time)
