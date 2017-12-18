@@ -255,11 +255,6 @@ FROM transfer.rms_catalogue_item_application_state
 WHERE state = 'applied' AND curround >= 0;
 
 INSERT INTO transfer.migrated_application_event (appId, userId, round, event, time)
-SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifierUserId AS integer)), curround, 'approve' AS EVENT, start
-FROM transfer.rms_catalogue_item_application_state
-WHERE state = 'approved' AND curround >= 0;
-
-INSERT INTO transfer.migrated_application_event (appId, userId, round, event, time)
 SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifierUserId AS integer)), curround, 'reject' AS EVENT, start
 FROM transfer.rms_catalogue_item_application_state
 WHERE state = 'rejected' AND curround >= 0;
