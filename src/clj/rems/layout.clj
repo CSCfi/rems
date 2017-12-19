@@ -45,10 +45,11 @@
        (when-roles #{:approver :reviewer}
          (nav-link "/actions" (text :t.navigation/actions) (= page-name "actions"))))
       (nav-link "/" (text :t.navigation/home) (= page-name "home")))
-    (for [{:keys [id url translation-key translations]} (:extra-pages env)]
+    (for [{:keys [id url translation-key translations external?]} (:extra-pages env)]
       (nav-link url
                 (if translation-key (text translation-key) (translations context/*lang*))
-                (= page-name id)))]
+                (= page-name id)
+                external?))]
    (language-switcher)])
 
 (defn- navbar
