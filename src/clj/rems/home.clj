@@ -3,19 +3,20 @@
             [rems.auth.auth :as auth]
             [rems.context :as context]
             [rems.css.styles :as styles]
+            [rems.guide :refer :all]
             [rems.layout :as layout]
             [rems.text :refer [text]]
             [ring.util.response :refer [content-type
                                         redirect
                                         response]]))
 
-(defn- about []
-  [:p (text :t.about/text)])
+(defn- about [text]
+  [:p text])
 
 (defn- about-page []
   (layout/render
    "about"
-   (about)))
+   (about (text :t.about/text))))
 
 (defn- home-page []
   (if context/*user*
@@ -28,3 +29,9 @@
   (GET "/css/screen.css" [] (-> (styles/generate-css)
                                 (response)
                                 (content-type "text/css"))))
+
+(defn guide
+  "Component guide fragment"
+  []
+  (list
+   (example "about" (about "Some about text"))))

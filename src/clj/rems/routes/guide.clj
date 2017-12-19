@@ -12,6 +12,7 @@
             [rems.context :as context]
             [rems.form :as form]
             [rems.guide :refer :all]
+            [rems.home :as home]
             [rems.info-field :as info-field]
             [rems.layout :as layout]
             [rems.phase :as phase]
@@ -86,7 +87,7 @@
 
           [:h2 "Misc components"]
           (phase/guide)
-          #_(example "about" (contents/about))
+          (home/guide)
           (include-js "/assets/jquery/jquery.min.js")
           (include-js "/assets/tether/dist/js/tether.min.js")
           (include-js "/assets/bootstrap/js/bootstrap.min.js")]]]))))
