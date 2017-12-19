@@ -10,12 +10,19 @@
             [rems.util :refer [get-username]]
             [ring.util.http-response :as response]))
 
+(defn external-link []
+  [:i {:class "fa fa-external-link"}])
+
 (defn- url-dest
   [dest]
   (str context/*root-path* dest))
 
-(defn- nav-link [path title & [active?]]
-  (link-to {:class (str "nav-item nav-link" (if active? " active" ""))} (url-dest path) title))
+(defn- nav-link [path title & [active? external?]]
+  [:a {:class (str "nav-item nav-link" (if active? " active" ""))
+       :href (url-dest path)
+       :target (if external? "_blank" nil)}
+   title
+   (when external? (list " " (external-link)))])
 
 (defn user-switcher [user]
   (when user
