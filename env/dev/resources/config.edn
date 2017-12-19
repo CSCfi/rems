@@ -13,8 +13,8 @@
                ;; {:id "about" :url "/about" :translation-key :t.navigation/about}
 
                ;; example of an external page with inline translation
-               ;;{:id "hello" :url "http://example.org/hello.html" :external? true :translations {:fi "Hei" :en "Hello"}}
+               ;; {:id "hello" :url "http://example.org/hello.html" :external? true :translations {:fi "Hei" :en "Hello"}}
 
                ;; example of a local markdown file with inline translation
-               ;;{:id "mark" :url "/markdown/about.md" :file "about.md" :translations {:fi "Info" :en "About"}}
+               ;; {:id "mark" :url "/markdown/about.md" :file "about.md" :translations {:fi "Info" :en "About"}}
                ]}
