@@ -353,3 +353,7 @@ SELECT unnest(enum_range(NULL::application_event_type));
 
 -- :name get-application-states :? :*
 SELECT unnest(enum_range(NULL::application_state));
+
+-- :name log-entitlement-post! :insert
+INSERT INTO entitlement_post_log (payload, status)
+VALUES (:payload::jsonb, :status);
