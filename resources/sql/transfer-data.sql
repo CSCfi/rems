@@ -225,22 +225,22 @@ WHERE formMapId IS NULL;
 -- events
 
 INSERT INTO transfer.migrated_application_event (appId, userId, round, event, comment, time)
-SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(wfApprId AS integer)), round, 'approve' AS EVENT, comment, start
+SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(apprUserId AS integer)), round, 'approve' AS EVENT, comment, start
 FROM transfer.rms_catalogue_item_application_approvers
 WHERE state = 'approved' AND round >= 0;
 
 INSERT INTO transfer.migrated_application_event (appId, userId, round, event, comment, time)
-SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(wfApprId AS integer)), round, 'reject' AS EVENT, comment, start
+SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(apprUserId AS integer)), round, 'reject' AS EVENT, comment, start
 FROM transfer.rms_catalogue_item_application_approvers
 WHERE state = 'rejected' AND round >= 0;
 
 INSERT INTO transfer.migrated_application_event (appId, userId, round, event, comment, time)
-SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(wfApprId AS integer)), round, 'return' AS EVENT, comment, start
+SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(apprUserId AS integer)), round, 'return' AS EVENT, comment, start
 FROM transfer.rms_catalogue_item_application_approvers
 WHERE state = 'returned' AND round >= 0;
 
 INSERT INTO transfer.migrated_application_event (appId, userId, round, event, comment, time)
-SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(wfApprId AS integer)), round, 'close' AS EVENT, comment, start
+SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(apprUserId AS integer)), round, 'close' AS EVENT, comment, start
 FROM transfer.rms_catalogue_item_application_approvers
 WHERE state = 'closed' AND round >= 0;
 
