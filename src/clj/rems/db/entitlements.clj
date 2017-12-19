@@ -29,13 +29,20 @@
                      :user (:userid e)})
           json-payload (cheshire/generate-string payload)]
       (log/infof "Posting entitlements to %s:" target payload)
-      (try
-        (http/post target
-                   {:body json-payload
-                    :content-type :json
-                    :timeout 2500})
-        (catch Exception e
-          (log/error "POST failed" e))))))
+      (let [response (try
+                       (http/post target
+                                  {:throw-exceptions false
+                                   :body json-payload
+                                   :content-type :json
+                                   :socket-timeout 2500
+                                   :conn-timeout 2500})
+                       (catch Exception e
+                         (log/error "POST failed" e)
+                         {:status "exception"}))
+            status (:status response)]
+        (when-not (= 200 status)
+          (log/warnf "Post failed: %s", response))
+        (db/log-entitlement-post! {:payload json-payload :status status})))))
 
 (defn add-entitlements-for
   "If the given application is approved, add an entitlement to the db

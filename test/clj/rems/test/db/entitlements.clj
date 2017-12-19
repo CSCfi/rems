@@ -1,0 +1,56 @@
+(ns rems.test.db.entitlements
+  (:require [cheshire.core :as cheshire]
+            [clj-time.core :as time]
+            [clojure.test :refer :all]
+            [rems.context :as context]
+            [rems.db.core :as db]
+            [rems.db.entitlements :as entitlements]
+            [stub-http.core :as stub]))
+
+(def +entitlements+
+  [{:resid "res1" :catappid 11 :userid "user1" :start (time/date-time 2001 10 11)}
+   {:resid "res2" :catappid 12 :userid "user2" :start (time/date-time 2002 10 11)}])
+
+(def +expected-payload+
+  [{"resource" "res1" "application" 11 "user" "user1"}
+   {"resource" "res2" "application" 12 "user" "user2"}])
+
+(defn run-with-server [spec f]
+  (with-open [server (stub/start! {"/entitlements" spec})]
+    (with-redefs [rems.config/env {:entitlements-target
+                                   (str (:uri server) "/entitlements")}]
+      (f)
+      (prn (stub/recorded-requests server))
+      (for [r (stub/recorded-requests server)]
+        (cheshire/parse-string (get-in r [:body "postData"]))))))
+
+(deftest test-post-entitlements
+  (let [log (atom [])]
+    (with-redefs [db/log-entitlement-post! #(swap! log conj %)]
+      (testing "ok"
+        (is (= [+expected-payload+]
+               (run-with-server {:status 200}
+                                #(#'entitlements/post-entitlements +entitlements+))))
+        (let [[{payload :payload status :status}] @log]
+          (is (= 200 status))
+          (is (= +expected-payload+ (cheshire/parse-string payload))))
+        (reset! log []))
+      (testing "not found"
+        (run-with-server {:status 404}
+                         #(#'entitlements/post-entitlements +entitlements+))
+        (let [[{payload :payload status :status}] @log]
+          (is (= 404 status))
+          (is (= +expected-payload+ (cheshire/parse-string payload))))
+        (reset! log []))
+      (testing "timeout"
+        (run-with-server {:status 200 :delay 5000} ;; timeout of 2500 in code
+                         #(#'entitlements/post-entitlements +entitlements+))
+        (let [[{payload :payload status :status}] @log]
+          (is (= "exception" status))
+          (is (= +expected-payload+ (cheshire/parse-string payload)))))
+      (testing "no server"
+        (with-redefs [rems.config/env {:entitlements-target "http://invalid/entitlements"}]
+          (#'entitlements/post-entitlements +entitlements+)
+          (let [[{payload :payload status :status}] @log]
+          (is (= "exception" status))
+          (is (= +expected-payload+ (cheshire/parse-string payload)))))))))
