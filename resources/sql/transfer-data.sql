@@ -1,4 +1,8 @@
-CREATE TABLE IF NOT EXISTS transfer.migrated_application_event (
+DROP TABLE IF EXISTS transfer.migrated_application_event;
+DROP TABLE IF EXISTS transfer.migrated_form_item;
+DROP TABLE IF EXISTS transfer.migrated_item_ids;
+
+CREATE TABLE transfer.migrated_application_event (
   id serial NOT NULL PRIMARY KEY, -- for ordering events
   appId integer REFERENCES catalogue_item_application (id),
   userId varchar(255) REFERENCES users (userId),
@@ -7,8 +11,6 @@ CREATE TABLE IF NOT EXISTS transfer.migrated_application_event (
   comment varchar(4096) DEFAULT NULL,
   time timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-
-DELETE FROM transfer.migrated_application_event;
 
 -- data created by the app that might reference data we want to clear
 DELETE FROM public.entitlement CASCADE;
@@ -69,15 +71,13 @@ SELECT id, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(owne
 FROM transfer.rms_application_form_meta;
 
 -- Create a table for form items
-CREATE TABLE IF NOT EXISTS transfer.migrated_form_item (
+CREATE TABLE transfer.migrated_form_item (
   metaId integer,
   langCode varchar(64),
   itemOrder integer,
   itemMapId integer,
   itemId integer
 );
-
-DELETE FROM transfer.migrated_form_item;
 
 INSERT INTO transfer.migrated_form_item (metaId, langCode, itemOrder, itemMapId, itemId)
 SELECT
@@ -89,13 +89,11 @@ LEFT JOIN transfer.rms_application_form_item_map itemmap ON itemmap.formId = for
 LEFT JOIN transfer.rms_application_form_item item ON item.id = itemmap.formItemId;
 
 -- Allocate item ids
-CREATE TABLE IF NOT EXISTS transfer.migrated_item_ids (
+CREATE TABLE transfer.migrated_item_ids (
   id serial,
   metaId integer,
   itemOrder integer
 );
-
-DELETE FROM transfer.migrated_item_ids;
 
 INSERT INTO transfer.migrated_item_ids (metaId, itemOrder)
 SELECT DISTINCT metaId, itemOrder
@@ -192,6 +190,27 @@ SELECT wfId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(ap
 
 INSERT INTO public.workflow_actors (wfId, actorUserId, role, round, start, endt)
 SELECT wfId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(revUserId AS integer)), 'reviewer' AS ROLE, round, start, "end" FROM transfer.rms_workflow_reviewers;
+
+-- roles
+
+INSERT INTO public.roles (userId, role)
+SELECT DISTINCT userId, 'applicant' AS role
+FROM transfer.user_mapping
+WHERE userId IS NOT NULL;
+
+INSERT INTO public.roles (userId, role)
+SELECT userId, role
+FROM (SELECT DISTINCT (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(apprUserId AS integer)) AS userId,
+      'approver' AS role
+       FROM transfer.rms_workflow_approvers) approvers
+WHERE userId IS NOT NULL;
+
+INSERT INTO public.roles (userId, role)
+SELECT userId, role
+FROM (SELECT DISTINCT (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(revUserId AS integer)) AS userId,
+             'reviewer' AS role
+      FROM transfer.rms_workflow_reviewers) reviewers
+WHERE userId IS NOT NULL;
 
 -- applications
 
