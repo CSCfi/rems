@@ -1,6 +1,7 @@
 (ns rems.layout
   (:require [hiccup.element :refer [link-to]]
             [hiccup.page :refer [html5 include-css include-js]]
+            [rems.config :refer [env]]
             [rems.context :as context]
             [rems.guide :refer :all]
             [rems.language-switcher :refer [language-switcher]]
@@ -37,7 +38,10 @@
        (when-roles #{:approver :reviewer}
          (nav-link "/actions" (text :t.navigation/actions) (= page-name "actions"))))
       (nav-link "/" (text :t.navigation/home) (= page-name "home")))
-    (nav-link "/about" (text :t.navigation/about) (= page-name "about"))]
+    (for [{:keys [id url translation-key translations]} (:extra-pages env)]
+      (nav-link url
+                (if translation-key (text translation-key) (translations context/*lang*))
+                (= page-name id)))]
    (language-switcher)])
 
 (defn- navbar
