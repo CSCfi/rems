@@ -191,6 +191,27 @@ SELECT wfId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(ap
 INSERT INTO public.workflow_actors (wfId, actorUserId, role, round, start, endt)
 SELECT wfId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(revUserId AS integer)), 'reviewer' AS ROLE, round, start, "end" FROM transfer.rms_workflow_reviewers;
 
+-- roles
+
+INSERT INTO public.roles (userId, role)
+SELECT DISTINCT userId, 'applicant' AS role
+FROM transfer.user_mapping
+WHERE userId IS NOT NULL;
+
+INSERT INTO public.roles (userId, role)
+SELECT userId, role
+FROM (SELECT DISTINCT (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(apprUserId AS integer)) AS userId,
+      'approver' AS role
+       FROM transfer.rms_workflow_approvers) approvers
+WHERE userId IS NOT NULL;
+
+INSERT INTO public.roles (userId, role)
+SELECT userId, role
+FROM (SELECT DISTINCT (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(revUserId AS integer)) AS userId,
+             'reviewer' AS role
+      FROM transfer.rms_workflow_reviewers) reviewers
+WHERE userId IS NOT NULL;
+
 -- applications
 
 INSERT INTO public.catalogue_item_application (id, start, endt, applicantUserId, modifierUserId, wfid)
