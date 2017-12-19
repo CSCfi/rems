@@ -1,10 +1,9 @@
-CREATE TABLE IF NOT EXISTS transfer.user_mapping (
+DROP TABLE IF EXISTS transfer.user_mapping;
+
+CREATE TABLE transfer.user_mapping (
 expandoId integer NOT NULL PRIMARY KEY,
 userId varchar(255),
 userAttrs jsonb);
-
-DELETE FROM transfer.user_mapping;
-DELETE FROM public.users CASCADE;
 
 INSERT INTO transfer.user_mapping(expandoId)
 SELECT DISTINCT er.classPK
@@ -30,6 +29,8 @@ FROM (SELECT er.classPK as expandoId, jsonb_object_agg(ec.name, ev.data_) AS use
       AND ev.data_ IS NOT NULL
       GROUP BY er.classPK) ed
 WHERE user_mapping.expandoId = ed.expandoId;
+
+DELETE FROM public.users CASCADE;
 
 INSERT INTO public.users (userId, userAttrs)
 SELECT userId, userAttrs
