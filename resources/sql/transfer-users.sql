@@ -34,4 +34,5 @@ WHERE user_mapping.expandoId = ed.expandoId;
 INSERT INTO public.users (userId, userAttrs)
 SELECT userId, userAttrs
 FROM transfer.user_mapping
-WHERE userId IS NOT NULL;
+WHERE userId IS NOT NULL
+ON CONFLICT DO NOTHING;
