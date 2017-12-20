@@ -23,7 +23,6 @@
     (with-redefs [rems.config/env {:entitlements-target
                                    (str (:uri server) "/entitlements")}]
       (callback)
-      (prn (stub/recorded-requests server))
       (for [r (stub/recorded-requests server)]
         (cheshire/parse-string (get-in r [:body "postData"]))))))
 
