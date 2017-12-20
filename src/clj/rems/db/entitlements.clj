@@ -21,6 +21,29 @@
       (doseq [e ents]
         (println (join "," [(:resid e) (:catappid e) (:userid e) (text/localize-time (:start e))]))))))
 
+(defn- post-entitlements [entitlements]
+  (when-let [target (get env :entitlements-target)]
+    (let [payload (for [e entitlements]
+                    {:application (:catappid e)
+                     :resource (:resid e)
+                     :user (:userid e)})
+          json-payload (cheshire/generate-string payload)]
+      (log/infof "Posting entitlements to %s:" target payload)
+      (let [response (try
+                       (http/post target
+                                  {:throw-exceptions false
+                                   :body json-payload
+                                   :content-type :json
+                                   :socket-timeout 2500
+                                   :conn-timeout 2500})
+                       (catch Exception e
+                         (log/error "POST failed" e)
+                         {:status "exception"}))
+            status (:status response)]
+        (when-not (= 200 status)
+          (log/warnf "Post failed: %s", response))
+        (db/log-entitlement-post! {:payload json-payload :status status})))))
+
 (defn add-entitlements-for
   "If the given application is approved, add an entitlement to the db
   and call the entitlement REST callback (if defined)."
@@ -28,17 +51,4 @@
   (when (= "approved" (:state application))
     (db/add-entitlement! {:application (:id application)
                           :user (:applicantuserid application)})
-    (when-let [target (get env :entitlements-target)]
-      (let [entitlements (db/get-entitlements {:application (:id application)})
-            payload (for [e entitlements]
-                      {:application (:catappid e)
-                       :resource (:resid e)
-                       :user (:userid e)})]
-        (log/infof "Posting entitlements to %s:" target payload)
-        (try
-          (http/post target
-                     {:body (cheshire/generate-string payload)
-                      :content-type :json
-                      :timeout 2500})
-          (catch Exception e
-            (log/error "POST failed" e)))))))
+    (post-entitlements (db/get-entitlements {:application (:id application)}))))
