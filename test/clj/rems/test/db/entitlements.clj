@@ -15,11 +15,14 @@
   [{"resource" "res1" "application" 11 "user" "user1"}
    {"resource" "res2" "application" 12 "user" "user2"}])
 
-(defn run-with-server [spec f]
-  (with-open [server (stub/start! {"/entitlements" spec})]
+(defn run-with-server
+  "Run callback with a mock entitlements http server set up.
+   Return sequence of data received by mock server."
+  [endpoint-spec callback]
+  (with-open [server (stub/start! {"/entitlements" endpoint-spec})]
     (with-redefs [rems.config/env {:entitlements-target
                                    (str (:uri server) "/entitlements")}]
-      (f)
+      (callback)
       (prn (stub/recorded-requests server))
       (for [r (stub/recorded-requests server)]
         (cheshire/parse-string (get-in r [:body "postData"]))))))
