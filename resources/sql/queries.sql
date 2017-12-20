@@ -182,23 +182,22 @@ SET (modifierUserId, value) = (:user, :value)
 
 -- :name save-license-approval! :!
 -- TODO: make this atomic
-INSERT INTO catalogue_item_application_licenses
-(catappid, licid, actoruserid, round, state)
+INSERT INTO application_license_approval_values
+(catappid,formmapid, licid, modifieruserid, state)
 SELECT
-:catappid, :licid, :actoruserid, :round, CAST(:state AS license_state)
+:catappid, NULL as formmapid, :licid, :actoruserid, CAST(:state AS license_status)
 WHERE NOT exists
-(SELECT id, catappid, licid, actoruserid
- FROM catalogue_item_application_licenses
- WHERE
- catappid = :catappid AND licid = :licid AND actoruserid = :actoruserid);
+(SELECT id, catappid, licid, modifieruserid
+FROM application_license_approval_values
+WHERE catappid = :catappid AND licid = :licid AND modifieruserid = :actoruserid);
 
 -- :name delete-license-approval! :!
-DELETE FROM catalogue_item_application_licenses
-WHERE catappid = :catappid AND licid = :licid AND actoruserid = :actoruserid
+DELETE FROM application_license_approval_values
+WHERE catappid = :catappid AND licid = :licid AND modifieruserid = :actoruserid
 
 -- :name get-application-license-approval :? :1
-SELECT state FROM catalogue_item_application_licenses
-WHERE catappid = :catappid AND licid = :licid AND actoruserid = :actoruserid
+SELECT state FROM application_license_approval_values
+WHERE catappid = :catappid AND licid = :licid AND modifieruserid = :actoruserid
 
 -- :name create-license! :insert
 INSERT INTO license
