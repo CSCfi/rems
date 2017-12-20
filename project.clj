@@ -22,6 +22,7 @@
                  [luminus-nrepl "0.1.4"]
                  [luminus/ring-ttl-session "0.3.2"]
                  [macroz/hiccup-find "0.6.1" :exclusions [org.clojure/tools.reader]]
+                 [markdown-clj "1.0.1"]
                  [metosin/compojure-api "1.1.11" :exclusions [cheshire
                                                               com.google.code.findbugs/jsr305]]
                  [mount "0.1.11"]

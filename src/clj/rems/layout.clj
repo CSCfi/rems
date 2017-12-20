@@ -1,6 +1,7 @@
 (ns rems.layout
   (:require [hiccup.element :refer [link-to]]
             [hiccup.page :refer [html5 include-css include-js]]
+            [rems.config :refer [env]]
             [rems.context :as context]
             [rems.guide :refer :all]
             [rems.language-switcher :refer [language-switcher]]
@@ -9,12 +10,19 @@
             [rems.util :refer [get-username]]
             [ring.util.http-response :as response]))
 
+(defn external-link []
+  [:i {:class "fa fa-external-link"}])
+
 (defn- url-dest
   [dest]
   (str context/*root-path* dest))
 
-(defn- nav-link [path title & [active?]]
-  (link-to {:class (str "nav-item nav-link" (if active? " active" ""))} (url-dest path) title))
+(defn- nav-link [path title & [active? external?]]
+  [:a {:class (str "nav-item nav-link" (if active? " active" ""))
+       :href (url-dest path)
+       :target (if external? "_blank" nil)}
+   title
+   (when external? (list " " (external-link)))])
 
 (defn user-switcher [user]
   (when user
@@ -37,7 +45,11 @@
        (when-roles #{:approver :reviewer}
          (nav-link "/actions" (text :t.navigation/actions) (= page-name "actions"))))
       (nav-link "/" (text :t.navigation/home) (= page-name "home")))
-    (nav-link "/about" (text :t.navigation/about) (= page-name "about"))]
+    (for [{:keys [id url translation-key translations external?]} (:extra-pages env)]
+      (nav-link url
+                (if translation-key (text translation-key) (translations context/*lang*))
+                (= page-name id)
+                external?))]
    (language-switcher)])
 
 (defn- navbar

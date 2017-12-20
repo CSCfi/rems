@@ -18,7 +18,7 @@
   (let [resid (:resid item)
         title (get-catalogue-item-title item)
         component (if (urn-catalogue-item? item)
-                    [:a.catalogue-item-link {:href resid :target :_blank} title]
+                    [:a.catalogue-item-link {:href resid :target :_blank} title " " (layout/external-link)]
                     title)]
     [:tr
      [:td {:data-th (text :t.catalogue/header)} component]
