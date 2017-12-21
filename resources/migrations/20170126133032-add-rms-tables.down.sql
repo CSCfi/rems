@@ -171,6 +171,6 @@ DROP TYPE IF EXISTS prefix_state;
 --;;
 DROP TYPE IF EXISTS license_type;
 --;;
-DROP TYPE IF EXISTS application_event_type;
+DROP TYPE IF EXISTS application_event_type CASCADE;
 --;;
 DROP TYPE IF EXISTS workflow_actor_role;
