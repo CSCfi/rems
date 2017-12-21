@@ -224,6 +224,14 @@ SELECT id, catId FROM transfer.rms_catalogue_item_application
 UNION
 SELECT catAppId, catId FROM transfer.rms_catalogue_item_application_catid_overflow;
 
+-- application text values
+-- TODO: better handling of duplicates
+INSERT INTO public.application_text_values (catAppId, formMapId, modifierUserId, value, start, endt)
+SELECT catAppId, formMapId, modifierUserId, value, start, "end"
+FROM transfer.rms_application_text_values
+ON CONFLICT (catAppId, formMapId)
+DO NOTHING;
+
 -- approved application licenses
 
 INSERT INTO public.catalogue_item_application_licenses (catAppId, licId, actorUserId, round, stalling, state, start, endt)
