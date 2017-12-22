@@ -13,7 +13,7 @@
                  [conman "0.7.4" :exclusions [org.clojure/tools.reader]]
                  [cprop "0.1.11"]
                  [garden "1.3.2"]
-                 [haka-buddy "0.2.1" :exclusions [cheshire]]
+                 [haka-buddy "0.2.2" :exclusions [cheshire]]
                  [hiccup "1.0.5"]
                  [hickory "0.7.1" :exclusions [org.clojure/tools.reader]]
                  [im.chit/hara.io.scheduler "2.5.10"]
