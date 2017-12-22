@@ -224,6 +224,14 @@ SELECT id, catId FROM transfer.rms_catalogue_item_application
 UNION
 SELECT catAppId, catId FROM transfer.rms_catalogue_item_application_catid_overflow;
 
+-- application text values
+-- TODO: better handling of duplicates
+INSERT INTO public.application_text_values (catAppId, formMapId, modifierUserId, value, start, endt)
+SELECT catAppId, formMapId, modifierUserId, value, start, "end"
+FROM transfer.rms_application_text_values
+ON CONFLICT (catAppId, formMapId)
+DO NOTHING;
+
 -- approved application licenses
 
 INSERT INTO public.catalogue_item_application_licenses (catAppId, licId, actorUserId, round, stalling, state, start, endt)
@@ -272,11 +280,6 @@ INSERT INTO transfer.migrated_application_event (appId, userId, round, event, ti
 SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifierUserId AS integer)), curround, 'apply' AS EVENT, start
 FROM transfer.rms_catalogue_item_application_state
 WHERE state = 'applied' AND curround >= 0;
-
-INSERT INTO transfer.migrated_application_event (appId, userId, round, event, time)
-SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifierUserId AS integer)), curround, 'reject' AS EVENT, start
-FROM transfer.rms_catalogue_item_application_state
-WHERE state = 'rejected' AND curround >= 0;
 
 INSERT INTO transfer.migrated_application_event (appId, userId, round, event, time)
 SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifierUserId AS integer)), curround, 'return' AS EVENT, start
