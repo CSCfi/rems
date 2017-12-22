@@ -264,7 +264,13 @@ FROM transfer.rms_catalogue_item_application_approvers
 WHERE state = 'closed' AND round >= 0;
 
 INSERT INTO transfer.migrated_application_event (appId, userId, round, event, comment, time)
-SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(revUserId AS integer)), round, 'review' AS EVENT, comment, start
+SELECT catAppId, (SELECT userid FROM transfer.user_mapping WHERE expandoId = CAST(revUserId AS integer)), round, 'review-request' AS EVENT, comment, start
+FROM transfer.rms_catalogue_item_application_reviewers
+WHERE state = 'created' AND round >= 0;
+
+-- TODO: handle separation of migrating normal and third party reviews
+INSERT INTO transfer.migrated_application_event (appId, userId, round, event, comment, time)
+SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(revUserId AS integer)), round, 'third-party-review' AS EVENT, comment, start
 FROM transfer.rms_catalogue_item_application_reviewers
 WHERE state = 'commented' AND round >= 0;
 
