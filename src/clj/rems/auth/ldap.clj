@@ -83,8 +83,3 @@
             (assoc (redirect "/landing_page")
                    :session (assoc session :identity (convert-ldap-user user)))
             (login-failed)))))
-
-(defn guide []
-  (list
-   (example "ldap login component"
-            (login-component))))

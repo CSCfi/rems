@@ -82,9 +82,6 @@
        (contains? (set (actors/get-by-role (:id application) (:curround application) role))
                   (get-user-id))))
 
-(defn- round-has-approvers? [application-id round]
-  (not-empty? (actors/get-by-role application-id round "approver")))
-
 (defn- is-actor? [application-id role]
   (contains? (set (actors/get-by-role application-id role))
              (get-user-id)))

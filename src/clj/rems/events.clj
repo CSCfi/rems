@@ -112,12 +112,6 @@
     (text :t.actions/return)]
    (approval-confirm-modal "return" (text :t.actions/return) app)))
 
-(defn- close-button [app]
-  (list
-   [:button#close.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
-    (text :t.actions/close)]
-   (approval-confirm-modal "close" (text :t.actions/close) app)))
-
 (defn back-to-actions-button []
   [:a#back-actions.btn.btn-secondary.pull-left {:href "/actions"} (text :t.form/back-actions)])
 
