@@ -1,7 +1,5 @@
 (ns rems.home
-  (:require [clojure.java.io :as io]
-            [clojure.string :as s]
-            [compojure.core :refer [GET defroutes]]
+  (:require [compojure.core :refer [GET defroutes]]
             [markdown.core :as md]
             [rems.auth.auth :as auth]
             [rems.auth.util :as auth-util]

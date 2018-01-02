@@ -3,6 +3,7 @@
             [compojure.core :refer [defroutes routes wrap-routes]]
             [compojure.route :as route]
             [mount.core :as mount]
+            [rems.actions :as actions]
             [rems.applications :as applications]
             [rems.auth.auth :as auth]
             [rems.cart :as cart]
@@ -18,8 +19,7 @@
             [rems.middleware :as middleware]
             [rems.routes.guide :refer [guide-routes]]
             [rems.routes.services :refer [service-routes]]
-            [rems.util :refer [never-match-route]]
-            [rems.actions :as actions]))
+            [rems.util :refer [never-match-route]]))
 
 (mount/defstate init-app
   :start ((or (:init +defaults+) identity))

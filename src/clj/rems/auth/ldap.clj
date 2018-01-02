@@ -4,7 +4,6 @@
             [compojure.core :refer [GET POST defroutes]]
             [rems.anti-forgery :refer [anti-forgery-field]]
             [rems.config :refer [env]]
-            [rems.guide :refer [example]]
             [rems.layout :as layout]
             [rems.text :refer [text]]
             [rems.util :refer [getx getx-in]]
