@@ -23,6 +23,7 @@
 
 ;; TODO cache application state in db instead of always computing it from events
 (declare get-application-state)
+(declare get-application-statex)
 
 (defn- not-empty? [args]
   ((complement empty?) args))
@@ -154,6 +155,14 @@
      (assoc (get-application-state (:id app))
             :catalogue-items (get-catalogue-items-by-application-id (:id app))))))
 
+(defn- get-applications-implx
+  "Like `get-applications-impl`, but implementation utilizes `get-application-statex` instead of `get-application-state`."
+  [query-params]
+  (doall
+    (for [app (db/get-applications query-params)]
+      (assoc (get-application-statex app)
+             :catalogue-items (get-catalogue-items-by-application-id (:id app))))))
+
 (defn get-my-applications []
   (filter
    #(not= (:state %) "closed") ; don't show deleted applications
@@ -162,10 +171,10 @@
 (defn get-approvals []
   (filterv
    (fn [app] (can-approve? app))
-   (get-applications-impl {})))
+   (get-applications-implx {})))
 
 (defn get-handled-approvals []
-  (->> (get-applications-impl {})
+  (->> (get-applications-implx {})
        (filterv (fn [app] (is-approver? (:id app))))
        (filterv handled?)
        (mapv (fn [app]
@@ -175,7 +184,7 @@
 
 ;; TODO: consider refactoring to finding the review events from the current user and mapping those to applications
 (defn get-handled-reviews []
-  (->> (get-applications-impl {})
+  (->> (get-applications-implx {})
        (filterv (fn [app] (or (is-reviewer? (:id app))
                               (is-third-party-reviewer? (get-user-id) app))))
        (filterv reviewed?)
@@ -520,6 +529,15 @@
         application (-> {:id application-id}
                         db/get-applications
                         first
+                        (assoc :state "draft" :curround 0) ;; reset state
+                        (assoc :events events))]
+    (apply-events application events)))
+
+(defn get-application-statex
+  "Like `get-application-state`, but takes as an application structure as a parameter instead of an application id."
+  [application]
+  (let [events (db/get-application-events {:application (:id application)})
+        application (-> application
                         (assoc :state "draft" :curround 0) ;; reset state
                         (assoc :events events))]
     (apply-events application events)))
