@@ -210,14 +210,17 @@
 
 ;; TODO: consider refactoring to finding the review events from the current user and mapping those to applications
 (defn get-handled-reviews []
-  (->> (get-applications-implx {})
-       (filterv (fn [app] (or (is-reviewer? (:id app))
-                              (is-third-party-reviewer? (get-user-id) app))))
-       (filterv reviewed?)
-       (mapv (fn [app]
-               (let [my-events (filter #(= (get-user-id) (:userid %))
-                                       (:events app))]
-                 (assoc app :handled (:time (last my-events))))))))
+  (let [actors (db/get-workflow-actors {:role "reviewer"})]
+    (->> (get-applications-implx {})
+         (filterv reviewed?)
+         (filterv (fn [app] (or (is-actor? (map :actoruserid
+                                                (filter #(= (:id app) (:id %))
+                                                        actors)))
+                                (is-third-party-reviewer? (get-user-id) app))))
+         (mapv (fn [app]
+                 (let [my-events (filter #(= (get-user-id) (:userid %))
+                                         (:events app))]
+                   (assoc app :handled (:time (last my-events)))))))))
 
 ;; TODO notify actors also during other events such as reject, return etc.
 (defn- check-for-unneeded-actions
@@ -243,7 +246,7 @@
   "Returns applications that are waiting for a normal or 3rd party review. Type of the review, with key :review and values :normal or :third-party,
   are added to each application's attributes"
   []
-  (->> (get-applications-impl {})
+  (->> (get-applications-implx {})
        (filterv
         (fn [app] (and (not (reviewed? app))
                        (or (can-review? app)
