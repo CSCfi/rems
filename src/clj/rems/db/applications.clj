@@ -174,7 +174,7 @@
             :catalogue-items (get-catalogue-items-by-application-id (:id app))))))
 
 (defn- get-applications-implx
-  "Like `get-applications-impl`, but implementation utilizes `get-application-statex` instead of `get-application-state`."
+  "Like `get-applications-impl`, but implementation utilizes `get-application-statex` instead of `get-application-state` and prefetches all data from the database."
   [query-params]
   (let [events (db/get-events)
         application-items (db/get-application-items)
@@ -563,7 +563,7 @@
     (apply-events application events)))
 
 (defn get-application-statex
-  "Like `get-application-state`, but takes as an application structure as a parameter instead of an application id."
+  "Like `get-application-state`, but takes an application structure and application events as parameters to avoid database calls."
   [application events]
   (let [application (-> application
                         (assoc :state "draft" :curround 0) ;; reset state
