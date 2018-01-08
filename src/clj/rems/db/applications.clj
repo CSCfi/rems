@@ -4,7 +4,8 @@
                                  union]]
             [rems.auth.util :refer [throw-unauthorized]]
             [rems.context :as context]
-            [rems.db.catalogue :refer [get-localized-catalogue-item]]
+            [rems.db.catalogue :refer [get-localized-catalogue-item
+                                       get-localized-catalogue-items]]
             [rems.db.core :as db]
             [rems.db.entitlements :as entitlements]
             [rems.db.roles :as roles]
@@ -86,9 +87,12 @@
 (defn- round-has-approvers? [application-id round]
   (not-empty? (actors/get-by-role application-id round "approver")))
 
-(defn- is-actor? [application-id role]
-  (contains? (set (actors/get-by-role application-id role))
-             (get-user-id)))
+(defn- is-actor?
+  ([actors]
+   (contains? (set actors)
+              (get-user-id)))
+  ([application-id role]
+   (is-actor? (actors/get-by-role application-id role))))
 
 (defn- can-approve? [application]
   (can-act-as? application "approver"))
@@ -135,19 +139,33 @@
         (is-reviewer? application-id)
         (is-third-party-reviewer? application))))
 
-(defn translate-catalogue-item [item-id]
-  (let [item (get-localized-catalogue-item item-id)]
-    (merge item
-           (get-in item [:localizations context/*lang*]))))
+(defn translate-catalogue-item
+  ([item-id]
+   (let [item (get-localized-catalogue-item item-id)]
+     (merge item
+            (get-in item [:localizations context/*lang*]))))
+  ([localized-items item-id]
+   (let [item (into {} (filter #(= item-id (:id %)) localized-items))]
+     (merge item
+            (get-in item [:localizations context/*lang*])))))
 
-(defn- get-catalogue-items [ids]
-  (mapv (comp translate-catalogue-item :id)
-        (db/get-catalogue-items {:items ids})))
+(defn- get-catalogue-items
+  ([ids]
+   (mapv (comp translate-catalogue-item :id)
+         (db/get-catalogue-items {:items ids})))
+  ([catalogue-items localized-items]
+   (mapv (comp (partial translate-catalogue-item localized-items) :id)
+         catalogue-items)))
 
-(defn- get-catalogue-items-by-application-id [app-id]
-  (let [items (db/get-application-items {:application app-id})]
-    (when (seq items) (get-catalogue-items (mapv :item items)))
-    ))
+(defn- get-catalogue-items-by-application-id
+  ([app-id]
+   (get-catalogue-items (mapv :item (db/get-application-items {:application app-id}))))
+  ([application-items catalogue-items localized-items]
+   (when (seq application-items)
+     (let [ids (mapv :item application-items)]
+       (get-catalogue-items (filter #(some (fn [id] (= (:id %) id)) ids)
+                                    catalogue-items)
+                            localized-items)))))
 
 (defn- get-applications-impl [query-params]
   (doall
@@ -158,10 +176,15 @@
 (defn- get-applications-implx
   "Like `get-applications-impl`, but implementation utilizes `get-application-statex` instead of `get-application-state`."
   [query-params]
-  (doall
-    (for [app (db/get-applications query-params)]
-      (assoc (get-application-statex app)
-             :catalogue-items (get-catalogue-items-by-application-id (:id app))))))
+  (let [events (db/get-events)
+        application-items (db/get-application-items)
+        catalogue-items (db/get-catalogue-items)
+        localized-items (get-localized-catalogue-items)]
+    (doall
+      (for [app (db/get-applications query-params)]
+        (assoc
+          (get-application-statex app (filter #(= (:id app) (:appid %)) events))
+          :catalogue-items (get-catalogue-items-by-application-id (filter #(= (:id app) (:application %)) application-items) catalogue-items localized-items))))))
 
 (defn get-my-applications []
   (filter
@@ -170,17 +193,20 @@
 
 (defn get-approvals []
   (filterv
-   (fn [app] (can-approve? app))
+   can-approve?
    (get-applications-implx {})))
 
 (defn get-handled-approvals []
-  (->> (get-applications-implx {})
-       (filterv (fn [app] (is-approver? (:id app))))
-       (filterv handled?)
-       (mapv (fn [app]
-               (let [my-events (filter #(= (get-user-id) (:userid %))
-                                       (:events app))]
-                 (assoc app :handled (:time (last my-events))))))))
+  (let [actors (db/get-workflow-actors {:role "approver"})]
+    (->> (get-applications-implx {})
+         (filterv handled?)
+         (filterv (fn [app] (is-actor? (map :actoruserid
+                                            (filter #(= (:id app) (:id %))
+                                                    actors)))))
+         (mapv (fn [app]
+                 (let [my-events (filter #(= (get-user-id) (:userid %))
+                                         (:events app))]
+                   (assoc app :handled (:time (last my-events)))))))))
 
 ;; TODO: consider refactoring to finding the review events from the current user and mapping those to applications
 (defn get-handled-reviews []
@@ -535,9 +561,8 @@
 
 (defn get-application-statex
   "Like `get-application-state`, but takes as an application structure as a parameter instead of an application id."
-  [application]
-  (let [events (db/get-application-events {:application (:id application)})
-        application (-> application
+  [application events]
+  (let [application (-> application
                         (assoc :state "draft" :curround 0) ;; reset state
                         (assoc :events events))]
     (apply-events application events)))
