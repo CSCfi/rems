@@ -250,11 +250,10 @@ LEFT OUTER JOIN workflow wf on wf.id = wfa.wfid
 LEFT OUTER JOIN catalogue_item_application app ON app.wfid = wf.id
 WHERE 1=1
 /*~ (when (:application params) */
-AND app.id = :application
+  AND app.id = :application
 /*~ ) ~*/
 /*~ (when (:wfid params) */
-FROM workflow_actors wfa
-WHERE wfa.wfid = :wfid
+  AND wfa.wfid = :wfid
 /*~ ) ~*/
 /*~ (when (:round params) */
   AND wfa.round = :round
@@ -346,7 +345,8 @@ FROM application_event
 WHERE appId = :application
 ORDER BY id ASC
 
--- :name get-events :? :*
+-- TODO: consider refactoring this into get-application-events
+-- :name get-all-application-events :? :*
 SELECT
   appId, userId, round, event, comment, time
 FROM application_event

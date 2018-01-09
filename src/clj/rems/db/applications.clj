@@ -175,7 +175,7 @@
 (defn- get-applications-implx
   "Like `get-applications-impl`, but implementation prefetches all data from the database."
   [query-params]
-  (let [events (db/get-events)
+  (let [events (db/get-all-application-events)
         application-items (db/get-application-items)
         catalogue-items (db/get-catalogue-items)
         localized-items (get-localized-catalogue-items)]
