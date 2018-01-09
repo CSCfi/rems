@@ -172,7 +172,7 @@
      (assoc (get-application-state (:id app))
             :catalogue-items (get-catalogue-items-by-application-id (:id app))))))
 
-(defn- get-applications-implx
+(defn- get-applications-impl-batch
   "Like `get-applications-impl`, but implementation prefetches all data from the database."
   [query-params]
   (let [events (db/get-all-application-events)
@@ -193,11 +193,11 @@
 (defn get-approvals []
   (filterv
    can-approve?
-   (get-applications-implx {})))
+   (get-applications-impl-batch {})))
 
 (defn get-handled-approvals []
   (let [actors (db/get-workflow-actors {:role "approver"})]
-    (->> (get-applications-implx {})
+    (->> (get-applications-impl-batch {})
          (filterv handled?)
          (filterv (fn [app] (is-actor? (map :actoruserid
                                             (filter #(= (:id app) (:id %))
@@ -210,7 +210,7 @@
 ;; TODO: consider refactoring to finding the review events from the current user and mapping those to applications
 (defn get-handled-reviews []
   (let [actors (db/get-workflow-actors {:role "reviewer"})]
-    (->> (get-applications-implx {})
+    (->> (get-applications-impl-batch {})
          (filterv reviewed?)
          (filterv (fn [app] (or (is-actor? (map :actoruserid
                                                 (filter #(= (:id app) (:id %))
@@ -245,7 +245,7 @@
   "Returns applications that are waiting for a normal or 3rd party review. Type of the review, with key :review and values :normal or :third-party,
   are added to each application's attributes"
   []
-  (->> (get-applications-implx {})
+  (->> (get-applications-impl-batch {})
        (filterv
         (fn [app] (and (not (reviewed? app))
                        (or (can-review? app)
