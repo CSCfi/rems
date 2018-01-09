@@ -86,24 +86,24 @@
 (defn- round-has-approvers? [application-id round]
   (not-empty? (actors/get-by-role application-id round "approver")))
 
-(defn- is-actor?
-  ([actors]
-   (contains? (set actors)
-              (get-user-id)))
-  ([application-id role]
-   (is-actor? (actors/get-by-role application-id role))))
+(defn- is-actor? [actors]
+  (contains? (set actors)
+             (get-user-id)))
+
+(defn- has-actor-role? [application-id role]
+  (is-actor? (actors/get-by-role application-id role)))
 
 (defn- can-approve? [application]
   (can-act-as? application "approver"))
 
 (defn- is-approver? [application-id]
-  (is-actor? application-id "approver"))
+  (has-actor-role? application-id "approver"))
 
 (defn- can-review? [application]
   (can-act-as? application "reviewer"))
 
 (defn- is-reviewer? [application-id]
-  (is-actor? application-id "reviewer"))
+  (has-actor-role? application-id "reviewer"))
 
 (defn- is-third-party-reviewer?
   "Checks if a given user has been requested to review the given application. If no user is provided, the function checks review requests for the current user.
