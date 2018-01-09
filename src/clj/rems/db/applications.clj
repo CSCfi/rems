@@ -24,7 +24,6 @@
 
 ;; TODO cache application state in db instead of always computing it from events
 (declare get-application-state)
-(declare get-application-statex)
 
 (defn- not-empty? [args]
   ((complement empty?) args))
@@ -174,7 +173,7 @@
             :catalogue-items (get-catalogue-items-by-application-id (:id app))))))
 
 (defn- get-applications-implx
-  "Like `get-applications-impl`, but implementation utilizes `get-application-statex` instead of `get-application-state` and prefetches all data from the database."
+  "Like `get-applications-impl`, but implementation prefetches all data from the database."
   [query-params]
   (let [events (db/get-events)
         application-items (db/get-application-items)
@@ -183,7 +182,7 @@
     (doall
       (for [app (db/get-applications query-params)]
         (assoc
-          (get-application-statex app (filter #(= (:id app) (:appid %)) events))
+          (get-application-state app (filter #(= (:id app) (:appid %)) events))
           :catalogue-items (get-catalogue-items-by-application-id (filter #(= (:id app) (:application %)) application-items) catalogue-items localized-items))))))
 
 (defn get-my-applications []
@@ -553,22 +552,15 @@
 
 ;;; Public event api
 
-(defn get-application-state [application-id]
-  (let [events (db/get-application-events {:application application-id})
-        application (-> {:id application-id}
-                        db/get-applications
-                        first
-                        (assoc :state "draft" :curround 0) ;; reset state
-                        (assoc :events events))]
-    (apply-events application events)))
-
-(defn get-application-statex
-  "Like `get-application-state`, but takes an application structure and application events as parameters to avoid database calls."
-  [application events]
-  (let [application (-> application
-                        (assoc :state "draft" :curround 0) ;; reset state
-                        (assoc :events events))]
-    (apply-events application events)))
+(defn get-application-state
+  ([application-id]
+   (get-application-state (first (db/get-applications {:id application-id}))
+                          (db/get-application-events {:application application-id})))
+  ([application events]
+   (let [application (-> application
+                         (assoc :state "draft" :curround 0) ;; reset state
+                         (assoc :events events))]
+     (apply-events application events))))
 
 (declare handle-state-change)
 
