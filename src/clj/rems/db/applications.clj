@@ -4,7 +4,8 @@
                                  union]]
             [rems.auth.util :refer [throw-unauthorized]]
             [rems.context :as context]
-            [rems.db.catalogue :refer [get-localized-catalogue-item]]
+            [rems.db.catalogue :refer [get-localized-catalogue-item
+                                       get-localized-catalogue-items]]
             [rems.db.core :as db]
             [rems.db.entitlements :as entitlements]
             [rems.db.roles :as roles]
@@ -85,21 +86,24 @@
 (defn- round-has-approvers? [application-id round]
   (not-empty? (actors/get-by-role application-id round "approver")))
 
-(defn- is-actor? [application-id role]
-  (contains? (set (actors/get-by-role application-id role))
+(defn- is-actor? [actors]
+  (contains? (set actors)
              (get-user-id)))
+
+(defn- has-actor-role? [application-id role]
+  (is-actor? (actors/get-by-role application-id role)))
 
 (defn- can-approve? [application]
   (can-act-as? application "approver"))
 
 (defn- is-approver? [application-id]
-  (is-actor? application-id "approver"))
+  (has-actor-role? application-id "approver"))
 
 (defn- can-review? [application]
   (can-act-as? application "reviewer"))
 
 (defn- is-reviewer? [application-id]
-  (is-actor? application-id "reviewer"))
+  (has-actor-role? application-id "reviewer"))
 
 (defn- is-third-party-reviewer?
   "Checks if a given user has been requested to review the given application. If no user is provided, the function checks review requests for the current user.
@@ -134,55 +138,79 @@
         (is-reviewer? application-id)
         (is-third-party-reviewer? application))))
 
-(defn translate-catalogue-item [item-id]
-  (let [item (get-localized-catalogue-item item-id)]
-    (merge item
-           (get-in item [:localizations context/*lang*]))))
+(defn- translate-catalogue-item [item]
+  (merge item
+         (get-in item [:localizations context/*lang*])))
 
-(defn- get-catalogue-items [ids]
-  (mapv (comp translate-catalogue-item :id)
-        (db/get-catalogue-items {:items ids})))
+(defn- get-catalogue-items
+  "Function that returns localized catalogue-items for the given application items, `ids`. Prefetched localized catalogue items, `localized-items`,
+  can be given as a parameter to avoid excessive database calls."
+  ([ids]
+   (mapv translate-catalogue-item
+         (get-localized-catalogue-items {:items ids})))
+  ([ids localized-items]
+   (mapv translate-catalogue-item
+         (filter #(some #{(:id %)} ids)
+                 localized-items))))
 
-(defn- get-catalogue-items-by-application-id [app-id]
-  (let [items (db/get-application-items {:application app-id})]
-    (when (seq items) (get-catalogue-items (mapv :item items)))
-    ))
+(defn- get-catalogue-items-by-application-id
+  "Given an `app-id`, the function queries for all the items related to that application and calls `get-catalogue-items` to return all the catalogue items
+  for the application with localizations."
+  [app-id]
+  (get-catalogue-items (mapv :item (db/get-application-items {:application app-id}))))
 
-(defn- get-applications-impl [query-params]
-  (doall
-   (for [app (db/get-applications query-params)]
-     (assoc (get-application-state (:id app))
-            :catalogue-items (get-catalogue-items-by-application-id (:id app))))))
+(defn- get-catalogue-items-by-application-items
+  "Given `application-items` and `localized-items`, catalogue items with localizations, the function `get-catalogue-items` to map all the application items
+  to the catalogue items with localizations."
+  [application-items localized-items]
+  (when (seq application-items)
+    (get-catalogue-items (mapv :item application-items)
+                         localized-items)))
+
+(defn- get-applications-impl-batch
+  "Prefetches all possibly relevant data from the database and returns all the applications, according to the query parameters, with all the events
+  and catalogue items associated with them."
+  [query-params]
+  (let [events (db/get-all-application-events)
+        application-items (db/get-application-items)
+        localized-items (get-localized-catalogue-items)]
+    (doall
+      (for [app (db/get-applications query-params)]
+        (assoc
+          (get-application-state app (filter #(= (:id app) (:appid %)) events))
+          :catalogue-items (get-catalogue-items-by-application-items (filter #(= (:id app) (:application %)) application-items) localized-items))))))
 
 (defn get-my-applications []
   (filter
    #(not= (:state %) "closed") ; don't show deleted applications
-   (get-applications-impl {:applicant (get-user-id)})))
+   (get-applications-impl-batch {:applicant (get-user-id)})))
 
 (defn get-approvals []
   (filterv
-   (fn [app] (can-approve? app))
-   (get-applications-impl {})))
+   can-approve?
+   (get-applications-impl-batch {})))
 
 (defn get-handled-approvals []
-  (->> (get-applications-impl {})
-       (filterv (fn [app] (is-approver? (:id app))))
-       (filterv handled?)
-       (mapv (fn [app]
-               (let [my-events (filter #(= (get-user-id) (:userid %))
-                                       (:events app))]
-                 (assoc app :handled (:time (last my-events))))))))
+  (let [actors (db/get-workflow-actors {:role "approver"})]
+    (->> (get-applications-impl-batch {})
+         (filterv handled?)
+         (filterv (fn [app] (is-actor? (actors/filter-by-application-id actors (:id app)))))
+         (mapv (fn [app]
+                 (let [my-events (filter #(= (get-user-id) (:userid %))
+                                         (:events app))]
+                   (assoc app :handled (:time (last my-events)))))))))
 
 ;; TODO: consider refactoring to finding the review events from the current user and mapping those to applications
 (defn get-handled-reviews []
-  (->> (get-applications-impl {})
-       (filterv (fn [app] (or (is-reviewer? (:id app))
-                              (is-third-party-reviewer? (get-user-id) app))))
-       (filterv reviewed?)
-       (mapv (fn [app]
-               (let [my-events (filter #(= (get-user-id) (:userid %))
-                                       (:events app))]
-                 (assoc app :handled (:time (last my-events))))))))
+  (let [actors (db/get-workflow-actors {:role "reviewer"})]
+    (->> (get-applications-impl-batch {})
+         (filterv reviewed?)
+         (filterv (fn [app] (or (is-actor? (actors/filter-by-application-id actors (:id app)))
+                                (is-third-party-reviewer? (get-user-id) app))))
+         (mapv (fn [app]
+                 (let [my-events (filter #(= (get-user-id) (:userid %))
+                                         (:events app))]
+                   (assoc app :handled (:time (last my-events)))))))))
 
 ;; TODO notify actors also during other events such as reject, return etc.
 (defn- check-for-unneeded-actions
@@ -208,7 +236,7 @@
   "Returns applications that are waiting for a normal or 3rd party review. Type of the review, with key :review and values :normal or :third-party,
   are added to each application's attributes"
   []
-  (->> (get-applications-impl {})
+  (->> (get-applications-impl-batch {})
        (filterv
         (fn [app] (and (not (reviewed? app))
                        (or (can-review? app)
@@ -515,14 +543,15 @@
 
 ;;; Public event api
 
-(defn get-application-state [application-id]
-  (let [events (db/get-application-events {:application application-id})
-        application (-> {:id application-id}
-                        db/get-applications
-                        first
-                        (assoc :state "draft" :curround 0) ;; reset state
-                        (assoc :events events))]
-    (apply-events application events)))
+(defn get-application-state
+  ([application-id]
+   (get-application-state (first (db/get-applications {:id application-id}))
+                          (db/get-application-events {:application application-id})))
+  ([application events]
+   (let [application (-> application
+                         (assoc :state "draft" :curround 0) ;; reset state
+                         (assoc :events events))]
+     (apply-events application events))))
 
 (declare handle-state-change)
 

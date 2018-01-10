@@ -26,8 +26,11 @@
   [item]
   (assoc item :localizations ((cached :localizations) (:id item))))
 
-(defn get-localized-catalogue-items []
-  (map localize-catalogue-item (db/get-catalogue-items)))
+(defn get-localized-catalogue-items
+  ([]
+   (get-localized-catalogue-items {}))
+  ([query-params]
+   (map localize-catalogue-item (db/get-catalogue-items query-params))))
 
 (defn get-localized-catalogue-item [id]
   (localize-catalogue-item (db/get-catalogue-item {:item id})))
