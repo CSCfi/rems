@@ -19,3 +19,8 @@
    (map :actoruserid (db/get-workflow-actors {:application application-id :role role})))
   ([application-id round role]
    (map :actoruserid (db/get-workflow-actors {:application application-id :round round :role role}))))
+
+(defn filter-by-application-id
+  "Given `actors`, a sequence of maps containing information for workflow actors, returns every :actoruserid for the current application."
+  [actors app-id]
+  (map :actoruserid (filter #(= app-id (:id %)) actors)))

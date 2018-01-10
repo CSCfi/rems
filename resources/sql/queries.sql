@@ -147,8 +147,9 @@ SELECT
   catItemId AS item
 FROM catalogue_item_application_items ciai
 WHERE 1=1
+/*~ (when (:application params) */
   AND ciai.catAppId = :application
-
+/*~ ) ~*/
 
 -- :name add-entitlement! :!
 -- TODO remove resId from this table to make it normalized?
@@ -239,19 +240,20 @@ VALUES
 -- :name get-workflow-actors :? :*
 SELECT
   wfa.actoruserid,
-  wfa.role
+  wfa.role,
+  app.id
 /*~ (when (:wfid params) */
 , wfa.round
 /*~ ) ~*/
 FROM workflow_actors wfa
-/*~ (when (:application params) */
 LEFT OUTER JOIN workflow wf on wf.id = wfa.wfid
 LEFT OUTER JOIN catalogue_item_application app ON app.wfid = wf.id
-WHERE app.id = :application
+WHERE 1=1
+/*~ (when (:application params) */
+  AND app.id = :application
 /*~ ) ~*/
 /*~ (when (:wfid params) */
-FROM workflow_actors wfa
-WHERE wfa.wfid = :wfid
+  AND wfa.wfid = :wfid
 /*~ ) ~*/
 /*~ (when (:round params) */
   AND wfa.round = :round
@@ -341,6 +343,13 @@ SELECT
   userId, round, event, comment, time
 FROM application_event
 WHERE appId = :application
+ORDER BY id ASC
+
+-- TODO: consider refactoring this into get-application-events
+-- :name get-all-application-events :? :*
+SELECT
+  appId, userId, round, event, comment, time
+FROM application_event
 ORDER BY id ASC
 
 -- :name add-application-event! :insert
