@@ -13,6 +13,7 @@ CREATE TABLE transfer.migrated_application_event (
 );
 
 -- data created by the app that might reference data we want to clear
+DELETE FROM public.application_license_approval_values CASCADE;
 DELETE FROM public.entitlement CASCADE;
 DELETE FROM public.application_text_values CASCADE;
 DELETE FROM public.catalogue_item_application_licenses CASCADE;
