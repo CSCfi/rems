@@ -226,10 +226,14 @@ UNION
 SELECT catAppId, catId FROM transfer.rms_catalogue_item_application_catid_overflow;
 
 -- application text values
+-- we need to get the (formMetaId, itemOrder) pair for each item and use this to look up the form_item_map id
 -- TODO: better handling of duplicates
 INSERT INTO public.application_text_values (catAppId, formMapId, modifierUserId, value, start, endt)
-SELECT catAppId, formMapId, modifierUserId, value, start, "end"
-FROM transfer.rms_application_text_values
+SELECT vals.catAppId, newitemmap.id, vals.modifierUserId, vals.value, vals.start, vals.end
+FROM transfer.rms_application_text_values vals
+LEFT JOIN transfer.rms_application_form_item_map olditemmap ON olditemmap.id = vals.formMapId
+LEFT JOIN transfer.rms_application_form_meta_map metamap ON metamap.formId = olditemmap.formId
+LEFT JOIN public.application_form_item_map newitemmap ON newitemmap.formId = metamap.id AND newitemmap.itemOrder = olditemmap.itemOrder
 ON CONFLICT (catAppId, formMapId)
 DO NOTHING;
 
