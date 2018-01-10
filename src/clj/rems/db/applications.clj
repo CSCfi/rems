@@ -167,14 +167,9 @@
     (get-catalogue-items (mapv :item application-items)
                          localized-items)))
 
-(defn- get-applications-impl [query-params]
-  (doall
-   (for [app (db/get-applications query-params)]
-     (assoc (get-application-state (:id app))
-            :catalogue-items (get-catalogue-items-by-application-id (:id app))))))
-
 (defn- get-applications-impl-batch
-  "Like `get-applications-impl`, but implementation prefetches all data from the database."
+  "Prefetches all possibly relevant data from the database and returns all the applications, according to the query parameters, with all the events
+  and catalogue items associated with them."
   [query-params]
   (let [events (db/get-all-application-events)
         application-items (db/get-application-items)
@@ -188,7 +183,7 @@
 (defn get-my-applications []
   (filter
    #(not= (:state %) "closed") ; don't show deleted applications
-   (get-applications-impl {:applicant (get-user-id)})))
+   (get-applications-impl-batch {:applicant (get-user-id)})))
 
 (defn get-approvals []
   (filterv
