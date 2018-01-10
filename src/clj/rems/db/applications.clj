@@ -138,33 +138,30 @@
         (is-reviewer? application-id)
         (is-third-party-reviewer? application))))
 
-(defn translate-catalogue-item
-  ([item-id]
-   (let [item (get-localized-catalogue-item item-id)]
-     (merge item
-            (get-in item [:localizations context/*lang*]))))
-  ([localized-items item-id]
-   (let [item (into {} (filter #(= item-id (:id %)) localized-items))]
-     (merge item
-            (get-in item [:localizations context/*lang*])))))
+(defn- translate-catalogue-item [item]
+  (merge item
+         (get-in item [:localizations context/*lang*])))
 
 (defn- get-catalogue-items
+  "Function that returns localized catalogue-items for the given application items, `ids`. Prefetched localized catalogue items, `localized-items`,
+  can be given as a parameter to avoid excessive database calls."
   ([ids]
-   (mapv (comp translate-catalogue-item :id)
-         (db/get-catalogue-items {:items ids})))
-  ([catalogue-items localized-items]
-   (mapv (comp (partial translate-catalogue-item localized-items) :id)
-         catalogue-items)))
+   (mapv translate-catalogue-item
+         (get-localized-catalogue-items {:items ids})))
+  ([ids localized-items]
+   (mapv translate-catalogue-item
+         (filter #(some #{(:id %)} ids)
+                 localized-items))))
 
 (defn- get-catalogue-items-by-application-id
+  "Given an `app-id`, the function queries for all the items related to that application and calls `get-catalogue-items` to return all the catalogue items
+  for the application with localizations. Alternatively, can be given the application-items and localized catalogue-items as parameter to avoid excessive database calls."
   ([app-id]
    (get-catalogue-items (mapv :item (db/get-application-items {:application app-id}))))
-  ([application-items catalogue-items localized-items]
+  ([application-items localized-items]
    (when (seq application-items)
-     (let [ids (mapv :item application-items)]
-       (get-catalogue-items (filter #(some (fn [id] (= (:id %) id)) ids)
-                                    catalogue-items)
-                            localized-items)))))
+     (get-catalogue-items (mapv :item application-items)
+                          localized-items))))
 
 (defn- get-applications-impl [query-params]
   (doall
@@ -177,13 +174,12 @@
   [query-params]
   (let [events (db/get-all-application-events)
         application-items (db/get-application-items)
-        catalogue-items (db/get-catalogue-items)
         localized-items (get-localized-catalogue-items)]
     (doall
       (for [app (db/get-applications query-params)]
         (assoc
           (get-application-state app (filter #(= (:id app) (:appid %)) events))
-          :catalogue-items (get-catalogue-items-by-application-id (filter #(= (:id app) (:application %)) application-items) catalogue-items localized-items))))))
+          :catalogue-items (get-catalogue-items-by-application-id (filter #(= (:id app) (:application %)) application-items) localized-items))))))
 
 (defn get-my-applications []
   (filter
@@ -199,9 +195,7 @@
   (let [actors (db/get-workflow-actors {:role "approver"})]
     (->> (get-applications-impl-batch {})
          (filterv handled?)
-         (filterv (fn [app] (is-actor? (map :actoruserid
-                                            (filter #(= (:id app) (:id %))
-                                                    actors)))))
+         (filterv (fn [app] (is-actor? (actors/filter-by-application-id actors (:id app)))))
          (mapv (fn [app]
                  (let [my-events (filter #(= (get-user-id) (:userid %))
                                          (:events app))]
@@ -212,9 +206,7 @@
   (let [actors (db/get-workflow-actors {:role "reviewer"})]
     (->> (get-applications-impl-batch {})
          (filterv reviewed?)
-         (filterv (fn [app] (or (is-actor? (map :actoruserid
-                                                (filter #(= (:id app) (:id %))
-                                                        actors)))
+         (filterv (fn [app] (or (is-actor? (actors/filter-by-application-id actors (:id app)))
                                 (is-third-party-reviewer? (get-user-id) app))))
          (mapv (fn [app]
                  (let [my-events (filter #(= (get-user-id) (:userid %))
