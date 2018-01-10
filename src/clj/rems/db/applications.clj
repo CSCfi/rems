@@ -155,13 +155,17 @@
 
 (defn- get-catalogue-items-by-application-id
   "Given an `app-id`, the function queries for all the items related to that application and calls `get-catalogue-items` to return all the catalogue items
-  for the application with localizations. Alternatively, can be given the application-items and localized catalogue-items as parameter to avoid excessive database calls."
-  ([app-id]
-   (get-catalogue-items (mapv :item (db/get-application-items {:application app-id}))))
-  ([application-items localized-items]
-   (when (seq application-items)
-     (get-catalogue-items (mapv :item application-items)
-                          localized-items))))
+  for the application with localizations."
+  [app-id]
+  (get-catalogue-items (mapv :item (db/get-application-items {:application app-id}))))
+
+(defn- get-catalogue-items-by-application-items
+  "Given `application-items` and `localized-items`, catalogue items with localizations, the function `get-catalogue-items` to map all the application items
+  to the catalogue items with localizations."
+  [application-items localized-items]
+  (when (seq application-items)
+    (get-catalogue-items (mapv :item application-items)
+                         localized-items)))
 
 (defn- get-applications-impl [query-params]
   (doall
@@ -179,7 +183,7 @@
       (for [app (db/get-applications query-params)]
         (assoc
           (get-application-state app (filter #(= (:id app) (:appid %)) events))
-          :catalogue-items (get-catalogue-items-by-application-id (filter #(= (:id app) (:application %)) application-items) localized-items))))))
+          :catalogue-items (get-catalogue-items-by-application-items (filter #(= (:id app) (:application %)) application-items) localized-items))))))
 
 (defn get-my-applications []
   (filter
