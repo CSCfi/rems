@@ -10,20 +10,19 @@ cache:
     - $HOME/.cache/pip
 jdk:
   - oraclejdk8
-addons:
-  postgresql: "9.5"
+sudo: required
 services:
-  - postgresql
-install:
-  - sudo pip install ansible
+  - docker
 before_script:
-  - psql -U postgres < resources/sql/init.sql
+  - sudo service postgresql stop # why is this running even though we didn't ask for it?
+  - ./dev_db.sh
 script:
   # verify that we can run unit tests without the database:
   - DATABASE_URL=invalid lein test
   # run all tests with coverage tracking:
   - lein with-profile test cloverage
   - lein uberwar
+  - ./dev_transfer.sh transfer-test-data/demo_liferay_20180115.sql transfer-test-data/demo_rems_20180115.sql && lein run validate
 after_success:
   - ./.travis-deploy.sh
 notifications:
