@@ -10,7 +10,8 @@
             [rems.config :refer [env]]
             [rems.db.test-data :as test-data]
             [rems.handler :as handler]
-            [rems.tasks :as tasks])
+            [rems.tasks :as tasks]
+            [rems.validate :as validate])
   (:gen-class))
 
 (def cli-options
@@ -79,5 +80,10 @@
     (do
       (mount/start #'rems.config/env #'rems.env/*db*)
       (test-data/create-demo-data!))
+    (= "validate" (first args))
+    (do
+      (mount/start #'rems.config/env #'rems.env/*db*)
+      (when-not (validate/validate)
+        (System/exit 2)))
     :else
     (apply start-app args)))
