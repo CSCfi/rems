@@ -42,7 +42,7 @@
 (defn approval-confirm-modal [name-field action-title app]
   (confirm-modal name-field action-title app (if (has-roles? :approver) (text :t.form/add-comments) (text :t.form/add-comments-applicant))))
 
-(defn review-confirm-modal [name-field action-title app]
+(defn- review-confirm-modal [name-field action-title app]
   (confirm-modal name-field action-title app (if (has-roles? :reviewer) (text :t.form/add-comments) (text :t.form/add-comments-applicant))))
 
 (defn- reviewer-selection [user-attrs]
@@ -51,7 +51,7 @@
     (when (and username mail)
       [:option {:value (get-user-id user-attrs)} (str username (hiccup/h " <") mail (hiccup/h ">"))])))
 
-(defn review-request-modal [app]
+(defn- review-request-modal [app]
   [:div.modal.fade {:id "review-request-modal" :tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
    [:div.modal-dialog {:role "document"}
     [:div.modal-content
