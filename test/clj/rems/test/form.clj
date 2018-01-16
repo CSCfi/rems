@@ -419,7 +419,8 @@
             (testing "on a draft"
               (is (= #{"save" "back-catalogue" "submit"} (get-actions draft-data))))
             (testing "on an applied form"
-              (is (= #{"withdraw" "back-catalogue"} (get-actions applied-data))))
+              (is (= #{"withdraw" "close" "back-catalogue"}
+                     (get-actions (assoc-in applied-data [:application :can-close?] true)))))
             (testing "on an approved form"
               (is (= #{"back-catalogue"} (get-actions approved-data))))))
         (binding [context/*user* {"eppn" "bob"}

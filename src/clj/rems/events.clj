@@ -137,6 +137,16 @@
    (review-request-button app)
    (approve-button app)])
 
+(defn close-form [app]
+  [:div.commands
+   (back-to-actions-button)
+   (close-modal app)
+   (close-button app)])
+
+(defn back-form []
+  [:div.commands
+   (back-to-actions-button)])
+
 (defn review-form [app]
   [:div.commands
    (back-to-actions-button)

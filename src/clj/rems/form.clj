@@ -229,11 +229,13 @@
        (events/approve-form application)
        (getx application :review-type)
        (events/review-form application)
-       ;; TODO duplicates logic from form-fields
-       (not (is-applicant? application))
-       [:div.row
-        [:div.col.commands
-         (events/back-to-actions-button)]]))))
+       ;; avoid duplicated close button by short-circuiting here
+       (is-applicant? application)
+       nil
+       (getx application :can-close?)
+       (events/close-form application)
+       true
+       (events/back-form)))))
 
 (defn link-to-application [items]
   (url "/form" {:catalogue-items (s/join "," (mapv :id items))}))
