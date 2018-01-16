@@ -165,8 +165,8 @@
       :title (text :t.form/application)
       :collapse
       (list
-       (events/approval-confirm-modal "close" (text :t.actions/close) application)
-       (events/approval-confirm-modal "withdraw" (text :t.actions/withdraw) application)
+       (events/close-modal application)
+       (events/withdraw-modal application)
        [:form {:method "post"
                :action (let [app (:id application)]
                          (str "/form/" app "/save"))}
@@ -183,11 +183,10 @@
            [:div.col
             [:a#back-catalogue.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
            (into [:div.col.commands]
-                 [(when closeable? [:button#close.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
-                                    (text :t.actions/close)])
+                 [(when closeable? (events/close-button application))
                   (when editable? [:button#save.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)])
                   (when editable? [:button#submit.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)])
-                  (when withdrawable? [:button#withdraw.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#withdraw-modal"} (text :t.actions/withdraw)])])])])})))
+                  (when withdrawable? (events/withdraw-button application))])])])})))
 
 (defn- applied-resources [catalogue-items]
   (collapsible/component

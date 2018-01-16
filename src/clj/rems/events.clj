@@ -39,8 +39,22 @@
        [:button.btn.btn-secondary {:data-dismiss "modal"} (text :t.actions/cancel)]
        [:button.btn.btn-primary {:type "submit" :name name-field} action-title]]]]]])
 
-(defn approval-confirm-modal [name-field action-title app]
+(defn- approval-confirm-modal [name-field action-title app]
   (confirm-modal name-field action-title app (if (has-roles? :approver) (text :t.form/add-comments) (text :t.form/add-comments-applicant))))
+
+(defn close-modal [app]
+  (approval-confirm-modal "close" (text :t.actions/close) app))
+
+(defn close-button [app]
+  [:button#close.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
+   (text :t.actions/close)])
+
+(defn withdraw-modal [app]
+  (approval-confirm-modal "withdraw" (text :t.actions/withdraw) app))
+
+(defn withdraw-button [app]
+  [:button#withdraw.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#withdraw-modal"}
+   (text :t.actions/withdraw)])
 
 (defn- review-confirm-modal [name-field action-title app]
   (confirm-modal name-field action-title app (if (has-roles? :reviewer) (text :t.form/add-comments) (text :t.form/add-comments-applicant))))
