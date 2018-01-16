@@ -354,7 +354,6 @@
                                     (index-by [:licid :langcode]))
          licenses (mapv #(process-license application license-localizations %)
                         (db/get-licenses {:wfid (:wfid application) :items catalogue-item-ids}))
-         applicant? (= (:applicantuserid application) (get-user-id))
          review-type (cond
                        (can-review? application) :normal
                        (can-third-party-review? application) :third-party
