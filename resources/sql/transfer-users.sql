@@ -30,6 +30,7 @@ FROM (SELECT er.classPK as expandoId, jsonb_object_agg(ec.name, ev.data_) AS use
       GROUP BY er.classPK) ed
 WHERE user_mapping.expandoId = ed.expandoId;
 
+DELETE FROM public.roles CASCADE;
 DELETE FROM public.users CASCADE;
 
 INSERT INTO public.users (userId, userAttrs)
