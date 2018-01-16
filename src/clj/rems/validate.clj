@@ -1,8 +1,8 @@
 (ns rems.validate
   "Validating data in the database."
   (:require [clojure.tools.logging :as log]
-            [rems.db.core :as db]
-            [rems.db.applications :as applications]))
+            [rems.db.applications :as applications]
+            [rems.db.core :as db]))
 
 (defn- validate-application
   [id]
