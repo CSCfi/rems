@@ -154,10 +154,7 @@
         contains-disabled-items? (seq (filter disabled-catalogue-item? (:catalogue-items form)))
         editable? (and (or new-application? (#{"draft" "returned" "withdrawn"} state)) (not contains-disabled-items?))
         readonly? (not editable?)
-        withdrawable? (and (= "applied" state) (not contains-disabled-items?))
-        closeable? (and
-                    (not new-application?)
-                    (not= "closed" state))]
+        withdrawable? (and (= "applied" state) (not contains-disabled-items?))]
     (collapsible/component
      {:id "form"
       :class "slow"
@@ -183,7 +180,7 @@
            [:div.col
             [:a#back-catalogue.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
            (into [:div.col.commands]
-                 [(when closeable? (events/close-button application))
+                 [(when (getx application :can-close?) (events/close-button application))
                   (when editable? [:button#save.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)])
                   (when editable? [:button#submit.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)])
                   (when withdrawable? (events/withdraw-button application))])])])})))
@@ -445,6 +442,7 @@
             (form {:title "Form title"
                    :application {:id 17 :state "draft"
                                  :can-approve? false
+                                 :can-close? false
                                  :review-type nil}
                    :catalogue-items [{:title "An applied item"}]
                    :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
@@ -460,6 +458,7 @@
                    :application {:id 17 :state "applied"
                                  ;; TODO can-approve? true requires db :(
                                  :can-approve? false
+                                 :can-close? true
                                  :review-type nil}
                    :catalogue-items [{:title "An applied item"}]
                    :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
@@ -477,6 +476,7 @@
                    :catalogue-items [{:title "An applied item"}]
                    :application {:id 17 :state "approved"
                                  :can-approve? false
+                                 :can-close? true
                                  :review-type nil
                                  :events [{:event "approve" :comment "Looking good, approved!"}]}
                    :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
