@@ -135,6 +135,13 @@
         (is-reviewer? application-id)
         (is-third-party-reviewer? application))))
 
+(defn- can-close? [application]
+  (let [application-id (:id application)]
+    (or (and (is-approver? application-id)
+             (= "approved" (:state application)))
+        (and (is-applicant? application)
+             (not= "closed" (:state application))))))
+
 (defn- translate-catalogue-item [item]
   (merge item
          (get-in item [:localizations context/*lang*])))
@@ -316,7 +323,8 @@
      :application {:id 3
                    :state \"draft\"
                    :review-type :normal
-                   :can-approve? false}
+                   :can-approve? false
+                   :can-close? true}
      :applicant-attributes {\"eppn\" \"developer\"
                             \"email\" \"developer@e.mail\"
                             \"displayName\" \"deve\"
@@ -366,6 +374,7 @@
       :catalogue-items catalogue-items
       :application (assoc application
                           :can-approve? (can-approve? application)
+                          :can-close? (can-close? application)
                           :review-type review-type)
       :applicant-attributes (users/get-user-attributes (:applicantuserid application))
       :items items
@@ -394,6 +403,7 @@
       :catalogue-items catalogue-items
       :application (assoc application
                           :can-approve? false
+                          :can-close? false
                           :review-type nil)
       :applicant-attributes (users/get-user-attributes (:applicantuserid application))
       :items items
@@ -693,6 +703,6 @@
 
 (defn close-application [application-id round msg]
   (let [application (get-application-state application-id)]
-    (when-not (or (is-applicant? application) (can-approve? application))
+    (when-not (can-close? application)
       (throw-unauthorized))
     (unjudge-application application "close" round msg)))

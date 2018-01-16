@@ -37,6 +37,7 @@
    :fnlround Long
    :events [Event]
    :can-approve? s/Bool
+   :can-close? s/Bool
    :review-type (s/maybe s/Keyword)})
 
 (def CatalogueItem
