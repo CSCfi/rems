@@ -154,10 +154,7 @@
         contains-disabled-items? (seq (filter disabled-catalogue-item? (:catalogue-items form)))
         editable? (and (or new-application? (#{"draft" "returned" "withdrawn"} state)) (not contains-disabled-items?))
         readonly? (not editable?)
-        withdrawable? (and (= "applied" state) (not contains-disabled-items?))
-        closeable? (and
-                    (not new-application?)
-                    (not= "closed" state))]
+        withdrawable? (and (= "applied" state) (not contains-disabled-items?))]
     (collapsible/component
      {:id "form"
       :class "slow"
@@ -165,8 +162,8 @@
       :title (text :t.form/application)
       :collapse
       (list
-       (events/approval-confirm-modal "close" (text :t.actions/close) application)
-       (events/approval-confirm-modal "withdraw" (text :t.actions/withdraw) application)
+       (events/close-modal application)
+       (events/withdraw-modal application)
        [:form {:method "post"
                :action (let [app (:id application)]
                          (str "/form/" app "/save"))}
@@ -183,11 +180,10 @@
            [:div.col
             [:a#back-catalogue.btn.btn-secondary {:href "/catalogue"} (text :t.form/back)]]
            (into [:div.col.commands]
-                 [(when closeable? [:button#close.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
-                                    (text :t.actions/close)])
+                 [(when (getx application :can-close?) (events/close-button application))
                   (when editable? [:button#save.btn.btn-secondary {:type "submit" :name "save"} (text :t.form/save)])
                   (when editable? [:button#submit.btn.btn-primary.submit-button {:type "submit" :name "submit"} (text :t.form/submit)])
-                  (when withdrawable? [:button#withdraw.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#withdraw-modal"} (text :t.actions/withdraw)])])])])})))
+                  (when withdrawable? (events/withdraw-button application))])])])})))
 
 (defn- applied-resources [catalogue-items]
   (collapsible/component
@@ -233,11 +229,13 @@
        (events/approve-form application)
        (getx application :review-type)
        (events/review-form application)
-       ;; TODO duplicates logic from form-fields
-       (not (is-applicant? application))
-       [:div.row
-        [:div.col.commands
-         (events/back-to-actions-button)]]))))
+       ;; avoid duplicated close button by short-circuiting here
+       (is-applicant? application)
+       nil
+       (getx application :can-close?)
+       (events/close-form application)
+       true
+       (events/back-form)))))
 
 (defn link-to-application [items]
   (url "/form" {:catalogue-items (s/join "," (mapv :id items))}))
@@ -446,6 +444,7 @@
             (form {:title "Form title"
                    :application {:id 17 :state "draft"
                                  :can-approve? false
+                                 :can-close? false
                                  :review-type nil}
                    :catalogue-items [{:title "An applied item"}]
                    :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
@@ -461,6 +460,7 @@
                    :application {:id 17 :state "applied"
                                  ;; TODO can-approve? true requires db :(
                                  :can-approve? false
+                                 :can-close? true
                                  :review-type nil}
                    :catalogue-items [{:title "An applied item"}]
                    :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
@@ -478,6 +478,7 @@
                    :catalogue-items [{:title "An applied item"}]
                    :application {:id 17 :state "approved"
                                  :can-approve? false
+                                 :can-close? true
                                  :review-type nil
                                  :events [{:event "approve" :comment "Looking good, approved!"}]}
                    :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}

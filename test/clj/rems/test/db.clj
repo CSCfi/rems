@@ -722,23 +722,38 @@
                 "Should not be able to review when withdrawn"))))
 
       (testing "closing"
-        (let [app (applications/create-new-draft wf)]
-          (db/add-application-item! {:application app :item item})
-          (applications/close-application app 0 "closing draft")
-          (is (= {:curround 0 :state "closed"} (fetch app))))
-        (let [app (applications/create-new-draft wf)]
-          (db/add-application-item! {:application app :item item})
-          (applications/submit-application app)
-          (applications/close-application app 0 "closing applied")
-          (is (= {:curround 0 :state "closed"} (fetch app))))
-        (let [app (applications/create-new-draft wf)]
-          (db/add-application-item! {:application app :item item})
-          (applications/submit-application app)
-          (applications/approve-application app 0 "c1")
-          (binding [context/*user* {"eppn" "event-test-approver"}]
-            (applications/approve-application app 1 "c2"))
-          (applications/close-application app 1 "closing approved")
-          (is (= {:curround 1 :state "closed"} (fetch app)))))
+        (testing "a draft as the applicant"
+          (let [app (applications/create-new-draft wf)]
+            (db/add-application-item! {:application app :item item})
+            (applications/close-application app 0 "closing draft")
+            (is (= {:curround 0 :state "closed"} (fetch app)))))
+        (testing "an applied application as the applicant"
+          (let [app (applications/create-new-draft wf)]
+            (db/add-application-item! {:application app :item item})
+            (applications/submit-application app)
+            (testing "as approver fails"
+              (binding [context/*user* {"eppn" "event-test-approver"}]
+                (is (thrown? NotAuthorizedException (applications/close-application app 0 "closing applied")))))
+            (applications/close-application app 0 "closing applied")
+            (is (= {:curround 0 :state "closed"} (fetch app)))))
+        (testing "an approved application as the applicant"
+          (let [app (applications/create-new-draft wf)]
+            (db/add-application-item! {:application app :item item})
+            (applications/submit-application app)
+            (applications/approve-application app 0 "c1")
+            (binding [context/*user* {"eppn" "event-test-approver"}]
+              (applications/approve-application app 1 "c2"))
+            (applications/close-application app 1 "closing approved")
+            (is (= {:curround 1 :state "closed"} (fetch app)))))
+        (testing "an approved application as the approver"
+          (let [app (applications/create-new-draft wf)]
+            (db/add-application-item! {:application app :item item})
+            (applications/submit-application app)
+            (applications/approve-application app 0 "c1")
+            (binding [context/*user* {"eppn" "event-test-approver"}]
+              (applications/approve-application app 1 "c2")
+              (applications/close-application app 1 "closing approved"))
+            (is (= {:curround 1 :state "closed"} (fetch app))))))
 
       (testing "autoapprove"
         (db/create-resource! {:id 1995 :resid "ABC" :prefix "abc" :modifieruserid uid})

@@ -262,6 +262,7 @@
                                                   (hiccup-find [:div.form-group.field :textarea] body))))
             submit-button #(first (hiccup-find [:.submit-button] %))
             data {:application {:can-approve? false
+                                :can-close? false
                                 :review-type nil}
                   :items [{:type "text"}
                           {:type "texta"}]
@@ -290,6 +291,7 @@
           data {:application
                 {:id 17
                  :can-approve? false
+                 :can-close? false
                  :review-type nil
                  :events [{:event "apply" :comment "APPLY"}
                           {:event "withdraw" :comment "WITHDRAW"}
@@ -322,6 +324,7 @@
     (let [get-info #(hiccup-find [:#applicant-info] %)
           data {:application {:id 66
                               :can-approve? false
+                              :can-close? false
                               :state "draft"
                               :review-type nil
                               :applicantuserid "bob"
@@ -352,6 +355,7 @@
                                     :fnlround 1
                                     :wfid 2
                                     :can-approve? false
+                                    :can-close? false
                                     :review-type nil
                                     :events []}}
           applied-data {:application {:id 2
@@ -362,6 +366,7 @@
                                       :state "applied"
                                       :curround 0
                                       :can-approve? false
+                                      :can-close? false
                                       :review-type nil
                                       :events
                                       [{:userid "developer"
@@ -382,6 +387,7 @@
                                        :state "approved"
                                        :curround 0
                                        :can-approve? false
+                                       :can-close? false
                                        :review-type nil
                                        :events
                                        [{:userid "developer"
@@ -411,11 +417,12 @@
                      (get-actions
                       (assoc-in draft-data [:application :id] -6)))))
             (testing "on a draft"
-              (is (= #{"save" "back-catalogue" "submit" "close"} (get-actions draft-data))))
+              (is (= #{"save" "back-catalogue" "submit"} (get-actions draft-data))))
             (testing "on an applied form"
-              (is (= #{"withdraw" "close" "back-catalogue"} (get-actions applied-data))))
+              (is (= #{"withdraw" "close" "back-catalogue"}
+                     (get-actions (assoc-in applied-data [:application :can-close?] true)))))
             (testing "on an approved form"
-              (is (= #{"close" "back-catalogue"} (get-actions approved-data))))))
+              (is (= #{"back-catalogue"} (get-actions approved-data))))))
         (binding [context/*user* {"eppn" "bob"}
                   context/*roles* #{:approver :applicant}]
           (testing "As a current round approver (who is also an applicant)"
