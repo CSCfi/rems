@@ -8,12 +8,12 @@
             [stub-http.core :as stub]))
 
 (def +entitlements+
-  [{:resid "res1" :catappid 11 :userid "user1" :start (time/date-time 2001 10 11)}
-   {:resid "res2" :catappid 12 :userid "user2" :start (time/date-time 2002 10 11)}])
+  [{:resid "res1" :catappid 11 :userid "user1" :start (time/date-time 2001 10 11) :mail "user1@tes.t"}
+   {:resid "res2" :catappid 12 :userid "user2" :start (time/date-time 2002 10 11) :mail "user2@tes.t"}])
 
 (def +expected-payload+
-  [{"resource" "res1" "application" 11 "user" "user1"}
-   {"resource" "res2" "application" 12 "user" "user2"}])
+  [{"resource" "res1" "application" 11 "user" "user1" "mail" "user1@tes.t"}
+   {"resource" "res2" "application" 12 "user" "user2" "mail" "user2@tes.t"}])
 
 (defn run-with-server
   "Run callback with a mock entitlements http server set up.

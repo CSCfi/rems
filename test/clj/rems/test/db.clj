@@ -928,7 +928,7 @@
               res2 (:id (db/create-resource! {:id 32 :resid "resource2" :prefix prefix :modifieruserid admin}))
               item1 (:id (db/create-catalogue-item! {:title "item1" :form nil :resid res1 :wfid wf}))
               item2 (:id (db/create-catalogue-item! {:title "item2" :form nil :resid res2 :wfid wf}))]
-          (db/add-user! {:user uid :userattrs nil})
+          (db/add-user! {:user uid :userattrs (cheshire/generate-string {"mail" "b@o.b"})})
           (binding [context/*user* {"eppn" uid}]
             (let [application (applications/create-new-draft wf)]
               (db/add-application-item! {:application application :item item1})
@@ -940,6 +940,6 @@
                              :body
                              (get "postData")
                              cheshire/parse-string)]
-                (is (= [{"resource" "resource1" "application" application "user" "bob"}
-                        {"resource" "resource2" "application" application "user" "bob"}]
+                (is (= [{"resource" "resource1" "application" application "user" "bob" "mail" "b@o.b"}
+                        {"resource" "resource2" "application" application "user" "bob" "mail" "b@o.b"}]
                        data))))))))))

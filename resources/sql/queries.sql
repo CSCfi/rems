@@ -163,8 +163,9 @@ WHERE ciai.catAppId = :application
 -- :name get-entitlements :?
 -- :doc
 -- - Use {:application id} to optionally pass application
-SELECT res.resId, catAppId, userId, entitlement.start FROM entitlement
+SELECT res.resId, catAppId, entitlement.userId, entitlement.start, users.userAttrs->>'mail' AS mail FROM entitlement
 LEFT OUTER JOIN resource res ON entitlement.resId = res.id
+LEFT OUTER JOIN users on entitlement.userId = users.userId
 WHERE 1=1
 /*~ (when (:application params) */
   AND catAppId = :application

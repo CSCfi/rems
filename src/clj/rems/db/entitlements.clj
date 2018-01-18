@@ -26,7 +26,8 @@
     (let [payload (for [e entitlements]
                     {:application (:catappid e)
                      :resource (:resid e)
-                     :user (:userid e)})
+                     :user (:userid e)
+                     :mail (:mail e)})
           json-payload (cheshire/generate-string payload)]
       (log/infof "Posting entitlements to %s:" target payload)
       (let [response (try
