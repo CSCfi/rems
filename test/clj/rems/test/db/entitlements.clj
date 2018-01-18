@@ -21,7 +21,7 @@
   [endpoint-spec callback]
   (with-open [server (stub/start! {"/entitlements" endpoint-spec})]
     (with-redefs [rems.config/env {:entitlements-target
-                                   (str (:uri server) "/entitlements")}]
+                                   {:add (str (:uri server) "/entitlements")}}]
       (callback)
       (for [r (stub/recorded-requests server)]
         (cheshire/parse-string (get-in r [:body "postData"]))))))
@@ -32,27 +32,27 @@
       (testing "ok"
         (is (= [+expected-payload+]
                (run-with-server {:status 200}
-                                #(#'entitlements/post-entitlements +entitlements+))))
+                                #(#'entitlements/post-entitlements :add +entitlements+))))
         (let [[{payload :payload status :status}] @log]
           (is (= 200 status))
           (is (= +expected-payload+ (cheshire/parse-string payload))))
         (reset! log []))
       (testing "not found"
         (run-with-server {:status 404}
-                         #(#'entitlements/post-entitlements +entitlements+))
+                         #(#'entitlements/post-entitlements :add +entitlements+))
         (let [[{payload :payload status :status}] @log]
           (is (= 404 status))
           (is (= +expected-payload+ (cheshire/parse-string payload))))
         (reset! log []))
       (testing "timeout"
         (run-with-server {:status 200 :delay 5000} ;; timeout of 2500 in code
-                         #(#'entitlements/post-entitlements +entitlements+))
+                         #(#'entitlements/post-entitlements :add +entitlements+))
         (let [[{payload :payload status :status}] @log]
           (is (= "exception" status))
           (is (= +expected-payload+ (cheshire/parse-string payload)))))
       (testing "no server"
         (with-redefs [rems.config/env {:entitlements-target "http://invalid/entitlements"}]
-          (#'entitlements/post-entitlements +entitlements+)
+          (#'entitlements/post-entitlements :add +entitlements+)
           (let [[{payload :payload status :status}] @log]
           (is (= "exception" status))
           (is (= +expected-payload+ (cheshire/parse-string payload)))))))))

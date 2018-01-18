@@ -21,8 +21,8 @@
       (doseq [e ents]
         (println (join "," [(:resid e) (:catappid e) (:userid e) (text/localize-time (:start e))]))))))
 
-(defn- post-entitlements [entitlements]
-  (when-let [target (get env :entitlements-target)]
+(defn- post-entitlements [target-key entitlements]
+  (when-let [target (get-in env [:entitlements-target target-key])]
     (let [payload (for [e entitlements]
                     {:application (:catappid e)
                      :resource (:resid e)
@@ -43,13 +43,24 @@
             status (:status response)]
         (when-not (= 200 status)
           (log/warnf "Post failed: %s", response))
-        (db/log-entitlement-post! {:payload json-payload :status status})))))
+        (db/log-entitlement-post! {:target target :payload json-payload :status status})))))
 
-(defn add-entitlements-for
+(defn- add-entitlements-for
   "If the given application is approved, add an entitlement to the db
   and call the entitlement REST callback (if defined)."
   [application]
   (when (= "approved" (:state application))
     (db/add-entitlement! {:application (:id application)
                           :user (:applicantuserid application)})
-    (post-entitlements (db/get-entitlements {:application (:id application)}))))
+    (post-entitlements :add (db/get-entitlements {:application (:id application)}))))
+
+(defn- end-entitlements-for
+  [application]
+  (when (= "closed" (:state application))
+    (db/end-entitlement! {:application (:id application)})
+    (post-entitlements :remove (db/get-entitlements {:application (:id application)}))))
+
+(defn update-entitlements-for
+  [application]
+  (add-entitlements-for application)
+  (end-entitlements-for application))
