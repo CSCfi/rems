@@ -913,33 +913,43 @@
 (deftest test-entitlements-post
   (testing "application that is not approved should not result in entitlements"
     (with-redefs [rems.db.core/add-entitlement! #(throw (Error. "don't call me"))]
-      (entitlements/add-entitlements-for {:id 3
-                                          :state "applied"
-                                          :applicantuserid "bob"})))
-  (testing "application that is approved should result in POST"
-    (with-open [server (stub/start! {"/entitlements" {:status 200}})]
-      (with-redefs [rems.config/env {:entitlements-target
-                                     (str (:uri server) "/entitlements")}]
-        (let [uid "bob"
-              admin "owner"
-              prefix "foo"
-              wf (:id (db/create-workflow! {:modifieruserid admin :owneruserid admin :title "Test workflow" :fnlround 1}))
-              res1 (:id (db/create-resource! {:id 17 :resid "resource1" :prefix prefix :modifieruserid admin}))
-              res2 (:id (db/create-resource! {:id 32 :resid "resource2" :prefix prefix :modifieruserid admin}))
-              item1 (:id (db/create-catalogue-item! {:title "item1" :form nil :resid res1 :wfid wf}))
-              item2 (:id (db/create-catalogue-item! {:title "item2" :form nil :resid res2 :wfid wf}))]
-          (db/add-user! {:user uid :userattrs (cheshire/generate-string {"mail" "b@o.b"})})
-          (binding [context/*user* {"eppn" uid}]
-            (let [application (applications/create-new-draft wf)]
-              (db/add-application-item! {:application application :item item1})
-              (db/add-application-item! {:application application :item item2})
-              ;; should get autoapproved, which calls add-entitlements-for
-              (applications/submit-application application)
-              (let [data (-> (stub/recorded-requests server)
-                             first
-                             :body
-                             (get "postData")
-                             cheshire/parse-string)]
+      (entitlements/update-entitlements-for {:id 3
+                                             :state "applied"
+                                             :applicantuserid "bob"})))
+  (with-open [server (stub/start! {"/add" {:status 200}
+                                   "/remove" {:status 200}})]
+    (with-redefs [rems.config/env {:entitlements-target
+                                   {:add (str (:uri server) "/add")
+                                    :remove (str (:uri server) "/remove")}}]
+      (let [uid "bob"
+            admin "owner"
+            prefix "foo"
+            wf (:id (db/create-workflow! {:modifieruserid admin :owneruserid admin :title "Test workflow" :fnlround 1}))
+            res1 (:id (db/create-resource! {:id 17 :resid "resource1" :prefix prefix :modifieruserid admin}))
+            res2 (:id (db/create-resource! {:id 32 :resid "resource2" :prefix prefix :modifieruserid admin}))
+            item1 (:id (db/create-catalogue-item! {:title "item1" :form nil :resid res1 :wfid wf}))
+            item2 (:id (db/create-catalogue-item! {:title "item2" :form nil :resid res2 :wfid wf}))]
+        (db/add-user! {:user uid :userattrs (cheshire/generate-string {"mail" "b@o.b"})})
+        (binding [context/*user* {"eppn" uid}]
+          (let [application (applications/create-new-draft wf)]
+            (db/add-application-item! {:application application :item item1})
+            (db/add-application-item! {:application application :item item2})
+            ;; should get autoapproved, which calls update-entitlements-for
+            (applications/submit-application application)
+            (testing "application that is approved should result in POST"
+              (let [data (first (stub/recorded-requests server))
+                    target (:path data)
+                    body (cheshire/parse-string (get-in data [:body "postData"]))]
+                (is (= "/add" target))
                 (is (= [{"resource" "resource1" "application" application "user" "bob" "mail" "b@o.b"}
                         {"resource" "resource2" "application" application "user" "bob" "mail" "b@o.b"}]
-                       data))))))))))
+                       body))))
+            (applications/close-application application 1 "close msg")
+            (testing "closing application should result in new POST"
+              (let [data (second (stub/recorded-requests server))
+                    target (:path data)
+                    body (cheshire/parse-string (get-in data [:body "postData"]))]
+                (is (= "/remove" target))
+                (is (= [{"resource" "resource1" "application" application "user" "bob" "mail" "b@o.b"}
+                        {"resource" "resource2" "application" application "user" "bob" "mail" "b@o.b"}]
+                       body))))))))))

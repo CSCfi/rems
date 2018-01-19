@@ -160,6 +160,11 @@ LEFT OUTER JOIN catalogue_item_application app ON ciai.catAppId = app.id
 LEFT OUTER JOIN catalogue_item cat ON ciai.catItemId = cat.id
 WHERE ciai.catAppId = :application
 
+-- :name end-entitlement! :!
+UPDATE entitlement
+SET endt = current_timestamp
+WHERE catAppId = :application
+
 -- :name get-entitlements :?
 -- :doc
 -- - Use {:application id} to optionally pass application
