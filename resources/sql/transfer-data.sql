@@ -288,6 +288,12 @@ FROM transfer.rms_catalogue_item_application_reviewers
 WHERE state = 'commented' AND round >= 0;
 
 INSERT INTO transfer.migrated_application_event (appId, userId, round, event, time)
+SELECT catappid, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifierUserId AS integer)), curround, 'withdraw' AS EVENT, start
+FROM transfer.rms_catalogue_item_application_state
+WHERE state = 'returned' and curround >= 0
+AND NOT exists (SELECT apprUserId FROM transfer.rms_catalogue_item_application_approvers WHERE state = 'returned' AND apprUserId = modifierUserId);
+
+INSERT INTO transfer.migrated_application_event (appId, userId, round, event, time)
 SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifierUserId AS integer)), curround, 'apply' AS EVENT, start
 FROM transfer.rms_catalogue_item_application_state
 WHERE state = 'applied' AND curround >= 0;
