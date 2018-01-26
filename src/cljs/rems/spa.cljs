@@ -82,7 +82,9 @@
    (link-to {} (str (:root-path context) "/Shibboleth.sso/Login") [image {:class "login-btn"} "/img/haka-logo.jpg"])])
 
 (defn home-page []
-  [login])
+  (if @(rf/subscribe [:user])
+    [:p "Logged in."]
+    [login]))
 
 (def pages
   {:home home-page
@@ -159,6 +161,9 @@
 
 ;; -------------------------
 ;; Initialize app
+
+(defn set-user! [user]
+  (rf/dispatch-sync [:set-user user]))
 
 (defn dispatch-initial-route! [href]
   (secretary/dispatch! href))
