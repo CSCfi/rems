@@ -73,7 +73,6 @@ var csrfToken = 'not-set';
    :status - error status
    :title - error title (optional)
    :message - detailed error message (optional)
-   :bare - don't render navbar and footer (optional)
 
    returns a response map with the error page as the body
    and the status specified by the status key"
