@@ -60,7 +60,8 @@
   :main rems.standalone
   :migratus {:store :database :db ~(get (System/getenv) "DATABASE_URL")}
 
-  :plugins [[lein-cprop "1.0.3"]
+  :plugins [[lein-cljsbuild "1.1.7"]
+            [lein-cprop "1.0.3"]
             [lein-uberwar "0.2.0"]
             [migratus-lein "0.5.2"]]
 
