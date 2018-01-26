@@ -197,13 +197,13 @@
 
 (defn- disabled-items-warning [items]
   (when-some [items (seq (filter disabled-catalogue-item? items))]
-    (layout/flash-message
-     {:status :failure
-      :contents [:div
-                 (text :t.form/alert-disabled-items)
-                 [:ul
-                  (for [item items]
-                    [:li (:title item)])]]})))
+    #_(layout/flash-message
+       {:status :failure
+        :contents [:div
+                   (text :t.form/alert-disabled-items)
+                   [:ul
+                    (for [item items]
+                      [:li (:title item)])]]})))
 
 
 (defn- form [form]
