@@ -27,3 +27,8 @@
  :set-user
  (fn [db [_ user]]
    (assoc db :user user)))
+
+(reg-event-db
+ :catalogue
+ (fn [db [_ catalogue]]
+   (assoc db :catalogue catalogue)))

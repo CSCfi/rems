@@ -1,5 +1,7 @@
 (ns rems.catalogue
-  (:require [clojure.string :as s]
+  (:require [ajax.core :refer [GET]]
+            [clojure.string :as s]
+            [re-frame.core :as rf]
             [rems.cart :as cart]
             ;; [rems.form :as form]
             [rems.db.catalogue :refer [urn-catalogue-item? get-catalogue-item-title disabled-catalogue-item?]]
@@ -32,11 +34,17 @@
                              (remove disabled-catalogue-item? items))]
            [catalogue-item item language]))])
 
+(defn- fetch-catalogue []
+  (GET "/api/catalogue/" {:handler #(rf/dispatch [:catalogue %])
+                          :response-format :json
+                          :keywords? true}))
+
 (defn catalogue-page []
-  [:div
-   ;; TODO fetch data
-   [cart/cart-list [] #_(cart/get-cart-items)]
-   [catalogue-list [] :en #_(get-localized-catalogue-items)]])
+  (fetch-catalogue)
+  (let [catalogue @(rf/subscribe [:catalogue])]
+    [:div
+     [cart/cart-list [] #_(cart/get-cart-items)]
+     [catalogue-list catalogue :en]]))
 
 (defn guide []
   [:div
