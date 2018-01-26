@@ -98,7 +98,8 @@
               {:min
                {:source-paths ["src/cljc" "src/cljs" "env/prod/cljs"]
                 :compiler
-                {:output-to "target/cljsbuild/public/js/app.js"
+                {:main "rems.app"
+                 :output-to "target/cljsbuild/public/js/app.js"
                  :optimizations :advanced
                  :pretty-print false
                  :closure-warnings
