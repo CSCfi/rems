@@ -5,6 +5,7 @@
                                           get-form-for
                                           make-draft-application]]
             [rems.form :as form]
+            [rems.locales :as locales]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
@@ -51,11 +52,14 @@
    :localizations (s/maybe {s/Any s/Any})
    })
 
+(def GetTranslationsResponse
+  s/Any)
+
 (def GetApplicationResponse
   {:id Long
    :catalogue-items [CatalogueItem]
    :applicant-attributes (s/maybe {s/Str s/Str})
-   :application Application
+   :application (s/maybe Application)
    :licenses [License]
    :title s/Str
    :items [Item]})
@@ -92,6 +96,14 @@
              :data {:info {:version "1.0.0"
                            :title "Sample API"
                            :description "Sample Services"}}}}
+
+  (context "/api" []
+           :tags ["translation"]
+
+           (GET "/translations" []
+                :summary     "Get translations"
+                :return      GetTranslationsResponse
+                (ok locales/translations)))
 
   (context "/api" []
            :tags ["application"]

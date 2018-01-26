@@ -80,7 +80,7 @@
   [{title :title id :id textcontent :textcontent approved :approved readonly :readonly}]
   (license id readonly approved
            [:a {:href textcontent :target "_blank"}
-            title " " (layout/external-link)]))
+            title " " #_(layout/external-link)]))
 
 (defn- text-license
   [{title :title id :id textcontent :textcontent approved :approved readonly :readonly}]

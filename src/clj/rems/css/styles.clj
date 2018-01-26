@@ -42,11 +42,14 @@
                          [(s/descendant :.rems-table.cart :tr)
                           {:border-bottom "none"}]
                          [(s/descendant :.logo :.img)
-                          {:background [[(util/get-theme-attribute :logo-bgcolor) (str "url(\"" (util/get-theme-attribute :img-path) (util/get-theme-attribute :logo-name-sm) "\")") :center :center :no-repeat]]
-                           :-webkit-background-size "contain"
-                           :-moz-background-size "contain"
-                           :-o-background-size "contain"
-                           :background-size "contain"}]
+                          {:background-color (util/get-theme-attribute :logo-bgcolor)
+                           :background-image (str "url(\"" (util/get-theme-attribute :img-path) (util/get-theme-attribute :logo-name-sm) "\")")
+                           :-webkit-background-size :contain
+                           :-moz-background-size :contain
+                           :-o-background-size :contain
+                           :background-size :contain
+                           :background-repeat :no-repeat
+                           :background-position [[:center :center]]}]
                          [:.logo
                           {:height (u/px 150)}]))
    (stylesheet/at-media {:min-width (u/px 768)}
@@ -148,25 +151,32 @@
 
 (defstyles screen
   (generate-at-font-faces)
-  [:* {:margin "0"}]
+  [:* {:margin 0}]
   [:a
    :button
-   {:cursor "pointer"}]
+   {:cursor :pointer}]
   [:a {:color (:color3 util/get-theme-attribute)}]
-  [:html {:position "relative"
+  [:html {:position :relative
           :min-width (u/px 320)
-          :height "100%"}]
+          :height (u/percent 100)}]
   [:body {:font-family "'Lato', sans-serif"
-          :min-height "100%"
-          :display "flex"
-          :flex-direction "column"
+          :min-height (u/percent 100)
+          :display :flex
+          :flex-direction :column
           :padding-top (u/px 56)}]
+  [:#app {:min-height (u/percent 100)
+          :flex 1
+          :display :flex}]
+  [(s/> :#app :div) {:min-height (u/percent 100)
+                     :flex 1
+                     :display :flex
+                     :flex-direction :column}]
   [:.fixed-top {:background-color "#fff"
                 :border-bottom [[(u/px 1) :solid (util/get-theme-attribute :color1)]]
                 :min-height (u/px 56)}]
   [:.main-content {:display "flex"
-                   :flex-direction "column"
-                   :flex-wrap "none"
+                   :flex-direction :column
+                   :flex-wrap :none
                    :min-height (u/px 300)
                    :flex-grow "1"}]
   [:.container {:max-width (u/px 891)}]
@@ -176,15 +186,15 @@
     :&:active:hover
     {:background-color "#d84f0e"
      :border-color (util/get-theme-attribute :color4)
-     :outline-color "transparent"}]
+     :outline-color :transparent}]
    {:background-color (util/get-theme-attribute :color4)
     :border-color (util/get-theme-attribute :color4)
-    :outline-color "transparent"}]
+    :outline-color :transparent}]
   [:.btn-secondary
    [:&:hover
     :&:focus
     :&:active:hover
-    {:outline-color "transparent"}]]
+    {:outline-color :transparent}]]
   [:.alert-info
    (s/descendant :.state-info :.phases :.phase.completed)
    {:color (util/get-theme-attribute :info-color)
@@ -220,11 +230,14 @@
            :padding "0 20px"
            :margin-bottom (u/em 1)}]
   [(s/descendant :.logo :.img) {:height "100%"
-                                :background [[(util/get-theme-attribute :logo-bgcolor) (str "url(\"" (util/get-theme-attribute :img-path) (util/get-theme-attribute :logo-name) "\")") :left :center :no-repeat]]
-                                :-webkit-background-size "contain"
-                                :-moz-o-background-size "contain"
-                                :-o-background-size "contain"
-                                :background-size "contain"
+                                :background-color (util/get-theme-attribute :logo-bgcolor)
+                                :background-image (str "url(\"" (util/get-theme-attribute :img-path) (util/get-theme-attribute :logo-name) "\")")
+                                :-webkit-background-size :contain
+                                :-moz-o-background-size :contain
+                                :-o-background-size :contain
+                                :background-size :contain
+                                :background-repeat :no-repeat
+                                :background-position [[:center :center]]
                                 :background-origin (util/get-theme-attribute :logo-content-origin)
                                 :padding-left (u/px 20)
                                 :padding-right (u/px 20)}]
@@ -255,8 +268,8 @@
   [:.user
    :.language-switcher
    {:white-space "nowrap"}]
-  [(s/descendant :.user :.nav-link) {:display "inline-block"}]
-  [:.user-name {:text-transform "none"}]
+  [(s/descendant :.user :.nav-link) {:display :inline-block}]
+  [:.user-name {:text-transform :none}]
   [:.fa
    :.user-name
    {:margin-right (u/px 5)}]
@@ -274,9 +287,9 @@
   [:.example-content-end {:clear "both"}]
   [:form.inline
    :.form-actions.inline
-   {:display "inline-block"}
+   {:display :inline-block}
    [:.btn-link
-    {:border "none"
+    {:border :none
      :padding 0}]]
   [:.modal-title {:color "#292b2c"}]
   [(s/+
@@ -303,11 +316,11 @@
   [:.color-4 {:background-color (util/get-theme-attribute :color4)}]
   [:.color-title {:padding-top (u/rem 0.8)}]
   [(s/descendant :.alert :ul ) {:margin-bottom 0}]
-  [:ul.comments {:list-style-type "none"}]
+  [:ul.comments {:list-style-type :none}]
   [:.inline-comment {:font-size (u/rem 1)}]
   [(s/& :p.inline-comment ":last-child") {:margin-bottom 0}]
-  [:.inline-comment-content {:display "inline-block"}]
-  [:.license-panel {:display "inline-block"
+  [:.inline-comment-content {:display :inline-block}]
+  [:.license-panel {:display :inline-block
                     :width "inherit"}]
   [:.card-header.clickable {:cursor "pointer"}]
   [(s/descendant :.card-header :a) {:color "inherit"}]

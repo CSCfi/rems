@@ -17,7 +17,7 @@
             [rems.language-switcher :as language-switcher]
             [rems.layout :refer [error-page]]
             [rems.middleware :as middleware]
-            [rems.routes.guide :refer [guide-routes]]
+            ;;[rems.routes.guide :refer [guide-routes]]
             [rems.routes.services :refer [service-routes]]
             [rems.util :refer [never-match-route]]))
 
@@ -72,7 +72,7 @@
 (defn app-routes []
   (routes
    (normal-routes)
-   (if (:component-guide +defaults+)
+   #_(if (:component-guide +defaults+)
      guide-routes
      never-match-route)
    (if-let [path (:serve-static +defaults+)]
