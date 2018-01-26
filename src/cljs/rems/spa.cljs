@@ -160,6 +160,9 @@
 ;; -------------------------
 ;; Initialize app
 
+(defn set-user! [user]
+  (rf/dispatch-sync [:set-user user]))
+
 (defn dispatch-initial-route! [href]
   (secretary/dispatch! href))
 

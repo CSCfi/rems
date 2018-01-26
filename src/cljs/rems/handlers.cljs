@@ -22,3 +22,8 @@
   :loaded-translations
   (fn [db [_ translations]]
     (assoc db :translations translations)))
+
+(reg-event-db
+ :set-user
+ (fn [db [_ user]]
+   (assoc db :user user)))

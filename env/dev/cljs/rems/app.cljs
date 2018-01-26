@@ -7,3 +7,6 @@
 (devtools/install!)
 
 (spa/init!)
+
+(defn ^:export setUser [user]
+  (spa/set-user! user))
