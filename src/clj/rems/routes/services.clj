@@ -4,6 +4,7 @@
             [rems.db.applications :refer [get-draft-form-for
                                           get-form-for
                                           make-draft-application]]
+            [rems.db.catalogue :as catalogue]
             [rems.form :as form]
             [rems.locales :as locales]
             [ring.util.http-response :refer :all]
@@ -81,6 +82,9 @@
    (s/optional-key :state) s/Str
    (s/optional-key :validation) [ValidationError]})
 
+(def GetCatalogueResponse
+  [CatalogueItem])
+
 (defn longify-keys [m]
   (into {} (for [[k v] m]
              [(Long/parseLong (name k)) v])))
@@ -126,5 +130,13 @@
                 :summary     "Create a new application or change an existing one"
                 :body        [request SaveApplicationRequest]
                 :return      SaveApplicationResponse
-                (ok (form/api-save (fix-keys request))))
-           ))
+                (ok (form/api-save (fix-keys request)))))
+
+  (context "/api" []
+           :tags ["catalogue"]
+
+           (GET "/catalogue/" []
+                :summary "Get catalogue items"
+                :return GetCatalogueResponse
+                (binding [context/*lang* :en]
+                  (ok (catalogue/get-localized-catalogue-items))))))
