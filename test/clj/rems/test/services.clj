@@ -1,5 +1,6 @@
 (ns ^:integration rems.test.services
   (:require [cheshire.core :refer [generate-string parse-stream]]
+            [clojure.string :refer [starts-with?]]
             [clojure.test :refer :all]
             [luminus-migrations.core :as migrations]
             [mount.core :as mount]
@@ -88,3 +89,13 @@
             (is (:valid cmd-response))
             (is (empty? (:validation cmd-response)))
             ))))))
+
+(deftest service-catalogue-test
+  (let [api-key "42"
+        user-id "alice"]
+    (let [data (-> (request :get "/api/catalogue/")
+                   (authenticate api-key user-id)
+                   app
+                   read-body)
+          item (first data)]
+      (is (starts-with? (:resid item) "http://")))))
