@@ -7,6 +7,7 @@
             [markdown.core :refer [md->html]]
             [ajax.core :refer [GET POST]]
             [rems.ajax :refer [load-interceptors!]]
+            [rems.application :refer [application-page fetch-application]]
             [rems.catalogue :refer [catalogue-page]]
             [rems.guide-page :refer [guide-page]]
             [rems.handlers]
@@ -90,7 +91,8 @@
   {:home home-page
    :catalogue catalogue-page
    :guide guide-page
-   :about about-page})
+   :about about-page
+   :application application-page})
 
 (defn user-switcher [user]
   (let [user (rf/subscribe [:user])]
@@ -141,6 +143,11 @@
 (secretary/defroute "/about" []
   (rf/dispatch [:set-active-page :about]))
 
+(secretary/defroute "/application/:id" {id :id}
+  (rf/dispatch [:rems.application/start-fetch-application id])
+  (rf/dispatch [:set-active-page :application]))
+
+
 ;; -------------------------
 ;; History
 ;; must be called after routes have been defined
@@ -157,7 +164,7 @@
 ;; Initialize app
 
 (defn set-user! [user]
-  (rf/dispatch-sync [:set-user user]))
+  (rf/dispatch-sync [:set-user (js->clj user :keywordize-keys true)]))
 
 (defn dispatch-initial-route! [href]
   (secretary/dispatch! href))
