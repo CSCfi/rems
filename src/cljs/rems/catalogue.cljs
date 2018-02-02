@@ -43,7 +43,7 @@
   (fetch-catalogue)
   (let [catalogue @(rf/subscribe [:catalogue])]
     [:div
-     [cart/cart-list [] #_(cart/get-cart-items)]
+     [cart/cart-list-container :en]
      [catalogue-list catalogue :en]]))
 
 (defn guide []

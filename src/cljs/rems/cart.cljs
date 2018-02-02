@@ -8,15 +8,30 @@
 
 ;; TODO anti-forgery when submitting
 
+(re-frame/reg-sub
+ ::cart
+ (fn [db]
+   (::cart db)))
+
+(re-frame/reg-event-db
+ ::add-item
+ (fn [db [_ item]]
+   (let [cart (-> (::cart db)
+                  (conj item))]
+     (assoc db ::cart cart ))))
+
+     (assoc db ::cart cart ))))
+
 (defn add-to-cart-button
   "Hiccup fragment that contains a button that adds the given item to the cart"
-  [cart item]
-  (let [disabled? (and cart (contains? (set cart) (:id item)))]
+  [item]
+  (let [cart @(re-frame/subscribe [::cart])
+        disabled? (and cart (contains? (set (map :id cart)) (:id item)))]
     [:button.btn.btn-primary
      {:type "submit"
       :disabled disabled?
       :class (if disabled? " disabled" "")
-      :on-click #(re-frame/dispatch [::add-item (:id item)])}
+      :on-click #(re-frame/dispatch [::add-item item])}
      (text :t.cart/add)]))
 
 (defn remove-from-cart-button
@@ -24,13 +39,8 @@
   [item]
   [:button.btn.btn-secondary
    {:type "submit"
-    :on-click #(re-frame/dispatch [::remove-item (:id item)])}
+    :on-click #(re-frame/dispatch [::remove-item item])}
    (text :t.cart/remove)])
-
-(defn get-cart-from-session
-  "Computes the value for context/*cart*: a set of integer ids."
-  [request]
-  (get-in request [:session :cart]))
 
 (defn- apply-button [items]
   [:a.btn.btn-primary {:href "TODO" #_(form/link-to-application items)} (text :t.cart/apply)])
@@ -66,6 +76,10 @@
                       (for [group (vals (into (sorted-map) (group-by key-fn items)))]
                         (group-view (sort-by get-catalogue-item-title group) language)))))]]]))
 
+(defn cart-list-container [language]
+  (let [cart @(re-frame/subscribe [::cart])]
+    [cart-list cart language]))
+
 (defn guide []
   [:div
    (component-info item-view)
@@ -96,3 +110,8 @@
             [cart-list [{:title "First title" :wfid 2} {:title "Second title" :wfid 1} {:title "Third title" :wfid 1} {:title "Fourth title" :wfid 1} {:title "Fifth title" :wfid 3}] nil])
    (example "cart-list with five items of same workflow but of two different forms"
             [cart-list [{:title "First form" :wfid 1 :formid 1} {:title "Second form" :wfid 1 :formid 2} {:title "First form" :wfid 1 :formid 1} {:title "Second form" :wfid 1 :formid 2} {:title "First form" :wfid 1 :formid 1}] nil])])
+
+(comment
+  (->> re-frame.db/app-db
+       (deref)
+       (::cart)))
