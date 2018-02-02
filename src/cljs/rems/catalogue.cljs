@@ -43,7 +43,7 @@
   (fetch-catalogue)
   (let [catalogue @(rf/subscribe [:catalogue])]
     [:div
-     [cart/cart-list [] #_(cart/get-cart-items)]
+     [cart/cart-list-container :en]
      [catalogue-list catalogue :en]]))
 
 (defn guide []
@@ -71,6 +71,6 @@
             [catalogue-list [] nil])
    (example "catalogue-list with two items"
             [catalogue-list [{:title "Item title"} {:title "Another title"}] nil])
-    (example "catalogue-list with three items, of which second is disabled"
-             [catalogue-list [{:title "Item 1"} {:title "Item 2 is disabled and should not be shown" :state "disabled"} {:title "Item 3"}] nil])
+   (example "catalogue-list with three items, of which second is disabled"
+            [catalogue-list [{:title "Item 1"} {:title "Item 2 is disabled and should not be shown" :state "disabled"} {:title "Item 3"}] nil])
    ])

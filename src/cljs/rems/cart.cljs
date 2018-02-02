@@ -1,38 +1,51 @@
 (ns rems.cart
   (:require #_[rems.form :as form]
+            [re-frame.core :as re-frame]
             [rems.util :refer [select-vals]]
             [rems.db.catalogue :refer [get-catalogue-item-title]]
             [rems.text :refer [text text-format]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 ;; TODO anti-forgery when submitting
-(defn- button
-  [cls action text value & [disabled?]]
-  [:button.btn {:type "submit"
-                :disabled disabled?
-                :class (str cls (if disabled? " disabled" ""))} text])
 
-(def ^:private button-primary
-  (partial button "btn-primary"))
+(re-frame/reg-sub
+ ::cart
+ (fn [db]
+   (::cart db)))
 
-(def ^:private button-secondary
-  (partial button "btn-secondary"))
+(re-frame/reg-event-db
+ ::add-item
+ (fn [db [_ item]]
+   (let [cart (-> (::cart db)
+                  (conj item))]
+     (assoc db ::cart cart ))))
+
+(re-frame/reg-event-db
+ ::remove-item
+ (fn [db [_ item]]
+   (let [cart (->> (::cart db)
+                  (remove (comp #{(:id item)} :id)))]
+     (assoc db ::cart cart ))))
 
 (defn add-to-cart-button
   "Hiccup fragment that contains a button that adds the given item to the cart"
-  [cart item]
-  (let [disabled? (and cart (contains? (set cart) (:id item)))]
-    [button-primary "/cart/add" (text :t.cart/add) (:id item) disabled?]))
+  [item]
+  (let [cart @(re-frame/subscribe [::cart])
+        disabled? (and cart (contains? (set (map :id cart)) (:id item)))]
+    [:button.btn.btn-primary
+     {:type "submit"
+      :disabled disabled?
+      :class (if disabled? " disabled" "")
+      :on-click #(re-frame/dispatch [::add-item item])}
+     (text :t.cart/add)]))
 
 (defn remove-from-cart-button
   "Hiccup fragment that contains a button that removes the given item from the cart"
   [item]
-  [button-secondary "/cart/remove" (text :t.cart/remove) (:id item)])
-
-(defn get-cart-from-session
-  "Computes the value for context/*cart*: a set of integer ids."
-  [request]
-  (get-in request [:session :cart]))
+  [:button.btn.btn-secondary
+   {:type "submit"
+    :on-click #(re-frame/dispatch [::remove-item item])}
+   (text :t.cart/remove)])
 
 (defn- apply-button [items]
   [:a.btn.btn-primary {:href "TODO" #_(form/link-to-application items)} (text :t.cart/apply)])
@@ -67,6 +80,10 @@
                (apply concat
                       (for [group (vals (into (sorted-map) (group-by key-fn items)))]
                         (group-view (sort-by get-catalogue-item-title group) language)))))]]]))
+
+(defn cart-list-container [language]
+  (let [cart @(re-frame/subscribe [::cart])]
+    [cart-list cart language]))
 
 (defn guide []
   [:div
