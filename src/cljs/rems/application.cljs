@@ -133,10 +133,89 @@
           (for [l licenses]
             (field (assoc l :readonly readonly?)))])]})))
 
+;; Header
+
+(defn- info-field
+  "A component that shows a readonly field with title and value.
+
+  Used for e.g. displaying applicant attributes."
+  [title value]
+  [:div.form-group
+   [:label title]
+   [:input.form-control {:type "text" :value value :readonly true}]])
+
+(defn- application-header [state events]
+  (collapsible/component
+   {:id "header"
+    :title [:span
+            (text :t.applications/state)
+            ;; TODO: localize-state
+            (when state (list ": " state))]
+    :always [:div
+             #_[:div.mb-3 {:class (str "state-" state)} (phases (get-application-phases state))]
+             (when-let [c (:comment (last events))]
+               (info-field (text :t.form/comment) c))]
+    :collapse (when (seq events)
+                (list
+                 [:h4 (text :t.form/events)]
+                 (into [:table#event-table.table.table-hover.mb-0
+                        [:tr
+                         [:th (text :t.form/user)]
+                         [:th (text :t.form/event)]
+                         [:th (text :t.form/comment)]
+                         [:th (text :t.form/date)]]]
+                       (for [e events]
+                         [:tr
+                          [:td (:userid e)]
+                          ;; TODO localize-event
+                          [:td (:event e)]
+                          [:td.event-comment (:comment e)]
+                          ;; TODO localize-time
+                          [:td (:time e)]]))))}))
+
+;; Applicant info
+
+(defn applicant-info [id user-attributes]
+  (collapsible/component
+   {:id id
+    :title (str (text :t.applicant-info/applicant))
+    :always [:div.row
+             [:div.col-md-6
+              (info-field (text :t.applicant-info/username) (:eppn user-attributes))]
+             [:div.col-md-6
+              (info-field (text :t.applicant-info/email) (:mail user-attributes))]]
+    ;; TODO hide from reviewer
+    :collapse [:form
+               (for [[k v] (dissoc user-attributes :commonName :mail)]
+                 (info-field k v))]}))
+
 ;; Whole application
 
+(defn- applied-resources [catalogue-items]
+  (collapsible/component
+   {:id "resources"
+    :open? true
+    :title (text :t.form/resources)
+    :always [:div.form-items.form-group
+             [:ul
+              (for [item catalogue-items]
+                [:li (:title item)])]]}))
+
 (defn- render-application [application]
-  [:pre (with-out-str (cljs.pprint/pprint application))])
+  ;; TODO should rename :application
+  (let [app (:application application)
+        state (:state app)
+        events (:events app)
+        user-attributes (:applicant-attributes application)]
+    [:div
+     [:h2 (text :t.applications/application)]
+     ;; TODO may-see-event? needs to be implemented in backend
+     (application-header state events)
+     ;; TODO hide from applicant:
+     (when user-attributes
+       [:div.mt-3 (applicant-info "applicant-info" user-attributes)])
+     [:div.mt-3 (applied-resources (:catalogue-items application))]
+     [:div.my-3 (fields application)]]))
 
 ;;;; Entrypoint ;;;;
 
@@ -158,70 +237,6 @@
        "voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur "
        "sint occaecat cupidatat non proident, sunt in culpa qui officia "
        "deserunt mollit anim id est laborum."))
-
-(def ^:private +example+
-  {:id 1,
- :catalogue-items
- [{:id 2,
-   :title "ELFA Corpus, one approval",
-   :wfid 2,
-   :formid 1,
-   :resid "http://urn.fi/urn:nbn:fi:lb-201403262",
-   :state "enabled",
-   :langcode "en",
-   :localizations
-   {:en {:id 2, :langcode "en", :title "ELFA Corpus, one approval"},
-    :fi
-    {:id 2, :langcode "fi", :title "ELFA-korpus, yksi hyväksyntä"}}}],
- :applicant-attributes
- {:eppn "developer", :mail "deve@lo.per", :commonName "developer"},
- :application
- {:applicantuserid "developer",
-  :can-approve? false,
-  :events [],
-  :review-type nil,
-  :start "2018-01-26T07:51:01.467Z",
-  :state "draft",
-  :wfid 2,
-  :fnlround 0,
-  :id 1,
-  :can-close? true,
-  :curround 0},
- :licenses
- [{:id 2,
-   :type "license",
-   :licensetype "link",
-   :title "CC Attribution 4.0",
-   :textcontent
-   "https://creativecommons.org/licenses/by/4.0/legalcode",
-   :approved true}
-  {:id 3,
-   :type "license",
-   :licensetype "text",
-   :title "General Terms of Use",
-   :textcontent
-   "License text in English. License text in English. License text in English. License text in English. License text in English. License text in English. License text in English. License text in English. License text in English. License text in English. ",
-   :approved true}],
- :title "Yksinkertainen lomake",
- :items
- [{:id 1,
-   :title "Project name",
-   :inputprompt "Project",
-   :optional false,
-   :type "text",
-   :value "draft application"}
-  {:id 3,
-   :title "Duration of the project",
-   :inputprompt "YYYY-YYYY",
-   :optional true,
-   :type "text",
-   :value "draft application"}
-  {:id 2,
-   :title "Purpose of the project",
-   :inputprompt "The purpose of the project is to ...",
-   :optional false,
-   :type "texta",
-   :value "draft application"}]})
 
 (defn guide []
   [:div
@@ -246,39 +261,39 @@
              (field {:type "license" :id 1 :title "A Text License" :licensetype "text"
                      :textcontent lipsum})])
 
-   (component-info fields)
-   (example "fields, partially filled"
-            (fields {:title "Form title"
-                     :application {:id 17 :state "draft"
-                                   :can-approve? false
-                                   :can-close? false
-                                   :review-type nil}
-                     :catalogue-items [{:title "An applied item"}]
-                     :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
-                             {:type "label" :title "Please input your wishes below."}
-                             {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2"}
-                             {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]
-                     :licenses [{:type "license" :title "A Text License" :licensetype "text" :id 2
-                                 :textcontent lipsum}
-                                {:type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
-                                 :approved true}]}))
-   (example "fields, applied"
-            (fields{:title "Form title"
-                    :application {:id 17 :state "applied"
-                                  :can-approve? false
-                                  :can-close? true
-                                  :review-type nil}
-                    :catalogue-items [{:title "An applied item"}]
-                    :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
-                            {:type "label" :title "Please input your wishes below."}
-                            {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2" :value "def"}
-                            {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]
-                    :licenses [{:type "license" :title "A Text License" :licensetype "text" :id 3
-                                :textcontent lipsum}
-                               {:type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
-                                :approved true}]
-                    :comments [{:comment "a comment"}]}))
-
    (component-info render-application)
-   (example "whole application"
-            (render-application +example+))])
+   (example "application, partially filled"
+            (render-application
+             {:title "Form title"
+              :application {:id 17 :state "draft"
+                            :can-approve? false
+                            :can-close? false
+                            :review-type nil}
+              :catalogue-items [{:title "An applied item"}]
+              :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
+                      {:type "label" :title "Please input your wishes below."}
+                      {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2"}
+                      {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]
+              :licenses [{:type "license" :title "A Text License" :licensetype "text" :id 2
+                          :textcontent lipsum}
+                         {:type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
+                          :approved true}]}))
+   (example "form, approved"
+            (render-application
+             {:title "Form title"
+              :catalogue-items [{:title "An applied item"}]
+              :applicant-attributes {:eppn "eppn" :mail "email@example.com" :additional "additional field"}
+              :application {:id 17 :state "approved"
+                            :can-approve? false
+                            :can-close? true
+                            :review-type nil
+                            :events [{:event "approve" :comment "Looking good, approved!"}]}
+              :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
+                      {:type "label" :title "Please input your wishes below."}
+                      {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2" :value "def"}
+                      {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]
+              :licenses [{:type "license" :title "A Text License" :licensetype "text" :id 3
+                          :textcontent lipsum}
+                         {:type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
+                          :approved true}]
+              :comments [{:comment "a comment"}]}))])
