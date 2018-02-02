@@ -1,6 +1,7 @@
 (ns rems.handlers
   (:require [rems.db :as db]
-            [re-frame.core :refer [dispatch reg-event-db]]))
+            [rems.application :refer [fetch-application]]
+            [re-frame.core :refer [dispatch reg-event-db reg-event-fx reg-fx]]))
 
 (reg-event-db
   :initialize-db
@@ -37,3 +38,13 @@
  :application
  (fn [db [_ application]]
    (assoc db :application application)))
+
+(reg-event-fx
+ :fetch-application
+ (fn [coeff [_ id]]
+   {:fetch-application [(get-in coeff [:db :user]) id]}))
+
+(reg-fx
+ :fetch-application
+ (fn [[user id]]
+   (fetch-application user id)))

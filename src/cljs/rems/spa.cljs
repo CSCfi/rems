@@ -7,7 +7,7 @@
             [markdown.core :refer [md->html]]
             [ajax.core :refer [GET POST]]
             [rems.ajax :refer [load-interceptors!]]
-            [rems.application :refer [application-page]]
+            [rems.application :refer [application-page fetch-application]]
             [rems.catalogue :refer [catalogue-page]]
             [rems.guide-page :refer [guide-page]]
             [rems.handlers]
@@ -149,7 +149,8 @@
 (secretary/defroute "/about" []
   (rf/dispatch [:set-active-page :about]))
 
-(secretary/defroute "/application" []
+(secretary/defroute "/application/:id" {id :id}
+  (rf/dispatch [:fetch-application id])
   (rf/dispatch [:set-active-page :application]))
 
 
