@@ -107,11 +107,6 @@
 (defn logo []
   [:div.logo [:div.container.img]])
 
-(defn debug [data]
-  [:div.debug (with-out-str
-                (cljs.pprint/pprint (merge {:context context}
-                                           data)))])
-
 (defn page []
   (let [page-id @(rf/subscribe [:page])
         content (pages page-id)
@@ -123,7 +118,6 @@
        [navbar-normal page-name user]
        [navbar-small page-name user]]]
      [logo]
-     [debug {:current-page page-id}]
      ;;[:button {:on-click #(rf/dispatch [:set-active-page :catalogue])} "catalogue"]
      #_[:div.container message]
      [:div.container.main-content [content]]

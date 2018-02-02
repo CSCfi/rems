@@ -116,7 +116,8 @@
                                  [com.cemerick/piggieback "0.2.2"]
                                  [figwheel-sidecar "0.5.14"]
                                  [ring/ring-mock "0.3.2" :exclusions [cheshire]]
-                                 [se.haleby/stub-http "0.2.4"]]
+                                 [se.haleby/stub-http "0.2.4"]
+                                 [re-frisk "0.5.3"]]
                   :plugins [[com.jakemccrary/lein-test-refresh "0.21.1"]
                             [lein-cloverage "1.0.10"]
                             [lein-figwheel "0.5.14"]
@@ -143,7 +144,8 @@
                       :output-dir "target/cljsbuild/public/js/out"
                       :source-map true
                       :optimizations :none
-                      :pretty-print true}}}}}
+                      :pretty-print true
+                      :preloads [re-frisk.preload]}}}}}
    :project/test {:resource-paths ["env/test/resources"]}
    :profiles/dev {}
    :profiles/test {}})
