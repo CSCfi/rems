@@ -2,7 +2,7 @@
   (:require ;; [compojure.core :refer [GET defroutes]]
    ;; [rems.actions :as actions]
    ;; [rems.applicant-info :as applicant-info]
-   ;; [rems.applications :as applications]
+   [rems.application :as application]
    ;; [rems.auth.auth :as auth]
    [rems.cart :as cart]
    [rems.catalogue :as catalogue]
@@ -75,8 +75,8 @@
     ;; (info-field/guide)
     ;; (applicant-info/guide)
 
-    ;; [:h2 "Forms"]
-    ;; (form/guide)
+    [:h2 "Applications"]
+    (application/guide)
 
     [:h2 "Misc components"]
     [phase/guide]
