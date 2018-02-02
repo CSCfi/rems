@@ -1,33 +1,31 @@
 (ns rems.cart
   (:require #_[rems.form :as form]
+            [re-frame.core :as re-frame]
             [rems.util :refer [select-vals]]
             [rems.db.catalogue :refer [get-catalogue-item-title]]
             [rems.text :refer [text text-format]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 ;; TODO anti-forgery when submitting
-(defn- button
-  [cls action text value & [disabled?]]
-  [:button.btn {:type "submit"
-                :disabled disabled?
-                :class (str cls (if disabled? " disabled" ""))} text])
-
-(def ^:private button-primary
-  (partial button "btn-primary"))
-
-(def ^:private button-secondary
-  (partial button "btn-secondary"))
 
 (defn add-to-cart-button
   "Hiccup fragment that contains a button that adds the given item to the cart"
   [cart item]
   (let [disabled? (and cart (contains? (set cart) (:id item)))]
-    [button-primary "/cart/add" (text :t.cart/add) (:id item) disabled?]))
+    [:button.btn.btn-primary
+     {:type "submit"
+      :disabled disabled?
+      :class (if disabled? " disabled" "")
+      :on-click #(re-frame/dispatch [::add-item (:id item)])}
+     (text :t.cart/add)]))
 
 (defn remove-from-cart-button
   "Hiccup fragment that contains a button that removes the given item from the cart"
   [item]
-  [button-secondary "/cart/remove" (text :t.cart/remove) (:id item)])
+  [:button.btn.btn-secondary
+   {:type "submit"
+    :on-click #(re-frame/dispatch [::remove-item (:id item)])}
+   (text :t.cart/remove)])
 
 (defn get-cart-from-session
   "Computes the value for context/*cart*: a set of integer ids."
