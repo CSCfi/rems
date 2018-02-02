@@ -150,7 +150,7 @@
   (rf/dispatch [:set-active-page :about]))
 
 (secretary/defroute "/application/:id" {id :id}
-  (rf/dispatch [:fetch-application id])
+  (rf/dispatch [:rems.application/start-fetch-application id])
   (rf/dispatch [:set-active-page :application]))
 
 
