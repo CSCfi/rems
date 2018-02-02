@@ -32,3 +32,8 @@
  :catalogue
  (fn [db [_ catalogue]]
    (assoc db :catalogue catalogue)))
+
+(reg-event-db
+ :application
+ (fn [db [_ application]]
+   (assoc db :application application)))

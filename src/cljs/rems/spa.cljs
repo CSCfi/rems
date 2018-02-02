@@ -169,7 +169,7 @@
 ;; Initialize app
 
 (defn set-user! [user]
-  (rf/dispatch-sync [:set-user user]))
+  (rf/dispatch-sync [:set-user (js->clj user :keywordize-keys true)]))
 
 (defn dispatch-initial-route! [href]
   (secretary/dispatch! href))
