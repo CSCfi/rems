@@ -7,6 +7,7 @@
             [markdown.core :refer [md->html]]
             [ajax.core :refer [GET POST]]
             [rems.ajax :refer [load-interceptors!]]
+            [rems.application :refer [application-page]]
             [rems.catalogue :refer [catalogue-page]]
             [rems.guide-page :refer [guide-page]]
             [rems.handlers]
@@ -90,7 +91,8 @@
   {:home home-page
    :catalogue catalogue-page
    :guide guide-page
-   :about about-page})
+   :about about-page
+   :application application-page})
 
 (defn user-switcher [user]
   (let [user (rf/subscribe [:user])]
@@ -146,6 +148,10 @@
 
 (secretary/defroute "/about" []
   (rf/dispatch [:set-active-page :about]))
+
+(secretary/defroute "/application" []
+  (rf/dispatch [:set-active-page :application]))
+
 
 ;; -------------------------
 ;; History
