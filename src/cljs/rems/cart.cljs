@@ -20,6 +20,11 @@
                   (conj item))]
      (assoc db ::cart cart ))))
 
+(re-frame/reg-event-db
+ ::remove-item
+ (fn [db [_ item]]
+   (let [cart (->> (::cart db)
+                  (remove (comp #{(:id item)} :id)))]
      (assoc db ::cart cart ))))
 
 (defn add-to-cart-button
