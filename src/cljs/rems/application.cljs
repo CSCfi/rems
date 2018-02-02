@@ -2,6 +2,7 @@
   (:require [ajax.core :refer [GET]]
             [re-frame.core :as rf]
             [rems.collapsible :as collapsible]
+            [rems.phase :refer [phases get-application-phases]]
             [rems.text :refer [text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
@@ -152,7 +153,7 @@
             ;; TODO: localize-state
             (when state (list ": " state))]
     :always [:div
-             #_[:div.mb-3 {:class (str "state-" state)} (phases (get-application-phases state))]
+             [:div.mb-3 {:class (str "state-" state)} (phases (get-application-phases state))]
              (when-let [c (:comment (last events))]
                (info-field (text :t.form/comment) c))]
     :collapse (when (seq events)
