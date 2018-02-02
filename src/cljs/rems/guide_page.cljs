@@ -13,7 +13,7 @@
    ;; [rems.home :as home]
    ;; [rems.info-field :as info-field]
    ;; [rems.layout :as layout]
-   ;; [rems.phase :as phase]
+   [rems.phase :as phase]
    ;; [rems.util :as util]
    ))
 
@@ -78,7 +78,7 @@
     ;; [:h2 "Forms"]
     ;; (form/guide)
 
-    ;; [:h2 "Misc components"]
-    ;; (phase/guide)
+    [:h2 "Misc components"]
+    [phase/guide]
     ;; (home/guide)
     ]])
