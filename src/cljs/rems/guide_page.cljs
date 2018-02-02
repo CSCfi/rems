@@ -6,7 +6,7 @@
    ;; [rems.auth.auth :as auth]
    [rems.cart :as cart]
    [rems.catalogue :as catalogue]
-   ;; [rems.collapsible :as collapsible]
+   [rems.collapsible :as collapsible]
    ;; [rems.context :as context]
    ;; [rems.form :as form]
    ;; [rems.guide :refer :all]
@@ -68,8 +68,8 @@
     ;; [:h2 "Actions list"]
     ;; (actions/guide)
 
-    ;; [:h2 "Collapsible component"]
-    ;; (collapsible/guide)
+    [:h2 "Collapsible component"]
+    [collapsible/guide]
 
     ;; [:h2 "Applicant Information"]
     ;; (info-field/guide)

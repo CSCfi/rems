@@ -33,7 +33,7 @@ var context = {};
 var csrfToken = 'not-set';
 "]
            (include-js "/assets/jquery/jquery.min.js")
-           (include-js "/assets/popper/popper.js")
+           (include-js "/assets/popper.js/dist/umd/popper.min.js")
            (include-js "/assets/tether/dist/js/tether.min.js")
            (include-js "/assets/bootstrap/js/bootstrap.min.js")
            (include-js "/js/app.js")

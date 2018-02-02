@@ -27,14 +27,14 @@
                  [metosin/compojure-api "1.1.11" :exclusions [cheshire
                                                               com.google.code.findbugs/jsr305]]
                  [mount "0.1.11"]
-                 [org.clojure/clojurescript "1.9.671" :scope "provided"]
+                 [org.clojure/clojurescript "1.9.946" :scope "provided"]
                  [org.clojure/clojure "1.9.0"]
                  [org.clojure/core.memoize "0.5.9"]
                  [org.clojure/tools.cli "0.3.5"]
                  [org.clojure/tools.logging "0.4.0"]
                  [org.postgresql/postgresql "42.1.4"]
                  [org.webjars.bower/tether "1.4.0"]
-                 [org.webjars.bower/popper.js "1.11.1"]
+                 [org.webjars.npm/popper.js "1.13.0"]
                  [org.webjars/bootstrap "4.0.0-beta.2"]
                  [org.webjars/font-awesome "4.7.0"]
                  [org.webjars/jquery "3.2.1"]
@@ -121,7 +121,7 @@
                   :plugins [[com.jakemccrary/lein-test-refresh "0.21.1"]
                             [lein-cloverage "1.0.10"]
                             [lein-figwheel "0.5.14"]
-                            [org.clojure/clojurescript "1.9.671"]]
+                            [org.clojure/clojurescript "1.9.946"]]
 
                   :aot [rems.InvalidRequestException rems.auth.NotAuthorizedException]
 
