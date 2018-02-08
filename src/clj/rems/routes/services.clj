@@ -27,7 +27,12 @@
    :type s/Str
    :value (s/maybe s/Str)})
 
-(def Event Long)
+(def Event
+  {:userid s/Str
+   :round Long
+   :event s/Str
+   :comment (s/maybe s/Str)
+   :time DateTime})
 
 (def Application
   {:id Long
