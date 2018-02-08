@@ -106,11 +106,7 @@
    :dev           [:project/dev :profiles/dev]
    :test          [:project/dev :project/test :profiles/test]
 
-   :project/dev  {:dependencies [[clj-webdriver/clj-webdriver "0.7.2" :exclusions [commons-logging]]
-                                 [directory-naming/naming-java "0.8"]
-                                 [org.seleniumhq.selenium/selenium-server "3.0.1" :exclusions [com.google.code.gson/gson
-                                                                                               commons-logging]]
-                                 [pjstadig/humane-test-output "0.8.3"]
+   :project/dev  {:dependencies [[pjstadig/humane-test-output "0.8.3"]
                                  [binaryage/devtools "0.9.8"]
                                  [com.cemerick/piggieback "0.2.2"]
                                  [figwheel-sidecar "0.5.14"]
