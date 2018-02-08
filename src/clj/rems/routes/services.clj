@@ -1,5 +1,6 @@
 (ns rems.routes.services
   (:require [compojure.api.sweet :refer :all]
+            [compojure.api.exception :as ex]
             [rems.context :as context]
             [rems.db.applications :refer [get-draft-form-for
                                           get-form-for
@@ -9,7 +10,8 @@
             [rems.locales :as locales]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
-  (:import (org.joda.time DateTime)))
+  (:import [org.joda.time DateTime]
+           rems.auth.NotAuthorizedException))
 
 (def License
   {:id Long
@@ -99,49 +101,59 @@
       (update-in [:items] longify-keys)
       (update-in [:licenses] longify-keys)))
 
-(defapi service-routes
-  {:swagger {:ui "/swagger-ui"
-             :spec "/swagger.json"
-             :data {:info {:version "1.0.0"
-                           :title "Sample API"
-                           :description "Sample Services"}}}}
+(defn unauthorized-handler
+  [exception ex-data request]
+  (unauthorized "unauthorized"))
 
-  (context "/api" []
-           :tags ["translation"]
+(def service-routes
+  (api
+   {:exceptions {:handlers {rems.auth.NotAuthorizedException (ex/with-logging unauthorized-handler)
+                            ;; add logging to validation handlers
+                            ::ex/request-validation (ex/with-logging ex/request-validation-handler)
+                            ::ex/request-parsing (ex/with-logging ex/request-parsing-handler)
+                            ::ex/response-validation (ex/with-logging ex/response-validation-handler)}}
+    :swagger {:ui "/swagger-ui"
+              :spec "/swagger.json"
+              :data {:info {:version "1.0.0"
+                            :title "Sample API"
+                            :description "Sample Services"}}}}
 
-           (GET "/translations" []
-                :summary     "Get translations"
-                :return      GetTranslationsResponse
-                (ok locales/translations)))
+   (context "/api" []
+            :tags ["translation"]
 
-  (context "/api" []
-           :tags ["application"]
+            (GET "/translations" []
+                 :summary     "Get translations"
+                 :return      GetTranslationsResponse
+                 (ok locales/translations)))
 
-           (GET "/application/" []
-                :summary     "Get application draft by `catalogue-items`"
-                :query-params [catalogue-items :- Long]
-                :return      GetApplicationResponse
-                (let [app (make-draft-application -1 catalogue-items)]
-                  (ok (get-draft-form-for app))))
+   (context "/api" []
+            :tags ["application"]
 
-           (GET "/application/:application-id" []
-                :summary     "Get application by `application-id`"
-                :path-params [application-id :- Long]
-                :return      GetApplicationResponse
-                (binding [context/*lang* :en]
-                  (ok (get-form-for application-id))))
+            (GET "/application/" []
+                 :summary     "Get application draft by `catalogue-items`"
+                 :query-params [catalogue-items :- Long]
+                 :return      GetApplicationResponse
+                 (let [app (make-draft-application -1 catalogue-items)]
+                   (ok (get-draft-form-for app))))
 
-           (PUT "/application" []
-                :summary     "Create a new application or change an existing one"
-                :body        [request SaveApplicationRequest]
-                :return      SaveApplicationResponse
-                (ok (form/api-save (fix-keys request)))))
+            (GET "/application/:application-id" []
+                 :summary     "Get application by `application-id`"
+                 :path-params [application-id :- Long]
+                 :return      GetApplicationResponse
+                 (binding [context/*lang* :en]
+                   (ok (get-form-for application-id))))
 
-  (context "/api" []
-           :tags ["catalogue"]
+            (PUT "/application" []
+                 :summary     "Create a new application or change an existing one"
+                 :body        [request SaveApplicationRequest]
+                 :return      SaveApplicationResponse
+                 (ok (form/api-save (fix-keys request)))))
 
-           (GET "/catalogue/" []
-                :summary "Get catalogue items"
-                :return GetCatalogueResponse
-                (binding [context/*lang* :en]
-                  (ok (catalogue/get-localized-catalogue-items))))))
+   (context "/api" []
+            :tags ["catalogue"]
+
+            (GET "/catalogue/" []
+                 :summary "Get catalogue items"
+                 :return GetCatalogueResponse
+                 (binding [context/*lang* :en]
+                   (ok (catalogue/get-localized-catalogue-items)))))))
