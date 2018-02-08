@@ -14,7 +14,7 @@
            rems.auth.NotAuthorizedException))
 
 (def License
-  {:id Long
+  {:id s/Num
    :type s/Str
    :licensetype s/Str
    :title s/Str
@@ -22,7 +22,7 @@
    :approved s/Bool})
 
 (def Item
-  {:id Long
+  {:id s/Num
    :title s/Str
    :inputprompt (s/maybe s/Str)
    :optional s/Bool
@@ -31,29 +31,29 @@
 
 (def Event
   {:userid s/Str
-   :round Long
+   :round s/Num
    :event s/Str
    :comment (s/maybe s/Str)
    :time DateTime})
 
 (def Application
-  {:id Long
+  {:id s/Num
    :state s/Str
    :applicantuserid s/Str
    :start DateTime
-   :wfid Long
-   :curround Long
-   :fnlround Long
+   :wfid s/Num
+   :curround s/Num
+   :fnlround s/Num
    :events [Event]
    :can-approve? s/Bool
    :can-close? s/Bool
    :review-type (s/maybe s/Keyword)})
 
 (def CatalogueItem
-  {:id Long
+  {:id s/Num
    :title s/Str
-   :wfid Long
-   :formid Long
+   :wfid s/Num
+   :formid s/Num
    :resid s/Str
    :state s/Str
    (s/optional-key :langcode) s/Keyword
@@ -64,7 +64,7 @@
   s/Any)
 
 (def GetApplicationResponse
-  {:id Long
+  {:id s/Num
    :catalogue-items [CatalogueItem]
    :applicant-attributes (s/maybe {s/Str s/Str})
    :application (s/maybe Application)
@@ -76,8 +76,8 @@
 
 (def SaveApplicationRequest
   {:operation s/Str
-   (s/optional-key :application-id) Long
-   (s/optional-key :catalogue-items) [Long]
+   (s/optional-key :application-id) s/Num
+   (s/optional-key :catalogue-items) [s/Num]
    :items {s/Keyword s/Str}  ;; NOTE: compojure-api only supports keywords here
    (s/optional-key :licenses) {s/Keyword s/Str}  ;; NOTE: compojure-api only supports keywords here
    })
@@ -85,21 +85,12 @@
 (def SaveApplicationResponse
   {:success s/Bool
    :valid s/Bool
-   (s/optional-key :id) Long
+   (s/optional-key :id) s/Num
    (s/optional-key :state) s/Str
    (s/optional-key :validation) [ValidationError]})
 
 (def GetCatalogueResponse
   [CatalogueItem])
-
-(defn longify-keys [m]
-  (into {} (for [[k v] m]
-             [(Long/parseLong (name k)) v])))
-
-(defn fix-keys [application]
-  (-> application
-      (update-in [:items] longify-keys)
-      (update-in [:licenses] longify-keys)))
 
 (defn unauthorized-handler
   [exception ex-data request]
@@ -147,7 +138,7 @@
                  :summary     "Create a new application or change an existing one"
                  :body        [request SaveApplicationRequest]
                  :return      SaveApplicationResponse
-                 (ok (form/api-save (fix-keys request)))))
+                 (ok (form/api-save request))))
 
    (context "/api" []
             :tags ["catalogue"]
