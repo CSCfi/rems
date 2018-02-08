@@ -11,3 +11,5 @@ Guide komponentit
 Bootstrap stable
 
 CSRF token?
+
+Check that all components are responsive and work acceptably in pad or phone
