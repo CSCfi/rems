@@ -3,7 +3,7 @@
             [re-frame.core :as rf]
             [rems.collapsible :as collapsible]
             [rems.phase :refer [phases get-application-phases]]
-            [rems.text :refer [text]])
+            [rems.text :refer [text localize-state localize-event localize-time]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 ;;;; Events and actions ;;;;
@@ -14,6 +14,8 @@
    {::fetch-application [(get-in coeff [:db :user]) id]}))
 
 (defn- fetch-application [user id]
+  ;; TODO: handle errors (e.g. unauthorized)
+  (rf/dispatch [::fetch-application-result nil])
   (GET (str "/api/application/" id) {:handler #(rf/dispatch [::fetch-application-result %])
                                      :response-format :json
                                      :headers {"x-rems-user-id" (:eppn user)}
@@ -140,8 +142,7 @@
    {:id "header"
     :title [:span
             (text :t.applications/state)
-            ;; TODO: localize-state
-            (when state (list ": " state))]
+            (when state (list ": " (localize-state state)))]
     :always [:div
              [:div.mb-3 {:class (str "state-" state)} (phases (get-application-phases state))]
              (when-let [c (:comment (last events))]
@@ -154,17 +155,15 @@
                          [:tr
                           [:th (text :t.form/user)]
                           [:th (text :t.form/event)]
-                          [:th (text :t.form/commen)]
+                          [:th (text :t.form/comment)]
                           [:th (text :t.form/date)]]]
                         (into [:tbody]
                               (for [e events]
                                 [:tr
                                  [:td (:userid e)]
-                                 ;; TODO localize-event
-                                 [:td (:event e)]
+                                 [:td (localize-event (:event e))]
                                  [:td.event-comment (:comment e)]
-                                 ;; TODO localize-time
-                                 [:td (:time e)]]))])])}])
+                                 [:td (localize-time (:time e))]]))])])}])
 
 ;; Applicant info
 

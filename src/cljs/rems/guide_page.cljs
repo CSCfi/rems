@@ -79,7 +79,7 @@
     ;; (applicant-info/guide)
 
     [:h2 "Applications"]
-    (application/guide)
+    [application/guide]
 
     [:h2 "Misc components"]
     [phase/guide]

@@ -25,8 +25,7 @@
                  [luminus/ring-ttl-session "0.3.2"]
                  [macroz/hiccup-find "0.6.1" :exclusions [org.clojure/tools.reader]]
                  [markdown-clj "1.0.2"]
-                 [metosin/compojure-api "1.1.11" :exclusions [cheshire
-                                                              com.google.code.findbugs/jsr305]]
+                 [metosin/compojure-api "2.0.0-alpha18" :exclusions [potemkin cheshire com.fasterxml.jackson.core/jackson-core]]
                  [mount "0.1.11"]
                  [org.clojure/clojurescript "1.9.946" :scope "provided"]
                  [org.clojure/clojure "1.9.0"]
@@ -111,11 +110,7 @@
    :dev           [:project/dev :profiles/dev]
    :test          [:project/dev :project/test :profiles/test]
 
-   :project/dev  {:dependencies [[clj-webdriver/clj-webdriver "0.7.2" :exclusions [commons-logging]]
-                                 [directory-naming/naming-java "0.8"]
-                                 [org.seleniumhq.selenium/selenium-server "3.0.1" :exclusions [com.google.code.gson/gson
-                                                                                               commons-logging]]
-                                 [pjstadig/humane-test-output "0.8.3"]
+   :project/dev  {:dependencies [[pjstadig/humane-test-output "0.8.3"]
                                  [binaryage/devtools "0.9.8"]
                                  [com.cemerick/piggieback "0.2.2"]
                                  [figwheel-sidecar "0.5.14"]

@@ -54,4 +54,4 @@
 
 (defn localize-time [time]
   (when time
-    (format/unparse time-format time)))
+    (format/unparse time-format (format/parse time))))
