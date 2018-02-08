@@ -88,6 +88,10 @@
 (def GetCatalogueResponse
   [CatalogueItem])
 
+(def GetActionsResponse
+  {:approver? s/Bool
+   :reviewer? s/Bool})
+
 (defn longify-keys [m]
   (into {} (for [[k v] m]
              [(Long/parseLong (name k)) v])))
@@ -119,6 +123,15 @@
                 :summary     "Get current layout theme"
                 :return      GetThemeResponse
                 (ok context/*theme*)))
+
+  (context "/api" []
+           :tags ["actions"]
+
+           (GET "/actions/" []
+                :summary     "Get actions page reviewable and approvable applications"
+                :return      GetActionsResponse
+                (ok {:approver? true
+                     :reviewer? true})))
 
   (context "/api" []
            :tags ["application"]
