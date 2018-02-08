@@ -3,6 +3,38 @@
             [rems.text :refer [text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
+;; TODO compute these on the server side?
+(defn get-application-phases [state]
+  (cond (= state "rejected")
+        [{:phase :apply :completed? true :text :t.phases/apply}
+         {:phase :approve :completed? true :rejected? true :text :t.phases/approve}
+         {:phase :result :completed? true :rejected? true :text :t.phases/rejected}]
+
+        (= state "approved")
+        [{:phase :apply :completed? true :text :t.phases/apply}
+         {:phase :approve :completed? true :approved? true :text :t.phases/approve}
+         {:phase :result :completed? true :approved? true :text :t.phases/approved}]
+
+        (= state "closed")
+        [{:phase :apply :closed? true :text :t.phases/apply}
+         {:phase :approve :closed? true :text :t.phases/approve}
+         {:phase :result :closed? true :text :t.phases/approved}]
+
+        (contains? #{"draft" "returned" "withdrawn"} state)
+        [{:phase :apply :active? true :text :t.phases/apply}
+         {:phase :approve :text :t.phases/approve}
+         {:phase :result :text :t.phases/approved}]
+
+        (= "applied" state)
+        [{:phase :apply :completed? true :text :t.phases/apply}
+         {:phase :approve :active? true :text :t.phases/approve}
+         {:phase :result :text :t.phases/approved}]
+
+        :else
+        [{:phase :apply :active? true :text :t.phases/apply}
+         {:phase :approve :text :t.phases/approve}
+         {:phase :result :text :t.phases/approved}]))
+
 (defn phases
   "Component for phase progress bar.
 
