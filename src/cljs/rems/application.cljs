@@ -136,7 +136,7 @@
    [:input.form-control {:type "text" :defaultValue value :readOnly true}]])
 
 (defn- application-header [state events]
-  (collapsible/component
+  [collapsible/component
    {:id "header"
     :title [:span
             (text :t.applications/state)
@@ -164,12 +164,12 @@
                                  [:td (:event e)]
                                  [:td.event-comment (:comment e)]
                                  ;; TODO localize-time
-                                 [:td (:time e)]]))])])}))
+                                 [:td (:time e)]]))])])}])
 
 ;; Applicant info
 
 (defn applicant-info [id user-attributes]
-  (collapsible/component
+  [collapsible/component
    {:id id
     :title (str (text :t.applicant-info/applicant))
     :always [:div.row
@@ -180,7 +180,7 @@
     ;; TODO hide from reviewer
     :collapse (into [:form]
                     (for [[k v] (dissoc user-attributes :commonName :mail)]
-                      [info-field k v]))}))
+                      [info-field k v]))}])
 
 ;; Whole application
 
