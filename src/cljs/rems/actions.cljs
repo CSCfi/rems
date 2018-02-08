@@ -30,7 +30,7 @@
 
 ;; TODO not implemented
 (defn- show-throughput-times-button []
-  [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#show-throughput-times-modal"}
+  [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#show-throughput-times-modal" :disabled true}
    (text :t.actions/show-throughput-times)])
 
 (defn- report-buttons []
