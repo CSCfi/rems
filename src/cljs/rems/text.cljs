@@ -1,5 +1,7 @@
 (ns rems.text
-  (:require [re-frame.core :as rf]
+  (:require [cljs-time.core :as time]
+            [cljs-time.format :as format]
+            [re-frame.core :as rf]
             [taoensso.tempura :as tempura :refer [tr]]))
 
 (defn text
@@ -21,3 +23,35 @@
         [@language]
         [k :t/missing]
         (vec args))))
+
+(defn localize-state [state]
+  (case state
+    "draft" :t.applications.states/draft
+    "applied" :t.applications.states/applied
+    "approved" :t.applications.states/approved
+    "rejected" :t.applications.states/rejected
+    "returned" :t.applications.states/returned
+    "withdrawn" :t.applications.states/withdrawn
+    "closed" :t.applications.states/closed
+    :t.applications.states/unknown))
+
+(defn localize-event [event]
+  (case event
+    "apply" :t.applications.events/apply
+    "approve" :t.applications.events/approve
+    "autoapprove" :t.applications.events/autoapprove
+    "close" :t.applications.events/close
+    "reject" :t.applications.events/reject
+    "return" :t.applications.events/return
+    "review" :t.applications.events/review
+    "review-request" :t.applications.events/review-request
+    "withdraw" :t.applications.events/withdraw
+    "third-party-review" :t.applications.events/third-party-review
+    :t.applications.events/unknown))
+
+(def ^:private time-format
+  (format/formatter "yyyy-MM-dd HH:mm" (time/default-time-zone)))
+
+(defn localize-time [time]
+  (when time
+    (format/unparse time-format time)))
