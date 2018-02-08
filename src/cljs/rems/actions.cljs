@@ -89,7 +89,7 @@
                 [:td {:data-th (text :t.actions/application)} (:id app)]
                 [:td {:data-th (text :t.actions/resource)} (str/join ", " (map :title (:catalogue-items app)))]
                 [:td {:data-th (text :t.actions/applicant)} (:applicantuserid app)]
-                [:td {:data-th (text :t.actions/state)} (text (localize-state (:state app)))]
+                [:td {:data-th (text :t.actions/state)} (localize-state (:state app))]
                 [:td {:data-th (text :t.actions/handled)} (localize-time (:handled app))]
                 [:td.commands (view-button app)]])])])))
 
