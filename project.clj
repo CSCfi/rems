@@ -6,6 +6,7 @@
   :dependencies [[ch.qos.logback/logback-classic "1.2.3"]
                  [clj-http "3.7.0"]
                  [clj-time "0.14.2"]
+                 [com.andrewmcveigh/cljs-time "0.5.2"]
                  [cljs-ajax "0.7.3"]
                  [org.clojars.pntblnk/clj-ldap "0.0.15"]
                  [org.clojars.runa/conjure "2.2.0"]
@@ -88,23 +89,24 @@
   :profiles
   {:uberjar {:omit-source true
              :prep-tasks ["compile" ["cljsbuild" "once" "min"]]
-             :aot :all
-             :jvm-opts ["-Dclojure.compiler.elide-meta=[:doc]"]
-             :uberjar-name "rems.jar"
-             :source-paths ["env/prod/clj"]
-             :resource-paths ["env/prod/resources"]
              :cljsbuild
              {:builds
               {:min
-               {:source-paths ["src/cljc" "src/cljs" "env/prod/cljs"]
+               {:source-paths ["src/cljc" "src/cljs"]
                 :compiler
-                {:main "rems.app"
+                {:output-dir "target/cljsbuild/public/js"
                  :output-to "target/cljsbuild/public/js/app.js"
+                 :source-map "target/cljsbuild/public/js/app.js.map"
                  :optimizations :advanced
                  :pretty-print false
                  :closure-warnings
                  {:externs-validation :off :non-standard-jsdoc :off}
-                 :externs ["react/externs/react.js"]}}}}}
+                 :externs ["react/externs/react.js"]}}}}
+             :aot :all
+             :jvm-opts ["-Dclojure.compiler.elide-meta=[:doc]"]
+             :uberjar-name "rems.jar"
+             :source-paths ["env/prod/clj"]
+             :resource-paths ["env/prod/resources"]}
 
    :dev           [:project/dev :profiles/dev]
    :test          [:project/dev :project/test :profiles/test]
@@ -137,7 +139,7 @@
                   :cljsbuild
                   {:builds
                    {:dev
-                    {:source-paths ["src/cljs" "src/cljc" "env/dev/cljs"]
+                    {:source-paths ["src/cljs" "src/cljc"]
                      :figwheel {:on-jsload "rems.spa/mount-components"}
                      :compiler
                      {:main "rems.app"
@@ -147,7 +149,7 @@
                       :source-map true
                       :optimizations :none
                       :pretty-print true
-                      :preloads [re-frisk.preload]}}}}}
+                      :preloads [devtools.preload re-frisk.preload]}}}}}
    :project/test {:resource-paths ["env/test/resources"]}
    :profiles/dev {}
    :profiles/test {}})
