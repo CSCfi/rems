@@ -14,6 +14,8 @@
    {::fetch-application [(get-in coeff [:db :user]) id]}))
 
 (defn- fetch-application [user id]
+  ;; TODO: handle errors (e.g. unauthorized)
+  (rf/dispatch [::fetch-application-result nil])
   (GET (str "/api/application/" id) {:handler #(rf/dispatch [::fetch-application-result %])
                                      :response-format :json
                                      :headers {"x-rems-user-id" (:eppn user)}
