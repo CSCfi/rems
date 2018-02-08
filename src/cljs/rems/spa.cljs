@@ -6,6 +6,7 @@
             [goog.history.EventType :as HistoryEventType]
             [markdown.core :refer [md->html]]
             [ajax.core :refer [GET POST]]
+            [rems.actions :refer [actions-page fetch-actions]]
             [rems.ajax :refer [load-interceptors!]]
             [rems.application :refer [application-page fetch-application]]
             [rems.catalogue :refer [catalogue-page]]
@@ -92,6 +93,7 @@
    :catalogue catalogue-page
    :guide guide-page
    :about about-page
+   :actions actions-page
    :application application-page})
 
 (defn user-switcher [user]
@@ -143,6 +145,9 @@
 (secretary/defroute "/about" []
   (rf/dispatch [:set-active-page :about]))
 
+(secretary/defroute "/actions" []
+  (rf/dispatch [:set-active-page :actions]))
+
 (secretary/defroute "/application/:id" {id :id}
   (rf/dispatch [:rems.application/start-fetch-application id])
   (rf/dispatch [:set-active-page :application]))
@@ -174,6 +179,11 @@
                             :response-format :json
                             :keywords? true}))
 
+(defn fetch-theme []
+  (GET "/api/theme" {:handler #(rf/dispatch [:loaded-theme %])
+                     :response-format :json
+                     :keywords? true}))
+
 (defn mount-components []
   (rf/clear-subscription-cache!)
   (r/render [page] (.getElementById js/document "app")))
@@ -182,6 +192,7 @@
   (rf/dispatch-sync [:initialize-db])
   (load-interceptors!)
   (fetch-translations!)
+  (fetch-theme)
   (hook-browser-navigation!)
   (mount-components)
   (dispatch-initial-route! (.. js/window -location -href)))

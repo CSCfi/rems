@@ -63,6 +63,9 @@
 (def GetTranslationsResponse
   s/Any)
 
+(def GetThemeResponse
+  s/Any)
+
 (def GetApplicationResponse
   {:id s/Num
    :catalogue-items [CatalogueItem]
@@ -92,6 +95,10 @@
 
 (def GetCatalogueResponse
   [CatalogueItem])
+
+(def GetActionsResponse
+  {:approver? s/Bool
+   :reviewer? s/Bool})
 
 (defn longify-keys [m]
   (into {} (for [[k v] m]
@@ -126,6 +133,14 @@
                  :summary     "Get translations"
                  :return      GetTranslationsResponse
                  (ok locales/translations)))
+
+   (context "/api" []
+            :tags ["theme"]
+
+            (GET "/theme" []
+                 :summary     "Get current layout theme"
+                 :return      GetThemeResponse
+                 (ok context/*theme*)))
 
    (context "/api" []
             :tags ["application"]

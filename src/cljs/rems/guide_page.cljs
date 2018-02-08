@@ -1,5 +1,6 @@
 (ns rems.guide-page
   (:require ;; [compojure.core :refer [GET defroutes]]
+   [re-frame.core :as rf]
    [rems.actions :as actions]
    ;; [rems.applicant-info :as applicant-info]
    [rems.application :as application]
@@ -15,20 +16,22 @@
    ;; [rems.layout :as layout]
    [rems.phase :as phase]
    ;; [rems.util :as util]
-   ))
+   )
+  (:require-macros [rems.guide-macros :refer [example]]))
 
-#_(defn color-box [id hex]
-    [:div.col-md-3
-     [:row
-      [:div.col-md-6.rectangle {:class id }]
-      [:div.col-md-6.color-title hex]]])
+(defn color-box [id hex]
+  [:div.col-md-3
+   [:row
+    [:div.col-md-6.rectangle {:class id }]
+    [:div.col-md-6.color-title hex]]])
 
-#_(defn color-boxes []
+(defn color-boxes []
+  (let [theme @(rf/subscribe [:theme])]
     [:div.row
-     [color-box "color-1" (util/get-theme-attribute :color1)]
-     [color-box "color-2" (util/get-theme-attribute :color2)]
-     [color-box "color-3" (util/get-theme-attribute :color3)]
-     [color-box "color-4" (util/get-theme-attribute :color4)]])
+     [color-box "color-1" (:color1 theme)]
+     [color-box "color-2" (:color2 theme)]
+     [color-box "color-3" (:color3 theme)]
+     [color-box "color-4" (:color4 theme)]]))
 
 (defn alerts []
   [:div
@@ -46,9 +49,9 @@
    [:div.example-page
     [:h1 "Component Guide"]
 
-    ;; [:h2 "Colors"]
-    ;; (example "Brand colors" (color-boxes))
-    ;; (example "Alerts" (alerts))
+    [:h2 "Colors"]
+    (example "Brand colors" [color-boxes])
+    (example "Alerts" [alerts])
 
     ;; [:h2 "Layout components"]
     ;; (layout/guide)
