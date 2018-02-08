@@ -78,9 +78,10 @@
   {:operation s/Str
    (s/optional-key :application-id) s/Num
    (s/optional-key :catalogue-items) [s/Num]
-   :items {s/Keyword s/Str}  ;; NOTE: compojure-api only supports keywords here
-   (s/optional-key :licenses) {s/Keyword s/Str}  ;; NOTE: compojure-api only supports keywords here
-   })
+   ;; NOTE: compojure-api only supports keyword keys properly, see
+   ;; https://github.com/metosin/compojure-api/issues/341
+   :items {s/Keyword s/Str}
+   (s/optional-key :licenses) {s/Keyword s/Str}})
 
 (def SaveApplicationResponse
   {:success s/Bool
@@ -91,6 +92,15 @@
 
 (def GetCatalogueResponse
   [CatalogueItem])
+
+(defn longify-keys [m]
+  (into {} (for [[k v] m]
+             [(Long/parseLong (name k)) v])))
+
+(defn fix-keys [application]
+  (-> application
+      (update-in [:items] longify-keys)
+      (update-in [:licenses] longify-keys)))
 
 (defn unauthorized-handler
   [exception ex-data request]
@@ -138,7 +148,7 @@
                  :summary     "Create a new application or change an existing one"
                  :body        [request SaveApplicationRequest]
                  :return      SaveApplicationResponse
-                 (ok (form/api-save request))))
+                 (ok (form/api-save (fix-keys request)))))
 
    (context "/api" []
             :tags ["catalogue"]
