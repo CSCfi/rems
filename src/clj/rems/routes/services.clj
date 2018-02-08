@@ -56,6 +56,9 @@
 (def GetTranslationsResponse
   s/Any)
 
+(def GetThemeResponse
+  s/Any)
+
 (def GetApplicationResponse
   {:id Long
    :catalogue-items [CatalogueItem]
@@ -108,6 +111,14 @@
                 :summary     "Get translations"
                 :return      GetTranslationsResponse
                 (ok locales/translations)))
+
+  (context "/api" []
+           :tags ["theme"]
+
+           (GET "/theme" []
+                :summary     "Get current layout theme"
+                :return      GetThemeResponse
+                (ok context/*theme*)))
 
   (context "/api" []
            :tags ["application"]

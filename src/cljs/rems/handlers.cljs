@@ -24,6 +24,11 @@
     (assoc db :translations translations)))
 
 (reg-event-db
+  :loaded-theme
+  (fn [db [_ theme]]
+    (assoc db :theme theme)))
+
+(reg-event-db
  :set-user
  (fn [db [_ user]]
    (assoc db :user user)))
