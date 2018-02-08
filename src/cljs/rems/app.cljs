@@ -1,10 +1,7 @@
 (ns ^:figwheel-no-load rems.app
-  (:require [rems.spa :as spa]
-            [devtools.core :as devtools]))
+  (:require [rems.spa :as spa]))
 
 (enable-console-print!)
-
-(devtools/install!)
 
 (spa/init!)
 
