@@ -30,9 +30,9 @@
           [:tr
            [:th (text :t.catalogue/header)]
            [:th ""]]]
-         (for [item (sort-by #(get-catalogue-item-title % language)
+         (doall (for [item (sort-by #(get-catalogue-item-title % language)
                              (remove disabled-catalogue-item? items))]
-           [catalogue-item item language]))])
+           [catalogue-item item language])))])
 
 (defn- fetch-catalogue []
   (GET "/api/catalogue/" {:handler #(rf/dispatch [:catalogue %])

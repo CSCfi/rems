@@ -7,6 +7,7 @@
             [markdown.core :refer [md->html]]
             [ajax.core :refer [GET POST]]
             [rems.ajax :refer [load-interceptors!]]
+            [rems.actions :refer [actions-page fetch-actions]]
             [rems.application :refer [application-page fetch-application]]
             [rems.catalogue :refer [catalogue-page]]
             [rems.guide-page :refer [guide-page]]
@@ -92,6 +93,7 @@
    :catalogue catalogue-page
    :guide guide-page
    :about about-page
+   :actions actions-page
    :application application-page})
 
 (defn user-switcher [user]
@@ -142,6 +144,9 @@
 
 (secretary/defroute "/about" []
   (rf/dispatch [:set-active-page :about]))
+
+(secretary/defroute "/actions" []
+  (rf/dispatch [:set-active-page :actions]))
 
 (secretary/defroute "/application/:id" {id :id}
   (rf/dispatch [:rems.application/start-fetch-application id])

@@ -88,6 +88,10 @@
 (def GetCatalogueResponse
   [CatalogueItem])
 
+(def GetActionsResponse
+  {:approver? s/Bool
+   :reviewer? s/Bool})
+
 (defn longify-keys [m]
   (into {} (for [[k v] m]
              [(Long/parseLong (name k)) v])))
@@ -122,6 +126,12 @@
 
   (context "/api" []
            :tags ["application"]
+
+           (GET "/actions/" []
+                :summary     "Get actions page reviewable and approvable applications"
+                :return      GetActionsResponse
+                (ok {:approver? true
+                     :reviewer? true}))
 
            (GET "/application/" []
                 :summary     "Get application draft by `catalogue-items`"
