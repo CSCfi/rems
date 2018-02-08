@@ -1,6 +1,6 @@
 (ns rems.guide-page
   (:require ;; [compojure.core :refer [GET defroutes]]
-   ;; [rems.actions :as actions]
+   [rems.actions :as actions]
    ;; [rems.applicant-info :as applicant-info]
    [rems.application :as application]
    ;; [rems.auth.auth :as auth]
@@ -65,8 +65,8 @@
     ;; [:h2 "Applications list"]
     ;; (applications/guide)
 
-    ;; [:h2 "Actions list"]
-    ;; (actions/guide)
+    [:h2 "Actions list"]
+    [actions/guide]
 
     [:h2 "Collapsible component"]
     [collapsible/guide]
