@@ -174,6 +174,11 @@
                             :response-format :json
                             :keywords? true}))
 
+(defn fetch-theme []
+  (GET "/api/theme" {:handler #(rf/dispatch [:loaded-theme %])
+                     :response-format :json
+                     :keywords? true}))
+
 (defn mount-components []
   (rf/clear-subscription-cache!)
   (r/render [page] (.getElementById js/document "app")))
@@ -182,6 +187,7 @@
   (rf/dispatch-sync [:initialize-db])
   (load-interceptors!)
   (fetch-translations!)
+  (fetch-theme)
   (hook-browser-navigation!)
   (mount-components)
   (dispatch-initial-route! (.. js/window -location -href)))

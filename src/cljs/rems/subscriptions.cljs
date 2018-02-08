@@ -22,6 +22,11 @@
     (:language db)))
 
 (reg-sub
+  :theme
+  (fn [db _]
+    (:theme db)))
+
+(reg-sub
   :user
   (fn [db _]
     (:user db)))
