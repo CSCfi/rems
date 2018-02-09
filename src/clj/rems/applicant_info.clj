@@ -21,22 +21,3 @@
                 [:form
                  (for [[k v] (dissoc user-attributes "commonName" "mail")]
                    (info-field/component k v))])}))
-
-(defn guide
-  []
-  (list
-   (component-info details)
-   (example "applicant-info for applicant shows no details"
-            (binding [context/*roles* #{:applicant}]
-              (details "info1" {"eppn" "developer@uu.id"
-                                "mail" "developer@uu.id"
-                                "commonName" "Deve Loper"
-                                "organization" "Testers"
-                                "address" "Testikatu 1, 00100 Helsinki"})))
-   (example "applicant-info for approver shows attributes"
-            (binding [context/*roles* #{:approver}]
-              (details "info2" {"eppn" "developer@uu.id"
-                                "mail" "developer@uu.id"
-                                "commonName" "Deve Loper"
-                                "organization" "Testers"
-                                "address" "Testikatu 1, 00100 Helsinki"})))))
