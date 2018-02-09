@@ -233,6 +233,23 @@
 
 (defn guide []
   [:div
+   (component-info info-field)
+   (example "info-field with data"
+            [info-field "Name" "Bob Tester"])
+   (component-info applicant-info)
+   ;; TODO: fix applicant-info example when we have roles
+   (example "applicant-info for applicant shows no details"
+            [applicant-info "info1" {:eppn "developer@uu.id"
+                              :mail "developer@uu.id"
+                              :commonName "Deve Loper"
+                              :organization "Testers"
+                              :address "Testikatu 1, 00100 Helsinki"}])
+   (example "applicant-info for approver shows attributes"
+            [applicant-info "info2" {:eppn "developer@uu.id"
+                                     :mail "developer@uu.id"
+                                     :commonName "Deve Loper"
+                                     :organization "Testers"
+                                     :address "Testikatu 1, 00100 Helsinki"}])
    (component-info field)
    (example "field of type \"text\""
             [:form
