@@ -54,8 +54,6 @@
    (auth/auth-routes)))
 
 (defroutes secured-routes
-  catalogue/catalogue-routes
-  actions/actions-routes
   applications/applications-routes
   landing-page/landing-page-routes
   events/events-routes

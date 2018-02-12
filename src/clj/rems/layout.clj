@@ -1,14 +1,9 @@
 (ns rems.layout
   (:require [cheshire.core :as cheshire]
-            [hiccup.element :refer [link-to]]
             [hiccup.page :refer [html5 include-css include-js]]
-            [rems.config :refer [env]]
             [rems.context :as context]
             [rems.guide :refer :all]
             [rems.language-switcher :refer [language-switcher]]
-            [rems.roles :refer [when-role when-roles]]
-            [rems.text :refer :all]
-            [rems.util :refer [get-username]]
             [ring.util.http-response :as response]))
 
 (defn external-link []

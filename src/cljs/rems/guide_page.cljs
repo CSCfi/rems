@@ -2,7 +2,6 @@
   (:require ;; [compojure.core :refer [GET defroutes]]
    [re-frame.core :as rf]
    [rems.actions :as actions]
-   ;; [rems.applicant-info :as applicant-info]
    [rems.application :as application]
    ;; [rems.auth.auth :as auth]
    [rems.cart :as cart]
@@ -12,7 +11,6 @@
    ;; [rems.form :as form]
    ;; [rems.guide :refer :all]
    ;; [rems.home :as home]
-   ;; [rems.info-field :as info-field]
    ;; [rems.layout :as layout]
    [rems.phase :as phase]
    ;; [rems.util :as util]
@@ -73,10 +71,6 @@
 
     [:h2 "Collapsible component"]
     [collapsible/guide]
-
-    ;; [:h2 "Applicant Information"]
-    ;; (info-field/guide)
-    ;; (applicant-info/guide)
 
     [:h2 "Applications"]
     [application/guide]

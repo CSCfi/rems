@@ -3,7 +3,6 @@
             [clojure.string :as s]
             [re-frame.core :as rf]
             [rems.cart :as cart]
-            ;; [rems.form :as form]
             [rems.db.catalogue :refer [urn-catalogue-item? get-catalogue-item-title disabled-catalogue-item?]]
             [rems.guide-functions]
             [rems.text :refer [text]]
