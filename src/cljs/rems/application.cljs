@@ -1,5 +1,5 @@
 (ns rems.application
-  (:require [ajax.core :refer [GET]]
+  (:require [ajax.core :refer [GET PUT]]
             [re-frame.core :as rf]
             [rems.collapsible :as collapsible]
             [rems.phase :refer [phases get-application-phases]]
@@ -37,9 +37,13 @@
    (assoc db
           :application application
           ;; TODO: should this be here?
-          :edit-application (into {}
-                                  (for [field (:items application)]
-                                    [(:id field) (:value field)])))))
+          :edit-application
+          {:items (into {}
+                        (for [field (:items application)]
+                          [(:id field) (:value field)]))
+           :licenses (into {}
+                           (for [license (:licenses application)]
+                             [(:id license) (:approved license)]))})))
 
 (rf/reg-sub
   :edit-application
@@ -49,7 +53,43 @@
 (rf/reg-event-db
  ::set-field
  (fn [db [_ id value]]
-   (assoc-in db [:edit-application id] value)))
+   (assoc-in db [:edit-application :items id] value)))
+
+(rf/reg-event-db
+ ::set-license
+ (fn [db [_ id value]]
+   (assoc-in db [:edit-application :licenses id] value)))
+
+(rf/reg-event-db
+ ::set-field
+ (fn [db [_ id value]]
+   (assoc-in db [:edit-application :items id] value)))
+
+(defn- save-application [user application-id catalogue-items items licenses]
+  (PUT "/api/application" {:headers {"x-rems-api-key" 42
+                                     "x-rems-user-id" (:eppn user)}
+                           :format :json
+                           :params {:operation "save"
+                                    ;; TODO why do I need to send these for an existing application?
+                                    :catalogue-items catalogue-items
+                                    :application-id application-id
+                                    :items items
+                                    :licenses licenses}}))
+
+(rf/reg-event-fx
+ ::save-application
+ (fn [{:keys [db]} [_]]
+   (let [app-id (get-in db [:application :id])
+         catalogue-ids (mapv :id (get-in db [:application :catalogue-items]))
+         items (get-in db [:edit-application :items])
+         ;; TODO change api to booleans
+         licenses (into {}
+                        (for [[id checked?] (get-in db [:edit-application :licenses])
+                              :when checked?]
+                          [id "approved"]))]
+     (save-application (:user db) app-id catalogue-ids items licenses))
+   ;; TODO spinner/success/failure
+   {}))
 
 ;;;; UI components ;;;;
 
@@ -62,7 +102,7 @@
 
 (defn- get-field-value
   [id]
-  (get @(rf/subscribe [:edit-application]) id))
+  (get-in @(rf/subscribe [:edit-application]) [:items id]))
 
 (defn- id-to-name [id]
   (str "field" id))
@@ -93,23 +133,32 @@
   [:div.form-group
    [:label title]])
 
-(defn- license [id readonly approved content]
+(defn- set-license-approval
+  [id]
+  (fn [event]
+    (rf/dispatch [::set-license id (.. event -target -checked)])))
+
+(defn- get-license-approval
+  [id]
+  (get-in @(rf/subscribe [:edit-application]) [:licenses id]))
+
+(defn- license [id readonly content]
   [:div.row
    [:div.col-1
-    [:input (merge {:type "checkbox" :name (str "license" id) :defaultValue "approved"
-                    :disabled readonly}
-                   (when approved {:checked ""}))]]
+    [:input {:type "checkbox" :name (str "license" id) :disabled readonly
+             :checked (get-license-approval id)
+             :onChange (set-license-approval id)}]]
    [:div.col content]])
 
 (defn- link-license
-  [{:keys [title id textcontent approved readonly]}]
-  [license id readonly approved
+  [{:keys [title id textcontent readonly]}]
+  [license id readonly
            [:a {:href textcontent :target "_blank"}
             title " "]])
 
 (defn- text-license
   [{:keys [title id textcontent approved readonly]}]
-  [license id readonly approved
+  [license id readonly
    [:div.license-panel
     [:h6.license-title
      [:a.license-header.collapsed {:data-toggle "collapse"
@@ -135,6 +184,11 @@
                 [unsupported-field f])
     [unsupported-field f]))
 
+(defn- save-button []
+  [:button#save.btn.btn-secondary
+   {:name "save" :onClick #(rf/dispatch [::save-application])}
+   (text :t.form/save)])
+
 (defn- fields [form]
   (let [application (:application form)
         state (:state application)
@@ -155,7 +209,9 @@
           [:h4 (text :t.form/licenses)]
           (into [:div]
                 (for [l licenses]
-                  [field (assoc l :readonly readonly?)]))])]}]))
+                  [field (assoc l :readonly readonly?)]))])
+       (when-not readonly?
+         [save-button])]}]))
 
 ;; Header
 
