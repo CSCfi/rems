@@ -40,8 +40,3 @@
   :catalogue
   (fn [db _]
     (:catalogue db)))
-
-(reg-sub
-  :application
-  (fn [db _]
-    (:application db)))

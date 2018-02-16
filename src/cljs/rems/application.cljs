@@ -8,6 +8,11 @@
 
 ;;;; Events and actions ;;;;
 
+(rf/reg-sub
+  :application
+  (fn [db _]
+    (:application db)))
+
 (rf/reg-event-fx
  ::start-fetch-application
  (fn [coeff [_ id]]
@@ -29,34 +34,60 @@
 (rf/reg-event-db
  ::fetch-application-result
  (fn [db [_ application]]
-   (assoc db :application application)))
+   (assoc db
+          :application application
+          ;; TODO: should this be here?
+          :edit-application (into {}
+                                  (for [field (:items application)]
+                                    [(:id field) (:value field)])))))
+
+(rf/reg-sub
+  :edit-application
+  (fn [db _]
+    (:edit-application db)))
+
+(rf/reg-event-db
+ ::set-field
+ (fn [db [_ id value]]
+   (assoc-in db [:edit-application id] value)))
 
 ;;;; UI components ;;;;
 
 ;; Fields
 
+(defn- set-field-value
+  [id]
+  (fn [event]
+    (rf/dispatch [::set-field id (.. event -target -value)])))
+
+(defn- get-field-value
+  [id]
+  (get @(rf/subscribe [:edit-application]) id))
+
 (defn- id-to-name [id]
   (str "field" id))
 
 (defn- text-field
-  [{:keys [title id value prompt readonly optional]}]
+  [{:keys [title id prompt readonly optional]}]
   [:div.form-group.field
    [:label {:for (id-to-name id)}
     title " "
     (when optional
       (text :t.form/optional))]
    [:input.form-control {:type "text" :name (id-to-name id) :placeholder prompt
-                         :defaultValue value :readOnly readonly}]])
+                         :value (get-field-value id) :readOnly readonly
+                         :onChange (set-field-value id)}]])
 
 (defn- texta-field
-  [{:keys [title id value prompt readonly optional]}]
+  [{:keys [title id prompt readonly optional]}]
   [:div.form-group.field
    [:label {:for (id-to-name id)}
     title " "
     (when optional
       (text :t.form/optional))]
    [:textarea.form-control {:name (id-to-name id) :placeholder prompt
-                            :readOnly readonly :defaultValue value}]])
+                            :value (get-field-value id) :readOnly readonly
+                            :onChange (set-field-value id)}]])
 
 (defn- label [{title :title}]
   [:div.form-group
