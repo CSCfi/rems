@@ -65,9 +65,23 @@
  (fn [db [_ id value]]
    (assoc-in db [:edit-application :items id] value)))
 
+;; status can be :pending :saved :failed or nil
+(rf/reg-event-db
+ ::set-status
+ (fn [db [_ value]]
+   (assoc-in db [:edit-application :status] value)))
+
 (defn- save-application [user application-id catalogue-items items licenses]
   (PUT "/api/application" {:headers {"x-rems-api-key" 42
                                      "x-rems-user-id" (:eppn user)}
+                           :handler (fn [resp]
+                                      (prn :SUCCESS resp)
+                                      (if (:success resp)
+                                        (rf/dispatch [::set-status :saved])
+                                        (rf/dispatch [::set-status :failed])))
+                           :error-handler (fn [err]
+                                            (prn :FAIL err)
+                                            (rf/dispatch [::set-status :failed]))
                            :format :json
                            :params {:operation "save"
                                     ;; TODO why do I need to send these for an existing application?
@@ -87,8 +101,8 @@
                         (for [[id checked?] (get-in db [:edit-application :licenses])
                               :when checked?]
                           [id "approved"]))]
+     (rf/dispatch [::set-status :pending])
      (save-application (:user db) app-id catalogue-ids items licenses))
-   ;; TODO spinner/success/failure
    {}))
 
 ;;;; UI components ;;;;
@@ -185,9 +199,18 @@
     [unsupported-field f]))
 
 (defn- save-button []
-  [:button#save.btn.btn-secondary
-   {:name "save" :onClick #(rf/dispatch [::save-application])}
-   (text :t.form/save)])
+  (let [status (:status @(rf/subscribe [:edit-application]))]
+    [:div
+     [:button#save.btn.btn-secondary
+      {:name "save" :onClick #(rf/dispatch [::save-application])}
+      (text :t.form/save)]
+     ;; TODO nicer styling
+     ;; TODO make the spinner spin
+     [:span (case status
+              nil ""
+              :pending [:i {:class "fa fa-spinner"}]
+              :saved [:i {:class "fa fa-check-circle"}]
+              :failed [:i {:class "fa fa-times-circle"}])]]))
 
 (defn- fields [form]
   (let [application (:application form)
