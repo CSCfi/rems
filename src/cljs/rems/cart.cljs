@@ -3,7 +3,9 @@
             [re-frame.core :as re-frame]
             [rems.util :refer [select-vals]]
             [rems.db.catalogue :refer [get-catalogue-item-title]]
-            [rems.text :refer [text text-format]])
+            [rems.text :refer [text text-format]]
+            [secretary.core :as secretary]
+            [clojure.string :as str])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 ;; TODO anti-forgery when submitting
@@ -47,8 +49,14 @@
     :on-click #(re-frame/dispatch [::remove-item item])}
    (text :t.cart/remove)])
 
+(defn apply-for [items]
+  (let [url (str "/application?items=" (str/join "," (sort (map :id items))))]
+    (println url)
+    (secretary/dispatch! url)))
+
 (defn- apply-button [items]
-  [:a.btn.btn-primary {:href "TODO" #_(form/link-to-application items)} (text :t.cart/apply)])
+  [:button.btn.btn-primary {:on-click (partial apply-for items)}
+   (text :t.cart/apply)])
 
 (defn- item-view [item language & [apply-button?]]
   [:tr.cart-item {:class (if apply-button? "separator" "")}
