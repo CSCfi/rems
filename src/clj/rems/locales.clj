@@ -12,4 +12,4 @@
 (def translations
   {:en-GB (load-resource-at-compile-time "translations/en-GB.edn")
    :fi (load-resource-at-compile-time "translations/fi.edn")
-   :en :en-GB})
+   :en (load-resource-at-compile-time "translations/en-GB.edn")})
