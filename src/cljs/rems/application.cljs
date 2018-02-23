@@ -112,7 +112,7 @@
   (fn [event]
     (rf/dispatch [::set-field id (.. event -target -value)])))
 
-(defn- get-field-value
+(defn- subscribe-field-value
   [id]
   (get-in @(rf/subscribe [:edit-application]) [:items id]))
 
@@ -127,7 +127,7 @@
     (when optional
       (text :t.form/optional))]
    [:input.form-control {:type "text" :name (id-to-name id) :placeholder prompt
-                         :value (get-field-value id) :readOnly readonly
+                         :value (subscribe-field-value id) :readOnly readonly
                          :onChange (set-field-value id)}]])
 
 (defn- texta-field
@@ -138,7 +138,7 @@
     (when optional
       (text :t.form/optional))]
    [:textarea.form-control {:name (id-to-name id) :placeholder prompt
-                            :value (get-field-value id) :readOnly readonly
+                            :value (subscribe-field-value id) :readOnly readonly
                             :onChange (set-field-value id)}]])
 
 (defn- label [{title :title}]
