@@ -9,9 +9,9 @@
 ;;;; Events and actions ;;;;
 
 (rf/reg-sub
-  :application
-  (fn [db _]
-    (:application db)))
+ :application
+ (fn [db _]
+   (:application db)))
 
 (rf/reg-event-fx
  ::start-fetch-application
@@ -46,9 +46,9 @@
                              [(:id license) (:approved license)]))})))
 
 (rf/reg-sub
-  :edit-application
-  (fn [db _]
-    (:edit-application db)))
+ :edit-application
+ (fn [db _]
+   (:edit-application db)))
 
 (rf/reg-event-db
  ::set-field
@@ -167,8 +167,8 @@
 (defn- link-license
   [{:keys [title id textcontent readonly]}]
   [license id readonly
-           [:a {:href textcontent :target "_blank"}
-            title " "]])
+   [:a {:href textcontent :target "_blank"}
+    title " "]])
 
 (defn- text-license
   [{:keys [title id textcontent approved readonly]}]
@@ -350,10 +350,10 @@
    ;; TODO: fix applicant-info example when we have roles
    (example "applicant-info for applicant shows no details"
             [applicant-info "info1" {:eppn "developer@uu.id"
-                              :mail "developer@uu.id"
-                              :commonName "Deve Loper"
-                              :organization "Testers"
-                              :address "Testikatu 1, 00100 Helsinki"}])
+                                     :mail "developer@uu.id"
+                                     :commonName "Deve Loper"
+                                     :organization "Testers"
+                                     :address "Testikatu 1, 00100 Helsinki"}])
    (example "applicant-info for approver shows attributes"
             [applicant-info "info2" {:eppn "developer@uu.id"
                                      :mail "developer@uu.id"
