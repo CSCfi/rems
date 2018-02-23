@@ -75,12 +75,10 @@
   (PUT "/api/application" {:headers {"x-rems-api-key" 42
                                      "x-rems-user-id" (:eppn user)}
                            :handler (fn [resp]
-                                      (prn :SUCCESS resp)
                                       (if (:success resp)
                                         (rf/dispatch [::set-status :saved])
                                         (rf/dispatch [::set-status :failed])))
                            :error-handler (fn [err]
-                                            (prn :FAIL err)
                                             (rf/dispatch [::set-status :failed]))
                            :format :json
                            :params {:operation "save"
