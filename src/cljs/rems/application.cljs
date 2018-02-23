@@ -1,5 +1,5 @@
 (ns rems.application
-  (:require [ajax.core :refer [GET]]
+  (:require [ajax.core :refer [GET PUT]]
             [re-frame.core :as rf]
             [rems.collapsible :as collapsible]
             [rems.phase :refer [phases get-application-phases]]
@@ -7,6 +7,11 @@
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 ;;;; Events and actions ;;;;
+
+(rf/reg-sub
+ :application
+ (fn [db _]
+   (:application db)))
 
 (rf/reg-event-fx
  ::start-fetch-application
@@ -29,56 +34,143 @@
 (rf/reg-event-db
  ::fetch-application-result
  (fn [db [_ application]]
-   (assoc db :application application)))
+   (assoc db
+          :application application
+          ;; TODO: should this be here?
+          :edit-application
+          {:items (into {}
+                        (for [field (:items application)]
+                          [(:id field) (:value field)]))
+           :licenses (into {}
+                           (for [license (:licenses application)]
+                             [(:id license) (:approved license)]))})))
+
+(rf/reg-sub
+ :edit-application
+ (fn [db _]
+   (:edit-application db)))
+
+(rf/reg-event-db
+ ::set-field
+ (fn [db [_ id value]]
+   (assoc-in db [:edit-application :items id] value)))
+
+(rf/reg-event-db
+ ::set-license
+ (fn [db [_ id value]]
+   (assoc-in db [:edit-application :licenses id] value)))
+
+(rf/reg-event-db
+ ::set-field
+ (fn [db [_ id value]]
+   (assoc-in db [:edit-application :items id] value)))
+
+;; status can be :pending :saved :failed or nil
+(rf/reg-event-db
+ ::set-status
+ (fn [db [_ value]]
+   (assoc-in db [:edit-application :status] value)))
+
+(defn- save-application [user application-id catalogue-items items licenses]
+  (PUT "/api/application" {:headers {"x-rems-api-key" 42
+                                     "x-rems-user-id" (:eppn user)}
+                           :handler (fn [resp]
+                                      (if (:success resp)
+                                        (rf/dispatch [::set-status :saved])
+                                        (rf/dispatch [::set-status :failed])))
+                           :error-handler (fn [err]
+                                            (rf/dispatch [::set-status :failed]))
+                           :format :json
+                           :params {:operation "save"
+                                    ;; TODO why do I need to send these for an existing application?
+                                    :catalogue-items catalogue-items
+                                    :application-id application-id
+                                    :items items
+                                    :licenses licenses}}))
+
+(rf/reg-event-fx
+ ::save-application
+ (fn [{:keys [db]} [_]]
+   (let [app-id (get-in db [:application :id])
+         catalogue-ids (mapv :id (get-in db [:application :catalogue-items]))
+         items (get-in db [:edit-application :items])
+         ;; TODO change api to booleans
+         licenses (into {}
+                        (for [[id checked?] (get-in db [:edit-application :licenses])
+                              :when checked?]
+                          [id "approved"]))]
+     (rf/dispatch [::set-status :pending])
+     (save-application (:user db) app-id catalogue-ids items licenses))
+   db))
 
 ;;;; UI components ;;;;
 
 ;; Fields
 
+(defn- set-field-value
+  [id]
+  (fn [event]
+    (rf/dispatch [::set-field id (.. event -target -value)])))
+
+(defn- subscribe-field-value
+  [id]
+  (get-in @(rf/subscribe [:edit-application]) [:items id]))
+
 (defn- id-to-name [id]
   (str "field" id))
 
 (defn- text-field
-  [{:keys [title id value prompt readonly optional]}]
+  [{:keys [title id prompt readonly optional]}]
   [:div.form-group.field
    [:label {:for (id-to-name id)}
     title " "
     (when optional
       (text :t.form/optional))]
    [:input.form-control {:type "text" :name (id-to-name id) :placeholder prompt
-                         :defaultValue value :readOnly readonly}]])
+                         :value (subscribe-field-value id) :readOnly readonly
+                         :onChange (set-field-value id)}]])
 
 (defn- texta-field
-  [{:keys [title id value prompt readonly optional]}]
+  [{:keys [title id prompt readonly optional]}]
   [:div.form-group.field
    [:label {:for (id-to-name id)}
     title " "
     (when optional
       (text :t.form/optional))]
    [:textarea.form-control {:name (id-to-name id) :placeholder prompt
-                            :readOnly readonly :defaultValue value}]])
+                            :value (subscribe-field-value id) :readOnly readonly
+                            :onChange (set-field-value id)}]])
 
 (defn- label [{title :title}]
   [:div.form-group
    [:label title]])
 
-(defn- license [id readonly approved content]
+(defn- set-license-approval
+  [id]
+  (fn [event]
+    (rf/dispatch [::set-license id (.. event -target -checked)])))
+
+(defn- get-license-approval
+  [id]
+  (get-in @(rf/subscribe [:edit-application]) [:licenses id]))
+
+(defn- license [id readonly content]
   [:div.row
    [:div.col-1
-    [:input (merge {:type "checkbox" :name (str "license" id) :defaultValue "approved"
-                    :disabled readonly}
-                   (when approved {:checked ""}))]]
+    [:input {:type "checkbox" :name (str "license" id) :disabled readonly
+             :checked (get-license-approval id)
+             :onChange (set-license-approval id)}]]
    [:div.col content]])
 
 (defn- link-license
-  [{:keys [title id textcontent approved readonly]}]
-  [license id readonly approved
-           [:a {:href textcontent :target "_blank"}
-            title " "]])
+  [{:keys [title id textcontent readonly]}]
+  [license id readonly
+   [:a {:href textcontent :target "_blank"}
+    title " "]])
 
 (defn- text-license
   [{:keys [title id textcontent approved readonly]}]
-  [license id readonly approved
+  [license id readonly
    [:div.license-panel
     [:h6.license-title
      [:a.license-header.collapsed {:data-toggle "collapse"
@@ -104,6 +196,20 @@
                 [unsupported-field f])
     [unsupported-field f]))
 
+(defn- save-button []
+  (let [status (:status @(rf/subscribe [:edit-application]))]
+    [:div
+     [:button#save.btn.btn-secondary
+      {:name "save" :onClick #(rf/dispatch [::save-application])}
+      (text :t.form/save)]
+     ;; TODO nicer styling
+     ;; TODO make the spinner spin
+     [:span (case status
+              nil ""
+              :pending [:i {:class "fa fa-spinner"}]
+              :saved [:i {:class "fa fa-check-circle"}]
+              :failed [:i {:class "fa fa-times-circle"}])]]))
+
 (defn- fields [form]
   (let [application (:application form)
         state (:state application)
@@ -124,7 +230,9 @@
           [:h4 (text :t.form/licenses)]
           (into [:div]
                 (for [l licenses]
-                  [field (assoc l :readonly readonly?)]))])]}]))
+                  [field (assoc l :readonly readonly?)]))])
+       (when-not readonly?
+         [save-button])]}]))
 
 ;; Header
 
@@ -240,10 +348,10 @@
    ;; TODO: fix applicant-info example when we have roles
    (example "applicant-info for applicant shows no details"
             [applicant-info "info1" {:eppn "developer@uu.id"
-                              :mail "developer@uu.id"
-                              :commonName "Deve Loper"
-                              :organization "Testers"
-                              :address "Testikatu 1, 00100 Helsinki"}])
+                                     :mail "developer@uu.id"
+                                     :commonName "Deve Loper"
+                                     :organization "Testers"
+                                     :address "Testikatu 1, 00100 Helsinki"}])
    (example "applicant-info for approver shows attributes"
             [applicant-info "info2" {:eppn "developer@uu.id"
                                      :mail "developer@uu.id"
