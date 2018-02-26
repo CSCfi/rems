@@ -1,16 +1,20 @@
 (ns rems.routes.services
   (:require [compojure.api.sweet :refer :all]
+            [compojure.api.exception :as ex]
             [rems.context :as context]
             [rems.db.applications :refer [get-draft-form-for
                                           get-form-for
                                           make-draft-application]]
+            [rems.db.catalogue :as catalogue]
             [rems.form :as form]
+            [rems.locales :as locales]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
-  (:import (org.joda.time DateTime)))
+  (:import [org.joda.time DateTime]
+           rems.auth.NotAuthorizedException))
 
 (def License
-  {:id Long
+  {:id s/Num
    :type s/Str
    :licensetype s/Str
    :title s/Str
@@ -18,44 +22,55 @@
    :approved s/Bool})
 
 (def Item
-  {:id Long
+  {:id s/Num
    :title s/Str
    :inputprompt (s/maybe s/Str)
    :optional s/Bool
    :type s/Str
    :value (s/maybe s/Str)})
 
-(def Event Long)
+(def Event
+  {:userid s/Str
+   :round s/Num
+   :event s/Str
+   :comment (s/maybe s/Str)
+   :time DateTime})
 
 (def Application
-  {:id Long
+  {:id s/Num
    :state s/Str
    :applicantuserid s/Str
    :start DateTime
-   :wfid Long
-   :curround Long
-   :fnlround Long
+   :wfid s/Num
+   :curround s/Num
+   :fnlround s/Num
    :events [Event]
    :can-approve? s/Bool
    :can-close? s/Bool
    :review-type (s/maybe s/Keyword)})
 
 (def CatalogueItem
-  {:id Long
+  {:id s/Num
    :title s/Str
-   :wfid Long
-   :formid Long
+   :wfid s/Num
+   :formid s/Num
    :resid s/Str
    :state s/Str
    (s/optional-key :langcode) s/Keyword
    :localizations (s/maybe {s/Any s/Any})
    })
 
+(def GetTranslationsResponse
+  s/Any)
+
+(def GetThemeResponse
+  s/Any)
+
 (def GetApplicationResponse
-  {:id Long
+  {:id s/Num
    :catalogue-items [CatalogueItem]
    :applicant-attributes (s/maybe {s/Str s/Str})
-   :application Application
+   :application (s/maybe Application)
    :licenses [License]
    :title s/Str
    :items [Item]})
@@ -64,18 +79,26 @@
 
 (def SaveApplicationRequest
   {:operation s/Str
-   (s/optional-key :application-id) Long
-   (s/optional-key :catalogue-items) [Long]
-   :items {s/Keyword s/Str}  ;; NOTE: compojure-api only supports keywords here
-   (s/optional-key :licenses) {s/Keyword s/Str}  ;; NOTE: compojure-api only supports keywords here
-   })
+   (s/optional-key :application-id) s/Num
+   (s/optional-key :catalogue-items) [s/Num]
+   ;; NOTE: compojure-api only supports keyword keys properly, see
+   ;; https://github.com/metosin/compojure-api/issues/341
+   :items {s/Keyword s/Str}
+   (s/optional-key :licenses) {s/Keyword s/Str}})
 
 (def SaveApplicationResponse
   {:success s/Bool
    :valid s/Bool
-   (s/optional-key :id) Long
+   (s/optional-key :id) s/Num
    (s/optional-key :state) s/Str
    (s/optional-key :validation) [ValidationError]})
+
+(def GetCatalogueResponse
+  [CatalogueItem])
+
+(def GetActionsResponse
+  {:approver? s/Bool
+   :reviewer? s/Bool})
 
 (defn longify-keys [m]
   (into {} (for [[k v] m]
@@ -86,33 +109,67 @@
       (update-in [:items] longify-keys)
       (update-in [:licenses] longify-keys)))
 
-(defapi service-routes
-  {:swagger {:ui "/swagger-ui"
-             :spec "/swagger.json"
-             :data {:info {:version "1.0.0"
-                           :title "Sample API"
-                           :description "Sample Services"}}}}
+(defn unauthorized-handler
+  [exception ex-data request]
+  (unauthorized "unauthorized"))
 
-  (context "/api" []
-           :tags ["application"]
+(def service-routes
+  (api
+   {:exceptions {:handlers {rems.auth.NotAuthorizedException (ex/with-logging unauthorized-handler)
+                            ;; add logging to validation handlers
+                            ::ex/request-validation (ex/with-logging ex/request-validation-handler)
+                            ::ex/request-parsing (ex/with-logging ex/request-parsing-handler)
+                            ::ex/response-validation (ex/with-logging ex/response-validation-handler)}}
+    :swagger {:ui "/swagger-ui"
+              :spec "/swagger.json"
+              :data {:info {:version "1.0.0"
+                            :title "Sample API"
+                            :description "Sample Services"}}}}
 
-           (GET "/application/" []
-                :summary     "Get application draft by `catalogue-items`"
-                :query-params [catalogue-items :- Long]
-                :return      GetApplicationResponse
-                (let [app (make-draft-application -1 catalogue-items)]
-                  (ok (get-draft-form-for app))))
+   (context "/api" []
+            :tags ["translation"]
 
-           (GET "/application/:application-id" []
-                :summary     "Get application by `application-id`"
-                :path-params [application-id :- Long]
-                :return      GetApplicationResponse
-                (binding [context/*lang* :en]
-                  (ok (get-form-for application-id))))
+            (GET "/translations" []
+                 :summary     "Get translations"
+                 :return      GetTranslationsResponse
+                 (ok locales/translations)))
 
-           (PUT "/application" []
-                :summary     "Create a new application or change an existing one"
-                :body        [request SaveApplicationRequest]
-                :return      SaveApplicationResponse
-                (ok (form/api-save (fix-keys request))))
-           ))
+   (context "/api" []
+            :tags ["theme"]
+
+            (GET "/theme" []
+                 :summary     "Get current layout theme"
+                 :return      GetThemeResponse
+                 (ok context/*theme*)))
+
+   (context "/api" []
+            :tags ["application"]
+
+            (GET "/application/" []
+                 :summary     "Get application draft by `catalogue-items`"
+                 :query-params [catalogue-items :- Long]
+                 :return      GetApplicationResponse
+                 (let [app (make-draft-application -1 catalogue-items)]
+                   (ok (get-draft-form-for app))))
+
+            (GET "/application/:application-id" []
+                 :summary     "Get application by `application-id`"
+                 :path-params [application-id :- Long]
+                 :return      GetApplicationResponse
+                 (binding [context/*lang* :en]
+                   (ok (get-form-for application-id))))
+
+            (PUT "/application" []
+                 :summary     "Create a new application or change an existing one"
+                 :body        [request SaveApplicationRequest]
+                 :return      SaveApplicationResponse
+                 (ok (form/api-save (fix-keys request)))))
+
+   (context "/api" []
+            :tags ["catalogue"]
+
+            (GET "/catalogue/" []
+                 :summary "Get catalogue items"
+                 :return GetCatalogueResponse
+                 (binding [context/*lang* :en]
+                   (ok (catalogue/get-localized-catalogue-items)))))))

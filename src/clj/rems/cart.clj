@@ -85,27 +85,3 @@
          (apply concat
                 (for [group (vals (into (sorted-map) (group-by key-fn items)))]
                   (group-view (sort-by get-catalogue-item-title group)))))]]]))
-
-(defn guide []
-  (list
-   (component-info item-view)
-   (example "item-view, single"
-            [:table.rems-table.cart
-             (item-view {:title "Item title"} true)])
-   (example "item-view, one of many has no apply button"
-            [:table.rems-table.cart
-             (item-view {:title "Item title"})])
-   (example "group-view"
-            [:table.rems-table.cart
-             (group-view [{:title "Item title"}])])
-
-   (component-info cart-list)
-   (example "cart-list empty"
-            (cart-list []))
-   (example "cart-list with two items of different workflow"
-            (cart-list [{:title "Item title" :wfid 1} {:title "Another title" :wfid 2}]))
-   (example "cart-list with three items of same workflow and two of different"
-            (cart-list [{:title "First title" :wfid 2} {:title "Second title" :wfid 1} {:title "Third title" :wfid 1} {:title "Fourth title" :wfid 1} {:title "Fifth title" :wfid 3}]))
-   (example "cart-list with five items of same workflow but of two different forms"
-            (cart-list [{:title "First form" :wfid 1 :formid 1} {:title "Second form" :wfid 1 :formid 2} {:title "First form" :wfid 1 :formid 1} {:title "Second form" :wfid 1 :formid 2} {:title "First form" :wfid 1 :formid 1}]))
-   ))

@@ -35,27 +35,3 @@
    (header title)
    (when (or always collapse)
      (block id open? always collapse))])
-
-(defn guide
-  []
-  (list (example "collapsible closed by default"
-                 (component {:id "hello2"
-                             :title "Collapse minimized"
-                             :always [:p "I am content that is always visible"]
-                             :collapse [:p "I am content that you can hide"]}))
-        (example "collapsible expanded by default"
-                 (component {:id "hello"
-                             :open? true
-                             :title "Collapse expanded"
-                             :always [:p "I am content that is always visible"]
-                             :collapse [:p "I am content that you can hide"]}))
-        (example "collapsible without hideable content can't be opened"
-                 (component {:id "hello3"
-                             :title "Collapse without children"
-                             :always [:p "I am content that is always visible"]}))
-        (example "collapsible that opens slowly"
-                 (component {:id "hello4"
-                             :class "slow"
-                             :title "Collapse expanded"
-                             :always [:p "I am content that is always visible"]
-                             :collapse [:div (repeat 5 [:p "I am content that you can hide"])]}))))

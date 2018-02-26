@@ -57,6 +57,7 @@
             :handled-approvals "Handled applications"
             :handled-reviews "Handled reviews"
             :load-application-states "Load application states"
+            :no-handled-yet "You have not handled any applications yet."
             :not-implemented "Not implemented yet"
             :open-approvals "Open applications"
             :open-reviews "Open reviews"
