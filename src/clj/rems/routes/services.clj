@@ -143,6 +143,15 @@
                  (ok context/*theme*)))
 
    (context "/api" []
+            :tags ["actions"]
+
+            (GET "/actions/" []
+                 :summary     "Get actions page reviewable and approvable applications"
+                 :return      GetActionsResponse
+                 (ok {:approver? true
+                      :reviewer? true})))
+
+   (context "/api" []
             :tags ["application"]
 
             (GET "/application/" []
