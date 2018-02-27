@@ -5,12 +5,14 @@
             [goog.events :as events]
             [goog.history.EventType :as HistoryEventType]
             [markdown.core :refer [md->html]]
-            [ajax.core :refer [GET POST]]
+            [ajax.core :refer [GET]]
             [rems.actions :refer [actions-page fetch-actions]]
             [rems.ajax :refer [load-interceptors!]]
             [rems.application :refer [application-page fetch-application]]
             [rems.atoms :as atoms]
+            [rems.auth.auth :as auth]
             [rems.catalogue :refer [catalogue-page]]
+            [rems.config :as config]
             [rems.guide-page :refer [guide-page]]
             [rems.handlers]
             [rems.navbar :as nav]
@@ -24,22 +26,16 @@
     [:div.col-md-12
      "TODO about page in markdown"]]])
 
-(defn login []
-  [:div.m-auto.jumbotron
-   [:h2 (text :t.login/title)]
-   [:p (text :t.login/text)]
-   [atoms/link-to {} (str (:root-path nav/context) "/login") [atoms/image {:class "login-btn"} "/img/haka-logo.jpg"]]])
-
 (defn home-page []
   (if @(rf/subscribe [:user])
     [:p "Logged in."]
-    [login]))
+    [auth/login-component]))
 
 (def pages
   {:home home-page
    :catalogue catalogue-page
    :guide guide-page
-   :about about-page
+   :about about-pa
    :actions actions-page
    :application application-page})
 
@@ -120,7 +116,7 @@
                             :response-format :json
                             :keywords? true}))
 
-(defn fetch-theme []
+(defn fetch-theme! []
   (GET "/api/theme" {:handler #(rf/dispatch [:loaded-theme %])
                      :response-format :json
                      :keywords? true}))
@@ -133,7 +129,8 @@
   (rf/dispatch-sync [:initialize-db])
   (load-interceptors!)
   (fetch-translations!)
-  (fetch-theme)
+  (fetch-theme!)
+  (config/fetch-config!)
   (hook-browser-navigation!)
   (mount-components)
   (dispatch-initial-route! (.. js/window -location -href)))

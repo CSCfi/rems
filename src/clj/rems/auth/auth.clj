@@ -24,12 +24,6 @@
     :shibboleth (shibboleth/wrap-auth handler)
     (wrap-auth-default handler)))
 
-(defn login-component []
-  (case (:authentication env)
-    :shibboleth (shibboleth/login-component)
-    :fake-shibboleth (shibboleth/login-component)
-    :ldap (ldap/login-component)))
-
 (defn- login-url []
   (case (:authentication env)
     :shibboleth (shibboleth/login-url)
@@ -54,8 +48,3 @@
                        fake-shibboleth/routes
                        ldap/routes)
      :ldap ldap/routes)))
-
-(defn guide []
-  (list
-   (example "shibboleth login" (shibboleth/login-component))
-   (example "ldap login" (ldap/login-component))))

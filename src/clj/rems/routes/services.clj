@@ -1,6 +1,7 @@
 (ns rems.routes.services
   (:require [compojure.api.sweet :refer :all]
             [compojure.api.exception :as ex]
+            [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.applications :refer [get-draft-form-for
                                           get-form-for
@@ -65,6 +66,13 @@
 
 (def GetThemeResponse
   s/Any)
+
+(def ExtraPage
+  {s/Keyword s/Any})
+
+(def GetConfigResponse
+  {:authentication s/Keyword
+   :extra-pages [ExtraPage]})
 
 (def GetApplicationResponse
   {:id s/Num
@@ -141,6 +149,14 @@
                  :summary     "Get current layout theme"
                  :return      GetThemeResponse
                  (ok context/*theme*)))
+
+   (context "/api" []
+            :tags ["config"]
+
+            (GET "/config" []
+                 :summary     "Get configuration that is relevant to UI"
+                 :return      GetConfigResponse
+                 (ok {:authentication (:authentication env) :extra-pages (:extra-pages env)})))
 
    (context "/api" []
             :tags ["actions"]

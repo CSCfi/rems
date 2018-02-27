@@ -3,7 +3,7 @@
    [re-frame.core :as rf]
    [rems.actions :as actions]
    [rems.application :as application]
-   ;; [rems.auth.auth :as auth]
+   [rems.auth.auth :as auth]
    [rems.cart :as cart]
    [rems.catalogue :as catalogue]
    [rems.collapsible :as collapsible]
@@ -61,8 +61,8 @@
     [:h2 "Language switcher widget"]
     (language-switcher/guide)
 
-    ;; [:h2 "Login"]
-    ;; (auth/guide)
+    [:h2 "Login"]
+    (auth/guide)
 
     [:h2 "Catalogue components"]
     [catalogue/guide]
