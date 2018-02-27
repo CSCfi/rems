@@ -21,7 +21,6 @@
 
 (defn- fetch-application [user id]
   ;; TODO: handle errors (e.g. unauthorized)
-  (rf/dispatch [::fetch-application-result nil])
   (GET (str "/api/application/" id) {:handler #(rf/dispatch [::fetch-application-result %])
                                      :response-format :json
                                      :headers {"x-rems-user-id" (:eppn user)}
@@ -72,26 +71,28 @@
  (fn [db [_ value]]
    (assoc-in db [:edit-application :status] value)))
 
-(defn- save-application [user application-id catalogue-items items licenses]
-  (PUT "/api/application" {:headers {"x-rems-api-key" 42
-                                     "x-rems-user-id" (:eppn user)}
-                           :handler (fn [resp]
-                                      (if (:success resp)
-                                        (rf/dispatch [::set-status :saved])
-                                        (rf/dispatch [::set-status :failed])))
-                           :error-handler (fn [err]
-                                            (rf/dispatch [::set-status :failed]))
-                           :format :json
-                           :params {:operation "save"
-                                    ;; TODO why do I need to send these for an existing application?
-                                    :catalogue-items catalogue-items
-                                    :application-id application-id
-                                    :items items
-                                    :licenses licenses}}))
+(defn- save-application [command user application-id catalogue-items items licenses]
+  (PUT "/api/application/command"
+       {:headers {"x-rems-api-key" 42
+                  "x-rems-user-id" (:eppn user)}
+        :handler (fn [resp]
+                   (if (:success resp)
+                     (do (rf/dispatch [::set-status :saved])
+                         (rf/dispatch [::start-fetch-application application-id]))
+                     (rf/dispatch [::set-status :failed])))
+        :error-handler (fn [err]
+                         (rf/dispatch [::set-status :failed]))
+        :format :json
+        :params {:command command
+                 ;; TODO why do I need to send these for an existing application?
+                 :catalogue-items catalogue-items
+                 :application-id application-id
+                 :items items
+                 :licenses licenses}}))
 
 (rf/reg-event-fx
  ::save-application
- (fn [{:keys [db]} [_]]
+ (fn [{:keys [db]} [_ command]]
    (let [app-id (get-in db [:application :id])
          catalogue-ids (mapv :id (get-in db [:application :catalogue-items]))
          items (get-in db [:edit-application :items])
@@ -100,8 +101,9 @@
                         (for [[id checked?] (get-in db [:edit-application :licenses])
                               :when checked?]
                           [id "approved"]))]
+     ;; TODO disable form while saving?
      (rf/dispatch [::set-status :pending])
-     (save-application (:user db) app-id catalogue-ids items licenses))
+     (save-application command (:user db) app-id catalogue-ids items licenses))
    {}))
 
 ;;;; UI components ;;;;
@@ -197,19 +199,24 @@
                 [unsupported-field f])
     [unsupported-field f]))
 
-(defn- save-button []
+(defn- status-widget []
   (let [status (:status @(rf/subscribe [:edit-application]))]
-    [:div
-     [:button#save.btn.btn-secondary
-      {:name "save" :onClick #(rf/dispatch [::save-application])}
-      (text :t.form/save)]
-     ;; TODO nicer styling
-     ;; TODO make the spinner spin
-     [:span (case status
-              nil ""
-              :pending [:i {:class "fa fa-spinner"}]
-              :saved [:i {:class "fa fa-check-circle"}]
-              :failed [:i {:class "fa fa-times-circle"}])]]))
+    ;; TODO nicer styling
+    ;; TODO make the spinner spin
+    [:span (case status
+             nil ""
+             :pending [:i {:class "fa fa-spinner"}]
+             :saved [:i {:class "fa fa-check-circle"}]
+             :failed [:i {:class "fa fa-times-circle"}])]))
+(defn- save-button []
+  [:button#save.btn.btn-secondary
+   {:name "save" :onClick #(rf/dispatch [::save-application "save"])}
+   (text :t.form/save)])
+
+(defn- submit-button []
+  [:button#submit.btn.btn-primary
+   {:name "submit" :onClick #(rf/dispatch [::save-application "submit"])}
+   (text :t.form/submit)])
 
 (defn- fields [form]
   (let [application (:application form)
@@ -233,7 +240,10 @@
                 (for [l licenses]
                   [field (assoc l :readonly readonly?)]))])
        (when-not readonly?
-         [save-button])]}]))
+         [:div.col.commands
+          [status-widget]
+          [save-button]
+          [submit-button]])]}]))
 
 ;; Header
 

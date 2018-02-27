@@ -77,8 +77,8 @@
 
 (def ValidationError s/Str)
 
-(def SaveApplicationRequest
-  {:operation s/Str
+(def SaveApplicationCommand
+  {:command s/Str
    (s/optional-key :application-id) s/Num
    (s/optional-key :catalogue-items) [s/Num]
    ;; NOTE: compojure-api only supports keyword keys properly, see
@@ -168,9 +168,9 @@
                  (binding [context/*lang* :en]
                    (ok (get-form-for application-id))))
 
-            (PUT "/application" []
+            (PUT "/application/command" []
                  :summary     "Create a new application or change an existing one"
-                 :body        [request SaveApplicationRequest]
+                 :body        [request SaveApplicationCommand]
                  :return      SaveApplicationResponse
                  (ok (form/api-save (fix-keys request)))))
 
