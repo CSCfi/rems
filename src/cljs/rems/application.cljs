@@ -121,7 +121,8 @@
                               :when checked?]
                           [id "approved"]))]
      (rf/dispatch [::set-status :pending])
-     (save-application (:user db) app-id catalogue-ids items licenses))))
+     (save-application (:user db) app-id catalogue-ids items licenses)
+     {})))
 
 ;;;; UI components ;;;;
 
