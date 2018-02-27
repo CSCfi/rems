@@ -15,12 +15,12 @@
   "Language switcher widget"
   []
   (let [current-language @(rf/subscribe [:language])]
-    [:div.language-switcher
+    (into [:div.language-switcher]
      (for [language +languages+]
        [:form.inline
         #_(anti-forgery-field)
         [:button {:class (lang-link-classes current-language language) :type "button"
-                  :on-click #(rf/dispatch [:set-current-language language])} language]])]))
+                  :on-click #(rf/dispatch [:set-current-language language])} language]]))))
 
 (defn guide []
   [:div
