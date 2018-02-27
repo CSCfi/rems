@@ -5,14 +5,14 @@
             [goog.events :as events]
             [goog.history.EventType :as HistoryEventType]
             [markdown.core :refer [md->html]]
-            [ajax.core :refer [GET POST]]
+            [ajax.core :refer [GET]]
             [rems.actions :refer [actions-page fetch-actions]]
             [rems.ajax :refer [load-interceptors!]]
             [rems.application :refer [application-page fetch-application]]
             [rems.atoms :as atoms]
             [rems.auth.auth :as auth]
             [rems.catalogue :refer [catalogue-page]]
-            [rems.config]
+            [rems.config :as config]
             [rems.guide-page :refer [guide-page]]
             [rems.handlers]
             [rems.navbar :as nav]
@@ -35,7 +35,7 @@
   {:home home-page
    :catalogue catalogue-page
    :guide guide-page
-   :about about-page
+   :about about-pa
    :actions actions-page
    :application application-page})
 
@@ -119,11 +119,6 @@
                      :response-format :json
                      :keywords? true}))
 
-(defn fetch-config! []
-  (GET "/api/config" {:handler #(rf/dispatch [:rems.config/loaded-config %])
-                      :response-format :transit
-                      :keywords? true}))
-
 (defn mount-components []
   (rf/clear-subscription-cache!)
   (r/render [page] (.getElementById js/document "app")))
@@ -133,7 +128,7 @@
   (load-interceptors!)
   (fetch-translations!)
   (fetch-theme!)
-  (fetch-config!)
+  (config/fetch-config!)
   (hook-browser-navigation!)
   (mount-components)
   (dispatch-initial-route! (.. js/window -location -href)))
