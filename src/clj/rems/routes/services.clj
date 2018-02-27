@@ -10,8 +10,7 @@
             [rems.form :as form]
             [rems.locales :as locales]
             [ring.util.http-response :refer :all]
-            [schema.core :as s]
-            [clj-time.core :as time])
+            [schema.core :as s])
   (:import [org.joda.time DateTime]
            rems.auth.NotAuthorizedException))
 
