@@ -9,68 +9,15 @@
             [rems.actions :refer [actions-page fetch-actions]]
             [rems.ajax :refer [load-interceptors!]]
             [rems.application :refer [application-page fetch-application]]
+            [rems.atoms :as atoms]
             [rems.cart :as cart]
             [rems.catalogue :refer [catalogue-page]]
             [rems.guide-page :refer [guide-page]]
             [rems.handlers]
+            [rems.navbar :as nav]
             [rems.subscriptions]
             [rems.text :refer [text]])
   (:import goog.History))
-
-(def context {:root-path ""})
-
-(defn when-role [role & content]
-  (let [active-role (rf/subscribe [:active-role])]
-    (when (= @active-role role)
-      content)))
-
-(defn when-roles [roles & content]
-  (let [active-role (rf/subscribe [:active-role])]
-    (when (contains? roles @active-role)
-      content)))
-
-(defn link-to [opts uri title]
-  [:a (merge opts {:href uri}) title])
-
-(defn image [opts src]
-  [:img (merge opts {:src src})])
-
-(defn url-dest
-  [dest]
-  (str (:root-path context) dest))
-
-(defn nav-link [path title & [active?]]
-  [link-to {:class (str "nav-item nav-link" (if active? " active" ""))} (url-dest path) title])
-
-(defn navbar-items [e page-name user]
-  [e
-   [:div.navbar-nav.mr-auto
-    (if user
-      (list
-       (when-role :applicant
-         [nav-link "/catalogue" (text :t.navigation/catalogue) (= page-name "catalogue")])
-       (when-role :applicant
-         [nav-link "/applications" (text :t.navigation/applications) (= page-name "applications")])
-       (when-roles #{:approver :reviewer}
-         [nav-link "/approvals" (text :t.navigation/approvals) (= page-name "approvals")]))
-      [nav-link "#/" (text :t.navigation/home) (= page-name "home")])
-    [nav-link "#/about" (text :t.navigation/about) (= page-name "about")]]
-   #_(role-switcher)
-   #_(language-switcher)])
-
-(defn navbar-normal
-  [page-name user]
-  [:div.navbar-flex
-   [:nav.navbar.navbar-toggleable-sm {:role "navigation"}
-    [:button.navbar-toggler
-     {:type "button" :data-toggle "collapse" :data-target "#small-navbar"}
-     "\u2630"]
-    [navbar-items :div#big-navbar.collapse.navbar-collapse page-name user]]
-   [:div.navbar #_[user-switcher user]]])
-
-(defn navbar-small
-  [page-name user]
-  [navbar-items :div#small-navbar.collapse.navbar-collapse.collapse.hidden-md-up page-name user])
 
 (defn about-page []
   [:div.container
@@ -82,7 +29,7 @@
   [:div.m-auto.jumbotron
    [:h2 (text :t.login/title)]
    [:p (text :t.login/text)]
-   (link-to {} (str (:root-path context) "/Shibboleth.sso/Login") [image {:class "login-btn"} "/img/haka-logo.jpg"])])
+   [atoms/link-to {} (str (:root-path nav/context) "/login") [atoms/image {:class "login-btn"} "/img/haka-logo.jpg"]]])
 
 (defn home-page []
   (if @(rf/subscribe [:user])
@@ -97,14 +44,6 @@
    :actions actions-page
    :application application-page})
 
-(defn user-switcher [user]
-  (let [user (rf/subscribe [:user])]
-    (when @user
-      [:div.user.px-2.px-sm-0
-       [:i.fa.fa-user]
-       [:span.user-name (str (get-in @user "eppn") " /")]
-       [link-to {:class (str "px-0 nav-link")} (url-dest "/Shibboleth.sso/Logout?return=%2F") (text :t.navigation/logout)]])))
-
 (defn footer []
   [:footer.footer
    [:div.container [:nav.navbar [:div.navbar-text (text :t/footer)]]]])
@@ -116,12 +55,12 @@
   (let [page-id @(rf/subscribe [:page])
         content (pages page-id)
         page-name "todo"
-        user {:todo? true }]
+        user @(rf/subscribe [:user])]
     [:div
      [:div.fixed-top
       [:div.container
-       [navbar-normal page-name user]
-       [navbar-small page-name user]]]
+       [nav/navbar-normal page-name user]
+       [nav/navbar-small page-name user]]]
      [logo]
      ;;[:button {:on-click #(rf/dispatch [:set-active-page :catalogue])} "catalogue"]
      #_[:div.container message]

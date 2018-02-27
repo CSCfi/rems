@@ -3,6 +3,7 @@
             [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.collapsible :as collapsible]
+            [rems.db.catalogue :refer [get-catalogue-item-title]]
             [rems.phase :refer [phases get-application-phases]]
             [rems.text :refer [text localize-state localize-event localize-time]]
             [rems.util :refer [dispatch!]])
@@ -313,15 +314,16 @@
 ;; Whole application
 
 (defn- applied-resources [catalogue-items]
-  [collapsible/component
-   {:id "resources"
-    :open? true
-    :title (text :t.form/resources)
-    :always [:div.form-items.form-group
-             (into [:ul]
-                   (for [item catalogue-items]
-                     ^{:key (:id item)}
-                     [:li (:title item)]))]}])
+  (let [language @(rf/subscribe [:language])]
+    [collapsible/component
+     {:id "resources"
+      :open? true
+      :title (text :t.form/resources)
+      :always [:div.form-items.form-group
+               (into [:ul]
+                     (for [item catalogue-items]
+                       ^{:key (:id item)}
+                       [:li (get-catalogue-item-title item language)]))]}]))
 
 (defn- render-application [application]
   ;; TODO should rename :application

@@ -40,10 +40,11 @@
 
 (defn catalogue-page []
   (fetch-catalogue)
-  (let [catalogue @(rf/subscribe [:catalogue])]
+  (let [catalogue @(rf/subscribe [:catalogue])
+        language @(rf/subscribe [:language])]
     [:div
-     [cart/cart-list-container :en]
-     [catalogue-list catalogue :en]]))
+     [cart/cart-list-container language]
+     [catalogue-list catalogue language]]))
 
 (defn guide []
   [:div

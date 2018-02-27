@@ -11,7 +11,9 @@
    ;; [rems.form :as form]
    ;; [rems.guide :refer :all]
    ;; [rems.home :as home]
+   [rems.language-switcher :as language-switcher]
    ;; [rems.layout :as layout]
+   [rems.navbar :as nav]
    [rems.phase :as phase]
    ;; [rems.util :as util]
    )
@@ -53,6 +55,11 @@
 
     ;; [:h2 "Layout components"]
     ;; (layout/guide)
+    [:h2 "Navigation"]
+    [nav/guide]
+
+    [:h2 "Language switcher widget"]
+    (language-switcher/guide)
 
     ;; [:h2 "Login"]
     ;; (auth/guide)
