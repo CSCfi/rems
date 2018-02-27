@@ -21,7 +21,6 @@
 
 (defn- fetch-application [user id]
   ;; TODO: handle errors (e.g. unauthorized)
-  (rf/dispatch [::fetch-application-result nil])
   (GET (str "/api/application/" id) {:handler #(rf/dispatch [::fetch-application-result %])
                                      :response-format :json
                                      :headers {"x-rems-user-id" (:eppn user)}
@@ -102,6 +101,7 @@
                         (for [[id checked?] (get-in db [:edit-application :licenses])
                               :when checked?]
                           [id "approved"]))]
+     ;; TODO disable form while saving?
      (rf/dispatch [::set-status :pending])
      (save-application command (:user db) app-id catalogue-ids items licenses))
    {}))
@@ -241,9 +241,9 @@
                   [field (assoc l :readonly readonly?)]))])
        (when-not readonly?
          [:div.col.commands
+          [status-widget]
           [save-button]
-          [submit-button]
-          [status-widget]])]}]))
+          [submit-button]])]}]))
 
 ;; Header
 
