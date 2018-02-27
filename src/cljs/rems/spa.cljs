@@ -35,7 +35,7 @@
   {:home home-page
    :catalogue catalogue-page
    :guide guide-page
-   :about about-pa
+   :about about-page
    :actions actions-page
    :application application-page})
 
