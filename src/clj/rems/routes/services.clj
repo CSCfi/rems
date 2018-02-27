@@ -174,14 +174,14 @@
 
      (GET "/application/" []
        :summary     "Get application draft by `catalogue-items`"
-       :query-params [catalogue-items :- Long]
+       :query-params [catalogue-items :- [s/Num]]
        :return      GetApplicationResponse
        (let [app (make-draft-application -1 catalogue-items)]
          (ok (get-draft-form-for app))))
 
      (GET "/application/:application-id" []
        :summary     "Get application by `application-id`"
-       :path-params [application-id :- Long]
+       :path-params [application-id :- s/Num]
        :return      GetApplicationResponse
        (binding [context/*lang* :en]
          (ok (get-form-for application-id))))
