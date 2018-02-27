@@ -9,6 +9,7 @@
             [rems.actions :refer [actions-page fetch-actions]]
             [rems.ajax :refer [load-interceptors!]]
             [rems.application :refer [application-page fetch-application]]
+            [rems.cart :as cart]
             [rems.catalogue :refer [catalogue-page]]
             [rems.guide-page :refer [guide-page]]
             [rems.handlers]
@@ -150,6 +151,10 @@
 
 (secretary/defroute "/application/:id" {id :id}
   (rf/dispatch [:rems.application/start-fetch-application id])
+  (rf/dispatch [:set-active-page :application]))
+
+(secretary/defroute "/application" {{items :items} :query-params}
+  (rf/dispatch [:rems.application/start-new-application (cart/parse-items items)])
   (rf/dispatch [:set-active-page :application]))
 
 

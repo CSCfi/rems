@@ -1,11 +1,12 @@
 (ns rems.cart
-  (:require #_[rems.form :as form]
+  (:require [cljs.tools.reader.edn :as edn]
+            [clojure.string :as str]
             [re-frame.core :as re-frame]
-            [rems.util :refer [select-vals]]
+            [rems.application :as application]
             [rems.db.catalogue :refer [get-catalogue-item-title]]
             [rems.text :refer [text text-format]]
-            [secretary.core :as secretary]
-            [clojure.string :as str])
+            [rems.util :refer [select-vals]]
+            [secretary.core :as secretary])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 ;; TODO anti-forgery when submitting
@@ -49,13 +50,13 @@
     :on-click #(re-frame/dispatch [::remove-item item])}
    (text :t.cart/remove)])
 
-(defn apply-for [items]
-  (let [url (str "/application?items=" (str/join "," (sort (map :id items))))]
-    (println url)
-    (secretary/dispatch! url)))
+;; TODO make util for other pages to use?
+(defn parse-items [items-string]
+  (->> (str/split items-string #",")
+       (mapv edn/read-string)))
 
 (defn- apply-button [items]
-  [:button.btn.btn-primary {:on-click (partial apply-for items)}
+  [:button.btn.btn-primary {:on-click (partial application/apply-for items)}
    (text :t.cart/apply)])
 
 (defn- item-view [item language & [apply-button?]]

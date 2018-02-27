@@ -9,7 +9,8 @@
             [rems.form :as form]
             [rems.locales :as locales]
             [ring.util.http-response :refer :all]
-            [schema.core :as s])
+            [schema.core :as s]
+            [clj-time.core :as time])
   (:import [org.joda.time DateTime]
            rems.auth.NotAuthorizedException))
 
@@ -36,19 +37,6 @@
    :comment (s/maybe s/Str)
    :time DateTime})
 
-(def Application
-  {:id s/Num
-   :state s/Str
-   :applicantuserid s/Str
-   :start DateTime
-   :wfid s/Num
-   :curround s/Num
-   :fnlround s/Num
-   :events [Event]
-   :can-approve? s/Bool
-   :can-close? s/Bool
-   :review-type (s/maybe s/Keyword)})
-
 (def CatalogueItem
   {:id s/Num
    :title s/Str
@@ -59,6 +47,21 @@
    (s/optional-key :langcode) s/Keyword
    :localizations (s/maybe {s/Any s/Any})
    })
+
+(def Application
+  {:id s/Num
+   :formid s/Num
+   :state s/Str
+   :applicantuserid s/Str
+   (s/optional-key :start) DateTime ;; does not exist for draft
+   :wfid s/Num
+   (s/optional-key :curround) s/Num ;; does not exist for draft
+   (s/optional-key :fnlround) s/Num ;; does not exist for draft
+   :events [Event]
+   :can-approve? s/Bool
+   :can-close? s/Bool
+   :catalogue-items [CatalogueItem]
+   :review-type (s/maybe s/Keyword)})
 
 (def GetTranslationsResponse
   s/Any)
@@ -127,58 +130,58 @@
                             :description "Sample Services"}}}}
 
    (context "/api" []
-            :tags ["translation"]
+     :tags ["translation"]
 
-            (GET "/translations" []
-                 :summary     "Get translations"
-                 :return      GetTranslationsResponse
-                 (ok locales/translations)))
-
-   (context "/api" []
-            :tags ["theme"]
-
-            (GET "/theme" []
-                 :summary     "Get current layout theme"
-                 :return      GetThemeResponse
-                 (ok context/*theme*)))
+     (GET "/translations" []
+       :summary     "Get translations"
+       :return      GetTranslationsResponse
+       (ok locales/translations)))
 
    (context "/api" []
-            :tags ["actions"]
+     :tags ["theme"]
 
-            (GET "/actions/" []
-                 :summary     "Get actions page reviewable and approvable applications"
-                 :return      GetActionsResponse
-                 (ok {:approver? true
-                      :reviewer? true})))
-
-   (context "/api" []
-            :tags ["application"]
-
-            (GET "/application/" []
-                 :summary     "Get application draft by `catalogue-items`"
-                 :query-params [catalogue-items :- Long]
-                 :return      GetApplicationResponse
-                 (let [app (make-draft-application -1 catalogue-items)]
-                   (ok (get-draft-form-for app))))
-
-            (GET "/application/:application-id" []
-                 :summary     "Get application by `application-id`"
-                 :path-params [application-id :- Long]
-                 :return      GetApplicationResponse
-                 (binding [context/*lang* :en]
-                   (ok (get-form-for application-id))))
-
-            (PUT "/application" []
-                 :summary     "Create a new application or change an existing one"
-                 :body        [request SaveApplicationRequest]
-                 :return      SaveApplicationResponse
-                 (ok (form/api-save (fix-keys request)))))
+     (GET "/theme" []
+       :summary     "Get current layout theme"
+       :return      GetThemeResponse
+       (ok context/*theme*)))
 
    (context "/api" []
-            :tags ["catalogue"]
+     :tags ["actions"]
 
-            (GET "/catalogue/" []
-                 :summary "Get catalogue items"
-                 :return GetCatalogueResponse
-                 (binding [context/*lang* :en]
-                   (ok (catalogue/get-localized-catalogue-items)))))))
+     (GET "/actions/" []
+       :summary     "Get actions page reviewable and approvable applications"
+       :return      GetActionsResponse
+       (ok {:approver? true
+            :reviewer? true})))
+
+   (context "/api" []
+     :tags ["application"]
+
+     (GET "/application/" []
+       :summary     "Get application draft by `catalogue-items`."
+       :query-params [catalogue-items :- [s/Num]]
+       :return      GetApplicationResponse
+       (let [app (make-draft-application -1 catalogue-items)]
+         (ok (get-draft-form-for app))))
+
+     (GET "/application/:application-id" []
+       :summary     "Get application by `application-id`"
+       :path-params [application-id :- s/Num]
+       :return      GetApplicationResponse
+       (binding [context/*lang* :en]
+         (ok (get-form-for application-id))))
+
+     (PUT "/application" []
+       :summary     "Create a new application or change an existing one"
+       :body        [request SaveApplicationRequest]
+       :return      SaveApplicationResponse
+       (ok (form/api-save (fix-keys request)))))
+
+   (context "/api" []
+     :tags ["catalogue"]
+
+     (GET "/catalogue/" []
+       :summary "Get catalogue items"
+       :return GetCatalogueResponse
+       (binding [context/*lang* :en]
+         (ok (catalogue/get-localized-catalogue-items)))))))

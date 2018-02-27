@@ -1,9 +1,11 @@
 (ns rems.application
   (:require [ajax.core :refer [GET PUT]]
+            [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.collapsible :as collapsible]
             [rems.phase :refer [phases get-application-phases]]
-            [rems.text :refer [text localize-state localize-event localize-time]])
+            [rems.text :refer [text localize-state localize-event localize-time]]
+            [rems.util :refer [dispatch!]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 ;;;; Events and actions ;;;;
@@ -15,8 +17,13 @@
 
 (rf/reg-event-fx
  ::start-fetch-application
- (fn [coeff [_ id]]
-   {::fetch-application [(get-in coeff [:db :user]) id]}))
+ (fn [cofx [_ id]]
+   {::fetch-application [(get-in cofx [:db :user]) id]}))
+
+(rf/reg-event-fx
+ ::start-new-application
+ (fn [cofx [_ items]]
+   {::fetch-draft-application items}))
 
 (defn- fetch-application [user id]
   ;; TODO: handle errors (e.g. unauthorized)
@@ -26,10 +33,24 @@
                                      :headers {"x-rems-user-id" (:eppn user)}
                                      :keywords? true}))
 
+(defn- fetch-draft-application [items]
+  ;; TODO: handle errors (e.g. unauthorized)
+  (rf/dispatch [::fetch-application-result nil])
+  (GET (str "/api/application/") {:handler #(rf/dispatch [::fetch-application-result %])
+                                  :params {:catalogue-items items}
+                                  :response-format :json
+                                  :headers {"x-rems-user-id" (:eppn user)}
+                                  :keywords? true}))
+
 (rf/reg-fx
  ::fetch-application
  (fn [[user id]]
    (fetch-application user id)))
+
+(rf/reg-fx
+ ::fetch-draft-application
+ (fn [[items]]
+   (fetch-draft-application items)))
 
 (rf/reg-event-db
  ::fetch-application-result
@@ -100,8 +121,7 @@
                               :when checked?]
                           [id "approved"]))]
      (rf/dispatch [::set-status :pending])
-     (save-application (:user db) app-id catalogue-ids items licenses))
-   {}))
+     (save-application (:user db) app-id catalogue-ids items licenses))))
 
 ;;;; UI components ;;;;
 
@@ -323,6 +343,7 @@
 (defn- show-application []
   (if-let [application @(rf/subscribe [:application])]
     [render-application application]
+    ;; TODO replace with spinner or localize?
     [:p "No application loaded"]))
 
 (defn application-page []
@@ -415,3 +436,9 @@
                          {:type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
                           :approved true}]
               :comments [{:comment "a comment"}]}])])
+
+;;;; Routes and route helpers ;;;;
+
+(defn apply-for [items]
+  (let [url (str "#/application?items=" (str/join "," (sort (map :id items))))]
+    (dispatch! url)))

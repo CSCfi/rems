@@ -22,3 +22,8 @@
          (group-by (first ks))
          (map (fn [[k v]] [k (index-by (rest ks) v)]))
          (into {}))))
+
+(defn dispatch!
+  "Dispatches to the given url."
+  [url]
+  (set! (.-location js/window) url))
