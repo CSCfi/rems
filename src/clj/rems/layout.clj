@@ -3,7 +3,6 @@
             [hiccup.page :refer [html5 include-css include-js]]
             [rems.context :as context]
             [rems.guide :refer :all]
-            [rems.language-switcher :refer [language-switcher]]
             [ring.util.http-response :as response]))
 
 (defn external-link []
@@ -81,11 +80,6 @@ var csrfToken = 'not-set';
   "Component guide fragment"
   []
   (list
-
-   (component-info language-switcher)
-   (example "language-switcher"
-            (language-switcher))
-
    (component-info error-content)
    (example "error-content"
             (error-content {:status 123 :title "Error title" :message "Error message"}))))

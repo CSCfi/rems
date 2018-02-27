@@ -12,6 +12,7 @@
             [rems.catalogue :refer [catalogue-page]]
             [rems.guide-page :refer [guide-page]]
             [rems.handlers]
+            [rems.language-switcher :refer [language-switcher]]
             [rems.subscriptions]
             [rems.text :refer [text]])
   (:import goog.History))
@@ -54,8 +55,7 @@
          [nav-link "/approvals" (text :t.navigation/approvals) (= page-name "approvals")]))
       [nav-link "#/" (text :t.navigation/home) (= page-name "home")])
     [nav-link "#/about" (text :t.navigation/about) (= page-name "about")]]
-   #_(role-switcher)
-   #_(language-switcher)])
+   (language-switcher)])
 
 (defn navbar-normal
   [page-name user]
@@ -64,8 +64,7 @@
     [:button.navbar-toggler
      {:type "button" :data-toggle "collapse" :data-target "#small-navbar"}
      "\u2630"]
-    [navbar-items :div#big-navbar.collapse.navbar-collapse page-name user]]
-   [:div.navbar #_[user-switcher user]]])
+    [navbar-items :div#big-navbar.collapse.navbar-collapse page-name user]]])
 
 (defn navbar-small
   [page-name user]

@@ -50,7 +50,6 @@
 (defn public-routes []
   (routes
    home/home-routes
-   language-switcher/switcher-routes
    (auth/auth-routes)))
 
 (defroutes secured-routes

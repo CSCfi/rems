@@ -37,3 +37,8 @@
  :catalogue
  (fn [db [_ catalogue]]
    (assoc db :catalogue catalogue)))
+
+(reg-event-db
+ :set-current-language
+ (fn [db [_ language]]
+   (assoc db :language language)))

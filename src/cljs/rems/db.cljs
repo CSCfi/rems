@@ -2,7 +2,7 @@
 
 (def default-db
   {:page :home
-   :language :en-GB
+   :language :en
    :translations {}
    :active-role nil
    :user nil})
