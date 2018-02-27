@@ -11,6 +11,7 @@
             [rems.application :refer [application-page fetch-application]]
             [rems.atoms :as atoms]
             [rems.catalogue :refer [catalogue-page]]
+            [rems.config]
             [rems.guide-page :refer [guide-page]]
             [rems.handlers]
             [rems.navbar :as nav]
@@ -118,10 +119,15 @@
                             :response-format :json
                             :keywords? true}))
 
-(defn fetch-theme []
+(defn fetch-theme! []
   (GET "/api/theme" {:handler #(rf/dispatch [:loaded-theme %])
                      :response-format :json
                      :keywords? true}))
+
+(defn fetch-config! []
+  (GET "/api/config" {:handler #(rf/dispatch [:rems.config/loaded-config %])
+                      :response-format :json
+                      :keywords? true}))
 
 (defn mount-components []
   (rf/clear-subscription-cache!)
@@ -131,7 +137,8 @@
   (rf/dispatch-sync [:initialize-db])
   (load-interceptors!)
   (fetch-translations!)
-  (fetch-theme)
+  (fetch-theme!)
+  (fetch-config!)
   (hook-browser-navigation!)
   (mount-components)
   (dispatch-initial-route! (.. js/window -location -href)))
