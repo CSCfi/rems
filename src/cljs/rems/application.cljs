@@ -73,21 +73,22 @@
    (assoc-in db [:edit-application :status] value)))
 
 (defn- save-application [user application-id catalogue-items items licenses]
-  (PUT "/api/application" {:headers {"x-rems-api-key" 42
-                                     "x-rems-user-id" (:eppn user)}
-                           :handler (fn [resp]
-                                      (if (:success resp)
-                                        (rf/dispatch [::set-status :saved])
-                                        (rf/dispatch [::set-status :failed])))
-                           :error-handler (fn [err]
-                                            (rf/dispatch [::set-status :failed]))
-                           :format :json
-                           :params {:operation "save"
-                                    ;; TODO why do I need to send these for an existing application?
-                                    :catalogue-items catalogue-items
-                                    :application-id application-id
-                                    :items items
-                                    :licenses licenses}}))
+  (PUT "/api/application/command"
+       {:headers {"x-rems-api-key" 42
+                  "x-rems-user-id" (:eppn user)}
+        :handler (fn [resp]
+                   (if (:success resp)
+                     (rf/dispatch [::set-status :saved])
+                     (rf/dispatch [::set-status :failed])))
+        :error-handler (fn [err]
+                         (rf/dispatch [::set-status :failed]))
+        :format :json
+        :params {:command "save"
+                 ;; TODO why do I need to send these for an existing application?
+                 :catalogue-items catalogue-items
+                 :application-id application-id
+                 :items items
+                 :licenses licenses}}))
 
 (rf/reg-event-fx
  ::save-application
