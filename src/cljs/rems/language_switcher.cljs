@@ -1,5 +1,6 @@
 (ns rems.language-switcher
-  (:require [re-frame.core :as rf])
+  (:require [re-frame.core :as rf]
+            [rems.guide-functions])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 ;; languages to switch between hardcoded for now
