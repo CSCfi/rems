@@ -43,9 +43,9 @@
         user-id "alice"
         catid 2]
     (testing "saving"
-      (let [response (-> (request :put (str "/api/application"))
+      (let [response (-> (request :put (str "/api/application/command"))
                          (authenticate api-key user-id)
-                         (json {:operation "save"
+                         (json {:command "save"
                                 :catalogue-items [catid]
                                 :items {1 "REST-Test"}})
                          app)
@@ -70,10 +70,10 @@
             (is (= 2 (count (:licenses application))))
             (is (= 3 (count (:items application))))
             ))
-        (testing "sending"
-          (let [response (-> (request :put (str "/api/application"))
+        (testing "submitting"
+          (let [response (-> (request :put (str "/api/application/command"))
                              (authenticate api-key user-id)
-                             (json {:operation "send"
+                             (json {:command "submit"
                                     :application-id application-id
                                     :catalogue-items [catid]
                                     :items {1 "REST-Test"

@@ -89,6 +89,8 @@
   (rf/dispatch [:set-active-page :actions]))
 
 (secretary/defroute "/application/:id" {id :id}
+  ;; TODO: a bit hacky:
+  (rf/dispatch [:rems.application/fetch-application-result nil])
   (rf/dispatch [:rems.application/start-fetch-application id])
   (rf/dispatch [:set-active-page :application]))
 

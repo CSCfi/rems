@@ -341,10 +341,10 @@
       )))
 
 (defn api-save [request]
-  (let [{:keys [application-id items licenses operation]} request
+  (let [{:keys [application-id items licenses command]} request
         catalogue-item-ids (:catalogue-items request)
         application (make-draft-application -1 catalogue-item-ids)
-        items (if (= operation "send") (assoc items "submit" true) items)
+        items (if (= command "submit") (assoc items "submit" true) items)
         db-application-id (if (draft? application-id)
                             (create-new-draft (getx application :wfid))
                             application-id)

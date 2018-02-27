@@ -80,8 +80,8 @@
 
 (def ValidationError s/Str)
 
-(def SaveApplicationRequest
-  {:operation s/Str
+(def SaveApplicationCommand
+  {:command s/Str
    (s/optional-key :application-id) s/Num
    (s/optional-key :catalogue-items) [s/Num]
    ;; NOTE: compojure-api only supports keyword keys properly, see
@@ -158,22 +158,22 @@
      :tags ["application"]
 
      (GET "/application/" []
-       :summary     "Get application draft by `catalogue-items`."
-       :query-params [catalogue-items :- [s/Num]]
+       :summary     "Get application draft by `catalogue-items`"
+       :query-params [catalogue-items :- Long]
        :return      GetApplicationResponse
        (let [app (make-draft-application -1 catalogue-items)]
          (ok (get-draft-form-for app))))
 
      (GET "/application/:application-id" []
        :summary     "Get application by `application-id`"
-       :path-params [application-id :- s/Num]
+       :path-params [application-id :- Long]
        :return      GetApplicationResponse
        (binding [context/*lang* :en]
          (ok (get-form-for application-id))))
 
-     (PUT "/application" []
+     (PUT "/application/command" []
        :summary     "Create a new application or change an existing one"
-       :body        [request SaveApplicationRequest]
+       :body        [request SaveApplicationCommand]
        :return      SaveApplicationResponse
        (ok (form/api-save (fix-keys request)))))
 
