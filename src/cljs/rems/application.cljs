@@ -17,13 +17,13 @@
 
 (rf/reg-event-fx
  ::start-fetch-application
- (fn [cofx [_ id]]
-   {::fetch-application [(get-in cofx [:db :user]) id]}))
+ (fn [{:keys [db]} [_ id]]
+   {::fetch-application [(:user db) id]}))
 
 (rf/reg-event-fx
  ::start-new-application
- (fn [cofx [_ items]]
-   {::fetch-draft-application items}))
+ (fn [{:keys [db]} [_ items]]
+   {::fetch-draft-application [(:user db) items]}))
 
 (defn- fetch-application [user id]
   ;; TODO: handle errors (e.g. unauthorized)
@@ -33,7 +33,7 @@
                                      :headers {"x-rems-user-id" (:eppn user)}
                                      :keywords? true}))
 
-(defn- fetch-draft-application [items]
+(defn- fetch-draft-application [user items]
   ;; TODO: handle errors (e.g. unauthorized)
   (rf/dispatch [::fetch-application-result nil])
   (GET (str "/api/application/") {:handler #(rf/dispatch [::fetch-application-result %])
@@ -49,8 +49,8 @@
 
 (rf/reg-fx
  ::fetch-draft-application
- (fn [[items]]
-   (fetch-draft-application items)))
+ (fn [[user items]]
+   (fetch-draft-application user items)))
 
 (rf/reg-event-db
  ::fetch-application-result
