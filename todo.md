@@ -9,8 +9,6 @@ Move subscriptions from subscriptions.cljs to appropriate files
 
 Applications page
 
-Auth ui components
-
 Tests
 
 Redirect (away from home page when logged in)

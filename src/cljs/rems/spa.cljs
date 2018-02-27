@@ -10,6 +10,7 @@
             [rems.ajax :refer [load-interceptors!]]
             [rems.application :refer [application-page fetch-application]]
             [rems.atoms :as atoms]
+            [rems.auth.auth :as auth]
             [rems.catalogue :refer [catalogue-page]]
             [rems.config]
             [rems.guide-page :refer [guide-page]]
@@ -25,16 +26,10 @@
     [:div.col-md-12
      "TODO about page in markdown"]]])
 
-(defn login []
-  [:div.m-auto.jumbotron
-   [:h2 (text :t.login/title)]
-   [:p (text :t.login/text)]
-   [atoms/link-to {} (str (:root-path nav/context) "/login") [atoms/image {:class "login-btn"} "/img/haka-logo.jpg"]]])
-
 (defn home-page []
   (if @(rf/subscribe [:user])
     [:p "Logged in."]
-    [login]))
+    [auth/login-component]))
 
 (def pages
   {:home home-page
@@ -126,7 +121,7 @@
 
 (defn fetch-config! []
   (GET "/api/config" {:handler #(rf/dispatch [:rems.config/loaded-config %])
-                      :response-format :json
+                      :response-format :transit
                       :keywords? true}))
 
 (defn mount-components []
