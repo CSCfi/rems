@@ -95,6 +95,7 @@
   (rf/dispatch [:set-active-page :application]))
 
 (secretary/defroute "/application" {{items :items} :query-params}
+  (rf/dispatch [:rems.application/fetch-application-result nil])
   (rf/dispatch [:rems.application/start-new-application (cart/parse-items items)])
   (rf/dispatch [:set-active-page :application]))
 

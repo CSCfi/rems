@@ -35,7 +35,6 @@
 
 (defn- fetch-draft-application [user items]
   ;; TODO: handle errors (e.g. unauthorized)
-  (rf/dispatch [::fetch-application-result nil])
   (GET (str "/api/application/") {:handler #(rf/dispatch [::fetch-application-result %])
                                   :params {:catalogue-items items}
                                   :response-format :json
