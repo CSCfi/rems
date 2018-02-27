@@ -1,6 +1,14 @@
 # Server Installation and Update
 
-If you are feeling anxious about issuing the commands, you can check the changes beforehand with a dry run by appending `--diff --check` at the end of the ansible commands.
+## Ansible
+
+The tool this project uses to automate installation and deployment is
+Ansible. You can find the ansible configuration and playbooks in the
+[ansible directory](../ansible/).
+
+If you are feeling anxious about issuing the commands, you can check
+the changes beforehand with a dry run by appending `--diff --check` at
+the end of the ansible commands.
 
 Common additional arguments:
 
@@ -10,6 +18,17 @@ Common additional arguments:
   * adding it to your `ssh-agent`
 2. To use an inventory instead the default one add `-i <inventory-name>` command line flag
 3. Run `ansible -m ping all` to check you can reach the host
+
+## Creating a virtual machine in OpenStack
+
+(Optional)
+
+1. Make sure you have a value set for at least these
+  * rems_secgroup_rules (json list of security group rules for Heat)
+  * stack_name (the name of the Heat stack for REMS)
+2. Source an openrc file to get credentials to OpenStack to your shell environment
+3. Run `ansible-playbook -i <inventory-name> heat_deploy.yml` if you have set stack_name in a vars file
+4. Run `ansible-playbook -i <inventory-name> heat_deploy.yml -e "stack_name=<your-stack-name>"` otherwise
 
 ## Preinstall step
 

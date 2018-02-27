@@ -4,6 +4,7 @@ dist: trusty
 branches:
   only:
     - master
+    - spa
 cache:
   directories:
     - $HOME/.m2

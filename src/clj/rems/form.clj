@@ -80,7 +80,7 @@
   [{title :title id :id textcontent :textcontent approved :approved readonly :readonly}]
   (license id readonly approved
            [:a {:href textcontent :target "_blank"}
-            title " " (layout/external-link)]))
+            title " " #_(layout/external-link)]))
 
 (defn- text-license
   [{title :title id :id textcontent :textcontent approved :approved readonly :readonly}]
@@ -197,13 +197,13 @@
 
 (defn- disabled-items-warning [items]
   (when-some [items (seq (filter disabled-catalogue-item? items))]
-    (layout/flash-message
-     {:status :failure
-      :contents [:div
-                 (text :t.form/alert-disabled-items)
-                 [:ul
-                  (for [item items]
-                    [:li (:title item)])]]})))
+    #_(layout/flash-message
+       {:status :failure
+        :contents [:div
+                   (text :t.form/alert-disabled-items)
+                   [:ul
+                    (for [item items]
+                      [:li (:title item)])]]})))
 
 
 (defn- form [form]
@@ -341,10 +341,10 @@
       )))
 
 (defn api-save [request]
-  (let [{:keys [application-id items licenses operation]} request
+  (let [{:keys [application-id items licenses command]} request
         catalogue-item-ids (:catalogue-items request)
         application (make-draft-application -1 catalogue-item-ids)
-        items (if (= operation "send") (assoc items "submit" true) items)
+        items (if (= command "submit") (assoc items "submit" true) items)
         db-application-id (if (draft? application-id)
                             (create-new-draft (getx application :wfid))
                             application-id)
