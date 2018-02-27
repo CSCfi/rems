@@ -70,10 +70,10 @@
             (is (= 2 (count (:licenses application))))
             (is (= 3 (count (:items application))))
             ))
-        (testing "sending"
+        (testing "submitting"
           (let [response (-> (request :put (str "/api/application/command"))
                              (authenticate api-key user-id)
-                             (json {:command "send"
+                             (json {:command "submit"
                                     :application-id application-id
                                     :catalogue-items [catid]
                                     :items {1 "REST-Test"
