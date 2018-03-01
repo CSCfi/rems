@@ -401,7 +401,7 @@
                                     (index-by [:licid :langcode]))
          licenses (mapv #(process-license application license-localizations %)
                         (db/get-licenses {:wfid wfid :items catalogue-item-ids}))]
-     {:id form-id
+     {:id application-id
       :title (:formtitle form)
       :catalogue-items catalogue-items
       :application (assoc application
