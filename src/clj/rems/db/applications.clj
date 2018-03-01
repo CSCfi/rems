@@ -265,7 +265,8 @@
      :applicantuserid (get-user-id)
      :wfid (:wfid (first items))
      :formid (:formid (first items))
-     :catalogue-items items}))
+     :catalogue-items items
+     :events []}))
 
 (defn- process-item
   "Returns an item structure like this:
@@ -373,6 +374,8 @@
       :title (:formtitle form)
       :catalogue-items catalogue-items
       :application (assoc application
+                          :formid form-id
+                          :catalogue-items catalogue-items ;; TODO decide if catalogue-items are part of "form" or "application"
                           :can-approve? (can-approve? application)
                           :can-close? (can-close? application)
                           :review-type review-type)
@@ -398,7 +401,7 @@
                                     (index-by [:licid :langcode]))
          licenses (mapv #(process-license application license-localizations %)
                         (db/get-licenses {:wfid wfid :items catalogue-item-ids}))]
-     {:id form-id
+     {:id application-id
       :title (:formtitle form)
       :catalogue-items catalogue-items
       :application (assoc application

@@ -11,6 +11,7 @@
             [rems.application :refer [application-page fetch-application]]
             [rems.atoms :as atoms]
             [rems.auth.auth :as auth]
+            [rems.cart :as cart]
             [rems.catalogue :refer [catalogue-page]]
             [rems.config :as config]
             [rems.guide-page :refer [guide-page]]
@@ -35,7 +36,7 @@
   {:home home-page
    :catalogue catalogue-page
    :guide guide-page
-   :about about-pa
+   :about about-page
    :actions actions-page
    :application application-page})
 
@@ -87,6 +88,11 @@
   ;; TODO: a bit hacky:
   (rf/dispatch [:rems.application/fetch-application-result nil])
   (rf/dispatch [:rems.application/start-fetch-application id])
+  (rf/dispatch [:set-active-page :application]))
+
+(secretary/defroute "/application" {{items :items} :query-params}
+  (rf/dispatch [:rems.application/fetch-application-result nil])
+  (rf/dispatch [:rems.application/start-new-application (cart/parse-items items)])
   (rf/dispatch [:set-active-page :application]))
 
 

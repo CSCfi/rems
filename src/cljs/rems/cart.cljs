@@ -1,9 +1,12 @@
 (ns rems.cart
-  (:require #_[rems.form :as form]
+  (:require [cljs.tools.reader.edn :as edn]
+            [clojure.string :as str]
             [re-frame.core :as re-frame]
-            [rems.util :refer [select-vals]]
+            [rems.application :as application]
             [rems.db.catalogue :refer [get-catalogue-item-title]]
-            [rems.text :refer [text text-format]])
+            [rems.text :refer [text text-format]]
+            [rems.util :refer [select-vals]]
+            [secretary.core :as secretary])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 ;; TODO anti-forgery when submitting
@@ -24,7 +27,7 @@
  ::remove-item
  (fn [db [_ item]]
    (let [cart (->> (::cart db)
-                  (remove (comp #{(:id item)} :id)))]
+                   (remove (comp #{(:id item)} :id)))]
      (assoc db ::cart cart ))))
 
 (defn add-to-cart-button
@@ -47,8 +50,14 @@
     :on-click #(re-frame/dispatch [::remove-item item])}
    (text :t.cart/remove)])
 
+;; TODO make util for other pages to use?
+(defn parse-items [items-string]
+  (->> (str/split items-string #",")
+       (mapv edn/read-string)))
+
 (defn- apply-button [items]
-  [:a.btn.btn-primary {:href "TODO" #_(form/link-to-application items)} (text :t.cart/apply)])
+  [:button.btn.btn-primary {:on-click #(application/apply-for items)}
+   (text :t.cart/apply)])
 
 (defn- item-view [item language & [apply-button?]]
   [:tr.cart-item {:class (if apply-button? "separator" "")}
