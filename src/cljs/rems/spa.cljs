@@ -50,19 +50,14 @@
 (defn page []
   (let [page-id @(rf/subscribe [:page])
         content (pages page-id)
-        page-name "todo"
-        user @(rf/subscribe [:user])]
+        page-name "todo"]
     [:div
-     [:div.fixed-top
-      [:div.container
-       [nav/navbar-normal page-name user]
-       [nav/navbar-small page-name user]]]
+     [nav/navigation-widget page-name]
      [logo]
      ;;[:button {:on-click #(rf/dispatch [:set-active-page :catalogue])} "catalogue"]
      #_[:div.container message]
      [:div.container.main-content [content]]
-     [footer]
-     ]))
+     [footer]]))
 
 ;; -------------------------
 ;; Routes
