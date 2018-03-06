@@ -65,5 +65,11 @@
   [m ks]
   (reduce getx m ks))
 
+(defn assoc-if
+  "Like `assoc` but doesn't do anything if map is nil"
+  [map key val]
+  (cond
+    map (assoc map key val)))
+
 (def never-match-route
   (constantly nil))

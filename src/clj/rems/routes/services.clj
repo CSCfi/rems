@@ -7,7 +7,6 @@
                                           get-form-for
                                           make-draft-application]]
             [rems.db.catalogue :as catalogue]
-            [rems.db.roles :as roles]
             [rems.form :as form]
             [rems.locales :as locales]
             [ring.util.http-response :refer :all]
@@ -110,9 +109,6 @@
   {:approver? s/Bool
    :reviewer? s/Bool})
 
-(def GetRolesResponse
-  #{s/Keyword})
-
 (defn longify-keys [m]
   (into {} (for [[k v] m]
              [(Long/parseLong (name k)) v])))
@@ -202,13 +198,4 @@
        :summary "Get catalogue items"
        :return GetCatalogueResponse
        (binding [context/*lang* :en]
-         (ok (catalogue/get-localized-catalogue-items)))))
-
-   (context "/api" []
-     :tags ["roles"]
-
-     (GET "/roles/:user-id" []
-       :summary "Get roles for the current user by `user-id`"
-       :path-params [user-id :- s/Str]
-       :return GetRolesResponse
-       (ok (roles/get-roles user-id))))))
+         (ok (catalogue/get-localized-catalogue-items)))))))

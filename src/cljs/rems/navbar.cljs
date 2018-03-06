@@ -9,28 +9,12 @@
 ;; TODO fetch as a subscription?
 (def context {:root-path ""})
 
-(defn- fetch-roles [user]
-  (GET (str "/api/roles/" (:eppn user)) {:handler #(rf/dispatch [::fetch-roles %])
-                                        :response-format :transit
-                                        :keywords? true}))
+(defn when-roles [roles current-roles & content]
+  (when (some roles current-roles)
+    content))
 
-(rf/reg-event-db
- ::fetch-roles
- (fn [db [_ result]]
-   (assoc db ::roles result)))
-
-(rf/reg-sub
- ::roles
- (fn [db _]
-   (::roles db)))
-
-(defn when-roles [roles & content]
-  (let [current-roles @(rf/subscribe [::roles])]
-    (when (some roles current-roles)
-      content)))
-
-(defn when-role [role & content]
-  (when-roles #{role} content))
+(defn when-role [role current-roles & content]
+  (when-roles #{role} current-roles content))
 
 (defn url-dest
   [dest]
@@ -50,13 +34,15 @@
   [e
    [:div.navbar-nav.mr-auto
     (if user
-      (list
-       (when-role :applicant
-        [nav-link "#/catalogue" (text :t.navigation/catalogue) (= page-name "catalogue")])
-       (when-role :applicant
-        [nav-link "#/applications" (text :t.navigation/applications) (= page-name "applications")])
-       (when-roles #{:approver :reviewer}
-        [nav-link "#/actions" (text :t.navigation/actions) (= page-name "actions")]))
+      ;;TODO: get navigation options from subscription
+      (let [current-roles (mapv keyword (:roles user))]
+        (list
+         (when-role :applicant current-roles
+                    [nav-link "#/catalogue" (text :t.navigation/catalogue) (= page-name "catalogue")])
+         (when-role :applicant current-roles
+                    [nav-link "#/applications" (text :t.navigation/applications) (= page-name "applications")])
+         (when-roles #{:approver :reviewer} current-roles
+                     [nav-link "#/actions" (text :t.navigation/actions) (= page-name "actions")])))
       [nav-link "#/" (text :t.navigation/home) (= page-name "home")])
     [nav-link "#/about" (text :t.navigation/about) (= page-name "about")]]
    [language-switcher]])
@@ -77,7 +63,6 @@
 
 (defn navigation-widget [page-name]
   (let [user @(rf/subscribe [:user])]
-    (fetch-roles user)
     [:div.fixed-top
      [:div.container
       [navbar-normal page-name user]
