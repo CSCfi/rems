@@ -9,6 +9,7 @@
 ;; TODO fetch as a subscription?
 (def context {:root-path ""})
 
+;; TODO consider moving when-role as it's own component
 (defn when-roles [roles current-roles & content]
   (when (some roles current-roles)
     content))
@@ -33,9 +34,9 @@
 (defn navbar-items [e page-name user]
   [e
    [:div.navbar-nav.mr-auto
-    (if user
+    (if (:user user)
       ;;TODO: get navigation options from subscription
-      (let [current-roles (mapv keyword (:roles user))]
+      (let [current-roles (:roles user)]
         (list
          (when-role :applicant current-roles
                     [nav-link "#/catalogue" (text :t.navigation/catalogue) (= page-name "catalogue")])
@@ -55,7 +56,7 @@
      {:type "button" :data-toggle "collapse" :data-target "#small-navbar"}
      "\u2630"]
     [navbar-items :div#big-navbar.collapse.navbar-collapse page-name user]]
-   [:div.navbar [user-widget user]]])
+   [:div.navbar [user-widget (:user user)]]])
 
 (defn navbar-small
   [page-name user]

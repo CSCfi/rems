@@ -28,7 +28,7 @@
      "TODO about page in markdown"]]])
 
 (defn home-page []
-  (if @(rf/subscribe [:user])
+  (if (:user @(rf/subscribe [:user]))
     [:p "Logged in."]
     [auth/login-component]))
 
@@ -107,7 +107,10 @@
 ;; Initialize app
 
 (defn set-user! [user]
-  (rf/dispatch-sync [:set-user (js->clj user :keywordize-keys true)]))
+  (let [user (js->clj user :keywordize-keys true)]
+    (rf/dispatch-sync [:set-user (if (:user user)
+                                   (update user :roles #(mapv keyword (:roles user)))
+                                   user)])))
 
 (defn dispatch-initial-route! [href]
   (secretary/dispatch! href))
