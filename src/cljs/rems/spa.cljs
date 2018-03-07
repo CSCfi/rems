@@ -28,7 +28,7 @@
      "TODO about page in markdown"]]])
 
 (defn home-page []
-  (if (:user @(rf/subscribe [:user]))
+  (if (:user @(rf/subscribe [:identity]))
     [:p "Logged in."]
     [auth/login-component]))
 
@@ -106,11 +106,20 @@
 ;; -------------------------
 ;; Initialize app
 
-(defn set-user! [user]
-  (let [user (js->clj user :keywordize-keys true)]
-    (rf/dispatch-sync [:set-user (if (:user user)
-                                   (update user :roles #(mapv keyword (:roles user)))
-                                   user)])))
+(defn set-identity!
+  "Receives as a parameter following kind of structure:
+   {:user {:eppn \"\"eppn\" \"developer\"
+           :email \"developer@e.mail\"
+           :displayName \"deve\"
+           :surname \"loper\"
+           ...}
+    :roles [\"applicant\" \"approver\"]}
+    Roles are converted to clojure keywords inside the function before dispatching"
+  [user-and-roles]
+  (let [user-and-roles (js->clj user-and-roles :keywordize-keys true)]
+    (rf/dispatch-sync [:set-identity (if (:user user-and-roles)
+                                   (update user-and-roles :roles #(mapv keyword (:roles user-and-roles)))
+                                   user-and-roles)])))
 
 (defn dispatch-initial-route! [href]
   (secretary/dispatch! href))

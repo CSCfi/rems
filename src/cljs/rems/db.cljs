@@ -5,4 +5,4 @@
    :language :en
    :translations {}
    :active-role nil
-   :user nil})
+   :identity {:user nil :roles nil}})

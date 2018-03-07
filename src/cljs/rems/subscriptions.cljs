@@ -27,9 +27,9 @@
     (:theme db)))
 
 (reg-sub
-  :user
+  :identity
   (fn [db _]
-    (:user db)))
+    (:identity db)))
 
 (reg-sub
   :active-role

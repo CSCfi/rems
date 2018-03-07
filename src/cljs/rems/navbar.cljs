@@ -31,12 +31,12 @@
      [:span.user-name (str (:commonName user) " /")]
      [atoms/link-to {:class (str "px-0 nav-link")} (url-dest "/logout") (text :t.navigation/logout)]]))
 
-(defn navbar-items [e page-name user]
+(defn navbar-items [e page-name identity]
   [e
    [:div.navbar-nav.mr-auto
-    (if (:user user)
+    (if (:user identity)
       ;;TODO: get navigation options from subscription
-      (let [current-roles (:roles user)]
+      (let [current-roles (:roles identity)]
         (list
          (when-role :applicant current-roles
                     [nav-link "#/catalogue" (text :t.navigation/catalogue) (= page-name "catalogue")])
@@ -49,25 +49,25 @@
    [language-switcher]])
 
 (defn navbar-normal
-  [page-name user]
+  [page-name identity]
   [:div.navbar-flex
    [:nav.navbar.navbar-expand-sm {:role "navigation"}
     [:button.navbar-toggler
      {:type "button" :data-toggle "collapse" :data-target "#small-navbar"}
      "\u2630"]
-    [navbar-items :div#big-navbar.collapse.navbar-collapse page-name user]]
-   [:div.navbar [user-widget (:user user)]]])
+    [navbar-items :div#big-navbar.collapse.navbar-collapse page-name identity]]
+   [:div.navbar [user-widget (:user identity)]]])
 
 (defn navbar-small
   [page-name user]
   [navbar-items :div#small-navbar.collapse.navbar-collapse.collapse.hidden-md-up page-name user])
 
 (defn navigation-widget [page-name]
-  (let [user @(rf/subscribe [:user])]
+  (let [identity @(rf/subscribe [:identity])]
     [:div.fixed-top
      [:div.container
-      [navbar-normal page-name user]
-      [navbar-small page-name user]]]))
+      [navbar-normal page-name identity]
+      [navbar-small page-name identity]]]))
 
 (defn guide []
   [:div
