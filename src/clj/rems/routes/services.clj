@@ -45,8 +45,7 @@
    :resid s/Str
    :state s/Str
    (s/optional-key :langcode) s/Keyword
-   :localizations (s/maybe {s/Any s/Any})
-   })
+   :localizations (s/maybe {s/Any s/Any})})
 
 (def Application
   {:id s/Num

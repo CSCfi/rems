@@ -28,7 +28,7 @@
      "TODO about page in markdown"]]])
 
 (defn home-page []
-  (if @(rf/subscribe [:user])
+  (if (:user @(rf/subscribe [:identity]))
     [:p "Logged in."]
     [auth/login-component]))
 
@@ -50,19 +50,14 @@
 (defn page []
   (let [page-id @(rf/subscribe [:page])
         content (pages page-id)
-        page-name "todo"
-        user @(rf/subscribe [:user])]
+        page-name "todo"]
     [:div
-     [:div.fixed-top
-      [:div.container
-       [nav/navbar-normal page-name user]
-       [nav/navbar-small page-name user]]]
+     [nav/navigation-widget page-name]
      [logo]
      ;;[:button {:on-click #(rf/dispatch [:set-active-page :catalogue])} "catalogue"]
      #_[:div.container message]
      [:div.container.main-content [content]]
-     [footer]
-     ]))
+     [footer]]))
 
 ;; -------------------------
 ;; Routes
@@ -111,8 +106,20 @@
 ;; -------------------------
 ;; Initialize app
 
-(defn set-user! [user]
-  (rf/dispatch-sync [:set-user (js->clj user :keywordize-keys true)]))
+(defn set-identity!
+  "Receives as a parameter following kind of structure:
+   {:user {:eppn \"\"eppn\" \"developer\"
+           :email \"developer@e.mail\"
+           :displayName \"deve\"
+           :surname \"loper\"
+           ...}
+    :roles [\"applicant\" \"approver\"]}
+    Roles are converted to clojure keywords inside the function before dispatching"
+  [user-and-roles]
+  (let [user-and-roles (js->clj user-and-roles :keywordize-keys true)]
+    (rf/dispatch-sync [:set-identity (if (:user user-and-roles)
+                                   (update user-and-roles :roles #(mapv keyword (:roles user-and-roles)))
+                                   user-and-roles)])))
 
 (defn dispatch-initial-route! [href]
   (secretary/dispatch! href))

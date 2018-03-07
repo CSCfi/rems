@@ -5,5 +5,5 @@
 
 (spa/init!)
 
-(defn ^:export setUser [user]
-  (spa/set-user! user))
+(defn ^:export setIdentity [user-and-roles]
+  (spa/set-identity! user-and-roles))

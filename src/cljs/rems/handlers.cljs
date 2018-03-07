@@ -29,9 +29,9 @@
     (assoc db :theme theme)))
 
 (reg-event-db
- :set-user
- (fn [db [_ user]]
-   (assoc db :user user)))
+ :set-identity
+ (fn [db [_ identity]]
+   (assoc db :identity identity)))
 
 (reg-event-db
  :catalogue
