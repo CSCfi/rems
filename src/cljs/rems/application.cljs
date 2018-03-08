@@ -279,6 +279,11 @@
    {:name "submit" :onClick #(rf/dispatch [::save-application "submit"])}
    (text :t.form/submit)])
 
+(defn- applicant-buttons []
+  [:div
+   [save-button]
+   [submit-button]])
+
 (defn- approve-button []
   [:button#submit.btn.btn-primary
    {:name "approve" :onClick #(rf/dispatch [::judge-application "approve"])}
@@ -326,9 +331,7 @@
         (when (:can-approve? application)
           [approve-buttons])
         (when-not readonly?
-          [:div
-           [save-button]
-           [submit-button]])]]}]))
+          [applicant-buttons])]]}]))
 
 ;; Header
 
