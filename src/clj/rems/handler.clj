@@ -4,7 +4,6 @@
             [compojure.route :as route]
             [mount.core :as mount]
             [rems.actions :as actions]
-            [rems.applications :as applications]
             [rems.auth.auth :as auth]
             [rems.cart :as cart]
             [rems.catalogue :as catalogue]
@@ -52,7 +51,6 @@
    (auth/auth-routes)))
 
 (defroutes secured-routes
-  applications/applications-routes
   landing-page/landing-page-routes
   events/events-routes
   cart/cart-routes
