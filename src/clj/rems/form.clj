@@ -71,10 +71,6 @@
    (for [m msgs]
      [:li m])])
 
-;; TODO remove id-to-name when no more forms submitted by SPA
-(defn- id-to-name [id]
-  (str "field" id))
-
 (defn save-application-items [application-id catalogue-item-ids]
   (assert application-id)
   (assert (empty? (filter nil? catalogue-item-ids)) "nils sent in catalogue-item-ids")
@@ -86,7 +82,7 @@
   [application-id input]
   (let [form (get-form-for application-id)]
     (doseq [{item-id :id :as item} (:items form)]
-      (when-let [value (get input item-id (get input (id-to-name item-id)))]
+      (when-let [value (get input item-id)]
         (db/save-field-value! {:application application-id
                                :form (:id form)
                                :item item-id
