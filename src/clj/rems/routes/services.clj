@@ -49,7 +49,7 @@
    :localizations (s/maybe {s/Any s/Any})})
 
 (def Application
-  {:id s/Num
+  {:id (s/maybe s/Num) ;; does not exist for unsaved draft
    :formid s/Num
    :state s/Str
    :applicantuserid s/Str
@@ -77,7 +77,7 @@
    :extra-pages [ExtraPage]})
 
 (def GetApplicationResponse
-  {:id s/Num
+  {:id (s/maybe s/Num)
    :catalogue-items [CatalogueItem]
    :applicant-attributes (s/maybe {s/Str s/Str})
    :application (s/maybe Application)
@@ -187,7 +187,7 @@
        :summary     "Get application draft by `catalogue-items`"
        :query-params [catalogue-items :- [s/Num]]
        :return      GetApplicationResponse
-       (let [app (make-draft-application -1 catalogue-items)]
+       (let [app (make-draft-application catalogue-items)]
          (ok (get-draft-form-for app))))
 
      (GET "/application/:application-id" []
