@@ -559,7 +559,7 @@
   ([application events]
    (let [application (-> application
                          (assoc :state "draft" :curround 0) ;; reset state
-                         (assoc :events events))]
+                         (assoc :events (map #(dissoc % :appid) events)))] ;;HACK remove :appid that is needed just for batching
      (apply-events application events))))
 
 (declare handle-state-change)

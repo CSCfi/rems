@@ -5,6 +5,7 @@
             [rems.context :as context]
             [rems.db.applications :refer [get-draft-form-for
                                           get-form-for
+                                          get-my-applications
                                           make-draft-application]]
             [rems.db.catalogue :as catalogue]
             [rems.form :as form]
@@ -83,6 +84,17 @@
    :licenses [License]
    :title s/Str
    :items [Item]})
+
+(def GetApplicationsResponse
+  [{:id s/Num
+    :catalogue-items [CatalogueItem]
+    :events [Event]
+    :start DateTime
+    :state s/Str
+    :wfid s/Num
+    :fnlround s/Num
+    :curround s/Num
+    :applicantuserid s/Str}])
 
 (def ValidationError s/Str)
 
@@ -190,6 +202,14 @@
        :body        [request SaveApplicationCommand]
        :return      SaveApplicationResponse
        (ok (form/api-save (fix-keys request)))))
+
+   (context "/api" []
+     :tags ["applications"]
+
+     (GET "/applications/" []
+       :summary "Get current user's all applications"
+       :return GetApplicationsResponse
+       (ok (get-my-applications))))
 
    (context "/api" []
      :tags ["catalogue"]

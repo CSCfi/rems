@@ -9,6 +9,7 @@
             [rems.actions :refer [actions-page fetch-actions]]
             [rems.ajax :refer [load-interceptors!]]
             [rems.application :refer [application-page fetch-application]]
+            [rems.applications :refer [applications-page]]
             [rems.atoms :as atoms]
             [rems.auth.auth :as auth]
             [rems.cart :as cart]
@@ -38,7 +39,8 @@
    :guide guide-page
    :about about-page
    :actions actions-page
-   :application application-page})
+   :application application-page
+   :applications applications-page})
 
 (defn footer []
   [:footer.footer
@@ -89,6 +91,9 @@
   (rf/dispatch [:rems.application/fetch-application-result nil])
   (rf/dispatch [:rems.application/start-new-application (cart/parse-items items)])
   (rf/dispatch [:set-active-page :application]))
+
+(secretary/defroute "/applications" []
+  (rf/dispatch [:set-active-page :applications]))
 
 ;; -------------------------
 ;; History
