@@ -244,6 +244,7 @@
              :pending [:i {:class "fa fa-spinner"}]
              :saved [:i {:class "fa fa-check-circle"}]
              :failed [:i {:class "fa fa-times-circle"}])]))
+
 (defn- save-button []
   [:button#save.btn.btn-secondary
    {:name "save" :onClick #(rf/dispatch [::save-application "save"])}
@@ -338,11 +339,19 @@
 
 ;; Whole application
 
+(defn- disabled-items-warning [catalogue-items]
+  (let [language @(rf/subscribe [:language])]
+    (when-some [items (seq (filter #(= "disabled" (:state %)) catalogue-items))]
+      [:div.alert.alert-danger
+       (text :t.form/alert-disabled-items)
+       (into [:ul]
+             (for [item items]
+               [:li (get-catalogue-item-title item language)]))])))
+
 (defn- applied-resources [catalogue-items]
   (let [language @(rf/subscribe [:language])]
     [collapsible/component
      {:id "resources"
-      :open? true
       :title (text :t.form/resources)
       :always [:div.form-items.form-group
                (into [:ul]
@@ -358,6 +367,7 @@
         user-attributes (:applicant-attributes application)]
     [:div
      [:h2 (text :t.applications/application)]
+     [disabled-items-warning (:catalogue-items application)]
      ;; TODO may-see-event? needs to be implemented in backend
      [application-header state events]
      ;; TODO hide from applicant:
@@ -407,6 +417,19 @@
                                      :commonName "Deve Loper"
                                      :organization "Testers"
                                      :address "Testikatu 1, 00100 Helsinki"}])
+
+   (component-info disabled-items-warning)
+   (example "no disabled items"
+            [disabled-items-warning []])
+   (example "two disabled items"
+            [disabled-items-warning
+             [{:state "disabled" :localizations {:en {:title "English title 1"}
+                                                 :fi {:title "Otsikko suomeksi 1"}}}
+              {:state "disabled" :localizations {:en {:title "English title 2"}
+                                                 :fi {:title "Otsikko suomeksi 2"}}}
+              {:state "enabled" :localizations {:en {:title "English title 3"}
+                                                :fi {:title "Otsikko suomeksi 3"}}}]])
+
    (component-info field)
    (example "field of type \"text\""
             [:form
