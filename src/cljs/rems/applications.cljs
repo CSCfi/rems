@@ -1,10 +1,26 @@
 (ns rems.applications
-  (:require [clojure.string :as string]
+  (:require [ajax.core :refer [GET]]
+            [clojure.string :as string]
+            [re-frame.core :as rf]
             [rems.text :refer [localize-state localize-time text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
+(defn- fetch-my-applications []
+  (GET "/api/applications/" {:handler #(rf/dispatch [::fetch-my-applications %])
+                             :response-format :json
+                             :keywords? true}))
+
+(rf/reg-event-db
+ ::fetch-my-applications
+ (fn [db [_ applications]]
+   (assoc db ::my-applications applications)))
+
+(rf/reg-sub
+ ::my-applications
+ (fn [db _]
+   (::my-applications db)))
+
 (defn- applications-item [app]
-  (prn app)
   (into [:tbody
          [:tr.application
           [:td {:data-th (text :t.applications/application)} (:id app)]
@@ -12,7 +28,7 @@
           [:td {:data-th (text :t.applications/state)} (localize-state (:state app))]
           [:td {:data-th (text :t.applications/created)} (localize-time (:start app))]
           [:td [:a.btn.btn-primary
-                {:href (str "/form" (:id app))}
+                {:href (str "#/application/" (:id app))}
                 (text :t/applications.view)]]]]))
 
 (defn- applications
@@ -30,7 +46,9 @@
        (applications-item app))]))
 
 (defn applications-page []
-  (applications nil))
+  (fetch-my-applications)
+  (let [apps @(rf/subscribe [::my-applications])]
+    (applications apps)))
 
 (defn guide []
   [:div
