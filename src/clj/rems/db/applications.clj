@@ -282,11 +282,13 @@
    :inputprompt (:inputprompt item)
    :optional (:formitemoptional item)
    :type (:type item)
-   :value (when-not (draft? application-id)
-            (:value
-             (db/get-field-value {:item (:id item)
-                                  :form form-id
-                                  :application application-id})))})
+   :value (or
+           (when-not (draft? application-id)
+             (:value
+              (db/get-field-value {:item (:id item)
+                                   :form form-id
+                                   :application application-id})))
+           "")})
 
 (defn- process-license
   "Returns a license structure like this:
