@@ -113,7 +113,7 @@
 (rf/reg-event-fx
  ::save-application
  (fn [{:keys [db]} [_ command]]
-   (let [app-id (get-in db [:application :id])
+   (let [app-id (get-in db [:application :application :id])
          catalogue-ids (mapv :id (get-in db [:application :catalogue-items]))
          items (get-in db [:edit-application :items])
          ;; TODO change api to booleans
