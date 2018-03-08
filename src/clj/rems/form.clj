@@ -103,9 +103,6 @@
                                       :licid licid
                                       :actoruserid (get-user-id)})))))
 
-(defn- redirect-to-application [application-id]
-  (redirect (str "/form/" application-id) :see-other))
-
 (defn- save-internal [application catalogue-items items licenses]
   (let [application-id (:id application)
         item-ids (mapv :id catalogue-items)
@@ -120,28 +117,12 @@
           validation (validate form)
           valid? (= :valid validation)
           perform-submit? (and submit? valid?)
-          success? (or (not submit?) perform-submit?)
-          flash (cond
-                  perform-submit? ;; valid submit
-                  [{:status :success :contents (text :t.form/submitted)}]
-                  submit? ;; invalid submit
-                  [{:status :warning :contents (text :t.form/saved)}
-                   {:status :warning :contents (format-validation-messages validation)}]
-                  valid? ;; valid draft
-                  [{:status :success :contents (text :t.form/saved)}]
-                  :else ;; invalid draft
-                  [{:status :success :contents (text :t.form/saved)}
-                   {:status :info :contents (format-validation-messages validation)}])]
+          success? (or (not submit?) perform-submit?)]
       (when perform-submit?
         (submit-application application-id))
-      {:submit? submit?
-       :form form
-       :validation validation
+      {:validation validation
        :valid? valid?
-       :perform-submit? perform-submit?
-       :success? success?
-       :flash flash}
-      )))
+       :success? success?})))
 
 (defn api-save [request]
   (let [{:keys [application-id items licenses command]} request
@@ -158,5 +139,4 @@
              :valid valid?}
       (not valid?) (assoc :validation validation)
       success? (assoc :id db-application-id
-                      :state (:state (get-application-state application-id))))
-    ))
+                      :state (:state (get-application-state application-id))))))
