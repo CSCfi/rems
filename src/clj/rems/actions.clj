@@ -2,7 +2,6 @@
   "The /actions page that shows a list of applications you can act on."
   (:require [clojure.string :as string]
             [compojure.core :refer [GET defroutes]]
-            [rems.collapsible :as collapsible]
             [rems.db.applications :as applications]
             [rems.guide :refer :all]
             [rems.layout :as layout]

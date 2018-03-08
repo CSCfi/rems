@@ -4,16 +4,12 @@
             [compojure.route :as route]
             [mount.core :as mount]
             [rems.actions :as actions]
-            [rems.applications :as applications]
             [rems.auth.auth :as auth]
-            [rems.cart :as cart]
-            [rems.catalogue :as catalogue]
             [rems.entitlements :as entitlements]
             [rems.env :refer [+defaults+]]
             [rems.events :as events]
             [rems.home :as home]
             [rems.landing-page :as landing-page]
-            [rems.language-switcher :as language-switcher]
             [rems.layout :refer [error-page]]
             [rems.middleware :as middleware]
             ;;[rems.routes.guide :refer [guide-routes]]
@@ -52,10 +48,8 @@
    (auth/auth-routes)))
 
 (defroutes secured-routes
-  applications/applications-routes
   landing-page/landing-page-routes
   events/events-routes
-  cart/cart-routes
   entitlements/entitlements-routes)
 
 (defn normal-routes []

@@ -3,12 +3,10 @@
             [buddy.auth.accessrules :refer [restrict]]
             [clojure.tools.logging :as log]
             [rems.auth.auth :as auth]
-            [rems.cart :refer [get-cart-from-session]]
             [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.roles :as roles]
             [rems.env :refer [+defaults+]]
-            [rems.language-switcher :refer [+default-language+]]
             [rems.layout :refer [error-page]]
             [rems.locales :refer [tconfig]]
             [rems.util :refer [get-user-id]]
@@ -21,6 +19,8 @@
             [ring.util.response :refer [redirect]]
             [taoensso.tempura :as tempura])
   (:import (javax.servlet ServletContext)))
+
+(def +default-language+ :en)
 
 (defn calculate-root-path [request]
   (if-let [context (:servlet-context request)]
@@ -39,7 +39,6 @@
   [handler]
   (fn [request]
     (binding [context/*root-path* (calculate-root-path request)
-              context/*cart* (get-cart-from-session request)
               context/*flash* (:flash request)]
       (handler request))))
 
