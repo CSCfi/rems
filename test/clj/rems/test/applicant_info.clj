@@ -1,16 +1,20 @@
 (ns rems.test.applicant-info
   (:require [clojure.test :refer :all]
             [hiccup-find.core :refer :all]
-            [rems.applicant-info :refer :all]
+            ;[rems.applicant-info :refer :all]
             [rems.context :as context]
             [rems.test.tempura :refer [with-fake-tempura]]))
 
+;; NOTE: details function is called applicant-info in spa implementation and is located under `rems.application` namespace
+#_
 (defn find-from-details [pattern]
   (hiccup-find pattern (details "applicant-info" {"eppn" "developer" "commonName" "Deve Loper"})))
 
+#_
 (defn children-of [hiccups]
   (remove nil? (mapcat (partial drop 2) hiccups)))
 
+#_
 (deftest test-applicant-details
   (with-fake-tempura
     (testing "Info without role information"

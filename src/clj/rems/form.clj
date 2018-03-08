@@ -1,33 +1,16 @@
 (ns rems.form
-  (:require [clojure.set :refer [difference]]
-            [clojure.string :as s]
-            [compojure.core :refer [GET POST defroutes]]
-            [hiccup.util :refer [url]]
-            [rems.anti-forgery :refer [anti-forgery-field]]
-            [rems.applicant-info :as applicant-info]
-            [rems.collapsible :as collapsible]
-            [rems.context :as context]
-            [rems.db.applications :refer [create-new-draft
+  (:require [rems.db.applications :refer [create-new-draft
                                           draft?
-                                          get-application-phases
                                           get-application-state
-                                          get-draft-form-for
                                           get-form-for
-                                          is-applicant?
                                           make-draft-application
                                           submit-application]]
             [rems.db.catalogue :refer [disabled-catalogue-item?]]
             [rems.db.core :as db]
-            [rems.events :as events]
-            [rems.guide :refer :all]
-            [rems.info-field :as info-field]
             [rems.InvalidRequestException]
-            [rems.layout :as layout]
-            [rems.phase :refer [phases]]
             [rems.roles :refer [has-roles?]]
             [rems.text :refer :all]
-            [rems.util :refer [get-user-id getx getx-in]]
-            [ring.util.response :refer [redirect]]))
+            [rems.util :refer [get-user-id getx getx-in]]))
 
 
 ;; TODO not yet implemented for SPA

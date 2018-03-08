@@ -1,7 +1,6 @@
 (ns rems.test.cart
   (:require [clojure.test :refer :all]
             [hiccup-find.core :refer :all]
-            [rems.cart :as cart]
             [rems.test.tempura :refer [fake-tempura-fixture]]
             [ring.mock.request :refer :all]))
 
@@ -10,6 +9,7 @@
 (defn check-row-text [row text]
   (is (= text (hiccup-text (first (hiccup-find [:td] row))))))
 
+#_
 (deftest test-cart-list
   (let [c (cart/cart-list [{:title "D" :wfid 1 :formid 2}
                            {:title "C" :wfid 1 :formid 1}])
@@ -23,6 +23,7 @@
       (is title)
       (is (.contains (hiccup-text title) "2")))))
 
+#_
 (deftest test-add-to-cart
   (let [run (fn [session path id]
               (-> (request :post path)

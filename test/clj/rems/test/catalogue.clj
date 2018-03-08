@@ -1,15 +1,16 @@
 (ns rems.test.catalogue
   (:require [clojure.test :refer :all]
             [hiccup-find.core :refer :all]
-            [rems.catalogue :refer :all]
             [rems.context :as context]
             [rems.test.tempura :refer [fake-tempura-fixture]]))
 
 (use-fixtures :once fake-tempura-fixture)
 
+#_
 (defn check-catalogue-item-text [props]
   (hiccup-text (first (hiccup-find [:td] (#'rems.catalogue/catalogue-item props)))))
 
+#_
 (deftest test-catalogue-item
   (testing "catalogue item with urn"
     (let [urn "http://urn.fi/urn:nbn:fi:lb-201403262"
@@ -33,6 +34,7 @@
 (defn check-row-text [row text]
   (is (= text (hiccup-text (first (hiccup-find [:td] row))))))
 
+#_
 (deftest test-catalogue-list
   (let [c (#'rems.catalogue/catalogue-list [{:title "B"} {:title "A"} {:title "C"}])
         rows (rest (hiccup-find [:tr] c))]
