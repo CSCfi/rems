@@ -19,12 +19,12 @@
 (rf/reg-event-fx
  ::start-fetch-application
  (fn [{:keys [db]} [_ id]]
-   {::fetch-application [(:user db) id]}))
+   {::fetch-application [(get-in db [:identity :user]) id]}))
 
 (rf/reg-event-fx
  ::start-new-application
  (fn [{:keys [db]} [_ items]]
-   {::fetch-draft-application [(:user db) items]}))
+   {::fetch-draft-application [(get-in db [:identity :user]) items]}))
 
 (defn- fetch-application [user id]
   ;; TODO: handle errors (e.g. unauthorized)
@@ -123,7 +123,7 @@
                           [id "approved"]))]
      ;; TODO disable form while saving?
      (rf/dispatch [::set-status :pending])
-     (save-application command (:user db) app-id catalogue-ids items licenses))
+     (save-application command (get-in db [:identity :user]) app-id catalogue-ids items licenses))
    {}))
 
 ;;;; UI components ;;;;
