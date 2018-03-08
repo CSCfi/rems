@@ -90,7 +90,6 @@
   (rf/dispatch [:rems.application/start-new-application (cart/parse-items items)])
   (rf/dispatch [:set-active-page :application]))
 
-
 ;; -------------------------
 ;; History
 ;; must be called after routes have been defined

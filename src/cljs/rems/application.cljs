@@ -6,8 +6,20 @@
             [rems.db.catalogue :refer [get-catalogue-item-title]]
             [rems.phase :refer [phases get-application-phases]]
             [rems.text :refer [text localize-state localize-event localize-time]]
-            [rems.util :refer [dispatch!]])
+            [rems.util :refer [dispatch!]]
+            [secretary.core :as secretary])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
+
+;;;; Routes and route helpers ;;;;
+;; TODO named secretary routes give us equivalent functions
+;; TODO should the secretary route definitions be in this ns too?
+
+(defn apply-for [items]
+  (let [url (str "#/application?items=" (str/join "," (sort (map :id items))))]
+    (dispatch! url)))
+
+(defn navigate-to [id]
+  (dispatch! (str "#/application/" id)))
 
 ;;;; Events and actions ;;;;
 
@@ -98,7 +110,10 @@
         :handler (fn [resp]
                    (if (:success resp)
                      (do (rf/dispatch [::set-status :saved])
-                         (rf/dispatch [::start-fetch-application application-id]))
+                         ;; HACK: we both set the location, and fire a fetch-application event
+                         ;; because if the location didn't change, secretary won't fire the event
+                         (navigate-to (:id resp))
+                         (rf/dispatch [::start-fetch-application (:id resp)]))
                      (rf/dispatch [::set-status :failed])))
         :error-handler (fn [err]
                          (rf/dispatch [::set-status :failed]))
@@ -448,9 +463,3 @@
                          {:type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
                           :approved true}]
               :comments [{:comment "a comment"}]}])])
-
-;;;; Routes and route helpers ;;;;
-
-(defn apply-for [items]
-  (let [url (str "#/application?items=" (str/join "," (sort (map :id items))))]
-    (dispatch! url)))
