@@ -284,6 +284,22 @@
    {:name "approve" :onClick #(rf/dispatch [::judge-application "approve"])}
    (text :t.actions/approve)])
 
+(defn- reject-button []
+  [:button#submit.btn.btn-secondary
+   {:name "reject" :onClick #(rf/dispatch [::judge-application "reject"])}
+   (text :t.actions/reject)])
+
+(defn- return-button []
+  [:button#submit.btn.btn-secondary
+   {:name "return" :onClick #(rf/dispatch [::judge-application "return"])}
+   (text :t.actions/return)])
+
+(defn- approve-buttons []
+  [:div
+   [reject-button]
+   [return-button]
+   [approve-button]])
+
 (defn- fields [form]
   (let [application (:application form)
         state (:state application)
@@ -308,7 +324,7 @@
        [:div.col.commands
         [status-widget]
         (when (:can-approve? application)
-          [approve-button])
+          [approve-buttons])
         (when-not readonly?
           [:div
            [save-button]
