@@ -87,8 +87,23 @@
             (is (= application-id (:id cmd-response)))
             (is (= "applied" (:state cmd-response)))
             (is (:valid cmd-response))
-            (is (empty? (:validation cmd-response)))
-            ))))))
+            (is (empty? (:validation cmd-response)))))
+        (testing "approving"
+          (let [response (-> (request :put (str "/api/application/judge"))
+                             (authenticate api-key "developer")
+                             (json {:command "approve"
+                                    :application-id application-id
+                                    :round 0
+                                    :comment "msg"})
+                             app)
+                cmd-response (read-body response)
+                application-response (-> (request :get (str "/api/application/" application-id))
+                                         (authenticate api-key user-id)
+                                         app)
+                application (:application (read-body application-response))]
+            (is (:success cmd-response))
+            (is (= "approved" (:state application)))
+            (is (= [nil "msg"] (map :comment (:events application))))))))))
 
 (deftest service-catalogue-test
   (let [api-key "42"

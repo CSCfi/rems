@@ -3,10 +3,7 @@
             [compojure.api.exception :as ex]
             [rems.config :refer [env]]
             [rems.context :as context]
-            [rems.db.applications :refer [get-draft-form-for
-                                          get-form-for
-                                          get-my-applications
-                                          make-draft-application]]
+            [rems.db.applications :as applications]
             [rems.db.catalogue :as catalogue]
             [rems.form :as form]
             [rems.locales :as locales]
@@ -99,7 +96,7 @@
 (def ValidationError s/Str)
 
 (def SaveApplicationCommand
-  {:command s/Str
+  {:command (s/enum "save" "submit")
    (s/optional-key :application-id) s/Num
    (s/optional-key :catalogue-items) [s/Num]
    ;; NOTE: compojure-api only supports keyword keys properly, see
@@ -113,6 +110,15 @@
    (s/optional-key :id) s/Num
    (s/optional-key :state) s/Str
    (s/optional-key :validation) [ValidationError]})
+
+(def JudgeApplicationCommand
+  {:command (s/enum "approve" "reject" "return" "review")
+   :application-id s/Num
+   :round s/Num
+   :comment s/Str})
+
+(def JudgeApplicationResponse
+  {:success s/Bool})
 
 (def GetCatalogueResponse
   [CatalogueItem])
@@ -133,6 +139,15 @@
 (defn unauthorized-handler
   [exception ex-data request]
   (unauthorized "unauthorized"))
+
+(defn api-judge [{:keys [command application-id round comment]}]
+  (case command
+    "approve" (applications/approve-application application-id round comment)
+    "reject" (applications/reject-application application-id round comment)
+    "return" (applications/return-application application-id round comment)
+    "review" (applications/review-application application-id round comment))
+  ;; failure communicated via an exception
+  {:success true})
 
 (def service-routes
   (api
@@ -187,21 +202,27 @@
        :summary     "Get application draft by `catalogue-items`"
        :query-params [catalogue-items :- [s/Num]]
        :return      GetApplicationResponse
-       (let [app (make-draft-application catalogue-items)]
-         (ok (get-draft-form-for app))))
+       (let [app (applications/make-draft-application catalogue-items)]
+         (ok (applications/get-draft-form-for app))))
 
      (GET "/application/:application-id" []
        :summary     "Get application by `application-id`"
        :path-params [application-id :- s/Num]
        :return      GetApplicationResponse
        (binding [context/*lang* :en]
-         (ok (get-form-for application-id))))
+         (ok (applications/get-form-for application-id))))
 
      (PUT "/application/command" []
        :summary     "Create a new application or change an existing one"
        :body        [request SaveApplicationCommand]
        :return      SaveApplicationResponse
-       (ok (form/api-save (fix-keys request)))))
+       (ok (form/api-save (fix-keys request))))
+
+     (PUT "/application/judge" []
+        :summary "Judge an application"
+        :body [request JudgeApplicationCommand]
+        :return JudgeApplicationResponse
+        (ok (api-judge request))))
 
    (context "/api" []
      :tags ["applications"]
@@ -209,7 +230,7 @@
      (GET "/applications/" []
        :summary "Get current user's all applications"
        :return GetApplicationsResponse
-       (ok (get-my-applications))))
+       (ok (applications/get-my-applications))))
 
    (context "/api" []
      :tags ["catalogue"]
