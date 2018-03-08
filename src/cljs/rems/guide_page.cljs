@@ -60,10 +60,10 @@
     [nav/guide]
 
     [:h2 "Language switcher widget"]
-    (language-switcher/guide)
+    [language-switcher/guide]
 
     [:h2 "Login"]
-    (auth/guide)
+    [auth/guide]
 
     [:h2 "Catalogue components"]
     [catalogue/guide]
@@ -72,7 +72,7 @@
     [cart/guide]
 
     [:h2 "Applications list"]
-    (applications/guide)
+    [applications/guide]
 
     [:h2 "Actions list"]
     [actions/guide]
