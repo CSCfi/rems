@@ -103,11 +103,10 @@
                                       :licid licid
                                       :actoruserid (get-user-id)})))))
 
-(defn- save-internal [application-id items licenses]
+(defn- save-form-inputs [application-id submit? items licenses]
   (save-fields application-id items)
   (save-licenses application-id licenses)
-  (let [submit? (get items "submit")
-        form (get-form-for application-id)
+  (let [form (get-form-for application-id)
         validation (validate form)
         valid? (= :valid validation)
         perform-submit? (and submit? valid?)
@@ -134,8 +133,8 @@
         ;; if no application-id given, create a new application
         application-id (or application-id
                            (create-new-draft-for-items catalogue-item-ids))
-        items (if (= command "submit") (assoc items "submit" true) items)
-        {:keys [success? valid? validation]} (save-internal application-id items licenses)]
+        submit? (= command "submit")
+        {:keys [success? valid? validation]} (save-form-inputs application-id submit? items licenses)]
     (cond-> {:success success?
              :valid valid?}
       (not valid?) (assoc :validation validation)
