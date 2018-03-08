@@ -103,40 +103,40 @@
                                       :licid licid
                                       :actoruserid (get-user-id)})))))
 
-(defn- save-internal [application catalogue-items items licenses]
-  (let [application-id (:id application)
-        item-ids (mapv :id catalogue-items)
-        disabled-items (filter disabled-catalogue-item? catalogue-items)]
+(defn- save-form-inputs [application-id submit? items licenses]
+  (save-fields application-id items)
+  (save-licenses application-id licenses)
+  (let [form (get-form-for application-id)
+        validation (validate form)
+        valid? (= :valid validation)
+        perform-submit? (and submit? valid?)
+        success? (or (not submit?) perform-submit?)]
+    (when perform-submit?
+      (submit-application application-id))
+    {:validation validation
+     :valid? valid?
+     :success? success?}))
+
+(defn- create-new-draft-for-items [catalogue-item-ids]
+  (let [draft (make-draft-application catalogue-item-ids)
+        disabled-items (filter disabled-catalogue-item? (getx draft :catalogue-items))]
     (when (seq disabled-items)
       (throw (rems.InvalidRequestException. (str "Disabled catalogue items " (pr-str disabled-items)))))
-    (save-application-items application-id item-ids)
-    (save-fields application-id items)
-    (save-licenses application-id licenses)
-    (let [submit? (get items "submit")
-          form (get-form-for application-id)
-          validation (validate form)
-          valid? (= :valid validation)
-          perform-submit? (and submit? valid?)
-          success? (or (not submit?) perform-submit?)]
-      (when perform-submit?
-        (submit-application application-id))
-      {:validation validation
-       :valid? valid?
-       :success? success?})))
+    (let [wfid (getx draft :wfid)
+          id (create-new-draft wfid)]
+      (save-application-items id catalogue-item-ids)
+      id)))
 
 (defn api-save [request]
   (let [{:keys [application-id items licenses command]} request
         catalogue-item-ids (:catalogue-items request)
-        application (make-draft-application -1 catalogue-item-ids)
-        items (if (= command "submit") (assoc items "submit" true) items)
-        db-application-id (if (draft? application-id)
-                            (create-new-draft (getx application :wfid))
-                            application-id)
-        application (assoc application :id db-application-id)
-        catalogue-items (:catalogue-items application)
-        {:keys [success? valid? validation]} (save-internal application catalogue-items items licenses)]
+        ;; if no application-id given, create a new application
+        application-id (or application-id
+                           (create-new-draft-for-items catalogue-item-ids))
+        submit? (= command "submit")
+        {:keys [success? valid? validation]} (save-form-inputs application-id submit? items licenses)]
     (cond-> {:success success?
              :valid valid?}
       (not valid?) (assoc :validation validation)
-      success? (assoc :id db-application-id
+      success? (assoc :id application-id
                       :state (:state (get-application-state application-id))))))

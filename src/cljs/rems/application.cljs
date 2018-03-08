@@ -104,27 +104,28 @@
    (assoc-in db [:edit-application :status] value)))
 
 (defn- save-application [command user application-id catalogue-items items licenses]
-  (PUT "/api/application/command"
-       {:headers {"x-rems-api-key" 42
-                  "x-rems-user-id" (:eppn user)}
-        ;; TODO handle validation errors
-        :handler (fn [resp]
-                   (if (:success resp)
-                     (do (rf/dispatch [::set-status :saved])
-                         ;; HACK: we both set the location, and fire a fetch-application event
-                         ;; because if the location didn't change, secretary won't fire the event
-                         (navigate-to (:id resp))
-                         (rf/dispatch [::start-fetch-application (:id resp)]))
-                     (rf/dispatch [::set-status :failed])))
-        :error-handler (fn [err]
-                         (rf/dispatch [::set-status :failed]))
-        :format :json
-        :params {:command command
-                 ;; TODO why do I need to send these for an existing application?
-                 :catalogue-items catalogue-items
-                 :application-id application-id
-                 :items items
-                 :licenses licenses}}))
+  (let [payload (merge {:command command
+                        :items items
+                        :licenses licenses}
+                       (if application-id
+                         {:application-id application-id}
+                         {:catalogue-items catalogue-items}))]
+    (PUT "/api/application/command"
+         {:headers {"x-rems-api-key" 42
+                    "x-rems-user-id" (:eppn user)}
+          ;; TODO handle validation errors
+          :handler (fn [resp]
+                     (if (:success resp)
+                       (do (rf/dispatch [::set-status :saved])
+                           ;; HACK: we both set the location, and fire a fetch-application event
+                           ;; because if the location didn't change, secretary won't fire the event
+                           (navigate-to (:id resp))
+                           (rf/dispatch [::start-fetch-application (:id resp)]))
+                       (rf/dispatch [::set-status :failed])))
+          :error-handler (fn [err]
+                           (rf/dispatch [::set-status :failed]))
+          :format :json
+          :params payload})))
 
 (rf/reg-event-fx
  ::save-application

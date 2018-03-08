@@ -17,10 +17,9 @@
                                index-by]]))
 
 (defn draft?
-  "Is the given `application-id` for a draft application?"
+  "Is the given `application-id` for an unsaved draft application?"
   [application-id]
-  (or (nil? application-id)
-      (neg? application-id)))
+  (nil? application-id))
 
 ;; TODO cache application state in db instead of always computing it from events
 (declare get-application-state)
@@ -256,11 +255,11 @@
 
 (defn make-draft-application
   "Make a draft application with an initial set of catalogue items."
-  [application-id catalogue-item-ids]
+  [catalogue-item-ids]
   (let [items (get-catalogue-items catalogue-item-ids)]
     (assert (= 1 (count (distinct (mapv :wfid items)))))
     (assert (= 1 (count (distinct (mapv :formid items)))))
-    {:id application-id
+    {:id nil
      :state "draft"
      :applicantuserid (get-user-id)
      :wfid (:wfid (first items))
