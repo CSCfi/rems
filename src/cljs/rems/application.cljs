@@ -107,6 +107,7 @@
   (PUT "/api/application/command"
        {:headers {"x-rems-api-key" 42
                   "x-rems-user-id" (:eppn user)}
+        ;; TODO handle validation errors
         :handler (fn [resp]
                    (if (:success resp)
                      (do (rf/dispatch [::set-status :saved])
