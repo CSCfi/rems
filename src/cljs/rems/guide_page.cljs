@@ -3,6 +3,7 @@
    [re-frame.core :as rf]
    [rems.actions :as actions]
    [rems.application :as application]
+   [rems.applications :as applications]
    [rems.auth.auth :as auth]
    [rems.cart :as cart]
    [rems.catalogue :as catalogue]
@@ -70,8 +71,8 @@
     [:h2 "Cart components"]
     [cart/guide]
 
-    ;; [:h2 "Applications list"]
-    ;; (applications/guide)
+    [:h2 "Applications list"]
+    (applications/guide)
 
     [:h2 "Actions list"]
     [actions/guide]
