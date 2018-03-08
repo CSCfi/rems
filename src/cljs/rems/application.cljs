@@ -6,8 +6,20 @@
             [rems.db.catalogue :refer [get-catalogue-item-title]]
             [rems.phase :refer [phases get-application-phases]]
             [rems.text :refer [text localize-state localize-event localize-time]]
-            [rems.util :refer [dispatch!]])
+            [rems.util :refer [dispatch!]]
+            [secretary.core :as secretary])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
+
+;;;; Routes and route helpers ;;;;
+;; TODO named secretary routes give us equivalent functions
+;; TODO should the secretary route definitions be in this ns too?
+
+(defn apply-for [items]
+  (let [url (str "#/application?items=" (str/join "," (sort (map :id items))))]
+    (dispatch! url)))
+
+(defn navigate-to [id]
+  (dispatch! (str "#/application/" id)))
 
 ;;;; Events and actions ;;;;
 
@@ -19,12 +31,12 @@
 (rf/reg-event-fx
  ::start-fetch-application
  (fn [{:keys [db]} [_ id]]
-   {::fetch-application [(:user db) id]}))
+   {::fetch-application [(get-in db [:identity :user]) id]}))
 
 (rf/reg-event-fx
  ::start-new-application
  (fn [{:keys [db]} [_ items]]
-   {::fetch-draft-application [(:user db) items]}))
+   {::fetch-draft-application [(get-in db [:identity :user]) items]}))
 
 (defn- fetch-application [user id]
   ;; TODO: handle errors (e.g. unauthorized)
@@ -98,7 +110,10 @@
         :handler (fn [resp]
                    (if (:success resp)
                      (do (rf/dispatch [::set-status :saved])
-                         (rf/dispatch [::start-fetch-application application-id]))
+                         ;; HACK: we both set the location, and fire a fetch-application event
+                         ;; because if the location didn't change, secretary won't fire the event
+                         (navigate-to (:id resp))
+                         (rf/dispatch [::start-fetch-application (:id resp)]))
                      (rf/dispatch [::set-status :failed])))
         :error-handler (fn [err]
                          (rf/dispatch [::set-status :failed]))
@@ -113,7 +128,7 @@
 (rf/reg-event-fx
  ::save-application
  (fn [{:keys [db]} [_ command]]
-   (let [app-id (get-in db [:application :id])
+   (let [app-id (get-in db [:application :application :id])
          catalogue-ids (mapv :id (get-in db [:application :catalogue-items]))
          items (get-in db [:edit-application :items])
          ;; TODO change api to booleans
@@ -123,7 +138,7 @@
                           [id "approved"]))]
      ;; TODO disable form while saving?
      (rf/dispatch [::set-status :pending])
-     (save-application command (:user db) app-id catalogue-ids items licenses))
+     (save-application command (get-in db [:identity :user]) app-id catalogue-ids items licenses))
    {}))
 
 ;;;; UI components ;;;;
@@ -448,9 +463,3 @@
                          {:type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
                           :approved true}]
               :comments [{:comment "a comment"}]}])])
-
-;;;; Routes and route helpers ;;;;
-
-(defn apply-for [items]
-  (let [url (str "#/application?items=" (str/join "," (sort (map :id items))))]
-    (dispatch! url)))
