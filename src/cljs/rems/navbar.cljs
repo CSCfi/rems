@@ -10,11 +10,11 @@
 (def context {:root-path ""})
 
 ;; TODO consider moving when-role as it's own component
-(defn when-roles [roles current-roles & content]
+(defn when-roles [roles current-roles content]
   (when (some roles current-roles)
     content))
 
-(defn when-role [role current-roles & content]
+(defn when-role [role current-roles content]
   (when-roles #{role} current-roles content))
 
 (defn url-dest
@@ -32,21 +32,18 @@
      [atoms/link-to {:class (str "px-0 nav-link")} (url-dest "/logout") (text :t.navigation/logout)]]))
 
 (defn navbar-items [e page-name identity]
-  [e
-   [:div.navbar-nav.mr-auto
-    (if (:user identity)
-      ;;TODO: get navigation options from subscription
-      (let [current-roles (:roles identity)]
-        (list
-         (when-role :applicant current-roles
-                    [nav-link "#/catalogue" (text :t.navigation/catalogue) (= page-name "catalogue")])
-         (when-role :applicant current-roles
-                    [nav-link "#/applications" (text :t.navigation/applications) (= page-name "applications")])
-         (when-roles #{:approver :reviewer} current-roles
-                     [nav-link "#/actions" (text :t.navigation/actions) (= page-name "actions")])))
-      [nav-link "#/" (text :t.navigation/home) (= page-name "home")])
-    [nav-link "#/about" (text :t.navigation/about) (= page-name "about")]]
-   [language-switcher]])
+  ;;TODO: get navigation options from subscription
+  (let [current-roles (:roles identity)]
+    [e [:div.navbar-nav.mr-auto
+        (when-role :applicant current-roles
+                   [nav-link "#/catalogue" (text :t.navigation/catalogue) (= page-name "catalogue")])
+        (when-role :applicant current-roles
+                   [nav-link "#/applications" (text :t.navigation/applications) (= page-name "applications")])
+        (when-roles #{:approver :reviewer} current-roles
+                    [nav-link "#/actions" (text :t.navigation/actions) (= page-name "actions")])
+        (when-not (:user identity) [nav-link "#/" (text :t.navigation/home) (= page-name "home")])
+        [nav-link "#/about" (text :t.navigation/about) (= page-name "about")]]
+     [language-switcher]]))
 
 (defn navbar-normal
   [page-name identity]
