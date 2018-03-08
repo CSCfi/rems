@@ -207,7 +207,7 @@
      :tags ["applications"]
 
      (GET "/applications/" []
-       :summary "Get current users all applications"
+       :summary "Get current user's all applications"
        :return GetApplicationsResponse
        (ok (get-my-applications))))
 
