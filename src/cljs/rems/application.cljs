@@ -143,6 +143,29 @@
      (save-application command (get-in db [:identity :user]) app-id catalogue-ids items licenses))
    {}))
 
+(defn- judge-application [command user application-id round comment]
+  (PUT "/api/application/judge"
+       {:headers {"x-rems-api-key" 42
+                  "x-rems-user-id" (:eppn user)}
+        :format :json
+        :params {:command command
+                 :application-id application-id
+                 :round round
+                 :comment comment}
+        ;; TODO error handling
+        :handler (fn [resp]
+                   (rf/dispatch [::start-fetch-application application-id]))}))
+
+(rf/reg-event-fx
+ ::judge-application
+ (fn [{:keys [db]} [_ command]]
+   (let [application-id (get-in db [:application :application :id])
+         round (get-in db [:application :application :curround])
+         user (get-in db [:identity :user])
+         comment ""]
+     (judge-application command user application-id round comment)
+     {})))
+
 ;;;; UI components ;;;;
 
 ;; Fields
@@ -245,6 +268,7 @@
              :pending [:i {:class "fa fa-spinner"}]
              :saved [:i {:class "fa fa-check-circle"}]
              :failed [:i {:class "fa fa-times-circle"}])]))
+
 (defn- save-button []
   [:button#save.btn.btn-secondary
    {:name "save" :onClick #(rf/dispatch [::save-application "save"])}
@@ -254,6 +278,11 @@
   [:button#submit.btn.btn-primary
    {:name "submit" :onClick #(rf/dispatch [::save-application "submit"])}
    (text :t.form/submit)])
+
+(defn- approve-button []
+  [:button#submit.btn.btn-primary
+   {:name "approve" :onClick #(rf/dispatch [::judge-application "approve"])}
+   (text :t.actions/approve)])
 
 (defn- fields [form]
   (let [application (:application form)
@@ -276,11 +305,14 @@
           (into [:div]
                 (for [l licenses]
                   [field (assoc l :readonly readonly?)]))])
-       (when-not readonly?
-         [:div.col.commands
-          [status-widget]
-          [save-button]
-          [submit-button]])]}]))
+       [:div.col.commands
+        [status-widget]
+        (when (:can-approve? application)
+          [approve-button])
+        (when-not readonly?
+          [:div
+           [save-button]
+           [submit-button]])]]}]))
 
 ;; Header
 
