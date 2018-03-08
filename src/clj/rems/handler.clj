@@ -11,7 +11,6 @@
             [rems.entitlements :as entitlements]
             [rems.env :refer [+defaults+]]
             [rems.events :as events]
-            [rems.form :as form]
             [rems.home :as home]
             [rems.landing-page :as landing-page]
             [rems.language-switcher :as language-switcher]
@@ -57,7 +56,6 @@
   landing-page/landing-page-routes
   events/events-routes
   cart/cart-routes
-  form/form-routes
   entitlements/entitlements-routes)
 
 (defn normal-routes []

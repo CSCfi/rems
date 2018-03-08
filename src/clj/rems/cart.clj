@@ -58,7 +58,7 @@
   (POST "/cart/remove" session (handler disj session)))
 
 (defn- apply-button [items]
-  [:a.btn.btn-primary {:href (form/link-to-application items)} (text :t.cart/apply)])
+  [:a.btn.btn-primary #_{:href (form/link-to-application items)} (text :t.cart/apply)])
 
 (defn- item-view [item & [apply-button?]]
   [:tr.cart-item {:class (if apply-button? "separator" "")}
