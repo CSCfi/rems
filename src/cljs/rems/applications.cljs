@@ -5,9 +5,10 @@
             [rems.text :refer [localize-state localize-time text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
-(defn- fetch-my-applications []
+(defn- fetch-my-applications [user]
   (GET "/api/applications/" {:handler #(rf/dispatch [::fetch-my-applications %])
                              :response-format :json
+                             :headers {"x-rems-user-id" (:eppn user)}
                              :keywords? true}))
 
 (rf/reg-event-db
@@ -46,7 +47,8 @@
        (applications-item app))]))
 
 (defn applications-page []
-  (fetch-my-applications)
+  (let [user @(rf/subscribe [:user])]
+    (fetch-my-applications user))
   (let [apps @(rf/subscribe [::my-applications])]
     (applications apps)))
 

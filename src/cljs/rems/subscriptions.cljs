@@ -32,6 +32,16 @@
     (:identity db)))
 
 (reg-sub
+  :user
+  (fn [db _]
+    (get-in db [:identity :user])))
+
+(reg-sub
+  :roles
+  (fn [db _]
+    (get-in db [:identity :roles])))
+
+(reg-sub
   :catalogue
   (fn [db _]
     (:catalogue db)))

@@ -29,7 +29,7 @@
      "TODO about page in markdown"]]])
 
 (defn home-page []
-  (if (:user @(rf/subscribe [:identity]))
+  (if @(rf/subscribe [:user])
     [:p "Logged in."]
     [auth/login-component]))
 
