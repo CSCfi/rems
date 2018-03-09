@@ -131,9 +131,6 @@
                                    (update user-and-roles :roles #(mapv keyword (:roles user-and-roles)))
                                    user-and-roles)])))
 
-(defn dispatch-initial-route! [href]
-  (secretary/dispatch! href))
-
 (defn fetch-translations! []
   (GET "/api/translations" {:handler #(rf/dispatch [:loaded-translations %])
                             :response-format :json
@@ -155,5 +152,4 @@
   (fetch-theme!)
   (config/fetch-config!)
   (hook-browser-navigation!)
-  (mount-components)
-  (dispatch-initial-route! (.. js/window -location -href)))
+  (mount-components))
