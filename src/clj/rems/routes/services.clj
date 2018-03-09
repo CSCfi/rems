@@ -196,7 +196,7 @@
      (GET "/config" []
        :summary     "Get configuration that is relevant to UI"
        :return      GetConfigResponse
-       (ok {:authentication (:authentication env) :extra-pages (:extra-pages env)})))
+       (ok (select-keys env [:authentication :extra-pages]))))
 
    (context "/api" []
      :tags ["actions"]
