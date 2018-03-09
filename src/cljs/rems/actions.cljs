@@ -36,7 +36,7 @@
 
 (defn- view-button [app]
   [:a.btn.btn-primary
-   {:href (str "/form/" (:id app))}
+   {:href (str "#/application/" (:id app))}
    (text :t.applications/view)])
 
 ;; TODO not implemented
