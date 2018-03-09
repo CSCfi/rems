@@ -175,33 +175,29 @@
   (fn [event]
     (rf/dispatch [::set-field id (.. event -target -value)])))
 
-(defn- subscribe-field-value
-  [id]
-  (get-in @(rf/subscribe [:edit-application]) [:items id]))
-
 (defn- id-to-name [id]
   (str "field" id))
 
 (defn- text-field
-  [{:keys [title id prompt readonly optional]}]
+  [{:keys [title id prompt readonly optional value]}]
   [:div.form-group.field
    [:label {:for (id-to-name id)}
     title " "
     (when optional
       (text :t.form/optional))]
    [:input.form-control {:type "text" :name (id-to-name id) :placeholder prompt
-                         :value (subscribe-field-value id) :readOnly readonly
+                         :value value :readOnly readonly
                          :onChange (set-field-value id)}]])
 
 (defn- texta-field
-  [{:keys [title id prompt readonly optional]}]
+  [{:keys [title id prompt readonly optional value]}]
   [:div.form-group.field
    [:label {:for (id-to-name id)}
     title " "
     (when optional
       (text :t.form/optional))]
    [:textarea.form-control {:name (id-to-name id) :placeholder prompt
-                            :value (subscribe-field-value id) :readOnly readonly
+                            :value value :readOnly readonly
                             :onChange (set-field-value id)}]])
 
 (defn- label [{title :title}]
@@ -213,27 +209,23 @@
   (fn [event]
     (rf/dispatch [::set-license id (.. event -target -checked)])))
 
-(defn- get-license-approval
-  [id]
-  (get-in @(rf/subscribe [:edit-application]) [:licenses id]))
-
-(defn- license [id readonly content]
+(defn- license [id approved readonly content]
   [:div.row
    [:div.col-1
     [:input {:type "checkbox" :name (str "license" id) :disabled readonly
-             :checked (get-license-approval id)
+             :checked approved
              :onChange (set-license-approval id)}]]
    [:div.col content]])
 
 (defn- link-license
-  [{:keys [title id textcontent readonly]}]
-  [license id readonly
+  [{:keys [title id textcontent readonly approved]}]
+  [license id approved readonly
    [:a {:href textcontent :target "_blank"}
     title " "]])
 
 (defn- text-license
   [{:keys [title id textcontent approved readonly]}]
-  [license id readonly
+  [license id approved readonly
    [:div.license-panel
     [:h6.license-title
      [:a.license-header.collapsed {:data-toggle "collapse"
@@ -305,7 +297,7 @@
    [return-button]
    [approve-button]])
 
-(defn- fields [form]
+(defn- fields [form field-values]
   (let [application (:application form)
         state (:state application)
         editable? (= "draft" state)
@@ -319,13 +311,17 @@
       [:div
        (into [:div]
              (for [i (:items form)]
-               [field (assoc i :readonly readonly?)]))
+               [field (assoc i
+                             :readonly readonly?
+                             :value (get-in field-values [:items (:id i)]))]))
        (when-let [licenses (not-empty (:licenses form))]
          [:div.form-group.field
           [:h4 (text :t.form/licenses)]
           (into [:div]
                 (for [l licenses]
-                  [field (assoc l :readonly readonly?)]))])
+                  [field (assoc l
+                                :readonly readonly?
+                                :approved (get-in field-values [:licenses (:id l)]))]))])
        [:div.col.commands
         [status-widget]
         (when (:can-approve? application)
@@ -410,7 +406,7 @@
                        ^{:key (:id item)}
                        [:li (get-catalogue-item-title item language)]))]}]))
 
-(defn- render-application [application]
+(defn- render-application [application field-values]
   ;; TODO should rename :application
   (let [app (:application application)
         state (:state app)
@@ -425,13 +421,14 @@
      (when user-attributes
        [:div.mt-3 [applicant-info "applicant-info" user-attributes]])
      [:div.mt-3 [applied-resources (:catalogue-items application)]]
-     [:div.my-3 [fields application]]]))
+     [:div.my-3 [fields application field-values]]]))
 
 ;;;; Entrypoint ;;;;
 
 (defn- show-application []
   (if-let [application @(rf/subscribe [:application])]
-    [render-application application]
+    (let [field-values @(rf/subscribe [:edit-application])]
+      [render-application application field-values])
     ;; TODO replace with spinner or localize?
     [:p "No application loaded"]))
 
@@ -511,15 +508,29 @@
                             :can-close? false
                             :review-type nil}
               :catalogue-items [{:title "An applied item"}]
-              :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
-                      {:type "label" :title "Please input your wishes below."}
-                      {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2"}
-                      {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]
-              :licenses [{:type "license" :title "A Text License" :licensetype "text" :id 2
+              :items [{:id 1 :type "text" :title "Field 1" :inputprompt "prompt 1"}
+                      {:id 2 :type "label" :title "Please input your wishes below."}
+                      {:id 3 :type "texta" :title "Field 2" :optional true :inputprompt "prompt 2"}
+                      {:id 4 :type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]
+              :licenses [{:id 4 :type "license" :title "A Text License" :licensetype "text"
                           :textcontent lipsum}
-                         {:type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
-                          :approved true}]}])
-   (example "form, approved"
+                         {:id 5 :type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"}]}
+             {:items {1 "abc"}
+              :licenses {4 false 5 true}}])
+   (example "application, applied"
+            [render-application
+             {:title "Form title"
+              :application {:id 17 :state "applied"
+                            :can-approve? true
+                            :can-close? false
+                            :review-type nil}
+              :catalogue-items [{:title "An applied item"}]
+              :items [{:id 1 :type "text" :title "Field 1" :inputprompt "prompt 1"}]
+              :licenses [{:id 2 :type "license" :title "A Text License" :licensetype "text"
+                          :textcontent lipsum}]}
+             {:items {1 "abc"}
+              :licenses {2 true}}])
+   (example "application, approved"
             [render-application
              {:title "Form title"
               :catalogue-items [{:title "An applied item"}]
@@ -529,12 +540,14 @@
                             :can-close? true
                             :review-type nil
                             :events [{:event "approve" :comment "Looking good, approved!"}]}
-              :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}
-                      {:type "label" :title "Please input your wishes below."}
-                      {:type "texta" :title "Field 2" :optional true :inputprompt "prompt 2" :value "def"}
-                      {:type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]
-              :licenses [{:type "license" :title "A Text License" :licensetype "text" :id 3
+              :items [{:id 1 :type "text" :title "Field 1" :inputprompt "prompt 1"}
+                      {:id 2 :type "label" :title "Please input your wishes below."}
+                      {:id 3 :type "texta" :title "Field 2" :optional true :inputprompt "prompt 2"}
+                      {:id 4 :type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]
+              :licenses [{:id 5 :type "license" :title "A Text License" :licensetype "text"
                           :textcontent lipsum}
-                         {:type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
+                         {:id 6 :type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
                           :approved true}]
-              :comments [{:comment "a comment"}]}])])
+              :comments [{:comment "a comment"}]}
+             {:items {1 "abc" 3 "def"}
+              :licenses {5 true 6 true}}])])
