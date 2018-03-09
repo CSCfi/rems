@@ -33,6 +33,9 @@
     [:p "Logged in."]
     [auth/login-component]))
 
+(defn not-found-page[]
+  [:h3 "No such page."])
+
 (def pages
   {:home home-page
    :catalogue catalogue-page
@@ -40,7 +43,8 @@
    :about about-page
    :actions actions-page
    :application application-page
-   :applications applications-page})
+   :applications applications-page
+   :not-found not-found-page})
 
 (defn footer []
   [:footer.footer
@@ -94,6 +98,9 @@
 
 (secretary/defroute "/applications" []
   (rf/dispatch [:set-active-page :applications]))
+
+(secretary/defroute "*" []
+  (rf/dispatch [:set-active-page :not-found]))
 
 ;; -------------------------
 ;; History
