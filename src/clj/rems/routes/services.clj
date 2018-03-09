@@ -123,9 +123,21 @@
 (def GetCatalogueResponse
   [CatalogueItem])
 
+;; TODO better schema
+(def Approval
+  s/Any)
+
+;; TODO better schema
+(def Review
+  s/Any)
+
 (def GetActionsResponse
   {:approver? s/Bool
-   :reviewer? s/Bool})
+   :reviewer? s/Bool
+   :approvals [Approval]
+   :handled-approvals [Approval]
+   :reviews [Review]
+   :handled-reviews [Review]})
 
 (defn longify-keys [m]
   (into {} (for [[k v] m]
@@ -184,7 +196,7 @@
      (GET "/config" []
        :summary     "Get configuration that is relevant to UI"
        :return      GetConfigResponse
-       (ok {:authentication (:authentication env) :extra-pages (:extra-pages env)})))
+       (ok (select-keys env [:authentication :extra-pages]))))
 
    (context "/api" []
      :tags ["actions"]
@@ -193,7 +205,11 @@
        :summary     "Get actions page reviewable and approvable applications"
        :return      GetActionsResponse
        (ok {:approver? true
-            :reviewer? true})))
+            :reviewer? true
+            :approvals (applications/get-approvals)
+            :handled-approvals (applications/get-handled-approvals)
+            :reviews (applications/get-applications-to-review)
+            :handled-reviews (applications/get-handled-reviews)})))
 
    (context "/api" []
      :tags ["application"]

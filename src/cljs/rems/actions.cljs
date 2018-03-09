@@ -8,16 +8,26 @@
             [rems.text :refer [localize-state localize-time text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
-(defn- fetch-actions []
+(defn- fetch-actions [user]
   (GET "/api/actions/" {:handler #(re-frame/dispatch [::fetch-actions-result %])
+                        :headers {"x-rems-user-id" (:eppn user)}
                         :response-format :json
                         :keywords? true}))
+
+(re-frame/reg-fx
+ ::fetch-actions
+ (fn [[user]]
+   (fetch-actions user)))
+
+(re-frame/reg-event-fx
+ ::start-fetch-actions
+ (fn [{:keys [db]} _]
+   {::fetch-actions [(get-in db [:identity :user])]}))
 
 (re-frame/reg-event-db
  ::fetch-actions-result
  (fn [db [_ result]]
    (assoc db ::actions result) ))
-
 
 (re-frame/reg-sub
  ::actions
@@ -119,7 +129,7 @@
 
 ;; TODO ensure ::actions is loaded when navigating to page
 (defn actions-page [reviews]
-  (fetch-actions)
+  (re-frame/dispatch [::start-fetch-actions])
   (let [actions @(re-frame/subscribe [::actions])]
     [:div
      (when (:reviewer? actions)
