@@ -5,6 +5,7 @@
             [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.catalogue :as catalogue]
+            [rems.db.entitlements :as entitlements]
             [rems.form :as form]
             [rems.locales :as locales]
             [ring.util.http-response :refer :all]
@@ -139,6 +140,12 @@
    :reviews [Review]
    :handled-reviews [Review]})
 
+(def Entitlement
+  {:resource s/Str
+   :application-id s/Num
+   :start s/Str
+   :mail s/Str})
+
 (defn longify-keys [m]
   (into {} (for [[k v] m]
              [(Long/parseLong (name k)) v])))
@@ -255,4 +262,11 @@
        :summary "Get catalogue items"
        :return GetCatalogueResponse
        (binding [context/*lang* :en]
-         (ok (catalogue/get-localized-catalogue-items)))))))
+         (ok (catalogue/get-localized-catalogue-items)))))
+
+   (context "/api" []
+     :tags ["entitlements"]
+     (GET "/entitlements/" []
+       :summary "Get all entitlements"
+       :return [Entitlement]
+       (ok (entitlements/get-entitlements-for-api))))))
