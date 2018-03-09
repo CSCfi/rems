@@ -519,7 +519,18 @@
                           :textcontent lipsum}
                          {:type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
                           :approved true}]}])
-   (example "form, approved"
+   (example "application, applied"
+            [render-application
+             {:title "Form title"
+              :application {:id 17 :state "applied"
+                            :can-approve? true
+                            :can-close? false
+                            :review-type nil}
+              :catalogue-items [{:title "An applied item"}]
+              :items [{:type "text" :title "Field 1" :inputprompt "prompt 1" :value "abc"}]
+              :licenses [{:type "license" :title "A Text License" :licensetype "text" :id 2
+                          :textcontent lipsum}]}])
+   (example "application, approved"
             [render-application
              {:title "Form title"
               :catalogue-items [{:title "An applied item"}]
