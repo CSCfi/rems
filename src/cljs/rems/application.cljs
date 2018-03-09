@@ -26,7 +26,7 @@
 (rf/reg-event-db
  ::zero-state
  (fn [db _]
-   (assoc db :application nil :edit-application {:items {} :licenses {} :judge-comment ""})))
+   (assoc db :application nil :edit-application nil ::judge-comment "")))
 
 (rf/reg-sub
  :application
