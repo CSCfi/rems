@@ -10,6 +10,19 @@
             [rems.roles :refer [has-roles?]]
             [rems.text :as text]))
 
+;; TODO move Entitlement schema here from rems.routes.services?
+
+(defn- entitlement-to-api [{:keys [resid catappid start mail]}]
+  {:resource resid
+   :application-id catappid
+   :start (text/localize-time start)
+   :mail mail})
+
+(defn get-entitlements-for-api []
+  (when-not (has-roles? :approver)
+    (throw-unauthorized))
+  (mapv entitlement-to-api (db/get-entitlements)))
+
 (defn get-entitlements-for-export
   "Returns a CSV string representing entitlements"
   []
