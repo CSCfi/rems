@@ -23,6 +23,11 @@
 
 ;;;; Events and actions ;;;;
 
+(rf/reg-event-db
+ ::zero-state
+ (fn [db _]
+   (assoc db :application nil :edit-application {:items {} :licenses {} :judge-comment ""})))
+
 (rf/reg-sub
  :application
  (fn [db _]
