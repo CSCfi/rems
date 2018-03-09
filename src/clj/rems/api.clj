@@ -1,4 +1,4 @@
-(ns rems.routes.services
+(ns rems.api
   (:require [compojure.api.sweet :refer :all]
             [compojure.api.exception :as ex]
             [rems.config :refer [env]]
@@ -168,7 +168,7 @@
   ;; failure communicated via an exception
   {:success true})
 
-(def service-routes
+(def api-routes
   (api
    {:exceptions {:handlers {rems.auth.NotAuthorizedException (ex/with-logging unauthorized-handler)
                             ;; add logging to validation handlers

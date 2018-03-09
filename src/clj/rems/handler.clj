@@ -13,7 +13,7 @@
             [rems.layout :refer [error-page]]
             [rems.middleware :as middleware]
             ;;[rems.routes.guide :refer [guide-routes]]
-            [rems.routes.services :refer [service-routes]]
+            [rems.api :refer [api-routes]]
             [rems.util :refer [never-match-route]]))
 
 (mount/defstate init-app
@@ -56,7 +56,7 @@
   (routes
    (public-routes)
    (wrap-routes #'secured-routes middleware/wrap-restricted)
-   #'service-routes))
+   #'api-routes))
 
 (defn app-routes []
   (routes
