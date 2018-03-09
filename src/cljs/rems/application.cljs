@@ -23,6 +23,11 @@
 
 ;;;; Events and actions ;;;;
 
+(rf/reg-event-db
+ ::zero-state
+ (fn [db _]
+   (assoc db :application nil :edit-application nil ::judge-comment "")))
+
 (rf/reg-sub
  :application
  (fn [db _]
@@ -92,10 +97,16 @@
  (fn [db [_ id value]]
    (assoc-in db [:edit-application :licenses id] value)))
 
+(rf/reg-sub
+ ::judge-comment
+ (fn [db _]
+   (::judge-comment db)))
+
+;; TODO remember to zero judge comment
 (rf/reg-event-db
- ::set-field
- (fn [db [_ id value]]
-   (assoc-in db [:edit-application :items id] value)))
+ ::set-judge-comment
+ (fn [db [_ value]]
+   (assoc db ::judge-comment value)))
 
 ;; status can be :pending :saved :failed or nil
 (rf/reg-event-db
@@ -162,7 +173,7 @@
    (let [application-id (get-in db [:application :application :id])
          round (get-in db [:application :application :curround])
          user (get-in db [:identity :user])
-         comment ""]
+         comment (get db ::judge-comment "")]
      (judge-application command user application-id round comment)
      {})))
 
@@ -271,32 +282,6 @@
    {:name "submit" :onClick #(rf/dispatch [::save-application "submit"])}
    (text :t.form/submit)])
 
-(defn- applicant-buttons []
-  [:div
-   [save-button]
-   [submit-button]])
-
-(defn- approve-button []
-  [:button#submit.btn.btn-primary
-   {:name "approve" :onClick #(rf/dispatch [::judge-application "approve"])}
-   (text :t.actions/approve)])
-
-(defn- reject-button []
-  [:button#submit.btn.btn-secondary
-   {:name "reject" :onClick #(rf/dispatch [::judge-application "reject"])}
-   (text :t.actions/reject)])
-
-(defn- return-button []
-  [:button#submit.btn.btn-secondary
-   {:name "return" :onClick #(rf/dispatch [::judge-application "return"])}
-   (text :t.actions/return)])
-
-(defn- approve-buttons []
-  [:div
-   [reject-button]
-   [return-button]
-   [approve-button]])
-
 (defn- fields [form field-values]
   (let [application (:application form)
         state (:state application)
@@ -322,12 +307,11 @@
                   [field (assoc l
                                 :readonly readonly?
                                 :approved (get-in field-values [:licenses (:id l)]))]))])
-       [:div.col.commands
-        [status-widget]
-        (when (:can-approve? application)
-          [approve-buttons])
-        (when-not readonly?
-          [applicant-buttons])]]}]))
+       (when-not readonly?
+         [:div.col.commands
+          [status-widget]
+          [save-button]
+          [submit-button]])]}]))
 
 ;; Header
 
@@ -384,6 +368,38 @@
                     (for [[k v] (dissoc user-attributes :commonName :mail)]
                       [info-field k v]))}])
 
+;; Approval
+
+(defn- approve-button []
+  [:button#submit.btn.btn-primary
+   {:name "approve" :onClick #(rf/dispatch [::judge-application "approve"])}
+   (text :t.actions/approve)])
+
+(defn- reject-button []
+  [:button#submit.btn.btn-secondary
+   {:name "reject" :onClick #(rf/dispatch [::judge-application "reject"])}
+   (text :t.actions/reject)])
+
+(defn- return-button []
+  [:button#submit.btn.btn-secondary
+   {:name "return" :onClick #(rf/dispatch [::judge-application "return"])}
+   (text :t.actions/return)])
+
+(defn- judge-form []
+  [collapsible/component
+   {:id "judge"
+    :title (text :t.phases/approve)
+    :always [:div
+             [:div.form-group
+              [:textarea.form-control
+               {:name "judge-comment" :placeholder "Comment"
+                :value @(rf/subscribe [::judge-comment])
+                :onChange #(rf/dispatch [::set-judge-comment (.. % -target -value)])}]]
+             [:div.col.commands
+              [reject-button]
+              [return-button]
+              [approve-button]]]}])
+
 ;; Whole application
 
 (defn- disabled-items-warning [catalogue-items]
@@ -421,7 +437,9 @@
      (when user-attributes
        [:div.mt-3 [applicant-info "applicant-info" user-attributes]])
      [:div.mt-3 [applied-resources (:catalogue-items application)]]
-     [:div.my-3 [fields application field-values]]]))
+     [:div.my-3 [fields application field-values]]
+     (when (:can-approve? app)
+       [:div.mb-3 [judge-form]])]))
 
 ;;;; Entrypoint ;;;;
 
