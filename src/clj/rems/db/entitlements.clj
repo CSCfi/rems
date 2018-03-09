@@ -10,7 +10,7 @@
             [rems.roles :refer [has-roles?]]
             [rems.text :as text]))
 
-;; TODO move Entitlement schema here from rems.routes.services?
+;; TODO move Entitlement schema here from rems.api?
 
 (defn- entitlement-to-api [{:keys [resid catappid start mail]}]
   {:resource resid
