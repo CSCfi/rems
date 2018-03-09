@@ -49,6 +49,7 @@
   (fn [request]
     (if (and (:uri request) (.startsWith (:uri request) "/api"))
       (binding [context/*lang* (get-in request [:params :lang])
+                ;; TODO if authorized pages then require x-rems-user-id or get from session?
                 context/*user* {"eppn" (get-in request [:headers "x-rems-user-id"])}]
         (handler request))
       (handler request))))
