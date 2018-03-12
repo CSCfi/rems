@@ -26,7 +26,7 @@
 
 (def GetConfigResponse
   {:authentication s/Keyword
-   :extra-pages [ExtraPage]})
+   (s/optional-key :extra-pages) [ExtraPage]})
 
 (def GetApplicationsResponse
   [{:id s/Num
