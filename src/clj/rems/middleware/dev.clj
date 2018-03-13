@@ -1,5 +1,6 @@
 (ns rems.middleware.dev
   (:require [prone.middleware :refer [wrap-exceptions]]
+            [rems.auth.NotAuthorizedException]
             [rems.context :as context]
             [ring.middleware.reload :refer [wrap-reload]]))
 
