@@ -29,34 +29,18 @@
    (s/optional-key :extra-pages) [ExtraPage]})
 
 (def GetApplicationsResponse
-  [{:id s/Num
-    :catalogue-items [CatalogueItem]
-    :events [Event]
-    :start DateTime
-    :state s/Str
-    :wfid s/Num
-    :fnlround s/Num
-    :curround s/Num
-    :applicantuserid s/Str}])
+  [Application])
 
 (def GetCatalogueResponse
   [CatalogueItem])
 
-;; TODO better schema
-(def Approval
-  s/Any)
-
-;; TODO better schema
-(def Review
-  s/Any)
-
 (def GetActionsResponse
   {:approver? s/Bool
    :reviewer? s/Bool
-   :approvals [Approval]
-   :handled-approvals [Approval]
-   :reviews [Review]
-   :handled-reviews [Review]})
+   :approvals [Application]
+   :handled-approvals [Application]
+   :reviews [Application]
+   :handled-reviews [Application]})
 
 (def Entitlement
   {:resource s/Str
@@ -116,7 +100,7 @@
      :header-params [x-rems-api-key :- String
                      x-rems-user-id :- String]
 
-     (GET "/actions/" []
+     (GET "/actions" []
        :summary     "Get actions page reviewable and approvable applications"
        :return      GetActionsResponse
        (ok {:approver? true
@@ -133,7 +117,7 @@
      :header-params [x-rems-api-key :- String
                      x-rems-user-id :- String]
 
-     (GET "/applications/" []
+     (GET "/applications" []
        :summary "Get current user's all applications"
        :return GetApplicationsResponse
        (ok (applications/get-my-applications))))

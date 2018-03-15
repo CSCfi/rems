@@ -48,7 +48,8 @@
    (s/optional-key :curround) s/Num ;; does not exist for draft
    (s/optional-key :fnlround) s/Num ;; does not exist for draft
    :events [Event]
-   :can-approve? s/Bool
-   :can-close? s/Bool
+   (s/optional-key :can-approve?) s/Bool
+   (s/optional-key :can-close?) s/Bool
    :catalogue-items [CatalogueItem]
-   :review-type (s/maybe s/Keyword)})
+   (s/optional-key :review-type) (s/maybe s/Keyword)
+   (s/optional-key :handled) DateTime})
