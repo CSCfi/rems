@@ -48,6 +48,23 @@
    :start s/Str
    :mail s/Str})
 
+(def CreateCatalogueItemCommand
+  {:title s/Str
+   :form s/Num
+   :resid s/Num
+   :wfid s/Num})
+
+(def CreateCatalogueItemResponse
+  CatalogueItem)
+
+(def CreateCatalogueItemLocalizationCommand
+  {:id s/Num
+   :langcode s/Str
+   :title s/Str})
+
+(def CreateCatalogueItemLocalizationResponse
+  {:success s/Bool})
+
 (defn unauthorized-handler
   [exception ex-data request]
   (unauthorized "unauthorized"))
@@ -131,7 +148,19 @@
        :summary "Get catalogue items"
        :return GetCatalogueResponse
        (binding [context/*lang* :en]
-         (ok (catalogue/get-localized-catalogue-items)))))
+         (ok (catalogue/get-localized-catalogue-items))))
+
+     (PUT "/catalogue/command/create" []
+       :summary "Create a new catalogue item"
+       :body [command CreateCatalogueItemCommand]
+       :return CreateCatalogueItemResponse
+       (ok (catalogue/create-catalogue-item-command! command)))
+
+     (PUT "/catalogue/command/create-localization" []
+       :summary "Create a new catalogue item localization"
+       :body [command CreateCatalogueItemLocalizationCommand]
+       :return CreateCatalogueItemLocalizationResponse
+       (ok (catalogue/create-catalogue-item-localization-command! command))))
 
    (context "/api" []
      :tags ["entitlements"]
