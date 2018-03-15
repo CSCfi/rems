@@ -83,6 +83,8 @@
 
    (context "/api" []
      :tags ["translation"]
+     :header-params [x-rems-api-key :- String
+                     x-rems-user-id :- String]
 
      (GET "/translations" []
        :summary     "Get translations"
@@ -91,6 +93,8 @@
 
    (context "/api" []
      :tags ["theme"]
+     :header-params [x-rems-api-key :- String
+                     x-rems-user-id :- String]
 
      (GET "/theme" []
        :summary     "Get current layout theme"
@@ -99,6 +103,8 @@
 
    (context "/api" []
      :tags ["config"]
+     :header-params [x-rems-api-key :- String
+                     x-rems-user-id :- String]
 
      (GET "/config" []
        :summary     "Get configuration that is relevant to UI"
@@ -107,6 +113,8 @@
 
    (context "/api" []
      :tags ["actions"]
+     :header-params [x-rems-api-key :- String
+                     x-rems-user-id :- String]
 
      (GET "/actions/" []
        :summary     "Get actions page reviewable and approvable applications"
@@ -122,6 +130,8 @@
 
    (context "/api" []
      :tags ["applications"]
+     :header-params [x-rems-api-key :- String
+                     x-rems-user-id :- String]
 
      (GET "/applications/" []
        :summary "Get current user's all applications"
@@ -130,6 +140,8 @@
 
    (context "/api" []
      :tags ["catalogue"]
+     :header-params [x-rems-api-key :- String
+                     x-rems-user-id :- String]
 
      (GET "/catalogue/" []
        :summary "Get catalogue items"
@@ -139,6 +151,8 @@
 
    (context "/api" []
      :tags ["entitlements"]
+     :header-params [x-rems-api-key :- String
+                     x-rems-user-id :- String]
      (GET "/entitlements/" []
        :summary "Get all entitlements"
        :return [Entitlement]
