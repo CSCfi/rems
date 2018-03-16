@@ -102,7 +102,6 @@
  (fn [db _]
    (::judge-comment db)))
 
-;; TODO remember to zero judge comment
 (rf/reg-event-db
  ::set-judge-comment
  (fn [db [_ value]]
