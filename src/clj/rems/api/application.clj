@@ -90,7 +90,7 @@
       (ok (form/api-save (fix-keys request))))
 
     (PUT "/judge" []
-       :summary "Judge an application"
-       :body [request JudgeApplicationCommand]
-       :return JudgeApplicationResponse
-       (ok (api-judge request)))))
+      :summary "Judge an application"
+      :body [request JudgeApplicationCommand]
+      :return JudgeApplicationResponse
+      (ok (api-judge request)))))
