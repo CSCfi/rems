@@ -2,10 +2,14 @@
 
 # API use the 1 minute version
 
+Here we assume that the instance you want to talk to is the REMS demo instance at `rems2demo.csc.fi`.
+
+You have an API-Key `42`.
+
 Checking what catalogue items are available
 
 ```sh
-curl https://rems2demo.csc.fi/api/catalogue
+curl -H "X-REMS-API-Key: 42" https://rems2demo.csc.fi/api/catalogue
 ```
 
 Returns the JSON response with the catalogue items
@@ -13,6 +17,8 @@ Returns the JSON response with the catalogue items
 ```json
 [{"id":1,"title":"non-localized title","wfid":1,"formid":1,"resid":"http://urn.fi/urn:nbn:fi:lb-201403262","state":"enabled","localizations":{"en":{"id":1,"langcode":"en","title":"ELFA Corpus, direct approval"},"fi":{"id":1,"langcode":"fi","title":"ELFA-korpus, suora hyväksyntä"}}}, ...]
 ```
+
+Some API endpoints also require `X-REMS-User-Id` header that is the REMS user id for the user that is represented. I.e. which user applies for a resource and which approves an application.
 
 See other methods in the [Swagger API documentation](https://rems2demo.scs.fi/swagger-ui).
 
