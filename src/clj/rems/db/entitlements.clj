@@ -18,10 +18,11 @@
    :start (text/localize-time start)
    :mail mail})
 
-(defn get-entitlements-for-api [user-or-nil]
+(defn get-entitlements-for-api [user-or-nil resource-or-nil]
   (when-not (has-roles? :approver)
     (throw-unauthorized))
-  (mapv entitlement-to-api (db/get-entitlements {:user user-or-nil})))
+  (mapv entitlement-to-api (db/get-entitlements {:user user-or-nil
+                                                 :resource resource-or-nil})))
 
 (defn get-entitlements-for-export
   "Returns a CSV string representing entitlements"
