@@ -2,11 +2,11 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
             [rems.context :as context]
+            [rems.db.core :as db]
             [rems.db.applications :as applications]
             [rems.form :as form]
             [ring.util.http-response :refer :all]
-            [schema.core :as s]
-            [rems.db.core :as db]))
+            [schema.core :as s]))
 
 ;; Response models
 
