@@ -159,6 +159,6 @@
 
        (GET "/" []
          :summary "Get all entitlements"
-         :query-params [{user :- s/Str nil}]
+         :query-params [{user :- (describe s/Str "return entitlements for this user (optional)") nil}]
          :return [Entitlement]
          (ok (entitlements/get-entitlements-for-api user)))))))
