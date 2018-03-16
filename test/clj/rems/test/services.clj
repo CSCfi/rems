@@ -136,7 +136,6 @@
                    (authenticate api-key user-id)
                    app
                    read-body)]
-      (println data)
       (is (= [2 2 3] (sort (map :id (mapcat :catalogue-items (:approvals data)))))))))
 
 (deftest service-translations-test
