@@ -3,6 +3,7 @@
             [rems.api.schema :refer :all]
             [rems.context :as context]
             [rems.db.applications :as applications]
+            [rems.db.core :as db]
             [rems.form :as form]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
@@ -65,23 +66,30 @@
       (update-in [:items] longify-keys)
       (update-in [:licenses] longify-keys)))
 
+(defn api-get-application [application-id]
+  (when (not (empty? (db/get-applications {:id application-id})))
+    (applications/get-form-for application-id)))
+
 (def application-api
   (context "/application" []
     :tags ["application"]
 
     (GET "/" []
-      :summary "Get application draft by `catalogue-items`"
-      :query-params [catalogue-items :- [s/Num]]
+      :summary "Get application (draft) for `catalogue-items`"
+      :query-params [catalogue-items :- (describe [s/Num] "catalogue item ids")]
       :return GetApplicationResponse
       (let [app (applications/make-draft-application catalogue-items)]
         (ok (applications/get-draft-form-for app))))
 
     (GET "/:application-id" []
       :summary "Get application by `application-id`"
-      :path-params [application-id :- s/Num]
-      :return GetApplicationResponse
+      :path-params [application-id :- (describe s/Num "application id")]
+      :responses {200 {:schema GetApplicationResponse}
+                  404 {:schema s/Str :description "Not found"}}
       (binding [context/*lang* :en]
-        (ok (applications/get-form-for application-id))))
+        (if-let [app (api-get-application application-id)]
+          (ok app)
+          (not-found! "not found"))))
 
     (PUT "/save" []
       :summary "Create a new application, change an existing one or submit an application"
@@ -90,7 +98,7 @@
       (ok (form/api-save (fix-keys request))))
 
     (PUT "/judge" []
-       :summary "Judge an application"
-       :body [request JudgeApplicationCommand]
-       :return JudgeApplicationResponse
-       (ok (api-judge request)))))
+      :summary "Judge an application"
+      :body [request JudgeApplicationCommand]
+      :return JudgeApplicationResponse
+      (ok (api-judge request)))))

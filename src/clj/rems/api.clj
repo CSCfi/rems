@@ -83,8 +83,8 @@
                             :description "Sample Services"}}}}
 
    (context "/api" []
-     :header-params [{x-rems-api-key :- s/Str nil}
-                     {x-rems-user-id :- s/Str nil}]
+     :header-params [{x-rems-api-key :- (describe s/Str "REMS API-Key (optional for UI, required for API)") nil}
+                     {x-rems-user-id :- (describe s/Str "user id (optional for UI, required for API)") nil}]
 
      (context "/translations" []
        :tags ["translations"]
@@ -145,7 +145,7 @@
 
        (GET "/:item-id" []
          :summary "Get a single catalogue item"
-         :path-params [item-id :- s/Num]
+         :path-params [item-id :- (describe s/Num "catalogue item")]
          :responses {200 {:schema CatalogueItem}
                      404 {:schema s/Str :description "Not found"}}
 
