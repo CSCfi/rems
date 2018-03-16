@@ -138,9 +138,21 @@
 
        (GET "/" []
          :summary "Get catalogue items"
+         :query-params [{resource :- (describe s/Str "resource id") nil}]
          :return GetCatalogueResponse
          (binding [context/*lang* :en]
-           (ok (catalogue/get-localized-catalogue-items))))
+           (ok (catalogue/get-localized-catalogue-items {:resource resource}))))
+
+       (GET "/:item-id" []
+         :summary "Get a single catalogue item"
+         :path-params [item-id :- s/Num]
+         :responses {200 {:schema CatalogueItem}
+                     404 {:schema s/Str :description "Not found"}}
+
+         (binding [context/*lang* :en]
+           (if-let [it (catalogue/get-localized-catalogue-item item-id)]
+             (ok it)
+             (not-found! "not found"))))
 
        (PUT "/create" []
          :summary "Create a new catalogue item"
