@@ -83,91 +83,81 @@
                             :description "Sample Services"}}}}
 
    (context "/api" []
-     :tags ["translation"]
      :header-params [{x-rems-api-key s/Str}
                      {x-rems-user-id s/Str}]
 
-     (GET "/translations" []
-       :summary     "Get translations"
-       :return      GetTranslationsResponse
-       (ok locales/translations)))
+     (context "/translations" []
+       :tags ["translations"]
 
-   (context "/api" []
-     :tags ["theme"]
-     :header-params [{x-rems-api-key s/Str}
-                     {x-rems-user-id s/Str}]
+       (GET "/" []
+         :summary "Get translations"
+         :return GetTranslationsResponse
+         (ok locales/translations)))
 
-     (GET "/theme" []
-       :summary     "Get current layout theme"
-       :return      GetThemeResponse
-       (ok context/*theme*)))
+     (context "/theme" []
+       :tags ["theme"]
 
-   (context "/api" []
-     :tags ["config"]
-     :header-params [{x-rems-api-key s/Str}
-                     {x-rems-user-id s/Str}]
+       (GET "/" []
+         :summary "Get current layout theme"
+         :return GetThemeResponse
+         (ok context/*theme*)))
 
-     (GET "/config" []
-       :summary     "Get configuration that is relevant to UI"
-       :return      GetConfigResponse
-       (ok (select-keys env [:authentication :extra-pages]))))
+     (context "/config" []
+       :tags ["config"]
 
-   (context "/api" []
-     :tags ["actions"]
-     :header-params [{x-rems-api-key s/Str}
-                     {x-rems-user-id s/Str}]
+       (GET "/" []
+         :summary "Get configuration that is relevant to UI"
+         :return GetConfigResponse
+         (ok (select-keys env [:authentication :extra-pages]))))
 
-     (GET "/actions" []
-       :summary     "Get actions page reviewable and approvable applications"
-       :return      GetActionsResponse
-       (ok {:approver? true
-            :reviewer? true
-            :approvals (applications/get-approvals)
-            :handled-approvals (applications/get-handled-approvals)
-            :reviews (applications/get-applications-to-review)
-            :handled-reviews (applications/get-handled-reviews)})))
+     (context "/actions" []
+       :tags ["actions"]
 
-   application-api
+       (GET "/" []
+         :summary "Get actions page reviewable and approvable applications"
+         :return GetActionsResponse
+         (ok {:approver? true
+              :reviewer? true
+              :approvals (applications/get-approvals)
+              :handled-approvals (applications/get-handled-approvals)
+              :reviews (applications/get-applications-to-review)
+              :handled-reviews (applications/get-handled-reviews)})))
 
-   (context "/api" []
-     :tags ["applications"]
-     :header-params [{x-rems-api-key s/Str}
-                     {x-rems-user-id s/Str}]
+     application-api
 
-     (GET "/applications" []
-       :summary "Get current user's all applications"
-       :return GetApplicationsResponse
-       (ok (applications/get-my-applications))))
+     (context "/applications" []
+       :tags ["applications"]
 
-   (context "/api" []
-     :tags ["catalogue"]
-     :header-params [{x-rems-api-key s/Str}
-                     {x-rems-user-id s/Str}]
+       (GET "/" []
+         :summary "Get current user's all applications"
+         :return GetApplicationsResponse
+         (ok (applications/get-my-applications))))
 
-     (GET "/catalogue/" []
-       :summary "Get catalogue items"
-       :return GetCatalogueResponse
-       (binding [context/*lang* :en]
-         (ok (catalogue/get-localized-catalogue-items))))
+     (context "/catalogue" []
+       :tags ["catalogue"]
 
-     (PUT "/catalogue/command/create" []
-       :summary "Create a new catalogue item"
-       :body [command CreateCatalogueItemCommand]
-       :return CreateCatalogueItemResponse
-       (ok (catalogue/create-catalogue-item-command! command)))
+       (GET "/" []
+         :summary "Get catalogue items"
+         :return GetCatalogueResponse
+         (binding [context/*lang* :en]
+           (ok (catalogue/get-localized-catalogue-items))))
 
-     (PUT "/catalogue/command/create-localization" []
-       :summary "Create a new catalogue item localization"
-       :body [command CreateCatalogueItemLocalizationCommand]
-       :return CreateCatalogueItemLocalizationResponse
-       (ok (catalogue/create-catalogue-item-localization-command! command))))
+       (PUT "/create" []
+         :summary "Create a new catalogue item"
+         :body [command CreateCatalogueItemCommand]
+         :return CreateCatalogueItemResponse
+         (ok (catalogue/create-catalogue-item-command! command)))
 
-   (context "/api" []
-     :tags ["entitlements"]
-     :header-params [{x-rems-api-key s/Str}
-                     {x-rems-user-id s/Str}]
+       (PUT "/create-localization" []
+         :summary "Create a new catalogue item localization"
+         :body [command CreateCatalogueItemLocalizationCommand]
+         :return CreateCatalogueItemLocalizationResponse
+         (ok (catalogue/create-catalogue-item-localization-command! command))))
 
-     (GET "/entitlements/" []
-       :summary "Get all entitlements"
-       :return [Entitlement]
-       (ok (entitlements/get-entitlements-for-api))))))
+     (context "/entitlements" []
+       :tags ["entitlements"]
+
+       (GET "/" []
+         :summary "Get all entitlements"
+         :return [Entitlement]
+         (ok (entitlements/get-entitlements-for-api)))))))
