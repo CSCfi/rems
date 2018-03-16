@@ -146,8 +146,9 @@
        (GET "/:item-id" []
          :summary "Get a single catalogue item"
          :path-params [item-id :- s/Num]
-         :responses {200 CatalogueItem
-                     400 s/Str}
+         :responses {200 {:schema CatalogueItem}
+                     404 {:schema s/Str :description "Not found"}}
+
          (binding [context/*lang* :en]
            (if-let [it (catalogue/get-localized-catalogue-item item-id)]
              (ok it)
