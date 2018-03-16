@@ -122,6 +122,11 @@
                           :wfid 1})
                    app
                    read-body)]
+      (is (= 7 (:id data))))
+    (let [data (-> (request :get "/api/catalogue/7")
+                   (authenticate api-key user-id)
+                   app
+                   read-body)]
       (is (= 7 (:id data))))))
 
 (deftest service-applications-test
