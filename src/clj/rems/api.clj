@@ -138,9 +138,10 @@
 
        (GET "/" []
          :summary "Get catalogue items"
+         :query-params [{resource :- (describe s/Str "") nil}]
          :return GetCatalogueResponse
          (binding [context/*lang* :en]
-           (ok (catalogue/get-localized-catalogue-items))))
+           (ok (catalogue/get-localized-catalogue-items {:resource resource}))))
 
        (PUT "/create" []
          :summary "Create a new catalogue item"

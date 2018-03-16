@@ -2,12 +2,16 @@
 -- :doc
 -- - Get catalogue items
 -- - :items vector of item ids
+-- - :resource resource id to fetch items for
 SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.state
 FROM catalogue_item ci
 LEFT OUTER JOIN resource res ON (ci.resid = res.id)
 WHERE 1=1
 /*~ (when (:items params) */
   AND ci.id IN (:v*:items)
+/*~ ) ~*/
+/*~ (when (:resource params) */
+  AND res.resid = :resource
 /*~ ) ~*/
 
 
