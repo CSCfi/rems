@@ -68,8 +68,8 @@
 (def application-api
   (context "/api" []
     :tags ["application"]
-     :header-params [x-rems-api-key :- String
-                     x-rems-user-id :- String]
+     :header-params [{x-rems-api-key s/Str}
+                     {x-rems-user-id s/Str}]
 
     (GET "/application/" []
       :summary     "Get application draft by `catalogue-items`"
