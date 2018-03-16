@@ -83,8 +83,8 @@
       (binding [context/*lang* :en]
         (ok (applications/get-form-for application-id))))
 
-    (PUT "/application/command" []
-      :summary     "Create a new application or change an existing one"
+    (PUT "/application/save" []
+      :summary     "Create a new application, change an existing one or submit an application"
       :body        [request SaveApplicationCommand]
       :return      SaveApplicationResponse
       (ok (form/api-save (fix-keys request))))

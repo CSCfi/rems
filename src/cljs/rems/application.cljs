@@ -121,7 +121,7 @@
                        (if application-id
                          {:application-id application-id}
                          {:catalogue-items catalogue-items}))]
-    (PUT "/api/application/command"
+    (PUT "/api/application/save"
          {:headers {"x-rems-api-key" 42
                     "x-rems-user-id" (:eppn user)}
           ;; TODO handle validation errors
