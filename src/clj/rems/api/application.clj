@@ -5,7 +5,8 @@
             [rems.db.applications :as applications]
             [rems.form :as form]
             [ring.util.http-response :refer :all]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [rems.db.core :as db]))
 
 ;; Response models
 
@@ -65,6 +66,10 @@
       (update-in [:items] longify-keys)
       (update-in [:licenses] longify-keys)))
 
+(defn api-get-application [application-id]
+  (when (not (empty? (db/get-applications {:id application-id})))
+    (applications/get-form-for application-id)))
+
 (def application-api
   (context "/application" []
     :tags ["application"]
@@ -79,9 +84,12 @@
     (GET "/:application-id" []
       :summary "Get application by `application-id`"
       :path-params [application-id :- s/Num]
-      :return GetApplicationResponse
+      :responses {200 {:schema GetApplicationResponse}
+                  404 {:schema s/Str :description "Not found"}}
       (binding [context/*lang* :en]
-        (ok (applications/get-form-for application-id))))
+        (if-let [app (api-get-application application-id)]
+          (ok app)
+          (not-found! "not found"))))
 
     (PUT "/save" []
       :summary "Create a new application, change an existing one or submit an application"
