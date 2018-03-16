@@ -4,7 +4,7 @@
 
 Here we assume that the instance you want to talk to is the REMS demo instance at `rems2demo.csc.fi`.
 
-You have an API-Key `42`.
+You have an API-Key `42` that you must provide in the header `X-REMS-API-Key`.
 
 Checking what catalogue items are available
 
@@ -15,7 +15,30 @@ curl -H "X-REMS-API-Key: 42" https://rems2demo.csc.fi/api/catalogue
 Returns the JSON response with the catalogue items
 
 ```json
-[{"id":1,"title":"non-localized title","wfid":1,"formid":1,"resid":"http://urn.fi/urn:nbn:fi:lb-201403262","state":"enabled","localizations":{"en":{"id":1,"langcode":"en","title":"ELFA Corpus, direct approval"},"fi":{"id":1,"langcode":"fi","title":"ELFA-korpus, suora hyväksyntä"}}}, ...]
+[
+    {
+        "formid": 1,
+        "id": 1,
+        "localizations": {
+            "en": {
+                "id": 1,
+                "langcode": "en",
+                "title": "ELFA Corpus, direct approval"
+            },
+            "fi": {
+                "id": 1,
+                "langcode": "fi",
+                "title": "ELFA-korpus, suora hyv\u00e4ksynt\u00e4"
+            }
+        },
+        "resid": "http://urn.fi/urn:nbn:fi:lb-201403262",
+        "state": "enabled",
+        "title": "non-localized title",
+        "wfid": 1
+    },
+
+    ...
+]
 ```
 
 Some API endpoints also require `X-REMS-User-Id` header that is the REMS user id for the user that is represented. I.e. which user applies for a resource and which approves an application.
