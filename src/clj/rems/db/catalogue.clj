@@ -33,7 +33,8 @@
    (map localize-catalogue-item (db/get-catalogue-items query-params))))
 
 (defn get-localized-catalogue-item [id]
-  (localize-catalogue-item (db/get-catalogue-item {:item id})))
+  (when-let [item (db/get-catalogue-item {:item id})]
+    (localize-catalogue-item item)))
 
 (defn get-catalogue-item-title [item]
   (let [localized-title (get-in item [:localizations context/*lang* :title])]

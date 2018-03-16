@@ -143,6 +143,16 @@
          (binding [context/*lang* :en]
            (ok (catalogue/get-localized-catalogue-items {:resource resource}))))
 
+       (GET "/:item-id" []
+         :summary "Get a single catalogue item"
+         :path-params [item-id :- s/Num]
+         :responses {200 CatalogueItem
+                     400 s/Str}
+         (binding [context/*lang* :en]
+           (if-let [it (catalogue/get-localized-catalogue-item item-id)]
+             (ok it)
+             (not-found! "not found"))))
+
        (PUT "/create" []
          :summary "Create a new catalogue item"
          :body [command CreateCatalogueItemCommand]
