@@ -75,15 +75,15 @@
     :tags ["application"]
 
     (GET "/" []
-      :summary "Get application draft by `catalogue-items`"
-      :query-params [catalogue-items :- [s/Num]]
+      :summary "Get application (draft) for `catalogue-items`"
+      :query-params [catalogue-items :- (describe [s/Num] "catalogue item ids")]
       :return GetApplicationResponse
       (let [app (applications/make-draft-application catalogue-items)]
         (ok (applications/get-draft-form-for app))))
 
     (GET "/:application-id" []
       :summary "Get application by `application-id`"
-      :path-params [application-id :- s/Num]
+      :path-params [application-id :- (describe s/Num "application id")]
       :responses {200 {:schema GetApplicationResponse}
                   404 {:schema s/Str :description "Not found"}}
       (binding [context/*lang* :en]
