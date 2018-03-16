@@ -159,5 +159,6 @@
 
        (GET "/" []
          :summary "Get all entitlements"
+         :query-params [{user :- s/Str nil}]
          :return [Entitlement]
-         (ok (entitlements/get-entitlements-for-api)))))))
+         (ok (entitlements/get-entitlements-for-api user)))))))
