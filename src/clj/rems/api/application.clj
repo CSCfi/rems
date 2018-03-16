@@ -66,30 +66,30 @@
       (update-in [:licenses] longify-keys)))
 
 (def application-api
-  (context "/api" []
+  (context "/application" []
     :tags ["application"]
 
-    (GET "/application/" []
-      :summary     "Get application draft by `catalogue-items`"
+    (GET "/" []
+      :summary "Get application draft by `catalogue-items`"
       :query-params [catalogue-items :- [s/Num]]
-      :return      GetApplicationResponse
+      :return GetApplicationResponse
       (let [app (applications/make-draft-application catalogue-items)]
         (ok (applications/get-draft-form-for app))))
 
-    (GET "/application/:application-id" []
-      :summary     "Get application by `application-id`"
+    (GET "/:application-id" []
+      :summary "Get application by `application-id`"
       :path-params [application-id :- s/Num]
-      :return      GetApplicationResponse
+      :return GetApplicationResponse
       (binding [context/*lang* :en]
         (ok (applications/get-form-for application-id))))
 
-    (PUT "/application/save" []
-      :summary     "Create a new application, change an existing one or submit an application"
-      :body        [request SaveApplicationCommand]
-      :return      SaveApplicationResponse
+    (PUT "/save" []
+      :summary "Create a new application, change an existing one or submit an application"
+      :body [request SaveApplicationCommand]
+      :return SaveApplicationResponse
       (ok (form/api-save (fix-keys request))))
 
-    (PUT "/application/judge" []
+    (PUT "/judge" []
        :summary "Judge an application"
        :body [request JudgeApplicationCommand]
        :return JudgeApplicationResponse

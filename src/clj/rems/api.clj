@@ -29,40 +29,41 @@
    (s/optional-key :extra-pages) [ExtraPage]})
 
 (def GetApplicationsResponse
-  [{:id s/Num
-    :catalogue-items [CatalogueItem]
-    :events [Event]
-    :start DateTime
-    :state s/Str
-    :wfid s/Num
-    :fnlround s/Num
-    :curround s/Num
-    :applicantuserid s/Str}])
+  [Application])
 
 (def GetCatalogueResponse
   [CatalogueItem])
 
-;; TODO better schema
-(def Approval
-  s/Any)
-
-;; TODO better schema
-(def Review
-  s/Any)
-
 (def GetActionsResponse
   {:approver? s/Bool
    :reviewer? s/Bool
-   :approvals [Approval]
-   :handled-approvals [Approval]
-   :reviews [Review]
-   :handled-reviews [Review]})
+   :approvals [Application]
+   :handled-approvals [Application]
+   :reviews [Application]
+   :handled-reviews [Application]})
 
 (def Entitlement
   {:resource s/Str
    :application-id s/Num
    :start s/Str
    :mail s/Str})
+
+(def CreateCatalogueItemCommand
+  {:title s/Str
+   :form s/Num
+   :resid s/Num
+   :wfid s/Num})
+
+(def CreateCatalogueItemResponse
+  CatalogueItem)
+
+(def CreateCatalogueItemLocalizationCommand
+  {:id s/Num
+   :langcode s/Str
+   :title s/Str})
+
+(def CreateCatalogueItemLocalizationResponse
+  {:success s/Bool})
 
 (defn unauthorized-handler
   [exception ex-data request]
@@ -82,64 +83,81 @@
                             :description "Sample Services"}}}}
 
    (context "/api" []
-     :tags ["translation"]
+     :header-params [{x-rems-api-key :- s/Str nil}
+                     {x-rems-user-id :- s/Str nil}]
 
-     (GET "/translations" []
-       :summary     "Get translations"
-       :return      GetTranslationsResponse
-       (ok locales/translations)))
+     (context "/translations" []
+       :tags ["translations"]
 
-   (context "/api" []
-     :tags ["theme"]
+       (GET "/" []
+         :summary "Get translations"
+         :return GetTranslationsResponse
+         (ok locales/translations)))
 
-     (GET "/theme" []
-       :summary     "Get current layout theme"
-       :return      GetThemeResponse
-       (ok context/*theme*)))
+     (context "/theme" []
+       :tags ["theme"]
 
-   (context "/api" []
-     :tags ["config"]
+       (GET "/" []
+         :summary "Get current layout theme"
+         :return GetThemeResponse
+         (ok context/*theme*)))
 
-     (GET "/config" []
-       :summary     "Get configuration that is relevant to UI"
-       :return      GetConfigResponse
-       (ok (select-keys env [:authentication :extra-pages]))))
+     (context "/config" []
+       :tags ["config"]
 
-   (context "/api" []
-     :tags ["actions"]
+       (GET "/" []
+         :summary "Get configuration that is relevant to UI"
+         :return GetConfigResponse
+         (ok (select-keys env [:authentication :extra-pages]))))
 
-     (GET "/actions/" []
-       :summary     "Get actions page reviewable and approvable applications"
-       :return      GetActionsResponse
-       (ok {:approver? true
-            :reviewer? true
-            :approvals (applications/get-approvals)
-            :handled-approvals (applications/get-handled-approvals)
-            :reviews (applications/get-applications-to-review)
-            :handled-reviews (applications/get-handled-reviews)})))
+     (context "/actions" []
+       :tags ["actions"]
 
-   application-api
+       (GET "/" []
+         :summary "Get actions page reviewable and approvable applications"
+         :return GetActionsResponse
+         (ok {:approver? true
+              :reviewer? true
+              :approvals (applications/get-approvals)
+              :handled-approvals (applications/get-handled-approvals)
+              :reviews (applications/get-applications-to-review)
+              :handled-reviews (applications/get-handled-reviews)})))
 
-   (context "/api" []
-     :tags ["applications"]
+     application-api
 
-     (GET "/applications/" []
-       :summary "Get current user's all applications"
-       :return GetApplicationsResponse
-       (ok (applications/get-my-applications))))
+     (context "/applications" []
+       :tags ["applications"]
 
-   (context "/api" []
-     :tags ["catalogue"]
+       (GET "/" []
+         :summary "Get current user's all applications"
+         :return GetApplicationsResponse
+         (ok (applications/get-my-applications))))
 
-     (GET "/catalogue/" []
-       :summary "Get catalogue items"
-       :return GetCatalogueResponse
-       (binding [context/*lang* :en]
-         (ok (catalogue/get-localized-catalogue-items)))))
+     (context "/catalogue" []
+       :tags ["catalogue"]
 
-   (context "/api" []
-     :tags ["entitlements"]
-     (GET "/entitlements/" []
-       :summary "Get all entitlements"
-       :return [Entitlement]
-       (ok (entitlements/get-entitlements-for-api))))))
+       (GET "/" []
+         :summary "Get catalogue items"
+         :return GetCatalogueResponse
+         (binding [context/*lang* :en]
+           (ok (catalogue/get-localized-catalogue-items))))
+
+       (PUT "/create" []
+         :summary "Create a new catalogue item"
+         :body [command CreateCatalogueItemCommand]
+         :return CreateCatalogueItemResponse
+         (ok (catalogue/create-catalogue-item-command! command)))
+
+       (PUT "/create-localization" []
+         :summary "Create a new catalogue item localization"
+         :body [command CreateCatalogueItemLocalizationCommand]
+         :return CreateCatalogueItemLocalizationResponse
+         (ok (catalogue/create-catalogue-item-localization-command! command))))
+
+     (context "/entitlements" []
+       :tags ["entitlements"]
+
+       (GET "/" []
+         :summary "Get all entitlements"
+         :return [Entitlement]
+         (ok (entitlements/get-entitlements-for-api)))))))

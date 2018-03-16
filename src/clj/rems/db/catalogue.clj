@@ -41,3 +41,10 @@
 
 (defn disabled-catalogue-item? [item]
   (= (:state item) "disabled"))
+
+(defn create-catalogue-item-command! [command]
+  (let [id (:id (db/create-catalogue-item! (select-keys command [:title :form :resid :wfid])))]
+    (get-localized-catalogue-item id)))
+
+(defn create-catalogue-item-localization-command! [command]
+  {:success (not (nil? (:id (db/create-catalogue-item-localization! (select-keys command [:id :langcode :title])))))})

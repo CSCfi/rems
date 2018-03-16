@@ -178,10 +178,11 @@
         application-items (db/get-application-items)
         localized-items (get-localized-catalogue-items)]
     (doall
-      (for [app (db/get-applications query-params)]
-        (assoc
-          (get-application-state app (filter #(= (:id app) (:appid %)) events))
-          :catalogue-items (get-catalogue-items-by-application-items (filter #(= (:id app) (:application %)) application-items) localized-items))))))
+     (for [app (db/get-applications query-params)]
+       (let [catalogue-items (get-catalogue-items-by-application-items (filter #(= (:id app) (:application %)) application-items) localized-items)]
+         (assoc (get-application-state app (filter #(= (:id app) (:appid %)) events))
+                :formid (:formid (first catalogue-items))
+                :catalogue-items catalogue-items))))))
 
 (defn get-my-applications []
   (filter
