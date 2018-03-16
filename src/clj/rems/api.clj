@@ -83,8 +83,8 @@
                             :description "Sample Services"}}}}
 
    (context "/api" []
-     :header-params [{x-rems-api-key s/Str}
-                     {x-rems-user-id s/Str}]
+     :header-params [{x-rems-api-key :- s/Str nil}
+                     {x-rems-user-id :- s/Str nil}]
 
      (context "/translations" []
        :tags ["translations"]
