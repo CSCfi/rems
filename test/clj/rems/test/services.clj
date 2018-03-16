@@ -114,11 +114,15 @@
                    read-body)
           item (first data)]
       (is (starts-with? (:resid item) "http://")))
-    (let [data (-> (request :put "/api/catalogue/command/add")
+    (let [data (-> (request :put "/api/catalogue/create")
                    (authenticate api-key user-id)
+                   (json {:title "test-item-title"
+                          :form 1
+                          :resid 1
+                          :wfid 1})
                    app
                    read-body)]
-      (is (= 8 (:id data))))))
+      (is (= 7 (:id data))))))
 
 (deftest service-applications-test
   (let [api-key "42"
