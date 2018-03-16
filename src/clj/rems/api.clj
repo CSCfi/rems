@@ -10,6 +10,7 @@
             [rems.db.entitlements :as entitlements]
             [rems.form :as form]
             [rems.locales :as locales]
+            [ring.middleware.cors :refer [wrap-cors]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
   (:import [org.joda.time DateTime]
@@ -69,9 +70,17 @@
   [exception ex-data request]
   (unauthorized "unauthorized"))
 
+(def cors-middleware
+  #(wrap-cors
+    %
+    :access-control-allow-origin #".*"
+    :access-control-allow-methods [:get :put :post :delete]))
+
 (def api-routes
   (api
-   {:exceptions {:handlers {rems.auth.NotAuthorizedException (ex/with-logging unauthorized-handler)
+   {;; TODO: should this be in rems.middleware?
+    :middleware [cors-middleware]
+    :exceptions {:handlers {rems.auth.NotAuthorizedException (ex/with-logging unauthorized-handler)
                             ;; add logging to validation handlers
                             ::ex/request-validation (ex/with-logging ex/request-validation-handler)
                             ::ex/request-parsing (ex/with-logging ex/request-parsing-handler)
