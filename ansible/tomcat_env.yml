@@ -8,6 +8,7 @@
     shell: "yum-config-manager --add-repo https://download.opensuse.org/repositories/security://shibboleth/CentOS_7/security:shibboleth.repo"
     args:
       creates: /etc/yum.repos.d/shibboleth.repo
+    when: auth == "haka"
 
   - name: Enable EPEL yum repository
     yum:
@@ -21,10 +22,15 @@
       - java-1.8.0-openjdk
       - java-1.8.0-openjdk-devel
       - httpd
-      - shibboleth
       - mod_proxy_html
       - mod_ssl
       - fail2ban
+
+  - name: Install shibboleth package
+    yum:
+      name: "shibboleth"
+      state: latest
+    when: auth == "haka"
 
   - name: Ensures /var/www/html/css dir exists
     file:
@@ -50,32 +56,38 @@
     get_url:
       url: https://confluence.csc.fi/download/attachments/31195585/haka_testi_2015_sha2.crt
       dest: /etc/pki/tls/certs
+    when: auth == "haka"
 
   - name: Configure shibboleth2.xml
     template:
       src: shibboleth2.xml
       dest: /etc/shibboleth/
+    when: auth == "haka"
 
   - name: Configure attribute-map.xml
     template:
       src: attribute-map.xml
       dest: /etc/shibboleth/
+    when: auth == "haka"
 
   - name: Change host cert file to shibd group
     file:
       path: /etc/pki/tls/certs/{{shib_certname}}
       group: shibd
+    when: auth == "haka"
 
   - name: Change host key file to shibd group
     file:
       path: /etc/pki/tls/private/{{shib_keyname}}
       group: shibd
+    when: auth == "haka"
 
   - name: Enable shibboleth service
     service:
       name: shibd
       state: started
       enabled: yes
+    when: auth == "haka"
 
   - name: Disable pesky welcome.conf
     copy:
@@ -94,6 +106,10 @@
 
   - name: Restore SELinux file context
     command: restorecon -R -v /etc/pki/
+
+  - name: Allow httpd networking in SEContext
+    command: /usr/sbin/setsebool -P httpd_can_network_connect 1
+    when: auth != "haka"
 
   - name: Enable httpd service
     service:
