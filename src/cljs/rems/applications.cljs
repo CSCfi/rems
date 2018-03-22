@@ -8,7 +8,6 @@
 (defn- fetch-my-applications [user]
   (GET "/api/applications/" {:handler #(rf/dispatch [::fetch-my-applications %])
                              :response-format :json
-                             :headers {"x-rems-user-id" (:eppn user)}
                              :keywords? true}))
 
 (rf/reg-event-db

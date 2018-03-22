@@ -3,6 +3,7 @@
             [hiccup.page :refer [html5 include-css include-js]]
             [rems.context :as context]
             [rems.guide :refer :all]
+            [ring.middleware.anti-forgery :refer [*anti-forgery-token*]]
             [ring.util.http-response :as response]))
 
 (defn external-link []
@@ -21,15 +22,12 @@
           (include-css "/css/screen.css")
           [:body
            [:div#app]
-           ;; TODO remove?
-           [:script {:type "text/javascript"} "
-var context = {};
-var csrfToken = 'not-set';
-"]
            (include-js "/assets/jquery/jquery.min.js")
            (include-js "/assets/popper.js/dist/umd/popper.min.js")
            (include-js "/assets/tether/dist/js/tether.min.js")
            (include-js "/assets/bootstrap/js/bootstrap.min.js")
+           [:script {:type "text/javascript"}
+            (format "var csrfToken = '%s';" *anti-forgery-token*)]
            (include-js "/js/app.js")
            [:script {:type "text/javascript"}
             (format "rems.app.setIdentity(%s);" (cheshire/generate-string {:user context/*user* :roles context/*roles*}))]]]))
