@@ -42,15 +42,22 @@
               context/*flash* (:flash request)]
       (handler request))))
 
-;; TODO handle using API-key and representing someone
+(defn valid-api-key? [request]
+  (= "42" (get-in request [:headers "x-rems-api-key"])))
+
 (defn wrap-service-context
   "Wraps context with data specific to the service usage. I.e. things needed by REST service or SPA."
   [handler]
   (fn [request]
+    ;; TODO startsWith is a hack
     (if (and (:uri request) (.startsWith (:uri request) "/api"))
       (binding [context/*lang* (get-in request [:params :lang])
-                ;; TODO if authorized pages then require x-rems-user-id or get from session?
-                context/*user* {"eppn" (get-in request [:headers "x-rems-user-id"])}]
+                ;; Either use user from session, or if api-key is set, user from header
+                context/*user* (let [uid (get-in request [:headers "x-rems-user-id"])]
+                                 (if (and (valid-api-key? request)
+                                          uid)
+                                   {"eppn" uid}
+                                   context/*user*))]
         (handler request))
       (handler request))))
 
@@ -146,19 +153,6 @@
                   (or (get-in response [:headers "Location"]) ""))
         response))))
 
-;; TODO proper API key handling
-(defn valid-api-key? [key]
-  (= "42" key))
-
-(defn wrap-csrf
-  "Custom wrapper for CSRF so that the API requests with valid `x-rems-api-key` don't need to provide CSRF token."
-  [handler]
-  (let [csrf-handler (wrap-anti-forgery handler)]
-    (fn [request]
-      (if (valid-api-key? (get-in request [:headers "x-rems-api-key"]))
-        (handler request)
-        (csrf-handler request)))))
-
 (def +wrap-defaults-settings+
   (-> site-defaults
       (assoc-in [:security :anti-forgery] false)
@@ -176,7 +170,6 @@
       wrap-user
       auth/wrap-auth
       wrap-webjars
-      wrap-csrf
       (wrap-defaults +wrap-defaults-settings+)
       wrap-internal-error
       wrap-formats))

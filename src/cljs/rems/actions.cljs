@@ -10,7 +10,6 @@
 
 (defn- fetch-actions [user]
   (GET "/api/actions/" {:handler #(re-frame/dispatch [::fetch-actions-result %])
-                        :headers {"x-rems-user-id" (:eppn user)}
                         :response-format :json
                         :keywords? true}))
 

@@ -121,9 +121,7 @@
                          {:application-id application-id}
                          {:catalogue-items catalogue-items}))]
     (PUT "/api/application/save"
-         {:headers {"x-rems-api-key" 42
-                    "x-rems-user-id" (:eppn user)}
-          ;; TODO handle validation errors
+         {;; TODO handle validation errors
           :handler (fn [resp]
                      (if (:success resp)
                        (do (rf/dispatch [::set-status :saved])
@@ -155,9 +153,7 @@
 
 (defn- judge-application [command user application-id round comment]
   (PUT "/api/application/judge"
-       {:headers {"x-rems-api-key" 42
-                  "x-rems-user-id" (:eppn user)}
-        :format :json
+       {:format :json
         :params {:command command
                  :application-id application-id
                  :round round
