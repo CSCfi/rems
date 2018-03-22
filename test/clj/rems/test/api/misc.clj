@@ -1,4 +1,4 @@
-(ns ^:integration rems.test.services
+(ns ^:integration rems.test.api.misc
   (:require [cheshire.core :refer [generate-string parse-stream]]
             [clojure.string :refer [starts-with?]]
             [clojure.test :refer :all]
