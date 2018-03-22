@@ -5,6 +5,7 @@
             [rems.auth.auth :as auth]
             [rems.config :refer [env]]
             [rems.context :as context]
+            [rems.db.api-key :as api-key]
             [rems.db.roles :as roles]
             [rems.env :refer [+defaults+]]
             [rems.layout :refer [error-page]]
@@ -35,7 +36,7 @@
     (:app-context env)))
 
 (defn valid-api-key? [request]
-  (= "42" (get-in request [:headers "x-rems-api-key"])))
+  (api-key/valid? (get-in request [:headers "x-rems-api-key"])))
 
 (defn wrap-csrf
   "Custom wrapper for CSRF so that the API requests with valid `x-rems-api-key` don't need to provide CSRF token."

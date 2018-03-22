@@ -200,6 +200,7 @@
         (applications/approve-application app-id 1 "comment for approval")))))
 
 (defn create-test-data! []
+  (db/add-api-key! {:apikey 42 :comment "test data"})
   (create-users-and-roles!)
   (db/create-resource! {:id 1 :resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1})
   (db/create-resource! {:id 2 :resid "Extra Data" :prefix "nbn" :modifieruserid 1})
