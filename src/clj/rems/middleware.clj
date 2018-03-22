@@ -37,6 +37,15 @@
 (defn valid-api-key? [request]
   (= "42" (get-in request [:headers "x-rems-api-key"])))
 
+(defn wrap-csrf
+  "Custom wrapper for CSRF so that the API requests with valid `x-rems-api-key` don't need to provide CSRF token."
+  [handler]
+  (let [csrf-handler (wrap-anti-forgery handler)]
+    (fn [request]
+      (if (valid-api-key? request)
+        (handler request)
+        (csrf-handler request)))))
+
 (defn- wrap-user
   "Binds context/*user* to the buddy identity _or_ to x-rems-user-id if an api key is supplied."
   [handler]
@@ -152,6 +161,7 @@
       wrap-i18n
       wrap-context
       wrap-user
+      wrap-csrf
       auth/wrap-auth
       wrap-webjars
       (wrap-defaults +wrap-defaults-settings+)
