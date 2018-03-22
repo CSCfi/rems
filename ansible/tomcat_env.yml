@@ -4,10 +4,11 @@
   become: yes
   tasks:
 
-  - name: Add Shibboleth yum repository
-    shell: "yum-config-manager --add-repo https://download.opensuse.org/repositories/security://shibboleth/CentOS_7/security:shibboleth.repo"
-    args:
-      creates: /etc/yum.repos.d/shibboleth.repo
+  - name: Check ansible version
+    assert:
+      that: ansible_version.major >= 2 and ansible_version.minor >= 4
+
+  - import_tasks: shibboleth.yml
     when: auth == "haka"
 
   - name: Enable EPEL yum repository
@@ -25,12 +26,6 @@
       - mod_proxy_html
       - mod_ssl
       - fail2ban
-
-  - name: Install shibboleth package
-    yum:
-      name: "shibboleth"
-      state: latest
-    when: auth == "haka"
 
   - name: Ensures /var/www/html/css dir exists
     file:
@@ -51,43 +46,6 @@
         dest: /var/www/html/css
       - src: '{{bg_img_src}}'
         dest: /var/www/html/img
-
-  - name: Copy haka test cert
-    get_url:
-      url: https://confluence.csc.fi/download/attachments/31195585/haka_testi_2015_sha2.crt
-      dest: /etc/pki/tls/certs
-    when: auth == "haka"
-
-  - name: Configure shibboleth2.xml
-    template:
-      src: shibboleth2.xml
-      dest: /etc/shibboleth/
-    when: auth == "haka"
-
-  - name: Configure attribute-map.xml
-    template:
-      src: attribute-map.xml
-      dest: /etc/shibboleth/
-    when: auth == "haka"
-
-  - name: Change host cert file to shibd group
-    file:
-      path: /etc/pki/tls/certs/{{shib_certname}}
-      group: shibd
-    when: auth == "haka"
-
-  - name: Change host key file to shibd group
-    file:
-      path: /etc/pki/tls/private/{{shib_keyname}}
-      group: shibd
-    when: auth == "haka"
-
-  - name: Enable shibboleth service
-    service:
-      name: shibd
-      state: started
-      enabled: yes
-    when: auth == "haka"
 
   - name: Disable pesky welcome.conf
     copy:
