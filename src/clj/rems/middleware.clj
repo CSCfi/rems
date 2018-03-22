@@ -34,36 +34,27 @@
     ;; instead
     (:app-context env)))
 
-(defn wrap-webapp-context
-  "Wraps context with data specific to the webapp usage. I.e. not things needed by REST service or SPA."
-  [handler]
-  (fn [request]
-    (binding [context/*root-path* (calculate-root-path request)
-              context/*flash* (:flash request)]
-      (handler request))))
-
 (defn valid-api-key? [request]
   (= "42" (get-in request [:headers "x-rems-api-key"])))
 
-(defn wrap-service-context
-  "Wraps context with data specific to the service usage. I.e. things needed by REST service or SPA."
+(defn- wrap-user
+  "Binds context/*user* to the buddy identity _or_ to x-rems-user-id if an api key is supplied."
   [handler]
   (fn [request]
-    ;; TODO startsWith is a hack
-    (if (and (:uri request) (.startsWith (:uri request) "/api"))
-      (binding [context/*lang* (get-in request [:params :lang])
-                ;; Either use user from session, or if api-key is set, user from header
-                context/*user* (let [uid (get-in request [:headers "x-rems-user-id"])]
-                                 (if (and (valid-api-key? request)
-                                          uid)
-                                   {"eppn" uid}
-                                   context/*user*))]
-        (handler request))
-      (handler request))))
+    (let [header-identity (when-let [uid (get-in request [:headers "x-rems-user-id"])]
+                            {"eppn" uid})
+          session-identity (:identity request)]
+      (binding [context/*user* (if (and (valid-api-key? request)
+                                        header-identity)
+                                 header-identity
+                                 session-identity)]
+        (handler request)))))
 
 (defn wrap-context [handler]
   (fn [request]
-    (binding [context/*roles* (when context/*user*
+    (binding [context/*root-path* (calculate-root-path request)
+              context/*flash* (:flash request)
+              context/*roles* (when context/*user*
                                 (roles/get-roles (get-user-id)))]
       (handler request))))
 
@@ -110,7 +101,9 @@
    (tempura/wrap-ring-request
     (fn [request]
       (binding [context/*tempura* (:tempura/tr request)
-                context/*lang* (get-in request [:session :language] +default-language+)]
+                context/*lang* (or (get-in request [:param :lang])
+                                   (get-in request [:session :language])
+                                   +default-language+)]
         (handler request)))
     {:tr-opts tconfig})))
 
@@ -127,13 +120,6 @@
       (handler req)
       (catch rems.auth.NotAuthorizedException e
         (on-unauthorized-error req)))))
-
-(defn- wrap-user
-  "Binds context/*user* to the buddy identity."
-  [handler]
-  (fn [request]
-    (binding [context/*user* (:identity request)]
-      (handler request))))
 
 (defn wrap-logging
   [handler]
@@ -165,8 +151,6 @@
       wrap-logging
       wrap-i18n
       wrap-context
-      wrap-webapp-context
-      wrap-service-context
       wrap-user
       auth/wrap-auth
       wrap-webjars
