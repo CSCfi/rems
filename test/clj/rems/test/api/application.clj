@@ -176,3 +176,28 @@
           (is (:success cmd-response))
           (is (:valid cmd-response))
           (is (empty? validations)))))))
+
+(deftest disabled-catalogue-item
+  (let [api-key "42"
+        user-id "alice"
+        catid 2]
+    (testing "save draft for disabled item"
+      (let [response (-> (request :put (str "/api/application/save"))
+                         (authenticate api-key user-id)
+                         (json {:command "save"
+                                :catalogue-items [6]
+                                :items {1 ""}})
+                         app)
+            cmd-response (read-body response)]
+        ;; TODO should we actually return a nice error message here?
+        (is (= 400 (:status response)))))
+    (testing "submit for disabled item"
+      (let [response (-> (request :put (str "/api/application/save"))
+                         (authenticate api-key user-id)
+                         (json {:command "submit"
+                                :catalogue-items [6]
+                                :items {1 "x" 2 "y" 3 "z"}
+                                :licenses {2 "approved" 3 "approved"}})
+                         app)
+            cmd-response (read-body response)]
+        (is (= 400 (:status response)))))))

@@ -70,6 +70,10 @@
   [exception ex-data request]
   (unauthorized "unauthorized"))
 
+(defn invalid-handler
+  [exception ex-data request]
+  (bad-request "invalid request"))
+
 (def cors-middleware
   #(wrap-cors
     %
@@ -81,6 +85,7 @@
    {;; TODO: should this be in rems.middleware?
     :middleware [cors-middleware]
     :exceptions {:handlers {rems.auth.NotAuthorizedException (ex/with-logging unauthorized-handler)
+                            rems.InvalidRequestException (ex/with-logging invalid-handler)
                             ;; add logging to validation handlers
                             ::ex/request-validation (ex/with-logging ex/request-validation-handler)
                             ::ex/request-parsing (ex/with-logging ex/request-parsing-handler)
