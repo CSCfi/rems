@@ -30,5 +30,7 @@
       (content-type "application/json")
       (body (generate-string m))))
 
-(defn read-body [response]
-  (parse-stream (clojure.java.io/reader (:body response)) true))
+(defn read-body [{body :body}]
+  (cond
+    (string? body) body
+    true (parse-stream (clojure.java.io/reader body) true)))
