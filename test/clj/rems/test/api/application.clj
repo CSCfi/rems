@@ -89,3 +89,90 @@
           (is (:success cmd-response))
           (is (= "approved" (:state application)))
           (is (= [nil "msg"] (map :comment (:events application)))))))))
+
+(deftest application-validation-test
+  (let [api-key "42"
+        user-id "alice"
+        catid 2]
+    (let [response (-> (request :put (str "/api/application/save"))
+                       (authenticate api-key user-id)
+                       (json {:command "save"
+                              :catalogue-items [catid]
+                              ;; "" should fail validation just like nil
+                              :items {1 ""}})
+                       app)
+          cmd-response (read-body response)
+          validations (:validation cmd-response)
+          application-id (:id cmd-response)]
+      (testing "empty draft"
+        (is (:success cmd-response))
+        ;; 2 fields, 2 licenses
+        (is (= 4 (count validations)))
+        (is (some #(.contains % "Project name") validations))
+        (is (some #(.contains % "Purpose of the project") validations))
+        (is (some #(.contains % "CC Attribution 4.0") validations))
+        (is (some #(.contains % "General Terms of Use") validations)))
+      (testing "add one field"
+        (let [response (-> (request :put (str "/api/application/save"))
+                           (authenticate api-key user-id)
+                           (json {:command "save"
+                                  :application-id application-id
+                                  :items {1 "FOO"}})
+                           app)
+              cmd-response (read-body response)
+              validations (:validation cmd-response)]
+          (is (:success cmd-response))
+          (is (not (:valid cmd-response)))
+          (is (= 3 (count validations)))))
+      (testing "add one license"
+        (let [response (-> (request :put (str "/api/application/save"))
+                           (authenticate api-key user-id)
+                           (json {:command "save"
+                                  :application-id application-id
+                                  :items {1 "FOO"}
+                                  :licenses {2 "approved"}})
+                           app)
+              cmd-response (read-body response)
+              validations (:validation cmd-response)]
+          (is (:success cmd-response))
+          (is (not (:valid cmd-response)))
+          (is (= 2 (count validations)))))
+      (testing "submit partial form"
+        (let [response (-> (request :put (str "/api/application/save"))
+                           (authenticate api-key user-id)
+                           (json {:command "submit"
+                                  :application-id application-id
+                                  :items {1 "FOO"}
+                                  :licenses {2 "approved"}})
+                           app)
+              cmd-response (read-body response)
+              validations (:validation cmd-response)]
+          (is (not (:success cmd-response)))
+          (is (not (:valid cmd-response)))
+          (is (= 2 (count validations)))))
+      (testing "save full form"
+        (let [response (-> (request :put (str "/api/application/save"))
+                           (authenticate api-key user-id)
+                           (json {:command "save"
+                                  :application-id application-id
+                                  :items {1 "FOO" 2 "ding" 3 "plong"}
+                                  :licenses {2 "approved" 3 "approved"}})
+                           app)
+              cmd-response (read-body response)
+              validations (:validation cmd-response)]
+          (is (:success cmd-response))
+          (is (:valid cmd-response))
+          (is (empty? validations))))
+      (testing "submit full form"
+        (let [response (-> (request :put (str "/api/application/save"))
+                           (authenticate api-key user-id)
+                           (json {:command "submit"
+                                  :application-id application-id
+                                  :items {1 "FOO" 2 "ding" 3 "plong"}
+                                  :licenses {2 "approved" 3 "approved"}})
+                           app)
+              cmd-response (read-body response)
+              validations (:validation cmd-response)]
+          (is (:success cmd-response))
+          (is (:valid cmd-response))
+          (is (empty? validations)))))))
