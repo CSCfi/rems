@@ -3,6 +3,7 @@
             [hiccup.page :refer [html5]]
             [hiccup.util :refer [url]]
             [rems.db.core :as db]
+            [rems.db.test-data :refer [+fake-user-data+]]
             [ring.util.response :refer [content-type redirect
                                         response]]))
 
@@ -43,9 +44,8 @@ a:visited { color: #fff; }
 ")
 
 (defn- fake-login [session username]
-  (let [mail (get {"developer" "deve@lo.per" "alice" "a@li.ce" "bob" "b@o.b" "carl" "c@a.rl"} username)]
-    (assoc (redirect "/landing_page")
-           :session (assoc session :identity {"eppn" username "commonName" username "mail" mail}))))
+  (assoc (redirect "/landing_page")
+         :session (assoc session :identity (get +fake-user-data+ username))))
 
 (defn- user-selection [username]
   (let [url (url "/Shibboleth.sso/Login" {:username username})]

@@ -14,6 +14,7 @@
    #'rems.config/env
    #'rems.env/*db*
    #'rems.handler/app)
+  ;; TODO: silence logging somehow?
   (db/assert-test-database!)
   (migrations/migrate ["reset"] (select-keys env [:database-url]))
   (test-data/create-test-data!)
@@ -30,5 +31,7 @@
       (content-type "application/json")
       (body (generate-string m))))
 
-(defn read-body [response]
-  (parse-stream (clojure.java.io/reader (:body response)) true))
+(defn read-body [{body :body}]
+  (cond
+    (string? body) body
+    true (parse-stream (clojure.java.io/reader body) true)))
