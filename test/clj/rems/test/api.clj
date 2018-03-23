@@ -14,6 +14,7 @@
    #'rems.config/env
    #'rems.env/*db*
    #'rems.handler/app)
+  ;; TODO: silence logging somehow?
   (db/assert-test-database!)
   (migrations/migrate ["reset"] (select-keys env [:database-url]))
   (test-data/create-test-data!)

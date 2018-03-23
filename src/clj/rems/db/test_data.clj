@@ -4,23 +4,31 @@
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.roles :as roles]
+            [rems.db.users :as users]
             [rems.db.workflow-actors :as actors]
             [rems.locales :as locales]
             [rems.util :refer [get-user-id]]))
 
+(def +fake-user-data+
+  {"developer" {"eppn" "developer" "mail" "deve@lo.per"}
+   "alice" {"eppn" "alice" "mail" "a@li.ce"}
+   "bob" {"eppn" "bob" "mail" "b@o.b"}
+   "carl" {"eppn" "carl" "mail" "c@a.rl"}
+   "owner" {"eppn" "owner" "mail" "ow@n.er"}})
+
 (defn- create-users-and-roles! []
   ;; users provided by the fake login
-  (db/add-user! {:user "developer" :userattrs nil})
+  (users/add-user! "developer" (+fake-user-data+ "developer"))
   (roles/add-role! "developer" :applicant)
   (roles/add-role! "developer" :approver)
-  (db/add-user! {:user "alice" :userattrs nil})
+  (users/add-user! "alice" (+fake-user-data+ "alice"))
   (roles/add-role! "alice" :applicant)
-  (db/add-user! {:user "bob" :userattrs nil})
+  (users/add-user! "bob" (+fake-user-data+ "bob"))
   (roles/add-role! "bob" :approver)
-  (db/add-user! {:user "carl" :userattrs nil})
+  (users/add-user! "carl" (+fake-user-data+ "carl"))
   (roles/add-role! "carl" :reviewer)
   ;; a user to own things
-  (db/add-user! {:user "owner" :userattrs nil}))
+  (users/add-user! "owner" (+fake-user-data+ "owner")))
 
 (defn- create-demo-users-and-roles! []
   ;; a user to own things
