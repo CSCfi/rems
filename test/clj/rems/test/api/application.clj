@@ -259,3 +259,5 @@
                               :application)]
           (is (:can-close? application))
           (is (not (:can-approve? application))))))))
+
+;; TODO test for event filtering when it gets implemented
