@@ -201,3 +201,61 @@
                          app)
             cmd-response (read-body response)]
         (is (= 400 (:status response)))))))
+
+(deftest application-api-roles
+  (let [api-key "42"
+        applicant "alice"
+        approver "developer"
+        catid 2]
+    (let [response (-> (request :put (str "/api/application/save"))
+                       (authenticate api-key applicant)
+                       (json {:command "submit"
+                              :catalogue-items [catid]
+                              :items {1 "x" 2 "y" 3 "z"}
+                              :licenses {2 "approved" 3 "approved"}})
+                       app)
+          cmd-response (read-body response)
+          app-id (:id cmd-response)]
+      (is (number? app-id))
+      (testing "get application as applicant"
+         (let [application (-> (request :get (str "/api/application/" app-id))
+                               (authenticate api-key applicant)
+                               app
+                               read-body
+                               :application)]
+           (is (:can-close? application))
+           (is (not (:can-approve? application)))))
+      (testing "get application as approver"
+         (let [application (-> (request :get (str "/api/application/" app-id))
+                               (authenticate api-key approver)
+                               app
+                               read-body
+                               :application)]
+           (is (not (:can-close? application)))
+           (is (:can-approve? application))))
+      ;; TODO tests for :review-type
+      (testing "approve application"
+        (is (= 200 (-> (request :put (str "/api/application/judge"))
+                       (authenticate api-key approver)
+                       (json {:command "approve"
+                              :application-id app-id
+                              :round 0
+                              :comment "msg"})
+                       app
+                       :status))))
+      (testing "get approved application as applicant"
+        (let [application (-> (request :get (str "/api/application/" app-id))
+                              (authenticate api-key applicant)
+                              app
+                              read-body
+                              :application)]
+          (is (:can-close? application))
+          (is (not (:can-approve? application)))))
+      (testing "get approved application as approver"
+        (let [application (-> (request :get (str "/api/application/" app-id))
+                              (authenticate api-key approver)
+                              app
+                              read-body
+                              :application)]
+          (is (:can-close? application))
+          (is (not (:can-approve? application))))))))
