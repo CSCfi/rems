@@ -48,12 +48,6 @@
       :valid
       messages)))
 
-(defn- format-validation-messages
-  [msgs]
-  [:ul
-   (for [m msgs]
-     [:li m])])
-
 (defn save-application-items [application-id catalogue-item-ids]
   (assert application-id)
   (assert (empty? (filter nil? catalogue-item-ids)) "nils sent in catalogue-item-ids")
@@ -120,6 +114,6 @@
         {:keys [success? valid? validation]} (save-form-inputs application-id submit? items licenses)]
     (cond-> {:success success?
              :valid valid?}
-      (not valid?) (assoc :validation validation)
+      validation (assoc :validation validation)
       success? (assoc :id application-id
                       :state (:state (get-application-state application-id))))))

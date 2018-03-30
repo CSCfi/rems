@@ -110,8 +110,10 @@
 ;; status can be :pending :saved :failed or nil
 (rf/reg-event-db
  ::set-status
- (fn [db [_ value]]
-   (assoc-in db [:edit-application :status] value)))
+ (fn [db [_ value validation]]
+   (-> db
+       (assoc-in [:edit-application :status] value)
+       (assoc-in [:edit-application :validation] validation))))
 
 (defn- save-application [command user application-id catalogue-items items licenses]
   (let [payload (merge {:command command
@@ -121,15 +123,14 @@
                          {:application-id application-id}
                          {:catalogue-items catalogue-items}))]
     (PUT "/api/application/save"
-         {;; TODO handle validation errors
-          :handler (fn [resp]
+         {:handler (fn [resp]
                      (if (:success resp)
                        (do (rf/dispatch [::set-status :saved])
                            ;; HACK: we both set the location, and fire a fetch-application event
                            ;; because if the location didn't change, secretary won't fire the event
                            (navigate-to (:id resp))
                            (rf/dispatch [::start-fetch-application (:id resp)]))
-                       (rf/dispatch [::set-status :failed])))
+                       (rf/dispatch [::set-status :failed (:validation resp)])))
           :error-handler (fn [err]
                            (rf/dispatch [::set-status :failed]))
           :format :json
@@ -173,6 +174,22 @@
      {})))
 
 ;;;; UI components ;;;;
+
+(defn- format-validation-messages
+  [msgs]
+  (into [:ul]
+        (for [m msgs]
+          [:li m])))
+
+(defn flash-message [{status :status contents :contents}]
+  (when status
+    [:div.alert
+     {:class (case status
+               :success "alert-success"
+               :warning "alert-warning"
+               :failure "alert-danger"
+               :info "alert-info")}
+     contents]))
 
 ;; Fields
 
@@ -277,8 +294,9 @@
    {:name "submit" :onClick #(rf/dispatch [::save-application "submit"])}
    (text :t.form/submit)])
 
-(defn- fields [form field-values]
+(defn- fields [form edit-application]
   (let [application (:application form)
+        {:keys [items licenses]} edit-application
         state (:state application)
         editable? (= "draft" state)
         readonly? (not editable?)]
@@ -293,7 +311,7 @@
              (for [i (:items form)]
                [field (assoc i
                              :readonly readonly?
-                             :value (get-in field-values [:items (:id i)]))]))
+                             :value (get items (:id i)))]))
        (when-let [licenses (not-empty (:licenses form))]
          [:div.form-group.field
           [:h4 (text :t.form/licenses)]
@@ -301,7 +319,7 @@
                 (for [l licenses]
                   [field (assoc l
                                 :readonly readonly?
-                                :approved (get-in field-values [:licenses (:id l)]))]))])
+                                :approved (get licenses (:id l)))]))])
        (when-not readonly?
          [:div.col.commands
           [status-widget]
@@ -417,7 +435,7 @@
                        ^{:key (:id item)}
                        [:li (get-catalogue-item-title item language)]))]}]))
 
-(defn- render-application [application field-values]
+(defn- render-application [application edit-application]
   ;; TODO should rename :application
   (let [app (:application application)
         state (:state app)
@@ -426,13 +444,18 @@
     [:div
      [:h2 (text :t.applications/application)]
      [disabled-items-warning (:catalogue-items application)]
+     (when (:validation edit-application)
+       [flash-message
+        {:status :failure
+         :contents [:div (text :t.form/validation.errors)
+                    [format-validation-messages (:validation edit-application)]]}])
      ;; TODO may-see-event? needs to be implemented in backend
      [application-header state events]
      ;; TODO hide from applicant:
      (when user-attributes
        [:div.mt-3 [applicant-info "applicant-info" user-attributes]])
      [:div.mt-3 [applied-resources (:catalogue-items application)]]
-     [:div.my-3 [fields application field-values]]
+     [:div.my-3 [fields application edit-application]]
      (when (:can-approve? app)
        [:div.mb-3 [judge-form]])]))
 
@@ -440,8 +463,8 @@
 
 (defn- show-application []
   (if-let [application @(rf/subscribe [:application])]
-    (let [field-values @(rf/subscribe [:edit-application])]
-      [render-application application field-values])
+    (let [edit-application @(rf/subscribe [:edit-application])]
+      [render-application application edit-application])
     ;; TODO replace with spinner or localize?
     [:p "No application loaded"]))
 
