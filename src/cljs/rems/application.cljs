@@ -179,7 +179,7 @@
   [msgs]
   (into [:ul]
         (for [m msgs]
-          [:li m])))
+          [:li (:text m)])))
 
 (defn flash-message [{status :status contents :contents}]
   (when status

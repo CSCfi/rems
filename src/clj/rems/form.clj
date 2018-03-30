@@ -30,12 +30,16 @@
   [item]
   (when-not (:optional item)
     (when (empty? (:value item))
-      (text-format :t.form.validation/required (:title item)))))
+      {:field (:id item)
+       :key :t.form.validation/required
+       :text (text-format :t.form.validation/required (:title item))})))
 
 (defn- validate-license
   [license]
   (when-not (:approved license)
-    (text-format :t.form.validation/required (:title license))))
+    {:field (:id license)
+     :key :t.form.validation/required
+     :text (text-format :t.form.validation/required (:title license))}))
 
 (defn- validate
   "Validates a filled in form from (get-form-for application).

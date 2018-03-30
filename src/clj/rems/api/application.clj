@@ -28,7 +28,10 @@
    :items {s/Keyword s/Str}
    (s/optional-key :licenses) {s/Keyword s/Str}})
 
-(def ValidationMessage s/Str)
+(def ValidationMessage
+  {:field s/Int
+   :key s/Keyword
+   :text s/Str})
 
 (def SaveApplicationResponse
   {:success s/Bool
