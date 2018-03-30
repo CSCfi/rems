@@ -30,14 +30,14 @@
   [item]
   (when-not (:optional item)
     (when (empty? (:value item))
-      {:field (:id item)
+      {:field (select-keys item [:id :title])
        :key :t.form.validation/required
        :text (text-format :t.form.validation/required (:title item))})))
 
 (defn- validate-license
   [license]
   (when-not (:approved license)
-    {:field (:id license)
+    {:field (select-keys license [:id :title])
      :key :t.form.validation/required
      :text (text-format :t.form.validation/required (:title license))}))
 

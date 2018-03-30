@@ -29,7 +29,8 @@
    (s/optional-key :licenses) {s/Keyword s/Str}})
 
 (def ValidationMessage
-  {:field s/Int
+  {:field {:id s/Int
+           :title s/Str}
    :key s/Keyword
    :text s/Str})
 

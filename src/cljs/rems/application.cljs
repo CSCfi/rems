@@ -5,7 +5,7 @@
             [rems.collapsible :as collapsible]
             [rems.db.catalogue :refer [get-catalogue-item-title]]
             [rems.phase :refer [phases get-application-phases]]
-            [rems.text :refer [text localize-state localize-event localize-time]]
+            [rems.text :refer [text text-format localize-state localize-event localize-time]]
             [rems.util :refer [dispatch!]]
             [secretary.core :as secretary])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
@@ -179,7 +179,7 @@
   [msgs]
   (into [:ul]
         (for [m msgs]
-          [:li (:text m)])))
+          [:li (text-format (:key m) (:title (:field m)))])))
 
 (defn flash-message [{status :status contents :contents}]
   (when status
