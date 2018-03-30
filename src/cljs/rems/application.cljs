@@ -181,9 +181,15 @@
         (for [m msgs]
           [:li (text-format (:key m) (:title (:field m)))])))
 
-(defn flash-message [{status :status contents :contents}]
+(defn flash-message
+  "Displays a notification (aka flash) message.
+
+   :status   - one of the alert types :success, :info, :warning or :failure
+   :contents - content to show inside the notification"
+  [{status :status contents :contents}]
   (when status
     [:div.alert
+     ;; TODO should this case and perhaps unnecessary mapping from keywords to Bootstrap be removed?
      {:class (case status
                :success "alert-success"
                :warning "alert-warning"
@@ -513,6 +519,15 @@
                                                  :fi {:title "Otsikko suomeksi 2"}}}
               {:state "enabled" :localizations {:en {:title "English title 3"}
                                                 :fi {:title "Otsikko suomeksi 3"}}}]])
+
+   (component-info flash-message)
+   (example "flash-message with info"
+            [flash-message {:status :info
+                            :contents "Hello world"}])
+
+   (example "flash-message with error"
+            [flash-message {:status :failure
+                            :contents "You fail"}])
 
    (component-info field)
    (example "field of type \"text\""
