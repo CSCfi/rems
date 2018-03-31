@@ -207,27 +207,39 @@
 (defn- id-to-name [id]
   (str "field" id))
 
+(defn- field-validation-message [validation]
+  (when validation
+    [:div {:class "text-danger"}
+     (text-format (:key validation) (:title (:field validation)))]))
+
 (defn- text-field
-  [{:keys [title id prompt readonly optional value]}]
+  [{:keys [title id prompt readonly optional value validation]}]
   [:div.form-group.field
    [:label {:for (id-to-name id)}
     title " "
     (when optional
       (text :t.form/optional))]
-   [:input.form-control {:type "text" :name (id-to-name id) :placeholder prompt
+   [:input.form-control {:type "text"
+                         :name (id-to-name id)
+                         :placeholder prompt
+                         :class (when validation "is-invalid")
                          :value value :readOnly readonly
-                         :onChange (set-field-value id)}]])
+                         :onChange (set-field-value id)}]
+   [field-validation-message validation]])
 
 (defn- texta-field
-  [{:keys [title id prompt readonly optional value]}]
+  [{:keys [title id prompt readonly optional value validation]}]
   [:div.form-group.field
    [:label {:for (id-to-name id)}
     title " "
     (when optional
       (text :t.form/optional))]
-   [:textarea.form-control {:name (id-to-name id) :placeholder prompt
+   [:textarea.form-control {:name (id-to-name id)
+                            :placeholder prompt
+                            :class (when validation "is-invalid")
                             :value value :readOnly readonly
-                            :onChange (set-field-value id)}]])
+                            :onChange (set-field-value id)}]
+   [field-validation-message validation]])
 
 (defn- label [{title :title}]
   [:div.form-group
@@ -238,23 +250,30 @@
   (fn [event]
     (rf/dispatch [::set-license id (.. event -target -checked)])))
 
-(defn- license [id approved readonly content]
-  [:div.row
-   [:div.col-1
-    [:input {:type "checkbox" :name (str "license" id) :disabled readonly
-             :checked approved
-             :onChange (set-license-approval id)}]]
-   [:div.col content]])
+(defn- license [id approved readonly validation content]
+  [:div
+   [:div.row
+    [:div.col-1
+     [:input {:type "checkbox"
+              :name (str "license" id)
+              :disabled readonly
+              :class (when validation "is-invalid")
+              :checked approved
+              :onChange (set-license-approval id)}]]
+    [:div.col content]]
+   [:div.row
+    [:div.col
+     [field-validation-message validation]]]])
 
 (defn- link-license
-  [{:keys [title id textcontent readonly approved]}]
-  [license id approved readonly
+  [{:keys [title id textcontent readonly approved validation]}]
+  [license id approved readonly validation
    [:a {:href textcontent :target "_blank"}
     title " "]])
 
 (defn- text-license
-  [{:keys [title id textcontent approved readonly]}]
-  [license id approved readonly
+  [{:keys [title id textcontent approved readonly validation]}]
+  [license id approved readonly validation
    [:div.license-panel
     [:h6.license-title
      [:a.license-header.collapsed {:data-toggle "collapse"
@@ -533,9 +552,17 @@
    (example "field of type \"text\""
             [:form
              [field {:type "text" :title "Title" :inputprompt "prompt"}]])
+   (example "field of type \"text\" with validation error"
+            [:form
+             [field {:type "text" :title "Title" :inputprompt "prompt"
+                     :validation {:field {:title "Title"} :key :t.form.validation.required}}]])
    (example "field of type \"texta\""
             [:form
              [field {:type "texta" :title "Title" :inputprompt "prompt"}]])
+   (example "field of type \"texta\" with validation error"
+            [:form
+             [field {:type "texta" :title "Title" :inputprompt "prompt"
+                     :validation {:field {:title "Title"} :key :t.form.validation.required}}]])
    (example "optional field"
             [:form
              [field {:type "texta" :optional "true" :title "Title" :inputprompt "prompt"}]])
@@ -545,10 +572,18 @@
    (example "link license"
             [:form
              [field {:type "license" :title "Link to license" :licensetype "link" :textcontent "/guide"}]])
+   (example "link license with validation error"
+            [:form
+             [field {:type "license" :title "Link to license" :licensetype "link" :textcontent "/guide"
+                     :validation {:field {:title "Link to license"} :key :t.form.validation.required}}]])
    (example "text license"
             [:form
              [field {:type "license" :id 1 :title "A Text License" :licensetype "text"
                      :textcontent lipsum}]])
+   (example "text license with validation error"
+            [:form
+             [field {:type "license" :id 1 :title "A Text License" :licensetype "text" :textcontent lipsum
+                     :validation {:field {:title "A Text License"} :key :t.form.validation.required}}]])
 
    (component-info render-application)
    (example "application, partially filled"
