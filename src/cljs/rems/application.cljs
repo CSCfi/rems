@@ -6,7 +6,7 @@
             [rems.db.catalogue :refer [get-catalogue-item-title]]
             [rems.phase :refer [phases get-application-phases]]
             [rems.text :refer [text text-format localize-state localize-event localize-time]]
-            [rems.util :refer [dispatch!]]
+            [rems.util :refer [dispatch! index-by]]
             [secretary.core :as secretary])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
@@ -321,7 +321,8 @@
 
 (defn- fields [form edit-application]
   (let [application (:application form)
-        {:keys [items licenses]} edit-application
+        {:keys [items licenses validation]} edit-application
+        validation-by-field-id (index-by [(comp :type :field) (comp :id :field)] validation)
         state (:state application)
         editable? (= "draft" state)
         readonly? (not editable?)]
@@ -335,6 +336,7 @@
        (into [:div]
              (for [i (:items form)]
                [field (assoc i
+                             :validation (get-in validation-by-field-id [:item (:id i)])
                              :readonly readonly?
                              :value (get items (:id i)))]))
        (when-let [licenses (not-empty (:licenses form))]
@@ -343,6 +345,7 @@
           (into [:div]
                 (for [l licenses]
                   [field (assoc l
+                                :validation (get-in validation-by-field-id [:license (:id l)])
                                 :readonly readonly?
                                 :approved (get licenses (:id l)))]))])
        (when-not readonly?
