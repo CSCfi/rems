@@ -30,7 +30,8 @@
 
 (def ValidationMessage
   {:field {:id s/Int
-           :title s/Str}
+           :title s/Str
+           :type (s/enum :item :license)}
    :key s/Keyword
    :text s/Str})
 
