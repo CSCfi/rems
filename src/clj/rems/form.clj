@@ -96,9 +96,9 @@
         success? (or (not submit?) perform-submit?)]
     (when perform-submit?
       (submit-application application-id))
-    {:validation validation
-     :valid? valid?
-     :success? success?}))
+    (merge {:valid? valid?
+            :success? success?}
+           (when-not valid? {:validation validation}))))
 
 (defn- create-new-draft-for-items [catalogue-item-ids]
   (let [draft (make-draft-application catalogue-item-ids)
@@ -120,6 +120,6 @@
         {:keys [success? valid? validation]} (save-form-inputs application-id submit? items licenses)]
     (cond-> {:success success?
              :valid valid?}
-      validation (assoc :validation validation)
+      (not valid?) (assoc :validation validation)
       success? (assoc :id application-id
                       :state (:state (get-application-state application-id))))))

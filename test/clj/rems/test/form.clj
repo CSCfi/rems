@@ -50,8 +50,8 @@
       (testing res
         (is (vector? res))
         (is (= 2 (count res)))
-        (is (.contains (first res) "B"))
-        (is (.contains (second res) "C"))))))
+        (is (.contains (:text (first res)) "B"))
+        (is (.contains (:text (second res)) "C"))))))
 
 #_
 (deftest test-editable
