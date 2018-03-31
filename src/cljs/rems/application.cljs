@@ -307,7 +307,7 @@
              nil ""
              :pending [:i {:class "fa fa-spinner"}]
              :saved [:i {:class "fa fa-check-circle"}]
-             :failed [:i {:class "fa fa-times-circle"}])]))
+             :failed [:i {:class "fa fa-times-circle text-danger"}])]))
 
 (defn- save-button []
   [:button#save.btn.btn-secondary
