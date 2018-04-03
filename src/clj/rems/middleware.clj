@@ -3,12 +3,11 @@
             [buddy.auth.accessrules :refer [restrict]]
             [clojure.tools.logging :as log]
             [rems.auth.auth :as auth]
-            [rems.cart :refer [get-cart-from-session]]
             [rems.config :refer [env]]
             [rems.context :as context]
+            [rems.db.api-key :as api-key]
             [rems.db.roles :as roles]
             [rems.env :refer [+defaults+]]
-            [rems.language-switcher :refer [+default-language+]]
             [rems.layout :refer [error-page]]
             [rems.locales :refer [tconfig]]
             [rems.util :refer [get-user-id]]
@@ -22,6 +21,8 @@
             [taoensso.tempura :as tempura])
   (:import (javax.servlet ServletContext)))
 
+(def +default-language+ :en)
+
 (defn calculate-root-path [request]
   (if-let [context (:servlet-context request)]
     ;; If we're not inside a servlet environment
@@ -34,29 +35,36 @@
     ;; instead
     (:app-context env)))
 
-(defn wrap-webapp-context
-  "Wraps context with data specific to the webapp usage. I.e. not things needed by REST service or SPA."
-  [handler]
-  (fn [request]
-    (binding [context/*root-path* (calculate-root-path request)
-              context/*cart* (get-cart-from-session request)
-              context/*flash* (:flash request)]
-      (handler request))))
+(defn valid-api-key? [request]
+  (api-key/valid? (get-in request [:headers "x-rems-api-key"])))
 
-;; TODO handle using API-key and representing someone
-(defn wrap-service-context
-  "Wraps context with data specific to the service usage. I.e. things needed by REST service or SPA."
+(defn wrap-csrf
+  "Custom wrapper for CSRF so that the API requests with valid `x-rems-api-key` don't need to provide CSRF token."
+  [handler]
+  (let [csrf-handler (wrap-anti-forgery handler)]
+    (fn [request]
+      (if (valid-api-key? request)
+        (handler request)
+        (csrf-handler request)))))
+
+(defn- wrap-user
+  "Binds context/*user* to the buddy identity _or_ to x-rems-user-id if an api key is supplied."
   [handler]
   (fn [request]
-    (if (and (:uri request) (.startsWith (:uri request) "/api"))
-      (binding [context/*lang* (get-in request [:params :lang])
-                context/*user* {"eppn" (get-in request [:headers "x-rems-user-id"])}]
-        (handler request))
-      (handler request))))
+    (let [header-identity (when-let [uid (get-in request [:headers "x-rems-user-id"])]
+                            {"eppn" uid})
+          session-identity (:identity request)]
+      (binding [context/*user* (if (and (valid-api-key? request)
+                                        header-identity)
+                                 header-identity
+                                 session-identity)]
+        (handler request)))))
 
 (defn wrap-context [handler]
   (fn [request]
-    (binding [context/*roles* (when context/*user*
+    (binding [context/*root-path* (calculate-root-path request)
+              context/*flash* (:flash request)
+              context/*roles* (when context/*user*
                                 (roles/get-roles (get-user-id)))]
       (handler request))))
 
@@ -67,7 +75,6 @@
       (catch Throwable t
         (log/error t)
         (error-page {:status 500
-                     :bare true ;; navbar requires tempura and we might not have it
                      :title "Something very bad has happened!"
                      :message "We've dispatched a team of highly trained gnomes to take care of the problem."})))))
 
@@ -104,7 +111,9 @@
    (tempura/wrap-ring-request
     (fn [request]
       (binding [context/*tempura* (:tempura/tr request)
-                context/*lang* (get-in request [:session :language] +default-language+)]
+                context/*lang* (or (get-in request [:param :lang])
+                                   (get-in request [:session :language])
+                                   +default-language+)]
         (handler request)))
     {:tr-opts tconfig})))
 
@@ -121,13 +130,6 @@
       (handler req)
       (catch rems.auth.NotAuthorizedException e
         (on-unauthorized-error req)))))
-
-(defn- wrap-user
-  "Binds context/*user* to the buddy identity."
-  [handler]
-  (fn [request]
-    (binding [context/*user* (:identity request)]
-      (handler request))))
 
 (defn wrap-logging
   [handler]
@@ -147,19 +149,6 @@
                   (or (get-in response [:headers "Location"]) ""))
         response))))
 
-;; TODO proper API key handling
-(defn valid-api-key? [key]
-  (= "42" key))
-
-(defn wrap-csrf
-  "Custom wrapper for CSRF so that the API requests with valid `x-rems-api-key` don't need to provide CSRF token."
-  [handler]
-  (let [csrf-handler (wrap-anti-forgery handler)]
-    (fn [request]
-      (if (valid-api-key? (get-in request [:headers "x-rems-api-key"]))
-        (handler request)
-        (csrf-handler request)))))
-
 (def +wrap-defaults-settings+
   (-> site-defaults
       (assoc-in [:security :anti-forgery] false)
@@ -172,12 +161,10 @@
       wrap-logging
       wrap-i18n
       wrap-context
-      wrap-webapp-context
-      wrap-service-context
       wrap-user
+      wrap-csrf
       auth/wrap-auth
       wrap-webjars
-      wrap-csrf
       (wrap-defaults +wrap-defaults-settings+)
       wrap-internal-error
       wrap-formats))

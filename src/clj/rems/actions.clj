@@ -2,7 +2,6 @@
   "The /actions page that shows a list of applications you can act on."
   (:require [clojure.string :as string]
             [compojure.core :refer [GET defroutes]]
-            [rems.collapsible :as collapsible]
             [rems.db.applications :as applications]
             [rems.guide :refer :all]
             [rems.layout :as layout]
@@ -127,60 +126,3 @@
    (handled-reviews (applications/get-handled-reviews)))
   ([apps]
    (handled-applications apps)))
-
-
-(defn guide
-  []
-  (list
-   (example "reviews empty"
-            (reviews []))
-   (example "reviews"
-            (reviews
-             [{:id 1 :catalogue-items [{:title "AAAAAAAAAAAAAA"}] :applicantuserid "alice"}
-              {:id 3 :catalogue-items [{:title "bbbbbb"}] :applicantuserid "bob"}]))
-   (example "handled reviews"
-            (handled-reviews
-             [{:id 1 :catalogue-items [{:title "AAAAAAAAAAAAAA"}] :applicantuserid "alice"}
-              {:id 3 :catalogue-items [{:title "bbbbbb"}] :state "approved" :applicantuserid "bob"}]))
-   (example "approvals empty"
-            (approvals []))
-   (example "approvals"
-            (approvals
-             [{:id 1 :catalogue-items [{:title "AAAAAAAAAAAAAA"}] :applicantuserid "alice"}
-              {:id 3 :catalogue-items [{:title "bbbbbb"}] :applicantuserid "bob"}]))
-   (example "handled approvals"
-            (handled-approvals
-             [{:id 1 :catalogue-items [{:title "AAAAAAAAAAAAAA"}] :applicantuserid "alice"}
-              {:id 3 :catalogue-items [{:title "bbbbbb"}] :state "approved" :applicantuserid "bob"}]))))
-
-(defn- actions-page []
-  (layout/render
-   "actions"
-   [:div
-    (when-role :reviewer
-      (list
-       (collapsible/component
-        {:id "open-reviews"
-         :open? true
-         :title (text :t.actions/open-reviews)
-         :collapse (reviews)})
-       [:div.mt-3
-        (collapsible/component
-         {:id "handled-reviews"
-          :title (text :t.actions/handled-reviews)
-          :collapse (handled-reviews)})]))
-    (when-role :approver
-      (list
-       (collapsible/component
-        {:id "open-approvals"
-         :open? true
-         :title (text :t.actions/open-approvals)
-         :collapse (approvals)})
-       [:div.mt-3
-        (collapsible/component
-         {:id "handled-approvals"
-          :title (text :t.actions/handled-approvals)
-          :collapse (handled-approvals)})]))]))
-
-(defroutes actions-routes
-  (GET "/actions" [] (actions-page)))

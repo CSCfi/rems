@@ -57,6 +57,7 @@
             :handled-approvals "Käsitellyt hakemukset"
             :handled-reviews "Käsitellyt katselmoinnit"
             :load-application-states "Lataa hakemusten tilat"
+            :no-handled-yet "Et ole käsitellyt hakemuksia vielä."
             :not-implemented "Ei vielä toteutettu"
             :open-approvals "Avoimet hakemukset"
             :open-reviews "Avoimet katselmoinnit"
@@ -157,7 +158,8 @@
          :submit "Lähetä hakemus"
          :submitted "Hakemus lähetetty."
          :user "Käyttäjä"
-         :validation {:required "Kenttä \"%1\" on pakollinen."}}
+         :validation {:errors "Lähetys epäonnistui. Tarkista seuraavat kentät."
+                      :required "Kenttä \"%1\" on pakollinen."}}
   :ldap {:failed "Kirjautuminen epäonnistui"
          :login "Kirjaudu"
          :password "Salasana"

@@ -4,6 +4,7 @@ dist: trusty
 branches:
   only:
     - master
+    - spa
 cache:
   directories:
     - $HOME/.m2
@@ -11,6 +12,8 @@ cache:
 jdk:
   - oraclejdk8
 sudo: required
+install:
+  - sudo pip install ansible
 services:
   - docker
 before_script:

@@ -23,9 +23,7 @@
    (about (text :t.about/text))))
 
 (defn- home-page []
-  (if context/*user*
-    (redirect "/landing_page")
-    (layout/render "home" (auth/login-component))))
+  nil)
 
 (defn- find-allowed-markdown-file [filename]
   (let [allowed-files (index-by [:file] (filter :file (:extra-pages env)))]

@@ -6,13 +6,6 @@
             [rems.context :as context]
             [rems.text :refer [text]]))
 
-(defn login-component []
-  [:div.m-auto.jumbotron
-   [:h2 (text :t.login/title)]
-   [:p (text :t.login/text)]
-   (link-to (str context/*root-path* "/Shibboleth.sso/Login")
-            (image {:class "login-btn"} "/img/haka-logo.jpg"))])
-
 (defn wrap-auth [handler]
   (-> handler
       (wrap-authentication (shibbo-backend))

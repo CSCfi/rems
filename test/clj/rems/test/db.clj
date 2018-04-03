@@ -127,7 +127,7 @@
         (let [f (applications/get-form-for app-id)]
           (is (= app-id (:id (:application f))))
           (is (= "draft" (:state (:application f))))
-          (is (= [nil "B" nil] (map :value (:items f))))
+          (is (= ["" "B" ""] (map :value (:items f))))
           (is (= [true] (map :approved (:licenses f)))))
 
         (testing "license field"
@@ -159,7 +159,7 @@
                                  :user uid
                                  :value "X"})
           (let [f (applications/get-form-for app-id)]
-            (is (= [nil "X" nil] (map :value (:items f)))))))
+            (is (= ["" "X" ""] (map :value (:items f)))))))
 
       (testing "get submitted form as approver"
         (actors/add-approver! (:id wf) "approver" 0)
@@ -172,7 +172,7 @@
         (binding [context/*user* {"eppn" "approver"}]
           (let [form (applications/get-form-for app-id)]
             (is (= "applied" (get-in form [:application :state])))
-            (is (= [nil "X" nil] (map :value (:items form))))
+            (is (= ["" "X" ""] (map :value (:items form))))
             (is (get-in form [:licenses 0 :approved])))))
 
       (testing "get approved form as applicant"
@@ -181,7 +181,7 @@
           (applications/approve-application app-id 0 "comment"))
         (let [form (applications/get-form-for app-id)]
           (is (= "approved" (get-in form [:application :state])))
-          (is (= [nil "X" nil] (map :value (:items form))))
+          (is (= ["" "X" ""] (map :value (:items form))))
           (is (= [nil "comment"]
                  (->> form :application :events (map :comment)))))))))
 

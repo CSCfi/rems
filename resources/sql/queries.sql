@@ -2,12 +2,16 @@
 -- :doc
 -- - Get catalogue items
 -- - :items vector of item ids
+-- - :resource resource id to fetch items for
 SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.state
 FROM catalogue_item ci
 LEFT OUTER JOIN resource res ON (ci.resid = res.id)
 WHERE 1=1
 /*~ (when (:items params) */
   AND ci.id IN (:v*:items)
+/*~ ) ~*/
+/*~ (when (:resource params) */
+  AND res.resid = :resource
 /*~ ) ~*/
 
 
@@ -167,13 +171,22 @@ WHERE catAppId = :application
 
 -- :name get-entitlements :?
 -- :doc
--- - Use {:application id} to optionally pass application
+-- Params:
+--   :application -- application id to limit select to
+--   :user -- user id to limit select to
+--   :resource -- resid to limit select to
 SELECT res.resId, catAppId, entitlement.userId, entitlement.start, users.userAttrs->>'mail' AS mail FROM entitlement
 LEFT OUTER JOIN resource res ON entitlement.resId = res.id
 LEFT OUTER JOIN users on entitlement.userId = users.userId
 WHERE 1=1
 /*~ (when (:application params) */
   AND catAppId = :application
+/*~ ) ~*/
+/*~ (when (:user params) */
+  AND entitlement.userId = :user
+/*~ ) ~*/
+/*~ (when (:resource params) */
+  AND res.resId = :resource
 /*~ ) ~*/
 
 -- :name save-field-value! :!
@@ -371,3 +384,11 @@ SELECT unnest(enum_range(NULL::application_state));
 -- :name log-entitlement-post! :insert
 INSERT INTO entitlement_post_log (payload, status)
 VALUES (:payload::jsonb, :status);
+
+-- :name add-api-key! :insert
+INSERT INTO api_key (apiKey, comment)
+VALUES (:apikey, :comment)
+
+-- :name get-api-key :? :1
+SELECT apiKey FROM api_key
+WHERE apiKey = :apikey

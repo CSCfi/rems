@@ -17,10 +17,9 @@
                                index-by]]))
 
 (defn draft?
-  "Is the given `application-id` for a draft application?"
+  "Is the given `application-id` for an unsaved draft application?"
   [application-id]
-  (or (nil? application-id)
-      (neg? application-id)))
+  (nil? application-id))
 
 ;; TODO cache application state in db instead of always computing it from events
 (declare get-application-state)
@@ -179,10 +178,11 @@
         application-items (db/get-application-items)
         localized-items (get-localized-catalogue-items)]
     (doall
-      (for [app (db/get-applications query-params)]
-        (assoc
-          (get-application-state app (filter #(= (:id app) (:appid %)) events))
-          :catalogue-items (get-catalogue-items-by-application-items (filter #(= (:id app) (:application %)) application-items) localized-items))))))
+     (for [app (db/get-applications query-params)]
+       (let [catalogue-items (get-catalogue-items-by-application-items (filter #(= (:id app) (:application %)) application-items) localized-items)]
+         (assoc (get-application-state app (filter #(= (:id app) (:appid %)) events))
+                :formid (:formid (first catalogue-items))
+                :catalogue-items catalogue-items))))))
 
 (defn get-my-applications []
   (filter
@@ -256,16 +256,17 @@
 
 (defn make-draft-application
   "Make a draft application with an initial set of catalogue items."
-  [application-id catalogue-item-ids]
+  [catalogue-item-ids]
   (let [items (get-catalogue-items catalogue-item-ids)]
     (assert (= 1 (count (distinct (mapv :wfid items)))))
     (assert (= 1 (count (distinct (mapv :formid items)))))
-    {:id application-id
+    {:id nil
      :state "draft"
      :applicantuserid (get-user-id)
      :wfid (:wfid (first items))
      :formid (:formid (first items))
-     :catalogue-items items}))
+     :catalogue-items items
+     :events []}))
 
 (defn- process-item
   "Returns an item structure like this:
@@ -282,11 +283,13 @@
    :inputprompt (:inputprompt item)
    :optional (:formitemoptional item)
    :type (:type item)
-   :value (when-not (draft? application-id)
-            (:value
-             (db/get-field-value {:item (:id item)
-                                  :form form-id
-                                  :application application-id})))})
+   :value (or
+           (when-not (draft? application-id)
+             (:value
+              (db/get-field-value {:item (:id item)
+                                   :form form-id
+                                   :application application-id})))
+           "")})
 
 (defn- process-license
   "Returns a license structure like this:
@@ -373,6 +376,8 @@
       :title (:formtitle form)
       :catalogue-items catalogue-items
       :application (assoc application
+                          :formid form-id
+                          :catalogue-items catalogue-items ;; TODO decide if catalogue-items are part of "form" or "application"
                           :can-approve? (can-approve? application)
                           :can-close? (can-close? application)
                           :review-type review-type)
@@ -398,7 +403,7 @@
                                     (index-by [:licid :langcode]))
          licenses (mapv #(process-license application license-localizations %)
                         (db/get-licenses {:wfid wfid :items catalogue-item-ids}))]
-     {:id form-id
+     {:id application-id
       :title (:formtitle form)
       :catalogue-items catalogue-items
       :application (assoc application
@@ -556,7 +561,7 @@
   ([application events]
    (let [application (-> application
                          (assoc :state "draft" :curround 0) ;; reset state
-                         (assoc :events events))]
+                         (assoc :events (map #(dissoc % :appid) events)))] ;;HACK remove :appid that is needed just for batching
      (apply-events application events))))
 
 (declare handle-state-change)
