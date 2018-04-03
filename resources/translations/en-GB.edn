@@ -157,7 +157,8 @@
          :submit "Send application"
          :submitted "Application submitted."
          :user "User"
-         :validation {:required "Field \"%1\" is required."}}
+         :validation {:errors "There were problems. Check the following fields."
+                      :required "Field \"%1\" is required."}}
   :ldap {:failed "Login failed"
          :login "Login"
          :password "Password"

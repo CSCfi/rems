@@ -28,9 +28,21 @@
         (is (not (:errors cmd-response)))
         (is (= "draft" (:state cmd-response)))
         (is (not (:valid cmd-response)))
-        (is (= ["Field \"Purpose of the project\" is required."
-                "Field \"CC Attribution 4.0\" is required."
-                "Field \"General Terms of Use\" is required."]
+        (is (= [{:field {:id 2
+                         :title "Purpose of the project"
+                         :type "item"}
+                 :key "t.form.validation/required"
+                 :text "Field \"Purpose of the project\" is required."}
+                {:field {:id 2
+                         :title "CC Attribution 4.0"
+                         :type "license"}
+                 :key "t.form.validation/required"
+                 :text "Field \"CC Attribution 4.0\" is required."}
+                {:field {:id 3
+                         :title "General Terms of Use"
+                         :type "license"}
+                 :key "t.form.validation/required"
+                 :text "Field \"General Terms of Use\" is required."}]
                (:validation cmd-response))))
       (testing "retrieving"
         (let [response (-> (request :get (str "/api/application/" application-id))
@@ -108,10 +120,10 @@
         (is (:success cmd-response))
         ;; 2 fields, 2 licenses
         (is (= 4 (count validations)))
-        (is (some #(.contains % "Project name") validations))
-        (is (some #(.contains % "Purpose of the project") validations))
-        (is (some #(.contains % "CC Attribution 4.0") validations))
-        (is (some #(.contains % "General Terms of Use") validations)))
+        (is (some #(.contains (:text %) "Project name") validations))
+        (is (some #(.contains (:text %) "Purpose of the project") validations))
+        (is (some #(.contains (:text %) "CC Attribution 4.0") validations))
+        (is (some #(.contains (:text %) "General Terms of Use") validations)))
       (testing "add one field"
         (let [response (-> (request :put (str "/api/application/save"))
                            (authenticate api-key user-id)

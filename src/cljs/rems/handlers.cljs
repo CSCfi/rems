@@ -10,7 +10,6 @@
 (reg-event-db
   :set-active-page
   (fn [db [_ page]]
-    (println :set-active-page page)
     (assoc db :page page)))
 
 (reg-event-db

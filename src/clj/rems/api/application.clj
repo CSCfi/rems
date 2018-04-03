@@ -28,14 +28,19 @@
    :items {s/Keyword s/Str}
    (s/optional-key :licenses) {s/Keyword s/Str}})
 
-(def ValidationError s/Str)
+(def ValidationMessage
+  {:field {:id s/Int
+           :title s/Str
+           :type (s/enum :item :license)}
+   :key s/Keyword
+   :text s/Str})
 
 (def SaveApplicationResponse
   {:success s/Bool
    :valid s/Bool
    (s/optional-key :id) s/Num
    (s/optional-key :state) s/Str
-   (s/optional-key :validation) [ValidationError]})
+   (s/optional-key :validation) [ValidationMessage]})
 
 (def JudgeApplicationCommand
   {:command (s/enum "approve" "reject" "return" "review")

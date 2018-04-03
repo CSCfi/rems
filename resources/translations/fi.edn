@@ -158,7 +158,8 @@
          :submit "Lähetä hakemus"
          :submitted "Hakemus lähetetty."
          :user "Käyttäjä"
-         :validation {:required "Kenttä \"%1\" on pakollinen."}}
+         :validation {:errors "Lähetys epäonnistui. Tarkista seuraavat kentät."
+                      :required "Kenttä \"%1\" on pakollinen."}}
   :ldap {:failed "Kirjautuminen epäonnistui"
          :login "Kirjaudu"
          :password "Salasana"

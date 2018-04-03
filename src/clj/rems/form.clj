@@ -30,12 +30,18 @@
   [item]
   (when-not (:optional item)
     (when (empty? (:value item))
-      (text-format :t.form.validation/required (:title item)))))
+      {:field (assoc (select-keys item [:id :title])
+                     :type :item)
+       :key :t.form.validation/required
+       :text (text-format :t.form.validation/required (:title item))})))
 
 (defn- validate-license
   [license]
   (when-not (:approved license)
-    (text-format :t.form.validation/required (:title license))))
+    {:field (assoc (select-keys license [:id :title])
+                   :type :license)
+     :key :t.form.validation/required
+     :text (text-format :t.form.validation/required (:title license))}))
 
 (defn- validate
   "Validates a filled in form from (get-form-for application).
@@ -47,12 +53,6 @@
     (if (empty? messages)
       :valid
       messages)))
-
-(defn- format-validation-messages
-  [msgs]
-  [:ul
-   (for [m msgs]
-     [:li m])])
 
 (defn save-application-items [application-id catalogue-item-ids]
   (assert application-id)
@@ -96,9 +96,9 @@
         success? (or (not submit?) perform-submit?)]
     (when perform-submit?
       (submit-application application-id))
-    {:validation validation
-     :valid? valid?
-     :success? success?}))
+    (merge {:valid? valid?
+            :success? success?}
+           (when-not valid? {:validation validation}))))
 
 (defn- create-new-draft-for-items [catalogue-item-ids]
   (let [draft (make-draft-application catalogue-item-ids)

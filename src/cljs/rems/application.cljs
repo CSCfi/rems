@@ -5,8 +5,8 @@
             [rems.collapsible :as collapsible]
             [rems.db.catalogue :refer [get-catalogue-item-title]]
             [rems.phase :refer [phases get-application-phases]]
-            [rems.text :refer [text localize-state localize-event localize-time]]
-            [rems.util :refer [dispatch!]]
+            [rems.text :refer [text text-format localize-state localize-event localize-time]]
+            [rems.util :refer [dispatch! index-by]]
             [secretary.core :as secretary])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
@@ -110,8 +110,10 @@
 ;; status can be :pending :saved :failed or nil
 (rf/reg-event-db
  ::set-status
- (fn [db [_ value]]
-   (assoc-in db [:edit-application :status] value)))
+ (fn [db [_ value validation]]
+   (-> db
+       (assoc-in [:edit-application :status] value)
+       (assoc-in [:edit-application :validation] validation))))
 
 (defn- save-application [command user application-id catalogue-items items licenses]
   (let [payload (merge {:command command
@@ -121,15 +123,14 @@
                          {:application-id application-id}
                          {:catalogue-items catalogue-items}))]
     (PUT "/api/application/save"
-         {;; TODO handle validation errors
-          :handler (fn [resp]
+         {:handler (fn [resp]
                      (if (:success resp)
                        (do (rf/dispatch [::set-status :saved])
                            ;; HACK: we both set the location, and fire a fetch-application event
                            ;; because if the location didn't change, secretary won't fire the event
                            (navigate-to (:id resp))
                            (rf/dispatch [::start-fetch-application (:id resp)]))
-                       (rf/dispatch [::set-status :failed])))
+                       (rf/dispatch [::set-status :failed (:validation resp)])))
           :error-handler (fn [err]
                            (rf/dispatch [::set-status :failed]))
           :format :json
@@ -174,6 +175,28 @@
 
 ;;;; UI components ;;;;
 
+(defn- format-validation-messages
+  [msgs]
+  (into [:ul]
+        (for [m msgs]
+          [:li (text-format (:key m) (:title (:field m)))])))
+
+(defn flash-message
+  "Displays a notification (aka flash) message.
+
+   :status   - one of the alert types :success, :info, :warning or :failure
+   :contents - content to show inside the notification"
+  [{status :status contents :contents}]
+  (when status
+    [:div.alert
+     ;; TODO should this case and perhaps unnecessary mapping from keywords to Bootstrap be removed?
+     {:class (case status
+               :success "alert-success"
+               :warning "alert-warning"
+               :failure "alert-danger"
+               :info "alert-info")}
+     contents]))
+
 ;; Fields
 
 (defn- set-field-value
@@ -184,27 +207,39 @@
 (defn- id-to-name [id]
   (str "field" id))
 
+(defn- field-validation-message [validation]
+  (when validation
+    [:div {:class "text-danger"}
+     (text-format (:key validation) (:title (:field validation)))]))
+
 (defn- text-field
-  [{:keys [title id prompt readonly optional value]}]
+  [{:keys [title id prompt readonly optional value validation]}]
   [:div.form-group.field
    [:label {:for (id-to-name id)}
     title " "
     (when optional
       (text :t.form/optional))]
-   [:input.form-control {:type "text" :name (id-to-name id) :placeholder prompt
+   [:input.form-control {:type "text"
+                         :name (id-to-name id)
+                         :placeholder prompt
+                         :class (when validation "is-invalid")
                          :value value :readOnly readonly
-                         :onChange (set-field-value id)}]])
+                         :onChange (set-field-value id)}]
+   [field-validation-message validation]])
 
 (defn- texta-field
-  [{:keys [title id prompt readonly optional value]}]
+  [{:keys [title id prompt readonly optional value validation]}]
   [:div.form-group.field
    [:label {:for (id-to-name id)}
     title " "
     (when optional
       (text :t.form/optional))]
-   [:textarea.form-control {:name (id-to-name id) :placeholder prompt
+   [:textarea.form-control {:name (id-to-name id)
+                            :placeholder prompt
+                            :class (when validation "is-invalid")
                             :value value :readOnly readonly
-                            :onChange (set-field-value id)}]])
+                            :onChange (set-field-value id)}]
+   [field-validation-message validation]])
 
 (defn- label [{title :title}]
   [:div.form-group
@@ -215,23 +250,30 @@
   (fn [event]
     (rf/dispatch [::set-license id (.. event -target -checked)])))
 
-(defn- license [id approved readonly content]
-  [:div.row
-   [:div.col-1
-    [:input {:type "checkbox" :name (str "license" id) :disabled readonly
-             :checked approved
-             :onChange (set-license-approval id)}]]
-   [:div.col content]])
+(defn- license [id approved readonly validation content]
+  [:div
+   [:div.row
+    [:div.col-1
+     [:input {:type "checkbox"
+              :name (str "license" id)
+              :disabled readonly
+              :class (when validation "is-invalid")
+              :checked approved
+              :onChange (set-license-approval id)}]]
+    [:div.col content]]
+   [:div.row
+    [:div.col
+     [field-validation-message validation]]]])
 
 (defn- link-license
-  [{:keys [title id textcontent readonly approved]}]
-  [license id approved readonly
+  [{:keys [title id textcontent readonly approved validation]}]
+  [license id approved readonly validation
    [:a {:href textcontent :target "_blank"}
     title " "]])
 
 (defn- text-license
-  [{:keys [title id textcontent approved readonly]}]
-  [license id approved readonly
+  [{:keys [title id textcontent approved readonly validation]}]
+  [license id approved readonly validation
    [:div.license-panel
     [:h6.license-title
      [:a.license-header.collapsed {:data-toggle "collapse"
@@ -265,7 +307,7 @@
              nil ""
              :pending [:i {:class "fa fa-spinner"}]
              :saved [:i {:class "fa fa-check-circle"}]
-             :failed [:i {:class "fa fa-times-circle"}])]))
+             :failed [:i {:class "fa fa-times-circle text-danger"}])]))
 
 (defn- save-button []
   [:button#save.btn.btn-secondary
@@ -277,8 +319,10 @@
    {:name "submit" :onClick #(rf/dispatch [::save-application "submit"])}
    (text :t.form/submit)])
 
-(defn- fields [form field-values]
+(defn- fields [form edit-application]
   (let [application (:application form)
+        {:keys [items licenses validation]} edit-application
+        validation-by-field-id (index-by [(comp :type :field) (comp :id :field)] validation)
         state (:state application)
         editable? (= "draft" state)
         readonly? (not editable?)]
@@ -292,16 +336,18 @@
        (into [:div]
              (for [i (:items form)]
                [field (assoc i
+                             :validation (get-in validation-by-field-id [:item (:id i)])
                              :readonly readonly?
-                             :value (get-in field-values [:items (:id i)]))]))
+                             :value (get items (:id i)))]))
        (when-let [licenses (not-empty (:licenses form))]
          [:div.form-group.field
           [:h4 (text :t.form/licenses)]
           (into [:div]
                 (for [l licenses]
                   [field (assoc l
+                                :validation (get-in validation-by-field-id [:license (:id l)])
                                 :readonly readonly?
-                                :approved (get-in field-values [:licenses (:id l)]))]))])
+                                :approved (get licenses (:id l)))]))])
        (when-not readonly?
          [:div.col.commands
           [status-widget]
@@ -417,7 +463,7 @@
                        ^{:key (:id item)}
                        [:li (get-catalogue-item-title item language)]))]}]))
 
-(defn- render-application [application field-values]
+(defn- render-application [application edit-application]
   ;; TODO should rename :application
   (let [app (:application application)
         state (:state app)
@@ -426,13 +472,18 @@
     [:div
      [:h2 (text :t.applications/application)]
      [disabled-items-warning (:catalogue-items application)]
+     (when (:validation edit-application)
+       [flash-message
+        {:status :failure
+         :contents [:div (text :t.form/validation.errors)
+                    [format-validation-messages (:validation edit-application)]]}])
      ;; TODO may-see-event? needs to be implemented in backend
      [application-header state events]
      ;; TODO hide from applicant:
      (when user-attributes
        [:div.mt-3 [applicant-info "applicant-info" user-attributes]])
      [:div.mt-3 [applied-resources (:catalogue-items application)]]
-     [:div.my-3 [fields application field-values]]
+     [:div.my-3 [fields application edit-application]]
      (when (:can-approve? app)
        [:div.mb-3 [judge-form]])]))
 
@@ -440,8 +491,8 @@
 
 (defn- show-application []
   (if-let [application @(rf/subscribe [:application])]
-    (let [field-values @(rf/subscribe [:edit-application])]
-      [render-application application field-values])
+    (let [edit-application @(rf/subscribe [:edit-application])]
+      [render-application application edit-application])
     ;; TODO replace with spinner or localize?
     [:p "No application loaded"]))
 
@@ -491,13 +542,30 @@
               {:state "enabled" :localizations {:en {:title "English title 3"}
                                                 :fi {:title "Otsikko suomeksi 3"}}}]])
 
+   (component-info flash-message)
+   (example "flash-message with info"
+            [flash-message {:status :info
+                            :contents "Hello world"}])
+
+   (example "flash-message with error"
+            [flash-message {:status :failure
+                            :contents "You fail"}])
+
    (component-info field)
    (example "field of type \"text\""
             [:form
              [field {:type "text" :title "Title" :inputprompt "prompt"}]])
+   (example "field of type \"text\" with validation error"
+            [:form
+             [field {:type "text" :title "Title" :inputprompt "prompt"
+                     :validation {:field {:title "Title"} :key :t.form.validation.required}}]])
    (example "field of type \"texta\""
             [:form
              [field {:type "texta" :title "Title" :inputprompt "prompt"}]])
+   (example "field of type \"texta\" with validation error"
+            [:form
+             [field {:type "texta" :title "Title" :inputprompt "prompt"
+                     :validation {:field {:title "Title"} :key :t.form.validation.required}}]])
    (example "optional field"
             [:form
              [field {:type "texta" :optional "true" :title "Title" :inputprompt "prompt"}]])
@@ -507,10 +575,18 @@
    (example "link license"
             [:form
              [field {:type "license" :title "Link to license" :licensetype "link" :textcontent "/guide"}]])
+   (example "link license with validation error"
+            [:form
+             [field {:type "license" :title "Link to license" :licensetype "link" :textcontent "/guide"
+                     :validation {:field {:title "Link to license"} :key :t.form.validation.required}}]])
    (example "text license"
             [:form
              [field {:type "license" :id 1 :title "A Text License" :licensetype "text"
                      :textcontent lipsum}]])
+   (example "text license with validation error"
+            [:form
+             [field {:type "license" :id 1 :title "A Text License" :licensetype "text" :textcontent lipsum
+                     :validation {:field {:title "A Text License"} :key :t.form.validation.required}}]])
 
    (component-info render-application)
    (example "application, partially filled"
