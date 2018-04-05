@@ -22,6 +22,16 @@
  (fn [db _]
    (::sort-order db)))
 
+(rf/reg-event-db
+ ::catalogue
+ (fn [db [_ catalogue]]
+   (assoc db ::catalogue catalogue)))
+
+(rf/reg-sub
+ ::catalogue
+ (fn [db _]
+   (::catalogue db)))
+
 (defn catalogue-item
   "Single catalogue item"
   [item language]
@@ -55,13 +65,13 @@
                     [catalogue-item item language])))]))
 
 (defn- fetch-catalogue []
-  (GET "/api/catalogue/" {:handler #(rf/dispatch [:catalogue %])
+  (GET "/api/catalogue/" {:handler #(rf/dispatch [::catalogue %])
                           :response-format :json
                           :keywords? true}))
 
 (defn catalogue-page []
   (fetch-catalogue)
-  (let [catalogue @(rf/subscribe [:catalogue])
+  (let [catalogue @(rf/subscribe [::catalogue])
         language @(rf/subscribe [:language])
         sort-order @(rf/subscribe [::sort-order])]
     [:div

@@ -40,8 +40,3 @@
   :roles
   (fn [db _]
     (get-in db [:identity :roles])))
-
-(reg-sub
-  :catalogue
-  (fn [db _]
-    (:catalogue db)))
