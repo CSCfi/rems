@@ -9,6 +9,29 @@
             [rems.atoms :refer [external-link]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
+(rf/reg-event-db
+ ::sort-by
+ (fn [db [_ _]]
+   (let [sort-order (if (= (::sort-order db) :asc)
+                      :desc
+                      :asc)]
+     (assoc db ::sort-order sort-order))))
+
+(rf/reg-sub
+ ::sort-order
+ (fn [db _]
+   (::sort-order db)))
+
+(rf/reg-event-db
+ ::catalogue
+ (fn [db [_ catalogue]]
+   (assoc db ::catalogue catalogue)))
+
+(rf/reg-sub
+ ::catalogue
+ (fn [db _]
+   (::catalogue db)))
+
 (defn catalogue-item
   "Single catalogue item"
   [item language]
@@ -23,28 +46,37 @@
 
 (defn- catalogue-list
   "List of catalogue items"
-  [items language]
-  [:table.rems-table.catalogue
-   (into [:tbody
-          [:tr
-           [:th (text :t.catalogue/header)]
-           [:th ""]]]
-         (doall (for [item (sort-by #(get-catalogue-item-title % language)
-                             (remove disabled-catalogue-item? items))]
-           [catalogue-item item language])))])
+  [items language sort-order]
+  (let [sorted (sort-by #(get-catalogue-item-title % language)
+                        (remove disabled-catalogue-item? items))
+        sorted-items (if (= sort-order :desc)
+                       (reverse sorted)
+                       sorted)]
+    [:table.rems-table.catalogue
+     (into [:tbody
+            [:tr
+             [:th {:on-click #(rf/dispatch [::sort-by])}
+              (str (text :t.catalogue/header) " ")
+              [:i.fa {:class (if (= sort-order :desc)
+                            "fa-arrow-up"
+                            "fa-arrow-down")}]]
+             [:th ""]]]
+           (for [item sorted-items]
+                    [catalogue-item item language]))]))
 
 (defn- fetch-catalogue []
-  (GET "/api/catalogue/" {:handler #(rf/dispatch [:catalogue %])
+  (GET "/api/catalogue/" {:handler #(rf/dispatch [::catalogue %])
                           :response-format :json
                           :keywords? true}))
 
 (defn catalogue-page []
   (fetch-catalogue)
-  (let [catalogue @(rf/subscribe [:catalogue])
-        language @(rf/subscribe [:language])]
+  (let [catalogue @(rf/subscribe [::catalogue])
+        language @(rf/subscribe [:language])
+        sort-order @(rf/subscribe [::sort-order])]
     [:div
      [cart/cart-list-container language]
-     [catalogue-list catalogue language]]))
+     [catalogue-list catalogue language sort-order]]))
 
 (defn guide []
   [:div
@@ -68,9 +100,10 @@
 
    (component-info catalogue-list)
    (example "catalogue-list empty"
-            [catalogue-list [] nil])
+            [catalogue-list [] nil nil])
    (example "catalogue-list with two items"
-            [catalogue-list [{:title "Item title"} {:title "Another title"}] nil])
+            [catalogue-list [{:title "Item title"} {:title "Another title"}] nil :asc])
+   (example "catalogue-list with two items in reverse order"
+            [catalogue-list [{:title "Item title"} {:title "Another title"}] nil :desc])
    (example "catalogue-list with three items, of which second is disabled"
-            [catalogue-list [{:title "Item 1"} {:title "Item 2 is disabled and should not be shown" :state "disabled"} {:title "Item 3"}] nil])
-   ])
+            [catalogue-list [{:title "Item 1"} {:title "Item 2 is disabled and should not be shown" :state "disabled"} {:title "Item 3"}] nil :asc])])
