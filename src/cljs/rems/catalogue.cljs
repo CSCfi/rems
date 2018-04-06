@@ -57,12 +57,12 @@
             [:tr
              [:th {:on-click #(rf/dispatch [::sort-by])}
               (str (text :t.catalogue/header) " ")
-              [:i {:class (if (= sort-order :desc)
-                            "fa fa-arrow-up"
-                            "fa fa-arrow-down")}]]
+              [:i.fa {:class (if (= sort-order :desc)
+                            "fa-arrow-up"
+                            "fa-arrow-down")}]]
              [:th ""]]]
-           (doall (for [item sorted-items]
-                    [catalogue-item item language])))]))
+           (for [item sorted-items]
+                    [catalogue-item item language]))]))
 
 (defn- fetch-catalogue []
   (GET "/api/catalogue/" {:handler #(rf/dispatch [::catalogue %])
@@ -100,7 +100,7 @@
 
    (component-info catalogue-list)
    (example "catalogue-list empty"
-            [catalogue-list [] nil :asc])
+            [catalogue-list [] nil nil])
    (example "catalogue-list with two items"
             [catalogue-list [{:title "Item title"} {:title "Another title"}] nil :asc])
    (example "catalogue-list with two items in reverse order"
