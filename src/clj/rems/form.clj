@@ -1,6 +1,5 @@
 (ns rems.form
   (:require [rems.db.applications :refer [create-new-draft
-                                          draft?
                                           get-application-state
                                           get-form-for
                                           make-draft-application
@@ -10,7 +9,7 @@
             [rems.InvalidRequestException]
             [rems.roles :refer [has-roles?]]
             [rems.text :refer :all]
-            [rems.util :refer [get-user-id getx getx-in]]))
+            [rems.util :refer [get-user-id getx]]))
 
 
 ;; TODO not yet implemented for SPA

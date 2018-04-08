@@ -1,10 +1,7 @@
 (ns rems.auth.shibboleth
   (:require [buddy.auth.middleware :refer [wrap-authentication
                                            wrap-authorization]]
-            [haka-buddy.backend :refer [authz-backend shibbo-backend]]
-            [hiccup.element :refer [image link-to]]
-            [rems.context :as context]
-            [rems.text :refer [text]]))
+            [haka-buddy.backend :refer [authz-backend shibbo-backend]]))
 
 (defn wrap-auth [handler]
   (-> handler

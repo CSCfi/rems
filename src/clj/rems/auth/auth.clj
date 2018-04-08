@@ -7,7 +7,6 @@
             [rems.auth.ldap :as ldap]
             [rems.auth.shibboleth :as shibboleth]
             [rems.config :refer [env]]
-            [rems.guide :refer [example]]
             [rems.util :refer [never-match-route]]
             [ring.util.response :refer [redirect]]))
 

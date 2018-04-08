@@ -1,17 +1,12 @@
 (ns rems.home
   (:require [compojure.core :refer [GET defroutes]]
             [markdown.core :as md]
-            [rems.auth.auth :as auth]
             [rems.auth.util :as auth-util]
             [rems.config :refer [env]]
-            [rems.context :as context]
             [rems.css.styles :as styles]
-            [rems.guide :refer :all]
             [rems.layout :as layout]
-            [rems.text :refer [text]]
             [rems.util :refer [index-by]]
             [ring.util.response :refer [content-type
-                                        redirect
                                         response]]))
 
 (defn- find-allowed-markdown-file [filename]

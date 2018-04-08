@@ -1,7 +1,6 @@
 (ns rems.guide-macros
   "Utilities for component guide."
-  (:require [clojure.string :as s]
-            [clojure.pprint :refer [code-dispatch write]]
+  (:require [clojure.pprint :refer [code-dispatch write]]
             [rems.locales :as locales]
             [taoensso.tempura :as tempura]))
 

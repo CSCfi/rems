@@ -3,6 +3,7 @@
             [compojure.core :refer [defroutes routes wrap-routes]]
             [compojure.route :as route]
             [mount.core :as mount]
+            [rems.api :refer [api-routes]]
             [rems.auth.auth :as auth]
             [rems.entitlements :as entitlements]
             [rems.env :refer [+defaults+]]
@@ -11,8 +12,6 @@
             [rems.landing-page :as landing-page]
             [rems.layout :refer [error-page]]
             [rems.middleware :as middleware]
-            ;;[rems.routes.guide :refer [guide-routes]]
-            [rems.api :refer [api-routes]]
             [rems.util :refer [never-match-route]]))
 
 (mount/defstate init-app
