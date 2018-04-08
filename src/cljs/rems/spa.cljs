@@ -26,7 +26,7 @@
   [:div.container
    [:div.row
     [:div.col-md-12
-     "TODO about page in markdown"]]])
+     (text :t.about/text)]]])
 
 (defn home-page []
   (if @(rf/subscribe [:user])
