@@ -14,17 +14,6 @@
                                         redirect
                                         response]]))
 
-(defn- about [text]
-  [:p text])
-
-(defn- about-page []
-  (layout/render
-   "about"
-   (about (text :t.about/text))))
-
-(defn- home-page []
-  nil)
-
 (defn- find-allowed-markdown-file [filename]
   (let [allowed-files (index-by [:file] (filter :file (:extra-pages env)))]
     (when (contains? allowed-files filename)
@@ -36,15 +25,7 @@
     (auth-util/throw-unauthorized)))
 
 (defroutes home-routes
-  (GET "/" [] (home-page))
-  (GET "/about" [] (about-page))
   (GET "/markdown/:filename" [filename] (markdown-page filename))
   (GET "/css/screen.css" [] (-> (styles/generate-css)
                                 (response)
                                 (content-type "text/css"))))
-
-(defn guide
-  "Component guide fragment"
-  []
-  (list
-   (example "about" (about "Some about text"))))
