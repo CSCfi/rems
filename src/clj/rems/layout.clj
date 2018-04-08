@@ -6,9 +6,6 @@
             [ring.middleware.anti-forgery :refer [*anti-forgery-token*]]
             [ring.util.http-response :as response]))
 
-(defn external-link []
-  [:i {:class "fa fa-external-link"}])
-
 (defn- page-template
   []
   (html5 [:head

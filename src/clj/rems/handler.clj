@@ -3,7 +3,6 @@
             [compojure.core :refer [defroutes routes wrap-routes]]
             [compojure.route :as route]
             [mount.core :as mount]
-            [rems.actions :as actions]
             [rems.auth.auth :as auth]
             [rems.entitlements :as entitlements]
             [rems.env :refer [+defaults+]]
