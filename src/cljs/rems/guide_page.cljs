@@ -1,29 +1,23 @@
 (ns rems.guide-page
-  (:require ;; [compojure.core :refer [GET defroutes]]
-   [re-frame.core :as rf]
-   [rems.actions :as actions]
-   [rems.application :as application]
-   [rems.applications :as applications]
-   [rems.auth.auth :as auth]
-   [rems.cart :as cart]
-   [rems.catalogue :as catalogue]
-   [rems.collapsible :as collapsible]
-   ;; [rems.context :as context]
-   ;; [rems.form :as form]
-   ;; [rems.guide :refer :all]
-   ;; [rems.home :as home]
-   [rems.language-switcher :as language-switcher]
-   ;; [rems.layout :as layout]
-   [rems.navbar :as nav]
-   [rems.phase :as phase]
-   ;; [rems.util :as util]
-   )
+  (:require [re-frame.core :as rf]
+            [rems.actions :as actions]
+            [rems.application :as application]
+            [rems.applications :as applications]
+            [rems.auth.auth :as auth]
+            [rems.cart :as cart]
+            [rems.catalogue :as catalogue]
+            [rems.collapsible :as collapsible]
+         ;; [rems.context :as context]
+            [rems.language-switcher :as language-switcher]
+         ;; [rems.layout :as layout]
+            [rems.navbar :as nav]
+            [rems.phase :as phase])
   (:require-macros [rems.guide-macros :refer [example]]))
 
 (defn color-box [id hex]
   [:div.col-md-3
    [:row
-    [:div.col-md-6.rectangle {:class id }]
+    [:div.col-md-6.rectangle {:class id}]
     [:div.col-md-6.color-title hex]]])
 
 (defn color-boxes []
@@ -84,6 +78,4 @@
     [application/guide]
 
     [:h2 "Misc components"]
-    [phase/guide]
-    ;; (home/guide)
-    ]])
+    [phase/guide]]])
