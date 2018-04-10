@@ -3,6 +3,7 @@
   (:require [ajax.core :refer [GET]]
             [clojure.string :as str]
             [re-frame.core :as re-frame]
+            [rems.application-list :as application-list]
             [rems.collapsible :as collapsible]
             [rems.guide-functions]
             [rems.text :refer [localize-state localize-time text]])
@@ -33,11 +34,6 @@
  (fn [db _]
    (::actions db)))
 
-(defn- view-button [app]
-  [:a.btn.btn-primary
-   {:href (str "#/application/" (:id app))}
-   (text :t.applications/view)])
-
 ;; TODO not implemented
 (defn- load-application-states-button []
   [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#load-application-states-modal" :disabled true}
@@ -65,30 +61,15 @@
    [show-publications-button]
    [show-throughput-times-button]])
 
-(defn- actions [apps]
+(defn- open-reviews [apps]
   (if (empty? apps)
     [:div.actions.alert.alert-success (text :t.actions/empty)]
-    [:table.rems-table.actions
-     (into [:tbody
-            [:tr
-             [:th (text :t.actions/application)]
-             [:th (text :t.actions/resource)]
-             [:th (text :t.actions/applicant)]
-             [:th (text :t.actions/created)]
-             [:th]]]
-           (for [app (sort-by :id apps)]
-             [:tr.action
-              [:td {:data-th (text :t.actions/application)} (:id app)]
-              [:td {:data-th (text :t.actions/resource)} (str/join ", " (map :title (:catalogue-items app)))]
-              [:td {:data-th (text :t.actions/applicant)} (:applicantuserid app)]
-              [:td {:data-th (text :t.actions/created)} (localize-time (:start app))]
-              [:td.commands (view-button app)]]))]))
-
-(defn- open-reviews [apps]
-  [actions apps])
+    [application-list/component :id apps]))
 
 (defn- open-approvals [apps]
-  [actions apps])
+  (if (empty? apps)
+    [:div.actions.alert.alert-success (text :t.actions/empty)]
+    [application-list/component :id apps]))
 
 (defn- handled-applications
   "Creates a table containing a list of handled applications.
@@ -101,23 +82,7 @@
     [:div.actions.alert.alert-success (text :t.actions/no-handled-yet)]
     [:div
      top-buttons
-     [:table.rems-table.actions
-      (into [:tbody
-             [:tr
-              [:th (text :t.actions/application)]
-              [:th (text :t.actions/resource)]
-              [:th (text :t.actions/applicant)]
-              [:th (text :t.actions/state)]
-              [:th (text :t.actions/handled)]
-              [:th]]]
-            (for [app (sort-by :handled apps)]
-              [:tr.action
-               [:td {:data-th (text :t.actions/application)} (:id app)]
-               [:td {:data-th (text :t.actions/resource)} (str/join ", " (map :title (:catalogue-items app)))]
-               [:td {:data-th (text :t.actions/applicant)} (:applicantuserid app)]
-               [:td {:data-th (text :t.actions/state)} (localize-state (:state app))]
-               [:td {:data-th (text :t.actions/handled)} (localize-time (:handled app))]
-               [:td.commands [view-button app]]]))]]))
+     [application-list/component :id apps]]))
 
 (defn- handled-approvals [apps]
   [handled-applications apps [report-buttons]])
