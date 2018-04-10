@@ -6,8 +6,7 @@
             [rems.application-list :as application-list]
             [rems.collapsible :as collapsible]
             [rems.guide-functions]
-            [rems.text :refer [localize-state localize-time text]])
-  (:require-macros [rems.guide-macros :refer [component-info example]]))
+            [rems.text :refer [localize-state localize-time text]]))
 
 (defn- fetch-actions [user]
   (GET "/api/actions/" {:handler #(re-frame/dispatch [::fetch-actions-result %])
@@ -141,35 +140,3 @@
            {:id "handled-approvals"
             :title (text :t.actions/handled-approvals)
             :collapse [handled-approvals (:handled-approvals actions)]}]]]])]))
-
-(defn guide
-  []
-  ;; TODO move guide stuff to application-list
-  [:div
-   (component-info open-reviews)
-   (example "open-reviews empty"
-            [open-reviews []])
-   (example "open-reviews"
-            [open-reviews
-             [{:id 1 :catalogue-items [{:title "AAAAAAAAAAAAAA"}] :applicantuserid "alice"}
-              {:id 3 :catalogue-items [{:title "bbbbbb"}] :applicantuserid "bob"}]])
-
-   (component-info handled-reviews)
-   (example "handled-reviews"
-            [handled-reviews
-             [{:id 1 :catalogue-items [{:title "AAAAAAAAAAAAAA"}] :applicantuserid "alice"}
-              {:id 3 :catalogue-items [{:title "bbbbbb"}] :state "approved" :applicantuserid "bob"}]])
-
-   (component-info open-approvals)
-   (example "open-approvals empty"
-            [open-approvals []])
-   (example "open-approvals"
-            [open-approvals
-             [{:id 1 :catalogue-items [{:title "AAAAAAAAAAAAAA"}] :applicantuserid "alice"}
-              {:id 3 :catalogue-items [{:title "bbbbbb"}] :applicantuserid "bob"}]])
-
-   (component-info handled-approvals)
-   (example "handled-approvals"
-            [handled-approvals
-             [{:id 1 :catalogue-items [{:title "AAAAAAAAAAAAAA"}] :applicantuserid "alice"}
-              {:id 3 :catalogue-items [{:title "bbbbbb"}] :state "approved" :applicantuserid "bob"}]])])

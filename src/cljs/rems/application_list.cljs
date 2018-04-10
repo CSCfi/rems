@@ -1,6 +1,7 @@
 (ns rems.application-list
   (:require [clojure.string :as str]
-            [rems.text :refer [localize-state localize-time text]]))
+            [rems.text :refer [localize-state localize-time text]])
+  (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn- view-button [app]
   [:a.btn.btn-primary
@@ -74,6 +75,31 @@
 
    sorting should be a pair [column order] where
      - order is :asc or :desc
-     - column is one of :id :applicant :resource :created :state"
+     - column is one of :id :applicant :resource :created :state
+
+   set-sorting is a callback that is called with a new sorting when it changes"
   [sorting set-sorting apps]
   (table sorting set-sorting (apply-sorting sorting apps)))
+
+(def ^:private +example-applications+
+  [{:id 1 :catalogue-items [{:title "Item 5"}] :state "draft" :applicantuserid "alice"
+    :start "1980-01-02T13:45:00.000Z"}
+   {:id 2 :catalogue-items [{:title "Item 3"}] :state "applied" :applicantuserid "bob"
+    :start "1971-02-03T23:59:00.000Z"}
+   {:id 3 :catalogue-items [{:title "Item 2"} {:title "Item 5"}] :state "approved" :applicantuserid "charlie"
+    :start "1980-01-01T01:01:00.000Z"}
+   {:id 4 :catalogue-items [{:title "Item 2"}] :state "rejected" :applicantuserid "david"
+    :start "1972-12-12T12:12:00.000Z"}
+   {:id 5 :catalogue-items [{:title "Item 2"}] :state "closed" :applicantuserid "ernie"
+    :start "1972-12-12T12:12:00.000Z"}])
+
+(defn guide
+  []
+  [:div
+   (component-info component)
+   (example "empty list"
+            [component [:id :asc] prn []])
+   (example "applications, default order"
+            [component [:id :asc] prn +example-applications+])
+   (example "applications, descending date"
+            [component [:created :desc] prn +example-applications+])])
