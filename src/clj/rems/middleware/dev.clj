@@ -1,6 +1,5 @@
 (ns rems.middleware.dev
-  (:require [prone.middleware :refer [wrap-exceptions]]
-            [rems.auth.NotAuthorizedException]
+  (:require [rems.auth.NotAuthorizedException]
             [rems.context :as context]
             [ring.middleware.reload :refer [wrap-reload]]))
 
@@ -11,22 +10,9 @@
     (binding [context/*theme* (context/load-theme)]
       (handler request))))
 
-(defn wrap-some-exceptions
-  "Wrap some exceptions in the prone.middleware/wrap-exceptions,
-  but let others pass (i.e. `NotAuthorizedException`)."
-  [handler]
-  (fn [req]
-    (try
-      (handler req)
-      (catch rems.auth.NotAuthorizedException e
-        (throw e))
-      (catch Throwable e
-        ((wrap-exceptions (fn [& _] (throw e))) req)))))
-
 (defn wrap-dev
-  "Middleware for dev use. Autoreload, style reloading, nicer errors."
+  "Middleware for dev use. Autoreload, style reloading."
   [handler]
   (-> handler
       wrap-reload
-      wrap-styles-context
-      wrap-some-exceptions))
+      wrap-styles-context))

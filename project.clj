@@ -39,7 +39,6 @@
                  [org.webjars/font-awesome "4.7.0"]
                  [org.webjars/jquery "3.2.1"]
                  [com.draines/postal "2.0.2"]
-                 [prone "1.3.0"]
                  [re-frame "0.10.2"]
                  [reagent "0.7.0"]
                  [reagent-utils "0.2.1"]
