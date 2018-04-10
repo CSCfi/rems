@@ -10,35 +10,43 @@
 (defn- get-catalogue-items [app]
   (str/join ", " (map :title (:catalogue-items app))))
 
+(def ^:private +columns+
+  [{:name :id
+    :getter :id
+    :header #(text :t.actions/application)}
+   {:name :resource
+    :getter get-catalogue-items
+    :header #(text :t.actions/resource)}
+   {:name :applicant
+    :getter :applicantuserid
+    :header #(text :t.actions/applicant)}
+   {:name :state
+    :getter #(localize-state (:state %))
+    :header #(text :t.actions/state)}
+   {:name :created
+    :getter #(localize-time (:start %))
+    :header #(text :t.actions/created)}])
+
 (defn- row [app]
-  [:tr.action
-   [:td {:data-th (text :t.actions/application)} (:id app)]
-   [:td {:data-th (text :t.actions/resource)} (get-catalogue-items app)]
-   [:td {:data-th (text :t.actions/applicant)} (:applicantuserid app)]
-   ;; make state column hideable?
-   [:td {:data-th (text :t.actions/state)} (localize-state (:state app))]
-   [:td {:data-th (text :t.actions/created)} (localize-time (:start app))]
-   ;; buttons to show could be parameterized
-   [:td.commands (view-button app)]])
+  (into [:tr.action]
+        (concat (for [{:keys [header getter]} +columns+]
+                  [:td {:data-th (header)} (getter app)])
+                ;; buttons to show could be parameterized
+                [[:td.commands (view-button app)]])))
 
 (defn- table [apps]
   [:table.rems-table.actions
    (into [:tbody
-          [:tr
-           [:th (text :t.actions/application)]
-           [:th (text :t.actions/resource)]
-           [:th (text :t.actions/applicant)]
-           [:th (text :t.actions/state)]
-           [:th (text :t.actions/created)]
-           [:th]]]
+          (into [:tr]
+                (for [{:keys [header]} +columns+]
+                  [:th (header)]))]
          (map row apps))])
 
-(def ^:private +sort-functions+
-  {:id :id
-   :applicant :applicantuserid
-   :resource get-catalogue-items
-   :created :start
-   :state (comp localize-state :state)})
+(defn- sort-by-column [col apps]
+  (let [fun (get
+             (zipmap (map :name +columns+) (map :getter +columns+))
+             col)]
+    (sort-by fun apps)))
 
 (defn component
   "A table of applications.
@@ -50,4 +58,4 @@
      :created
      :state"
   [sort-order apps]
-  (table (sort-by (get +sort-functions+ sort-order) apps)))
+  (table (sort-by-column sort-order apps)))
