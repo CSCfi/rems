@@ -25,7 +25,7 @@
   [apps]
   (if (empty? apps)
     [:div.applications.alert.alert-success (text :t/applications.empty)]
-    [application-list/component :id apps]))
+    [application-list/component [:id :asc] apps]))
 
 (defn applications-page []
   (let [user @(rf/subscribe [:user])]

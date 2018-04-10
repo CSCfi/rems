@@ -34,28 +34,35 @@
                 ;; buttons to show could be parameterized
                 [[:td.commands (view-button app)]])))
 
-(defn- table [apps]
+(defn- sort-symbol [sort-order]
+  [:i.fa {:class (case sort-order
+                   :asc "fa-arrow-down"
+                   :desc "fa-arrow-up")}])
+
+(defn- table [[sort-column sort-order] apps]
   [:table.rems-table.actions
    (into [:tbody
           (into [:tr]
-                (for [{:keys [header]} +columns+]
-                  [:th (header)]))]
+                (for [{:keys [name header]} +columns+]
+                  [:th
+                   (header)
+                   (when (= name sort-column) (sort-symbol sort-order))]))]
          (map row apps))])
 
-(defn- sort-by-column [col apps]
+(defn- apply-sorting [[col order] apps]
   (let [fun (get
              (zipmap (map :name +columns+) (map :getter +columns+))
-             col)]
-    (sort-by fun apps)))
+             col)
+        sorted (sort-by fun apps)]
+    (case order
+      :asc sorted
+      :desc (reverse sorted))))
 
 (defn component
   "A table of applications.
 
-   sort-order can be:
-     :id
-     :applicant
-     :resource
-     :created
-     :state"
-  [sort-order apps]
-  (table (sort-by-column sort-order apps)))
+   sorting should be a pair [column order] where
+     - order is :asc or :desc
+     - column is one of :id :applicant :resource :created :state"
+  [sorting apps]
+  (table sorting (apply-sorting sorting apps)))

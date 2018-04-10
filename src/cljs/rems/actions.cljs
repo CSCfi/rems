@@ -64,12 +64,12 @@
 (defn- open-reviews [apps]
   (if (empty? apps)
     [:div.actions.alert.alert-success (text :t.actions/empty)]
-    [application-list/component :id apps]))
+    [application-list/component [:id :asc] apps]))
 
 (defn- open-approvals [apps]
   (if (empty? apps)
     [:div.actions.alert.alert-success (text :t.actions/empty)]
-    [application-list/component :id apps]))
+    [application-list/component [:id :asc] apps]))
 
 (defn- handled-applications
   "Creates a table containing a list of handled applications.
@@ -82,7 +82,7 @@
     [:div.actions.alert.alert-success (text :t.actions/no-handled-yet)]
     [:div
      top-buttons
-     [application-list/component :id apps]]))
+     [application-list/component [:id :asc] apps]]))
 
 (defn- handled-approvals [apps]
   [handled-applications apps [report-buttons]])
