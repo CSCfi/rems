@@ -39,12 +39,23 @@
                    :asc "fa-arrow-down"
                    :desc "fa-arrow-up")}])
 
-(defn- table [[sort-column sort-order] apps]
+(defn- flip [order]
+  (case order
+    :asc :desc
+    :desc :asc))
+
+(defn- change-sort [old-column old-order new-column]
+  (if (= old-column new-column)
+    [old-column (flip old-order)]
+    [new-column :asc]))
+
+(defn- table [[sort-column sort-order] set-sorting apps]
   [:table.rems-table.actions
    (into [:tbody
           (into [:tr]
                 (for [{:keys [name header]} +columns+]
                   [:th
+                   {:on-click #(set-sorting (change-sort sort-column sort-order name))}
                    (header)
                    (when (= name sort-column) (sort-symbol sort-order))]))]
          (map row apps))])
@@ -64,5 +75,5 @@
    sorting should be a pair [column order] where
      - order is :asc or :desc
      - column is one of :id :applicant :resource :created :state"
-  [sorting apps]
-  (table sorting (apply-sorting sorting apps)))
+  [sorting set-sorting apps]
+  (table sorting set-sorting (apply-sorting sorting apps)))

@@ -34,6 +34,16 @@
  (fn [db _]
    (::actions db)))
 
+(re-frame/reg-sub
+ ::sort
+ (fn [db [_ key]]
+   (get-in db [::sort key] [:id :asc])))
+
+(re-frame/reg-event-db
+ ::sort
+ (fn [db [_ key sort]]
+   (assoc-in db [::sort key] sort)))
+
 ;; TODO not implemented
 (defn- load-application-states-button []
   [:button.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#load-application-states-modal" :disabled true}
@@ -61,35 +71,44 @@
    [show-publications-button]
    [show-throughput-times-button]])
 
-(defn- open-reviews [apps]
+(defn- open-applications
+  [key apps]
   (if (empty? apps)
     [:div.actions.alert.alert-success (text :t.actions/empty)]
-    [application-list/component [:id :asc] apps]))
+    [application-list/component
+     @(re-frame/subscribe [::sort key])
+     #(re-frame/dispatch [::sort key %])
+     apps]))
+
+(defn- open-reviews [apps]
+  [open-applications ::open-applications apps])
 
 (defn- open-approvals [apps]
-  (if (empty? apps)
-    [:div.actions.alert.alert-success (text :t.actions/empty)]
-    [application-list/component [:id :asc] apps]))
+  [open-applications ::open-approvals apps])
 
 (defn- handled-applications
   "Creates a table containing a list of handled applications.
 
   The function takes the following parameters as arguments:
+  key:         key to use for table ordering in re-frame
   apps:        collection of apps to be shown
   top-buttons: a set of extra buttons that will be shown on top of the table. This could include f.ex 'export as pdf' button."
-  [apps top-buttons]
+  [key apps top-buttons]
   (if (empty? apps)
     [:div.actions.alert.alert-success (text :t.actions/no-handled-yet)]
     [:div
      top-buttons
-     [application-list/component [:id :asc] apps]]))
+     [application-list/component
+      @(re-frame/subscribe [::sort key])
+      #(re-frame/dispatch [::sort key %])
+      apps]]))
 
 (defn- handled-approvals [apps]
-  [handled-applications apps [report-buttons]])
+  [handled-applications ::handled-approvals apps [report-buttons]])
 
 (defn- handled-reviews
   [apps]
-  [handled-applications apps nil])
+  [handled-applications ::handled-reviews apps nil])
 
 ;; TODO ensure ::actions is loaded when navigating to page
 (defn actions-page [reviews]
@@ -125,6 +144,7 @@
 
 (defn guide
   []
+  ;; TODO move guide stuff to application-list
   [:div
    (component-info open-reviews)
    (example "open-reviews empty"

@@ -21,23 +21,32 @@
  (fn [db _]
    (::my-applications db)))
 
-(defn- applications
-  [apps]
-  (if (empty? apps)
-    [:div.applications.alert.alert-success (text :t/applications.empty)]
-    [application-list/component [:id :asc] apps]))
+(rf/reg-sub
+ ::sort
+ (fn [db _]
+   (or (::sort db) [:id :asc])))
+
+(rf/reg-event-db
+ ::sort
+ (fn [db [_ order]]
+   (assoc db ::sort order)))
 
 (defn applications-page []
   (let [user @(rf/subscribe [:user])]
     (fetch-my-applications user))
-  (let [apps @(rf/subscribe [::my-applications])]
-    [applications apps]))
+  (let [apps @(rf/subscribe [::my-applications])
+        sort @(rf/subscribe [::sort])
+        set-sort #(rf/dispatch [::sort %])]
+    (if (empty? apps)
+      [:div.applications.alert.alert-success (text :t/applications.empty)]
+      [application-list/component sort set-sort apps])))
 
 (defn guide []
   [:div
-   (example "applications empty"
+   ;; TODO move guide stoff to application-list
+   #_(example "applications empty"
             [applications []])
-   (example "applications"
+   #_(example "applications"
             [applications
              [{:id 1 :catalogue-items [{:title "Draft application"}] :state "draft" :applicantuserid "alice"}
               {:id 2 :catalogue-items [{:title "Applied application"}] :state "applied" :applicantuserid "bob"}
