@@ -99,7 +99,7 @@
 
    (component-info catalogue-list)
    (example "catalogue-list empty"
-            [catalogue-list [] nil nil])
+            [catalogue-list [] nil :asc])
    (example "catalogue-list with two items"
             [catalogue-list [{:title "Item title"} {:title "Another title"}] nil :asc])
    (example "catalogue-list with two items in reverse order"
