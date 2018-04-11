@@ -1,6 +1,5 @@
 (ns rems.middleware.dev
-  (:require [rems.auth.NotAuthorizedException]
-            [rems.context :as context]
+  (:require [rems.context :as context]
             [ring.middleware.reload :refer [wrap-reload]]))
 
 (defn wrap-styles-context
