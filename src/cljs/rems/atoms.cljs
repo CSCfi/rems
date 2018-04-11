@@ -8,3 +8,8 @@
 
 (defn image [opts src]
   [:img (merge opts {:src src})])
+
+(defn sort-symbol [sort-order]
+  [:i.fa {:class (case sort-order
+                   :asc "fa-arrow-down"
+                   :desc "fa-arrow-up")}])

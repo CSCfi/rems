@@ -1,5 +1,6 @@
 (ns rems.application-list
   (:require [clojure.string :as str]
+            [rems.atoms :refer [sort-symbol]]
             [rems.text :refer [localize-state localize-time text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
@@ -34,11 +35,6 @@
                   [:td {:data-th (header)} (getter app)])
                 ;; buttons to show could be parameterized
                 [[:td.commands (view-button app)]])))
-
-(defn- sort-symbol [sort-order]
-  [:i.fa {:class (case sort-order
-                   :asc "fa-arrow-down"
-                   :desc "fa-arrow-up")}])
 
 (defn- flip [order]
   (case order
