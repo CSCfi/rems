@@ -54,6 +54,7 @@
                   [:th
                    {:on-click #(set-sorting (change-sort sort-column sort-order name))}
                    (header)
+                   " "
                    (when (= name sort-column) (sort-symbol sort-order))]))]
          (map row apps))])
 
