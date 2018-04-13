@@ -404,7 +404,6 @@
               [info-field (text :t.applicant-info/username) (:eppn user-attributes)]]
              [:div.col-md-6
               [info-field (text :t.applicant-info/email) (:mail user-attributes)]]]
-    ;; TODO hide from reviewer
     :collapse (into [:form]
                     (for [[k v] (dissoc user-attributes :commonName :mail)]
                       [info-field k v]))}])
@@ -477,9 +476,7 @@
         {:status :failure
          :contents [:div (text :t.form/validation.errors)
                     [format-validation-messages (:validation edit-application)]]}])
-     ;; TODO may-see-event? needs to be implemented in backend
      [application-header state events]
-     ;; TODO hide from applicant:
      (when user-attributes
        [:div.mt-3 [applicant-info "applicant-info" user-attributes]])
      [:div.mt-3 [applied-resources (:catalogue-items application)]]
