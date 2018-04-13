@@ -1,9 +1,4 @@
-REST API
-- API-Key hallinta?
-
-Guide komponentit
-
-Move subscriptions from subscriptions.cljs to appropriate files
+Move subscriptions from subscriptions.cljs to appropriate files (partially done)
 
 Redirect (away from home page when logged in)
 
@@ -11,35 +6,14 @@ Approve/Review modal dialogs
 
 Bootstrap stable
 
-CSRF token?
-
 Check that all components are responsive and work acceptably in pad or phone
-
-re-frame/ or rf/ convention?
-string/ str/ or s/ convention?
-
-# Missing features
-
-./src/cljs/rems/spa.cljs:29:     "TODO about page in markdown"]]])
-
-## Hide information
-./src/cljs/rems/application.cljs:407:    ;; TODO hide from reviewer
-./src/cljs/rems/application.cljs:480:     ;; TODO may-see-event? needs to be implemented in backend
-./src/cljs/rems/application.cljs:482:     ;; TODO hide from applicant:
-./src/clj/rems/form.clj:16:;; TODO not yet implemented for SPA
-./src/clj/rems/db/applications.clj:521:;; TODO should only be able to see the phase if applicant, approver, reviewer etc.
-
-## Notify actors
-./src/clj/rems/db/applications.clj:219:;; TODO notify actors also during other events such as reject, return etc.
-
-## Review timeout
-./src/clj/rems/db/applications.clj:254:    ;; TODO implement review timeout later
-
-
 
 # Technical improvements
 
 ## Minor details
+move from re-frame/ to rf/ convention
+convert string/ and s/ namespaces to str/
+
 ./src/cljs/rems/application.cljs:14:;; TODO named secretary routes give us equivalent functions
 ./src/cljs/rems/application.cljs:15:;; TODO should the secretary route definitions be in 
 
@@ -65,40 +39,10 @@ string/ str/ or s/ convention?
 ## Common utils
 ./src/cljs/rems/cart.cljs:53:;; TODO make util for other pages to use?
 
-## Cleanup: validation already implemented in SPA
-
-./src/clj/rems/form.clj:28:;; TODO not yet implemented for SPA
-
-
-
-# Usability improvements
-
-## Spinner while action is ongoing
-
-./src/cljs/rems/application.cljs:304:    ;; TODO nicer styling
-./src/cljs/rems/application.cljs:305:    ;; TODO make the spinner spin
-./src/cljs/rems/application.cljs:496:    ;; TODO replace with spinner or localize?
-
-## Disable inputs while action is ongoing
-
-./src/cljs/rems/application.cljs:150:     ;; TODO disable form while saving?
-
-
-
 # Robustness
 
 ./src/cljs/rems/actions.cljs:129:;; TODO ensure ::actions is loaded when navigating to page
 ./src/clj/rems/events.clj:155:;; TODO handle closing when no draft or anything saved yet
-
-## What if a request fails?
-
-./src/cljs/rems/application.cljs:47:  ;; TODO: handle errors (e.g. unauthorized)
-./src/cljs/rems/application.cljs:54:  ;; TODO: handle errors (e.g. unauthorized)
-./src/cljs/rems/application.cljs:162:        ;; TODO error handling
-
-## CSRF
-./src/cljs/rems/cart.cljs:12:;; TODO anti-forgery when submitting
-
 
 # SQL
 
@@ -106,9 +50,7 @@ string/ str/ or s/ convention?
 ./resources/migrations/20170126133032-add-rms-tables.up.sql:368:-- TODO add foreign key constraints from other tables to user table
 ./resources/migrations/20170126133032-add-rms-tables.up.sql:375:  -- TODO should this have an id for consistency with the other tables?
 ./resources/sql/queries.sql:159:-- TODO remove resId from this table to make it normalized?
-./resources/sql/queries.sql:204:-- TODO: make this atomic
 ./resources/sql/queries.sql:246:-- TODO: consider renaming this to link-resource-license!
 ./resources/sql/queries.sql:367:-- TODO: consider refactoring this into get-application-events
 ./resources/sql/transfer-data.sql:230:-- TODO: better handling of duplicates
 ./resources/sql/transfer-data.sql:284:-- TODO: handle separation of migrating normal and third party reviews
-./env/dev/clj/rems/env.clj:8:;; TODO these could be moved to config.edn
