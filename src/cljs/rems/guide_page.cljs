@@ -1,6 +1,7 @@
 (ns rems.guide-page
   (:require [re-frame.core :as rf]
             [rems.actions :as actions]
+            [rems.application :as application]
             [rems.application-list :as application-list]
             [rems.auth.auth :as auth]
             [rems.cart :as cart]
