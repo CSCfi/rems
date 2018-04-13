@@ -3,10 +3,10 @@
   (:require [ajax.core :refer [GET]]
             [clojure.string :as str]
             [re-frame.core :as re-frame]
+            [rems.application-list :as application-list]
             [rems.collapsible :as collapsible]
             [rems.guide-functions]
-            [rems.text :refer [localize-state localize-time text]])
-  (:require-macros [rems.guide-macros :refer [component-info example]]))
+            [rems.text :refer [localize-state localize-time text]]))
 
 (defn- fetch-actions [user]
   (GET "/api/actions/" {:handler #(re-frame/dispatch [::fetch-actions-result %])
@@ -33,10 +33,24 @@
  (fn [db _]
    (::actions db)))
 
-(defn- view-button [app]
-  [:a.btn.btn-primary
-   {:href (str "#/application/" (:id app))}
-   (text :t.applications/view)])
+;; Because we want to display multiple independently sortable
+;; application tables, we store a map of sort types in the db.
+;;
+;; Use (re-frame/dispatch [::sort :my-key [:field :asc]]) to set a
+;; sort type, and (re-frame/subscribe [::sort :my-key]) to get it
+;; back.
+;;
+;; See rems.application-list for more info about sort types.
+
+(re-frame/reg-sub
+ ::sort
+ (fn [db [_ key]]
+   (get-in db [::sort key] [:id :asc])))
+
+(re-frame/reg-event-db
+ ::sort
+ (fn [db [_ key sort]]
+   (assoc-in db [::sort key] sort)))
 
 ;; TODO not implemented
 (defn- load-application-states-button []
@@ -65,66 +79,44 @@
    [show-publications-button]
    [show-throughput-times-button]])
 
-(defn- actions [apps]
+(defn- open-applications
+  [key apps]
   (if (empty? apps)
     [:div.actions.alert.alert-success (text :t.actions/empty)]
-    [:table.rems-table.actions
-     (into [:tbody
-            [:tr
-             [:th (text :t.actions/application)]
-             [:th (text :t.actions/resource)]
-             [:th (text :t.actions/applicant)]
-             [:th (text :t.actions/created)]
-             [:th]]]
-           (for [app (sort-by :id apps)]
-             [:tr.action
-              [:td {:data-th (text :t.actions/application)} (:id app)]
-              [:td {:data-th (text :t.actions/resource)} (str/join ", " (map :title (:catalogue-items app)))]
-              [:td {:data-th (text :t.actions/applicant)} (:applicantuserid app)]
-              [:td {:data-th (text :t.actions/created)} (localize-time (:start app))]
-              [:td.commands (view-button app)]]))]))
+    [application-list/component
+     @(re-frame/subscribe [::sort key])
+     #(re-frame/dispatch [::sort key %])
+     apps]))
 
 (defn- open-reviews [apps]
-  [actions apps])
+  [open-applications ::open-applications apps])
 
 (defn- open-approvals [apps]
-  [actions apps])
+  [open-applications ::open-approvals apps])
 
 (defn- handled-applications
   "Creates a table containing a list of handled applications.
 
   The function takes the following parameters as arguments:
+  key:         key to use for table ordering in re-frame
   apps:        collection of apps to be shown
   top-buttons: a set of extra buttons that will be shown on top of the table. This could include f.ex 'export as pdf' button."
-  [apps top-buttons]
+  [key apps top-buttons]
   (if (empty? apps)
     [:div.actions.alert.alert-success (text :t.actions/no-handled-yet)]
     [:div
      top-buttons
-     [:table.rems-table.actions
-      (into [:tbody
-             [:tr
-              [:th (text :t.actions/application)]
-              [:th (text :t.actions/resource)]
-              [:th (text :t.actions/applicant)]
-              [:th (text :t.actions/state)]
-              [:th (text :t.actions/handled)]
-              [:th]]]
-            (for [app (sort-by :handled apps)]
-              [:tr.action
-               [:td {:data-th (text :t.actions/application)} (:id app)]
-               [:td {:data-th (text :t.actions/resource)} (str/join ", " (map :title (:catalogue-items app)))]
-               [:td {:data-th (text :t.actions/applicant)} (:applicantuserid app)]
-               [:td {:data-th (text :t.actions/state)} (localize-state (:state app))]
-               [:td {:data-th (text :t.actions/handled)} (localize-time (:handled app))]
-               [:td.commands [view-button app]]]))]]))
+     [application-list/component
+      @(re-frame/subscribe [::sort key])
+      #(re-frame/dispatch [::sort key %])
+      apps]]))
 
 (defn- handled-approvals [apps]
-  [handled-applications apps [report-buttons]])
+  [handled-applications ::handled-approvals apps [report-buttons]])
 
 (defn- handled-reviews
   [apps]
-  [handled-applications apps nil])
+  [handled-applications ::handled-reviews apps nil])
 
 ;; TODO ensure ::actions is loaded when navigating to page
 (defn actions-page [reviews]
@@ -157,34 +149,3 @@
            {:id "handled-approvals"
             :title (text :t.actions/handled-approvals)
             :collapse [handled-approvals (:handled-approvals actions)]}]]]])]))
-
-(defn guide
-  []
-  [:div
-   (component-info open-reviews)
-   (example "open-reviews empty"
-            [open-reviews []])
-   (example "open-reviews"
-            [open-reviews
-             [{:id 1 :catalogue-items [{:title "AAAAAAAAAAAAAA"}] :applicantuserid "alice"}
-              {:id 3 :catalogue-items [{:title "bbbbbb"}] :applicantuserid "bob"}]])
-
-   (component-info handled-reviews)
-   (example "handled-reviews"
-            [handled-reviews
-             [{:id 1 :catalogue-items [{:title "AAAAAAAAAAAAAA"}] :applicantuserid "alice"}
-              {:id 3 :catalogue-items [{:title "bbbbbb"}] :state "approved" :applicantuserid "bob"}]])
-
-   (component-info open-approvals)
-   (example "open-approvals empty"
-            [open-approvals []])
-   (example "open-approvals"
-            [open-approvals
-             [{:id 1 :catalogue-items [{:title "AAAAAAAAAAAAAA"}] :applicantuserid "alice"}
-              {:id 3 :catalogue-items [{:title "bbbbbb"}] :applicantuserid "bob"}]])
-
-   (component-info handled-approvals)
-   (example "handled-approvals"
-            [handled-approvals
-             [{:id 1 :catalogue-items [{:title "AAAAAAAAAAAAAA"}] :applicantuserid "alice"}
-              {:id 3 :catalogue-items [{:title "bbbbbb"}] :state "approved" :applicantuserid "bob"}]])])

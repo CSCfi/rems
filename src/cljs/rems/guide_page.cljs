@@ -1,8 +1,7 @@
 (ns rems.guide-page
   (:require [re-frame.core :as rf]
             [rems.actions :as actions]
-            [rems.application :as application]
-            [rems.applications :as applications]
+            [rems.application-list :as application-list]
             [rems.auth.auth :as auth]
             [rems.cart :as cart]
             [rems.catalogue :as catalogue]
@@ -65,11 +64,8 @@
     [:h2 "Cart components"]
     [cart/guide]
 
-    [:h2 "Applications list"]
-    [applications/guide]
-
-    [:h2 "Actions list"]
-    [actions/guide]
+    [:h2 "Application list"]
+    [application-list/guide]
 
     [:h2 "Collapsible component"]
     [collapsible/guide]
