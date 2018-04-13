@@ -201,7 +201,7 @@ DO UPDATE
 SET (modifierUserId, value) = (:user, :value)
 
 -- :name save-license-approval! :!
--- TODO: make this atomic
+-- NB: this is not atomic
 INSERT INTO application_license_approval_values
 (catappid,formmapid, licid, modifieruserid, state)
 SELECT
