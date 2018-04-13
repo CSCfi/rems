@@ -12,7 +12,6 @@
             [rems.util :refer [get-user-id getx]]))
 
 
-;; TODO not yet implemented for SPA
 (defn- may-see-event?
   "May the current user see this event?
 
@@ -24,7 +23,6 @@
     (or (has-roles? :reviewer :approver) ;; reviewer and approver can see everything
         (applicant-types (:event event)))))
 
-;; TODO not yet implemented for SPA
 (defn- validate-item
   [item]
   (when-not (:optional item)

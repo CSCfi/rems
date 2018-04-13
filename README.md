@@ -1,7 +1,5 @@
 # Resource Entitlement Management System
 
-... prototype in Clojure.
-
 ## Getting started
 
 ### Getting a database

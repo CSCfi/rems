@@ -215,7 +215,6 @@
                                          (:events app))]
                    (assoc app :handled (:time (last my-events)))))))))
 
-;; TODO notify actors also during other events such as reject, return etc.
 (defn- check-for-unneeded-actions
   "Checks whether the current event will advance into the next workflow round and notifies to all actors, who didn't react, by email that their attention is no longer needed."
   [application-id round event]
@@ -517,7 +516,6 @@
 
 ;;; Application phases
 
-;; TODO should only be able to see the phase if applicant, approver, reviewer etc.
 (defn get-application-phases [state]
   (cond (= state "rejected")
         [{:phase :apply :completed? true :text :t.phases/apply}

@@ -44,14 +44,12 @@
    {::fetch-draft-application [(get-in db [:identity :user]) items]}))
 
 (defn- fetch-application [user id]
-  ;; TODO: handle errors (e.g. unauthorized)
   (GET (str "/api/application/" id) {:handler #(rf/dispatch [::fetch-application-result %])
                                      :response-format :json
                                      :headers {"x-rems-user-id" (:eppn user)}
                                      :keywords? true}))
 
 (defn- fetch-draft-application [user items]
-  ;; TODO: handle errors (e.g. unauthorized)
   (GET (str "/api/application/") {:handler #(rf/dispatch [::fetch-application-result %])
                                   :params {:catalogue-items items}
                                   :response-format :json
@@ -159,7 +157,6 @@
                  :application-id application-id
                  :round round
                  :comment comment}
-        ;; TODO error handling
         :handler (fn [resp]
                    (rf/dispatch [::start-fetch-application application-id]))}))
 
@@ -301,8 +298,6 @@
 
 (defn- status-widget []
   (let [status (:status @(rf/subscribe [:edit-application]))]
-    ;; TODO nicer styling
-    ;; TODO make the spinner spin
     [:span (case status
              nil ""
              :pending [:i {:class "fa fa-spinner"}]
@@ -404,7 +399,6 @@
               [info-field (text :t.applicant-info/username) (:eppn user-attributes)]]
              [:div.col-md-6
               [info-field (text :t.applicant-info/email) (:mail user-attributes)]]]
-    ;; TODO hide from reviewer
     :collapse (into [:form]
                     (for [[k v] (dissoc user-attributes :commonName :mail)]
                       [info-field k v]))}])
@@ -477,9 +471,7 @@
         {:status :failure
          :contents [:div (text :t.form/validation.errors)
                     [format-validation-messages (:validation edit-application)]]}])
-     ;; TODO may-see-event? needs to be implemented in backend
      [application-header state events]
-     ;; TODO hide from applicant:
      (when user-attributes
        [:div.mt-3 [applicant-info "applicant-info" user-attributes]])
      [:div.mt-3 [applied-resources (:catalogue-items application)]]
@@ -493,7 +485,6 @@
   (if-let [application @(rf/subscribe [:application])]
     (let [edit-application @(rf/subscribe [:edit-application])]
       [render-application application edit-application])
-    ;; TODO replace with spinner or localize?
     [:p "No application loaded"]))
 
 (defn application-page []

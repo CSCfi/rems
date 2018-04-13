@@ -6,6 +6,7 @@
             [rems.config :refer [env]]))
 
 ;; TODO these could be moved to config.edn
+;; TODO component-guide does nothing for SPA
 (def +defaults+
   {:init
    (fn []
