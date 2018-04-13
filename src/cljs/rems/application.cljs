@@ -44,14 +44,12 @@
    {::fetch-draft-application [(get-in db [:identity :user]) items]}))
 
 (defn- fetch-application [user id]
-  ;; TODO: handle errors (e.g. unauthorized)
   (GET (str "/api/application/" id) {:handler #(rf/dispatch [::fetch-application-result %])
                                      :response-format :json
                                      :headers {"x-rems-user-id" (:eppn user)}
                                      :keywords? true}))
 
 (defn- fetch-draft-application [user items]
-  ;; TODO: handle errors (e.g. unauthorized)
   (GET (str "/api/application/") {:handler #(rf/dispatch [::fetch-application-result %])
                                   :params {:catalogue-items items}
                                   :response-format :json
@@ -159,7 +157,6 @@
                  :application-id application-id
                  :round round
                  :comment comment}
-        ;; TODO error handling
         :handler (fn [resp]
                    (rf/dispatch [::start-fetch-application application-id]))}))
 
