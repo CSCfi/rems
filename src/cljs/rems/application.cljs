@@ -301,8 +301,6 @@
 
 (defn- status-widget []
   (let [status (:status @(rf/subscribe [:edit-application]))]
-    ;; TODO nicer styling
-    ;; TODO make the spinner spin
     [:span (case status
              nil ""
              :pending [:i {:class "fa fa-spinner"}]
@@ -490,7 +488,6 @@
   (if-let [application @(rf/subscribe [:application])]
     (let [edit-application @(rf/subscribe [:edit-application])]
       [render-application application edit-application])
-    ;; TODO replace with spinner or localize?
     [:p "No application loaded"]))
 
 (defn application-page []
