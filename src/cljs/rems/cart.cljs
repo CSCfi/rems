@@ -9,8 +9,6 @@
             [secretary.core :as secretary])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
-;; TODO anti-forgery when submitting
-
 (re-frame/reg-sub
  ::cart
  (fn [db]
