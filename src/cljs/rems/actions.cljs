@@ -33,6 +33,15 @@
  (fn [db _]
    (::actions db)))
 
+;; Because we want to display multiple independently sortable
+;; application tables, we store a map of sort types in the db.
+;;
+;; Use (re-frame/dispatch [::sort :my-key [:field :asc]]) to set a
+;; sort type, and (re-frame/subscribe [::sort :my-key]) to get it
+;; back.
+;;
+;; See rems.application-list for more info about sort types.
+
 (re-frame/reg-sub
  ::sort
  (fn [db [_ key]]
