@@ -517,7 +517,6 @@
 
 ;;; Application phases
 
-;; TODO should only be able to see the phase if applicant, approver, reviewer etc.
 (defn get-application-phases [state]
   (cond (= state "rejected")
         [{:phase :apply :completed? true :text :t.phases/apply}
