@@ -70,5 +70,8 @@
     [:h2 "Collapsible component"]
     [collapsible/guide]
 
+    [:h2 "Applications"]
+    [application/guide]
+
     [:h2 "Misc components"]
     [phase/guide]]])
