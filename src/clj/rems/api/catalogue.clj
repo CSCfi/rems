@@ -48,18 +48,24 @@
                   404 {:schema s/Str :description "Not found"}}
 
       (binding [context/*lang* :en]
-        (if-let [it (catalogue/get-localized-catalogue-item item-id)]
-          (ok it)
-          (not-found! "not found"))))
+        (let [user-id (get-user-id)]
+          (when-not user-id (throw-unauthorized))
+          (if-let [it (catalogue/get-localized-catalogue-item item-id)]
+            (ok it)
+            (not-found! "not found")))))
 
     (PUT "/create" []
       :summary "Create a new catalogue item"
       :body [command CreateCatalogueItemCommand]
       :return CreateCatalogueItemResponse
-      (ok (catalogue/create-catalogue-item-command! command)))
+      (let [user-id (get-user-id)]
+        (when-not user-id (throw-unauthorized))
+        (ok (catalogue/create-catalogue-item-command! command))))
 
     (PUT "/create-localization" []
       :summary "Create a new catalogue item localization"
       :body [command CreateCatalogueItemLocalizationCommand]
       :return CreateCatalogueItemLocalizationResponse
-      (ok (catalogue/create-catalogue-item-localization-command! command)))))
+      (let [user-id (get-user-id)]
+        (when-not user-id (throw-unauthorized))
+        (ok (catalogue/create-catalogue-item-localization-command! command))))))
