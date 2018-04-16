@@ -37,7 +37,9 @@
       :query-params [{resource :- (describe s/Str "resource id") nil}]
       :return GetCatalogueResponse
       (binding [context/*lang* :en]
-        (ok (catalogue/get-localized-catalogue-items {:resource resource}))))
+        (let [user-id (get-user-id)]
+          (when-not user-id (throw-unauthorized))
+          (ok (catalogue/get-localized-catalogue-items {:resource resource})))))
 
     (GET "/:item-id" []
       :summary "Get a single catalogue item"
