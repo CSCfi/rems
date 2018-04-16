@@ -54,11 +54,7 @@
      public/config-api
 
      actions-api
-
      application-api
-
      applications-api
-
      catalogue-api
-
      entitlements-api)))
