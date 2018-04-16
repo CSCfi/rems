@@ -292,4 +292,23 @@
                                    :items {1 "REST-Test"}})
                        app)
           body (read-body response)]
+      (is (= "unauthorized" body))))
+  (testing "judge without authentication"
+    (let [body (-> (request :put (str "/api/application/judge"))
+                   (json-body {:command "approve"
+                               :application-id 2
+                               :round 0
+                               :comment "msg"})
+                   app
+                   read-body)]
+      (is (str/includes? body "Invalid anti-forgery token"))))
+  (testing "judge with wrong API-Key"
+    (let [body (-> (request :put (str "/api/application/judge"))
+                   (authenticate "invalid-api-key" "developer")
+                   (json-body {:command "approve"
+                               :application-id 2
+                               :round 0
+                               :comment "msg"})
+                   app
+                   read-body)]
       (is (= "unauthorized" body)))))
