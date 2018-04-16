@@ -6,29 +6,14 @@
             [rems.api.applications :refer [applications-api]]
             [rems.api.catalogue :refer [catalogue-api]]
             [rems.api.entitlements :refer [entitlements-api]]
-            [rems.api.schema :refer :all]
-            [rems.config :refer [env]]
+            [rems.api.public :as public]
             [rems.context :as context]
             [rems.form :as form]
-            [rems.locales :as locales]
             [ring.middleware.cors :refer [wrap-cors]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
   (:import [org.joda.time DateTime]
            rems.auth.NotAuthorizedException))
-
-(def GetTranslationsResponse
-  s/Any)
-
-(def GetThemeResponse
-  s/Any)
-
-(def ExtraPage
-  {s/Keyword s/Any})
-
-(def GetConfigResponse
-  {:authentication s/Keyword
-   (s/optional-key :extra-pages) [ExtraPage]})
 
 (defn unauthorized-handler
   [exception ex-data request]
@@ -64,29 +49,9 @@
      :header-params [{x-rems-api-key :- (describe s/Str "REMS API-Key (optional for UI, required for API)") nil}
                      {x-rems-user-id :- (describe s/Str "user id (optional for UI, required for API)") nil}]
 
-     (context "/translations" []
-       :tags ["translations"]
-
-       (GET "/" []
-         :summary "Get translations"
-         :return GetTranslationsResponse
-         (ok locales/translations)))
-
-     (context "/theme" []
-       :tags ["theme"]
-
-       (GET "/" []
-         :summary "Get current layout theme"
-         :return GetThemeResponse
-         (ok context/*theme*)))
-
-     (context "/config" []
-       :tags ["config"]
-
-       (GET "/" []
-         :summary "Get configuration that is relevant to UI"
-         :return GetConfigResponse
-         (ok (select-keys env [:authentication :extra-pages]))))
+     public/translations-api
+     public/theme-api
+     public/config-api
 
      actions-api
 
