@@ -11,6 +11,30 @@
   fake-tempura-fixture
   api-fixture)
 
+(deftest catalogue-api-test
+  (let [api-key "42"
+        user-id "alice"]
+    (let [data (-> (request :get "/api/catalogue/")
+                   (authenticate api-key user-id)
+                   app
+                   read-body)
+          item (first data)]
+      (is (str/starts-with? (:resid item) "http://")))
+    (let [data (-> (request :put "/api/catalogue/create")
+                   (authenticate api-key user-id)
+                   (json-body {:title "test-item-title"
+                               :form 1
+                               :resid 1
+                               :wfid 1})
+                   app
+                   read-body)]
+      (is (= 7 (:id data))))
+    (let [data (-> (request :get "/api/catalogue/7")
+                   (authenticate api-key user-id)
+                   app
+                   read-body)]
+      (is (= 7 (:id data))))))
+
 (deftest catalogue-api-security-test
   (testing "listing without authentication"
     (let [response (-> (request :get (str "/api/catalogue"))

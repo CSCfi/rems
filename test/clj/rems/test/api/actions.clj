@@ -20,6 +20,7 @@
       (testing "listing"
         (is (:approver? body))
         (is (= [2 8] (map :id (:approvals body))))
+        (is (= [2 2 3] (sort (map :id (mapcat :catalogue-items (:approvals body))))))
         (is (= [3 4 5 7 9] (map :id (:handled-approvals body))))
         (is (empty? (:reviews body)))
         (is (empty? (:handled-reviews body)))))))

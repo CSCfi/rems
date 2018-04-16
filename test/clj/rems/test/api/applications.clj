@@ -10,6 +10,14 @@
   fake-tempura-fixture
   api-fixture)
 
+(deftest applications-api-test
+  (let [api-key "42"
+        user-id "developer"]
+    (let [data (-> (request :get "/api/applications")
+                   (authenticate api-key user-id)
+                   app
+                   read-body)]
+      (is (= [1 2 3 4 5 6 7] (map :id (sort-by :id data)))))))
 (deftest applications-api-security-test
   (testing "listing without authentication"
     (let [response (-> (request :get (str "/api/applications"))
