@@ -43,7 +43,7 @@
   [handler]
   (let [csrf-handler (wrap-anti-forgery handler)]
     (fn [request]
-      (if (valid-api-key? request)
+      (if (get-in request [:headers "x-rems-api-key"])
         (handler request)
         (csrf-handler request)))))
 
