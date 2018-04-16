@@ -1,0 +1,49 @@
+@startuml
+skinParam ArrowColor Black
+skinParam BackgroundColor White
+skinParam componentBorderColor Black
+skinParam actorBorderColor Black
+skinparam componentBackgroundColor LightGray
+skinparam databaseBackgroundColor LightGray
+skinparam actorBackgroundColor LightGray
+skinparam Padding 5
+
+actor Applicant
+actor Approver
+actor APIUser
+
+node AuthenticationProvider {
+  component LDAP
+  component Haka
+}
+
+node Server {
+  component WebApp <<Single-Page App>>
+  component API <<REST>>
+}
+
+WebApp --> AuthenticationProvider : "authenticates against"
+
+Applicant --> WebApp
+Approver --> WebApp
+WebApp -> API : "     "
+APIUser --> API : "use with API-Key\nauthenticated against DB"
+
+
+node DB {
+  database rems
+}
+
+node EmailServer {
+  component email
+}
+
+API --> email : "send mail"
+
+node 3rdPartySystem {
+  component Receiver
+}
+
+API --> rems
+API .> Receiver : "entitlement push"
+@enduml
