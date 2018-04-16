@@ -8,11 +8,8 @@
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
-(def Entitlement
-  {:resource s/Str
-   :application-id s/Num
-   :start s/Str
-   :mail s/Str})
+(def GetEntitlementsResponse
+  [Entitlement])
 
 (def entitlements-api
   (context "/entitlements" []
@@ -22,5 +19,5 @@
                 :summary "Get all entitlements"
                 :query-params [{user :- (describe s/Str "return entitlements for this user (optional)") nil}
                                {resource :- (describe s/Str "return entitlements for this resource (optional)") nil}]
-                :return [Entitlement]
+                :return GetEntitlementsResponse
                 (ok (entitlements/get-entitlements-for-api user resource)))))
