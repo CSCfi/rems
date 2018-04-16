@@ -28,10 +28,10 @@
       (is (starts-with? (:resid item) "http://")))
     (let [data (-> (request :put "/api/catalogue/create")
                    (authenticate api-key user-id)
-                   (json {:title "test-item-title"
-                          :form 1
-                          :resid 1
-                          :wfid 1})
+                   (json-body {:title "test-item-title"
+                               :form 1
+                               :resid 1
+                               :wfid 1})
                    app
                    read-body)]
       (is (= 7 (:id data))))
