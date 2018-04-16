@@ -286,6 +286,7 @@
       (is (str/includes? body "Invalid anti-forgery token"))))
   (testing "save with wrong API-Key"
     (let [response (-> (request :put (str "/api/application/save"))
+                       (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
                        (json-body {:command "save"
                                    :catalogue-items [2]
                                    :items {1 "REST-Test"}})
