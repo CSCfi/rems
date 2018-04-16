@@ -1,7 +1,8 @@
 (ns rems.api
-  (:require [compojure.api.sweet :refer :all]
-            [compojure.api.exception :as ex]
+  (:require [compojure.api.exception :as ex]
+            [compojure.api.sweet :refer :all]
             [rems.api.application :refer [application-api]]
+            [rems.api.applications :refer [applications-api]]
             [rems.api.schema :refer :all]
             [rems.config :refer [env]]
             [rems.context :as context]
@@ -28,9 +29,6 @@
 (def GetConfigResponse
   {:authentication s/Keyword
    (s/optional-key :extra-pages) [ExtraPage]})
-
-(def GetApplicationsResponse
-  [Application])
 
 (def GetCatalogueResponse
   [CatalogueItem])
@@ -139,13 +137,7 @@
 
      application-api
 
-     (context "/applications" []
-       :tags ["applications"]
-
-       (GET "/" []
-         :summary "Get current user's all applications"
-         :return GetApplicationsResponse
-         (ok (applications/get-my-applications))))
+     applications-api
 
      (context "/catalogue" []
        :tags ["catalogue"]
