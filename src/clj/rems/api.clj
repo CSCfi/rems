@@ -93,8 +93,8 @@
     :swagger {:ui "/swagger-ui"
               :spec "/swagger.json"
               :data {:info {:version "1.0.0"
-                            :title "Sample API"
-                            :description "Sample Services"}}}}
+                            :title "REMS API"
+                            :description "REMS API Services"}}}}
 
    (context "/api" []
      :header-params [{x-rems-api-key :- (describe s/Str "REMS API-Key (optional for UI, required for API)") nil}
