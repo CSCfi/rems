@@ -4,6 +4,7 @@
             [rems.api.actions :refer [actions-api]]
             [rems.api.application :refer [application-api]]
             [rems.api.applications :refer [applications-api]]
+            [rems.api.catalogue :refer [catalogue-api]]
             [rems.api.schema :refer :all]
             [rems.config :refer [env]]
             [rems.context :as context]
@@ -31,31 +32,11 @@
   {:authentication s/Keyword
    (s/optional-key :extra-pages) [ExtraPage]})
 
-(def GetCatalogueResponse
-  [CatalogueItem])
-
 (def Entitlement
   {:resource s/Str
    :application-id s/Num
    :start s/Str
    :mail s/Str})
-
-(def CreateCatalogueItemCommand
-  {:title s/Str
-   :form s/Num
-   :resid s/Num
-   :wfid s/Num})
-
-(def CreateCatalogueItemResponse
-  CatalogueItem)
-
-(def CreateCatalogueItemLocalizationCommand
-  {:id s/Num
-   :langcode s/Str
-   :title s/Str})
-
-(def CreateCatalogueItemLocalizationResponse
-  {:success s/Bool})
 
 (defn unauthorized-handler
   [exception ex-data request]
@@ -121,38 +102,7 @@
 
      applications-api
 
-     (context "/catalogue" []
-       :tags ["catalogue"]
-
-       (GET "/" []
-         :summary "Get catalogue items"
-         :query-params [{resource :- (describe s/Str "resource id") nil}]
-         :return GetCatalogueResponse
-         (binding [context/*lang* :en]
-           (ok (catalogue/get-localized-catalogue-items {:resource resource}))))
-
-       (GET "/:item-id" []
-         :summary "Get a single catalogue item"
-         :path-params [item-id :- (describe s/Num "catalogue item")]
-         :responses {200 {:schema CatalogueItem}
-                     404 {:schema s/Str :description "Not found"}}
-
-         (binding [context/*lang* :en]
-           (if-let [it (catalogue/get-localized-catalogue-item item-id)]
-             (ok it)
-             (not-found! "not found"))))
-
-       (PUT "/create" []
-         :summary "Create a new catalogue item"
-         :body [command CreateCatalogueItemCommand]
-         :return CreateCatalogueItemResponse
-         (ok (catalogue/create-catalogue-item-command! command)))
-
-       (PUT "/create-localization" []
-         :summary "Create a new catalogue item localization"
-         :body [command CreateCatalogueItemLocalizationCommand]
-         :return CreateCatalogueItemLocalizationResponse
-         (ok (catalogue/create-catalogue-item-localization-command! command))))
+     catalogue-api
 
      (context "/entitlements" []
        :tags ["entitlements"]
