@@ -13,11 +13,11 @@
 
 (def entitlements-api
   (context "/entitlements" []
-           :tags ["entitlements"]
+    :tags ["entitlements"]
 
-           (GET "/" []
-                :summary "Get all entitlements"
-                :query-params [{user :- (describe s/Str "return entitlements for this user (optional)") nil}
-                               {resource :- (describe s/Str "return entitlements for this resource (optional)") nil}]
-                :return GetEntitlementsResponse
-                (ok (entitlements/get-entitlements-for-api user resource)))))
+    (GET "/" []
+      :summary "Get all entitlements"
+      :query-params [{user :- (describe s/Str "return entitlements for this user (optional)") nil}
+                     {resource :- (describe s/Str "return entitlements for this resource (optional)") nil}]
+      :return GetEntitlementsResponse
+      (ok (entitlements/get-entitlements-for-api user resource)))))

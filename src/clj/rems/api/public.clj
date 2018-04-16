@@ -25,27 +25,27 @@
 
 (def translations-api
   (context "/translations" []
-           :tags ["translations"]
+    :tags ["translations"]
 
-           (GET "/" []
-                :summary "Get translations"
-                :return GetTranslationsResponse
-                (ok locales/translations))))
+    (GET "/" []
+      :summary "Get translations"
+      :return GetTranslationsResponse
+      (ok locales/translations))))
 
 (def theme-api
   (context "/theme" []
-           :tags ["theme"]
+    :tags ["theme"]
 
-           (GET "/" []
-                :summary "Get current layout theme"
-                :return GetThemeResponse
-                (ok context/*theme*))))
+    (GET "/" []
+      :summary "Get current layout theme"
+      :return GetThemeResponse
+      (ok context/*theme*))))
 
 (def config-api
   (context "/config" []
-           :tags ["config"]
+    :tags ["config"]
 
-           (GET "/" []
-                :summary "Get configuration that is relevant to UI"
-                :return GetConfigResponse
-                (ok (select-keys env [:authentication :extra-pages])))))
+    (GET "/" []
+      :summary "Get configuration that is relevant to UI"
+      :return GetConfigResponse
+      (ok (select-keys env [:authentication :extra-pages])))))
