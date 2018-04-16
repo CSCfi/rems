@@ -1,6 +1,7 @@
 (ns rems.api
   (:require [compojure.api.exception :as ex]
             [compojure.api.sweet :refer :all]
+            [rems.api.actions :refer [actions-api]]
             [rems.api.application :refer [application-api]]
             [rems.api.applications :refer [applications-api]]
             [rems.api.schema :refer :all]
@@ -32,14 +33,6 @@
 
 (def GetCatalogueResponse
   [CatalogueItem])
-
-(def GetActionsResponse
-  {:approver? s/Bool
-   :reviewer? s/Bool
-   :approvals [Application]
-   :handled-approvals [Application]
-   :reviews [Application]
-   :handled-reviews [Application]})
 
 (def Entitlement
   {:resource s/Str
@@ -122,18 +115,7 @@
          :return GetConfigResponse
          (ok (select-keys env [:authentication :extra-pages]))))
 
-     (context "/actions" []
-       :tags ["actions"]
-
-       (GET "/" []
-         :summary "Get actions page reviewable and approvable applications"
-         :return GetActionsResponse
-         (ok {:approver? true
-              :reviewer? true
-              :approvals (applications/get-approvals)
-              :handled-approvals (applications/get-handled-approvals)
-              :reviews (applications/get-applications-to-review)
-              :handled-reviews (applications/get-handled-reviews)})))
+     actions-api
 
      application-api
 

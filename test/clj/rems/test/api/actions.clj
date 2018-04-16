@@ -16,10 +16,17 @@
     (let [response (-> (request :get (str "/api/actions"))
                        (authenticate api-key user-id)
                        app)
-          cmd-response (read-body response)]
+          body (read-body response)]
       (testing "listing"
-        (is (:approver? cmd-response))
-        (is (= [2 8] (map :id (:approvals cmd-response))))
-        (is (= [3 4 5 7 9] (map :id (:handled-approvals cmd-response))))
-        (is (empty? (:reviews cmd-response)))
-        (is (empty? (:handled-reviews cmd-response)))))))
+        (is (:approver? body))
+        (is (= [2 8] (map :id (:approvals body))))
+        (is (= [3 4 5 7 9] (map :id (:handled-approvals body))))
+        (is (empty? (:reviews body)))
+        (is (empty? (:handled-reviews body)))))))
+
+(deftest actions-api-security-test
+  (testing "listing without authentication"
+    (let [response (-> (request :get (str "/api/actions"))
+                       app)
+          body (read-body response)]
+      (is (= "unauthorized" body)))))
