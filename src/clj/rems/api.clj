@@ -5,6 +5,7 @@
             [rems.api.application :refer [application-api]]
             [rems.api.applications :refer [applications-api]]
             [rems.api.catalogue :refer [catalogue-api]]
+            [rems.api.entitlements :refer [entitlements-api]]
             [rems.api.schema :refer :all]
             [rems.config :refer [env]]
             [rems.context :as context]
@@ -28,12 +29,6 @@
 (def GetConfigResponse
   {:authentication s/Keyword
    (s/optional-key :extra-pages) [ExtraPage]})
-
-(def Entitlement
-  {:resource s/Str
-   :application-id s/Num
-   :start s/Str
-   :mail s/Str})
 
 (defn unauthorized-handler
   [exception ex-data request]
@@ -101,12 +96,4 @@
 
      catalogue-api
 
-     (context "/entitlements" []
-       :tags ["entitlements"]
-
-       (GET "/" []
-         :summary "Get all entitlements"
-         :query-params [{user :- (describe s/Str "return entitlements for this user (optional)") nil}
-                        {resource :- (describe s/Str "return entitlements for this resource (optional)") nil}]
-         :return [Entitlement]
-         (ok (entitlements/get-entitlements-for-api user resource)))))))
+     entitlements-api)))
