@@ -1,7 +1,7 @@
 (ns rems.api.catalogue
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
-            [rems.auth.util :refer [throw-unauthorized]]
+            [rems.api.util :refer [check-user]]
             [rems.context :as context]
             [rems.db.catalogue :as catalogue]
             [rems.util :refer [get-user-id]]
@@ -37,9 +37,8 @@
       :query-params [{resource :- (describe s/Str "resource id") nil}]
       :return GetCatalogueResponse
       (binding [context/*lang* :en]
-        (let [user-id (get-user-id)]
-          (when-not user-id (throw-unauthorized))
-          (ok (catalogue/get-localized-catalogue-items {:resource resource})))))
+        (check-user)
+        (ok (catalogue/get-localized-catalogue-items {:resource resource}))))
 
     (GET "/:item-id" []
       :summary "Get a single catalogue item"
@@ -48,24 +47,21 @@
                   404 {:schema s/Str :description "Not found"}}
 
       (binding [context/*lang* :en]
-        (let [user-id (get-user-id)]
-          (when-not user-id (throw-unauthorized))
-          (if-let [it (catalogue/get-localized-catalogue-item item-id)]
-            (ok it)
-            (not-found! "not found")))))
+        (check-user)
+        (if-let [it (catalogue/get-localized-catalogue-item item-id)]
+          (ok it)
+          (not-found! "not found"))))
 
     (PUT "/create" []
       :summary "Create a new catalogue item"
       :body [command CreateCatalogueItemCommand]
       :return CreateCatalogueItemResponse
-      (let [user-id (get-user-id)]
-        (when-not user-id (throw-unauthorized))
-        (ok (catalogue/create-catalogue-item-command! command))))
+      (check-user)
+      (ok (catalogue/create-catalogue-item-command! command)))
 
     (PUT "/create-localization" []
       :summary "Create a new catalogue item localization"
       :body [command CreateCatalogueItemLocalizationCommand]
       :return CreateCatalogueItemLocalizationResponse
-      (let [user-id (get-user-id)]
-        (when-not user-id (throw-unauthorized))
-        (ok (catalogue/create-catalogue-item-localization-command! command))))))
+      (check-user)
+      (ok (catalogue/create-catalogue-item-localization-command! command)))))

@@ -185,11 +185,9 @@
                 :catalogue-items catalogue-items))))))
 
 (defn get-my-applications []
-  (let [user-id (get-user-id)]
-    (when-not user-id (throw-unauthorized))
-    (filter
-     #(not= (:state %) "closed") ; don't show deleted applications
-     (get-applications-impl-batch {:applicant (getx-user-id)}))))
+  (filter
+   #(not= (:state %) "closed") ; don't show deleted applications
+   (get-applications-impl-batch {:applicant (getx-user-id)})))
 
 (defn get-approvals []
   (filterv
