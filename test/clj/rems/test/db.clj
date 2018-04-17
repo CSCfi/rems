@@ -208,7 +208,11 @@
                   (applications/get-my-applications))))
       (testing "deleted application is not shown"
         (applications/close-application app 0 "c")
-        (is (empty? (applications/get-my-applications)))))))
+        (is (empty? (applications/get-my-applications))))))
+  (testing "should not allow missing user"
+    (is (thrown? Exception (applications/get-my-applications)))
+    (binding [context/*user* nil]
+      (is (thrown? Exception (applications/get-my-applications))))))
 
 (deftest test-multi-applications
   (binding [context/*user* {"eppn" "test-user"}]
