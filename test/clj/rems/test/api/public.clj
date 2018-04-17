@@ -1,4 +1,4 @@
-(ns rems.test.api.public
+(ns ^:integration rems.test.api.public
   (:require [clojure.test :refer :all]
             [rems.handler :refer :all]
             [rems.test.api :refer :all]
