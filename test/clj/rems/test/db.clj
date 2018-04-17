@@ -455,13 +455,13 @@
           "should only see app2")
 
       (testing "applications/can-approve? after changes"
+        (is (not (can-approve? app1)))
+        (is (can-approve? app2))
+        (is (not (can-approve? app3)))
+        (is (not (can-approve? app4)))
+        (binding [context/*user* {"eppn" uid2}]
           (is (not (can-approve? app1)))
-          (is (can-approve? app2))
-          (is (not (can-approve? app3)))
-          (is (not (can-approve? app4)))
-          (binding [context/*user* {"eppn" uid2}]
-            (is (not (can-approve? app1)))
-            (is (not (can-approve? app2))))))))
+          (is (not (can-approve? app2))))))))
 
 (deftest test-get-applications-to-review
   (binding [context/*user* {"eppn" "test-user"}]
