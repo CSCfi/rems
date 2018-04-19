@@ -53,3 +53,9 @@
    :catalogue-items [CatalogueItem]
    (s/optional-key :review-type) (s/maybe s/Keyword)
    (s/optional-key :handled) DateTime})
+
+(def Entitlement
+  {:resource s/Str
+   :application-id s/Num
+   :start s/Str
+   :mail s/Str})

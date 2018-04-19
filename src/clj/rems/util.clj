@@ -28,25 +28,6 @@
   "Throw a RuntimeException, args passed to `clojure.core/format`."
   [& fmt-args]
   (throw (RuntimeException. (apply format fmt-args))))
-
-(defn get-user-id
-  ([]
-   (get-user-id context/*user*))
-  ([user]
-   (get user "eppn")))
-
-(defn get-username
-  ([]
-   (get-username context/*user*))
-  ([user]
-   (get user "commonName")))
-
-(defn get-user-mail
-  ([]
-   (get-user-mail context/*user*))
-  ([user]
-   (get user "mail")))
-
 (defn get-theme-attribute
   "Fetch the attribute value from the current theme."
   [attr-name]
@@ -67,3 +48,27 @@
 
 (def never-match-route
   (constantly nil))
+
+(defn get-user-id
+  ([]
+   (get-user-id context/*user*))
+  ([user]
+   (get user "eppn")))
+
+(defn getx-user-id
+  ([]
+   (getx-user-id context/*user*))
+  ([user]
+   (getx user "eppn")))
+
+(defn get-username
+  ([]
+   (get-username context/*user*))
+  ([user]
+   (get user "commonName")))
+
+(defn get-user-mail
+  ([]
+   (get-user-mail context/*user*))
+  ([user]
+   (get user "mail")))

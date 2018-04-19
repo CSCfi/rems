@@ -208,7 +208,11 @@
                   (applications/get-my-applications))))
       (testing "deleted application is not shown"
         (applications/close-application app 0 "c")
-        (is (empty? (applications/get-my-applications)))))))
+        (is (empty? (applications/get-my-applications))))))
+  (testing "should not allow missing user"
+    (is (thrown? Exception (applications/get-my-applications)))
+    (binding [context/*user* nil]
+      (is (thrown? Exception (applications/get-my-applications))))))
 
 (deftest test-multi-applications
   (binding [context/*user* {"eppn" "test-user"}]
@@ -451,13 +455,13 @@
           "should only see app2")
 
       (testing "applications/can-approve? after changes"
+        (is (not (can-approve? app1)))
+        (is (can-approve? app2))
+        (is (not (can-approve? app3)))
+        (is (not (can-approve? app4)))
+        (binding [context/*user* {"eppn" uid2}]
           (is (not (can-approve? app1)))
-          (is (can-approve? app2))
-          (is (not (can-approve? app3)))
-          (is (not (can-approve? app4)))
-          (binding [context/*user* {"eppn" uid2}]
-            (is (not (can-approve? app1)))
-            (is (not (can-approve? app2))))))))
+          (is (not (can-approve? app2))))))))
 
 (deftest test-get-applications-to-review
   (binding [context/*user* {"eppn" "test-user"}]

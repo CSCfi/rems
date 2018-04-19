@@ -26,11 +26,6 @@
       (assoc-in [:headers "x-rems-api-key"] api-key)
       (assoc-in [:headers "x-rems-user-id"] user-id)))
 
-(defn json [request m]
-  (-> request
-      (content-type "application/json")
-      (body (generate-string m))))
-
 (defn read-body [{body :body}]
   (cond
     (string? body) body

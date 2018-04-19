@@ -13,6 +13,7 @@
             [rems.email :as email]
             [rems.util :refer [get-user-id
                                get-username
+                               getx-user-id
                                index-by]]))
 
 (defn draft?
@@ -186,7 +187,7 @@
 (defn get-my-applications []
   (filter
    #(not= (:state %) "closed") ; don't show deleted applications
-   (get-applications-impl-batch {:applicant (get-user-id)})))
+   (get-applications-impl-batch {:applicant (getx-user-id)})))
 
 (defn get-approvals []
   (filterv
