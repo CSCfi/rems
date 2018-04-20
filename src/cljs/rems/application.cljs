@@ -420,8 +420,15 @@
    {:name "return" :onClick #(rf/dispatch [::judge-application "return"])}
    (text :t.actions/return)])
 
+(defn- close-button []
+  [:button#submit.btn.btn-secondary
+   {:name "close" :onClick #(rf/dispatch [::judge-application "close"])}
+   (text :t.actions/close)])
+
 (defn- actions-form [app]
-  (let [buttons (concat (when (:can-approve? app)
+  (let [buttons (concat (when (:can-close? app)
+                          [[close-button]])
+                        (when (:can-approve? app)
                           [[reject-button]
                            [return-button]
                            [approve-button]]))]
