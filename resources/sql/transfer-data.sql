@@ -154,7 +154,7 @@ INSERT INTO public.catalogue_item_localization
 SELECT * FROM transfer.rms_catalogue_item_localization;
 
 UPDATE public.catalogue_item
-SET state = (SELECT CAST(cis.state::text AS item_state)
+SET state = (SELECT COALESCE(CAST(cis.state::text AS item_state), 'disabled')
              FROM transfer.rms_catalogue_item_state cis
              WHERE catalogue_item.id = cis.catid
              ORDER BY cis.start DESC
