@@ -167,6 +167,7 @@
          round (get-in db [:application :application :curround])
          user (get-in db [:identity :user])
          comment (get db ::judge-comment "")]
+     (rf/dispatch [::set-judge-comment ""])
      (judge-application command user application-id round comment)
      {})))
 
