@@ -425,8 +425,15 @@
    {:name "close" :onClick #(rf/dispatch [::judge-application "close"])}
    (text :t.actions/close)])
 
+(defn- withdraw-button []
+  [:button#submit.btn.btn-secondary
+   {:name "withdraw" :onClick #(rf/dispatch [::judge-application "withdraw"])}
+   (text :t.actions/withdraw)])
+
 (defn- actions-form [app]
-  (let [buttons (concat (when (:can-close? app)
+  (let [buttons (concat (when (:can-withdraw? app)
+                          [[withdraw-button]])
+                        (when (:can-close? app)
                           [[close-button]])
                         (when (:can-approve? app)
                           [[reject-button]
