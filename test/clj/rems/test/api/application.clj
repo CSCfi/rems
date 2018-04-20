@@ -236,6 +236,7 @@
                               app
                               read-body
                               :application)]
+          (is (:can-withdraw? application))
           (is (:can-close? application))
           (is (not (:can-approve? application)))))
       (testing "get application as approver"
