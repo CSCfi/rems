@@ -319,7 +319,7 @@
         {:keys [items licenses validation]} edit-application
         validation-by-field-id (index-by [(comp :type :field) (comp :id :field)] validation)
         state (:state application)
-        editable? (= "draft" state)
+        editable? (#{"draft" "returned" "withdrawn"} state)
         readonly? (not editable?)]
     [collapsible/component
      {:id "form"
