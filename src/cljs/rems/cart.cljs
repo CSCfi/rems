@@ -54,7 +54,10 @@
        (mapv edn/read-string)))
 
 (defn- apply-button [items]
-  [:button.btn.btn-primary {:on-click #(application/apply-for items)}
+  [:button.btn.btn-primary {:on-click #(do
+                                         (doseq [i items]
+                                           (re-frame/dispatch [::remove-item i]))
+                                         (application/apply-for items))}
    (text :t.cart/apply)])
 
 (defn- item-view [item language & [apply-button?]]
