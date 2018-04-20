@@ -431,10 +431,10 @@
    (text :t.actions/withdraw)])
 
 (defn- actions-form [app]
-  (let [buttons (concat (when (:can-withdraw? app)
-                          [[withdraw-button]])
-                        (when (:can-close? app)
+  (let [buttons (concat (when (:can-close? app)
                           [[close-button]])
+                        (when (:can-withdraw? app)
+                          [[withdraw-button]])
                         (when (:can-approve? app)
                           [[reject-button]
                            [return-button]
