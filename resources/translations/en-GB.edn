@@ -138,7 +138,8 @@
                                Please do not reply to this automatically generated message."
           :status-changed-subject "Application state change"}
   :footer "Powered by CSC - IT Center for Science"
-  :form {:add-comments "Add comment to the decision (shown to applicant)"
+  :form {:actions "Actions"
+         :add-comments "Add comment to the decision (shown to applicant)"
          :add-comments-applicant "Add comment to the decision"
          :alert-disabled-items "The following resources can't be applied anymore. Consider closing this draft and creating a new application."
          :application "Application"
