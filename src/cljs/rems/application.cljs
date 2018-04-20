@@ -334,11 +334,11 @@
                              :validation (get-in validation-by-field-id [:item (:id i)])
                              :readonly readonly?
                              :value (get items (:id i)))]))
-       (when-let [licenses (not-empty (:licenses form))]
+       (when-let [form-licenses (not-empty (:licenses form))]
          [:div.form-group.field
           [:h4 (text :t.form/licenses)]
           (into [:div]
-                (for [l licenses]
+                (for [l form-licenses]
                   [field (assoc l
                                 :validation (get-in validation-by-field-id [:license (:id l)])
                                 :readonly readonly?
