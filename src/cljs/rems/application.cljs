@@ -138,13 +138,17 @@
  ::save-application
  (fn [{:keys [db]} [_ command]]
    (let [app-id (get-in db [:application :application :id])
-         catalogue-ids (mapv :id (get-in db [:application :catalogue-items]))
+         catalogue-items (get-in db [:application :catalogue-items])
+         catalogue-ids (mapv :id catalogue-items)
          items (get-in db [:edit-application :items])
          ;; TODO change api to booleans
          licenses (into {}
                         (for [[id checked?] (get-in db [:edit-application :licenses])
                               :when checked?]
                           [id "approved"]))]
+     (when-not app-id ;; fresh application
+       (doseq [i catalogue-items]
+         (rf/dispatch [:rems.cart/remove-item i])))
      ;; TODO disable form while saving?
      (rf/dispatch [::set-status :pending])
      (save-application command (get-in db [:identity :user]) app-id catalogue-ids items licenses))
