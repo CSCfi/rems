@@ -171,6 +171,7 @@
          round (get-in db [:application :application :curround])
          user (get-in db [:identity :user])
          comment (get db ::judge-comment "")]
+     (rf/dispatch [::set-judge-comment ""])
      (judge-application command user application-id round comment)
      {})))
 
@@ -424,20 +425,38 @@
    {:name "return" :onClick #(rf/dispatch [::judge-application "return"])}
    (text :t.actions/return)])
 
-(defn- judge-form []
-  [collapsible/component
-   {:id "judge"
-    :title (text :t.phases/approve)
-    :always [:div
-             [:div.form-group
-              [:textarea.form-control
-               {:name "judge-comment" :placeholder "Comment"
-                :value @(rf/subscribe [::judge-comment])
-                :onChange #(rf/dispatch [::set-judge-comment (.. % -target -value)])}]]
-             [:div.col.commands
-              [reject-button]
-              [return-button]
-              [approve-button]]]}])
+(defn- close-button []
+  [:button#submit.btn.btn-secondary
+   {:name "close" :onClick #(rf/dispatch [::judge-application "close"])}
+   (text :t.actions/close)])
+
+(defn- withdraw-button []
+  [:button#submit.btn.btn-secondary
+   {:name "withdraw" :onClick #(rf/dispatch [::judge-application "withdraw"])}
+   (text :t.actions/withdraw)])
+
+(defn- actions-form [app]
+  (let [buttons (concat (when (:can-close? app)
+                          [[close-button]])
+                        (when (:can-withdraw? app)
+                          [[withdraw-button]])
+                        (when (:can-approve? app)
+                          [[reject-button]
+                           [return-button]
+                           [approve-button]]))]
+    (if (empty? buttons)
+      [:div]
+      [collapsible/component
+       {:id "actions"
+        :title (text :t.form/actions)
+        :always [:div
+                 [:div.form-group
+                  [:textarea.form-control
+                   {:name "judge-comment" :placeholder "Comment"
+                    :value @(rf/subscribe [::judge-comment])
+                    :onChange #(rf/dispatch [::set-judge-comment (.. % -target -value)])}]]
+                 (into [:div.col.commands]
+                       buttons)]}])))
 
 ;; Whole application
 
@@ -480,8 +499,7 @@
        [:div.mt-3 [applicant-info "applicant-info" user-attributes]])
      [:div.mt-3 [applied-resources (:catalogue-items application)]]
      [:div.my-3 [fields application edit-application]]
-     (when (:can-approve? app)
-       [:div.mb-3 [judge-form]])]))
+     [:div.mb-3 [actions-form app]]]))
 
 ;;;; Entrypoint ;;;;
 

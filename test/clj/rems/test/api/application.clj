@@ -236,6 +236,7 @@
                               app
                               read-body
                               :application)]
+          (is (:can-withdraw? application))
           (is (:can-close? application))
           (is (not (:can-approve? application)))))
       (testing "get application as approver"
@@ -272,6 +273,65 @@
                               :application)]
           (is (:can-close? application))
           (is (not (:can-approve? application))))))))
+
+(deftest application-api-action-test
+  ;; Run through all the application actions that are available
+  (let [api-key "42"
+        user "developer"
+        catid 2
+        app-id (-> (request :put (str "/api/application/save"))
+                   (authenticate api-key user)
+                   (json-body {:command "save"
+                               :catalogue-items [catid]
+                               :items {1 "x" 2 "y" 3 "z"}
+                               :licenses {2 "approved" 3 "approved"}})
+                   app
+                   read-body
+                   :id)
+        submit (fn []
+                 (is (= 200
+                        (-> (request :put (str "/api/application/save"))
+                            (authenticate api-key user)
+                            (json-body {:command "submit"
+                                        :application-id app-id
+                                        :items {1 "x" 2 "y" 3 "z"}
+                                        :licenses {2 "approved" 3 "approved"}})
+                            app
+                            :status))))
+        action (fn [body]
+                (is (= 200
+                       (-> (request :put (str "/api/application/judge"))
+                           (authenticate api-key user)
+                           (json-body (merge {:application-id app-id
+                                              :round 0}
+                                             body))
+                           app
+                           :status))))]
+    (submit)
+    (action {:command "return"
+             :comment "returned"})
+    (submit)
+    (action {:command "withdraw"
+             :comment "withdrawn"})
+    (submit)
+    (action {:command "approve"
+             :comment "approved"})
+    (action {:command "close"
+             :comment "closed"})
+    (let [events (-> (request :get (str "/api/application/" app-id))
+                     (authenticate api-key user)
+                     app
+                     read-body
+                     :application
+                     :events)]
+      (is (= [["apply" nil]
+              ["return" "returned"]
+              ["apply" nil]
+              ["withdraw" "withdrawn"]
+              ["apply" nil]
+              ["approve" "approved"]
+              ["close" "closed"]]
+             (map (juxt :event :comment) events))))))
 
 ;; TODO test for event filtering when it gets implemented
 

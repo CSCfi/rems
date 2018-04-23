@@ -141,6 +141,10 @@
         (and (is-applicant? application)
              (not= "closed" (:state application))))))
 
+(defn- can-withdraw? [application]
+  (and (is-applicant? application)
+       (= (:state application) "applied")))
+
 (defn- translate-catalogue-item [item]
   (merge item
          (get-in item [:localizations context/*lang*])))
@@ -326,7 +330,8 @@
                    :state \"draft\"
                    :review-type :normal
                    :can-approve? false
-                   :can-close? true}
+                   :can-close? true
+                   :can-withdrwa? false}
      :applicant-attributes {\"eppn\" \"developer\"
                             \"email\" \"developer@e.mail\"
                             \"displayName\" \"deve\"
@@ -379,6 +384,7 @@
                           :catalogue-items catalogue-items ;; TODO decide if catalogue-items are part of "form" or "application"
                           :can-approve? (can-approve? application)
                           :can-close? (can-close? application)
+                          :can-withdraw? (can-withdraw? application)
                           :review-type review-type)
       :applicant-attributes (users/get-user-attributes (:applicantuserid application))
       :items items
@@ -693,9 +699,7 @@
 
 (defn withdraw-application [application-id round msg]
   (let [application (get-application-state application-id)]
-    (when-not (is-applicant? application)
-      (throw-unauthorized))
-    (when-not (= (:state application) "applied")
+    (when-not (can-withdraw? application)
       (throw-unauthorized))
     (unjudge-application application "withdraw" round msg)))
 
