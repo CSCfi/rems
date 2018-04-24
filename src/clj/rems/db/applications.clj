@@ -204,9 +204,7 @@
          (filterv handled?)
          (filterv (fn [app] (is-actor? (actors/filter-by-application-id actors (:id app)))))
          (mapv (fn [app]
-                 (let [my-events (filter #(= (get-user-id) (:userid %))
-                                         (:events app))]
-                   (assoc app :handled (:time (last my-events)))))))))
+                 (assoc app :handled (:time (last (:events app)))))))))
 
 ;; TODO: consider refactoring to finding the review events from the current user and mapping those to applications
 (defn get-handled-reviews []
@@ -216,9 +214,7 @@
          (filterv (fn [app] (or (is-actor? (actors/filter-by-application-id actors (:id app)))
                                 (is-third-party-reviewer? (get-user-id) app))))
          (mapv (fn [app]
-                 (let [my-events (filter #(= (get-user-id) (:userid %))
-                                         (:events app))]
-                   (assoc app :handled (:time (last my-events)))))))))
+                 (assoc app :handled (:time (last (:events app)))))))))
 
 (defn- check-for-unneeded-actions
   "Checks whether the current event will advance into the next workflow round and notifies to all actors, who didn't react, by email that their attention is no longer needed."
