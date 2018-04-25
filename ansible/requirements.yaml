@@ -1,4 +1,0 @@
----
-- src: https://github.com/CSCfi/ansible-role-users.git
-  scm: git
-  path: galaxy-roles

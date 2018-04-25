@@ -74,10 +74,6 @@ components in various configurations.
 
 REMS is an open source project. In case you would like to contribute to its development, please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) document.
 
-## Deployment
-
-See [docs/server_maintenance.md](docs/server_maintenance.md)
-
 ## More documentation
 
 See the [docs](./docs) folder
