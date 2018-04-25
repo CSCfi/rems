@@ -70,6 +70,10 @@ lein with-profile test cloverage
 You can access the component guide at `/#/guide`. It contains all the
 components in various configurations.
 
+## Contributing
+
+REMS is an open source project. In case you would like to contribute to its development, please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) document.
+
 ## Deployment
 
 See [docs/server_maintenance.md](docs/server_maintenance.md)
