@@ -1,7 +1,0 @@
-shib_certname: rems2demo.csc.fi.crt
-shib_keyname: rems2demo.csc.fi.key
-shib_metadata_provider: https://haka.funet.fi/metadata/haka_test_metadata_signed.xml
-shib_discovery_url: https://testsp.funet.fi/shibboleth/WAYF
-shib_hostname: rems2demo.csc.fi
-cert_chain_block: "SSLCertificateChainFile /etc/pki/tls/certs/DigiCertCA.crt"
-auth: "haka"
