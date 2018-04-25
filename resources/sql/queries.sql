@@ -321,12 +321,12 @@ WHERE textvalues.catAppId = :application
 -- - Gets application licenses by workflow and catalogue item ids
 -- - :wfid workflow id for workflow licenses
 -- - :items vector of catalogue item ids for resource licenses
-SELECT lic.id, lic.title, lic.type, lic.textcontent
+SELECT lic.id, lic.title, lic.type, lic.textcontent, wl.start, wl.endt
 FROM license lic
 INNER JOIN workflow_licenses wl ON lic.id = wl.licid
 WHERE wl.wfid = :wfid
 UNION
-SELECT lic.id, lic.title, lic.type, lic.textcontent
+SELECT lic.id, lic.title, lic.type, lic.textcontent, rl.start, rl.endt
 FROM license lic
 INNER JOIN resource_licenses rl ON lic.id = rl.licid
 INNER JOIN catalogue_item item ON (item.resid = rl.resid)

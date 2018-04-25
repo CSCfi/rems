@@ -1,6 +1,7 @@
 (ns rems.db.applications
   "Query functions for forms and applications."
-  (:require [clojure.set :refer [difference
+  (:require [clj-time.core :as time]
+            [clojure.set :refer [difference
                                  union]]
             [rems.auth.util :refer [throw-unauthorized]]
             [rems.context :as context]
@@ -316,6 +317,14 @@
                                                            :licid (:id license)
                                                            :actoruserid app-user}))))}))
 
+(defn get-active-licenses [now params]
+  (->> (db/get-licenses params)
+       (filter (fn [license]
+                 (let [start (:start license)
+                       end (:endt license)]
+                   (and (or (nil? start) (time/before? start now))
+                        (or (nil? end) (time/before? now end))))))))
+
 (defn get-form-for
   "Returns a form structure like this:
 
@@ -362,7 +371,7 @@
                                     (map #(update-in % [:langcode] keyword))
                                     (index-by [:licid :langcode]))
          licenses (mapv #(process-license application license-localizations %)
-                        (db/get-licenses {:wfid (:wfid application) :items catalogue-item-ids}))
+                        (get-active-licenses (:start application) {:wfid (:wfid application) :items catalogue-item-ids}))
          review-type (cond
                        (can-review? application) :normal
                        (can-third-party-review? application) :third-party
@@ -400,7 +409,7 @@
                                     (map #(update-in % [:langcode] keyword))
                                     (index-by [:licid :langcode]))
          licenses (mapv #(process-license application license-localizations %)
-                        (db/get-licenses {:wfid wfid :items catalogue-item-ids}))]
+                        (get-active-licenses (time/now) {:wfid wfid :items catalogue-item-ids}))]
      {:id application-id
       :title (:formtitle form)
       :catalogue-items catalogue-items
