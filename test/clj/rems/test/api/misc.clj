@@ -34,7 +34,7 @@
                           :wfid 1})
                    app
                    read-body)]
-      (is (= 7 (:id data))))
+      (is (= 9 (:id data))))
     (let [data (-> (request :get "/api/catalogue/7")
                    (authenticate api-key user-id)
                    app
@@ -57,7 +57,7 @@
                    (authenticate api-key user-id)
                    app
                    read-body)]
-      (is (= [2 2 3] (sort (map :id (mapcat :catalogue-items (:approvals data)))))))))
+      (is (= [2 2 3 7 8] (sort (map :id (mapcat :catalogue-items (:approvals data)))))))))
 
 (deftest service-translations-test
   (let [api-key "42"
