@@ -84,6 +84,7 @@
   ;; flag tests that need a db with ^:integration
   :test-selectors {:default (complement :integration)
                    :all (constantly true)}
+  :eftest {:multithread? false} ;; integration tests aren't safe to run in parallel
 
   :profiles
   {:uberjar {:omit-source true
@@ -111,6 +112,7 @@
    :test          [:project/dev :project/test :profiles/test]
 
    :project/dev  {:dependencies [[pjstadig/humane-test-output "0.8.3"]
+                                 [eftest "0.5.1"]
                                  [binaryage/devtools "0.9.8"]
                                  [com.cemerick/piggieback "0.2.2"]
                                  [figwheel-sidecar "0.5.14"]
@@ -119,10 +121,10 @@
                                  [re-frisk "0.5.3"]
                                  ]
                   :plugins [[com.jakemccrary/lein-test-refresh "0.21.1"]
+                            [lein-eftest "0.5.1"]
                             [lein-cloverage "1.0.10"]
                             [lein-figwheel "0.5.14"]
                             [org.clojure/clojurescript "1.9.946"]]
-
                   :aot [rems.InvalidRequestException rems.auth.NotAuthorizedException]
 
                   :source-paths ["env/dev/clj" "test/clj"]

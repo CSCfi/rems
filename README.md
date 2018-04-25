@@ -50,13 +50,13 @@ Point your browser to <http://localhost:3000>
 To run unit tests:
 
 ```
-lein test
+lein eftest
 ```
 
 To run tests that need a database:
 
 ```
-lein test :all
+lein eftest :all
 ```
 
 To run all tests and output coverage:
