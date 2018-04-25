@@ -19,30 +19,37 @@
   [:id :resource :applicant :state :created])
 
 (def ^:private +columns+
-  {:id {:getter :id
+  {:id {:value :id
         :header #(text :t.actions/application)}
-   :resource {:getter get-catalogue-items
+   :resource {:value get-catalogue-items
               :header #(text :t.actions/resource)}
-   :applicant {:getter :applicantuserid
+   :applicant {:value :applicantuserid
                :header #(text :t.actions/applicant)}
-   :state {:getter #(localize-state (:state %))
+   :state {:value #(localize-state (:state %))
            :header #(text :t.actions/state)}
-   :created {:getter #(localize-time (:start %))
+   :created {:value #(localize-time (:start %))
+             :sort-value :start
              :header #(text :t.actions/created)}
-   :handled {:getter #(localize-time (:handled %))
+   :handled {:value #(localize-time (:handled %))
+             :sort-value :handled
              ;; NB!:
              :header #(text :t.actions/last-modified)}})
 
 (defn column-header [col]
   ((get-in +columns+ [col :header])))
 
-(defn column-getter [col app]
-  ((get-in +columns+ [col :getter]) app))
+(defn column-value [col app]
+  ((get-in +columns+ [col :value]) app))
+
+(defn column-sort-value [col app]
+  ((or (get-in +columns+ [col :sort-value])
+       (get-in +columns+ [col :value]))
+   app))
 
 (defn- row [columns app]
   (into [:tr.action]
         (concat (for [c columns]
-                  [:td {:data-th (column-header c)} (column-getter c app)])
+                  [:td {:data-th (column-header c)} (column-value c app)])
                 ;; buttons to show could be parameterized
                 [[:td.commands (view-button app)]])))
 
@@ -66,10 +73,10 @@
                    (column-header c)
                    " "
                    (when (= c sort-column) (sort-symbol sort-order))]))]
-         (map (partial row columns) apps))])
+         (map (fn [app] ^{:key (:id app)} [row columns app]) apps))])
 
 (defn- apply-sorting [[col order] apps]
-  (let [sorted (sort-by #(column-getter col %) apps)]
+  (let [sorted (sort-by #(column-sort-value col %) apps)]
     (case order
       :asc sorted
       :desc (reverse sorted))))
