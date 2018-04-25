@@ -56,6 +56,7 @@
             :handled "Handled"
             :handled-approvals "Handled applications"
             :handled-reviews "Handled reviews"
+            :last-modified "Modified"
             :load-application-states "Load application states"
             :no-handled-yet "You have not handled any applications yet."
             :not-implemented "Not implemented yet"
