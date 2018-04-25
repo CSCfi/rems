@@ -38,4 +38,4 @@
         set-sort #(rf/dispatch [::sort %])]
     (if (empty? apps)
       [:div.applications.alert.alert-success (text :t/applications.empty)]
-      [application-list/component sort set-sort apps])))
+      [application-list/component application-list/+default-columns+ sort set-sort apps])))

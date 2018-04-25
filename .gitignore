@@ -15,4 +15,3 @@ profiles.clj
 .DS_Store
 resources/public/css/compiled/screen.css
 figwheel_server.log
-ansible/galaxy-roles

@@ -56,6 +56,7 @@
             :handled "Käsitelty"
             :handled-approvals "Käsitellyt hakemukset"
             :handled-reviews "Käsitellyt katselmoinnit"
+            :last-modified "Muokattu"
             :load-application-states "Lataa hakemusten tilat"
             :no-handled-yet "Et ole käsitellyt hakemuksia vielä."
             :not-implemented "Ei vielä toteutettu"
@@ -139,7 +140,8 @@
                                Älkää vastatko tähän automaattisesti luotuun viestiin."
           :status-changed-subject "Hakemuksen tila on muuttunut"}
   :footer "CSC - IT Center for Science"
-  :form {:add-comments "Lisää päätökseen kommentti (näkyy hakijalle)"
+  :form {:actions "Toiminnot"
+         :add-comments "Lisää päätökseen kommentti (näkyy hakijalle)"
          :add-comments-applicant "Lisää päätökseen kommentti"
          :alert-disabled-items "Seuraavia resursseja ei voi enää hakea. Harkitse tämän luonnoksen sulkemista ja tee sitten uusi hakemus."
          :application "Tiedot"

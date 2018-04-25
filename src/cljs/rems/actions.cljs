@@ -84,6 +84,7 @@
   (if (empty? apps)
     [:div.actions.alert.alert-success (text :t.actions/empty)]
     [application-list/component
+     application-list/+default-columns+
      @(re-frame/subscribe [::sort key])
      #(re-frame/dispatch [::sort key %])
      apps]))
@@ -107,6 +108,7 @@
     [:div
      top-buttons
      [application-list/component
+      [:id :resource :applicant :state :handled]
       @(re-frame/subscribe [::sort key])
       #(re-frame/dispatch [::sort key %])
       apps]]))

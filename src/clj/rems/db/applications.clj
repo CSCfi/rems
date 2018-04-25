@@ -14,6 +14,7 @@
             [rems.email :as email]
             [rems.util :refer [get-user-id
                                get-username
+                               getx-user-id
                                index-by]]))
 
 (defn draft?
@@ -141,6 +142,10 @@
         (and (is-applicant? application)
              (not= "closed" (:state application))))))
 
+(defn- can-withdraw? [application]
+  (and (is-applicant? application)
+       (= (:state application) "applied")))
+
 (defn- translate-catalogue-item [item]
   (merge item
          (get-in item [:localizations context/*lang*])))
@@ -187,7 +192,7 @@
 (defn get-my-applications []
   (filter
    #(not= (:state %) "closed") ; don't show deleted applications
-   (get-applications-impl-batch {:applicant (get-user-id)})))
+   (get-applications-impl-batch {:applicant (getx-user-id)})))
 
 (defn get-approvals []
   (filterv
@@ -200,9 +205,7 @@
          (filterv handled?)
          (filterv (fn [app] (is-actor? (actors/filter-by-application-id actors (:id app)))))
          (mapv (fn [app]
-                 (let [my-events (filter #(= (get-user-id) (:userid %))
-                                         (:events app))]
-                   (assoc app :handled (:time (last my-events)))))))))
+                 (assoc app :handled (:time (last (:events app)))))))))
 
 ;; TODO: consider refactoring to finding the review events from the current user and mapping those to applications
 (defn get-handled-reviews []
@@ -212,9 +215,7 @@
          (filterv (fn [app] (or (is-actor? (actors/filter-by-application-id actors (:id app)))
                                 (is-third-party-reviewer? (get-user-id) app))))
          (mapv (fn [app]
-                 (let [my-events (filter #(= (get-user-id) (:userid %))
-                                         (:events app))]
-                   (assoc app :handled (:time (last my-events)))))))))
+                 (assoc app :handled (:time (last (:events app)))))))))
 
 (defn- check-for-unneeded-actions
   "Checks whether the current event will advance into the next workflow round and notifies to all actors, who didn't react, by email that their attention is no longer needed."
@@ -334,7 +335,8 @@
                    :state \"draft\"
                    :review-type :normal
                    :can-approve? false
-                   :can-close? true}
+                   :can-close? true
+                   :can-withdrwa? false}
      :applicant-attributes {\"eppn\" \"developer\"
                             \"email\" \"developer@e.mail\"
                             \"displayName\" \"deve\"
@@ -387,6 +389,7 @@
                           :catalogue-items catalogue-items ;; TODO decide if catalogue-items are part of "form" or "application"
                           :can-approve? (can-approve? application)
                           :can-close? (can-close? application)
+                          :can-withdraw? (can-withdraw? application)
                           :review-type review-type)
       :applicant-attributes (users/get-user-attributes (:applicantuserid application))
       :items items
@@ -706,9 +709,7 @@
 
 (defn withdraw-application [application-id round msg]
   (let [application (get-application-state application-id)]
-    (when-not (is-applicant? application)
-      (throw-unauthorized))
-    (when-not (= (:state application) "applied")
+    (when-not (can-withdraw? application)
       (throw-unauthorized))
     (unjudge-application application "withdraw" round msg)))
 

@@ -50,13 +50,13 @@ Point your browser to <http://localhost:3000>
 To run unit tests:
 
 ```
-lein test
+lein eftest
 ```
 
 To run tests that need a database:
 
 ```
-lein test :all
+lein eftest :all
 ```
 
 To run all tests and output coverage:
@@ -70,9 +70,9 @@ lein with-profile test cloverage
 You can access the component guide at `/#/guide`. It contains all the
 components in various configurations.
 
-## Deployment
+## Contributing
 
-See [docs/server_maintenance.md](docs/server_maintenance.md)
+REMS is an open source project. In case you would like to contribute to its development, please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) document.
 
 ## More documentation
 

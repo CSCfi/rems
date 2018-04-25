@@ -1,6 +1,7 @@
 (ns rems.api.application
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
+            [rems.api.util :refer [check-user]]
             [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
@@ -43,7 +44,7 @@
    (s/optional-key :validation) [ValidationMessage]})
 
 (def JudgeApplicationCommand
-  {:command (s/enum "approve" "reject" "return" "review")
+  {:command (s/enum "approve" "close" "reject" "return" "review" "withdraw")
    :application-id s/Num
    :round s/Num
    :comment s/Str})
@@ -56,9 +57,11 @@
 (defn- api-judge [{:keys [command application-id round comment]}]
   (case command
     "approve" (applications/approve-application application-id round comment)
+    "close" (applications/close-application application-id round comment)
     "reject" (applications/reject-application application-id round comment)
     "return" (applications/return-application application-id round comment)
-    "review" (applications/review-application application-id round comment))
+    "review" (applications/review-application application-id round comment)
+    "withdraw" (applications/withdraw-application application-id round comment))
   ;; failure communicated via an exception
   {:success true})
 
@@ -83,6 +86,7 @@
       :summary "Get application (draft) for `catalogue-items`"
       :query-params [catalogue-items :- (describe [s/Num] "catalogue item ids")]
       :return GetApplicationResponse
+      (check-user)
       (let [app (applications/make-draft-application catalogue-items)]
         (ok (applications/get-draft-form-for app))))
 
@@ -91,6 +95,7 @@
       :path-params [application-id :- (describe s/Num "application id")]
       :responses {200 {:schema GetApplicationResponse}
                   404 {:schema s/Str :description "Not found"}}
+      (check-user)
       (binding [context/*lang* :en]
         (if-let [app (api-get-application application-id)]
           (ok app)
@@ -100,10 +105,12 @@
       :summary "Create a new application, change an existing one or submit an application"
       :body [request SaveApplicationCommand]
       :return SaveApplicationResponse
+      (check-user)
       (ok (form/api-save (fix-keys request))))
 
     (PUT "/judge" []
       :summary "Judge an application"
       :body [request JudgeApplicationCommand]
       :return JudgeApplicationResponse
+      (check-user)
       (ok (api-judge request)))))
