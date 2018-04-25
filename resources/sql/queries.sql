@@ -255,6 +255,18 @@ INSERT INTO resource_licenses
 VALUES
 (:resid, :licid)
 
+-- :name set-resource-license-validity! :insert
+-- :doc set license expiration
+UPDATE resource_licenses rl
+SET start = :start, endt = :end
+WHERE rl.licid = :licid
+
+-- :name set-workflow-license-validity! :insert
+-- :doc set license expiration
+UPDATE workflow_licenses wl
+SET start = :start, endt = :end
+WHERE wl.licid = :licid
+
 -- :name create-workflow-actor! :insert
 INSERT INTO workflow_actors
 (wfid, actoruserid, role, round)
