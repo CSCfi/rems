@@ -116,10 +116,9 @@ VALUES
 INSERT INTO catalogue_item_application
 (applicantUserId, wfid, start)
 VALUES
-/*~ (when (:start params) */
+/*~ (if (:start params) */
 (:user, :wfid, :start)
-/*~ ) ~*/
-/*~ (when (not (:start params)) */
+/*~*/
 (:user, :wfid, now())
 /*~ ) ~*/
 RETURNING id
