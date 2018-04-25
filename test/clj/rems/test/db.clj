@@ -1,6 +1,7 @@
 (ns ^:integration rems.test.db
   "Namespace for tests that use an actual database."
   (:require [cheshire.core :as cheshire]
+            [clj-time.core :as time]
             [clojure.java.jdbc :as jdbc]
             [clojure.string :refer [split-lines]]
             [clojure.test :refer :all]
@@ -66,6 +67,7 @@
           license-fi (db/create-license-localization! {:licid (:id license) :langcode "fi" :title "Testi lisenssi" :textcontent "http://testi.fi"})
           license-en (db/create-license-localization! {:licid (:id license) :langcode "en" :title "Test license" :textcontent "http://test.com"})
           wf-license (db/create-workflow-license! {:wfid (:id wf) :licid (:id license) :round 0})
+          _ (db/set-workflow-license-validity! {:licid (:id license) :start (time/minus (time/now) (time/years 1)) :end nil})
           item (db/create-catalogue-item! {:title "item" :form (:id form) :resid nil :wfid (:id wf)})
           item-c (db/create-form-item!
                   {:type "text" :user uid :value 0})
