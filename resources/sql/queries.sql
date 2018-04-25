@@ -114,9 +114,14 @@ VALUES
 
 -- :name create-application! :insert
 INSERT INTO catalogue_item_application
-(applicantUserId, wfid)
+(applicantUserId, wfid, start)
 VALUES
-(:user, :wfid)
+/*~ (when (:start params) */
+(:user, :wfid, :start)
+/*~ ) ~*/
+/*~ (when (not (:start params)) */
+(:user, :wfid, now())
+/*~ ) ~*/
 RETURNING id
 
 -- :name add-application-item! :insert

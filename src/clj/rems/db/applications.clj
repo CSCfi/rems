@@ -417,6 +417,11 @@
         id (:id (db/create-application! {:user uid :wfid wfid}))]
     id))
 
+(defn create-new-draft-at-time [wfid time]
+  (let [uid (get-user-id)
+        id (:id (db/create-application! {:user uid :wfid wfid :start time}))]
+    id))
+
 ;;; Applying events
 
 (defmulti ^:private apply-event
