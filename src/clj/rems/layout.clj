@@ -2,7 +2,6 @@
   (:require [cheshire.core :as cheshire]
             [hiccup.page :refer [html5 include-css include-js]]
             [rems.context :as context]
-            [rems.guide :refer :all]
             [ring.middleware.anti-forgery :refer [*anti-forgery-token*]]
             [ring.util.http-response :as response]))
 
@@ -70,11 +69,3 @@
    and the status specified by the status key"
   [error-details]
   (render "error page" (error-content error-details) error-details))
-
-(defn guide
-  "Component guide fragment"
-  []
-  (list
-   (component-info error-content)
-   (example "error-content"
-            (error-content {:status 123 :title "Error title" :message "Error message"}))))
