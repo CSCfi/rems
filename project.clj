@@ -63,6 +63,7 @@
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-cprop "1.0.3"]
             [lein-uberwar "0.2.0"]
+            [lein-shell "0.5.0"]
             [migratus-lein "0.5.2"]]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled"
@@ -88,7 +89,9 @@
 
   :profiles
   {:uberjar {:omit-source true
-             :prep-tasks ["compile" ["cljsbuild" "once" "min"]]
+             :prep-tasks [["shell" "sh" "-c" "mkdir -p target/uberjar/resources && git describe --always --dirty > target/uberjar/resources/git-describe.txt"]
+                          "compile"
+                          ["cljsbuild" "once" "min"]]
              :cljsbuild
              {:builds
               {:min
@@ -106,7 +109,7 @@
              :jvm-opts ["-Dclojure.compiler.elide-meta=[:doc]"]
              :uberjar-name "rems.jar"
              :source-paths ["env/prod/clj"]
-             :resource-paths ["env/prod/resources"]}
+             :resource-paths ["env/prod/resources" "target/uberjar/resources"]}
 
    :dev           [:project/dev :profiles/dev]
    :test          [:project/dev :project/test :profiles/test]
