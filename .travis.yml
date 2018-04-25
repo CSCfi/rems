@@ -12,8 +12,6 @@ cache:
 jdk:
   - oraclejdk8
 sudo: required
-install:
-  - sudo pip install ansible
 services:
   - docker
 before_script:
