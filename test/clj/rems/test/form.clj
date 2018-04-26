@@ -52,38 +52,3 @@
         (is (= 2 (count res)))
         (is (.contains (:text (first res)) "B"))
         (is (.contains (:text (second res)) "C"))))))
-
-#_
-(deftest test-editable
-  (with-fake-tempura
-    (binding [context/*roles* #{:applicant}]
-      (let [readonly? (fn [[_tag attrs]]
-                        (case (:type attrs)
-                          "checkbox" (:disabled attrs) ;; checkboxes are special
-                          (:readonly attrs)))
-            all-inputs (fn [body] (remove #(= "comment" (:name (second %)))
-                                          (concat (hiccup-find [:div.form-group.field :input] body)
-                                                  (hiccup-find [:div.form-group.field :textarea] body))))
-            submit-button #(first (hiccup-find [:.submit-button] %))
-            data {:application {:can-approve? false
-                                :can-close? false
-                                :review-type nil}
-                  :items [{:type "text"}
-                          {:type "texta"}]
-                  :licenses [{:type "license" :licensetype "link"
-                              :textcontent "" :title ""}]}]
-        (testing "new form"
-          (let [body (form data)]
-            (is (= [false false false] (map readonly? (all-inputs body))))
-            (is (submit-button body))))
-        (testing "draft"
-          (let [body (form (assoc-in data [:application :state] "draft"))]
-            (is (= [false false false] (map readonly? (all-inputs body))))
-            (is (submit-button body))))
-        (doseq [state ["applied" "approved" "rejected"]]
-          (testing state
-            (let [body (form (-> data
-                                 (assoc-in [:application :id] 1)
-                                 (assoc-in [:application :state] state)))]
-              (is (= [true true true] (map readonly? (all-inputs body))))
-              (is (nil? (submit-button body))))))))))

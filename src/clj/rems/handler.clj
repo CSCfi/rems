@@ -59,9 +59,6 @@
 (defn app-routes []
   (routes
    (normal-routes)
-   #_(if (:component-guide +defaults+)
-     guide-routes
-     never-match-route)
    (if-let [path (:serve-static +defaults+)]
      (route/files "/" {:root path})
      never-match-route)
