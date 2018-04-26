@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/CSCfi/rems.svg?branch=master)](https://travis-ci.org/CSCfi/rems)
 # Resource Entitlement Management System
 
 ## Getting started
