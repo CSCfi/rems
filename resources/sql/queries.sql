@@ -114,9 +114,13 @@ VALUES
 
 -- :name create-application! :insert
 INSERT INTO catalogue_item_application
-(applicantUserId, wfid)
+(applicantUserId, wfid, start)
 VALUES
-(:user, :wfid)
+/*~ (if (:start params) */
+(:user, :wfid, :start)
+/*~*/
+(:user, :wfid, now())
+/*~ ) ~*/
 RETURNING id
 
 -- :name add-application-item! :insert
@@ -250,6 +254,18 @@ INSERT INTO resource_licenses
 VALUES
 (:resid, :licid)
 
+-- :name set-resource-license-validity! :insert
+-- :doc set license expiration
+UPDATE resource_licenses rl
+SET start = :start, endt = :end
+WHERE rl.licid = :licid
+
+-- :name set-workflow-license-validity! :insert
+-- :doc set license expiration
+UPDATE workflow_licenses wl
+SET start = :start, endt = :end
+WHERE wl.licid = :licid
+
 -- :name create-workflow-actor! :insert
 INSERT INTO workflow_actors
 (wfid, actoruserid, role, round)
@@ -316,12 +332,12 @@ WHERE textvalues.catAppId = :application
 -- - Gets application licenses by workflow and catalogue item ids
 -- - :wfid workflow id for workflow licenses
 -- - :items vector of catalogue item ids for resource licenses
-SELECT lic.id, lic.title, lic.type, lic.textcontent
+SELECT lic.id, lic.title, lic.type, lic.textcontent, wl.start, wl.endt
 FROM license lic
 INNER JOIN workflow_licenses wl ON lic.id = wl.licid
 WHERE wl.wfid = :wfid
 UNION
-SELECT lic.id, lic.title, lic.type, lic.textcontent
+SELECT lic.id, lic.title, lic.type, lic.textcontent, rl.start, rl.endt
 FROM license lic
 INNER JOIN resource_licenses rl ON lic.id = rl.licid
 INNER JOIN catalogue_item item ON (item.resid = rl.resid)

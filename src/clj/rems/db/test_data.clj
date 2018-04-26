@@ -1,6 +1,7 @@
 (ns rems.db.test-data
   "Populating the database with nice test data."
-  (:require [rems.context :as context]
+  (:require [clj-time.core :as time]
+            [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.roles :as roles]
@@ -115,25 +116,29 @@
 
       (doseq [wfid [minimal simple with-review two-round different]]
         (db/create-workflow-license! {:wfid wfid :licid link :round 0})
-        (db/create-workflow-license! {:wfid wfid :licid text :round 0})))
-
+        (db/create-workflow-license! {:wfid wfid :licid text :round 0})
+        (db/set-workflow-license-validity! {:licid link :start (time/minus (time/now) (time/years 1)) :end nil})
+        (db/set-workflow-license-validity! {:licid text :start (time/minus (time/now) (time/years 1)) :end nil})))
+    
     {:minimal minimal
      :simple simple
      :with-review with-review
      :two-round two-round
      :different different}))
 
-(defn- create-resource-license! [resid]
+(defn- create-resource-license! [resid text]
   (let [licid (:id (db/create-license!
                     {:modifieruserid "owner" :owneruserid "owner" :title "resource license"
                      :type "link" :textcontent "http://invalid"}))]
     (db/create-license-localization!
-     {:licid licid :langcode "en" :title "Apache License 2.0"
+     {:licid licid :langcode "en" :title (str text " (en)")
       :textcontent "https://www.apache.org/licenses/LICENSE-2.0"})
     (db/create-license-localization!
-     {:licid licid :langcode "fi" :title "Apache lisenssi 2.0"
+     {:licid licid :langcode "fi" :title (str text " (fi)")
       :textcontent "https://www.apache.org/licenses/LICENSE-2.0"})
-    (db/create-resource-license! {:resid resid :licid licid})))
+    (db/create-resource-license! {:resid resid :licid licid})
+    (db/set-resource-license-validity! {:licid licid :start (time/minus (time/now) (time/years 1)) :end nil})
+    licid))
 
 (defn- create-catalogue-item! [resource workflow form localizations]
   (let [id (:id (db/create-catalogue-item!
@@ -142,8 +147,8 @@
       (db/create-catalogue-item-localization! {:id id :langcode lang :title title}))
     id))
 
-(defn- create-draft! [catids wfid field-value]
-  (let [app-id (applications/create-new-draft wfid)
+(defn- create-draft! [catids wfid field-value & [now]]
+  (let [app-id (applications/create-new-draft-at-time wfid (or now (time/now)))
         _ (if (vector? catids)
             (doseq [catid catids]
               (db/add-application-item! {:application app-id :item catid}))
@@ -207,12 +212,37 @@
       (binding [context/*user* {"eppn" approver}]
         (applications/approve-application app-id 1 "comment for approval")))))
 
+(defn- create-application-with-expired-resource-license! [wfid form applicant-user]
+  (let [resource-id 3
+        _ (db/create-resource! {:id resource-id :resid "Resource that has expired license" :prefix "nbn" :modifieruserid 1})
+        year-ago (time/minus (time/now) (time/years 1))
+        yesterday (time/minus (time/now) (time/days 1))
+        licid-expired (create-resource-license! resource-id "License that has expired")
+        _ (db/set-resource-license-validity! {:licid licid-expired :start year-ago :end yesterday})
+        item-with-expired-license (create-catalogue-item! resource-id wfid form {"en" "Resource with expired resource license"
+                                                                                 "fi" "Resurssi jolla on vanhentunut resurssilisenssi"})]
+    (binding [context/*tempura* locales/tconfig
+              context/*user* {"eppn" applicant-user}]
+      (applications/submit-application (create-draft! item-with-expired-license wfid "applied when license was valid that has since expired" (time/minus (time/now) (time/days 2)))))))
+
+(defn- create-application-before-new-resource-license! [wfid form applicant-user]
+  (let [resource-id 4
+        _ (db/create-resource! {:id resource-id :resid "Resource that has a new resource license" :prefix "nbn" :modifieruserid 1})
+        yesterday (time/minus (time/now) (time/days 1))
+        licid-new (create-resource-license! resource-id "License that was just created")
+        _ (db/set-resource-license-validity! {:licid licid-new :start (time/now) :end nil})
+        item-without-new-license (create-catalogue-item! resource-id wfid form {"en" "Resource with just created new resource license"
+                                                                                "fi" "Resurssi jolla on uusi resurssilisenssi"})]
+    (binding [context/*tempura* locales/tconfig
+              context/*user* {"eppn" applicant-user}]
+      (applications/submit-application (create-draft! item-without-new-license wfid "applied before license was valid" (time/minus (time/now) (time/days 2)))))))
+
 (defn create-test-data! []
   (db/add-api-key! {:apikey 42 :comment "test data"})
   (create-users-and-roles!)
   (db/create-resource! {:id 1 :resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1})
   (db/create-resource! {:id 2 :resid "Extra Data" :prefix "nbn" :modifieruserid 1})
-  (create-resource-license! 2)
+  (create-resource-license! 2 "Some test license")
   (let [form (create-basic-form!)
         workflows (create-workflows! "developer" "bob" "carl")
         minimal (create-catalogue-item! 1 (:minimal workflows) form
@@ -237,13 +267,15 @@
     (create-applications! simple (:simple workflows) "developer" "developer")
     (create-disabled-applications! disabled (:simple workflows) "developer" "developer")
     (create-bundled-application! simple bundable (:simple workflows) "alice" "developer")
-    (create-review-application! with-review (:with-review workflows) "alice" "carl" "developer")))
+    (create-review-application! with-review (:with-review workflows) "alice" "carl" "developer")
+    (create-application-with-expired-resource-license! (:simple workflows) form "alice")
+    (create-application-before-new-resource-license!  (:simple workflows) form "alice")))
 
 (defn create-demo-data! []
   (create-demo-users-and-roles!)
   (db/create-resource! {:id 1 :resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1})
   (db/create-resource! {:id 2 :resid "Extra Data" :prefix "nbn" :modifieruserid 1})
-  (create-resource-license! 2)
+  (create-resource-license! 2 "Some demo license")
   (let [form (create-basic-form!)
         workflows (create-workflows! "RDapprover1@funet.fi" "RDapprover2@funet.fi" "RDreview@funet.fi")
         minimal (create-catalogue-item! 1 (:minimal workflows) form
@@ -268,4 +300,6 @@
     (create-applications! simple (:simple workflows) "RDapplicant1@funet.fi" "RDapprover1@funet.fi")
     (create-disabled-applications! disabled (:simple workflows) "RDapplicant1@funet.fi" "RDapprover1@funet.fi")
     (create-bundled-application! simple bundable (:simple workflows) "RDapplicant2@funet.fi" "RDapprover1@funet.fi")
-    (create-review-application! with-review (:with-review workflows) "RDapplicant1@funet.fi" "RDreview@funet.fi" "RDapprover1@funet.fi")))
+    (create-review-application! with-review (:with-review workflows) "RDapplicant1@funet.fi" "RDreview@funet.fi" "RDapprover1@funet.fi")
+    (create-application-with-expired-resource-license! (:simple workflows) form "RDapplicant1@funet.fi")
+    (create-application-before-new-resource-license!  (:simple workflows) form "RDapplicant1@funet.fi")))

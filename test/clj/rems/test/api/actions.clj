@@ -21,16 +21,16 @@
   (testing "listing"
     (let [body (get-response-body "developer")]
       (is (:approver? body))
-      (is (= [2 8] (map :id (:approvals body))))
-      (is (= [2 2 3] (sort (map :id (mapcat :catalogue-items (:approvals body))))))
+      (is (= [2 8 10 11] (map :id (:approvals body))))
+      (is (= [2 2 3 7 8] (sort (map :id (mapcat :catalogue-items (:approvals body))))))
       (is (= [3 4 5 7 9] (map :id (:handled-approvals body))))
       (is (empty? (:reviews body)))
       (is (empty? (:handled-reviews body)))))
   (testing "listing as another approver"
     (let [body (get-response-body "bob")]
       (is (:approver? body))
-      (is (= [2 8] (map :id (:approvals body))))
-      (is (= [2 2 3] (sort (map :id (mapcat :catalogue-items (:approvals body))))))
+      (is (= [2 8 10 11] (map :id (:approvals body))))
+      (is (= [2 2 3 7 8] (sort (map :id (mapcat :catalogue-items (:approvals body))))))
       (is (= [3 4 5 7] (map :id (:handled-approvals body))))
       (is (empty? (:reviews body)))
       (is (empty? (:handled-reviews body)))))
