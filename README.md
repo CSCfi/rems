@@ -77,4 +77,13 @@ REMS is an open source project. In case you would like to contribute to its deve
 
 ## More documentation
 
-See the [docs](./docs) folder
+Documentation files can be found under the [docs](./docs) folder.
+
+Documentation can also be read from the browser by launching user docs server with the command:
+`mkdocs serve`
+
+Alternatively docker images can be used for running the documentation server:
+```
+docker build . -f Dockerfile.docs -t rems-mkdocs-server
+docker run -it -p 8000:8000 --name rems-user-guide rems-mkdocs-server --rm
+```
