@@ -84,6 +84,6 @@ Documentation can also be read from the browser by launching user docs server wi
 
 Alternatively docker images can be used for running the documentation server:
 ```
-docker build . -f Dockerfile.docs -t rems-mkdocs-server
+docker build . -f docs-server/Dockerfile -t rems-mkdocs-server
 docker run -it -p 8000:8000 --name rems-user-guide rems-mkdocs-server --rm
 ```
