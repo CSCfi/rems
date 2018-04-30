@@ -320,6 +320,9 @@
    {:name "submit" :onClick #(rf/dispatch [::save-application "submit"])}
    (text :t.form/submit)])
 
+(defn- apply-localization [item language]
+  (merge item (get-in item [:localizations language])))
+
 (defn- fields [form edit-application language]
   (let [application (:application form)
         {:keys [items licenses validation]} edit-application
@@ -336,7 +339,7 @@
       [:div
        (into [:div]
              (for [i (:items form)]
-               [field (assoc (merge i (get-in i [:localizations language])) ;; TODO ugly
+               [field (assoc (apply-localization i language)
                              :validation (get-in validation-by-field-id [:item (:id i)])
                              :readonly readonly?
                              :value (get items (:id i)))]))
@@ -345,7 +348,7 @@
           [:h4 (text :t.form/licenses)]
           (into [:div]
                 (for [l form-licenses]
-                  [field (assoc (merge l (get-in l [:localizations language])) ; TODO ugly
+                  [field (assoc (apply-localization l language)
                                 :validation (get-in validation-by-field-id [:license (:id l)])
                                 :readonly readonly?
                                 :approved (get licenses (:id l)))]))])
