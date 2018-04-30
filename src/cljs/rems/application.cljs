@@ -336,7 +336,7 @@
       [:div
        (into [:div]
              (for [i (:items form)]
-               [field (assoc i
+               [field (assoc (merge i (get-in i [:localizations language])) ;; TODO ugly
                              :validation (get-in validation-by-field-id [:item (:id i)])
                              :readonly readonly?
                              :value (get items (:id i)))]))
