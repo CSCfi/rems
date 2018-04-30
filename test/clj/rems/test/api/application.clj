@@ -30,7 +30,6 @@
         (is (= "draft" (:state cmd-response)))
         (is (not (:valid cmd-response)))
         (is (= [{:field {:id 2
-                         :title "Purpose of the project"
                          :type "item"}
                  :key "t.form.validation/required"
                  :text "Field \"Purpose of the project\" is required."}

@@ -279,10 +279,13 @@
      :value \"filled value or nil\"}"
   [application-id form-id item]
   {:id (:id item)
-   :title (:title item)
-   :inputprompt (:inputprompt item)
    :optional (:formitemoptional item)
    :type (:type item)
+   ;; TODO here we do a db call per item, for licenses we do one huge
+   ;; db call. Not sure which is better?
+   :localizations (into {} (for [{:keys [langcode title inputprompt]}
+                                 (db/get-form-item-localizations {:item (:id item)})]
+                             [(keyword langcode) {:title title :inputprompt inputprompt}]))
    :value (or
            (when-not (draft? application-id)
              (:value
@@ -310,6 +313,7 @@
     {:id (:id license)
      :type "license"
      :licensetype (:type license)
+     ;; TODO why do licenses have a non-localized title & content while items don't?
      :title (:title license)
      :textcontent (:textcontent license)
      :localizations my-localizations
@@ -380,8 +384,7 @@
          catalogue-item-ids (mapv :item (db/get-application-items {:application application-id}))
          catalogue-items (get-catalogue-items catalogue-item-ids)
          items (mapv #(process-item application-id form-id %)
-                     (db/get-form-items {:id form-id
-                                         :langcode (name context/*lang*)}))
+                     (db/get-form-items {:id form-id}))
          licenses (get-licenses-and-localizations application catalogue-item-ids)
          review-type (cond
                        (can-review? application) :normal
@@ -415,8 +418,7 @@
          wfid (:wfid application)
          catalogue-items (:catalogue-items application)
          items (mapv #(process-item application-id form-id %)
-                     (db/get-form-items {:id form-id
-                                         :langcode (name context/*lang*)}))
+                     (db/get-form-items {:id form-id}))
          licenses (get-licenses-and-localizations application catalogue-item-ids)]
      {:id application-id
       :title (:formtitle form)

@@ -97,6 +97,7 @@
       (testing "get form for catalogue item"
         (with-redefs [catalogue/cached
                       {:localizations (catalogue/load-catalogue-item-localizations!)}]
+          ;; TODO no need to localize forms any more!
           (let [form-fi (binding [context/*lang* :fi]
                           (applications/get-form-for app-id))
                 form-en (binding [context/*lang* :en]
@@ -104,9 +105,9 @@
                 form-ru (binding [context/*lang* :ru]
                           (applications/get-form-for app-id))]
             (is (= "internal-title" (:title form-en)) "title")
-            (is (= ["A-en" "B-en" "C-en"] (map :title (:items form-en))) "items should be in order")
+            (is (= ["A-en" "B-en" "C-en"] (map #(get-in % [:localizations :en :title]) (:items form-en))) "items should be in order")
             (is (= "internal-title" (:title form-fi)) "title")
-            (is (= ["A-fi" "B-fi" "C-fi"] (map :title (:items form-fi))) "items should be in order")
+            (is (= ["A-fi" "B-fi" "C-fi"] (map #(get-in % [:localizations :fi :title]) (:items form-fi))) "items should be in order")
 
             (is (= 1 (count (:licenses form-fi)) (count (:licenses form-en)) (count (:licenses form-ru))))
             (is (= {:title "non-localized license"

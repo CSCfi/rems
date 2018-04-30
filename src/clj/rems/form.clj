@@ -27,10 +27,11 @@
   [item]
   (when-not (:optional item)
     (when (empty? (:value item))
-      {:field (assoc (select-keys item [:id :title])
+      {:field (assoc (select-keys item [:id])
                      :type :item)
        :key :t.form.validation/required
-       :text (text-format :t.form.validation/required (:title item))})))
+       ;; TODO always uses english title...
+       :text (text-format :t.form.validation/required (get-in item [:localizations :en :title]))})))
 
 (defn- validate-license
   [license]
