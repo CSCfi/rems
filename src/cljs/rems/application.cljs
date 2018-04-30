@@ -181,6 +181,7 @@
   [msgs]
   (into [:ul]
         (for [m msgs]
+          ;; TODO :title is not localized!
           [:li (text-format (:key m) (:title (:field m)))])))
 
 (defn flash-message
@@ -319,7 +320,7 @@
    {:name "submit" :onClick #(rf/dispatch [::save-application "submit"])}
    (text :t.form/submit)])
 
-(defn- fields [form edit-application]
+(defn- fields [form edit-application language]
   (let [application (:application form)
         {:keys [items licenses validation]} edit-application
         validation-by-field-id (index-by [(comp :type :field) (comp :id :field)] validation)
@@ -344,7 +345,7 @@
           [:h4 (text :t.form/licenses)]
           (into [:div]
                 (for [l form-licenses]
-                  [field (assoc l
+                  [field (assoc (merge l (get-in l [:localizations language])) ; TODO ugly
                                 :validation (get-in validation-by-field-id [:license (:id l)])
                                 :readonly readonly?
                                 :approved (get licenses (:id l)))]))])
@@ -480,7 +481,7 @@
                        ^{:key (:id item)}
                        [:li (get-catalogue-item-title item language)]))]}]))
 
-(defn- render-application [application edit-application]
+(defn- render-application [application edit-application language]
   ;; TODO should rename :application
   (let [app (:application application)
         state (:state app)
@@ -498,15 +499,16 @@
      (when user-attributes
        [:div.mt-3 [applicant-info "applicant-info" user-attributes]])
      [:div.mt-3 [applied-resources (:catalogue-items application)]]
-     [:div.my-3 [fields application edit-application]]
+     [:div.my-3 [fields application edit-application language]]
      [:div.mb-3 [actions-form app]]]))
 
 ;;;; Entrypoint ;;;;
 
 (defn- show-application []
   (if-let [application @(rf/subscribe [:application])]
-    (let [edit-application @(rf/subscribe [:edit-application])]
-      [render-application application edit-application])
+    (let [edit-application @(rf/subscribe [:edit-application])
+          language @(rf/subscribe [:language])]
+      [render-application application edit-application language])
     [:p "No application loaded"]))
 
 (defn application-page []
@@ -614,11 +616,13 @@
                       {:id 2 :type "label" :title "Please input your wishes below."}
                       {:id 3 :type "texta" :title "Field 2" :optional true :inputprompt "prompt 2"}
                       {:id 4 :type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]
-              :licenses [{:id 4 :type "license" :title "A Text License" :licensetype "text"
-                          :textcontent lipsum}
-                         {:id 5 :type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"}]}
+              :licenses [{:id 4 :type "license" :title "" :textcontent "" :licensetype "text"
+                          :localizations {:en {:title "A Text License" :textcontent lipsum}}}
+                         {:id 5 :type "license" :licensetype "link" :title "" :textcontent ""
+                          :localizations {:en {:title "Link to license" :textcontent "/guide"}}}]}
              {:items {1 "abc"}
-              :licenses {4 false 5 true}}])
+              :licenses {4 false 5 true}}
+             :en])
    (example "application, applied"
             [render-application
              {:title "Form title"
@@ -628,10 +632,12 @@
                             :review-type nil}
               :catalogue-items [{:title "An applied item"}]
               :items [{:id 1 :type "text" :title "Field 1" :inputprompt "prompt 1"}]
-              :licenses [{:id 2 :type "license" :title "A Text License" :licensetype "text"
-                          :textcontent lipsum}]}
+              :licenses [{:id 2 :type "license" :title "" :licensetype "text"
+                          :textcontent ""
+                          :localizations {:en {:title "A Text License" :textcontent lipsum}}}]}
              {:items {1 "abc"}
-              :licenses {2 true}}])
+              :licenses {2 true}}
+             :en])
    (example "application, approved"
             [render-application
              {:title "Form title"
