@@ -299,18 +299,20 @@
      :licensetype \"link\"
      :title \"LGPL\"
      :textcontent \"www.license.link\"
-     :approved false}"
+     :approved false
+     :localizations {\"fi\" {:title \"LGPL\" :textcontent \"license.fi\"}}}"
   [application localizations license]
   (let [app-id (:id application)
         app-user (:applicantuserid application)
         license-id (:id license)
-        localized-title (get-in localizations [license-id context/*lang* :title])
-        localized-content (get-in localizations [license-id context/*lang* :textcontent])]
+        my-localizations (into {} (for [{:keys [langcode title textcontent]} (get localizations license-id)]
+                                    [langcode {:title title :textcontent textcontent}]))]
     {:id (:id license)
      :type "license"
      :licensetype (:type license)
-     :title (or localized-title (:title license))
-     :textcontent (or localized-content (:textcontent license))
+     :title (:title license)
+     :textcontent (:textcontent license)
+     :localizations my-localizations
      :approved (= "approved"
                   (:state
                    (when application
@@ -355,6 +357,7 @@
                  :licensetype \"link\"
                  :title \"LGPL\"
                  :textcontent \"http://foo\"
+                 :localizations {\"fi\" {:title \"...\" :textcontent \"...\"}}
                  :approved false}]}"
   ([application-id]
    (let [form (db/get-form-for-application {:application application-id})
@@ -371,7 +374,7 @@
                                          :langcode (name context/*lang*)}))
          license-localizations (->> (db/get-license-localizations)
                                     (map #(update-in % [:langcode] keyword))
-                                    (index-by [:licid :langcode]))
+                                    (group-by :licid))
          licenses (mapv #(process-license application license-localizations %)
                         (get-active-licenses (:start application) {:wfid (:wfid application) :items catalogue-item-ids}))
          review-type (cond
@@ -410,7 +413,7 @@
                                          :langcode (name context/*lang*)}))
          license-localizations (->> (db/get-license-localizations)
                                     (map #(update-in % [:langcode] keyword))
-                                    (index-by [:licid :langcode]))
+                                    (group-by :licid))
          licenses (mapv #(process-license application license-localizations %)
                         (get-active-licenses (time/now) {:wfid wfid :items catalogue-item-ids}))]
      {:id application-id

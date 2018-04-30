@@ -35,15 +35,15 @@
                  :key "t.form.validation/required"
                  :text "Field \"Purpose of the project\" is required."}
                 {:field {:id 2
-                         :title "CC Attribution 4.0"
+                         :title "non-localized link license"
                          :type "license"}
                  :key "t.form.validation/required"
-                 :text "Field \"CC Attribution 4.0\" is required."}
+                 :text "Field \"non-localized link license\" is required."}
                 {:field {:id 3
-                         :title "General Terms of Use"
+                         :title "non-localized text license"
                          :type "license"}
                  :key "t.form.validation/required"
-                 :text "Field \"General Terms of Use\" is required."}]
+                 :text "Field \"non-localized text license\" is required."}]
                (:validation cmd-response))))
       (testing "retrieving"
         (let [response (-> (request :get (str "/api/application/" application-id))
@@ -123,8 +123,8 @@
         (is (= 4 (count validations)))
         (is (some #(.contains (:text %) "Project name") validations))
         (is (some #(.contains (:text %) "Purpose of the project") validations))
-        (is (some #(.contains (:text %) "CC Attribution 4.0") validations))
-        (is (some #(.contains (:text %) "General Terms of Use") validations)))
+        (is (some #(.contains (:text %) "non-localized link license") validations))
+        (is (some #(.contains (:text %) "non-localized text license") validations)))
       (testing "add one field"
         (let [response (-> (request :put (str "/api/application/save"))
                            (authenticate api-key user-id)

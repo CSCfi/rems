@@ -107,12 +107,15 @@
             (is (= ["A-en" "B-en" "C-en"] (map :title (:items form-en))) "items should be in order")
             (is (= "internal-title" (:title form-fi)) "title")
             (is (= ["A-fi" "B-fi" "C-fi"] (map :title (:items form-fi))) "items should be in order")
-            (is (= ["Testi lisenssi"] (map :title (:licenses form-fi))) "there should only be one license in Finnish")
-            (is (= "http://testi.fi" (:textcontent (first (:licenses form-fi)))) "link should point to Finnish site")
-            (is (= "Test license" (:title (first (:licenses form-en)))) "title should be in English")
-            (is (= "http://test.com" (:textcontent (first (:licenses form-en)))) "link should point to English site")
-            (is (= "non-localized license" (:title (first (:licenses form-ru)))) "default title used when no localization is found")
-            (is (= "http://test.org" (:textcontent (first (:licenses form-ru)))) "link should point to default license site"))))
+
+            (is (= 1 (count (:licenses form-fi)) (count (:licenses form-en)) (count (:licenses form-ru))))
+            (is (= {:title "non-localized license"
+                    :textcontent "http://test.org"
+                    :localizations {:fi {:title "Testi lisenssi" :textcontent "http://testi.fi"}
+                                    :en {:title "Test license" :textcontent "http://test.com"}}}
+                   (select-keys (first (:licenses form-fi)) [:title :textcontent :localizations])
+                   (select-keys (first (:licenses form-en)) [:title :textcontent :localizations])
+                   (select-keys (first (:licenses form-ru)) [:title :textcontent :localizations]))))))
 
       (testing "get partially filled form"
         (is app-id "sanity check")

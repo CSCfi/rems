@@ -96,10 +96,10 @@
 
     ;; attach both kinds of licenses to all workflows
     (let [link (:id (db/create-license!
-                     {:modifieruserid "owner" :owneruserid "owner" :title "non-localized license"
+                     {:modifieruserid "owner" :owneruserid "owner" :title "non-localized link license"
                       :type "link" :textcontent "http://invalid"}))
           text (:id (db/create-license!
-                     {:modifieruserid "owner" :owneruserid "owner" :title "non-localized license"
+                     {:modifieruserid "owner" :owneruserid "owner" :title "non-localized text license"
                       :type "text" :textcontent "non-localized content"}))]
       (db/create-license-localization!
        {:licid link :langcode "en" :title "CC Attribution 4.0"
@@ -119,7 +119,7 @@
         (db/create-workflow-license! {:wfid wfid :licid text :round 0})
         (db/set-workflow-license-validity! {:licid link :start (time/minus (time/now) (time/years 1)) :end nil})
         (db/set-workflow-license-validity! {:licid text :start (time/minus (time/now) (time/years 1)) :end nil})))
-    
+
     {:minimal minimal
      :simple simple
      :with-review with-review

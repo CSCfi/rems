@@ -21,6 +21,7 @@
    :licensetype s/Str
    :title s/Str
    :textcontent s/Str
+   :localizations {s/Keyword {:title s/Str :textcontent s/Str}}
    :approved s/Bool})
 
 (def Item
