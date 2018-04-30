@@ -1,0 +1,9 @@
+site_name: REMS2 Documentation
+pages:
+  - Home: index.md
+  - Introduction: intro.md
+  - Themes: themes.md
+  - Migrating From REMS1: migrations.md
+  - Entitlements: entitlements.md
+theme:
+  name: readthedocs
