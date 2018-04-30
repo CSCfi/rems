@@ -375,7 +375,7 @@
                  :approved false}]}"
   ([application-id]
    (let [form (db/get-form-for-application {:application application-id})
-         form (or form (db/get-form-for-application {:application application-id :lang "en"}))
+         form (or form (db/get-form-for-application {:application application-id}))
          _ (assert form)
          application (get-application-state application-id)
          _ (assert application)
@@ -414,7 +414,7 @@
    (let [application-id (:id application)
          catalogue-item-ids (map :id (:catalogue-items application))
          item-id (first catalogue-item-ids)
-         form (db/get-form-for-item {:item item-id :lang (name context/*lang*)})
+         form (db/get-form-for-item {:item item-id})
          form-id (:formid form)
          wfid (:wfid application)
          catalogue-items (:catalogue-items application)
