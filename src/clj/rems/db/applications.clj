@@ -328,6 +328,16 @@
                    (and (or (nil? start) (time/before? start now))
                         (or (nil? end) (time/before? now end))))))))
 
+(defn- get-licenses-and-localizations [application catalogue-item-ids]
+  ;; TODO catalogue-item-ids passed in just for performance
+  (let [license-localizations (->> (db/get-license-localizations)
+                                   (map #(update-in % [:langcode] keyword))
+                                   (group-by :licid))
+        time (or (:start application) (time/now))]
+    (mapv #(process-license application license-localizations %)
+          (get-active-licenses (:start application) {:wfid (:wfid application) :items catalogue-item-ids}))))
+
+
 (defn get-form-for
   "Returns a form structure like this:
 
@@ -372,11 +382,7 @@
          items (mapv #(process-item application-id form-id %)
                      (db/get-form-items {:id form-id
                                          :langcode (name context/*lang*)}))
-         license-localizations (->> (db/get-license-localizations)
-                                    (map #(update-in % [:langcode] keyword))
-                                    (group-by :licid))
-         licenses (mapv #(process-license application license-localizations %)
-                        (get-active-licenses (:start application) {:wfid (:wfid application) :items catalogue-item-ids}))
+         licenses (get-licenses-and-localizations application catalogue-item-ids)
          review-type (cond
                        (can-review? application) :normal
                        (can-third-party-review? application) :third-party
@@ -411,11 +417,7 @@
          items (mapv #(process-item application-id form-id %)
                      (db/get-form-items {:id form-id
                                          :langcode (name context/*lang*)}))
-         license-localizations (->> (db/get-license-localizations)
-                                    (map #(update-in % [:langcode] keyword))
-                                    (group-by :licid))
-         licenses (mapv #(process-license application license-localizations %)
-                        (get-active-licenses (time/now) {:wfid wfid :items catalogue-item-ids}))]
+         licenses (get-licenses-and-localizations application catalogue-item-ids)]
      {:id application-id
       :title (:formtitle form)
       :catalogue-items catalogue-items
