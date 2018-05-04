@@ -325,6 +325,11 @@ AND wf.id = :wfid
 AND ci.id = :catid
 /*~ ) ~*/
 
+-- :name get-workflows :? :*
+SELECT
+  wf.id, wf.owneruserid, wf.modifieruserid, wf.title, wf.fnlround, wf.visibility, wf.start, wf.endt
+FROM workflow wf
+
 -- :name clear-field-value! :!
 DELETE FROM application_text_values
 WHERE catAppId = :application

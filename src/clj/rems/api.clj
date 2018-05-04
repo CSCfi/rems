@@ -8,6 +8,7 @@
             [rems.api.entitlements :refer [entitlements-api]]
             [rems.api.form :refer [form-api]]
             [rems.api.public :as public]
+            [rems.api.workflow :refer [workflow-api]]
             [rems.context :as context]
             [rems.form :as form]
             [ring.middleware.cors :refer [wrap-cors]]
@@ -59,4 +60,5 @@
      applications-api
      catalogue-api
      entitlements-api
-     form-api)))
+     form-api
+     workflow-api)))
