@@ -51,6 +51,12 @@ INSERT INTO catalogue_item_localization
   (catid, langcode, title)
 VALUES (:id, :langcode, :title)
 
+-- :name get-forms :? :*
+SELECT
+  id,
+  title
+FROM application_form
+
 -- :name get-form-for-application :? :1
 SELECT
   form.id as formid,
