@@ -192,7 +192,7 @@
 
 (deftest disabled-catalogue-item
   (let [api-key "42"
-        user-id "alice"
+        user-id "developer"
         catid 6]
     (testing "save draft for disabled item"
       (let [response (-> (request :put (str "/api/application/save"))
@@ -203,17 +203,18 @@
                          app)
             cmd-response (read-body response)]
         ;; TODO should we actually return a nice error message here?
-        (is (= 400 (:status response)))))
-    (testing "submit for disabled item"
+        (is (= 400 (:status response)) "should not be able to save draft with disbled item")))
+    (testing "submit for application with disabled item"
       (let [response (-> (request :put (str "/api/application/save"))
                          (authenticate api-key user-id)
-                         (json-body {:command "submit"
+                         (json-body {:application-id 6 ;; application-id 6 is already created, but catalogue-item was disabled later
+                                     :command "submit"
                                      :catalogue-items [catid]
                                      :items {1 "x" 2 "y" 3 "z"}
                                      :licenses {2 "approved" 3 "approved"}})
                          app)
             cmd-response (read-body response)]
-        (is (= 400 (:status response)))))))
+        (is (= 400 (:status response)) "should not be possible to submit with disabled item")))))
 
 (deftest application-api-roles
   (let [api-key "42"
