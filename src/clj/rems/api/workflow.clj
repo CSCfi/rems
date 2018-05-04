@@ -2,7 +2,6 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.api.util :refer [check-user]]
             [rems.db.core :as db]
-            [rems.util :refer [get-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
   (:import [org.joda.time DateTime]))
