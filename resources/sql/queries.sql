@@ -285,7 +285,13 @@ INSERT INTO workflow_actors
 VALUES
 (:wfid, :actoruserid, CAST (:role as workflow_actor_role), :round)
 
--- :name get-workflow-actors :? :*
+-- :name get-actors-for-applications :? :*
+-- :doc
+-- Get actors, joined with applications
+-- - :wfid filter by workflow
+-- - :application filter by application
+-- - :round filter by round
+-- - :role filter by role
 SELECT
   wfa.actoruserid,
   wfa.role,
@@ -310,6 +316,12 @@ WHERE 1=1
   AND wfa.role = CAST (:role as workflow_actor_role)
 /*~ ) ~*/
 
+-- :name get-workflow-actors :? :*
+SELECT
+  actoruserid, role, round
+FROM workflow_actors
+WHERE wfid = :wfid
+
 -- :name get-workflow :? :1
 SELECT
   wf.id, wf.owneruserid, wf.modifieruserid, wf.title, wf.fnlround, wf.visibility, wf.start, wf.endt
@@ -324,6 +336,11 @@ AND wf.id = :wfid
 /*~ (when (:catid params) */
 AND ci.id = :catid
 /*~ ) ~*/
+
+-- :name get-workflows :? :*
+SELECT
+  wf.id, wf.owneruserid, wf.modifieruserid, wf.title, wf.fnlround, wf.visibility, wf.start, wf.endt
+FROM workflow wf
 
 -- :name clear-field-value! :!
 DELETE FROM application_text_values

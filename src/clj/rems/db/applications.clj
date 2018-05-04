@@ -200,7 +200,7 @@
    (get-applications-impl-batch {})))
 
 (defn get-handled-approvals []
-  (let [actors (db/get-workflow-actors {:role "approver"})]
+  (let [actors (db/get-actors-for-applications {:role "approver"})]
     (->> (get-applications-impl-batch {})
          (filterv handled?)
          (filterv (fn [app] (is-actor? (actors/filter-by-application-id actors (:id app)))))
@@ -209,7 +209,7 @@
 
 ;; TODO: consider refactoring to finding the review events from the current user and mapping those to applications
 (defn get-handled-reviews []
-  (let [actors (db/get-workflow-actors {:role "reviewer"})]
+  (let [actors (db/get-actors-for-applications {:role "reviewer"})]
     (->> (get-applications-impl-batch {})
          (filterv reviewed?)
          (filterv (fn [app] (or (is-actor? (actors/filter-by-application-id actors (:id app)))
