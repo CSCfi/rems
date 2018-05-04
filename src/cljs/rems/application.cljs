@@ -178,11 +178,10 @@
 ;;;; UI components ;;;;
 
 (defn- format-validation-messages
-  [msgs]
+  [msgs language]
   (into [:ul]
         (for [m msgs]
-          ;; TODO :title is not localized!
-          [:li (text-format (:key m) (:title (:field m)))])))
+          [:li (text-format (:key m) (get-in m [:title language]))])))
 
 (defn flash-message
   "Displays a notification (aka flash) message.
@@ -210,10 +209,10 @@
 (defn- id-to-name [id]
   (str "field" id))
 
-(defn- field-validation-message [validation]
+(defn- field-validation-message [validation title]
   (when validation
     [:div {:class "text-danger"}
-     (text-format (:key validation) (:title (:field validation)))]))
+     (text-format (:key validation) title)]))
 
 (defn- text-field
   [{:keys [title id prompt readonly optional value validation]}]
@@ -228,7 +227,7 @@
                          :class (when validation "is-invalid")
                          :value value :readOnly readonly
                          :onChange (set-field-value id)}]
-   [field-validation-message validation]])
+   [field-validation-message validation title]])
 
 (defn- texta-field
   [{:keys [title id prompt readonly optional value validation]}]
@@ -242,7 +241,7 @@
                             :class (when validation "is-invalid")
                             :value value :readOnly readonly
                             :onChange (set-field-value id)}]
-   [field-validation-message validation]])
+   [field-validation-message validation title]])
 
 (defn- label [{title :title}]
   [:div.form-group
@@ -253,7 +252,7 @@
   (fn [event]
     (rf/dispatch [::set-license id (.. event -target -checked)])))
 
-(defn- license [id approved readonly validation content]
+(defn- license [id title approved readonly validation content]
   [:div
    [:div.row
     [:div.col-1
@@ -266,17 +265,17 @@
     [:div.col content]]
    [:div.row
     [:div.col
-     [field-validation-message validation]]]])
+     [field-validation-message validation title]]]])
 
 (defn- link-license
   [{:keys [title id textcontent readonly approved validation]}]
-  [license id approved readonly validation
+  [license id title approved readonly validation
    [:a {:href textcontent :target "_blank"}
     title " "]])
 
 (defn- text-license
   [{:keys [title id textcontent approved readonly validation]}]
-  [license id approved readonly validation
+  [license id title approved readonly validation
    [:div.license-panel
     [:h6.license-title
      [:a.license-header.collapsed {:data-toggle "collapse"
@@ -326,7 +325,7 @@
 (defn- fields [form edit-application language]
   (let [application (:application form)
         {:keys [items licenses validation]} edit-application
-        validation-by-field-id (index-by [(comp :type :field) (comp :id :field)] validation)
+        validation-by-field-id (index-by [:type :id] validation)
         state (:state application)
         editable? (#{"draft" "returned" "withdrawn"} state)
         readonly? (not editable?)]
@@ -497,7 +496,7 @@
        [flash-message
         {:status :failure
          :contents [:div (text :t.form/validation.errors)
-                    [format-validation-messages (:validation edit-application)]]}])
+                    [format-validation-messages (:validation edit-application) language]]}])
      [application-header state events]
      (when user-attributes
        [:div.mt-3 [applicant-info "applicant-info" user-attributes]])
@@ -576,14 +575,14 @@
    (example "field of type \"text\" with validation error"
             [:form
              [field {:type "text" :title "Title" :inputprompt "prompt"
-                     :validation {:field {:title "Title"} :key :t.form.validation.required}}]])
+                     :validation {:key :t.form.validation.required}}]])
    (example "field of type \"texta\""
             [:form
              [field {:type "texta" :title "Title" :inputprompt "prompt"}]])
    (example "field of type \"texta\" with validation error"
             [:form
              [field {:type "texta" :title "Title" :inputprompt "prompt"
-                     :validation {:field {:title "Title"} :key :t.form.validation.required}}]])
+                     :validation {:key :t.form.validation.required}}]])
    (example "optional field"
             [:form
              [field {:type "texta" :optional "true" :title "Title" :inputprompt "prompt"}]])

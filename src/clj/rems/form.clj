@@ -23,12 +23,18 @@
     (or (has-roles? :reviewer :approver) ;; reviewer and approver can see everything
         (applicant-types (:event event)))))
 
+(defn- title-localizations [item]
+  (into {} (for [[lang {title :title}] (:localizations item)
+                 :when title]
+             [lang title])))
+
 (defn- validate-item
   [item]
   (when-not (:optional item)
     (when (empty? (:value item))
-      {:field (assoc (select-keys item [:id])
-                     :type :item)
+      {:type :item
+       :id (:id item)
+       :title (title-localizations item)
        :key :t.form.validation/required
        ;; TODO always uses english title...
        :text (text-format :t.form.validation/required (get-in item [:localizations :en :title]))})))
@@ -36,8 +42,9 @@
 (defn- validate-license
   [license]
   (when-not (:approved license)
-    {:field (assoc (select-keys license [:id :title])
-                   :type :license)
+    {:type :license
+     :id (:id license)
+     :title (title-localizations license)
      :key :t.form.validation/required
      :text (text-format :t.form.validation/required (:title license))}))
 

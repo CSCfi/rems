@@ -30,9 +30,9 @@
    (s/optional-key :licenses) {s/Keyword s/Str}})
 
 (def ValidationMessage
-  {:field {:id s/Int
-           (s/optional-key :title) s/Str ;; TODO
-           :type (s/enum :item :license)}
+  {:type (s/enum :item :license)
+   :id s/Num
+   :title {s/Keyword s/Str}
    :key s/Keyword
    :text s/Str})
 

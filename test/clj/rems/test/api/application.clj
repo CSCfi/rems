@@ -29,18 +29,19 @@
         (is (not (:errors cmd-response)))
         (is (= "draft" (:state cmd-response)))
         (is (not (:valid cmd-response)))
-        (is (= [{:field {:id 2
-                         :type "item"}
+        (is (= [{:type "item"
+                 :id 2
+                 :title {:en "Purpose of the project" :fi "Projektin tarkoitus"}
                  :key "t.form.validation/required"
                  :text "Field \"Purpose of the project\" is required."}
-                {:field {:id 2
-                         :title "non-localized link license"
-                         :type "license"}
+                {:type "license"
+                 :id 2
+                 :title {:en "CC Attribution 4.0" :fi "CC Nimeä 4.0"}
                  :key "t.form.validation/required"
                  :text "Field \"non-localized link license\" is required."}
-                {:field {:id 3
-                         :title "non-localized text license"
-                         :type "license"}
+                {:type "license"
+                 :id 3
+                 :title {:en "General Terms of Use", :fi "Yleiset käyttöehdot"}
                  :key "t.form.validation/required"
                  :text "Field \"non-localized text license\" is required."}]
                (:validation cmd-response))))
