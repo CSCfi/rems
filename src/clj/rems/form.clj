@@ -3,7 +3,8 @@
                                           get-application-state
                                           get-form-for
                                           make-draft-application
-                                          submit-application]]
+                                          submit-application
+                                          get-catalogue-items-by-application-id]]
             [rems.db.catalogue :refer [disabled-catalogue-item?]]
             [rems.db.core :as db]
             [rems.InvalidRequestException]
@@ -97,11 +98,14 @@
             :success? success?}
            (when-not valid? {:validation validation}))))
 
-(defn- create-new-draft-for-items [catalogue-item-ids]
-  (let [draft (make-draft-application catalogue-item-ids)
-        disabled-items (filter disabled-catalogue-item? (getx draft :catalogue-items))]
+(defn- check-for-disabled-items! [items]
+  (let [disabled-items (filter disabled-catalogue-item? items)]
     (when (seq disabled-items)
-      (throw (rems.InvalidRequestException. (str "Disabled catalogue items " (pr-str disabled-items)))))
+      (throw (rems.InvalidRequestException. (str "Disabled catalogue items " (pr-str disabled-items)))))))
+
+(defn- create-new-draft-for-items [catalogue-item-ids]
+  (let [draft (make-draft-application catalogue-item-ids)]
+    (check-for-disabled-items! (getx draft :catalogue-items))
     (let [wfid (getx draft :wfid)
           id (create-new-draft wfid)]
       (save-application-items id catalogue-item-ids)
@@ -113,6 +117,7 @@
         ;; if no application-id given, create a new application
         application-id (or application-id
                            (create-new-draft-for-items catalogue-item-ids))
+        _ (check-for-disabled-items! (get-catalogue-items-by-application-id application-id))
         submit? (= command "submit")
         {:keys [success? valid? validation]} (save-form-inputs application-id submit? items licenses)]
     (cond-> {:success success?
