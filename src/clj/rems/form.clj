@@ -28,6 +28,10 @@
                  :when title]
              [lang title])))
 
+;; TODO: in the validation :text, we always use the english title for
+;; items since they don't have a non-localized title like licenses.
+;; Should probably get rid of non-localize title for licenses as well?
+
 (defn- validate-item
   [item]
   (when-not (:optional item)
@@ -36,7 +40,6 @@
        :id (:id item)
        :title (title-localizations item)
        :key :t.form.validation/required
-       ;; TODO always uses english title...
        :text (text-format :t.form.validation/required (get-in item [:localizations :en :title]))})))
 
 (defn- validate-license
