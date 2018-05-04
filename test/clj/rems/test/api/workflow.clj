@@ -33,4 +33,10 @@
     (let [response (-> (request :get (str "/api/workflow"))
                        app)
           body (read-body response)]
+      (is (= "unauthorized" body))))
+  (testing "listing without approver role"
+    (let [response (-> (request :get (str "/api/workflow"))
+                       (authenticate "42" "alice")
+                       app)
+          body (read-body response)]
       (is (= "unauthorized" body)))))

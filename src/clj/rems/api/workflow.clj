@@ -1,6 +1,6 @@
 (ns rems.api.workflow
   (:require [compojure.api.sweet :refer :all]
-            [rems.api.util :refer [check-user]]
+            [rems.api.util :refer [check-user check-roles]]
             [rems.db.core :as db]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
@@ -45,4 +45,5 @@
       :summary "Get workflows"
       :return [Workflow]
       (check-user)
+      (check-roles :approver) ;; TODO admin role needed?
       (ok (get-workflows)))))
