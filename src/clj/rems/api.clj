@@ -21,7 +21,7 @@
 
 (defn invalid-handler
   [exception ex-data request]
-  (bad-request "invalid request"))
+  (bad-request (.getMessage exception)))
 
 (def cors-middleware
   #(wrap-cors
