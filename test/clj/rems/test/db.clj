@@ -97,26 +97,17 @@
       (testing "get form for catalogue item"
         (with-redefs [catalogue/cached
                       {:localizations (catalogue/load-catalogue-item-localizations!)}]
-          ;; TODO no need to localize forms any more!
-          (let [form-fi (binding [context/*lang* :fi]
-                          (applications/get-form-for app-id))
-                form-en (binding [context/*lang* :en]
-                          (applications/get-form-for app-id))
-                form-ru (binding [context/*lang* :ru]
-                          (applications/get-form-for app-id))]
-            (is (= "internal-title" (:title form-en)) "title")
-            (is (= ["A-en" "B-en" "C-en"] (map #(get-in % [:localizations :en :title]) (:items form-en))) "items should be in order")
-            (is (= "internal-title" (:title form-fi)) "title")
-            (is (= ["A-fi" "B-fi" "C-fi"] (map #(get-in % [:localizations :fi :title]) (:items form-fi))) "items should be in order")
+          (let [form (applications/get-form-for app-id)]
+            (is (= "internal-title" (:title form)) "title")
+            (is (= ["A-en" "B-en" "C-en"] (map #(get-in % [:localizations :en :title]) (:items form))) "items should be in order")
+            (is (= ["A-fi" "B-fi" "C-fi"] (map #(get-in % [:localizations :fi :title]) (:items form))) "items should be in order")
 
-            (is (= 1 (count (:licenses form-fi)) (count (:licenses form-en)) (count (:licenses form-ru))))
+            (is (= 1 (count (:licenses form))))
             (is (= {:title "non-localized license"
                     :textcontent "http://test.org"
                     :localizations {:fi {:title "Testi lisenssi" :textcontent "http://testi.fi"}
                                     :en {:title "Test license" :textcontent "http://test.com"}}}
-                   (select-keys (first (:licenses form-fi)) [:title :textcontent :localizations])
-                   (select-keys (first (:licenses form-en)) [:title :textcontent :localizations])
-                   (select-keys (first (:licenses form-ru)) [:title :textcontent :localizations]))))))
+                   (select-keys (first (:licenses form)) [:title :textcontent :localizations]))))))
 
       (testing "get partially filled form"
         (is app-id "sanity check")
