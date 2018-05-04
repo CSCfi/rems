@@ -19,7 +19,7 @@
         wfs (index-by [:title] data)
         simple (get wfs "simple")]
     (is simple)
-    (is (= 0 (:fnlround simple)))
+    (is (= 0 (:final-round simple)))
     (is (= [{:actoruserid "developer"
              :round 0
              :role "approver"}

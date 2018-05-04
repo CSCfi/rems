@@ -16,16 +16,26 @@
    :owneruserid s/Str
    :modifieruserid s/Str
    :title s/Str
-   :fnlround s/Num
-   :visibility s/Str
+   :final-round s/Num
    :start DateTime
-   :endt (s/maybe DateTime)
+   :end (s/maybe DateTime)
    :actors [Actor]})
 
-(defn get-workflows []
+(defn- format-workflow
+  [{:keys [id owneruserid modifieruserid title fnlround start endt]}]
+  {:id id
+   :owneruserid owneruserid
+   :modifieruserid modifieruserid
+   :title title
+   :final-round fnlround
+   :start start
+   :end endt})
+
+(defn- get-workflows []
   (doall
    (for [wf (db/get-workflows)]
-     (assoc wf :actors (db/get-workflow-actors {:wfid (:id wf)})))))
+     (assoc (format-workflow wf)
+            :actors (db/get-workflow-actors {:wfid (:id wf)})))))
 
 (def workflow-api
   (context "/workflow" []
