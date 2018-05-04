@@ -38,13 +38,16 @@
                                 :approved true}]})))
 
     (let [res (validate
-               {:items [{:title "A"
+               {:items [{:id 1
+                         :localizations {:en {:title "A"}}
                          :optional true
                          :value nil}
-                        {:title "B"
+                        {:id 2
+                         :localizations {:en {:title "B"}}
                          :optional false
                          :value ""}
-                        {:title "C"
+                        {:id 3
+                         :localizations {:en {:title "C"}}
                          :optional false
                          :value nil}]})]
       (testing res

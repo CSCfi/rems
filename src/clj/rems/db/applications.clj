@@ -279,10 +279,13 @@
      :value \"filled value or nil\"}"
   [application-id form-id item]
   {:id (:id item)
-   :title (:title item)
-   :inputprompt (:inputprompt item)
    :optional (:formitemoptional item)
    :type (:type item)
+   ;; TODO here we do a db call per item, for licenses we do one huge
+   ;; db call. Not sure which is better?
+   :localizations (into {} (for [{:keys [langcode title inputprompt]}
+                                 (db/get-form-item-localizations {:item (:id item)})]
+                             [(keyword langcode) {:title title :inputprompt inputprompt}]))
    :value (or
            (when-not (draft? application-id)
              (:value
@@ -299,18 +302,21 @@
      :licensetype \"link\"
      :title \"LGPL\"
      :textcontent \"www.license.link\"
-     :approved false}"
+     :approved false
+     :localizations {\"fi\" {:title \"LGPL\" :textcontent \"license.fi\"}}}"
   [application localizations license]
   (let [app-id (:id application)
         app-user (:applicantuserid application)
         license-id (:id license)
-        localized-title (get-in localizations [license-id context/*lang* :title])
-        localized-content (get-in localizations [license-id context/*lang* :textcontent])]
+        my-localizations (into {} (for [{:keys [langcode title textcontent]} (get localizations license-id)]
+                                    [langcode {:title title :textcontent textcontent}]))]
     {:id (:id license)
      :type "license"
      :licensetype (:type license)
-     :title (or localized-title (:title license))
-     :textcontent (or localized-content (:textcontent license))
+     ;; TODO why do licenses have a non-localized title & content while items don't?
+     :title (:title license)
+     :textcontent (:textcontent license)
+     :localizations my-localizations
      :approved (= "approved"
                   (:state
                    (when application
@@ -325,6 +331,16 @@
                        end (:endt license)]
                    (and (or (nil? start) (time/before? start now))
                         (or (nil? end) (time/before? now end))))))))
+
+(defn- get-licenses-and-localizations [application catalogue-item-ids]
+  ;; TODO catalogue-item-ids passed in just for performance
+  (let [license-localizations (->> (db/get-license-localizations)
+                                   (map #(update-in % [:langcode] keyword))
+                                   (group-by :licid))
+        time (or (:start application) (time/now))]
+    (mapv #(process-license application license-localizations %)
+          (get-active-licenses time {:wfid (:wfid application) :items catalogue-item-ids}))))
+
 
 (defn get-form-for
   "Returns a form structure like this:
@@ -355,10 +371,11 @@
                  :licensetype \"link\"
                  :title \"LGPL\"
                  :textcontent \"http://foo\"
+                 :localizations {\"fi\" {:title \"...\" :textcontent \"...\"}}
                  :approved false}]}"
   ([application-id]
    (let [form (db/get-form-for-application {:application application-id})
-         form (or form (db/get-form-for-application {:application application-id :lang "en"}))
+         form (or form (db/get-form-for-application {:application application-id}))
          _ (assert form)
          application (get-application-state application-id)
          _ (assert application)
@@ -367,13 +384,8 @@
          catalogue-item-ids (mapv :item (db/get-application-items {:application application-id}))
          catalogue-items (get-catalogue-items catalogue-item-ids)
          items (mapv #(process-item application-id form-id %)
-                     (db/get-form-items {:id form-id
-                                         :langcode (name context/*lang*)}))
-         license-localizations (->> (db/get-license-localizations)
-                                    (map #(update-in % [:langcode] keyword))
-                                    (index-by [:licid :langcode]))
-         licenses (mapv #(process-license application license-localizations %)
-                        (get-active-licenses (:start application) {:wfid (:wfid application) :items catalogue-item-ids}))
+                     (db/get-form-items {:id form-id}))
+         licenses (get-licenses-and-localizations application catalogue-item-ids)
          review-type (cond
                        (can-review? application) :normal
                        (can-third-party-review? application) :third-party
@@ -401,18 +413,13 @@
    (let [application-id (:id application)
          catalogue-item-ids (map :id (:catalogue-items application))
          item-id (first catalogue-item-ids)
-         form (db/get-form-for-item {:item item-id :lang (name context/*lang*)})
+         form (db/get-form-for-item {:item item-id})
          form-id (:formid form)
          wfid (:wfid application)
          catalogue-items (:catalogue-items application)
          items (mapv #(process-item application-id form-id %)
-                     (db/get-form-items {:id form-id
-                                         :langcode (name context/*lang*)}))
-         license-localizations (->> (db/get-license-localizations)
-                                    (map #(update-in % [:langcode] keyword))
-                                    (index-by [:licid :langcode]))
-         licenses (mapv #(process-license application license-localizations %)
-                        (get-active-licenses (time/now) {:wfid wfid :items catalogue-item-ids}))]
+                     (db/get-form-items {:id form-id}))
+         licenses (get-licenses-and-localizations application catalogue-item-ids)]
      {:id application-id
       :title (:formtitle form)
       :catalogue-items catalogue-items

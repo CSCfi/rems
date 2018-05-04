@@ -23,20 +23,31 @@
     (or (has-roles? :reviewer :approver) ;; reviewer and approver can see everything
         (applicant-types (:event event)))))
 
+(defn- title-localizations [item]
+  (into {} (for [[lang {title :title}] (:localizations item)
+                 :when title]
+             [lang title])))
+
+;; TODO: in the validation :text, we always use the english title for
+;; items since they don't have a non-localized title like licenses.
+;; Should probably get rid of non-localize title for licenses as well?
+
 (defn- validate-item
   [item]
   (when-not (:optional item)
     (when (empty? (:value item))
-      {:field (assoc (select-keys item [:id :title])
-                     :type :item)
+      {:type :item
+       :id (:id item)
+       :title (title-localizations item)
        :key :t.form.validation/required
-       :text (text-format :t.form.validation/required (:title item))})))
+       :text (text-format :t.form.validation/required (get-in item [:localizations :en :title]))})))
 
 (defn- validate-license
   [license]
   (when-not (:approved license)
-    {:field (assoc (select-keys license [:id :title])
-                   :type :license)
+    {:type :license
+     :id (:id license)
+     :title (title-localizations license)
      :key :t.form.validation/required
      :text (text-format :t.form.validation/required (:title license))}))
 

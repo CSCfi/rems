@@ -21,12 +21,12 @@
    :licensetype s/Str
    :title s/Str
    :textcontent s/Str
+   :localizations {s/Keyword {:title s/Str :textcontent s/Str}}
    :approved s/Bool})
 
 (def Item
   {:id s/Num
-   :title s/Str
-   :inputprompt (s/maybe s/Str)
+   :localizations {s/Keyword {:title s/Str :inputprompt (s/maybe s/Str)}}
    :optional s/Bool
    :type s/Str
    :value (s/maybe s/Str)})

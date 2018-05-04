@@ -178,10 +178,10 @@
 ;;;; UI components ;;;;
 
 (defn- format-validation-messages
-  [msgs]
+  [msgs language]
   (into [:ul]
         (for [m msgs]
-          [:li (text-format (:key m) (:title (:field m)))])))
+          [:li (text-format (:key m) (get-in m [:title language]))])))
 
 (defn flash-message
   "Displays a notification (aka flash) message.
@@ -209,10 +209,10 @@
 (defn- id-to-name [id]
   (str "field" id))
 
-(defn- field-validation-message [validation]
+(defn- field-validation-message [validation title]
   (when validation
     [:div {:class "text-danger"}
-     (text-format (:key validation) (:title (:field validation)))]))
+     (text-format (:key validation) title)]))
 
 (defn- text-field
   [{:keys [title id prompt readonly optional value validation]}]
@@ -227,7 +227,7 @@
                          :class (when validation "is-invalid")
                          :value value :readOnly readonly
                          :onChange (set-field-value id)}]
-   [field-validation-message validation]])
+   [field-validation-message validation title]])
 
 (defn- texta-field
   [{:keys [title id prompt readonly optional value validation]}]
@@ -241,7 +241,7 @@
                             :class (when validation "is-invalid")
                             :value value :readOnly readonly
                             :onChange (set-field-value id)}]
-   [field-validation-message validation]])
+   [field-validation-message validation title]])
 
 (defn- label [{title :title}]
   [:div.form-group
@@ -252,7 +252,7 @@
   (fn [event]
     (rf/dispatch [::set-license id (.. event -target -checked)])))
 
-(defn- license [id approved readonly validation content]
+(defn- license [id title approved readonly validation content]
   [:div
    [:div.row
     [:div.col-1
@@ -265,17 +265,17 @@
     [:div.col content]]
    [:div.row
     [:div.col
-     [field-validation-message validation]]]])
+     [field-validation-message validation title]]]])
 
 (defn- link-license
   [{:keys [title id textcontent readonly approved validation]}]
-  [license id approved readonly validation
+  [license id title approved readonly validation
    [:a {:href textcontent :target "_blank"}
     title " "]])
 
 (defn- text-license
   [{:keys [title id textcontent approved readonly validation]}]
-  [license id approved readonly validation
+  [license id title approved readonly validation
    [:div.license-panel
     [:h6.license-title
      [:a.license-header.collapsed {:data-toggle "collapse"
@@ -319,10 +319,13 @@
    {:name "submit" :onClick #(rf/dispatch [::save-application "submit"])}
    (text :t.form/submit)])
 
-(defn- fields [form edit-application]
+(defn- apply-localization [item language]
+  (merge item (get-in item [:localizations language])))
+
+(defn- fields [form edit-application language]
   (let [application (:application form)
         {:keys [items licenses validation]} edit-application
-        validation-by-field-id (index-by [(comp :type :field) (comp :id :field)] validation)
+        validation-by-field-id (index-by [:type :id] validation)
         state (:state application)
         editable? (#{"draft" "returned" "withdrawn"} state)
         readonly? (not editable?)]
@@ -335,7 +338,7 @@
       [:div
        (into [:div]
              (for [i (:items form)]
-               [field (assoc i
+               [field (assoc (apply-localization i language)
                              :validation (get-in validation-by-field-id [:item (:id i)])
                              :readonly readonly?
                              :value (get items (:id i)))]))
@@ -344,7 +347,7 @@
           [:h4 (text :t.form/licenses)]
           (into [:div]
                 (for [l form-licenses]
-                  [field (assoc l
+                  [field (assoc (apply-localization l language)
                                 :validation (get-in validation-by-field-id [:license (:id l)])
                                 :readonly readonly?
                                 :approved (get licenses (:id l)))]))])
@@ -480,7 +483,7 @@
                        ^{:key (:id item)}
                        [:li (get-catalogue-item-title item language)]))]}]))
 
-(defn- render-application [application edit-application]
+(defn- render-application [application edit-application language]
   ;; TODO should rename :application
   (let [app (:application application)
         state (:state app)
@@ -493,20 +496,21 @@
        [flash-message
         {:status :failure
          :contents [:div (text :t.form/validation.errors)
-                    [format-validation-messages (:validation edit-application)]]}])
+                    [format-validation-messages (:validation edit-application) language]]}])
      [application-header state events]
      (when user-attributes
        [:div.mt-3 [applicant-info "applicant-info" user-attributes]])
      [:div.mt-3 [applied-resources (:catalogue-items application)]]
-     [:div.my-3 [fields application edit-application]]
+     [:div.my-3 [fields application edit-application language]]
      [:div.mb-3 [actions-form app]]]))
 
 ;;;; Entrypoint ;;;;
 
 (defn- show-application []
   (if-let [application @(rf/subscribe [:application])]
-    (let [edit-application @(rf/subscribe [:edit-application])]
-      [render-application application edit-application])
+    (let [edit-application @(rf/subscribe [:edit-application])
+          language @(rf/subscribe [:language])]
+      [render-application application edit-application language])
     [:p "No application loaded"]))
 
 (defn application-page []
@@ -571,14 +575,14 @@
    (example "field of type \"text\" with validation error"
             [:form
              [field {:type "text" :title "Title" :inputprompt "prompt"
-                     :validation {:field {:title "Title"} :key :t.form.validation.required}}]])
+                     :validation {:key :t.form.validation.required}}]])
    (example "field of type \"texta\""
             [:form
              [field {:type "texta" :title "Title" :inputprompt "prompt"}]])
    (example "field of type \"texta\" with validation error"
             [:form
              [field {:type "texta" :title "Title" :inputprompt "prompt"
-                     :validation {:field {:title "Title"} :key :t.form.validation.required}}]])
+                     :validation {:key :t.form.validation.required}}]])
    (example "optional field"
             [:form
              [field {:type "texta" :optional "true" :title "Title" :inputprompt "prompt"}]])
@@ -614,11 +618,13 @@
                       {:id 2 :type "label" :title "Please input your wishes below."}
                       {:id 3 :type "texta" :title "Field 2" :optional true :inputprompt "prompt 2"}
                       {:id 4 :type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]
-              :licenses [{:id 4 :type "license" :title "A Text License" :licensetype "text"
-                          :textcontent lipsum}
-                         {:id 5 :type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"}]}
+              :licenses [{:id 4 :type "license" :title "" :textcontent "" :licensetype "text"
+                          :localizations {:en {:title "A Text License" :textcontent lipsum}}}
+                         {:id 5 :type "license" :licensetype "link" :title "" :textcontent ""
+                          :localizations {:en {:title "Link to license" :textcontent "/guide"}}}]}
              {:items {1 "abc"}
-              :licenses {4 false 5 true}}])
+              :licenses {4 false 5 true}}
+             :en])
    (example "application, applied"
             [render-application
              {:title "Form title"
@@ -628,10 +634,12 @@
                             :review-type nil}
               :catalogue-items [{:title "An applied item"}]
               :items [{:id 1 :type "text" :title "Field 1" :inputprompt "prompt 1"}]
-              :licenses [{:id 2 :type "license" :title "A Text License" :licensetype "text"
-                          :textcontent lipsum}]}
+              :licenses [{:id 2 :type "license" :title "" :licensetype "text"
+                          :textcontent ""
+                          :localizations {:en {:title "A Text License" :textcontent lipsum}}}]}
              {:items {1 "abc"}
-              :licenses {2 true}}])
+              :licenses {2 true}}
+             :en])
    (example "application, approved"
             [render-application
              {:title "Form title"

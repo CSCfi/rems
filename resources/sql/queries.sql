@@ -77,16 +77,23 @@ SELECT
   type,
   value,
   itemorder,
-  item.visibility,
-  loc.title,
-  loc.inputprompt
+  item.visibility
 FROM application_form form
 LEFT OUTER JOIN application_form_item_map itemmap ON form.id = itemmap.formId
 LEFT OUTER JOIN application_form_item item ON item.id = itemmap.formItemId
-LEFT OUTER JOIN application_form_item_localization loc ON loc.itemId = item.id
 WHERE form.id = :id
-  AND loc.langCode = :langcode
 ORDER BY itemorder
+
+-- :name get-form-item-localizations :? :*
+SELECT
+  langCode,
+  title,
+  inputprompt
+FROM application_form_item_localization
+WHERE 1=1
+/*~ (when (:item params) */
+  AND itemId = :item
+/*~ ) ~*/
 
 -- :name create-form! :insert
 INSERT INTO application_form
