@@ -6,6 +6,7 @@
             [rems.api.applications :refer [applications-api]]
             [rems.api.catalogue :refer [catalogue-api]]
             [rems.api.entitlements :refer [entitlements-api]]
+            [rems.api.form :refer [form-api]]
             [rems.api.public :as public]
             [rems.context :as context]
             [rems.form :as form]
@@ -57,4 +58,5 @@
      application-api
      applications-api
      catalogue-api
-     entitlements-api)))
+     entitlements-api
+     form-api)))
