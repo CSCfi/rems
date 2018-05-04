@@ -283,7 +283,7 @@
    :type (:type item)
    ;; TODO here we do a db call per item, for licenses we do one huge
    ;; db call. Not sure which is better?
-   :localizations (into {} (for [{:keys [langcode title inputprompt] :as foo}
+   :localizations (into {} (for [{:keys [langcode title inputprompt]}
                                  (db/get-form-item-localizations {:item (:id item)})]
                              [(keyword langcode) {:title title :inputprompt inputprompt}]))
    :value (or
@@ -339,7 +339,7 @@
                                    (group-by :licid))
         time (or (:start application) (time/now))]
     (mapv #(process-license application license-localizations %)
-          (get-active-licenses (:start application) {:wfid (:wfid application) :items catalogue-item-ids}))))
+          (get-active-licenses time {:wfid (:wfid application) :items catalogue-item-ids}))))
 
 
 (defn get-form-for
@@ -393,7 +393,6 @@
      (when application-id
        (when-not (may-see-application? application)
          (throw-unauthorized)))
-     (prn :DBG items)
      {:id form-id
       :title (:formtitle form)
       :catalogue-items catalogue-items
