@@ -285,7 +285,13 @@ INSERT INTO workflow_actors
 VALUES
 (:wfid, :actoruserid, CAST (:role as workflow_actor_role), :round)
 
--- :name get-workflow-actors :? :*
+-- :name get-actors-for-applications :? :*
+-- :doc
+-- Get actors, joined with applications
+-- - :wfid filter by workflow
+-- - :application filter by application
+-- - :round filter by round
+-- - :role filter by role
 SELECT
   wfa.actoruserid,
   wfa.role,
@@ -309,6 +315,12 @@ WHERE 1=1
 /*~ (when (:role params) */
   AND wfa.role = CAST (:role as workflow_actor_role)
 /*~ ) ~*/
+
+-- :name get-workflow-actors :? :*
+SELECT
+  actoruserid, role, round
+FROM workflow_actors
+WHERE wfid = :wfid
 
 -- :name get-workflow :? :1
 SELECT

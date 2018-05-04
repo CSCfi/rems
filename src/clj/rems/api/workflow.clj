@@ -1,6 +1,5 @@
 (ns rems.api.workflow
   (:require [compojure.api.sweet :refer :all]
-            #_[rems.api.schema :refer :all]
             [rems.api.util :refer [check-user]]
             [rems.db.core :as db]
             [rems.util :refer [get-user-id]]
@@ -10,7 +9,6 @@
 
 (def Actor
   {:actoruserid s/Str
-   :id s/Any ;; TODO join by app shouldn't be done
    :round s/Num
    :role (s/enum "approver" "reviewer")})
 
