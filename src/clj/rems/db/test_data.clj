@@ -213,8 +213,7 @@
         (applications/approve-application app-id 1 "comment for approval")))))
 
 (defn- create-application-with-expired-resource-license! [wfid form applicant-user]
-  (let [resource-id 3
-        _ (db/create-resource! {:id resource-id :resid "Resource that has expired license" :prefix "nbn" :modifieruserid 1})
+  (let [resource-id (:id (db/create-resource! {:resid "Resource that has expired license" :prefix "nbn" :modifieruserid 1}))
         year-ago (time/minus (time/now) (time/years 1))
         yesterday (time/minus (time/now) (time/days 1))
         licid-expired (create-resource-license! resource-id "License that has expired")
@@ -226,8 +225,7 @@
       (applications/submit-application (create-draft! item-with-expired-license wfid "applied when license was valid that has since expired" (time/minus (time/now) (time/days 2)))))))
 
 (defn- create-application-before-new-resource-license! [wfid form applicant-user]
-  (let [resource-id 4
-        _ (db/create-resource! {:id resource-id :resid "Resource that has a new resource license" :prefix "nbn" :modifieruserid 1})
+  (let [resource-id (:id (db/create-resource! {:resid "Resource that has a new resource license" :prefix "nbn" :modifieruserid 1}))
         yesterday (time/minus (time/now) (time/days 1))
         licid-new (create-resource-license! resource-id "License that was just created")
         _ (db/set-resource-license-validity! {:licid licid-new :start (time/now) :end nil})
@@ -240,29 +238,29 @@
 (defn create-test-data! []
   (db/add-api-key! {:apikey 42 :comment "test data"})
   (create-users-and-roles!)
-  (db/create-resource! {:id 1 :resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1})
-  (db/create-resource! {:id 2 :resid "Extra Data" :prefix "nbn" :modifieruserid 1})
-  (create-resource-license! 2 "Some test license")
-  (let [form (create-basic-form!)
+  (let [res1 (:id (db/create-resource! {:resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1}))
+        res2 (:id (db/create-resource! {:resid "Extra Data" :prefix "nbn" :modifieruserid 1}))
+        form (create-basic-form!)
         workflows (create-workflows! "developer" "bob" "carl")
-        minimal (create-catalogue-item! 1 (:minimal workflows) form
+        minimal (create-catalogue-item! res1 (:minimal workflows) form
                                         {"en" "ELFA Corpus, direct approval"
                                          "fi" "ELFA-korpus, suora hyväksyntä"})
-        simple (create-catalogue-item! 1 (:simple workflows) form
+        simple (create-catalogue-item! res1 (:simple workflows) form
                                        {"en" "ELFA Corpus, one approval"
                                         "fi" "ELFA-korpus, yksi hyväksyntä"})
-        bundable (create-catalogue-item! 2 (:simple workflows) form
+        bundable (create-catalogue-item! res2 (:simple workflows) form
                                          {"en" "ELFA Corpus, one approval (extra data)"
                                           "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti)"})
-        with-review (create-catalogue-item! 1 (:with-review workflows) form
+        with-review (create-catalogue-item! res1 (:with-review workflows) form
                                             {"en" "ELFA Corpus, with review"
                                              "fi" "ELFA-korpus, katselmoinnilla"})
-        different (create-catalogue-item! 1 (:different workflows) form
+        different (create-catalogue-item! res1 (:different workflows) form
                                           {"en" "ELFA Corpus, two rounds of approval by different approvers"
                                            "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})
-        disabled (create-catalogue-item! 1 (:simple workflows) form
+        disabled (create-catalogue-item! res1 (:simple workflows) form
                                          {"en" "ELFA Corpus, one approval (extra data, disabled)"
                                           "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti, pois käytöstä)"})]
+    (create-resource-license! res2 "Some test license")
     (db/set-catalogue-item-state! {:item disabled :state "disabled" :user "developer"})
     (create-applications! simple (:simple workflows) "developer" "developer")
     (create-disabled-applications! disabled (:simple workflows) "developer" "developer")
@@ -273,29 +271,29 @@
 
 (defn create-demo-data! []
   (create-demo-users-and-roles!)
-  (db/create-resource! {:id 1 :resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1})
-  (db/create-resource! {:id 2 :resid "Extra Data" :prefix "nbn" :modifieruserid 1})
-  (create-resource-license! 2 "Some demo license")
-  (let [form (create-basic-form!)
+  (let [res1 (:id (db/create-resource! {:resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1}))
+        res2 (:id (db/create-resource! {:resid "Extra Data" :prefix "nbn" :modifieruserid 1}))
+        form (create-basic-form!)
         workflows (create-workflows! "RDapprover1@funet.fi" "RDapprover2@funet.fi" "RDreview@funet.fi")
-        minimal (create-catalogue-item! 1 (:minimal workflows) form
+        minimal (create-catalogue-item! res1 (:minimal workflows) form
                                         {"en" "ELFA Corpus, direct approval"
                                          "fi" "ELFA-korpus, suora hyväksyntä"})
-        simple (create-catalogue-item! 1 (:simple workflows) form
+        simple (create-catalogue-item! res1 (:simple workflows) form
                                        {"en" "ELFA Corpus, one approval"
                                         "fi" "ELFA-korpus, yksi hyväksyntä"})
-        bundable (create-catalogue-item! 2 (:simple workflows) form
+        bundable (create-catalogue-item! res2 (:simple workflows) form
                                          {"en" "ELFA Corpus, one approval (extra data)"
                                           "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti)"})
-        with-review (create-catalogue-item! 1 (:with-review workflows) form
+        with-review (create-catalogue-item! res1 (:with-review workflows) form
                                             {"en" "ELFA Corpus, with review"
                                              "fi" "ELFA-korpus, katselmoinnilla"})
-        different (create-catalogue-item! 1 (:different workflows) form
+        different (create-catalogue-item! res1 (:different workflows) form
                                           {"en" "ELFA Corpus, two rounds of approval by different approvers"
                                            "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})
-        disabled (create-catalogue-item! 1 (:simple workflows) form
+        disabled (create-catalogue-item! res1 (:simple workflows) form
                                          {"en" "ELFA Corpus, one approval (extra data, disabled)"
                                           "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti, pois käytöstä)"})]
+    (create-resource-license! res2 "Some demo license")
     (db/set-catalogue-item-state! {:item disabled :state "disabled" :user "developer"})
     (create-applications! simple (:simple workflows) "RDapplicant1@funet.fi" "RDapprover1@funet.fi")
     (create-disabled-applications! disabled (:simple workflows) "RDapplicant1@funet.fi" "RDapprover1@funet.fi")

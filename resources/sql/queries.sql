@@ -46,7 +46,9 @@ FROM resource
 -- :doc Create a single resource
 INSERT INTO resource
 (id, resid, prefix, modifieruserid)
-VALUES (:id, :resid, :prefix, :modifieruserid)
+VALUES (
+  /*~ (if (:id params) */ :id /*~ */ DEFAULT /*~ ) ~*/,
+  :resid, :prefix, :modifieruserid)
 
 -- :name get-database-name :? :1
 SELECT current_database()
@@ -386,7 +388,7 @@ WHERE item.id IN (:v*:items)
 SELECT lic.id, lic.title, lic.type, lic.textcontent, rl.start, rl.endt
 FROM license lic
 INNER JOIN resource_licenses rl ON lic.id = rl.licid
-WHERE rl.id = :id
+WHERE rl.resid = :id
 
 -- :name get-all-licenses :? :*
 SELECT lic.id, lic.title, lic.type, lic.textcontent
