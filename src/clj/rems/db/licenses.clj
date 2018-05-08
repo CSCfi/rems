@@ -3,9 +3,9 @@
   (:require [clj-time.core :as time]
             [rems.db.core :as db]))
 
-(defn- get-licenses-raw [params]
+(defn- format-licenses [licenses]
   (doall
-   (for [license (db/get-licenses params)]
+   (for [license licenses]
      {:id (:id license)
       :licensetype (:type license)
       :start (:start license)
@@ -14,16 +14,25 @@
       :title (:title license)
       :textcontent (:textcontent license)})))
 
-(defn get-licenses [params]
+(defn- localize-licenses [licenses]
   (let [localizations (->> (db/get-license-localizations)
                            (map #(update-in % [:langcode] keyword))
                            (group-by :licid))]
     (doall
-     (for [lic (get-licenses-raw params)]
+     (for [lic licenses]
        (assoc lic :localizations
               (into {} (for [{:keys [langcode title textcontent]} (get localizations (:id lic))]
                          [langcode {:title title :textcontent textcontent}])))))))
 
+(defn get-resource-licenses [id]
+  (->> (db/get-resource-licenses {:id id})
+       (format-licenses)
+       (localize-licenses)))
+
+(defn get-licenses [params]
+  (->> (db/get-licenses params)
+       (format-licenses)
+       (localize-licenses)))
 
 (defn get-active-licenses [now params]
   (->> (get-licenses params)

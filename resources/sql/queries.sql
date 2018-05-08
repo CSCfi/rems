@@ -382,6 +382,12 @@ INNER JOIN resource_licenses rl ON lic.id = rl.licid
 INNER JOIN catalogue_item item ON (item.resid = rl.resid)
 WHERE item.id IN (:v*:items)
 
+-- :name get-resource-licenses :? :*
+SELECT lic.id, lic.title, lic.type, lic.textcontent, rl.start, rl.endt
+FROM license lic
+INNER JOIN resource_licenses rl ON lic.id = rl.licid
+WHERE rl.id = :id
+
 -- :name get-license-localizations :? :*
 SELECT licid, langcode, title, textcontent
 FROM license_localization

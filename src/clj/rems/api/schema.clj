@@ -15,7 +15,7 @@
    (s/optional-key :langcode) s/Keyword
    :localizations (s/maybe {s/Any s/Any})})
 
-(def License
+(def ApplicationLicense
   {:id s/Num
    :type s/Str
    :licensetype s/Str
