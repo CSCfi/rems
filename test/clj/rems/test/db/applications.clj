@@ -47,7 +47,8 @@
       "actions only by applicant"))
 
 (deftest test-get-active-licenses
-  (let [today (time/now)
+  (let [get-active-licenses #'rems.db.applications/get-active-licenses
+        today (time/now)
         yesterday (time/minus today (time/days 1))
         expired-license-end (time/plus yesterday (time/hours 1))
         just-created-license-start (time/minus today (time/hours 1))]

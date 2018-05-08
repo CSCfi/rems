@@ -324,7 +324,7 @@
                                                            :licid (:id license)
                                                            :actoruserid app-user}))))}))
 
-(defn get-active-licenses [now params]
+(defn- get-active-licenses [now params]
   (->> (db/get-licenses params)
        (filter (fn [license]
                  (let [start (:start license)
