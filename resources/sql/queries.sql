@@ -388,6 +388,10 @@ FROM license lic
 INNER JOIN resource_licenses rl ON lic.id = rl.licid
 WHERE rl.id = :id
 
+-- :name get-all-licenses :? :*
+SELECT lic.id, lic.title, lic.type, lic.textcontent
+FROM license lic
+
 -- :name get-license-localizations :? :*
 SELECT licid, langcode, title, textcontent
 FROM license_localization

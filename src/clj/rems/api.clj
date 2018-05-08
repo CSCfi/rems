@@ -7,6 +7,7 @@
             [rems.api.catalogue :refer [catalogue-api]]
             [rems.api.entitlements :refer [entitlements-api]]
             [rems.api.form :refer [form-api]]
+            [rems.api.license :refer [license-api]]
             [rems.api.public :as public]
             [rems.api.resource :refer [resource-api]]
             [rems.api.workflow :refer [workflow-api]]
@@ -62,5 +63,6 @@
      catalogue-api
      entitlements-api
      form-api
+     license-api
      resource-api
      workflow-api)))

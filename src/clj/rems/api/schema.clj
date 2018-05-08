@@ -15,10 +15,34 @@
    (s/optional-key :langcode) s/Keyword
    :localizations (s/maybe {s/Any s/Any})})
 
+(def License
+  {:id s/Num
+   :licensetype (s/enum "text" "link" "attachment")
+   :title s/Str
+   :textcontent s/Str
+   :localizations {s/Keyword {:title s/Str :textcontent s/Str}}})
+
+(def ResourceLicense
+  {:id s/Num
+   :licensetype (s/enum "text" "link" "attachment")
+   :start DateTime
+   :end (s/maybe DateTime)
+   :title s/Str
+   :textcontent s/Str
+   :localizations {s/Keyword {:title s/Str :textcontent s/Str}}})
+
+(def Resource
+  {:id s/Num
+   :modifieruserid s/Str
+   :resid s/Str
+   :start DateTime
+   :end (s/maybe DateTime)
+   :licenses [ResourceLicense]})
+
 (def ApplicationLicense
   {:id s/Num
    :type s/Str
-   :licensetype s/Str
+   :licensetype (s/enum "text" "link" "attachment")
    :title s/Str
    :textcontent s/Str
    :localizations {s/Keyword {:title s/Str :textcontent s/Str}}

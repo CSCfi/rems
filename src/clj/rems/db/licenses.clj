@@ -29,6 +29,12 @@
        (format-licenses)
        (localize-licenses)))
 
+(defn get-all-licenses []
+  (->> (db/get-all-licenses)
+       (format-licenses)
+       (map #(dissoc % :start :end)) ;; HACK
+       (localize-licenses)))
+
 (defn get-licenses [params]
   (->> (db/get-licenses params)
        (format-licenses)
