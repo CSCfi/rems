@@ -33,6 +33,15 @@ INSERT INTO catalogue_item
 (title, formid, resid, wfid)
 VALUES (:title, :form, :resid, :wfid)
 
+-- :name get-resources :? :*
+SELECT
+  id,
+  modifieruserid,
+  resid,
+  start,
+  endt
+FROM resource
+
 -- :name create-resource! :insert
 -- :doc Create a single resource
 INSERT INTO resource

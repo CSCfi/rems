@@ -8,6 +8,7 @@
             [rems.api.entitlements :refer [entitlements-api]]
             [rems.api.form :refer [form-api]]
             [rems.api.public :as public]
+            [rems.api.resource :refer [resource-api]]
             [rems.api.workflow :refer [workflow-api]]
             [rems.context :as context]
             [rems.form :as form]
@@ -61,4 +62,5 @@
      catalogue-api
      entitlements-api
      form-api
+     resource-api
      workflow-api)))
