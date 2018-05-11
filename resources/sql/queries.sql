@@ -37,6 +37,7 @@ VALUES (:title, :form, :resid, :wfid)
 SELECT
   id,
   modifieruserid,
+  prefix,
   resid,
   start,
   endt
@@ -45,10 +46,8 @@ FROM resource
 -- :name create-resource! :insert
 -- :doc Create a single resource
 INSERT INTO resource
-(id, resid, prefix, modifieruserid)
-VALUES (
-  /*~ (if (:id params) */ :id /*~ */ DEFAULT /*~ ) ~*/,
-  :resid, :prefix, :modifieruserid)
+(resid, prefix, modifieruserid)
+VALUES (:resid, :prefix, :modifieruserid)
 
 -- :name get-database-name :? :1
 SELECT current_database()

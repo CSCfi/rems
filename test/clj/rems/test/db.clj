@@ -46,16 +46,16 @@
     (is (empty? (db/get-catalogue-items))))
 
   (testing "with test database"
-    (db/create-resource! {:id 1 :resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1})
-    (db/create-catalogue-item! {:title "ELFA Corpus" :form nil :resid 1 :wfid nil})
-    (db/create-catalogue-item! {:title "B" :form nil :resid nil :wfid nil})
-    (is (= ["B" "ELFA Corpus"] (sort (map :title (db/get-catalogue-items))))
-        "should find two items")
-    (let [item-from-list (second (db/get-catalogue-items))
-          item-by-id (db/get-catalogue-item {:item (:id item-from-list)})]
-      (is (= (select-keys item-from-list [:id :title])
-             (select-keys item-by-id [:id :title]))
-          "should find catalogue item by id"))))
+    (let [resid (:id (db/create-resource! {:resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1}))]
+      (db/create-catalogue-item! {:title "ELFA Corpus" :form nil :resid resid :wfid nil})
+      (db/create-catalogue-item! {:title "B" :form nil :resid nil :wfid nil})
+      (is (= ["B" "ELFA Corpus"] (sort (map :title (db/get-catalogue-items))))
+          "should find two items")
+      (let [item-from-list (second (db/get-catalogue-items))
+            item-by-id (db/get-catalogue-item {:item (:id item-from-list)})]
+        (is (= (select-keys item-from-list [:id :title])
+               (select-keys item-by-id [:id :title]))
+            "should find catalogue item by id")))))
 
 (deftest test-form
   (binding [context/*user* {"eppn" "test-user"}
@@ -216,10 +216,10 @@
     (db/add-user! {:user "test-user" :userattrs nil})
     (let [uid (get-user-id)
           wf (:id (db/create-workflow! {:owneruserid uid :modifieruserid uid :title "" :fnlround 0}))
-          _ (db/create-resource! {:id 111 :resid "resid111" :prefix "abc" :modifieruserid uid})
-          _ (db/create-resource! {:id 222 :resid "resid222" :prefix "abc" :modifieruserid uid})
-          item1 (:id (db/create-catalogue-item! {:title "item" :form nil :resid 111 :wfid wf}))
-          item2 (:id (db/create-catalogue-item! {:title "item" :form nil :resid 222 :wfid wf}))
+          res1 (:id (db/create-resource! {:resid "resid111" :prefix "abc" :modifieruserid uid}))
+          res2 (:id (db/create-resource! {:resid "resid222" :prefix "abc" :modifieruserid uid}))
+          item1 (:id (db/create-catalogue-item! {:title "item" :form nil :resid res1 :wfid wf}))
+          item2 (:id (db/create-catalogue-item! {:title "item" :form nil :resid res2 :wfid wf}))
           app (applications/create-new-draft wf)]
       ;; apply for two items at the same time
       (db/add-application-item! {:application app :item item1})
@@ -757,9 +757,9 @@
             (is (= {:curround 1 :state "closed"} (fetch app))))))
 
       (testing "autoapprove"
-        (db/create-resource! {:id 1995 :resid "ABC" :prefix "abc" :modifieruserid uid})
-        (let [auto-wf (:id (db/create-workflow! {:modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 1}))
-              auto-item (:id (db/create-catalogue-item! {:title "A" :form nil :resid 1995 :wfid auto-wf}))
+        (let [res-abc (:id (db/create-resource! {:resid "ABC" :prefix "abc" :modifieruserid uid}))
+              auto-wf (:id (db/create-workflow! {:modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 1}))
+              auto-item (:id (db/create-catalogue-item! {:title "A" :form nil :resid res-abc :wfid auto-wf}))
               auto-app (applications/create-new-draft auto-wf)]
           (db/add-application-item! {:application auto-app :item auto-item})
           (is (= (fetch auto-app) {:curround 0 :state "draft"}))
@@ -876,8 +876,8 @@
   (db/add-user! {:user "jack" :userattrs nil})
   (db/add-user! {:user "jill" :userattrs nil})
   (let [wf (:id (db/create-workflow! {:modifieruserid "owner" :owneruserid "owner" :title "Test workflow" :fnlround 1}))
-        res1 (:id (db/create-resource! {:id 18 :resid "resource1" :prefix "pre" :modifieruserid "owner"}))
-        res2 (:id (db/create-resource! {:id 33 :resid "resource2" :prefix "pre" :modifieruserid "owner"}))
+        res1 (:id (db/create-resource! {:resid "resource1" :prefix "pre" :modifieruserid "owner"}))
+        res2 (:id (db/create-resource! {:resid "resource2" :prefix "pre" :modifieruserid "owner"}))
         item1 (:id (db/create-catalogue-item! {:title "item1" :form nil :resid res1 :wfid wf}))
         item2 (:id (db/create-catalogue-item! {:title "item2" :form nil :resid res2 :wfid wf}))
         jack-app (binding [context/*user* {"eppn" "jack"}]
@@ -926,8 +926,8 @@
             admin "owner"
             prefix "foo"
             wf (:id (db/create-workflow! {:modifieruserid admin :owneruserid admin :title "Test workflow" :fnlround 1}))
-            res1 (:id (db/create-resource! {:id 17 :resid "resource1" :prefix prefix :modifieruserid admin}))
-            res2 (:id (db/create-resource! {:id 32 :resid "resource2" :prefix prefix :modifieruserid admin}))
+            res1 (:id (db/create-resource! {:resid "resource1" :prefix prefix :modifieruserid admin}))
+            res2 (:id (db/create-resource! {:resid "resource2" :prefix prefix :modifieruserid admin}))
             item1 (:id (db/create-catalogue-item! {:title "item1" :form nil :resid res1 :wfid wf}))
             item2 (:id (db/create-catalogue-item! {:title "item2" :form nil :resid res2 :wfid wf}))]
         (db/add-user! {:user uid :userattrs (cheshire/generate-string {"mail" "b@o.b"})})

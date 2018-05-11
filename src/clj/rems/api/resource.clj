@@ -15,9 +15,10 @@
    :licenses [s/Num]})
 
 (defn- format-resource
-  [{:keys [id modifieruserid resid start endt]}]
+  [{:keys [id modifieruserid prefix resid start endt]}]
   {:id id
    :modifieruserid modifieruserid
+   :prefix prefix
    :resid resid
    :start start
    :end endt})

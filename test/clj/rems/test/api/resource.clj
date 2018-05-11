@@ -23,7 +23,7 @@
         (is (= 200 (:status response)))
         (is (seq? data))
         (is (not (empty? data)))
-        (is (= #{:id :modifieruserid :resid :start :end :licenses} (set (keys (first data)))))))
+        (is (= #{:id :modifieruserid :prefix :resid :start :end :licenses} (set (keys (first data)))))))
     (testing "create"
       (let [licid 1
             resid "RESOURCE-API-TEST"]
