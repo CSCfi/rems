@@ -304,6 +304,12 @@ SELECT catAppId, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAS
 FROM transfer.rms_catalogue_item_application_state
 WHERE state = 'closed' AND curround >= 0;
 
+-- FIX 'unknown' userid problem in `apply` events
+UPDATE transfer.migrated_application_event mae
+SET userid = (SELECT applicantUserId FROM public.catalogue_item_application WHERE id = mae.appId)
+WHERE userid IS NULL
+  AND event = 'apply';
+
 INSERT INTO public.application_event (appId, userId, round, event, comment, time)
 SELECT appId, userId, round, event, comment, time
 FROM transfer.migrated_application_event
