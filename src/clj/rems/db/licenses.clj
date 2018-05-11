@@ -1,7 +1,8 @@
 (ns rems.db.licenses
   "querying localized licenses"
   (:require [clj-time.core :as time]
-            [rems.db.core :as db]))
+            [rems.db.core :as db]
+            [rems.util :refer [distinct-by]]))
 
 (defn- format-licenses [licenses]
   (doall
@@ -46,4 +47,5 @@
                  (let [start (:start license)
                        end (:end license)]
                    (and (or (nil? start) (time/before? start now))
-                        (or (nil? end) (time/before? now end))))))))
+                        (or (nil? end) (time/before? now end))))))
+       (distinct-by :id)))

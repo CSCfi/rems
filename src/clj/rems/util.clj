@@ -24,6 +24,14 @@
          (map (fn [[k v]] [k (index-by (rest ks) v)]))
          (into {}))))
 
+(defn distinct-by
+  "Remove duplicates from sequence, comparing the value returned by key-fn.
+   The first element that key-fn returns a given value for is retained.
+
+   Order of sequence is not preserved in any way."
+  [key-fn sequence]
+  (map first (vals (group-by key-fn sequence))))
+
 (defn errorf
   "Throw a RuntimeException, args passed to `clojure.core/format`."
   [& fmt-args]

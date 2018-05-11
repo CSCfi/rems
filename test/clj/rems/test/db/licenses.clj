@@ -25,8 +25,10 @@
         expired-license-end (time/plus yesterday (time/hours 1))
         just-created-license-start (time/minus today (time/hours 1))]
     (with-redefs [db/get-license-localizations (constantly [])
+                  ;; test active license deduplication by having :always twice
                   db/get-licenses (fn [params] [{:id :always :start nil :endt nil}
+                                                {:id :always :start nil :endt nil}
                                                 {:id :expired :start nil :endt expired-license-end}
                                                 {:id :just-created :start just-created-license-start :endt nil}])]
-      (is (= #{:always :just-created} (set (map :id (get-active-licenses today nil)))))
-      (is (= #{:always :expired} (set (map :id (get-active-licenses yesterday nil))))))))
+      (is (= [:always :just-created] (sort (map :id (get-active-licenses today nil)))))
+      (is (= [:always :expired] (sort (map :id (get-active-licenses yesterday nil))))))))
