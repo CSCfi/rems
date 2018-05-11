@@ -13,7 +13,7 @@
 
 (deftest resource-api-test
   (let [api-key "42"
-        user-id "developer"]
+        user-id "owner"]
     (testing "get"
       ;; just a basic smoke test for now
       (let [response (-> (request :get "/api/resource")
@@ -55,7 +55,7 @@
                                    :licenses []})
                        app)]
       (is (.contains (:body response) "Invalid anti-forgery token"))))
-  (testing "without approver role"
+  (testing "without owner role"
     (let [api-key "42"
           user-id "alice"]
       (let [response (-> (request :get "/api/resource")

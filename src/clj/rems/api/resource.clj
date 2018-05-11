@@ -42,12 +42,12 @@
       :summary "Get resources"
       :return [Resource]
       (check-user)
-      (check-roles :approver) ;; TODO admin role needed?
+      (check-roles :owner) ;; TODO admin role needed?
       (ok (get-resources)))
 
     (PUT "/create" []
       :summary "Create resource"
       :body [command CreateResourceCommand]
       (check-user)
-      (check-roles :approver)
+      (check-roles :owner)
       (ok (create-resource command)))))

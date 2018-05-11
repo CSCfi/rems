@@ -2,7 +2,7 @@
   (:require [rems.db.core :as db]
             [rems.util :refer [errorf]]))
 
-(def +roles+ #{:applicant :reviewer :approver})
+(def +roles+ #{:applicant :reviewer :approver :owner})
 
 (defn- role-from-db [{role-string :role}]
   (let [role (keyword role-string)]
