@@ -35,12 +35,12 @@
                  :key "t.form.validation/required"
                  :text "Field \"Purpose of the project\" is required."}
                 {:type "license"
-                 :id 2
+                 :id 1
                  :title {:en "CC Attribution 4.0" :fi "CC Nimeä 4.0"}
                  :key "t.form.validation/required"
                  :text "Field \"non-localized link license\" is required."}
                 {:type "license"
-                 :id 3
+                 :id 2
                  :title {:en "General Terms of Use", :fi "Yleiset käyttöehdot"}
                  :key "t.form.validation/required"
                  :text "Field \"non-localized text license\" is required."}]
@@ -77,7 +77,7 @@
                                        :items {1 "REST-Test"
                                                2 "2017-2018"
                                                3 "The purpose is to test this REST service.}"}
-                                       :licenses {2 "approved" 3 "approved"}})
+                                       :licenses {1 "approved" 2 "approved"}})
                            app)
               cmd-response (read-body response)]
           (is (:success cmd-response))
@@ -143,7 +143,7 @@
                            (json-body {:command "save"
                                        :application-id application-id
                                        :items {1 "FOO"}
-                                       :licenses {2 "approved"}})
+                                       :licenses {1 "approved"}})
                            app)
               cmd-response (read-body response)
               validations (:validation cmd-response)]
@@ -156,7 +156,7 @@
                            (json-body {:command "submit"
                                        :application-id application-id
                                        :items {1 "FOO"}
-                                       :licenses {2 "approved"}})
+                                       :licenses {1 "approved"}})
                            app)
               cmd-response (read-body response)
               validations (:validation cmd-response)]
@@ -169,7 +169,7 @@
                            (json-body {:command "save"
                                        :application-id application-id
                                        :items {1 "FOO" 2 "ding" 3 "plong"}
-                                       :licenses {2 "approved" 3 "approved"}})
+                                       :licenses {1 "approved" 2 "approved"}})
                            app)
               cmd-response (read-body response)
               validations (:validation cmd-response)]
@@ -182,7 +182,7 @@
                            (json-body {:command "submit"
                                        :application-id application-id
                                        :items {1 "FOO" 2 "ding" 3 "plong"}
-                                       :licenses {2 "approved" 3 "approved"}})
+                                       :licenses {1 "approved" 2 "approved"}})
                            app)
               cmd-response (read-body response)
               validations (:validation cmd-response)]
@@ -211,7 +211,7 @@
                                      :command "submit"
                                      :catalogue-items [catid]
                                      :items {1 "x" 2 "y" 3 "z"}
-                                     :licenses {2 "approved" 3 "approved"}})
+                                     :licenses {1 "approved" 2 "approved"}})
                          app)
             cmd-response (read-body response)]
         (is (= 400 (:status response)) "should not be possible to submit with disabled item")))))
@@ -226,7 +226,7 @@
                        (json-body {:command "submit"
                                    :catalogue-items [catid]
                                    :items {1 "x" 2 "y" 3 "z"}
-                                   :licenses {2 "approved" 3 "approved"}})
+                                   :licenses {1 "approved" 2 "approved"}})
                        app)
           cmd-response (read-body response)
           app-id (:id cmd-response)]
@@ -285,7 +285,7 @@
                    (json-body {:command "save"
                                :catalogue-items [catid]
                                :items {1 "x" 2 "y" 3 "z"}
-                               :licenses {2 "approved" 3 "approved"}})
+                               :licenses {1 "approved" 2 "approved"}})
                    app
                    read-body
                    :id)
@@ -296,7 +296,7 @@
                             (json-body {:command "submit"
                                         :application-id app-id
                                         :items {1 "x" 2 "y" 3 "z"}
-                                        :licenses {2 "approved" 3 "approved"}})
+                                        :licenses {1 "approved" 2 "approved"}})
                             app
                             :status))))
         action (fn [body]

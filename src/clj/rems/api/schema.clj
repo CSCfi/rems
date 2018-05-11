@@ -16,13 +16,32 @@
    :localizations (s/maybe {s/Any s/Any})})
 
 (def License
+  ;; NB! the license table also has a start and an end but they're
+  ;; not exposed/used at the moment
   {:id s/Num
-   :type s/Str
-   :licensetype s/Str
+   :licensetype (s/enum "text" "link" "attachment")
    :title s/Str
    :textcontent s/Str
-   :localizations {s/Keyword {:title s/Str :textcontent s/Str}}
-   :approved s/Bool})
+   :localizations {s/Keyword {:title s/Str :textcontent s/Str}}})
+
+(def ResourceLicense
+  (merge License
+         {:start DateTime
+          :end (s/maybe DateTime)}))
+
+(def Resource
+  {:id s/Num
+   :modifieruserid s/Str
+   :prefix s/Str
+   :resid s/Str
+   :start DateTime
+   :end (s/maybe DateTime)
+   :licenses [ResourceLicense]})
+
+(def ApplicationLicense
+  (merge License
+         {:type (s/eq "license") ;; TODO this is pretty redundant
+          :approved s/Bool}))
 
 (def Item
   {:id s/Num

@@ -16,7 +16,7 @@
    :catalogue-items [CatalogueItem]
    :applicant-attributes (s/maybe {s/Str s/Str})
    :application (s/maybe Application)
-   :licenses [License]
+   :licenses [ApplicationLicense]
    :title s/Str
    :items [Item]})
 

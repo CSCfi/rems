@@ -33,11 +33,21 @@ INSERT INTO catalogue_item
 (title, formid, resid, wfid)
 VALUES (:title, :form, :resid, :wfid)
 
+-- :name get-resources :? :*
+SELECT
+  id,
+  modifieruserid,
+  prefix,
+  resid,
+  start,
+  endt
+FROM resource
+
 -- :name create-resource! :insert
 -- :doc Create a single resource
 INSERT INTO resource
-(id, resid, prefix, modifieruserid)
-VALUES (:id, :resid, :prefix, :modifieruserid)
+(resid, prefix, modifieruserid)
+VALUES (:resid, :prefix, :modifieruserid)
 
 -- :name get-database-name :? :1
 SELECT current_database()
@@ -372,6 +382,16 @@ FROM license lic
 INNER JOIN resource_licenses rl ON lic.id = rl.licid
 INNER JOIN catalogue_item item ON (item.resid = rl.resid)
 WHERE item.id IN (:v*:items)
+
+-- :name get-resource-licenses :? :*
+SELECT lic.id, lic.title, lic.type, lic.textcontent, rl.start, rl.endt
+FROM license lic
+INNER JOIN resource_licenses rl ON lic.id = rl.licid
+WHERE rl.resid = :id
+
+-- :name get-all-licenses :? :*
+SELECT lic.id, lic.title, lic.type, lic.textcontent
+FROM license lic
 
 -- :name get-license-localizations :? :*
 SELECT licid, langcode, title, textcontent

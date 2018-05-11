@@ -8,6 +8,7 @@
             [rems.db.catalogue :refer [get-localized-catalogue-items]]
             [rems.db.core :as db]
             [rems.db.entitlements :as entitlements]
+            [rems.db.licenses :as licenses]
             [rems.db.roles :as roles]
             [rems.db.users :as users]
             [rems.db.workflow-actors :as actors]
@@ -295,51 +296,25 @@
            "")})
 
 (defn- process-license
-  "Returns a license structure like this:
-
-    {:id 2
-     :type \"license\"
-     :licensetype \"link\"
-     :title \"LGPL\"
-     :textcontent \"www.license.link\"
-     :approved false
-     :localizations {\"fi\" {:title \"LGPL\" :textcontent \"license.fi\"}}}"
-  [application localizations license]
+  [application license]
   (let [app-id (:id application)
         app-user (:applicantuserid application)
-        license-id (:id license)
-        my-localizations (into {} (for [{:keys [langcode title textcontent]} (get localizations license-id)]
-                                    [langcode {:title title :textcontent textcontent}]))]
-    {:id (:id license)
-     :type "license"
-     :licensetype (:type license)
-     ;; TODO why do licenses have a non-localized title & content while items don't?
-     :title (:title license)
-     :textcontent (:textcontent license)
-     :localizations my-localizations
-     :approved (= "approved"
-                  (:state
-                   (when application
-                     (db/get-application-license-approval {:catappid app-id
-                                                           :licid (:id license)
-                                                           :actoruserid app-user}))))}))
+        license-id (:id license)]
+    (-> license
+        (dissoc :start :end)
+        (assoc :type "license"
+               :approved (= "approved"
+                            (:state
+                             (when application
+                               (db/get-application-license-approval {:catappid app-id
+                                                                     :licid license-id
+                                                                     :actoruserid app-user}))))))))
 
-(defn get-active-licenses [now params]
-  (->> (db/get-licenses params)
-       (filter (fn [license]
-                 (let [start (:start license)
-                       end (:endt license)]
-                   (and (or (nil? start) (time/before? start now))
-                        (or (nil? end) (time/before? now end))))))))
-
-(defn- get-licenses-and-localizations [application catalogue-item-ids]
-  ;; TODO catalogue-item-ids passed in just for performance
-  (let [license-localizations (->> (db/get-license-localizations)
-                                   (map #(update-in % [:langcode] keyword))
-                                   (group-by :licid))
-        time (or (:start application) (time/now))]
-    (mapv #(process-license application license-localizations %)
-          (get-active-licenses time {:wfid (:wfid application) :items catalogue-item-ids}))))
+(defn- get-application-licenses [application catalogue-item-ids]
+  (mapv #(process-license application %)
+        (licenses/get-active-licenses
+         (or (:start application) (time/now))
+         {:wfid (:wfid application) :items catalogue-item-ids})))
 
 
 (defn get-form-for
@@ -385,7 +360,7 @@
          catalogue-items (get-catalogue-items catalogue-item-ids)
          items (mapv #(process-item application-id form-id %)
                      (db/get-form-items {:id form-id}))
-         licenses (get-licenses-and-localizations application catalogue-item-ids)
+         licenses (get-application-licenses application catalogue-item-ids)
          review-type (cond
                        (can-review? application) :normal
                        (can-third-party-review? application) :third-party
@@ -419,7 +394,7 @@
          catalogue-items (:catalogue-items application)
          items (mapv #(process-item application-id form-id %)
                      (db/get-form-items {:id form-id}))
-         licenses (get-licenses-and-localizations application catalogue-item-ids)]
+         licenses (get-application-licenses application catalogue-item-ids)]
      {:id application-id
       :title (:formtitle form)
       :catalogue-items catalogue-items
