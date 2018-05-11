@@ -40,8 +40,12 @@ DELETE FROM public.application_form CASCADE;
 INSERT INTO public.workflow (id, owneruserid, modifieruserid, title, fnlround, visibility, start, endt)
 SELECT id, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(owneruserid AS integer)), (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifieruserid AS integer)), title, fnlround, CAST(visibility::text AS scope), start, "end" FROM transfer.rms_workflow;
 
+SELECT setval('workflow_id_seq', (SELECT max(id) FROM public.workflow));
+
 INSERT INTO public.resource (id, modifierUserId, prefix, resId, start, endt)
 SELECT id, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifierUserId AS integer)), prefix, resId, start, "end" FROM transfer.rms_resource;
+
+SELECT setval('resource_id_seq', (SELECT max(id) FROM public.resource));
 
 -- forms
 
@@ -70,6 +74,8 @@ SELECT id, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modi
 INSERT INTO public.application_form (id, ownerUserId, modifierUserId, title, visibility, start, endt)
 SELECT id, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(owneruserid AS integer)), (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifieruserid AS integer)), COALESCE(title,'unknown'), CAST(visibility::text AS scope), start, "end"
 FROM transfer.rms_application_form_meta;
+
+SELECT setval('application_form_id_seq', (SELECT max(id) FROM public.application_form));
 
 -- Create a table for form items
 CREATE TABLE transfer.migrated_form_item (
@@ -116,6 +122,8 @@ FROM transfer.migrated_form_item mig
 LEFT JOIN transfer.migrated_item_ids ids ON ids.metaId = mig.metaId AND ids.itemOrder = mig.itemOrder
 LEFT JOIN transfer.rms_application_form_item item ON item.id = mig.itemId;
 
+SELECT setval('application_form_item_id_seq', (SELECT max(id) FROM public.application_form_item));
+
 -- Create form-item mappings
 INSERT INTO public.application_form_item_map (formId, formItemId, itemOrder, formItemOptional, modifierUserId, start, endt)
 SELECT
@@ -150,8 +158,10 @@ LEFT JOIN transfer.rms_application_form_item item ON item.id = mig.itemId;
 INSERT INTO public.catalogue_item
 SELECT * FROM transfer.rms_catalogue_item;
 
-INSERT INTO public.catalogue_item_localization
-SELECT * FROM transfer.rms_catalogue_item_localization;
+SELECT setval('catalogue_item_id_seq', (SELECT max(id) FROM public.catalogue_item));
+
+INSERT INTO public.catalogue_item_localization (catid, langcode, title, start, endt)
+SELECT catid, langcode, title, start, "end" FROM transfer.rms_catalogue_item_localization;
 
 UPDATE public.catalogue_item
 SET state = COALESCE((SELECT CAST(cis.state::text AS item_state)
@@ -176,11 +186,13 @@ SELECT id,
   "end"
 FROM transfer.rms_license;
 
-INSERT INTO public.license_localization
-SELECT * FROM transfer.rms_license_localization;
+SELECT setval('license_id_seq', (SELECT max(id) FROM public.license));
 
-INSERT INTO public.workflow_licenses
-SELECT * FROM transfer.rms_workflow_licenses;
+INSERT INTO public.license_localization (licid, langcode, title, textcontent, attid, start, endt)
+SELECT licid, langcode, title, textcontent, attid, start, "end" FROM transfer.rms_license_localization;
+
+INSERT INTO public.workflow_licenses (wfid, licid, round, stalling, start, endt)
+SELECT wfid, licid, round, stalling, start, "end" FROM transfer.rms_workflow_licenses;
 
 INSERT INTO public.resource_licenses (resId, licId, stalling, start, endt)
 SELECT resId, licId, stalling, start, "end" FROM transfer.rms_resource_licenses;
@@ -220,6 +232,8 @@ INSERT INTO public.catalogue_item_application (id, start, endt, applicantUserId,
 SELECT cia.id, cia.start, cia.end, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(cia.applicantUserId AS integer)), (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(cia.modifierUserId AS integer)), item.wfid
 FROM transfer.rms_catalogue_item_application cia
 LEFT JOIN transfer.rms_catalogue_item item ON cia.catId = item.id;
+
+SELECT setval('catalogue_item_application_id_seq', (SELECT max(id) FROM public.catalogue_item_application));
 
 INSERT INTO public.catalogue_item_application_items (catAppId, catItemId)
 SELECT id, catId FROM transfer.rms_catalogue_item_application
@@ -311,5 +325,5 @@ ORDER BY time;
 
 -- entitlements
 
-INSERT INTO public.entitlement (id, resid, catappid, userid, start, endt)
-SELECT id, resid, catappid, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(rms_entitlement.userid AS integer)), start, "end" FROM transfer.rms_entitlement;
+INSERT INTO public.entitlement (resid, catappid, userid, start, endt)
+SELECT resid, catappid, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(rms_entitlement.userid AS integer)), start, "end" FROM transfer.rms_entitlement;
