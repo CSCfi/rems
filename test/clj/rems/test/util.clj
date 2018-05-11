@@ -10,3 +10,7 @@
   (testing "with default-value"
     (is [1 :nope 2 :nope 3]
         (= (select-vals {:e 3 :b 2 :c 3 :a 1} [:a :e :b :d :e] :nope)))))
+
+(deftest test-distinct-by
+  (is (= [1 2]
+         (sort (distinct-by even? [1 2 3 4])))))
