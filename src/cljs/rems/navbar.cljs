@@ -34,6 +34,7 @@
 (defn navbar-items [e page-name identity]
   ;;TODO: get navigation options from subscription
   (let [current-roles (:roles identity)]
+    (prn :ROLES current-roles)
     [e [:div.navbar-nav.mr-auto
         (when-role :applicant current-roles
                    [nav-link "#/catalogue" (text :t.navigation/catalogue) (= page-name "catalogue")])
@@ -41,6 +42,8 @@
                    [nav-link "#/applications" (text :t.navigation/applications) (= page-name "applications")])
         (when-roles #{:approver :reviewer} current-roles
                     [nav-link "#/actions" (text :t.navigation/actions) (= page-name "actions")])
+        (when-role :owner current-roles
+                   [nav-link "#/administration" (text :t.navigation/administration) (= page-name "administration")])
         (when-not (:user identity) [nav-link "#/" (text :t.navigation/home) (= page-name "home")])
         [nav-link "#/about" (text :t.navigation/about) (= page-name "about")]]
      [language-switcher]]))

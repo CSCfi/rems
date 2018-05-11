@@ -7,6 +7,7 @@
             [markdown.core :refer [md->html]]
             [ajax.core :refer [GET]]
             [rems.actions :refer [actions-page fetch-actions]]
+            [rems.administration :refer [administration-page]]
             [rems.ajax :refer [load-interceptors!]]
             [rems.application :refer [application-page fetch-application]]
             [rems.applications :refer [applications-page]]
@@ -44,6 +45,7 @@
    :actions actions-page
    :application application-page
    :applications applications-page
+   :administration administration-page
    :not-found not-found-page})
 
 (defn footer []
@@ -98,6 +100,9 @@
 
 (secretary/defroute "/applications" []
   (rf/dispatch [:set-active-page :applications]))
+
+(secretary/defroute "/administration" []
+  (rf/dispatch [:set-active-page :administration]))
 
 (secretary/defroute "*" []
   (rf/dispatch [:set-active-page :not-found]))

@@ -173,6 +173,7 @@
   :missing "Missing translation"
   :navigation {:about "About"
                :actions "Actions"
+               :administration "Administration"
                :applications "Applications"
                :catalogue "Catalogue"
                :home "Home"
