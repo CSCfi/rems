@@ -20,6 +20,7 @@
     (auth-util/throw-unauthorized)))
 
 (defroutes home-routes
+  (GET "/" [] (layout/application-page))
   (GET "/markdown/:filename" [filename] (markdown-page filename))
   (GET "/css/screen.css" [] (-> (styles/generate-css)
                                 (response)
