@@ -334,6 +334,63 @@
               ["close" "closed"]]
              (map (juxt :event :comment) events))))))
 
+(deftest application-api-3rd-party-review-test
+  (let [api-key "42"
+        user "developer"
+        reviewer "alice"
+        catid 2
+        app-id (-> (request :put (str "/api/application/save"))
+                   (authenticate api-key user)
+                   (json-body {:command "submit"
+                               :catalogue-items [catid]
+                               :items {1 "x" 2 "y" 3 "z"}
+                               :licenses {2 "approved" 3 "approved"}})
+                   app
+                   read-body
+                   :id)]
+    (testing "send review request"
+      (is (= 200
+             (-> (request :put (str "/api/application/review_request"))
+                 (authenticate api-key user)
+                 (json-body {:application-id app-id
+                             :round 0
+                             :comment "pls revu"
+                             :recipients [reviewer]})
+                 app
+                 :status))))
+    (testing "check review event"
+      (let [events (-> (request :get (str "/api/application/" app-id))
+                     (authenticate api-key user)
+                     app
+                     read-body
+                     :application
+                     :events)]
+        (is (= [{:userid "developer" :comment nil :event "apply"}
+                {:userid "alice" :comment "pls revu" :event "review-request"}]
+               (map #(select-keys % [:userid :comment :event]) events)))))
+    (testing "send review"
+      (is (= 200
+             (-> (request :put (str "/api/application/judge"))
+                 (authenticate api-key reviewer)
+                 (json-body {:command "3rd-party-review"
+                             :application-id app-id
+                             :round 0
+                             :comment "is ok"})
+                 app
+                 :status))))
+    (testing "check events"
+      (let [events (-> (request :get (str "/api/application/" app-id))
+                     (authenticate api-key user)
+                     app
+                     read-body
+                     :application
+                     :events)]
+        (is (= [{:userid "developer" :comment nil :event "apply"}
+                {:userid "alice" :comment "pls revu" :event "review-request"}
+                {:userid "alice" :comment "is ok" :event "third-party-review"}]
+               (map #(select-keys % [:userid :comment :event]) events)))))))
+;; TODO non-happy path tests for review?
+
 ;; TODO test for event filtering when it gets implemented
 
 (deftest application-api-security-test

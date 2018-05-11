@@ -44,12 +44,18 @@
    (s/optional-key :validation) [ValidationMessage]})
 
 (def JudgeApplicationCommand
-  {:command (s/enum "approve" "close" "reject" "return" "review" "withdraw")
+  {:command (s/enum "approve" "close" "reject" "return" "review" "3rd-party-review" "withdraw")
    :application-id s/Num
    :round s/Num
    :comment s/Str})
 
-(def JudgeApplicationResponse
+(def ReviewRequestCommand
+  {:application-id s/Num
+   :round s/Num
+   :comment s/Str
+   :recipients [s/Str]})
+
+(def ApplicationCommandResponse
   {:success s/Bool})
 
 ;; Api implementation
@@ -61,6 +67,7 @@
     "reject" (applications/reject-application application-id round comment)
     "return" (applications/return-application application-id round comment)
     "review" (applications/review-application application-id round comment)
+    "3rd-party-review" (applications/perform-third-party-review application-id round comment)
     "withdraw" (applications/withdraw-application application-id round comment))
   ;; failure communicated via an exception
   {:success true})
@@ -111,6 +118,17 @@
     (PUT "/judge" []
       :summary "Judge an application"
       :body [request JudgeApplicationCommand]
-      :return JudgeApplicationResponse
+      :return ApplicationCommandResponse
       (check-user)
-      (ok (api-judge request)))))
+      (ok (api-judge request)))
+
+    (PUT "/review_request" []
+      :summary "Request a review"
+      :body [request ReviewRequestCommand]
+      :return ApplicationCommandResponse
+      (check-user)
+      (applications/send-review-request (:application-id request)
+                                        (:round request)
+                                        (:comment request)
+                                        (:recipients request))
+      (ok {:success true}))))
