@@ -16,3 +16,10 @@
     ...etc}"
   [userid]
   (parse-string (:userattrs (db/get-user-attributes {:user userid}))))
+
+(defn get-all-users
+  []
+  (->> (db/get-users)
+       (map :userid)
+       (map get-user-attributes)
+       (doall)))

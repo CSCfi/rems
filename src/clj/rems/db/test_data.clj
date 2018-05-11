@@ -11,11 +11,11 @@
             [rems.util :refer [get-user-id]]))
 
 (def +fake-user-data+
-  {"developer" {"eppn" "developer" "mail" "deve@lo.per"}
-   "alice" {"eppn" "alice" "mail" "a@li.ce"}
-   "bob" {"eppn" "bob" "mail" "b@o.b"}
-   "carl" {"eppn" "carl" "mail" "c@a.rl"}
-   "owner" {"eppn" "owner" "mail" "ow@n.er"}})
+  {"developer" {"eppn" "developer" "mail" "deve@lo.per" "commonName" "Deve Loper"}
+   "alice" {"eppn" "alice" "mail" "a@li.ce" "commonName" "Alice Applicant"}
+   "bob" {"eppn" "bob" "mail" "b@o.b" "commonName" "Bob Approver"}
+   "carl" {"eppn" "carl" "mail" "c@a.rl" "commonName" "Carl Reviewer"}
+   "owner" {"eppn" "owner" "mail" "ow@n.er" "commonName" "Own Er"}})
 
 (defn- create-users-and-roles! []
   ;; users provided by the fake login

@@ -1,10 +1,11 @@
 (ns rems.api.application
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
-            [rems.api.util :refer [check-user]]
+            [rems.api.util :refer [check-user check-roles]]
             [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
+            [rems.db.users :as users]
             [rems.form :as form]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
@@ -58,6 +59,11 @@
 (def ApplicationCommandResponse
   {:success s/Bool})
 
+(def Reviewer
+  {:userid s/Str
+   :name (s/maybe s/Str)
+   :email (s/maybe s/Str)})
+
 ;; Api implementation
 
 (defn- api-judge [{:keys [command application-id round comment]}]
@@ -96,6 +102,16 @@
       (check-user)
       (let [app (applications/make-draft-application catalogue-items)]
         (ok (applications/get-draft-form-for app))))
+
+    (GET "/reviewers" []
+      :summary "Available third party reviewers"
+      :return [Reviewer]
+      (check-user)
+      (check-roles :approver)
+      (ok (for [u (users/get-all-users)]
+            {:userid (get u "eppn")
+             :name (get u "commonName")
+             :email (get u "mail")})))
 
     (GET "/:application-id" []
       :summary "Get application by `application-id`"
