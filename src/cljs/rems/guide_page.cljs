@@ -3,6 +3,7 @@
             [rems.actions :as actions]
             [rems.application :as application]
             [rems.application-list :as application-list]
+            [rems.autocomplete :as autocomplete]
             [rems.auth.auth :as auth]
             [rems.cart :as cart]
             [rems.catalogue :as catalogue]
@@ -75,4 +76,5 @@
     [application/guide]
 
     [:h2 "Misc components"]
+    [autocomplete/guide]
     [phase/guide]]])
