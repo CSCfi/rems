@@ -1,10 +1,11 @@
 (ns rems.api.application
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
-            [rems.api.util :refer [check-user]]
+            [rems.api.util :refer [check-user check-roles]]
             [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
+            [rems.db.users :as users]
             [rems.form :as form]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
@@ -44,13 +45,24 @@
    (s/optional-key :validation) [ValidationMessage]})
 
 (def JudgeApplicationCommand
-  {:command (s/enum "approve" "close" "reject" "return" "review" "withdraw")
+  {:command (s/enum "approve" "close" "reject" "return" "review" "3rd-party-review" "withdraw")
    :application-id s/Num
    :round s/Num
    :comment s/Str})
 
-(def JudgeApplicationResponse
+(def ReviewRequestCommand
+  {:application-id s/Num
+   :round s/Num
+   :comment s/Str
+   :recipients [s/Str]})
+
+(def ApplicationCommandResponse
   {:success s/Bool})
+
+(def Reviewer
+  {:userid s/Str
+   :name (s/maybe s/Str)
+   :email (s/maybe s/Str)})
 
 ;; Api implementation
 
@@ -61,6 +73,7 @@
     "reject" (applications/reject-application application-id round comment)
     "return" (applications/return-application application-id round comment)
     "review" (applications/review-application application-id round comment)
+    "3rd-party-review" (applications/perform-third-party-review application-id round comment)
     "withdraw" (applications/withdraw-application application-id round comment))
   ;; failure communicated via an exception
   {:success true})
@@ -90,6 +103,16 @@
       (let [app (applications/make-draft-application catalogue-items)]
         (ok (applications/get-draft-form-for app))))
 
+    (GET "/reviewers" []
+      :summary "Available third party reviewers"
+      :return [Reviewer]
+      (check-user)
+      (check-roles :approver)
+      (ok (for [u (users/get-all-users)]
+            {:userid (get u "eppn")
+             :name (get u "commonName")
+             :email (get u "mail")})))
+
     (GET "/:application-id" []
       :summary "Get application by `application-id`"
       :path-params [application-id :- (describe s/Num "application id")]
@@ -111,6 +134,17 @@
     (PUT "/judge" []
       :summary "Judge an application"
       :body [request JudgeApplicationCommand]
-      :return JudgeApplicationResponse
+      :return ApplicationCommandResponse
       (check-user)
-      (ok (api-judge request)))))
+      (ok (api-judge request)))
+
+    (PUT "/review_request" []
+      :summary "Request a review"
+      :body [request ReviewRequestCommand]
+      :return ApplicationCommandResponse
+      (check-user)
+      (applications/send-review-request (:application-id request)
+                                        (:round request)
+                                        (:comment request)
+                                        (:recipients request))
+      (ok {:success true}))))
