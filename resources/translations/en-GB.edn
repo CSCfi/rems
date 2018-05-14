@@ -95,6 +95,7 @@
                           :third-party-review "Reviewed by a third party"
                           :unknown "Unknown"
                           :withdraw "Withdrawn for modifying"}
+                 :request-review "Request review by a third party"
                  :resource "Resource"
                  :state "State"
                  :states {:applied "Applied"
