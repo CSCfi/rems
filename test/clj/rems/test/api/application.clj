@@ -344,7 +344,7 @@
                    (json-body {:command "submit"
                                :catalogue-items [catid]
                                :items {1 "x" 2 "y" 3 "z"}
-                               :licenses {2 "approved" 3 "approved"}})
+                               :licenses {1 "approved" 2 "approved"}})
                    app
                    read-body
                    :id)]
