@@ -15,5 +15,5 @@
       :summary "Get licenses"
       :return [License]
       (check-user)
-      (check-roles :approver) ;; TODO admin role needed?
+      (check-roles :owner)
       (ok (licenses/get-all-licenses)))))

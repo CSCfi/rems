@@ -29,7 +29,8 @@
   (users/add-user! "carl" (+fake-user-data+ "carl"))
   (roles/add-role! "carl" :reviewer)
   ;; a user to own things
-  (users/add-user! "owner" (+fake-user-data+ "owner")))
+  (users/add-user! "owner" (+fake-user-data+ "owner"))
+  (roles/add-role! "owner" :owner))
 
 (defn- create-demo-users-and-roles! []
   ;; a user to own things

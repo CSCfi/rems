@@ -13,7 +13,7 @@
 
 (deftest workflow-api-test
   (let [data (-> (request :get "/api/workflow")
-                 (authenticate "42" "developer")
+                 (authenticate "42" "owner")
                  app
                  read-body)
         wfs (index-by [:title] data)
@@ -34,7 +34,7 @@
                        app)
           body (read-body response)]
       (is (= "unauthorized" body))))
-  (testing "listing without approver role"
+  (testing "listing without owner role"
     (let [response (-> (request :get (str "/api/workflow"))
                        (authenticate "42" "alice")
                        app)

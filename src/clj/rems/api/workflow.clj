@@ -45,5 +45,5 @@
       :summary "Get workflows"
       :return [Workflow]
       (check-user)
-      (check-roles :approver) ;; TODO admin role needed?
+      (check-roles :owner)
       (ok (get-workflows)))))
