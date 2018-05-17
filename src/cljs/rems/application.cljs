@@ -432,6 +432,11 @@
    {:name "return" :onClick #(rf/dispatch [::judge-application "return"])}
    (text :t.actions/return)])
 
+(defn- review-button []
+  [:button#submit.btn.btn-primary
+   {:name "return" :onClick #(rf/dispatch [::judge-application "review"])}
+   (text :t.actions/review)])
+
 (defn- close-button []
   [:button#submit.btn.btn-secondary
    {:name "close" :onClick #(rf/dispatch [::judge-application "close"])}
@@ -581,6 +586,8 @@
                           [[close-button]])
                         (when (:can-withdraw? app)
                           [[withdraw-button]])
+                        (when (= "normal" (:review-type app))
+                          [[review-button]])
                         (when (:can-approve? app)
                           [[reject-button]
                            [return-button]
