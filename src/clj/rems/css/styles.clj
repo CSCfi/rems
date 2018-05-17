@@ -374,13 +374,13 @@
    [:.autocomplete__selected-item:last-of-type {:margin-bottom (u/rem 0.5)}]
    [:.autocomplete__selected-item {:height (u/px 40)
                                    :line-height (u/px 40)
-                                   :background-color "#e9ecef"
+                                   :background-color (util/get-theme-attribute :color1)
                                    :border-radius (u/rem 0.25)
                                    :border [[(u/px 1) :solid "#111"]]}]
    [:.autocomplete__dropdown {:padding (u/px 10)}]
    [:.autocomplete__item {:padding (u/px 10)}]
-   [:.autocomplete__item--selected {:background-color "#e9ecef"}]
-   [:.autocomplete__item:hover {:background-color "#f6f9fc"
+   [:.autocomplete__item--selected {:background-color (util/get-theme-attribute :color1)}]
+   [:.autocomplete__item:hover {:background-color (util/get-theme-attribute :color1)
                                 :cursor :pointer}]
    [:.autocomplete__selected-item {:display :inline-block
                                    :padding [[0 (u/rem 0.5)]]
