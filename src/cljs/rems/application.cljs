@@ -36,35 +36,33 @@
 (rf/reg-event-fx
  ::start-fetch-application
  (fn [{:keys [db]} [_ id]]
-   {::fetch-application [(get-in db [:identity :user]) id]}))
+   {::fetch-application [id]}))
 
 (rf/reg-event-fx
  ::start-new-application
  (fn [{:keys [db]} [_ items]]
-   {::fetch-draft-application [(get-in db [:identity :user]) items]}))
+   {::fetch-draft-application [items]}))
 
-(defn- fetch-application [user id]
+(defn- fetch-application [id]
   (GET (str "/api/application/" id) {:handler #(rf/dispatch [::fetch-application-result %])
                                      :response-format :json
-                                     :headers {"x-rems-user-id" (:eppn user)}
                                      :keywords? true}))
 
-(defn- fetch-draft-application [user items]
+(defn- fetch-draft-application [items]
   (GET (str "/api/application/") {:handler #(rf/dispatch [::fetch-application-result %])
                                   :params {:catalogue-items items}
                                   :response-format :json
-                                  :headers {"x-rems-user-id" (:eppn user)}
                                   :keywords? true}))
 
 (rf/reg-fx
  ::fetch-application
- (fn [[user id]]
-   (fetch-application user id)))
+ (fn [[id]]
+   (fetch-application id)))
 
 (rf/reg-fx
  ::fetch-draft-application
- (fn [[user items]]
-   (fetch-draft-application user items)))
+ (fn [[items]]
+   (fetch-draft-application items)))
 
 (rf/reg-event-db
  ::fetch-application-result
@@ -113,7 +111,7 @@
        (assoc-in [:edit-application :status] value)
        (assoc-in [:edit-application :validation] validation))))
 
-(defn- save-application [command user application-id catalogue-items items licenses]
+(defn- save-application [command application-id catalogue-items items licenses]
   (let [payload (merge {:command command
                         :items items
                         :licenses licenses}
@@ -151,10 +149,10 @@
          (rf/dispatch [:rems.cart/remove-item i])))
      ;; TODO disable form while saving?
      (rf/dispatch [::set-status :pending])
-     (save-application command (get-in db [:identity :user]) app-id catalogue-ids items licenses))
+     (save-application command app-id catalogue-ids items licenses))
    {}))
 
-(defn- judge-application [command user application-id round comment]
+(defn- judge-application [command application-id round comment]
   (PUT "/api/application/judge"
        {:format :json
         :params {:command command
@@ -169,10 +167,9 @@
  (fn [{:keys [db]} [_ command]]
    (let [application-id (get-in db [:application :application :id])
          round (get-in db [:application :application :curround])
-         user (get-in db [:identity :user])
          comment (get db ::judge-comment "")]
      (rf/dispatch [::set-judge-comment ""])
-     (judge-application command user application-id round comment)
+     (judge-application command application-id round comment)
      {})))
 
 ;;;; UI components ;;;;
