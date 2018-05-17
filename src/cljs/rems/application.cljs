@@ -437,6 +437,9 @@
    {:name "review" :onClick #(rf/dispatch [::judge-application "review"])}
    (text :t.actions/review)])
 
+(defn- third-party-review-button []
+  [:button#submit.btn.btn-primary
+   {:name "third-party-review" :onClick #(rf/dispatch [::judge-application "third-party-review"])}
    (text :t.actions/review)])
 
 (defn- close-button []
@@ -588,13 +591,15 @@
                           [[close-button]])
                         (when (:can-withdraw? app)
                           [[withdraw-button]])
-                        (when (= "normal" (:review-type app))
-                          [[review-button]])
                         (when (:can-approve? app)
                           [[reject-button]
                            [return-button]
                            [review-request-button]
-                           [approve-button]]))]
+                           [approve-button]])
+                        (when (= "normal" (:review-type app))
+                          [[review-button]])
+                        (when (= "third-party" (:review-type app))
+                          [[third-party-review-button]]))]
     (if (empty? buttons)
       [:div]
       [collapsible/component
