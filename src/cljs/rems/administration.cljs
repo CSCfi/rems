@@ -51,16 +51,11 @@
 (defn- catalogue-item
   "Single catalogue item"
   [item language]
-  (let [resid (:resid item)
-        title (get-catalogue-item-title item language)
-        component (if (urn-catalogue-item? item)
-                    [:a.catalogue-item-link {:href resid :target :_blank} title " " [external-link]]
-                    title)]
-    [:tr
-     [:td {:data-th (text :t.catalogue/header)} component]
-     [:td.commands {:data-th ""} (if (disabled-catalogue-item? item)
-                                   [enable-button item]
-                                   [disable-button item])]]))
+  [:tr
+   [:td {:data-th (text :t.catalogue/header)} (get-catalogue-item-title item language)]
+   [:td.commands {:data-th ""} (if (disabled-catalogue-item? item)
+                                 [enable-button item]
+                                 [disable-button item])]])
 
 (defn- catalogue-list
   "List of catalogue items"
