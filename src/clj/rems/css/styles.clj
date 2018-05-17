@@ -352,11 +352,7 @@
   ;; because the component classes are hard-coded
   [:.autocomplete {:width (u/percent 100)}
    [:.autocomplete__control
-    [:input {;;:padding (u/px 10)
-             ;;:border-radius (u/px 4)
-             ;;:border [[(u/px 1) :solid "#111"]]
-
-             ;; from Bootstrap .form-control
+    [:input {;; from Bootstrap .form-control
              :display :block
              :width (u/percent 100)
              :padding [[(u/rem 0.375) (u/rem 0.75)]]
@@ -375,7 +371,6 @@
                     :outline 0
                     :outline-offset (u/px -2)
                     :box-shadow [[0 0 0 (u/rem 0.2) "rgba(0,123,255,.25)"]]}]]
-   ;;[:.autocomplete__selected-items {:margin-bottom (u/rem 0.5)}]
    [:.autocomplete__selected-item:last-of-type {:margin-bottom (u/rem 0.5)}]
    [:.autocomplete__selected-item {:height (u/px 40)
                                    :line-height (u/px 40)
