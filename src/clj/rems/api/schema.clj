@@ -11,7 +11,7 @@
    :wfid s/Num
    :formid s/Num
    :resid s/Str
-   :state s/Str
+   :state (s/enum "enabled" "disabled")
    (s/optional-key :langcode) s/Keyword
    :localizations (s/maybe {s/Any s/Any})})
 
@@ -80,3 +80,6 @@
    :application-id s/Num
    :start s/Str
    :mail s/Str})
+
+(def SuccessResponse
+  {:success s/Bool})

@@ -78,6 +78,8 @@
             :view "View"
             :withdraw "Withdraw"
             :withdraw-success "Application withdrawn"}
+  :administration {:disable "Disable"
+                   :enable "Enable"}
   :applicant-info {:applicant "Applicant"
                    :email "Email"
                    :username "Name"}
@@ -173,6 +175,7 @@
   :missing "Missing translation"
   :navigation {:about "About"
                :actions "Actions"
+               :administration "Administration"
                :applications "Applications"
                :catalogue "Catalogue"
                :home "Home"

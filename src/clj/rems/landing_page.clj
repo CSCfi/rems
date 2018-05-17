@@ -12,6 +12,7 @@
     (cond
       redirect-to (assoc (redirect redirect-to)
                          :session (dissoc (:session req) :redirect-to))
+      (has-roles? :owner) (redirect "/#/administration")
       (has-roles? :approver) (redirect "/#/actions")
       (has-roles? :reviewer) (redirect "/#/actions")
       :else (redirect "/#/catalogue"))))

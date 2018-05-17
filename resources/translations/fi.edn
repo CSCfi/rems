@@ -78,6 +78,8 @@
             :view "Näytä"
             :withdraw "Palauta muokattavaksi"
             :withdraw-success "Hakemus palautettu muokattavaksi"}
+  :administration {:disable "Poista käytöstä"
+                   :enable "Ota käyttöön"}
   :applicant-info {:applicant "Hakija"
                    :email "Sähköposti"
                    :username "Nimi"}
@@ -174,6 +176,7 @@
   :missing "Käännös puuttuu"
   :navigation {:about "Info"
                :actions "Toiminnot"
+               :administration "Ylläpito"
                :applications "Hakemukset"
                :catalogue "Kielivarat"
                :home "Etusivu"
