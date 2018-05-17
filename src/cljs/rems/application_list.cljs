@@ -35,21 +35,22 @@
              ;; NB!:
              :header #(text :t.actions/last-modified)}})
 
-(defn column-header [col]
-  ((get-in +columns+ [col :header])))
+(defn column-header [column-definitions col]
+  ((get-in column-definitions [col :header])))
 
-(defn column-value [col app]
-  ((get-in +columns+ [col :value]) app))
+(defn column-value [column-definitions col app]
+  ((get-in column-definitions [col :value]) app))
 
-(defn column-sort-value [col app]
-  ((or (get-in +columns+ [col :sort-value])
-       (get-in +columns+ [col :value]))
+(defn column-sort-value [column-definitions col app]
+  ((or (get-in column-definitions [col :sort-value])
+       (get-in column-definitions [col :value]))
    app))
 
-(defn- row [columns app]
+(defn- row [column-definitions columns app]
   (into [:tr.action]
         (concat (for [c columns]
-                  [:td {:data-th (column-header c)} (column-value c app)])
+                  [:td {:data-th (column-header column-definitions c)}
+                   (column-value column-definitions c app)])
                 ;; buttons to show could be parameterized
                 [[:td.commands (view-button app)]])))
 
@@ -63,23 +64,24 @@
     [old-column (flip old-order)]
     [new-column :asc]))
 
-(defn- table [columns [sort-column sort-order] set-sorting apps]
-  [:table.rems-table.actions
-   (into [:tbody
-          (into [:tr]
-                (for [c columns]
-                  [:th
-                   {:on-click #(set-sorting (change-sort sort-column sort-order c))}
-                   (column-header c)
-                   " "
-                   (when (= c sort-column) (sort-symbol sort-order))]))]
-         (map (fn [app] ^{:key (:id app)} [row columns app]) apps))])
-
-(defn- apply-sorting [[col order] apps]
-  (let [sorted (sort-by #(column-sort-value col %) apps)]
+(defn- apply-sorting [column-definitions [col order] apps]
+  (let [sorted (sort-by #(column-sort-value column-definitions col %) apps)]
     (case order
       :asc sorted
       :desc (reverse sorted))))
+
+(defn- table [column-definitions visible-columns [sort-column sort-order] set-sorting apps]
+  [:table.rems-table.actions
+   (into [:tbody
+          (into [:tr]
+                (for [c visible-columns]
+                  [:th
+                   {:on-click #(set-sorting (change-sort sort-column sort-order c))}
+                   (column-header column-definitions c)
+                   " "
+                   (when (= c sort-column) (sort-symbol sort-order))]))]
+         (map (fn [app] ^{:key (:id app)} [row column-definitions visible-columns app])
+              (apply-sorting column-definitions [sort-column sort-order] apps)))])
 
 (defn component
   "A table of applications.
@@ -92,7 +94,7 @@
 
    set-sorting is a callback that is called with a new sorting when it changes"
   [columns sorting set-sorting apps]
-  (table columns sorting set-sorting (apply-sorting sorting apps)))
+  (table +columns+ columns sorting set-sorting apps))
 
 (def ^:private +example-applications+
   [{:id 1 :catalogue-items [{:title "Item 5"}] :state "draft" :applicantuserid "alice"
