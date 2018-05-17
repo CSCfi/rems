@@ -11,6 +11,8 @@
 (def GetCatalogueResponse
   [CatalogueItem])
 
+;; TODO resid is misleading: it's the internal id, not the string id
+;; Should we take the string id instead?
 (def CreateCatalogueItemCommand
   {:title s/Str
    :form s/Num
