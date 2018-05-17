@@ -42,7 +42,7 @@
       :summary "Get resources"
       :return [Resource]
       (check-user)
-      (check-roles :owner) ;; TODO admin role needed?
+      (check-roles :owner)
       (ok (get-resources)))
 
     (PUT "/create" []
