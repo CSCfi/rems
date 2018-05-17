@@ -30,7 +30,12 @@
 (rf/reg-event-db
  ::zero-state
  (fn [db _]
-   (assoc db :application nil :edit-application nil ::judge-comment "")))
+   (assoc db
+          :application nil
+          :edit-application nil
+          ::judge-comment ""
+          ::review-comment ""
+          ::send-3rd-party-review-request-success false)))
 
 (rf/reg-sub
  :application
@@ -532,7 +537,6 @@
    (let [application-id (get-in db [:application :application :id])
          round (get-in db [:application :application :curround])
          user (get-in db [:identity :user])]
-     (rf/dispatch [::set-review-comment ""])
      (send-3rd-party-review-request reviewers user application-id round comment)
      {})))
 
