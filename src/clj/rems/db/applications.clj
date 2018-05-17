@@ -235,7 +235,7 @@
                                                              (email/action-not-needed user-attrs applicant-name application-id))))))
 
 (defn assoc-review-type-to-app [app]
-  (assoc app :review (if (is-reviewer? (:id app)) :normal :third-party)))
+  (assoc app :review-type (if (is-reviewer? (:id app)) :normal :third-party)))
 
 (defn get-applications-to-review
   "Returns applications that are waiting for a normal or 3rd party review. Type of the review, with key :review and values :normal or :third-party,
