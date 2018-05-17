@@ -1,6 +1,6 @@
 (ns rems.application-list
   (:require [clojure.string :as str]
-            [rems.atoms :refer [sort-symbol]]
+            [rems.table :as table]
             [rems.text :refer [localize-state localize-time text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
@@ -13,10 +13,10 @@
   (str/join ", " (map :title (:catalogue-items app))))
 
 (def +all-columns+
-  [:id :resource :applicant :state :created :handled])
+  [:id :resource :applicant :state :created :handled :view])
 
 (def +default-columns+
-  [:id :resource :applicant :state :created])
+  [:id :resource :applicant :state :created :view])
 
 (def ^:private +columns+
   {:id {:value :id
@@ -33,55 +33,9 @@
    :handled {:value #(localize-time (:handled %))
              :sort-value :handled
              ;; NB!:
-             :header #(text :t.actions/last-modified)}})
-
-(defn column-header [column-definitions col]
-  ((get-in column-definitions [col :header])))
-
-(defn column-value [column-definitions col app]
-  ((get-in column-definitions [col :value]) app))
-
-(defn column-sort-value [column-definitions col app]
-  ((or (get-in column-definitions [col :sort-value])
-       (get-in column-definitions [col :value]))
-   app))
-
-(defn- row [column-definitions columns app]
-  (into [:tr.action]
-        (concat (for [c columns]
-                  [:td {:data-th (column-header column-definitions c)}
-                   (column-value column-definitions c app)])
-                ;; buttons to show could be parameterized
-                [[:td.commands (view-button app)]])))
-
-(defn- flip [order]
-  (case order
-    :asc :desc
-    :desc :asc))
-
-(defn- change-sort [old-column old-order new-column]
-  (if (= old-column new-column)
-    [old-column (flip old-order)]
-    [new-column :asc]))
-
-(defn- apply-sorting [column-definitions [col order] apps]
-  (let [sorted (sort-by #(column-sort-value column-definitions col %) apps)]
-    (case order
-      :asc sorted
-      :desc (reverse sorted))))
-
-(defn- table [column-definitions visible-columns [sort-column sort-order] set-sorting apps]
-  [:table.rems-table.actions
-   (into [:tbody
-          (into [:tr]
-                (for [c visible-columns]
-                  [:th
-                   {:on-click #(set-sorting (change-sort sort-column sort-order c))}
-                   (column-header column-definitions c)
-                   " "
-                   (when (= c sort-column) (sort-symbol sort-order))]))]
-         (map (fn [app] ^{:key (:id app)} [row column-definitions visible-columns app])
-              (apply-sorting column-definitions [sort-column sort-order] apps)))])
+             :header #(text :t.actions/last-modified)}
+   :view {:value view-button
+          :sortable? false}})
 
 (defn component
   "A table of applications.
@@ -94,7 +48,7 @@
 
    set-sorting is a callback that is called with a new sorting when it changes"
   [columns sorting set-sorting apps]
-  (table +columns+ columns sorting set-sorting apps))
+  [table/component +columns+ columns sorting set-sorting :id apps])
 
 (def ^:private +example-applications+
   [{:id 1 :catalogue-items [{:title "Item 5"}] :state "draft" :applicantuserid "alice"
