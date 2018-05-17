@@ -458,7 +458,6 @@
 (rf/reg-event-db
  ::add-selected-3rd-party-reviewer
  (fn [db [_ reviewer]]
-   (println reviewer)
    (if (contains? (::selected-3rd-party-reviewers db) reviewer)
      db
      (update db ::selected-3rd-party-reviewers conj reviewer))))
