@@ -5,7 +5,7 @@
             [rems.application-list :as application-list]
             [rems.text :refer [localize-state localize-time text]]))
 
-(defn- fetch-my-applications [user]
+(defn- fetch-my-applications []
   (GET "/api/applications/" {:handler #(rf/dispatch [::fetch-my-applications %])
                              :response-format :json
                              :keywords? true}))
@@ -31,8 +31,7 @@
    (assoc db ::sort order)))
 
 (defn applications-page []
-  (let [user @(rf/subscribe [:user])]
-    (fetch-my-applications user))
+  (fetch-my-applications)
   (let [apps @(rf/subscribe [::my-applications])
         sort @(rf/subscribe [::sort])
         set-sort #(rf/dispatch [::sort %])]
