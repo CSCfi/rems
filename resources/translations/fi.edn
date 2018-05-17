@@ -95,7 +95,6 @@
                           :third-party-review "Katselmoitu ulkoisen toimijan toimesta"
                           :unknown "Unknown"
                           :withdraw "Palautettu muokattavaksi"}
-                 :request-review "Pyydä ulkoiseen toimijan katselmointia"
                  :resource "Kielivara"
                  :state "Tila"
                  :states {:applied "Haettu"

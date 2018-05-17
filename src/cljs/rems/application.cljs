@@ -543,7 +543,7 @@
       [:div.modal-content
        [:div
         [:div.modal-header
-         [:h5#confirmModalLabel.modal-title (text :t.applications/request-review)]
+         [:h5#confirmModalLabel.modal-title (text :t.actions/review-request)]
          [:button.close {:type "button" :data-dismiss "modal" :aria-label (text :t.actions/cancel)}
           [:span {:aria-hidden "true"} "\u00D7"]]]
         [:div.modal-body
@@ -633,7 +633,7 @@
      (when @(rf/subscribe [::send-3rd-party-review-request-message])
        [flash-message
         {:status :success
-         :contents (text :t.applications.events/review-request)}])
+         :contents (text :t.actions/review-request-success)}])
      (when (:validation edit-application)
        [flash-message
         {:status :failure
