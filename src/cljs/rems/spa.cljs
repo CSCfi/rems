@@ -129,8 +129,8 @@
   [user-and-roles]
   (let [user-and-roles (js->clj user-and-roles :keywordize-keys true)]
     (rf/dispatch-sync [:set-identity (if (:user user-and-roles)
-                                   (update user-and-roles :roles #(mapv keyword (:roles user-and-roles)))
-                                   user-and-roles)])))
+                                       (update user-and-roles :roles #(mapv keyword (:roles user-and-roles)))
+                                       user-and-roles)])))
 
 (defn fetch-translations! []
   (GET "/api/translations" {:handler #(rf/dispatch [:loaded-translations %])
