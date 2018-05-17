@@ -107,6 +107,8 @@
                           :withdrawn "Withdrawn"}
                  :user "User"
                  :view "View"}
+  :autocomplete {:no-results "No results"
+                 :placeholder "Choose or type"}
   :cart {:add "Add to cart"
          :apply "Apply"
          :apply-for-bundle "Apply for these %1 resources as a bundle "

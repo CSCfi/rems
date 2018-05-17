@@ -2,6 +2,7 @@
   (:require [ajax.core :refer [GET PUT]]
             [clojure.string :as str]
             [re-frame.core :as rf]
+            [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
             [rems.db.catalogue :refer [get-catalogue-item-title]]
             [rems.phase :refer [phases get-application-phases]]
@@ -9,6 +10,9 @@
             [rems.util :refer [dispatch! index-by]]
             [secretary.core :as secretary])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
+
+(defn scroll-to-top! []
+  (.setTimeout js/window #(.scrollTo js/window 0 0) 500)) ;; wait until faded out
 
 ;;;; Routes and route helpers ;;;;
 ;; TODO named secretary routes give us equivalent functions
@@ -26,7 +30,12 @@
 (rf/reg-event-db
  ::zero-state
  (fn [db _]
-   (assoc db :application nil :edit-application nil ::judge-comment "")))
+   (assoc db
+          :application nil
+          :edit-application nil
+          ::judge-comment ""
+          ::review-comment ""
+          ::send-third-party-review-request-success false)))
 
 (rf/reg-sub
  :application
@@ -427,7 +436,12 @@
 
 (defn- review-button []
   [:button#submit.btn.btn-primary
-   {:name "return" :onClick #(rf/dispatch [::judge-application "review"])}
+   {:name "review" :onClick #(rf/dispatch [::judge-application "review"])}
+   (text :t.actions/review)])
+
+(defn- third-party-review-button []
+  [:button#submit.btn.btn-primary
+   {:name "third-party-review" :onClick #(rf/dispatch [::judge-application "third-party-review"])}
    (text :t.actions/review)])
 
 (defn- close-button []
@@ -440,17 +454,153 @@
    {:name "withdraw" :onClick #(rf/dispatch [::judge-application "withdraw"])}
    (text :t.actions/withdraw)])
 
+(defn- fetch-potential-third-party-reviewers [user]
+  (GET (str "/api/application/reviewers")
+       {:handler #(do (rf/dispatch [::set-potential-third-party-reviewers %])
+                      (rf/dispatch [::set-selected-third-party-reviewers #{}]))
+        :response-format :json
+        :headers {"x-rems-user-id" (:eppn user)}
+        :keywords? true}))
+
+(rf/reg-event-db
+ ::set-selected-third-party-reviewers
+ (fn [db [_ reviewers]]
+   (assoc db ::selected-third-party-reviewers reviewers)))
+
+(rf/reg-event-db
+ ::add-selected-third-party-reviewer
+ (fn [db [_ reviewer]]
+   (if (contains? (::selected-third-party-reviewers db) reviewer)
+     db
+     (update db ::selected-third-party-reviewers conj reviewer))))
+
+(rf/reg-event-db
+ ::remove-selected-third-party-reviewer
+ (fn [db [_ reviewer]]
+   (update db ::selected-third-party-reviewers disj reviewer)))
+
+(rf/reg-sub
+ ::selected-third-party-reviewers
+ (fn [db _]
+   (::selected-third-party-reviewers db)))
+
+(rf/reg-fx
+ ::fetch-potential-third-party-reviewers
+ (fn [[user]]
+   (fetch-potential-third-party-reviewers user)))
+
+(rf/reg-event-db
+ ::set-potential-third-party-reviewers
+ (fn [db [_ reviewers]]
+   (assoc db ::potential-third-party-reviewers (for [reviewer reviewers]
+                                                 (assoc reviewer :display (str (:name reviewer) " (" (:email reviewer)")"))))))
+
+(rf/reg-event-fx
+ ::start-fetch-potential-third-party-reviewers
+ (fn [{:keys [db]} [_]]
+   {::fetch-potential-third-party-reviewers [(get-in db [:identity :user])]}))
+
+(rf/reg-sub
+ ::potential-third-party-reviewers
+ (fn [db _]
+   (::potential-third-party-reviewers db)))
+
+(rf/reg-event-db
+ ::set-review-comment
+ (fn [db [_ value]]
+   (assoc db ::review-comment value)))
+
+(rf/reg-sub
+ ::review-comment
+ (fn [db _]
+   (::review-comment db)))
+
+(defn- send-third-party-review-request [reviewers user application-id round comment]
+  (PUT "/api/application/review_request"
+       {:format :json
+        :params {:application-id application-id
+                 :round round
+                 :comment comment
+                 :recipients (map :userid reviewers)}
+        :handler (fn [resp]
+                   (rf/dispatch [::send-third-party-review-request-success true])
+                   (rf/dispatch [::start-fetch-application application-id ])
+                   (scroll-to-top!)
+                   )}))
+
+(rf/reg-event-fx
+ ::send-third-party-review-request
+ (fn [{:keys [db]} [_ reviewers comment]]
+   (let [application-id (get-in db [:application :application :id])
+         round (get-in db [:application :application :curround])
+         user (get-in db [:identity :user])]
+     (send-third-party-review-request reviewers user application-id round comment)
+     {})))
+
+(rf/reg-event-db
+ ::send-third-party-review-request-success
+ (fn [db [_ value]]
+   (assoc db ::send-third-party-review-request-message value)))
+
+(rf/reg-sub
+ ::send-third-party-review-request-message
+ (fn [db _]
+   (::send-third-party-review-request-message db)))
+
+(defn- review-request-modal []
+  (let [selected-third-party-reviewers @(rf/subscribe [::selected-third-party-reviewers])
+        potential-third-party-reviewers @(rf/subscribe [::potential-third-party-reviewers])
+        review-comment @(rf/subscribe [::review-comment])]
+    [:div.modal.fade {:id "review-request-modal" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
+     [:div.modal-dialog {:role "document"}
+      [:div.modal-content
+       [:div
+        [:div.modal-header
+         [:h5#confirmModalLabel.modal-title (text :t.actions/review-request)]
+         [:button.close {:type "button" :data-dismiss "modal" :aria-label (text :t.actions/cancel)}
+          [:span {:aria-hidden "true"} "\u00D7"]]]
+        [:div.modal-body
+         [:div.form-group
+          [:label {:for "review-comment"} (text :t.form/add-comments)]
+          [:textarea#review-comment.form-control {:name "comment" :placeholder (text :t.form/comment)
+                                                  :on-change #(rf/dispatch [::set-review-comment (.. % -target -value)])}]]
+         [:div.form-group
+          [:label (text :t.actions/review-request-selection)]
+          [autocomplete/component
+           {:value (sort-by :display selected-third-party-reviewers)
+            :items potential-third-party-reviewers
+            :value->text #(:display %2)
+            :item->key :userid
+            :item->text :display
+            :item->value identity
+            :search-fields [:name :email]
+            :add-fn #(rf/dispatch [::add-selected-third-party-reviewer %])
+            :remove-fn #(rf/dispatch [::remove-selected-third-party-reviewer %])
+            }]]]
+        [:div.modal-footer
+         [:button.btn.btn-secondary {:data-dismiss "modal"} (text :t.actions/cancel)]
+         [:button.btn.btn-primary {:data-dismiss "modal"
+                                   :on-click #(rf/dispatch [::send-third-party-review-request selected-third-party-reviewers review-comment])} (text :t.actions/review-request)]]]]]]))
+
+(defn review-request-button []
+  [:button#review-request.btn.btn-secondary
+   {:type "button" :data-toggle "modal" :data-target "#review-request-modal"}
+   (text :t.actions/review-request)])
+
 (defn- actions-form [app]
   (let [buttons (concat (when (:can-close? app)
                           [[close-button]])
                         (when (:can-withdraw? app)
                           [[withdraw-button]])
-                        (when (= "normal" (:review-type app))
-                          [[review-button]])
                         (when (:can-approve? app)
                           [[reject-button]
                            [return-button]
-                           [approve-button]]))]
+                           [review-request-button]
+                           [approve-button]])
+                        (when (= "normal" (:review-type app))
+                          [[review-button]])
+                        (when (= "third-party" (:review-type app))
+                          [[third-party-review-button]]))]
     (if (empty? buttons)
       [:div]
       [collapsible/component
@@ -496,6 +646,10 @@
     [:div
      [:h2 (text :t.applications/application)]
      [disabled-items-warning (:catalogue-items application)]
+     (when @(rf/subscribe [::send-third-party-review-request-message])
+       [flash-message
+        {:status :success
+         :contents (text :t.actions/review-request-success)}])
      (when (:validation edit-application)
        [flash-message
         {:status :failure
@@ -506,7 +660,8 @@
        [:div.mt-3 [applicant-info "applicant-info" user-attributes]])
      [:div.mt-3 [applied-resources (:catalogue-items application)]]
      [:div.my-3 [fields application edit-application language]]
-     [:div.mb-3 [actions-form app]]]))
+     [:div.mb-3 [actions-form app]]
+     [review-request-modal]]))
 
 ;;;; Entrypoint ;;;;
 

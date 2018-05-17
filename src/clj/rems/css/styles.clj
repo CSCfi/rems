@@ -347,6 +347,51 @@
    [:.collapsing {:-webkit-transition "height 0.25s linear"
                   :-o-transition "height 0.25s linear"
                   :transition "height 0.25s linear"}]]
+
+  ;; autocomplete, duplicates some Bootstrap styling
+  ;; because the component classes are hard-coded
+  [:.autocomplete {:width (u/percent 100)}
+   [:.autocomplete__control
+    [:input {;; from Bootstrap .form-control
+             :display :block
+             :width (u/percent 100)
+             :padding [[(u/rem 0.375) (u/rem 0.75)]]
+             :font-size (u/rem 1)
+             :line-height 1.5
+             :color "#495057"
+             :background-color "#fff"
+             :background-image :none
+             :background-clip :padding-box
+             :border [[(u/px 1) :solid "#ced4da"]]
+             :border-radius (u/rem 0.25)
+             :transition [[:border-color :ease-in-out (u/s 0.15) :box-shadow :ease-in-out (u/s 0.15)]]}]
+    ["input:focus" {:color "#495057"
+                    :background-color "#fff"
+                    :border-color "#80bdff"
+                    :outline 0
+                    :outline-offset (u/px -2)
+                    :box-shadow [[0 0 0 (u/rem 0.2) "rgba(0,123,255,.25)"]]}]]
+   [:.autocomplete__selected-item:last-of-type {:margin-bottom (u/rem 0.5)}]
+   [:.autocomplete__selected-item {:height (u/px 40)
+                                   :line-height (u/px 40)
+                                   :background-color (util/get-theme-attribute :color1)
+                                   :border-radius (u/rem 0.25)
+                                   :border [[(u/px 1) :solid "#111"]]}]
+   [:.autocomplete__dropdown {:padding (u/px 10)}]
+   [:.autocomplete__item {:padding (u/px 10)}]
+   [:.autocomplete__item--selected {:background-color (util/get-theme-attribute :color1)}]
+   [:.autocomplete__item:hover {:background-color (util/get-theme-attribute :color1)
+                                :cursor :pointer}]
+   [:.autocomplete__selected-item {:display :inline-block
+                                   :padding [[0 (u/rem 0.5)]]
+                                   :margin-right (u/px 10)}
+    [:a.autocomplete__remove-item-button {:margin-left (u/px 5)
+                                          :padding (u/rem 0.5)
+                                          :padding-right 0
+                                          :color (util/get-theme-attribute :danger-color)
+                                          :font-weight :bold}]
+    [:input {:width (u/percent 100)}]]]
+
   (generate-phase-styles)
   [(s/descendant :.document :h3) {:margin-top (u/rem 4)}]
                                         ;These must be last as the parsing fails when the first non-standard element is met

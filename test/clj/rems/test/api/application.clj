@@ -334,7 +334,7 @@
               ["close" "closed"]]
              (map (juxt :event :comment) events))))))
 
-(deftest application-api-3rd-party-review-test
+(deftest application-api-third-party-review-test
   (let [api-key "42"
         user "developer"
         reviewer "alice"
@@ -372,7 +372,7 @@
       (is (= 200
              (-> (request :put (str "/api/application/judge"))
                  (authenticate api-key reviewer)
-                 (json-body {:command "3rd-party-review"
+                 (json-body {:command "third-party-review"
                              :application-id app-id
                              :round 0
                              :comment "is ok"})

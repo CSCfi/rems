@@ -45,7 +45,7 @@
    (s/optional-key :validation) [ValidationMessage]})
 
 (def JudgeApplicationCommand
-  {:command (s/enum "approve" "close" "reject" "return" "review" "3rd-party-review" "withdraw")
+  {:command (s/enum "approve" "close" "reject" "return" "review" "third-party-review" "withdraw")
    :application-id s/Num
    :round s/Num
    :comment s/Str})
@@ -73,7 +73,7 @@
     "reject" (applications/reject-application application-id round comment)
     "return" (applications/return-application application-id round comment)
     "review" (applications/review-application application-id round comment)
-    "3rd-party-review" (applications/perform-third-party-review application-id round comment)
+    "third-party-review" (applications/perform-third-party-review application-id round comment)
     "withdraw" (applications/withdraw-application application-id round comment))
   ;; failure communicated via an exception
   {:success true})

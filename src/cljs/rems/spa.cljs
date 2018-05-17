@@ -88,6 +88,7 @@
 (secretary/defroute "/application/:id" {id :id}
   (rf/dispatch [:rems.application/zero-state])
   (rf/dispatch [:rems.application/start-fetch-application id])
+  (rf/dispatch [:rems.application/start-fetch-potential-third-party-reviewers])
   (rf/dispatch [:set-active-page :application]))
 
 (secretary/defroute "/application" {{items :items} :query-params}
@@ -128,8 +129,8 @@
   [user-and-roles]
   (let [user-and-roles (js->clj user-and-roles :keywordize-keys true)]
     (rf/dispatch-sync [:set-identity (if (:user user-and-roles)
-                                   (update user-and-roles :roles #(mapv keyword (:roles user-and-roles)))
-                                   user-and-roles)])))
+                                       (update user-and-roles :roles #(mapv keyword (:roles user-and-roles)))
+                                       user-and-roles)])))
 
 (defn fetch-translations! []
   (GET "/api/translations" {:handler #(rf/dispatch [:loaded-translations %])
