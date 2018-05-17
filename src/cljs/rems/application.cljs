@@ -434,7 +434,9 @@
 
 (defn- review-button []
   [:button#submit.btn.btn-primary
-   {:name "return" :onClick #(rf/dispatch [::judge-application "review"])}
+   {:name "review" :onClick #(rf/dispatch [::judge-application "review"])}
+   (text :t.actions/review)])
+
    (text :t.actions/review)])
 
 (defn- close-button []
