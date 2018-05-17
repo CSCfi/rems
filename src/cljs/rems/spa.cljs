@@ -88,7 +88,7 @@
 (secretary/defroute "/application/:id" {id :id}
   (rf/dispatch [:rems.application/zero-state])
   (rf/dispatch [:rems.application/start-fetch-application id])
-  (rf/dispatch [:rems.application/start-fetch-potential-3rd-party-reviewers])
+  (rf/dispatch [:rems.application/start-fetch-potential-third-party-reviewers])
   (rf/dispatch [:set-active-page :application]))
 
 (secretary/defroute "/application" {{items :items} :query-params}
