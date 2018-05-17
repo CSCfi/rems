@@ -11,6 +11,9 @@
             [secretary.core :as secretary])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
+(defn scroll-to-top! []
+  (.setTimeout js/window #(.scrollTo js/window 0 0) 500)) ;; wait until faded out
+
 ;;;; Routes and route helpers ;;;;
 ;; TODO named secretary routes give us equivalent functions
 ;; TODO should the secretary route definitions be in this ns too?
@@ -509,7 +512,10 @@
                  :comment comment
                  :recipients (map :userid reviewers)}
         :handler (fn [resp]
-                   (rf/dispatch [::send-3rd-party-review-request-success true]))}))
+                   (rf/dispatch [::send-3rd-party-review-request-success true])
+                   (rf/dispatch [::start-fetch-application application-id ])
+                   (scroll-to-top!)
+                   )}))
 
 (rf/reg-event-fx
  ::send-3rd-party-review-request
@@ -530,9 +536,6 @@
  ::send-3rd-party-review-request-message
  (fn [db _]
    (::send-3rd-party-review-request-message db)))
-
-(defn scroll-to-top! []
-  (.setTimeout js/window #(.scrollTo js/window 0 0) 500)) ;; wait until faded out
 
 (defn- review-request-modal []
   (let [selected-3rd-party-reviewers @(rf/subscribe [::selected-3rd-party-reviewers])
@@ -567,8 +570,7 @@
         [:div.modal-footer
          [:button.btn.btn-secondary {:data-dismiss "modal"} (text :t.actions/cancel)]
          [:button.btn.btn-primary {:data-dismiss "modal"
-                                   :on-click #(do (rf/dispatch [::send-3rd-party-review-request selected-3rd-party-reviewers review-comment])
-                                                  (scroll-to-top!))} (text :t.actions/review-request)]]]]]]))
+                                   :on-click #(do (rf/dispatch [::send-3rd-party-review-request selected-3rd-party-reviewers review-comment]))} (text :t.actions/review-request)]]]]]]))
 
 (defn review-request-button []
   [:button#review-request.btn.btn-secondary
