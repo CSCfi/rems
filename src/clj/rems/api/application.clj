@@ -56,9 +56,6 @@
    :comment s/Str
    :recipients [s/Str]})
 
-(def ApplicationCommandResponse
-  {:success s/Bool})
-
 (def Reviewer
   {:userid s/Str
    :name (s/maybe s/Str)
@@ -134,14 +131,14 @@
     (PUT "/judge" []
       :summary "Judge an application"
       :body [request JudgeApplicationCommand]
-      :return ApplicationCommandResponse
+      :return SuccessResponse
       (check-user)
       (ok (api-judge request)))
 
     (PUT "/review_request" []
       :summary "Request a review"
       :body [request ReviewRequestCommand]
-      :return ApplicationCommandResponse
+      :return SuccessResponse
       (check-user)
       (applications/send-review-request (:application-id request)
                                         (:round request)

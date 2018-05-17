@@ -1,5 +1,5 @@
 (ns rems.administration
-  (:require [ajax.core :refer [GET]]
+  (:require [ajax.core :refer [GET PUT]]
             [re-frame.core :as rf]
             [rems.atoms :refer [external-link]]
             [rems.db.catalogue :refer [urn-catalogue-item? get-catalogue-item-title disabled-catalogue-item?]]
@@ -22,16 +22,29 @@
                           :response-format :json
                           :keywords? true}))
 
-(defn- disable-button []
+(defn- update-catalogue-item [id state]
+  (PUT "/api/catalogue/update" {:format :json
+                                :params {:id id :state state}
+                                ;; TODO error handling
+                                :handler (fn [resp]
+                                           (fetch-catalogue))}))
+
+(rf/reg-event-fx
+ ::update-catalogue-item
+ (fn [_ [_ id state]]
+   (update-catalogue-item id state)
+   {}))
+
+(defn- disable-button [item]
   [:button.btn.btn-secondary
    {:type "submit"
-    :on-click nil}
+    :on-click #(rf/dispatch [::update-catalogue-item (:id item) "disabled"])}
    (text :t.administration/disable)])
 
-(defn- enable-button []
+(defn- enable-button [item]
   [:button.btn.btn-primary
    {:type "submit"
-    :on-click nil}
+    :on-click #(rf/dispatch [::update-catalogue-item (:id item) "enabled"])}
    (text :t.administration/enable)])
 
 ;; TODO make a generic table component? This is now copypasted from rems.catalogue
@@ -56,7 +69,7 @@
    (into [:tbody
           [:tr
            [:th (text :t.catalogue/header)]]]
-         (for [item items]
+         (for [item (sort-by :id items)]
            [catalogue-item item language]))])
 
 (defn administration-page []
