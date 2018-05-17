@@ -583,7 +583,7 @@
         [:div.modal-footer
          [:button.btn.btn-secondary {:data-dismiss "modal"} (text :t.actions/cancel)]
          [:button.btn.btn-primary {:data-dismiss "modal"
-                                   :on-click #(do (rf/dispatch [::send-3rd-party-review-request selected-3rd-party-reviewers review-comment]))} (text :t.actions/review-request)]]]]]]))
+                                   :on-click #(rf/dispatch [::send-3rd-party-review-request selected-3rd-party-reviewers review-comment])} (text :t.actions/review-request)]]]]]]))
 
 (defn review-request-button []
   [:button#review-request.btn.btn-secondary
