@@ -21,7 +21,7 @@
           item (first data)]
       (is (str/starts-with? (:resid item) "http://")))
     (let [data (-> (request :put "/api/catalogue/create")
-                   (authenticate api-key user-id)
+                   (authenticate api-key "owner")
                    (json-body {:title "test-item-title"
                                :form 1
                                :resid 1
