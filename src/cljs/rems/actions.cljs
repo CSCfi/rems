@@ -8,20 +8,20 @@
             [rems.guide-functions]
             [rems.text :refer [localize-state localize-time text]]))
 
-(defn- fetch-actions [user]
+(defn- fetch-actions []
   (GET "/api/actions/" {:handler #(re-frame/dispatch [::fetch-actions-result %])
                         :response-format :json
                         :keywords? true}))
 
 (re-frame/reg-fx
  ::fetch-actions
- (fn [[user]]
-   (fetch-actions user)))
+ (fn [_]
+   (fetch-actions)))
 
 (re-frame/reg-event-fx
  ::start-fetch-actions
  (fn [{:keys [db]} _]
-   {::fetch-actions [(get-in db [:identity :user])]}))
+   {::fetch-actions []}))
 
 (re-frame/reg-event-db
  ::fetch-actions-result
