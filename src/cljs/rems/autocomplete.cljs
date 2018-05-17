@@ -29,8 +29,8 @@
     [:div
      (component-info component)
      (example "autocomplete, empty"
-              [component {:value nil :items (sorted-map 1 "Matti" 2 "Teppo" 3 "Seppo" 4 "Hupu" 5 "Tupu")
+              [component {:value nil :items (sorted-map 1 "Alice" 2 "Bob" 3 "Carl" 4 "Own" 5 "Deve")
                           :add-fn add-fn :remove-fn remove-fn}])
      (example "autocomplete, multiple values selected"
-              [component {:value #{1 5} :items (sorted-map 1 "Matti" 2 "Teppo" 3 "Seppo" 4 "Hupu" 5 "Tupu")
+              [component {:value #{1 5} :items (sorted-map 1 "Alice" 2 "Bob" 3 "Carl" 4 "Own" 5 "Deve")
                           :add-fn add-fn :remove-fn remove-fn}])]))
