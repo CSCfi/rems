@@ -36,6 +36,7 @@
   "Throw a RuntimeException, args passed to `clojure.core/format`."
   [& fmt-args]
   (throw (RuntimeException. (apply format fmt-args))))
+
 (defn get-theme-attribute
   "Fetch the attribute value from the current theme."
   [attr-name]
