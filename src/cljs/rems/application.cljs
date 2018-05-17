@@ -215,7 +215,7 @@
      (text-format (:key validation) title)]))
 
 (defn- text-field
-  [{:keys [title id prompt readonly optional value validation]}]
+  [{:keys [title id inputprompt readonly optional value validation]}]
   [:div.form-group.field
    [:label {:for (id-to-name id)}
     title " "
@@ -223,21 +223,21 @@
       (text :t.form/optional))]
    [:input.form-control {:type "text"
                          :name (id-to-name id)
-                         :placeholder prompt
+                         :placeholder inputprompt
                          :class (when validation "is-invalid")
                          :value value :readOnly readonly
                          :onChange (set-field-value id)}]
    [field-validation-message validation title]])
 
 (defn- texta-field
-  [{:keys [title id prompt readonly optional value validation]}]
+  [{:keys [title id inputprompt readonly optional value validation]}]
   [:div.form-group.field
    [:label {:for (id-to-name id)}
     title " "
     (when optional
       (text :t.form/optional))]
    [:textarea.form-control {:name (id-to-name id)
-                            :placeholder prompt
+                            :placeholder inputprompt
                             :class (when validation "is-invalid")
                             :value value :readOnly readonly
                             :onChange (set-field-value id)}]
