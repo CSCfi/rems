@@ -1,7 +1,7 @@
 (ns rems.api.application
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
-            [rems.api.util :refer [check-user check-roles]]
+            [rems.api.util :refer [check-roles check-user]]
             [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.core :as db]

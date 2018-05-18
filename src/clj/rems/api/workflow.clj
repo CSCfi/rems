@@ -1,6 +1,6 @@
 (ns rems.api.workflow
   (:require [compojure.api.sweet :refer :all]
-            [rems.api.util :refer [check-user check-roles]]
+            [rems.api.util :refer [check-roles check-user]]
             [rems.db.core :as db]
             [ring.util.http-response :refer :all]
             [schema.core :as s])

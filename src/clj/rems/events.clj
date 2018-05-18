@@ -1,11 +1,8 @@
 (ns rems.events
   "Components and endpoints for submitting events (review, approve, etc.) for applications"
   (:require [compojure.core :refer [POST defroutes]]
-            [hiccup.core :as hiccup]
             [rems.anti-forgery :refer [anti-forgery-field]]
             [rems.db.applications :as applications]
-            [rems.db.core :as db]
-            [rems.db.users :as users]
             [rems.roles :refer [has-roles?]]
             [rems.text :refer [text]]
             [rems.util :refer :all]

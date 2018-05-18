@@ -15,8 +15,7 @@
             [rems.email :as email]
             [rems.util :refer [get-user-id
                                get-username
-                               getx-user-id
-                               index-by]]))
+                               getx-user-id]]))
 
 (defn draft?
   "Is the given `application-id` for an unsaved draft application?"

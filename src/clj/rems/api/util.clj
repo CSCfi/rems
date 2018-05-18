@@ -1,7 +1,7 @@
 (ns rems.api.util
   (:require [rems.auth.util :refer [throw-unauthorized]]
-            [rems.util :refer [get-user-id]]
-            [rems.roles :refer [has-roles?]]))
+            [rems.roles :refer [has-roles?]]
+            [rems.util :refer [get-user-id]]))
 
 (defn check-user []
   (let [user-id (get-user-id)]
