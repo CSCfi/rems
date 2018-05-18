@@ -62,8 +62,6 @@
     [:div
      [nav/navigation-widget page-name]
      [logo]
-     ;;[:button {:on-click #(rf/dispatch [:set-active-page :catalogue])} "catalogue"]
-     #_[:div.container message]
      [:div.container.main-content [content]]
      [footer]]))
 

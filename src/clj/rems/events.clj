@@ -45,112 +45,11 @@
 (defn close-modal [app]
   (approval-confirm-modal "close" (text :t.actions/close) app))
 
-(defn close-button [app]
-  [:button#close.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#close-modal"}
-   (text :t.actions/close)])
-
 (defn withdraw-modal [app]
   (approval-confirm-modal "withdraw" (text :t.actions/withdraw) app))
 
-(defn withdraw-button [app]
-  [:button#withdraw.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#withdraw-modal"}
-   (text :t.actions/withdraw)])
-
 (defn- review-confirm-modal [name-field action-title app]
   (confirm-modal name-field action-title app (if (has-roles? :reviewer) (text :t.form/add-comments) (text :t.form/add-comments-applicant))))
-
-(defn- reviewer-selection [user-attrs]
-  (let [username (get-username user-attrs)
-        mail (get-user-mail user-attrs)]
-    (when (and username mail)
-      [:option {:value (get-user-id user-attrs)} (str username (hiccup/h " <") mail (hiccup/h ">"))])))
-
-(defn- review-request-modal [app]
-  [:div.modal.fade {:id "review-request-modal" :tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
-   [:div.modal-dialog {:role "document"}
-    [:div.modal-content
-     [:form (actions-form-attrs app)
-      (anti-forgery-field)
-      [:div.modal-header
-       [:h5#confirmModalLabel.modal-title (text :t.form/add-comments)]
-       [:button.close {:type "button" :data-dismiss "modal" :aria-label (text :t.actions/cancel)}
-        [:span {:aria-hidden "true"} "&times;"]]]
-      [:div.modal-body
-       [:div.form-group
-        [:textarea.form-control {:name "comment"}]]
-       [:div.form-group
-        [:label (text :t.actions/review-request-selection)]
-        [:select.form-control {:name "recipients" :multiple "multiple" :required true}
-         (let [other-users (filter #(not= (get-user-id) %) (map :userid (db/get-users)))
-               users-attrs (map users/get-user-attributes other-users)]
-           (for [user-attrs users-attrs]
-             (reviewer-selection user-attrs)))]]]
-      [:div.modal-footer
-       [:button.btn.btn-secondary {:data-dismiss "modal"} (text :t.actions/cancel)]
-       [:button.btn.btn-primary {:type "submit" :name "review-request"} (text :t.actions/review-request)]]]]]])
-
-(defn- approve-button [app]
-  (list
-   [:button#approve.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#approve-modal"}
-    (text :t.actions/approve)]
-   (approval-confirm-modal "approve" (text :t.actions/approve) app)))
-
-(defn- reject-button [app]
-  (list
-   [:button#reject.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#reject-modal"}
-    (text :t.actions/reject)]
-   (approval-confirm-modal "reject" (text :t.actions/reject) app)))
-
-(defn review-button [app]
-  (case (:review-type app)
-    :normal
-    (list
-     [:button#review.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#review-modal"}
-      (text :t.actions/review)]
-     (review-confirm-modal "review" (text :t.actions/review) app))
-    :third-party
-    (list
-     [:button#third-party-review.btn.btn-primary {:type "button" :data-toggle "modal" :data-target "#third-party-review-modal"}
-      (text :t.actions/review)]
-     (review-confirm-modal "third-party-review" (text :t.actions/review) app))))
-
-(defn review-request-button [app]
-  (list
-    [:button#review-request.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#review-request-modal"}
-     (text :t.actions/review-request)]
-    (review-request-modal app)))
-
-(defn- return-button [app]
-  (list
-   [:button#return.btn.btn-secondary {:type "button" :data-toggle "modal" :data-target "#return-modal"}
-    (text :t.actions/return)]
-   (approval-confirm-modal "return" (text :t.actions/return) app)))
-
-(defn back-to-actions-button []
-  [:a#back-actions.btn.btn-secondary.pull-left {:href "/actions"} (text :t.form/back-actions)])
-
-(defn approve-form [app]
-  [:div.commands
-   (back-to-actions-button)
-   (reject-button app)
-   (return-button app)
-   (review-request-button app)
-   (approve-button app)])
-
-(defn close-form [app]
-  [:div.commands
-   (back-to-actions-button)
-   (close-modal app)
-   (close-button app)])
-
-(defn back-form []
-  [:div.commands
-   (back-to-actions-button)])
-
-(defn review-form [app]
-  [:div.commands
-   (back-to-actions-button)
-   (review-button app)])
 
 ;; TODO handle closing when no draft or anything saved yet
 (defroutes events-routes
