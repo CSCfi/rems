@@ -3,6 +3,7 @@
             [re-frame.core :as rf]
             [rems.atoms :refer [external-link]]
             [rems.db.catalogue :refer [urn-catalogue-item? get-catalogue-item-title disabled-catalogue-item?]]
+            [rems.table :as table]
             [rems.text :refer [text]]))
 
 ;; TODO copypaste from rems.catalogue, move to rems.db.catalogue?
@@ -35,6 +36,8 @@
    (update-catalogue-item id state)
    {}))
 
+;;;; UI ;;;;
+
 (defn- disable-button [item]
   [:button.btn.btn-secondary
    {:type "submit"
@@ -47,25 +50,24 @@
     :on-click #(rf/dispatch [::update-catalogue-item (:id item) "enabled"])}
    (text :t.administration/enable)])
 
-;; TODO make a generic table component? This is now copypasted from rems.catalogue
-(defn- catalogue-item
-  "Single catalogue item"
-  [item language]
-  [:tr
-   [:td {:data-th (text :t.catalogue/header)} (get-catalogue-item-title item language)]
-   [:td.commands {:data-th ""} (if (disabled-catalogue-item? item)
-                                 [enable-button item]
-                                 [disable-button item])]])
+(defn- catalogue-item-button [item]
+  (if (disabled-catalogue-item? item)
+    [enable-button item]
+    [disable-button item]))
+
+(defn- catalogue-columns [language]
+  {:name {:header #(text :t.catalogue/header)
+          :value #(get-catalogue-item-title % language)}
+   :button {:value catalogue-item-button
+            :sortable? false}})
 
 (defn- catalogue-list
   "List of catalogue items"
   [items language]
-  [:table.rems-table.catalogue
-   (into [:tbody
-          [:tr
-           [:th (text :t.catalogue/header)]]]
-         (for [item (sort-by :id items)]
-           [catalogue-item item language]))])
+  ;; TODO no sorting yet
+  (table/component (catalogue-columns language) [:name :button]
+                   [:name :asc] (fn [_])
+                   :id items))
 
 (defn administration-page []
   (fetch-catalogue)
