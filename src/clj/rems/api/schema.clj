@@ -72,7 +72,7 @@
    (s/optional-key :can-withdraw?) s/Bool
    (s/optional-key :review) (s/enum :third-party)
    :catalogue-items [CatalogueItem]
-   (s/optional-key :review-type) (s/enum :normal :third-party nil)
+   (s/optional-key :review-type) (s/maybe (s/enum :normal :third-party))
    (s/optional-key :handled) DateTime})
 
 (def Entitlement
