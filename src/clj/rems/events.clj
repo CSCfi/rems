@@ -8,46 +8,6 @@
             [rems.util :refer :all]
             [ring.util.response :refer [redirect]]))
 
-(defn- actions-form-attrs [app]
-  {:method "post"
-   :action (str "/event/" (:id app) "/" (:curround app))})
-
-(defn- confirm-modal
-  "Creates a confimation pop-up for actions that could potentially cause harm if triggered by mistake.
-   Takes the following arguments:
-   name-field:   name of the button
-   action-title: text for the button shown to user
-   app:          application id the modal refers to
-   title-txt:    desired text for the title of the pop-up"
-  [name-field action-title app title-txt]
-  [:div.modal.fade {:id (str name-field "-modal") :tabindex "-1" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
-   [:div.modal-dialog {:role "document"}
-    [:div.modal-content
-     [:form (actions-form-attrs app)
-      (anti-forgery-field)
-      [:div.modal-header
-       [:h5#confirmModalLabel.modal-title title-txt]
-       [:button.close {:type "button" :data-dismiss "modal" :aria-label (text :t.actions/cancel)}
-        [:span {:aria-hidden "true"} "&times;"]]]
-      [:div.modal-body
-       [:div.form-group
-        [:textarea.form-control {:name "comment"}]]]
-      [:div.modal-footer
-       [:button.btn.btn-secondary {:data-dismiss "modal"} (text :t.actions/cancel)]
-       [:button.btn.btn-primary {:type "submit" :name name-field} action-title]]]]]])
-
-(defn- approval-confirm-modal [name-field action-title app]
-  (confirm-modal name-field action-title app (if (has-roles? :approver) (text :t.form/add-comments) (text :t.form/add-comments-applicant))))
-
-(defn close-modal [app]
-  (approval-confirm-modal "close" (text :t.actions/close) app))
-
-(defn withdraw-modal [app]
-  (approval-confirm-modal "withdraw" (text :t.actions/withdraw) app))
-
-(defn- review-confirm-modal [name-field action-title app]
-  (confirm-modal name-field action-title app (if (has-roles? :reviewer) (text :t.form/add-comments) (text :t.form/add-comments-applicant))))
-
 ;; TODO handle closing when no draft or anything saved yet
 (defroutes events-routes
   (POST "/event/:id/:round" [id round :as request]
