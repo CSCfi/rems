@@ -122,9 +122,12 @@
        (is-third-party-reviewer? (get-user-id) (:curround application) application)))
 
 (defn get-third-party-reviewers
-  "Takes as an argument a structure containing application information and a workflow round. Then returns userids for all users that have been requested to review for the given round."
-  [application round]
-  (set (map :userid (get-events-of-type application round "review-request"))))
+  "Takes as an argument a structure containing application information and a optionally the workflow round. Then returns userids for all users that have been requested to review for the given round or all rounds if not given."
+  ([application]
+   (set (map :userid (get-events-of-type application "review-request"))))
+  ([application round]
+   (set (map :userid (get-events-of-type application round "review-request")))))
+
 
 (defn is-applicant? [application]
   (= (:applicantuserid application) (get-user-id)))
