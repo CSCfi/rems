@@ -49,7 +49,7 @@
   (table/component (catalogue-columns language) [:name :cart]
                    sort-order #(rf/dispatch [::set-sort-order %])
                    :id
-                   items))
+                   (filter (complement disabled-catalogue-item?) items)))
 
 (defn- fetch-catalogue []
   (GET "/api/catalogue/" {:handler #(rf/dispatch [::catalogue %])

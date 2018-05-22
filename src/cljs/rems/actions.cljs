@@ -108,7 +108,7 @@
     [:div
      top-buttons
      [application-list/component
-      [:id :resource :applicant :state :handled]
+      [:id :resource :applicant :state :handled :view]
       @(re-frame/subscribe [::sort key])
       #(re-frame/dispatch [::sort key %])
       apps]]))
