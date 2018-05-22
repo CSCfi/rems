@@ -92,7 +92,7 @@
            event))
        events))
 
-(defn hide-event-comments [user application]
+(defn hide-event-comments [application user]
   (let [events (get-in application [:application :events])
         can-see-comments? (contains? (set (applications/get-handlers application)) (get-user-id))]
     (if can-see-comments?
@@ -101,8 +101,8 @@
 
 (defn api-get-application [application-id]
   (when (not (empty? (db/get-applications {:id application-id})))
-    (->> (applications/get-form-for application-id)
-         (hide-event-comments (util/get-user-id)))))
+    (-> (applications/get-form-for application-id)
+        (hide-event-comments (util/get-user-id)))))
 
 (def application-api
   (context "/application" []
