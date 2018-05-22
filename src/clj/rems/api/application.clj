@@ -95,7 +95,6 @@
 (defn hide-event-comments [user application]
   (let [events (get-in application [:application :events])
         can-see-comments? (contains? (set (applications/get-handlers application)) (get-user-id))]
-    (prn (get-in application [:application :events]))
     (if can-see-comments?
       application
       (update-in application [:application :events] hide-sensitive-comments))))
