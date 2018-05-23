@@ -3,10 +3,8 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
             [rems.api.util :refer [check-user]]
-            [rems.context :as context]
             [rems.db.applications :as applications]
-            [ring.util.http-response :refer :all]
-            [schema.core :as s]))
+            [ring.util.http-response :refer :all]))
 
 (def GetApplicationsResponse
   [Application])

@@ -1,10 +1,9 @@
 (ns rems.api.license
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
-            [rems.api.util :refer [check-user check-roles]]
+            [rems.api.util :refer [check-roles check-user]]
             [rems.db.licenses :as licenses]
-            [ring.util.http-response :refer :all]
-            [schema.core :as s])
+            [ring.util.http-response :refer :all])
   (:import [org.joda.time DateTime]))
 
 (def license-api

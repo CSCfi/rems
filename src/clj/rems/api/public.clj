@@ -1,12 +1,8 @@
 (ns rems.api.public
   (:require [compojure.api.sweet :refer :all]
-            [rems.api.schema :refer :all]
-            [rems.auth.util :refer [throw-unauthorized]]
             [rems.config :refer [env]]
             [rems.context :as context]
-            [rems.db.applications :as applications]
             [rems.locales :as locales]
-            [rems.util :refer [get-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 

@@ -1,7 +1,7 @@
 (ns rems.api.resource
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
-            [rems.api.util :refer [check-user check-roles]]
+            [rems.api.util :refer [check-roles check-user]]
             [rems.db.core :as db]
             [rems.db.licenses :as licenses]
             [rems.util :refer [get-user-id]]
