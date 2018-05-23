@@ -18,6 +18,7 @@
                    app
                    read-body)]
       (is (= [1 2 3 4 5 6 7] (map :id (sort-by :id data)))))))
+
 (deftest applications-api-security-test
   (testing "listing without authentication"
     (let [response (-> (request :get (str "/api/applications"))

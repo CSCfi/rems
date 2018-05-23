@@ -7,6 +7,7 @@
             [rems.db.core :as db]
             [rems.db.users :as users]
             [rems.form :as form]
+            [rems.util :refer [get-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
@@ -84,9 +85,24 @@
       (update-in [:items] longify-keys)
       (update-in [:licenses] longify-keys)))
 
+(defn- hide-sensitive-comments [events]
+  (map (fn [event]
+         (if (contains? #{"third-party-review" "review-request"} (:event event))
+           (assoc event :comment nil) ; remove sensitive comment
+           event))
+       events))
+
+(defn hide-event-comments [application user]
+  (let [events (get-in application [:application :events])
+        can-see-comments? (contains? (set (applications/get-handlers application)) (get-user-id))]
+    (if can-see-comments?
+      application
+      (update-in application [:application :events] hide-sensitive-comments))))
+
 (defn api-get-application [application-id]
   (when (not (empty? (db/get-applications {:id application-id})))
-    (applications/get-form-for application-id)))
+    (-> (applications/get-form-for application-id)
+        (hide-event-comments (get-user-id)))))
 
 (def application-api
   (context "/application" []
