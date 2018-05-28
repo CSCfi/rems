@@ -9,4 +9,4 @@ RUN chgrp -R 0 /usr/src && \
     chmod -R g=u /usr/src
 
 EXPOSE 8000
-ENTRYPOINT ["sh", "-c", "mkdocs serve -a 0.0.0.0:8000"]
+ENTRYPOINT ["sh", "-c", "mkdocs serve --no-livereload -a 0.0.0.0:8000"]

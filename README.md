@@ -87,3 +87,5 @@ Alternatively docker images can be used for running the documentation server:
 docker build . -f docs-server/Dockerfile -t rems-mkdocs-server
 docker run -it -p 8000:8000 --name rems-user-guide rems-mkdocs-server --rm
 ```
+
+*Note* live reload is disabled for the docker version of mkdocs.
