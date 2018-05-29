@@ -54,4 +54,4 @@
 
 (defn localize-time [time]
   (when time
-    (format/unparse time-format (format/parse time))))
+    (format/unparse-local time-format (time/to-default-time-zone (format/parse time)))))
