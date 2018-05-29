@@ -43,17 +43,10 @@
   (when-let [key (get-api-key request)]
     (api-key/valid? key)))
 
-(defn wrap-csrf-token-in-headers
-  "For testing ease, publish csrf token in response headers."
-  [handler]
-  (fn [request]
-    (assoc-in (handler request)
-              [:headers "x-csrf-token"] *anti-forgery-token*)))
-
 (defn wrap-api-key-or-csrf-token
   "Custom wrapper for CSRF so that the API requests with valid `x-rems-api-key` don't need to provide CSRF token."
   [handler]
-  (let [csrf-handler (wrap-anti-forgery (wrap-csrf-token-in-headers handler))]
+  (let [csrf-handler (wrap-anti-forgery handler)]
     (fn [request]
       (cond
         (valid-api-key? request) (handler request)

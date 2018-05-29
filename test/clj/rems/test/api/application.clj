@@ -420,6 +420,11 @@
 (defn- strip-cookie-attributes [cookie]
   (re-find #"[^;]*" cookie))
 
+(defn- get-csrf-token [response]
+  (let [token-regex #"var csrfToken = '([^\']*)'"
+        [_ token] (re-find token-regex (:body response))]
+    token))
+
 (deftest application-api-session-test
   (let [username "alice"
         login-headers (-> (request :get "/Shibboleth.sso/Login" {:username username})
@@ -428,7 +433,10 @@
         cookie (-> (get login-headers "Set-Cookie")
                    first
                    strip-cookie-attributes)
-        csrf (get login-headers "x-csrf-token")]
+        csrf (-> (request :get "/")
+                 (header "Cookie" cookie)
+                 app
+                 get-csrf-token)]
     (is cookie)
     (is csrf)
     (testing "submit with session"
