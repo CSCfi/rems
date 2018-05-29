@@ -417,6 +417,63 @@
 
 ;; TODO test for event filtering when it gets implemented
 
+(defn- strip-cookie-attributes [cookie]
+  (re-find #"[^;]*" cookie))
+
+(defn- get-csrf-token [response]
+  (let [token-regex #"var csrfToken = '([^\']*)'"
+        [_ token] (re-find token-regex (:body response))]
+    token))
+
+(deftest application-api-session-test
+  (let [username "alice"
+        login-headers (-> (request :get "/Shibboleth.sso/Login" {:username username})
+                          app
+                          :headers)
+        cookie (-> (get login-headers "Set-Cookie")
+                   first
+                   strip-cookie-attributes)
+        csrf (-> (request :get "/")
+                 (header "Cookie" cookie)
+                 app
+                 get-csrf-token)]
+    (is cookie)
+    (is csrf)
+    (testing "submit with session"
+      (let [response (-> (request :put (str "/api/application/save"))
+                         (header "Cookie" cookie)
+                         (header "x-csrf-token" csrf)
+                         (json-body {:command "submit"
+                                     :catalogue-items [2]
+                                     :items {1 "x" 2 "y" 3 "z"}
+                                     :licenses {1 "approved" 2 "approved"}})
+                         app)
+            body (read-body response)]
+        (is (= 200 (:status response)))
+        (is (:success body))))
+    (testing "submit with session but without csrf"
+      (let [response (-> (request :put (str "/api/application/save"))
+                         (header "Cookie" cookie)
+                         (json-body {:command "submit"
+                                     :catalogue-items [2]
+                                     :items {1 "x" 2 "y" 3 "z"}
+                                     :licenses {1 "approved" 2 "approved"}})
+                         app)]
+        (is (= 403 (:status response)))))
+    (testing "submit with session and csrf and wrong api-key"
+      (let [response (-> (request :put (str "/api/application/save"))
+                         (header "Cookie" cookie)
+                         (header "x-csrf-token" csrf)
+                         (header "x-rems-api-key" "WRONG")
+                         (json-body {:command "submit"
+                                     :catalogue-items [2]
+                                     :items {1 "x" 2 "y" 3 "z"}
+                                     :licenses {1 "approved" 2 "approved"}})
+                         app)
+            body (read-body response)]
+        (is (= 401 (:status response)))
+        (is (= "invalid api key" body))))))
+
 (deftest application-api-security-test
   (testing "save without authentication"
     (let [response (-> (request :put (str "/api/application/save"))
@@ -434,7 +491,7 @@
                                    :items {1 "REST-Test"}})
                        app)
           body (read-body response)]
-      (is (= "unauthorized" body))))
+      (is (= "invalid api key" body))))
   (testing "judge without authentication"
     (let [body (-> (request :put (str "/api/application/judge"))
                    (json-body {:command "approve"
@@ -453,4 +510,4 @@
                                :comment "msg"})
                    app
                    read-body)]
-      (is (= "unauthorized" body)))))
+      (is (= "invalid api key" body)))))
