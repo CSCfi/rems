@@ -40,7 +40,7 @@
   (str "([:t.email/" subject "-subject :t/missing])"))
 
 (defn- status-msg-to-check [username appid catid item-title status-key]
-  (str "([:t.email/status-changed-msg :t/missing] [\"" username "\" " appid " \"" item-title "\" \":t.applications.states/" status-key "\" \"localhost:3000/form/" appid "\"])"))
+  (str "([:t.email/status-changed-msg :t/missing] [\"" username "\" " appid " \"" item-title "\" \"([:t.applications.states/" status-key " :t/missing])\" \"localhost:3000/form/" appid "\"])"))
 
 (deftest test-sending-email
   (with-redefs [catalogue/cached {:localizations (catalogue/load-catalogue-item-localizations!)}]

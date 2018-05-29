@@ -38,7 +38,7 @@
                           (get-username recipient-attrs)
                           app-id
                           (format-items items)
-                          (string/lower-case (text (localize-state state)))
+                          (text (localize-state state))
                           (form-link app-id))))
 
 ;; TODO: send message localized according to recipient's preferences, when those are stored
