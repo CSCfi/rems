@@ -434,7 +434,7 @@
                                    :items {1 "REST-Test"}})
                        app)
           body (read-body response)]
-      (is (= "unauthorized" body))))
+      (is (= "invalid api key" body))))
   (testing "judge without authentication"
     (let [body (-> (request :put (str "/api/application/judge"))
                    (json-body {:command "approve"
@@ -453,4 +453,4 @@
                                :comment "msg"})
                    app
                    read-body)]
-      (is (= "unauthorized" body)))))
+      (is (= "invalid api key" body)))))

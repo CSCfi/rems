@@ -17,7 +17,8 @@
                                               wrap-defaults]]
             [ring.middleware.format :refer [wrap-restful-format]]
             [ring.middleware.webjars :refer [wrap-webjars]]
-            [ring.util.response :refer [redirect]]
+            [ring.util.response :refer [redirect content-type]]
+            [ring.util.http-response :refer [unauthorized]]
             [taoensso.tempura :as tempura])
   (:import (javax.servlet ServletContext)))
 
@@ -35,17 +36,22 @@
     ;; instead
     (:app-context env)))
 
-(defn valid-api-key? [request]
-  (api-key/valid? (get-in request [:headers "x-rems-api-key"])))
+(defn get-api-key [request]
+  (get-in request [:headers "x-rems-api-key"]))
 
-(defn wrap-csrf
+(defn valid-api-key? [request]
+  (when-let [key (get-api-key request)]
+    (api-key/valid? key)))
+
+(defn wrap-api-key-or-csrf-token
   "Custom wrapper for CSRF so that the API requests with valid `x-rems-api-key` don't need to provide CSRF token."
   [handler]
   (let [csrf-handler (wrap-anti-forgery handler)]
     (fn [request]
-      (if (get-in request [:headers "x-rems-api-key"])
-        (handler request)
-        (csrf-handler request)))))
+      (cond
+        (valid-api-key? request) (handler request)
+        (get-api-key request) (unauthorized "invalid api key")
+        true (csrf-handler request)))))
 
 (defn- wrap-user
   "Binds context/*user* to the buddy identity _or_ to x-rems-user-id if a valid api key is supplied."
@@ -162,7 +168,7 @@
       wrap-i18n
       wrap-context
       wrap-user
-      wrap-csrf
+      wrap-api-key-or-csrf-token
       auth/wrap-auth
       wrap-webjars
       (wrap-defaults +wrap-defaults-settings+)

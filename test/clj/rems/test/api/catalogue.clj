@@ -52,7 +52,7 @@
           body (read-body response)]
       (is (str/includes? body "Invalid anti-forgery token"))))
   (testing "create with wrong API-Key"
-    (is (= "unauthorized"
+    (is (= "invalid api key"
            (-> (request :put (str "/api/catalogue/create"))
                (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
                (json-body {:title "malicious item"
@@ -70,7 +70,7 @@
           body (read-body response)]
       (is (str/includes? body "Invalid anti-forgery token"))))
   (testing "create-localization with wrong API-Key"
-    (is (= "unauthorized"
+    (is (= "invalid api key"
            (-> (request :put (str "/api/catalogue/create-localization"))
                (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
                (json-body {:id 1

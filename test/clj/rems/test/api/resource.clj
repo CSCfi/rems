@@ -55,6 +55,20 @@
                                    :licenses []})
                        app)]
       (is (.contains (:body response) "Invalid anti-forgery token"))))
+  (testing "with wrong api key"
+    (let [api-key "1"
+          user-id "owner"]
+      (let [response (-> (request :get "/api/resource")
+                         (authenticate api-key user-id)
+                         app)]
+        (is (= 401 (:status response))))
+      (let [response (-> (request :put "/api/resource/create")
+                         (authenticate api-key user-id)
+                         (json-body {:resid "r"
+                                     :prefix "p"
+                                     :licenses []})
+                         app)]
+        (is (= 401 (:status response))))))
   (testing "without owner role"
     (let [api-key "42"
           user-id "alice"]
