@@ -2,33 +2,33 @@
   "The /actions page that shows a list of applications you can act on."
   (:require [ajax.core :refer [GET]]
             [clojure.string :as str]
-            [re-frame.core :as re-frame]
+            [re-frame.core :as rf]
             [rems.application-list :as application-list]
             [rems.collapsible :as collapsible]
             [rems.guide-functions]
             [rems.text :refer [localize-state localize-time text]]))
 
 (defn- fetch-actions []
-  (GET "/api/actions/" {:handler #(re-frame/dispatch [::fetch-actions-result %])
+  (GET "/api/actions/" {:handler #(rf/dispatch [::fetch-actions-result %])
                         :response-format :json
                         :keywords? true}))
 
-(re-frame/reg-fx
+(rf/reg-fx
  ::fetch-actions
  (fn [_]
    (fetch-actions)))
 
-(re-frame/reg-event-fx
+(rf/reg-event-fx
  ::start-fetch-actions
  (fn [{:keys [db]} _]
    {::fetch-actions []}))
 
-(re-frame/reg-event-db
+(rf/reg-event-db
  ::fetch-actions-result
  (fn [db [_ result]]
    (assoc db ::actions result) ))
 
-(re-frame/reg-sub
+(rf/reg-sub
  ::actions
  (fn [db _]
    (::actions db)))
@@ -36,18 +36,18 @@
 ;; Because we want to display multiple independently sortable
 ;; application tables, we store a map of sort types in the db.
 ;;
-;; Use (re-frame/dispatch [::sort :my-key [:field :asc]]) to set a
-;; sort type, and (re-frame/subscribe [::sort :my-key]) to get it
+;; Use (rf/dispatch [::sort :my-key [:field :asc]]) to set a
+;; sort type, and (rf/subscribe [::sort :my-key]) to get it
 ;; back.
 ;;
 ;; See rems.application-list for more info about sort types.
 
-(re-frame/reg-sub
+(rf/reg-sub
  ::sort
  (fn [db [_ key]]
    (get-in db [::sort key] [:id :asc])))
 
-(re-frame/reg-event-db
+(rf/reg-event-db
  ::sort
  (fn [db [_ key sort]]
    (assoc-in db [::sort key] sort)))
@@ -85,8 +85,8 @@
     [:div.actions.alert.alert-success (text :t.actions/empty)]
     [application-list/component
      application-list/+default-columns+
-     @(re-frame/subscribe [::sort key])
-     #(re-frame/dispatch [::sort key %])
+     @(rf/subscribe [::sort key])
+     #(rf/dispatch [::sort key %])
      apps]))
 
 (defn- open-reviews [apps]
@@ -109,8 +109,8 @@
      top-buttons
      [application-list/component
       [:id :resource :applicant :state :handled :view]
-      @(re-frame/subscribe [::sort key])
-      #(re-frame/dispatch [::sort key %])
+      @(rf/subscribe [::sort key])
+      #(rf/dispatch [::sort key %])
       apps]]))
 
 (defn- handled-approvals [apps]
@@ -122,8 +122,8 @@
 
 ;; TODO ensure ::actions is loaded when navigating to page
 (defn actions-page [reviews]
-  (re-frame/dispatch [::start-fetch-actions])
-  (let [actions @(re-frame/subscribe [::actions])]
+  (rf/dispatch [::start-fetch-actions])
+  (let [actions @(rf/subscribe [::actions])]
     [:div
      (when (:reviewer? actions)
        [:div

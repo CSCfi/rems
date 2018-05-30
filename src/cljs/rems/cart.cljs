@@ -1,7 +1,7 @@
 (ns rems.cart
   (:require [cljs.tools.reader.edn :as edn]
             [clojure.string :as str]
-            [re-frame.core :as re-frame]
+            [re-frame.core :as rf]
             [rems.application :as application]
             [rems.db.catalogue :refer [get-catalogue-item-title]]
             [rems.text :refer [text text-format]]
@@ -9,19 +9,19 @@
             [secretary.core :as secretary])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
-(re-frame/reg-sub
+(rf/reg-sub
  ::cart
  (fn [db]
    (::cart db)))
 
-(re-frame/reg-event-db
+(rf/reg-event-db
  ::add-item
  (fn [db [_ item]]
    (let [cart (-> (::cart db)
                   (conj item))]
      (assoc db ::cart cart ))))
 
-(re-frame/reg-event-db
+(rf/reg-event-db
  ::remove-item
  (fn [db [_ item]]
    (let [cart (->> (::cart db)
@@ -31,13 +31,13 @@
 (defn add-to-cart-button
   "Hiccup fragment that contains a button that adds the given item to the cart"
   [item]
-  (let [cart @(re-frame/subscribe [::cart])
+  (let [cart @(rf/subscribe [::cart])
         disabled? (and cart (contains? (set (map :id cart)) (:id item)))]
     [:button.btn.btn-primary
      {:type "submit"
       :disabled disabled?
       :class (if disabled? " disabled" "")
-      :on-click #(re-frame/dispatch [::add-item item])}
+      :on-click #(rf/dispatch [::add-item item])}
      (text :t.cart/add)]))
 
 (defn remove-from-cart-button
@@ -45,7 +45,7 @@
   [item]
   [:button.btn.btn-secondary
    {:type "submit"
-    :on-click #(re-frame/dispatch [::remove-item item])}
+    :on-click #(rf/dispatch [::remove-item item])}
    (text :t.cart/remove)])
 
 ;; TODO make util for other pages to use?
@@ -89,7 +89,7 @@
                         (group-view (sort-by get-catalogue-item-title group) language)))))]]]))
 
 (defn cart-list-container [language]
-  (let [cart @(re-frame/subscribe [::cart])]
+  (let [cart @(rf/subscribe [::cart])]
     [cart-list cart language]))
 
 (defn guide []
