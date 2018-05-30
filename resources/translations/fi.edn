@@ -139,7 +139,7 @@
 
           :review-request-subject "Katselmointi pyyntö"
           :status-changed-msg "Hyvä %1,
-                               Hakemuksenne %2 käyttää resursseja (%3) on edennyt tilaan %4.
+                               Hakemuksenne %2 käyttää resursseja (%3) on edennyt tilaan: %4.
                                Voitte seurata hakemustanne: %5
                                Älkää vastatko tähän automaattisesti luotuun viestiin."
           :status-changed-subject "Hakemuksen tila on muuttunut"}

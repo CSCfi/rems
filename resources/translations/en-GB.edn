@@ -138,7 +138,7 @@
                                Please do not reply to this automatically generated message."
           :review-request-subject "Review request"
           :status-changed-msg "Dear %1,
-                               Your application %2 to access the resources %3 has progressed to the state %4.
+                               Your application %2 to access the resources %3 has progressed to state: %4.
                                You can view the application: %5
                                Please do not reply to this automatically generated message."
           :status-changed-subject "Application state change"}
