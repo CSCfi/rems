@@ -11,8 +11,6 @@ Check that all components are responsive and work acceptably in pad or phone
 # Technical improvements
 
 ## Minor details
-move from re-frame/ to rf/ convention
-convert string/ and s/ namespaces to str/
 
 ./src/cljs/rems/application.cljs:14:;; TODO named secretary routes give us equivalent functions
 ./src/cljs/rems/application.cljs:15:;; TODO should the secretary route definitions be in 

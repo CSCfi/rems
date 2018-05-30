@@ -1,8 +1,8 @@
 (ns rems.db.catalogue
-  (:require [clojure.string :as s]))
+  (:require [clojure.string :as str]))
 
 (defn urn-catalogue-item? [{:keys [resid]}]
-  (and resid (s/starts-with? resid "http://urn.fi")))
+  (and resid (str/starts-with? resid "http://urn.fi")))
 
 (defn get-catalogue-item-title [item language]
   (or (get-in item [:localizations language :title])
