@@ -1,8 +1,8 @@
 (ns rems.guide-functions
-  (:require [clojure.string :as s]))
+  (:require [clojure.string :as str]))
 
 (defn- remove-indentation [docstring]
-  (s/join "\n" (for [line (s/split (str "  " docstring) #"\n")]
+  (str/join "\n" (for [line (str/split (str "  " docstring) #"\n")]
                  (apply str (drop 2 line)))))
 
 (defn render-component-info [title ns doc]

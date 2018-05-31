@@ -1,5 +1,5 @@
 (ns rems.email
-  (:require [clojure.string :as string]
+  (:require [clojure.string :as str]
             [postal.core :as postal]
             [rems.config :refer [env]]
             [rems.context :as context]
@@ -21,7 +21,7 @@
   (str context/*root-path* "/form/" app-id))
 
 (defn- format-items [items]
-  (string/join "," (map :title items)))
+  (str/join "," (map :title items)))
 
 (defn confirm-application-creation [app-id items]
   (send-mail (get-user-mail)

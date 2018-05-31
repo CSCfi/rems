@@ -1,6 +1,5 @@
 (ns rems.applications
   (:require [ajax.core :refer [GET]]
-            [clojure.string :as string]
             [re-frame.core :as rf]
             [rems.application-list :as application-list]
             [rems.text :refer [localize-state localize-time text]]))

@@ -1,6 +1,5 @@
 (ns rems.catalogue
   (:require [ajax.core :refer [GET]]
-            [clojure.string :as s]
             [re-frame.core :as rf]
             [rems.atoms :as atoms]
             [rems.cart :as cart]
