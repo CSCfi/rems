@@ -503,7 +503,8 @@
 (rf/reg-event-fx
  ::start-fetch-potential-third-party-reviewers
  (fn [{:keys [db]} [_]]
-   {::fetch-potential-third-party-reviewers [(get-in db [:identity :user])]}))
+   (when (contains? (set (get-in db [:identity :roles])) :approver)
+     {::fetch-potential-third-party-reviewers [(get-in db [:identity :user])]})))
 
 (rf/reg-sub
  ::potential-third-party-reviewers
