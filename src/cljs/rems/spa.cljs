@@ -73,6 +73,14 @@
 (secretary/defroute "/" []
   (rf/dispatch [:set-active-page :home]))
 
+(secretary/defroute "/landing_page" []
+  (if-let [url (.getItem js/sessionStorage "rems-redirect-url")]
+    (do
+      (println "Redirecting to" url "after authorization")
+      (.removeItem js/window.sessionStorage "rems-redirect-url")
+      (dispatch! url))
+    (rf/dispatch [:landing-page-redirect!])))
+
 (secretary/defroute "/catalogue" []
   (rf/dispatch [:set-active-page :catalogue]))
 

@@ -1,6 +1,7 @@
 (ns rems.handlers
   (:require [rems.db :as db]
-            [re-frame.core :refer [dispatch reg-event-db]]))
+            [rems.util :refer [dispatch!]]
+            [re-frame.core :refer [dispatch reg-event-db reg-event-fx]]))
 
 (reg-event-db
  :initialize-db
@@ -36,3 +37,18 @@
  :set-current-language
  (fn [db [_ language]]
    (assoc db :language language)))
+
+(reg-event-fx
+ :landing-page-redirect!
+ (fn [{:keys [db]}]
+   (if (get-in db [:identity :roles])
+     (let [roles (set (get-in db [:identity :roles]))]
+       (println "Selecting landing page based on roles" roles)
+       (.removeItem js/window.sessionStorage "rems-redirect-url")
+       (cond
+         (contains? roles :owner) (dispatch! "/#/administration")
+         (contains? roles :approver) (dispatch! "/#/actions")
+         (contains? roles :reviewer) (dispatch! "/#/actions")
+         :else (dispatch! "/#/catalogue"))
+       {})
+     {:dispatch [:landing-page-redirect!]})))
