@@ -4,7 +4,8 @@
             [rems.atoms :refer [external-link]]
             [rems.db.catalogue :refer [urn-catalogue-item? get-catalogue-item-title disabled-catalogue-item?]]
             [rems.table :as table]
-            [rems.text :refer [text]]))
+            [rems.text :refer [text]]
+            [rems.util :refer [redirect-when-unauthorized]]))
 
 ;; TODO copypaste from rems.catalogue, move to rems.db.catalogue?
 
@@ -20,6 +21,7 @@
 
 (defn- fetch-catalogue []
   (GET "/api/catalogue/" {:handler #(rf/dispatch [::catalogue %])
+                          :error-handler redirect-when-unauthorized
                           :response-format :json
                           :keywords? true}))
 
@@ -27,6 +29,7 @@
   (PUT "/api/catalogue/update" {:format :json
                                 :params {:id id :state state}
                                 ;; TODO error handling
+                                :error-handler redirect-when-unauthorized
                                 :handler (fn [resp]
                                            (fetch-catalogue))}))
 

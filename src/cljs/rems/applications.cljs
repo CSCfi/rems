@@ -2,10 +2,12 @@
   (:require [ajax.core :refer [GET]]
             [re-frame.core :as rf]
             [rems.application-list :as application-list]
-            [rems.text :refer [localize-state localize-time text]]))
+            [rems.text :refer [localize-state localize-time text]]
+            [rems.util :refer [redirect-when-unauthorized]]))
 
 (defn- fetch-my-applications []
   (GET "/api/applications/" {:handler #(rf/dispatch [::fetch-my-applications %])
+                             :error-handler redirect-when-unauthorized
                              :response-format :json
                              :keywords? true}))
 

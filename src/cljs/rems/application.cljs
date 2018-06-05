@@ -7,7 +7,7 @@
             [rems.db.catalogue :refer [get-catalogue-item-title]]
             [rems.phase :refer [phases get-application-phases]]
             [rems.text :refer [text text-format localize-state localize-event localize-time]]
-            [rems.util :refer [dispatch! index-by]]
+            [rems.util :refer [dispatch! index-by redirect-when-unauthorized]]
             [secretary.core :as secretary])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
@@ -54,11 +54,13 @@
 
 (defn- fetch-application [id]
   (GET (str "/api/application/" id) {:handler #(rf/dispatch [::fetch-application-result %])
+                                     :error-handler redirect-when-unauthorized
                                      :response-format :json
                                      :keywords? true}))
 
 (defn- fetch-draft-application [items]
   (GET (str "/api/application/") {:handler #(rf/dispatch [::fetch-application-result %])
+                                  :error-handler redirect-when-unauthorized
                                   :params {:catalogue-items items}
                                   :response-format :json
                                   :keywords? true}))
@@ -137,6 +139,7 @@
                            (rf/dispatch [::start-fetch-application (:id resp)]))
                        (rf/dispatch [::set-status :failed (:validation resp)])))
           :error-handler (fn [err]
+                           (redirect-when-unauthorized err)
                            (rf/dispatch [::set-status :failed]))
           :format :json
           :params payload})))
@@ -168,6 +171,7 @@
                  :application-id application-id
                  :round round
                  :comment comment}
+        :error-handler redirect-when-unauthorized
         :handler (fn [resp]
                    (rf/dispatch [::start-fetch-application application-id]))}))
 
@@ -458,6 +462,7 @@
   (GET (str "/api/application/reviewers")
        {:handler #(do (rf/dispatch [::set-potential-third-party-reviewers %])
                       (rf/dispatch [::set-selected-third-party-reviewers #{}]))
+        :error-handler redirect-when-unauthorized
         :response-format :json
         :headers {"x-rems-user-id" (:eppn user)}
         :keywords? true}))
@@ -522,11 +527,11 @@
                  :round round
                  :comment comment
                  :recipients (map :userid reviewers)}
+        :error-handler redirect-when-unauthorized
         :handler (fn [resp]
                    (rf/dispatch [::send-third-party-review-request-success true])
                    (rf/dispatch [::start-fetch-application application-id ])
-                   (scroll-to-top!)
-                   )}))
+                   (scroll-to-top!))}))
 
 (rf/reg-event-fx
  ::send-third-party-review-request

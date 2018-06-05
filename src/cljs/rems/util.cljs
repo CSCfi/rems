@@ -27,3 +27,10 @@
   "Dispatches to the given url."
   [url]
   (set! (.-location js/window) url))
+
+(defn redirect-when-unauthorized [{:keys [status status-text]}]
+  (when (= 401 status)
+    (let [url (.. js/window -location -href)]
+      (println "Redirecting to authorization from" url)
+      (.setItem js/window.sessionStorage "rems-redirect-url" url)
+      (dispatch! "/"))))
