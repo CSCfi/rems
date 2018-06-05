@@ -20,7 +20,8 @@
             [rems.handlers]
             [rems.navbar :as nav]
             [rems.subscriptions]
-            [rems.text :refer [text]])
+            [rems.text :refer [text]]
+            [rems.util :refer [dispatch!]])
   (:import goog.History))
 
 (defn about-page []
@@ -31,7 +32,8 @@
 
 (defn home-page []
   (if @(rf/subscribe [:user])
-    [:p "Logged in."]
+    (do (rf/dispatch [:landing-page-redirect!]) ; don't show the empty page
+          [:div])
     [auth/login-component]))
 
 (defn not-found-page[]
