@@ -198,8 +198,12 @@
         localized-items (get-localized-catalogue-items)]
     (doall
      (for [app (db/get-applications query-params)]
-       (let [catalogue-items (get-catalogue-items-by-application-items (filter #(= (:id app) (:application %)) application-items) localized-items)]
-         (assoc (get-application-state app (filter #(= (:id app) (:appid %)) events))
+       (let [catalogue-items (get-catalogue-items-by-application-items (filter #(= (:id app) (:application %)) application-items) localized-items)
+             app-events (for [e events
+                              :when (= (:id app) (:appid e))]
+                          ;; :appid needed only for batching
+                          (dissoc e :appid))]
+         (assoc (get-application-state app app-events)
                 :formid (:formid (first catalogue-items))
                 :catalogue-items catalogue-items))))))
 
@@ -570,7 +574,7 @@
   ([application events]
    (let [application (-> application
                          (assoc :state "draft" :curround 0) ;; reset state
-                         (assoc :events (map #(dissoc % :appid) events)))] ;;HACK remove :appid that is needed just for batching
+                         (assoc :events events))]
      (apply-events application events))))
 
 (declare handle-state-change)
