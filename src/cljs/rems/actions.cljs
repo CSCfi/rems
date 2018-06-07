@@ -45,7 +45,7 @@
 (rf/reg-sub
  ::sort
  (fn [db [_ key]]
-   (get-in db [::sort key] [:id :asc])))
+   (get-in db [::sort key] [:last-modified :desc])))
 
 (rf/reg-event-db
  ::sort
@@ -84,7 +84,7 @@
   (if (empty? apps)
     [:div.actions.alert.alert-success (text :t.actions/empty)]
     [application-list/component
-     application-list/+default-columns+
+     application-list/+all-columns+
      @(rf/subscribe [::sort key])
      #(rf/dispatch [::sort key %])
      apps]))
