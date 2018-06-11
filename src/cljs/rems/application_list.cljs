@@ -13,7 +13,7 @@
   (str/join ", " (map :title (:catalogue-items app))))
 
 (def +all-columns+
-  [:id :resource :applicant :state :created :handled :view])
+  [:id :resource :applicant :state :created :last-modified :view])
 
 (def +default-columns+
   [:id :resource :applicant :state :created :view])
@@ -30,10 +30,9 @@
    :created {:value #(localize-time (:start %))
              :sort-value :start
              :header #(text :t.actions/created)}
-   :handled {:value #(localize-time (:handled %))
-             :sort-value :handled
-             ;; NB!:
-             :header #(text :t.actions/last-modified)}
+   :last-modified {:value #(localize-time (:last-modified %))
+                   :sort-value :last-modified
+                   :header #(text :t.actions/last-modified)}
    :view {:value view-button
           :sortable? false}})
 
@@ -52,15 +51,15 @@
 
 (def ^:private +example-applications+
   [{:id 1 :catalogue-items [{:title "Item 5"}] :state "draft" :applicantuserid "alice"
-    :start "1980-01-02T13:45:00.000Z" :handled "2017-01-01T01:01:01:001Z"}
+    :start "1980-01-02T13:45:00.000Z" :last-modified "2017-01-01T01:01:01:001Z"}
    {:id 2 :catalogue-items [{:title "Item 3"}] :state "applied" :applicantuserid "bob"
-    :start "1971-02-03T23:59:00.000Z" :handled "2017-01-01T01:01:01:001Z"}
+    :start "1971-02-03T23:59:00.000Z" :last-modified "2017-01-01T01:01:01:001Z"}
    {:id 3 :catalogue-items [{:title "Item 2"} {:title "Item 5"}] :state "approved" :applicantuserid "charlie"
-    :start "1980-01-01T01:01:00.000Z" :handled "2017-01-01T01:01:01:001Z"}
+    :start "1980-01-01T01:01:00.000Z" :last-modified "2017-01-01T01:01:01:001Z"}
    {:id 4 :catalogue-items [{:title "Item 2"}] :state "rejected" :applicantuserid "david"
-    :start "1972-12-12T12:12:00.000Z" :handled "2017-01-01T01:01:01:001Z"}
+    :start "1972-12-12T12:12:00.000Z" :last-modified "2017-01-01T01:01:01:001Z"}
    {:id 5 :catalogue-items [{:title "Item 2"}] :state "closed" :applicantuserid "ernie"
-    :start "1972-12-12T12:12:00.000Z" :handled "2017-01-01T01:01:01:001Z"}])
+    :start "1972-12-12T12:12:00.000Z" :last-modified "2017-01-01T01:01:01:001Z"}])
 
 (defn guide
   []

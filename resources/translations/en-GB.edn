@@ -53,7 +53,6 @@
             :created "Created"
             :empty "You don't have any applications to process."
             :export-entitlements "Export entitlements as csv"
-            :handled "Handled"
             :handled-approvals "Handled applications"
             :handled-reviews "Handled reviews"
             :last-modified "Modified"
