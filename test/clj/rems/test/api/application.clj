@@ -349,6 +349,13 @@
                    app
                    read-body
                    :id)]
+    (testing "fetch reviewers"
+      (let [reviewers (-> (request :get (str "/api/application/reviewers"))
+                          (authenticate api-key approver)
+                          app
+                          read-body)]
+        (is (= ["alice" "bob" "carl" "developer" "owner"] (sort (map :userid reviewers))))
+        (is (not (contains? (set (map :userid reviewers)) "invalid")))))
     (testing "send review request"
       (is (= 200
              (-> (request :put (str "/api/application/review_request"))

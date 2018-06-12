@@ -1,5 +1,6 @@
 (ns rems.api.application
-  (:require [compojure.api.sweet :refer :all]
+  (:require [clojure.string :as str]
+            [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
             [rems.api.util :refer [check-roles check-user]]
             [rems.context :as context]
@@ -104,6 +105,11 @@
     (-> (applications/get-form-for application-id)
         (hide-event-comments (get-user-id)))))
 
+(defn invalid-reviewer? [u]
+  (or (str/blank? (get u "eppn"))
+      (str/blank? (get u "commonName"))
+      (str/blank? (get u "mail"))))
+
 (def application-api
   (context "/application" []
     :tags ["application"]
@@ -121,7 +127,8 @@
       :return [Reviewer]
       (check-user)
       (check-roles :approver)
-      (ok (for [u (users/get-all-users)]
+      (ok (for [u (->> (users/get-all-users)
+                       (remove invalid-reviewer?))]
             {:userid (get u "eppn")
              :name (get u "commonName")
              :email (get u "mail")})))
