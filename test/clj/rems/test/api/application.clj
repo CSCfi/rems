@@ -349,6 +349,13 @@
                    app
                    read-body
                    :id)]
+    (testing "fetch reviewers"
+      (let [reviewers (-> (request :get (str "/api/application/reviewers"))
+                          (authenticate api-key approver)
+                          app
+                          read-body)]
+        (is (= ["alice" "bob" "carl" "developer" "owner"] (sort (map :userid reviewers))))
+        (is (not (contains? (set (map :userid reviewers)) "invalid")))))
     (testing "send review request"
       (is (= 200
              (-> (request :put (str "/api/application/review_request"))
@@ -475,6 +482,16 @@
         (is (= "invalid api key" body))))))
 
 (deftest application-api-security-test
+  (testing "fetch application without authentication"
+    (let [response (-> (request :get (str "/api/application/1"))
+                       app)
+          body (read-body response)]
+      (is (= body "unauthorized"))))
+  (testing "fetch reviewers without authentication"
+    (let [response (-> (request :get (str "/api/application/reviewers"))
+                       app)
+          body (read-body response)]
+      (is (= body "unauthorized"))))
   (testing "save without authentication"
     (let [response (-> (request :put (str "/api/application/save"))
                        (json-body {:command "save"

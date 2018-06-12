@@ -30,7 +30,9 @@
   (roles/add-role! "carl" :reviewer)
   ;; a user to own things
   (users/add-user! "owner" (+fake-user-data+ "owner"))
-  (roles/add-role! "owner" :owner))
+  (roles/add-role! "owner" :owner)
+  ;; invalid user for tests
+  (db/add-user! {:user "invalid" :userattrs nil}))
 
 (defn- create-demo-users-and-roles! []
   ;; a user to own things
