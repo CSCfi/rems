@@ -73,7 +73,7 @@
    (s/optional-key :review) (s/enum :third-party)
    :catalogue-items [CatalogueItem]
    (s/optional-key :review-type) (s/maybe (s/enum :normal :third-party))
-   (s/optional-key :handled) DateTime})
+   (s/optional-key :last-modified) DateTime})
 
 (def Entitlement
   {:resource s/Str

@@ -198,8 +198,12 @@
         localized-items (get-localized-catalogue-items)]
     (doall
      (for [app (db/get-applications query-params)]
-       (let [catalogue-items (get-catalogue-items-by-application-items (filter #(= (:id app) (:application %)) application-items) localized-items)]
-         (assoc (get-application-state app (filter #(= (:id app) (:appid %)) events))
+       (let [catalogue-items (get-catalogue-items-by-application-items (filter #(= (:id app) (:application %)) application-items) localized-items)
+             app-events (for [e events
+                              :when (= (:id app) (:appid e))]
+                          ;; :appid needed only for batching
+                          (dissoc e :appid))]
+         (assoc (get-application-state app app-events)
                 :formid (:formid (first catalogue-items))
                 :catalogue-items catalogue-items))))))
 
@@ -217,9 +221,7 @@
   (let [actors (db/get-actors-for-applications {:role "approver"})]
     (->> (get-applications-impl-batch {})
          (filterv handled?)
-         (filterv (fn [app] (is-actor? (actors/filter-by-application-id actors (:id app)))))
-         (mapv (fn [app]
-                 (assoc app :handled (:time (last (:events app)))))))))
+         (filterv (fn [app] (is-actor? (actors/filter-by-application-id actors (:id app))))))))
 
 ;; TODO: consider refactoring to finding the review events from the current user and mapping those to applications
 (defn get-handled-reviews []
@@ -227,9 +229,7 @@
     (->> (get-applications-impl-batch {})
          (filterv reviewed?)
          (filterv (fn [app] (or (is-actor? (actors/filter-by-application-id actors (:id app)))
-                                (is-third-party-reviewer? (get-user-id) app))))
-         (mapv (fn [app]
-                 (assoc app :handled (:time (last (:events app)))))))))
+                                (is-third-party-reviewer? (get-user-id) app)))))))
 
 (defn- check-for-unneeded-actions
   "Checks whether the current event will advance into the next workflow round and notifies to all actors, who didn't react, by email that their attention is no longer needed."
@@ -570,7 +570,9 @@
   ([application events]
    (let [application (-> application
                          (assoc :state "draft" :curround 0) ;; reset state
-                         (assoc :events (map #(dissoc % :appid) events)))] ;;HACK remove :appid that is needed just for batching
+                         (assoc :events events)
+                         (assoc :last-modified (or (:time (last events))
+                                                   (:start application))))]
      (apply-events application events))))
 
 (declare handle-state-change)

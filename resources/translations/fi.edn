@@ -53,7 +53,6 @@
             :created "Luotu"
             :empty "Sinulla ei ole hakemuksia käsiteltäväksi."
             :export-entitlements "Lataa käyttöoikeudet csv-tiedostona"
-            :handled "Käsitelty"
             :handled-approvals "Käsitellyt hakemukset"
             :handled-reviews "Käsitellyt katselmoinnit"
             :last-modified "Muokattu"
