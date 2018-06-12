@@ -109,6 +109,7 @@
 (reg-event-fx
  :landing-page-redirect!
  (fn [{:keys [db]}]
+   ;; do we have the roles set by set-identity already?
    (if (get-in db [:identity :roles])
      (let [roles (set (get-in db [:identity :roles]))]
        (println "Selecting landing page based on roles" roles)
@@ -119,6 +120,7 @@
          (contains? roles :reviewer) (dispatch! "/#/actions")
          :else (dispatch! "/#/catalogue"))
        {})
+      ;;; else dispatch the same event again while waiting for set-identity (happens especially with Firefox)
      {:dispatch [:landing-page-redirect!]})))
 
 (defn about-page []
