@@ -79,6 +79,6 @@
               password (getx-in req [:form-params "password"])
               user (get-ldap-user username password)]
           (if user
-            (assoc (redirect "/landing_page")
+            (assoc (redirect "/")
                    :session (assoc session :identity (convert-ldap-user user)))
             (login-failed)))))

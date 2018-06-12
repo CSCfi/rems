@@ -30,7 +30,12 @@
 
 (defn redirect-when-unauthorized [{:keys [status status-text]}]
   (when (= 401 status)
-    (let [url (.. js/window -location -href)]
-      (println "Redirecting to authorization from" url)
-      (.setItem js/window.sessionStorage "rems-redirect-url" url)
-      (dispatch! "/"))))
+    (if-let [redirect-ongoing (.getItem js/sessionStorage "rems-redirect-ongoing")]
+      (do
+        (println "Redirecting to authorization again")
+        (.removeItem js/sessionStorage "rems-redirect-ongoing")
+        (.removeItem js/sessionStorage "rems-redirect-url"))
+      (let [current-url (.. js/window -location -href)]
+        (println "Redirecting to authorization from" current-url)
+        (.setItem js/sessionStorage "rems-redirect-url" current-url)))
+    (dispatch! "/")))

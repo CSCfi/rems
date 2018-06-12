@@ -113,7 +113,8 @@
    (if (get-in db [:identity :roles])
      (let [roles (set (get-in db [:identity :roles]))]
        (println "Selecting landing page based on roles" roles)
-       (.removeItem js/window.sessionStorage "rems-redirect-url")
+       (.removeItem js/sessionStorage "rems-redirect-ongoing")
+       (.removeItem js/sessionStorage "rems-redirect-url")
        (cond
          (contains? roles :owner) (dispatch! "/#/administration")
          (contains? roles :approver) (dispatch! "/#/actions")
@@ -131,8 +132,16 @@
 
 (defn home-page []
   (if @(rf/subscribe [:user])
-    (do (rf/dispatch [:landing-page-redirect!]) ; don't show the empty page
-        [:div])
+    (do
+      ;; user is logged in so redirect to a more specific page
+      (if-let [url (.getItem js/sessionStorage "rems-redirect-url")]
+        (do
+          (println "Redirecting to" url "after authorization")
+          (.removeItem js/sessionStorage "rems-redirect-url")
+          (.setItem js/sessionStorage "rems-redirect-ongoing" true)
+          (dispatch! url))
+        (rf/dispatch [:landing-page-redirect!]))
+      [:div])
     [auth/login-component]))
 
 (defn not-found-page[]
@@ -173,14 +182,6 @@
 
 (secretary/defroute "/" []
   (rf/dispatch [:set-active-page :home]))
-
-(secretary/defroute "/landing_page" []
-  (if-let [url (.getItem js/sessionStorage "rems-redirect-url")]
-    (do
-      (println "Redirecting to" url "after authorization")
-      (.removeItem js/window.sessionStorage "rems-redirect-url")
-      (dispatch! url))
-    (rf/dispatch [:landing-page-redirect!])))
 
 (secretary/defroute "/catalogue" []
   (rf/dispatch [:set-active-page :catalogue]))
