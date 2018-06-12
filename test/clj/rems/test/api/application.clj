@@ -482,6 +482,16 @@
         (is (= "invalid api key" body))))))
 
 (deftest application-api-security-test
+  (testing "fetch application without authentication"
+    (let [response (-> (request :get (str "/api/application/1"))
+                       app)
+          body (read-body response)]
+      (is (= body "unauthorized"))))
+  (testing "fetch reviewers without authentication"
+    (let [response (-> (request :get (str "/api/application/reviewers"))
+                       app)
+          body (read-body response)]
+      (is (= body "unauthorized"))))
   (testing "save without authentication"
     (let [response (-> (request :put (str "/api/application/save"))
                        (json-body {:command "save"
