@@ -15,10 +15,11 @@
            [:link {:rel "shortcut icon" :href "/img/favicon.ico" :type "image/x-icon"}]
            [:title "Welcome to rems"]
            (include-css "/assets/bootstrap/css/bootstrap.min.css")
-           (include-css "/assets/font-awesome/css/font-awesome.min.css")
+           (include-css "/assets/font-awesome/web-fonts-with-css/css/fontawesome-all.min.css")
            (include-css "/css/screen.css")]
           [:body
            [:div#app]
+           (include-js "/assets/font-awesome/svg-with-js/js/fontawesome.min.js")
            (include-js "/assets/jquery/jquery.min.js")
            (include-js "/assets/popper.js/dist/umd/popper.min.js")
            (include-js "/assets/tether/dist/js/tether.min.js")
