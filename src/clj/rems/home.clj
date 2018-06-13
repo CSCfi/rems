@@ -7,6 +7,7 @@
             [rems.layout :as layout]
             [rems.util :refer [index-by]]
             [ring.util.response :refer [content-type
+                                        redirect
                                         response]]))
 
 (defn- find-allowed-markdown-file [filename]
@@ -20,7 +21,8 @@
     (auth-util/throw-unauthorized)))
 
 (defroutes home-routes
-  (GET "/" [] (layout/application-page))
+  (GET "/" [] (layout/home-page))
+  (GET "/landing_page" req (redirect "/")) ; legacy url redirect
   (GET "/markdown/:filename" [filename] (markdown-page filename))
   (GET "/css/screen.css" [] (-> (styles/generate-css)
                                 (response)

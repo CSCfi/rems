@@ -6,10 +6,12 @@
             [rems.application-list :as application-list]
             [rems.collapsible :as collapsible]
             [rems.guide-functions]
-            [rems.text :refer [localize-state localize-time text]]))
+            [rems.text :refer [localize-state localize-time text]]
+            [rems.util :refer [redirect-when-unauthorized]]))
 
 (defn- fetch-actions []
   (GET "/api/actions/" {:handler #(rf/dispatch [::fetch-actions-result %])
+                        :error-handler redirect-when-unauthorized
                         :response-format :json
                         :keywords? true}))
 

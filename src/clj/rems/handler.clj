@@ -9,7 +9,6 @@
             [rems.env :refer [+defaults+]]
             [rems.events :as events]
             [rems.home :as home]
-            [rems.landing-page :as landing-page]
             [rems.layout :refer [error-page]]
             [rems.middleware :as middleware]
             [rems.util :refer [never-match-route]]))
@@ -46,7 +45,6 @@
    (auth/auth-routes)))
 
 (defroutes secured-routes
-  landing-page/landing-page-routes
   events/events-routes
   entitlements/entitlements-routes)
 

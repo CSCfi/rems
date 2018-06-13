@@ -2,6 +2,8 @@
   (:require [cheshire.core :as cheshire]
             [hiccup.page :refer [html5 include-css include-js]]
             [rems.context :as context]
+            [rems.db.users :as users]
+            [rems.util :refer [get-user-id]]
             [ring.middleware.anti-forgery :refer [*anti-forgery-token*]]
             [ring.util.http-response :as response]))
 
@@ -41,7 +43,8 @@
       :body (page-template content)}
      content-type)))
 
-(defn application-page []
+(defn home-page []
+  (users/add-user-if-logged-in! (get-user-id) context/*user*)
   (render
    "REMS"
    (list

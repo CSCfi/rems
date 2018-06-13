@@ -6,6 +6,10 @@
   (assert (and userattrs user) "User or user attributes missing!")
   (db/add-user! {:user user :userattrs (generate-string userattrs)}))
 
+(defn add-user-if-logged-in! [user userattrs]
+  (when user
+    (add-user! user userattrs)))
+
 (defn get-user-attributes
   "Takes as user id as an input and fetches user attributes that are stored in a json blob in the users table.
    Returns a structure like this:

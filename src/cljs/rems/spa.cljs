@@ -1,6 +1,6 @@
 (ns rems.spa
   (:require [reagent.core :as r]
-            [re-frame.core :as rf]
+            [re-frame.core :as rf :refer [dispatch reg-event-db reg-event-fx reg-sub]]
             [secretary.core :as secretary]
             [goog.events :as events]
             [goog.history.EventType :as HistoryEventType]
@@ -17,11 +17,112 @@
             [rems.catalogue :refer [catalogue-page]]
             [rems.config :as config]
             [rems.guide-page :refer [guide-page]]
-            [rems.handlers]
             [rems.navbar :as nav]
-            [rems.subscriptions]
-            [rems.text :refer [text]])
+            [rems.text :refer [text]]
+            [rems.util :refer [dispatch!]])
   (:import goog.History))
+
+;;; subscriptions
+
+(reg-sub
+ :page
+ (fn [db _]
+   (:page db)))
+
+(reg-sub
+ :docs
+ (fn [db _]
+   (:docs db)))
+
+;; TODO: possibly move translations out
+(reg-sub
+ :translations
+ (fn [db _]
+   (:translations db)))
+
+(reg-sub
+ :language
+ (fn [db _]
+   (:language db)))
+
+;; TODO: possibly move theme out
+(reg-sub
+ :theme
+ (fn [db _]
+   (:theme db)))
+
+(reg-sub
+ :identity
+ (fn [db _]
+   (:identity db)))
+
+(reg-sub
+ :user
+ (fn [db _]
+   (get-in db [:identity :user])))
+
+(reg-sub
+ :roles
+ (fn [db _]
+   (get-in db [:identity :roles])))
+
+;;; handlers
+
+(reg-event-db
+ :initialize-db
+ (fn [_ _]
+   {:page :home
+    :language :en
+    :translations {}
+    :identity {:user nil :roles nil}}))
+
+(reg-event-db
+ :set-active-page
+ (fn [db [_ page]]
+   (assoc db :page page)))
+
+(reg-event-db
+ :set-docs
+ (fn [db [_ docs]]
+   (assoc db :docs docs)))
+
+(reg-event-db
+ :loaded-translations
+ (fn [db [_ translations]]
+   (assoc db :translations translations)))
+
+(reg-event-db
+ :loaded-theme
+ (fn [db [_ theme]]
+   (assoc db :theme theme)))
+
+(reg-event-db
+ :set-identity
+ (fn [db [_ identity]]
+   (assoc db :identity identity)))
+
+(reg-event-db
+ :set-current-language
+ (fn [db [_ language]]
+   (assoc db :language language)))
+
+(reg-event-fx
+ :landing-page-redirect!
+ (fn [{:keys [db]}]
+   ;; do we have the roles set by set-identity already?
+   (if (get-in db [:identity :roles])
+     (let [roles (set (get-in db [:identity :roles]))]
+       (println "Selecting landing page based on roles" roles)
+       (.removeItem js/sessionStorage "rems-redirect-ongoing")
+       (.removeItem js/sessionStorage "rems-redirect-url")
+       (cond
+         (contains? roles :owner) (dispatch! "/#/administration")
+         (contains? roles :approver) (dispatch! "/#/actions")
+         (contains? roles :reviewer) (dispatch! "/#/actions")
+         :else (dispatch! "/#/catalogue"))
+       {})
+      ;;; else dispatch the same event again while waiting for set-identity (happens especially with Firefox)
+     {:dispatch [:landing-page-redirect!]})))
 
 (defn about-page []
   [:div.container
@@ -31,7 +132,16 @@
 
 (defn home-page []
   (if @(rf/subscribe [:user])
-    [:p "Logged in."]
+    (do
+      ;; user is logged in so redirect to a more specific page
+      (if-let [url (.getItem js/sessionStorage "rems-redirect-url")]
+        (do
+          (println "Redirecting to" url "after authorization")
+          (.removeItem js/sessionStorage "rems-redirect-url")
+          (.setItem js/sessionStorage "rems-redirect-ongoing" true)
+          (dispatch! url))
+        (rf/dispatch [:landing-page-redirect!]))
+      [:div])
     [auth/login-component]))
 
 (defn not-found-page[]

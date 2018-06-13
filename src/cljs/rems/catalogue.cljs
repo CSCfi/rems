@@ -1,13 +1,13 @@
 (ns rems.catalogue
   (:require [ajax.core :refer [GET]]
             [re-frame.core :as rf]
-            [rems.atoms :as atoms]
+            [rems.atoms :refer [external-link]]
             [rems.cart :as cart]
             [rems.db.catalogue :refer [urn-catalogue-item? get-catalogue-item-title disabled-catalogue-item?]]
             [rems.guide-functions]
             [rems.table :as table]
             [rems.text :refer [text]]
-            [rems.atoms :refer [external-link]])
+            [rems.util :refer [redirect-when-unauthorized]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (rf/reg-event-db
@@ -52,6 +52,7 @@
 
 (defn- fetch-catalogue []
   (GET "/api/catalogue/" {:handler #(rf/dispatch [::catalogue %])
+                          :error-handler redirect-when-unauthorized
                           :response-format :json
                           :keywords? true}))
 
