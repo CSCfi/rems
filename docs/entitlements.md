@@ -11,6 +11,6 @@ The payload of the POST request is JSON, and looks like this:
 ```json
 {"application": 137,
  "user": "username",
- "resource": "http//urn.fi/resource_name"
+ "resource": "resource_name_maybe_urn_or_something"
  "email": "bob@example.com"}
 ```

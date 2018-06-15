@@ -251,7 +251,7 @@
 (defn create-test-data! []
   (db/add-api-key! {:apikey 42 :comment "test data"})
   (create-users-and-roles!)
-  (let [res1 (:id (db/create-resource! {:resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1}))
+  (let [res1 (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1}))
         res2 (:id (db/create-resource! {:resid "Extra Data" :prefix "nbn" :modifieruserid 1}))
         form (create-basic-form! "owner")
         workflows (create-workflows! "developer" "bob" "carl" "owner")
@@ -284,7 +284,7 @@
 
 (defn create-demo-data! []
   (create-demo-users-and-roles!)
-  (let [res1 (:id (db/create-resource! {:resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1}))
+  (let [res1 (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1}))
         res2 (:id (db/create-resource! {:resid "Extra Data" :prefix "nbn" :modifieruserid 1}))
         form (create-basic-form! "RDowner@funet.fi")
         workflows (create-workflows! "RDapprover1@funet.fi" "RDapprover2@funet.fi" "RDreview@funet.fi" "RDowner@funet.fi")

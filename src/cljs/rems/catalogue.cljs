@@ -3,7 +3,10 @@
             [re-frame.core :as rf]
             [rems.atoms :refer [external-link]]
             [rems.cart :as cart]
-            [rems.db.catalogue :refer [urn-catalogue-item? get-catalogue-item-title disabled-catalogue-item?]]
+            [rems.db.catalogue :refer [disabled-catalogue-item?
+                                       get-catalogue-item-title
+                                       urn-catalogue-item-link
+                                       urn-catalogue-item?]]
             [rems.guide-functions]
             [rems.table :as table]
             [rems.text :refer [text]]
@@ -33,7 +36,7 @@
 (defn- catalogue-item-title [item language]
   (let [title (get-catalogue-item-title item language)]
     (if (urn-catalogue-item? item)
-      [:a.catalogue-item-link {:href (:resid item) :target :_blank} title " " [external-link]]
+      [:a.catalogue-item-link {:href (urn-catalogue-item-link item) :target :_blank} title " " [external-link]]
       [:span title])))
 
 (defn- catalogue-columns [lang]
@@ -79,7 +82,7 @@
              [:tbody
               [:tr
                [:td
-                [catalogue-item-title {:title "Item title" :resid "http://urn.fi/urn:nbn:fi:lb-201403262"} nil]]]]])
+                [catalogue-item-title {:title "Item title" :resid "urn:nbn:fi:lb-201403262"} nil]]]]])
    (example "catalogue-item-title in Finnish with localizations"
             [:table.rems-table
              [:tbody

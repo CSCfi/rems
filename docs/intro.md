@@ -31,7 +31,7 @@ Returns the JSON response with the catalogue items
                 "title": "ELFA-korpus, suora hyv\u00e4ksynt\u00e4"
             }
         },
-        "resid": "http://urn.fi/urn:nbn:fi:lb-201403262",
+        "resid": "urn:nbn:fi:lb-201403262",
         "state": "enabled",
         "title": "non-localized title",
         "wfid": 1
