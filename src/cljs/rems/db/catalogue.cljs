@@ -4,8 +4,8 @@
 (defn urn-catalogue-item? [{:keys [resid]}]
   (and resid (str/starts-with? resid "urn:")))
 
-(defn urn-catalogue-item-link [{:keys [resid]}]
-  (str "http://urn.fi/" resid))
+(defn urn-catalogue-item-link [{:keys [resid]} {:keys [urn-prefix]}]
+  (str (or urn-prefix "http://urn.fi/") resid))
 
 (defn get-catalogue-item-title [item language]
   (or (get-in item [:localizations language :title])
