@@ -46,7 +46,7 @@
     (is (empty? (db/get-catalogue-items))))
 
   (testing "with test database"
-    (let [resid (:id (db/create-resource! {:resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1}))]
+    (let [resid (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1}))]
       (db/create-catalogue-item! {:title "ELFA Corpus" :form nil :resid resid :wfid nil})
       (db/create-catalogue-item! {:title "B" :form nil :resid nil :wfid nil})
       (is (= ["B" "ELFA Corpus"] (sort (map :title (db/get-catalogue-items))))

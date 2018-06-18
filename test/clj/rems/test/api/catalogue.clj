@@ -19,7 +19,7 @@
                    app
                    read-body)
           item (first data)]
-      (is (str/starts-with? (:resid item) "http://")))
+      (is (str/starts-with? (:resid item) "urn:")))
     (let [data (-> (request :put "/api/catalogue/create")
                    (authenticate api-key "owner")
                    (json-body {:title "test-item-title"

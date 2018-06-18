@@ -3,7 +3,10 @@
             [re-frame.core :as rf]
             [rems.atoms :refer [external-link]]
             [rems.cart :as cart]
-            [rems.db.catalogue :refer [urn-catalogue-item? get-catalogue-item-title disabled-catalogue-item?]]
+            [rems.db.catalogue :refer [disabled-catalogue-item?
+                                       get-catalogue-item-title
+                                       urn-catalogue-item-link
+                                       urn-catalogue-item?]]
             [rems.guide-functions]
             [rems.table :as table]
             [rems.text :refer [text]]
@@ -30,25 +33,26 @@
  (fn [db _]
    (::catalogue db)))
 
-(defn- catalogue-item-title [item language]
+(defn- catalogue-item-title [item language config]
   (let [title (get-catalogue-item-title item language)]
     (if (urn-catalogue-item? item)
-      [:a.catalogue-item-link {:href (:resid item) :target :_blank} title " " [external-link]]
+      [:a.catalogue-item-link {:href (urn-catalogue-item-link item config) :target :_blank} title " " [external-link]]
       [:span title])))
 
-(defn- catalogue-columns [lang]
+(defn- catalogue-columns [lang config]
   {:name {:header #(text :t.catalogue/header)
-          :value #(catalogue-item-title % lang)
+          :value (fn [item] [catalogue-item-title item lang config])
           :sort-value #(get-catalogue-item-title % lang)}
    :cart {:value (fn [i] [cart/add-to-cart-button i])
           :sortable? false}})
 
 (defn- catalogue-list
-  [items language sort-order]
-  (table/component (catalogue-columns language) [:name :cart]
-                   sort-order #(rf/dispatch [::set-sort-order %])
-                   :id
-                   (filter (complement disabled-catalogue-item?) items)))
+  [items language sort-order config]
+  [table/component
+   (catalogue-columns language config) [:name :cart]
+   sort-order #(rf/dispatch [::set-sort-order %])
+   :id
+   (filter (complement disabled-catalogue-item?) items)])
 
 (defn- fetch-catalogue []
   (GET "/api/catalogue/" {:handler #(rf/dispatch [::catalogue %])
@@ -60,10 +64,11 @@
   (fetch-catalogue)
   (let [catalogue @(rf/subscribe [::catalogue])
         language @(rf/subscribe [:language])
-        sort-order @(rf/subscribe [::sort-order])]
+        sort-order @(rf/subscribe [::sort-order])
+        config @(rf/subscribe [:rems.config/config])]
     [:div
      [cart/cart-list-container language]
-     [catalogue-list catalogue language sort-order]]))
+     [catalogue-list catalogue language sort-order config]]))
 
 (defn guide []
   [:div
@@ -79,7 +84,13 @@
              [:tbody
               [:tr
                [:td
-                [catalogue-item-title {:title "Item title" :resid "http://urn.fi/urn:nbn:fi:lb-201403262"} nil]]]]])
+                [catalogue-item-title {:title "Item title" :resid "urn:nbn:fi:lb-201403262"} nil nil]]]]])
+   (example "catalogue-item-title linked to example.org"
+            [:table.rems-table
+             [:tbody
+              [:tr
+               [:td
+                [catalogue-item-title {:title "Item title" :resid "urn:nbn:fi:lb-201403262"} nil {:urn-prefix "http://example.org/"}]]]]])
    (example "catalogue-item-title in Finnish with localizations"
             [:table.rems-table
              [:tbody
