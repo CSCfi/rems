@@ -46,8 +46,10 @@ FROM resource
 -- :name create-resource! :insert
 -- :doc Create a single resource
 INSERT INTO resource
-(resid, prefix, modifieruserid)
-VALUES (:resid, :prefix, :modifieruserid)
+(resid, prefix, modifieruserid, endt)
+VALUES (:resid, :prefix, :modifieruserid,
+ /*~ (if (:endt params) */ :endt /*~*/ NULL /*~ ) ~*/
+)
 
 -- :name get-database-name :? :1
 SELECT current_database()

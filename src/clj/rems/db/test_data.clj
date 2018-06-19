@@ -255,6 +255,7 @@
   (create-users-and-roles!)
   (let [res1 (:id (db/create-resource! {:resid "http://urn.fi/urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1}))
         res2 (:id (db/create-resource! {:resid "Extra Data" :prefix "nbn" :modifieruserid 1}))
+        res3 (:id (db/create-resource! {:resid "Expired Resource, should not be seen" :prefix "nbn" :modifieruserid 1 :endt (time/minus (time/now) (time/years 1))}))
         form (create-basic-form! "owner")
         workflows (create-workflows! "developer" "bob" "carl" "owner")
         minimal (create-catalogue-item! res1 (:minimal workflows) form

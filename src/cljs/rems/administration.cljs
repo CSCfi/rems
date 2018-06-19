@@ -120,7 +120,7 @@
   (simple-fetch "/api/workflow/?active=true" #(rf/dispatch [::set-workflows %])))
 
 (defn- fetch-resources []
-  (simple-fetch "/api/resource/" #(rf/dispatch [::set-resources %])))
+  (simple-fetch "/api/resource/?active=true" #(rf/dispatch [::set-resources %])))
 
 (defn- fetch-forms []
   (simple-fetch "/api/form/" #(rf/dispatch [::set-forms %])))

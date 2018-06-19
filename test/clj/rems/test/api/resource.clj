@@ -23,7 +23,7 @@
         (is (= 200 (:status response)))
         (is (seq? data))
         (is (not (empty? data)))
-        (is (= #{:id :modifieruserid :prefix :resid :start :end :licenses} (set (keys (first data)))))))
+        (is (= #{:id :modifieruserid :prefix :resid :start :end :active :licenses} (set (keys (first data)))))))
     (testing "create"
       (let [licid 1
             resid "RESOURCE-API-TEST"]
@@ -43,6 +43,21 @@
             (is (= 200 (:status response)))
             (is resource)
             (is (= [licid] (map :id (:licenses resource))))))))))
+
+(deftest resource-api-filtering-test
+  (let [unfiltered-data (-> (request :get "/api/resource")
+                            (authenticate "42" "owner")
+                            app
+                            read-body)
+        filtered-data (-> (request :get "/api/resource" {:active true})
+                          (authenticate "42" "owner")
+                          app
+                          read-body)]
+    (is (not (empty? unfiltered-data)))
+    (is (not (empty? filtered-data)))
+    (is (every? #(contains? % :active) unfiltered-data))
+    (is (every? :active filtered-data))
+    (is (< (count filtered-data) (count unfiltered-data)))))
 
 (deftest resource-api-security-test
   (testing "without authentication"

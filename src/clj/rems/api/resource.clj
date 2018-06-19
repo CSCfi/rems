@@ -4,6 +4,7 @@
             [rems.api.util :refer [check-roles check-user]]
             [rems.db.core :as db]
             [rems.db.licenses :as licenses]
+            [rems.db.resource :as resource]
             [rems.util :refer [get-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
@@ -15,17 +16,18 @@
    :licenses [s/Num]})
 
 (defn- format-resource
-  [{:keys [id modifieruserid prefix resid start endt]}]
+  [{:keys [id modifieruserid prefix resid start endt active?]}]
   {:id id
    :modifieruserid modifieruserid
    :prefix prefix
    :resid resid
    :start start
-   :end endt})
+   :end endt
+   :active active?})
 
-(defn- get-resources []
+(defn- get-resources [filters]
   (doall
-   (for [res (db/get-resources)]
+   (for [res (resource/get-resources filters)]
      (assoc (format-resource res)
             :licenses (licenses/get-resource-licenses (:id res))))))
 
@@ -40,10 +42,11 @@
 
     (GET "/" []
       :summary "Get resources"
+      :query-params [{active :- (describe s/Bool "filter active or inactive resources") nil}]
       :return [Resource]
       (check-user)
       (check-roles :owner)
-      (ok (get-resources)))
+      (ok (get-resources (when-not (nil? active) {:active? active}))))
 
     (PUT "/create" []
       :summary "Create resource"
