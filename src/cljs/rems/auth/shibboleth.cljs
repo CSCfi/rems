@@ -3,7 +3,7 @@
             [rems.navbar :as nav]
             [rems.text :refer [text]]))
 
-(defn login-component []
+(defn login-component [alternative-endpoint]
   [:div.m-auto.jumbotron
    [:h2 (text :t.login/title)]
    [:p (text :t.login/text)]
@@ -11,6 +11,7 @@
     [atoms/link-to nil
                    (nav/url-dest "/Shibboleth.sso/Login")
                    [atoms/image {:class "login-btn"} "/img/haka-logo.jpg"]]]
-   [atoms/link-to nil
-                  (nav/url-dest "/Shibboleth.sso/eds")
-                  (text :t.login/alternative)]])
+   (when alternative-endpoint
+    [atoms/link-to nil
+                   (nav/url-dest alternative-endpoint)
+                   (text :t.login/alternative)])])
