@@ -59,6 +59,11 @@
     (users/add-user! owner (+demo-user-data+ owner))
     (roles/add-role! owner :owner)))
 
+(defn- create-expired-form!
+  [owner]
+  (let [yesterday (time/minus (time/now) (time/days 1))]
+    (db/create-form! {:title "Expired form, should not be seen" :user owner :endt yesterday})))
+
 (defn- create-basic-form!
   "Creates a bilingual form with all supported field types. Returns id of the form meta."
   [owner]
@@ -257,6 +262,7 @@
         res2 (:id (db/create-resource! {:resid "Extra Data" :prefix "nbn" :modifieruserid 1}))
         res3 (:id (db/create-resource! {:resid "Expired Resource, should not be seen" :prefix "nbn" :modifieruserid 1 :endt (time/minus (time/now) (time/years 1))}))
         form (create-basic-form! "owner")
+        _ (create-expired-form! "owner")
         workflows (create-workflows! "developer" "bob" "carl" "owner")
         minimal (create-catalogue-item! res1 (:minimal workflows) form
                                         {"en" "ELFA Corpus, direct approval"

@@ -123,7 +123,7 @@
   (simple-fetch "/api/resource/?active=true" #(rf/dispatch [::set-resources %])))
 
 (defn- fetch-forms []
-  (simple-fetch "/api/form/" #(rf/dispatch [::set-forms %])))
+  (simple-fetch "/api/form/?active=true" #(rf/dispatch [::set-forms %])))
 
 (defn- update-catalogue-item [id state]
   (PUT "/api/catalogue/update" {:format :json

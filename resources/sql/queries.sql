@@ -66,7 +66,9 @@ VALUES (:id, :langcode, :title)
 -- :name get-forms :? :*
 SELECT
   id,
-  title
+  title,
+  start,
+  endt
 FROM application_form
 
 -- :name get-form-for-application :? :1
@@ -115,9 +117,14 @@ WHERE 1=1
 
 -- :name create-form! :insert
 INSERT INTO application_form
-(title, modifierUserId, ownerUserId, visibility)
+(title, modifierUserId, ownerUserId, visibility, endt)
 VALUES
-(:title, :user, :user, 'public')
+(:title,
+ :user,
+ :user,
+ 'public',
+ /*~ (if (:endt params) */ :endt /*~*/ NULL /*~ ) ~*/
+)
 
 -- :name create-form-item! :insert
 INSERT INTO application_form_item
