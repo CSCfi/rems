@@ -169,7 +169,8 @@
          :password "Password"
          :title "LDAP Login"
          :username "Username"}
-  :login {:text "Login by using your Haka credentials"
+  :login {:alternative "Other sign in options"
+          :text "Login by using your Haka credentials"
           :title "Login"}
   :missing "Missing translation"
   :navigation {:about "About"

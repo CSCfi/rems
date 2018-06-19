@@ -170,7 +170,8 @@
          :password "Salasana"
          :title "LDAP-kirjautuminen"
          :username "Käyttäjänimi"}
-  :login {:text "Kirjaudu sisään Haka-tunnuksillasi"
+  :login {:alternative "Muut kirjautumisvaihtoehdot"
+          :text "Kirjaudu sisään Haka-tunnuksillasi"
           :title "Kirjaudu sisään"}
   :missing "Käännös puuttuu"
   :navigation {:about "Info"
