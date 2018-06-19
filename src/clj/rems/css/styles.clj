@@ -376,6 +376,7 @@
                     :outline 0
                     :outline-offset (u/px -2)
                     :box-shadow [[0 0 0 (u/rem 0.2) "rgba(0,123,255,.25)"]]}]]
+   [:.autocomplete__selected-items {:display :inline-block}]
    [:.autocomplete__selected-item:last-of-type {:margin-bottom (u/rem 0.5)}]
    [:.autocomplete__selected-item {:height (u/px 40)
                                    :line-height (u/px 40)
@@ -383,6 +384,7 @@
                                    :border-radius (u/rem 0.25)
                                    :border [[(u/px 1) :solid "#111"]]}]
    [:.autocomplete__dropdown {:padding (u/px 10)}]
+   [:.autocomplete__control [:input {:display :inline-block}]]
    [:.autocomplete__item {:padding (u/px 10)}]
    [:.autocomplete__item--selected {:background-color (util/get-theme-attribute :color1)}]
    [:.autocomplete__item:hover {:background-color (util/get-theme-attribute :color1)
