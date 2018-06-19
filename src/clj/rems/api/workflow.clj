@@ -50,4 +50,4 @@
       :return [Workflow]
       (check-user)
       (check-roles :owner)
-      (ok (get-workflows (when active {:active? active}))))))
+      (ok (get-workflows (when-not (nil? active) {:active? active}))))))
