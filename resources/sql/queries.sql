@@ -260,9 +260,14 @@ VALUES
 
 -- :name create-workflow! :insert
 INSERT INTO workflow
-(ownerUserId, modifierUserId, title, fnlround)
+(ownerUserId, modifierUserId, title, fnlround, endt)
 VALUES
-(:owneruserid, :modifieruserid, :title, :fnlround)
+(:owneruserid,
+ :modifieruserid,
+ :title,
+ :fnlround,
+ /*~ (if (:endt params) */ :endt /*~*/ NULL /*~ ) ~*/
+ )
 
 -- :name create-workflow-license! :insert
 INSERT INTO workflow_licenses
