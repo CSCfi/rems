@@ -2,6 +2,7 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.api.util :refer [check-roles check-user]]
             [rems.db.core :as db]
+            [rems.db.workflow :as workflow]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
   (:import [org.joda.time DateTime]))
@@ -19,21 +20,23 @@
    :final-round s/Num
    :start DateTime
    :end (s/maybe DateTime)
+   :active s/Bool
    :actors [Actor]})
 
 (defn- format-workflow
-  [{:keys [id owneruserid modifieruserid title fnlround start endt]}]
+  [{:keys [id owneruserid modifieruserid title fnlround start endt active?]}]
   {:id id
    :owneruserid owneruserid
    :modifieruserid modifieruserid
    :title title
    :final-round fnlround
    :start start
-   :end endt})
+   :end endt
+   :active active?})
 
-(defn- get-workflows []
+(defn- get-workflows [filters]
   (doall
-   (for [wf (db/get-workflows)]
+   (for [wf (workflow/get-workflows filters)]
      (assoc (format-workflow wf)
             :actors (db/get-workflow-actors {:wfid (:id wf)})))))
 
@@ -43,7 +46,8 @@
 
     (GET "/" []
       :summary "Get workflows"
+      :query-params [{active :- (describe s/Bool "filter active or inactive workflows") nil}]
       :return [Workflow]
       (check-user)
       (check-roles :owner)
-      (ok (get-workflows)))))
+      (ok (get-workflows (when active {:active? active}))))))

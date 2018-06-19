@@ -117,7 +117,7 @@
   (simple-fetch "/api/catalogue/" #(rf/dispatch [::catalogue %])))
 
 (defn- fetch-workflows []
-  (simple-fetch "/api/workflow/" #(rf/dispatch [::set-workflows %])))
+  (simple-fetch "/api/workflow/?active=true" #(rf/dispatch [::set-workflows %])))
 
 (defn- fetch-resources []
   (simple-fetch "/api/resource/" #(rf/dispatch [::set-resources %])))

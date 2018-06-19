@@ -28,6 +28,21 @@
              :role "approver"}]
            (:actors simple)))))
 
+(deftest workflow-api-filtering-test
+  (let [unfiltered-data (-> (request :get "/api/workflow")
+                            (authenticate "42" "owner")
+                            app
+                            read-body)
+        filtered-data (-> (request :get "/api/workflow" {:active true})
+                          (authenticate "42" "owner")
+                          app
+                          read-body)]
+    (is (not (empty? unfiltered-data)))
+    (is (not (empty? filtered-data)))
+    (is (every? #(contains? % :active) unfiltered-data))
+    (is (every? :active filtered-data))
+    (is (< (count filtered-data) (count unfiltered-data)))))
+
 (deftest workflow-api-security-test
   (testing "listing without authentication"
     (let [response (-> (request :get (str "/api/workflow"))
