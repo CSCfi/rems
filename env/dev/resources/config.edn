@@ -5,6 +5,8 @@
  ;; a useful default:
  :database-url "postgresql://localhost/rems?user=rems"
  :theme "lbr"
+ ;; example of urn resource linking (default http://urn.fi)
+ ;; :urn-prefix "http://example.org"
  :authentication :fake-shibboleth
  :ldap {:connection {:host "localhost:2636"
                      :ssl? true}

@@ -2,7 +2,10 @@
   (:require [clojure.string :as str]))
 
 (defn urn-catalogue-item? [{:keys [resid]}]
-  (and resid (str/starts-with? resid "http://urn.fi")))
+  (and resid (str/starts-with? resid "urn:")))
+
+(defn urn-catalogue-item-link [{:keys [resid]} {:keys [urn-prefix]}]
+  (str (or urn-prefix "http://urn.fi/") resid))
 
 (defn get-catalogue-item-title [item language]
   (or (get-in item [:localizations language :title])
