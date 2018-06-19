@@ -199,6 +199,11 @@
     :&:focus
     :&:active:hover
     {:outline-color :transparent}]]
+  [:.btn-primary.disabled :.btn-primary:disabled
+   :.btn-secondary.disabled :.btn-secondary:disabled
+   {:color "#fff"
+    :background-color "#aaa"
+    :border-color "#aaa"}]
   [:.alert-info
    (s/descendant :.state-info :.phases :.phase.completed)
    {:color (util/get-theme-attribute :info-color)
