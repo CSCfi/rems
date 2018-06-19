@@ -41,14 +41,16 @@
           :value #(catalogue-item-title % lang)
           :sort-value #(get-catalogue-item-title % lang)}
    :cart {:value (fn [i] [cart/add-to-cart-button i])
-          :sortable? false}})
+          :sortable? false
+          :class "commands"}})
 
 (defn- catalogue-list
   [items language sort-order]
   (table/component (catalogue-columns language) [:name :cart]
                    sort-order #(rf/dispatch [::set-sort-order %])
                    :id
-                   (filter (complement disabled-catalogue-item?) items)))
+                   (filter (complement disabled-catalogue-item?) items)
+                   {:class "catalogue"}))
 
 (defn- fetch-catalogue []
   (GET "/api/catalogue/" {:handler #(rf/dispatch [::catalogue %])
