@@ -8,6 +8,7 @@
  ;; example of urn resource linking (default http://urn.fi)
  ;; :urn-prefix "http://example.org"
  :authentication :fake-shibboleth
+ ;; :alternative-login-url "/login-endpoint"
  :ldap {:connection {:host "localhost:2636"
                      :ssl? true}
         :search-root "dc=Suivohtor,dc=local"}

@@ -260,7 +260,8 @@
     :border-width (u/px 1)
     :box-shadow "0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)"}
    [:h2 {:margin-bottom (u/px 20)}]]
-  [:.login-btn {:max-height (u/px 70)}
+  [:.login-btn {:max-height (u/px 70)
+                :margin-bottom (u/px 20)}
    [:&:hover {:filter "brightness(80%)"}]]
   (generate-rems-table-styles)
   [:.btn.disabled {:opacity 0.25}]
