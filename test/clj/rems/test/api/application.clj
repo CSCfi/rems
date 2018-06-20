@@ -338,7 +338,7 @@
   (let [api-key "42"
         applicant "alice"
         approver "developer"
-        reviewer "bob"
+        reviewer "carl"
         catid 2
         app-id (-> (request :put (str "/api/application/save"))
                    (authenticate api-key applicant)
