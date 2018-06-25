@@ -223,60 +223,61 @@
   (fetch-workflows)
   (fetch-resources)
   (fetch-forms)
-  (let [workflows @(rf/subscribe [::workflows])
-        resources @(rf/subscribe [::resources])
-        forms @(rf/subscribe [::forms])
-        title @(rf/subscribe [::title])
-        selected-workflow @(rf/subscribe [::selected-workflow])
-        selected-resource @(rf/subscribe [::selected-resource])
-        selected-form @(rf/subscribe [::selected-form])]
-    [collapsible/component
-     {:id "create-catalogue-item"
-      :title (text :t.navigation/create-catalogue-item)
-      :always [:div
-               [:div.form-group.field
-                [:label {:for "title"} (text :t.create-catalogue-item/title)]
-                [:input.form-control {:name "title"
-                                      :type :text
-                                      :placeholder (text :t.create-catalogue-item/title-placeholder)
-                                      :value title
-                                      :on-change #(rf/dispatch [::set-title (.. % -target -value)])}]]
-               [:div.form-group
-                [:label (text :t.create-catalogue-item/workflow-selection)]
-                [autocomplete/component
-                 {:value (when selected-workflow #{selected-workflow})
-                  :items workflows
-                  :value->text #(:title %2)
-                  :item->key :id
-                  :item->text :title
-                  :item->value identity
-                  :search-fields [:title]
-                  :add-fn #(rf/dispatch [::set-selected-workflow %])
-                  :remove-fn #(rf/dispatch [::set-selected-workflow nil])}]]
-               [:div.form-group
-                [:label (text :t.create-catalogue-item/resource-selection)]
-                [autocomplete/component
-                 {:value (when selected-resource #{selected-resource})
-                  :items resources
-                  :value->text #(:resid %2)
-                  :item->key :id
-                  :item->text :resid
-                  :item->value identity
-                  :search-fields [:resid]
-                  :add-fn #(rf/dispatch [::set-selected-resource %])
-                  :remove-fn #(rf/dispatch [::set-selected-resource nil])}]]
-               [:div.form-group
-                [:label (text :t.create-catalogue-item/form-selection)]
-                [autocomplete/component
-                 {:value (when selected-form #{selected-form})
-                  :items forms
-                  :value->text #(:title %2)
-                  :item->key :id
-                  :item->text :title
-                  :item->value identity
-                  :search-fields [:title]
-                  :add-fn #(rf/dispatch [::set-selected-form %])
-                  :remove-fn #(rf/dispatch [::set-selected-form nil])}]]
-               [:div.col.commands
-                [cancel-button]
-                [save-catalogue-item-button]]]}]))
+  (let [workflows (rf/subscribe [::workflows])
+        resources (rf/subscribe [::resources])
+        forms (rf/subscribe [::forms])
+        title (rf/subscribe [::title])
+        selected-workflow (rf/subscribe [::selected-workflow])
+        selected-resource (rf/subscribe [::selected-resource])
+        selected-form (rf/subscribe [::selected-form])]
+    (fn []
+      [collapsible/component
+       {:id "create-catalogue-item"
+        :title (text :t.navigation/create-catalogue-item)
+        :always [:div
+                 [:div.form-group.field
+                  [:label {:for "title"} (text :t.create-catalogue-item/title)]
+                  [:input.form-control {:name "title"
+                                        :type :text
+                                        :placeholder (text :t.create-catalogue-item/title-placeholder)
+                                        :value @title
+                                        :on-change #(rf/dispatch [::set-title (.. % -target -value)])}]]
+                 [:div.form-group
+                  [:label (text :t.create-catalogue-item/workflow-selection)]
+                  [autocomplete/component
+                   {:value (when @selected-workflow #{@selected-workflow})
+                    :items @workflows
+                    :value->text #(:title %2)
+                    :item->key :id
+                    :item->text :title
+                    :item->value identity
+                    :search-fields [:title]
+                    :add-fn #(rf/dispatch [::set-selected-workflow %])
+                    :remove-fn #(rf/dispatch [::set-selected-workflow nil])}]]
+                 [:div.form-group
+                  [:label (text :t.create-catalogue-item/resource-selection)]
+                  [autocomplete/component
+                   {:value (when @selected-resource #{@selected-resource})
+                    :items @resources
+                    :value->text #(:resid %2)
+                    :item->key :id
+                    :item->text :resid
+                    :item->value identity
+                    :search-fields [:resid]
+                    :add-fn #(rf/dispatch [::set-selected-resource %])
+                    :remove-fn #(rf/dispatch [::set-selected-resource nil])}]]
+                 [:div.form-group
+                  [:label (text :t.create-catalogue-item/form-selection)]
+                  [autocomplete/component
+                   {:value (when @selected-form #{@selected-form})
+                    :items @forms
+                    :value->text #(:title %2)
+                    :item->key :id
+                    :item->text :title
+                    :item->value identity
+                    :search-fields [:title]
+                    :add-fn #(rf/dispatch [::set-selected-form %])
+                    :remove-fn #(rf/dispatch [::set-selected-form nil])}]]
+                 [:div.col.commands
+                  [cancel-button]
+                  [save-catalogue-item-button]]]}])))
