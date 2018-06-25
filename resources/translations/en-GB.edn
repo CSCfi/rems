@@ -81,7 +81,8 @@
             :view "View"
             :withdraw "Withdraw"
             :withdraw-success "Application withdrawn"}
-  :administration {:disable "Disable"
+  :administration {:create-catalogue-item "Create catalogue item"
+                   :disable "Disable"
                    :enable "Enable"}
   :applicant-info {:applicant "Applicant"
                    :email "Email"
@@ -121,6 +122,13 @@
          :header "%1 resources in cart"
          :remove "Remove"}
   :catalogue {:header "Resource"}
+  :create-catalogue-item {:cancel "Cancel"
+                          :form-selection "Form"
+                          :resource-selection "Resource"
+                          :save "Save"
+                          :title "Name"
+                          :title-placeholder "Name"
+                          :workflow-selection "Workflow"}
   :email {:action-not-needed-msg "Dear %1,
                                   Applicant's %2 submitted application %3 no longer requires your attention.
                                   Please do not reply to this automatically generated message."
@@ -182,6 +190,7 @@
                :administration "Administration"
                :applications "Applications"
                :catalogue "Catalogue"
+               :create-catalogue-item "Create catalogue item"
                :home "Home"
                :login "Login"
                :logout "Sign Out"}

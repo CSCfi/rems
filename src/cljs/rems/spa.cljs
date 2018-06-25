@@ -7,7 +7,7 @@
             [markdown.core :refer [md->html]]
             [ajax.core :refer [GET]]
             [rems.actions :refer [actions-page fetch-actions]]
-            [rems.administration :refer [administration-page]]
+            [rems.administration :refer [administration-page create-catalogue-item-page]]
             [rems.ajax :refer [load-interceptors!]]
             [rems.application :refer [application-page fetch-application]]
             [rems.applications :refer [applications-page]]
@@ -156,6 +156,7 @@
    :application application-page
    :applications applications-page
    :administration administration-page
+   :create-catalogue-item create-catalogue-item-page
    :not-found not-found-page})
 
 (defn footer []
@@ -211,6 +212,10 @@
 
 (secretary/defroute "/administration" []
   (rf/dispatch [:set-active-page :administration]))
+
+(secretary/defroute "/create-catalogue-item" []
+  (rf/dispatch [:rems.administration/reset-create-catalogue-item])
+  (rf/dispatch [:set-active-page :create-catalogue-item]))
 
 (secretary/defroute "*" []
   (rf/dispatch [:set-active-page :not-found]))

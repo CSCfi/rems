@@ -36,6 +36,7 @@
    :resid s/Str
    :start DateTime
    :end (s/maybe DateTime)
+   :active s/Bool
    :licenses [ResourceLicense]})
 
 (def ApplicationLicense

@@ -8,6 +8,9 @@
 (defn column-value [column-definitions col app]
   ((get-in column-definitions [col :value]) app))
 
+(defn column-class [column-definitions col]
+  (get-in column-definitions [col :class] (name col)))
+
 (defn column-sort-value [column-definitions col app]
   ((or (get-in column-definitions [col :sort-value])
        (get-in column-definitions [col :value]))
@@ -16,7 +19,8 @@
 (defn- row [column-definitions columns app]
   (into [:tr.action]
         (for [c columns]
-          [:td {:data-th (column-header column-definitions c)}
+          [:td {:class (column-class column-definitions c)
+                :data-th (column-header column-definitions c)}
            (column-value column-definitions c app)])))
 
 (defn- flip [order]
@@ -42,15 +46,17 @@
      {:column-name {:header (fn [] ...)
                     :value (fn [item] ...)
                     :sort-value (fn [item] ...)
-                    :sortable? bool-defaults-to-true}
+                    :sortable? bool-defaults-to-true
+                    :class defaults-to-name-of-column-name-kw}
       ...}
    visible-columns: a sequence of keys that occur in column-definitions
    [sort-column sort-order]: a pair of a colum name and :asc or :desc
    id-function: function for setting react key for row, should return unique values
    set-sorting: callback to call with [col order] when the sort is changed
-   items: sequence of items to render"
-  [column-definitions visible-columns [sort-column sort-order] set-sorting id-function items]
-  [:table.rems-table.actions
+   items: sequence of items to render
+   opts: possibly options with {:class classes for the table}"
+  [column-definitions visible-columns [sort-column sort-order] set-sorting id-function items & [opts]]
+  [:table.rems-table (when (:class opts) (select-keys opts [:class]))
    (into [:tbody
           (into [:tr]
                 (for [c visible-columns]

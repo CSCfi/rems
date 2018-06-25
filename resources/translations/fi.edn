@@ -81,7 +81,8 @@
             :view "Näytä"
             :withdraw "Palauta muokattavaksi"
             :withdraw-success "Hakemus palautettu muokattavaksi"}
-  :administration {:disable "Poista käytöstä"
+  :administration {:create-catalogue-item "Uusi kielivara"
+                   :disable "Poista käytöstä"
                    :enable "Ota käyttöön"}
   :applicant-info {:applicant "Hakija"
                    :email "Sähköposti"
@@ -121,6 +122,13 @@
          :header "%1 kielivaraa korissa"
          :remove "Poista"}
   :catalogue {:header "Kielivarat"}
+  :create-catalogue-item {:cancel "Peruuta"
+                          :form-selection "Lomake"
+                          :resource-selection "Resurssi"
+                          :save "Tallenna"
+                          :title "Nimi"
+                          :title-placeholder "Nimi"
+                          :workflow-selection "Työvuo"}
   :email {:action-not-needed-msg "Hyvä %1,
                                   Hakijan %2 hakemus %3 ei enää vaadi huomiotanne.
                                   Älkää vastatko tähän automaattisesti luotuun viestiin."
@@ -183,6 +191,7 @@
                :administration "Ylläpito"
                :applications "Hakemukset"
                :catalogue "Kielivarat"
+               :create-catalogue-item "Luo kielivara"
                :home "Etusivu"
                :login "Kirjaudu sisään"
                :logout "Kirjaudu ulos"}

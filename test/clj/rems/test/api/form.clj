@@ -1,4 +1,4 @@
-(ns ^:integration rems.test.api.workflow
+(ns ^:integration rems.test.api.form
   (:require [clojure.test :refer :all]
             [rems.handler :refer [app]]
             [rems.test.api :refer :all]
@@ -11,29 +11,12 @@
   fake-tempura-fixture
   api-fixture)
 
-(deftest workflow-api-test
-  (let [data (-> (request :get "/api/workflow")
-                 (authenticate "42" "owner")
-                 app
-                 read-body)
-        wfs (index-by [:title] data)
-        simple (get wfs "simple")]
-    (is simple)
-    (is (= 0 (:final-round simple)))
-    (is (= [{:actoruserid "developer"
-             :round 0
-             :role "approver"}
-            {:actoruserid "bob"
-             :round 0
-             :role "approver"}]
-           (:actors simple)))))
-
-(deftest workflow-api-filtering-test
-  (let [unfiltered-data (-> (request :get "/api/workflow")
+(deftest form-api-filtering-test
+  (let [unfiltered-data (-> (request :get "/api/form")
                             (authenticate "42" "owner")
                             app
                             read-body)
-        filtered-data (-> (request :get "/api/workflow" {:active true})
+        filtered-data (-> (request :get "/api/form" {:active true})
                           (authenticate "42" "owner")
                           app
                           read-body)]
@@ -43,14 +26,14 @@
     (is (every? :active filtered-data))
     (is (< (count filtered-data) (count unfiltered-data)))))
 
-(deftest workflow-api-security-test
+(deftest form-api-security-test
   (testing "listing without authentication"
-    (let [response (-> (request :get (str "/api/workflow"))
+    (let [response (-> (request :get (str "/api/form"))
                        app)
           body (read-body response)]
       (is (= "unauthorized" body))))
   (testing "listing without owner role"
-    (let [response (-> (request :get (str "/api/workflow"))
+    (let [response (-> (request :get (str "/api/form"))
                        (authenticate "42" "alice")
                        app)
           body (read-body response)]

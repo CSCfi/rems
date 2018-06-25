@@ -46,8 +46,10 @@ FROM resource
 -- :name create-resource! :insert
 -- :doc Create a single resource
 INSERT INTO resource
-(resid, prefix, modifieruserid)
-VALUES (:resid, :prefix, :modifieruserid)
+(resid, prefix, modifieruserid, endt)
+VALUES (:resid, :prefix, :modifieruserid,
+ /*~ (if (:endt params) */ :endt /*~*/ NULL /*~ ) ~*/
+)
 
 -- :name get-database-name :? :1
 SELECT current_database()
@@ -64,7 +66,9 @@ VALUES (:id, :langcode, :title)
 -- :name get-forms :? :*
 SELECT
   id,
-  title
+  title,
+  start,
+  endt
 FROM application_form
 
 -- :name get-form-for-application :? :1
@@ -113,9 +117,14 @@ WHERE 1=1
 
 -- :name create-form! :insert
 INSERT INTO application_form
-(title, modifierUserId, ownerUserId, visibility)
+(title, modifierUserId, ownerUserId, visibility, endt)
 VALUES
-(:title, :user, :user, 'public')
+(:title,
+ :user,
+ :user,
+ 'public',
+ /*~ (if (:endt params) */ :endt /*~*/ NULL /*~ ) ~*/
+)
 
 -- :name create-form-item! :insert
 INSERT INTO application_form_item
@@ -260,9 +269,14 @@ VALUES
 
 -- :name create-workflow! :insert
 INSERT INTO workflow
-(ownerUserId, modifierUserId, title, fnlround)
+(ownerUserId, modifierUserId, title, fnlround, endt)
 VALUES
-(:owneruserid, :modifieruserid, :title, :fnlround)
+(:owneruserid,
+ :modifieruserid,
+ :title,
+ :fnlround,
+ /*~ (if (:endt params) */ :endt /*~*/ NULL /*~ ) ~*/
+ )
 
 -- :name create-workflow-license! :insert
 INSERT INTO workflow_licenses
