@@ -54,7 +54,7 @@
    id-function: function for setting react key for row, should return unique values
    set-sorting: callback to call with [col order] when the sort is changed
    items: sequence of items to render
-   opts: possibly options wiht {:class classes for the table}"
+   opts: possibly options with {:class classes for the table}"
   [column-definitions visible-columns [sort-column sort-order] set-sorting id-function items & [opts]]
   [:table.rems-table (when (:class opts) (select-keys opts [:class]))
    (into [:tbody
