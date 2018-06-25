@@ -1,5 +1,6 @@
 (ns rems.administration
   (:require [ajax.core :refer [GET PUT]]
+            [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.atoms :refer [external-link]]
             [rems.autocomplete :as autocomplete]
@@ -188,7 +189,7 @@
         form @(rf/subscribe [::selected-form])]
     [:button.btn.btn-primary
      {:on-click #(rf/dispatch [::create-catalogue-item title workflow resource form])
-      :disabled (not (and workflow resource form))}
+      :disabled (not (and (not (str/blank? title)) workflow resource form))}
      (text :t.create-catalogue-item/save)]))
 
 (defn- catalogue-item-button [item]
