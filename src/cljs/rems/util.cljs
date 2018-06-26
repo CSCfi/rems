@@ -1,4 +1,5 @@
-(ns rems.util)
+(ns rems.util
+  (:require [re-frame.core :as rf]))
 
 (defn select-vals
   "Select values in map `m` specified by given keys `ks`.
@@ -30,16 +31,5 @@
 
 (defn redirect-when-unauthorized [{:keys [status status-text]}]
   (when (= 401 status)
-    (if-let [redirect-ongoing (.getItem js/sessionStorage "rems-redirect-ongoing")]
-      (do
-        ;; NB: When the user logs in and is redirected, it's still possible that the user does not 
-        ;; actually have access to the target page and we will get another 401. 
-        ;; In this case we don't want to redirect again to the login and the same target page
-        ;; so let's clear the redirect-url so the default starting page will be used instead.
-        (println "Redirecting to authorization again")
-        (.removeItem js/sessionStorage "rems-redirect-ongoing")
-        (.removeItem js/sessionStorage "rems-redirect-url"))
-      (let [current-url (.. js/window -location -href)]
-        (println "Redirecting to authorization from" current-url)
-        (.setItem js/sessionStorage "rems-redirect-url" current-url)))
-    (dispatch! "/")))
+    (let [current-url (.. js/window -location -href)]
+      (rf/dispatch [:unauthorized! current-url]))))
