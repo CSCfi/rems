@@ -6,8 +6,7 @@ pages:
   - Developer guide:
     - Introduction: intro.md
     - Architecture: architecture.md
-    - Themes: themes.md
+    - Configuration: configuration.md
     - Migrating From REMS1: migrations.md
-    - Entitlements: entitlements.md
 theme:
   name: readthedocs

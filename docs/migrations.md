@@ -21,9 +21,10 @@ Then you can proceed with loading the dump.
 You must provide the name of the dump file, as well as the target database connection details. Docker is required for this script to work as temporary instances of databases are created.
 
 Transfer script
+
 1. starts a `mariadb` docker image,
-1. loads the dump in there, then
-1. uses `pgloader` to transfer the data.
+2. loads the dump in there, then
+3. uses `pgloader` to transfer the data.
 
 Note it may take up to 5 minutes for the DB caches to reload, and reload e.g. localization texts. To force this you can restart the server.
 
