@@ -3,6 +3,7 @@
             [hiccup.page :refer [html5 include-css include-js]]
             [rems.context :as context]
             [rems.db.users :as users]
+            [rems.text :refer [text]]
             [rems.util :refer [get-user-id]]
             [ring.middleware.anti-forgery :refer [*anti-forgery-token*]]
             [ring.util.http-response :as response]))
@@ -15,7 +16,7 @@
            [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
            [:link {:rel "icon" :href "/img/favicon.ico" :type "image/x-icon"}]
            [:link {:rel "shortcut icon" :href "/img/favicon.ico" :type "image/x-icon"}]
-           [:title "Welcome to rems"]
+           [:title (text :t.header/title)]
            (include-css "/assets/bootstrap/css/bootstrap.min.css")
            (include-css "/assets/font-awesome/web-fonts-with-css/css/fontawesome-all.min.css")
            (include-css "/css/screen.css")]

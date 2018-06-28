@@ -176,6 +176,7 @@
          :user "User"
          :validation {:errors "There were problems. Check the following fields."
                       :required "Field \"%1\" is required."}}
+  :header {:title "Welcome to REMS"}
   :ldap {:failed "Login failed"
          :login "Login"
          :password "Password"
