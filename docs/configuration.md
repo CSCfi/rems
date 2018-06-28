@@ -8,15 +8,15 @@ Configuration can be found under the `env` folder and [cprop](https://github.com
 
 Currently supported authentication methods are SAML2 and LDAP. Login method to be used can be defined with the key `:authentication` and the following values are recognized:
 
-* `:fake-shibboleth`
-* `:shibboleth`
+* `:shibboleth` for SAML2
 * `:ldap`
+* `:fake-shibboleth` for development login
 
-### SAML2
+### SAML2 (`:shibboleth`)
 
 When using this option, login requests are directed to `/Shibboleth.sso/Login`.
 
-### LDAP
+### LDAP (`:ldap`)
 
 Using LDAP as the authentication method requires that additional configuration with the following structure is provided:
 ```
@@ -25,7 +25,7 @@ Using LDAP as the authentication method requires that additional configuration w
        :search-root "dc=some,dc=thing"}
 ```
 
-### Development login
+### Development login (`:fake-shibboleth`)
 
 This option should not be used in production. Keep also in mind that anyone with access to the dev/test server using development authentication can login with your fake credentials.
 
