@@ -177,6 +177,7 @@
          :user "Käyttäjä"
          :validation {:errors "Lähetys epäonnistui. Tarkista seuraavat kentät."
                       :required "Kenttä \"%1\" on pakollinen."}}
+  :header {:title "Tervetuloa REMSiin"}
   :ldap {:failed "Kirjautuminen epäonnistui"
          :login "Kirjaudu"
          :password "Salasana"
