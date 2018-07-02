@@ -143,7 +143,7 @@
 
 (defn home-page []
   (if @(rf/subscribe [:user])
-    [:div]
+    [catalogue-page]
     [auth/login-component]))
 
 (defn unauthorized-page []
