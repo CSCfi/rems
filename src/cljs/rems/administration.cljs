@@ -43,11 +43,6 @@
    (assoc db ::forms forms)))
 
 (rf/reg-event-db
- ::set-title
- (fn [db [_ title]]
-   (assoc db ::title title)))
-
-(rf/reg-event-db
  ::set-selected-workflow
  (fn [db [_ workflow]]
    (if workflow
