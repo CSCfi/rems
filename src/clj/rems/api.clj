@@ -1,21 +1,20 @@
 (ns rems.api
-  (:require [compojure.api.exception :as ex]
-            [compojure.api.sweet :refer :all]
+  (:require [compojure.api.sweet :refer :all]
+            [compojure.api.exception :as ex]
             [rems.api.actions :refer [actions-api]]
-            [rems.api.application :refer [application-api]]
             [rems.api.applications :refer [applications-api]]
             [rems.api.catalogue :refer [catalogue-api]]
+            [rems.api.catalogue-items :refer [catalogue-items-api]]
             [rems.api.entitlements :refer [entitlements-api]]
-            [rems.api.form :refer [form-api]]
-            [rems.api.license :refer [license-api]]
+            [rems.api.forms :refer [forms-api]]
+            [rems.api.licenses :refer [licenses-api]]
             [rems.api.public :as public]
-            [rems.api.resource :refer [resource-api]]
-            [rems.api.workflow :refer [workflow-api]]
+            [rems.api.resources :refer [resources-api]]
+            [rems.api.workflows :refer [workflows-api]]
             [ring.middleware.cors :refer [wrap-cors]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
-  (:import [org.joda.time DateTime]
-           rems.auth.NotAuthorizedException))
+  (:import rems.auth.NotAuthorizedException))
 
 (defn unauthorized-handler
   [exception ex-data request]
@@ -56,11 +55,11 @@
      public/config-api
 
      actions-api
-     application-api
      applications-api
      catalogue-api
+     catalogue-items-api
      entitlements-api
-     form-api
-     license-api
-     resource-api
-     workflow-api)))
+     forms-api
+     licenses-api
+     resources-api
+     workflows-api)))

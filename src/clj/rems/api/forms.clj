@@ -1,4 +1,4 @@
-(ns rems.api.form
+(ns rems.api.forms
   (:require [compojure.api.sweet :refer :all]
             [rems.api.util :refer [check-roles check-user]]
             [rems.db.core :as db]
@@ -27,9 +27,9 @@
    (for [wf (form/get-forms filters)]
      (format-form wf))))
 
-(def form-api
-  (context "/form" []
-    :tags ["form"]
+(def forms-api
+  (context "/forms" []
+    :tags ["forms"]
 
     (GET "/" []
       :summary "Get forms"

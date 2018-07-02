@@ -1,4 +1,4 @@
-(ns ^:integration rems.test.api.workflow
+(ns ^:integration rems.test.api.workflows
   (:require [clojure.test :refer :all]
             [rems.handler :refer [app]]
             [rems.test.api :refer :all]
@@ -11,13 +11,15 @@
   fake-tempura-fixture
   api-fixture)
 
-(deftest workflow-api-test
-  (let [data (-> (request :get "/api/workflow")
+(deftest workflows-api-test
+  (let [response (-> (request :get "/api/workflows")
                  (authenticate "42" "owner")
-                 app
-                 read-body)
+                 app)
+        data (read-body response)
         wfs (index-by [:title] data)
         simple (get wfs "simple")]
+    (is (response-is-ok? response))
+    (is (coll-is-not-empty? data))
     (is simple)
     (is (= 0 (:final-round simple)))
     (is (= [{:actoruserid "developer"
@@ -28,30 +30,34 @@
              :role "approver"}]
            (:actors simple)))))
 
-(deftest workflow-api-filtering-test
-  (let [unfiltered-data (-> (request :get "/api/workflow")
+(deftest workflows-api-filtering-test
+  (let [unfiltered-response (-> (request :get "/api/workflows")
                             (authenticate "42" "owner")
-                            app
-                            read-body)
-        filtered-data (-> (request :get "/api/workflow" {:active true})
+                            app)
+        unfiltered-data (read-body unfiltered-response)
+        filtered-response (-> (request :get "/api/workflows" {:active true})
                           (authenticate "42" "owner")
-                          app
-                          read-body)]
-    (is (not (empty? unfiltered-data)))
-    (is (not (empty? filtered-data)))
+                          app)
+        filtered-data (read-body filtered-response)]
+    (is (response-is-ok? unfiltered-response))
+    (is (response-is-ok? filtered-response))
+    (is (coll-is-not-empty? unfiltered-data))
+    (is (coll-is-not-empty? filtered-data))
     (is (every? #(contains? % :active) unfiltered-data))
     (is (every? :active filtered-data))
     (is (< (count filtered-data) (count unfiltered-data)))))
 
-(deftest workflow-api-security-test
+(deftest workflows-api-security-test
   (testing "listing without authentication"
-    (let [response (-> (request :get (str "/api/workflow"))
+    (let [response (-> (request :get (str "/api/workflows"))
                        app)
           body (read-body response)]
+      (is (= 401 (:status response)))
       (is (= "unauthorized" body))))
   (testing "listing without owner role"
-    (let [response (-> (request :get (str "/api/workflow"))
+    (let [response (-> (request :get (str "/api/workflows"))
                        (authenticate "42" "alice")
                        app)
           body (read-body response)]
+      (is (= 401 (:status response)))
       (is (= "unauthorized" body)))))

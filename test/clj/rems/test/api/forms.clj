@@ -1,4 +1,4 @@
-(ns ^:integration rems.test.api.form
+(ns ^:integration rems.test.api.forms
   (:require [clojure.test :refer :all]
             [rems.handler :refer [app]]
             [rems.test.api :refer :all]
@@ -11,30 +11,34 @@
   fake-tempura-fixture
   api-fixture)
 
-(deftest form-api-filtering-test
-  (let [unfiltered-data (-> (request :get "/api/form")
+(deftest forms-api-filtering-test
+  (let [unfiltered-response (-> (request :get "/api/forms")
                             (authenticate "42" "owner")
-                            app
-                            read-body)
-        filtered-data (-> (request :get "/api/form" {:active true})
+                            app)
+        unfiltered-data (read-body unfiltered-response)
+        filtered-response (-> (request :get "/api/forms" {:active true})
                           (authenticate "42" "owner")
-                          app
-                          read-body)]
-    (is (not (empty? unfiltered-data)))
-    (is (not (empty? filtered-data)))
+                          app)
+        filtered-data (read-body filtered-response)]
+    (is (response-is-ok? unfiltered-response))
+    (is (response-is-ok? filtered-response))
+    (is (coll-is-not-empty? unfiltered-data))
+    (is (coll-is-not-empty? filtered-data))
     (is (every? #(contains? % :active) unfiltered-data))
     (is (every? :active filtered-data))
     (is (< (count filtered-data) (count unfiltered-data)))))
 
-(deftest form-api-security-test
+(deftest forms-api-security-test
   (testing "listing without authentication"
-    (let [response (-> (request :get (str "/api/form"))
+    (let [response (-> (request :get (str "/api/forms"))
                        app)
           body (read-body response)]
+      (is (= 401 (:status response)))
       (is (= "unauthorized" body))))
   (testing "listing without owner role"
-    (let [response (-> (request :get (str "/api/form"))
+    (let [response (-> (request :get (str "/api/forms"))
                        (authenticate "42" "alice")
                        app)
           body (read-body response)]
+      (is (= 401 (:status response)))
       (is (= "unauthorized" body)))))

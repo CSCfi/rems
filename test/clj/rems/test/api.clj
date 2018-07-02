@@ -1,6 +1,7 @@
 (ns rems.test.api
   "Shared code for API testing"
   (:require [cheshire.core :refer [generate-string parse-stream]]
+            [clojure.test :refer [is]]
             [luminus-migrations.core :as migrations]
             [mount.core :as mount]
             [rems.config :refer [env]]
@@ -25,6 +26,13 @@
   (-> request
       (assoc-in [:headers "x-rems-api-key"] api-key)
       (assoc-in [:headers "x-rems-user-id"] user-id)))
+
+(defn response-is-ok? [response]
+  (= 200 (:status response)))
+
+(defn coll-is-not-empty? [data]
+  (and (coll? data)
+       (not (empty? data))))
 
 (defn read-body [{body :body}]
   (cond

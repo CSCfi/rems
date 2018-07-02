@@ -53,17 +53,17 @@
    {::fetch-draft-application [items]}))
 
 (defn- fetch-application [id]
-  (GET (str "/api/application/" id) {:handler #(rf/dispatch [::fetch-application-result %])
-                                     :error-handler redirect-when-unauthorized
-                                     :response-format :json
-                                     :keywords? true}))
+  (GET (str "/api/applications/" id) {:handler #(rf/dispatch [::fetch-application-result %])
+                                      :error-handler redirect-when-unauthorized
+                                      :response-format :json
+                                      :keywords? true}))
 
 (defn- fetch-draft-application [items]
-  (GET (str "/api/application/") {:handler #(rf/dispatch [::fetch-application-result %])
-                                  :error-handler redirect-when-unauthorized
-                                  :params {:catalogue-items items}
-                                  :response-format :json
-                                  :keywords? true}))
+  (GET (str "/api/applications/draft") {:handler #(rf/dispatch [::fetch-application-result %])
+                                        :error-handler redirect-when-unauthorized
+                                        :params {:catalogue-items items}
+                                        :response-format :json
+                                        :keywords? true}))
 
 (rf/reg-fx
  ::fetch-application
@@ -129,7 +129,7 @@
                        (if application-id
                          {:application-id application-id}
                          {:catalogue-items catalogue-items}))]
-    (PUT "/api/application/save"
+    (PUT "/api/applications/save"
          {:handler (fn [resp]
                      (if (:success resp)
                        (do (rf/dispatch [::set-status :saved])
@@ -165,7 +165,7 @@
    {}))
 
 (defn- judge-application [command application-id round comment]
-  (PUT "/api/application/judge"
+  (PUT "/api/applications/judge"
        {:format :json
         :params {:command command
                  :application-id application-id
@@ -459,7 +459,7 @@
    (text :t.actions/withdraw)])
 
 (defn- fetch-potential-third-party-reviewers [user]
-  (GET (str "/api/application/reviewers")
+  (GET (str "/api/applications/reviewers")
        {:handler #(do (rf/dispatch [::set-potential-third-party-reviewers %])
                       (rf/dispatch [::set-selected-third-party-reviewers #{}]))
         :error-handler redirect-when-unauthorized
@@ -522,7 +522,7 @@
    (::review-comment db)))
 
 (defn- send-third-party-review-request [reviewers user application-id round comment]
-  (PUT "/api/application/review_request"
+  (PUT "/api/applications/review_request"
        {:format :json
         :params {:application-id application-id
                  :round round

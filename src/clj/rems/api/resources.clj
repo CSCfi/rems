@@ -1,4 +1,4 @@
-(ns rems.api.resource
+(ns rems.api.resources
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
             [rems.api.util :refer [check-roles check-user]]
@@ -36,9 +36,9 @@
     (doseq [licid licenses]
       (db/create-resource-license! {:resid id :licid licid}))))
 
-(def resource-api
-  (context "/resource" []
-    :tags ["resource"]
+(def resources-api
+  (context "/resources" []
+    :tags ["resources"]
 
     (GET "/" []
       :summary "Get resources"
