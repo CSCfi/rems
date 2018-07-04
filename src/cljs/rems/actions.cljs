@@ -29,6 +29,7 @@
 (rf/reg-fx
  ::fetch-handled-actions
  (fn [_]
+  (rf/dispatch [::loading-handled-actions])
   (fetch-handled-actions)))
 
 (rf/reg-event-fx
@@ -49,7 +50,13 @@
 (rf/reg-event-db
  ::fetch-handled-actions-result
  (fn [db [_ result]]
-   (assoc db ::handled-actions result)))
+   (assoc db ::handled-actions result
+             ::loading-handled-actions? false)))
+
+(rf/reg-event-db
+ ::loading-handled-actions
+ (fn [db [_ result]]
+   (assoc db ::loading-handled-actions? true)))
 
 (rf/reg-sub
  ::actions
@@ -60,6 +67,11 @@
  ::handled-actions
  (fn [db _]
    (::handled-actions db)))
+
+(rf/reg-sub
+ ::loading-handled-actions?
+ (fn [db _]
+   (::loading-handled-actions? db)))
 ;; Because we want to display multiple independently sortable
 ;; application tables, we store a map of sort types in the db.
 ;;
@@ -129,29 +141,34 @@
   key:         key to use for table ordering in re-frame
   apps:        collection of apps to be shown
   top-buttons: a set of extra buttons that will be shown on top of the table. This could include f.ex 'export as pdf' button."
-  [key apps top-buttons]
-  (if (empty? apps)
-    [:div.actions.alert.alert-success (text :t.actions/no-handled-yet)]
-    [:div
-     top-buttons
-     [application-list/component
-      [:id :resource :applicant :state :last-modified :view]
-      @(rf/subscribe [::sort key])
-      #(rf/dispatch [::sort key %])
-      apps]]))
+  [key apps top-buttons loading?]
+  (if loading?
+    [:div.row
+     [:div.m-auto
+      [:i {:class "fas fa-spinner fa-spin"}]]]
+    (if (empty? apps)
+      [:div.actions.alert.alert-success (text :t.actions/no-handled-yet)]
+      [:div
+       top-buttons
+       [application-list/component
+        [:id :resource :applicant :state :last-modified :view]
+        @(rf/subscribe [::sort key])
+        #(rf/dispatch [::sort key %])
+        apps]])))
 
-(defn- handled-approvals [apps]
-  [handled-applications ::handled-approvals apps [report-buttons]])
+(defn- handled-approvals [apps loading?]
+  [handled-applications ::handled-approvals apps [report-buttons] loading?])
 
 (defn- handled-reviews
-  [apps]
-  [handled-applications ::handled-reviews apps nil])
+  [apps loading?]
+  [handled-applications ::handled-reviews apps nil loading?])
 
 ;; TODO ensure ::actions is loaded when navigating to page
 (defn actions-page [reviews]
   (rf/dispatch [::start-fetch-actions])
   (let [actions @(rf/subscribe [::actions])
-        handled-actions @(rf/subscribe [::handled-actions])]
+        handled-actions @(rf/subscribe [::handled-actions])
+        loading? @(rf/subscribe [::loading-handled-actions?])]
     [:div
      (when (:reviewer? actions)
        [:div
@@ -166,7 +183,7 @@
            {:id "handled-reviews"
             :dispatch-on-open :rems.actions/start-fetch-handled-actions
             :title (text :t.actions/handled-reviews)
-            :collapse [handled-reviews (:handled-reviews handled-actions)]}]]]])
+            :collapse [handled-reviews (:handled-reviews handled-actions) loading?]}]]]])
      (when (:approver? actions)
        [:div
         [:div
@@ -180,4 +197,4 @@
            {:id "handled-approvals"
             :dispatch-on-open :rems.actions/start-fetch-handled-actions
             :title (text :t.actions/handled-approvals)
-            :collapse [handled-approvals (:handled-approvals handled-actions)]}]]]])]))
+            :collapse [handled-approvals (:handled-approvals handled-actions) loading?]}]]]])]))
