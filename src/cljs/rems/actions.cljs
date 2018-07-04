@@ -15,26 +15,51 @@
                         :response-format :json
                         :keywords? true}))
 
+(defn- fetch-handled-actions []
+  (GET "/api/actions/handled" {:handler #(rf/dispatch [::fetch-handled-actions-result %])
+                               :error-handler redirect-when-unauthorized
+                               :response-format :json
+                               :keywords? true}))
+
 (rf/reg-fx
  ::fetch-actions
  (fn [_]
    (fetch-actions)))
+
+(rf/reg-fx
+ ::fetch-handled-actions
+ (fn [_]
+  (fetch-handled-actions)))
 
 (rf/reg-event-fx
  ::start-fetch-actions
  (fn [{:keys [db]} _]
    {::fetch-actions []}))
 
+(rf/reg-event-fx
+ ::start-fetch-handled-actions
+ (fn [{:keys [db]} _]
+   {::fetch-handled-actions []}))
+
 (rf/reg-event-db
  ::fetch-actions-result
  (fn [db [_ result]]
-   (assoc db ::actions result) ))
+   (assoc db ::actions result)))
+
+(rf/reg-event-db
+ ::fetch-handled-actions-result
+ (fn [db [_ result]]
+   (assoc db ::handled-actions result)))
 
 (rf/reg-sub
  ::actions
  (fn [db _]
    (::actions db)))
 
+(rf/reg-sub
+ ::handled-actions
+ (fn [db _]
+   (::handled-actions db)))
 ;; Because we want to display multiple independently sortable
 ;; application tables, we store a map of sort types in the db.
 ;;
@@ -125,7 +150,8 @@
 ;; TODO ensure ::actions is loaded when navigating to page
 (defn actions-page [reviews]
   (rf/dispatch [::start-fetch-actions])
-  (let [actions @(rf/subscribe [::actions])]
+  (let [actions @(rf/subscribe [::actions])
+        handled-actions @(rf/subscribe [::handled-actions])]
     [:div
      (when (:reviewer? actions)
        [:div
@@ -138,8 +164,9 @@
          [:div.my-3
           [collapsible/component
            {:id "handled-reviews"
+            :dispatch-on-open :rems.actions/start-fetch-handled-actions
             :title (text :t.actions/handled-reviews)
-            :collapse [handled-reviews (:handled-reviews actions)]}]]]])
+            :collapse [handled-reviews (:handled-reviews handled-actions)]}]]]])
      (when (:approver? actions)
        [:div
         [:div
@@ -151,5 +178,6 @@
          [:div.mt-3
           [collapsible/component
            {:id "handled-approvals"
+            :dispatch-on-open :rems.actions/start-fetch-handled-actions
             :title (text :t.actions/handled-approvals)
-            :collapse [handled-approvals (:handled-approvals actions)]}]]]])]))
+            :collapse [handled-approvals (:handled-approvals handled-actions)]}]]]])]))

@@ -10,8 +10,12 @@
   {:approver? s/Bool
    :reviewer? s/Bool
    :approvals [Application]
+   :reviews [Application]})
+
+(def GetHandledActionsResponse
+  {:approver? s/Bool
+   :reviewer? s/Bool
    :handled-approvals [Application]
-   :reviews [Application]
    :handled-reviews [Application]})
 
 (def actions-api
@@ -25,6 +29,12 @@
       (ok {:approver? true
            :reviewer? true
            :approvals (applications/get-approvals)
+           :reviews (applications/get-applications-to-review)}))
+    (GET "/handled" []
+      :summary "Get data for applications that have been acted on (for example approved or reviewed)"
+      :return GetHandledActionsResponse
+      (check-user)
+      (ok {:approver? true
+           :reviewer? true
            :handled-approvals (applications/get-handled-approvals)
-           :reviews (applications/get-applications-to-review)
            :handled-reviews (applications/get-handled-reviews)}))))
