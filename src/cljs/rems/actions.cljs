@@ -50,8 +50,9 @@
 (rf/reg-event-db
  ::fetch-handled-actions-result
  (fn [db [_ result]]
-   (assoc db ::handled-actions result
-             ::loading-handled-actions? false)))
+   (-> db
+    (assoc ::handled-actions result)
+    (dissoc ::loading-handled-actions?))))
 
 (rf/reg-event-db
  ::loading-handled-actions
