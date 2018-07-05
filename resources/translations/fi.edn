@@ -122,6 +122,8 @@
          :header "%1 kielivaraa korissa"
          :remove "Poista"}
   :catalogue {:header "Kielivarat"}
+  :collapse {:show-more "Näytä lisää"
+             :show-less "Näytä vähemmän"}
   :create-catalogue-item {:cancel "Peruuta"
                           :form-selection "Lomake"
                           :resource-selection "Resurssi"
@@ -177,6 +179,7 @@
          :user "Käyttäjä"
          :validation {:errors "Lähetys epäonnistui. Tarkista seuraavat kentät."
                       :required "Kenttä \"%1\" on pakollinen."}}
+  :header {:title "Tervetuloa REMSiin"}
   :ldap {:failed "Kirjautuminen epäonnistui"
          :login "Kirjaudu"
          :password "Salasana"
@@ -195,10 +198,12 @@
                :home "Etusivu"
                :login "Kirjaudu sisään"
                :logout "Kirjaudu ulos"}
+  :not-found-page {:not-found "Sivua ei löytynyt"
+                   :page-was-not-found "Tätä sivua ei löytynyt."}
   :phases {:apply "Hae"
            :approve "Hyväksyntä"
            :approved "Hyväksytty"
            :rejected "Hylätty"
            :review "Katselmointi"}
-  :collapse {:show-more "Näytä lisää"
-             :show-less "Näytä vähemmän"}}}
+  :unauthorized-page {:unauthorized "Ei käyttöoikeuksia"
+                      :you-are-unauthorized "Sinulla ei ole käyttöoikeuksia tähän sivuun."}}}

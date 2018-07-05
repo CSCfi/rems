@@ -209,7 +209,7 @@
 (defn administration-page []
   (fetch-catalogue)
   [:div
-   [:h1 (text :t.navigation/administration)]
+   [:h2 (text :t.navigation/administration)]
    [:div.col.commands
     [to-create-catalogue-item-button]]
    [catalogue-list @(rf/subscribe [::catalogue]) @(rf/subscribe [:language])]])

@@ -107,13 +107,24 @@
    (assoc db :language language)))
 
 (reg-event-fx
+ :unauthorized!
+ (fn [{:keys [db]} [_ current-url]]
+   (println "Received unauthorized from" current-url)
+   (if (get-in db [:identity :roles])
+     (do (println "User is logged-in")
+         (.removeItem js/sessionStorage "rems-redirect-url")
+         {:dispatch [:set-active-page :unauthorized]})
+     (do (println "User is not logged-in")
+         (.setItem js/sessionStorage "rems-redirect-url" current-url)
+         (dispatch! "/")))))
+
+(reg-event-fx
  :landing-page-redirect!
  (fn [{:keys [db]}]
    ;; do we have the roles set by set-identity already?
    (if (get-in db [:identity :roles])
      (let [roles (set (get-in db [:identity :roles]))]
        (println "Selecting landing page based on roles" roles)
-       (.removeItem js/sessionStorage "rems-redirect-ongoing")
        (.removeItem js/sessionStorage "rems-redirect-url")
        (cond
          (contains? roles :owner) (dispatch! "/#/administration")
@@ -132,20 +143,18 @@
 
 (defn home-page []
   (if @(rf/subscribe [:user])
-    (do
-      ;; user is logged in so redirect to a more specific page
-      (if-let [url (.getItem js/sessionStorage "rems-redirect-url")]
-        (do
-          (println "Redirecting to" url "after authorization")
-          (.removeItem js/sessionStorage "rems-redirect-url")
-          (.setItem js/sessionStorage "rems-redirect-ongoing" true)
-          (dispatch! url))
-        (rf/dispatch [:landing-page-redirect!]))
-      [:div])
+    [catalogue-page]
     [auth/login-component]))
 
+(defn unauthorized-page []
+  [:div
+   [:h2 (text :t.unauthorized-page/unauthorized)]
+   [:p (text :t.unauthorized-page/you-are-unauthorized)]])
+
 (defn not-found-page[]
-  [:h3 "No such page."])
+  [:div
+   [:h2 (text :t.not-found-page/not-found)]
+   [:p (text :t.not-found-page/page-was-not-found)]])
 
 (def pages
   {:home home-page
@@ -157,6 +166,7 @@
    :applications applications-page
    :administration administration-page
    :create-catalogue-item create-catalogue-item-page
+   :unauthorized unauthorized-page
    :not-found not-found-page})
 
 (defn footer []
@@ -216,6 +226,18 @@
 (secretary/defroute "/create-catalogue-item" []
   (rf/dispatch [:rems.administration/reset-create-catalogue-item])
   (rf/dispatch [:set-active-page :create-catalogue-item]))
+
+(secretary/defroute "/unauthorized" []
+  (rf/dispatch [:set-active-page :unauthorized]))
+
+(secretary/defroute "/redirect" []
+  ;; user is logged in so redirect to a more specific page
+  (if-let [url (.getItem js/sessionStorage "rems-redirect-url")]
+    (do
+      (println "Redirecting to" url "after authorization")
+      (.removeItem js/sessionStorage "rems-redirect-url")
+      (dispatch! url))
+    (rf/dispatch [:landing-page-redirect!])))
 
 (secretary/defroute "*" []
   (rf/dispatch [:set-active-page :not-found]))

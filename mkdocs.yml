@@ -2,12 +2,12 @@ site_name: REMS2 Documentation
 pages:
   - Home: index.md
   - User guide:
+    - Linking to REMS: linking.md
     - Dictionary: dictionary.md
   - Developer guide:
-    - Introduction: intro.md
+    - Using the API: usingtheapi.md
     - Architecture: architecture.md
-    - Themes: themes.md
+    - Configuration: configuration.md
     - Migrating From REMS1: migrations.md
-    - Entitlements: entitlements.md
 theme:
   name: readthedocs

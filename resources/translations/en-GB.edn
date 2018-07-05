@@ -122,6 +122,8 @@
          :header "%1 resources in cart"
          :remove "Remove"}
   :catalogue {:header "Resource"}
+  :collapse {:show-more "Show more"
+             :show-less "Show less"}
   :create-catalogue-item {:cancel "Cancel"
                           :form-selection "Form"
                           :resource-selection "Resource"
@@ -176,6 +178,7 @@
          :user "User"
          :validation {:errors "There were problems. Check the following fields."
                       :required "Field \"%1\" is required."}}
+  :header {:title "Welcome to REMS"}
   :ldap {:failed "Login failed"
          :login "Login"
          :password "Password"
@@ -194,10 +197,12 @@
                :home "Home"
                :login "Login"
                :logout "Sign Out"}
+  :not-found-page {:not-found "Not found"
+                   :page-was-not-found "Page was not found."}
   :phases {:apply "Apply"
            :approve "Approval"
            :approved "Approved"
            :rejected "Rejected"
            :review "Review"}
-  :collapse {:show-more "Show more"
-             :show-less "Show less"}}}
+  :unauthorized-page {:unauthorized "Unauthorized"
+                      :you-are-unauthorized "You are unauthorized to use this page."}}}

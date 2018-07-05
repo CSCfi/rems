@@ -29,11 +29,13 @@
   []
   (when-not (has-roles? :approver)
     (throw-unauthorized))
-  (let [ents (db/get-entitlements)]
+  (let [ents (db/get-entitlements)
+        separator (or (get env :csv-separator)
+                      ",")]
     (with-out-str
-      (println "resource,application,user,start")
+      (println (join separator ["resource" "application" "user" "start"]))
       (doseq [e ents]
-        (println (join "," [(:resid e) (:catappid e) (:userid e) (text/localize-time (:start e))]))))))
+        (println (join separator [(:resid e) (:catappid e) (:userid e) (text/localize-time (:start e))]))))))
 
 (defn- post-entitlements [target-key entitlements]
   (when-let [target (get-in env [:entitlements-target target-key])]
