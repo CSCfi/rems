@@ -1,4 +1,4 @@
-(ns rems.api.license
+(ns rems.api.licenses
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
             [rems.api.util :refer [check-roles check-user]]
@@ -6,9 +6,9 @@
             [ring.util.http-response :refer :all])
   (:import [org.joda.time DateTime]))
 
-(def license-api
-  (context "/license" []
-    :tags ["license"]
+(def licenses-api
+  (context "/licenses" []
+    :tags ["licenses"]
 
     (GET "/" []
       :summary "Get licenses"

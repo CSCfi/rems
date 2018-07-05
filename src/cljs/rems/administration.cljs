@@ -43,11 +43,6 @@
    (assoc db ::forms forms)))
 
 (rf/reg-event-db
- ::set-title
- (fn [db [_ title]]
-   (assoc db ::title title)))
-
-(rf/reg-event-db
  ::set-selected-workflow
  (fn [db [_ workflow]]
    (if workflow
@@ -115,24 +110,24 @@
              :keywords? true}))
 
 (defn- fetch-catalogue []
-  (simple-fetch "/api/catalogue/" #(rf/dispatch [::catalogue %])))
+  (simple-fetch "/api/catalogue-items/" #(rf/dispatch [::catalogue %])))
 
 (defn- fetch-workflows []
-  (simple-fetch "/api/workflow/?active=true" #(rf/dispatch [::set-workflows %])))
+  (simple-fetch "/api/workflows/?active=true" #(rf/dispatch [::set-workflows %])))
 
 (defn- fetch-resources []
-  (simple-fetch "/api/resource/?active=true" #(rf/dispatch [::set-resources %])))
+  (simple-fetch "/api/resources/?active=true" #(rf/dispatch [::set-resources %])))
 
 (defn- fetch-forms []
-  (simple-fetch "/api/form/?active=true" #(rf/dispatch [::set-forms %])))
+  (simple-fetch "/api/forms/?active=true" #(rf/dispatch [::set-forms %])))
 
 (defn- update-catalogue-item [id state]
-  (PUT "/api/catalogue/update" {:format :json
-                                :params {:id id :state state}
-                                ;; TODO error handling
-                                :error-handler redirect-when-unauthorized
-                                :handler (fn [resp]
-                                           (fetch-catalogue))}))
+  (PUT "/api/catalogue-items/update" {:format :json
+                                      :params {:id id :state state}
+                                      ;; TODO error handling
+                                      :error-handler redirect-when-unauthorized
+                                      :handler (fn [resp]
+                                                 (fetch-catalogue))}))
 
 (rf/reg-event-fx
  ::update-catalogue-item
@@ -141,15 +136,15 @@
    {}))
 
 (defn- create-catalogue-item [title workflow resource form]
-  (PUT "/api/catalogue/create" {:format :json
-                                :params {:title title
-                                         :wfid (:id workflow)
-                                         :resid (:id resource)
-                                         :form (:id form)}
-                                ;; TODO error handling
-                                :error-handler redirect-when-unauthorized
-                                :handler (fn [resp]
-                                           (dispatch! "#/administration"))}))
+  (PUT "/api/catalogue-items/create" {:format :json
+                                      :params {:title title
+                                               :wfid (:id workflow)
+                                               :resid (:id resource)
+                                               :form (:id form)}
+                                      ;; TODO error handling
+                                      :error-handler redirect-when-unauthorized
+                                      :handler (fn [resp]
+                                                 (dispatch! "#/administration"))}))
 
 (rf/reg-event-fx
  ::create-catalogue-item

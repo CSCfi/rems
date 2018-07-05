@@ -10,3 +10,7 @@
 (defn check-roles [& roles]
   (when-not (apply has-roles? roles)
     (throw-unauthorized)))
+
+(defn longify-keys [m]
+  (into {} (for [[k v] m]
+             [(Long/parseLong (name k)) v])))

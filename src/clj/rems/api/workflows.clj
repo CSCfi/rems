@@ -1,4 +1,4 @@
-(ns rems.api.workflow
+(ns rems.api.workflows
   (:require [compojure.api.sweet :refer :all]
             [rems.api.util :refer [check-roles check-user]]
             [rems.db.core :as db]
@@ -40,9 +40,9 @@
      (assoc (format-workflow wf)
             :actors (db/get-workflow-actors {:wfid (:id wf)})))))
 
-(def workflow-api
-  (context "/workflow" []
-    :tags ["workflow"]
+(def workflows-api
+  (context "/workflows" []
+    :tags ["workflows"]
 
     (GET "/" []
       :summary "Get workflows"

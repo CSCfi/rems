@@ -57,10 +57,10 @@ curl -X GET \
      'http://localhost:3000/api/catalogue'
 ```
 
-Let's say we are interested in applying for catalogue item 2 that includes a workflow with one approval round. We can query the application api endpoint to find out how to fill in the form.
+Let's say we are interested in applying for catalogue item 2 that includes a workflow with one approval round. We can query the application api endpoint to find out how to fill in the form. Essentially, it gives us a draft to work on.
 
 ```
-curl -X GET -H 'Accept: application/json' -H 'x-rems-api-key: 42' -H 'x-rems-user-id: alice' 'http://localhost:3000/api/application?catalogue-items=2'
+curl -X GET -H 'Accept: application/json' -H 'x-rems-api-key: 42' -H 'x-rems-user-id: alice' 'http://localhost:3000/api/applications/draft?catalogue-items=2'
 ```
 
 Judging from the output of the previous command, in order to apply for access we need to:
@@ -80,7 +80,7 @@ curl -X PUT \
     "catalogue-items": [2], \
     "items": {"1":"Test Project","2":"To test sending applications using the api"}, \
     "licenses": {"1":"approved","2":"approved"} }' \
-    'http://localhost:3000/api/application/save'
+    'http://localhost:3000/api/applications/save'
 ```
 
 You should get the following output as a response:
@@ -92,16 +92,16 @@ You should get the following output as a response:
 This tells us that the request succeeded, the system assigned id 12 to our application, the form was properly filled and that the application has progressed to an applied state. Now we can proceed to approving the request. Both users Developer and Bob have been assigned as approvers for the current workflow but only one of them needs to grant the permission. Let's provide an answer as Developer:
 
 ```sh
-curl -X PUT \ 
+curl -X PUT \
      -H 'Content-Type: application/json' \
      -H 'Accept: application/json' \
      -H 'x-rems-api-key: 42' \
      -H 'x-rems-user-id: developer' \
-   -d '{"command": "approve", \ 
-   "application-id": 12, \ 
-   "round": 0, \ 
-   "comment": "Looks good to me." \ 
- }' 'http://localhost:3000/api/application/judge'
+   -d '{"command": "approve", \
+   "application-id": 12, \
+   "round": 0, \
+   "comment": "Looks good to me." \
+ }' 'http://localhost:3000/api/applications/judge'
 ```
 
 Now the application sent by Alice has been approved and an entitlement should have been created. To verify this we can query the entitlements api like this:
