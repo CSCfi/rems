@@ -1,6 +1,6 @@
 (ns rems.api
-  (:require [compojure.api.sweet :refer :all]
-            [compojure.api.exception :as ex]
+  (:require [compojure.api.exception :as ex]
+            [compojure.api.sweet :refer :all]
             [rems.api.actions :refer [actions-api]]
             [rems.api.applications :refer [applications-api]]
             [rems.api.catalogue :refer [catalogue-api]]
