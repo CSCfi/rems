@@ -57,10 +57,10 @@ curl -X GET \
      'http://localhost:3000/api/catalogue'
 ```
 
-Let's say we are interested in applying for catalogue item 2 that includes a workflow with one approval round. We can query the application api endpoint to find out how to fill in the form.
+Let's say we are interested in applying for catalogue item 2 that includes a workflow with one approval round. We can query the application api endpoint to find out how to fill in the form. Essentially, it gives us a draft to work on.
 
 ```
-curl -X GET -H 'Accept: application/json' -H 'x-rems-api-key: 42' -H 'x-rems-user-id: alice' 'http://localhost:3000/api/applications?catalogue-items=2'
+curl -X GET -H 'Accept: application/json' -H 'x-rems-api-key: 42' -H 'x-rems-user-id: alice' 'http://localhost:3000/api/applications/draft?catalogue-items=2'
 ```
 
 Judging from the output of the previous command, in order to apply for access we need to:
