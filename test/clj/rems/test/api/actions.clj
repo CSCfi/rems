@@ -10,41 +10,52 @@
   fake-tempura-fixture
   api-fixture)
 
-(defn get-response-body [user-id]
+(defn get-response-body [user-id endpoint]
   (let [api-key "42"
-        response (-> (request :get (str "/api/actions"))
+        response (-> (request :get (str "/api/" endpoint))
                      (authenticate api-key user-id)
                      app)]
     (read-body response)))
 
 (deftest actions-api-test
   (testing "listing"
-    (let [body (get-response-body "developer")]
-      (is (:approver? body))
-      (is (= [2 8 10 11] (map :id (:approvals body))))
-      (is (= [2 2 3 7 8] (sort (map :id (mapcat :catalogue-items (:approvals body))))))
-      (is (= [3 4 5 7 9] (map :id (:handled-approvals body))))
+    (let [actions-body (get-response-body "developer" "actions")
+          handled-body (get-response-body "developer" "actions/handled")]
+      (is (:approver? actions-body))
+      (is (:approver? handled-body))
+      (is (= [2 8 10 11] (map :id (:approvals actions-body))))
+      (is (= [2 2 3 7 8] (sort (map :id (mapcat :catalogue-items (:approvals actions-body))))))
+      (is (= [3 4 5 7 9] (map :id (:handled-approvals handled-body))))
       (is (empty? (:reviews body)))
-      (is (empty? (:handled-reviews body)))))
+      (is (empty? (:handled-reviews handled-body)))))
   (testing "listing as another approver"
-    (let [body (get-response-body "bob")]
-      (is (:approver? body))
-      (is (= [2 8 10 11] (map :id (:approvals body))))
-      (is (= [2 2 3 7 8] (sort (map :id (mapcat :catalogue-items (:approvals body))))))
-      (is (= [3 4 5 7] (map :id (:handled-approvals body))))
+    (let [actions-body (get-response-body "bob" "actions")
+          handled-body (get-response-body "bob" "actions/handled")]
+      (is (:approver? actions-body))
+      (is (:approver? handled-body))
+      (is (= [2 8 10 11] (map :id (:approvals actions-body))))
+      (is (= [2 2 3 7 8] (sort (map :id (mapcat :catalogue-items (:approvals actions-body))))))
+      (is (= [3 4 5 7] (map :id (:handled-approvals handled-body))))
       (is (empty? (:reviews body)))
-      (is (empty? (:handled-reviews body)))))
+      (is (empty? (:handled-reviews handled-body)))))
   (testing "listing as a reviewer"
-    (let [body (get-response-body "carl")]
-      (is (:reviewer? body))
+    (let [actions-body (get-response-body "carl" "actions")
+          handled-body (get-response-body "carl" "actions/handled")]
+      (is (:reviewer? actions-body))
+      (is (:reviewer? handled-body))
       (is (empty? (:approvals body)))
-      (is (empty? (:handled-approvals body)))
+      (is (empty? (:handled-approvals handled-body)))
       (is (empty? (:reviews body)))
-      (is (= [9] (map :id (:handled-reviews body)))))))
+      (is (= [9] (map :id (:handled-reviews handled-body)))))))
 
 (deftest actions-api-security-test
-  (testing "listing without authentication"
+  (testing "listing actions without authentication"
     (let [response (-> (request :get (str "/api/actions"))
+                       app)
+          body (read-body response)]
+      (is (= "unauthorized" body))))
+  (testing "listing handled actions without authentication"
+    (let [response (-> (request :get (str "/api/actions/handled"))
                        app)
           body (read-body response)]
       (is (= "unauthorized" body)))))
