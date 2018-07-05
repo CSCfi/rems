@@ -2,13 +2,13 @@
   (:require [clojure.string :as str]
             [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
-            [rems.api.util :refer [check-roles check-user]]
+            [rems.api.util :refer [check-roles check-user longify-keys]]
             [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.users :as users]
             [rems.form :as form]
-            [rems.util :refer [get-user-id longify-keys]]
+            [rems.util :refer [get-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
