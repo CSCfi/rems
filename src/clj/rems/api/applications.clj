@@ -8,7 +8,7 @@
             [rems.db.core :as db]
             [rems.db.users :as users]
             [rems.form :as form]
-            [rems.util :refer [get-user-id]]
+            [rems.util :refer [get-user-id longify-keys]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
@@ -79,10 +79,6 @@
     "withdraw" (applications/withdraw-application application-id round comment))
   ;; failure communicated via an exception
   {:success true})
-
-(defn- longify-keys [m]
-  (into {} (for [[k v] m]
-             [(Long/parseLong (name k)) v])))
 
 (defn- fix-keys [application]
   (-> application
