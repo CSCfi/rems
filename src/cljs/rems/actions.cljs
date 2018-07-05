@@ -182,7 +182,7 @@
          [:div.my-3
           [collapsible/component
            {:id "handled-reviews"
-            :dispatch-on-open :rems.actions/start-fetch-handled-actions
+            :on-open #(rf/dispatch [:rems.actions/start-fetch-handled-actions])
             :title (text :t.actions/handled-reviews)
             :collapse [handled-reviews (:handled-reviews handled-actions) loading?]}]]]])
      (when (:approver? actions)
@@ -196,6 +196,6 @@
          [:div.mt-3
           [collapsible/component
            {:id "handled-approvals"
-            :dispatch-on-open :rems.actions/start-fetch-handled-actions
+            :on-open #(rf/dispatch [:rems.actions/start-fetch-handled-actions])
             :title (text :t.actions/handled-approvals)
             :collapse [handled-approvals (:handled-approvals handled-actions) loading?]}]]]])]))
