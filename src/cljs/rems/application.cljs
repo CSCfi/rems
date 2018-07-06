@@ -567,7 +567,7 @@
           [:span {:aria-hidden "true"} "\u00D7"]]]
         [:div.modal-body
          [:div.form-group
-          [:label {:for "review-comment"} (text :t.form/add-comments)]
+          [:label {:for "review-comment"} (text :t.form/add-comments-not-shown-to-applicant)]
           [:textarea#review-comment.form-control {:name "comment" :placeholder (text :t.form/comment)
                                                   :on-change #(rf/dispatch [::set-review-comment (.. % -target -value)])}]]
          [:div.form-group
