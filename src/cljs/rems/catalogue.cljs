@@ -8,6 +8,7 @@
                                        urn-catalogue-item-link
                                        urn-catalogue-item?]]
             [rems.guide-functions]
+            [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.text :refer [text]]
             [rems.util :refer [redirect-when-unauthorized]])
@@ -24,14 +25,38 @@
    (get db ::sort-order [:name :asc])))
 
 (rf/reg-event-db
- ::catalogue
+ ::fetch-catalogue-result
  (fn [db [_ catalogue]]
-   (assoc db ::catalogue catalogue)))
+   (-> db
+       (assoc ::catalogue catalogue)
+       (dissoc ::loading?))))
 
 (rf/reg-sub
  ::catalogue
  (fn [db _]
    (::catalogue db)))
+
+(rf/reg-sub
+ ::loading?
+ (fn [db _]
+   (::loading? db)))
+
+(rf/reg-event-fx
+ ::start-fetch-catalogue
+ (fn [{:keys [db]} _]
+   {:db (assoc db ::loading? true)
+    ::fetch-catalogue []}))
+
+(defn- fetch-catalogue []
+  (GET "/api/catalogue/" {:handler #(rf/dispatch [::fetch-catalogue-result %])
+                          :error-handler redirect-when-unauthorized
+                          :response-format :json
+                          :keywords? true}))
+
+(rf/reg-fx
+ ::fetch-catalogue
+ (fn [_]
+   (fetch-catalogue)))
 
 (defn- catalogue-item-title [item language config]
   (let [title (get-catalogue-item-title item language)]
@@ -56,21 +81,20 @@
    (filter (complement disabled-catalogue-item?) items)
    {:class "catalogue"}])
 
-(defn- fetch-catalogue []
-  (GET "/api/catalogue/" {:handler #(rf/dispatch [::catalogue %])
-                          :error-handler redirect-when-unauthorized
-                          :response-format :json
-                          :keywords? true}))
-
 (defn catalogue-page []
-  (fetch-catalogue)
-  (let [catalogue @(rf/subscribe [::catalogue])
-        language @(rf/subscribe [:language])
-        sort-order @(rf/subscribe [::sort-order])
-        config @(rf/subscribe [:rems.config/config])]
-    [:div
-     [cart/cart-list-container language]
-     [catalogue-list catalogue language sort-order config]]))
+  (let [catalogue (rf/subscribe [::catalogue])
+        loading? (rf/subscribe [::loading?])
+        language (rf/subscribe [:language])
+        sort-order (rf/subscribe [::sort-order])
+        config (rf/subscribe [:rems.config/config])]
+    (fn []
+      [:div
+       [:h2 (text :t.catalogue/catalogue)]
+       (if @loading?
+         [spinner/big]
+         [:div
+          [cart/cart-list-container @language]
+          [catalogue-list @catalogue @language @sort-order @config]])])))
 
 (defn guide []
   [:div

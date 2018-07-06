@@ -6,6 +6,7 @@
             [rems.application-list :as application-list]
             [rems.collapsible :as collapsible]
             [rems.guide-functions]
+            [rems.spinner :as spinner]
             [rems.text :refer [localize-state localize-time text]]
             [rems.util :refer [redirect-when-unauthorized]]))
 
@@ -29,40 +30,45 @@
 (rf/reg-fx
  ::fetch-handled-actions
  (fn [_]
-  (rf/dispatch [::loading-handled-actions])
-  (fetch-handled-actions)))
+   (fetch-handled-actions)))
 
 (rf/reg-event-fx
  ::start-fetch-actions
  (fn [{:keys [db]} _]
-   {::fetch-actions []}))
+   {:db (-> db
+            (assoc ::loading-actions? true)
+            (dissoc ::actions ::handled-actions)) ; zero state that should be reloaded, good for performance
+    ::fetch-actions []}))
 
 (rf/reg-event-fx
  ::start-fetch-handled-actions
  (fn [{:keys [db]} _]
-   {::fetch-handled-actions []}))
+   {:db (assoc db ::loading-handled-actions? true)
+    ::fetch-handled-actions []}))
 
 (rf/reg-event-db
  ::fetch-actions-result
  (fn [db [_ result]]
-   (assoc db ::actions result)))
+   (-> db
+       (assoc ::actions result)
+       (dissoc ::loading-actions?))))
 
 (rf/reg-event-db
  ::fetch-handled-actions-result
  (fn [db [_ result]]
    (-> db
-    (assoc ::handled-actions result)
-    (dissoc ::loading-handled-actions?))))
-
-(rf/reg-event-db
- ::loading-handled-actions
- (fn [db [_ result]]
-   (assoc db ::loading-handled-actions? true)))
+       (assoc ::handled-actions result)
+       (dissoc ::loading-handled-actions?))))
 
 (rf/reg-sub
  ::actions
  (fn [db _]
    (::actions db)))
+
+(rf/reg-sub
+ ::loading-actions?
+ (fn [db _]
+   (::loading-actions? db)))
 
 (rf/reg-sub
  ::handled-actions
@@ -73,6 +79,7 @@
  ::loading-handled-actions?
  (fn [db _]
    (::loading-handled-actions? db)))
+
 ;; Because we want to display multiple independently sortable
 ;; application tables, we store a map of sort types in the db.
 ;;
@@ -144,9 +151,7 @@
   top-buttons: a set of extra buttons that will be shown on top of the table. This could include f.ex 'export as pdf' button."
   [key apps top-buttons loading?]
   (if loading?
-    [:div.row
-     [:div.m-auto
-      [:i {:class "fas fa-spinner fa-spin"}]]]
+    [spinner/big]
     (if (empty? apps)
       [:div.actions.alert.alert-success (text :t.actions/no-handled-yet)]
       [:div
@@ -164,38 +169,40 @@
   [apps loading?]
   [handled-applications ::handled-reviews apps nil loading?])
 
-;; TODO ensure ::actions is loaded when navigating to page
 (defn actions-page [reviews]
-  (rf/dispatch [::start-fetch-actions])
-  (let [actions @(rf/subscribe [::actions])
-        handled-actions @(rf/subscribe [::handled-actions])
-        loading? @(rf/subscribe [::loading-handled-actions?])]
-    [:div
-     (when (:reviewer? actions)
-       [:div
+  (let [actions (rf/subscribe [::actions])
+        loading-actions? (rf/subscribe [::loading-actions?])
+        handled-actions (rf/subscribe [::handled-actions])
+        loading-handled-actions? (rf/subscribe [::loading-handled-actions?])]
+    (fn [reviews]
+      (if @loading-actions?
+        [spinner/big]
         [:div
-         [collapsible/component
-          {:id "open-reviews"
-           :open? true
-           :title (text :t.actions/open-reviews)
-           :collapse [open-reviews (:reviews actions)]}]
-         [:div.my-3
-          [collapsible/component
-           {:id "handled-reviews"
-            :on-open #(rf/dispatch [:rems.actions/start-fetch-handled-actions])
-            :title (text :t.actions/handled-reviews)
-            :collapse [handled-reviews (:handled-reviews handled-actions) loading?]}]]]])
-     (when (:approver? actions)
-       [:div
-        [:div
-         [collapsible/component
-          {:id "open-approvals"
-           :open? true
-           :title (text :t.actions/open-approvals)
-           :collapse [open-approvals (:approvals actions)]}]
-         [:div.mt-3
-          [collapsible/component
-           {:id "handled-approvals"
-            :on-open #(rf/dispatch [:rems.actions/start-fetch-handled-actions])
-            :title (text :t.actions/handled-approvals)
-            :collapse [handled-approvals (:handled-approvals handled-actions) loading?]}]]]])]))
+         (when (:reviewer? @actions)
+           [:div
+            [:div
+             [collapsible/component
+              {:id "open-reviews"
+               :open? true
+               :title (text :t.actions/open-reviews)
+               :collapse [open-reviews (:reviews @actions)]}]
+             [:div.my-3
+              [collapsible/component
+               {:id "handled-reviews"
+                :on-open #(rf/dispatch [:rems.actions/start-fetch-handled-actions])
+                :title (text :t.actions/handled-reviews)
+                :collapse [handled-reviews (:handled-reviews @handled-actions) @loading-handled-actions?]}]]]])
+         (when (:approver? @actions)
+           [:div
+            [:div
+             [collapsible/component
+              {:id "open-approvals"
+               :open? true
+               :title (text :t.actions/open-approvals)
+               :collapse [open-approvals (:approvals @actions)]}]
+             [:div.mt-3
+              [collapsible/component
+               {:id "handled-approvals"
+                :on-open #(rf/dispatch [:rems.actions/start-fetch-handled-actions])
+                :title (text :t.actions/handled-approvals)
+                :collapse [handled-approvals (:handled-approvals @handled-actions) @loading-handled-actions?]}]]]])]))))
