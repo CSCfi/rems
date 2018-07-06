@@ -12,7 +12,8 @@
             [rems.language-switcher :as language-switcher]
          ;; [rems.layout :as layout]
             [rems.navbar :as nav]
-            [rems.phase :as phase])
+            [rems.phase :as phase]
+            [rems.spinner :as spinner])
   (:require-macros [rems.guide-macros :refer [example]]))
 
 (defn color-box [id hex]
@@ -53,6 +54,9 @@
     ;; (layout/guide)
     [:h2 "Navigation"]
     [nav/guide]
+
+    [:h2 "Spinner"]
+    [spinner/guide]
 
     [:h2 "Language switcher widget"]
     [language-switcher/guide]
