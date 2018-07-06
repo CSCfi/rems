@@ -321,7 +321,7 @@
     [unsupported-field f]))
 
 (defn- status-widget []
-  (let [status (:status @(rf/subscribe [:edit-application]))]
+  (let [status (:status @(rf/subscribe [::edit-application]))]
     [:span (case status
              nil ""
              :pending [spinner/small]
