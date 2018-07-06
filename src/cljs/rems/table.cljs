@@ -8,6 +8,12 @@
 (defn column-value [column-definitions col app]
   ((get-in column-definitions [col :value]) app))
 
+(defn column-values [column-definitions col app]
+  (let [values (get-in column-definitions [col :values])]
+    (if values
+      (values app)
+      [(column-value column-definitions col app)])))
+
 (defn column-class [column-definitions col]
   (get-in column-definitions [col :class] (name col)))
 
@@ -19,9 +25,9 @@
 (defn- row [column-definitions columns app]
   (into [:tr.action]
         (for [c columns]
-          [:td {:class (column-class column-definitions c)
-                :data-th (column-header column-definitions c)}
-           (column-value column-definitions c app)])))
+          (into [:td {:class   (column-class column-definitions c)
+                      :data-th (column-header column-definitions c)}]
+                (column-values column-definitions c app)))))
 
 (defn- flip [order]
   (case order
