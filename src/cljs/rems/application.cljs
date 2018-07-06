@@ -614,7 +614,8 @@
         :title (text :t.form/actions)
         :always [:div
                  [:div.form-group
-                  [:textarea.form-control
+                  [:label {:for "judge-comment"} (text :t.form/add-comments)]
+                  [:textarea#judge-comment.form-control
                    {:name "judge-comment" :placeholder "Comment"
                     :value @(rf/subscribe [::judge-comment])
                     :onChange #(rf/dispatch [::set-judge-comment (.. % -target -value)])}]]
