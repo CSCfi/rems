@@ -16,7 +16,7 @@
 
 (defn color-box [id hex]
   [:div.col-md-3
-   [:row
+   [:div.row
     [:div.col-md-6.rectangle {:class id}]
     [:div.col-md-6.color-title hex]]])
 
