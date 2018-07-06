@@ -5,7 +5,8 @@
 (rf/reg-event-db
   ::loaded-config
   (fn [db [_ config]]
-    (assoc db :config config)))
+    (assoc db :config config
+              :language (:default-language config))))
 
 (rf/reg-sub
   ::config
