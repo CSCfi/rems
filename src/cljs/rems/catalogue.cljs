@@ -47,8 +47,7 @@
               :sort-value #(get-catalogue-item-title % lang)}
    :commands {:values    (fn [item] [[catalogue-item-more-info item config]
                                      [cart/add-to-cart-button item]])
-              :sortable? false
-              :class     "commands"}})
+              :sortable? false}})
 
 (defn- catalogue-list
   [items language sort-order config]
