@@ -1,13 +1,12 @@
 (ns rems.application
-  (:require [ajax.core :refer [GET PUT]]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
             [rems.db.catalogue :refer [get-catalogue-item-title]]
             [rems.phase :refer [phases get-application-phases]]
             [rems.text :refer [text text-format localize-state localize-event localize-time]]
-            [rems.util :refer [dispatch! index-by redirect-when-unauthorized]]
+            [rems.util :refer [dispatch! fetch index-by put!]]
             [secretary.core :as secretary])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
@@ -53,17 +52,11 @@
    {::fetch-draft-application [items]}))
 
 (defn- fetch-application [id]
-  (GET (str "/api/applications/" id) {:handler #(rf/dispatch [::fetch-application-result %])
-                                      :error-handler redirect-when-unauthorized
-                                      :response-format :json
-                                      :keywords? true}))
+  (fetch (str "/api/applications/" id) {:handler #(rf/dispatch [::fetch-application-result %])}))
 
 (defn- fetch-draft-application [items]
-  (GET (str "/api/applications/draft") {:handler #(rf/dispatch [::fetch-application-result %])
-                                        :error-handler redirect-when-unauthorized
-                                        :params {:catalogue-items items}
-                                        :response-format :json
-                                        :keywords? true}))
+  (fetch (str "/api/applications/draft") {:handler #(rf/dispatch [::fetch-application-result %])
+                                          :params {:catalogue-items items}}))
 
 (rf/reg-fx
  ::fetch-application
@@ -129,20 +122,17 @@
                        (if application-id
                          {:application-id application-id}
                          {:catalogue-items catalogue-items}))]
-    (PUT "/api/applications/save"
-         {:handler (fn [resp]
-                     (if (:success resp)
-                       (do (rf/dispatch [::set-status :saved])
-                           ;; HACK: we both set the location, and fire a fetch-application event
-                           ;; because if the location didn't change, secretary won't fire the event
-                           (navigate-to (:id resp))
-                           (rf/dispatch [::start-fetch-application (:id resp)]))
-                       (rf/dispatch [::set-status :failed (:validation resp)])))
-          :error-handler (fn [err]
-                           (redirect-when-unauthorized err)
-                           (rf/dispatch [::set-status :failed]))
-          :format :json
-          :params payload})))
+    (put! "/api/applications/save"
+          {:handler (fn [resp]
+                      (if (:success resp)
+                        (do (rf/dispatch [::set-status :saved])
+                            ;; HACK: we both set the location, and fire a fetch-application event
+                            ;; because if the location didn't change, secretary won't fire the event
+                            (navigate-to (:id resp))
+                            (rf/dispatch [::start-fetch-application (:id resp)]))
+                        (rf/dispatch [::set-status :failed (:validation resp)])))
+           :error-handler (fn [_] (rf/dispatch [::set-status :failed]))
+           :params payload})))
 
 (rf/reg-event-fx
  ::save-application
@@ -165,15 +155,13 @@
    {}))
 
 (defn- judge-application [command application-id round comment]
-  (PUT "/api/applications/judge"
-       {:format :json
-        :params {:command command
-                 :application-id application-id
-                 :round round
-                 :comment comment}
-        :error-handler redirect-when-unauthorized
-        :handler (fn [resp]
-                   (rf/dispatch [::start-fetch-application application-id]))}))
+  (put! "/api/applications/judge"
+        {:params {:command command
+                  :application-id application-id
+                  :round round
+                  :comment comment}
+         :handler (fn [resp]
+                    (rf/dispatch [::start-fetch-application application-id]))}))
 
 (rf/reg-event-fx
  ::judge-application
@@ -459,13 +447,10 @@
    (text :t.actions/withdraw)])
 
 (defn- fetch-potential-third-party-reviewers [user]
-  (GET (str "/api/applications/reviewers")
-       {:handler #(do (rf/dispatch [::set-potential-third-party-reviewers %])
-                      (rf/dispatch [::set-selected-third-party-reviewers #{}]))
-        :error-handler redirect-when-unauthorized
-        :response-format :json
-        :headers {"x-rems-user-id" (:eppn user)}
-        :keywords? true}))
+  (fetch (str "/api/applications/reviewers")
+         {:handler #(do (rf/dispatch [::set-potential-third-party-reviewers %])
+                        (rf/dispatch [::set-selected-third-party-reviewers #{}]))
+          :headers {"x-rems-user-id" (:eppn user)}}))
 
 (rf/reg-event-db
  ::set-selected-third-party-reviewers
@@ -522,17 +507,15 @@
    (::review-comment db)))
 
 (defn- send-third-party-review-request [reviewers user application-id round comment]
-  (PUT "/api/applications/review_request"
-       {:format :json
-        :params {:application-id application-id
-                 :round round
-                 :comment comment
-                 :recipients (map :userid reviewers)}
-        :error-handler redirect-when-unauthorized
-        :handler (fn [resp]
-                   (rf/dispatch [::send-third-party-review-request-success true])
-                   (rf/dispatch [::start-fetch-application application-id ])
-                   (scroll-to-top!))}))
+  (put! "/api/applications/review_request"
+        {:params {:application-id application-id
+                  :round round
+                  :comment comment
+                  :recipients (map :userid reviewers)}
+         :handler (fn [resp]
+                    (rf/dispatch [::send-third-party-review-request-success true])
+                    (rf/dispatch [::start-fetch-application application-id ])
+                    (scroll-to-top!))}))
 
 (rf/reg-event-fx
  ::send-third-party-review-request

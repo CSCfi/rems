@@ -1,6 +1,5 @@
 (ns rems.navbar
-  (:require [ajax.core :refer [GET]]
-            [re-frame.core :as rf]
+  (:require [re-frame.core :as rf]
             [rems.atoms :as atoms]
             [rems.language-switcher :refer [language-switcher]]
             [rems.text :refer [text]])

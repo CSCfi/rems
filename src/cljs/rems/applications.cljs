@@ -1,15 +1,11 @@
 (ns rems.applications
-  (:require [ajax.core :refer [GET]]
-            [re-frame.core :as rf]
+  (:require [re-frame.core :as rf]
             [rems.application-list :as application-list]
             [rems.text :refer [localize-state localize-time text]]
-            [rems.util :refer [redirect-when-unauthorized]]))
+            [rems.util :refer [fetch]]))
 
 (defn- fetch-my-applications []
-  (GET "/api/applications/" {:handler #(rf/dispatch [::fetch-my-applications %])
-                             :error-handler redirect-when-unauthorized
-                             :response-format :json
-                             :keywords? true}))
+  (fetch "/api/applications/" {:handler #(rf/dispatch [::fetch-my-applications %])}))
 
 (rf/reg-event-db
  ::fetch-my-applications
