@@ -121,7 +121,8 @@
          :checkout "Lähetä"
          :header "%1 kielivaraa korissa"
          :remove "Poista"}
-  :catalogue {:header "Kielivarat"}
+  :catalogue {:header "Kielivarat"
+              :more-info "Lisätietoja"}
   :collapse {:show-more "Näytä lisää"
              :show-less "Näytä vähemmän"}
   :create-catalogue-item {:cancel "Peruuta"

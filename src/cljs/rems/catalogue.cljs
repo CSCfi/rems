@@ -33,24 +33,26 @@
  (fn [db _]
    (::catalogue db)))
 
-(defn- catalogue-item-title [item language config]
-  (let [title (get-catalogue-item-title item language)]
-    (if (urn-catalogue-item? item)
-      [:a.catalogue-item-link {:href (urn-catalogue-item-link item config) :target :_blank} title " " [external-link]]
-      [:span title])))
+(defn- catalogue-item-title [item language]
+  [:span (get-catalogue-item-title item language)])
+
+(defn- catalogue-item-more-info [item config]
+  (when (urn-catalogue-item? item)
+    [:a.btn.btn-secondary {:href (urn-catalogue-item-link item config) :target :_blank}
+     (text :t.catalogue/more-info) " " [external-link]]))
 
 (defn- catalogue-columns [lang config]
-  {:name {:header #(text :t.catalogue/header)
-          :value (fn [item] [catalogue-item-title item lang config])
-          :sort-value #(get-catalogue-item-title % lang)}
-   :cart {:value (fn [i] [cart/add-to-cart-button i])
-          :sortable? false
-          :class "commands"}})
+  {:name     {:header     #(text :t.catalogue/header)
+              :value      (fn [item] [catalogue-item-title item lang])
+              :sort-value #(get-catalogue-item-title % lang)}
+   :commands {:values    (fn [item] [[catalogue-item-more-info item config]
+                                     [cart/add-to-cart-button item]])
+              :sortable? false}})
 
 (defn- catalogue-list
   [items language sort-order config]
   [table/component
-   (catalogue-columns language config) [:name :cart]
+   (catalogue-columns language config) [:name :commands]
    sort-order #(rf/dispatch [::set-sort-order %])
    :id
    (filter (complement disabled-catalogue-item?) items)
@@ -81,30 +83,22 @@
               [:tr
                [:td
                 [catalogue-item-title {:title "Item title"} nil]]]]])
-   (example "catalogue-item-title linked to urn.fi"
-            [:table.rems-table
-             [:tbody
-              [:tr
-               [:td
-                [catalogue-item-title {:title "Item title" :resid "urn:nbn:fi:lb-201403262"} nil nil]]]]])
-   (example "catalogue-item-title linked to example.org"
-            [:table.rems-table
-             [:tbody
-              [:tr
-               [:td
-                [catalogue-item-title {:title "Item title" :resid "urn:nbn:fi:lb-201403262"} nil {:urn-prefix "http://example.org/"}]]]]])
    (example "catalogue-item-title in Finnish with localizations"
             [:table.rems-table
              [:tbody
               [:tr
                [:td
-                [catalogue-item-title {:title "Not used when there are localizations" :localizations {:fi {:title "Suomenkielinen title"} :en {:title "English title"}}} :en]]]]])
+                [catalogue-item-title {:title "Not used when there are localizations"
+                                       :localizations {:fi {:title "Suomenkielinen title"}
+                                                       :en {:title "English title"}}} :en]]]]])
    (example "catalogue-item-title in English with localizations"
             [:table.rems-table
              [:tbody
               [:tr
                [:td
-                [catalogue-item-title {:title "Not used when there are localizations" :localizations {:fi {:title "Suomenkielinen title"} :en {:title "English title"}}} :fi]]]]])
+                [catalogue-item-title {:title "Not used when there are localizations"
+                                       :localizations {:fi {:title "Suomenkielinen title"}
+                                                       :en {:title "English title"}}} :fi]]]]])
 
    (component-info catalogue-list)
    (example "catalogue-list empty"
@@ -114,4 +108,8 @@
    (example "catalogue-list with two items in reverse order"
             [catalogue-list [{:title "Item title"} {:title "Another title"}] nil [:name :desc]])
    (example "catalogue-list with three items, of which second is disabled"
-            [catalogue-list [{:title "Item 1"} {:title "Item 2 is disabled and should not be shown" :state "disabled"} {:title "Item 3"}] nil [:name :asc]])])
+            [catalogue-list [{:title "Item 1"} {:title "Item 2 is disabled and should not be shown" :state "disabled"} {:title "Item 3"}] nil [:name :asc]])
+   (example "catalogue-list with item linked to urn.fi"
+            [catalogue-list [{:title "Item title" :resid "urn:nbn:fi:lb-201403262"}] nil [:name :asc]])
+   (example "catalogue-list with item linked to example.org"
+            [catalogue-list [{:title "Item title" :resid "urn:nbn:fi:lb-201403262"}] nil [:name :asc] {:urn-prefix "http://example.org/"}])])
