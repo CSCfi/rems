@@ -22,7 +22,7 @@
             [taoensso.tempura :as tempura])
   (:import (javax.servlet ServletContext)))
 
-(def +default-language+ :en)
+(def +default-language+ (:default-language env :en))
 
 (defn calculate-root-path [request]
   (if-let [context (:servlet-context request)]
