@@ -6,7 +6,7 @@
   ::loaded-config
   (fn [db [_ config]]
     (assoc db :config config
-              :language (:default-language config))))
+              :language (:default-language config :en))))
 
 (rf/reg-sub
   ::config
