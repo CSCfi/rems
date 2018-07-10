@@ -1,6 +1,7 @@
 (ns rems.layout
   (:require [cheshire.core :as cheshire]
             [hiccup.page :refer [html5 include-css include-js]]
+            [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.users :as users]
             [rems.text :refer [text]]
@@ -27,6 +28,8 @@
            (include-js "/assets/popper.js/dist/umd/popper.min.js")
            (include-js "/assets/tether/dist/js/tether.min.js")
            (include-js "/assets/bootstrap/js/bootstrap.min.js")
+           (for [extra-script (get-in env [:extra-scripts :files])]
+             (include-js extra-script))
            content]]))
 
 (defn render
