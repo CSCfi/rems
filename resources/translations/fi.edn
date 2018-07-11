@@ -161,8 +161,9 @@
           :status-changed-subject "Hakemuksen tila on muuttunut"}
   :footer "CSC - IT Center for Science"
   :form {:actions "Toiminnot"
-         :add-comments "Lisää päätökseen kommentti (näkyy hakijalle paitsi jos katselmointi)"
-         :add-comments-not-shown-to-applicant "Lisää päätökseen kommentti"
+         :add-comments "Lisää päätökseen kommentti"
+         :add-comments-shown-to-applicant "Lisää päätökseen kommentti (näkyy hakijalle paitsi jos katselmointi)"
+         :add-comments-not-shown-to-applicant "Lisää päätökseen kommentti (ei näy hakijalle)"
          :alert-disabled-items "Seuraavia resursseja ei voi enää hakea. Harkitse tämän luonnoksen sulkemista ja tee sitten uusi hakemus."
          :application "Tiedot"
          :back "Takaisin kielivaroihin"
