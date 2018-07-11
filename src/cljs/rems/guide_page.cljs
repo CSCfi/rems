@@ -8,16 +8,15 @@
             [rems.cart :as cart]
             [rems.catalogue :as catalogue]
             [rems.collapsible :as collapsible]
-         ;; [rems.context :as context]
             [rems.language-switcher :as language-switcher]
-         ;; [rems.layout :as layout]
             [rems.navbar :as nav]
-            [rems.phase :as phase])
+            [rems.phase :as phase]
+            [rems.spinner :as spinner])
   (:require-macros [rems.guide-macros :refer [example]]))
 
 (defn color-box [id hex]
   [:div.col-md-3
-   [:row
+   [:div.row
     [:div.col-md-6.rectangle {:class id}]
     [:div.col-md-6.color-title hex]]])
 
@@ -34,8 +33,7 @@
    [:div.alert.alert-success "Success level message"]
    [:div.alert.alert-info "Info level message"]
    [:div.alert.alert-warning "Warning level message"]
-   [:div.alert.alert-danger "Danger level message"]
-   ])
+   [:div.alert.alert-danger "Danger level message"]])
 
 (defn guide-page []
   ;; (binding [context/*root-path* "path/"
@@ -49,10 +47,11 @@
     (example "Brand colors" [color-boxes])
     (example "Alerts" [alerts])
 
-    ;; [:h2 "Layout components"]
-    ;; (layout/guide)
     [:h2 "Navigation"]
     [nav/guide]
+
+    [:h2 "Spinner"]
+    [spinner/guide]
 
     [:h2 "Language switcher widget"]
     [language-switcher/guide]

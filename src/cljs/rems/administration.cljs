@@ -5,11 +5,35 @@
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
             [rems.db.catalogue :refer [urn-catalogue-item? get-catalogue-item-title disabled-catalogue-item?]]
+            [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.text :refer [text]]
             [rems.util :refer [dispatch! fetch put!]]))
 
 ;; TODO copypaste from rems.catalogue, move to rems.db.catalogue?
+
+(defn- fetch-catalogue []
+  (fetch "/api/catalogue-items/" {:handler #(rf/dispatch [::fetch-catalogue-result %])}))
+
+(defn- fetch-workflows []
+  (fetch "/api/workflows/?active=true" {:handler #(rf/dispatch [::set-workflows %])}))
+
+(defn- fetch-resources []
+  (fetch "/api/resources/?active=true" {:handler #(rf/dispatch [::set-resources %])}))
+
+(defn- fetch-forms []
+  (fetch "/api/forms/?active=true" {:handler #(rf/dispatch [::set-forms %])}))
+
+(rf/reg-fx
+ ::fetch-catalogue
+ (fn [_]
+   (fetch-catalogue)))
+
+(rf/reg-event-fx
+ ::start-fetch-catalogue
+ (fn [{:keys [db]}]
+   {:db (assoc db ::loading? true)
+    ::fetch-catalogue []}))
 
 (rf/reg-event-db
  ::reset-create-catalogue-item
@@ -17,9 +41,11 @@
    (dissoc db ::title ::selected-workflow ::selected-resource ::selected-form)))
 
 (rf/reg-event-db
- ::catalogue
+ ::fetch-catalogue-result
  (fn [db [_ catalogue]]
-   (assoc db ::catalogue catalogue)))
+   (-> db
+       (assoc ::catalogue catalogue)
+       (dissoc ::loading?))))
 
 (rf/reg-event-db
  ::set-title
@@ -68,6 +94,11 @@
    (::catalogue db)))
 
 (rf/reg-sub
+ ::loading?
+ (fn [db _]
+   (::loading? db)))
+
+(rf/reg-sub
  ::title
  (fn [db _]
    (::title db)))
@@ -102,21 +133,9 @@
  (fn [db _]
    (::forms db)))
 
-(defn- fetch-catalogue []
-  (fetch "/api/catalogue-items/" {:handler #(rf/dispatch [::catalogue %])}))
-
-(defn- fetch-workflows []
-  (fetch "/api/workflows/?active=true" {:handler #(rf/dispatch [::set-workflows %])}))
-
-(defn- fetch-resources []
-  (fetch "/api/resources/?active=true" {:handler #(rf/dispatch [::set-resources %])}))
-
-(defn- fetch-forms []
-  (fetch "/api/forms/?active=true" {:handler #(rf/dispatch [::set-forms %])}))
-
 (defn- update-catalogue-item [id state]
   (put! "/api/catalogue-items/update" {:params {:id id :state state}
-                                       :handler (fn [resp] (fetch-catalogue))}))
+                                       :handler #(rf/dispatch [::start-fetch-catalogue])}))
 
 (rf/reg-event-fx
  ::update-catalogue-item
@@ -193,12 +212,18 @@
    :id items])
 
 (defn administration-page []
-  (fetch-catalogue)
-  [:div
-   [:h2 (text :t.navigation/administration)]
-   [:div.col.commands
-    [to-create-catalogue-item-button]]
-   [catalogue-list @(rf/subscribe [::catalogue]) @(rf/subscribe [:language])]])
+  (let [catalogue (rf/subscribe [::catalogue])
+        language (rf/subscribe [:language])
+        loading? (rf/subscribe [::loading?])]
+    (fn []
+      (into [:div
+             [:h2 (text :t.navigation/administration)]]
+            (if @loading?
+              [[spinner/big]]
+              [[:div
+                [:div.col.commands
+                 [to-create-catalogue-item-button]]
+                [catalogue-list @catalogue @language]]])))))
 
 (defn create-catalogue-item-page []
   (fetch-workflows)

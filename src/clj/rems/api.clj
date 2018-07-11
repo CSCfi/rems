@@ -65,6 +65,10 @@
                    %
                    {:handlers {DateTime joda-time-writer}}))]}})))
 
+(defn slow-middleware [request]
+  (Thread/sleep 2000)
+  request)
+
 (def api-routes
   (api
    {;; TODO: should this be in rems.middleware?
@@ -83,6 +87,7 @@
                             :description "REMS API Services"}}}}
 
    (context "/api" []
+     ;; :middleware [slow-middleware]
      :header-params [{x-rems-api-key :- (describe s/Str "REMS API-Key (optional for UI, required for API)") nil}
                      {x-rems-user-id :- (describe s/Str "user id (optional for UI, required for API)") nil}]
 

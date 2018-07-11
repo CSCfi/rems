@@ -5,6 +5,7 @@
             [rems.collapsible :as collapsible]
             [rems.db.catalogue :refer [get-catalogue-item-title]]
             [rems.phase :refer [phases get-application-phases]]
+            [rems.spinner :as spinner]
             [rems.text :refer [text text-format localize-state localize-event localize-time]]
             [rems.util :refer [dispatch! fetch index-by put!]]
             [secretary.core :as secretary])
@@ -30,21 +31,27 @@
  ::zero-state
  (fn [db _]
    (assoc db
-          :application nil
-          :edit-application nil
+          ::application nil
+          ::edit-application nil
           ::judge-comment ""
           ::review-comment ""
           ::send-third-party-review-request-success false)))
 
 (rf/reg-sub
- :application
+ ::application
  (fn [db _]
-   (:application db)))
+   (::application db)))
+
+(rf/reg-sub
+ ::loading?
+ (fn [db _]
+   (::loading? db)))
 
 (rf/reg-event-fx
  ::start-fetch-application
  (fn [{:keys [db]} [_ id]]
-   {::fetch-application [id]}))
+   {:db (assoc db ::loading? true)
+    ::fetch-application [id]}))
 
 (rf/reg-event-fx
  ::start-new-application
@@ -71,31 +78,33 @@
 (rf/reg-event-db
  ::fetch-application-result
  (fn [db [_ application]]
-   (assoc db
-          :application application
-          ;; TODO: should this be here?
-          :edit-application
-          {:items (into {}
-                        (for [field (:items application)]
-                          [(:id field) (:value field)]))
-           :licenses (into {}
-                           (for [license (:licenses application)]
-                             [(:id license) (:approved license)]))})))
+   (-> db
+       (assoc
+        ::application application
+        ;; TODO: should this be here?
+        ::edit-application
+        {:items (into {}
+                      (for [field (:items application)]
+                        [(:id field) (:value field)]))
+         :licenses (into {}
+                         (for [license (:licenses application)]
+                           [(:id license) (:approved license)]))})
+       (dissoc ::loading?))))
 
 (rf/reg-sub
- :edit-application
+ ::edit-application
  (fn [db _]
-   (:edit-application db)))
+   (::edit-application db)))
 
 (rf/reg-event-db
  ::set-field
  (fn [db [_ id value]]
-   (assoc-in db [:edit-application :items id] value)))
+   (assoc-in db [::edit-application :items id] value)))
 
 (rf/reg-event-db
  ::set-license
  (fn [db [_ id value]]
-   (assoc-in db [:edit-application :licenses id] value)))
+   (assoc-in db [::edit-application :licenses id] value)))
 
 (rf/reg-sub
  ::judge-comment
@@ -112,8 +121,8 @@
  ::set-status
  (fn [db [_ value validation]]
    (-> db
-       (assoc-in [:edit-application :status] value)
-       (assoc-in [:edit-application :validation] validation))))
+       (assoc-in [::edit-application :status] value)
+       (assoc-in [::edit-application :validation] validation))))
 
 (defn- save-application [command application-id catalogue-items items licenses]
   (let [payload (merge {:command command
@@ -137,13 +146,13 @@
 (rf/reg-event-fx
  ::save-application
  (fn [{:keys [db]} [_ command]]
-   (let [app-id (get-in db [:application :application :id])
-         catalogue-items (get-in db [:application :catalogue-items])
+   (let [app-id (get-in db [::application :application :id])
+         catalogue-items (get-in db [::application :catalogue-items])
          catalogue-ids (mapv :id catalogue-items)
-         items (get-in db [:edit-application :items])
+         items (get-in db [::edit-application :items])
          ;; TODO change api to booleans
          licenses (into {}
-                        (for [[id checked?] (get-in db [:edit-application :licenses])
+                        (for [[id checked?] (get-in db [::edit-application :licenses])
                               :when checked?]
                           [id "approved"]))]
      (when-not app-id ;; fresh application
@@ -166,8 +175,8 @@
 (rf/reg-event-fx
  ::judge-application
  (fn [{:keys [db]} [_ command]]
-   (let [application-id (get-in db [:application :application :id])
-         round (get-in db [:application :application :curround])
+   (let [application-id (get-in db [::application :application :id])
+         round (get-in db [::application :application :curround])
          comment (get db ::judge-comment "")]
      (rf/dispatch [::set-judge-comment ""])
      (judge-application command application-id round comment)
@@ -300,10 +309,10 @@
     [unsupported-field f]))
 
 (defn- status-widget []
-  (let [status (:status @(rf/subscribe [:edit-application]))]
+  (let [status (:status @(rf/subscribe [::edit-application]))]
     [:span (case status
              nil ""
-             :pending [:i {:class "fa fa-spinner"}]
+             :pending [spinner/small]
              :saved [:i {:class "fa fa-check-circle"}]
              :failed [:i {:class "fa fa-times-circle text-danger"}])]))
 
@@ -520,8 +529,8 @@
 (rf/reg-event-fx
  ::send-third-party-review-request
  (fn [{:keys [db]} [_ reviewers comment]]
-   (let [application-id (get-in db [:application :application :id])
-         round (get-in db [:application :application :curround])
+   (let [application-id (get-in db [::application :application :id])
+         round (get-in db [::application :application :curround])
          user (get-in db [:identity :user])]
      (send-third-party-review-request reviewers user application-id round comment)
      {})))
@@ -550,7 +559,7 @@
           [:span {:aria-hidden "true"} "\u00D7"]]]
         [:div.modal-body
          [:div.form-group
-          [:label {:for "review-comment"} (text :t.form/add-comments)]
+          [:label {:for "review-comment"} (text :t.form/add-comments-not-shown-to-applicant)]
           [:textarea#review-comment.form-control {:name "comment" :placeholder (text :t.form/comment)
                                                   :on-change #(rf/dispatch [::set-review-comment (.. % -target -value)])}]]
          [:div.form-group
@@ -597,7 +606,8 @@
         :title (text :t.form/actions)
         :always [:div
                  [:div.form-group
-                  [:textarea.form-control
+                  [:label {:for "judge-comment"} (text :t.form/add-comments)]
+                  [:textarea#judge-comment.form-control
                    {:name "judge-comment" :placeholder "Comment"
                     :value @(rf/subscribe [::judge-comment])
                     :onChange #(rf/dispatch [::set-judge-comment (.. % -target -value)])}]]
@@ -633,7 +643,6 @@
         events (:events app)
         user-attributes (:applicant-attributes application)]
     [:div
-     [:h2 (text :t.applications/application)]
      [disabled-items-warning (:catalogue-items application)]
      (when @(rf/subscribe [::send-third-party-review-request-message])
        [flash-message
@@ -654,15 +663,17 @@
 
 ;;;; Entrypoint ;;;;
 
-(defn- show-application []
-  (if-let [application @(rf/subscribe [:application])]
-    (let [edit-application @(rf/subscribe [:edit-application])
-          language @(rf/subscribe [:language])]
-      [render-application application edit-application language])
-    [:p "No application loaded"]))
-
 (defn application-page []
-  [show-application])
+  (let [application (rf/subscribe [::application])
+        edit-application (rf/subscribe [::edit-application])
+        language (rf/subscribe [:language])
+        loading? (rf/subscribe [::loading?])]
+    (fn []
+      [:div
+       [:h2 (text :t.applications/application)]
+       (if @loading?
+         [spinner/big]
+         [render-application @application @edit-application @language])])))
 
 ;;;; Guide ;;;;
 

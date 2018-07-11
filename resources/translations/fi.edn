@@ -88,6 +88,7 @@
                    :email "Sähköposti"
                    :username "Nimi"}
   :applications {:application "Hakemus"
+                 :applications "Hakemukset"
                  :created "Luotu"
                  :empty "Sinulla ei ole hakemuksia."
                  :events {:apply "Lähetetty hyväksyttäväksi"
@@ -121,7 +122,8 @@
          :checkout "Lähetä"
          :header "%1 kielivaraa korissa"
          :remove "Poista"}
-  :catalogue {:header "Kielivarat"
+  :catalogue {:catalogue "Kielivarat"
+              :header "Kielivarat"
               :more-info "Lisätietoja"}
   :collapse {:show-more "Näytä lisää"
              :show-less "Näytä vähemmän"}
@@ -159,8 +161,8 @@
           :status-changed-subject "Hakemuksen tila on muuttunut"}
   :footer "CSC - IT Center for Science"
   :form {:actions "Toiminnot"
-         :add-comments "Lisää päätökseen kommentti (näkyy hakijalle)"
-         :add-comments-applicant "Lisää päätökseen kommentti"
+         :add-comments "Lisää päätökseen kommentti (näkyy hakijalle paitsi jos katselmointi)"
+         :add-comments-not-shown-to-applicant "Lisää päätökseen kommentti"
          :alert-disabled-items "Seuraavia resursseja ei voi enää hakea. Harkitse tämän luonnoksen sulkemista ja tee sitten uusi hakemus."
          :application "Tiedot"
          :back "Takaisin kielivaroihin"
