@@ -22,8 +22,6 @@ function logIt(e) {
   console.log(e);
 }
 
-window.rems = {};
-window.rems.hooks = {};
 window.rems.hooks.get = logIt;
 window.rems.hooks.put = logIt;
 window.rems.hooks.navigate = logIt;

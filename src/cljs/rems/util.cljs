@@ -47,8 +47,7 @@
 
   Additionally calls event hooks."
   [url opts]
-  (when (and js/window.rems js/window.rems.hooks js/window.rems.hooks.get)
-    (js/window.rems.hooks.get url (clj->js opts)))
+  (js/window.rems.hooks.get url (clj->js opts))
   (GET url (merge {:error-handler (wrap-default-error-handler (:error-handler opts))
                    :response-format :transit}
                   opts)))
@@ -60,8 +59,7 @@
 
   Additionally calls event hooks."
   [url opts]
-  (when (and js/window.rems js/window.rems.hooks js/window.rems.hooks.put)
-    (js/window.rems.hooks.put url (clj->js opts)))
+  (js/window.rems.hooks.put url (clj->js opts))
   (PUT url (merge {:error-handler (wrap-default-error-handler (:error-handler opts))
                    :format :json
                    :response-format :transit}

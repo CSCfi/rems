@@ -254,8 +254,7 @@
     (events/listen
      HistoryEventType/NAVIGATE
      (fn [event]
-       (when (and js/window.rems js/window.rems.hooks js/window.rems.hooks.navigate)
-         (js/window.rems.hooks.navigate (.-token event)))
+       (js/window.rems.hooks.navigate (.-token event))
        (secretary/dispatch! (.-token event))))
     (.setEnabled true)))
 
