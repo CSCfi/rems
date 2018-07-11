@@ -567,7 +567,7 @@
           [:span {:aria-hidden "true"} "\u00D7"]]]
         [:div.modal-body
          [:div.form-group
-          [:label {:for "review-comment"} (text :t.form/add-comments)]
+          [:label {:for "review-comment"} (text :t.form/add-comments-not-shown-to-applicant)]
           [:textarea#review-comment.form-control {:name "comment" :placeholder (text :t.form/comment)
                                                   :on-change #(rf/dispatch [::set-review-comment (.. % -target -value)])}]]
          [:div.form-group
@@ -614,7 +614,8 @@
         :title (text :t.form/actions)
         :always [:div
                  [:div.form-group
-                  [:textarea.form-control
+                  [:label {:for "judge-comment"} (text :t.form/add-comments)]
+                  [:textarea#judge-comment.form-control
                    {:name "judge-comment" :placeholder "Comment"
                     :value @(rf/subscribe [::judge-comment])
                     :onChange #(rf/dispatch [::set-judge-comment (.. % -target -value)])}]]
