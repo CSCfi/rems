@@ -195,6 +195,7 @@
   (rf/dispatch [:set-active-page :home]))
 
 (secretary/defroute "/catalogue" []
+  (rf/dispatch [:rems.catalogue/start-fetch-catalogue])
   (rf/dispatch [:set-active-page :catalogue]))
 
 (secretary/defroute "/guide" []
@@ -204,6 +205,7 @@
   (rf/dispatch [:set-active-page :about]))
 
 (secretary/defroute "/actions" []
+  (rf/dispatch [:rems.actions/start-fetch-actions])
   (rf/dispatch [:set-active-page :actions]))
 
 (secretary/defroute "/application/:id" {id :id}
@@ -218,9 +220,11 @@
   (rf/dispatch [:set-active-page :application]))
 
 (secretary/defroute "/applications" []
+  (rf/dispatch [:rems.applications/start-fetch-my-applications])
   (rf/dispatch [:set-active-page :applications]))
 
 (secretary/defroute "/administration" []
+  (rf/dispatch [:rems.administration/start-fetch-catalogue])
   (rf/dispatch [:set-active-page :administration]))
 
 (secretary/defroute "/create-catalogue-item" []
