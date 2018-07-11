@@ -102,20 +102,17 @@
  (fn [db _]
    (::forms db)))
 
-(defn- simple-fetch [path dispatch]
-  (fetch path {:handler dispatch}))
-
 (defn- fetch-catalogue []
-  (simple-fetch "/api/catalogue-items/" #(rf/dispatch [::catalogue %])))
+  (fetch "/api/catalogue-items/" {:handler #(rf/dispatch [::catalogue %])}))
 
 (defn- fetch-workflows []
-  (simple-fetch "/api/workflows/?active=true" #(rf/dispatch [::set-workflows %])))
+  (fetch "/api/workflows/?active=true" {:handler #(rf/dispatch [::set-workflows %])}))
 
 (defn- fetch-resources []
-  (simple-fetch "/api/resources/?active=true" #(rf/dispatch [::set-resources %])))
+  (fetch "/api/resources/?active=true" {:handler #(rf/dispatch [::set-resources %])}))
 
 (defn- fetch-forms []
-  (simple-fetch "/api/forms/?active=true" #(rf/dispatch [::set-forms %])))
+  (fetch "/api/forms/?active=true" {:handler #(rf/dispatch [::set-forms %])}))
 
 (defn- update-catalogue-item [id state]
   (put! "/api/catalogue-items/update" {:params {:id id :state state}
