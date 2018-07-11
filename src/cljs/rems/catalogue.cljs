@@ -47,7 +47,7 @@
     ::fetch-catalogue []}))
 
 (defn- fetch-catalogue []
-  (fetch "/api/catalogue/" {:handler #(rf/dispatch [::catalogue %])}))
+  (fetch "/api/catalogue/" {:handler #(rf/dispatch [::fetch-catalogue-result %])}))
 
 (rf/reg-fx
  ::fetch-catalogue
