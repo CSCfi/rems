@@ -123,7 +123,8 @@
          :header "%1 kielivaraa korissa"
          :remove "Poista"}
   :catalogue {:catalogue "Kielivarat"
-              :header "Kielivarat"}
+              :header "Kielivarat"
+              :more-info "Lisätietoja"}
   :collapse {:show-more "Näytä lisää"
              :show-less "Näytä vähemmän"}
   :create-catalogue-item {:cancel "Peruuta"

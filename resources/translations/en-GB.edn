@@ -123,7 +123,8 @@
          :header "%1 resources in cart"
          :remove "Remove"}
   :catalogue {:catalogue "Catalogue"
-              :header "Resource"}
+              :header "Resource"
+              :more-info "More info"}
   :collapse {:show-more "Show more"
              :show-less "Show less"}
   :create-catalogue-item {:cancel "Cancel"
