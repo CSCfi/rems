@@ -135,7 +135,8 @@
                           :title "Name"
                           :title-placeholder "Name"
                           :workflow-selection "Workflow"}
-  :create-resource {:prefix "Organization"
+  :create-resource {:licenses-selection "Terms of Use"
+                    :prefix "Organization"
                     :prefix-placeholder "testorganization.org"
                     :resid "Resource identifier"
                     :resid-placeholder "urn:test:fi:some-uuid"

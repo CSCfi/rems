@@ -135,7 +135,8 @@
                           :title "Nimi"
                           :title-placeholder "Nimi"
                           :workflow-selection "Työvuo"}
-  :create-resource {:prefix "Organization"
+  :create-resource {:licenses-selection "Käyttöehdot"
+                    :prefix "Organization"
                     :prefix-placeholder "testorganization.org"
                     :resid "Resurssin tunniste"
                     :resid-placeholder "urn:test:fi:some-uuid"
