@@ -82,6 +82,7 @@
             :withdraw "Withdraw"
             :withdraw-success "Application withdrawn"}
   :administration {:create-catalogue-item "Create catalogue item"
+                   :create-resource "Create resource"
                    :disable "Disable"
                    :enable "Enable"}
   :applicant-info {:applicant "Applicant"
@@ -134,6 +135,11 @@
                           :title "Name"
                           :title-placeholder "Name"
                           :workflow-selection "Workflow"}
+  :create-resource {:prefix "Organization"
+                    :prefix-placeholder "testorganization.org"
+                    :resid "Resource identifier"
+                    :resid-placeholder "urn:test:fi:some-uuid"
+                    :save "Save"}
   :email {:action-not-needed-msg "Dear %1,
                                   Applicant's %2 submitted application %3 no longer requires your attention.
                                   Please do not reply to this automatically generated message."
@@ -197,6 +203,7 @@
                :applications "Applications"
                :catalogue "Catalogue"
                :create-catalogue-item "Create catalogue item"
+               :create-resource "Create resource"
                :home "Home"
                :login "Login"
                :logout "Sign Out"}

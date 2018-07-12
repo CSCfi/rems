@@ -48,11 +48,26 @@
    (dissoc db ::title ::selected-workflow ::selected-resource ::selected-form)))
 
 (rf/reg-event-db
+ ::reset-create-resource
+ (fn [db _]
+   (dissoc db ::prefix ::resid)))
+
+(rf/reg-event-db
  ::fetch-catalogue-result
  (fn [db [_ catalogue]]
    (-> db
        (assoc ::catalogue catalogue)
        (dissoc ::loading?))))
+
+(rf/reg-event-db
+ ::set-prefix
+ (fn [db [_ prefix]]
+   (assoc db ::prefix prefix)))
+
+(rf/reg-event-db
+ ::set-resid
+ (fn [db [_ resid]]
+   (assoc db ::resid resid)))
 
 (rf/reg-event-db
  ::set-title
@@ -106,6 +121,16 @@
    (::loading? db)))
 
 (rf/reg-sub
+ ::prefix
+ (fn [db _]
+   (::prefix db)))
+
+(rf/reg-sub
+ ::resid
+ (fn [db _]
+   (::resid db)))
+
+(rf/reg-sub
  ::title
  (fn [db _]
    (::title db)))
@@ -154,6 +179,15 @@
    (update-catalogue-item id state)
    {}))
 
+(defn- create-resource [prefix resid]
+  (PUT "/api/resources/create" {:format :json
+                               :params {:prefix prefix
+                                        :resid resid
+                                        :licenses []}
+                               :error-handler redirect-when-unauthorized
+                               :handler (fn [resp]
+                                          (dispatch! "#/administration"))}))
+
 (defn- create-catalogue-item [title workflow resource form]
   (PUT "/api/catalogue-items/create" {:format :json
                                       :params {:title title
@@ -164,6 +198,12 @@
                                       :error-handler redirect-when-unauthorized
                                       :handler (fn [resp]
                                                  (dispatch! "#/administration"))}))
+
+(rf/reg-event-fx
+ ::create-resource
+ (fn [db [_ prefix resid]]
+   (create-resource prefix resid)
+   {}))
 
 (rf/reg-event-fx
  ::create-catalogue-item
@@ -185,16 +225,30 @@
     :on-click #(rf/dispatch [::update-catalogue-item (:id item) "enabled"])}
    (text :t.administration/enable)])
 
-(defn- to-create-catalogue-item-button [item]
+(defn- to-create-resource-button []
+  [:button.btn.btn-primary
+   {:type "submit"
+    :on-click #(dispatch! "/#/create-resource")}
+   (text :t.administration/create-resource)])
+
+(defn- to-create-catalogue-item-button []
   [:button.btn.btn-primary
    {:type "submit"
     :on-click #(dispatch! "/#/create-catalogue-item")}
    (text :t.administration/create-catalogue-item)])
 
-(defn- cancel-button [item]
+(defn- cancel-button []
   [:button.btn.btn-secondary
    {:on-click #(dispatch! "/#/administration")}
    (text :t.create-catalogue-item/cancel)])
+
+(defn- save-resource-button []
+  (let [prefix @(rf/subscribe [::prefix])
+        resid @(rf/subscribe [::resid])] 
+    [:button.btn.btn-primary
+     {:on-click #(rf/dispatch [::create-resource prefix resid])
+      :disabled (not (and (not (str/blank? prefix)) (not (str/blank? resid))))}
+     (text :t.create-resource/save)]))
 
 (defn- save-catalogue-item-button [item]
   (let [title @(rf/subscribe [::title])
@@ -236,8 +290,35 @@
               [[spinner/big]]
               [[:div
                 [:div.col.commands
+                 [to-create-resource-button]
                  [to-create-catalogue-item-button]]
                 [catalogue-list @catalogue @language]]])))))
+
+(defn create-resource-page []
+  (let [prefix (rf/subscribe [::prefix])
+        resid (rf/subscribe [::resid])]
+    (fn []
+    [collapsible/component
+     {:id "create-create"
+      :title (text :t.navigation/create-resource)
+      :always [:div
+               [:div.form-group.field
+                [:label {:for "prefix"} (text :t.create-resource/prefix)]
+                [:input.form-control {:name "prefix"
+                                      :type :text
+                                      :placeholder (text :t.create-resource/prefix-placeholder)
+                                      :value @prefix
+                                      :on-change #(rf/dispatch [::set-prefix (.. % -target -value)])}]]
+               [:div.form-group.field
+                [:label {:for "resid"} (text :t.create-resource/resid)]
+                [:input.form-control {:name "resid"
+                                      :type :text
+                                      :placeholder (text :t.create-resource/resid-placeholder)
+                                      :value @resid
+                                      :on-change #(rf/dispatch [::set-resid (.. % -target -value)])}]]
+               [:div.col.commands
+                 [cancel-button]
+                 [save-resource-button]]]}])))
 
 (defn create-catalogue-item-page []
   (fetch-workflows)

@@ -7,7 +7,9 @@
             [markdown.core :refer [md->html]]
             [ajax.core :refer [GET]]
             [rems.actions :refer [actions-page fetch-actions]]
-            [rems.administration :refer [administration-page create-catalogue-item-page]]
+            [rems.administration :refer [administration-page
+                                         create-resource-page
+                                         create-catalogue-item-page]]
             [rems.ajax :refer [load-interceptors!]]
             [rems.application :refer [application-page fetch-application]]
             [rems.applications :refer [applications-page]]
@@ -165,6 +167,7 @@
    :application application-page
    :applications applications-page
    :administration administration-page
+   :create-resource create-resource-page
    :create-catalogue-item create-catalogue-item-page
    :unauthorized unauthorized-page
    :not-found not-found-page})
@@ -226,6 +229,10 @@
 (secretary/defroute "/administration" []
   (rf/dispatch [:rems.administration/start-fetch-catalogue])
   (rf/dispatch [:set-active-page :administration]))
+
+(secretary/defroute "/create-resource" []
+  (rf/dispatch [:rems.administration/reset-create-resource])
+  (rf/dispatch [:set-active-page :create-resource]))
 
 (secretary/defroute "/create-catalogue-item" []
   (rf/dispatch [:rems.administration/reset-create-catalogue-item])
