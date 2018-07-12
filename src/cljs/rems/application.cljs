@@ -623,7 +623,10 @@
         :title (text :t.form/actions)
         :always [:div
                  [:div.form-group
-                  [:label {:for "judge-comment"} (text :t.form/add-comments)]
+                  [:label {:for "judge-comment"}
+                   (cond (:is-applicant? app) (text :t.form/add-comments)
+                         (:can-third-party-review? app) (text :t.form/add-comments-not-shown-to-applicant)
+                         :else (text :t.form/add-comments-shown-to-applicant))]
                   [:textarea#judge-comment.form-control
                    {:name "judge-comment" :placeholder "Comment"
                     :value @(rf/subscribe [::judge-comment])

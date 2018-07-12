@@ -340,7 +340,9 @@
                    :review-type :normal
                    :can-approve? false
                    :can-close? true
-                   :can-withdrwa? false}
+                   :can-withdraw? false
+                   :can-third-party-review? false
+                   :is-applicant? true}
      :applicant-attributes {\"eppn\" \"developer\"
                             \"email\" \"developer@e.mail\"
                             \"displayName\" \"deve\"
@@ -390,6 +392,8 @@
                           :can-approve? (can-approve? application)
                           :can-close? (can-close? application)
                           :can-withdraw? (can-withdraw? application)
+                          :can-third-party-review? (can-third-party-review? application)
+                          :is-applicant? (is-applicant? application)
                           :review-type review-type)
       :applicant-attributes (users/get-user-attributes (:applicantuserid application))
       :items items
