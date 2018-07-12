@@ -233,7 +233,7 @@
         (applications/approve-application app-id 1 "comment for approval")))))
 
 (defn- create-application-with-expired-resource-license! [wfid form applicant-user owner]
-  (let [resource-id (:id (db/create-resource! {:resid "Resource that has expired license" :prefix "nbn" :modifieruserid 1}))
+  (let [resource-id (:id (db/create-resource! {:resid "Resource that has expired license" :prefix "nbn" :modifieruserid owner}))
         year-ago (time/minus (time/now) (time/years 1))
         yesterday (time/minus (time/now) (time/days 1))
         licid-expired (create-resource-license! resource-id "License that has expired" owner)
@@ -245,7 +245,7 @@
       (applications/submit-application (create-draft! item-with-expired-license wfid "applied when license was valid that has since expired" (time/minus (time/now) (time/days 2)))))))
 
 (defn- create-application-before-new-resource-license! [wfid form applicant-user owner]
-  (let [resource-id (:id (db/create-resource! {:resid "Resource that has a new resource license" :prefix "nbn" :modifieruserid 1}))
+  (let [resource-id (:id (db/create-resource! {:resid "Resource that has a new resource license" :prefix "nbn" :modifieruserid owner}))
         yesterday (time/minus (time/now) (time/days 1))
         licid-new (create-resource-license! resource-id "License that was just created" owner)
         _ (db/set-resource-license-validity! {:licid licid-new :start (time/now) :end nil})
@@ -258,9 +258,9 @@
 (defn create-test-data! []
   (db/add-api-key! {:apikey 42 :comment "test data"})
   (create-users-and-roles!)
-  (let [res1 (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1}))
-        res2 (:id (db/create-resource! {:resid "Extra Data" :prefix "nbn" :modifieruserid 1}))
-        res3 (:id (db/create-resource! {:resid "Expired Resource, should not be seen" :prefix "nbn" :modifieruserid 1 :endt (time/minus (time/now) (time/years 1))}))
+  (let [res1 (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid "owner"}))
+        res2 (:id (db/create-resource! {:resid "Extra Data" :prefix "nbn" :modifieruserid "owner"}))
+        res3 (:id (db/create-resource! {:resid "Expired Resource, should not be seen" :prefix "nbn" :modifieruserid "owner" :endt (time/minus (time/now) (time/years 1))}))
         form (create-basic-form! "owner")
         _ (create-expired-form! "owner")
         workflows (create-workflows! "developer" "bob" "carl" "owner")
@@ -293,8 +293,8 @@
 
 (defn create-demo-data! []
   (create-demo-users-and-roles!)
-  (let [res1 (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid 1}))
-        res2 (:id (db/create-resource! {:resid "Extra Data" :prefix "nbn" :modifieruserid 1}))
+  (let [res1 (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid "RDowner@funet.fi"}))
+        res2 (:id (db/create-resource! {:resid "Extra Data" :prefix "nbn" :modifieruserid "RDowner@funet.fi"}))
         form (create-basic-form! "RDowner@funet.fi")
         workflows (create-workflows! "RDapprover1@funet.fi" "RDapprover2@funet.fi" "RDreview@funet.fi" "RDowner@funet.fi")
         minimal (create-catalogue-item! res1 (:minimal workflows) form
