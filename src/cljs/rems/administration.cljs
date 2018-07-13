@@ -32,7 +32,7 @@
   (simple-fetch "/api/forms/?active=true" #(rf/dispatch [::set-forms %])))
 
 (defn- fetch-licenses []
-  (simple-fetch "/api/licenses/" #(do (rf/dispatch [::set-licenses %])
+  (simple-fetch "/api/licenses?active=true" #(do (rf/dispatch [::set-licenses %])
                                       (rf/dispatch [::set-selected-licenses #{}]))))
 
 (rf/reg-fx

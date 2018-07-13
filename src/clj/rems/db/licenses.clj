@@ -30,11 +30,14 @@
        (format-licenses)
        (localize-licenses)))
 
-(defn get-all-licenses []
-  (->> (db/get-all-licenses)
-       (format-licenses)
-       (map #(dissoc % :start :end)) ;; HACK
-       (localize-licenses)))
+(defn get-all-licenses [filters]
+  (let [filters (or filters {})]
+    (->> (db/get-all-licenses)
+         (map db/assoc-active)
+         (filter #(db/contains-all-kv-pairs? % filters))
+         (format-licenses)
+         (map #(dissoc % :start :end)) ;; HACK
+         (localize-licenses))))
 
 (defn get-licenses [params]
   (->> (db/get-licenses params)
