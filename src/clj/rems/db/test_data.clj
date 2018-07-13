@@ -64,6 +64,11 @@
   (let [yesterday (time/minus (time/now) (time/days 1))]
     (db/create-form! {:title "Expired form, should not be seen" :user owner :endt yesterday})))
 
+(defn- create-expired-license!
+  [owner]
+  (let [yesterday (time/minus (time/now) (time/days 1))]
+    (db/create-license! {:modifieruserid owner :owneruserid owner :title "expired license" :type "link" :textcontent "http://expired" :endt yesterday})))
+
 (defn- create-basic-form!
   "Creates a bilingual form with all supported field types. Returns id of the form meta."
   [owner]
@@ -289,7 +294,8 @@
     (create-bundled-application! simple bundable (:simple workflows) "alice" "developer")
     (create-review-application! with-review (:with-review workflows) "alice" "carl" "developer")
     (create-application-with-expired-resource-license! (:simple workflows) form "alice" "owner")
-    (create-application-before-new-resource-license!  (:simple workflows) form "alice" "owner")))
+    (create-application-before-new-resource-license!  (:simple workflows) form "alice" "owner")
+    (create-expired-license! "owner")))
 
 (defn create-demo-data! []
   (create-demo-users-and-roles!)
