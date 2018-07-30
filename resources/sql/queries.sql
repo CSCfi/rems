@@ -269,9 +269,10 @@ VALUES
 
 -- :name create-workflow! :insert
 INSERT INTO workflow
-(ownerUserId, modifierUserId, title, fnlround, endt)
+(prefix, ownerUserId, modifierUserId, title, fnlround, endt)
 VALUES
-(:owneruserid,
+(:prefix,
+ :owneruserid,
  :modifieruserid,
  :title,
  :fnlround,

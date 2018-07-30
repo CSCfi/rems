@@ -94,12 +94,12 @@
     (:id form)))
 
 (defn- create-workflows! [user1 user2 user3 owner]
-  (let [minimal (:id (db/create-workflow! {:owneruserid owner :modifieruserid owner :title "minimal" :fnlround 0}))
-        simple (:id (db/create-workflow! {:owneruserid owner :modifieruserid owner :title "simple" :fnlround 0}))
-        with-review (:id (db/create-workflow! {:owneruserid owner :modifieruserid owner :title "with review" :fnlround 1}))
-        two-round (:id (db/create-workflow! {:owneruserid owner :modifieruserid owner :title "two rounds" :fnlround 1}))
-        different (:id (db/create-workflow! {:owneruserid owner :modifieruserid owner :title "two rounds, different approvers" :fnlround 1}))
-        expired (:id (db/create-workflow! {:owneruserid owner :modifieruserid owner :title "workflow has already expired, should not be seen" :fnlround 0 :endt (time/minus (time/now) (time/years 1))}))]
+  (let [minimal (:id (db/create-workflow! {:prefix "nbn" :owneruserid owner :modifieruserid owner :title "minimal" :fnlround 0}))
+        simple (:id (db/create-workflow! {:prefix "nbn" :owneruserid owner :modifieruserid owner :title "simple" :fnlround 0}))
+        with-review (:id (db/create-workflow! {:prefix "nbn" :owneruserid owner :modifieruserid owner :title "with review" :fnlround 1}))
+        two-round (:id (db/create-workflow! {:prefix "nbn" :owneruserid owner :modifieruserid owner :title "two rounds" :fnlround 1}))
+        different (:id (db/create-workflow! {:prefix "nbn" :owneruserid owner :modifieruserid owner :title "two rounds, different approvers" :fnlround 1}))
+        expired (:id (db/create-workflow! {:prefix "nbn" :owneruserid owner :modifieruserid owner :title "workflow has already expired, should not be seen" :fnlround 0 :endt (time/minus (time/now) (time/years 1))}))]
     ;; either user1 or user2 can approve
     (actors/add-approver! simple user1 0)
     (actors/add-approver! simple user2 0)
