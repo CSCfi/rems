@@ -1,6 +1,5 @@
 (ns rems.administration
-  (:require [ajax.core :refer [GET PUT]]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.atoms :refer [external-link]]
             [rems.autocomplete :as autocomplete]
@@ -9,27 +8,21 @@
             [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.text :refer [text]]
-            [rems.util :refer [dispatch! redirect-when-unauthorized]]))
+            [rems.util :refer [dispatch! fetch put!]]))
 
 ;; TODO copypaste from rems.catalogue, move to rems.db.catalogue?
 
-(defn- simple-fetch [path dispatch]
-  (GET path {:handler dispatch
-             :error-handler redirect-when-unauthorized
-             :response-format :json
-             :keywords? true}))
-
 (defn- fetch-catalogue []
-  (simple-fetch "/api/catalogue-items/" #(rf/dispatch [::fetch-catalogue-result %])))
+  (fetch "/api/catalogue-items/" {:handler #(rf/dispatch [::fetch-catalogue-result %])}))
 
 (defn- fetch-workflows []
-  (simple-fetch "/api/workflows/?active=true" #(rf/dispatch [::set-workflows %])))
+  (fetch "/api/workflows/?active=true" {:handler #(rf/dispatch [::set-workflows %])}))
 
 (defn- fetch-resources []
-  (simple-fetch "/api/resources/?active=true" #(rf/dispatch [::set-resources %])))
+  (fetch "/api/resources/?active=true" {:handler #(rf/dispatch [::set-resources %])}))
 
 (defn- fetch-forms []
-  (simple-fetch "/api/forms/?active=true" #(rf/dispatch [::set-forms %])))
+  (fetch "/api/forms/?active=true" {:handler #(rf/dispatch [::set-forms %])}))
 
 (rf/reg-fx
  ::fetch-catalogue
@@ -141,12 +134,8 @@
    (::forms db)))
 
 (defn- update-catalogue-item [id state]
-  (PUT "/api/catalogue-items/update" {:format :json
-                                      :params {:id id :state state}
-                                      ;; TODO error handling
-                                      :error-handler redirect-when-unauthorized
-                                      :handler (fn [resp]
-                                                 (rf/dispatch [::start-fetch-catalogue]))}))
+  (put! "/api/catalogue-items/update" {:params {:id id :state state}
+                                       :handler #(rf/dispatch [::start-fetch-catalogue])}))
 
 (rf/reg-event-fx
  ::update-catalogue-item
@@ -155,15 +144,12 @@
    {}))
 
 (defn- create-catalogue-item [title workflow resource form]
-  (PUT "/api/catalogue-items/create" {:format :json
-                                      :params {:title title
-                                               :wfid (:id workflow)
-                                               :resid (:id resource)
-                                               :form (:id form)}
-                                      ;; TODO error handling
-                                      :error-handler redirect-when-unauthorized
-                                      :handler (fn [resp]
-                                                 (dispatch! "#/administration"))}))
+  (put! "/api/catalogue-items/create" {:params {:title title
+                                                :wfid (:id workflow)
+                                                :resid (:id resource)
+                                                :form (:id form)}
+                                       ;; TODO error handling
+                                       :handler (fn [resp] (dispatch! "#/administration"))}))
 
 (rf/reg-event-fx
  ::create-catalogue-item

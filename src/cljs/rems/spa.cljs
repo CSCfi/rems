@@ -5,7 +5,6 @@
             [goog.events :as events]
             [goog.history.EventType :as HistoryEventType]
             [markdown.core :refer [md->html]]
-            [ajax.core :refer [GET]]
             [rems.actions :refer [actions-page fetch-actions]]
             [rems.administration :refer [administration-page create-catalogue-item-page]]
             [rems.ajax :refer [load-interceptors!]]
@@ -19,7 +18,7 @@
             [rems.guide-page :refer [guide-page]]
             [rems.navbar :as nav]
             [rems.text :refer [text]]
-            [rems.util :refer [dispatch!]])
+            [rems.util :refer [dispatch! fetch]])
   (:import goog.History))
 
 ;;; subscriptions
@@ -255,6 +254,7 @@
     (events/listen
      HistoryEventType/NAVIGATE
      (fn [event]
+       (js/window.rems.hooks.navigate (.-token event))
        (secretary/dispatch! (.-token event))))
     (.setEnabled true)))
 
@@ -277,14 +277,10 @@
                                        user-and-roles)])))
 
 (defn fetch-translations! []
-  (GET "/api/translations" {:handler #(rf/dispatch [:loaded-translations %])
-                            :response-format :json
-                            :keywords? true}))
+  (fetch "/api/translations" {:handler #(rf/dispatch [:loaded-translations %])}))
 
 (defn fetch-theme! []
-  (GET "/api/theme" {:handler #(rf/dispatch [:loaded-theme %])
-                     :response-format :json
-                     :keywords? true}))
+  (fetch "/api/theme" {:handler #(rf/dispatch [:loaded-theme %])}))
 
 (defn mount-components []
   (rf/clear-subscription-cache!)

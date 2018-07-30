@@ -15,12 +15,26 @@
   (testing "fetch applications"
     (let [api-key "42"
           user-id "developer"]
-      (let [data (-> (request :get "/api/applications")
-                     (authenticate api-key user-id)
-                     app
-                     read-body)]
-        (is (= [1 2 3 4 5 6 7] (map :id (sort-by :id data)))))))
+      (testing "regular fetch"
+        (let [response (-> (request :get "/api/applications")
+                           (authenticate api-key user-id)
+                           (header "Accept" "application/json")
+                           app)
+              data (read-body response)]
+          (is (response-is-ok? response))
+          (is (= "application/json; charset=utf-8" (get-in response [:headers "Content-Type"])))
+          (is (= [1 2 3 4 5 6 7] (map :id (sort-by :id data))))))
+      (testing "transit support"
+        (let [response (-> (request :get "/api/applications")
+                           (authenticate api-key user-id)
+                           (header "Accept" "application/transit+json")
+                           app)
+              data (read-body response)]
+          (is (response-is-ok? response))
+          (is (= "application/transit+json; charset=utf-8" (get-in response [:headers "Content-Type"])))
+          (is (= 7 (count data))))))))
 
+(deftest applications-api-command-test
   (let [api-key "42"
         user-id "alice"
         another-user "alice_smith"

@@ -1,26 +1,19 @@
 (ns rems.actions
   "The /actions page that shows a list of applications you can act on."
-  (:require [ajax.core :refer [GET]]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.application-list :as application-list]
             [rems.collapsible :as collapsible]
             [rems.guide-functions]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-state localize-time text]]
-            [rems.util :refer [redirect-when-unauthorized]]))
+            [rems.util :refer [fetch]]))
 
 (defn- fetch-actions []
-  (GET "/api/actions/" {:handler #(rf/dispatch [::fetch-actions-result %])
-                        :error-handler redirect-when-unauthorized
-                        :response-format :json
-                        :keywords? true}))
+  (fetch "/api/actions/" {:handler #(rf/dispatch [::fetch-actions-result %])}))
 
 (defn- fetch-handled-actions []
-  (GET "/api/actions/handled" {:handler #(rf/dispatch [::fetch-handled-actions-result %])
-                               :error-handler redirect-when-unauthorized
-                               :response-format :json
-                               :keywords? true}))
+  (fetch "/api/actions/handled" {:handler #(rf/dispatch [::fetch-handled-actions-result %])}))
 
 (rf/reg-fx
  ::fetch-actions

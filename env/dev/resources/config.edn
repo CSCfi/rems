@@ -15,6 +15,9 @@
  :ldap {:connection {:host "localhost:2636"
                      :ssl? true}
         :search-root "dc=Suivohtor,dc=local"}
+ ;; optional extra script files loaded when UI loads
+ ;; :extra-scripts {:root "/tmp" :files ["/scripts/foo.js"]}
+
  :extra-pages [;; example of internal page with translation in localization files
                ;; {:id "about" :url "/about" :translation-key :t.navigation/about}
 

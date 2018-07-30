@@ -1,5 +1,6 @@
 (ns rems.util
-  (:require [re-frame.core :as rf]))
+  (:require  [ajax.core :refer [GET PUT]]
+             [re-frame.core :as rf]))
 
 (defn select-vals
   "Select values in map `m` specified by given keys `ks`.
@@ -33,3 +34,33 @@
   (when (= 401 status)
     (let [current-url (.. js/window -location -href)]
       (rf/dispatch [:unauthorized! current-url]))))
+
+(defn- wrap-default-error-handler [handler]
+  (fn [err]
+    (redirect-when-unauthorized err)
+    (when handler (handler err))))
+
+(defn fetch
+  "Fetches data from the given url with optional map of options like #'ajax.core/GET.
+
+  Has sensible defaults with error handler, JSON and keywords.
+
+  Additionally calls event hooks."
+  [url opts]
+  (js/window.rems.hooks.get url (clj->js opts))
+  (GET url (merge {:error-handler (wrap-default-error-handler (:error-handler opts))
+                   :response-format :transit}
+                  opts)))
+
+(defn put!
+  "Dispatches a command to the given url with optional map of options like #'ajax.core/PUT.
+
+  Has sensible defaults with error handler, JSON and keywords.
+
+  Additionally calls event hooks."
+  [url opts]
+  (js/window.rems.hooks.put url (clj->js opts))
+  (PUT url (merge {:error-handler (wrap-default-error-handler (:error-handler opts))
+                   :format :json
+                   :response-format :transit}
+                  opts)))

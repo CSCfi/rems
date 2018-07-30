@@ -1,17 +1,19 @@
 (ns rems.handler
   (:require [clojure.tools.logging :as log]
-            [compojure.core :refer [defroutes routes wrap-routes]]
+            [compojure.core :refer [defroutes GET routes wrap-routes]]
             [compojure.route :as route]
             [mount.core :as mount]
             [rems.api :refer [api-routes]]
             [rems.auth.auth :as auth]
+            [rems.config :refer [env]]
             [rems.entitlements :as entitlements]
             [rems.env :refer [+defaults+]]
             [rems.events :as events]
             [rems.home :as home]
             [rems.layout :refer [error-page]]
             [rems.middleware :as middleware]
-            [rems.util :refer [never-match-route]]))
+            [rems.util :refer [never-match-route]]
+            [ring.util.response :refer [file-response]]))
 
 (mount/defstate init-app
   :start ((or (:init +defaults+) identity))
@@ -54,8 +56,15 @@
    (wrap-routes #'secured-routes middleware/wrap-restricted)
    #'api-routes))
 
+(defn extra-script-routes [{:keys [root files]}]
+  (let [files (set files)]
+    (fn [request]
+      (when (contains? files (:uri request))
+        (file-response (:uri request) {:root root})))))
+
 (defn app-routes []
   (routes
+   (extra-script-routes (:extra-scripts env))
    (normal-routes)
    (if-let [path (:serve-static +defaults+)]
      (route/files "/" {:root path})
