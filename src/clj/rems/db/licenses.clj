@@ -25,12 +25,18 @@
               (into {} (for [{:keys [langcode title textcontent]} (get localizations (:id lic))]
                          [langcode {:title title :textcontent textcontent}])))))))
 
-(defn get-resource-licenses [id]
+(defn get-resource-licenses
+  "Get resource licenses for given resource id"
+  [id]
   (->> (db/get-resource-licenses {:id id})
        (format-licenses)
        (localize-licenses)))
 
-(defn get-all-licenses [filters]
+(defn get-all-licenses
+  "Get all licenses.
+
+   filters is a map of key-value pairs that must be present in the licenses"
+  [filters]
   (let [filters (or filters {})]
     (->> (db/get-all-licenses)
          (map db/assoc-active)
@@ -39,12 +45,18 @@
          (map #(dissoc % :start :end)) ;; HACK
          (localize-licenses))))
 
-(defn get-licenses [params]
+(defn get-licenses
+  "Get licenses. Params map can contain:
+     :wfid -- workflow to get workflow licenses for
+     :items -- sequence of catalogue items to get resource licenses for"
+  [params]
   (->> (db/get-licenses params)
        (format-licenses)
        (localize-licenses)))
 
-(defn get-active-licenses [now params]
+(defn get-active-licenses
+  "Like get-licenses but limit to active licenses."
+  [now params]
   (->> (get-licenses params)
        (filter (fn [license]
                  (let [start (:start license)
