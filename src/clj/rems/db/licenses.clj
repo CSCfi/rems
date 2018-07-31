@@ -53,9 +53,5 @@
   (->> (db/get-licenses params)
        (format-licenses)
        (localize-licenses)
-       (filter (fn [license]
-                 (let [start (:start license)
-                       end (:end license)]
-                   (and (or (nil? start) (time/before? start now))
-                        (or (nil? end) (time/before? now end))))))
+       (filter (fn [license] (db/now-active? now (:start license) (:end license))))
        (distinct-by :id)))

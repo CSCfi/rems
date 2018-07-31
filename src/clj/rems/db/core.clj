@@ -14,14 +14,20 @@
 (defn contains-all-kv-pairs? [supermap map]
   (superset? (set supermap) (set map)))
 
-
-(defn now-active? [start end]
-  (and (or (nil? start)
-           (time/after? (time/now) start))
-       (or (nil? end)
-           (time/before? (time/now) end))))
+(defn now-active?
+  ([start end]
+   (now-active? (time/now) start end))
+  ([now start end]
+   (and (or (nil? start)
+            (time/after? now start))
+        (or (nil? end)
+            (time/before? now end)))))
 
 (defn assoc-active
-  "Calculates and assocs :active? attribute based on current time and :start and :endt attributes."
-  [x]
-  (assoc x :active? (now-active? (:start x)(:endt x))))
+  "Calculates and assocs :active? attribute based on current time and :start and :endt attributes.
+
+   Current time can be passed in optionally."
+  ([x]
+   (assoc-active (time/now) x))
+  ([now x]
+   (assoc x :active? (now-active? now (:start x) (:endt x)))))
