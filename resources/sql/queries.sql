@@ -66,6 +66,7 @@ VALUES (:id, :langcode, :title)
 -- :name get-forms :? :*
 SELECT
   id,
+  prefix,
   title,
   start,
   endt
@@ -74,6 +75,7 @@ FROM application_form
 -- :name get-form-for-application :? :1
 SELECT
   form.id as formid,
+  form.prefix as prefix,
   form.title as formtitle,
   form.visibility as formvisibility
 FROM catalogue_item_application_items ciai
