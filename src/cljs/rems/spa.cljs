@@ -144,7 +144,7 @@
 
 (defn home-page []
   (if @(rf/subscribe [:user])
-    [catalogue-page]
+    (rf/dispatch [:landing-page-redirect!])
     [auth/login-component]))
 
 (defn unauthorized-page []
