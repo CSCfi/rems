@@ -82,6 +82,7 @@
             :withdraw "Palauta muokattavaksi"
             :withdraw-success "Hakemus palautettu muokattavaksi"}
   :administration {:create-catalogue-item "Uusi kielivara"
+                   :create-resource "Uusi resurssi"
                    :disable "Poista käytöstä"
                    :enable "Ota käyttöön"}
   :applicant-info {:applicant "Hakija"
@@ -134,6 +135,12 @@
                           :title "Nimi"
                           :title-placeholder "Nimi"
                           :workflow-selection "Työvuo"}
+  :create-resource {:licenses-selection "Käyttöehdot"
+                    :prefix "Organization"
+                    :prefix-placeholder "testorganization.org"
+                    :resid "Resurssin tunniste"
+                    :resid-placeholder "urn:test:fi:some-uuid"
+                    :save "Tallenna"}
   :email {:action-not-needed-msg "Hyvä %1,
                                   Hakijan %2 hakemus %3 ei enää vaadi huomiotanne.
                                   Älkää vastatko tähän automaattisesti luotuun viestiin."
@@ -199,6 +206,7 @@
                :applications "Hakemukset"
                :catalogue "Kielivarat"
                :create-catalogue-item "Luo kielivara"
+               :create-resource "Luo resurssi"
                :home "Etusivu"
                :login "Kirjaudu sisään"
                :logout "Kirjaudu ulos"}

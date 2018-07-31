@@ -257,9 +257,11 @@ WHERE catappid = :catappid AND licid = :licid AND modifieruserid = :actoruserid
 
 -- :name create-license! :insert
 INSERT INTO license
-(ownerUserId, modifierUserId, title, type, textcontent)
+(ownerUserId, modifierUserId, title, type, textcontent, endt)
 VALUES
-(:owneruserid, :modifieruserid, :title, :type::license_type, :textcontent)
+(:owneruserid, :modifieruserid, :title, :type::license_type, :textcontent,
+/*~ (if (:endt params) */ :endt /*~*/ NULL /*~ ) ~*/
+)
 
 -- :name create-license-localization! :insert
 INSERT INTO license_localization
@@ -404,7 +406,7 @@ INNER JOIN resource_licenses rl ON lic.id = rl.licid
 WHERE rl.resid = :id
 
 -- :name get-all-licenses :? :*
-SELECT lic.id, lic.title, lic.type, lic.textcontent
+SELECT lic.id, lic.title, lic.type, lic.textcontent, lic.start, lic.endt
 FROM license lic
 
 -- :name get-license-localizations :? :*
