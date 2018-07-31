@@ -9,14 +9,16 @@
 
 (def Form
   {:id s/Num
+   :prefix s/Str
    :title s/Str
    :start DateTime
    :end (s/maybe DateTime)
    :active s/Bool})
 
 (defn- format-form
-  [{:keys [id title start endt active?]}]
+  [{:keys [id prefix title start endt active?]}]
   {:id id
+   :prefix prefix
    :title title
    :start start
    :end endt

@@ -62,7 +62,7 @@
 (defn- create-expired-form!
   [owner]
   (let [yesterday (time/minus (time/now) (time/days 1))]
-    (db/create-form! {:title "Expired form, should not be seen" :user owner :endt yesterday})))
+    (db/create-form! {:prefix "nbn" :title "Expired form, should not be seen" :user owner :endt yesterday})))
 
 (defn- create-expired-license!
   [owner]
@@ -72,7 +72,7 @@
 (defn- create-basic-form!
   "Creates a bilingual form with all supported field types. Returns id of the form meta."
   [owner]
-  (let [form (db/create-form! {:title "Yksinkertainen lomake" :user owner})
+  (let [form (db/create-form! {:prefix "nbn" :title "Yksinkertainen lomake" :user owner})
 
         name (db/create-form-item!
               {:type "text" :optional false :user owner :value 0})

@@ -61,7 +61,7 @@
   (binding [context/*user* {"eppn" "test-user"}
             context/*lang* :en]
     (let [uid (get-user-id)
-          form (db/create-form! {:title "internal-title" :user uid})
+          form (db/create-form! {:prefix "abc" :title "internal-title" :user uid})
           wf (db/create-workflow! {:prefix "abc" :modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 0})
           license (db/create-license! {:modifieruserid uid :owneruserid uid :title "non-localized license" :type "link" :textcontent "http://test.org"})
           license-fi (db/create-license-localization! {:licid (:id license) :langcode "fi" :title "Testi lisenssi" :textcontent "http://testi.fi"})

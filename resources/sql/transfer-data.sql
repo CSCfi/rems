@@ -71,8 +71,8 @@ SELECT setval('resource_id_seq', (SELECT max(id) FROM public.resource));
 -- Let's reuse the metaId as the formId, to make copying catalogue_item simpler
 
 -- Create forms
-INSERT INTO public.application_form (id, ownerUserId, modifierUserId, title, visibility, start, endt)
-SELECT id, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(owneruserid AS integer)), (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifieruserid AS integer)), COALESCE(title,'unknown'), CAST(visibility::text AS scope), start, "end"
+INSERT INTO public.application_form (id, prefix, ownerUserId, modifierUserId, title, visibility, start, endt)
+SELECT id, 'default', (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(owneruserid AS integer)), (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifieruserid AS integer)), COALESCE(title,'unknown'), CAST(visibility::text AS scope), start, "end"
 FROM transfer.rms_application_form_meta;
 
 SELECT setval('application_form_id_seq', (SELECT max(id) FROM public.application_form));
