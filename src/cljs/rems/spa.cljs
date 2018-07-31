@@ -180,10 +180,9 @@
 
 (defn page []
   (let [page-id @(rf/subscribe [:page])
-        content (pages page-id)
-        page-name "todo"]
+        content (pages page-id)]
     [:div
-     [nav/navigation-widget page-name]
+     [nav/navigation-widget page-id]
      [logo]
      [:div.container.main-content [content]]
      [footer]]))

@@ -63,8 +63,7 @@ a:visited { color: #fff; }
                  [:div.users (->> (map :userid (db/get-users))
                                   (sort)
                                   (distinct)
-                                  (map user-selection)
-                                  )]]])
+                                  (map user-selection))]]])
         (response)
         (content-type "text/html; charset=utf-8"))))
 
