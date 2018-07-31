@@ -117,9 +117,10 @@ WHERE 1=1
 
 -- :name create-form! :insert
 INSERT INTO application_form
-(title, modifierUserId, ownerUserId, visibility, endt)
+(prefix, title, modifierUserId, ownerUserId, visibility, endt)
 VALUES
-(:title,
+(:prefix,
+ :title,
  :user,
  :user,
  'public',
