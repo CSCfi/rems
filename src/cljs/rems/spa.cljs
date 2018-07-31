@@ -6,9 +6,9 @@
             [goog.history.EventType :as HistoryEventType]
             [markdown.core :refer [md->html]]
             [rems.actions :refer [actions-page fetch-actions]]
-            [rems.administration :refer [administration-page
-                                         create-resource-page
-                                         create-catalogue-item-page]]
+            [rems.administration :refer [administration-page]]
+            [rems.administration.catalogue :refer [create-catalogue-item-page]]
+            [rems.administration.resource :refer [create-resource-page]]
             [rems.ajax :refer [load-interceptors!]]
             [rems.application :refer [application-page fetch-application]]
             [rems.applications :refer [applications-page]]
@@ -229,11 +229,11 @@
   (rf/dispatch [:set-active-page :administration]))
 
 (secretary/defroute "/create-resource" []
-  (rf/dispatch [:rems.administration/reset-create-resource])
+  (rf/dispatch [:rems.administration.resource/reset-create-resource])
   (rf/dispatch [:set-active-page :create-resource]))
 
 (secretary/defroute "/create-catalogue-item" []
-  (rf/dispatch [:rems.administration/reset-create-catalogue-item])
+  (rf/dispatch [:rems.administration.catalogue/reset-create-catalogue-item])
   (rf/dispatch [:set-active-page :create-catalogue-item]))
 
 (secretary/defroute "/unauthorized" []
