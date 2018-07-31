@@ -271,9 +271,10 @@ VALUES
 
 -- :name create-workflow! :insert
 INSERT INTO workflow
-(ownerUserId, modifierUserId, title, fnlround, endt)
+(prefix, ownerUserId, modifierUserId, title, fnlround, endt)
 VALUES
-(:owneruserid,
+(:prefix,
+ :owneruserid,
  :modifieruserid,
  :title,
  :fnlround,
@@ -365,7 +366,7 @@ AND ci.id = :catid
 
 -- :name get-workflows :? :*
 SELECT
-  wf.id, wf.owneruserid, wf.modifieruserid, wf.title, wf.fnlround, wf.visibility, wf.start, wf.endt
+  wf.id, wf.prefix, wf.owneruserid, wf.modifieruserid, wf.title, wf.fnlround, wf.visibility, wf.start, wf.endt
 FROM workflow wf
 
 -- :name clear-field-value! :!

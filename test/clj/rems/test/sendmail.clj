@@ -48,10 +48,10 @@
               context/*root-path* "localhost:3000"]
       (let [uid "approver"
             uid2 "reviewer"
-            wfid1 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 1}))
-            wfid2 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 0}))
-            wfid3 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 1}))
-            wfid4 (:id (db/create-workflow! {:owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 1}))
+            wfid1 (:id (db/create-workflow! {:prefix "abc" :owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 1}))
+            wfid2 (:id (db/create-workflow! {:prefix "abc" :owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 0}))
+            wfid3 (:id (db/create-workflow! {:prefix "abc" :owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 1}))
+            wfid4 (:id (db/create-workflow! {:prefix "abc" :owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 1}))
             _ (actors/add-reviewer! wfid1 uid2 0)
             _ (actors/add-approver! wfid1 uid 1)
             _ (actors/add-approver! wfid2 uid 0)

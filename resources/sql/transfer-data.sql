@@ -37,8 +37,8 @@ DELETE FROM public.application_form_item_map CASCADE;
 DELETE FROM public.application_form_item CASCADE;
 DELETE FROM public.application_form CASCADE;
 
-INSERT INTO public.workflow (id, owneruserid, modifieruserid, title, fnlround, visibility, start, endt)
-SELECT id, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(owneruserid AS integer)), (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifieruserid AS integer)), title, fnlround, CAST(visibility::text AS scope), start, "end" FROM transfer.rms_workflow;
+INSERT INTO public.workflow (id, prefix, owneruserid, modifieruserid, title, fnlround, visibility, start, endt)
+SELECT id, 'default', (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(owneruserid AS integer)), (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifieruserid AS integer)), title, fnlround, CAST(visibility::text AS scope), start, "end" FROM transfer.rms_workflow;
 
 SELECT setval('workflow_id_seq', (SELECT max(id) FROM public.workflow));
 

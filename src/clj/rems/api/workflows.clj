@@ -14,6 +14,7 @@
 
 (def Workflow
   {:id s/Num
+   :prefix s/Str
    :owneruserid s/Str
    :modifieruserid s/Str
    :title s/Str
@@ -24,8 +25,9 @@
    :actors [Actor]})
 
 (defn- format-workflow
-  [{:keys [id owneruserid modifieruserid title fnlround start endt active?]}]
+  [{:keys [id prefix owneruserid modifieruserid title fnlround start endt active?]}]
   {:id id
+   :prefix prefix
    :owneruserid owneruserid
    :modifieruserid modifieruserid
    :title title
