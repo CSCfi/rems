@@ -25,30 +25,41 @@
               (into {} (for [{:keys [langcode title textcontent]} (get localizations (:id lic))]
                          [langcode {:title title :textcontent textcontent}])))))))
 
-(defn get-resource-licenses [id]
+(defn get-resource-licenses
+  "Get resource licenses for given resource id"
+  [id]
   (->> (db/get-resource-licenses {:id id})
        (format-licenses)
        (localize-licenses)))
 
-(defn get-all-licenses [filters]
+;; NB! There are three different "license activity" concepts:
+;; - start and end in resource_licenses table
+;; - start and end in workflow_licenses table
+;; - start and end in licenses table
+;;
+;; The last of these is only used in get-all-licenses which is only
+;; used by /api/licenses. The resource and workflow activities are
+;; used in actual application processing logic.
+
+(defn get-all-licenses
+  "Get all licenses.
+
+   filters is a map of key-value pairs that must be present in the licenses"
+  [filters]
   (let [filters (or filters {})]
     (->> (db/get-all-licenses)
          (map db/assoc-active)
          (filter #(db/contains-all-kv-pairs? % filters))
          (format-licenses)
-         (map #(dissoc % :start :end)) ;; HACK
          (localize-licenses))))
 
-(defn get-licenses [params]
+(defn get-active-licenses
+  "Get license active now. Params map can contain:
+    :wfid -- workflow to get workflow licenses for
+    :items -- sequence of catalogue items to get resource licenses for"
+  [now params]
   (->> (db/get-licenses params)
        (format-licenses)
-       (localize-licenses)))
-
-(defn get-active-licenses [now params]
-  (->> (get-licenses params)
-       (filter (fn [license]
-                 (let [start (:start license)
-                       end (:end license)]
-                   (and (or (nil? start) (time/before? start now))
-                        (or (nil? end) (time/before? now end))))))
+       (localize-licenses)
+       (filter (fn [license] (db/now-active? now (:start license) (:end license))))
        (distinct-by :id)))

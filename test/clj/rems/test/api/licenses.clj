@@ -19,7 +19,7 @@
           data (read-body response)]
       (is (response-is-ok? response))
       (is (coll-is-not-empty? data))
-      (is (= #{:id :licensetype :title :textcontent :localizations} (set (keys (first data))))))))
+      (is (= #{:id :start :end :licensetype :title :textcontent :localizations} (set (keys (first data))))))))
 
 (deftest licenses-api-filtering-test
   (let [unfiltered-response (-> (request :get "/api/licenses")
