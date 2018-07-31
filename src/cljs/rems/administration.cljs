@@ -24,10 +24,6 @@
 (defn- fetch-forms []
   (fetch "/api/forms/?active=true" {:handler #(rf/dispatch [::set-forms %])}))
 
-(defn- fetch-licenses []
-  (simple-fetch "/api/licenses?active=true" #(do (rf/dispatch [::set-licenses %])
-                                      (rf/dispatch [::set-selected-licenses #{}]))))
-
 (rf/reg-fx
  ::fetch-catalogue
  (fn [_]
@@ -45,26 +41,11 @@
    (dissoc db ::title ::selected-workflow ::selected-resource ::selected-form)))
 
 (rf/reg-event-db
- ::reset-create-resource
- (fn [db _]
-   (dissoc db ::prefix ::resid ::selected-licenses)))
-
-(rf/reg-event-db
  ::fetch-catalogue-result
  (fn [db [_ catalogue]]
    (-> db
        (assoc ::catalogue catalogue)
        (dissoc ::loading?))))
-
-(rf/reg-event-db
- ::set-prefix
- (fn [db [_ prefix]]
-   (assoc db ::prefix prefix)))
-
-(rf/reg-event-db
- ::set-resid
- (fn [db [_ resid]]
-   (assoc db ::resid resid)))
 
 (rf/reg-event-db
  ::set-title
@@ -87,11 +68,6 @@
    (assoc db ::forms forms)))
 
 (rf/reg-event-db
- ::set-licenses
- (fn [db [_ licenses]]
-   (assoc db ::licenses licenses)))
-
-(rf/reg-event-db
  ::set-selected-workflow
  (fn [db [_ workflow]]
    (if workflow
@@ -112,23 +88,6 @@
      (assoc db ::selected-form ^{:key (:id form)} form )
      (dissoc db ::selected-form))))
 
-(rf/reg-event-db
- ::set-selected-licenses
- (fn [db [_ licenses]]
-   (assoc db ::selected-licenses licenses)))
-
-(rf/reg-event-db
- ::add-selected-licenses
- (fn [db [_ license]]
-   (if (contains? (::selected-licenses db) license)
-     db
-     (update db ::selected-licenses conj license))))
-
-(rf/reg-event-db
- ::remove-selected-licenses
- (fn [db [_ license]]
-   (update db ::selected-licenses disj license)))
-
 (rf/reg-sub
  ::catalogue
  (fn [db _]
@@ -138,16 +97,6 @@
  ::loading?
  (fn [db _]
    (::loading? db)))
-
-(rf/reg-sub
- ::prefix
- (fn [db _]
-   (::prefix db)))
-
-(rf/reg-sub
- ::resid
- (fn [db _]
-   (::resid db)))
 
 (rf/reg-sub
  ::title
@@ -170,11 +119,6 @@
    (::selected-form db)))
 
 (rf/reg-sub
- ::selected-licenses
- (fn [db _]
-  (::selected-licenses db)))
-
-(rf/reg-sub
  ::workflows
  (fn [db _]
    (::workflows db)))
@@ -189,11 +133,6 @@
  (fn [db _]
    (::forms db)))
 
-(rf/reg-sub
- ::licenses
- (fn [db _]
-   (::licenses db)))
-
 (defn- update-catalogue-item [id state]
   (put! "/api/catalogue-items/update" {:params {:id id :state state}
                                        :handler #(rf/dispatch [::start-fetch-catalogue])}))
@@ -204,17 +143,6 @@
    (update-catalogue-item id state)
    {}))
 
-(defn- create-resource [prefix resid licenses]
-  (PUT "/api/resources/create" {:format :json
-                               :params {:prefix prefix
-                                        :resid resid
-                                        :licenses (if licenses
-                                                    (map :id licenses)
-                                                    [])}
-                               :error-handler redirect-when-unauthorized
-                               :handler (fn [resp]
-                                          (dispatch! "#/administration"))}))
-
 (defn- create-catalogue-item [title workflow resource form]
   (put! "/api/catalogue-items/create" {:params {:title title
                                                 :wfid (:id workflow)
@@ -222,12 +150,6 @@
                                                 :form (:id form)}
                                        ;; TODO error handling
                                        :handler (fn [resp] (dispatch! "#/administration"))}))
-
-(rf/reg-event-fx
- ::create-resource
- (fn [db [_ prefix resid licenses]]
-   (create-resource prefix resid licenses)
-   {}))
 
 (rf/reg-event-fx
  ::create-catalogue-item
@@ -265,15 +187,6 @@
   [:button.btn.btn-secondary
    {:on-click #(dispatch! "/#/administration")}
    (text :t.create-catalogue-item/cancel)])
-
-(defn- save-resource-button []
-  (let [prefix @(rf/subscribe [::prefix])
-        resid @(rf/subscribe [::resid])
-        licenses @(rf/subscribe [::selected-licenses])]
-    [:button.btn.btn-primary
-     {:on-click #(rf/dispatch [::create-resource prefix resid licenses])
-      :disabled (not (and (not (str/blank? prefix)) (not (str/blank? resid))))}
-     (text :t.create-resource/save)]))
 
 (defn- save-catalogue-item-button [item]
   (let [title @(rf/subscribe [::title])
@@ -318,47 +231,6 @@
                  [to-create-resource-button]
                  [to-create-catalogue-item-button]]
                 [catalogue-list @catalogue @language]]])))))
-
-(defn create-resource-page []
-  (fetch-licenses)
-  (let [prefix (rf/subscribe [::prefix])
-        resid (rf/subscribe [::resid])
-        licenses (rf/subscribe [::licenses])
-        selected-licenses (rf/subscribe [::selected-licenses])]
-    (fn []
-    [collapsible/component
-     {:id "create-create"
-      :title (text :t.navigation/create-resource)
-      :always [:div
-               [:div.form-group.field
-                [:label {:for "prefix"} (text :t.create-resource/prefix)]
-                [:input.form-control {:name "prefix"
-                                      :type :text
-                                      :placeholder (text :t.create-resource/prefix-placeholder)
-                                      :value @prefix
-                                      :on-change #(rf/dispatch [::set-prefix (.. % -target -value)])}]]
-               [:div.form-group.field
-                [:label {:for "resid"} (text :t.create-resource/resid)]
-                [:input.form-control {:name "resid"
-                                      :type :text
-                                      :placeholder (text :t.create-resource/resid-placeholder)
-                                      :value @resid
-                                      :on-change #(rf/dispatch [::set-resid (.. % -target -value)])}]]
-               [:div.form-group
-                [:label (text :t.create-resource/licenses-selection)]
-                [autocomplete/component
-                 {:value (sort-by :id @selected-licenses)
-                  :items @licenses
-                  :value->text #(:title %2)
-                  :item->key :id
-                  :item->text :title
-                  :item->value identity
-                  :search-fields [:title]
-                  :add-fn #(rf/dispatch [::add-selected-licenses %])
-                  :remove-fn #(rf/dispatch [::remove-selected-licenses %])}]]
-               [:div.col.commands
-                 [cancel-button]
-                 [save-resource-button]]]}])))
 
 (defn create-catalogue-item-page []
   (fetch-workflows)
