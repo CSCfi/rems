@@ -45,19 +45,14 @@
          (map #(dissoc % :start :end)) ;; HACK
          (localize-licenses))))
 
-(defn get-licenses
-  "Get licenses. Params map can contain:
-     :wfid -- workflow to get workflow licenses for
-     :items -- sequence of catalogue items to get resource licenses for"
-  [params]
+(defn get-active-licenses
+  "Get license active now. Params map can contain:
+    :wfid -- workflow to get workflow licenses for
+    :items -- sequence of catalogue items to get resource licenses for"
+  [now params]
   (->> (db/get-licenses params)
        (format-licenses)
-       (localize-licenses)))
-
-(defn get-active-licenses
-  "Like get-licenses but limit to active licenses."
-  [now params]
-  (->> (get-licenses params)
+       (localize-licenses)
        (filter (fn [license]
                  (let [start (:start license)
                        end (:end license)]
