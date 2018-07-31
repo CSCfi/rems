@@ -314,7 +314,6 @@
         app-user (:applicantuserid application)
         license-id (:id license)]
     (-> license
-        (dissoc :start :end)
         (assoc :type "license"
                :approved (= "approved"
                             (:state
