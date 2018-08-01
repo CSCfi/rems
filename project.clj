@@ -9,6 +9,7 @@
                  [com.andrewmcveigh/cljs-time "0.5.2"]
                  [cljs-ajax "0.7.3"]
                  [org.clojars.pntblnk/clj-ldap "0.0.16"]
+                 [clj-pdf "2.2.33"]
                  [org.clojars.runa/conjure "2.2.0"]
                  [compojure "1.6.1"]
                  [com.taoensso/tempura "1.2.1"]
