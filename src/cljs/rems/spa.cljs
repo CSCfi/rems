@@ -144,7 +144,17 @@
 
 (defn home-page []
   (if @(rf/subscribe [:user])
-    (rf/dispatch [:landing-page-redirect!])
+    ;; TODO this is a hack to show something useful on the home page
+    ;; when we are logged in. We can't really perform a dispatch!
+    ;; here, because that would be a race condition with #fragment
+    ;; handling in hook-history-navigation!
+    ;;
+    ;; One possibility is to have a separate :init default page that
+    ;; does the navigation/redirect logic, instead of using :home as
+    ;; the default.
+    (do
+      (rf/dispatch [:rems.catalogue/start-fetch-catalogue])
+      [catalogue-page])
     [auth/login-component]))
 
 (defn unauthorized-page []
