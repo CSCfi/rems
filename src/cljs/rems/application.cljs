@@ -290,7 +290,7 @@
                                    :aria-expanded "false"
                                    :aria-controls (str "collapse" id)}
       title " " [:i {:class "fa fa-ellipsis-h"}]]]
-    [:div.collapse {:id (str "collapse" id) }
+    [:div.collapse {:id (str "collapse" id)}
      [:div.license-block textcontent]]]])
 
 (defn- unsupported-field
@@ -523,7 +523,7 @@
                   :recipients (map :userid reviewers)}
          :handler (fn [resp]
                     (rf/dispatch [::send-third-party-review-request-success true])
-                    (rf/dispatch [::start-fetch-application application-id ])
+                    (rf/dispatch [::start-fetch-application application-id])
                     (scroll-to-top!))}))
 
 (rf/reg-event-fx
@@ -573,8 +573,7 @@
             :item->value identity
             :search-fields [:name :email]
             :add-fn #(rf/dispatch [::add-selected-third-party-reviewer %])
-            :remove-fn #(rf/dispatch [::remove-selected-third-party-reviewer %])
-            }]]]
+            :remove-fn #(rf/dispatch [::remove-selected-third-party-reviewer %])}]]]
         [:div.modal-footer
          [:button.btn.btn-secondary {:data-dismiss "modal"} (text :t.actions/cancel)]
          [:button.btn.btn-primary {:data-dismiss "modal"
