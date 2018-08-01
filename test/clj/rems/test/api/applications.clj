@@ -442,11 +442,11 @@
                        read-body
                        :application
                        :events)]
-        (is (= [{:userid applicant :comment nil :event "apply"}
-                {:userid reviewer :comment nil :event "review-request"}
-                {:userid reviewer :comment nil :event "third-party-review"}]
+        (is (= [{:userid nil :comment nil :event "apply"}
+                {:userid nil :comment nil :event "review-request"}
+                {:userid nil :comment nil :event "third-party-review"}]
                (map #(select-keys % [:userid :comment :event]) events))
-            "does not see review event comments")))))
+            "does not see review event comments nor users")))))
 ;; TODO non-happy path tests for review?
 
 ;; TODO test for event filtering when it gets implemented
