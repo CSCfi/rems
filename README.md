@@ -66,6 +66,13 @@ To run all tests and output coverage:
 lein with-profile test cloverage
 ```
 
+Start REPL and run tests in there:
+
+```
+lein with-profile test repl
+(user/run-all-tests)
+```
+
 ## Component Guide
 
 You can access the component guide at `/#/guide`. It contains all the
