@@ -1,7 +1,14 @@
 (ns rems.text
   (:require [clj-time.core :as time]
             [clj-time.format :as format]
-            [rems.context :as context]))
+            [rems.locales :as locales]
+            [rems.context :as context]
+            [taoensso.tempura :as tempura]))
+
+(defn with-language [lang f]
+  (binding [context/*lang* lang
+            context/*tempura* (partial tempura/tr locales/tconfig [lang])]
+    (f)))
 
 (defn text
   "Return the tempura translation for a given key. Additional fallback
