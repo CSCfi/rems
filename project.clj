@@ -54,6 +54,7 @@
 
   :jvm-opts ["-server" "-Dconf=.lein-env"]
   :source-paths ["src/clj" "src/cljc"]
+  :test-paths ["test/clj"]
   :resource-paths ["resources" "target/cljsbuild"]
   :target-path "target/%s/"
   :main rems.standalone
@@ -130,7 +131,7 @@
                             [lein-figwheel "0.5.16"]]
                   :aot [rems.InvalidRequestException rems.auth.NotAuthorizedException]
 
-                  :source-paths ["env/dev/clj" "test/clj"]
+                  :source-paths ["env/dev/clj"]
                   :resource-paths ["env/dev/resources"]
                   :repl-options {:init-ns rems.standalone
                                  :welcome (rems.standalone/repl-help)}
