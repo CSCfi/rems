@@ -376,32 +376,35 @@
    [:input.form-control {:type "text" :defaultValue value :readOnly true}]])
 
 (defn- application-header [state events]
-  [collapsible/component
-   {:id "header"
-    :title [:span
-            (text :t.applications/state)
-            (when state (list ": " (localize-state state)))]
-    :always [:div
-             [:div.mb-3 {:class (str "state-" state)} (phases (get-application-phases state))]
-             (when-let [c (:comment (last events))]
-               (info-field (text :t.form/comment) c))]
-    :collapse (when (seq events)
-                [:div
-                 [:h4 (text :t.form/events)]
-                 (into [:table#event-table.table.table-hover.mb-0
-                        [:thead
-                         [:tr
-                          [:th (text :t.form/user)]
-                          [:th (text :t.form/event)]
-                          [:th (text :t.form/comment)]
-                          [:th (text :t.form/date)]]]
-                        (into [:tbody]
-                              (for [e events]
-                                [:tr
-                                 [:td (:userid e)]
-                                 [:td (localize-event (:event e))]
-                                 [:td.event-comment (:comment e)]
-                                 [:td (localize-time (:time e))]]))])])}])
+  (let [has-users? (boolean (some :userid events))]
+    [collapsible/component
+     {:id       "header"
+      :title    [:span
+                 (text :t.applications/state)
+                 (when state (list ": " (localize-state state)))]
+      :always   [:div
+                 [:div.mb-3 {:class (str "state-" state)} (phases (get-application-phases state))]
+                 (when-let [c (:comment (last events))]
+                   (info-field (text :t.form/comment) c))]
+      :collapse (when (seq events)
+                  [:div
+                   [:h4 (text :t.form/events)]
+                   (into [:table#event-table.table.table-hover.mb-0
+                          [:thead
+                           [:tr
+                            (when has-users?
+                              [:th (text :t.form/user)])
+                            [:th (text :t.form/event)]
+                            [:th (text :t.form/comment)]
+                            [:th (text :t.form/date)]]]
+                          (into [:tbody]
+                                (for [e events]
+                                  [:tr
+                                   (when has-users?
+                                     [:td (:userid e)])
+                                   [:td (localize-event (:event e))]
+                                   [:td.event-comment (:comment e)]
+                                   [:td (localize-time (:time e))]]))])])}]))
 
 ;; Applicant info
 
