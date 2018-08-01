@@ -58,8 +58,10 @@
 
 (defn repl-help []
   (println "Welcome to REMS!")
-  (println "You can run the server with (start-app)")
-  (println "You can run the tests with (user/run-all-tests)"))
+  (println "Some useful commands:")
+  (println "  Run the server  (start-app)")
+  (println "  Run all tests   (user/run-all-tests)")
+  (println "  Run some tests  (user/run-tests 'rems.test.api.applications 'rems.test.api.actions)"))
 
 (defn -main
   "Arguments can be either arguments to mount/start-with-args, or one of
