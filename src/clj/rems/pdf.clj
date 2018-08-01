@@ -3,14 +3,14 @@
   (:require [clj-pdf.core :refer :all]
             [rems.context :as context]
             [rems.db.applications :as applications]
-            [rems.text :refer [text localize-state with-language]]))
+            [rems.text :refer [text localize-event localize-state localize-time with-language]]))
 
 (defn- render-header [form]
   (let [state (get-in form [:application :state])
+        events (get-in form [:application :events])
         user (:applicant-attributes form)
         catalogue-items (:catalogue-items form)]
     (list
-     ;; TODO events
      [:paragraph
       (text :t.applications/state)
       (when state [:phrase ": " (text (localize-state state))])]
@@ -24,7 +24,12 @@
       (for [ci catalogue-items]
         [:phrase
          (get-in ci [:localizations context/*lang* :title])
-         " (" (:resid ci) ")"])))))
+         " (" (:resid ci) ")"]))
+     [:heading (text :t.form/events)]
+     (into
+      [:table {:header [(text :t.form/user) (text :t.form/event) (text :t.form/comment) (text :t.form/date)]}]
+      (for [e events]
+        [(:userid e) (text (localize-event (:event e))) (:comment e) (localize-time (:time e))])))))
 
 (defn- render-field [field]
   (list
@@ -64,7 +69,7 @@
 (comment
   (def form
     (binding [rems.context/*user* {"eppn" "developer"}]
-      (applications/get-form-for 1)))
+      (applications/get-form-for 9)))
   (with-language :en
     #(clojure.pprint/pprint (render-form form)))
   (with-language :en
