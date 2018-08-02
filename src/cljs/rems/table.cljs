@@ -5,29 +5,29 @@
 (defn column-header [column-definitions col]
   ((get-in column-definitions [col :header] (constantly ""))))
 
-(defn column-value [column-definitions col app]
-  ((get-in column-definitions [col :value]) app))
+(defn column-value [column-definitions col item]
+  ((get-in column-definitions [col :value]) item))
 
-(defn column-values [column-definitions col app]
+(defn column-values [column-definitions col item]
   (let [values (get-in column-definitions [col :values])]
     (if values
-      (values app)
-      [(column-value column-definitions col app)])))
+      (values item)
+      [(column-value column-definitions col item)])))
 
 (defn column-class [column-definitions col]
   (get-in column-definitions [col :class] (name col)))
 
-(defn column-sort-value [column-definitions col app]
+(defn column-sort-value [column-definitions col item]
   ((or (get-in column-definitions [col :sort-value])
        (get-in column-definitions [col :value]))
-   app))
+   item))
 
-(defn- row [column-definitions columns app]
+(defn- row [column-definitions columns item]
   (into [:tr.action]
         (for [c columns]
           (into [:td {:class   (column-class column-definitions c)
                       :data-th (column-header column-definitions c)}]
-                (column-values column-definitions c app)))))
+                (column-values column-definitions c item)))))
 
 (defn- flip [order]
   (case order
@@ -39,8 +39,8 @@
     [old-column (flip old-order)]
     [new-column :asc]))
 
-(defn- apply-sorting [column-definitions [col order] apps]
-  (let [sorted (sort-by #(column-sort-value column-definitions col %) apps)]
+(defn- apply-sorting [column-definitions [col order] items]
+  (let [sorted (sort-by #(column-sort-value column-definitions col %) items)]
     (case order
       :asc sorted
       :desc (reverse sorted))))
