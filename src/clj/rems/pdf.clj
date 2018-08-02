@@ -26,10 +26,12 @@
          (get-in ci [:localizations context/*lang* :title])
          " (" (:resid ci) ")"]))
      [:heading (text :t.form/events)]
-     (into
-      [:table {:header [(text :t.form/user) (text :t.form/event) (text :t.form/comment) (text :t.form/date)]}]
-      (for [e events]
-        [(:userid e) (text (localize-event (:event e))) (:comment e) (localize-time (:time e))])))))
+     (if (empty? events)
+       [:paragraph "–"] ;; TODO localize?
+       (into
+        [:table {:header [(text :t.form/user) (text :t.form/event) (text :t.form/comment) (text :t.form/date)]}]
+        (for [e events]
+          [(:userid e) (text (localize-event (:event e))) (:comment e) (localize-time (:time e))]))))))
 
 (defn- render-field [field]
   (list
@@ -59,6 +61,7 @@
 
 (defn- render-form [form]
   [{}
+   [:heading (text :t.applications/application)]
    (render-header form)
    (render-fields form)
    (render-licenses form)])
