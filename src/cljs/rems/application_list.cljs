@@ -29,12 +29,15 @@
            :header #(text :t.actions/state)}
    :created {:value #(localize-time (:start %))
              :sort-value :start
-             :header #(text :t.actions/created)}
+             :header #(text :t.actions/created)
+             :filterable? false}
    :last-modified {:value #(localize-time (:last-modified %))
                    :sort-value :last-modified
-                   :header #(text :t.actions/last-modified)}
+                   :header #(text :t.actions/last-modified)
+                   :filterable? false}
    :view {:value view-button
-          :sortable? false}})
+          :sortable? false
+          :filterable? false}})
 
 (defn component
   "A table of applications.

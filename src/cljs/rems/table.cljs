@@ -53,6 +53,7 @@
                     :value (fn [item] ...)
                     :sort-value (fn [item] ...)
                     :sortable? bool-defaults-to-true
+                    :filterable? bool-defaults-to-true
                     :class defaults-to-name-of-column-name-kw}
       ...}
    visible-columns: a sequence of keys that occur in column-definitions
@@ -66,11 +67,18 @@
    (into [:tbody
           (into [:tr]
                 (for [c visible-columns]
-                  [:th
-                   {:on-click (when (get-in column-definitions [c :sortable?] true)
-                                #(set-sorting (change-sort sort-column sort-order c)))}
-                   (column-header column-definitions c)
-                   " "
-                   (when (= c sort-column) (sort-symbol sort-order))]))]
+                  (let [sortable? (get-in column-definitions [c :sortable?] true)
+                        filterable? (get-in column-definitions [c :filterable?] true)]
+                    [:th
+                       [:div.column-header
+                          {:on-click (when sortable?
+                                       #(set-sorting (change-sort sort-column sort-order c)))}
+                          (column-header column-definitions c)
+                          " "
+                          (when (= c sort-column) (sort-symbol sort-order))]
+                       (when filterable?
+                         [:input.column-filter ; TODO: event handler
+                            {:type "text"
+                             :placeholder "Filter"}])])))]
          (map (fn [item] ^{:key (id-function item)} [row column-definitions visible-columns item])
               (apply-sorting column-definitions [sort-column sort-order] items)))])
