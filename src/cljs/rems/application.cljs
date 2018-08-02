@@ -206,6 +206,11 @@
                :info "alert-info")}
      contents]))
 
+(defn- pdf-button [id]
+  [:a.btn.btn-secondary
+   {:href (str "/api/applications/" id "/pdf")}
+   "PDF"])
+
 ;; Fields
 
 (defn- set-field-value
@@ -662,7 +667,8 @@
      [:div.mt-3 [applied-resources (:catalogue-items application)]]
      [:div.my-3 [fields application edit-application language]]
      [:div.mb-3 [actions-form app]]
-     [review-request-modal]]))
+     [review-request-modal]
+     [pdf-button (:id app)]]))
 
 ;;;; Entrypoint ;;;;
 
