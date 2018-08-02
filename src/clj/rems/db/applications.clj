@@ -32,8 +32,7 @@
 
 (defn handling-event? [app e]
   (or (contains? #{"approve" "autoapprove" "reject" "return" "review"} (:event e)) ;; definitely not by applicant
-      (and (= "close" (:event e)) (not= (:applicantuserid app) (:userid e))) ;; not by applicant
-      ))
+      (and (= "close" (:event e)) (not= (:applicantuserid app) (:userid e))))) ;; not by applicant
 
 (defn handled? [app]
   (or (contains? #{"approved" "rejected" "returned"} (:state app)) ;; by approver action
@@ -264,9 +263,7 @@
 (defn check-review-timeout
   "Checks for and times out reviews that are past the associated end time."
   [t]
-  (let [reviews (get-applications-to-review)]
-    ;; TODO implement review timeout later
-    ))
+  (let [reviews (get-applications-to-review)])) ;; TODO implement review timeout later
 
 (defn make-draft-application
   "Make a draft application with an initial set of catalogue items."
@@ -560,9 +557,7 @@
         :else
         [{:phase :apply :active? true :text :t.phases/apply}
          {:phase :approve :text :t.phases/approve}
-         {:phase :result :text :t.phases/approved}]
-
-        ))
+         {:phase :result :text :t.phases/approved}]))
 
 ;;; Public event api
 

@@ -92,16 +92,23 @@
            event))
        events))
 
-(defn hide-event-comments [application user]
-  (let [can-see-comments? (contains? (set (applications/get-handlers (:application application))) (get-user-id))]
-    (if can-see-comments?
+(defn- hide-users [events]
+  (map (fn [event]
+         (assoc event :userid nil))
+       events))
+
+(defn hide-sensitive-information [application user]
+  (let [is-handler? (contains? (set (applications/get-handlers (:application application))) user)]
+    (if is-handler?
       application
-      (update-in application [:application :events] hide-sensitive-comments))))
+      (-> application
+        (update-in [:application :events] hide-sensitive-comments)
+        (update-in [:application :events] hide-users)))))
 
 (defn api-get-application [application-id]
   (when (not (empty? (db/get-applications {:id application-id})))
     (-> (applications/get-form-for application-id)
-        (hide-event-comments (get-user-id)))))
+        (hide-sensitive-information (get-user-id)))))
 
 (defn invalid-reviewer? [u]
   (or (str/blank? (get u "eppn"))

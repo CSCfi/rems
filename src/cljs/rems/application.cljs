@@ -290,7 +290,7 @@
                                    :aria-expanded "false"
                                    :aria-controls (str "collapse" id)}
       title " " [:i {:class "fa fa-ellipsis-h"}]]]
-    [:div.collapse {:id (str "collapse" id) }
+    [:div.collapse {:id (str "collapse" id)}
      [:div.license-block textcontent]]]])
 
 (defn- unsupported-field
@@ -376,32 +376,35 @@
    [:input.form-control {:type "text" :defaultValue value :readOnly true}]])
 
 (defn- application-header [state events]
-  [collapsible/component
-   {:id "header"
-    :title [:span
-            (text :t.applications/state)
-            (when state (list ": " (localize-state state)))]
-    :always [:div
-             [:div.mb-3 {:class (str "state-" state)} (phases (get-application-phases state))]
-             (when-let [c (:comment (last events))]
-               (info-field (text :t.form/comment) c))]
-    :collapse (when (seq events)
-                [:div
-                 [:h4 (text :t.form/events)]
-                 (into [:table#event-table.table.table-hover.mb-0
-                        [:thead
-                         [:tr
-                          [:th (text :t.form/user)]
-                          [:th (text :t.form/event)]
-                          [:th (text :t.form/comment)]
-                          [:th (text :t.form/date)]]]
-                        (into [:tbody]
-                              (for [e events]
-                                [:tr
-                                 [:td (:userid e)]
-                                 [:td (localize-event (:event e))]
-                                 [:td.event-comment (:comment e)]
-                                 [:td (localize-time (:time e))]]))])])}])
+  (let [has-users? (boolean (some :userid events))]
+    [collapsible/component
+     {:id       "header"
+      :title    [:span
+                 (text :t.applications/state)
+                 (when state (list ": " (localize-state state)))]
+      :always   [:div
+                 [:div.mb-3 {:class (str "state-" state)} (phases (get-application-phases state))]
+                 (when-let [c (:comment (last events))]
+                   (info-field (text :t.form/comment) c))]
+      :collapse (when (seq events)
+                  [:div
+                   [:h4 (text :t.form/events)]
+                   (into [:table#event-table.table.table-hover.mb-0
+                          [:thead
+                           [:tr
+                            (when has-users?
+                              [:th (text :t.form/user)])
+                            [:th (text :t.form/event)]
+                            [:th (text :t.form/comment)]
+                            [:th (text :t.form/date)]]]
+                          (into [:tbody]
+                                (for [e events]
+                                  [:tr
+                                   (when has-users?
+                                     [:td (:userid e)])
+                                   [:td (localize-event (:event e))]
+                                   [:td.event-comment (:comment e)]
+                                   [:td (localize-time (:time e))]]))])])}]))
 
 ;; Applicant info
 
@@ -523,7 +526,7 @@
                   :recipients (map :userid reviewers)}
          :handler (fn [resp]
                     (rf/dispatch [::send-third-party-review-request-success true])
-                    (rf/dispatch [::start-fetch-application application-id ])
+                    (rf/dispatch [::start-fetch-application application-id])
                     (scroll-to-top!))}))
 
 (rf/reg-event-fx
@@ -573,8 +576,7 @@
             :item->value identity
             :search-fields [:name :email]
             :add-fn #(rf/dispatch [::add-selected-third-party-reviewer %])
-            :remove-fn #(rf/dispatch [::remove-selected-third-party-reviewer %])
-            }]]]
+            :remove-fn #(rf/dispatch [::remove-selected-third-party-reviewer %])}]]]
         [:div.modal-footer
          [:button.btn.btn-secondary {:data-dismiss "modal"} (text :t.actions/cancel)]
          [:button.btn.btn-primary {:data-dismiss "modal"

@@ -49,7 +49,7 @@
    :value (s/maybe s/Str)})
 
 (def Event
-  {:userid s/Str
+  {:userid (s/maybe s/Str)
    :round s/Num
    :event s/Str
    :comment (s/maybe s/Str)
