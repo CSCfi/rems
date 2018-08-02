@@ -413,6 +413,16 @@
                              :comment "is ok"})
                  app
                  :status))))
+    (testing "approve"
+      (is (= 200
+             (-> (request :put (str "/api/applications/judge"))
+                 (authenticate api-key approver)
+                 (json-body {:command "approve"
+                             :application-id app-id
+                             :round 0
+                             :comment "I approve this"})
+                 app
+                 :status))))
     (testing "events of approver"
       (let [events (-> (request :get (str "/api/applications/" app-id))
                        (authenticate api-key approver)
@@ -422,7 +432,8 @@
                        :events)]
         (is (= [{:userid applicant :comment nil :event "apply"}
                 {:userid reviewer :comment "pls revu" :event "review-request"}
-                {:userid reviewer :comment "is ok" :event "third-party-review"}]
+                {:userid reviewer :comment "is ok" :event "third-party-review"}
+                {:userid approver :comment "I approve this" :event "approve"}]
                (map #(select-keys % [:userid :comment :event]) events)))))
     (testing "events of reviewer"
       (let [events (-> (request :get (str "/api/applications/" app-id))
@@ -433,7 +444,8 @@
                        :events)]
         (is (= [{:userid applicant :comment nil :event "apply"}
                 {:userid reviewer :comment "pls revu" :event "review-request"}
-                {:userid reviewer :comment "is ok" :event "third-party-review"}]
+                {:userid reviewer :comment "is ok" :event "third-party-review"}
+                {:userid approver :comment "I approve this" :event "approve"}]
                (map #(select-keys % [:userid :comment :event]) events)))))
     (testing "events of applicant"
       (let [events (-> (request :get (str "/api/applications/" app-id))
@@ -444,9 +456,10 @@
                        :events)]
         (is (= [{:userid nil :comment nil :event "apply"}
                 {:userid nil :comment nil :event "review-request"}
-                {:userid nil :comment nil :event "third-party-review"}]
+                {:userid nil :comment nil :event "third-party-review"}
+                {:userid nil :comment "I approve this" :event "approve"}]
                (map #(select-keys % [:userid :comment :event]) events))
-            "does not see review event comments nor users")))))
+            "does not see review event comments nor users, but sees approval comment")))))
 ;; TODO non-happy path tests for review?
 
 ;; TODO test for event filtering when it gets implemented
