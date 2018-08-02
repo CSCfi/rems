@@ -8,6 +8,7 @@
             [rems.db.core :as db]
             [rems.db.users :as users]
             [rems.form :as form]
+            [rems.pdf :as pdf]
             [rems.util :refer [get-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
@@ -147,6 +148,20 @@
         (if-let [app (api-get-application application-id)]
           (ok app)
           (not-found! "not found"))))
+
+    (GET "/:application-id/pdf" []
+       :summary "Get a pdf version of an application."
+       :path-params [application-id :- (describe s/Num "application id")]
+       :produces ["application/pdf"]
+       (check-user)
+       (binding [context/*lang* :en]
+         (if-let [app (api-get-application application-id)]
+           (-> app
+               (pdf/application-to-pdf-bytes)
+               (java.io.ByteArrayInputStream.)
+               (ok)
+               (content-type "application/pdf"))
+           (not-found! "not found"))))
 
     (PUT "/save" []
       :summary "Create a new application, change an existing one or submit an application"

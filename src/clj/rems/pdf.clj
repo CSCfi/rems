@@ -66,6 +66,11 @@
 (defn application-to-pdf [form out]
   (pdf (render-form form) out))
 
+(defn application-to-pdf-bytes [form]
+  (let [out (java.io.ByteArrayOutputStream.)]
+    (pdf (render-form form) out)
+    (.toByteArray out)))
+
 (comment
   (def form
     (binding [rems.context/*user* {"eppn" "developer"}]
