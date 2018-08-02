@@ -574,3 +574,22 @@
                    app
                    read-body)]
       (is (= "invalid api key" body)))))
+
+(deftest pdf-smoke-test
+  (testing "not found"
+    (let [response (-> (request :get (str "/api/applications/9999999/pdf"))
+                       (authenticate "42" "developer")
+                       app)]
+      (is (= 404 (:status response)))))
+  (testing "not authorized"
+    (let [response (-> (request :get (str "/api/applications/2/pdf"))
+                       (authenticate "42" "alice")
+                       app)]
+      (is (= 401 (:status response)))))
+  (testing "success"
+    (let [response (-> (request :get (str "/api/applications/2/pdf"))
+                       (authenticate "42" "developer")
+                       app)]
+      (is (= 200 (:status response)))
+      (is (= "application/pdf" (get-in response [:headers "Content-Type"])))
+      (is (.startsWith (slurp (:body response)) "%PDF-1.")))))
