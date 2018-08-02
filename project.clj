@@ -63,6 +63,7 @@
 
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-cprop "1.0.3"]
+            [lein-doo "0.1.10"]
             [lein-uberwar "0.2.0"]
             [lein-shell "0.5.0"]
             [migratus-lein "0.5.7"]]
@@ -87,6 +88,10 @@
   :test-selectors {:default (complement :integration)
                    :all (constantly true)}
   :eftest {:multithread? false} ;; integration tests aren't safe to run in parallel
+
+  ;; cljs testing
+  :doo {:build "test"
+        :alias {:default [:phantom]}}
 
   :profiles
   {:uberjar {:omit-source true
@@ -116,6 +121,10 @@
    :test          [:project/dev :project/test :profiles/test]
 
    :project/dev  {:dependencies [[pjstadig/humane-test-output "0.8.3"]
+                                 ;; rrb-vector doesn't compile cleanly on cljs right now, see
+                                 ;; https://github.com/emezeske/lein-cljsbuild/issues/469
+                                 [quantum/org.clojure.core.rrb-vector "0.0.12"]
+                                 [doo "0.1.10" :exclusions [rrb-vector]]
                                  [eftest "0.5.2"]
                                  [binaryage/devtools "0.9.10"]
                                  [com.cemerick/piggieback "0.2.2"]
@@ -152,7 +161,14 @@
                       :source-map true
                       :optimizations :none
                       :pretty-print true
-                      :preloads [devtools.preload re-frisk.preload]}}}}}
+                      :preloads [devtools.preload re-frisk.preload]}}
+                    :test
+                    {:source-paths ["src/cljs" "src/cljc" "test/cljs"]
+                     :compiler
+                     {:output-to "target/cljsbuild/test/test.js"
+                      :output-dir "target/cljsbuild/test/out"
+                      :main rems.cljs-tests
+                      :optimizations :none}}}}}
    :project/test {:resource-paths ["env/test/resources"]}
    :profiles/dev {}
    :profiles/test {}})

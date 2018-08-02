@@ -73,6 +73,14 @@ lein with-profile test repl
 (user/run-all-tests)
 ```
 
+#### Clojurescript tests
+
+Install phantomjs and run with
+
+```
+lein doo
+```
+
 ## Component Guide
 
 You can access the component guide at `/#/guide`. It contains all the
