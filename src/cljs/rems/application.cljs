@@ -375,8 +375,18 @@
    [:label title]
    [:input.form-control {:type "text" :defaultValue value :readOnly true}]])
 
+(defn- format-event [event]
+  {:userid  (:userid event)
+   :event   (localize-event (:event event))
+   :comment (:comment event)
+   :time    (localize-time (:time event))})
+
 (defn- application-header [state events]
-  (let [has-users? (boolean (some :userid events))]
+  (let [has-users? (boolean (some :userid events))
+        ; the event times have millisecond differences, so they need to be formatted to minute precision before deduping
+        events (->> events
+                    (map format-event)
+                    dedupe)]
     [collapsible/component
      {:id       "header"
       :title    [:span
@@ -402,9 +412,9 @@
                                   [:tr
                                    (when has-users?
                                      [:td (:userid e)])
-                                   [:td (localize-event (:event e))]
+                                   [:td (:event e)]
                                    [:td.event-comment (:comment e)]
-                                   [:td (localize-time (:time e))]]))])])}]))
+                                   [:td (:time e)]]))])])}]))
 
 ;; Applicant info
 
