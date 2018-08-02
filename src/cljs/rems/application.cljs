@@ -380,8 +380,20 @@
    [:label title]
    [:input.form-control {:type "text" :defaultValue value :readOnly true}]])
 
+(defn- format-event [event]
+  {:userid  (:userid event)
+   :event   (localize-event (:event event))
+   :comment (:comment event)
+   :time    (localize-time (:time event))})
+
 (defn- application-header [state events]
-  (let [has-users? (boolean (some :userid events))]
+  (let [has-users? (boolean (some :userid events))
+        ; the event times have millisecond differences, so they need to be formatted to minute precision before deduping
+        events (->> events
+                    (map format-event)
+                    dedupe)
+        last-event (when (:comment (last events))
+                        (last events))]
     [collapsible/component
      {:id       "header"
       :title    [:span
@@ -389,8 +401,10 @@
                  (when state (list ": " (localize-state state)))]
       :always   [:div
                  [:div.mb-3 {:class (str "state-" state)} (phases (get-application-phases state))]
-                 (when-let [c (:comment (last events))]
-                   (info-field (text :t.form/comment) c))]
+                 (when last-event
+                   (info-field (text :t.form/comment)
+                               (str (:event last-event) ": "
+                                    (:comment last-event))))]
       :collapse (when (seq events)
                   [:div
                    [:h4 (text :t.form/events)]
@@ -407,9 +421,9 @@
                                   [:tr
                                    (when has-users?
                                      [:td (:userid e)])
-                                   [:td (localize-event (:event e))]
+                                   [:td (:event e)]
                                    [:td.event-comment (:comment e)]
-                                   [:td (localize-time (:time e))]]))])])}]))
+                                   [:td (:time e)]]))])])}]))
 
 ;; Applicant info
 
