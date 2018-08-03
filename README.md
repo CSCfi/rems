@@ -75,7 +75,13 @@ lein with-profile test repl
 
 #### Clojurescript tests
 
-Just run
+First make sure you have the npm depenencies with
+
+```
+lein deps
+```
+
+and then just run
 
 ```
 lein doo
