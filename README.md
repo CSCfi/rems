@@ -73,6 +73,22 @@ lein with-profile test repl
 (user/run-all-tests)
 ```
 
+#### Clojurescript tests
+
+First make sure you have the npm depenencies with
+
+```
+lein deps
+```
+
+and then just run
+
+```
+lein doo
+```
+
+to run tests in Headless Chrome via Karma.
+
 ## Component Guide
 
 You can access the component guide at `/#/guide`. It contains all the

@@ -17,3 +17,4 @@
 /profiles.clj
 /resources/public/css/compiled/screen.css
 /target/
+/node_modules
