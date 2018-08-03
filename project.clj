@@ -95,7 +95,7 @@
                           [karma-chrome-launcher "2.2.0"]]}
   :doo {:build "test"
         :paths {:karma "node_modules/karma/bin/karma"}
-        :alias {:default [:chrome]}}
+        :alias {:default [:chrome-headless]}}
 
   :profiles
   {:uberjar {:omit-source true

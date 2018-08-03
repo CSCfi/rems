@@ -87,11 +87,7 @@ and then just run
 lein doo
 ```
 
-to run tests in Chrome via Karma. Alternatively, you can use phantomjs with
-
-```
-lein doo phantom
-```
+to run tests in Headless Chrome via Karma.
 
 ## Component Guide
 

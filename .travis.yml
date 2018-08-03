@@ -1,6 +1,8 @@
 language: clojure
 lein: 2.8.1
 dist: trusty
+addons:
+  chrome: stable
 branches:
   only:
     - master
@@ -23,6 +25,6 @@ script:
   # run all tests with coverage tracking:
   - lein with-profile test cloverage
   # frontend tests on phantomjs in travis for now
-  - lein doo phantom test once
+  - lein doo chrome-headless test once
   - lein uberwar
   - ./dev_transfer.sh transfer-test-data/demo_liferay_20180115.sql transfer-test-data/demo_rems_20180115.sql && lein run validate
