@@ -63,7 +63,6 @@
 
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-cprop "1.0.3"]
-            [lein-doo "0.1.10"]
             [lein-uberwar "0.2.0"]
             [lein-shell "0.5.0"]
             [migratus-lein "0.5.7"]]
@@ -135,7 +134,8 @@
                                  [se.haleby/stub-http "0.2.5"]
                                  [re-frisk "0.5.4"]]
 
-                  :plugins [[com.jakemccrary/lein-test-refresh "0.21.1"]
+                  :plugins [[lein-doo "0.1.10"]
+                            [com.jakemccrary/lein-test-refresh "0.21.1"]
                             [lein-eftest "0.5.2"]
                             [lein-cloverage "1.0.10"]
                             [lein-figwheel "0.5.16"]]
