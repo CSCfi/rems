@@ -75,10 +75,16 @@ lein with-profile test repl
 
 #### Clojurescript tests
 
-Install phantomjs and run with
+Just run
 
 ```
 lein doo
+```
+
+to run tests in Chrome via Karma. Alternatively, you can use phantomjs with
+
+```
+lein doo phantom
 ```
 
 ## Component Guide

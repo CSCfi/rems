@@ -22,7 +22,7 @@ script:
   - DATABASE_URL=invalid lein test
   # run all tests with coverage tracking:
   - lein with-profile test cloverage
-  # frontend tests
+  # frontend tests on phantomjs in travis for now
   - lein doo phantom test once
   - lein uberwar
   - ./dev_transfer.sh transfer-test-data/demo_liferay_20180115.sql transfer-test-data/demo_rems_20180115.sql && lein run validate

@@ -63,6 +63,7 @@
 
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-cprop "1.0.3"]
+            [lein-npm "0.6.2"]
             [lein-uberwar "0.2.0"]
             [lein-shell "0.5.0"]
             [migratus-lein "0.5.7"]]
@@ -89,8 +90,12 @@
   :eftest {:multithread? false} ;; integration tests aren't safe to run in parallel
 
   ;; cljs testing
+  :npm {:devDependencies [[karma "2.0.5"]
+                          [karma-cljs-test "0.1.0"]
+                          [karma-chrome-launcher "2.2.0"]]}
   :doo {:build "test"
-        :alias {:default [:phantom]}}
+        :paths {:karma "node_modules/karma/bin/karma"}
+        :alias {:default [:chrome]}}
 
   :profiles
   {:uberjar {:omit-source true
