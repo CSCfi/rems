@@ -1,6 +1,7 @@
 (ns rems.table
   "Generic sortable table widget"
-  (:require [rems.atoms :refer [sort-symbol]]))
+  (:require [rems.atoms :refer [sort-symbol]]
+            [clojure.string :as string]))
 
 (defn column-header [column-definitions col]
   ((get-in column-definitions [col :header] (constantly ""))))
@@ -45,6 +46,19 @@
       :asc sorted
       :desc (reverse sorted))))
 
+(defn matches-filter [column-definitions col filter-value item]
+  (let [actual-value (column-sort-value column-definitions col item)]
+    (string/includes? (.toLowerCase actual-value)
+                      (.toLowerCase filter-value))))
+
+(defn matches-filters [column-definitions filters item]
+  (every? (fn [[col filter-value]] ()
+            (matches-filter column-definitions col filter-value item))
+          filters))
+
+(defn apply-filtering [column-definitions filters items]
+  (filter #(matches-filters column-definitions filters %) items))
+
 (defn component
   "Table component. Args:
 
@@ -81,4 +95,6 @@
                             {:type "text"
                              :placeholder "Filter"}])])))]
          (map (fn [item] ^{:key (id-function item)} [row column-definitions visible-columns item])
-              (apply-sorting column-definitions [sort-column sort-order] items)))])
+              (->> items
+                   (apply-filtering column-definitions {}) ; TODO: parameterize filters
+                   (apply-sorting column-definitions [sort-column sort-order]))))])
