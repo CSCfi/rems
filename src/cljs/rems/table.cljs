@@ -93,11 +93,18 @@
                       (when (= column sort-column)
                         (sort-symbol sort-order))]
                      (when filterable?
-                       [:input.column-filter
-                        {:type        "text"
-                         :placeholder "Filter"
-                         :on-input    (fn [event] (set-sorting
-                                                    (assoc-in sorting [:filters column] (-> event .-target .-value))))}])])))]
+                       [:span.column-filter
+                        [:input
+                         {:type        "text"
+                          :name        (str (name column) "-search")
+                          :value       (str (column filters))
+                          :placeholder ""
+                          :on-input    (fn [event] (set-sorting
+                                                     (assoc-in sorting [:filters column] (-> event .-target .-value))))}]
+                        (when (not= "" (get filters column ""))
+                          [:span.reset-button.fa.fa-times
+                           {:on-click (fn [] (set-sorting
+                                               (assoc-in sorting [:filters column] "")))}])])])))]
          (map (fn [item] ^{:key (id-function item)} [row column-definitions visible-columns item])
               (->> items
                    (apply-filtering column-definitions filters)

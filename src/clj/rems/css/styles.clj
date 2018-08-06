@@ -69,7 +69,18 @@
                            {:white-space "nowrap"}]]
                          [:.rems-table
                           [:.column-filter
-                           {:width "100%"}]]
+                           {:position "relative"}
+                           [:input
+                            {:width "100%"}]
+                           [:.reset-button
+                            {:position   "absolute"
+                             :right      "0px"
+                             :top        "50%"
+                             :margin-top "-0.5em"           ; center vertically
+                             :color      "#ccc"
+                             :cursor     "pointer"}]
+                           [:.reset-button:hover
+                            {:color "#888"}]]]
                          [:.language-switcher
                           {:padding ".5em .5em"}]))
    (stylesheet/at-media {:min-width (u/px 480)}
