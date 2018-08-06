@@ -102,7 +102,7 @@
                           :on-input    (fn [event] (set-sorting
                                                      (assoc-in sorting [:filters column] (-> event .-target .-value))))}]
                         (when (not= "" (get filters column ""))
-                          [:span.reset-button.fa.fa-times
+                          [:span.reset-button.fa.fa-backspace
                            {:on-click (fn [] (set-sorting
                                                (assoc-in sorting [:filters column] "")))}])])])))]
          (map (fn [item] ^{:key (id-function item)} [row column-definitions visible-columns item])
