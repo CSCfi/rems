@@ -11,5 +11,5 @@
 
 (defn sort-symbol [sort-order]
   [:i.fa {:class (case sort-order
-                   :asc "fa-arrow-down"
-                   :desc "fa-arrow-up")}])
+                   :asc "fa-arrow-up"
+                   :desc "fa-arrow-down")}])
