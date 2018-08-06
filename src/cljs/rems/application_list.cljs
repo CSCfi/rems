@@ -44,7 +44,7 @@
 
    columns should be a subsequence of +all-columns+, for instance +default-columns+.
 
-   sorting should be a pair [column order] where
+   sorting should be a map {:sort-column column, :sort-order order} where
      - order is :asc or :desc
      - column is one of :id :applicant :resource :created :state
 
@@ -69,8 +69,8 @@
   [:div
    (component-info component)
    (example "empty list"
-            [component +default-columns+ [:id :asc] prn []])
+            [component +default-columns+ {:sort-column :id, :sort-order :asc} prn []])
    (example "applications, default order"
-            [component +default-columns+ [:id :asc] prn +example-applications+])
+            [component +default-columns+ {:sort-column :id, :sort-order :asc} prn +example-applications+])
    (example "applications, descending date, all columns"
-            [component +all-columns+ [:created :desc] prn +example-applications+])])
+            [component +all-columns+ {:sort-column :created, :sort-order :desc} prn +example-applications+])])

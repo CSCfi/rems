@@ -20,8 +20,7 @@
 
 (defn column-sort-value [column-definitions col item]
   ((or (get-in column-definitions [col :sort-value])
-       (get-in column-definitions [col :value]))
-   item))
+       (get-in column-definitions [col :value])) item))
 
 (defn- row [column-definitions columns item]
   (into [:tr.action]
@@ -35,10 +34,10 @@
     :asc :desc
     :desc :asc))
 
-(defn- change-sort [old-column old-order new-column]
+(defn- change-sort-order [old-column old-order new-column]
   (if (= old-column new-column)
-    [old-column (flip old-order)]
-    [new-column :asc]))
+    (flip old-order)
+    :asc))
 
 (defn- apply-sorting [column-definitions [col order] items]
   (let [sorted (sort-by #(column-sort-value column-definitions col %) items)]
@@ -71,30 +70,35 @@
                     :class defaults-to-name-of-column-name-kw}
       ...}
    visible-columns: a sequence of keys that occur in column-definitions
-   [sort-column sort-order]: a pair of a colum name and :asc or :desc
+   sorting: sorting and filtering options, for example {:sort-column :name, :sort-order :asc}
+   set-sorting: a callback that is called with a new sorting when it changes
    id-function: function for setting react key for row, should return unique values
-   set-sorting: callback to call with [col order] when the sort is changed
    items: sequence of items to render
    opts: possibly options with {:class classes for the table}"
-  [column-definitions visible-columns [sort-column sort-order] set-sorting id-function items & [opts]]
+  [column-definitions visible-columns {:keys [sort-column sort-order filters] :as sorting} set-sorting id-function items & [opts]]
   [:table.rems-table (when (:class opts) (select-keys opts [:class]))
    (into [:tbody
           (into [:tr]
-                (for [c visible-columns]
-                  (let [sortable? (get-in column-definitions [c :sortable?] true)
-                        filterable? (get-in column-definitions [c :filterable?] true)]
+                (for [column visible-columns]
+                  (let [sortable? (get-in column-definitions [column :sortable?] true)
+                        filterable? (get-in column-definitions [column :filterable?] true)]
                     [:th
-                       [:div.column-header
-                          {:on-click (when sortable?
-                                       #(set-sorting (change-sort sort-column sort-order c)))}
-                          (column-header column-definitions c)
-                          " "
-                          (when (= c sort-column) (sort-symbol sort-order))]
-                       (when filterable?
-                         [:input.column-filter ; TODO: event handler
-                            {:type "text"
-                             :placeholder "Filter"}])])))]
+                     [:div.column-header
+                      {:on-click (when sortable?
+                                   (fn [] (set-sorting (-> sorting
+                                                           (assoc :sort-column column)
+                                                           (assoc :sort-order (change-sort-order sort-column sort-order column))))))}
+                      (column-header column-definitions column)
+                      " "
+                      (when (= column sort-column)
+                        (sort-symbol sort-order))]
+                     (when filterable?
+                       [:input.column-filter
+                        {:type        "text"
+                         :placeholder "Filter"
+                         :on-input    (fn [event] (set-sorting
+                                                    (assoc-in sorting [:filters column] (-> event .-target .-value))))}])])))]
          (map (fn [item] ^{:key (id-function item)} [row column-definitions visible-columns item])
               (->> items
-                   (apply-filtering column-definitions {}) ; TODO: parameterize filters
+                   (apply-filtering column-definitions filters)
                    (apply-sorting column-definitions [sort-column sort-order]))))])
