@@ -5,14 +5,22 @@
 (deftest matches-filter-test
   (let [column-definitions {:fname-col {:sort-value :first-name}
                             :lname-col {:sort-value :last-name}}]
-    (testing "mismatch"
-      (is (= false (matches-filter column-definitions :fname-col "foo" {:first-name "bar"}))))
-    (testing "exact match"
-      (is (= true (matches-filter column-definitions :fname-col "foo" {:first-name "foo"}))))
-    (testing "substring match"
-      (is (= true (matches-filter column-definitions :fname-col "ba" {:first-name "foobar"}))))
-    (testing "case insensitive match"
-      (is (= true (matches-filter column-definitions :fname-col "Abc" {:first-name "abC"}))))))
+    (testing "string column"
+      (testing "mismatch"
+        (is (= false (matches-filter column-definitions :fname-col "foo" {:first-name "bar"}))))
+      (testing "exact match"
+        (is (= true (matches-filter column-definitions :fname-col "foo" {:first-name "foo"}))))
+      (testing "substring match"
+        (is (= true (matches-filter column-definitions :fname-col "ba" {:first-name "foobar"}))))
+      (testing "case insensitive match"
+        (is (= true (matches-filter column-definitions :fname-col "Abc" {:first-name "abC"})))))
+    (testing "numeric column"
+      (testing "mismatch"
+        (is (= false (matches-filter column-definitions :fname-col "42" {:first-name 123}))))
+      (testing "exact match"
+        (is (= true (matches-filter column-definitions :fname-col "123" {:first-name 123}))))
+      (testing "substring match"
+        (is (= true (matches-filter column-definitions :fname-col "2" {:first-name 123})))))))
 
 (deftest matches-filters-test
   (let [column-definitions {:fname-col {:sort-value :first-name}

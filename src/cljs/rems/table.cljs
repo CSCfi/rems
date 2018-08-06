@@ -46,7 +46,7 @@
       :desc (reverse sorted))))
 
 (defn matches-filter [column-definitions col filter-value item]
-  (let [actual-value (column-sort-value column-definitions col item)]
+  (let [actual-value (.toString (column-sort-value column-definitions col item))]
     (string/includes? (.toLowerCase actual-value)
                       (.toLowerCase filter-value))))
 
