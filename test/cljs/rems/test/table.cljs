@@ -3,24 +3,24 @@
             [rems.table :refer [matches-filter matches-filters apply-filtering]]))
 
 (deftest matches-filter-test
-  (let [column-definitions {:fname-col {:sort-value :first-name}
-                            :lname-col {:sort-value :last-name}}]
+  (let [column-definitions {:string-col  {:sort-value :string}
+                            :numeric-col {:sort-value :numeric}}]
     (testing "string column"
       (testing "mismatch"
-        (is (= false (matches-filter column-definitions :fname-col "foo" {:first-name "bar"}))))
+        (is (= false (matches-filter column-definitions :string-col "foo" {:string "bar"}))))
       (testing "exact match"
-        (is (= true (matches-filter column-definitions :fname-col "foo" {:first-name "foo"}))))
+        (is (= true (matches-filter column-definitions :string-col "foo" {:string "foo"}))))
       (testing "substring match"
-        (is (= true (matches-filter column-definitions :fname-col "ba" {:first-name "foobar"}))))
+        (is (= true (matches-filter column-definitions :string-col "ba" {:string "foobar"}))))
       (testing "case insensitive match"
-        (is (= true (matches-filter column-definitions :fname-col "Abc" {:first-name "abC"})))))
+        (is (= true (matches-filter column-definitions :string-col "Abc" {:string "abC"})))))
     (testing "numeric column"
       (testing "mismatch"
-        (is (= false (matches-filter column-definitions :fname-col "42" {:first-name 123}))))
+        (is (= false (matches-filter column-definitions :numeric-col "42" {:numeric 123}))))
       (testing "exact match"
-        (is (= true (matches-filter column-definitions :fname-col "123" {:first-name 123}))))
+        (is (= true (matches-filter column-definitions :numeric-col "123" {:numeric 123}))))
       (testing "substring match"
-        (is (= true (matches-filter column-definitions :fname-col "2" {:first-name 123})))))))
+        (is (= true (matches-filter column-definitions :numeric-col "2" {:numeric 123})))))))
 
 (deftest matches-filters-test
   (let [column-definitions {:fname-col {:sort-value :first-name}
