@@ -16,13 +16,12 @@
 (rf/reg-event-db
   ::set-sorting
   (fn [db [_ sorting]]
-    (println ::set-sorting sorting)
-    (assoc db ::sorting2 sorting)))
+    (assoc db ::sorting sorting)))
 
 (rf/reg-sub
   ::sorting
   (fn [db _]
-    (or (::sorting2 db)
+    (or (::sorting db)
         {:sort-column :name
          :sort-order  :asc})))
 
