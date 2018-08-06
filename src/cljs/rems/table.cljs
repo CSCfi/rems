@@ -1,7 +1,7 @@
 (ns rems.table
   "Generic sortable table widget"
   (:require [rems.atoms :refer [sort-symbol]]
-            [clojure.string :as string]))
+            [clojure.string :as str]))
 
 (defn column-header [column-definitions col]
   ((get-in column-definitions [col :header] (constantly ""))))
@@ -47,8 +47,8 @@
 
 (defn matches-filter [column-definitions col filter-value item]
   (let [actual-value (str (column-sort-value column-definitions col item))]
-    (string/includes? (string/lower-case actual-value)
-                      (string/lower-case filter-value))))
+    (str/includes? (str/lower-case actual-value)
+                   (str/lower-case filter-value))))
 
 (defn matches-filters [column-definitions filters item]
   (every? (fn [[col filter-value]] ()
