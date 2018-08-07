@@ -256,6 +256,19 @@
                             :readOnly readonly
                             :onChange (set-field-value id)}]])
 
+(defn- date-field
+  [{:keys [title id readonly optional value min max validation] :as opts}]
+  [basic-field opts
+   [:input.form-control {:type "date"
+                         :name (id-to-name id)
+                         :class (when validation "is-invalid")
+                         ; using :value would reset user input while the user is typing, thus making the component unusable
+                         :defaultValue value
+                         :readOnly readonly
+                         :min min
+                         :max max
+                         :onChange (set-field-value id)}]])
+
 (defn- label [{title :title}]
   [:div.form-group
    [:label title]])
@@ -307,6 +320,7 @@
   (case (:type f)
     "text" [text-field f]
     "texta" [texta-field f]
+    "date" [date-field f]
     "label" [label f]
     "license" (case (:licensetype f)
                 "link" [link-license f]
@@ -768,6 +782,9 @@
             [:form
              [field {:type "texta" :title "Title" :inputprompt "prompt"
                      :validation {:key :t.form.validation.required}}]])
+   (example "field of type \"date\""
+            [:form
+             [field {:type "date" :title "Title"}]])
    (example "optional field"
             [:form
              [field {:type "texta" :optional "true" :title "Title" :inputprompt "prompt"}]])
@@ -802,7 +819,8 @@
               :items [{:id 1 :type "text" :title "Field 1" :inputprompt "prompt 1"}
                       {:id 2 :type "label" :title "Please input your wishes below."}
                       {:id 3 :type "texta" :title "Field 2" :optional true :inputprompt "prompt 2"}
-                      {:id 4 :type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]
+                      {:id 4 :type "unsupported" :title "Field 3" :inputprompt "prompt 3"}
+                      {:id 5 :type "date" :title "Field 4"}]
               :licenses [{:id 4 :type "license" :title "" :textcontent "" :licensetype "text"
                           :localizations {:en {:title "A Text License" :textcontent lipsum}}}
                          {:id 5 :type "license" :licensetype "link" :title "" :textcontent ""
