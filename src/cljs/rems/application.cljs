@@ -226,34 +226,35 @@
     [:div {:class "text-danger"}
      (text-format (:key validation) title)]))
 
-(defn- text-field
-  [{:keys [title id inputprompt readonly optional value validation]}]
+(defn- basic-field [{:keys [title id optional validation]} field-component]
   [:div.form-group.field
    [:label {:for (id-to-name id)}
     title " "
     (when optional
       (text :t.form/optional))]
+   field-component
+   [field-validation-message validation title]])
+
+(defn- text-field
+  [{:keys [title id inputprompt readonly optional value validation] :as opts}]
+  [basic-field opts
    [:input.form-control {:type "text"
                          :name (id-to-name id)
                          :placeholder inputprompt
                          :class (when validation "is-invalid")
-                         :value value :readOnly readonly
-                         :onChange (set-field-value id)}]
-   [field-validation-message validation title]])
+                         :value value
+                         :readOnly readonly
+                         :onChange (set-field-value id)}]])
 
 (defn- texta-field
-  [{:keys [title id inputprompt readonly optional value validation]}]
-  [:div.form-group.field
-   [:label {:for (id-to-name id)}
-    title " "
-    (when optional
-      (text :t.form/optional))]
+  [{:keys [title id inputprompt readonly optional value validation] :as opts}]
+  [basic-field opts
    [:textarea.form-control {:name (id-to-name id)
                             :placeholder inputprompt
                             :class (when validation "is-invalid")
-                            :value value :readOnly readonly
-                            :onChange (set-field-value id)}]
-   [field-validation-message validation title]])
+                            :value value
+                            :readOnly readonly
+                            :onChange (set-field-value id)}]])
 
 (defn- label [{title :title}]
   [:div.form-group
