@@ -75,22 +75,17 @@
 
 ;; Because we want to display multiple independently sortable
 ;; application tables, we store a map of sort types in the db.
-;;
-;; Use (rf/dispatch [::sort :my-key [:field :asc]]) to set a
-;; sort type, and (rf/subscribe [::sort :my-key]) to get it
-;; back.
-;;
-;; See rems.application-list for more info about sort types.
 
 (rf/reg-sub
- ::sort
- (fn [db [_ key]]
-   (get-in db [::sort key] [:last-modified :desc])))
+  ::sorting
+  (fn [db [_ key]]
+    (get-in db [::sorting key] {:sort-column :last-modified
+                                :sort-order  :desc})))
 
 (rf/reg-event-db
- ::sort
- (fn [db [_ key sort]]
-   (assoc-in db [::sort key] sort)))
+  ::set-sorting
+  (fn [db [_ key sorting]]
+    (assoc-in db [::sorting key] sorting)))
 
 ;; TODO not implemented
 (defn- load-application-states-button []
@@ -125,8 +120,8 @@
     [:div.actions.alert.alert-success (text :t.actions/empty)]
     [application-list/component
      application-list/+all-columns+
-     @(rf/subscribe [::sort key])
-     #(rf/dispatch [::sort key %])
+     @(rf/subscribe [::sorting key])
+     #(rf/dispatch [::set-sorting key %])
      apps]))
 
 (defn- open-reviews [apps]
@@ -151,8 +146,8 @@
        top-buttons
        [application-list/component
         [:id :resource :applicant :state :last-modified :view]
-        @(rf/subscribe [::sort key])
-        #(rf/dispatch [::sort key %])
+        @(rf/subscribe [::sorting key])
+        #(rf/dispatch [::set-sorting key %])
         apps]])))
 
 (defn- handled-approvals [apps loading?]

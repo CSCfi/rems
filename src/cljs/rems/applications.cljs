@@ -39,20 +39,22 @@
    (::loading? db)))
 
 (rf/reg-sub
- ::sort
- (fn [db _]
-   (or (::sort db) [:created :desc])))
+  ::sorting
+  (fn [db _]
+    (or (::sorting db)
+        {:sort-column :created
+         :sort-order  :desc})))
 
 (rf/reg-event-db
- ::sort
- (fn [db [_ order]]
-   (assoc db ::sort order)))
+  ::set-sorting
+  (fn [db [_ order]]
+    (assoc db ::sorting order)))
 
 (defn applications-page []
   (let [apps (rf/subscribe [::my-applications])
         loading? (rf/subscribe [::loading?])
-        sort (rf/subscribe [::sort])
-        set-sort #(rf/dispatch [::sort %])]
+        sorting (rf/subscribe [::sorting])
+        set-sorting #(rf/dispatch [::set-sorting %])]
     (fn []
       [:div
        [:h2 (text :t.applications/applications)]
@@ -63,4 +65,4 @@
              [:div.applications.alert.alert-success (text :t/applications.empty)]
 
              :else
-             [application-list/component application-list/+all-columns+ @sort set-sort @apps])])))
+             [application-list/component application-list/+all-columns+ @sorting set-sorting @apps])])))

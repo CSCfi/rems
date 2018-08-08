@@ -36,8 +36,7 @@
                                       :opacity 1}] ; Mozilla Firefox 4 to 18
    [".form-control::-moz-placeholder" {:color "#ccc"
                                        :opacity 1}]; Mozilla Firefox 19+
-   [".form-control:-ms-input-placeholder" {:color "#ccc"}]; Internet Explorer 10-11
-   ))
+   [".form-control:-ms-input-placeholder" {:color "#ccc"}])); Internet Explorer 10-11
 
 (defn- generate-media-queries []
   (list
@@ -63,7 +62,25 @@
                          [:.rems-table
                           [:th
                            :td
-                           {:display "table-cell"}]]
+                           {:display "table-cell"
+                            :vertical-align "top"}]]
+                         [:.rems-table
+                          [:.column-header
+                           {:white-space "nowrap"}]]
+                         [:.rems-table
+                          [:.column-filter
+                           {:position "relative"}
+                           [:input
+                            {:width "100%"}]
+                           [:.reset-button
+                            {:position   "absolute"
+                             :right      "0px"
+                             :top        "50%"
+                             :margin-top "-0.5em"           ; center vertically
+                             :color      "#ccc"
+                             :cursor     "pointer"}]
+                           [:.reset-button:hover
+                            {:color "#888"}]]]
                          [:.language-switcher
                           {:padding ".5em .5em"}]))
    (stylesheet/at-media {:min-width (u/px 480)}
@@ -118,8 +135,7 @@
      :td:before
      {:color "#000"}]
     [:tr
-     [(s/& (s/nth-child "2n")) {:background "#fff"}]]
-    ]
+     [(s/& (s/nth-child "2n")) {:background "#fff"}]]]
    [:.rems-table {:margin "1em 0"
                   :min-width "100%"
                   :background-color (util/get-theme-attribute :table-bgcolor)
@@ -143,8 +159,7 @@
     [:tr {:margin "0 1rem"}
      [(s/& (s/nth-child "2n")) {:background-color (util/get-theme-attribute :table-stripe-color)}]]
     [:td.commands:last-child {:text-align "right"
-                              :padding-right (u/rem 1)}]
-    ]
+                              :padding-right (u/rem 1)}]]
    [:.inner-cart {:margin (u/em 1)}]
    [:.outer-cart {:border [[(u/px 1) :solid (util/get-theme-attribute :color1)]]
                   :border-radius (u/rem 0.4)}]
@@ -223,7 +238,7 @@
    :.btn-link
    (s/descendant :.nav-link :a)
    {:color (util/get-theme-attribute :color3)
-    :border 0 }] ;for button links
+    :border 0}] ;for button links
   [:.navbar
    [:.nav-link :.btn-link
     {:text-transform "uppercase"}]]

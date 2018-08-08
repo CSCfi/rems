@@ -93,9 +93,10 @@
 (defn- catalogue-list
   "List of catalogue items"
   [items language]
-  ;; TODO no sorting yet
   [table/component (catalogue-columns language) [:name :commands]
-   [:name :asc] (fn [_])
+   {:sort-column :name
+    :sort-order  :asc}
+   (fn [_]) ; TODO: changing sorting
    :id items])
 
 (defn administration-page []

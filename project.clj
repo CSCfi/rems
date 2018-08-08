@@ -36,7 +36,7 @@
                  [org.webjars.bower/tether "1.4.3"]
                  [org.webjars.npm/popper.js "1.14.3"]
                  [org.webjars/bootstrap "4.1.0"]
-                 [org.webjars/font-awesome "5.0.13"]
+                 [org.webjars/font-awesome "5.2.0"]
                  [org.webjars/jquery "3.3.1-1"]
                  [com.draines/postal "2.0.2"]
                  [re-frame "0.10.5"]
@@ -143,7 +143,8 @@
                             [com.jakemccrary/lein-test-refresh "0.21.1"]
                             [lein-eftest "0.5.2"]
                             [lein-cloverage "1.0.10"]
-                            [lein-figwheel "0.5.16"]]
+                            [lein-figwheel "0.5.16"]
+                            [lein-ancient "0.6.15"]]
                   :aot [rems.InvalidRequestException rems.auth.NotAuthorizedException]
 
                   :source-paths ["env/dev/clj"]
