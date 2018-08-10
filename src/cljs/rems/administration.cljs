@@ -88,7 +88,8 @@
   {:name {:header #(text :t.catalogue/header)
           :value #(get-catalogue-item-title % language)}
    :commands {:value catalogue-item-button
-              :sortable? false}})
+              :sortable? false
+              :filterable? false}})
 
 (defn- catalogue-list
   "List of catalogue items"
