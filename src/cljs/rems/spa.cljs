@@ -8,6 +8,7 @@
             [rems.actions :refer [actions-page fetch-actions]]
             [rems.administration :refer [administration-page]]
             [rems.administration.catalogue :refer [create-catalogue-item-page]]
+            [rems.administration.license :refer [create-license-page]]
             [rems.administration.resource :refer [create-resource-page]]
             [rems.ajax :refer [load-interceptors!]]
             [rems.application :refer [application-page fetch-application]]
@@ -176,7 +177,7 @@
    :application application-page
    :applications applications-page
    :administration administration-page
-   :create-license create-resource-page ; TODO
+   :create-license create-license-page
    :create-resource create-resource-page
    :create-catalogue-item create-catalogue-item-page
    :unauthorized unauthorized-page
@@ -240,7 +241,7 @@
   (rf/dispatch [:set-active-page :administration]))
 
 (secretary/defroute "/create-license" []
-  (rf/dispatch [:rems.administration.resource/reset-create-license])
+  (rf/dispatch [:rems.administration.license/reset-create-license])
   (rf/dispatch [:set-active-page :create-license]))
 
 (secretary/defroute "/create-resource" []

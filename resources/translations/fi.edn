@@ -206,6 +206,7 @@
                :applications "Hakemukset"
                :catalogue "Kielivarat"
                :create-catalogue-item "Luo kielivara"
+               :create-license "Luo lisenssi"
                :create-resource "Luo resurssi"
                :home "Etusivu"
                :login "Kirjaudu sisään"
