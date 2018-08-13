@@ -176,6 +176,7 @@
    :application application-page
    :applications applications-page
    :administration administration-page
+   :create-license create-resource-page ; TODO
    :create-resource create-resource-page
    :create-catalogue-item create-catalogue-item-page
    :unauthorized unauthorized-page
@@ -237,6 +238,10 @@
 (secretary/defroute "/administration" []
   (rf/dispatch [:rems.administration/start-fetch-catalogue])
   (rf/dispatch [:set-active-page :administration]))
+
+(secretary/defroute "/create-license" []
+  (rf/dispatch [:rems.administration.resource/reset-create-license])
+  (rf/dispatch [:set-active-page :create-license]))
 
 (secretary/defroute "/create-resource" []
   (rf/dispatch [:rems.administration.resource/reset-create-resource])

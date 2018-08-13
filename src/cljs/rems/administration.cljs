@@ -67,6 +67,12 @@
     :on-click #(rf/dispatch [::update-catalogue-item (:id item) "enabled"])}
    (text :t.administration/enable)])
 
+(defn- to-create-license-button []
+  [:button.btn.btn-primary
+   {:type "submit"
+    :on-click #(dispatch! "/#/create-license")}
+   (text :t.administration/create-license)])
+
 (defn- to-create-resource-button []
   [:button.btn.btn-primary
    {:type "submit"
@@ -111,6 +117,7 @@
               [[spinner/big]]
               [[:div
                 [:div.col.commands
+                 [to-create-license-button]
                  [to-create-resource-button]
                  [to-create-catalogue-item-button]]
                 [catalogue-list @catalogue @language]]])))))

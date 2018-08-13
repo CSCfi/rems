@@ -45,8 +45,7 @@
                   [:p "Sitoudut siihen, että et tee REMS-demossa mitään sellaista joka loukkaa lakeja tai asetuksia tai kolmannen osapuolen oikeuksia (kuten tekijänoikeuksia) tai on säädytöntä, uhkaavaa, väkivaltaista, herjaavaa, vihamielistä, häiritsevää tai muulla tavalla paheksuttavaa."]
                   [:p "Sitoudut siihen, että et syötä REMS-demoon mitään tunnistettua tai tunnistettavissa olevaa luonnollista henkilöä koskevaa tietoa."]
                   [:h3 "Rahoittaja"]
-                  [:p "CSC:n REMS-tuote on saanut rahoitusta Opetus- ja kulttuuriministeriöltä ja Suomen akatemialta (apurahat 271642 ja 263164 Biomedinfraa varten, joka on Suomen ELIXIR, BBMRI ja EATRIS-tutkimusinfrastruktuurisolmujen muodostama konsortio)."]
-                  ]]}
+                  [:p "CSC:n REMS-tuote on saanut rahoitusta Opetus- ja kulttuuriministeriöltä ja Suomen akatemialta (apurahat 271642 ja 263164 Biomedinfraa varten, joka on Suomen ELIXIR, BBMRI ja EATRIS-tutkimusinfrastruktuurisolmujen muodostama konsortio)."]]]}
   :actions {:applicant "Hakija"
             :application "Hakemus"
             :approve "Hyväksy"
@@ -82,6 +81,7 @@
             :withdraw "Palauta muokattavaksi"
             :withdraw-success "Hakemus palautettu muokattavaksi"}
   :administration {:create-catalogue-item "Uusi kielivara"
+                   :create-license "Uusi lisenssi"
                    :create-resource "Uusi resurssi"
                    :disable "Poista käytöstä"
                    :enable "Ota käyttöön"}
