@@ -107,19 +107,21 @@
         selected-licenses (rf/subscribe [::selected-licenses])]
     (fn []
       [collapsible/component
-       {:id "create-create"
+       {:id "create-resource"
         :title (text :t.navigation/create-resource)
         :always [:div
                  [:div.form-group.field
                   [:label {:for "prefix"} (text :t.create-resource/prefix)]
-                  [:input.form-control {:name "prefix"
+                  [:input.form-control {:id "prefix"
+                                        :name "prefix"
                                         :type :text
                                         :placeholder (text :t.create-resource/prefix-placeholder)
                                         :value @prefix
                                         :on-change #(rf/dispatch [::set-prefix (.. % -target -value)])}]]
                  [:div.form-group.field
                   [:label {:for "resid"} (text :t.create-resource/resid)]
-                  [:input.form-control {:name "resid"
+                  [:input.form-control {:id "resid"
+                                        :name "resid"
                                         :type :text
                                         :placeholder (text :t.create-resource/resid-placeholder)
                                         :value @resid

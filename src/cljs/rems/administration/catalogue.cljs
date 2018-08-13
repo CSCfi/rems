@@ -72,7 +72,7 @@
  ::set-selected-workflow
  (fn [db [_ workflow]]
    (if workflow
-     (assoc db ::selected-workflow ^{:key (:id workflow)} workflow )
+     (assoc db ::selected-workflow ^{:key (:id workflow)} workflow)
      (dissoc db ::selected-workflow))))
 
 (rf/reg-sub
@@ -84,7 +84,7 @@
  ::set-selected-resource
  (fn [db [_ resource]]
    (if resource
-     (assoc db ::selected-resource ^{:key (:id resource)} resource )
+     (assoc db ::selected-resource ^{:key (:id resource)} resource)
      (dissoc db ::selected-resource))))
 
 (rf/reg-sub
@@ -96,7 +96,7 @@
  ::set-selected-form
  (fn [db [_ form]]
    (if form
-     (assoc db ::selected-form ^{:key (:id form)} form )
+     (assoc db ::selected-form ^{:key (:id form)} form)
      (dissoc db ::selected-form))))
 
 (rf/reg-event-fx
@@ -145,7 +145,8 @@
         :always [:div
                  [:div.form-group.field
                   [:label {:for "title"} (text :t.create-catalogue-item/title)]
-                  [:input.form-control {:name "title"
+                  [:input.form-control {:id "title"
+                                        :name "title"
                                         :type :text
                                         :placeholder (text :t.create-catalogue-item/title-placeholder)
                                         :value @title

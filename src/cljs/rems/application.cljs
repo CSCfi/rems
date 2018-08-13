@@ -234,6 +234,7 @@
     (when optional
       (text :t.form/optional))]
    [:input.form-control {:type "text"
+                         :id (id-to-name id)
                          :name (id-to-name id)
                          :placeholder inputprompt
                          :class (when validation "is-invalid")
@@ -248,7 +249,8 @@
     title " "
     (when optional
       (text :t.form/optional))]
-   [:textarea.form-control {:name (id-to-name id)
+   [:textarea.form-control {:id (id-to-name id)
+                            :name (id-to-name id)
                             :placeholder inputprompt
                             :class (when validation "is-invalid")
                             :value value :readOnly readonly
