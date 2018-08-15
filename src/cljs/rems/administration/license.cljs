@@ -5,13 +5,21 @@
             [rems.text :refer [text]]
             [rems.util :refer [dispatch! fetch put!]]))
 
+(def link-licensetype "link")
+(def text-licensetype "text")
+
+(defn parse-textcontent [form]
+  (condp = (:licensetype form)
+    link-licensetype (:link form)
+    text-licensetype (:text form)
+    nil))
+
 (defn- create-license [form]
-  ; TODO: create API
-  (put! "/api/licenses/create" {:params {:form form}
+  (put! "/api/licenses/create" {:params {:title (:title form)
+                                         :licensetype (:licensetype form)
+                                         :textcontent (parse-textcontent form)}
                                 :handler (fn [resp]
                                            (dispatch! "#/administration"))}))
-
-; TODO: group fields
 
 (rf/reg-event-fx
   ::create-license
@@ -22,12 +30,13 @@
 (rf/reg-event-db
   ::reset-create-license
   (fn [db _]
-    (dissoc db ::title ::type ::link ::text)))
+    (dissoc db ::form)))
 
 (rf/reg-sub
   ::form
   (fn [db _]
     (::form db)))
+
 (rf/reg-event-db
   ::set-form-field
   (fn [db [_ keys value]]
@@ -40,11 +49,9 @@
   (let [form @(rf/subscribe [::form])]
     [:button.btn.btn-primary
      {:on-click #(rf/dispatch [::create-license form])
-      :disabled (not (and (not (str/blank? (:title (:default form))))
-                          (not (str/blank? (:type form)))
-                          (not (str/blank? (if (= "link" (:type form))
-                                             (:link (:default form))
-                                             (:text (:default form)))))))}
+      :disabled (not (and (not (str/blank? (:title form)))
+                          (not (str/blank? (:licensetype form)))
+                          (not (str/blank? (parse-textcontent form)))))}
      (text :t.create-resource/save)]))                      ; TODO: rename translation key
 
 (defn- cancel-button []
@@ -65,46 +72,46 @@
                   [:input.form-control {:type "text"
                                         :id "default-title"
                                         :name "default-title"
-                                        :value (:title (:default @form))
-                                        :on-change #(rf/dispatch [::set-form-field [:default :title] (.. % -target -value)])}]]
+                                        :value (:title @form)
+                                        :on-change #(rf/dispatch [::set-form-field [:title] (.. % -target -value)])}]]
                  [:div.form-group.field
-                  (let [value "link"]
+                  (let [value link-licensetype]
                     [:div.form-check.form-check-inline
                      [:input.form-check-input {:type "radio"
-                                               :id "link-type-field"
-                                               :name "type-field"
+                                               :id "link-licensetype-field"
+                                               :name "licensetype-field"
                                                :value value
-                                               :checked (= value (:type @form))
+                                               :checked (= value (:licensetype @form))
                                                :on-change #(when (.. % -target -checked)
-                                                             (rf/dispatch [::set-form-field [:type] value]))}]
-                     [:label.form-check-label {:for "link-type-field"} "External link"]])
-                  (let [value "text"]
+                                                             (rf/dispatch [::set-form-field [:licensetype] value]))}]
+                     [:label.form-check-label {:for "link-licensetype-field"} "External link"]])
+                  (let [value text-licensetype]
                     [:div.form-check.form-check-inline
                      [:input.form-check-input {:type "radio"
-                                               :id "text-type-field"
-                                               :name "type-field"
+                                               :id "text-licensetype-field"
+                                               :name "licensetype-field"
                                                :value value
-                                               :checked (= value (:type @form))
+                                               :checked (= value (:licensetype @form))
                                                :on-change #(when (.. % -target -checked)
-                                                             (rf/dispatch [::set-form-field [:type] value]))}]
-                     [:label.form-check-label {:for "text-type-field"} "Inline text"]])]
-                 (when (= "link" (:type @form))
+                                                             (rf/dispatch [::set-form-field [:licensetype] value]))}]
+                     [:label.form-check-label {:for "text-licensetype-field"} "Inline text"]])]
+                 (when (= link-licensetype (:licensetype @form))
                    [:div.form-group.field
                     [:label {:for "link-field"} "Link to the license"]
                     [:input.form-control {:type "text"
                                           :id "link-field"
                                           :name "link-field"
                                           :placeholder "https://example.com/license"
-                                          :value (:link (:default @form))
-                                          :on-change #(rf/dispatch [::set-form-field [:default :link] (.. % -target -value)])}]])
-                 (when (= "text" (:type @form))
+                                          :value (:link @form)
+                                          :on-change #(rf/dispatch [::set-form-field [:link] (.. % -target -value)])}]])
+                 (when (= text-licensetype (:licensetype @form))
                    [:div.form-group.field
                     [:label {:for "text-field"} "License text"]
                     [:textarea.form-control {:type "text"
                                              :id "text-field"
                                              :name "text-field"
-                                             :value (:text (:default @form))
-                                             :on-change #(rf/dispatch [::set-form-field [:default :text] (.. % -target -value)])}]])
+                                             :value (:text @form)
+                                             :on-change #(rf/dispatch [::set-form-field [:text] (.. % -target -value)])}]])
                  ; TODO: non-default languages
                  ; https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes
                  [:div.col.commands
