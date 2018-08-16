@@ -2,29 +2,50 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.collapsible :as collapsible]
-            [rems.text :refer [text]]
+            [rems.text :refer [text localize-item]]
             [rems.util :refer [dispatch! fetch put!]]))
 
-(def link-licensetype "link")
-(def text-licensetype "text")
+(def license-type-link "link")
+(def license-type-text "text")
 
-(defn parse-textcontent [form]
-  (condp = (:licensetype form)
-    link-licensetype (:link form)
-    text-licensetype (:text form)
+(defn parse-textcontent [form license-type]
+  (condp = license-type
+    license-type-link (:link form)
+    license-type-text (:text form)
     nil))
 
-(defn- create-license [form]
-  (put! "/api/licenses/create" {:params {:title (:title form)
-                                         :licensetype (:licensetype form)
-                                         :textcontent (parse-textcontent form)}
+(defn- build-localization [data license-type]
+  {:title (:title data)
+   :textcontent (parse-textcontent data license-type)})
+
+(defn- valid-localization? [data]
+  (and (not (str/blank? (:title data)))
+       (not (str/blank? (:textcontent data)))))
+
+(defn- valid-request? [request languages]
+  (and (not (str/blank? (:licensetype request)))
+       (= (set languages)
+          (set (keys (:localizations request))))
+       (every? valid-localization? (vals (:localizations request)))))
+
+(defn build-request [form default-language languages]
+  (let [license-type (:licensetype form)
+        request {:licensetype license-type
+                 :localizations (into {} (map (fn [[lang data]]
+                                                [lang (build-localization data license-type)])
+                                              (:localizations form)))}]
+    (when (valid-request? request languages)
+      (localize-item request default-language))))
+
+(defn- create-license [form default-language languages]
+  (put! "/api/licenses/create" {:params (build-request form default-language languages)
                                 :handler (fn [resp]
                                            (dispatch! "#/administration"))}))
 
 (rf/reg-event-fx
   ::create-license
-  (fn [db [_ form]]
-    (create-license form)
+  (fn [{:keys [db]} [_ form]]
+    (create-license form (:default-language db) (:languages db))
     {}))
 
 (rf/reg-event-db
@@ -45,13 +66,66 @@
 
 ;;;; UI ;;;;
 
-(defn- save-license-button []
+(defn- language-heading [language]
+  [:h2 (str/upper-case (name language))])
+
+(defn- license-title-field [keys]
   (let [form @(rf/subscribe [::form])]
+    [:div.form-group.field
+     [:label {:for "default-title"} "Title"]                ; TODO: translation
+     [:input.form-control {:type "text"
+                           :id "default-title"
+                           :name "default-title"
+                           :value (get-in form keys)
+                           :on-change #(rf/dispatch [::set-form-field keys (.. % -target -value)])}]]))
+
+(defn- license-type-radio-button [value label]
+  (let [form @(rf/subscribe [::form])]
+    [:div.form-check.form-check-inline
+     [:input.form-check-input {:type "radio"
+                               :id (str value "-licensetype-field")
+                               :name "licensetype-field"
+                               :value value
+                               :checked (= value (:licensetype form))
+                               :on-change #(when (.. % -target -checked)
+                                             (rf/dispatch [::set-form-field [:licensetype] value]))}]
+     [:label.form-check-label {:for (str value "-licensetype-field")} label]]))
+
+(defn- license-type-radio-group []
+  [:div.form-group.field
+   [license-type-radio-button license-type-link "External link"] ; TODO: translation
+   [license-type-radio-button license-type-text "Inline text"]]) ; TODO: translation
+
+(defn- license-link-field [keys]
+  (let [form @(rf/subscribe [::form])]
+    (when (= license-type-link (:licensetype form))
+      [:div.form-group.field
+       [:label {:for "link-field"} "Link to the license"]   ; TODO: translation
+       [:input.form-control {:type "text"
+                             :id "link-field"
+                             :name "link-field"
+                             :placeholder "https://example.com/license"
+                             :value (get-in form keys)
+                             :on-change #(rf/dispatch [::set-form-field keys (.. % -target -value)])}]])))
+
+(defn- license-text-field [keys]
+  (let [form @(rf/subscribe [::form])]
+    (when (= license-type-text (:licensetype form))
+      [:div.form-group.field
+       [:label {:for "text-field"} "License text"]          ; TODO: translation
+       [:textarea.form-control {:type "text"
+                                :id "text-field"
+                                :name "text-field"
+                                :value (get-in form keys)
+                                :on-change #(rf/dispatch [::set-form-field keys (.. % -target -value)])}]])))
+
+(defn- save-license-button []
+  (let [form @(rf/subscribe [::form])
+        default-language @(rf/subscribe [:default-language])
+        languages @(rf/subscribe [:languages])]
     [:button.btn.btn-primary
      {:on-click #(rf/dispatch [::create-license form])
-      :disabled (not (and (not (str/blank? (:title form)))
-                          (not (str/blank? (:licensetype form)))
-                          (not (str/blank? (parse-textcontent form)))))}
+      :disabled (not (build-request form default-language languages))}
      (text :t.create-resource/save)]))                      ; TODO: rename translation key
 
 (defn- cancel-button []
@@ -60,60 +134,26 @@
    (text :t.create-catalogue-item/cancel)])                 ; TODO: rename translation key
 
 (defn create-license-page []
-  (let [form (rf/subscribe [::form])]
+  (let [default-language (rf/subscribe [:default-language])
+        languages (rf/subscribe [:languages])]
     (fn []
-      ; TODO: translations
       [collapsible/component
        {:id "create-license"
         :title (text :t.navigation/create-license)
         :always [:div
-                 [:div.form-group.field
-                  [:label {:for "default-title"} "Title"]
-                  [:input.form-control {:type "text"
-                                        :id "default-title"
-                                        :name "default-title"
-                                        :value (:title @form)
-                                        :on-change #(rf/dispatch [::set-form-field [:title] (.. % -target -value)])}]]
-                 [:div.form-group.field
-                  (let [value link-licensetype]
-                    [:div.form-check.form-check-inline
-                     [:input.form-check-input {:type "radio"
-                                               :id "link-licensetype-field"
-                                               :name "licensetype-field"
-                                               :value value
-                                               :checked (= value (:licensetype @form))
-                                               :on-change #(when (.. % -target -checked)
-                                                             (rf/dispatch [::set-form-field [:licensetype] value]))}]
-                     [:label.form-check-label {:for "link-licensetype-field"} "External link"]])
-                  (let [value text-licensetype]
-                    [:div.form-check.form-check-inline
-                     [:input.form-check-input {:type "radio"
-                                               :id "text-licensetype-field"
-                                               :name "licensetype-field"
-                                               :value value
-                                               :checked (= value (:licensetype @form))
-                                               :on-change #(when (.. % -target -checked)
-                                                             (rf/dispatch [::set-form-field [:licensetype] value]))}]
-                     [:label.form-check-label {:for "text-licensetype-field"} "Inline text"]])]
-                 (when (= link-licensetype (:licensetype @form))
-                   [:div.form-group.field
-                    [:label {:for "link-field"} "Link to the license"]
-                    [:input.form-control {:type "text"
-                                          :id "link-field"
-                                          :name "link-field"
-                                          :placeholder "https://example.com/license"
-                                          :value (:link @form)
-                                          :on-change #(rf/dispatch [::set-form-field [:link] (.. % -target -value)])}]])
-                 (when (= text-licensetype (:licensetype @form))
-                   [:div.form-group.field
-                    [:label {:for "text-field"} "License text"]
-                    [:textarea.form-control {:type "text"
-                                             :id "text-field"
-                                             :name "text-field"
-                                             :value (:text @form)
-                                             :on-change #(rf/dispatch [::set-form-field [:text] (.. % -target -value)])}]])
-                 ; TODO: non-default languages
-                 ; https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes
+                 [language-heading @default-language]
+                 [license-title-field [:localizations @default-language :title]]
+                 [license-type-radio-group]
+                 [license-link-field [:localizations @default-language :link]]
+                 [license-text-field [:localizations @default-language :text]]
+
+                 (for [language (remove #(= % @default-language) @languages)]
+                   [:div {:key language}
+                    [language-heading language]
+                    [license-title-field [:localizations language :title]]
+                    [license-link-field [:localizations language :link]]
+                    [license-text-field [:localizations language :text]]])
+
                  [:div.col.commands
                   [cancel-button]
                   [save-license-button]]]}])))

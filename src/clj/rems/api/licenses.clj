@@ -7,9 +7,11 @@
             [schema.core :as s]))
 
 (def CreateLicenseCommand
-  {:title s/Str
-   :licensetype (s/enum "link" "text")
-   :textcontent s/Str})
+  {:licensetype (s/enum "link" "text")
+   :title s/Str
+   :textcontent s/Str
+   :localizations {s/Keyword {:title s/Str
+                              :textcontent s/Str}}})
 
 (def licenses-api
   (context "/licenses" []
