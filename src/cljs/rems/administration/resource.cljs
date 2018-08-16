@@ -3,7 +3,7 @@
             [re-frame.core :as rf]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
-            [rems.text :refer [text]]
+            [rems.text :refer [text localize-item]]
             [rems.util :refer [dispatch! fetch put!]]))
 
 (defn- fetch-licenses []
@@ -129,8 +129,10 @@
                  [:div.form-group
                   [:label (text :t.create-resource/licenses-selection)]
                   [autocomplete/component
-                   {:value (sort-by :id @selected-licenses)
-                    :items @licenses
+                   {:value (->> @selected-licenses
+                                (map localize-item)
+                                (sort-by :id))
+                    :items (map localize-item @licenses)
                     :value->text #(:title %2)
                     :item->key :id
                     :item->text :title

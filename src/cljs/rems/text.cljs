@@ -55,3 +55,7 @@
 (defn localize-time [time]
   (when time
     (format/unparse-local time-format (time/to-default-time-zone (format/parse time)))))
+
+(defn localize-item [item]
+  (let [language @(rf/subscribe [:language])]
+    (merge item (get-in item [:localizations language]))))
