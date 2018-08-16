@@ -27,7 +27,11 @@
     (testing "create linked license"
       (let [command {:title (str "license title " (UUID/randomUUID))
                      :licensetype "link"
-                     :textcontent "http://example.com/license"}
+                     :textcontent "http://example.com/license"
+                     :localizations {:en {:title "en title"
+                                          :textcontent "http://example.com/license/en"}
+                                     :fi {:title "fi title"
+                                          :textcontent "http://example.com/license/fi"}}}
             response (-> (request :put "/api/licenses/create")
                          (authenticate api-key user-id)
                          (json-body command)
@@ -48,7 +52,11 @@
     (testing "create inline license"
       (let [command {:title (str "license title " (UUID/randomUUID))
                      :licensetype "text"
-                     :textcontent "license text"}
+                     :textcontent "license text"
+                     :localizations {:en {:title "en title"
+                                          :textcontent "en text"}
+                                     :fi {:title "fi title"
+                                          :textcontent "fi text"}}}
             response (-> (request :put "/api/licenses/create")
                          (authenticate api-key user-id)
                          (json-body command)
@@ -87,9 +95,11 @@
                        app)]
       (is (= 401 (:status response))))
     (let [response (-> (request :put "/api/licenses/create")
-                       (json-body {:title "t"
-                                   :licensetype "text"
-                                   :textcontent "t"})
+                       (json-body {:licensetype "text"
+                                   :title "t"
+                                   :textcontent "t"
+                                   :localizations {:en {:title "t"
+                                                        :textcontent "t"}}})
                        app)]
       (is (= 403 (:status response)))))
 
@@ -100,8 +110,10 @@
       (is (= 401 (:status response))))
     (let [response (-> (request :put "/api/licenses/create")
                        (authenticate "42" "alice")
-                       (json-body {:title "t"
-                                   :licensetype "text"
-                                   :textcontent "t"})
+                       (json-body {:licensetype "text"
+                                   :title "t"
+                                   :textcontent "t"
+                                   :localizations {:en {:title "t"
+                                                        :textcontent "t"}}})
                        app)]
       (is (= 401 (:status response))))))

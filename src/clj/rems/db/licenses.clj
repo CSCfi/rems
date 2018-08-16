@@ -64,9 +64,15 @@
        (filter (fn [license] (db/now-active? now (:start license) (:end license))))
        (distinct-by :id)))
 
-(defn create-license [{:keys [title licensetype textcontent]}]
-  (db/create-license! {:owneruserid (get-user-id)
-                       :modifieruserid (get-user-id)
-                       :title title
-                       :type licensetype
-                       :textcontent textcontent}))
+(defn create-license [{:keys [title licensetype textcontent localizations]}]
+  (let [license (db/create-license! {:owneruserid (get-user-id)
+                                     :modifieruserid (get-user-id)
+                                     :type licensetype
+                                     :title title
+                                     :textcontent textcontent})
+        licid (:id license)]
+    (doall (for [[langcode localization] localizations]
+             (db/create-license-localization! {:licid licid
+                                               :langcode (name langcode)
+                                               :title (:title localization)
+                                               :textcontent (:textcontent localization)})))))
