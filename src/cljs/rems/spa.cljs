@@ -43,9 +43,19 @@
    (:translations db)))
 
 (reg-sub
- :language
- (fn [db _]
-   (:language db)))
+  :language
+  (fn [db _]
+    (:language db)))
+
+(reg-sub
+  :languages
+  (fn [db _]
+    (:languages db)))
+
+(reg-sub
+  :default-language
+  (fn [db _]
+    (:default-language db)))
 
 ;; TODO: possibly move theme out
 (reg-sub
@@ -71,12 +81,14 @@
 ;;; handlers
 
 (reg-event-db
- :initialize-db
- (fn [_ _]
-   {:page :home
-    :language :en
-    :translations {}
-    :identity {:user nil :roles nil}}))
+  :initialize-db
+  (fn [_ _]
+    {:page :home
+     :language :en
+     :languages [:en :fi]                                   ; TODO: hard-coded for now
+     :default-language :en
+     :translations {}
+     :identity {:user nil :roles nil}}))
 
 (reg-event-db
  :set-active-page
