@@ -135,6 +135,11 @@
                           :title "Name"
                           :title-placeholder "Name"
                           :workflow-selection "Workflow"}
+  :create-license {:title "License name"
+                   :external-link "External link"
+                   :inline-text "Inline text"
+                   :link-to-license "Link to the license"
+                   :license-text "License text"}
   :create-resource {:licenses-selection "Terms of Use"
                     :prefix "Organization"
                     :prefix-placeholder "testorganization.org"

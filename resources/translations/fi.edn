@@ -135,6 +135,11 @@
                           :title "Nimi"
                           :title-placeholder "Nimi"
                           :workflow-selection "Työvuo"}
+  :create-license {:title "Lisenssin nimi"
+                   :external-link "Linkki"
+                   :inline-text "Teksti"
+                   :link-to-license "Linkki lisenssiin"
+                   :license-text "Lisenssin teksti"}
   :create-resource {:licenses-selection "Käyttöehdot"
                     :prefix "Organization"
                     :prefix-placeholder "testorganization.org"

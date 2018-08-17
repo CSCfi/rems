@@ -72,7 +72,7 @@
 (defn- license-title-field [keys]
   (let [form @(rf/subscribe [::form])]
     [:div.form-group.field
-     [:label {:for "default-title"} "Title"]                ; TODO: translation
+     [:label {:for "default-title"} (text :t.create-license/title)]
      [:input.form-control {:type "text"
                            :id "default-title"
                            :name "default-title"
@@ -93,14 +93,14 @@
 
 (defn- license-type-radio-group []
   [:div.form-group.field
-   [license-type-radio-button license-type-link "External link"] ; TODO: translation
-   [license-type-radio-button license-type-text "Inline text"]]) ; TODO: translation
+   [license-type-radio-button license-type-link (text :t.create-license/external-link)]
+   [license-type-radio-button license-type-text (text :t.create-license/inline-text)]])
 
 (defn- license-link-field [keys]
   (let [form @(rf/subscribe [::form])]
     (when (= license-type-link (:licensetype form))
       [:div.form-group.field
-       [:label {:for "link-field"} "Link to the license"]   ; TODO: translation
+       [:label {:for "link-field"} (text :t.create-license/link-to-license)]
        [:input.form-control {:type "text"
                              :id "link-field"
                              :name "link-field"
@@ -112,7 +112,7 @@
   (let [form @(rf/subscribe [::form])]
     (when (= license-type-text (:licensetype form))
       [:div.form-group.field
-       [:label {:for "text-field"} "License text"]          ; TODO: translation
+       [:label {:for "text-field"} (text :t.create-license/license-text)]
        [:textarea.form-control {:type "text"
                                 :id "text-field"
                                 :name "text-field"
