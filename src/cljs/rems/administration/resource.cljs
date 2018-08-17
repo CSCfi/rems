@@ -92,12 +92,12 @@
     [:button.btn.btn-primary
      {:on-click #(rf/dispatch [::create-resource prefix resid licenses])
       :disabled (not (and (not (str/blank? prefix)) (not (str/blank? resid))))}
-     (text :t.create-resource/save)]))
+     (text :t.administration/save)]))
 
 (defn- cancel-button []
   [:button.btn.btn-secondary
    {:on-click #(dispatch! "/#/administration")}
-   (text :t.create-catalogue-item/cancel)])
+   (text :t.administration/cancel)])
 
 (defn create-resource-page []
   (fetch-licenses)

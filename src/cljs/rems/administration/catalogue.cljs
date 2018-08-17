@@ -115,7 +115,7 @@
 (defn- cancel-button []
   [:button.btn.btn-secondary
    {:on-click #(dispatch! "/#/administration")}
-   (text :t.create-catalogue-item/cancel)])
+   (text :t.administration/cancel)])
 
 (defn- save-catalogue-item-button [item]
   (let [title @(rf/subscribe [::title])
@@ -125,7 +125,7 @@
     [:button.btn.btn-primary
      {:on-click #(rf/dispatch [::create-catalogue-item title workflow resource form])
       :disabled (not (and (not (str/blank? title)) workflow resource form))}
-     (text :t.create-catalogue-item/save)]))
+     (text :t.administration/save)]))
 
 (defn create-catalogue-item-page []
   (fetch-workflows)

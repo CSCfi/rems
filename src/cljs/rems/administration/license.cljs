@@ -126,12 +126,12 @@
     [:button.btn.btn-primary
      {:on-click #(rf/dispatch [::create-license form])
       :disabled (not (build-request form default-language languages))}
-     (text :t.create-resource/save)]))                      ; TODO: rename translation key
+     (text :t.administration/save)]))
 
 (defn- cancel-button []
   [:button.btn.btn-secondary
    {:on-click #(dispatch! "/#/administration")}
-   (text :t.create-catalogue-item/cancel)])                 ; TODO: rename translation key
+   (text :t.administration/cancel)])
 
 (defn create-license-page []
   (let [default-language (rf/subscribe [:default-language])
