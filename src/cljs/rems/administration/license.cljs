@@ -66,30 +66,33 @@
 
 ;;;; UI ;;;;
 
+(defn- keys-to-id [keys]
+  (str/join "-" (map name keys)))
+
 (defn- language-heading [language]
   [:h2 (str/upper-case (name language))])
 
 (defn- license-title-field [keys]
-  (let [form @(rf/subscribe [::form])]
+  (let [form @(rf/subscribe [::form])
+        id (keys-to-id keys)]
     [:div.form-group.field
-     [:label {:for "default-title"} (text :t.create-license/title)]
+     [:label {:for id} (text :t.create-license/title)]
      [:input.form-control {:type "text"
-                           :id "default-title"
-                           :name "default-title"
+                           :id id
                            :value (get-in form keys)
                            :on-change #(rf/dispatch [::set-form-field keys (.. % -target -value)])}]]))
 
 (defn- license-type-radio-button [value label]
-  (let [form @(rf/subscribe [::form])]
+  (let [form @(rf/subscribe [::form])
+        id (str "license-type-" value)]
     [:div.form-check.form-check-inline
      [:input.form-check-input {:type "radio"
-                               :id (str value "-licensetype-field")
-                               :name "licensetype-field"
+                               :id id
                                :value value
                                :checked (= value (:licensetype form))
                                :on-change #(when (.. % -target -checked)
                                              (rf/dispatch [::set-form-field [:licensetype] value]))}]
-     [:label.form-check-label {:for (str value "-licensetype-field")} label]]))
+     [:label.form-check-label {:for id} label]]))
 
 (defn- license-type-radio-group []
   [:div.form-group.field
@@ -97,25 +100,25 @@
    [license-type-radio-button license-type-text (text :t.create-license/inline-text)]])
 
 (defn- license-link-field [keys]
-  (let [form @(rf/subscribe [::form])]
+  (let [form @(rf/subscribe [::form])
+        id (keys-to-id keys)]
     (when (= license-type-link (:licensetype form))
       [:div.form-group.field
-       [:label {:for "link-field"} (text :t.create-license/link-to-license)]
+       [:label {:for id} (text :t.create-license/link-to-license)]
        [:input.form-control {:type "text"
-                             :id "link-field"
-                             :name "link-field"
+                             :id id
                              :placeholder "https://example.com/license"
                              :value (get-in form keys)
                              :on-change #(rf/dispatch [::set-form-field keys (.. % -target -value)])}]])))
 
 (defn- license-text-field [keys]
-  (let [form @(rf/subscribe [::form])]
+  (let [form @(rf/subscribe [::form])
+        id (keys-to-id keys)]
     (when (= license-type-text (:licensetype form))
       [:div.form-group.field
-       [:label {:for "text-field"} (text :t.create-license/license-text)]
+       [:label {:for id} (text :t.create-license/license-text)]
        [:textarea.form-control {:type "text"
-                                :id "text-field"
-                                :name "text-field"
+                                :id id
                                 :value (get-in form keys)
                                 :on-change #(rf/dispatch [::set-form-field keys (.. % -target -value)])}]])))
 
