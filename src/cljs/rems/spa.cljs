@@ -1,6 +1,6 @@
 (ns rems.spa
   (:require [reagent.core :as r]
-            [re-frame.core :as rf :refer [dispatch reg-event-db reg-event-fx reg-sub]]
+            [re-frame.core :as rf :refer [dispatch reg-event-db reg-event-fx reg-sub reg-fx]]
             [secretary.core :as secretary]
             [goog.events :as events]
             [goog.history.EventType :as HistoryEventType]
@@ -115,10 +115,16 @@
  (fn [db [_ identity]]
    (assoc db :identity identity)))
 
-(reg-event-db
- :set-current-language
- (fn [db [_ language]]
-   (assoc db :language language)))
+(reg-event-fx
+  :set-current-language
+  (fn [{:keys [db]} [_ language]]
+    {:db (assoc db :language language)
+     :update-document-language (name language)}))
+
+(reg-fx
+  :update-document-language
+  (fn [language]
+    (set! (.. js/document -documentElement -lang) language)))
 
 (reg-event-fx
  :unauthorized!

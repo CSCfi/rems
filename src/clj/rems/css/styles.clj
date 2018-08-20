@@ -332,6 +332,7 @@
   [(s/> :.form-actions "*:not(:first-child)")
    (s/> :.commands "*:not(:first-child)")
    {:margin-left (u/em 0.5)}]
+  ["input[type=date].form-control" {:width (u/em 12)}]
   [:.full {:width "100%"}]
   [:.rectangle {:width (u/px 50)
                 :height (u/px 50)}]
