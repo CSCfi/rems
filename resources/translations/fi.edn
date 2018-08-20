@@ -83,6 +83,7 @@
   :administration {:create-catalogue-item "Uusi kielivara"
                    :create-license "Uusi lisenssi"
                    :create-resource "Uusi resurssi"
+                   :create-workflow "Uusi työvuo"
                    :disable "Poista käytöstä"
                    :enable "Ota käyttöön"
                    :save "Tallenna"

@@ -79,6 +79,12 @@
     :on-click #(dispatch! "/#/create-resource")}
    (text :t.administration/create-resource)])
 
+(defn- to-create-workflow-button []
+  [:button.btn.btn-primary
+   {:type "submit"
+    :on-click #(dispatch! "/#/create-workflow")}
+   (text :t.administration/create-workflow)])
+
 (defn- to-create-catalogue-item-button []
   [:button.btn.btn-primary
    {:type "submit"
@@ -119,5 +125,6 @@
                 [:div.col.commands
                  [to-create-license-button]
                  [to-create-resource-button]
+                 [to-create-workflow-button]
                  [to-create-catalogue-item-button]]
                 [catalogue-list @catalogue @language]]])))))
