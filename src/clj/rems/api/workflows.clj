@@ -36,11 +36,16 @@
    :end endt
    :active active?})
 
+(def CreateWorkflowCommand
+  {:title s/Str
+   :rounds [{:actors [{:userid s/Str
+                       :role (s/enum "reviewer" "approver")}]}]})
+
 (defn- get-workflows [filters]
   (doall
-   (for [wf (workflow/get-workflows filters)]
-     (assoc (format-workflow wf)
-            :actors (db/get-workflow-actors {:wfid (:id wf)})))))
+    (for [wf (workflow/get-workflows filters)]
+      (assoc (format-workflow wf)
+        :actors (db/get-workflow-actors {:wfid (:id wf)})))))
 
 (def workflows-api
   (context "/workflows" []
@@ -52,4 +57,11 @@
       :return [Workflow]
       (check-user)
       (check-roles :owner)
-      (ok (get-workflows (when-not (nil? active) {:active? active}))))))
+      (ok (get-workflows (when-not (nil? active) {:active? active}))))
+
+    (PUT "/create" []
+      :summary "Create workflow"
+      :body [command CreateWorkflowCommand]
+      ; TODO
+      (prn command)
+      (ok "TODO"))))
