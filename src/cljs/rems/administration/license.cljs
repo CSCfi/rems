@@ -9,9 +9,9 @@
 (def license-type-text "text")
 
 (defn parse-textcontent [form license-type]
-  (condp = license-type
-    license-type-link (:link form)
-    license-type-text (:text form)
+  (case license-type
+    "link" (:link form)
+    "text" (:text form)
     nil))
 
 (defn- build-localization [data license-type]
@@ -137,26 +137,25 @@
    (text :t.administration/cancel)])
 
 (defn create-license-page []
-  (let [default-language (rf/subscribe [:default-language])
-        languages (rf/subscribe [:languages])]
-    (fn []
-      [collapsible/component
-       {:id "create-license"
-        :title (text :t.navigation/create-license)
-        :always [:div
-                 [language-heading @default-language]
-                 [license-title-field [:localizations @default-language :title]]
-                 [license-type-radio-group]
-                 [license-link-field [:localizations @default-language :link]]
-                 [license-text-field [:localizations @default-language :text]]
+  (let [default-language @(rf/subscribe [:default-language])
+        languages @(rf/subscribe [:languages])]
+    [collapsible/component
+     {:id "create-license"
+      :title (text :t.navigation/create-license)
+      :always [:div
+               [language-heading @default-language]
+               [license-title-field [:localizations default-language :title]]
+               [license-type-radio-group]
+               [license-link-field [:localizations default-language :link]]
+               [license-text-field [:localizations default-language :text]]
 
-                 (for [language (remove #(= % @default-language) @languages)]
-                   [:div {:key language}
-                    [language-heading language]
-                    [license-title-field [:localizations language :title]]
-                    [license-link-field [:localizations language :link]]
-                    [license-text-field [:localizations language :text]]])
+               (for [language (remove #(= % default-language) languages)]
+                 [:div {:key language}
+                  [language-heading language]
+                  [license-title-field [:localizations language :title]]
+                  [license-link-field [:localizations language :link]]
+                  [license-text-field [:localizations language :text]]])
 
-                 [:div.col.commands
-                  [cancel-button]
-                  [save-license-button]]]}])))
+               [:div.col.commands
+                [cancel-button]
+                [save-license-button]]]}]))

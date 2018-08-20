@@ -71,8 +71,8 @@
                                      :title title
                                      :textcontent textcontent})
         licid (:id license)]
-    (doall (for [[langcode localization] localizations]
-             (db/create-license-localization! {:licid licid
-                                               :langcode (name langcode)
-                                               :title (:title localization)
-                                               :textcontent (:textcontent localization)})))))
+    (doseq [[langcode localization] localizations]
+      (db/create-license-localization! {:licid licid
+                                        :langcode (name langcode)
+                                        :title (:title localization)
+                                        :textcontent (:textcontent localization)}))))

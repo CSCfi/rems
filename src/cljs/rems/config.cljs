@@ -5,10 +5,11 @@
 (rf/reg-event-db
   ::loaded-config
   (fn [db [_ config]]
-    (let [default-language (:default-language config (:default-language db))]
+    (let [hardcoded-default-language (get db :default-language)
+          configured-default-language (get config :default-language hardcoded-default-language)]
       (assoc db :config config
-                :default-language default-language
-                :language default-language))))
+                :default-language configured-default-language
+                :language configured-default-language))))
 
 (rf/reg-sub
   ::config
