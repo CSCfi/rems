@@ -143,18 +143,18 @@
      {:id "create-license"
       :title (text :t.navigation/create-license)
       :always [:div
-               [language-heading @default-language]
+               [language-heading default-language]
                [license-title-field [:localizations default-language :title]]
                [license-type-radio-group]
                [license-link-field [:localizations default-language :link]]
                [license-text-field [:localizations default-language :text]]
 
-               (for [language (remove #(= % default-language) languages)]
-                 [:div {:key language}
-                  [language-heading language]
-                  [license-title-field [:localizations language :title]]
-                  [license-link-field [:localizations language :link]]
-                  [license-text-field [:localizations language :text]]])
+               (doall (for [language (remove #(= % default-language) languages)]
+                        [:div {:key language}
+                         [language-heading language]
+                         [license-title-field [:localizations language :title]]
+                         [license-link-field [:localizations language :link]]
+                         [license-text-field [:localizations language :text]]]))
 
                [:div.col.commands
                 [cancel-button]
