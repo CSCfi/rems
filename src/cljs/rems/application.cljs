@@ -6,7 +6,7 @@
             [rems.db.catalogue :refer [get-catalogue-item-title]]
             [rems.phase :refer [phases get-application-phases]]
             [rems.spinner :as spinner]
-            [rems.text :refer [text text-format localize-state localize-event localize-time]]
+            [rems.text :refer [text text-format localize-state localize-event localize-time localize-item]]
             [rems.util :refer [dispatch! fetch index-by put!]]
             [secretary.core :as secretary])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
@@ -239,6 +239,7 @@
   [{:keys [title id inputprompt readonly optional value validation] :as opts}]
   [basic-field opts
    [:input.form-control {:type "text"
+                         :id (id-to-name id)
                          :name (id-to-name id)
                          :placeholder inputprompt
                          :class (when validation "is-invalid")
@@ -249,7 +250,8 @@
 (defn- texta-field
   [{:keys [title id inputprompt readonly optional value validation] :as opts}]
   [basic-field opts
-   [:textarea.form-control {:name (id-to-name id)
+   [:textarea.form-control {:id (id-to-name id)
+                            :name (id-to-name id)
                             :placeholder inputprompt
                             :class (when validation "is-invalid")
                             :value value
@@ -346,10 +348,7 @@
    {:name "submit" :onClick #(rf/dispatch [::save-application "submit"])}
    (text :t.form/submit)])
 
-(defn- apply-localization [item language]
-  (merge item (get-in item [:localizations language])))
-
-(defn- fields [form edit-application language]
+(defn- fields [form edit-application]
   (let [application (:application form)
         {:keys [items licenses validation]} edit-application
         validation-by-field-id (index-by [:type :id] validation)
@@ -364,20 +363,20 @@
       :collapse
       [:div
        (into [:div]
-             (for [i (:items form)]
-               [field (assoc (apply-localization i language)
-                             :validation (get-in validation-by-field-id [:item (:id i)])
-                             :readonly readonly?
-                             :value (get items (:id i)))]))
+             (for [item (:items form)]
+               [field (assoc (localize-item item)
+                        :validation (get-in validation-by-field-id [:item (:id item)])
+                        :readonly readonly?
+                        :value (get items (:id item)))]))
        (when-let [form-licenses (not-empty (:licenses form))]
          [:div.form-group.field
           [:h4 (text :t.form/licenses)]
           (into [:div]
-                (for [l form-licenses]
-                  [field (assoc (apply-localization l language)
-                                :validation (get-in validation-by-field-id [:license (:id l)])
-                                :readonly readonly?
-                                :approved (get licenses (:id l)))]))])
+                (for [license form-licenses]
+                  [field (assoc (localize-item license)
+                           :validation (get-in validation-by-field-id [:license (:id license)])
+                           :readonly readonly?
+                           :approved (get licenses (:id license)))]))])
        (when-not readonly?
          [:div.col.commands
           [status-widget]
@@ -696,7 +695,7 @@
      (when user-attributes
        [:div.mt-3 [applicant-info "applicant-info" user-attributes]])
      [:div.mt-3 [applied-resources (:catalogue-items application)]]
-     [:div.my-3 [fields application edit-application language]]
+     [:div.my-3 [fields application edit-application]]
      [:div.mb-3 [actions-form app]]
      [review-request-modal]
      [pdf-button (:id app)]]))

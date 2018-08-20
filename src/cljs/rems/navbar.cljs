@@ -44,6 +44,7 @@
                     [nav-link "#/actions" (text :t.navigation/actions) (= page-id :actions)])
         (when-role :owner current-roles
                    [nav-link "#/administration" (text :t.navigation/administration) (contains? #{:administration
+                                                                                                 :create-license
                                                                                                  :create-resource
                                                                                                  :create-catalogue-item}
                                                                                                page-id)])

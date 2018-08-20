@@ -3,7 +3,7 @@
             [re-frame.core :as rf]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
-            [rems.text :refer [text]]
+            [rems.text :refer [text localize-item]]
             [rems.util :refer [dispatch! fetch put!]]))
 
 (defn- fetch-licenses []
@@ -17,8 +17,8 @@
                                           :licenses (if licenses
                                                       (map :id licenses)
                                                       [])}
-                                :handler (fn [resp]
-                                           (dispatch! "#/administration"))}))
+                                 :handler (fn [resp]
+                                            (dispatch! "#/administration"))}))
 
 (rf/reg-sub
  ::prefix
@@ -92,12 +92,12 @@
     [:button.btn.btn-primary
      {:on-click #(rf/dispatch [::create-resource prefix resid licenses])
       :disabled (not (and (not (str/blank? prefix)) (not (str/blank? resid))))}
-     (text :t.create-resource/save)]))
+     (text :t.administration/save)]))
 
 (defn- cancel-button []
   [:button.btn.btn-secondary
    {:on-click #(dispatch! "/#/administration")}
-   (text :t.create-catalogue-item/cancel)])
+   (text :t.administration/cancel)])
 
 (defn create-resource-page []
   (fetch-licenses)
@@ -106,36 +106,40 @@
         licenses (rf/subscribe [::licenses])
         selected-licenses (rf/subscribe [::selected-licenses])]
     (fn []
-    [collapsible/component
-     {:id "create-create"
-      :title (text :t.navigation/create-resource)
-      :always [:div
-               [:div.form-group.field
-                [:label {:for "prefix"} (text :t.create-resource/prefix)]
-                [:input.form-control {:name "prefix"
-                                      :type :text
-                                      :placeholder (text :t.create-resource/prefix-placeholder)
-                                      :value @prefix
-                                      :on-change #(rf/dispatch [::set-prefix (.. % -target -value)])}]]
-               [:div.form-group.field
-                [:label {:for "resid"} (text :t.create-resource/resid)]
-                [:input.form-control {:name "resid"
-                                      :type :text
-                                      :placeholder (text :t.create-resource/resid-placeholder)
-                                      :value @resid
-                                      :on-change #(rf/dispatch [::set-resid (.. % -target -value)])}]]
-               [:div.form-group
-                [:label (text :t.create-resource/licenses-selection)]
-                [autocomplete/component
-                 {:value (sort-by :id @selected-licenses)
-                  :items @licenses
-                  :value->text #(:title %2)
-                  :item->key :id
-                  :item->text :title
-                  :item->value identity
-                  :search-fields [:title]
-                  :add-fn #(rf/dispatch [::add-selected-licenses %])
-                  :remove-fn #(rf/dispatch [::remove-selected-licenses %])}]]
-               [:div.col.commands
-                 [cancel-button]
-                 [save-resource-button]]]}])))
+      [collapsible/component
+       {:id "create-resource"
+        :title (text :t.navigation/create-resource)
+        :always [:div
+                 [:div.form-group.field
+                  [:label {:for "prefix"} (text :t.create-resource/prefix)]
+                  [:input.form-control {:id "prefix"
+                                        :name "prefix"
+                                        :type :text
+                                        :placeholder (text :t.create-resource/prefix-placeholder)
+                                        :value @prefix
+                                        :on-change #(rf/dispatch [::set-prefix (.. % -target -value)])}]]
+                 [:div.form-group.field
+                  [:label {:for "resid"} (text :t.create-resource/resid)]
+                  [:input.form-control {:id "resid"
+                                        :name "resid"
+                                        :type :text
+                                        :placeholder (text :t.create-resource/resid-placeholder)
+                                        :value @resid
+                                        :on-change #(rf/dispatch [::set-resid (.. % -target -value)])}]]
+                 [:div.form-group
+                  [:label (text :t.create-resource/licenses-selection)]
+                  [autocomplete/component
+                   {:value (->> @selected-licenses
+                                (map localize-item)
+                                (sort-by :id))
+                    :items (map localize-item @licenses)
+                    :value->text #(:title %2)
+                    :item->key :id
+                    :item->text :title
+                    :item->value identity
+                    :search-fields [:title]
+                    :add-fn #(rf/dispatch [::add-selected-licenses %])
+                    :remove-fn #(rf/dispatch [::remove-selected-licenses %])}]]
+                 [:div.col.commands
+                  [cancel-button]
+                  [save-resource-button]]]}])))

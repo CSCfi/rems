@@ -8,6 +8,7 @@
             [rems.actions :refer [actions-page fetch-actions]]
             [rems.administration :refer [administration-page]]
             [rems.administration.catalogue :refer [create-catalogue-item-page]]
+            [rems.administration.license :refer [create-license-page]]
             [rems.administration.resource :refer [create-resource-page]]
             [rems.ajax :refer [load-interceptors!]]
             [rems.application :refer [application-page fetch-application]]
@@ -42,9 +43,19 @@
    (:translations db)))
 
 (reg-sub
- :language
- (fn [db _]
-   (:language db)))
+  :language
+  (fn [db _]
+    (:language db)))
+
+(reg-sub
+  :languages
+  (fn [db _]
+    (:languages db)))
+
+(reg-sub
+  :default-language
+  (fn [db _]
+    (:default-language db)))
 
 ;; TODO: possibly move theme out
 (reg-sub
@@ -70,12 +81,14 @@
 ;;; handlers
 
 (reg-event-db
- :initialize-db
- (fn [_ _]
-   {:page :home
-    :language :en
-    :translations {}
-    :identity {:user nil :roles nil}}))
+  :initialize-db
+  (fn [_ _]
+    {:page :home
+     :language :en
+     :languages [:en :fi]                                   ; TODO: hard-coded for now
+     :default-language :en
+     :translations {}
+     :identity {:user nil :roles nil}}))
 
 (reg-event-db
  :set-active-page
@@ -182,6 +195,7 @@
    :application application-page
    :applications applications-page
    :administration administration-page
+   :create-license create-license-page
    :create-resource create-resource-page
    :create-catalogue-item create-catalogue-item-page
    :unauthorized unauthorized-page
@@ -243,6 +257,10 @@
 (secretary/defroute "/administration" []
   (rf/dispatch [:rems.administration/start-fetch-catalogue])
   (rf/dispatch [:set-active-page :administration]))
+
+(secretary/defroute "/create-license" []
+  (rf/dispatch [:rems.administration.license/reset-create-license])
+  (rf/dispatch [:set-active-page :create-license]))
 
 (secretary/defroute "/create-resource" []
   (rf/dispatch [:rems.administration.resource/reset-create-resource])

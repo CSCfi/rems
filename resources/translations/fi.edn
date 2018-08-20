@@ -45,8 +45,7 @@
                   [:p "Sitoudut siihen, että et tee REMS-demossa mitään sellaista joka loukkaa lakeja tai asetuksia tai kolmannen osapuolen oikeuksia (kuten tekijänoikeuksia) tai on säädytöntä, uhkaavaa, väkivaltaista, herjaavaa, vihamielistä, häiritsevää tai muulla tavalla paheksuttavaa."]
                   [:p "Sitoudut siihen, että et syötä REMS-demoon mitään tunnistettua tai tunnistettavissa olevaa luonnollista henkilöä koskevaa tietoa."]
                   [:h3 "Rahoittaja"]
-                  [:p "CSC:n REMS-tuote on saanut rahoitusta Opetus- ja kulttuuriministeriöltä ja Suomen akatemialta (apurahat 271642 ja 263164 Biomedinfraa varten, joka on Suomen ELIXIR, BBMRI ja EATRIS-tutkimusinfrastruktuurisolmujen muodostama konsortio)."]
-                  ]]}
+                  [:p "CSC:n REMS-tuote on saanut rahoitusta Opetus- ja kulttuuriministeriöltä ja Suomen akatemialta (apurahat 271642 ja 263164 Biomedinfraa varten, joka on Suomen ELIXIR, BBMRI ja EATRIS-tutkimusinfrastruktuurisolmujen muodostama konsortio)."]]]}
   :actions {:applicant "Hakija"
             :application "Hakemus"
             :approve "Hyväksy"
@@ -82,9 +81,12 @@
             :withdraw "Palauta muokattavaksi"
             :withdraw-success "Hakemus palautettu muokattavaksi"}
   :administration {:create-catalogue-item "Uusi kielivara"
+                   :create-license "Uusi lisenssi"
                    :create-resource "Uusi resurssi"
                    :disable "Poista käytöstä"
-                   :enable "Ota käyttöön"}
+                   :enable "Ota käyttöön"
+                   :save "Tallenna"
+                   :cancel "Peruuta"}
   :applicant-info {:applicant "Hakija"
                    :email "Sähköposti"
                    :username "Nimi"}
@@ -128,19 +130,21 @@
               :more-info "Lisätietoja"}
   :collapse {:show-more "Näytä lisää"
              :show-less "Näytä vähemmän"}
-  :create-catalogue-item {:cancel "Peruuta"
-                          :form-selection "Lomake"
+  :create-catalogue-item {:form-selection "Lomake"
                           :resource-selection "Resurssi"
-                          :save "Tallenna"
                           :title "Nimi"
                           :title-placeholder "Nimi"
                           :workflow-selection "Työvuo"}
+  :create-license {:title "Lisenssin nimi"
+                   :external-link "Linkki"
+                   :inline-text "Teksti"
+                   :link-to-license "Linkki lisenssiin"
+                   :license-text "Lisenssin teksti"}
   :create-resource {:licenses-selection "Käyttöehdot"
                     :prefix "Organization"
                     :prefix-placeholder "testorganization.org"
                     :resid "Resurssin tunniste"
-                    :resid-placeholder "urn:test:fi:some-uuid"
-                    :save "Tallenna"}
+                    :resid-placeholder "urn:test:fi:some-uuid"}
   :email {:action-not-needed-msg "Hyvä %1,
                                   Hakijan %2 hakemus %3 ei enää vaadi huomiotanne.
                                   Älkää vastatko tähän automaattisesti luotuun viestiin."
@@ -206,6 +210,7 @@
                :applications "Hakemukset"
                :catalogue "Kielivarat"
                :create-catalogue-item "Luo kielivara"
+               :create-license "Luo lisenssi"
                :create-resource "Luo resurssi"
                :home "Etusivu"
                :login "Kirjaudu sisään"

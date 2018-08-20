@@ -45,8 +45,7 @@
                   [:p "You agree not to do anything that infringes any laws or regulations or the rights of another (such as copyright) or is obscene, threatening, violent, abusive, hateful, harassing or otherwise objectionable."]
                   [:p "You agree not to introduce to REMS any information that relates to an identified or identifiable natural person."]
                   [:h3 "Acknowledgements"]
-                  [:p "CSC’s work for REMS has been supported by the Ministry of Education and Culture of Finland and by Academy of Finland grants 271642 and 263164 to construct Biomedinfra, the Finnish consortium for ELIXIR, BBMRI and EATRIS ESFRI."]
-                  ]]}
+                  [:p "CSC’s work for REMS has been supported by the Ministry of Education and Culture of Finland and by Academy of Finland grants 271642 and 263164 to construct Biomedinfra, the Finnish consortium for ELIXIR, BBMRI and EATRIS ESFRI."]]]}
   :actions {:applicant "Applicant"
             :application "Application"
             :approve "Approve"
@@ -82,9 +81,12 @@
             :withdraw "Withdraw"
             :withdraw-success "Application withdrawn"}
   :administration {:create-catalogue-item "Create catalogue item"
+                   :create-license "Create license"
                    :create-resource "Create resource"
                    :disable "Disable"
-                   :enable "Enable"}
+                   :enable "Enable"
+                   :save "Save"
+                   :cancel "Cancel"}
   :applicant-info {:applicant "Applicant"
                    :email "Email"
                    :username "Name"}
@@ -128,19 +130,21 @@
               :more-info "More info"}
   :collapse {:show-more "Show more"
              :show-less "Show less"}
-  :create-catalogue-item {:cancel "Cancel"
-                          :form-selection "Form"
+  :create-catalogue-item {:form-selection "Form"
                           :resource-selection "Resource"
-                          :save "Save"
                           :title "Name"
                           :title-placeholder "Name"
                           :workflow-selection "Workflow"}
+  :create-license {:title "License name"
+                   :external-link "External link"
+                   :inline-text "Inline text"
+                   :link-to-license "Link to the license"
+                   :license-text "License text"}
   :create-resource {:licenses-selection "Terms of Use"
                     :prefix "Organization"
                     :prefix-placeholder "testorganization.org"
                     :resid "Resource identifier"
-                    :resid-placeholder "urn:test:fi:some-uuid"
-                    :save "Save"}
+                    :resid-placeholder "urn:test:fi:some-uuid"}
   :email {:action-not-needed-msg "Dear %1,
                                   Applicant's %2 submitted application %3 no longer requires your attention.
                                   Please do not reply to this automatically generated message."
@@ -205,6 +209,7 @@
                :applications "Applications"
                :catalogue "Catalogue"
                :create-catalogue-item "Create catalogue item"
+               :create-license "Create license"
                :create-resource "Create resource"
                :home "Home"
                :login "Login"

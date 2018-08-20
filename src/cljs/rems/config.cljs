@@ -5,8 +5,11 @@
 (rf/reg-event-db
   ::loaded-config
   (fn [db [_ config]]
-    (assoc db :config config
-              :language (:default-language config :en))))
+    (let [hardcoded-default-language (get db :default-language)
+          configured-default-language (get config :default-language hardcoded-default-language)]
+      (assoc db :config config
+                :default-language configured-default-language
+                :language configured-default-language))))
 
 (rf/reg-sub
   ::config
@@ -14,4 +17,4 @@
     (:config db)))
 
 (defn fetch-config! []
-  (fetch "/api/config" {:handler #(rf/dispatch [:rems.config/loaded-config %])}))
+  (fetch "/api/config" {:handler #(rf/dispatch [::loaded-config %])}))
