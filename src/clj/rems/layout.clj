@@ -23,7 +23,7 @@ window.rems = {
 
 (defn- page-template
   [content]
-  (html5 [:html
+  (html5 [:html {:lang "en"}
           [:head
            [:meta {:http-equiv "Content-Type" :content "text/html; charset=UTF-8"}]
            [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
@@ -36,6 +36,8 @@ window.rems = {
           [:body
            [:div#app]
            (include-js "/assets/font-awesome/js/fontawesome.js")
+           (include-js "/assets/better-dom/dist/better-dom.js")
+           (include-js "/assets/better-dateinput-polyfill/dist/better-dateinput-polyfill.js")
            (include-js "/assets/jquery/jquery.min.js")
            (include-js "/assets/popper.js/dist/umd/popper.min.js")
            (include-js "/assets/tether/dist/js/tether.min.js")

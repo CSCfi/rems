@@ -34,6 +34,8 @@
                  [org.clojure/tools.logging "0.4.1"]
                  [org.postgresql/postgresql "42.2.2"]
                  [org.webjars.bower/tether "1.4.3"]
+                 [org.webjars.npm/better-dateinput-polyfill "3.0.0"]
+                 [org.webjars.npm/better-dom "4.0.0"]
                  [org.webjars.npm/popper.js "1.14.3"]
                  [org.webjars/bootstrap "4.1.0"]
                  [org.webjars/font-awesome "5.2.0"]
