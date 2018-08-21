@@ -54,11 +54,28 @@
       (let [response (-> (request :get (str "/api/workflows"))
                          app)]
         (is (= 401 (:status response)))
-        (is (= "unauthorized" (read-body response))))))
+        (is (= "unauthorized" (read-body response)))))
+    (testing "create"
+      (let [response (-> (request :post (str "/api/workflows/create"))
+                         (json-body {:title "workflow title"
+                                     :rounds [{:actors [{:userid "bob"
+                                                         :role "reviewer"}]}]})
+                         app)]
+        (is (= 403 (:status response)))
+        (is (= "<h1>Invalid anti-forgery token</h1>" (read-body response))))))
 
   (testing "without owner role"
     (testing "list"
       (let [response (-> (request :get (str "/api/workflows"))
+                         (authenticate "42" "alice")
+                         app)]
+        (is (= 401 (:status response)))
+        (is (= "unauthorized" (read-body response)))))
+    (testing "create"
+      (let [response (-> (request :post (str "/api/workflows/create"))
+                         (json-body {:title "workflow title"
+                                     :rounds [{:actors [{:userid "bob"
+                                                         :role "reviewer"}]}]})
                          (authenticate "42" "alice")
                          app)]
         (is (= 401 (:status response)))

@@ -62,6 +62,8 @@
     (POST "/create" []
       :summary "Create workflow"
       :body [command CreateWorkflowCommand]
+      (check-user)
+      (check-roles :owner)
       ; TODO
       (prn command)
       (ok "TODO"))))
