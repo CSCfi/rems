@@ -59,7 +59,7 @@
       (check-roles :owner)
       (ok (get-workflows (when-not (nil? active) {:active? active}))))
 
-    (PUT "/create" []
+    (POST "/create" []
       :summary "Create workflow"
       :body [command CreateWorkflowCommand]
       ; TODO

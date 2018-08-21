@@ -25,7 +25,7 @@
       (check-roles :owner)
       (ok (licenses/get-all-licenses (when-not (nil? active) {:active? active}))))
 
-    (PUT "/create" []
+    (POST "/create" []
       :summary "Create license"
       :body [command CreateLicenseCommand]
       (check-user)

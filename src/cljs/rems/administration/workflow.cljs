@@ -3,7 +3,7 @@
             [re-frame.core :as rf]
             [rems.collapsible :as collapsible]
             [rems.text :refer [text localize-item]]
-            [rems.util :refer [dispatch! fetch put!]]))
+            [rems.util :refer [dispatch! fetch post!]]))
 
 (def actor-role-approver "approver")
 (def actor-role-reviewer "text")
@@ -13,9 +13,9 @@
   form)
 
 (defn- create-workflow [form]
-  (put! "/api/licenses/create" {:params (build-request form)
-                                :handler (fn [resp]
-                                           (dispatch! "#/administration"))}))
+  (post! "/api/licenses/create" {:params (build-request form)
+                                 :handler (fn [resp]
+                                            (dispatch! "#/administration"))}))
 
 (rf/reg-event-fx
   ::create-workflow

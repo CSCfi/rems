@@ -1,5 +1,5 @@
 (ns rems.util
-  (:require  [ajax.core :refer [GET PUT]]
+  (:require  [ajax.core :refer [GET PUT POST]]
              [re-frame.core :as rf]))
 
 (defn select-vals
@@ -64,3 +64,16 @@
                    :format :json
                    :response-format :transit}
                   opts)))
+
+(defn post!
+  "Dispatches a command to the given url with optional map of options like #'ajax.core/POST.
+
+  Has sensible defaults with error handler, JSON and keywords.
+
+  Additionally calls event hooks."
+  [url opts]
+  (js/window.rems.hooks.put url (clj->js opts))
+  (POST url (merge {:error-handler (wrap-default-error-handler (:error-handler opts))
+                    :format :json
+                    :response-format :transit}
+                   opts)))

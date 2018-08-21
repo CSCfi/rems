@@ -32,7 +32,7 @@
                                           :textcontent "http://example.com/license/en"}
                                      :fi {:title "fi title"
                                           :textcontent "http://example.com/license/fi"}}}
-            response (-> (request :put "/api/licenses/create")
+            response (-> (request :post "/api/licenses/create")
                          (authenticate api-key user-id)
                          (json-body command)
                          app)]
@@ -57,7 +57,7 @@
                                           :textcontent "en text"}
                                      :fi {:title "fi title"
                                           :textcontent "fi text"}}}
-            response (-> (request :put "/api/licenses/create")
+            response (-> (request :post "/api/licenses/create")
                          (authenticate api-key user-id)
                          (json-body command)
                          app)]
@@ -94,7 +94,7 @@
     (let [response (-> (request :get "/api/licenses")
                        app)]
       (is (= 401 (:status response))))
-    (let [response (-> (request :put "/api/licenses/create")
+    (let [response (-> (request :post "/api/licenses/create")
                        (json-body {:licensetype "text"
                                    :title "t"
                                    :textcontent "t"
@@ -108,7 +108,7 @@
                        (authenticate "42" "alice")
                        app)]
       (is (= 401 (:status response))))
-    (let [response (-> (request :put "/api/licenses/create")
+    (let [response (-> (request :post "/api/licenses/create")
                        (authenticate "42" "alice")
                        (json-body {:licensetype "text"
                                    :title "t"

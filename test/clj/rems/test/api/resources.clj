@@ -26,7 +26,7 @@
     (testing "create"
       (let [licid 1
             resid "RESOURCE-API-TEST"]
-        (let [response (-> (request :put "/api/resources/create")
+        (let [response (-> (request :post "/api/resources/create")
                            (authenticate api-key user-id)
                            (json-body {:resid resid
                                        :prefix "TEST-PREFIX"
@@ -65,7 +65,7 @@
     (let [response (-> (request :get "/api/resources")
                        app)]
       (is (= 401 (:status response))))
-    (let [response (-> (request :put "/api/resources/create")
+    (let [response (-> (request :post "/api/resources/create")
                        (json-body {:resid "r"
                                    :prefix "p"
                                    :licenses []})
@@ -78,7 +78,7 @@
                          (authenticate api-key user-id)
                          app)]
         (is (= 401 (:status response))))
-      (let [response (-> (request :put "/api/resources/create")
+      (let [response (-> (request :post "/api/resources/create")
                          (authenticate api-key user-id)
                          (json-body {:resid "r"
                                      :prefix "p"
@@ -92,7 +92,7 @@
                          (authenticate api-key user-id)
                          app)]
         (is (= 401 (:status response))))
-      (let [response (-> (request :put "/api/resources/create")
+      (let [response (-> (request :post "/api/resources/create")
                          (authenticate api-key user-id)
                          (json-body {:resid "r"
                                      :prefix "p"

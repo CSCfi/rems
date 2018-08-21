@@ -20,7 +20,7 @@
                    read-body)
           item (first data)]
       (is (str/starts-with? (:resid item) "urn:")))
-    (let [data (-> (request :put "/api/catalogue-items/create")
+    (let [data (-> (request :post "/api/catalogue-items/create")
                    (authenticate api-key "owner")
                    (json-body {:title "test-item-title"
                                :form 1
@@ -49,13 +49,13 @@
       (is (= 401 (:status response)))
       (is (= "unauthorized" body))))
   (testing "create without authentication"
-    (let [response (-> (request :put (str "/api/catalogue-items/create"))
+    (let [response (-> (request :post (str "/api/catalogue-items/create"))
                        app)
           body (read-body response)]
       (is (str/includes? body "Invalid anti-forgery token"))))
   (testing "create with wrong API-Key"
     (is (= "invalid api key"
-           (-> (request :put (str "/api/catalogue-items/create"))
+           (-> (request :post (str "/api/catalogue-items/create"))
                (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
                (json-body {:title "malicious item"
                            :form 1
@@ -64,7 +64,7 @@
                app
                (read-body)))))
   (testing "create-localization without authentication"
-    (let [response (-> (request :put (str "/api/catalogue-items/create-localization"))
+    (let [response (-> (request :post (str "/api/catalogue-items/create-localization"))
                        (json-body {:id 1
                                    :langcode :fi
                                    :title "malicious localization"})
@@ -73,7 +73,7 @@
       (is (str/includes? body "Invalid anti-forgery token"))))
   (testing "create-localization with wrong API-Key"
     (is (= "invalid api key"
-           (-> (request :put (str "/api/catalogue-items/create-localization"))
+           (-> (request :post (str "/api/catalogue-items/create-localization"))
                (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
                (json-body {:id 1
                            :langcode :fi

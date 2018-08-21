@@ -4,7 +4,7 @@
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
             [rems.text :refer [text]]
-            [rems.util :refer [dispatch! fetch put!]]))
+            [rems.util :refer [dispatch! fetch post!]]))
 
 (defn- fetch-workflows []
   (fetch "/api/workflows/?active=true" {:handler #(rf/dispatch [::set-workflows %])}))
@@ -16,12 +16,12 @@
   (fetch "/api/forms/?active=true" {:handler #(rf/dispatch [::set-forms %])}))
 
 (defn- create-catalogue-item [title workflow resource form]
-  (put! "/api/catalogue-items/create" {:params {:title title
-                                                :wfid (:id workflow)
-                                                :resid (:id resource)
-                                                :form (:id form)}
-                                       ;; TODO error handling
-                                       :handler (fn [resp] (dispatch! "#/administration"))}))
+  (post! "/api/catalogue-items/create" {:params {:title title
+                                                 :wfid (:id workflow)
+                                                 :resid (:id resource)
+                                                 :form (:id form)}
+                                        ;; TODO error handling
+                                        :handler (fn [resp] (dispatch! "#/administration"))}))
 
 (rf/reg-sub
  ::workflows
