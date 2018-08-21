@@ -91,29 +91,37 @@
 
 (deftest licenses-api-security-test
   (testing "without authentication"
-    (let [response (-> (request :get "/api/licenses")
-                       app)]
-      (is (= 401 (:status response))))
-    (let [response (-> (request :post "/api/licenses/create")
-                       (json-body {:licensetype "text"
-                                   :title "t"
-                                   :textcontent "t"
-                                   :localizations {:en {:title "t"
-                                                        :textcontent "t"}}})
-                       app)]
-      (is (= 403 (:status response)))))
+    (testing "list"
+      (let [response (-> (request :get "/api/licenses")
+                         app)]
+        (is (= 401 (:status response)))
+        (is (= "unauthorized" (read-body response)))))
+    (testing "create"
+      (let [response (-> (request :post "/api/licenses/create")
+                         (json-body {:licensetype "text"
+                                     :title "t"
+                                     :textcontent "t"
+                                     :localizations {:en {:title "t"
+                                                          :textcontent "t"}}})
+                         app)]
+        (is (= 403 (:status response)))
+        (is (= "<h1>Invalid anti-forgery token</h1>" (read-body response))))))
 
   (testing "without owner role"
-    (let [response (-> (request :get "/api/licenses")
-                       (authenticate "42" "alice")
-                       app)]
-      (is (= 401 (:status response))))
-    (let [response (-> (request :post "/api/licenses/create")
-                       (authenticate "42" "alice")
-                       (json-body {:licensetype "text"
-                                   :title "t"
-                                   :textcontent "t"
-                                   :localizations {:en {:title "t"
-                                                        :textcontent "t"}}})
-                       app)]
-      (is (= 401 (:status response))))))
+    (testing "list"
+      (let [response (-> (request :get "/api/licenses")
+                         (authenticate "42" "alice")
+                         app)]
+        (is (= 401 (:status response)))
+        (is (= "unauthorized" (read-body response)))))
+    (testing "create"
+      (let [response (-> (request :post "/api/licenses/create")
+                         (authenticate "42" "alice")
+                         (json-body {:licensetype "text"
+                                     :title "t"
+                                     :textcontent "t"
+                                     :localizations {:en {:title "t"
+                                                          :textcontent "t"}}})
+                         app)]
+        (is (= 401 (:status response)))
+        (is (= "unauthorized" (read-body response)))))))
