@@ -29,7 +29,38 @@
               {:actoruserid "bob"
                :round 0
                :role "approver"}]
-             (:actors simple))))))
+             (:actors simple)))))
+  (testing "create"
+    (let [response (-> (request :post (str "/api/workflows/create"))
+                       (json-body {:prefix "abc"
+                                   :title "workflow title"
+                                   :rounds [{:actors [{:userid "alice"
+                                                       :role "reviewer"}
+                                                      {:userid "bob"
+                                                       :role "reviewer"}]}
+                                            {:actors [{:userid "carl"
+                                                       :role "approver"}]}]})
+                       (authenticate "42" "owner")
+                       app)
+          body (read-body response)
+          id (:id body)]
+      (is (= 200 (:status response)))
+      (is (< 0 id))
+      (testing "and fetch"
+        (let [response (-> (request :get "/api/workflows")
+                           (authenticate "42" "owner")
+                           app)
+              workflows (read-body response)
+              workflow (first (filter #(= id (:id %)) workflows))]
+          (is (response-is-ok? response))
+          (is (= {:id id
+                  :prefix "abc"
+                  :title "workflow title"
+                  :final-round 1
+                  :actors [{:actoruserid "alice", :role "reviewer", :round 0}
+                           {:actoruserid "bob", :role "reviewer", :round 0}
+                           {:actoruserid "carl", :role "approver", :round 1}]}
+                 (select-keys workflow [:id :prefix :title :final-round :actors]))))))))
 
 (deftest workflows-api-filtering-test
   (let [unfiltered-response (-> (request :get "/api/workflows")
@@ -57,7 +88,8 @@
         (is (= "unauthorized" (read-body response)))))
     (testing "create"
       (let [response (-> (request :post (str "/api/workflows/create"))
-                         (json-body {:title "workflow title"
+                         (json-body {:prefix "abc"
+                                     :title "workflow title"
                                      :rounds [{:actors [{:userid "bob"
                                                          :role "reviewer"}]}]})
                          app)]
@@ -73,7 +105,8 @@
         (is (= "unauthorized" (read-body response)))))
     (testing "create"
       (let [response (-> (request :post (str "/api/workflows/create"))
-                         (json-body {:title "workflow title"
+                         (json-body {:prefix "abc"
+                                     :title "workflow title"
                                      :rounds [{:actors [{:userid "bob"
                                                          :role "reviewer"}]}]})
                          (authenticate "42" "alice")

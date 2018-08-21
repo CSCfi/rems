@@ -4,7 +4,9 @@
             [rems.db.core :as db]
             [rems.db.workflow :as workflow]
             [ring.util.http-response :refer :all]
-            [schema.core :as s])
+            [schema.core :as s]
+            [rems.util :refer [get-user-id]]
+            [rems.db.workflow-actors :as actors])
   (:import [org.joda.time DateTime]))
 
 (def Actor
@@ -37,7 +39,8 @@
    :active active?})
 
 (def CreateWorkflowCommand
-  {:title s/Str
+  {:prefix s/Str
+   :title s/Str
    :rounds [{:actors [{:userid s/Str
                        :role (s/enum "reviewer" "approver")}]}]})
 
@@ -46,6 +49,21 @@
     (for [wf (workflow/get-workflows filters)]
       (assoc (format-workflow wf)
         :actors (db/get-workflow-actors {:wfid (:id wf)})))))
+
+(defn create-workflow [{:keys [prefix title rounds]}]
+  (let [wfid (:id (db/create-workflow! {:prefix prefix,
+                                        :owneruserid (get-user-id),
+                                        :modifieruserid (get-user-id),
+                                        :title title,
+                                        :fnlround (dec (count rounds))}))]
+    (doseq [[round-index round] (map-indexed vector rounds)]
+      (doseq [{:keys [role userid]} (:actors round)]
+        (case role
+          "approver" (actors/add-approver! wfid userid round-index)
+          "reviewer" (actors/add-reviewer! wfid userid round-index))))
+    {:id wfid}))
+
+
 
 (def workflows-api
   (context "/workflows" []
@@ -64,6 +82,4 @@
       :body [command CreateWorkflowCommand]
       (check-user)
       (check-roles :owner)
-      ; TODO
-      (prn command)
-      (ok "TODO"))))
+      (ok (create-workflow command)))))
