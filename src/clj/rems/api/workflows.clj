@@ -41,8 +41,8 @@
 (def CreateWorkflowCommand
   {:prefix s/Str
    :title s/Str
-   :rounds [{:actors [{:userid s/Str
-                       :role (s/enum "reviewer" "approver")}]}]})
+   :rounds [{:type (s/enum :approval :review)
+             :actors [{:userid s/Str}]}]})
 
 (defn- get-workflows [filters]
   (doall
@@ -57,10 +57,10 @@
                                         :title title,
                                         :fnlround (dec (count rounds))}))]
     (doseq [[round-index round] (map-indexed vector rounds)]
-      (doseq [{:keys [role userid]} (:actors round)]
-        (case role
-          "approver" (actors/add-approver! wfid userid round-index)
-          "reviewer" (actors/add-reviewer! wfid userid round-index))))
+      (doseq [actor (:actors round)]
+        (case (:type round)
+          :approval (actors/add-approver! wfid (:userid actor) round-index)
+          :review (actors/add-reviewer! wfid (:userid actor) round-index))))
     {:id wfid}))
 
 

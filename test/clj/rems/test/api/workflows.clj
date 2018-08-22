@@ -34,12 +34,11 @@
     (let [response (-> (request :post (str "/api/workflows/create"))
                        (json-body {:prefix "abc"
                                    :title "workflow title"
-                                   :rounds [{:actors [{:userid "alice"
-                                                       :role "reviewer"}
-                                                      {:userid "bob"
-                                                       :role "reviewer"}]}
-                                            {:actors [{:userid "carl"
-                                                       :role "approver"}]}]})
+                                   :rounds [{:type :review
+                                             :actors [{:userid "alice"}
+                                                      {:userid "bob"}]}
+                                            {:type :approval
+                                             :actors [{:userid "carl"}]}]})
                        (authenticate "42" "owner")
                        app)
           body (read-body response)
@@ -90,8 +89,8 @@
       (let [response (-> (request :post (str "/api/workflows/create"))
                          (json-body {:prefix "abc"
                                      :title "workflow title"
-                                     :rounds [{:actors [{:userid "bob"
-                                                         :role "reviewer"}]}]})
+                                     :rounds [{:type :approval
+                                               :actors [{:userid "bob"}]}]})
                          app)]
         (is (= 403 (:status response)))
         (is (= "<h1>Invalid anti-forgery token</h1>" (read-body response))))))
@@ -107,8 +106,8 @@
       (let [response (-> (request :post (str "/api/workflows/create"))
                          (json-body {:prefix "abc"
                                      :title "workflow title"
-                                     :rounds [{:actors [{:userid "bob"
-                                                         :role "reviewer"}]}]})
+                                     :rounds [{:type :approval
+                                               :actors [{:userid "bob"}]}]})
                          (authenticate "42" "alice")
                          app)]
         (is (= 401 (:status response)))
