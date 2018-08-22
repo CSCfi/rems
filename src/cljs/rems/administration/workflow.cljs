@@ -5,12 +5,19 @@
             [rems.text :refer [text localize-item]]
             [rems.util :refer [dispatch! fetch post!]]))
 
-(def actor-role-approver "approver")
-(def actor-role-reviewer "text")
+(defn- valid-request? [request]
+  (and (not (str/blank? (:prefix request)))
+       (not (str/blank? (:title request)))
+       (not (empty? (:rounds request)))
+       (every? (fn [round]
+                 (and (not (nil? (:type round)))
+                      (not (empty? (:actors round)))))
+               (:rounds request))))
 
 (defn build-request [form]
-  ; TODO
-  form)
+  (let [request form]                                       ; TODO: mapping needed?
+    (when (valid-request? request)
+      request)))
 
 (defn- create-workflow [form]
   (post! "/api/licenses/create" {:params (build-request form)
@@ -67,11 +74,11 @@
 (defn- round-type-radio-button [round value label]
   (let [form @(rf/subscribe [::form])
         keys [:rounds round :type]
-        id (str "round-" round "-type-" value)]
+        id (str "round-" round "-type-" (name value))]
     [:div.form-check.form-check-inline
      [:input.form-check-input {:type "radio"
                                :id id
-                               :value value
+                               :value (name value)
                                :checked (= value (get-in form keys))
                                :on-change #(when (.. % -target -checked)
                                              (rf/dispatch [::set-form-field keys value]))}]
@@ -79,8 +86,8 @@
 
 (defn- round-type-radio-group [round]
   [:div.form-group.field
-   [round-type-radio-button round actor-role-approver "Approval round"] ; TODO: translation
-   [round-type-radio-button round actor-role-reviewer "Review round"]]) ; TODO: translation
+   [round-type-radio-button round :approval "Approval round"] ; TODO: translation
+   [round-type-radio-button round :review "Review round"]]) ; TODO: translation
 
 (defn- workflow-actors-field [round]
   (let [form @(rf/subscribe [::form])
