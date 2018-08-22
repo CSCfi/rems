@@ -41,6 +41,18 @@
 
 ;;;; UI ;;;;
 
+(defn- workflow-prefix-field []
+  (let [form @(rf/subscribe [::form])
+        keys [:prefix]
+        id "prefix"]
+    [:div.form-group.field
+     [:label {:for id} (text :t.create-resource/prefix)]    ; TODO: extract common translation
+     [:input.form-control {:type :text
+                           :id id
+                           :placeholder (text :t.create-resource/prefix-placeholder) ; TODO: extract common translation
+                           :value (get-in form keys)
+                           :on-change #(rf/dispatch [::set-form-field keys (.. % -target -value)])}]]))
+
 (defn- workflow-title-field []
   (let [form @(rf/subscribe [::form])
         keys [:title]
@@ -105,6 +117,7 @@
      {:id "create-workflow"
       :title "Create workflow"                              ; TODO: translation
       :always [:div
+               [workflow-prefix-field]
                [workflow-title-field]
                (doall (for [round (range (count (:rounds form)))]
                         [:div
