@@ -3,7 +3,9 @@
             [re-frame.core :as rf]
             [rems.collapsible :as collapsible]
             [rems.text :refer [text localize-item]]
-            [rems.util :refer [dispatch! fetch post!]]))
+            [rems.util :refer [dispatch! fetch post!]]
+            [rems.autocomplete :as autocomplete]
+            [rems.application :refer [enrich-user]]))
 
 (defn- valid-request? [request]
   (and (not (str/blank? (:prefix request)))
@@ -14,15 +16,25 @@
                       (not (empty? (:actors round)))))
                (:rounds request))))
 
+(defn build-actor-request [actor]
+  {:userid (:userid actor)})
+
+(defn- build-round-request [round]
+  {:type (:type round)
+   :actors (map build-actor-request (:actors round))})
+
 (defn build-request [form]
-  (let [request form]                                       ; TODO: mapping needed?
+  (let [request {:prefix (:prefix form)
+                 :title (:title form)
+                 :rounds (map build-round-request (:rounds form))}]
+
     (when (valid-request? request)
       request)))
 
 (defn- create-workflow [form]
-  (post! "/api/licenses/create" {:params (build-request form)
-                                 :handler (fn [resp]
-                                            (dispatch! "#/administration"))}))
+  (post! "/api/workflows/create" {:params (build-request form)
+                                  :handler (fn [resp]
+                                             (dispatch! "#/administration"))}))
 
 (rf/reg-event-fx
   ::create-workflow
@@ -44,6 +56,58 @@
   ::set-form-field
   (fn [db [_ keys value]]
     (assoc-in db (concat [::form] keys) value)))
+
+
+; selected actors
+
+(defn- remove-actor [actors actor]
+  (filter #(not= (:userid %)
+                 (:userid actor))
+          actors))
+
+(rf/reg-event-db
+  ::remove-actor
+  (fn [db [_ round actor]]
+    (update-in db [::form :rounds round :actors] remove-actor actor)))
+
+(defn- add-actor [actors actor]
+  (-> actors
+      (remove-actor actor)                                  ; avoid duplicates
+      (conj actor)))
+
+(rf/reg-event-db
+  ::add-actor
+  (fn [db [_ round actor]]
+    (update-in db [::form :rounds round :actors] add-actor actor)))
+
+
+; available actors
+
+(defn- fetch-actors []
+  (fetch "/api/workflows/actors" {:handler #(rf/dispatch [::fetch-actors-result %])}))
+
+(rf/reg-fx
+  ::fetch-actors
+  (fn [_]
+    (fetch-actors)))
+
+(rf/reg-event-fx
+  ::start-fetch-actors
+  (fn [{:keys [db]}]
+    {:db (assoc db ::loading? true)
+     ::fetch-actors []}))
+
+(rf/reg-event-db
+  ::fetch-actors-result
+  (fn [db [_ actors]]
+    (-> db
+        (assoc ::actors (map enrich-user actors))
+        (dissoc ::loading?))))
+
+(rf/reg-sub
+  ::actors
+  (fn [db _]
+    (::actors db)))
 
 
 ;;;; UI ;;;;
@@ -91,14 +155,24 @@
 
 (defn- workflow-actors-field [round]
   (let [form @(rf/subscribe [::form])
-        keys [:rounds round :actors]
-        id (str "round-" round "-actors")]
-    [:div.form-group.field
-     [:label {:for id} "Users"]                             ; TODO: translation
-     [:input.form-control {:type "text"
-                           :id id
-                           :value (get-in form keys)
-                           :on-change #(rf/dispatch [::set-form-field keys (.. % -target -value)])}]]))
+        round-type (get-in form [:rounds round :type])
+        all-actors @(rf/subscribe [::actors])
+        selected-actors (get-in form [:rounds round :actors])]
+    (when round-type
+      [:div.form-group
+       [:label (case round-type
+                 :approval "Approvers"
+                 :review "Reviewers")]                      ; TODO: translation
+       [autocomplete/component
+        {:value (sort-by :userid selected-actors)
+         :items all-actors
+         :value->text #(:display %2)
+         :item->key :userid
+         :item->text :display
+         :item->value identity
+         :search-fields [:display :userid]
+         :add-fn #(rf/dispatch [::add-actor round %])
+         :remove-fn #(rf/dispatch [::remove-actor round %])}]])))
 
 (defn- add-round-button []
   (let [form @(rf/subscribe [::form])]
@@ -129,7 +203,8 @@
                (doall (for [round (range (count (:rounds form)))]
                         [:div
                          {:key round}
-                         [:h2 (str "Round " (inc round))]
+                         [:h2 (str "Round " (inc round))]   ; TODO: translation
+                         ; TODO: button to remove the round
                          [round-type-radio-group round]
                          [workflow-actors-field round]]))
 

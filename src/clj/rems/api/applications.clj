@@ -116,6 +116,13 @@
       (str/blank? (get u "commonName"))
       (str/blank? (get u "mail"))))
 
+(defn get-reviewers []
+  (for [u (->> (users/get-all-users)
+               (remove invalid-reviewer?))]
+    {:userid (get u "eppn")
+     :name (get u "commonName")
+     :email (get u "mail")}))
+
 (def applications-api
   (context "/applications" []
     :tags ["applications"]
@@ -139,11 +146,7 @@
       :return [Reviewer]
       (check-user)
       (check-roles :approver)
-      (ok (for [u (->> (users/get-all-users)
-                       (remove invalid-reviewer?))]
-            {:userid (get u "eppn")
-             :name (get u "commonName")
-             :email (get u "mail")})))
+      (ok (get-reviewers)))
 
     (GET "/:application-id" []
       :summary "Get application by `application-id`"

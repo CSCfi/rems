@@ -6,7 +6,8 @@
             [ring.util.http-response :refer :all]
             [schema.core :as s]
             [rems.util :refer [get-user-id]]
-            [rems.db.workflow-actors :as actors])
+            [rems.db.workflow-actors :as actors]
+            [rems.api.applications :refer [Reviewer get-reviewers]])
   (:import [org.joda.time DateTime]))
 
 (def Actor
@@ -82,4 +83,11 @@
       :body [command CreateWorkflowCommand]
       (check-user)
       (check-roles :owner)
-      (ok (create-workflow command)))))
+      (ok (create-workflow command)))
+
+    (GET "/actors" []                                       ; TODO: deduplicate with /api/applications/reviewers API?
+      :summary "List of available actors"
+      :return [Reviewer]
+      (check-user)
+      (check-roles :owner)
+      (ok (get-reviewers)))))

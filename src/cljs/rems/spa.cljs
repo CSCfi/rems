@@ -269,6 +269,7 @@
   (rf/dispatch [:set-active-page :create-resource]))
 
 (secretary/defroute "/create-workflow" []
+  (rf/dispatch [:rems.administration.workflow/start-fetch-actors])
   (rf/dispatch [:rems.administration.workflow/reset-create-workflow])
   (rf/dispatch [:set-active-page :create-workflow]))
 
