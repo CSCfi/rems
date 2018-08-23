@@ -59,6 +59,30 @@
                   :actors [{:actoruserid "alice", :role "reviewer", :round 0}
                            {:actoruserid "bob", :role "reviewer", :round 0}
                            {:actoruserid "carl", :role "approver", :round 1}]}
+                 (select-keys workflow [:id :prefix :title :final-round :actors])))))))
+  (testing "create auto-approved workflow"
+    (let [response (-> (request :post (str "/api/workflows/create"))
+                       (json-body {:prefix "abc"
+                                   :title "auto-approved workflow"
+                                   :rounds []})
+                       (authenticate "42" "owner")
+                       app)
+          body (read-body response)
+          id (:id body)]
+      (is (= 200 (:status response)))
+      (is (< 0 id))
+      (testing "and fetch"
+        (let [response (-> (request :get "/api/workflows")
+                           (authenticate "42" "owner")
+                           app)
+              workflows (read-body response)
+              workflow (first (filter #(= id (:id %)) workflows))]
+          (is (response-is-ok? response))
+          (is (= {:id id
+                  :prefix "abc"
+                  :title "auto-approved workflow"
+                  :final-round 0
+                  :actors []}
                  (select-keys workflow [:id :prefix :title :final-round :actors]))))))))
 
 (deftest workflows-api-filtering-test

@@ -10,7 +10,6 @@
 (defn- valid-request? [request]
   (and (not (str/blank? (:prefix request)))
        (not (str/blank? (:title request)))
-       (not (empty? (:rounds request)))
        (every? (fn [round]
                  (and (not (nil? (:type round)))
                       (not (empty? (:actors round)))))
@@ -45,7 +44,7 @@
 (rf/reg-event-db
   ::reset-create-workflow
   (fn [db _]
-    (assoc db ::form {:rounds [{}]})))
+    (assoc db ::form {:rounds []})))
 
 (rf/reg-sub
   ::form

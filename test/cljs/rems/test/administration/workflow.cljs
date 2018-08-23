@@ -19,15 +19,18 @@
                        {:type :approval
                         :actors [{:userid "carl"}]}]}
              (build-request form))))
+    (testing "auto-approved workflow"
+      (is (= {:prefix "abc"
+              :title "workflow title"
+              :rounds []}
+             (build-request (assoc form :rounds [])))))
     (testing "missing prefix"
       (is (nil? (build-request (assoc form :prefix "")))))
     (testing "missing title"
       (is (nil? (build-request (assoc form :title "")))))
-    (testing "no rounds"
-      (is (nil? (build-request (assoc form :rounds [])))))
     (testing "missing round type"
       (is (nil? (build-request (assoc-in form [:rounds 0 :type] nil)))))
-    (testing "no actors"
+    (testing "missing actors"
       (is (nil? (build-request (assoc-in form [:rounds 0 :actors] [])))))))
 
 (deftest vec-dissoc-test

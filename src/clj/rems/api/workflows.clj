@@ -56,15 +56,14 @@
                                         :owneruserid (get-user-id),
                                         :modifieruserid (get-user-id),
                                         :title title,
-                                        :fnlround (dec (count rounds))}))]
+                                        ; workflows with no rounds are auto-approved
+                                        :fnlround (max 0 (dec (count rounds)))}))]
     (doseq [[round-index round] (map-indexed vector rounds)]
       (doseq [actor (:actors round)]
         (case (:type round)
           :approval (actors/add-approver! wfid (:userid actor) round-index)
           :review (actors/add-reviewer! wfid (:userid actor) round-index))))
     {:id wfid}))
-
-
 
 (def workflows-api
   (context "/workflows" []
