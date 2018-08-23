@@ -2,7 +2,7 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.collapsible :as collapsible]
-            [rems.text :refer [text localize-item]]
+            [rems.text :refer [text text-format localize-item]]
             [rems.util :refer [dispatch! fetch post!]]
             [rems.autocomplete :as autocomplete]
             [rems.application :refer [enrich-user]]))
@@ -129,7 +129,7 @@
         keys [:title]
         id "title"]
     [:div.form-group.field
-     [:label {:for id} "Title"]                             ; TODO: translation
+     [:label {:for id} (text :t.create-workflow/title)]
      [:input.form-control {:type "text"
                            :id id
                            :value (get-in form keys)
@@ -150,8 +150,8 @@
 
 (defn- round-type-radio-group [round]
   [:div.form-group.field
-   [round-type-radio-button round :approval "Approval round"] ; TODO: translation
-   [round-type-radio-button round :review "Review round"]]) ; TODO: translation
+   [round-type-radio-button round :approval (text :t.create-workflow/approval-round)]
+   [round-type-radio-button round :review (text :t.create-workflow/review-round)]])
 
 (defn- workflow-actors-field [round]
   (let [form @(rf/subscribe [::form])
@@ -161,8 +161,8 @@
     (when round-type
       [:div.form-group
        [:label (case round-type
-                 :approval "Approvers"
-                 :review "Reviewers")]                      ; TODO: translation
+                 :approval (text :t.create-workflow/approvers)
+                 :review (text :t.create-workflow/reviewers))]
        [autocomplete/component
         {:value (sort-by :userid selected-actors)
          :items all-actors
@@ -178,7 +178,7 @@
   (let [form @(rf/subscribe [::form])]
     [:button.btn.btn-primary
      {:on-click #(rf/dispatch [::set-form-field [:rounds (count (:rounds form))] {}])}
-     "Add round"]))                                         ; TODO: translation
+     (text :t.create-workflow/add-round)]))
 
 (defn vec-dissoc [coll index]
   (vec (concat (subvec coll 0 index)
@@ -189,7 +189,7 @@
     [:button.btn.btn-secondary
      {:on-click #(rf/dispatch [::set-form-field [:rounds] (vec-dissoc (:rounds form) round)])
       :style {:float "right"}}
-     "Remove round"]))                                      ; TODO: translation
+     (text :t.create-workflow/remove-round)]))
 
 (defn- save-workflow-button []
   (let [form @(rf/subscribe [::form])]
@@ -207,15 +207,15 @@
   (let [form @(rf/subscribe [::form])]
     [collapsible/component
      {:id "create-workflow"
-      :title "Create workflow"                              ; TODO: translation
+      :title (text :t.administration/create-workflow)
       :always [:div
                [workflow-prefix-field]
                [workflow-title-field]
                (doall (for [round (range (count (:rounds form)))]
                         [:div
                          {:key round}
-                         [:h2 (str "Round " (inc round))]   ; TODO: translation
                          [remove-round-button round]
+                         [:h2 (text-format :t.create-workflow/round-n (inc round))]
                          [round-type-radio-group round]
                          [workflow-actors-field round]]))
 

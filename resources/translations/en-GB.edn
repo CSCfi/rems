@@ -146,6 +146,14 @@
                     :prefix-placeholder "testorganization.org"
                     :resid "Resource identifier"
                     :resid-placeholder "urn:test:fi:some-uuid"}
+  :create-workflow {:title "Title"
+                    :approval-round "Approval round"
+                    :review-round "Review round"
+                    :approvers "Approvers"
+                    :reviewers "Reviewers"
+                    :add-round "Add round"
+                    :remove-round "Remove round"
+                    :round-n "Round %1"}
   :email {:action-not-needed-msg "Dear %1,
                                   Applicant's %2 submitted application %3 no longer requires your attention.
                                   Please do not reply to this automatically generated message."

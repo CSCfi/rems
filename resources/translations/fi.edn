@@ -142,10 +142,18 @@
                    :link-to-license "Linkki lisenssiin"
                    :license-text "Lisenssin teksti"}
   :create-resource {:licenses-selection "Käyttöehdot"
-                    :prefix "Organization"
+                    :prefix "Organisaatio"
                     :prefix-placeholder "testorganization.org"
                     :resid "Resurssin tunniste"
                     :resid-placeholder "urn:test:fi:some-uuid"}
+  :create-workflow {:title "Työvuon nimi"
+                    :approval-round "Hyväksymiskierros"
+                    :review-round "Katselmointikierros"
+                    :approvers "Hyväksyjät"
+                    :reviewers "Katselmoijat"
+                    :add-round "Lisää kierros"
+                    :remove-round "Poista kierros"
+                    :round-n "Kierros %1"}
   :email {:action-not-needed-msg "Hyvä %1,
                                   Hakijan %2 hakemus %3 ei enää vaadi huomiotanne.
                                   Älkää vastatko tähän automaattisesti luotuun viestiin."
