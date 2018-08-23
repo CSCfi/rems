@@ -180,6 +180,17 @@
      {:on-click #(rf/dispatch [::set-form-field [:rounds (count (:rounds form))] {}])}
      "Add round"]))                                         ; TODO: translation
 
+(defn vec-dissoc [coll index]
+  (vec (concat (subvec coll 0 index)
+               (subvec coll (inc index)))))
+
+(defn- remove-round-button [round]
+  (let [form @(rf/subscribe [::form])]
+    [:button.btn.btn-secondary
+     {:on-click #(rf/dispatch [::set-form-field [:rounds] (vec-dissoc (:rounds form) round)])
+      :style {:float "right"}}
+     "Remove round"]))                                      ; TODO: translation
+
 (defn- save-workflow-button []
   (let [form @(rf/subscribe [::form])]
     [:button.btn.btn-primary
@@ -204,7 +215,7 @@
                         [:div
                          {:key round}
                          [:h2 (str "Round " (inc round))]   ; TODO: translation
-                         ; TODO: button to remove the round
+                         [remove-round-button round]
                          [round-type-radio-group round]
                          [workflow-actors-field round]]))
 
