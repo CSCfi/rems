@@ -8,6 +8,7 @@
             [rems.actions :refer [actions-page fetch-actions]]
             [rems.administration :refer [administration-page]]
             [rems.administration.catalogue :refer [create-catalogue-item-page]]
+            [rems.administration.form :refer [create-form-page]]
             [rems.administration.license :refer [create-license-page]]
             [rems.administration.resource :refer [create-resource-page]]
             [rems.administration.workflow :refer [create-workflow-page]]
@@ -196,10 +197,11 @@
    :application application-page
    :applications applications-page
    :administration administration-page
+   :create-catalogue-item create-catalogue-item-page
+   :create-form create-form-page
    :create-license create-license-page
    :create-resource create-resource-page
    :create-workflow create-workflow-page
-   :create-catalogue-item create-catalogue-item-page
    :unauthorized unauthorized-page
    :not-found not-found-page})
 
@@ -260,6 +262,15 @@
   (rf/dispatch [:rems.administration/start-fetch-catalogue])
   (rf/dispatch [:set-active-page :administration]))
 
+(secretary/defroute "/create-catalogue-item" []
+  (rf/dispatch [:rems.administration.catalogue/reset-create-catalogue-item])
+  (rf/dispatch [:set-active-page :create-catalogue-item]))
+
+(secretary/defroute "/create-form" []
+  (rf/dispatch [:rems.administration.form/start-fetch-form-items])
+  (rf/dispatch [:rems.administration.form/reset-create-form])
+  (rf/dispatch [:set-active-page :create-form]))
+
 (secretary/defroute "/create-license" []
   (rf/dispatch [:rems.administration.license/reset-create-license])
   (rf/dispatch [:set-active-page :create-license]))
@@ -272,10 +283,6 @@
   (rf/dispatch [:rems.administration.workflow/start-fetch-actors])
   (rf/dispatch [:rems.administration.workflow/reset-create-workflow])
   (rf/dispatch [:set-active-page :create-workflow]))
-
-(secretary/defroute "/create-catalogue-item" []
-  (rf/dispatch [:rems.administration.catalogue/reset-create-catalogue-item])
-  (rf/dispatch [:set-active-page :create-catalogue-item]))
 
 (secretary/defroute "/unauthorized" []
   (rf/dispatch [:set-active-page :unauthorized]))
