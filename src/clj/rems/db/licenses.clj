@@ -46,12 +46,11 @@
 
    filters is a map of key-value pairs that must be present in the licenses"
   [filters]
-  (let [filters (or filters {})]
-    (->> (db/get-all-licenses)
-         (map db/assoc-active)
-         (filter #(db/contains-all-kv-pairs? % filters))
-         (format-licenses)
-         (localize-licenses))))
+  (->> (db/get-all-licenses)
+       (map db/assoc-active)
+       (db/apply-filters filters)
+       (format-licenses)
+       (localize-licenses)))
 
 (defn get-active-licenses
   "Get license active now. Params map can contain:

@@ -1,6 +1,6 @@
 (ns rems.db.core
   (:require [clj-time.core :as time]
-            [clj-time.jdbc] ;; convert db timestamps to joda-time objects
+            [clj-time.jdbc]                                 ;; convert db timestamps to joda-time objects
             [clojure.set :refer [superset?]]
             [conman.core :as conman]
             [rems.env :refer [*db*]]))
@@ -13,6 +13,10 @@
 
 (defn contains-all-kv-pairs? [supermap map]
   (superset? (set supermap) (set map)))
+
+(defn apply-filters [filters coll]
+  (let [filters (or filters {})]
+    (filter #(contains-all-kv-pairs? % filters) coll)))
 
 (defn now-active?
   ([start end]
