@@ -13,6 +13,7 @@
             [rems.api.catalogue-items :refer [catalogue-items-api]]
             [rems.api.entitlements :refer [entitlements-api]]
             [rems.api.forms :refer [forms-api]]
+            [rems.api.form-items :refer [form-items-api]]
             [rems.api.licenses :refer [licenses-api]]
             [rems.api.public :as public]
             [rems.api.resources :refer [resources-api]]
@@ -21,6 +22,7 @@
             [ring.util.http-response :refer :all]
             [schema.core :as s])
   (:import rems.auth.NotAuthorizedException
+           rems.InvalidRequestException
            [org.joda.time ReadableInstant DateTime]))
 
 (defn unauthorized-handler
@@ -74,8 +76,8 @@
    {;; TODO: should this be in rems.middleware?
     :formats muuntaja
     :middleware [cors-middleware]
-    :exceptions {:handlers {rems.auth.NotAuthorizedException (ex/with-logging unauthorized-handler)
-                            rems.InvalidRequestException (ex/with-logging invalid-handler)
+    :exceptions {:handlers {NotAuthorizedException (ex/with-logging unauthorized-handler)
+                            InvalidRequestException (ex/with-logging invalid-handler)
                             ;; add logging to validation handlers
                             ::ex/request-validation (ex/with-logging ex/request-validation-handler)
                             ::ex/request-parsing (ex/with-logging ex/request-parsing-handler)
@@ -101,6 +103,7 @@
      catalogue-items-api
      entitlements-api
      forms-api
+     form-items-api
      licenses-api
      resources-api
      workflows-api)))

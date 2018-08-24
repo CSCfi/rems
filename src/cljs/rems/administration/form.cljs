@@ -47,7 +47,7 @@
 ; available actors
 
 (defn- fetch-form-items []
-  (fetch "/api/forms/items" {:handler #(rf/dispatch [::fetch-form-items-result %])}))
+  (fetch "/api/form-items" {:handler #(rf/dispatch [::fetch-form-items-result %])}))
 
 (rf/reg-fx
   ::fetch-form-items

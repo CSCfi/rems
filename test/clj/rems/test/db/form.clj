@@ -8,7 +8,7 @@
   (let [today (time/now)
         yesterday (time/minus today (time/days 1))]
     (with-redefs [db/get-forms (constantly [{:id :always :start nil :endt nil}
-                                                {:id :expired :start nil :endt yesterday}])]
+                                            {:id :expired :start nil :endt yesterday}])]
       (testing "find all forms"
         (is (= #{:always :expired} (set (map :id (get-forms {})))) "should return also expired"))
 

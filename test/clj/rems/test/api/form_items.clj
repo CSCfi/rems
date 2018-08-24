@@ -1,6 +1,7 @@
-(ns ^:integration rems.test.api.forms
+(ns ^:integration rems.test.api.form-items
   (:require [clojure.test :refer :all]
             [rems.handler :refer [app]]
+            [rems.db.core :as db]
             [rems.test.api :refer :all]
             [rems.test.tempura :refer [fake-tempura-fixture]]
             [rems.util :refer [index-by]]
@@ -11,12 +12,13 @@
   fake-tempura-fixture
   api-fixture)
 
-(deftest forms-api-filtering-test
-  (let [unfiltered-response (-> (request :get "/api/forms")
+(deftest form-items-api-filtering-test
+  (db/end-form-item! {:id 1})                               ; we need some expired form items in the test data
+  (let [unfiltered-response (-> (request :get "/api/form-items")
                                 (authenticate "42" "owner")
                                 app)
         unfiltered-data (read-body unfiltered-response)
-        filtered-response (-> (request :get "/api/forms" {:active true})
+        filtered-response (-> (request :get "/api/form-items" {:active true})
                               (authenticate "42" "owner")
                               app)
         filtered-data (read-body filtered-response)]
@@ -28,15 +30,15 @@
     (is (every? :active filtered-data))
     (is (< (count filtered-data) (count unfiltered-data)))))
 
-(deftest forms-api-security-test
+(deftest form-items-api-security-test
   (testing "listing without authentication"
-    (let [response (-> (request :get (str "/api/forms"))
+    (let [response (-> (request :get (str "/api/form-items"))
                        app)
           body (read-body response)]
       (is (= 401 (:status response)))
       (is (= "unauthorized" body))))
   (testing "listing without owner role"
-    (let [response (-> (request :get (str "/api/forms"))
+    (let [response (-> (request :get (str "/api/form-items"))
                        (authenticate "42" "alice")
                        app)
           body (read-body response)]

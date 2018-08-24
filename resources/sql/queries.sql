@@ -106,6 +106,10 @@ LEFT OUTER JOIN application_form_item item ON item.id = itemmap.formItemId
 WHERE form.id = :id
 ORDER BY itemorder
 
+-- :name get-all-form-items :? :*
+SELECT id, type, value, visibility, start, endt, owneruserid, modifieruserid
+FROM application_form_item;
+
 -- :name get-form-item-localizations :? :*
 SELECT
   langCode,
@@ -146,6 +150,11 @@ INSERT INTO application_form_item_localization
 (itemId, langCode, title, inputPrompt)
 VALUES
 (:item, :langcode, :title, :inputprompt)
+
+-- :name end-form-item! :!
+UPDATE application_form_item
+SET endt = current_timestamp
+WHERE id = :id;
 
 -- :name create-application! :insert
 INSERT INTO catalogue_item_application
