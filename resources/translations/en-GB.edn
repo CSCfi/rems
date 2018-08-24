@@ -115,6 +115,7 @@
                           :returned "Returned"
                           :unknown "Unknown"
                           :withdrawn "Withdrawn"}
+                 :latest-comment "Latest comment"
                  :user "User"
                  :view "View"}
   :autocomplete {:no-results "No results"

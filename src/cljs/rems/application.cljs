@@ -417,9 +417,8 @@
       :always   [:div
                  [:div.mb-3 {:class (str "state-" state)} (phases (get-application-phases state))]
                  (when last-event
-                   (info-field (text :t.form/comment)
-                               (str (:event last-event) ": "
-                                    (:comment last-event))))]
+                   (info-field (text :t.applications/latest-comment)
+                               (:comment last-event)))]
       :collapse (when (seq events)
                   [:div
                    [:h4 (text :t.form/events)]
