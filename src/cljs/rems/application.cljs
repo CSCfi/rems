@@ -207,9 +207,10 @@
      contents]))
 
 (defn- pdf-button [id]
-  [:a.btn.btn-secondary
-   {:href (str "/api/applications/" id "/pdf")}
-   "PDF"])
+  (when id
+    [:a.btn.btn-secondary
+     {:href (str "/api/applications/" id "/pdf")}
+     "PDF"]))
 
 ;; Fields
 
