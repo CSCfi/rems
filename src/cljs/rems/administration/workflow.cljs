@@ -3,7 +3,7 @@
             [re-frame.core :as rf]
             [rems.collapsible :as collapsible]
             [rems.text :refer [text text-format localize-item]]
-            [rems.util :refer [dispatch! fetch post!]]
+            [rems.util :refer [dispatch! fetch post! vec-dissoc]]
             [rems.autocomplete :as autocomplete]
             [rems.application :refer [enrich-user]]))
 
@@ -178,10 +178,6 @@
     [:button.btn.btn-primary
      {:on-click #(rf/dispatch [::set-form-field [:rounds (count (:rounds form))] {}])}
      (text :t.create-workflow/add-round)]))
-
-(defn vec-dissoc [coll index]
-  (vec (concat (subvec coll 0 index)
-               (subvec coll (inc index)))))
 
 (defn- remove-round-button [round]
   (let [form @(rf/subscribe [::form])]

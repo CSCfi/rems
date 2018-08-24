@@ -25,6 +25,10 @@
          (map (fn [[k v]] [k (index-by (rest ks) v)]))
          (into {}))))
 
+(defn vec-dissoc [coll index]
+  (vec (concat (subvec coll 0 index)
+               (subvec coll (inc index)))))
+
 (defn dispatch!
   "Dispatches to the given url."
   [url]
