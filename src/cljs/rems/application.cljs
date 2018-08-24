@@ -207,9 +207,10 @@
      contents]))
 
 (defn- pdf-button [id]
-  [:a.btn.btn-secondary
-   {:href (str "/api/applications/" id "/pdf")}
-   "PDF"])
+  (when id
+    [:a.btn.btn-secondary
+     {:href (str "/api/applications/" id "/pdf")}
+     "PDF"]))
 
 ;; Fields
 
@@ -681,6 +682,8 @@
         events (:events app)
         user-attributes (:applicant-attributes application)]
     [:div
+     [:div {:class "float-right"} [pdf-button (:id app)]]
+     [:h2 (text :t.applications/application)]
      [disabled-items-warning (:catalogue-items application)]
      (when @(rf/subscribe [::send-third-party-review-request-message])
        [flash-message
@@ -697,8 +700,7 @@
      [:div.mt-3 [applied-resources (:catalogue-items application)]]
      [:div.my-3 [fields application edit-application]]
      [:div.mb-3 [actions-form app]]
-     [review-request-modal]
-     [pdf-button (:id app)]]))
+     [review-request-modal]]))
 
 ;;;; Entrypoint ;;;;
 
@@ -707,12 +709,11 @@
         edit-application (rf/subscribe [::edit-application])
         language (rf/subscribe [:language])
         loading? (rf/subscribe [::loading?])]
-    (fn []
+    (if @loading?
       [:div
        [:h2 (text :t.applications/application)]
-       (if @loading?
-         [spinner/big]
-         [render-application @application @edit-application @language])])))
+       [spinner/big]]
+      [render-application @application @edit-application @language])))
 
 ;;;; Guide ;;;;
 
