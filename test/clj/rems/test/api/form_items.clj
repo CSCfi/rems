@@ -13,7 +13,6 @@
   api-fixture)
 
 (deftest form-items-api-filtering-test
-  (db/end-form-item! {:id 1})                               ; we need some expired form items in the test data
   (let [unfiltered-response (-> (request :get "/api/form-items")
                                 (authenticate "42" "owner")
                                 app)
