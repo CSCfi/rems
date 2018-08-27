@@ -45,6 +45,10 @@
    :rounds [{:type (s/enum :approval :review)
              :actors [{:userid s/Str}]}]})
 
+; TODO: deduplicate or decouple with /api/applications/reviewers API?
+(def AvailableActor Reviewer)
+(def get-available-actors get-reviewers)
+
 (defn- get-workflows [filters]
   (doall
     (for [wf (workflow/get-workflows filters)]
@@ -84,9 +88,9 @@
       (check-roles :owner)
       (ok (create-workflow command)))
 
-    (GET "/actors" []                                       ; TODO: deduplicate with /api/applications/reviewers API?
+    (GET "/actors" []
       :summary "List of available actors"
-      :return [Reviewer]
+      :return [AvailableActor]
       (check-user)
       (check-roles :owner)
-      (ok (get-reviewers)))))
+      (ok (get-available-actors)))))
