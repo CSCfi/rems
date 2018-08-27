@@ -668,6 +668,9 @@
         (let [app (applications/create-new-draft wf)]
           (db/add-application-item! {:application app :item item})
 
+          (is (thrown? NotAuthorizedException (applications/return-application app 0 "comment"))
+              "Should not be able to return before submitting")
+
           (applications/submit-application app)
 
           (binding [context/*user* {"eppn" "event-test-approver"}]
@@ -676,6 +679,9 @@
 
           (applications/return-application app 0 "comment")
           (is (= {:curround 0 :state "returned"} (fetch app)))
+
+          (is (thrown? NotAuthorizedException (applications/return-application app 0 "comment"))
+              "Should not be able to return twice")
 
           (binding [context/*user* {"eppn" "event-test-approver"}]
             (is (thrown? NotAuthorizedException (applications/submit-application app))

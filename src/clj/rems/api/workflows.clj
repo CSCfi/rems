@@ -1,13 +1,13 @@
 (ns rems.api.workflows
   (:require [compojure.api.sweet :refer :all]
+            [rems.api.applications :refer [Reviewer get-reviewers]]
             [rems.api.util :refer [check-roles check-user]]
             [rems.db.core :as db]
             [rems.db.workflow :as workflow]
-            [ring.util.http-response :refer :all]
-            [schema.core :as s]
-            [rems.util :refer [get-user-id]]
             [rems.db.workflow-actors :as actors]
-            [rems.api.applications :refer [Reviewer get-reviewers]])
+            [rems.util :refer [get-user-id]]
+            [ring.util.http-response :refer :all]
+            [schema.core :as s])
   (:import [org.joda.time DateTime]))
 
 (def Actor
@@ -44,6 +44,10 @@
    :title s/Str
    :rounds [{:type (s/enum :approval :review)
              :actors [{:userid s/Str}]}]})
+
+; TODO: deduplicate or decouple with /api/applications/reviewers API?
+(def AvailableActor Reviewer)
+(def get-available-actors get-reviewers)
 
 (defn- get-workflows [filters]
   (doall
@@ -84,9 +88,9 @@
       (check-roles :owner)
       (ok (create-workflow command)))
 
-    (GET "/actors" []                                       ; TODO: deduplicate with /api/applications/reviewers API?
+    (GET "/actors" []
       :summary "List of available actors"
-      :return [Reviewer]
+      :return [AvailableActor]
       (check-user)
       (check-roles :owner)
-      (ok (get-reviewers)))))
+      (ok (get-available-actors)))))

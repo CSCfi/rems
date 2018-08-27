@@ -16,42 +16,54 @@
   (fetch "/api/catalogue-items/" {:handler #(rf/dispatch [::fetch-catalogue-result %])}))
 
 (rf/reg-fx
- ::fetch-catalogue
- (fn [_]
-   (fetch-catalogue)))
+  ::fetch-catalogue
+  (fn [_]
+    (fetch-catalogue)))
 
 (rf/reg-event-fx
- ::start-fetch-catalogue
- (fn [{:keys [db]}]
-   {:db (assoc db ::loading? true)
-    ::fetch-catalogue []}))
+  ::start-fetch-catalogue
+  (fn [{:keys [db]}]
+    {:db (assoc db ::loading? true)
+     ::fetch-catalogue []}))
 
 (rf/reg-event-db
- ::fetch-catalogue-result
- (fn [db [_ catalogue]]
-   (-> db
-       (assoc ::catalogue catalogue)
-       (dissoc ::loading?))))
+  ::fetch-catalogue-result
+  (fn [db [_ catalogue]]
+    (-> db
+        (assoc ::catalogue catalogue)
+        (dissoc ::loading?))))
 
 (rf/reg-sub
- ::catalogue
- (fn [db _]
-   (::catalogue db)))
+  ::catalogue
+  (fn [db _]
+    (::catalogue db)))
 
 (rf/reg-sub
- ::loading?
- (fn [db _]
-   (::loading? db)))
+  ::loading?
+  (fn [db _]
+    (::loading? db)))
 
 (defn- update-catalogue-item [id state]
   (put! "/api/catalogue-items/update" {:params {:id id :state state}
                                        :handler #(rf/dispatch [::start-fetch-catalogue])}))
 
 (rf/reg-event-fx
- ::update-catalogue-item
- (fn [_ [_ id state]]
-   (update-catalogue-item id state)
-   {}))
+  ::update-catalogue-item
+  (fn [_ [_ id state]]
+    (update-catalogue-item id state)
+    {}))
+
+(rf/reg-event-db
+  ::set-sorting
+  (fn [db [_ sorting]]
+    (assoc db ::sorting sorting)))
+
+(rf/reg-sub
+  ::sorting
+  (fn [db _]
+    (or (::sorting db)
+        {:sort-column :name
+         :sort-order :asc})))
 
 ;;;; UI ;;;;
 
@@ -111,16 +123,17 @@
 
 (defn- catalogue-list
   "List of catalogue items"
-  [items language]
+  [items language sorting]
   [table/component (catalogue-columns language) [:name :commands]
-   {:sort-column :name
-    :sort-order  :asc}
-   (fn [_]) ; TODO: changing sorting
-   :id items])
+   sorting
+   #(rf/dispatch [::set-sorting %])
+   :id
+   items])
 
 (defn administration-page []
   (let [catalogue (rf/subscribe [::catalogue])
         language (rf/subscribe [:language])
+        sorting (rf/subscribe [::sorting])
         loading? (rf/subscribe [::loading?])]
     (fn []
       (into [:div
@@ -134,4 +147,4 @@
                  [to-create-license-button]
                  [to-create-resource-button]
                  [to-create-catalogue-item-button]]
-                [catalogue-list @catalogue @language]]])))))
+                [catalogue-list @catalogue @language @sorting]]])))))

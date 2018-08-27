@@ -1,11 +1,11 @@
 (ns rems.administration.workflow
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
+            [rems.application :refer [enrich-user]]
+            [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
             [rems.text :refer [text text-format localize-item]]
-            [rems.util :refer [dispatch! fetch post! vec-dissoc]]
-            [rems.autocomplete :as autocomplete]
-            [rems.application :refer [enrich-user]]))
+            [rems.util :refer [dispatch! fetch post! vec-dissoc]]))
 
 (defn- valid-request? [request]
   (and (not (str/blank? (:prefix request)))
@@ -173,18 +173,30 @@
          :add-fn #(rf/dispatch [::add-actor round %])
          :remove-fn #(rf/dispatch [::remove-actor round %])}]])))
 
+(defn- next-workflow-arrow []
+  [:i.next-workflow-arrow.fa.fa-long-arrow-alt-down
+   {:aria-hidden true}])
+
 (defn- add-round-button []
   (let [form @(rf/subscribe [::form])]
-    [:button.btn.btn-primary
-     {:on-click #(rf/dispatch [::set-form-field [:rounds (count (:rounds form))] {}])}
+    [:a
+     {:href "#"
+      :on-click (fn [event]
+                  (.preventDefault event)
+                  (rf/dispatch [::set-form-field [:rounds (count (:rounds form))] {}]))}
      (text :t.create-workflow/add-round)]))
 
 (defn- remove-round-button [round]
   (let [form @(rf/subscribe [::form])]
-    [:button.btn.btn-secondary
-     {:on-click #(rf/dispatch [::set-form-field [:rounds] (vec-dissoc (:rounds form) round)])
-      :style {:float "right"}}
-     (text :t.create-workflow/remove-round)]))
+    [:a.remove-workflow-round
+     {:href "#"
+      :on-click (fn [event]
+                  (.preventDefault event)
+                  (rf/dispatch [::set-form-field [:rounds] (vec-dissoc (:rounds form) round)]))
+      :aria-label (text :t.create-workflow/remove-round)
+      :title (text :t.create-workflow/remove-round)}
+     [:i.icon-link.fas.fa-times
+      {:aria-hidden true}]]))
 
 (defn- save-workflow-button []
   (let [form @(rf/subscribe [::form])]
@@ -207,14 +219,16 @@
                [workflow-prefix-field]
                [workflow-title-field]
                (doall (for [round (range (count (:rounds form)))]
-                        [:div
+                        [:div.workflow-round
                          {:key round}
                          [remove-round-button round]
                          [:h2 (text-format :t.create-workflow/round-n (inc round))]
                          [round-type-radio-group round]
-                         [workflow-actors-field round]]))
-
+                         [workflow-actors-field round]
+                         (when (< round (dec (count (:rounds form))))
+                           [next-workflow-arrow])]))
+               [:div.workflow-round.new-workflow-round
+                [add-round-button]]
                [:div.col.commands
-                [add-round-button]
                 [cancel-button]
                 [save-workflow-button]]]}]))
