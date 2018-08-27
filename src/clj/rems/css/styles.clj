@@ -332,7 +332,8 @@
    (s/> :.commands "*:not(:first-child)")
    {:margin-left (u/em 0.5)}]
   ["input[type=date].form-control" {:width (u/em 12)}]
-  [:.workflow-round {:border "2px dashed #ccc"
+  [:.workflow-round {:position "relative"
+                     :border "2px dashed #ccc"
                      :border-radius (u/px 15)
                      :padding (u/px 10)
                      :margin-left (u/px -10)
@@ -341,6 +342,11 @@
                      :margin-bottom (u/px 16)}
    [:h2 {:font-weight 500
          :font-size (u/rem 1.4)}]]
+  [:.next-workflow-arrow {:position "absolute"
+                          :font-size (u/px 40)
+                          :left (u/percent 50)
+                          :transform "translate(-50%, -1%)"
+                          :z-index 1}]
   [:.new-workflow-round {:text-align "center"}]
   [:.remove-workflow-round {:float "right"}]
   [:.full {:width "100%"}]

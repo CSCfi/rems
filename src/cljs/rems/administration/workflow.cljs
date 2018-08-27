@@ -173,6 +173,10 @@
          :add-fn #(rf/dispatch [::add-actor round %])
          :remove-fn #(rf/dispatch [::remove-actor round %])}]])))
 
+(defn- next-workflow-arrow []
+  [:i.next-workflow-arrow.fa.fa-long-arrow-alt-down
+   {:aria-hidden true}])
+
 (defn- add-round-button []
   (let [form @(rf/subscribe [::form])]
     [:a
@@ -224,7 +228,9 @@
                          [remove-round-button round]
                          [:h2 (text-format :t.create-workflow/round-n (inc round))]
                          [round-type-radio-group round]
-                         [workflow-actors-field round]]))
+                         [workflow-actors-field round]
+                         (when (< round (dec (count (:rounds form))))
+                           [next-workflow-arrow])]))
                [:div.workflow-round.new-workflow-round
                 [add-round-button]]
                [:div.col.commands
