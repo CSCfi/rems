@@ -116,6 +116,7 @@
                           :returned "Palautettu"
                           :unknown "Tuntematon"
                           :withdrawn "Palautettu takaisin"}
+                 :latest-comment "Viimeisin kommentti"
                  :user "Käyttäjä"
                  :view "Näytä"}
   :autocomplete {:no-results "Ei tuloksia"
