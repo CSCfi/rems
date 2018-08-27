@@ -175,8 +175,11 @@
 
 (defn- add-round-button []
   (let [form @(rf/subscribe [::form])]
-    [:button.btn.btn-primary
-     {:on-click #(rf/dispatch [::set-form-field [:rounds (count (:rounds form))] {}])}
+    [:a
+     {:href "#"
+      :on-click (fn [event]
+                  (.preventDefault event)
+                  (rf/dispatch [::set-form-field [:rounds (count (:rounds form))] {}]))}
      (text :t.create-workflow/add-round)]))
 
 (defn vec-dissoc [coll index]
@@ -185,10 +188,15 @@
 
 (defn- remove-round-button [round]
   (let [form @(rf/subscribe [::form])]
-    [:button.btn.btn-secondary
-     {:on-click #(rf/dispatch [::set-form-field [:rounds] (vec-dissoc (:rounds form) round)])
-      :style {:float "right"}}
-     (text :t.create-workflow/remove-round)]))
+    [:a.remove-workflow-round
+     {:href "#"
+      :on-click (fn [event]
+                  (.preventDefault event)
+                  (rf/dispatch [::set-form-field [:rounds] (vec-dissoc (:rounds form) round)]))
+      :aria-label (text :t.create-workflow/remove-round)
+      :title (text :t.create-workflow/remove-round)}
+     [:i.icon-link.fas.fa-times
+      {:aria-hidden true}]]))
 
 (defn- save-workflow-button []
   (let [form @(rf/subscribe [::form])]
@@ -211,14 +219,14 @@
                [workflow-prefix-field]
                [workflow-title-field]
                (doall (for [round (range (count (:rounds form)))]
-                        [:div
+                        [:div.workflow-round
                          {:key round}
                          [remove-round-button round]
                          [:h2 (text-format :t.create-workflow/round-n (inc round))]
                          [round-type-radio-group round]
                          [workflow-actors-field round]]))
-
+               [:div.workflow-round.new-workflow-round
+                [add-round-button]]
                [:div.col.commands
-                [add-round-button]
                 [cancel-button]
                 [save-workflow-button]]]}]))
