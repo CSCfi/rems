@@ -1,11 +1,11 @@
 (ns rems.administration.workflow
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
+            [rems.application :refer [enrich-user]]
+            [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
             [rems.text :refer [text text-format localize-item]]
-            [rems.util :refer [dispatch! fetch post!]]
-            [rems.autocomplete :as autocomplete]
-            [rems.application :refer [enrich-user]]))
+            [rems.util :refer [dispatch! fetch post!]]))
 
 (defn- valid-request? [request]
   (and (not (str/blank? (:prefix request)))

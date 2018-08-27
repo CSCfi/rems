@@ -1,13 +1,13 @@
 (ns rems.api.workflows
   (:require [compojure.api.sweet :refer :all]
+            [rems.api.applications :refer [Reviewer get-reviewers]]
             [rems.api.util :refer [check-roles check-user]]
             [rems.db.core :as db]
             [rems.db.workflow :as workflow]
-            [ring.util.http-response :refer :all]
-            [schema.core :as s]
-            [rems.util :refer [get-user-id]]
             [rems.db.workflow-actors :as actors]
-            [rems.api.applications :refer [Reviewer get-reviewers]])
+            [rems.util :refer [get-user-id]]
+            [ring.util.http-response :refer :all]
+            [schema.core :as s])
   (:import [org.joda.time DateTime]))
 
 (def Actor
