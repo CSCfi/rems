@@ -173,21 +173,21 @@
                (content-type "application/pdf"))
            (not-found! "not found"))))
 
-    (PUT "/save" []
+    (POST "/save" []
       :summary "Create a new application, change an existing one or submit an application"
       :body [request SaveApplicationCommand]
       :return SaveApplicationResponse
       (check-user)
       (ok (form/api-save (fix-keys request))))
 
-    (PUT "/judge" []
+    (POST "/judge" []
       :summary "Judge an application"
       :body [request JudgeApplicationCommand]
       :return SuccessResponse
       (check-user)
       (ok (api-judge request)))
 
-    (PUT "/review_request" []
+    (POST "/review_request" []
       :summary "Request a review"
       :body [request ReviewRequestCommand]
       :return SuccessResponse

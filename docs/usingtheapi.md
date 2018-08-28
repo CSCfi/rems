@@ -71,7 +71,7 @@ Judging from the output of the previous command, in order to apply for access we
 Form item "Duration of the project" seems to be optional so we will leave that empty. Let's send in the application.
 
 ```sh
-curl -X PUT \
+curl -X POST \
      -H 'Content-Type: application/json' \
      -H 'Accept: application/json' \
      -H 'x-rems-api-key: 42' \
@@ -92,7 +92,7 @@ You should get the following output as a response:
 This tells us that the request succeeded, the system assigned id 12 to our application, the form was properly filled and that the application has progressed to an applied state. Now we can proceed to approving the request. Both users Developer and Bob have been assigned as approvers for the current workflow but only one of them needs to grant the permission. Let's provide an answer as Developer:
 
 ```sh
-curl -X PUT \
+curl -X POST \
      -H 'Content-Type: application/json' \
      -H 'Accept: application/json' \
      -H 'x-rems-api-key: 42' \
