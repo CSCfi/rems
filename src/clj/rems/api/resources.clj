@@ -48,7 +48,7 @@
       (check-roles :owner)
       (ok (get-resources (when-not (nil? active) {:active? active}))))
 
-    (PUT "/create" []
+    (POST "/create" []
       :summary "Create resource"
       :body [command CreateResourceCommand]
       (check-user)

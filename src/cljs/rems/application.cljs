@@ -524,11 +524,14 @@
  (fn [[user]]
    (fetch-potential-third-party-reviewers user)))
 
+(defn enrich-user [user]
+  (assoc user :display (str (:name user) " (" (:email user) ")")))
+
 (rf/reg-event-db
  ::set-potential-third-party-reviewers
  (fn [db [_ reviewers]]
    (assoc db ::potential-third-party-reviewers (for [reviewer reviewers]
-                                                 (assoc reviewer :display (str (:name reviewer) " (" (:email reviewer)")"))))))
+                                                 (enrich-user reviewer)))))
 
 (rf/reg-event-fx
  ::start-fetch-potential-third-party-reviewers

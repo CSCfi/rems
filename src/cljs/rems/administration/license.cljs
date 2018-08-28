@@ -3,7 +3,7 @@
             [re-frame.core :as rf]
             [rems.collapsible :as collapsible]
             [rems.text :refer [text localize-item]]
-            [rems.util :refer [dispatch! fetch put!]]))
+            [rems.util :refer [dispatch! fetch post!]]))
 
 (def license-type-link "link")
 (def license-type-text "text")
@@ -38,9 +38,9 @@
       (localize-item request default-language))))
 
 (defn- create-license [form default-language languages]
-  (put! "/api/licenses/create" {:params (build-request form default-language languages)
-                                :handler (fn [resp]
-                                           (dispatch! "#/administration"))}))
+  (post! "/api/licenses/create" {:params (build-request form default-language languages)
+                                 :handler (fn [resp]
+                                            (dispatch! "#/administration"))}))
 
 (rf/reg-event-fx
   ::create-license

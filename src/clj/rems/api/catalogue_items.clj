@@ -56,7 +56,7 @@
           (ok it)
           (not-found! "not found"))))
 
-    (PUT "/create" []
+    (POST "/create" []
       :summary "Create a new catalogue item"
       :body [command CreateCatalogueItemCommand]
       :return CreateCatalogueItemResponse
@@ -73,7 +73,7 @@
       (db/set-catalogue-item-state! {:item (:id command) :state (:state command)})
       (ok {:success true}))
 
-    (PUT "/create-localization" []
+    (POST "/create-localization" []
       :summary "Create a new catalogue item localization"
       :body [command CreateCatalogueItemLocalizationCommand]
       :return SuccessResponse

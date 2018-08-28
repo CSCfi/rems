@@ -26,7 +26,7 @@
     (testing "create"
       (let [licid 1
             resid "RESOURCE-API-TEST"]
-        (let [response (-> (request :put "/api/resources/create")
+        (let [response (-> (request :post "/api/resources/create")
                            (authenticate api-key user-id)
                            (json-body {:resid resid
                                        :prefix "TEST-PREFIX"
@@ -62,40 +62,54 @@
 
 (deftest resources-api-security-test
   (testing "without authentication"
-    (let [response (-> (request :get "/api/resources")
-                       app)]
-      (is (= 401 (:status response))))
-    (let [response (-> (request :put "/api/resources/create")
-                       (json-body {:resid "r"
-                                   :prefix "p"
-                                   :licenses []})
-                       app)]
-      (is (.contains (:body response) "Invalid anti-forgery token"))))
+    (testing "list"
+      (let [response (-> (request :get "/api/resources")
+                         app)]
+        (is (= 401 (:status response)))
+        (is (= "unauthorized" (read-body response)))))
+    (testing "create"
+      (let [response (-> (request :post "/api/resources/create")
+                         (json-body {:resid "r"
+                                     :prefix "p"
+                                     :licenses []})
+                         app)]
+        (is (= 403 (:status response)))
+        (is (= "<h1>Invalid anti-forgery token</h1>" (read-body response))))))
+
   (testing "with wrong api key"
     (let [api-key "1"
           user-id "owner"]
-      (let [response (-> (request :get "/api/resources")
-                         (authenticate api-key user-id)
-                         app)]
-        (is (= 401 (:status response))))
-      (let [response (-> (request :put "/api/resources/create")
-                         (authenticate api-key user-id)
-                         (json-body {:resid "r"
-                                     :prefix "p"
-                                     :licenses []})
-                         app)]
-        (is (= 401 (:status response))))))
+      (testing "list"
+        (let [response (-> (request :get "/api/resources")
+                           (authenticate api-key user-id)
+                           app)]
+          (is (= 401 (:status response)))
+          (is (= "invalid api key" (read-body response)))))
+      (testing "create"
+        (let [response (-> (request :post "/api/resources/create")
+                           (authenticate api-key user-id)
+                           (json-body {:resid "r"
+                                       :prefix "p"
+                                       :licenses []})
+                           app)]
+          (is (= 401 (:status response)))
+          (is (= "invalid api key" (read-body response)))))))
+
   (testing "without owner role"
     (let [api-key "42"
           user-id "alice"]
-      (let [response (-> (request :get "/api/resources")
-                         (authenticate api-key user-id)
-                         app)]
-        (is (= 401 (:status response))))
-      (let [response (-> (request :put "/api/resources/create")
-                         (authenticate api-key user-id)
-                         (json-body {:resid "r"
-                                     :prefix "p"
-                                     :licenses []})
-                         app)]
-        (is (= 401 (:status response)))))))
+      (testing "list"
+        (let [response (-> (request :get "/api/resources")
+                           (authenticate api-key user-id)
+                           app)]
+          (is (= 401 (:status response)))
+          (is (= "unauthorized" (read-body response)))))
+      (testing "create"
+        (let [response (-> (request :post "/api/resources/create")
+                           (authenticate api-key user-id)
+                           (json-body {:resid "r"
+                                       :prefix "p"
+                                       :licenses []})
+                           app)]
+          (is (= 401 (:status response)))
+          (is (= "unauthorized" (read-body response))))))))

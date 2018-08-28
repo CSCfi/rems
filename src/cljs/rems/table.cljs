@@ -25,7 +25,7 @@
 (defn- row [column-definitions columns item]
   (into [:tr.action]
         (for [col columns]
-          (into [:td {:class   (column-class column-definitions col)
+          (into [:td {:class (column-class column-definitions col)
                       :data-th (column-header column-definitions col)}]
                 (column-values column-definitions col item)))))
 
@@ -95,16 +95,17 @@
                      (when filterable?
                        [:span.column-filter
                         [:input
-                         {:type        "text"
-                          :name        (str (name column) "-search")
-                          :value       (str (column filters))
+                         {:type "text"
+                          :name (str (name column) "-search")
+                          :value (str (column filters))
                           :placeholder ""
-                          :on-input    (fn [event] (set-sorting
-                                                     (assoc-in sorting [:filters column] (-> event .-target .-value))))}]
+                          :on-input (fn [event] (set-sorting
+                                                  (assoc-in sorting [:filters column] (-> event .-target .-value))))}]
                         (when (not= "" (get filters column ""))
-                          [:span.reset-button.fa.fa-backspace
+                          [:span.reset-button.icon-link.fa.fa-backspace
                            {:on-click (fn [] (set-sorting
-                                               (assoc-in sorting [:filters column] "")))}])])])))]
+                                               (assoc-in sorting [:filters column] "")))
+                            :aria-hidden true}])])])))]
          (map (fn [item] ^{:key (id-function item)} [row column-definitions visible-columns item])
               (->> items
                    (apply-filtering column-definitions filters)

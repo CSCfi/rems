@@ -4,7 +4,7 @@
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
             [rems.text :refer [text localize-item]]
-            [rems.util :refer [dispatch! fetch put!]]))
+            [rems.util :refer [dispatch! fetch post!]]))
 
 (defn- fetch-licenses []
   (fetch "/api/licenses?active=true"
@@ -12,13 +12,13 @@
                         (rf/dispatch [::set-selected-licenses #{}]))}))
 
 (defn- create-resource [prefix resid licenses]
-  (put! "/api/resources/create" {:params {:prefix prefix
-                                          :resid resid
-                                          :licenses (if licenses
-                                                      (map :id licenses)
-                                                      [])}
-                                 :handler (fn [resp]
-                                            (dispatch! "#/administration"))}))
+  (post! "/api/resources/create" {:params {:prefix prefix
+                                           :resid resid
+                                           :licenses (if licenses
+                                                       (map :id licenses)
+                                                       [])}
+                                  :handler (fn [resp]
+                                             (dispatch! "#/administration"))}))
 
 (rf/reg-sub
  ::prefix

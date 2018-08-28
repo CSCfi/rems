@@ -46,6 +46,7 @@
                    [nav-link "#/administration" (text :t.navigation/administration) (contains? #{:administration
                                                                                                  :create-license
                                                                                                  :create-resource
+                                                                                                 :create-workflow
                                                                                                  :create-catalogue-item}
                                                                                                page-id)])
         (when-not (:user identity) [nav-link "#/" (text :t.navigation/home) (= page-id :home)])
