@@ -7,7 +7,7 @@
             [rems.phase :refer [phases get-application-phases]]
             [rems.spinner :as spinner]
             [rems.text :refer [text text-format localize-state localize-event localize-time localize-item]]
-            [rems.util :refer [dispatch! fetch index-by put!]]
+            [rems.util :refer [dispatch! fetch index-by post!]]
             [secretary.core :as secretary])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
@@ -131,7 +131,7 @@
                        (if application-id
                          {:application-id application-id}
                          {:catalogue-items catalogue-items}))]
-    (put! "/api/applications/save"
+    (post! "/api/applications/save"
           {:handler (fn [resp]
                       (if (:success resp)
                         (do (rf/dispatch [::set-status :saved])
@@ -164,7 +164,7 @@
    {}))
 
 (defn- judge-application [command application-id round comment]
-  (put! "/api/applications/judge"
+  (post! "/api/applications/judge"
         {:params {:command command
                   :application-id application-id
                   :round round
@@ -555,7 +555,7 @@
    (::review-comment db)))
 
 (defn- send-third-party-review-request [reviewers user application-id round comment]
-  (put! "/api/applications/review_request"
+  (post! "/api/applications/review_request"
         {:params {:application-id application-id
                   :round round
                   :comment comment
