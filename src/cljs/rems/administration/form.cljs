@@ -98,6 +98,63 @@
                            :value (get-in form keys)
                            :on-change #(rf/dispatch [::set-form-field keys (.. % -target -value)])}]]))
 
+(defn- form-item-title-field []
+  [:div.form-group.field
+   [:label "Field title"]                                   ; TODO: translation
+   [:div.form-group.row
+    [:label.col-sm-1.col-form-label "EN"]
+    [:div.col-sm-11
+     [:input.form-control {:type "text"}]]]
+   [:div.form-group.row
+    [:label.col-sm-1.col-form-label "FI"]
+    [:div.col-sm-11
+     [:input.form-control {:type "text"}]]]])
+
+(defn- form-item-type-field []
+  [:div.form-group.field
+   [:div.form-check
+    [:input.form-check-input {:id "type-text"
+                              :type "radio"
+                              :name "type"
+                              :value "text"}]
+    [:label.form-check-label {:for "type-text"}
+     "Text field"]]                                         ; TODO: translation
+   [:div.form-check
+    [:input.form-check-input {:id "type-texta"
+                              :type "radio"
+                              :name "type"
+                              :value "texta"}]
+    [:label.form-check-label {:for "type-texta"}
+     "Text area"]]                                          ; TODO: translation
+   [:div.form-check
+    [:input.form-check-input {:id "type-date"
+                              :type "radio"
+                              :name "type"
+                              :value "date"}]
+    [:label.form-check-label {:for "type-date"}
+     "Date field"]]])                                       ; TODO: translation
+
+(defn- form-item-optional-checkbox []
+  [:div.form-group.field
+   [:div.form-check
+    [:input.form-check-input {:id "optional"
+                              :type "checkbox"
+                              :name "optional"}]
+    [:label.form-check-label {:for "optional"}
+     "Optional"]]])                                         ; TODO: translation
+
+(defn- form-item-input-prompt-field []
+  [:div.form-group.field
+   [:label "Input prompt"]                                  ; TODO: translation
+   [:div.form-group.row
+    [:label.col-sm-1.col-form-label "EN"]
+    [:div.col-sm-11
+     [:input.form-control {:type "text"}]]]
+   [:div.form-group.row
+    [:label.col-sm-1.col-form-label "FI"]
+    [:div.col-sm-11
+     [:input.form-control {:type "text"}]]]])
+
 (defn- add-form-item-button []
   (let [form @(rf/subscribe [::form])]
     [:button.btn.btn-primary
@@ -106,10 +163,17 @@
 
 (defn- remove-form-item-button [round]
   (let [form @(rf/subscribe [::form])]
-    [:button.btn.btn-secondary
-     {:on-click #(rf/dispatch [::set-form-field [:items] (vec-dissoc (:items form) round)])
-      :style {:float "right"}}
-     "Remove field"]))                                      ; TODO: translation
+    [:a
+     {:href "#"
+      :on-click (fn [event]
+                  (.preventDefault event)
+                  (rf/dispatch [::set-form-field [:items] (vec-dissoc (:items form) round)]))
+      :style {:position "absolute"
+              :right 0}
+      :aria-label "Remove field"                            ; TODO: translation
+      :title "Remove field"}
+     [:i.icon-link.fas.fa-times
+      {:aria-hidden true}]]))
 
 (defn- save-form-button []
   (let [form @(rf/subscribe [::form])]
@@ -134,10 +198,14 @@
 
                (doall (for [item (range (count (:items form)))]
                         [:div
-                         {:key item}
+                         {:key item
+                          :style {:border "1px dashed gray"
+                                  :position "relative"}}
                          [remove-form-item-button item]
-                         ; TODO
-                         [:p (str "Field " (inc item))]]))
+                         [form-item-title-field]
+                         [form-item-type-field]
+                         [form-item-optional-checkbox]
+                         [form-item-input-prompt-field]]))
 
                [:div.col.commands
                 [add-form-item-button]
