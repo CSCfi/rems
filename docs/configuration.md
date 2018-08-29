@@ -2,7 +2,7 @@
 
 REMS contains a number of configuration options that can be used to alter authentication options, theming or to add integration points, just to name a few.
 
-Configuration can be found under the `env` folder and [cprop](https://github.com/tolitius/cprop) library is used to handle the configuration options. For example, to change configuration for your production environment edit the `config.edn` file under the `env/prod/resources` folder.
+Configuration can be found under the `env` folder and [cprop](https://github.com/tolitius/cprop) library is used to handle the configuration options. For example, to change configuration for your production environment edit the `config.edn` file under the `env/prod/resources` folder. Some examples can be found in the `env/dev/resources` folder.
 
 ## Authentication options
 
@@ -47,6 +47,8 @@ The payload of the POST request is JSON, and looks like this:
 ```
 
 ## Localization
+
+Default language used in the application is English. To change the behaviour an optional key `:default-language` to your production environment's `config.edn` file.
 
 Localization files are located under `resources/translations`. To change a text simply provide a new value for the key you want to change.
 

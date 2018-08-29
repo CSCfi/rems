@@ -8,6 +8,7 @@ pages:
     - Using the API: usingtheapi.md
     - Architecture: architecture.md
     - Configuration: configuration.md
+    - Hooks: hooks.md
     - Migrating From REMS1: migrations.md
 theme:
   name: readthedocs

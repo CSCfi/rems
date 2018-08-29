@@ -39,7 +39,7 @@
         user-id "alice"
         another-user "alice_smith"
         catid 2]
-    (let [response (-> (request :put (str "/api/applications/save"))
+    (let [response (-> (request :post (str "/api/applications/save"))
                        (authenticate api-key user-id)
                        (json-body {:command "save"
                                    :catalogue-items [catid]
@@ -86,7 +86,7 @@
               application (read-body response)]
           (is (= 401 (:status response)))))
       (testing "saving as other user"
-        (let [response (-> (request :put (str "/api/applications/save"))
+        (let [response (-> (request :post (str "/api/applications/save"))
                            (authenticate api-key another-user)
                            (json-body {:command "save"
                                        :application-id application-id
@@ -94,7 +94,7 @@
                            app)]
           (is (= 401 (:status response)))))
       (testing "submitting"
-        (let [response (-> (request :put (str "/api/applications/save"))
+        (let [response (-> (request :post (str "/api/applications/save"))
                            (authenticate api-key user-id)
                            (json-body {:command "submit"
                                        :application-id application-id
@@ -111,7 +111,7 @@
           (is (:valid cmd-response))
           (is (empty? (:validation cmd-response)))))
       (testing "approving"
-        (let [response (-> (request :put (str "/api/applications/judge"))
+        (let [response (-> (request :post (str "/api/applications/judge"))
                            (authenticate api-key "developer")
                            (json-body {:command "approve"
                                        :application-id application-id
@@ -131,7 +131,7 @@
   (let [api-key "42"
         user-id "alice"
         catid 2]
-    (let [response (-> (request :put (str "/api/applications/save"))
+    (let [response (-> (request :post (str "/api/applications/save"))
                        (authenticate api-key user-id)
                        (json-body {:command "save"
                                    :catalogue-items [catid]
@@ -150,7 +150,7 @@
         (is (some #(.contains (:text %) "non-localized link license") validations))
         (is (some #(.contains (:text %) "non-localized text license") validations)))
       (testing "add one field"
-        (let [response (-> (request :put (str "/api/applications/save"))
+        (let [response (-> (request :post (str "/api/applications/save"))
                            (authenticate api-key user-id)
                            (json-body {:command "save"
                                        :application-id application-id
@@ -162,7 +162,7 @@
           (is (not (:valid cmd-response)))
           (is (= 3 (count validations)))))
       (testing "add one license"
-        (let [response (-> (request :put (str "/api/applications/save"))
+        (let [response (-> (request :post (str "/api/applications/save"))
                            (authenticate api-key user-id)
                            (json-body {:command "save"
                                        :application-id application-id
@@ -175,7 +175,7 @@
           (is (not (:valid cmd-response)))
           (is (= 2 (count validations)))))
       (testing "submit partial form"
-        (let [response (-> (request :put (str "/api/applications/save"))
+        (let [response (-> (request :post (str "/api/applications/save"))
                            (authenticate api-key user-id)
                            (json-body {:command "submit"
                                        :application-id application-id
@@ -188,7 +188,7 @@
           (is (not (:valid cmd-response)))
           (is (= 2 (count validations)))))
       (testing "save full form"
-        (let [response (-> (request :put (str "/api/applications/save"))
+        (let [response (-> (request :post (str "/api/applications/save"))
                            (authenticate api-key user-id)
                            (json-body {:command "save"
                                        :application-id application-id
@@ -201,7 +201,7 @@
           (is (:valid cmd-response))
           (is (empty? validations))))
       (testing "submit full form"
-        (let [response (-> (request :put (str "/api/applications/save"))
+        (let [response (-> (request :post (str "/api/applications/save"))
                            (authenticate api-key user-id)
                            (json-body {:command "submit"
                                        :application-id application-id
@@ -219,7 +219,7 @@
         user-id "developer"
         catid 6]
     (testing "save draft for disabled item"
-      (let [response (-> (request :put (str "/api/applications/save"))
+      (let [response (-> (request :post (str "/api/applications/save"))
                          (authenticate api-key user-id)
                          (json-body {:command "save"
                                      :catalogue-items [catid]
@@ -229,7 +229,7 @@
         ;; TODO should we actually return a nice error message here?
         (is (= 400 (:status response)) "should not be able to save draft with disbled item")))
     (testing "submit for application with disabled item"
-      (let [response (-> (request :put (str "/api/applications/save"))
+      (let [response (-> (request :post (str "/api/applications/save"))
                          (authenticate api-key user-id)
                          (json-body {:application-id 6 ;; application-id 6 is already created, but catalogue-item was disabled later
                                      :command "submit"
@@ -245,7 +245,7 @@
         applicant "alice"
         approver "developer"
         catid 2]
-    (let [response (-> (request :put (str "/api/applications/save"))
+    (let [response (-> (request :post (str "/api/applications/save"))
                        (authenticate api-key applicant)
                        (json-body {:command "submit"
                                    :catalogue-items [catid]
@@ -275,7 +275,7 @@
           (is (:can-approve? application))))
       ;; TODO tests for :review-type
       (testing "approve application"
-        (is (= 200 (-> (request :put (str "/api/applications/judge"))
+        (is (= 200 (-> (request :post (str "/api/applications/judge"))
                        (authenticate api-key approver)
                        (json-body {:command "approve"
                                    :application-id app-id
@@ -305,7 +305,7 @@
   (let [api-key "42"
         user "developer"
         catid 2
-        app-id (-> (request :put (str "/api/applications/save"))
+        app-id (-> (request :post (str "/api/applications/save"))
                    (authenticate api-key user)
                    (json-body {:command "save"
                                :catalogue-items [catid]
@@ -316,7 +316,7 @@
                    :id)
         submit (fn []
                  (is (= 200
-                        (-> (request :put (str "/api/applications/save"))
+                        (-> (request :post (str "/api/applications/save"))
                             (authenticate api-key user)
                             (json-body {:command "submit"
                                         :application-id app-id
@@ -326,7 +326,7 @@
                             :status))))
         action (fn [body]
                  (is (= 200
-                        (-> (request :put (str "/api/applications/judge"))
+                        (-> (request :post (str "/api/applications/judge"))
                             (authenticate api-key user)
                             (json-body (merge {:application-id app-id
                                                :round 0}
@@ -367,7 +367,7 @@
         approver "developer"
         reviewer "carl"
         catid 2
-        app-id (-> (request :put (str "/api/applications/save"))
+        app-id (-> (request :post (str "/api/applications/save"))
                    (authenticate api-key applicant)
                    (json-body {:command "submit"
                                :catalogue-items [catid]
@@ -385,7 +385,7 @@
         (is (not (contains? (set (map :userid reviewers)) "invalid")))))
     (testing "send review request"
       (is (= 200
-             (-> (request :put (str "/api/applications/review_request"))
+             (-> (request :post (str "/api/applications/review_request"))
                  (authenticate api-key approver)
                  (json-body {:application-id app-id
                              :round 0
@@ -405,7 +405,7 @@
                (map #(select-keys % [:userid :comment :event]) events)))))
     (testing "send review"
       (is (= 200
-             (-> (request :put (str "/api/applications/judge"))
+             (-> (request :post (str "/api/applications/judge"))
                  (authenticate api-key reviewer)
                  (json-body {:command "third-party-review"
                              :application-id app-id
@@ -415,7 +415,7 @@
                  :status))))
     (testing "approve"
       (is (= 200
-             (-> (request :put (str "/api/applications/judge"))
+             (-> (request :post (str "/api/applications/judge"))
                  (authenticate api-key approver)
                  (json-body {:command "approve"
                              :application-id app-id
@@ -487,7 +487,7 @@
     (is cookie)
     (is csrf)
     (testing "submit with session"
-      (let [response (-> (request :put (str "/api/applications/save"))
+      (let [response (-> (request :post (str "/api/applications/save"))
                          (header "Cookie" cookie)
                          (header "x-csrf-token" csrf)
                          (json-body {:command "submit"
@@ -499,7 +499,7 @@
         (is (= 200 (:status response)))
         (is (:success body))))
     (testing "submit with session but without csrf"
-      (let [response (-> (request :put (str "/api/applications/save"))
+      (let [response (-> (request :post (str "/api/applications/save"))
                          (header "Cookie" cookie)
                          (json-body {:command "submit"
                                      :catalogue-items [2]
@@ -508,7 +508,7 @@
                          app)]
         (is (= 403 (:status response)))))
     (testing "submit with session and csrf and wrong api-key"
-      (let [response (-> (request :put (str "/api/applications/save"))
+      (let [response (-> (request :post (str "/api/applications/save"))
                          (header "Cookie" cookie)
                          (header "x-csrf-token" csrf)
                          (header "x-rems-api-key" "WRONG")
@@ -539,7 +539,7 @@
           body (read-body response)]
       (is (= body "unauthorized"))))
   (testing "save without authentication"
-    (let [response (-> (request :put (str "/api/applications/save"))
+    (let [response (-> (request :post (str "/api/applications/save"))
                        (json-body {:command "save"
                                    :catalogue-items [2]
                                    :items {1 "REST-Test"}})
@@ -547,7 +547,7 @@
           body (read-body response)]
       (is (str/includes? body "Invalid anti-forgery token"))))
   (testing "save with wrong API-Key"
-    (let [response (-> (request :put (str "/api/applications/save"))
+    (let [response (-> (request :post (str "/api/applications/save"))
                        (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
                        (json-body {:command "save"
                                    :catalogue-items [2]
@@ -556,7 +556,7 @@
           body (read-body response)]
       (is (= "invalid api key" body))))
   (testing "judge without authentication"
-    (let [body (-> (request :put (str "/api/applications/judge"))
+    (let [body (-> (request :post (str "/api/applications/judge"))
                    (json-body {:command "approve"
                                :application-id 2
                                :round 0
@@ -565,7 +565,7 @@
                    read-body)]
       (is (str/includes? body "Invalid anti-forgery token"))))
   (testing "judge with wrong API-Key"
-    (let [body (-> (request :put (str "/api/applications/judge"))
+    (let [body (-> (request :post (str "/api/applications/judge"))
                    (authenticate "invalid-api-key" "developer")
                    (json-body {:command "approve"
                                :application-id 2

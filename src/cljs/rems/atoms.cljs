@@ -13,3 +13,6 @@
   [:i.fa {:class (case sort-order
                    :asc "fa-arrow-up"
                    :desc "fa-arrow-down")}])
+
+(defn search-symbol []
+  [:i.fa {:class "fa-search"}])
