@@ -43,8 +43,21 @@
   (fn [db [_ keys value]]
     (assoc-in db (concat [::form] keys) value)))
 
+(rf/reg-event-db
+  ::add-form-item
+  (fn [db [_]]
+    (assoc-in db [::form :items (count (:items (::form db)))] {})))
 
-; available actors
+(rf/reg-event-db
+  ::remove-form-item
+  (fn [db [_ index]]
+    (assoc-in db [::form :items] (vec-dissoc (:items (::form db)) index))))
+
+; TODO: handle ::move-form-item-up
+; TODO: handle ::move-form-item-down
+
+
+; form items
 
 (defn- fetch-form-items []
   (fetch "/api/form-items" {:handler #(rf/dispatch [::fetch-form-items-result %])}))
@@ -156,24 +169,45 @@
      [:input.form-control {:type "text"}]]]])
 
 (defn- add-form-item-button []
-  (let [form @(rf/subscribe [::form])]
-    [:button.btn.btn-primary
-     {:on-click #(rf/dispatch [::set-form-field [:items (count (:items form))] {}])}
-     "Add field"]))                                         ; TODO: translation
+  [:a
+   {:href "#"
+    :on-click (fn [event]
+                (.preventDefault event)
+                (rf/dispatch [::add-form-item]))}
+   "Add field"])                                            ; TODO: translation
 
-(defn- remove-form-item-button [round]
-  (let [form @(rf/subscribe [::form])]
-    [:a
-     {:href "#"
-      :on-click (fn [event]
-                  (.preventDefault event)
-                  (rf/dispatch [::set-form-field [:items] (vec-dissoc (:items form) round)]))
-      :style {:position "absolute"
-              :right 0}
-      :aria-label "Remove field"                            ; TODO: translation
-      :title "Remove field"}
-     [:i.icon-link.fas.fa-times
-      {:aria-hidden true}]]))
+(defn- remove-form-item-button [index]
+  [:a
+   {:href "#"
+    :on-click (fn [event]
+                (.preventDefault event)
+                (rf/dispatch [::remove-form-item index]))
+    :aria-label "Remove field"                              ; TODO: translation
+    :title "Remove field"}
+   [:i.icon-link.fas.fa-times
+    {:aria-hidden true}]])
+
+(defn- move-form-item-up-button [index]
+  [:a
+   {:href "#"
+    :on-click (fn [event]
+                (.preventDefault event)
+                (rf/dispatch [::move-form-item-up index]))
+    :aria-label "Move up"                                   ; TODO: translation
+    :title "Move up"}
+   [:i.icon-link.fas.fa-chevron-up
+    {:aria-hidden true}]])
+
+(defn- move-form-item-down-button [index]
+  [:a
+   {:href "#"
+    :on-click (fn [event]
+                (.preventDefault event)
+                (rf/dispatch [::move-form-item-down index]))
+    :aria-label "Move down"                                 ; TODO: translation
+    :title "Move down"}
+   [:i.icon-link.fas.fa-chevron-down
+    {:aria-hidden true}]])
 
 (defn- save-form-button []
   (let [form @(rf/subscribe [::form])]
@@ -197,17 +231,19 @@
                [form-title-field]
 
                (doall (for [item (range (count (:items form)))]
-                        [:div
-                         {:key item
-                          :style {:border "1px dashed gray"
-                                  :position "relative"}}
-                         [remove-form-item-button item]
+                        [:div.form-item
+                         {:key item}
+                         [:div.form-item-controls
+                          [move-form-item-up-button item]
+                          [move-form-item-down-button item]
+                          [remove-form-item-button item]]
                          [form-item-title-field]
                          [form-item-type-field]
                          [form-item-optional-checkbox]
                          [form-item-input-prompt-field]]))
 
+               [:div.form-item.new-form-item
+                [add-form-item-button]]
                [:div.col.commands
-                [add-form-item-button]
                 [cancel-button]
                 [save-form-button]]]}]))

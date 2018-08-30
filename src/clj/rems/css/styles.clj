@@ -164,6 +164,15 @@
    [:.cart-item {:padding-right (u/em 1)}
     [:>span {:display :inline-block :vertical-align :middle}]]))
 
+(def ^:private dashed-form-group {:position "relative"
+                                  :border "2px dashed #ccc"
+                                  :border-radius (u/px 15)
+                                  :padding (u/px 10)
+                                  :margin-left (u/px -10)
+                                  :margin-right (u/px -10)
+                                  :margin-top 0
+                                  :margin-bottom (u/px 16)})
+
 (defstyles screen
   (generate-at-font-faces)
   [:* {:margin 0}]
@@ -331,15 +340,12 @@
   [(s/> :.form-actions "*:not(:first-child)")
    (s/> :.commands "*:not(:first-child)")
    {:margin-left (u/em 0.5)}]
+
+  ; form inputs
   ["input[type=date].form-control" {:width (u/em 12)}]
-  [:.workflow-round {:position "relative"
-                     :border "2px dashed #ccc"
-                     :border-radius (u/px 15)
-                     :padding (u/px 10)
-                     :margin-left (u/px -10)
-                     :margin-right (u/px -10)
-                     :margin-top 0
-                     :margin-bottom (u/px 16)}
+
+  ; workflow editor
+  [:.workflow-round dashed-form-group
    [:h2 {:font-weight 500
          :font-size (u/rem 1.4)}]]
   [:.next-workflow-arrow {:position "absolute"
@@ -349,6 +355,13 @@
                           :z-index 1}]
   [:.new-workflow-round {:text-align "center"}]
   [:.remove-workflow-round {:float "right"}]
+
+  ; form editor
+  [:.form-item dashed-form-group]
+  [:.form-item-controls {:float "right"}
+   [:* {:margin-left (u/em 0.25)}]]
+  [:.new-form-item {:text-align "center"}]
+
   [:.full {:width "100%"}]
   [:.rectangle {:width (u/px 50)
                 :height (u/px 50)}]
