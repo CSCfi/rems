@@ -53,8 +53,22 @@
   (fn [db [_ index]]
     (assoc-in db [::form :items] (vec-dissoc (:items (::form db)) index))))
 
-; TODO: handle ::move-form-item-up
-; TODO: handle ::move-form-item-down
+(rf/reg-event-db
+  ::move-form-item-up
+  (fn [db [_ index]]
+    (let [other (max 0 (dec index))]
+      (-> db
+          (assoc-in [::form :items index] (get-in db [::form :items other]))
+          (assoc-in [::form :items other] (get-in db [::form :items index]))))))
+
+(rf/reg-event-db
+  ::move-form-item-down
+  (fn [db [_ index]]
+    (let [last-index (dec (count (get-in db [::form :items])))
+          other (min last-index (inc index))]
+      (-> db
+          (assoc-in [::form :items index] (get-in db [::form :items other]))
+          (assoc-in [::form :items other] (get-in db [::form :items index]))))))
 
 
 ; form items
