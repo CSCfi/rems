@@ -7,6 +7,10 @@
             [rems.application :refer [enrich-user]]
             [clojure.string :as s]))
 
+(defn- uses-input-prompt? [form item]
+  (let [form-item-type (get-in form [:items item :type])]
+    (contains? #{"text" "texta"} form-item-type)))
+
 (defn- valid-request? [request]
   ; TODO
   false)
@@ -273,9 +277,10 @@
                           [move-form-item-down-button item]
                           [remove-form-item-button item]]
                          [form-item-title-field item]
-                         [form-item-type-radio-group item]
                          [form-item-optional-checkbox item]
-                         [form-item-input-prompt-field item]]))
+                         [form-item-type-radio-group item]
+                         (when (uses-input-prompt? form item)
+                           [form-item-input-prompt-field item])]))
 
                [:div.form-item.new-form-item
                 [add-form-item-button]]
