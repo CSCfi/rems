@@ -105,57 +105,67 @@
     (::form-items db)))
 
 
-;;;; UI ;;;;
+; reusable form components
+; TODO: extract from this namespace
 
-(defn- form-prefix-field []
-  (let [form @(rf/subscribe [::form])
-        keys [:prefix]
-        id "prefix"]
-    [:div.form-group.field
-     [:label {:for id} (text :t.create-resource/prefix)]    ; TODO: extract common translation
-     [:input.form-control {:type :text
-                           :id id
-                           :placeholder (text :t.create-resource/prefix-placeholder) ; TODO: extract common translation
-                           :value (get-in form keys)
-                           :on-change #(rf/dispatch [::set-form-field keys (.. % -target -value)])}]]))
+(defn- key-to-id [key]
+  (if (number? key)
+    (str key)
+    (name key)))
 
-; TODO: extract text field component
-(defn- form-title-field []
+(defn- keys-to-id [keys]
+  (->> keys
+       (map key-to-id)
+       (str/join "-")))
+
+(defn- text-field [{:keys [keys label placeholder]}]
   (let [form @(rf/subscribe [::form])
-        keys [:title]
-        id "title"]
+        id (keys-to-id keys)]
     [:div.form-group.field
-     [:label {:for id} "Title"]                             ; TODO: translation
+     [:label {:for id} label]
      [:input.form-control {:type "text"
                            :id id
+                           :placeholder placeholder
                            :value (get-in form keys)
                            :on-change #(rf/dispatch [::set-form-field keys (.. % -target -value)])}]]))
 
-(defn- form-item-title-localized-field [item lang]
+(defn- localized-text-field-lang [{:keys [keys-prefix lang]}]
   (let [form @(rf/subscribe [::form])
-        keys [:items item :title lang]
-        id (str "items-" item "-title-" lang)]
+        keys (conj keys-prefix lang)
+        id (keys-to-id keys)]
     [:div.form-group.row
      [:label.col-sm-1.col-form-label {:for id}
-      (s/upper-case lang)]
+      (s/upper-case (name lang))]
      [:div.col-sm-11
       [:input.form-control {:type "text"
                             :id id
                             :value (get-in form keys)
                             :on-change #(rf/dispatch [::set-form-field keys (.. % -target -value)])}]]]))
 
-(defn- form-item-title-field [item]
-  [:div.form-group.field
-   [:label "Field title"]                                   ; TODO: translation
-   [form-item-title-localized-field item "en"]
-   [form-item-title-localized-field item "fi"]])
+(defn- localized-text-field [{:keys [keys label]}]
+  (let [languages @(rf/subscribe [:languages])]
+    (into [:div.form-group.field
+           [:label label]]
+          (for [lang languages]
+            [localized-text-field-lang {:keys-prefix keys
+                                        :lang lang}]))))
 
-; TODO: extract radio button component
-(defn- form-item-type-radio-button [item value label]
+(defn- checkbox [{:keys [keys label]}]
   (let [form @(rf/subscribe [::form])
-        keys [:items item :type]
-        name (str "item-" item "-type")
-        id (str "item-" item "-type-" value)]
+        id (keys-to-id keys)]
+    [:div.form-group.field
+     [:div.form-check
+      [:input.form-check-input {:id id
+                                :type "checkbox"
+                                :checked (boolean (get-in form keys))
+                                :on-change #(rf/dispatch [::set-form-field keys (.. % -target -checked)])}]
+      [:label.form-check-label {:for id}
+       label]]]))
+
+(defn- radio-button [{:keys [keys value label]}]
+  (let [form @(rf/subscribe [::form])
+        name (keys-to-id keys)
+        id (keys-to-id (conj keys value))]
     [:div.form-check
      [:input.form-check-input {:id id
                                :type "radio"
@@ -167,45 +177,42 @@
      [:label.form-check-label {:for id}
       label]]))
 
-(defn- form-item-type-radio-group [item]
-  [:div.form-group.field
-   [form-item-type-radio-button item "text" "Text field"]   ; TODO: translation
-   [form-item-type-radio-button item "texta" "Text area"]   ; TODO: translation
-   [form-item-type-radio-button item "date" "Date field"]]) ; TODO: translation
+(defn- radio-button-group [{:keys [keys options]}]
+  (into [:div.form-group.field]
+        (map (fn [{:keys [value label]}]
+               [radio-button {:keys keys
+                              :value value
+                              :label label}])
+             options)))
 
-; TODO: extract checkbox component
-(defn- form-item-optional-checkbox [item]
-  (let [form @(rf/subscribe [::form])
-        keys [:items item :optional]
-        id (str "item-" item "-optional")]
-    [:div.form-group.field
-     [:div.form-check
-      [:input.form-check-input {:id id
-                                :type "checkbox"
-                                :checked (boolean (get-in form keys))
-                                :on-change #(rf/dispatch [::set-form-field keys (.. % -target -checked)])}]
-      [:label.form-check-label {:for id}
-       "Optional"]]]))                                      ; TODO: translation
+;;;; UI ;;;;
 
-; TODO: extract localized text field component
-(defn- form-item-input-prompt-localized-field [item lang]
-  (let [form @(rf/subscribe [::form])
-        keys [:items item :input-prompt lang]
-        id (str "items-" item "-input-prompt-" lang)]
-    [:div.form-group.row
-     [:label.col-sm-1.col-form-label {:for id}
-      (s/upper-case lang)]
-     [:div.col-sm-11
-      [:input.form-control {:type "text"
-                            :id id
-                            :value (get-in form keys)
-                            :on-change #(rf/dispatch [::set-form-field keys (.. % -target -value)])}]]]))
+(defn- form-prefix-field []
+  [text-field {:keys [:prefix]
+               :label (text :t.create-resource/prefix)      ; TODO: extract common translation
+               :placeholder (text :t.create-resource/prefix-placeholder)}]) ; TODO: extract common translation
+
+(defn- form-title-field []
+  [text-field {:keys [:title]
+               :label "Title"}])                            ; TODO: translation
+
+(defn- form-item-title-field [item]
+  [localized-text-field {:keys [:items item :title]
+                         :label "Field title"}])            ; TODO: translation
 
 (defn- form-item-input-prompt-field [item]
-  [:div.form-group.field
-   [:label "Input prompt"]                                  ; TODO: translation
-   [form-item-input-prompt-localized-field item "en"]
-   [form-item-input-prompt-localized-field item "fi"]])
+  [localized-text-field {:keys [:items item :input-prompt]
+                         :label "Input prompt"}])           ; TODO: translation
+
+(defn- form-item-type-radio-group [item]
+  [radio-button-group {:keys [:items item :type]
+                       :options [{:value "text", :label "Text field"} ; TODO: translation
+                                 {:value "texta", :label "Text area"} ; TODO: translation
+                                 {:value "date", :label "Date field"}]}]) ; TODO: translation
+
+(defn- form-item-optional-checkbox [item]
+  [checkbox {:keys [:items item :optional]
+             :label "Optional"}])                           ; TODO: translation
 
 (defn- add-form-item-button []
   [:a
