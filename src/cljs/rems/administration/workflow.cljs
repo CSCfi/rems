@@ -137,11 +137,13 @@
 (defn- round-type-radio-button [round value label]
   (let [form @(rf/subscribe [::form])
         keys [:rounds round :type]
-        id (str "round-" round "-type-" (name value))]
+        name (str "round-" round "-type")
+        id (str "round-" round "-type-" (clojure.core/name value))]
     [:div.form-check.form-check-inline
      [:input.form-check-input {:type "radio"
                                :id id
-                               :value (name value)
+                               :name name
+                               :value (clojure.core/name value)
                                :checked (= value (get-in form keys))
                                :on-change #(when (.. % -target -checked)
                                              (rf/dispatch [::set-form-field keys value]))}]

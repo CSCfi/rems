@@ -84,10 +84,12 @@
 
 (defn- license-type-radio-button [value label]
   (let [form @(rf/subscribe [::form])
+        name "license-type"
         id (str "license-type-" value)]
     [:div.form-check.form-check-inline
      [:input.form-check-input {:type "radio"
                                :id id
+                               :name name
                                :value value
                                :checked (= value (:licensetype form))
                                :on-change #(when (.. % -target -checked)
