@@ -116,6 +116,7 @@
                  :pretty-print false
                  :closure-warnings
                  {:externs-validation :off :non-standard-jsdoc :off}
+                 :infer-externs :true ;; for window.rems.hooks to work
                  :externs ["react/externs/react.js"]}}}}
              :aot :all
              :jvm-opts ["-Dclojure.compiler.elide-meta=[:doc]"]
