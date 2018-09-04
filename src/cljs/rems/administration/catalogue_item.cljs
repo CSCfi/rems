@@ -1,4 +1,4 @@
-(ns rems.administration.catalogue
+(ns rems.administration.catalogue-item
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.autocomplete :as autocomplete]
