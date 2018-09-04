@@ -62,19 +62,32 @@
 
 ; available licenses
 
-(rf/reg-sub
-  ::available-licenses
-  (fn [db _]
-    (::available-licenses db)))
-
-(rf/reg-event-db
-  ::set-available-licenses
-  (fn [db [_ licenses]]
-    (assoc db ::available-licenses licenses)))
-
 (defn- fetch-licenses []
   (fetch "/api/licenses?active=true"
-         {:handler #(rf/dispatch [::set-available-licenses %])}))
+         {:handler #(rf/dispatch [::fetch-licenses-result %])}))
+
+(rf/reg-event-fx
+  ::start-fetch-licenses
+  (fn [{:keys [db]}]
+    {:db (assoc db ::loading? true)
+     ::fetch-licenses []}))
+
+(rf/reg-fx
+  ::fetch-licenses
+  (fn [_]
+    (fetch-licenses)))
+
+(rf/reg-event-db
+  ::fetch-licenses-result
+  (fn [db [_ licenses]]
+    (-> db
+        (assoc ::licenses licenses)
+        (dissoc ::loading?))))
+
+(rf/reg-sub
+  ::licenses
+  (fn [db _]
+    (::licenses db)))
 
 
 ;;;; UI ;;;;
@@ -93,7 +106,7 @@
                        :placeholder (text :t.create-resource/resid-placeholder)}])
 
 (defn- resource-licenses-field []
-  (let [available-licenses @(rf/subscribe [::available-licenses])
+  (let [available-licenses @(rf/subscribe [::licenses])
         selected-licenses @(rf/subscribe [::selected-licenses])]
     [:div.form-group
      [:label (text :t.create-resource/licenses-selection)]
@@ -123,17 +136,14 @@
    (text :t.administration/cancel)])
 
 (defn create-resource-page []
-  ; FIXME: fetch available licenses the same way as fetch-form-items to fix https://github.com/CSCfi/rems/issues/646
-  (fetch-licenses)
-  (fn []
-    [collapsible/component
-     {:id "create-resource"
-      :title (text :t.navigation/create-resource)
-      :always [:div
-               [resource-prefix-field]
-               [resource-id-field]
-               [resource-licenses-field]
+  [collapsible/component
+   {:id "create-resource"
+    :title (text :t.navigation/create-resource)
+    :always [:div
+             [resource-prefix-field]
+             [resource-id-field]
+             [resource-licenses-field]
 
-               [:div.col.commands
-                [cancel-button]
-                [save-resource-button]]]}]))
+             [:div.col.commands
+              [cancel-button]
+              [save-resource-button]]]}])

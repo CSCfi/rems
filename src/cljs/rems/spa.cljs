@@ -263,6 +263,9 @@
   (rf/dispatch [:set-active-page :administration]))
 
 (secretary/defroute "/create-catalogue-item" []
+  (rf/dispatch [:rems.administration.catalogue/start-fetch-workflows])
+  (rf/dispatch [:rems.administration.catalogue/start-fetch-resources])
+  (rf/dispatch [:rems.administration.catalogue/start-fetch-forms])
   (rf/dispatch [:rems.administration.catalogue/reset-create-catalogue-item])
   (rf/dispatch [:set-active-page :create-catalogue-item]))
 
@@ -276,6 +279,7 @@
   (rf/dispatch [:set-active-page :create-license]))
 
 (secretary/defroute "/create-resource" []
+  (rf/dispatch [:rems.administration.resource/start-fetch-licenses])
   (rf/dispatch [:rems.administration.resource/reset-create-resource])
   (rf/dispatch [:set-active-page :create-resource]))
 
