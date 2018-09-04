@@ -1,6 +1,6 @@
 (ns rems.administration.form
   (:require [re-frame.core :as rf]
-            [rems.administration.components :refer [checkbox localized-text-field radio-button-group text-field]]
+            [rems.administration.components :refer [checkbox localized-text-field vertical-radio-button-group text-field]]
             [rems.application :refer [enrich-user]]
             [rems.collapsible :as collapsible]
             [rems.text :refer [text text-format localize-item]]
@@ -127,10 +127,10 @@
                                  :label "Input prompt"}])   ; TODO: translation
 
 (defn- form-item-type-radio-group [item]
-  [radio-button-group context {:keys [:items item :type]
-                               :options [{:value "text", :label "Text field"} ; TODO: translation
-                                         {:value "texta", :label "Text area"} ; TODO: translation
-                                         {:value "date", :label "Date field"}]}]) ; TODO: translation
+  [vertical-radio-button-group context {:keys [:items item :type]
+                                        :options [{:value "text", :label "Text field"} ; TODO: translation
+                                                  {:value "texta", :label "Text area"} ; TODO: translation
+                                                  {:value "date", :label "Date field"}]}]) ; TODO: translation
 
 (defn- form-item-optional-checkbox [item]
   [checkbox context {:keys [:items item :optional]
