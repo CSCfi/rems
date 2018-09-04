@@ -1,6 +1,7 @@
 (ns rems.administration.workflow
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
+            [rems.administration.components :refer [radio-button-group text-field]]
             [rems.application :refer [enrich-user]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
@@ -111,48 +112,25 @@
 
 ;;;; UI ;;;;
 
+(def ^:private context {:get-form ::form
+                        :update-form ::set-form-field})
+
 (defn- workflow-prefix-field []
-  (let [form @(rf/subscribe [::form])
-        keys [:prefix]
-        id "prefix"]
-    [:div.form-group.field
-     [:label {:for id} (text :t.create-resource/prefix)]    ; TODO: extract common translation
-     [:input.form-control {:type :text
-                           :id id
-                           :placeholder (text :t.create-resource/prefix-placeholder) ; TODO: extract common translation
-                           :value (get-in form keys)
-                           :on-change #(rf/dispatch [::set-form-field keys (.. % -target -value)])}]]))
+  [text-field context {:keys [:prefix]
+                       :label (text :t.create-resource/prefix) ; TODO: extract common translation
+                       :placeholder (text :t.create-resource/prefix-placeholder)}]) ; TODO: extract common translation
 
 (defn- workflow-title-field []
-  (let [form @(rf/subscribe [::form])
-        keys [:title]
-        id "title"]
-    [:div.form-group.field
-     [:label {:for id} (text :t.create-workflow/title)]
-     [:input.form-control {:type "text"
-                           :id id
-                           :value (get-in form keys)
-                           :on-change #(rf/dispatch [::set-form-field keys (.. % -target -value)])}]]))
-
-(defn- round-type-radio-button [round value label]
-  (let [form @(rf/subscribe [::form])
-        keys [:rounds round :type]
-        name (str "round-" round "-type")
-        id (str "round-" round "-type-" (clojure.core/name value))]
-    [:div.form-check.form-check-inline
-     [:input.form-check-input {:type "radio"
-                               :id id
-                               :name name
-                               :value (clojure.core/name value)
-                               :checked (= value (get-in form keys))
-                               :on-change #(when (.. % -target -checked)
-                                             (rf/dispatch [::set-form-field keys value]))}]
-     [:label.form-check-label {:for id} label]]))
+  [text-field context {:keys [:title]
+                       :label (text :t.create-workflow/title)}])
 
 (defn- round-type-radio-group [round]
-  [:div.form-group.field
-   [round-type-radio-button round :approval (text :t.create-workflow/approval-round)]
-   [round-type-radio-button round :review (text :t.create-workflow/review-round)]])
+  [radio-button-group context {:keys [:rounds round :type]
+                               :orientation :horizontal
+                               :options [{:value :approval
+                                          :label (text :t.create-workflow/approval-round)}
+                                         {:value :review
+                                          :label (text :t.create-workflow/review-round)}]}])
 
 (defn- workflow-actors-field [round]
   (let [form @(rf/subscribe [::form])

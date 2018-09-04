@@ -84,14 +84,13 @@
       [:label.form-check-label {:for id}
        label]]]))
 
-(defn radio-button
-  "A single radio button. Needs to be wrapped in a form group.
-  See also `vertical-radio-button-group`."
-  [context {:keys [keys value label]}]
+(defn- radio-button [context {:keys [keys value label orientation]}]
   (let [form @(rf/subscribe [(:get-form context)])
         name (keys-to-id keys)
         id (keys-to-id (conj keys value))]
-    [:div.form-check
+    [(case orientation
+       :vertical :div.form-check
+       :horizontal :div.form-check.form-check-inline)
      [:input.form-check-input {:id id
                                :type "radio"
                                :name name
@@ -102,14 +101,15 @@
      [:label.form-check-label {:for id}
       label]]))
 
-(defn vertical-radio-button-group
-  "A group of radio buttons, laid out vertically. The radio buttons
-   must be listed in `options`, which is a list of maps of the shape
-   `{:value \"...\", :label \"...\"}`."
-  [context {:keys [keys options]}]
+(defn radio-button-group
+  "A list of radio buttons.
+  `orientation`  - `:horizontal` or `:vertical`
+  `options`      - list of `{:value \"...\", :label \"...\"}`"
+  [context {:keys [keys orientation options]}]
   (into [:div.form-group.field]
         (map (fn [{:keys [value label]}]
                [radio-button context {:keys keys
                                       :value value
-                                      :label label}])
+                                      :label label
+                                      :orientation orientation}])
              options)))
