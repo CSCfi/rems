@@ -1,9 +1,7 @@
 (ns rems.administration
-  (:require [clojure.string :as str]
-            [re-frame.core :as rf]
+  (:require [re-frame.core :as rf]
             [rems.atoms :refer [external-link]]
-            [rems.autocomplete :as autocomplete]
-            [rems.collapsible :as collapsible]
+            [rems.config :refer [dev-environment?]]
             [rems.db.catalogue :refer [urn-catalogue-item? get-catalogue-item-title disabled-catalogue-item?]]
             [rems.spinner :as spinner]
             [rems.table :as table]
@@ -79,6 +77,18 @@
     :on-click #(rf/dispatch [::update-catalogue-item (:id item) "enabled"])}
    (text :t.administration/enable)])
 
+(defn- to-create-catalogue-item-button []
+  [:button.btn.btn-primary
+   {:type "submit"
+    :on-click #(dispatch! "/#/create-catalogue-item")}
+   (text :t.administration/create-catalogue-item)])
+
+(defn- to-create-form-button []
+  [:button.btn.btn-primary
+   {:type "submit"
+    :on-click #(dispatch! "/#/create-form")}
+   (text :t.administration/create-form)])
+
 (defn- to-create-license-button []
   [:button.btn.btn-primary
    {:type "submit"
@@ -96,12 +106,6 @@
    {:type "submit"
     :on-click #(dispatch! "/#/create-workflow")}
    (text :t.administration/create-workflow)])
-
-(defn- to-create-catalogue-item-button []
-  [:button.btn.btn-primary
-   {:type "submit"
-    :on-click #(dispatch! "/#/create-catalogue-item")}
-   (text :t.administration/create-catalogue-item)])
 
 (defn- catalogue-item-button [item]
   (if (disabled-catalogue-item? item)
@@ -136,8 +140,10 @@
               [[spinner/big]]
               [[:div
                 [:div.col.commands
+                 [to-create-workflow-button]
+                 (when (dev-environment?)
+                   [to-create-form-button])
                  [to-create-license-button]
                  [to-create-resource-button]
-                 [to-create-workflow-button]
                  [to-create-catalogue-item-button]]
                 [catalogue-list @catalogue @language @sorting]]])))))

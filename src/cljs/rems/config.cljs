@@ -18,3 +18,7 @@
 
 (defn fetch-config! []
   (fetch "/api/config" {:handler #(rf/dispatch [::loaded-config %])}))
+
+(defn dev-environment? []
+  (let [config @(rf/subscribe [::config])]
+    (boolean (:dev config))))

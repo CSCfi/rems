@@ -44,10 +44,11 @@
                     [nav-link "#/actions" (text :t.navigation/actions) (= page-id :actions)])
         (when-role :owner current-roles
                    [nav-link "#/administration" (text :t.navigation/administration) (contains? #{:administration
+                                                                                                 :create-catalogue-item
+                                                                                                 :create-form
                                                                                                  :create-license
                                                                                                  :create-resource
-                                                                                                 :create-workflow
-                                                                                                 :create-catalogue-item}
+                                                                                                 :create-workflow}
                                                                                                page-id)])
         (when-not (:user identity) [nav-link "#/" (text :t.navigation/home) (= page-id :home)])
         [nav-link "#/about" (text :t.navigation/about) (= page-id :about)]]

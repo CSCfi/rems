@@ -1,6 +1,6 @@
 (ns rems.test.administration.workflow
   (:require [cljs.test :refer-macros [deftest is testing]]
-            [rems.administration.workflow :refer [build-request vec-dissoc]]))
+            [rems.administration.workflow :refer [build-request]]))
 
 (deftest build-request-test
   (let [form {:prefix "abc"
@@ -32,10 +32,3 @@
       (is (nil? (build-request (assoc-in form [:rounds 0 :type] nil)))))
     (testing "missing actors"
       (is (nil? (build-request (assoc-in form [:rounds 0 :actors] [])))))))
-
-(deftest vec-dissoc-test
-  (is (vector? (vec-dissoc ["a"] 0)))
-  (is (= [] (vec-dissoc ["a"] 0)))
-  (is (= ["b", "c"] (vec-dissoc ["a", "b", "c"] 0)))
-  (is (= ["a", "c"] (vec-dissoc ["a", "b", "c"] 1)))
-  (is (= ["a", "b"] (vec-dissoc ["a", "b", "c"] 2))))

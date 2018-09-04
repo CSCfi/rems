@@ -1,7 +1,7 @@
-(ns rems.db.form
+(ns rems.db.form-item
   (:require [rems.db.core :as db]))
 
-(defn get-forms [filters]
-  (->> (db/get-forms)
+(defn get-form-items [filters]
+  (->> (db/get-all-form-items)
        (map db/assoc-active)
        (db/apply-filters filters)))

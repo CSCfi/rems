@@ -5,7 +5,7 @@
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
             [rems.text :refer [text text-format localize-item]]
-            [rems.util :refer [dispatch! fetch post!]]))
+            [rems.util :refer [dispatch! fetch post! vec-dissoc]]))
 
 (defn- valid-request? [request]
   (and (not (str/blank? (:prefix request)))
@@ -137,11 +137,13 @@
 (defn- round-type-radio-button [round value label]
   (let [form @(rf/subscribe [::form])
         keys [:rounds round :type]
-        id (str "round-" round "-type-" (name value))]
+        name (str "round-" round "-type")
+        id (str "round-" round "-type-" (clojure.core/name value))]
     [:div.form-check.form-check-inline
      [:input.form-check-input {:type "radio"
                                :id id
-                               :value (name value)
+                               :name name
+                               :value (clojure.core/name value)
                                :checked (= value (get-in form keys))
                                :on-change #(when (.. % -target -checked)
                                              (rf/dispatch [::set-form-field keys value]))}]
@@ -185,10 +187,6 @@
                   (.preventDefault event)
                   (rf/dispatch [::set-form-field [:rounds (count (:rounds form))] {}]))}
      (text :t.create-workflow/add-round)]))
-
-(defn vec-dissoc [coll index]
-  (vec (concat (subvec coll 0 index)
-               (subvec coll (inc index)))))
 
 (defn- remove-round-button [round]
   (let [form @(rf/subscribe [::form])]
