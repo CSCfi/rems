@@ -259,33 +259,27 @@
   (rf/dispatch [:set-active-page :applications]))
 
 (secretary/defroute "/administration" []
-  (rf/dispatch [:rems.administration/start-fetch-catalogue])
+  (rf/dispatch [:rems.administration/enter-page])
   (rf/dispatch [:set-active-page :administration]))
 
 (secretary/defroute "/create-catalogue-item" []
-  (rf/dispatch [:rems.administration.catalogue-item/start-fetch-workflows])
-  (rf/dispatch [:rems.administration.catalogue-item/start-fetch-resources])
-  (rf/dispatch [:rems.administration.catalogue-item/start-fetch-forms])
-  (rf/dispatch [:rems.administration.catalogue-item/reset-create-catalogue-item])
+  (rf/dispatch [:rems.administration.catalogue-item/enter-page])
   (rf/dispatch [:set-active-page :create-catalogue-item]))
 
 (secretary/defroute "/create-form" []
-  (rf/dispatch [:rems.administration.form/start-fetch-form-items])
-  (rf/dispatch [:rems.administration.form/reset-create-form])
+  (rf/dispatch [:rems.administration.form/enter-page])
   (rf/dispatch [:set-active-page :create-form]))
 
 (secretary/defroute "/create-license" []
-  (rf/dispatch [:rems.administration.license/reset-create-license])
+  (rf/dispatch [:rems.administration.license/enter-page])
   (rf/dispatch [:set-active-page :create-license]))
 
 (secretary/defroute "/create-resource" []
-  (rf/dispatch [:rems.administration.resource/start-fetch-licenses])
-  (rf/dispatch [:rems.administration.resource/reset-create-resource])
+  (rf/dispatch [:rems.administration.resource/enter-page])
   (rf/dispatch [:set-active-page :create-resource]))
 
 (secretary/defroute "/create-workflow" []
-  (rf/dispatch [:rems.administration.workflow/start-fetch-actors])
-  (rf/dispatch [:rems.administration.workflow/reset-create-workflow])
+  (rf/dispatch [:rems.administration.workflow/enter-page])
   (rf/dispatch [:set-active-page :create-workflow]))
 
 (secretary/defroute "/unauthorized" []

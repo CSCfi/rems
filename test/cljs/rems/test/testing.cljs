@@ -7,3 +7,7 @@
       (f)
       (finally
         (restore-fn)))))
+
+(defn stub-re-frame-effect [id]
+  (rf/clear-fx id)
+  (rf/reg-fx id (fn [_])))

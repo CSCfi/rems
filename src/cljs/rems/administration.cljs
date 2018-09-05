@@ -8,8 +8,16 @@
             [rems.text :refer [text]]
             [rems.util :refer [dispatch! fetch put!]]))
 
-;; TODO copypaste from rems.catalogue, move to rems.db.catalogue?
+(rf/reg-event-fx
+  ::enter-page
+  (fn [{:keys [db]}]
+    {:db (assoc db ::loading? true)
+     ::fetch-catalogue nil}))
 
+
+; catalogue items
+
+;; TODO copypaste from rems.catalogue, move to rems.db.catalogue?
 (defn- fetch-catalogue []
   (fetch "/api/catalogue-items/" {:handler #(rf/dispatch [::fetch-catalogue-result %])}))
 
@@ -17,12 +25,6 @@
   ::fetch-catalogue
   (fn [_]
     (fetch-catalogue)))
-
-(rf/reg-event-fx
-  ::start-fetch-catalogue
-  (fn [{:keys [db]}]
-    {:db (assoc db ::loading? true)
-     ::fetch-catalogue []}))
 
 (rf/reg-event-db
   ::fetch-catalogue-result
@@ -43,7 +45,7 @@
 
 (defn- update-catalogue-item [id state]
   (put! "/api/catalogue-items/update" {:params {:id id :state state}
-                                       :handler #(rf/dispatch [::start-fetch-catalogue])}))
+                                       :handler #(rf/dispatch [::enter-page])}))
 
 (rf/reg-event-fx
   ::update-catalogue-item

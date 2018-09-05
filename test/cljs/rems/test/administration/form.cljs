@@ -2,12 +2,13 @@
   (:require [cljs.test :refer-macros [deftest is testing use-fixtures]]
             [re-frame.core :as rf]
             [rems.administration.form :as f]
-            [rems.test.testing :refer [isolate-re-frame-state]]))
+            [rems.test.testing :refer [isolate-re-frame-state stub-re-frame-effect]]))
 
 (use-fixtures :each isolate-re-frame-state)
 
 (defn reset-form []
-  (rf/dispatch-sync [::f/reset-create-form]))
+  (stub-re-frame-effect ::f/fetch-form-items)
+  (rf/dispatch-sync [::f/enter-page]))
 
 (deftest add-form-item-test
   (let [form (rf/subscribe [::f/form])]

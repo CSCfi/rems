@@ -6,36 +6,18 @@
             [rems.text :refer [text text-format localize-item]]
             [rems.util :refer [dispatch! fetch post! vec-dissoc]]))
 
-(defn- uses-input-prompt? [form item]
-  (let [form-item-type (get-in form [:items item :type])]
-    (contains? #{"text" "texta"} form-item-type)))
-
-(defn- valid-request? [request]
-  ; TODO
-  false)
-
-(defn build-request [form]
-  ; TODO
-  (let [request {:prefix (:prefix form)
-                 :title (:title form)}]
-    (when (valid-request? request)
-      request)))
-
-(defn- create-form [request]
-  (post! "/api/forms/create" {:params request
-                              :handler (fn [resp]
-                                         (dispatch! "#/administration"))}))
+(defn- reset-form [db]
+  (assoc db ::form {:items []}))
 
 (rf/reg-event-fx
-  ::create-form
-  (fn [_ [_ request]]
-    (create-form request)
-    {}))
+  ::enter-page
+  (fn [{:keys [db]}]
+    ; TODO: loading indicator
+    {:db (reset-form db)
+     ::fetch-form-items nil}))
 
-(rf/reg-event-db
-  ::reset-create-form
-  (fn [db _]
-    (assoc db ::form {:items []})))
+
+; form state
 
 (rf/reg-sub
   ::form
@@ -75,7 +57,37 @@
           (assoc-in [::form :items other] (get-in db [::form :items index]))))))
 
 
+; form submit
+
+(defn- uses-input-prompt? [form item]
+  (let [form-item-type (get-in form [:items item :type])]
+    (contains? #{"text" "texta"} form-item-type)))
+
+(defn- valid-request? [request]
+  ; TODO
+  false)
+
+(defn build-request [form]
+  ; TODO
+  (let [request {:prefix (:prefix form)
+                 :title (:title form)}]
+    (when (valid-request? request)
+      request)))
+
+(defn- create-form [request]
+  (post! "/api/forms/create" {:params request
+                              ; TODO: error handling
+                              :handler (fn [resp] (dispatch! "#/administration"))}))
+
+(rf/reg-event-fx
+  ::create-form
+  (fn [_ [_ request]]
+    (create-form request)
+    {}))
+
+
 ; form items
+; TODO: not needed and can be removed?
 
 (defn- fetch-form-items []
   (fetch "/api/form-items" {:handler #(rf/dispatch [::fetch-form-items-result %])}))
@@ -84,12 +96,6 @@
   ::fetch-form-items
   (fn [_]
     (fetch-form-items)))
-
-(rf/reg-event-fx
-  ::start-fetch-form-items
-  (fn [{:keys [db]}]
-    {:db (assoc db ::loading? true)
-     ::fetch-form-items []}))
 
 (rf/reg-event-db
   ::fetch-form-items-result
@@ -207,6 +213,7 @@
                           [move-form-item-up-button item]
                           [move-form-item-down-button item]
                           [remove-form-item-button item]]
+
                          [form-item-title-field item]
                          [form-item-optional-checkbox item]
                          [form-item-type-radio-group item]
@@ -215,6 +222,7 @@
 
                [:div.form-item.new-form-item
                 [add-form-item-button]]
+
                [:div.col.commands
                 [cancel-button]
                 [save-form-button]]]}]))

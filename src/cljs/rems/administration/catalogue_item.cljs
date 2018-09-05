@@ -7,24 +7,20 @@
             [rems.text :refer [text]]
             [rems.util :refer [dispatch! fetch post!]]))
 
-(defn- valid-request? [request]
-  (and (not (str/blank? (:title request)))
-       (number? (:wfid request))
-       (number? (:resid request))
-       (number? (:form request))))
+(defn- reset-form [db]
+  (dissoc db ::form))
 
-(defn build-request [form]
-  (let [request {:title (:title form)
-                 :wfid (get-in form [:workflow :id])
-                 :resid (get-in form [:resource :id])
-                 :form (get-in form [:form :id])}]
-    (when (valid-request? request)
-      request)))
+(rf/reg-event-fx
+  ::enter-page
+  (fn [{:keys [db]}]
+    ; TODO: loading indicator
+    {:db (reset-form db)
+     ::fetch-workflows nil
+     ::fetch-resources nil
+     ::fetch-forms nil}))
 
-(defn- create-catalogue-item [request]
-  (post! "/api/catalogue-items/create" {:params request
-                                        ;; TODO error handling
-                                        :handler (fn [resp] (dispatch! "#/administration"))}))
+
+; form state
 
 (rf/reg-sub
   ::form
@@ -66,28 +62,39 @@
   (fn [db [_ form]]
     (assoc-in db [::form :form] form)))
 
+
+; form submit
+
+(defn- valid-request? [request]
+  (and (not (str/blank? (:title request)))
+       (number? (:wfid request))
+       (number? (:resid request))
+       (number? (:form request))))
+
+(defn build-request [form]
+  (let [request {:title (:title form)
+                 :wfid (get-in form [:workflow :id])
+                 :resid (get-in form [:resource :id])
+                 :form (get-in form [:form :id])}]
+    (when (valid-request? request)
+      request)))
+
+(defn- create-catalogue-item [request]
+  (post! "/api/catalogue-items/create" {:params request
+                                        ;; TODO error handling
+                                        :handler (fn [resp] (dispatch! "#/administration"))}))
+
 (rf/reg-event-fx
   ::create-catalogue-item
   (fn [_ [_ request]]
     (create-catalogue-item request)
     {}))
 
-(rf/reg-event-db
-  ::reset-create-catalogue-item
-  (fn [db _]
-    (dissoc db ::form)))
-
 
 ; available workflows
 
 (defn- fetch-workflows []
   (fetch "/api/workflows/?active=true" {:handler #(rf/dispatch [::fetch-workflows-result %])}))
-
-(rf/reg-event-fx
-  ::start-fetch-workflows
-  (fn [{:keys [db]}]
-    {:db db                                                 ; TODO: keep track of loading status?
-     ::fetch-workflows []}))
 
 (rf/reg-fx
   ::fetch-workflows
@@ -110,12 +117,6 @@
 (defn- fetch-resources []
   (fetch "/api/resources/?active=true" {:handler #(rf/dispatch [::fetch-resources-result %])}))
 
-(rf/reg-event-fx
-  ::start-fetch-resources
-  (fn [{:keys [db]}]
-    {:db db                                                 ; TODO: keep track of loading status?
-     ::fetch-resources []}))
-
 (rf/reg-fx
   ::fetch-resources
   (fn [_]
@@ -136,12 +137,6 @@
 
 (defn- fetch-forms []
   (fetch "/api/forms/?active=true" {:handler #(rf/dispatch [::fetch-forms-result %])}))
-
-(rf/reg-event-fx
-  ::start-fetch-forms
-  (fn [{:keys [db]}]
-    {:db db                                                 ; TODO: keep track of loading status?
-     ::fetch-forms []}))
 
 (rf/reg-fx
   ::fetch-forms

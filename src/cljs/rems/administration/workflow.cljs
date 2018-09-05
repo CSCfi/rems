@@ -8,6 +8,32 @@
             [rems.text :refer [text text-format localize-item]]
             [rems.util :refer [dispatch! fetch post! vec-dissoc]]))
 
+(defn- reset-form [db]
+  (assoc db ::form {:rounds []}))
+
+(rf/reg-event-fx
+  ::enter-page
+  (fn [{:keys [db]}]
+    ; TODO: loading indicator
+    {:db (reset-form db)
+     ::fetch-actors nil}))
+
+
+; form state
+
+(rf/reg-sub
+  ::form
+  (fn [db _]
+    (::form db)))
+
+(rf/reg-event-db
+  ::set-form-field
+  (fn [db [_ keys value]]
+    (assoc-in db (concat [::form] keys) value)))
+
+
+; form submit
+
 (defn- valid-request? [request]
   (and (not (str/blank? (:prefix request)))
        (not (str/blank? (:title request)))
@@ -27,35 +53,19 @@
   (let [request {:prefix (:prefix form)
                  :title (:title form)
                  :rounds (map build-round-request (:rounds form))}]
-
     (when (valid-request? request)
       request)))
 
 (defn- create-workflow [request]
   (post! "/api/workflows/create" {:params request
-                                  :handler (fn [resp]
-                                             (dispatch! "#/administration"))}))
+                                  ; TODO: error handling
+                                  :handler (fn [resp] (dispatch! "#/administration"))}))
 
 (rf/reg-event-fx
   ::create-workflow
   (fn [_ [_ request]]
     (create-workflow request)
     {}))
-
-(rf/reg-event-db
-  ::reset-create-workflow
-  (fn [db _]
-    (assoc db ::form {:rounds []})))
-
-(rf/reg-sub
-  ::form
-  (fn [db _]
-    (::form db)))
-
-(rf/reg-event-db
-  ::set-form-field
-  (fn [db [_ keys value]]
-    (assoc-in db (concat [::form] keys) value)))
 
 
 ; selected actors
@@ -86,12 +96,6 @@
 (defn- fetch-actors []
   (fetch "/api/workflows/actors" {:handler #(rf/dispatch [::fetch-actors-result %])}))
 
-(rf/reg-event-fx
-  ::start-fetch-actors
-  (fn [{:keys [db]}]
-    {:db (assoc db ::loading? true)
-     ::fetch-actors []}))
-
 (rf/reg-fx
   ::fetch-actors
   (fn [_]
@@ -100,9 +104,7 @@
 (rf/reg-event-db
   ::fetch-actors-result
   (fn [db [_ actors]]
-    (-> db
-        (assoc ::actors (map enrich-user actors))
-        (dissoc ::loading?))))
+    (assoc db ::actors (map enrich-user actors))))
 
 (rf/reg-sub
   ::actors
