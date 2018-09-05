@@ -183,7 +183,7 @@
         request (build-request form)]
     [:button.btn.btn-primary
      {:on-click #(rf/dispatch [::create-form request])
-      :disabled (not request)}
+      :disabled (nil? request)}
      (text :t.administration/save)]))
 
 (defn- cancel-button []

@@ -107,7 +107,7 @@
         request (build-request form default-language languages)]
     [:button.btn.btn-primary
      {:on-click #(rf/dispatch [::create-license request])
-      :disabled (not request)}
+      :disabled (nil? request)}
      (text :t.administration/save)]))
 
 (defn- cancel-button []

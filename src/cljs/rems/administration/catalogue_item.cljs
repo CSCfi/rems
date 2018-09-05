@@ -234,7 +234,7 @@
         request (build-request title workflow resource form)]
     [:button.btn.btn-primary
      {:on-click #(rf/dispatch [::create-catalogue-item request])
-      :disabled (not request)}
+      :disabled (nil? request)}
      (text :t.administration/save)]))
 
 (defn create-catalogue-item-page []
