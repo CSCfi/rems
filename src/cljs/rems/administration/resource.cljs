@@ -11,7 +11,7 @@
   (and (not (str/blank? (:prefix request)))
        (not (str/blank? (:resid request)))))
 
-(defn- build-request [form]
+(defn build-request [form]
   (let [request {:prefix (:prefix form)
                  :resid (:resid form)
                  :licenses (map :id (:licenses form))}]

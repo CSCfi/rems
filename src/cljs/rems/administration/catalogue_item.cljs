@@ -7,19 +7,19 @@
             [rems.text :refer [text]]
             [rems.util :refer [dispatch! fetch post!]]))
 
-(defn- build-request [form_]
-  (let [title (:title form_)
-        workflow (:workflow form_)
-        resource (:resource form_)
-        form (:form form_)]
-    (when (and (not (str/blank? title))
-               workflow
-               resource
-               form)
-      {:title title
-       :wfid (:id workflow)
-       :resid (:id resource)
-       :form (:id form)})))
+(defn- valid-request? [request]
+  (and (not (str/blank? (:title request)))
+       (number? (:wfid request))
+       (number? (:resid request))
+       (number? (:form request))))
+
+(defn build-request [form]
+  (let [request {:title (:title form)
+                 :wfid (get-in form [:workflow :id])
+                 :resid (get-in form [:resource :id])
+                 :form (get-in form [:form :id])}]
+    (when (valid-request? request)
+      request)))
 
 (defn- create-catalogue-item [request]
   (post! "/api/catalogue-items/create" {:params request

@@ -16,7 +16,7 @@
                       (not (empty? (:actors round)))))
                (:rounds request))))
 
-(defn build-actor-request [actor]
+(defn- build-actor-request [actor]
   {:userid (:userid actor)})
 
 (defn- build-round-request [round]
