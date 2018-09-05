@@ -1,20 +1,25 @@
 (ns rems.administration.catalogue-item
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
+            [rems.administration.components :refer [text-field]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
             [rems.text :refer [text]]
             [rems.util :refer [dispatch! fetch post!]]))
 
-(defn- build-request [title workflow resource form]
-  (when (and (not (str/blank? title))
-             workflow
-             resource
-             form)
-    {:title title
-     :wfid (:id workflow)
-     :resid (:id resource)
-     :form (:id form)}))
+(defn- build-request [form_]
+  (let [title (:title form_)
+        workflow (:workflow form_)
+        resource (:resource form_)
+        form (:form form_)]
+    (when (and (not (str/blank? title))
+               workflow
+               resource
+               form)
+      {:title title
+       :wfid (:id workflow)
+       :resid (:id resource)
+       :form (:id form)})))
 
 (defn- create-catalogue-item [request]
   (post! "/api/catalogue-items/create" {:params request
@@ -22,50 +27,44 @@
                                         :handler (fn [resp] (dispatch! "#/administration"))}))
 
 (rf/reg-sub
-  ::title
+  ::form
   (fn [db _]
-    (::title db)))
+    (::form db)))
 
 (rf/reg-event-db
-  ::set-title
-  (fn [db [_ title]]
-    (assoc db ::title title)))
+  ::set-form-field
+  (fn [db [_ keys value]]
+    (assoc-in db (concat [::form] keys) value)))
 
 (rf/reg-sub
   ::selected-workflow
   (fn [db _]
-    (::selected-workflow db)))
+    (get-in db [::form :workflow])))
 
 (rf/reg-event-db
   ::set-selected-workflow
   (fn [db [_ workflow]]
-    (if workflow
-      (assoc db ::selected-workflow ^{:key (:id workflow)} workflow)
-      (dissoc db ::selected-workflow))))
+    (assoc-in db [::form :workflow] workflow)))
 
 (rf/reg-sub
   ::selected-resource
   (fn [db _]
-    (::selected-resource db)))
+    (get-in db [::form :resource])))
 
 (rf/reg-event-db
   ::set-selected-resource
   (fn [db [_ resource]]
-    (if resource
-      (assoc db ::selected-resource ^{:key (:id resource)} resource)
-      (dissoc db ::selected-resource))))
+    (assoc-in db [::form :resource] resource)))
 
 (rf/reg-sub
   ::selected-form
   (fn [db _]
-    (::selected-form db)))
+    (get-in db [::form :form])))
 
 (rf/reg-event-db
   ::set-selected-form
   (fn [db [_ form]]
-    (if form
-      (assoc db ::selected-form ^{:key (:id form)} form)
-      (dissoc db ::selected-form))))
+    (assoc-in db [::form :form] form)))
 
 (rf/reg-event-fx
   ::create-catalogue-item
@@ -76,7 +75,7 @@
 (rf/reg-event-db
   ::reset-create-catalogue-item
   (fn [db _]
-    (dissoc db ::title ::selected-workflow ::selected-resource ::selected-form)))
+    (dissoc db ::form)))
 
 
 ; available workflows
@@ -162,16 +161,13 @@
 
 ;;;; UI ;;;;
 
+(def ^:private context {:get-form ::form
+                        :update-form ::set-form-field})
+
 (defn- catalogue-item-title-field []
-  (let [title @(rf/subscribe [::title])]
-    [:div.form-group.field
-     [:label {:for "title"} (text :t.create-catalogue-item/title)]
-     [:input.form-control {:id "title"
-                           :name "title"
-                           :type :text
-                           :placeholder (text :t.create-catalogue-item/title-placeholder)
-                           :value title
-                           :on-change #(rf/dispatch [::set-title (.. % -target -value)])}]]))
+  [text-field context {:keys [:title]
+                       :label (text :t.create-catalogue-item/title)
+                       :placeholder (text :t.create-catalogue-item/title-placeholder)}])
 
 (defn- catalogue-item-workflow-field []
   (let [workflows @(rf/subscribe [::workflows])
@@ -227,11 +223,8 @@
    (text :t.administration/cancel)])
 
 (defn- save-catalogue-item-button []
-  (let [title @(rf/subscribe [::title])
-        workflow @(rf/subscribe [::selected-workflow])
-        resource @(rf/subscribe [::selected-resource])
-        form @(rf/subscribe [::selected-form])
-        request (build-request title workflow resource form)]
+  (let [form @(rf/subscribe [::form])
+        request (build-request form)]
     [:button.btn.btn-primary
      {:on-click #(rf/dispatch [::create-catalogue-item request])
       :disabled (nil? request)}
