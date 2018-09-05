@@ -18,14 +18,14 @@
     (when (valid-request? request)
       request)))
 
-(defn- create-resource [form]
-  (post! "/api/resources/create" {:params (build-request form)
+(defn- create-resource [request]
+  (post! "/api/resources/create" {:params request
                                   :handler (fn [resp]
                                              (dispatch! "#/administration"))}))
 
 (rf/reg-event-fx
   ::create-resource
-  (fn [db [_ request]]
+  (fn [_ [_ request]]
     (create-resource request)
     {}))
 
@@ -124,10 +124,11 @@
        :remove-fn #(rf/dispatch [::deselect-license %])}]]))
 
 (defn- save-resource-button []
-  (let [form @(rf/subscribe [::form])]
+  (let [form @(rf/subscribe [::form])
+        request (build-request form)]
     [:button.btn.btn-primary
-     {:on-click #(rf/dispatch [::create-resource form])
-      :disabled (not (build-request form))}
+     {:on-click #(rf/dispatch [::create-resource request])
+      :disabled (not request)}
      (text :t.administration/save)]))
 
 (defn- cancel-button []

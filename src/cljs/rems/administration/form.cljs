@@ -21,15 +21,15 @@
     (when (valid-request? request)
       request)))
 
-(defn- create-form [form]
-  (post! "/api/forms/create" {:params (build-request form)
+(defn- create-form [request]
+  (post! "/api/forms/create" {:params request
                               :handler (fn [resp]
                                          (dispatch! "#/administration"))}))
 
 (rf/reg-event-fx
   ::create-form
-  (fn [_ [_ form]]
-    (create-form form)
+  (fn [_ [_ request]]
+    (create-form request)
     {}))
 
 (rf/reg-event-db
@@ -179,10 +179,11 @@
     {:aria-hidden true}]])
 
 (defn- save-form-button []
-  (let [form @(rf/subscribe [::form])]
+  (let [form @(rf/subscribe [::form])
+        request (build-request form)]
     [:button.btn.btn-primary
-     {:on-click #(rf/dispatch [::create-form form])
-      :disabled (not (build-request form))}
+     {:on-click #(rf/dispatch [::create-form request])
+      :disabled (not request)}
      (text :t.administration/save)]))
 
 (defn- cancel-button []

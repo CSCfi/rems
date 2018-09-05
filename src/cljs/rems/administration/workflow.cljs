@@ -31,15 +31,15 @@
     (when (valid-request? request)
       request)))
 
-(defn- create-workflow [form]
-  (post! "/api/workflows/create" {:params (build-request form)
+(defn- create-workflow [request]
+  (post! "/api/workflows/create" {:params request
                                   :handler (fn [resp]
                                              (dispatch! "#/administration"))}))
 
 (rf/reg-event-fx
   ::create-workflow
-  (fn [_ [_ form]]
-    (create-workflow form)
+  (fn [_ [_ request]]
+    (create-workflow request)
     {}))
 
 (rf/reg-event-db
@@ -86,16 +86,16 @@
 (defn- fetch-actors []
   (fetch "/api/workflows/actors" {:handler #(rf/dispatch [::fetch-actors-result %])}))
 
-(rf/reg-fx
-  ::fetch-actors
-  (fn [_]
-    (fetch-actors)))
-
 (rf/reg-event-fx
   ::start-fetch-actors
   (fn [{:keys [db]}]
     {:db (assoc db ::loading? true)
      ::fetch-actors []}))
+
+(rf/reg-fx
+  ::fetch-actors
+  (fn [_]
+    (fetch-actors)))
 
 (rf/reg-event-db
   ::fetch-actors-result
@@ -163,6 +163,7 @@
      {:href "#"
       :on-click (fn [event]
                   (.preventDefault event)
+                  ; TODO: refactor to re-frame events
                   (rf/dispatch [::set-form-field [:rounds (count (:rounds form))] {}]))}
      (text :t.create-workflow/add-round)]))
 
@@ -172,6 +173,7 @@
      {:href "#"
       :on-click (fn [event]
                   (.preventDefault event)
+                  ; TODO: refactor to re-frame events
                   (rf/dispatch [::set-form-field [:rounds] (vec-dissoc (:rounds form) round)]))
       :aria-label (text :t.create-workflow/remove-round)
       :title (text :t.create-workflow/remove-round)}
@@ -179,10 +181,11 @@
       {:aria-hidden true}]]))
 
 (defn- save-workflow-button []
-  (let [form @(rf/subscribe [::form])]
+  (let [form @(rf/subscribe [::form])
+        request (build-request form)]
     [:button.btn.btn-primary
-     {:on-click #(rf/dispatch [::create-workflow form])
-      :disabled (not (build-request form))}
+     {:on-click #(rf/dispatch [::create-workflow request])
+      :disabled (not request)}
      (text :t.administration/save)]))
 
 (defn- cancel-button []
@@ -191,24 +194,30 @@
    (text :t.administration/cancel)])
 
 (defn create-workflow-page []
-  (let [form @(rf/subscribe [::form])]
+  (let [form @(rf/subscribe [::form])
+        num-rounds (count (:rounds form))
+        last-round (dec num-rounds)]
     [collapsible/component
      {:id "create-workflow"
       :title (text :t.administration/create-workflow)
       :always [:div
                [workflow-prefix-field]
                [workflow-title-field]
-               (doall (for [round (range (count (:rounds form)))]
+
+               (doall (for [round (range num-rounds)]
                         [:div.workflow-round
                          {:key round}
                          [remove-round-button round]
+
                          [:h2 (text-format :t.create-workflow/round-n (inc round))]
                          [round-type-radio-group round]
                          [workflow-actors-field round]
-                         (when (< round (dec (count (:rounds form))))
+                         (when (not= round last-round)
                            [next-workflow-arrow])]))
+
                [:div.workflow-round.new-workflow-round
                 [add-round-button]]
+
                [:div.col.commands
                 [cancel-button]
                 [save-workflow-button]]]}]))

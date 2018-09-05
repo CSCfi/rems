@@ -38,15 +38,15 @@
     (when (valid-request? request languages)
       (localize-item request default-language))))
 
-(defn- create-license [form default-language languages]
-  (post! "/api/licenses/create" {:params (build-request form default-language languages)
+(defn- create-license [request]
+  (post! "/api/licenses/create" {:params request
                                  :handler (fn [resp]
                                             (dispatch! "#/administration"))}))
 
 (rf/reg-event-fx
   ::create-license
-  (fn [{:keys [db]} [_ form]]
-    (create-license form (:default-language db) (:languages db))
+  (fn [_ [_ request]]
+    (create-license request)
     {}))
 
 (rf/reg-event-db
@@ -103,10 +103,11 @@
 (defn- save-license-button []
   (let [form @(rf/subscribe [::form])
         default-language @(rf/subscribe [:default-language])
-        languages @(rf/subscribe [:languages])]
+        languages @(rf/subscribe [:languages])
+        request (build-request form default-language languages)]
     [:button.btn.btn-primary
-     {:on-click #(rf/dispatch [::create-license form])
-      :disabled (not (build-request form default-language languages))}
+     {:on-click #(rf/dispatch [::create-license request])
+      :disabled (not request)}
      (text :t.administration/save)]))
 
 (defn- cancel-button []
