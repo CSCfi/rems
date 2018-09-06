@@ -154,7 +154,7 @@
           (contains? roles :reviewer) (dispatch! "/#/actions")
           :else (dispatch! "/#/catalogue"))
         {})
-       ;;; else dispatch the same event again while waiting for set-identity (happens especially with Firefox)
+      ;;; else dispatch the same event again while waiting for set-identity (happens especially with Firefox)
       {:dispatch [:landing-page-redirect!]})))
 
 (defn about-page []
@@ -174,7 +174,7 @@
     ;; does the navigation/redirect logic, instead of using :home as
     ;; the default.
     (do
-      (rf/dispatch [:rems.catalogue/start-fetch-catalogue])
+      (rf/dispatch [:rems.catalogue/enter-page])
       [catalogue-page])
     [auth/login-component]))
 
@@ -230,7 +230,7 @@
   (rf/dispatch [:set-active-page :home]))
 
 (secretary/defroute "/catalogue" []
-  (rf/dispatch [:rems.catalogue/start-fetch-catalogue])
+  (rf/dispatch [:rems.catalogue/enter-page])
   (rf/dispatch [:set-active-page :catalogue]))
 
 (secretary/defroute "/guide" []
@@ -240,22 +240,19 @@
   (rf/dispatch [:set-active-page :about]))
 
 (secretary/defroute "/actions" []
-  (rf/dispatch [:rems.actions/start-fetch-actions])
+  (rf/dispatch [:rems.actions/enter-page])
   (rf/dispatch [:set-active-page :actions]))
 
 (secretary/defroute "/application/:id" {id :id}
-  (rf/dispatch [:rems.application/zero-state])
-  (rf/dispatch [:rems.application/start-fetch-application id])
-  (rf/dispatch [:rems.application/start-fetch-potential-third-party-reviewers])
+  (rf/dispatch [:rems.application/enter-application-page id])
   (rf/dispatch [:set-active-page :application]))
 
 (secretary/defroute "/application" {{items :items} :query-params}
-  (rf/dispatch [:rems.application/zero-state])
-  (rf/dispatch [:rems.application/start-new-application (cart/parse-items items)])
+  (rf/dispatch [:rems.application/enter-new-application-page (cart/parse-items items)])
   (rf/dispatch [:set-active-page :application]))
 
 (secretary/defroute "/applications" []
-  (rf/dispatch [:rems.applications/start-fetch-my-applications])
+  (rf/dispatch [:rems.applications/enter-page])
   (rf/dispatch [:set-active-page :applications]))
 
 (secretary/defroute "/administration" []
