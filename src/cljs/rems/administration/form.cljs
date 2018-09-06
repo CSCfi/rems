@@ -1,6 +1,6 @@
 (ns rems.administration.form
   (:require [re-frame.core :as rf]
-            [rems.administration.components :refer [checkbox localized-text-field vertical-radio-button-group text-field]]
+            [rems.administration.components :refer [checkbox localized-text-field radio-button-group text-field]]
             [rems.application :refer [enrich-user]]
             [rems.collapsible :as collapsible]
             [rems.text :refer [text text-format localize-item]]
@@ -21,15 +21,15 @@
     (when (valid-request? request)
       request)))
 
-(defn- create-form [form]
-  (post! "/api/forms/create" {:params (build-request form)
+(defn- create-form [request]
+  (post! "/api/forms/create" {:params request
                               :handler (fn [resp]
                                          (dispatch! "#/administration"))}))
 
 (rf/reg-event-fx
   ::create-form
-  (fn [_ [_ form]]
-    (create-form form)
+  (fn [_ [_ request]]
+    (create-form request)
     {}))
 
 (rf/reg-event-db
@@ -127,10 +127,11 @@
                                  :label "Input prompt"}])   ; TODO: translation
 
 (defn- form-item-type-radio-group [item]
-  [vertical-radio-button-group context {:keys [:items item :type]
-                                        :options [{:value "text", :label "Text field"} ; TODO: translation
-                                                  {:value "texta", :label "Text area"} ; TODO: translation
-                                                  {:value "date", :label "Date field"}]}]) ; TODO: translation
+  [radio-button-group context {:keys [:items item :type]
+                               :orientation :vertical
+                               :options [{:value "text", :label "Text field"} ; TODO: translation
+                                         {:value "texta", :label "Text area"} ; TODO: translation
+                                         {:value "date", :label "Date field"}]}]) ; TODO: translation
 
 (defn- form-item-optional-checkbox [item]
   [checkbox context {:keys [:items item :optional]
@@ -178,10 +179,11 @@
     {:aria-hidden true}]])
 
 (defn- save-form-button []
-  (let [form @(rf/subscribe [::form])]
+  (let [form @(rf/subscribe [::form])
+        request (build-request form)]
     [:button.btn.btn-primary
-     {:on-click #(rf/dispatch [::create-form form])
-      :disabled (not (build-request form))}
+     {:on-click #(rf/dispatch [::create-form request])
+      :disabled (nil? request)}
      (text :t.administration/save)]))
 
 (defn- cancel-button []

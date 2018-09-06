@@ -7,7 +7,7 @@
             [markdown.core :refer [md->html]]
             [rems.actions :refer [actions-page fetch-actions]]
             [rems.administration :refer [administration-page]]
-            [rems.administration.catalogue :refer [create-catalogue-item-page]]
+            [rems.administration.catalogue-item :refer [create-catalogue-item-page]]
             [rems.administration.form :refer [create-form-page]]
             [rems.administration.license :refer [create-license-page]]
             [rems.administration.resource :refer [create-resource-page]]
@@ -263,7 +263,10 @@
   (rf/dispatch [:set-active-page :administration]))
 
 (secretary/defroute "/create-catalogue-item" []
-  (rf/dispatch [:rems.administration.catalogue/reset-create-catalogue-item])
+  (rf/dispatch [:rems.administration.catalogue-item/start-fetch-workflows])
+  (rf/dispatch [:rems.administration.catalogue-item/start-fetch-resources])
+  (rf/dispatch [:rems.administration.catalogue-item/start-fetch-forms])
+  (rf/dispatch [:rems.administration.catalogue-item/reset-create-catalogue-item])
   (rf/dispatch [:set-active-page :create-catalogue-item]))
 
 (secretary/defroute "/create-form" []
@@ -276,6 +279,7 @@
   (rf/dispatch [:set-active-page :create-license]))
 
 (secretary/defroute "/create-resource" []
+  (rf/dispatch [:rems.administration.resource/start-fetch-licenses])
   (rf/dispatch [:rems.administration.resource/reset-create-resource])
   (rf/dispatch [:set-active-page :create-resource]))
 

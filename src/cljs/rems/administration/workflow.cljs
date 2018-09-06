@@ -1,6 +1,7 @@
 (ns rems.administration.workflow
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
+            [rems.administration.components :refer [radio-button-group text-field]]
             [rems.application :refer [enrich-user]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
@@ -15,7 +16,7 @@
                       (not (empty? (:actors round)))))
                (:rounds request))))
 
-(defn build-actor-request [actor]
+(defn- build-actor-request [actor]
   {:userid (:userid actor)})
 
 (defn- build-round-request [round]
@@ -30,15 +31,15 @@
     (when (valid-request? request)
       request)))
 
-(defn- create-workflow [form]
-  (post! "/api/workflows/create" {:params (build-request form)
+(defn- create-workflow [request]
+  (post! "/api/workflows/create" {:params request
                                   :handler (fn [resp]
                                              (dispatch! "#/administration"))}))
 
 (rf/reg-event-fx
   ::create-workflow
-  (fn [_ [_ form]]
-    (create-workflow form)
+  (fn [_ [_ request]]
+    (create-workflow request)
     {}))
 
 (rf/reg-event-db
@@ -85,16 +86,16 @@
 (defn- fetch-actors []
   (fetch "/api/workflows/actors" {:handler #(rf/dispatch [::fetch-actors-result %])}))
 
-(rf/reg-fx
-  ::fetch-actors
-  (fn [_]
-    (fetch-actors)))
-
 (rf/reg-event-fx
   ::start-fetch-actors
   (fn [{:keys [db]}]
     {:db (assoc db ::loading? true)
      ::fetch-actors []}))
+
+(rf/reg-fx
+  ::fetch-actors
+  (fn [_]
+    (fetch-actors)))
 
 (rf/reg-event-db
   ::fetch-actors-result
@@ -111,48 +112,25 @@
 
 ;;;; UI ;;;;
 
+(def ^:private context {:get-form ::form
+                        :update-form ::set-form-field})
+
 (defn- workflow-prefix-field []
-  (let [form @(rf/subscribe [::form])
-        keys [:prefix]
-        id "prefix"]
-    [:div.form-group.field
-     [:label {:for id} (text :t.create-resource/prefix)]    ; TODO: extract common translation
-     [:input.form-control {:type :text
-                           :id id
-                           :placeholder (text :t.create-resource/prefix-placeholder) ; TODO: extract common translation
-                           :value (get-in form keys)
-                           :on-change #(rf/dispatch [::set-form-field keys (.. % -target -value)])}]]))
+  [text-field context {:keys [:prefix]
+                       :label (text :t.create-resource/prefix) ; TODO: extract common translation
+                       :placeholder (text :t.create-resource/prefix-placeholder)}]) ; TODO: extract common translation
 
 (defn- workflow-title-field []
-  (let [form @(rf/subscribe [::form])
-        keys [:title]
-        id "title"]
-    [:div.form-group.field
-     [:label {:for id} (text :t.create-workflow/title)]
-     [:input.form-control {:type "text"
-                           :id id
-                           :value (get-in form keys)
-                           :on-change #(rf/dispatch [::set-form-field keys (.. % -target -value)])}]]))
-
-(defn- round-type-radio-button [round value label]
-  (let [form @(rf/subscribe [::form])
-        keys [:rounds round :type]
-        name (str "round-" round "-type")
-        id (str "round-" round "-type-" (clojure.core/name value))]
-    [:div.form-check.form-check-inline
-     [:input.form-check-input {:type "radio"
-                               :id id
-                               :name name
-                               :value (clojure.core/name value)
-                               :checked (= value (get-in form keys))
-                               :on-change #(when (.. % -target -checked)
-                                             (rf/dispatch [::set-form-field keys value]))}]
-     [:label.form-check-label {:for id} label]]))
+  [text-field context {:keys [:title]
+                       :label (text :t.create-workflow/title)}])
 
 (defn- round-type-radio-group [round]
-  [:div.form-group.field
-   [round-type-radio-button round :approval (text :t.create-workflow/approval-round)]
-   [round-type-radio-button round :review (text :t.create-workflow/review-round)]])
+  [radio-button-group context {:keys [:rounds round :type]
+                               :orientation :horizontal
+                               :options [{:value :approval
+                                          :label (text :t.create-workflow/approval-round)}
+                                         {:value :review
+                                          :label (text :t.create-workflow/review-round)}]}])
 
 (defn- workflow-actors-field [round]
   (let [form @(rf/subscribe [::form])
@@ -185,6 +163,7 @@
      {:href "#"
       :on-click (fn [event]
                   (.preventDefault event)
+                  ; TODO: refactor to re-frame events
                   (rf/dispatch [::set-form-field [:rounds (count (:rounds form))] {}]))}
      (text :t.create-workflow/add-round)]))
 
@@ -194,6 +173,7 @@
      {:href "#"
       :on-click (fn [event]
                   (.preventDefault event)
+                  ; TODO: refactor to re-frame events
                   (rf/dispatch [::set-form-field [:rounds] (vec-dissoc (:rounds form) round)]))
       :aria-label (text :t.create-workflow/remove-round)
       :title (text :t.create-workflow/remove-round)}
@@ -201,10 +181,11 @@
       {:aria-hidden true}]]))
 
 (defn- save-workflow-button []
-  (let [form @(rf/subscribe [::form])]
+  (let [form @(rf/subscribe [::form])
+        request (build-request form)]
     [:button.btn.btn-primary
-     {:on-click #(rf/dispatch [::create-workflow form])
-      :disabled (not (build-request form))}
+     {:on-click #(rf/dispatch [::create-workflow request])
+      :disabled (nil? request)}
      (text :t.administration/save)]))
 
 (defn- cancel-button []
@@ -213,24 +194,30 @@
    (text :t.administration/cancel)])
 
 (defn create-workflow-page []
-  (let [form @(rf/subscribe [::form])]
+  (let [form @(rf/subscribe [::form])
+        num-rounds (count (:rounds form))
+        last-round (dec num-rounds)]
     [collapsible/component
      {:id "create-workflow"
       :title (text :t.administration/create-workflow)
       :always [:div
                [workflow-prefix-field]
                [workflow-title-field]
-               (doall (for [round (range (count (:rounds form)))]
+
+               (doall (for [round (range num-rounds)]
                         [:div.workflow-round
                          {:key round}
                          [remove-round-button round]
+
                          [:h2 (text-format :t.create-workflow/round-n (inc round))]
                          [round-type-radio-group round]
                          [workflow-actors-field round]
-                         (when (< round (dec (count (:rounds form))))
+                         (when (not= round last-round)
                            [next-workflow-arrow])]))
+
                [:div.workflow-round.new-workflow-round
                 [add-round-button]]
+
                [:div.col.commands
                 [cancel-button]
                 [save-workflow-button]]]}]))
