@@ -12,7 +12,7 @@
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn scroll-to-top! []
-  (.setTimeout js/window #(.scrollTo js/window 0 0) 500)) ;; wait until faded out
+  (.setTimeout js/window #(.scrollTo js/window 0 0) 500))   ;; wait until faded out
 
 ;;;; Routes and route helpers ;;;;
 ;; TODO named secretary routes give us equivalent functions
@@ -28,35 +28,35 @@
 ;;;; Events and actions ;;;;
 
 (rf/reg-event-db
- ::zero-state
- (fn [db _]
-   (assoc db
-          ::application nil
-          ::edit-application nil
-          ::judge-comment ""
-          ::review-comment ""
-          ::send-third-party-review-request-success false)))
+  ::zero-state
+  (fn [db _]
+    (assoc db
+      ::application nil
+      ::edit-application nil
+      ::judge-comment ""
+      ::review-comment ""
+      ::send-third-party-review-request-success false)))
 
 (rf/reg-sub
- ::application
- (fn [db _]
-   (::application db)))
+  ::application
+  (fn [db _]
+    (::application db)))
 
 (rf/reg-sub
- ::loading?
- (fn [db _]
-   (::loading? db)))
+  ::loading?
+  (fn [db _]
+    (::loading? db)))
 
 (rf/reg-event-fx
- ::start-fetch-application
- (fn [{:keys [db]} [_ id]]
-   {:db (assoc db ::loading? true)
-    ::fetch-application [id]}))
+  ::start-fetch-application
+  (fn [{:keys [db]} [_ id]]
+    {:db (assoc db ::loading? true)
+     ::fetch-application [id]}))
 
 (rf/reg-event-fx
- ::start-new-application
- (fn [{:keys [db]} [_ items]]
-   {::fetch-draft-application [items]}))
+  ::start-new-application
+  (fn [{:keys [db]} [_ items]]
+    {::fetch-draft-application [items]}))
 
 (defn- fetch-application [id]
   (fetch (str "/api/applications/" id) {:handler #(rf/dispatch [::fetch-application-result %])}))
@@ -66,63 +66,62 @@
                                           :params {:catalogue-items items}}))
 
 (rf/reg-fx
- ::fetch-application
- (fn [[id]]
-   (fetch-application id)))
+  ::fetch-application
+  (fn [[id]]
+    (fetch-application id)))
 
 (rf/reg-fx
- ::fetch-draft-application
- (fn [[items]]
-   (fetch-draft-application items)))
+  ::fetch-draft-application
+  (fn [[items]]
+    (fetch-draft-application items)))
 
 (rf/reg-event-db
- ::fetch-application-result
- (fn [db [_ application]]
-   (-> db
-       (assoc
-        ::application application
-        ;; TODO: should this be here?
-        ::edit-application
-        {:items (into {}
-                      (for [field (:items application)]
-                        [(:id field) (:value field)]))
-         :licenses (into {}
-                         (for [license (:licenses application)]
-                           [(:id license) (:approved license)]))})
-       (dissoc ::loading?))))
+  ::fetch-application-result
+  (fn [db [_ application]]
+    (-> db
+        (assoc
+          ::application application
+          ;; TODO: should this be here?
+          ::edit-application {:items (into {}
+                                           (for [field (:items application)]
+                                             [(:id field) (:value field)]))
+                              :licenses (into {}
+                                              (for [license (:licenses application)]
+                                                [(:id license) (:approved license)]))})
+        (dissoc ::loading?))))
 
 (rf/reg-sub
- ::edit-application
- (fn [db _]
-   (::edit-application db)))
+  ::edit-application
+  (fn [db _]
+    (::edit-application db)))
 
 (rf/reg-event-db
- ::set-field
- (fn [db [_ id value]]
-   (assoc-in db [::edit-application :items id] value)))
+  ::set-field
+  (fn [db [_ id value]]
+    (assoc-in db [::edit-application :items id] value)))
 
 (rf/reg-event-db
- ::set-license
- (fn [db [_ id value]]
-   (assoc-in db [::edit-application :licenses id] value)))
+  ::set-license
+  (fn [db [_ id value]]
+    (assoc-in db [::edit-application :licenses id] value)))
 
 (rf/reg-sub
- ::judge-comment
- (fn [db _]
-   (::judge-comment db)))
+  ::judge-comment
+  (fn [db _]
+    (::judge-comment db)))
 
 (rf/reg-event-db
- ::set-judge-comment
- (fn [db [_ value]]
-   (assoc db ::judge-comment value)))
+  ::set-judge-comment
+  (fn [db [_ value]]
+    (assoc db ::judge-comment value)))
 
 ;; status can be :pending :saved :failed or nil
 (rf/reg-event-db
- ::set-status
- (fn [db [_ value validation]]
-   (-> db
-       (assoc-in [::edit-application :status] value)
-       (assoc-in [::edit-application :validation] validation))))
+  ::set-status
+  (fn [db [_ value validation]]
+    (-> db
+        (assoc-in [::edit-application :status] value)
+        (assoc-in [::edit-application :validation] validation))))
 
 (defn- save-application [command application-id catalogue-items items licenses]
   (let [payload (merge {:command command
@@ -132,55 +131,55 @@
                          {:application-id application-id}
                          {:catalogue-items catalogue-items}))]
     (post! "/api/applications/save"
-          {:handler (fn [resp]
-                      (if (:success resp)
-                        (do (rf/dispatch [::set-status :saved])
-                            ;; HACK: we both set the location, and fire a fetch-application event
-                            ;; because if the location didn't change, secretary won't fire the event
-                            (navigate-to (:id resp))
-                            (rf/dispatch [::start-fetch-application (:id resp)]))
-                        (rf/dispatch [::set-status :failed (:validation resp)])))
-           :error-handler (fn [_] (rf/dispatch [::set-status :failed]))
-           :params payload})))
+           {:handler (fn [resp]
+                       (if (:success resp)
+                         (do (rf/dispatch [::set-status :saved])
+                             ;; HACK: we both set the location, and fire a fetch-application event
+                             ;; because if the location didn't change, secretary won't fire the event
+                             (navigate-to (:id resp))
+                             (rf/dispatch [::start-fetch-application (:id resp)]))
+                         (rf/dispatch [::set-status :failed (:validation resp)])))
+            :error-handler (fn [_] (rf/dispatch [::set-status :failed]))
+            :params payload})))
 
 (rf/reg-event-fx
- ::save-application
- (fn [{:keys [db]} [_ command]]
-   (let [app-id (get-in db [::application :application :id])
-         catalogue-items (get-in db [::application :catalogue-items])
-         catalogue-ids (mapv :id catalogue-items)
-         items (get-in db [::edit-application :items])
-         ;; TODO change api to booleans
-         licenses (into {}
-                        (for [[id checked?] (get-in db [::edit-application :licenses])
-                              :when checked?]
-                          [id "approved"]))]
-     (when-not app-id ;; fresh application
-       (doseq [i catalogue-items]
-         (rf/dispatch [:rems.cart/remove-item i])))
-     ;; TODO disable form while saving?
-     (rf/dispatch [::set-status :pending])
-     (save-application command app-id catalogue-ids items licenses))
-   {}))
+  ::save-application
+  (fn [{:keys [db]} [_ command]]
+    (let [app-id (get-in db [::application :application :id])
+          catalogue-items (get-in db [::application :catalogue-items])
+          catalogue-ids (mapv :id catalogue-items)
+          items (get-in db [::edit-application :items])
+          ;; TODO change api to booleans
+          licenses (into {}
+                         (for [[id checked?] (get-in db [::edit-application :licenses])
+                               :when checked?]
+                           [id "approved"]))]
+      (when-not app-id                                      ;; fresh application
+        (doseq [i catalogue-items]
+          (rf/dispatch [:rems.cart/remove-item i])))
+      ;; TODO disable form while saving?
+      (rf/dispatch [::set-status :pending])
+      (save-application command app-id catalogue-ids items licenses))
+    {}))
 
 (defn- judge-application [command application-id round comment]
   (post! "/api/applications/judge"
-        {:params {:command command
-                  :application-id application-id
-                  :round round
-                  :comment comment}
-         :handler (fn [resp]
-                    (rf/dispatch [::start-fetch-application application-id]))}))
+         {:params {:command command
+                   :application-id application-id
+                   :round round
+                   :comment comment}
+          :handler (fn [resp]
+                     (rf/dispatch [::start-fetch-application application-id]))}))
 
 (rf/reg-event-fx
- ::judge-application
- (fn [{:keys [db]} [_ command]]
-   (let [application-id (get-in db [::application :application :id])
-         round (get-in db [::application :application :curround])
-         comment (get db ::judge-comment "")]
-     (rf/dispatch [::set-judge-comment ""])
-     (judge-application command application-id round comment)
-     {})))
+  ::judge-application
+  (fn [{:keys [db]} [_ command]]
+    (let [application-id (get-in db [::application :application :id])
+          round (get-in db [::application :application :curround])
+          comment (get db ::judge-comment "")]
+      (rf/dispatch [::set-judge-comment ""])
+      (judge-application command application-id round comment)
+      {})))
 
 ;;;; UI components ;;;;
 
@@ -396,10 +395,10 @@
    [:input.form-control {:type "text" :defaultValue value :readOnly true}]])
 
 (defn- format-event [event]
-  {:userid  (:userid event)
-   :event   (localize-event (:event event))
+  {:userid (:userid event)
+   :event (localize-event (:event event))
    :comment (:comment event)
-   :time    (localize-time (:time event))})
+   :time (localize-time (:time event))})
 
 (defn- application-header [state events]
   (let [has-users? (boolean (some :userid events))
@@ -408,17 +407,17 @@
                     (map format-event)
                     dedupe)
         last-event (when (:comment (last events))
-                        (last events))]
+                     (last events))]
     [collapsible/component
-     {:id       "header"
-      :title    [:span
-                 (text :t.applications/state)
-                 (when state (list ": " (localize-state state)))]
-      :always   [:div
-                 [:div.mb-3 {:class (str "state-" state)} (phases (get-application-phases state))]
-                 (when last-event
-                   (info-field (text :t.applications/latest-comment)
-                               (:comment last-event)))]
+     {:id "header"
+      :title [:span
+              (text :t.applications/state)
+              (when state (list ": " (localize-state state)))]
+      :always [:div
+               [:div.mb-3 {:class (str "state-" state)} (phases (get-application-phases state))]
+               (when last-event
+                 (info-field (text :t.applications/latest-comment)
+                             (:comment last-event)))]
       :collapse (when (seq events)
                   [:div
                    [:h4 (text :t.form/events)]
@@ -498,91 +497,91 @@
           :headers {"x-rems-user-id" (:eppn user)}}))
 
 (rf/reg-event-db
- ::set-selected-third-party-reviewers
- (fn [db [_ reviewers]]
-   (assoc db ::selected-third-party-reviewers reviewers)))
+  ::set-selected-third-party-reviewers
+  (fn [db [_ reviewers]]
+    (assoc db ::selected-third-party-reviewers reviewers)))
 
 (rf/reg-event-db
- ::add-selected-third-party-reviewer
- (fn [db [_ reviewer]]
-   (if (contains? (::selected-third-party-reviewers db) reviewer)
-     db
-     (update db ::selected-third-party-reviewers conj reviewer))))
+  ::add-selected-third-party-reviewer
+  (fn [db [_ reviewer]]
+    (if (contains? (::selected-third-party-reviewers db) reviewer)
+      db
+      (update db ::selected-third-party-reviewers conj reviewer))))
 
 (rf/reg-event-db
- ::remove-selected-third-party-reviewer
- (fn [db [_ reviewer]]
-   (update db ::selected-third-party-reviewers disj reviewer)))
+  ::remove-selected-third-party-reviewer
+  (fn [db [_ reviewer]]
+    (update db ::selected-third-party-reviewers disj reviewer)))
 
 (rf/reg-sub
- ::selected-third-party-reviewers
- (fn [db _]
-   (::selected-third-party-reviewers db)))
+  ::selected-third-party-reviewers
+  (fn [db _]
+    (::selected-third-party-reviewers db)))
 
 (rf/reg-fx
- ::fetch-potential-third-party-reviewers
- (fn [[user]]
-   (fetch-potential-third-party-reviewers user)))
+  ::fetch-potential-third-party-reviewers
+  (fn [[user]]
+    (fetch-potential-third-party-reviewers user)))
 
 (defn enrich-user [user]
   (assoc user :display (str (:name user) " (" (:email user) ")")))
 
 (rf/reg-event-db
- ::set-potential-third-party-reviewers
- (fn [db [_ reviewers]]
-   (assoc db ::potential-third-party-reviewers (for [reviewer reviewers]
-                                                 (enrich-user reviewer)))))
+  ::set-potential-third-party-reviewers
+  (fn [db [_ reviewers]]
+    (assoc db ::potential-third-party-reviewers (for [reviewer reviewers]
+                                                  (enrich-user reviewer)))))
 
 (rf/reg-event-fx
- ::start-fetch-potential-third-party-reviewers
- (fn [{:keys [db]} [_]]
-   (when (contains? (set (get-in db [:identity :roles])) :approver)
-     {::fetch-potential-third-party-reviewers [(get-in db [:identity :user])]})))
+  ::start-fetch-potential-third-party-reviewers
+  (fn [{:keys [db]} [_]]
+    (when (contains? (set (get-in db [:identity :roles])) :approver)
+      {::fetch-potential-third-party-reviewers [(get-in db [:identity :user])]})))
 
 (rf/reg-sub
- ::potential-third-party-reviewers
- (fn [db _]
-   (::potential-third-party-reviewers db)))
+  ::potential-third-party-reviewers
+  (fn [db _]
+    (::potential-third-party-reviewers db)))
 
 (rf/reg-event-db
- ::set-review-comment
- (fn [db [_ value]]
-   (assoc db ::review-comment value)))
+  ::set-review-comment
+  (fn [db [_ value]]
+    (assoc db ::review-comment value)))
 
 (rf/reg-sub
- ::review-comment
- (fn [db _]
-   (::review-comment db)))
+  ::review-comment
+  (fn [db _]
+    (::review-comment db)))
 
 (defn- send-third-party-review-request [reviewers user application-id round comment]
   (post! "/api/applications/review_request"
-        {:params {:application-id application-id
-                  :round round
-                  :comment comment
-                  :recipients (map :userid reviewers)}
-         :handler (fn [resp]
-                    (rf/dispatch [::send-third-party-review-request-success true])
-                    (rf/dispatch [::start-fetch-application application-id])
-                    (scroll-to-top!))}))
+         {:params {:application-id application-id
+                   :round round
+                   :comment comment
+                   :recipients (map :userid reviewers)}
+          :handler (fn [resp]
+                     (rf/dispatch [::send-third-party-review-request-success true])
+                     (rf/dispatch [::start-fetch-application application-id])
+                     (scroll-to-top!))}))
 
 (rf/reg-event-fx
- ::send-third-party-review-request
- (fn [{:keys [db]} [_ reviewers comment]]
-   (let [application-id (get-in db [::application :application :id])
-         round (get-in db [::application :application :curround])
-         user (get-in db [:identity :user])]
-     (send-third-party-review-request reviewers user application-id round comment)
-     {})))
+  ::send-third-party-review-request
+  (fn [{:keys [db]} [_ reviewers comment]]
+    (let [application-id (get-in db [::application :application :id])
+          round (get-in db [::application :application :curround])
+          user (get-in db [:identity :user])]
+      (send-third-party-review-request reviewers user application-id round comment)
+      {})))
 
 (rf/reg-event-db
- ::send-third-party-review-request-success
- (fn [db [_ value]]
-   (assoc db ::send-third-party-review-request-message value)))
+  ::send-third-party-review-request-success
+  (fn [db [_ value]]
+    (assoc db ::send-third-party-review-request-message value)))
 
 (rf/reg-sub
- ::send-third-party-review-request-message
- (fn [db _]
-   (::send-third-party-review-request-message db)))
+  ::send-third-party-review-request-message
+  (fn [db _]
+    (::send-third-party-review-request-message db)))
 
 (defn- review-request-modal []
   (let [selected-third-party-reviewers @(rf/subscribe [::selected-third-party-reviewers])

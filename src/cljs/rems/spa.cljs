@@ -29,20 +29,20 @@
 ;;; subscriptions
 
 (reg-sub
- :page
- (fn [db _]
-   (:page db)))
+  :page
+  (fn [db _]
+    (:page db)))
 
 (reg-sub
- :docs
- (fn [db _]
-   (:docs db)))
+  :docs
+  (fn [db _]
+    (:docs db)))
 
 ;; TODO: possibly move translations out
 (reg-sub
- :translations
- (fn [db _]
-   (:translations db)))
+  :translations
+  (fn [db _]
+    (:translations db)))
 
 (reg-sub
   :language
@@ -61,24 +61,24 @@
 
 ;; TODO: possibly move theme out
 (reg-sub
- :theme
- (fn [db _]
-   (:theme db)))
+  :theme
+  (fn [db _]
+    (:theme db)))
 
 (reg-sub
- :identity
- (fn [db _]
-   (:identity db)))
+  :identity
+  (fn [db _]
+    (:identity db)))
 
 (reg-sub
- :user
- (fn [db _]
-   (get-in db [:identity :user])))
+  :user
+  (fn [db _]
+    (get-in db [:identity :user])))
 
 (reg-sub
- :roles
- (fn [db _]
-   (get-in db [:identity :roles])))
+  :roles
+  (fn [db _]
+    (get-in db [:identity :roles])))
 
 ;;; handlers
 
@@ -93,29 +93,29 @@
      :identity {:user nil :roles nil}}))
 
 (reg-event-db
- :set-active-page
- (fn [db [_ page]]
-   (assoc db :page page)))
+  :set-active-page
+  (fn [db [_ page]]
+    (assoc db :page page)))
 
 (reg-event-db
- :set-docs
- (fn [db [_ docs]]
-   (assoc db :docs docs)))
+  :set-docs
+  (fn [db [_ docs]]
+    (assoc db :docs docs)))
 
 (reg-event-db
- :loaded-translations
- (fn [db [_ translations]]
-   (assoc db :translations translations)))
+  :loaded-translations
+  (fn [db [_ translations]]
+    (assoc db :translations translations)))
 
 (reg-event-db
- :loaded-theme
- (fn [db [_ theme]]
-   (assoc db :theme theme)))
+  :loaded-theme
+  (fn [db [_ theme]]
+    (assoc db :theme theme)))
 
 (reg-event-db
- :set-identity
- (fn [db [_ identity]]
-   (assoc db :identity identity)))
+  :set-identity
+  (fn [db [_ identity]]
+    (assoc db :identity identity)))
 
 (reg-event-fx
   :set-current-language
@@ -129,33 +129,33 @@
     (set! (.. js/document -documentElement -lang) language)))
 
 (reg-event-fx
- :unauthorized!
- (fn [{:keys [db]} [_ current-url]]
-   (println "Received unauthorized from" current-url)
-   (if (get-in db [:identity :roles])
-     (do (println "User is logged-in")
-         (.removeItem js/sessionStorage "rems-redirect-url")
-         {:dispatch [:set-active-page :unauthorized]})
-     (do (println "User is not logged-in")
-         (.setItem js/sessionStorage "rems-redirect-url" current-url)
-         (dispatch! "/")))))
+  :unauthorized!
+  (fn [{:keys [db]} [_ current-url]]
+    (println "Received unauthorized from" current-url)
+    (if (get-in db [:identity :roles])
+      (do (println "User is logged-in")
+          (.removeItem js/sessionStorage "rems-redirect-url")
+          {:dispatch [:set-active-page :unauthorized]})
+      (do (println "User is not logged-in")
+          (.setItem js/sessionStorage "rems-redirect-url" current-url)
+          (dispatch! "/")))))
 
 (reg-event-fx
- :landing-page-redirect!
- (fn [{:keys [db]}]
-   ;; do we have the roles set by set-identity already?
-   (if (get-in db [:identity :roles])
-     (let [roles (set (get-in db [:identity :roles]))]
-       (println "Selecting landing page based on roles" roles)
-       (.removeItem js/sessionStorage "rems-redirect-url")
-       (cond
-         (contains? roles :owner) (dispatch! "/#/administration")
-         (contains? roles :approver) (dispatch! "/#/actions")
-         (contains? roles :reviewer) (dispatch! "/#/actions")
-         :else (dispatch! "/#/catalogue"))
-       {})
-      ;;; else dispatch the same event again while waiting for set-identity (happens especially with Firefox)
-     {:dispatch [:landing-page-redirect!]})))
+  :landing-page-redirect!
+  (fn [{:keys [db]}]
+    ;; do we have the roles set by set-identity already?
+    (if (get-in db [:identity :roles])
+      (let [roles (set (get-in db [:identity :roles]))]
+        (println "Selecting landing page based on roles" roles)
+        (.removeItem js/sessionStorage "rems-redirect-url")
+        (cond
+          (contains? roles :owner) (dispatch! "/#/administration")
+          (contains? roles :approver) (dispatch! "/#/actions")
+          (contains? roles :reviewer) (dispatch! "/#/actions")
+          :else (dispatch! "/#/catalogue"))
+        {})
+       ;;; else dispatch the same event again while waiting for set-identity (happens especially with Firefox)
+      {:dispatch [:landing-page-redirect!]})))
 
 (defn about-page []
   [:div.container
@@ -183,7 +183,7 @@
    [:h2 (text :t.unauthorized-page/unauthorized)]
    [:p (text :t.unauthorized-page/you-are-unauthorized)]])
 
-(defn not-found-page[]
+(defn not-found-page []
   [:div
    [:h2 (text :t.not-found-page/not-found)]
    [:p (text :t.not-found-page/page-was-not-found)]])
@@ -304,10 +304,10 @@
 (defn hook-browser-navigation! []
   (doto (History.)
     (events/listen
-     HistoryEventType/NAVIGATE
-     (fn [event]
-       (js/window.rems.hooks.navigate (.-token event))
-       (secretary/dispatch! (.-token event))))
+      HistoryEventType/NAVIGATE
+      (fn [event]
+        (js/window.rems.hooks.navigate (.-token event))
+        (secretary/dispatch! (.-token event))))
     (.setEnabled true)))
 
 ;; -------------------------
