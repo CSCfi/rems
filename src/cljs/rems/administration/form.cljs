@@ -1,5 +1,6 @@
 (ns rems.administration.form
-  (:require [re-frame.core :as rf]
+  (:require [clojure.string :as str]
+            [re-frame.core :as rf]
             [rems.administration.components :refer [checkbox localized-text-field radio-button-group text-field]]
             [rems.application :refer [enrich-user]]
             [rems.collapsible :as collapsible]
@@ -17,7 +18,7 @@
     ::fetch-form-items nil}))
 
 
-; form state
+;;;; form state
 
 (rf/reg-sub
  ::form
@@ -57,21 +58,58 @@
          (assoc-in [::form :items other] (get-in db [::form :items index]))))))
 
 
-; form submit
+;;;; form submit
 
-(defn- uses-input-prompt? [form item]
-  (let [form-item-type (get-in form [:items item :type])]
-    (contains? #{"text" "texta"} form-item-type)))
+(defn- uses-input-prompt? [item]
+  (contains? #{"text" "texta"} (:type item)))
 
-(defn- valid-request? [request]
-  ; TODO
-  false)
+(defn- localized-string? [lstr languages]
+  (and (= (set (keys lstr))
+          (set languages))
+       (every? string? (vals lstr))))
 
-(defn build-request [form]
-  ; TODO
+(defn- valid-required-localized-string? [lstr languages]
+  (and (localized-string? lstr languages)
+       (every? #(not (str/blank? %))
+               (vals lstr))))
+
+(defn- valid-optional-localized-string? [lstr languages]
+  (and (localized-string? lstr languages)
+       ;; partial translations are not allowed
+       (or (every? #(not (str/blank? %))
+                   (vals lstr))
+           (every? #(str/blank? %)
+                   (vals lstr)))))
+
+(defn- valid-request-item? [item languages]
+  (and (valid-required-localized-string? (:title item) languages)
+       (boolean? (:optional item))
+       (not (str/blank? (:type item)))
+       (if (uses-input-prompt? item)
+         (valid-optional-localized-string? (:input-prompt item) languages)
+         (nil? (:input-prompt item)))))
+
+(defn- valid-request? [request languages]
+  (and (not (str/blank? (:prefix request)))
+       (not (str/blank? (:title request)))
+       (every? #(valid-request-item? % languages) (:items request))))
+
+(defn build-localized-string [lstr languages]
+  (into {} (for [language languages]
+             [language (get lstr language "")])))
+
+(defn- build-request-item [item languages]
+  {:title (build-localized-string (:title item) languages)
+   :optional (boolean (:optional item))
+   :type (:type item)
+   :input-prompt (when (uses-input-prompt? item)
+                   (build-localized-string (:input-prompt item) languages))})
+
+(defn build-request [form languages]
   (let [request {:prefix (:prefix form)
-                 :title (:title form)}]
-    (when (valid-request? request)
+                 :title (:title form)
+                 :items (map #(build-request-item % languages) (:items form))}]
+    (when (valid-request? request languages)
       request)))
 
 (defn- create-form [request]
@@ -86,7 +124,7 @@
    {}))
 
 
-; form items
+;;;; form items
 ; TODO: not needed and can be removed?
 
 (defn- fetch-form-items []
@@ -186,7 +224,8 @@
 
 (defn- save-form-button []
   (let [form @(rf/subscribe [::form])
-        request (build-request form)]
+        languages @(rf/subscribe [:languages])
+        request (build-request form languages)]
     [:button.btn.btn-primary
      {:on-click #(rf/dispatch [::create-form request])
       :disabled (nil? request)}
@@ -217,7 +256,7 @@
                          [form-item-title-field item]
                          [form-item-optional-checkbox item]
                          [form-item-type-radio-group item]
-                         (when (uses-input-prompt? form item)
+                         (when (uses-input-prompt? (get-in form [:items item]))
                            [form-item-input-prompt-field item])]))
 
                [:div.form-item.new-form-item

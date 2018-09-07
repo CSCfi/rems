@@ -1,7 +1,7 @@
 (ns rems.test.administration.form
   (:require [cljs.test :refer-macros [deftest is testing use-fixtures]]
             [re-frame.core :as rf]
-            [rems.administration.form :as f]
+            [rems.administration.form :as f :refer [build-request build-localized-string]]
             [rems.test.testing :refer [isolate-re-frame-state stub-re-frame-effect]]))
 
 (use-fixtures :each isolate-re-frame-state)
@@ -155,3 +155,96 @@
                         {:foo "item X"}]}
                @form)
             "after move 3")))))
+
+(deftest build-request-test
+  (let [form {:prefix "abc"
+              :title "the title"
+              :items [{:title {:en "en title"
+                               :fi "fi title"}
+                       :optional true
+                       :type "text"
+                       :input-prompt {:en "en prompt"
+                                      :fi "fi prompt"}}]}
+        languages [:en :fi]]
+    (testing "valid form"
+      (is (= {:prefix "abc"
+              :title "the title"
+              :items [{:title {:en "en title"
+                               :fi "fi title"}
+                       :optional true
+                       :type "text"
+                       :input-prompt {:en "en prompt"
+                                      :fi "fi prompt"}}]}
+             (build-request form languages))))
+
+    (testing "missing prefix"
+      (is (nil? (build-request (assoc-in form [:prefix] "") languages))))
+
+    (testing "missing title"
+      (is (nil? (build-request (assoc-in form [:title] "") languages))))
+
+    (testing "zero items is ok"
+      (is (= {:prefix "abc"
+              :title "the title"
+              :items []}
+             (build-request (assoc-in form [:items] []) languages))))
+
+    (testing "missing item title"
+      (is (= nil
+             (build-request (assoc-in form [:items 0 :title :en] "") languages)
+             (build-request (update-in form [:items 0 :title] dissoc :en) languages)
+             (build-request (assoc-in form [:items 0 :title] nil) languages))))
+
+    (testing "missing optional implies false"
+      (is (= {:prefix "abc"
+              :title "the title"
+              :items [{:title {:en "en title"
+                               :fi "fi title"}
+                       :optional false
+                       :type "text"
+                       :input-prompt {:en "en prompt"
+                                      :fi "fi prompt"}}]}
+             (build-request (assoc-in form [:items 0 :optional] nil) languages))))
+
+    (testing "missing item type"
+      (is (nil? (build-request (assoc-in form [:items 0 :type] nil) languages))))
+
+    (testing "input prompt is optional"
+      (is (= {:prefix "abc"
+              :title "the title"
+              :items [{:title {:en "en title"
+                               :fi "fi title"}
+                       :optional true
+                       :type "text"
+                       :input-prompt {:en ""
+                                      :fi ""}}]}
+             (build-request (assoc-in form [:items 0 :input-prompt] nil) languages)
+             (build-request (assoc-in form [:items 0 :input-prompt] {:en ""}) languages)
+             (build-request (assoc-in form [:items 0 :input-prompt] {:en "", :fi ""}) languages))))
+
+    (testing "if you use input prompt, you must fill in all the languages"
+      (is (= nil
+             (build-request (assoc-in form [:items 0 :input-prompt] {:en "en prompt", :fi ""}) languages)
+             (build-request (assoc-in form [:items 0 :input-prompt] {:en "en prompt"}) languages))))
+
+    (testing "date fields won't have an input prompt"
+      (is (= {:prefix "abc"
+              :title "the title"
+              :items [{:title {:en "en title"
+                               :fi "fi title"}
+                       :optional true
+                       :type "date"
+                       :input-prompt nil}]}
+             (build-request (assoc-in form [:items 0 :type] "date") languages))))))
+
+(deftest build-localized-string-test
+  (let [languages [:en :fi]]
+    (testing "localizations are copied as-is"
+      (is (= {:en "x", :fi "y"}
+             (build-localized-string {:en "x", :fi "y"} languages))))
+    (testing "missing localizations default to empty string"
+      (is (= {:en "", :fi ""}
+             (build-localized-string {} languages))))
+    (testing "additional languages are excluded"
+      (is (= {:en "x", :fi "y"}
+             (build-localized-string {:en "x", :fi "y", :sv "z"} languages))))))
