@@ -7,6 +7,47 @@
             [rems.text :refer [text localize-item]]
             [rems.util :refer [dispatch! fetch post!]]))
 
+(defn- reset-form [db]
+  (assoc db ::form {:licenses #{}}))
+
+(rf/reg-event-fx
+ ::enter-page
+ (fn [{:keys [db]}]
+   ; TODO: loading indicator
+   {:db (reset-form db)
+    ::fetch-licenses nil}))
+
+
+; form state
+
+(rf/reg-sub
+ ::form
+ (fn [db _]
+   (::form db)))
+
+(rf/reg-event-db
+ ::set-form-field
+ (fn [db [_ keys value]]
+   (assoc-in db (concat [::form] keys) value)))
+
+(rf/reg-sub
+ ::selected-licenses
+ (fn [db _]
+   (get-in db [::form :licenses])))
+
+(rf/reg-event-db
+ ::select-license
+ (fn [db [_ license]]
+   (update-in db [::form :licenses] conj license)))
+
+(rf/reg-event-db
+ ::deselect-license
+ (fn [db [_ license]]
+   (update-in db [::form :licenses] disj license)))
+
+
+; form submit
+
 (defn- valid-request? [request]
   (and (not (str/blank? (:prefix request)))
        (not (str/blank? (:resid request)))))
@@ -20,44 +61,14 @@
 
 (defn- create-resource [request]
   (post! "/api/resources/create" {:params request
-                                  :handler (fn [resp]
-                                             (dispatch! "#/administration"))}))
+                                  ; TODO: error handling
+                                  :handler (fn [resp] (dispatch! "#/administration"))}))
 
 (rf/reg-event-fx
-  ::create-resource
-  (fn [_ [_ request]]
-    (create-resource request)
-    {}))
-
-(rf/reg-event-db
-  ::reset-create-resource
-  (fn [db _]
-    (assoc db ::form {:licenses #{}})))
-
-(rf/reg-sub
-  ::form
-  (fn [db _]
-    (::form db)))
-
-(rf/reg-event-db
-  ::set-form-field
-  (fn [db [_ keys value]]
-    (assoc-in db (concat [::form] keys) value)))
-
-(rf/reg-sub
-  ::selected-licenses
-  (fn [db _]
-    (get-in db [::form :licenses])))
-
-(rf/reg-event-db
-  ::select-license
-  (fn [db [_ license]]
-    (update-in db [::form :licenses] conj license)))
-
-(rf/reg-event-db
-  ::deselect-license
-  (fn [db [_ license]]
-    (update-in db [::form :licenses] disj license)))
+ ::create-resource
+ (fn [_ [_ request]]
+   (create-resource request)
+   {}))
 
 
 ; available licenses
@@ -66,28 +77,20 @@
   (fetch "/api/licenses?active=true"
          {:handler #(rf/dispatch [::fetch-licenses-result %])}))
 
-(rf/reg-event-fx
-  ::start-fetch-licenses
-  (fn [{:keys [db]}]
-    {:db (assoc db ::loading? true)
-     ::fetch-licenses []}))
-
 (rf/reg-fx
-  ::fetch-licenses
-  (fn [_]
-    (fetch-licenses)))
+ ::fetch-licenses
+ (fn [_]
+   (fetch-licenses)))
 
 (rf/reg-event-db
-  ::fetch-licenses-result
-  (fn [db [_ licenses]]
-    (-> db
-        (assoc ::licenses licenses)
-        (dissoc ::loading?))))
+ ::fetch-licenses-result
+ (fn [db [_ licenses]]
+   (assoc db ::licenses licenses)))
 
 (rf/reg-sub
-  ::licenses
-  (fn [db _]
-    (::licenses db)))
+ ::licenses
+ (fn [db _]
+   (::licenses db)))
 
 
 ;;;; UI ;;;;

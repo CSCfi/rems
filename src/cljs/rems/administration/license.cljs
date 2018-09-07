@@ -6,6 +6,30 @@
             [rems.text :refer [text localize-item]]
             [rems.util :refer [dispatch! fetch post!]]))
 
+(defn- reset-form [db]
+  (dissoc db ::form))
+
+(rf/reg-event-db
+ ::enter-page
+ (fn [db _]
+   (reset-form db)))
+
+
+; form state
+
+(rf/reg-sub
+ ::form
+ (fn [db _]
+   (::form db)))
+
+(rf/reg-event-db
+ ::set-form-field
+ (fn [db [_ keys value]]
+   (assoc-in db (concat [::form] keys) value)))
+
+
+; form submit
+
 (def license-type-link "link")
 (def license-type-text "text")
 
@@ -40,29 +64,14 @@
 
 (defn- create-license [request]
   (post! "/api/licenses/create" {:params request
-                                 :handler (fn [resp]
-                                            (dispatch! "#/administration"))}))
+                                 ; TODO: error handling
+                                 :handler (fn [resp] (dispatch! "#/administration"))}))
 
 (rf/reg-event-fx
-  ::create-license
-  (fn [_ [_ request]]
-    (create-license request)
-    {}))
-
-(rf/reg-event-db
-  ::reset-create-license
-  (fn [db _]
-    (dissoc db ::form)))
-
-(rf/reg-sub
-  ::form
-  (fn [db _]
-    (::form db)))
-
-(rf/reg-event-db
-  ::set-form-field
-  (fn [db [_ keys value]]
-    (assoc-in db (concat [::form] keys) value)))
+ ::create-license
+ (fn [_ [_ request]]
+   (create-license request)
+   {}))
 
 
 ;;;; UI ;;;;

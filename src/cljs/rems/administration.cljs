@@ -8,60 +8,62 @@
             [rems.text :refer [text]]
             [rems.util :refer [dispatch! fetch put!]]))
 
-;; TODO copypaste from rems.catalogue, move to rems.db.catalogue?
+(rf/reg-event-fx
+ ::enter-page
+ (fn [{:keys [db]}]
+   {:db (assoc db ::loading? true)
+    ::fetch-catalogue nil}))
 
+
+; catalogue items
+
+;; TODO copypaste from rems.catalogue, move to rems.db.catalogue?
 (defn- fetch-catalogue []
   (fetch "/api/catalogue-items/" {:handler #(rf/dispatch [::fetch-catalogue-result %])}))
 
 (rf/reg-fx
-  ::fetch-catalogue
-  (fn [_]
-    (fetch-catalogue)))
-
-(rf/reg-event-fx
-  ::start-fetch-catalogue
-  (fn [{:keys [db]}]
-    {:db (assoc db ::loading? true)
-     ::fetch-catalogue []}))
+ ::fetch-catalogue
+ (fn [_]
+   (fetch-catalogue)))
 
 (rf/reg-event-db
-  ::fetch-catalogue-result
-  (fn [db [_ catalogue]]
-    (-> db
-        (assoc ::catalogue catalogue)
-        (dissoc ::loading?))))
+ ::fetch-catalogue-result
+ (fn [db [_ catalogue]]
+   (-> db
+       (assoc ::catalogue catalogue)
+       (dissoc ::loading?))))
 
 (rf/reg-sub
-  ::catalogue
-  (fn [db _]
-    (::catalogue db)))
+ ::catalogue
+ (fn [db _]
+   (::catalogue db)))
 
 (rf/reg-sub
-  ::loading?
-  (fn [db _]
-    (::loading? db)))
+ ::loading?
+ (fn [db _]
+   (::loading? db)))
 
 (defn- update-catalogue-item [id state]
   (put! "/api/catalogue-items/update" {:params {:id id :state state}
-                                       :handler #(rf/dispatch [::start-fetch-catalogue])}))
+                                       :handler #(rf/dispatch [::enter-page])}))
 
 (rf/reg-event-fx
-  ::update-catalogue-item
-  (fn [_ [_ id state]]
-    (update-catalogue-item id state)
-    {}))
+ ::update-catalogue-item
+ (fn [_ [_ id state]]
+   (update-catalogue-item id state)
+   {}))
 
 (rf/reg-event-db
-  ::set-sorting
-  (fn [db [_ sorting]]
-    (assoc db ::sorting sorting)))
+ ::set-sorting
+ (fn [db [_ sorting]]
+   (assoc db ::sorting sorting)))
 
 (rf/reg-sub
-  ::sorting
-  (fn [db _]
-    (or (::sorting db)
-        {:sort-column :name
-         :sort-order :asc})))
+ ::sorting
+ (fn [db _]
+   (or (::sorting db)
+       {:sort-column :name
+        :sort-order :asc})))
 
 ;;;; UI ;;;;
 

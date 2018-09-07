@@ -45,19 +45,19 @@
    (:translations db)))
 
 (reg-sub
-  :language
-  (fn [db _]
-    (:language db)))
+ :language
+ (fn [db _]
+   (:language db)))
 
 (reg-sub
-  :languages
-  (fn [db _]
-    (:languages db)))
+ :languages
+ (fn [db _]
+   (:languages db)))
 
 (reg-sub
-  :default-language
-  (fn [db _]
-    (:default-language db)))
+ :default-language
+ (fn [db _]
+   (:default-language db)))
 
 ;; TODO: possibly move theme out
 (reg-sub
@@ -83,14 +83,14 @@
 ;;; handlers
 
 (reg-event-db
-  :initialize-db
-  (fn [_ _]
-    {:page :home
-     :language :en
-     :languages [:en :fi]                                   ; TODO: hard-coded for now
-     :default-language :en
-     :translations {}
-     :identity {:user nil :roles nil}}))
+ :initialize-db
+ (fn [_ _]
+   {:page :home
+    :language :en
+    :languages [:en :fi] ; TODO: hard-coded for now
+    :default-language :en
+    :translations {}
+    :identity {:user nil :roles nil}}))
 
 (reg-event-db
  :set-active-page
@@ -118,15 +118,15 @@
    (assoc db :identity identity)))
 
 (reg-event-fx
-  :set-current-language
-  (fn [{:keys [db]} [_ language]]
-    {:db (assoc db :language language)
-     :update-document-language (name language)}))
+ :set-current-language
+ (fn [{:keys [db]} [_ language]]
+   {:db (assoc db :language language)
+    :update-document-language (name language)}))
 
 (reg-fx
-  :update-document-language
-  (fn [language]
-    (set! (.. js/document -documentElement -lang) language)))
+ :update-document-language
+ (fn [language]
+   (set! (.. js/document -documentElement -lang) language)))
 
 (reg-event-fx
  :unauthorized!
@@ -154,7 +154,7 @@
          (contains? roles :reviewer) (dispatch! "/#/actions")
          :else (dispatch! "/#/catalogue"))
        {})
-      ;;; else dispatch the same event again while waiting for set-identity (happens especially with Firefox)
+     ;;; else dispatch the same event again while waiting for set-identity (happens especially with Firefox)
      {:dispatch [:landing-page-redirect!]})))
 
 (defn about-page []
@@ -174,7 +174,7 @@
     ;; does the navigation/redirect logic, instead of using :home as
     ;; the default.
     (do
-      (rf/dispatch [:rems.catalogue/start-fetch-catalogue])
+      (rf/dispatch [:rems.catalogue/enter-page])
       [catalogue-page])
     [auth/login-component]))
 
@@ -183,7 +183,7 @@
    [:h2 (text :t.unauthorized-page/unauthorized)]
    [:p (text :t.unauthorized-page/you-are-unauthorized)]])
 
-(defn not-found-page[]
+(defn not-found-page []
   [:div
    [:h2 (text :t.not-found-page/not-found)]
    [:p (text :t.not-found-page/page-was-not-found)]])
@@ -230,7 +230,7 @@
   (rf/dispatch [:set-active-page :home]))
 
 (secretary/defroute "/catalogue" []
-  (rf/dispatch [:rems.catalogue/start-fetch-catalogue])
+  (rf/dispatch [:rems.catalogue/enter-page])
   (rf/dispatch [:set-active-page :catalogue]))
 
 (secretary/defroute "/guide" []
@@ -240,52 +240,43 @@
   (rf/dispatch [:set-active-page :about]))
 
 (secretary/defroute "/actions" []
-  (rf/dispatch [:rems.actions/start-fetch-actions])
+  (rf/dispatch [:rems.actions/enter-page])
   (rf/dispatch [:set-active-page :actions]))
 
 (secretary/defroute "/application/:id" {id :id}
-  (rf/dispatch [:rems.application/zero-state])
-  (rf/dispatch [:rems.application/start-fetch-application id])
-  (rf/dispatch [:rems.application/start-fetch-potential-third-party-reviewers])
+  (rf/dispatch [:rems.application/enter-application-page id])
   (rf/dispatch [:set-active-page :application]))
 
 (secretary/defroute "/application" {{items :items} :query-params}
-  (rf/dispatch [:rems.application/zero-state])
-  (rf/dispatch [:rems.application/start-new-application (cart/parse-items items)])
+  (rf/dispatch [:rems.application/enter-new-application-page (cart/parse-items items)])
   (rf/dispatch [:set-active-page :application]))
 
 (secretary/defroute "/applications" []
-  (rf/dispatch [:rems.applications/start-fetch-my-applications])
+  (rf/dispatch [:rems.applications/enter-page])
   (rf/dispatch [:set-active-page :applications]))
 
 (secretary/defroute "/administration" []
-  (rf/dispatch [:rems.administration/start-fetch-catalogue])
+  (rf/dispatch [:rems.administration/enter-page])
   (rf/dispatch [:set-active-page :administration]))
 
 (secretary/defroute "/create-catalogue-item" []
-  (rf/dispatch [:rems.administration.catalogue-item/start-fetch-workflows])
-  (rf/dispatch [:rems.administration.catalogue-item/start-fetch-resources])
-  (rf/dispatch [:rems.administration.catalogue-item/start-fetch-forms])
-  (rf/dispatch [:rems.administration.catalogue-item/reset-create-catalogue-item])
+  (rf/dispatch [:rems.administration.catalogue-item/enter-page])
   (rf/dispatch [:set-active-page :create-catalogue-item]))
 
 (secretary/defroute "/create-form" []
-  (rf/dispatch [:rems.administration.form/start-fetch-form-items])
-  (rf/dispatch [:rems.administration.form/reset-create-form])
+  (rf/dispatch [:rems.administration.form/enter-page])
   (rf/dispatch [:set-active-page :create-form]))
 
 (secretary/defroute "/create-license" []
-  (rf/dispatch [:rems.administration.license/reset-create-license])
+  (rf/dispatch [:rems.administration.license/enter-page])
   (rf/dispatch [:set-active-page :create-license]))
 
 (secretary/defroute "/create-resource" []
-  (rf/dispatch [:rems.administration.resource/start-fetch-licenses])
-  (rf/dispatch [:rems.administration.resource/reset-create-resource])
+  (rf/dispatch [:rems.administration.resource/enter-page])
   (rf/dispatch [:set-active-page :create-resource]))
 
 (secretary/defroute "/create-workflow" []
-  (rf/dispatch [:rems.administration.workflow/start-fetch-actors])
-  (rf/dispatch [:rems.administration.workflow/reset-create-workflow])
+  (rf/dispatch [:rems.administration.workflow/enter-page])
   (rf/dispatch [:set-active-page :create-workflow]))
 
 (secretary/defroute "/unauthorized" []

@@ -27,15 +27,13 @@
 
 ;;;; Events and actions ;;;;
 
-(rf/reg-event-db
- ::zero-state
- (fn [db _]
-   (assoc db
-          ::application nil
-          ::edit-application nil
-          ::judge-comment ""
-          ::review-comment ""
-          ::send-third-party-review-request-success false)))
+(defn- reset-state [db]
+  (assoc db
+    ::application nil
+    ::edit-application nil
+    ::judge-comment ""
+    ::review-comment ""
+    ::send-third-party-review-request-success false))
 
 (rf/reg-sub
  ::application
@@ -43,53 +41,67 @@
    (::application db)))
 
 (rf/reg-sub
- ::loading?
+ ::loading-application?
  (fn [db _]
-   (::loading? db)))
+   (::loading-application? db)))
+
+;;; existing application
+
+(defn- has-role? [db role]
+  (contains? (set (get-in db [:identity :roles]))
+             role))
 
 (rf/reg-event-fx
- ::start-fetch-application
+ ::enter-application-page
  (fn [{:keys [db]} [_ id]]
-   {:db (assoc db ::loading? true)
-    ::fetch-application [id]}))
-
-(rf/reg-event-fx
- ::start-new-application
- (fn [{:keys [db]} [_ items]]
-   {::fetch-draft-application [items]}))
+   (merge {:db (-> db
+                   (reset-state)
+                   (assoc ::loading-application? true))
+           ::fetch-application [id]}
+          (when (has-role? db :approver)
+            {::fetch-potential-third-party-reviewers [(get-in db [:identity :user])]}))))
 
 (defn- fetch-application [id]
   (fetch (str "/api/applications/" id) {:handler #(rf/dispatch [::fetch-application-result %])}))
-
-(defn- fetch-draft-application [items]
-  (fetch (str "/api/applications/draft") {:handler #(rf/dispatch [::fetch-application-result %])
-                                          :params {:catalogue-items items}}))
 
 (rf/reg-fx
  ::fetch-application
  (fn [[id]]
    (fetch-application id)))
 
-(rf/reg-fx
- ::fetch-draft-application
- (fn [[items]]
-   (fetch-draft-application items)))
-
 (rf/reg-event-db
  ::fetch-application-result
  (fn [db [_ application]]
    (-> db
        (assoc
-        ::application application
-        ;; TODO: should this be here?
-        ::edit-application
-        {:items (into {}
-                      (for [field (:items application)]
-                        [(:id field) (:value field)]))
-         :licenses (into {}
-                         (for [license (:licenses application)]
-                           [(:id license) (:approved license)]))})
-       (dissoc ::loading?))))
+         ::application application
+         ;; TODO: should this be here?
+         ::edit-application {:items (into {}
+                                          (for [field (:items application)]
+                                            [(:id field) (:value field)]))
+                             :licenses (into {}
+                                             (for [license (:licenses application)]
+                                               [(:id license) (:approved license)]))})
+       (dissoc ::loading-application?))))
+
+;;; new application
+
+(rf/reg-event-fx
+ ::enter-new-application-page
+ (fn [{:keys [db]} [_ items]]
+   {:db (reset-state db)
+    ::fetch-draft-application [items]}))
+
+(defn- fetch-draft-application [items]
+  (fetch (str "/api/applications/draft") {:handler #(rf/dispatch [::fetch-application-result %])
+                                          :params {:catalogue-items items}}))
+
+(rf/reg-fx
+ ::fetch-draft-application
+ (fn [[items]]
+   (fetch-draft-application items)))
+
+;;; form state
 
 (rf/reg-sub
  ::edit-application
@@ -124,6 +136,8 @@
        (assoc-in [::edit-application :status] value)
        (assoc-in [::edit-application :validation] validation))))
 
+;;; saving application
+
 (defn- save-application [command application-id catalogue-items items licenses]
   (let [payload (merge {:command command
                         :items items
@@ -132,16 +146,16 @@
                          {:application-id application-id}
                          {:catalogue-items catalogue-items}))]
     (post! "/api/applications/save"
-          {:handler (fn [resp]
-                      (if (:success resp)
-                        (do (rf/dispatch [::set-status :saved])
-                            ;; HACK: we both set the location, and fire a fetch-application event
-                            ;; because if the location didn't change, secretary won't fire the event
-                            (navigate-to (:id resp))
-                            (rf/dispatch [::start-fetch-application (:id resp)]))
-                        (rf/dispatch [::set-status :failed (:validation resp)])))
-           :error-handler (fn [_] (rf/dispatch [::set-status :failed]))
-           :params payload})))
+           {:handler (fn [resp]
+                       (if (:success resp)
+                         (do (rf/dispatch [::set-status :saved])
+                             ;; HACK: we both set the location, and fire a fetch-application event
+                             ;; because if the location didn't change, secretary won't fire the event
+                             (navigate-to (:id resp))
+                             (rf/dispatch [::enter-application-page (:id resp)]))
+                         (rf/dispatch [::set-status :failed (:validation resp)])))
+            :error-handler (fn [_] (rf/dispatch [::set-status :failed]))
+            :params payload})))
 
 (rf/reg-event-fx
  ::save-application
@@ -163,14 +177,16 @@
      (save-application command app-id catalogue-ids items licenses))
    {}))
 
+;;; judging application
+
 (defn- judge-application [command application-id round comment]
   (post! "/api/applications/judge"
-        {:params {:command command
-                  :application-id application-id
-                  :round round
-                  :comment comment}
-         :handler (fn [resp]
-                    (rf/dispatch [::start-fetch-application application-id]))}))
+         {:params {:command command
+                   :application-id application-id
+                   :round round
+                   :comment comment}
+          :handler (fn [resp]
+                     (rf/dispatch [::enter-application-page application-id]))}))
 
 (rf/reg-event-fx
  ::judge-application
@@ -396,10 +412,10 @@
    [:input.form-control {:type "text" :defaultValue value :readOnly true}]])
 
 (defn- format-event [event]
-  {:userid  (:userid event)
-   :event   (localize-event (:event event))
+  {:userid (:userid event)
+   :event (localize-event (:event event))
    :comment (:comment event)
-   :time    (localize-time (:time event))})
+   :time (localize-time (:time event))})
 
 (defn- application-header [state events]
   (let [has-users? (boolean (some :userid events))
@@ -408,17 +424,17 @@
                     (map format-event)
                     dedupe)
         last-event (when (:comment (last events))
-                        (last events))]
+                     (last events))]
     [collapsible/component
-     {:id       "header"
-      :title    [:span
-                 (text :t.applications/state)
-                 (when state (list ": " (localize-state state)))]
-      :always   [:div
-                 [:div.mb-3 {:class (str "state-" state)} (phases (get-application-phases state))]
-                 (when last-event
-                   (info-field (text :t.applications/latest-comment)
-                               (:comment last-event)))]
+     {:id "header"
+      :title [:span
+              (text :t.applications/state)
+              (when state (list ": " (localize-state state)))]
+      :always [:div
+               [:div.mb-3 {:class (str "state-" state)} (phases (get-application-phases state))]
+               (when last-event
+                 (info-field (text :t.applications/latest-comment)
+                             (:comment last-event)))]
       :collapse (when (seq events)
                   [:div
                    [:h4 (text :t.form/events)]
@@ -491,11 +507,36 @@
    {:name "withdraw" :onClick #(rf/dispatch [::judge-application "withdraw"])}
    (text :t.actions/withdraw)])
 
+;;;; More events and actions ;;;;
+
+;;; potential third-party reviewers
+
 (defn- fetch-potential-third-party-reviewers [user]
   (fetch (str "/api/applications/reviewers")
          {:handler #(do (rf/dispatch [::set-potential-third-party-reviewers %])
                         (rf/dispatch [::set-selected-third-party-reviewers #{}]))
           :headers {"x-rems-user-id" (:eppn user)}}))
+
+(rf/reg-fx
+ ::fetch-potential-third-party-reviewers
+ (fn [[user]]
+   (fetch-potential-third-party-reviewers user)))
+
+(defn enrich-user [user]
+  (assoc user :display (str (:name user) " (" (:email user) ")")))
+
+(rf/reg-event-db
+ ::set-potential-third-party-reviewers
+ (fn [db [_ reviewers]]
+   (assoc db ::potential-third-party-reviewers (for [reviewer reviewers]
+                                                 (enrich-user reviewer)))))
+
+(rf/reg-sub
+ ::potential-third-party-reviewers
+ (fn [db _]
+   (::potential-third-party-reviewers db)))
+
+;;; selected third-party reviewers
 
 (rf/reg-event-db
  ::set-selected-third-party-reviewers
@@ -519,30 +560,7 @@
  (fn [db _]
    (::selected-third-party-reviewers db)))
 
-(rf/reg-fx
- ::fetch-potential-third-party-reviewers
- (fn [[user]]
-   (fetch-potential-third-party-reviewers user)))
-
-(defn enrich-user [user]
-  (assoc user :display (str (:name user) " (" (:email user) ")")))
-
-(rf/reg-event-db
- ::set-potential-third-party-reviewers
- (fn [db [_ reviewers]]
-   (assoc db ::potential-third-party-reviewers (for [reviewer reviewers]
-                                                 (enrich-user reviewer)))))
-
-(rf/reg-event-fx
- ::start-fetch-potential-third-party-reviewers
- (fn [{:keys [db]} [_]]
-   (when (contains? (set (get-in db [:identity :roles])) :approver)
-     {::fetch-potential-third-party-reviewers [(get-in db [:identity :user])]})))
-
-(rf/reg-sub
- ::potential-third-party-reviewers
- (fn [db _]
-   (::potential-third-party-reviewers db)))
+;;; more form state
 
 (rf/reg-event-db
  ::set-review-comment
@@ -554,16 +572,18 @@
  (fn [db _]
    (::review-comment db)))
 
+;;; third-party review
+
 (defn- send-third-party-review-request [reviewers user application-id round comment]
   (post! "/api/applications/review_request"
-        {:params {:application-id application-id
-                  :round round
-                  :comment comment
-                  :recipients (map :userid reviewers)}
-         :handler (fn [resp]
-                    (rf/dispatch [::send-third-party-review-request-success true])
-                    (rf/dispatch [::start-fetch-application application-id])
-                    (scroll-to-top!))}))
+         {:params {:application-id application-id
+                   :round round
+                   :comment comment
+                   :recipients (map :userid reviewers)}
+          :handler (fn [resp]
+                     (rf/dispatch [::send-third-party-review-request-success true])
+                     (rf/dispatch [::enter-application-page application-id])
+                     (scroll-to-top!))}))
 
 (rf/reg-event-fx
  ::send-third-party-review-request
@@ -583,6 +603,8 @@
  ::send-third-party-review-request-message
  (fn [db _]
    (::send-third-party-review-request-message db)))
+
+;;;; More UI components ;;;;
 
 (defn- review-request-modal []
   (let [selected-third-party-reviewers @(rf/subscribe [::selected-third-party-reviewers])
@@ -710,7 +732,7 @@
   (let [application (rf/subscribe [::application])
         edit-application (rf/subscribe [::edit-application])
         language (rf/subscribe [:language])
-        loading? (rf/subscribe [::loading?])]
+        loading? (rf/subscribe [::loading-application?])]
     (if @loading?
       [:div
        [:h2 (text :t.applications/application)]

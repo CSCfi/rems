@@ -7,6 +7,64 @@
             [rems.text :refer [text]]
             [rems.util :refer [dispatch! fetch post!]]))
 
+(defn- reset-form [db]
+  (dissoc db ::form))
+
+(rf/reg-event-fx
+ ::enter-page
+ (fn [{:keys [db]}]
+   ; TODO: loading indicator
+   {:db (reset-form db)
+    ::fetch-workflows nil
+    ::fetch-resources nil
+    ::fetch-forms nil}))
+
+
+; form state
+
+(rf/reg-sub
+ ::form
+ (fn [db _]
+   (::form db)))
+
+(rf/reg-event-db
+ ::set-form-field
+ (fn [db [_ keys value]]
+   (assoc-in db (concat [::form] keys) value)))
+
+(rf/reg-sub
+ ::selected-workflow
+ (fn [db _]
+   (get-in db [::form :workflow])))
+
+(rf/reg-event-db
+ ::set-selected-workflow
+ (fn [db [_ workflow]]
+   (assoc-in db [::form :workflow] workflow)))
+
+(rf/reg-sub
+ ::selected-resource
+ (fn [db _]
+   (get-in db [::form :resource])))
+
+(rf/reg-event-db
+ ::set-selected-resource
+ (fn [db [_ resource]]
+   (assoc-in db [::form :resource] resource)))
+
+(rf/reg-sub
+ ::selected-form
+ (fn [db _]
+   (get-in db [::form :form])))
+
+(rf/reg-event-db
+ ::set-selected-form
+ (fn [db [_ form]]
+   (assoc-in db [::form :form] form)))
+
+
+; form submit
+
 (defn- valid-request? [request]
   (and (not (str/blank? (:title request)))
        (number? (:wfid request))
@@ -26,56 +84,11 @@
                                         ;; TODO error handling
                                         :handler (fn [resp] (dispatch! "#/administration"))}))
 
-(rf/reg-sub
-  ::form
-  (fn [db _]
-    (::form db)))
-
-(rf/reg-event-db
-  ::set-form-field
-  (fn [db [_ keys value]]
-    (assoc-in db (concat [::form] keys) value)))
-
-(rf/reg-sub
-  ::selected-workflow
-  (fn [db _]
-    (get-in db [::form :workflow])))
-
-(rf/reg-event-db
-  ::set-selected-workflow
-  (fn [db [_ workflow]]
-    (assoc-in db [::form :workflow] workflow)))
-
-(rf/reg-sub
-  ::selected-resource
-  (fn [db _]
-    (get-in db [::form :resource])))
-
-(rf/reg-event-db
-  ::set-selected-resource
-  (fn [db [_ resource]]
-    (assoc-in db [::form :resource] resource)))
-
-(rf/reg-sub
-  ::selected-form
-  (fn [db _]
-    (get-in db [::form :form])))
-
-(rf/reg-event-db
-  ::set-selected-form
-  (fn [db [_ form]]
-    (assoc-in db [::form :form] form)))
-
 (rf/reg-event-fx
-  ::create-catalogue-item
-  (fn [_ [_ request]]
-    (create-catalogue-item request)
-    {}))
-
-(rf/reg-event-db
-  ::reset-create-catalogue-item
-  (fn [db _]
-    (dissoc db ::form)))
+ ::create-catalogue-item
+ (fn [_ [_ request]]
+   (create-catalogue-item request)
+   {}))
 
 
 ; available workflows
@@ -83,26 +96,20 @@
 (defn- fetch-workflows []
   (fetch "/api/workflows/?active=true" {:handler #(rf/dispatch [::fetch-workflows-result %])}))
 
-(rf/reg-event-fx
-  ::start-fetch-workflows
-  (fn [{:keys [db]}]
-    {:db db                                                 ; TODO: keep track of loading status?
-     ::fetch-workflows []}))
-
 (rf/reg-fx
-  ::fetch-workflows
-  (fn [_]
-    (fetch-workflows)))
+ ::fetch-workflows
+ (fn [_]
+   (fetch-workflows)))
 
 (rf/reg-event-db
-  ::fetch-workflows-result
-  (fn [db [_ workflows]]
-    (assoc db ::workflows workflows)))
+ ::fetch-workflows-result
+ (fn [db [_ workflows]]
+   (assoc db ::workflows workflows)))
 
 (rf/reg-sub
-  ::workflows
-  (fn [db _]
-    (::workflows db)))
+ ::workflows
+ (fn [db _]
+   (::workflows db)))
 
 
 ; available resources
@@ -110,26 +117,20 @@
 (defn- fetch-resources []
   (fetch "/api/resources/?active=true" {:handler #(rf/dispatch [::fetch-resources-result %])}))
 
-(rf/reg-event-fx
-  ::start-fetch-resources
-  (fn [{:keys [db]}]
-    {:db db                                                 ; TODO: keep track of loading status?
-     ::fetch-resources []}))
-
 (rf/reg-fx
-  ::fetch-resources
-  (fn [_]
-    (fetch-resources)))
+ ::fetch-resources
+ (fn [_]
+   (fetch-resources)))
 
 (rf/reg-event-db
-  ::fetch-resources-result
-  (fn [db [_ resources]]
-    (assoc db ::resources resources)))
+ ::fetch-resources-result
+ (fn [db [_ resources]]
+   (assoc db ::resources resources)))
 
 (rf/reg-sub
-  ::resources
-  (fn [db _]
-    (::resources db)))
+ ::resources
+ (fn [db _]
+   (::resources db)))
 
 
 ; available forms
@@ -137,26 +138,20 @@
 (defn- fetch-forms []
   (fetch "/api/forms/?active=true" {:handler #(rf/dispatch [::fetch-forms-result %])}))
 
-(rf/reg-event-fx
-  ::start-fetch-forms
-  (fn [{:keys [db]}]
-    {:db db                                                 ; TODO: keep track of loading status?
-     ::fetch-forms []}))
-
 (rf/reg-fx
-  ::fetch-forms
-  (fn [_]
-    (fetch-forms)))
+ ::fetch-forms
+ (fn [_]
+   (fetch-forms)))
 
 (rf/reg-event-db
-  ::fetch-forms-result
-  (fn [db [_ forms]]
-    (assoc db ::forms forms)))
+ ::fetch-forms-result
+ (fn [db [_ forms]]
+   (assoc db ::forms forms)))
 
 (rf/reg-sub
-  ::forms
-  (fn [db _]
-    (::forms db)))
+ ::forms
+ (fn [db _]
+   (::forms db)))
 
 
 ;;;; UI ;;;;

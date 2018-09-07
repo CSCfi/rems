@@ -13,40 +13,27 @@
             [rems.util :refer [fetch]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
-(rf/reg-event-db
-  ::set-sorting
-  (fn [db [_ sorting]]
-    (assoc db ::sorting sorting)))
-
-(rf/reg-sub
-  ::sorting
-  (fn [db _]
-    (or (::sorting db)
-        {:sort-column :name
-         :sort-order  :asc})))
-
-(rf/reg-event-db
- ::fetch-catalogue-result
- (fn [db [_ catalogue]]
-   (-> db
-       (assoc ::catalogue catalogue)
-       (dissoc ::loading?))))
-
-(rf/reg-sub
- ::catalogue
- (fn [db _]
-   (::catalogue db)))
-
-(rf/reg-sub
- ::loading?
- (fn [db _]
-   (::loading? db)))
-
 (rf/reg-event-fx
- ::start-fetch-catalogue
+ ::enter-page
  (fn [{:keys [db]} _]
-   {:db (assoc db ::loading? true)
-    ::fetch-catalogue []}))
+   {:db (assoc db ::loading-catalogue? true)
+    ::fetch-catalogue nil}))
+
+;;;; table sorting
+
+(rf/reg-event-db
+ ::set-sorting
+ (fn [db [_ sorting]]
+   (assoc db ::sorting sorting)))
+
+(rf/reg-sub
+ ::sorting
+ (fn [db _]
+   (or (::sorting db)
+       {:sort-column :name
+        :sort-order :asc})))
+
+;;;; catalogue
 
 (defn- fetch-catalogue []
   (fetch "/api/catalogue/" {:handler #(rf/dispatch [::fetch-catalogue-result %])}))
@@ -55,6 +42,25 @@
  ::fetch-catalogue
  (fn [_]
    (fetch-catalogue)))
+
+(rf/reg-event-db
+ ::fetch-catalogue-result
+ (fn [db [_ catalogue]]
+   (-> db
+       (assoc ::catalogue catalogue)
+       (dissoc ::loading-catalogue?))))
+
+(rf/reg-sub
+ ::loading-catalogue?
+ (fn [db _]
+   (::loading-catalogue? db)))
+
+(rf/reg-sub
+ ::catalogue
+ (fn [db _]
+   (::catalogue db)))
+
+;;;; UI
 
 (defn- catalogue-item-title [item language]
   [:span (get-catalogue-item-title item language)])
@@ -65,11 +71,11 @@
      (text :t.catalogue/more-info) " " [external-link]]))
 
 (defn- catalogue-columns [lang config]
-  {:name     {:header     #(text :t.catalogue/header)
-              :value      (fn [item] [catalogue-item-title item lang])
-              :sort-value #(get-catalogue-item-title % lang)}
-   :commands {:values    (fn [item] [[catalogue-item-more-info item config]
-                                     [cart/add-to-cart-button item]])
+  {:name {:header #(text :t.catalogue/header)
+          :value (fn [item] [catalogue-item-title item lang])
+          :sort-value #(get-catalogue-item-title % lang)}
+   :commands {:values (fn [item] [[catalogue-item-more-info item config]
+                                  [cart/add-to-cart-button item]])
               :sortable? false
               :filterable? false}})
 
@@ -85,7 +91,7 @@
 
 (defn catalogue-page []
   (let [catalogue (rf/subscribe [::catalogue])
-        loading? (rf/subscribe [::loading?])
+        loading? (rf/subscribe [::loading-catalogue?])
         language (rf/subscribe [:language])
         sorting (rf/subscribe [::sorting])
         config (rf/subscribe [:rems.config/config])]

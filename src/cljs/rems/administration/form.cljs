@@ -6,6 +6,59 @@
             [rems.text :refer [text text-format localize-item]]
             [rems.util :refer [dispatch! fetch post! vec-dissoc]]))
 
+(defn- reset-form [db]
+  (assoc db ::form {:items []}))
+
+(rf/reg-event-fx
+ ::enter-page
+ (fn [{:keys [db]}]
+   ; TODO: loading indicator
+   {:db (reset-form db)
+    ::fetch-form-items nil}))
+
+
+; form state
+
+(rf/reg-sub
+ ::form
+ (fn [db _]
+   (::form db)))
+
+(rf/reg-event-db
+ ::set-form-field
+ (fn [db [_ keys value]]
+   (assoc-in db (concat [::form] keys) value)))
+
+(rf/reg-event-db
+ ::add-form-item
+ (fn [db [_]]
+   (assoc-in db [::form :items (count (:items (::form db)))] {})))
+
+(rf/reg-event-db
+ ::remove-form-item
+ (fn [db [_ index]]
+   (assoc-in db [::form :items] (vec-dissoc (:items (::form db)) index))))
+
+(rf/reg-event-db
+ ::move-form-item-up
+ (fn [db [_ index]]
+   (let [other (max 0 (dec index))]
+     (-> db
+         (assoc-in [::form :items index] (get-in db [::form :items other]))
+         (assoc-in [::form :items other] (get-in db [::form :items index]))))))
+
+(rf/reg-event-db
+ ::move-form-item-down
+ (fn [db [_ index]]
+   (let [last-index (dec (count (get-in db [::form :items])))
+         other (min last-index (inc index))]
+     (-> db
+         (assoc-in [::form :items index] (get-in db [::form :items other]))
+         (assoc-in [::form :items other] (get-in db [::form :items index]))))))
+
+
+; form submit
+
 (defn- uses-input-prompt? [form item]
   (let [form-item-type (get-in form [:items item :type])]
     (contains? #{"text" "texta"} form-item-type)))
@@ -23,85 +76,38 @@
 
 (defn- create-form [request]
   (post! "/api/forms/create" {:params request
-                              :handler (fn [resp]
-                                         (dispatch! "#/administration"))}))
+                              ; TODO: error handling
+                              :handler (fn [resp] (dispatch! "#/administration"))}))
 
 (rf/reg-event-fx
-  ::create-form
-  (fn [_ [_ request]]
-    (create-form request)
-    {}))
-
-(rf/reg-event-db
-  ::reset-create-form
-  (fn [db _]
-    (assoc db ::form {:items []})))
-
-(rf/reg-sub
-  ::form
-  (fn [db _]
-    (::form db)))
-
-(rf/reg-event-db
-  ::set-form-field
-  (fn [db [_ keys value]]
-    (assoc-in db (concat [::form] keys) value)))
-
-(rf/reg-event-db
-  ::add-form-item
-  (fn [db [_]]
-    (assoc-in db [::form :items (count (:items (::form db)))] {})))
-
-(rf/reg-event-db
-  ::remove-form-item
-  (fn [db [_ index]]
-    (assoc-in db [::form :items] (vec-dissoc (:items (::form db)) index))))
-
-(rf/reg-event-db
-  ::move-form-item-up
-  (fn [db [_ index]]
-    (let [other (max 0 (dec index))]
-      (-> db
-          (assoc-in [::form :items index] (get-in db [::form :items other]))
-          (assoc-in [::form :items other] (get-in db [::form :items index]))))))
-
-(rf/reg-event-db
-  ::move-form-item-down
-  (fn [db [_ index]]
-    (let [last-index (dec (count (get-in db [::form :items])))
-          other (min last-index (inc index))]
-      (-> db
-          (assoc-in [::form :items index] (get-in db [::form :items other]))
-          (assoc-in [::form :items other] (get-in db [::form :items index]))))))
+ ::create-form
+ (fn [_ [_ request]]
+   (create-form request)
+   {}))
 
 
 ; form items
+; TODO: not needed and can be removed?
 
 (defn- fetch-form-items []
   (fetch "/api/form-items" {:handler #(rf/dispatch [::fetch-form-items-result %])}))
 
 (rf/reg-fx
-  ::fetch-form-items
-  (fn [_]
-    (fetch-form-items)))
-
-(rf/reg-event-fx
-  ::start-fetch-form-items
-  (fn [{:keys [db]}]
-    {:db (assoc db ::loading? true)
-     ::fetch-form-items []}))
+ ::fetch-form-items
+ (fn [_]
+   (fetch-form-items)))
 
 (rf/reg-event-db
-  ::fetch-form-items-result
-  (fn [db [_ items]]
-    (-> db
-        (assoc ::form-items items)
-        (dissoc ::loading?))))
+ ::fetch-form-items-result
+ (fn [db [_ items]]
+   (-> db
+       (assoc ::form-items items)
+       (dissoc ::loading?))))
 
 (rf/reg-sub
-  ::form-items
-  (fn [db _]
-    (::form-items db)))
+ ::form-items
+ (fn [db _]
+   (::form-items db)))
 
 
 ;;;; UI ;;;;
@@ -116,15 +122,15 @@
 
 (defn- form-title-field []
   [text-field context {:keys [:title]
-                       :label "Title"}])                    ; TODO: translation
+                       :label "Title"}]) ; TODO: translation
 
 (defn- form-item-title-field [item]
   [localized-text-field context {:keys [:items item :title]
-                                 :label "Field title"}])    ; TODO: translation
+                                 :label "Field title"}]) ; TODO: translation
 
 (defn- form-item-input-prompt-field [item]
   [localized-text-field context {:keys [:items item :input-prompt]
-                                 :label "Input prompt"}])   ; TODO: translation
+                                 :label "Input prompt"}]) ; TODO: translation
 
 (defn- form-item-type-radio-group [item]
   [radio-button-group context {:keys [:items item :type]
@@ -135,7 +141,7 @@
 
 (defn- form-item-optional-checkbox [item]
   [checkbox context {:keys [:items item :optional]
-                     :label "Optional"}])                   ; TODO: translation
+                     :label "Optional"}]) ; TODO: translation
 
 (defn- add-form-item-button []
   [:a
@@ -143,7 +149,7 @@
     :on-click (fn [event]
                 (.preventDefault event)
                 (rf/dispatch [::add-form-item]))}
-   "Add field"])                                            ; TODO: translation
+   "Add field"]) ; TODO: translation
 
 (defn- remove-form-item-button [index]
   [:a
@@ -151,7 +157,7 @@
     :on-click (fn [event]
                 (.preventDefault event)
                 (rf/dispatch [::remove-form-item index]))
-    :aria-label "Remove field"                              ; TODO: translation
+    :aria-label "Remove field" ; TODO: translation
     :title "Remove field"}
    [:i.icon-link.fas.fa-times
     {:aria-hidden true}]])
@@ -162,7 +168,7 @@
     :on-click (fn [event]
                 (.preventDefault event)
                 (rf/dispatch [::move-form-item-up index]))
-    :aria-label "Move up"                                   ; TODO: translation
+    :aria-label "Move up" ; TODO: translation
     :title "Move up"}
    [:i.icon-link.fas.fa-chevron-up
     {:aria-hidden true}]])
@@ -173,7 +179,7 @@
     :on-click (fn [event]
                 (.preventDefault event)
                 (rf/dispatch [::move-form-item-down index]))
-    :aria-label "Move down"                                 ; TODO: translation
+    :aria-label "Move down" ; TODO: translation
     :title "Move down"}
    [:i.icon-link.fas.fa-chevron-down
     {:aria-hidden true}]])
@@ -207,6 +213,7 @@
                           [move-form-item-up-button item]
                           [move-form-item-down-button item]
                           [remove-form-item-button item]]
+
                          [form-item-title-field item]
                          [form-item-optional-checkbox item]
                          [form-item-type-radio-group item]
@@ -215,6 +222,7 @@
 
                [:div.form-item.new-form-item
                 [add-form-item-button]]
+
                [:div.col.commands
                 [cancel-button]
                 [save-form-button]]]}]))
