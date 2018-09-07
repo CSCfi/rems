@@ -12,24 +12,24 @@
   (assoc db ::form {:rounds []}))
 
 (rf/reg-event-fx
-  ::enter-page
-  (fn [{:keys [db]}]
-    ; TODO: loading indicator
-    {:db (reset-form db)
-     ::fetch-actors nil}))
+ ::enter-page
+ (fn [{:keys [db]}]
+   ; TODO: loading indicator
+   {:db (reset-form db)
+    ::fetch-actors nil}))
 
 
 ; form state
 
 (rf/reg-sub
-  ::form
-  (fn [db _]
-    (::form db)))
+ ::form
+ (fn [db _]
+   (::form db)))
 
 (rf/reg-event-db
-  ::set-form-field
-  (fn [db [_ keys value]]
-    (assoc-in db (concat [::form] keys) value)))
+ ::set-form-field
+ (fn [db [_ keys value]]
+   (assoc-in db (concat [::form] keys) value)))
 
 
 ; form submit
@@ -62,10 +62,10 @@
                                   :handler (fn [resp] (dispatch! "#/administration"))}))
 
 (rf/reg-event-fx
-  ::create-workflow
-  (fn [_ [_ request]]
-    (create-workflow request)
-    {}))
+ ::create-workflow
+ (fn [_ [_ request]]
+   (create-workflow request)
+   {}))
 
 
 ; selected actors
@@ -76,19 +76,19 @@
           actors))
 
 (rf/reg-event-db
-  ::remove-actor
-  (fn [db [_ round actor]]
-    (update-in db [::form :rounds round :actors] remove-actor actor)))
+ ::remove-actor
+ (fn [db [_ round actor]]
+   (update-in db [::form :rounds round :actors] remove-actor actor)))
 
 (defn- add-actor [actors actor]
   (-> actors
-      (remove-actor actor)                                  ; avoid duplicates
+      (remove-actor actor) ; avoid duplicates
       (conj actor)))
 
 (rf/reg-event-db
-  ::add-actor
-  (fn [db [_ round actor]]
-    (update-in db [::form :rounds round :actors] add-actor actor)))
+ ::add-actor
+ (fn [db [_ round actor]]
+   (update-in db [::form :rounds round :actors] add-actor actor)))
 
 
 ; available actors
@@ -97,19 +97,19 @@
   (fetch "/api/workflows/actors" {:handler #(rf/dispatch [::fetch-actors-result %])}))
 
 (rf/reg-fx
-  ::fetch-actors
-  (fn [_]
-    (fetch-actors)))
+ ::fetch-actors
+ (fn [_]
+   (fetch-actors)))
 
 (rf/reg-event-db
-  ::fetch-actors-result
-  (fn [db [_ actors]]
-    (assoc db ::actors (map enrich-user actors))))
+ ::fetch-actors-result
+ (fn [db [_ actors]]
+   (assoc db ::actors (map enrich-user actors))))
 
 (rf/reg-sub
-  ::actors
-  (fn [db _]
-    (::actors db)))
+ ::actors
+ (fn [db _]
+   (::actors db)))
 
 
 ;;;; UI ;;;;

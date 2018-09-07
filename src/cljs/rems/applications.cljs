@@ -6,12 +6,12 @@
             [rems.util :refer [fetch]]))
 
 (rf/reg-event-fx
-  ::enter-page
-  (fn [{:keys [db]} _]
-    {:db (-> db
-             (assoc ::loading-my-applications? true)
-             (dissoc ::my-applications))
-     ::fetch-my-applications nil}))
+ ::enter-page
+ (fn [{:keys [db]} _]
+   {:db (-> db
+            (assoc ::loading-my-applications? true)
+            (dissoc ::my-applications))
+    ::fetch-my-applications nil}))
 
 ;;;; applications
 
@@ -19,40 +19,40 @@
   (fetch "/api/applications/" {:handler #(rf/dispatch [::fetch-my-applications-result %])}))
 
 (rf/reg-fx
-  ::fetch-my-applications
-  (fn [_]
-    (fetch-my-applications)))
+ ::fetch-my-applications
+ (fn [_]
+   (fetch-my-applications)))
 
 (rf/reg-event-db
-  ::fetch-my-applications-result
-  (fn [db [_ applications]]
-    (-> db
-        (assoc ::my-applications applications)
-        (dissoc ::loading-my-applications?))))
+ ::fetch-my-applications-result
+ (fn [db [_ applications]]
+   (-> db
+       (assoc ::my-applications applications)
+       (dissoc ::loading-my-applications?))))
 
 (rf/reg-sub
-  ::my-applications
-  (fn [db _]
-    (::my-applications db)))
+ ::my-applications
+ (fn [db _]
+   (::my-applications db)))
 
 (rf/reg-sub
-  ::loading-my-applications?
-  (fn [db _]
-    (::loading-my-applications? db)))
+ ::loading-my-applications?
+ (fn [db _]
+   (::loading-my-applications? db)))
 
 ;;;; table sorting
 
 (rf/reg-sub
-  ::sorting
-  (fn [db _]
-    (or (::sorting db)
-        {:sort-column :created
-         :sort-order :desc})))
+ ::sorting
+ (fn [db _]
+   (or (::sorting db)
+       {:sort-column :created
+        :sort-order :desc})))
 
 (rf/reg-event-db
-  ::set-sorting
-  (fn [db [_ order]]
-    (assoc db ::sorting order)))
+ ::set-sorting
+ (fn [db [_ order]]
+   (assoc db ::sorting order)))
 
 ;;;; UI
 

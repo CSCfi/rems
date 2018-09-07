@@ -10,12 +10,12 @@
             [rems.util :refer [fetch]]))
 
 (rf/reg-event-fx
-  ::enter-page
-  (fn [{:keys [db]} _]
-    {:db (-> db
-             (assoc ::loading-actions? true)
-             (dissoc ::actions ::handled-actions))          ; zero state that should be reloaded, good for performance
-     ::fetch-actions nil}))
+ ::enter-page
+ (fn [{:keys [db]} _]
+   {:db (-> db
+            (assoc ::loading-actions? true)
+            (dissoc ::actions ::handled-actions)) ; zero state that should be reloaded, good for performance
+    ::fetch-actions nil}))
 
 ;;;; actions
 
@@ -23,59 +23,59 @@
   (fetch "/api/actions/" {:handler #(rf/dispatch [::fetch-actions-result %])}))
 
 (rf/reg-fx
-  ::fetch-actions
-  (fn [_]
-    (fetch-actions)))
+ ::fetch-actions
+ (fn [_]
+   (fetch-actions)))
 
 (rf/reg-event-db
-  ::fetch-actions-result
-  (fn [db [_ result]]
-    (-> db
-        (assoc ::actions result)
-        (dissoc ::loading-actions?))))
+ ::fetch-actions-result
+ (fn [db [_ result]]
+   (-> db
+       (assoc ::actions result)
+       (dissoc ::loading-actions?))))
 
 (rf/reg-sub
-  ::actions
-  (fn [db _]
-    (::actions db)))
+ ::actions
+ (fn [db _]
+   (::actions db)))
 
 (rf/reg-sub
-  ::loading-actions?
-  (fn [db _]
-    (::loading-actions? db)))
+ ::loading-actions?
+ (fn [db _]
+   (::loading-actions? db)))
 
 ;;;; handled actions
 
 (rf/reg-event-fx
-  ::start-fetch-handled-actions
-  (fn [{:keys [db]} _]
-    {:db (assoc db ::loading-handled-actions? true)
-     ::fetch-handled-actions []}))
+ ::start-fetch-handled-actions
+ (fn [{:keys [db]} _]
+   {:db (assoc db ::loading-handled-actions? true)
+    ::fetch-handled-actions []}))
 
 (defn- fetch-handled-actions []
   (fetch "/api/actions/handled" {:handler #(rf/dispatch [::fetch-handled-actions-result %])}))
 
 (rf/reg-fx
-  ::fetch-handled-actions
-  (fn [_]
-    (fetch-handled-actions)))
+ ::fetch-handled-actions
+ (fn [_]
+   (fetch-handled-actions)))
 
 (rf/reg-event-db
-  ::fetch-handled-actions-result
-  (fn [db [_ result]]
-    (-> db
-        (assoc ::handled-actions result)
-        (dissoc ::loading-handled-actions?))))
+ ::fetch-handled-actions-result
+ (fn [db [_ result]]
+   (-> db
+       (assoc ::handled-actions result)
+       (dissoc ::loading-handled-actions?))))
 
 (rf/reg-sub
-  ::handled-actions
-  (fn [db _]
-    (::handled-actions db)))
+ ::handled-actions
+ (fn [db _]
+   (::handled-actions db)))
 
 (rf/reg-sub
-  ::loading-handled-actions?
-  (fn [db _]
-    (::loading-handled-actions? db)))
+ ::loading-handled-actions?
+ (fn [db _]
+   (::loading-handled-actions? db)))
 
 ;;;; table sorting
 
@@ -83,15 +83,15 @@
 ;; application tables, we store a map of sort types in the db.
 
 (rf/reg-sub
-  ::sorting
-  (fn [db [_ key]]
-    (get-in db [::sorting key] {:sort-column :last-modified
-                                :sort-order :desc})))
+ ::sorting
+ (fn [db [_ key]]
+   (get-in db [::sorting key] {:sort-column :last-modified
+                               :sort-order :desc})))
 
 (rf/reg-event-db
-  ::set-sorting
-  (fn [db [_ key sorting]]
-    (assoc-in db [::sorting key] sorting)))
+ ::set-sorting
+ (fn [db [_ key sorting]]
+   (assoc-in db [::sorting key] sorting)))
 
 ;;;; UI
 

@@ -10,22 +10,22 @@
   (dissoc db ::form))
 
 (rf/reg-event-db
-  ::enter-page
-  (fn [db _]
-    (reset-form db)))
+ ::enter-page
+ (fn [db _]
+   (reset-form db)))
 
 
 ; form state
 
 (rf/reg-sub
-  ::form
-  (fn [db _]
-    (::form db)))
+ ::form
+ (fn [db _]
+   (::form db)))
 
 (rf/reg-event-db
-  ::set-form-field
-  (fn [db [_ keys value]]
-    (assoc-in db (concat [::form] keys) value)))
+ ::set-form-field
+ (fn [db [_ keys value]]
+   (assoc-in db (concat [::form] keys) value)))
 
 
 ; form submit
@@ -68,10 +68,10 @@
                                  :handler (fn [resp] (dispatch! "#/administration"))}))
 
 (rf/reg-event-fx
-  ::create-license
-  (fn [_ [_ request]]
-    (create-license request)
-    {}))
+ ::create-license
+ (fn [_ [_ request]]
+   (create-license request)
+   {}))
 
 
 ;;;; UI ;;;;
