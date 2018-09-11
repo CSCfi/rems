@@ -13,9 +13,7 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   ; TODO: loading indicator
-   {:db (reset-form db)
-    ::fetch-form-items nil}))
+   {:db (reset-form db)}))
 
 
 ;;;; form state
@@ -122,30 +120,6 @@
  (fn [_ [_ request]]
    (create-form request)
    {}))
-
-
-;;;; form items
-; TODO: not needed and can be removed?
-
-(defn- fetch-form-items []
-  (fetch "/api/form-items" {:handler #(rf/dispatch [::fetch-form-items-result %])}))
-
-(rf/reg-fx
- ::fetch-form-items
- (fn [_]
-   (fetch-form-items)))
-
-(rf/reg-event-db
- ::fetch-form-items-result
- (fn [db [_ items]]
-   (-> db
-       (assoc ::form-items items)
-       (dissoc ::loading?))))
-
-(rf/reg-sub
- ::form-items
- (fn [db _]
-   (::form-items db)))
 
 
 ;;;; UI ;;;;

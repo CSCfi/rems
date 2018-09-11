@@ -13,7 +13,6 @@
             [rems.api.catalogue-items :refer [catalogue-items-api]]
             [rems.api.entitlements :refer [entitlements-api]]
             [rems.api.forms :refer [forms-api]]
-            [rems.api.form-items :refer [form-items-api]]
             [rems.api.licenses :refer [licenses-api]]
             [rems.api.public :as public]
             [rems.api.resources :refer [resources-api]]
@@ -103,7 +102,6 @@
      catalogue-items-api
      entitlements-api
      forms-api
-     form-items-api
      licenses-api
      resources-api
      workflows-api)))
