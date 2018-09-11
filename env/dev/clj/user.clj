@@ -3,7 +3,9 @@
             [eftest.runner :as ef]))
 
 (defn reload []
-  (repl/refresh))
+  (repl/refresh)
+  ; XXX: workaround to the user namespace missing after refresh
+  (require 'user))
 
 (defn run-tests [& namespaces]
   (reload)
