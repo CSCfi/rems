@@ -138,6 +138,17 @@
                           :title "Name"
                           :title-placeholder "Name"
                           :workflow-selection "Workflow"}
+  :create-form {:title "Form name"
+                :item-title "Field title"
+                :input-prompt "Placeholder text"
+                :type-text "Text field"
+                :type-texta "Text area"
+                :type-date "Date field"
+                :optional "Optional"
+                :add-form-item "Add field"
+                :remove-form-item "Remove field"
+                :move-form-item-up "Move up"
+                :move-form-item-down "Move down"}
   :create-license {:title "License name"
                    :external-link "External link"
                    :inline-text "Inline text"

@@ -134,26 +134,26 @@
 
 (defn- form-title-field []
   [text-field context {:keys [:title]
-                       :label "Title"}]) ; TODO: translation
+                       :label (text :t.create-form/title)}])
 
 (defn- form-item-title-field [item]
   [localized-text-field context {:keys [:items item :title]
-                                 :label "Field title"}]) ; TODO: translation
+                                 :label (text :t.create-form/item-title)}])
 
 (defn- form-item-input-prompt-field [item]
   [localized-text-field context {:keys [:items item :input-prompt]
-                                 :label "Input prompt"}]) ; TODO: translation
+                                 :label (text :t.create-form/input-prompt)}])
 
 (defn- form-item-type-radio-group [item]
   [radio-button-group context {:keys [:items item :type]
                                :orientation :vertical
-                               :options [{:value "text", :label "Text field"} ; TODO: translation
-                                         {:value "texta", :label "Text area"} ; TODO: translation
-                                         {:value "date", :label "Date field"}]}]) ; TODO: translation
+                               :options [{:value "text", :label (text :t.create-form/type-text)}
+                                         {:value "texta", :label (text :t.create-form/type-texta)}
+                                         {:value "date", :label (text :t.create-form/type-date)}]}])
 
 (defn- form-item-optional-checkbox [item]
   [checkbox context {:keys [:items item :optional]
-                     :label "Optional"}]) ; TODO: translation
+                     :label (text :t.create-form/optional)}])
 
 (defn- add-form-item-button []
   [:a
@@ -161,7 +161,7 @@
     :on-click (fn [event]
                 (.preventDefault event)
                 (rf/dispatch [::add-form-item]))}
-   "Add field"]) ; TODO: translation
+   (text :t.create-form/add-form-item)])
 
 (defn- remove-form-item-button [index]
   [:a
@@ -169,8 +169,8 @@
     :on-click (fn [event]
                 (.preventDefault event)
                 (rf/dispatch [::remove-form-item index]))
-    :aria-label "Remove field" ; TODO: translation
-    :title "Remove field"}
+    :aria-label (text :t.create-form/remove-form-item)
+    :title (text :t.create-form/remove-form-item)}
    [:i.icon-link.fas.fa-times
     {:aria-hidden true}]])
 
@@ -180,8 +180,8 @@
     :on-click (fn [event]
                 (.preventDefault event)
                 (rf/dispatch [::move-form-item-up index]))
-    :aria-label "Move up" ; TODO: translation
-    :title "Move up"}
+    :aria-label (text :t.create-form/move-form-item-up)
+    :title (text :t.create-form/move-form-item-up)}
    [:i.icon-link.fas.fa-chevron-up
     {:aria-hidden true}]])
 
@@ -191,8 +191,8 @@
     :on-click (fn [event]
                 (.preventDefault event)
                 (rf/dispatch [::move-form-item-down index]))
-    :aria-label "Move down" ; TODO: translation
-    :title "Move down"}
+    :aria-label (text :t.create-form/move-form-item-down)
+    :title (text :t.create-form/move-form-item-down)}
    [:i.icon-link.fas.fa-chevron-down
     {:aria-hidden true}]])
 

@@ -138,6 +138,17 @@
                           :title "Nimi"
                           :title-placeholder "Nimi"
                           :workflow-selection "Työvuo"}
+  :create-form {:title "Lomakkeen nimi"
+                :item-title "Kentän otsikko"
+                :input-prompt "Esimerkkiteksti"
+                :type-text "Tekstikenttä"
+                :type-texta "Tekstialue"
+                :type-date "Päivämäärä"
+                :optional "Ei pakollinen"
+                :add-form-item "Lisää kenttä"
+                :remove-form-item "Poista kenttä"
+                :move-form-item-up "Siirrä ylöspäin"
+                :move-form-item-down "Siirrä alaspäin"}
   :create-license {:title "Lisenssin nimi"
                    :external-link "Linkki"
                    :inline-text "Teksti"
