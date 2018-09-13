@@ -1,5 +1,6 @@
 (ns rems.administration.form
-  (:require [re-frame.core :as rf]
+  (:require [clojure.string :as str]
+            [re-frame.core :as rf]
             [rems.administration.components :refer [checkbox localized-text-field radio-button-group text-field]]
             [rems.application :refer [enrich-user]]
             [rems.collapsible :as collapsible]
@@ -12,12 +13,10 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   ; TODO: loading indicator
-   {:db (reset-form db)
-    ::fetch-form-items nil}))
+   {:db (reset-form db)}))
 
 
-; form state
+;;;; form state
 
 (rf/reg-sub
  ::form
@@ -57,21 +56,58 @@
          (assoc-in [::form :items other] (get-in db [::form :items index]))))))
 
 
-; form submit
+;;;; form submit
 
-(defn- uses-input-prompt? [form item]
-  (let [form-item-type (get-in form [:items item :type])]
-    (contains? #{"text" "texta"} form-item-type)))
+(defn- uses-input-prompt? [item]
+  (contains? #{"text" "texta"} (:type item)))
 
-(defn- valid-request? [request]
-  ; TODO
-  false)
+(defn- localized-string? [lstr languages]
+  (and (= (set (keys lstr))
+          (set languages))
+       (every? string? (vals lstr))))
 
-(defn build-request [form]
-  ; TODO
+(defn- valid-required-localized-string? [lstr languages]
+  (and (localized-string? lstr languages)
+       (every? #(not (str/blank? %))
+               (vals lstr))))
+
+(defn- valid-optional-localized-string? [lstr languages]
+  (and (localized-string? lstr languages)
+       ;; partial translations are not allowed
+       (or (every? #(not (str/blank? %))
+                   (vals lstr))
+           (every? #(str/blank? %)
+                   (vals lstr)))))
+
+(defn- valid-request-item? [item languages]
+  (and (valid-required-localized-string? (:title item) languages)
+       (boolean? (:optional item))
+       (not (str/blank? (:type item)))
+       (if (uses-input-prompt? item)
+         (valid-optional-localized-string? (:input-prompt item) languages)
+         (nil? (:input-prompt item)))))
+
+(defn- valid-request? [request languages]
+  (and (not (str/blank? (:prefix request)))
+       (not (str/blank? (:title request)))
+       (every? #(valid-request-item? % languages) (:items request))))
+
+(defn build-localized-string [lstr languages]
+  (into {} (for [language languages]
+             [language (get lstr language "")])))
+
+(defn- build-request-item [item languages]
+  {:title (build-localized-string (:title item) languages)
+   :optional (boolean (:optional item))
+   :type (:type item)
+   :input-prompt (when (uses-input-prompt? item)
+                   (build-localized-string (:input-prompt item) languages))})
+
+(defn build-request [form languages]
   (let [request {:prefix (:prefix form)
-                 :title (:title form)}]
-    (when (valid-request? request)
+                 :title (:title form)
+                 :items (map #(build-request-item % languages) (:items form))}]
+    (when (valid-request? request languages)
       request)))
 
 (defn- create-form [request]
@@ -86,30 +122,6 @@
    {}))
 
 
-; form items
-; TODO: not needed and can be removed?
-
-(defn- fetch-form-items []
-  (fetch "/api/form-items" {:handler #(rf/dispatch [::fetch-form-items-result %])}))
-
-(rf/reg-fx
- ::fetch-form-items
- (fn [_]
-   (fetch-form-items)))
-
-(rf/reg-event-db
- ::fetch-form-items-result
- (fn [db [_ items]]
-   (-> db
-       (assoc ::form-items items)
-       (dissoc ::loading?))))
-
-(rf/reg-sub
- ::form-items
- (fn [db _]
-   (::form-items db)))
-
-
 ;;;; UI ;;;;
 
 (def ^:private context {:get-form ::form
@@ -122,26 +134,26 @@
 
 (defn- form-title-field []
   [text-field context {:keys [:title]
-                       :label "Title"}]) ; TODO: translation
+                       :label (text :t.create-form/title)}])
 
 (defn- form-item-title-field [item]
   [localized-text-field context {:keys [:items item :title]
-                                 :label "Field title"}]) ; TODO: translation
+                                 :label (text :t.create-form/item-title)}])
 
 (defn- form-item-input-prompt-field [item]
   [localized-text-field context {:keys [:items item :input-prompt]
-                                 :label "Input prompt"}]) ; TODO: translation
+                                 :label (text :t.create-form/input-prompt)}])
 
 (defn- form-item-type-radio-group [item]
   [radio-button-group context {:keys [:items item :type]
                                :orientation :vertical
-                               :options [{:value "text", :label "Text field"} ; TODO: translation
-                                         {:value "texta", :label "Text area"} ; TODO: translation
-                                         {:value "date", :label "Date field"}]}]) ; TODO: translation
+                               :options [{:value "text", :label (text :t.create-form/type-text)}
+                                         {:value "texta", :label (text :t.create-form/type-texta)}
+                                         {:value "date", :label (text :t.create-form/type-date)}]}])
 
 (defn- form-item-optional-checkbox [item]
   [checkbox context {:keys [:items item :optional]
-                     :label "Optional"}]) ; TODO: translation
+                     :label (text :t.create-form/optional)}])
 
 (defn- add-form-item-button []
   [:a
@@ -149,7 +161,7 @@
     :on-click (fn [event]
                 (.preventDefault event)
                 (rf/dispatch [::add-form-item]))}
-   "Add field"]) ; TODO: translation
+   (text :t.create-form/add-form-item)])
 
 (defn- remove-form-item-button [index]
   [:a
@@ -157,8 +169,8 @@
     :on-click (fn [event]
                 (.preventDefault event)
                 (rf/dispatch [::remove-form-item index]))
-    :aria-label "Remove field" ; TODO: translation
-    :title "Remove field"}
+    :aria-label (text :t.create-form/remove-form-item)
+    :title (text :t.create-form/remove-form-item)}
    [:i.icon-link.fas.fa-times
     {:aria-hidden true}]])
 
@@ -168,8 +180,8 @@
     :on-click (fn [event]
                 (.preventDefault event)
                 (rf/dispatch [::move-form-item-up index]))
-    :aria-label "Move up" ; TODO: translation
-    :title "Move up"}
+    :aria-label (text :t.create-form/move-form-item-up)
+    :title (text :t.create-form/move-form-item-up)}
    [:i.icon-link.fas.fa-chevron-up
     {:aria-hidden true}]])
 
@@ -179,14 +191,15 @@
     :on-click (fn [event]
                 (.preventDefault event)
                 (rf/dispatch [::move-form-item-down index]))
-    :aria-label "Move down" ; TODO: translation
-    :title "Move down"}
+    :aria-label (text :t.create-form/move-form-item-down)
+    :title (text :t.create-form/move-form-item-down)}
    [:i.icon-link.fas.fa-chevron-down
     {:aria-hidden true}]])
 
 (defn- save-form-button []
   (let [form @(rf/subscribe [::form])
-        request (build-request form)]
+        languages @(rf/subscribe [:languages])
+        request (build-request form languages)]
     [:button.btn.btn-primary
      {:on-click #(rf/dispatch [::create-form request])
       :disabled (nil? request)}
@@ -217,7 +230,7 @@
                          [form-item-title-field item]
                          [form-item-optional-checkbox item]
                          [form-item-type-radio-group item]
-                         (when (uses-input-prompt? form item)
+                         (when (uses-input-prompt? (get-in form [:items item]))
                            [form-item-input-prompt-field item])]))
 
                [:div.form-item.new-form-item
