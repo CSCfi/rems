@@ -1,11 +1,7 @@
 (ns user
   (:require [clojure.pprint :refer [pprint]]
             [clojure.tools.namespace.repl :as repl]
-            [eftest.runner :as ef]
-            [muuntaja.core :as muuntaja]
-            [rems.api :as api])
-  (:import (java.awt Toolkit)
-           (java.awt.datatransfer DataFlavor)))
+            [eftest.runner :as ef]))
 
 (defn reload []
   (repl/refresh)
@@ -20,16 +16,9 @@
   (reload)
   (ef/run-tests (ef/find-tests "test/clj") {:multithread? false}))
 
-(defn read-clipboard []
-  (-> (Toolkit/getDefaultToolkit)
-      (.getSystemClipboard)
-      (.getData DataFlavor/stringFlavor)))
-
-(defn decode-transit [data]
-  (muuntaja/decode api/muuntaja "application/transit+json" data))
-
-(defn pptransit
-  ([]
-   (pptransit (read-clipboard)))
-  ([data]
-   (pprint (decode-transit data))))
+(defn pptransit []
+  ;; XXX: The user namespace is loaded before AOT happens, so our custom exceptions won't exist yet then,
+  ;;      which causes the app to crash if we try to require an application namespace in the ns declaration.
+  ;;      The workaround here is to defer requiring application namespaces.
+  (require 'rems.repl-utils)
+  ((resolve 'rems.repl-utils/pptransit)))
