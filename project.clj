@@ -1,7 +1,7 @@
 (defproject rems "0.1.0-SNAPSHOT"
 
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
+  :description "Resource Entitlement Management System is a tool for managing access rights to resources, such as research datasets."
+  :url "https://github.com/CSCfi/rems"
 
   :dependencies [[ch.qos.logback/logback-classic "1.2.3"]
                  [clj-http "3.9.1"]
@@ -55,7 +55,6 @@
 
   :min-lein-version "2.0.0"
 
-  :jvm-opts ["-server" "-Dconf=.lein-env"]
   :source-paths ["src/clj" "src/cljc"]
   :test-paths ["test/clj"]
   :resource-paths ["resources" "target/cljsbuild"]
@@ -143,6 +142,7 @@
                            [lein-figwheel "0.5.16"]]
                  :aot [rems.InvalidRequestException rems.auth.NotAuthorizedException]
 
+                 :jvm-opts ["-Dconf=dev-config.edn"]
                  :source-paths ["env/dev/clj"]
                  :resource-paths ["env/dev/resources"]
                  :repl-options {:init-ns rems.standalone
@@ -165,6 +165,7 @@
                                                         :output-dir "target/cljsbuild/test/out"
                                                         :main rems.cljs-tests
                                                         :optimizations :none}}}}}
-   :project/test {:resource-paths ["env/test/resources"]}
+   :project/test {:jvm-opts ["-Dconf=test-config.edn"]
+                  :resource-paths ["env/test/resources"]}
    :profiles/dev {}
    :profiles/test {}})

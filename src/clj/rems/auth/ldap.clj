@@ -18,7 +18,8 @@
   [user password]
   (try
     (let [connection (assoc (getx-in env [:ldap :connection])
-                            :bind-dn user :password password)
+                       :bind-dn user
+                       :password password)
           search-root (getx-in env [:ldap :search-root])
 
           conn (ldap/connect connection)

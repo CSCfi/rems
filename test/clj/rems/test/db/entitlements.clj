@@ -2,7 +2,6 @@
   (:require [cheshire.core :as cheshire]
             [clj-time.core :as time]
             [clojure.test :refer :all]
-            [rems.context :as context]
             [rems.db.core :as db]
             [rems.db.entitlements :as entitlements]
             [stub-http.core :as stub]))
@@ -54,5 +53,5 @@
         (with-redefs [rems.config/env {:entitlements-target "http://invalid/entitlements"}]
           (#'entitlements/post-entitlements :add +entitlements+)
           (let [[{payload :payload status :status}] @log]
-          (is (= "exception" status))
-          (is (= +expected-payload+ (cheshire/parse-string payload)))))))))
+            (is (= "exception" status))
+            (is (= +expected-payload+ (cheshire/parse-string payload)))))))))

@@ -1,0 +1,5 @@
+{:dev true
+ :nrepl-port 7000
+ :theme "lbr"
+ :database-url "postgresql://localhost/rems?user=rems"
+ :authentication :fake-shibboleth}

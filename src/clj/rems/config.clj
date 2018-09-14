@@ -1,10 +1,5 @@
 (ns rems.config
   (:require [cprop.core :refer [load-config]]
-            [cprop.source :as source]
-            [mount.core :refer [args defstate]]))
+            [mount.core :refer [defstate]]))
 
-(defstate env :start (load-config
-                       :merge
-                       [(args)
-                        (source/from-system-props)
-                        (source/from-env)]))
+(defstate env :start (load-config :resource "config-defaults.edn"))
