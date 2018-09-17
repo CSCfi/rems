@@ -171,4 +171,5 @@
       wrap-webjars
       (wrap-defaults +wrap-defaults-settings+)
       wrap-internal-error
+      wrap-i18n ; rendering the error page fails if rems.context/*tempura* is not set
       wrap-formats))
