@@ -12,6 +12,7 @@
  :warning-color "#8a6d3b"
  :img-path "/img/"
  :logo-bgcolor nil
+ ;; TODO: image does not exist
  :logo-name "rems_logo_en.png"
  :logo-name-sm "rems_logo_en.png"
  :logo-content-origin "initial"

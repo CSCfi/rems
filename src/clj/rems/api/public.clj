@@ -1,8 +1,8 @@
 (ns rems.api.public
   (:require [compojure.api.sweet :refer :all]
             [rems.config :refer [env]]
-            [rems.context :as context]
             [rems.locales :as locales]
+            [rems.themes :as themes]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
@@ -38,7 +38,9 @@
     (GET "/" []
       :summary "Get current layout theme"
       :return GetThemeResponse
-      (ok context/*theme*))))
+      (ok (dissoc themes/theme
+                  ;; avoid leaking file system information
+                  :static-resources-path)))))
 
 (def config-api
   (context "/config" []

@@ -3,7 +3,7 @@
  ;; when :nrepl-port is set the application starts the nREPL server on load
  :nrepl-port nil
  :database-url "postgresql://localhost/rems?user=rems"
- :theme "default"
+ :theme-path nil
  :authentication :shibboleth
  :csv-separator ","
  :default-language :en
