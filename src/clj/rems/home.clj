@@ -24,6 +24,6 @@
   (GET "/" [] (layout/home-page))
   (GET "/landing_page" req (redirect "/#/redirect")) ; DEPRECATED: legacy url redirect
   (GET "/markdown/:filename" [filename] (markdown-page filename))
-  (GET "/css/screen.css" [] (-> (styles/generate-css)
+  (GET "/css/screen.css" [] (-> styles/screen
                                 (response)
                                 (content-type "text/css"))))
