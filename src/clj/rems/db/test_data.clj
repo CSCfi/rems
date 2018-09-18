@@ -10,12 +10,27 @@
             [rems.locales :as locales]
             [rems.util :refer [get-user-id]]))
 
+(def +fake-users+
+  {:applicant "alice"
+   :approver1 "developer"
+   :approver2 "bob"
+   :owner "owner"
+   :reviewer "carl"})
+
 (def +fake-user-data+
   {"developer" {"eppn" "developer" "mail" "deve@lo.per" "commonName" "Deve Loper"}
    "alice" {"eppn" "alice" "mail" "a@li.ce" "commonName" "Alice Applicant"}
    "bob" {"eppn" "bob" "mail" "b@o.b" "commonName" "Bob Approver"}
    "carl" {"eppn" "carl" "mail" "c@a.rl" "commonName" "Carl Reviewer"}
    "owner" {"eppn" "owner" "mail" "ow@n.er" "commonName" "Own Er"}})
+
+(def +demo-users+
+  {:applicant1 "RDapplicant1@funet.fi"
+   :applicant2 "RDapplicant2@funet.fi"
+   :approver1 "RDapprover1@funet.fi"
+   :approver2 "RDapprover2@funet.fi"
+   :owner "RDowner@funet.fi"
+   :reviewer "RDreview@funet.fi"})
 
 (def +demo-user-data+
   {"RDapplicant1@funet.fi" {"eppn" "RDapplicant1@funet.fi" "mail" "RDapplicant1.test@test_example.org" "commonName" "RDapplicant1 REMSDEMO1"}
@@ -27,35 +42,35 @@
 
 (defn- create-users-and-roles! []
   ;; users provided by the fake login
-  (users/add-user! "developer" (+fake-user-data+ "developer"))
-  (roles/add-role! "developer" :applicant)
-  (roles/add-role! "developer" :approver)
-  (users/add-user! "alice" (+fake-user-data+ "alice"))
-  (roles/add-role! "alice" :applicant)
-  (users/add-user! "bob" (+fake-user-data+ "bob"))
-  (roles/add-role! "bob" :approver)
-  (users/add-user! "carl" (+fake-user-data+ "carl"))
-  (roles/add-role! "carl" :reviewer)
+  (users/add-user! (+fake-users+ :approver1) (+fake-user-data+ (+fake-users+ :approver1)))
+  (roles/add-role! (+fake-users+ :approver1) :applicant)
+  (roles/add-role! (+fake-users+ :approver1) :approver)
+  (users/add-user! (+fake-users+ :applicant) (+fake-user-data+ (+fake-users+ :applicant)))
+  (roles/add-role! (+fake-users+ :applicant) :applicant)
+  (users/add-user! (+fake-users+ :approver2) (+fake-user-data+ (+fake-users+ :approver2)))
+  (roles/add-role! (+fake-users+ :approver2) :approver)
+  (users/add-user! (+fake-users+ :reviewer) (+fake-user-data+ (+fake-users+ :reviewer)))
+  (roles/add-role! (+fake-users+ :reviewer) :reviewer)
   ;; a user to own things
-  (users/add-user! "owner" (+fake-user-data+ "owner"))
-  (roles/add-role! "owner" :owner)
+  (users/add-user! (+fake-users+ :owner) (+fake-user-data+ (+fake-users+ :owner)))
+  (roles/add-role! (+fake-users+ :owner) :owner)
   ;; invalid user for tests
   (db/add-user! {:user "invalid" :userattrs nil}))
 
 (defn- create-demo-users-and-roles! []
   ;; users used on remsdemo
-  (doseq [applicant ["RDapplicant1@funet.fi" "RDapplicant2@funet.fi"]]
+  (doseq [applicant [(+demo-users+ :applicant1) (+demo-users+ :applicant2)]]
     (users/add-user! applicant (+demo-user-data+ applicant))
     (roles/add-role! applicant :applicant))
-  (doseq [approver ["RDapprover1@funet.fi" "RDapprover2@funet.fi"]]
+  (doseq [approver [(+demo-users+ :approver1) (+demo-users+ :approver2)]]
     (users/add-user! approver (+demo-user-data+ approver))
     (roles/add-role! approver :approver)
     (roles/add-role! approver :applicant))
-  (let [reviewer "RDreview@funet.fi"]
+  (let [reviewer (+demo-users+ :reviewer)]
     (users/add-user! reviewer (+demo-user-data+ reviewer))
     (roles/add-role! reviewer :reviewer))
   ;; a user to own things
-  (let [owner "RDowner@funet.fi"]
+  (let [owner (+demo-users+ :owner)]
     (users/add-user! owner (+demo-user-data+ owner))
     (roles/add-role! owner :owner)))
 
@@ -238,7 +253,7 @@
         (applications/approve-application app-id 1 "comment for approval")))))
 
 (defn- create-application-with-expired-resource-license! [wfid form applicant-user owner]
-  (let [resource-id (:id (db/create-resource! {:resid "Resource that has expired license" :prefix "nbn" :modifieruserid owner}))
+  (let [resource-id (:id (db/create-resource! {:resid "Resource that has expired license" :prefix "nbn" :owneruserid owner :modifieruserid owner}))
         year-ago (time/minus (time/now) (time/years 1))
         yesterday (time/minus (time/now) (time/days 1))
         licid-expired (create-resource-license! resource-id "License that has expired" owner)
@@ -250,7 +265,7 @@
       (applications/submit-application (create-draft! item-with-expired-license wfid "applied when license was valid that has since expired" (time/minus (time/now) (time/days 2)))))))
 
 (defn- create-application-before-new-resource-license! [wfid form applicant-user owner]
-  (let [resource-id (:id (db/create-resource! {:resid "Resource that has a new resource license" :prefix "nbn" :modifieruserid owner}))
+  (let [resource-id (:id (db/create-resource! {:resid "Resource that has a new resource license" :prefix "nbn" :owneruserid owner :modifieruserid owner}))
         yesterday (time/minus (time/now) (time/days 1))
         licid-new (create-resource-license! resource-id "License that was just created" owner)
         _ (db/set-resource-license-validity! {:licid licid-new :start (time/now) :end nil})
@@ -263,12 +278,12 @@
 (defn create-test-data! []
   (db/add-api-key! {:apikey 42 :comment "test data"})
   (create-users-and-roles!)
-  (let [res1 (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid "owner"}))
-        res2 (:id (db/create-resource! {:resid "Extra Data" :prefix "nbn" :modifieruserid "owner"}))
-        res3 (:id (db/create-resource! {:resid "Expired Resource, should not be seen" :prefix "nbn" :modifieruserid "owner" :endt (time/minus (time/now) (time/years 1))}))
-        form (create-basic-form! "owner")
-        _ (create-expired-form! "owner")
-        workflows (create-workflows! "developer" "bob" "carl" "owner")
+  (let [res1 (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :prefix "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner)}))
+        res2 (:id (db/create-resource! {:resid "Extra Data" :prefix "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner)}))
+        res3 (:id (db/create-resource! {:resid "Expired Resource, should not be seen" :prefix "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner) :endt (time/minus (time/now) (time/years 1))}))
+        form (create-basic-form! (+fake-users+ :owner))
+        _ (create-expired-form! (+fake-users+ :owner))
+        workflows (create-workflows! (+fake-users+ :approver1) (+fake-users+ :approver2) (+fake-users+ :reviewer) (+fake-users+ :owner))
         minimal (create-catalogue-item! res1 (:minimal workflows) form
                                         {"en" "ELFA Corpus, direct approval"
                                          "fi" "ELFA-korpus, suora hyväksyntä"})
@@ -287,22 +302,22 @@
         disabled (create-catalogue-item! res1 (:simple workflows) form
                                          {"en" "ELFA Corpus, one approval (extra data, disabled)"
                                           "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti, pois käytöstä)"})]
-    (create-resource-license! res2 "Some test license" "owner")
-    (db/set-catalogue-item-state! {:item disabled :state "disabled" :user "developer"})
-    (create-applications! simple (:simple workflows) "developer" "developer")
-    (create-disabled-applications! disabled (:simple workflows) "developer" "developer")
-    (create-bundled-application! simple bundable (:simple workflows) "alice" "developer")
-    (create-review-application! with-review (:with-review workflows) "alice" "carl" "developer")
-    (create-application-with-expired-resource-license! (:simple workflows) form "alice" "owner")
-    (create-application-before-new-resource-license!  (:simple workflows) form "alice" "owner")
-    (create-expired-license! "owner")))
+    (create-resource-license! res2 "Some test license" (+fake-users+ :owner))
+    (db/set-catalogue-item-state! {:item disabled :state "disabled" :user (+fake-users+ :approver1)})
+    (create-applications! simple (:simple workflows) (+fake-users+ :approver1) (+fake-users+ :approver1))
+    (create-disabled-applications! disabled (:simple workflows) (+fake-users+ :approver1) (+fake-users+ :approver1))
+    (create-bundled-application! simple bundable (:simple workflows) (+fake-users+ :applicant) (+fake-users+ :approver1))
+    (create-review-application! with-review (:with-review workflows) (+fake-users+ :applicant) (+fake-users+ :reviewer) (+fake-users+ :approver1))
+    (create-application-with-expired-resource-license! (:simple workflows) form (+fake-users+ :applicant) (+fake-users+ :owner))
+    (create-application-before-new-resource-license!  (:simple workflows) form (+fake-users+ :applicant) (+fake-users+ :owner))
+    (create-expired-license! (+fake-users+ :owner))))
 
 (defn create-demo-data! []
   (create-demo-users-and-roles!)
-  (let [res1 (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :prefix "nbn" :modifieruserid "RDowner@funet.fi"}))
-        res2 (:id (db/create-resource! {:resid "Extra Data" :prefix "nbn" :modifieruserid "RDowner@funet.fi"}))
-        form (create-basic-form! "RDowner@funet.fi")
-        workflows (create-workflows! "RDapprover1@funet.fi" "RDapprover2@funet.fi" "RDreview@funet.fi" "RDowner@funet.fi")
+  (let [res1 (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :prefix "nbn" :owneruserid (+demo-users+ :owner) :modifieruserid (+demo-users+ :owner)}))
+        res2 (:id (db/create-resource! {:resid "Extra Data" :prefix "nbn" :owneruserid (+demo-users+ :owner) :modifieruserid (+demo-users+ :owner)}))
+        form (create-basic-form! (+demo-users+ :owner))
+        workflows (create-workflows! (+demo-users+ :approver1) (+demo-users+ :approver2) (+demo-users+ :reviewer) (+demo-users+ :owner))
         minimal (create-catalogue-item! res1 (:minimal workflows) form
                                         {"en" "ELFA Corpus, direct approval"
                                          "fi" "ELFA-korpus, suora hyväksyntä"})
@@ -321,11 +336,11 @@
         disabled (create-catalogue-item! res1 (:simple workflows) form
                                          {"en" "ELFA Corpus, one approval (extra data, disabled)"
                                           "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti, pois käytöstä)"})]
-    (create-resource-license! res2 "Some demo license" "RDowner@funet.fi")
-    (db/set-catalogue-item-state! {:item disabled :state "disabled" :user "developer"})
-    (create-applications! simple (:simple workflows) "RDapplicant1@funet.fi" "RDapprover1@funet.fi")
-    (create-disabled-applications! disabled (:simple workflows) "RDapplicant1@funet.fi" "RDapprover1@funet.fi")
-    (create-bundled-application! simple bundable (:simple workflows) "RDapplicant2@funet.fi" "RDapprover1@funet.fi")
-    (create-review-application! with-review (:with-review workflows) "RDapplicant1@funet.fi" "RDreview@funet.fi" "RDapprover1@funet.fi")
-    (create-application-with-expired-resource-license! (:simple workflows) form "RDapplicant1@funet.fi" "RDowner@funet.fi")
-    (create-application-before-new-resource-license!  (:simple workflows) form "RDapplicant1@funet.fi" "RDowner@funet.fi")))
+    (create-resource-license! res2 "Some demo license" (+demo-users+ :owner))
+    (db/set-catalogue-item-state! {:item disabled :state "disabled" :user (+demo-users+ :owner)})
+    (create-applications! simple (:simple workflows) (+demo-users+ :applicant1) (+demo-users+ :approver1))
+    (create-disabled-applications! disabled (:simple workflows) (+demo-users+ :applicant1) (+demo-users+ :approver1))
+    (create-bundled-application! simple bundable (:simple workflows) (+demo-users+ :applicant2) (+demo-users+ :approver1))
+    (create-review-application! with-review (:with-review workflows) (+demo-users+ :applicant1) (+demo-users+ :reviewer) (+demo-users+ :approver1))
+    (create-application-with-expired-resource-license! (:simple workflows) form (+demo-users+ :applicant1) (+demo-users+ :owner))
+    (create-application-before-new-resource-license!  (:simple workflows) form (+demo-users+ :applicant1) (+demo-users+ :owner))))

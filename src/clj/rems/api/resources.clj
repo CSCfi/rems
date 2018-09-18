@@ -32,7 +32,7 @@
             :licenses (licenses/get-resource-licenses (:id res))))))
 
 (defn- create-resource [{:keys [resid prefix licenses]}]
-  (let [id (:id (db/create-resource! {:resid resid :prefix prefix :modifieruserid (get-user-id)}))]
+  (let [id (:id (db/create-resource! {:resid resid :prefix prefix :owneruserid (get-user-id) :modifieruserid (get-user-id)}))]
     (doseq [licid licenses]
       (db/create-resource-license! {:resid id :licid licid}))))
 
