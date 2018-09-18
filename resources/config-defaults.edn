@@ -18,6 +18,10 @@
         :search-root "dc=Suivohtor,dc=local"}
  :alternative-login-url nil
 
+ ;; URLs to notify about granted and revoked entitlements.
+ :entitlements-target {:add nil
+                       :remove nil}
+
  ;; List of supported languages. They will be selectable in the UI.
  :languages [:en]
  :default-language :en
