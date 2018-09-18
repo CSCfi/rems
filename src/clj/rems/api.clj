@@ -16,6 +16,7 @@
             [rems.api.licenses :refer [licenses-api]]
             [rems.api.public :as public]
             [rems.api.resources :refer [resources-api]]
+            [rems.api.users :refer [users-api]]
             [rems.api.workflows :refer [workflows-api]]
             [ring.middleware.cors :refer [wrap-cors]]
             [ring.util.http-response :refer :all]
@@ -104,4 +105,5 @@
      forms-api
      licenses-api
      resources-api
+     users-api
      workflows-api)))
