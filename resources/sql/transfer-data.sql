@@ -31,8 +31,8 @@ SELECT id, 'default', (SELECT userId FROM transfer.user_mapping WHERE expandoId 
 
 SELECT setval('workflow_id_seq', (SELECT max(id) FROM public.workflow));
 
-INSERT INTO public.resource (id, modifierUserId, prefix, resId, start, endt)
-SELECT id, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifierUserId AS integer)), prefix, resId, start, "end" FROM transfer.rms_resource;
+INSERT INTO public.resource (id, owneruserid, modifierUserId, prefix, resId, start, endt)
+SELECT id, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifierUserId AS integer)), (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifierUserId AS integer)), prefix, resId, start, "end" FROM transfer.rms_resource;
 
 SELECT setval('resource_id_seq', (SELECT max(id) FROM public.resource));
 

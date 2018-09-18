@@ -36,6 +36,7 @@ VALUES (:title, :form, :resid, :wfid)
 -- :name get-resources :? :*
 SELECT
   id,
+  owneruserid,
   modifieruserid,
   prefix,
   resid,
@@ -46,8 +47,8 @@ FROM resource
 -- :name create-resource! :insert
 -- :doc Create a single resource
 INSERT INTO resource
-(resid, prefix, modifieruserid, endt)
-VALUES (:resid, :prefix, :modifieruserid,
+(resid, prefix, ownerUserId, modifieruserid, endt)
+VALUES (:resid, :prefix, :owneruserid, :modifieruserid,
  /*~ (if (:endt params) */ :endt /*~*/ NULL /*~ ) ~*/
 )
 

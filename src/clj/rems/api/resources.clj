@@ -10,14 +10,26 @@
             [schema.core :as s])
   (:import [org.joda.time DateTime]))
 
+(def Resource
+  {:id s/Num
+   :owneruserid s/Str
+   :modifieruserid s/Str
+   :prefix s/Str
+   :resid s/Str
+   :start DateTime
+   :end (s/maybe DateTime)
+   :active s/Bool
+   :licenses [ResourceLicense]})
+
 (def CreateResourceCommand
   {:resid s/Str
    :prefix s/Str
    :licenses [s/Num]})
 
 (defn- format-resource
-  [{:keys [id modifieruserid prefix resid start endt active?]}]
+  [{:keys [id owneruserid modifieruserid prefix resid start endt active?]}]
   {:id id
+   :owneruserid owneruserid
    :modifieruserid modifieruserid
    :prefix prefix
    :resid resid
@@ -32,7 +44,7 @@
             :licenses (licenses/get-resource-licenses (:id res))))))
 
 (defn- create-resource [{:keys [resid prefix licenses]}]
-  (let [id (:id (db/create-resource! {:resid resid :prefix prefix :modifieruserid (get-user-id)}))]
+  (let [id (:id (db/create-resource! {:resid resid :prefix prefix :owneruserid (get-user-id) :modifieruserid (get-user-id)}))]
     (doseq [licid licenses]
       (db/create-resource-license! {:resid id :licid licid}))))
 
