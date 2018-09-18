@@ -17,8 +17,13 @@
                      :ssl? true}
         :search-root "dc=Suivohtor,dc=local"}
 
+ ;; List of supported languages. They will be selectable in the UI.
+ :languages [:en]
  :default-language :en
 
+ ;; Path to .edn file with theme variables to override the default theme.
+ ;; If there is a 'public' directory next to the .edn file, it will be
+ ;; added as a static resources directory.
  :theme-path nil
 
  ;; Optional extra static resources directory.

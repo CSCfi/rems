@@ -87,7 +87,7 @@
  (fn [_ _]
    {:page :home
     :language :en
-    :languages [:en :fi] ; TODO: hard-coded for now
+    :languages [:en]
     :default-language :en
     :translations {}
     :identity {:user nil :roles nil}}))

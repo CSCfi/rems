@@ -18,9 +18,10 @@
 (def GetConfigResponse
   {:authentication s/Keyword
    (s/optional-key :alternative-login-url) s/Str
-   (s/optional-key :extra-pages) [ExtraPage]
-   (s/optional-key :default-language) s/Keyword
-   (s/optional-key :dev) s/Bool})
+   :extra-pages [ExtraPage]
+   :languages [s/Keyword]
+   :default-language s/Keyword
+   :dev s/Bool})
 
 (def translations-api
   (context "/translations" []
@@ -49,4 +50,4 @@
     (GET "/" []
       :summary "Get configuration that is relevant to UI"
       :return GetConfigResponse
-      (ok (select-keys env [:authentication :alternative-login-url :extra-pages :default-language :dev])))))
+      (ok (select-keys env [:authentication :alternative-login-url :extra-pages :languages :default-language :dev])))))
