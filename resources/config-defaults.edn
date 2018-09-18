@@ -1,16 +1,27 @@
-{:dev false
+{;; HTTP server port.
  :port 3000
- ;; when :nrepl-port is set the application starts the nREPL server on load
+
+ ;; When :nrepl-port is set, the application starts an nREPL server on load.
  :nrepl-port nil
- :database-url "postgresql://localhost/rems?user=rems"
- :theme-path nil
+
+ ;; When true, enables experimental and unfinished features.
+ :dev false
+
+ ;; Uses :database-url if it's defined. Otherwise :database-jndi-name is used.
+ :database-url nil
+ :database-jndi-name "java:comp/env/jdbc/rems"
+
+ ;; Supported authentication methods: :shibboleth, :fake-shibboleth, :ldap
  :authentication :shibboleth
- :csv-separator ","
- :default-language :en
  :ldap {:connection {:host "localhost:2636"
                      :ssl? true}
         :search-root "dc=Suivohtor,dc=local"}
- ;; optional extra script files loaded when UI loads
+
+ :default-language :en
+
+ :theme-path nil
+
+ ;; Optional extra script files loaded when UI loads
  :extra-scripts {:root "/dev/null" :files []}
 
  :extra-pages [;; example of internal page with translation in localization files
@@ -28,4 +39,6 @@
                #_{:id "mark"
                   :url "/markdown/about.md"
                   :file "about.md"
-                  :translations {:fi "Info", :en "About"}}]}
+                  :translations {:fi "Info", :en "About"}}]
+
+ :csv-separator ","}

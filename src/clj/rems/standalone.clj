@@ -1,5 +1,6 @@
 (ns rems.standalone
   "Run the REMS app in an embedded http server."
+  (:refer-clojure :exclude [parse-opts])
   (:require [clojure.tools.cli :refer [parse-opts]]
             [clojure.tools.logging :as log]
             [hara.io.scheduler :as scheduler]
@@ -78,15 +79,15 @@
       (migrations/migrate args (select-keys env [:database-url])))
     (= "test-data" (first args))
     (do
-      (mount/start #'rems.config/env #'rems.env/*db*)
+      (mount/start #'rems.config/env #'rems.db.core/*db*)
       (test-data/create-test-data!))
     (= "demo-data" (first args))
     (do
-      (mount/start #'rems.config/env #'rems.env/*db*)
+      (mount/start #'rems.config/env #'rems.db.core/*db*)
       (test-data/create-demo-data!))
     (= "validate" (first args))
     (do
-      (mount/start #'rems.config/env #'rems.env/*db*)
+      (mount/start #'rems.config/env #'rems.db.core/*db*)
       (when-not (validate/validate)
         (System/exit 2)))
     :else

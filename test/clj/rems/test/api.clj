@@ -13,7 +13,7 @@
 (defn api-fixture [f]
   (mount/start
    #'rems.config/env
-   #'rems.env/*db*
+   #'rems.db.core/*db*
    #'rems.handler/app)
   ;; TODO: silence logging somehow?
   (db/assert-test-database!)

@@ -11,7 +11,7 @@
   (fn [f]
     (mount/start
      #'rems.config/env
-     #'rems.env/*db*)
+     #'rems.db.core/*db*)
     (db/assert-test-database!)
     (migrations/migrate ["reset"] (select-keys env [:database-url]))
     (f)
