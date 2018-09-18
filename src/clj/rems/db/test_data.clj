@@ -11,7 +11,7 @@
             [rems.util :refer [get-user-id]]))
 
 (def +fake-users+
-  {:applicant "alice"
+  {:applicant1 "alice"
    :approver1 "developer"
    :approver2 "bob"
    :owner "owner"
@@ -45,8 +45,8 @@
   (users/add-user! (+fake-users+ :approver1) (+fake-user-data+ (+fake-users+ :approver1)))
   (roles/add-role! (+fake-users+ :approver1) :applicant)
   (roles/add-role! (+fake-users+ :approver1) :approver)
-  (users/add-user! (+fake-users+ :applicant) (+fake-user-data+ (+fake-users+ :applicant)))
-  (roles/add-role! (+fake-users+ :applicant) :applicant)
+  (users/add-user! (+fake-users+ :applicant1) (+fake-user-data+ (+fake-users+ :applicant1)))
+  (roles/add-role! (+fake-users+ :applicant1) :applicant)
   (users/add-user! (+fake-users+ :approver2) (+fake-user-data+ (+fake-users+ :approver2)))
   (roles/add-role! (+fake-users+ :approver2) :approver)
   (users/add-user! (+fake-users+ :reviewer) (+fake-user-data+ (+fake-users+ :reviewer)))
@@ -74,21 +74,21 @@
     (users/add-user! owner (+demo-user-data+ owner))
     (roles/add-role! owner :owner)))
 
-(defn- create-expired-form!
-  [owner]
+(defn- create-expired-form! []
   (let [yesterday (time/minus (time/now) (time/days 1))]
-    (db/create-form! {:prefix "nbn" :title "Expired form, should not be seen" :user owner :endt yesterday})))
+    ;; only used from create-test-data!
+    (db/create-form! {:prefix "nbn" :title "Expired form, should not be seen" :user (+fake-users+ :owner) :endt yesterday})))
 
-(defn- create-expired-license!
-  [owner]
-  (let [yesterday (time/minus (time/now) (time/days 1))]
+(defn- create-expired-license! []
+  (let [owner (+fake-users+ :owner) ; only used from create-test-data!
+        yesterday (time/minus (time/now) (time/days 1))]
     (db/create-license! {:modifieruserid owner :owneruserid owner :title "expired license" :type "link" :textcontent "http://expired" :endt yesterday})))
 
 (defn- create-basic-form!
   "Creates a bilingual form with all supported field types. Returns id of the form meta."
-  [owner]
-  (let [form (db/create-form! {:prefix "nbn" :title "Yksinkertainen lomake" :user owner})
-
+  [users]
+  (let [owner (users :owner)
+        form (db/create-form! {:prefix "nbn" :title "Yksinkertainen lomake" :user owner})
         name (db/create-form-item! {:type "text" :optional false :user owner :value 0})
         purpose (db/create-form-item! {:type "texta" :optional false :user owner :value 0})
         start-date (db/create-form-item! {:type "date" :optional true :user owner :value 0})
@@ -113,25 +113,29 @@
 
     (:id form)))
 
-(defn- create-workflows! [user1 user2 user3 owner]
-  (let [minimal (:id (db/create-workflow! {:prefix "nbn" :owneruserid owner :modifieruserid owner :title "minimal" :fnlround 0}))
+(defn- create-workflows! [users]
+  (let [approver1 (users :approver1)
+        approver2 (users :approver2)
+        reviewer (users :reviewer)
+        owner (users :owner)
+        minimal (:id (db/create-workflow! {:prefix "nbn" :owneruserid owner :modifieruserid owner :title "minimal" :fnlround 0}))
         simple (:id (db/create-workflow! {:prefix "nbn" :owneruserid owner :modifieruserid owner :title "simple" :fnlround 0}))
         with-review (:id (db/create-workflow! {:prefix "nbn" :owneruserid owner :modifieruserid owner :title "with review" :fnlround 1}))
         two-round (:id (db/create-workflow! {:prefix "nbn" :owneruserid owner :modifieruserid owner :title "two rounds" :fnlround 1}))
         different (:id (db/create-workflow! {:prefix "nbn" :owneruserid owner :modifieruserid owner :title "two rounds, different approvers" :fnlround 1}))
         expired (:id (db/create-workflow! {:prefix "nbn" :owneruserid owner :modifieruserid owner :title "workflow has already expired, should not be seen" :fnlround 0 :endt (time/minus (time/now) (time/years 1))}))]
-    ;; either user1 or user2 can approve
-    (actors/add-approver! simple user1 0)
-    (actors/add-approver! simple user2 0)
-    ;; first user3 reviews, then user1 can approve
-    (actors/add-reviewer! with-review user3 0)
-    (actors/add-approver! with-review user1 1)
-    ;; only user1 can approve
-    (actors/add-approver! two-round user1 0)
-    (actors/add-approver! two-round user1 1)
-    ;; first user2, then user1
-    (actors/add-approver! different user2 0)
-    (actors/add-approver! different user1 1)
+    ;; either approver1 or approver2 can approve
+    (actors/add-approver! simple approver1 0)
+    (actors/add-approver! simple approver2 0)
+    ;; first reviewer reviews, then approver1 can approve
+    (actors/add-reviewer! with-review reviewer 0)
+    (actors/add-approver! with-review approver1 1)
+    ;; only approver1 can approve
+    (actors/add-approver! two-round approver1 0)
+    (actors/add-approver! two-round approver1 1)
+    ;; first approver2, then approver1
+    (actors/add-approver! different approver2 0)
+    (actors/add-approver! different approver1 1)
 
     ;; attach both kinds of licenses to all workflows
     (let [link (:id (db/create-license!
@@ -242,18 +246,23 @@
         (applications/return-application app-id 0 "comment for return"))
       (applications/submit-application app-id))))
 
-(defn- create-review-application! [catid wfid applicant reviewer approver]
-  (binding [context/*tempura* locales/tconfig
-            context/*user* {"eppn" applicant}]
-    (let [app-id (create-draft! catid wfid "application with review")]
-      (applications/submit-application app-id)
-      (binding [context/*user* {"eppn" reviewer}]
-        (applications/review-application app-id 0 "comment for review"))
-      (binding [context/*user* {"eppn" approver}]
-        (applications/approve-application app-id 1 "comment for approval")))))
+(defn- create-review-application! [catid wfid users]
+  (let [applicant (users :applicant1)
+        approver (users :approver1)
+        reviewer (users :reviewer)]
+    (binding [context/*tempura* locales/tconfig
+              context/*user* {"eppn" applicant}]
+      (let [app-id (create-draft! catid wfid "application with review")]
+        (applications/submit-application app-id)
+        (binding [context/*user* {"eppn" reviewer}]
+          (applications/review-application app-id 0 "comment for review"))
+        (binding [context/*user* {"eppn" approver}]
+          (applications/approve-application app-id 1 "comment for approval"))))))
 
-(defn- create-application-with-expired-resource-license! [wfid form applicant-user owner]
-  (let [resource-id (:id (db/create-resource! {:resid "Resource that has expired license" :prefix "nbn" :owneruserid owner :modifieruserid owner}))
+(defn- create-application-with-expired-resource-license! [wfid form users]
+  (let [applicant (users :applicant1)
+        owner (users :owner)
+        resource-id (:id (db/create-resource! {:resid "Resource that has expired license" :prefix "nbn" :owneruserid owner :modifieruserid owner}))
         year-ago (time/minus (time/now) (time/years 1))
         yesterday (time/minus (time/now) (time/days 1))
         licid-expired (create-resource-license! resource-id "License that has expired" owner)
@@ -261,18 +270,20 @@
         item-with-expired-license (create-catalogue-item! resource-id wfid form {"en" "Resource with expired resource license"
                                                                                  "fi" "Resurssi jolla on vanhentunut resurssilisenssi"})]
     (binding [context/*tempura* locales/tconfig
-              context/*user* {"eppn" applicant-user}]
+              context/*user* {"eppn" applicant}]
       (applications/submit-application (create-draft! item-with-expired-license wfid "applied when license was valid that has since expired" (time/minus (time/now) (time/days 2)))))))
 
-(defn- create-application-before-new-resource-license! [wfid form applicant-user owner]
-  (let [resource-id (:id (db/create-resource! {:resid "Resource that has a new resource license" :prefix "nbn" :owneruserid owner :modifieruserid owner}))
+(defn- create-application-before-new-resource-license! [wfid form users]
+  (let [applicant (users :applicant1)
+        owner (users :owner)
+        resource-id (:id (db/create-resource! {:resid "Resource that has a new resource license" :prefix "nbn" :owneruserid owner :modifieruserid owner}))
         yesterday (time/minus (time/now) (time/days 1))
         licid-new (create-resource-license! resource-id "License that was just created" owner)
         _ (db/set-resource-license-validity! {:licid licid-new :start (time/now) :end nil})
         item-without-new-license (create-catalogue-item! resource-id wfid form {"en" "Resource with just created new resource license"
                                                                                 "fi" "Resurssi jolla on uusi resurssilisenssi"})]
     (binding [context/*tempura* locales/tconfig
-              context/*user* {"eppn" applicant-user}]
+              context/*user* {"eppn" applicant}]
       (applications/submit-application (create-draft! item-without-new-license wfid "applied before license was valid" (time/minus (time/now) (time/days 2)))))))
 
 (defn create-test-data! []
@@ -281,9 +292,9 @@
   (let [res1 (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :prefix "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner)}))
         res2 (:id (db/create-resource! {:resid "Extra Data" :prefix "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner)}))
         res3 (:id (db/create-resource! {:resid "Expired Resource, should not be seen" :prefix "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner) :endt (time/minus (time/now) (time/years 1))}))
-        form (create-basic-form! (+fake-users+ :owner))
-        _ (create-expired-form! (+fake-users+ :owner))
-        workflows (create-workflows! (+fake-users+ :approver1) (+fake-users+ :approver2) (+fake-users+ :reviewer) (+fake-users+ :owner))
+        form (create-basic-form! +fake-users+)
+        _ (create-expired-form!)
+        workflows (create-workflows! +fake-users+)
         minimal (create-catalogue-item! res1 (:minimal workflows) form
                                         {"en" "ELFA Corpus, direct approval"
                                          "fi" "ELFA-korpus, suora hyväksyntä"})
@@ -306,18 +317,18 @@
     (db/set-catalogue-item-state! {:item disabled :state "disabled" :user (+fake-users+ :approver1)})
     (create-applications! simple (:simple workflows) (+fake-users+ :approver1) (+fake-users+ :approver1))
     (create-disabled-applications! disabled (:simple workflows) (+fake-users+ :approver1) (+fake-users+ :approver1))
-    (create-bundled-application! simple bundable (:simple workflows) (+fake-users+ :applicant) (+fake-users+ :approver1))
-    (create-review-application! with-review (:with-review workflows) (+fake-users+ :applicant) (+fake-users+ :reviewer) (+fake-users+ :approver1))
-    (create-application-with-expired-resource-license! (:simple workflows) form (+fake-users+ :applicant) (+fake-users+ :owner))
-    (create-application-before-new-resource-license!  (:simple workflows) form (+fake-users+ :applicant) (+fake-users+ :owner))
-    (create-expired-license! (+fake-users+ :owner))))
+    (create-bundled-application! simple bundable (:simple workflows) (+fake-users+ :applicant1) (+fake-users+ :approver1))
+    (create-review-application! with-review (:with-review workflows) +fake-users+)
+    (create-application-with-expired-resource-license! (:simple workflows) form +fake-users+)
+    (create-application-before-new-resource-license!  (:simple workflows) form +fake-users+)
+    (create-expired-license!)))
 
 (defn create-demo-data! []
   (create-demo-users-and-roles!)
   (let [res1 (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :prefix "nbn" :owneruserid (+demo-users+ :owner) :modifieruserid (+demo-users+ :owner)}))
         res2 (:id (db/create-resource! {:resid "Extra Data" :prefix "nbn" :owneruserid (+demo-users+ :owner) :modifieruserid (+demo-users+ :owner)}))
-        form (create-basic-form! (+demo-users+ :owner))
-        workflows (create-workflows! (+demo-users+ :approver1) (+demo-users+ :approver2) (+demo-users+ :reviewer) (+demo-users+ :owner))
+        form (create-basic-form! +demo-users+)
+        workflows (create-workflows! +demo-users+)
         minimal (create-catalogue-item! res1 (:minimal workflows) form
                                         {"en" "ELFA Corpus, direct approval"
                                          "fi" "ELFA-korpus, suora hyväksyntä"})
@@ -341,6 +352,6 @@
     (create-applications! simple (:simple workflows) (+demo-users+ :applicant1) (+demo-users+ :approver1))
     (create-disabled-applications! disabled (:simple workflows) (+demo-users+ :applicant1) (+demo-users+ :approver1))
     (create-bundled-application! simple bundable (:simple workflows) (+demo-users+ :applicant2) (+demo-users+ :approver1))
-    (create-review-application! with-review (:with-review workflows) (+demo-users+ :applicant1) (+demo-users+ :reviewer) (+demo-users+ :approver1))
-    (create-application-with-expired-resource-license! (:simple workflows) form (+demo-users+ :applicant1) (+demo-users+ :owner))
-    (create-application-before-new-resource-license!  (:simple workflows) form (+demo-users+ :applicant1) (+demo-users+ :owner))))
+    (create-review-application! with-review (:with-review workflows) +demo-users+)
+    (create-application-with-expired-resource-license! (:simple workflows) form +demo-users+)
+    (create-application-before-new-resource-license!  (:simple workflows) form +demo-users+)))
