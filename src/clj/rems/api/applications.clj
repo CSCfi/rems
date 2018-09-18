@@ -3,7 +3,6 @@
             [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
             [rems.api.util :refer [check-roles check-user longify-keys]]
-            [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.users :as users]
@@ -103,8 +102,8 @@
     (if is-handler?
       application
       (-> application
-        (update-in [:application :events] hide-sensitive-comments)
-        (update-in [:application :events] hide-users)))))
+          (update-in [:application :events] hide-sensitive-comments)
+          (update-in [:application :events] hide-users)))))
 
 (defn api-get-application [application-id]
   (when (not (empty? (db/get-applications {:id application-id})))
@@ -154,24 +153,22 @@
       :responses {200 {:schema GetApplicationResponse}
                   404 {:schema s/Str :description "Not found"}}
       (check-user)
-      (binding [context/*lang* :en]
-        (if-let [app (api-get-application application-id)]
-          (ok app)
-          (not-found! "not found"))))
+      (if-let [app (api-get-application application-id)]
+        (ok app)
+        (not-found! "not found")))
 
     (GET "/:application-id/pdf" []
-       :summary "Get a pdf version of an application."
-       :path-params [application-id :- (describe s/Num "application id")]
-       :produces ["application/pdf"]
-       (check-user)
-       (binding [context/*lang* :en]
-         (if-let [app (api-get-application application-id)]
-           (-> app
-               (pdf/application-to-pdf-bytes)
-               (java.io.ByteArrayInputStream.)
-               (ok)
-               (content-type "application/pdf"))
-           (not-found! "not found"))))
+      :summary "Get a pdf version of an application."
+      :path-params [application-id :- (describe s/Num "application id")]
+      :produces ["application/pdf"]
+      (check-user)
+      (if-let [app (api-get-application application-id)]
+        (-> app
+            (pdf/application-to-pdf-bytes)
+            (java.io.ByteArrayInputStream.)
+            (ok)
+            (content-type "application/pdf"))
+        (not-found! "not found")))
 
     (POST "/save" []
       :summary "Create a new application, change an existing one or submit an application"

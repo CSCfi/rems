@@ -2,13 +2,11 @@
   (:require [clojure.test :refer :all]
             [rems.handler :refer [app]]
             [rems.test.api :refer :all]
-            [rems.test.tempura :refer [fake-tempura-fixture]]
             [ring.mock.request :refer :all]
             [clojure.string :as str]))
 
 (use-fixtures
   :once
-  fake-tempura-fixture
   api-fixture)
 
 (deftest catalogue-api-test
@@ -26,7 +24,7 @@
     (let [response (-> (request :get (str "/api/catalogue"))
                        app)
           body (read-body response)]
-      (is (= 401 (:status response)))
+      (is (response-is-unauthorized? response))
       (is (= "unauthorized" body))))
   (testing "listing with wrong API-Key"
     (is (= "invalid api key"

@@ -26,7 +26,7 @@
       (let [response (-> (request :post (str "/api/users/create"))
                          (json-body new-user)
                          app)]
-        (is (= 403 (:status response)))
+        (is (response-is-forbidden? response))
         (is (= "<h1>Invalid anti-forgery token</h1>" (read-body response))))))
 
   (testing "without owner role"
@@ -35,5 +35,5 @@
                          (json-body new-user)
                          (authenticate "42" "alice")
                          app)]
-        (is (= 401 (:status response)))
+        (is (response-is-unauthorized? response))
         (is (= "unauthorized" (read-body response)))))))

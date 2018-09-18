@@ -3,12 +3,10 @@
             [clojure.test :refer :all]
             [rems.handler :refer [app]]
             [rems.test.api :refer :all]
-            [rems.test.tempura :refer [fake-tempura-fixture]]
             [ring.mock.request :refer :all]))
 
 (use-fixtures
   :once
-  fake-tempura-fixture
   api-fixture)
 
 (deftest resources-api-test
@@ -65,7 +63,7 @@
     (testing "list"
       (let [response (-> (request :get "/api/resources")
                          app)]
-        (is (= 401 (:status response)))
+        (is (response-is-unauthorized? response))
         (is (= "unauthorized" (read-body response)))))
     (testing "create"
       (let [response (-> (request :post "/api/resources/create")
@@ -73,7 +71,7 @@
                                      :prefix "p"
                                      :licenses []})
                          app)]
-        (is (= 403 (:status response)))
+        (is (response-is-forbidden? response))
         (is (= "<h1>Invalid anti-forgery token</h1>" (read-body response))))))
 
   (testing "with wrong api key"
@@ -83,7 +81,7 @@
         (let [response (-> (request :get "/api/resources")
                            (authenticate api-key user-id)
                            app)]
-          (is (= 401 (:status response)))
+          (is (response-is-unauthorized? response))
           (is (= "invalid api key" (read-body response)))))
       (testing "create"
         (let [response (-> (request :post "/api/resources/create")
@@ -92,7 +90,7 @@
                                        :prefix "p"
                                        :licenses []})
                            app)]
-          (is (= 401 (:status response)))
+          (is (response-is-unauthorized? response))
           (is (= "invalid api key" (read-body response)))))))
 
   (testing "without owner role"
@@ -102,7 +100,7 @@
         (let [response (-> (request :get "/api/resources")
                            (authenticate api-key user-id)
                            app)]
-          (is (= 401 (:status response)))
+          (is (response-is-unauthorized? response))
           (is (= "unauthorized" (read-body response)))))
       (testing "create"
         (let [response (-> (request :post "/api/resources/create")
@@ -111,5 +109,5 @@
                                        :prefix "p"
                                        :licenses []})
                            app)]
-          (is (= 401 (:status response)))
+          (is (response-is-unauthorized? response))
           (is (= "unauthorized" (read-body response))))))))
