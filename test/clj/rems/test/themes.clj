@@ -1,12 +1,15 @@
 (ns rems.test.themes
   (:require [clojure.test :refer :all]
+            [mount.core :as mount]
+            [rems.test.testing :refer [suppress-logging]]
             [rems.themes :as themes]
-            [rems.util :as util]
-            [mount.core :as mount]))
+            [rems.util :as util]))
 
-(use-fixtures :once (fn [f]
-                      (f)
-                      (mount/stop)))
+(use-fixtures :once
+  (suppress-logging "rems.themes")
+  (fn [f]
+    (f)
+    (mount/stop)))
 
 (deftest load-theme-test
   (let [default-theme {:default "foo"}]

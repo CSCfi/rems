@@ -4,7 +4,11 @@
             [clojure.test :refer :all]
             [rems.db.core :as db]
             [rems.db.entitlements :as entitlements]
+            [rems.test.testing :refer [suppress-logging]]
             [stub-http.core :as stub]))
+
+(use-fixtures :once
+  (suppress-logging "rems.db.entitlements"))
 
 (def +entitlements+
   [{:resid "res1" :catappid 11 :userid "user1" :start (time/date-time 2001 10 11) :mail "user1@tes.t"}
