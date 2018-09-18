@@ -6,7 +6,7 @@
 
 (use-fixtures :once (fn [f]
                       (f)
-                      (mount/stop #'rems.themes/theme)))
+                      (mount/stop)))
 
 (deftest load-theme-test
   (let [default-theme {:default "foo"}]
@@ -28,8 +28,10 @@
                           [:color1 :color42]))))))
 
 (deftest get-theme-attribute-test
-  (mount/start-with {#'rems.themes/theme {:test "success"
-                                          :test-color 2}})
+  (-> (mount/only [#'rems.themes/theme])
+      (mount/swap {#'rems.themes/theme {:test "success"
+                                        :test-color 2}})
+      (mount/start))
   (is (= 2 (util/get-theme-attribute :test-color)))
   (is (= "success" (util/get-theme-attribute :test)))
   (is (nil? (util/get-theme-attribute :no-such-attribute))))
