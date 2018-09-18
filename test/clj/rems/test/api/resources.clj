@@ -22,7 +22,7 @@
             data (read-body response)]
         (is (response-is-ok? response))
         (is (coll-is-not-empty? data))
-        (is (= #{:id :modifieruserid :prefix :resid :start :end :active :licenses} (set (keys (first data)))))))
+        (is (= #{:id :owneruserid :modifieruserid :prefix :resid :start :end :active :licenses} (set (keys (first data)))))))
     (testing "create"
       (let [licid 1
             resid "RESOURCE-API-TEST"]
