@@ -26,16 +26,6 @@
 
 (def ResourceLicense License)
 
-(def Resource
-  {:id s/Num
-   :modifieruserid s/Str
-   :prefix s/Str
-   :resid s/Str
-   :start DateTime
-   :end (s/maybe DateTime)
-   :active s/Bool
-   :licenses [ResourceLicense]})
-
 (def ApplicationLicense
   (merge License
          {:type (s/eq "license") ;; TODO this is pretty redundant

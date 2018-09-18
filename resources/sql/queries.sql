@@ -36,6 +36,7 @@ VALUES (:title, :form, :resid, :wfid)
 -- :name get-resources :? :*
 SELECT
   id,
+  owneruserid,
   modifieruserid,
   prefix,
   resid,
