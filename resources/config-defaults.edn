@@ -21,6 +21,9 @@
 
  :theme-path nil
 
+ ;; Optional extra static resources directory.
+ :extra-static-resources nil
+
  ;; Optional extra script files loaded when UI loads
  :extra-scripts {:root "/dev/null" :files []}
 

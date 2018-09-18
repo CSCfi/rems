@@ -13,8 +13,8 @@
          (when theme-path
            (try
              (assoc (source/from-file theme-path)
-               :static-resources-path (.getPath (io/file (.getParentFile (io/file theme-path))
-                                                         "public")))
+               :theme-static-resources (.getPath (io/file (.getParentFile (io/file theme-path))
+                                                          "public")))
              (catch java.util.MissingResourceException e
                (log/error (str "Could not locate the theme file: " theme-path))
                {})

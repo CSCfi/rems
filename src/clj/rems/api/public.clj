@@ -40,7 +40,7 @@
       :return GetThemeResponse
       (ok (dissoc themes/theme
                   ;; avoid leaking file system information
-                  :static-resources-path)))))
+                  :theme-static-resources)))))
 
 (def config-api
   (context "/config" []

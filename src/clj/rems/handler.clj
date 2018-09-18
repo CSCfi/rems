@@ -63,10 +63,10 @@
   (routes
    (extra-script-routes (:extra-scripts env))
    (normal-routes)
-   (if-let [path (:serve-static +defaults+)]
+   (if-let [path (:extra-static-resources env)]
      (route/files "/" {:root path})
      never-match-route)
-   (if-let [path (:static-resources-path themes/theme)]
+   (if-let [path (:theme-static-resources themes/theme)]
      (route/files "/" {:root path})
      never-match-route)
    not-found))

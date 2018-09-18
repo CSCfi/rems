@@ -18,7 +18,7 @@
              (themes/load-theme "no-such-file.edn" default-theme))))
     (testing "static resources can be placed in 'public' directory next to the theme file"
       (is (= "lbr-theme/public"
-             (:static-resources-path (themes/load-theme "lbr-theme/lbr.edn" default-theme)))))
+             (:theme-static-resources (themes/load-theme "lbr-theme/lbr.edn" default-theme)))))
     (testing "overrides values from the default theme"
       (is (= {:color1 "#CAD2E6"
               :color42 "not overridden"}
