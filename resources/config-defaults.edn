@@ -16,6 +16,7 @@
  :ldap {:connection {:host "localhost:2636"
                      :ssl? true}
         :search-root "dc=Suivohtor,dc=local"}
+ :alternative-login-url nil
 
  ;; List of supported languages. They will be selectable in the UI.
  :languages [:en]

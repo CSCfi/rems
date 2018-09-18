@@ -17,7 +17,7 @@
 
 (def GetConfigResponse
   {:authentication s/Keyword
-   (s/optional-key :alternative-login-url) s/Str
+   :alternative-login-url (s/maybe s/Str)
    :extra-pages [ExtraPage]
    :languages [s/Keyword]
    :default-language s/Keyword
