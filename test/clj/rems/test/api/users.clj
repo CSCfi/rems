@@ -1,5 +1,6 @@
 (ns ^:integration rems.test.api.users
   (:require [clojure.test :refer :all]
+            [rems.db.users :as users]
             [rems.handler :refer [app]]
             [rems.test.api :refer :all]
             [ring.mock.request :refer :all]))
@@ -14,11 +15,13 @@
 
 (deftest users-api-test
   (testing "create"
+    (is (= nil (users/get-user-attributes "david")))
     (let [response (-> (request :post (str "/api/users/create"))
                        (json-body new-user)
                        (authenticate "42" "owner")
                        app)]
-      (is (response-is-ok? response)))))
+      (is (response-is-ok? response))
+      (is (= {"eppn" "david" "mail" "d@av.id" "commonName" "David Newuser"} (users/get-user-attributes "david"))))))
 
 (deftest workflows-api-security-test
   (testing "without authentication"
