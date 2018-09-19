@@ -76,7 +76,7 @@
           (is (= application-id (:id (:application application))))
           (is (= "draft" (:state (:application application))))
           (is (= 2 (count (:licenses application))))
-          (is (= 3 (count (:items application))))))
+          (is (= 4 (count (:items application))))))
       (testing "retrieving as other user"
         (let [response (-> (request :get (str "/api/applications/" application-id))
                            (authenticate api-key another-user)

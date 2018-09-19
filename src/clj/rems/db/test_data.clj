@@ -92,12 +92,14 @@
         name (db/create-form-item! {:type "text" :optional false :user owner :value 0})
         purpose (db/create-form-item! {:type "texta" :optional false :user owner :value 0})
         start-date (db/create-form-item! {:type "date" :optional true :user owner :value 0})
-        expired (db/create-form-item! {:type "text" :optional true :user owner :value 0})]
+        expired (db/create-form-item! {:type "text" :optional true :user owner :value 0})
+        plan (db/create-form-item! {:type "attachment" :optional true :user owner :value 0})]
     (db/end-form-item! {:id (:id expired)})
     ;; link out of order for less predictable row ids
     (db/link-form-item! {:form (:id form) :itemorder 1 :optional false :item (:id name) :user owner})
     (db/link-form-item! {:form (:id form) :itemorder 3 :optional false :item (:id purpose) :user owner})
     (db/link-form-item! {:form (:id form) :itemorder 2 :optional true :item (:id start-date) :user owner})
+    (db/link-form-item! {:form (:id form) :itemorder 4 :optional true :item (:id plan) :user owner})
     ;; localize
     (db/localize-form-item! {:item (:id name) :langcode "fi" :title "Projektin nimi" :inputprompt "Projekti"})
     (db/localize-form-item! {:item (:id name) :langcode "en" :title "Project name" :inputprompt "Project"})
@@ -110,6 +112,8 @@
     (db/localize-form-item! {:item (:id start-date) :langcode "fi" :title "Projektin aloituspäivä" :inputprompt ""})
     (db/localize-form-item! {:item (:id start-date) :langcode "en" :title "Start date of the project" :inputprompt ""})
     (db/localize-form-item! {:item (:id expired) :langcode "en" :title "Expired form item" :inputprompt ""})
+    (db/localize-form-item! {:item (:id plan) :langcode "fi" :title "Projektisuunnitelma" :inputprompt ""})
+    (db/localize-form-item! {:item (:id plan) :langcode "en" :title "Project plan" :inputprompt ""})
 
     (:id form)))
 
