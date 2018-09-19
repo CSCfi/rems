@@ -3,12 +3,10 @@
             [clojure.test :refer :all]
             [rems.handler :refer [app]]
             [rems.test.api :refer :all]
-            [rems.test.tempura :refer [fake-tempura-fixture]]
             [ring.mock.request :refer :all]))
 
 (use-fixtures
   :once
-  fake-tempura-fixture
   api-fixture)
 
 (deftest applications-api-test
@@ -84,7 +82,7 @@
                            (authenticate api-key another-user)
                            app)
               application (read-body response)]
-          (is (= 401 (:status response)))))
+          (is (response-is-unauthorized? response))))
       (testing "saving as other user"
         (let [response (-> (request :post (str "/api/applications/save"))
                            (authenticate api-key another-user)
@@ -92,7 +90,7 @@
                                        :application-id application-id
                                        :items {1 "REST-Test"}})
                            app)]
-          (is (= 401 (:status response)))))
+          (is (response-is-unauthorized? response))))
       (testing "submitting"
         (let [response (-> (request :post (str "/api/applications/save"))
                            (authenticate api-key user-id)
@@ -254,7 +252,7 @@
                        app)
           cmd-response (read-body response)
           app-id (:id cmd-response)]
-      (is (= 200 (:status response)))
+      (is (response-is-ok? response))
       (is (number? app-id))
       (testing "get application as applicant"
         (let [application (-> (request :get (str "/api/applications/" app-id))
@@ -275,14 +273,13 @@
           (is (:can-approve? application))))
       ;; TODO tests for :review-type
       (testing "approve application"
-        (is (= 200 (-> (request :post (str "/api/applications/judge"))
-                       (authenticate api-key approver)
-                       (json-body {:command "approve"
-                                   :application-id app-id
-                                   :round 0
-                                   :comment "msg"})
-                       app
-                       :status))))
+        (is (response-is-ok? (-> (request :post (str "/api/applications/judge"))
+                                 (authenticate api-key approver)
+                                 (json-body {:command "approve"
+                                             :application-id app-id
+                                             :round 0
+                                             :comment "msg"})
+                                 app))))
       (testing "get approved application as applicant"
         (let [application (-> (request :get (str "/api/applications/" app-id))
                               (authenticate api-key applicant)
@@ -315,24 +312,20 @@
                    read-body
                    :id)
         submit (fn []
-                 (is (= 200
-                        (-> (request :post (str "/api/applications/save"))
-                            (authenticate api-key user)
-                            (json-body {:command "submit"
-                                        :application-id app-id
-                                        :items {1 "x" 2 "y" 3 "z"}
-                                        :licenses {1 "approved" 2 "approved"}})
-                            app
-                            :status))))
+                 (is (response-is-ok? (-> (request :post (str "/api/applications/save"))
+                                          (authenticate api-key user)
+                                          (json-body {:command "submit"
+                                                      :application-id app-id
+                                                      :items {1 "x" 2 "y" 3 "z"}
+                                                      :licenses {1 "approved" 2 "approved"}})
+                                          app))))
         action (fn [body]
-                 (is (= 200
-                        (-> (request :post (str "/api/applications/judge"))
-                            (authenticate api-key user)
-                            (json-body (merge {:application-id app-id
-                                               :round 0}
-                                              body))
-                            app
-                            :status))))]
+                 (is (response-is-ok? (-> (request :post (str "/api/applications/judge"))
+                                          (authenticate api-key user)
+                                          (json-body (merge {:application-id app-id
+                                                             :round 0}
+                                                            body))
+                                          app))))]
     (submit)
     (action {:command "return"
              :comment "returned"})
@@ -351,7 +344,7 @@
                      read-body
                      :application
                      :events)]
-      (is (= 200 (:status response)))
+      (is (response-is-ok? response))
       (is (= [["apply" nil]
               ["return" "returned"]
               ["apply" nil]
@@ -384,15 +377,13 @@
         (is (= ["alice" "bob" "carl" "developer" "owner"] (sort (map :userid reviewers))))
         (is (not (contains? (set (map :userid reviewers)) "invalid")))))
     (testing "send review request"
-      (is (= 200
-             (-> (request :post (str "/api/applications/review_request"))
-                 (authenticate api-key approver)
-                 (json-body {:application-id app-id
-                             :round 0
-                             :comment "pls revu"
-                             :recipients [reviewer]})
-                 app
-                 :status))))
+      (is (response-is-ok? (-> (request :post (str "/api/applications/review_request"))
+                               (authenticate api-key approver)
+                               (json-body {:application-id app-id
+                                           :round 0
+                                           :comment "pls revu"
+                                           :recipients [reviewer]})
+                               app))))
     (testing "check review event"
       (let [events (-> (request :get (str "/api/applications/" app-id))
                        (authenticate api-key reviewer)
@@ -404,25 +395,21 @@
                 {:userid reviewer :comment "pls revu" :event "review-request"}]
                (map #(select-keys % [:userid :comment :event]) events)))))
     (testing "send review"
-      (is (= 200
-             (-> (request :post (str "/api/applications/judge"))
-                 (authenticate api-key reviewer)
-                 (json-body {:command "third-party-review"
-                             :application-id app-id
-                             :round 0
-                             :comment "is ok"})
-                 app
-                 :status))))
+      (is (response-is-ok? (-> (request :post (str "/api/applications/judge"))
+                               (authenticate api-key reviewer)
+                               (json-body {:command "third-party-review"
+                                           :application-id app-id
+                                           :round 0
+                                           :comment "is ok"})
+                               app))))
     (testing "approve"
-      (is (= 200
-             (-> (request :post (str "/api/applications/judge"))
-                 (authenticate api-key approver)
-                 (json-body {:command "approve"
-                             :application-id app-id
-                             :round 0
-                             :comment "I approve this"})
-                 app
-                 :status))))
+      (is (response-is-ok? (-> (request :post (str "/api/applications/judge"))
+                               (authenticate api-key approver)
+                               (json-body {:command "approve"
+                                           :application-id app-id
+                                           :round 0
+                                           :comment "I approve this"})
+                               app))))
     (testing "events of approver"
       (let [events (-> (request :get (str "/api/applications/" app-id))
                        (authenticate api-key approver)
@@ -496,7 +483,7 @@
                                      :licenses {1 "approved" 2 "approved"}})
                          app)
             body (read-body response)]
-        (is (= 200 (:status response)))
+        (is (response-is-ok? response))
         (is (:success body))))
     (testing "submit with session but without csrf"
       (let [response (-> (request :post (str "/api/applications/save"))
@@ -506,7 +493,7 @@
                                      :items {1 "x" 2 "y" 3 "z"}
                                      :licenses {1 "approved" 2 "approved"}})
                          app)]
-        (is (= 403 (:status response)))))
+        (is (response-is-forbidden? response))))
     (testing "submit with session and csrf and wrong api-key"
       (let [response (-> (request :post (str "/api/applications/save"))
                          (header "Cookie" cookie)
@@ -518,7 +505,7 @@
                                      :licenses {1 "approved" 2 "approved"}})
                          app)
             body (read-body response)]
-        (is (= 401 (:status response)))
+        (is (response-is-unauthorized? response))
         (is (= "invalid api key" body))))))
 
 (deftest applications-api-security-test
@@ -585,11 +572,11 @@
     (let [response (-> (request :get (str "/api/applications/2/pdf"))
                        (authenticate "42" "alice")
                        app)]
-      (is (= 401 (:status response)))))
+      (is (response-is-unauthorized? response))))
   (testing "success"
     (let [response (-> (request :get (str "/api/applications/2/pdf"))
                        (authenticate "42" "developer")
                        app)]
-      (is (= 200 (:status response)))
+      (is (response-is-ok? response))
       (is (= "application/pdf" (get-in response [:headers "Content-Type"])))
       (is (.startsWith (slurp (:body response)) "%PDF-1.")))))

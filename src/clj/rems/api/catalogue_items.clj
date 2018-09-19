@@ -2,7 +2,6 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
             [rems.api.util :refer [check-user check-roles]]
-            [rems.context :as context]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.util :refer [get-user-id]]
@@ -40,9 +39,8 @@
       :summary "Get catalogue items"
       :query-params [{resource :- (describe s/Str "resource id (optional)") nil}]
       :return GetCatalogueItemsResponse
-      (binding [context/*lang* :en]
-        (check-user)
-        (ok (catalogue/get-localized-catalogue-items {:resource resource}))))
+      (check-user)
+      (ok (catalogue/get-localized-catalogue-items {:resource resource})))
 
     (GET "/:item-id" []
       :summary "Get a single catalogue item"
@@ -50,11 +48,10 @@
       :responses {200 {:schema CatalogueItem}
                   404 {:schema s/Str :description "Not found"}}
 
-      (binding [context/*lang* :en]
-        (check-user)
-        (if-let [it (catalogue/get-localized-catalogue-item item-id)]
-          (ok it)
-          (not-found! "not found"))))
+      (check-user)
+      (if-let [it (catalogue/get-localized-catalogue-item item-id)]
+        (ok it)
+        (not-found! "not found")))
 
     (POST "/create" []
       :summary "Create a new catalogue item"
