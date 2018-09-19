@@ -18,9 +18,9 @@
 
 (defn load-external-theme [config]
   (if-let [file (get-file config :theme-path)]
-    (assoc config
-           :theme (merge-maps (:theme config) (source/from-file file))
-           :theme-static-resources (file-sibling file "public"))
+    (merge-maps config
+                {:theme (source/from-file file)
+                 :theme-static-resources (file-sibling file "public")})
     config))
 
 (defstate env :start (-> (load-config :resource "config-defaults.edn")
