@@ -55,6 +55,6 @@ Localization files are located under `resources/translations`. To change a text 
 
 ## Themes
 
-Custom themes can be added by creating a file, for example `my-custom-theme.edn`, and specifying its location in the `:theme-path` configuration parameter. The theme file can override some or all of the theme attributes (see [theme-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/theme-defaults.edn)). If there is a `public` directory next to the theme configuration file, it will be exposed to the web as a static resources directory. See [lbr-theme](https://github.com/CSCfi/rems/tree/master/lbr-theme) for an example theme.
+Custom themes can be used by creating a file, for example `my-custom-theme.edn`, and specifying its location in the `:theme-path` configuration parameter. The theme file can override some or all of the theme attributes (see `:theme` in [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn)). Static resources can be placed in a `public` directory next to the theme configuration file. See [lbr-theme](https://github.com/CSCfi/rems/tree/master/lbr-theme) for an example theme.
 
 To quickly validate that all UI components look right navigate to `/#/guide`. See it in action at <https://rems2demo.csc.fi/#/guide>.

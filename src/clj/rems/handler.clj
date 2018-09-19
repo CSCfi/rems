@@ -12,7 +12,6 @@
             [rems.home :as home]
             [rems.layout :refer [error-page]]
             [rems.middleware :as middleware]
-            [rems.themes :as themes]
             [rems.util :refer [never-match-route]]
             [ring.util.response :refer [file-response]]))
 
@@ -66,7 +65,7 @@
    (if-let [path (:extra-static-resources env)]
      (route/files "/" {:root path})
      never-match-route)
-   (if-let [path (:theme-static-resources themes/theme)]
+   (if-let [path (:theme-static-resources env)]
      (route/files "/" {:root path})
      never-match-route)
    not-found))

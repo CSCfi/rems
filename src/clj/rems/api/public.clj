@@ -2,7 +2,6 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.config :refer [env]]
             [rems.locales :as locales]
-            [rems.themes :as themes]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
@@ -39,9 +38,7 @@
     (GET "/" []
       :summary "Get current layout theme"
       :return GetThemeResponse
-      (ok (dissoc themes/theme
-                  ;; avoid leaking file system information
-                  :theme-static-resources)))))
+      (ok (:theme env)))))
 
 (def config-api
   (context "/config" []

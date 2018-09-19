@@ -26,10 +26,37 @@
  :languages [:en]
  :default-language :en
 
- ;; Path to .edn file with theme variables to override the default theme.
- ;; If there is a 'public' directory next to the .edn file, it will be
- ;; added as a static resources directory.
+ ;; Path to an external theme file to override variables in :theme.
+ ;; Will automatically set :theme-static-resources to a 'public' directory
+ ;; next to the theme file.
  :theme-path nil
+
+ ;; Optional static resources directory for theme files.
+ :theme-static-resources nil
+
+ ;; UI theme variables.
+ :theme {:color1 "#cbd0d5"
+         :color2 "#b6cfd7"
+         :color3 "#64727e"
+         :color4 "#983b6b"
+         :info-bgcolor "#d9edf7"
+         :danger-bgcolor "#f2dede"
+         :success-bgcolor "#dff0d8"
+         :warning-bgcolor "#fcf8e3"
+         :info-color "#31708f"
+         :danger-color "#a94442"
+         :success-color "#3c763d"
+         :warning-color "#8a6d3b"
+         :img-path "/img/"
+         :logo-bgcolor nil
+         :logo-name "rems_logo_en.png"
+         :logo-name-sm "rems_logo_en.png"
+         :logo-content-origin "initial"
+         :phase-color "#cbd0d5"
+         :phase-color-active "#7eadba"
+         :phase-color-completed "#007887"
+         :table-bgcolor "#a4acb5"
+         :table-stripe-color "#cbd0d5"}
 
  ;; Optional extra static resources directory.
  :extra-static-resources nil
