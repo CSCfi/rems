@@ -3,22 +3,25 @@
             [cprop.core :refer [load-config]]
             [cprop.source :as source]
             [cprop.tools :refer [merge-maps]]
-            [mount.core :refer [defstate]]))
-
-(defn- file-exists? [path]
-  (and path (.isFile (io/file path))))
+            [mount.core :refer [defstate]])
+  (:import (java.io FileNotFoundException)))
 
 (defn- file-sibling [file sibling-name]
   (.getPath (io/file (.getParentFile (io/file file))
                      sibling-name)))
 
+(defn- get-file [config key]
+  (if-let [file (get config key)]
+    (if (.isFile (io/file file))
+      file
+      (throw (FileNotFoundException. (str "the file specified in " key " does not exist: " file))))))
+
 (defn load-external-theme [config]
-  (let [file (:theme-path config)]
-    (if (file-exists? file)
-      (assoc config
-             :theme (merge-maps (:theme config) (source/from-file file))
-             :theme-static-resources (file-sibling file "public"))
-      config)))
+  (if-let [file (get-file config :theme-path)]
+    (assoc config
+           :theme (merge-maps (:theme config) (source/from-file file))
+           :theme-static-resources (file-sibling file "public"))
+    config))
 
 (defstate env :start (-> (load-config :resource "config-defaults.edn")
                          (load-external-theme)))

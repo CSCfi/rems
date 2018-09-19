@@ -1,7 +1,8 @@
 (ns rems.test.themes
   (:require [clojure.test :refer :all]
             [rems.config :as config]
-            [rems.util :as util]))
+            [rems.util :as util])
+  (:import (java.io FileNotFoundException)))
 
 (deftest load-external-theme-test
   (testing "no theme gives default theme"
@@ -9,10 +10,11 @@
                   :theme {:default "foo"}}]
       (is (= config (config/load-external-theme config)))))
 
-  (testing "non-existing theme file is ignored silently"
+  (testing "non-existing theme file produces an error"
     (let [config {:theme-path "no-such-file.edn"
                   :theme {:default "foo"}}]
-      (is (= config (config/load-external-theme config)))))
+      (is (thrown-with-msg? FileNotFoundException #"^\Qthe file specified in :theme-path does not exist: no-such-file.edn\E$"
+                            (config/load-external-theme config)))))
 
   (testing "custom theme overrides values from the default theme"
     (let [config {:theme-path "lbr-theme/lbr.edn"
