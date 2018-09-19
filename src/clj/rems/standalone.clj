@@ -29,10 +29,7 @@
 (mount/defstate ^{:on-reload :noop}
   http-server
   :start
-  (http/start
-   (-> env
-       (assoc :handler handler/app)
-       (update :port #(or (-> env :options :port) %))))
+  (http/start (assoc env :handler handler/app))
   :stop
   (when http-server (http/stop http-server)))
 
