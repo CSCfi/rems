@@ -2,15 +2,13 @@
   (:require [clojure.test :refer :all]
             [rems.handler :refer [app]]
             [rems.test.api :refer :all]
-            [rems.test.tempura :refer [fake-tempura-fixture]]
             [rems.util :refer [index-by]]
             [ring.mock.request :refer :all])
   (:import (java.util UUID)))
 
 (use-fixtures
- :once
- fake-tempura-fixture
- api-fixture)
+  :once
+  api-fixture)
 
 (defn- get-draft-form [form-id]
   ;; XXX: there is no simple API for reading the form items
@@ -105,7 +103,7 @@
       (let [response (-> (request :get (str "/api/forms"))
                          app)
             body (read-body response)]
-        (is (= 401 (:status response)))
+        (is (response-is-unauthorized? response))
         (is (= "unauthorized" body))))
     (testing "create"
       (let [response (-> (request :post "/api/forms/create")
@@ -113,7 +111,7 @@
                                      :title "the title"
                                      :items []})
                          app)]
-        (is (= 403 (:status response)))
+        (is (response-is-forbidden? response))
         (is (= "<h1>Invalid anti-forgery token</h1>" (read-body response))))))
 
   (testing "without owner role"
@@ -122,7 +120,7 @@
                          (authenticate "42" "alice")
                          app)
             body (read-body response)]
-        (is (= 401 (:status response)))
+        (is (response-is-unauthorized? response))
         (is (= "unauthorized" body))))
     (testing "create"
       (let [response (-> (request :post "/api/forms/create")
@@ -131,5 +129,5 @@
                                      :title "the title"
                                      :items []})
                          app)]
-        (is (= 401 (:status response)))
+        (is (response-is-unauthorized? response))
         (is (= "unauthorized" (read-body response)))))))

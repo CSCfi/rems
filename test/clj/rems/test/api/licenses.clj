@@ -2,14 +2,12 @@
   (:require [clojure.test :refer :all]
             [rems.handler :refer [app]]
             [rems.test.api :refer :all]
-            [rems.test.tempura :refer [fake-tempura-fixture]]
             [rems.util :refer [index-by]]
             [ring.mock.request :refer :all])
   (:import (java.util UUID)))
 
 (use-fixtures
   :once
-  fake-tempura-fixture
   api-fixture)
 
 (deftest licenses-api-test
@@ -94,7 +92,7 @@
     (testing "list"
       (let [response (-> (request :get "/api/licenses")
                          app)]
-        (is (= 401 (:status response)))
+        (is (response-is-unauthorized? response))
         (is (= "unauthorized" (read-body response)))))
     (testing "create"
       (let [response (-> (request :post "/api/licenses/create")
@@ -104,7 +102,7 @@
                                      :localizations {:en {:title "t"
                                                           :textcontent "t"}}})
                          app)]
-        (is (= 403 (:status response)))
+        (is (response-is-forbidden? response))
         (is (= "<h1>Invalid anti-forgery token</h1>" (read-body response))))))
 
   (testing "without owner role"
@@ -112,7 +110,7 @@
       (let [response (-> (request :get "/api/licenses")
                          (authenticate "42" "alice")
                          app)]
-        (is (= 401 (:status response)))
+        (is (response-is-unauthorized? response))
         (is (= "unauthorized" (read-body response)))))
     (testing "create"
       (let [response (-> (request :post "/api/licenses/create")
@@ -123,5 +121,5 @@
                                      :localizations {:en {:title "t"
                                                           :textcontent "t"}}})
                          app)]
-        (is (= 401 (:status response)))
+        (is (response-is-unauthorized? response))
         (is (= "unauthorized" (read-body response)))))))

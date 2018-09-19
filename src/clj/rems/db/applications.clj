@@ -361,7 +361,6 @@
                  :approved false}]}"
   ([application-id]
    (let [form (db/get-form-for-application {:application application-id})
-         form (or form (db/get-form-for-application {:application application-id}))
          _ (assert form)
          application (get-application-state application-id)
          _ (assert application)

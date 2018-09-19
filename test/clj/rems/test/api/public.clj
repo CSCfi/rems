@@ -2,12 +2,10 @@
   (:require [clojure.test :refer :all]
             [rems.handler :refer :all]
             [rems.test.api :refer :all]
-            [rems.test.tempura :refer [fake-tempura-fixture]]
             [ring.mock.request :refer :all]))
 
 (use-fixtures
   :once
-  fake-tempura-fixture
   api-fixture)
 
 (deftest service-translations-test
@@ -39,4 +37,4 @@
       (let [resp (-> (request :get "/api/entitlements?user=alice")
                      (authenticate api-key "alice")
                      app)]
-        (is (= 401 (:status resp)))))))
+        (is (response-is-unauthorized? resp))))))

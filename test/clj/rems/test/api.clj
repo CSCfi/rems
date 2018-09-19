@@ -30,6 +30,12 @@
 (defn response-is-ok? [response]
   (= 200 (:status response)))
 
+(defn response-is-unauthorized? [response]
+  (= 401 (:status response)))
+
+(defn response-is-forbidden? [response]
+  (= 403 (:status response)))
+
 (defn coll-is-not-empty? [data]
   (and (coll? data)
        (not (empty? data))))
