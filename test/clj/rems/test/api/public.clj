@@ -32,9 +32,20 @@
                      (authenticate api-key user-id)
                      app
                      read-body)]
-        (is (= 1 (count data)))))
-    (testing "unauthorized"
-      (let [resp (-> (request :get "/api/entitlements?user=alice")
-                     (authenticate api-key "alice")
-                     app)]
-        (is (response-is-unauthorized? resp))))))
+        (is (= 1 (count data))))))
+  (testing "listing as applicant"
+    (testing "with entitlements"
+      (let [response (-> (request :get (str "/api/entitlements"))
+                         (authenticate "42" "alice")
+                         app)
+            body (read-body response)]
+        (is (response-is-ok? response))
+        (is (coll-is-not-empty? body))
+        (is (every? #(= (:mail %) "a@li.ce") body))))
+    (testing "without entitlements"
+      (let [response (-> (request :get (str "/api/entitlements"))
+                         (authenticate "42" "carl")
+                         app)
+            body (read-body response)]
+        (is (response-is-ok? response))
+        (is (coll-is-empty? body))))))

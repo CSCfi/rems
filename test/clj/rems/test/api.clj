@@ -40,6 +40,10 @@
   (and (coll? data)
        (not (empty? data))))
 
+(defn coll-is-empty? [data]
+  (and (coll? data)
+       (empty? data)))
+
 (defn read-body [{body :body}]
   (cond
     (string? body) body
