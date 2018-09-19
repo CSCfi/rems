@@ -2,7 +2,9 @@
 
 REMS contains a number of configuration options that can be used to alter authentication options, theming or to add integration points, just to name a few.
 
-Configuration can be found under the `env` folder and [cprop](https://github.com/tolitius/cprop) library is used to handle the configuration options. For example, to change configuration for your production environment edit the `config.edn` file under the `env/prod/resources` folder. Some examples can be found in the `env/dev/resources` folder.
+Configuration uses the [cprop](https://github.com/tolitius/cprop) library. You can specify the location of the configuration file by setting the `conf` system property: `java -Dconf="../somepath/config.edn" -jar rems.jar` You can also configure the application using environment variables as described in the cprop documentation.
+
+The full list of available configuration options can be seen in [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn).  
 
 ## Authentication options
 
@@ -34,15 +36,14 @@ This option should not be used in production. Keep also in mind that anyone with
 REMS can submit a HTTP POST request for every entitlement granted or
 revoked.
 
-To use this feature, add `:entitlements-target {:add
-"http://url/to/post/to" :remove "http://other/url"}` to `config.edn`.
+To use this feature, add `:entitlements-target {:add "http://url/to/post/to" :remove "http://other/url"}` to `config.edn`.
 
 The payload of the POST request is JSON, and looks like this:
 
 ```json
 {"application": 137,
  "user": "username",
- "resource": "resource_name_maybe_urn_or_something"
+ "resource": "resource_name_maybe_urn_or_something",
  "email": "bob@example.com"}
 ```
 
@@ -54,11 +55,6 @@ Localization files are located under `resources/translations`. To change a text 
 
 ## Themes
 
-Custom themes can be added by creating a file, for example
-my-custom-theme.edn, to the resources/themes folder. The theming
-allows custom themes to only partially override the default
-attributes. To take the new theme into use add a key/value pair,
-`:theme "my-custom-theme"` to the
-appropriate config.edn under the env folder.
+Custom themes can be added by creating a file, for example `my-custom-theme.edn`, and specifying its location in the `:theme-path` configuration parameter. The theme file can override some or all of the theme attributes (see [theme-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/theme-defaults.edn)). If there is a `public` directory next to the theme configuration file, it will be exposed to the web as a static resources directory. See [lbr-theme](https://github.com/CSCfi/rems/tree/master/lbr-theme) for an example theme.
 
 To quickly validate that all UI components look right navigate to `/#/guide`. See it in action at <https://rems2demo.csc.fi/#/guide>.
