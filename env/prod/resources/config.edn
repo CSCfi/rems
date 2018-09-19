@@ -1,4 +1,0 @@
-{:production true
- :port 3000
- :theme "lbr"
- :authentication :shibboleth}

@@ -15,10 +15,6 @@
             [rems.util :refer [never-match-route]]
             [ring.util.response :refer [file-response]]))
 
-(mount/defstate init-app
-  :start ((or (:init +defaults+) identity))
-  :stop  ((or (:stop +defaults+) identity)))
-
 (defn init
   "init will be called once when
    app is deployed as a servlet on
@@ -66,12 +62,14 @@
   (routes
    (extra-script-routes (:extra-scripts env))
    (normal-routes)
-   (if-let [path (:serve-static +defaults+)]
+   (if-let [path (:extra-static-resources env)]
+     (route/files "/" {:root path})
+     never-match-route)
+   (if-let [path (:theme-static-resources env)]
      (route/files "/" {:root path})
      never-match-route)
    not-found))
 
-;; we use mount to construct the app so that middleware can access
-;; mount state (e.g. rems.env/config)
+;; we use mount to construct the app so that middleware can access mount state
 (mount/defstate app
-  :start (middleware/wrap-base (app-routes)))
+                :start (middleware/wrap-base (app-routes)))

@@ -1,5 +1,6 @@
 (ns rems.util
-  (:require [rems.context :as context]))
+  (:require [rems.context :as context]
+            [rems.config :refer [env]]))
 
 (defn select-vals
   "Select values in map `m` specified by given keys `ks`.
@@ -40,7 +41,7 @@
 (defn get-theme-attribute
   "Fetch the attribute value from the current theme."
   [attr-name]
-  (get context/*theme* attr-name))
+  (get (:theme env) attr-name))
 
 (defn getx
   "Like `get` but throws an exception if the key is not found."

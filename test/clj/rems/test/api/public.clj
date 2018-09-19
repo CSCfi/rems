@@ -16,7 +16,7 @@
                    app
                    read-body)
           languages (keys data)]
-      (is (= [:en :en-GB :fi] (sort languages))))))
+      (is (= [:en :fi] (sort languages))))))
 
 (deftest entitlements-test
   (let [api-key "42"

@@ -24,7 +24,7 @@
   (fn [f]
     (mount/start
      #'rems.config/env
-     #'rems.env/*db*)
+     #'rems.db.core/*db*)
     (db/assert-test-database!)
     (migrations/migrate ["reset"] (select-keys env [:database-url]))
     (f)
@@ -32,8 +32,8 @@
 
 (use-fixtures :each
   (fn [f]
-    (conman/with-transaction [rems.env/*db* {:isolation :serializable}]
-      (jdbc/db-set-rollback-only! rems.env/*db*)
+    (conman/with-transaction [rems.db.core/*db* {:isolation :serializable}]
+      (jdbc/db-set-rollback-only! rems.db.core/*db*)
       (f))))
 
 (defn- subject-to-check [subject]

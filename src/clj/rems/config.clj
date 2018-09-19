@@ -1,10 +1,27 @@
 (ns rems.config
-  (:require [cprop.core :refer [load-config]]
+  (:require [clojure.java.io :as io]
+            [cprop.core :refer [load-config]]
             [cprop.source :as source]
-            [mount.core :refer [args defstate]]))
+            [cprop.tools :refer [merge-maps]]
+            [mount.core :refer [defstate]])
+  (:import (java.io FileNotFoundException)))
 
-(defstate env :start (load-config
-                       :merge
-                       [(args)
-                        (source/from-system-props)
-                        (source/from-env)]))
+(defn- file-sibling [file sibling-name]
+  (.getPath (io/file (.getParentFile (io/file file))
+                     sibling-name)))
+
+(defn- get-file [config key]
+  (if-let [file (get config key)]
+    (if (.isFile (io/file file))
+      file
+      (throw (FileNotFoundException. (str "the file specified in " key " does not exist: " file))))))
+
+(defn load-external-theme [config]
+  (if-let [file (get-file config :theme-path)]
+    (merge-maps config
+                {:theme (source/from-file file)
+                 :theme-static-resources (file-sibling file "public")})
+    config))
+
+(defstate env :start (-> (load-config :resource "config-defaults.edn")
+                         (load-external-theme)))

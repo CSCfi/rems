@@ -30,8 +30,7 @@
   (when-not (has-roles? :approver)
     (throw-unauthorized))
   (let [ents (db/get-entitlements)
-        separator (or (get env :csv-separator)
-                      ",")]
+        separator (:csv-separator env)]
     (with-out-str
       (println (join separator ["resource" "application" "user" "start"]))
       (doseq [e ents]

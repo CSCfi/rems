@@ -1,0 +1,84 @@
+{;; HTTP server port.
+ :port 3000
+
+ ;; When :nrepl-port is set, the application starts an nREPL server on load.
+ :nrepl-port nil
+
+ ;; When true, enables experimental and unfinished features.
+ :dev false
+
+ ;; Uses :database-url if it's defined. Otherwise :database-jndi-name is used.
+ :database-url nil
+ :database-jndi-name "java:comp/env/jdbc/rems"
+
+ ;; Supported authentication methods: :shibboleth, :fake-shibboleth, :ldap
+ :authentication :shibboleth
+ :ldap {:connection {:host "localhost:2636"
+                     :ssl? true}
+        :search-root "dc=Suivohtor,dc=local"}
+ :alternative-login-url nil
+
+ ;; URLs to notify about granted and revoked entitlements.
+ :entitlements-target {:add nil
+                       :remove nil}
+
+ ;; List of supported languages. They will be selectable in the UI.
+ :languages [:en :fi]
+ :default-language :en
+
+ ;; Path to an external theme file to override variables in :theme.
+ ;; Will automatically set :theme-static-resources to a 'public' directory
+ ;; next to the theme file.
+ :theme-path nil
+
+ ;; Optional static resources directory for theme files.
+ :theme-static-resources nil
+
+ ;; UI theme variables.
+ :theme {:color1 "#cbd0d5"
+         :color2 "#b6cfd7"
+         :color3 "#64727e"
+         :color4 "#983b6b"
+         :info-bgcolor "#d9edf7"
+         :danger-bgcolor "#f2dede"
+         :success-bgcolor "#dff0d8"
+         :warning-bgcolor "#fcf8e3"
+         :info-color "#31708f"
+         :danger-color "#a94442"
+         :success-color "#3c763d"
+         :warning-color "#8a6d3b"
+         :img-path "/img/"
+         :logo-bgcolor nil
+         :logo-name "rems_logo_en.png"
+         :logo-name-sm "rems_logo_en.png"
+         :logo-content-origin "initial"
+         :phase-color "#cbd0d5"
+         :phase-color-active "#7eadba"
+         :phase-color-completed "#007887"
+         :table-bgcolor "#a4acb5"
+         :table-stripe-color "#cbd0d5"}
+
+ ;; Optional extra static resources directory.
+ :extra-static-resources nil
+
+ ;; Optional extra script files loaded when UI loads
+ :extra-scripts {:root "/dev/null" :files []}
+
+ :extra-pages [;; example of internal page with translation in localization files
+               #_{:id "about"
+                  :url "/about"
+                  :translation-key :t.navigation/about}
+
+               ;; example of an external page with inline translation
+               #_{:id "hello"
+                  :url "http://example.org/hello.html"
+                  :external? true
+                  :translations {:fi "Hei", :en "Hello"}}
+
+               ;; example of a local markdown file with inline translation
+               #_{:id "mark"
+                  :url "/markdown/about.md"
+                  :file "about.md"
+                  :translations {:fi "Info", :en "About"}}]
+
+ :csv-separator ","}

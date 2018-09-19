@@ -2,7 +2,7 @@
   (:require [clojure.java.io :as io]
             [clojure.test :refer :all]))
 
-(def loc-en (read-string (slurp (io/resource "translations/en-GB.edn"))))
+(def loc-en (read-string (slurp (io/resource "translations/en.edn"))))
 
 (def loc-fi (read-string (slurp (io/resource "translations/fi.edn"))))
 

@@ -22,8 +22,6 @@
             [taoensso.tempura :as tempura])
   (:import (javax.servlet ServletContext)))
 
-(def +default-language+ (:default-language env :en))
-
 (defn calculate-root-path [request]
   (if-let [context (:servlet-context request)]
     ;; If we're not inside a servlet environment
@@ -119,7 +117,7 @@
       (binding [context/*tempura* (:tempura/tr request)
                 context/*lang* (or (get-in request [:param :lang])
                                    (get-in request [:session :language])
-                                   +default-language+)]
+                                   (:default-language env))]
         (handler request)))
     {:tr-opts tconfig})))
 
@@ -173,4 +171,5 @@
       wrap-webjars
       (wrap-defaults +wrap-defaults-settings+)
       wrap-internal-error
+      wrap-i18n ; rendering the error page fails if rems.context/*tempura* is not set
       wrap-formats))
