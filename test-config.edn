@@ -1,5 +1,4 @@
 {:dev true
  :nrepl-port 7000
  :database-url "postgresql://localhost/rems_test?user=rems_test"
- :authentication :fake-shibboleth
- :languages [:en :fi]}
+ :authentication :fake-shibboleth}

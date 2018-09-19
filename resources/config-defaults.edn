@@ -23,7 +23,7 @@
                        :remove nil}
 
  ;; List of supported languages. They will be selectable in the UI.
- :languages [:en]
+ :languages [:en :fi]
  :default-language :en
 
  ;; Path to an external theme file to override variables in :theme.

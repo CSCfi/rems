@@ -49,9 +49,7 @@ The payload of the POST request is JSON, and looks like this:
 
 ## Localization
 
-Default language used in the application is English. To change the behaviour an optional key `:default-language` to your production environment's `config.edn` file.
-
-Localization files are located under `resources/translations`. To change a text simply provide a new value for the key you want to change.
+To add localization in a new language, copy one of the files in `resources/translations` and change the texts. Configure `:languages` to include the new language. You can change the default language by configuring `:default-language`.
 
 ## Themes
 
