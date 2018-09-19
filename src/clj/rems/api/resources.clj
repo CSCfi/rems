@@ -6,7 +6,7 @@
             [rems.db.resource :as resource]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
-  (:import [org.joda.time DateTime]))
+  (:import (org.joda.time DateTime)))
 
 (def Resource
   {:id s/Num

@@ -1,9 +1,7 @@
 (ns rems.test.form
   (:require [clojure.test :refer :all]
             [rems.form :as form]
-            [rems.test.tempura :refer [with-fake-tempura]]
-            [ring.mock.request :refer :all])
-  (:import rems.InvalidRequestException))
+            [rems.test.tempura :refer [with-fake-tempura]]))
 
 (def validate #'form/validate)
 

@@ -2,8 +2,8 @@
   "Rendering applications as pdf"
   (:require [clj-pdf.core :refer :all]
             [rems.context :as context]
-            [rems.db.applications :as applications]
-            [rems.text :refer [text localize-event localize-state localize-time with-language]]))
+            [rems.text :refer [localize-event localize-state
+                               localize-time text]]))
 
 (defn- render-header [form]
   (let [state (get-in form [:application :state])

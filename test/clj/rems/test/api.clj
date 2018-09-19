@@ -1,14 +1,12 @@
 (ns rems.test.api
   "Shared code for API testing"
-  (:require [cheshire.core :refer [generate-string parse-stream]]
-            [clojure.test :refer [is]]
+  (:require [cheshire.core :refer [parse-stream]]
             [luminus-migrations.core :as migrations]
             [mount.core :as mount]
             [rems.config :refer [env]]
             [rems.db.core :as db]
-            [rems.db.test-data :as test-data]
             [rems.handler :refer :all]
-            [ring.mock.request :refer :all]))
+            [rems.db.test-data :as test-data]))
 
 (defn api-fixture [f]
   (mount/start

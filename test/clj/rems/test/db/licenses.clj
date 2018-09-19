@@ -1,8 +1,8 @@
 (ns rems.test.db.licenses
   (:require [clj-time.core :as time]
             [clojure.test :refer :all]
-            [rems.db.licenses :refer :all]
-            [rems.db.core :as db]))
+            [rems.db.core :as db]
+            [rems.db.licenses :refer :all]))
 
 (deftest test-localize-licenses
   (with-redefs [db/get-license-localizations (fn [] [{:licid 1 :langcode :en :title "en title 1" :textcontent "en content 1"}

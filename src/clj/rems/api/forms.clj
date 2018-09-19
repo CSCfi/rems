@@ -4,7 +4,7 @@
             [rems.db.form :as form]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
-  (:import [org.joda.time DateTime]))
+  (:import (org.joda.time DateTime)))
 
 (def Form
   {:id s/Num

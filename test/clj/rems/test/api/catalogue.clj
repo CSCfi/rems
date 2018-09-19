@@ -1,9 +1,9 @@
 (ns ^:integration rems.test.api.catalogue
-  (:require [clojure.test :refer :all]
+  (:require [clojure.string :as str]
+            [clojure.test :refer :all]
             [rems.handler :refer [app]]
             [rems.test.api :refer :all]
-            [ring.mock.request :refer :all]
-            [clojure.string :as str]))
+            [ring.mock.request :refer :all]))
 
 (use-fixtures
   :once

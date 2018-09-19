@@ -2,7 +2,6 @@
   (:require [clojure.test :refer :all]
             [rems.handler :refer [app]]
             [rems.test.api :refer :all]
-            [rems.util :refer [index-by]]
             [ring.mock.request :refer :all])
   (:import (java.util UUID)))
 
