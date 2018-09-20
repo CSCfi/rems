@@ -80,8 +80,7 @@
       (testing "retrieving as other user"
         (let [response (-> (request :get (str "/api/applications/" application-id))
                            (authenticate api-key another-user)
-                           app)
-              application (read-body response)]
+                           app)]
           (is (response-is-unauthorized? response))))
       (testing "saving as other user"
         (let [response (-> (request :post (str "/api/applications/save"))
@@ -222,8 +221,7 @@
                          (json-body {:command "save"
                                      :catalogue-items [catid]
                                      :items {1 ""}})
-                         app)
-            cmd-response (read-body response)]
+                         app)]
         ;; TODO should we actually return a nice error message here?
         (is (= 400 (:status response)) "should not be able to save draft with disbled item")))
     (testing "submit for application with disabled item"
@@ -234,8 +232,7 @@
                                      :catalogue-items [catid]
                                      :items {1 "x" 2 "y" 3 "z"}
                                      :licenses {1 "approved" 2 "approved"}})
-                         app)
-            cmd-response (read-body response)]
+                         app)]
         (is (= 400 (:status response)) "should not be possible to submit with disabled item")))))
 
 (deftest application-api-roles

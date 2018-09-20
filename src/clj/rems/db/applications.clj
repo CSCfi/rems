@@ -404,7 +404,6 @@
          item-id (first catalogue-item-ids)
          form (db/get-form-for-item {:item item-id})
          form-id (:formid form)
-         wfid (:wfid application)
          catalogue-items (:catalogue-items application)
          items (mapv #(process-item application-id form-id %)
                      (db/get-form-items {:id form-id}))
