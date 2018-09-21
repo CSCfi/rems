@@ -9,7 +9,7 @@
             [rems.db.roles :as roles]
             [rems.env :refer [+defaults+]]
             [rems.layout :refer [error-page]]
-            [rems.locales :refer [tconfig]]
+            [rems.locales :refer [tempura-config]]
             [rems.util :refer [get-user-id]]
             [ring-ttl-session.core :refer [ttl-memory-store]]
             [ring.middleware.anti-forgery :refer [wrap-anti-forgery *anti-forgery-token*]]
@@ -119,7 +119,7 @@
                                    (get-in request [:session :language])
                                    (:default-language env))]
         (handler request)))
-    {:tr-opts tconfig})))
+    {:tr-opts (tempura-config)})))
 
 (defn on-unauthorized-error [request]
   (error-page

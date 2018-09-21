@@ -7,7 +7,7 @@
 
 (defn with-language [lang f]
   (binding [context/*lang* lang
-            context/*tempura* (partial tempura/tr locales/tconfig [lang])]
+            context/*tempura* (partial tempura/tr (locales/tempura-config) [lang])]
     (f)))
 
 (defn text
