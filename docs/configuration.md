@@ -49,7 +49,15 @@ The payload of the POST request is JSON, and looks like this:
 
 ## Localization
 
-To add localization in a new language, copy one of the files in `resources/translations` and change the texts. Configure `:languages` to include the new language. You can change the default language by configuring `:default-language`.
+To add localization in a new language, make a copy of the [English localization file](https://github.com/CSCfi/rems/blob/master/resources/translations/en.edn) and change the texts. Place it in a directory and configure `:translations-directory` to point to that directory. The localization file must be named after the language code. Add the language code to `:languages` to make it available in the application. You can change the default language by configuring `:default-language`.
+
+For example, to add German localization, create a file `my-translations/de.edn` and use the following configuration:
+
+```clojure
+{:translations-directory "my-translations"
+ :languages [:de :en]
+ :default-language :de}
+```
 
 ## Themes
 
