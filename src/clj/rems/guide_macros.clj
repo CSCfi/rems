@@ -1,6 +1,7 @@
 (ns rems.guide-macros
   "Utilities for component guide."
   (:require [clojure.pprint :refer [code-dispatch write]]
+            [rems.context :as context]
             [rems.locales :as locales]
             [taoensso.tempura :as tempura]))
 
@@ -9,8 +10,7 @@
      (rems.guide-functions/render-component-info
       (:name m#)
       (ns-name (:ns m#))
-      (:doc m#)
-      )))
+      (:doc m#))))
 
 (defmacro example
   ([title content]
@@ -19,5 +19,5 @@
 
 (defmacro with-language [lang & body]
   `(binding [context/*lang* ~lang
-               context/*tempura* (partial tempura/tr locales/tconfig [~lang])]
-       ~@body))
+             context/*tempura* (partial tempura/tr locales/tconfig [~lang])]
+     ~@body))
