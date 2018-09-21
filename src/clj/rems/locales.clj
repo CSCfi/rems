@@ -4,14 +4,6 @@
             [clojure.java.io :as io])
   (:import (java.io FileNotFoundException)))
 
-;; Note: the intermediate :t key in the dictionaries makes grepping
-;; easier: all localizations are of the form :t/foo or :t.something/foo
-; TODO: support external translations
-(def tconfig
-  {:dict
-   {:en {:__load-resource "translations/en.edn"}
-    :fi {:__load-resource "translations/fi.edn"}}})
-
 (defn- load-translation [language translations-directory]
   (let [file (when translations-directory
                (io/file translations-directory (str (name language) ".edn")))
@@ -32,3 +24,6 @@
        (apply merge)))
 
 (defstate translations :start (load-translations env))
+
+(defn tempura-config []
+  {:dict translations})

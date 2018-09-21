@@ -19,5 +19,5 @@
 
 (defmacro with-language [lang & body]
   `(binding [context/*lang* ~lang
-             context/*tempura* (partial tempura/tr locales/tconfig [~lang])]
+             context/*tempura* (partial tempura/tr (locales/tempura-config) [~lang])]
      ~@body))

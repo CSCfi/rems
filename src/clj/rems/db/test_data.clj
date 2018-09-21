@@ -211,7 +211,7 @@
     app-id))
 
 (defn- create-applications! [catid wfid applicant approver]
-  (binding [context/*tempura* locales/tconfig
+  (binding [context/*tempura* (locales/tempura-config)
             context/*user* {"eppn" applicant}]
     (create-draft! catid wfid "draft application")
     (applications/submit-application (create-draft! catid wfid "applied application"))
@@ -229,7 +229,7 @@
         (applications/return-application application 0 "comment for return")))))
 
 (defn- create-disabled-applications! [catid wfid applicant approver]
-  (binding [context/*tempura* locales/tconfig
+  (binding [context/*tempura* (locales/tempura-config)
             context/*user* {"eppn" applicant}]
     (let [application (create-draft! catid wfid "draft with disabled item")])
     (let [application (create-draft! catid wfid "approved application with disabled item")]
@@ -238,7 +238,7 @@
         (applications/approve-application application 0 "comment for approval")))))
 
 (defn- create-bundled-application! [catid catid2 wfid applicant approver]
-  (binding [context/*tempura* locales/tconfig
+  (binding [context/*tempura* (locales/tempura-config)
             context/*user* {"eppn" applicant}]
     (let [app-id (create-draft! [catid catid2] wfid "bundled application")]
       (applications/submit-application app-id)
@@ -250,7 +250,7 @@
   (let [applicant (users :applicant1)
         approver (users :approver1)
         reviewer (users :reviewer)]
-    (binding [context/*tempura* locales/tconfig
+    (binding [context/*tempura* (locales/tempura-config)
               context/*user* {"eppn" applicant}]
       (let [app-id (create-draft! catid wfid "application with review")]
         (applications/submit-application app-id)
@@ -269,7 +269,7 @@
         _ (db/set-resource-license-validity! {:licid licid-expired :start year-ago :end yesterday})
         item-with-expired-license (create-catalogue-item! resource-id wfid form {"en" "Resource with expired resource license"
                                                                                  "fi" "Resurssi jolla on vanhentunut resurssilisenssi"})]
-    (binding [context/*tempura* locales/tconfig
+    (binding [context/*tempura* (locales/tempura-config)
               context/*user* {"eppn" applicant}]
       (applications/submit-application (create-draft! item-with-expired-license wfid "applied when license was valid that has since expired" (time/minus (time/now) (time/days 2)))))))
 
@@ -282,7 +282,7 @@
         _ (db/set-resource-license-validity! {:licid licid-new :start (time/now) :end nil})
         item-without-new-license (create-catalogue-item! resource-id wfid form {"en" "Resource with just created new resource license"
                                                                                 "fi" "Resurssi jolla on uusi resurssilisenssi"})]
-    (binding [context/*tempura* locales/tconfig
+    (binding [context/*tempura* (locales/tempura-config)
               context/*user* {"eppn" applicant}]
       (applications/submit-application (create-draft! item-without-new-license wfid "applied before license was valid" (time/minus (time/now) (time/days 2)))))))
 
