@@ -4,9 +4,9 @@
             [eftest.runner :as ef]))
 
 (defn reload []
-  (repl/refresh)
-  ; XXX: workaround to the user namespace missing after refresh
-  (require 'user))
+  ((resolve 'rems.standalone/stop-app))
+  (repl/refresh-all)
+  ((resolve 'rems.standalone/start-app)))
 
 (defn run-tests [& namespaces]
   (reload)
