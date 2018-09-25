@@ -874,6 +874,36 @@
                     {:round 0 :event "review-request" :comment "can you please review this?"}
                     {:round 0 :event "return" :comment "returning"}]))))))))
 
+(deftest test-add-member
+  (db/add-user! {:user "alice" :userattrs "{\"eppn\": \"alice\"}"})
+  (db/add-user! {:user "bob" :userattrs "{\"eppn\": \"bob\"}"})
+  (db/add-user! {:user "carl" :userattrs "{\"eppn\": \"carl\"}"})
+  (db/add-user! {:user "david" :userattrs "{\"eppn\": \"david\"}"})
+  (binding [context/*user* {"eppn" "alice"}]
+    (let [wf (:id (db/create-workflow! {:organization "abc" :modifieruserid "owner" :owneruserid "owner" :title "Test workflow" :fnlround 1}))
+          item (:id (db/create-catalogue-item! {:title "A" :form nil :resid nil :wfid wf}))
+          app (applications/create-new-draft wf)]
+      (db/add-application-item! {:application app :item item})
+      (testing "Adding two members"
+        (applications/add-member app "bob")
+        (applications/add-member app "carl")
+        (is (= ["bob" "carl"] (:members (applications/get-application-state app)))))
+      (testing "Can't add non-existing members"
+        (is (thrown? AssertionError
+                     (applications/add-member app "non-existent"))))
+      (testing "Non-applicant can't add members"
+        (binding [context/*user* {"eppn" "other-user"}]
+          (is (thrown? NotAuthorizedException
+                       (applications/add-member app "david")))))
+      (applications/submit-application app)
+      (testing "Can't add members to submitted application"
+        (is (thrown? NotAuthorizedException
+                     (applications/add-member app "david"))))
+      (testing "Members persist after autoapprove"
+        (let [state (applications/get-application-state app)]
+          (is (= "approved" (:state state)))
+          (is (= ["bob" "carl"] (:members state))))))))
+
 (deftest test-get-entitlements-for-export
   (db/add-user! {:user "jack" :userattrs nil})
   (db/add-user! {:user "jill" :userattrs nil})

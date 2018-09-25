@@ -1,6 +1,7 @@
 (ns rems.db.applications
   "Query functions for forms and applications."
-  (:require [clj-time.core :as time]
+  (:require [cheshire.core :as cheshire]
+            [clj-time.core :as time]
             [clojure.set :refer [difference
                                  union]]
             [rems.auth.util :refer [throw-unauthorized]]
@@ -15,6 +16,7 @@
             [rems.email :as email]
             [rems.util :refer [get-user-id
                                get-username
+                               getx
                                getx-user-id]]))
 
 (defn draft?
@@ -526,6 +528,12 @@
   [application event]
   (assoc application :state "closed"))
 
+(defmethod apply-event "add-member"
+  [application event]
+  (let [data (cheshire/parse-string (:eventdata event))
+        uid (getx data "uid")]
+    (update application :members #((fnil conj []) % uid))))
+
 (defn- apply-events [application events]
   (reduce apply-event application events))
 
@@ -717,3 +725,15 @@
     (when-not (can-close? application)
       (throw-unauthorized))
     (unjudge-application application "close" round msg)))
+
+(defn add-member [application-id member]
+  (let [application (get-application-state application-id)
+        uid (get-user-id)]
+    (when-not (= uid (:applicantuserid application))
+      (throw-unauthorized))
+    (when-not (#{"draft" "returned" "withdrawn"} (:state application))
+      (throw-unauthorized))
+    (assert (users/get-user-attributes member) (str "User '" member "' must exist"))
+    (db/add-application-event! {:application application-id :user uid :round 0
+                                :comment nil
+                                :event "add-member" :eventdata (cheshire/generate-string {"uid" member})})))
