@@ -35,7 +35,7 @@
 ; form submit
 
 (defn- valid-request? [request]
-  (and (not (str/blank? (:prefix request)))
+  (and (not (str/blank? (:organization request)))
        (not (str/blank? (:title request)))
        (every? (fn [round]
                  (and (not (nil? (:type round)))
@@ -50,7 +50,7 @@
    :actors (map build-actor-request (:actors round))})
 
 (defn build-request [form]
-  (let [request {:prefix (:prefix form)
+  (let [request {:organization (:organization form)
                  :title (:title form)
                  :rounds (map build-round-request (:rounds form))}]
     (when (valid-request? request)
@@ -117,10 +117,10 @@
 (def ^:private context {:get-form ::form
                         :update-form ::set-form-field})
 
-(defn- workflow-prefix-field []
-  [text-field context {:keys [:prefix]
-                       :label (text :t.create-resource/prefix) ; TODO: extract common translation
-                       :placeholder (text :t.create-resource/prefix-placeholder)}]) ; TODO: extract common translation
+(defn- workflow-organization-field []
+  [text-field context {:keys [:organization]
+                       :label (text :t.create-resource/organization) ; TODO: extract common translation
+                       :placeholder (text :t.create-resource/organization-placeholder)}]) ; TODO: extract common translation
 
 (defn- workflow-title-field []
   [text-field context {:keys [:title]
@@ -203,7 +203,7 @@
      {:id "create-workflow"
       :title (text :t.administration/create-workflow)
       :always [:div
-               [workflow-prefix-field]
+               [workflow-organization-field]
                [workflow-title-field]
 
                (doall (for [round (range num-rounds)]

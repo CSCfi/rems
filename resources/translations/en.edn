@@ -155,8 +155,8 @@
                    :link-to-license "Link to the license"
                    :license-text "License text"}
   :create-resource {:licenses-selection "Terms of Use"
-                    :prefix "Organization"
-                    :prefix-placeholder "testorganization.org"
+                    :organization "Organization"
+                    :organization-placeholder "testorganization.org"
                     :resid "Resource identifier"
                     :resid-placeholder "urn:test:fi:some-uuid"}
   :create-workflow {:title "Title"

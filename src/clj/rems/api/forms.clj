@@ -10,16 +10,16 @@
 
 (def Form
   {:id s/Num
-   :prefix s/Str
+   :organization s/Str
    :title s/Str
    :start DateTime
    :end (s/maybe DateTime)
    :active s/Bool})
 
 (defn- format-form
-  [{:keys [id prefix title start endt active?]}]
+  [{:keys [id organization title start endt active?]}]
   {:id id
-   :prefix prefix
+   :organization organization
    :title title
    :start start
    :end endt
@@ -31,7 +31,7 @@
      (format-form wf))))
 
 (def CreateFormCommand
-  {:prefix s/Str
+  {:organization s/Str
    :title s/Str
    :items [{:title {s/Keyword s/Str}
             :optional s/Bool
@@ -54,8 +54,8 @@
                                :title (get title lang)
                                :inputprompt (get input-prompt lang)}))))
 
-(defn- create-form [{:keys [prefix title items]}]
-  (let [form (db/create-form! {:prefix prefix
+(defn- create-form [{:keys [organization title items]}]
+  (let [form (db/create-form! {:organization organization
                                :title title
                                :user (get-user-id)})]
     (doseq [[index item] (map-indexed vector items)]

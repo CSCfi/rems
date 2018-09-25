@@ -155,8 +155,8 @@
                    :link-to-license "Linkki lisenssiin"
                    :license-text "Lisenssin teksti"}
   :create-resource {:licenses-selection "Käyttöehdot"
-                    :prefix "Organisaatio"
-                    :prefix-placeholder "testorganization.org"
+                    :organization "Organisaatio"
+                    :organization-placeholder "testorganization.org"
                     :resid "Resurssin tunniste"
                     :resid-placeholder "urn:test:fi:some-uuid"}
   :create-workflow {:title "Työvuon nimi"

@@ -40,11 +40,11 @@
             data (read-body response)]
         (is (response-is-ok? response))
         (is (coll-is-not-empty? data))
-        (is (= #{:id :prefix :title :start :end :active}
+        (is (= #{:id :organization :title :start :end :active}
                (set (keys (first data)))))))
 
     (testing "create"
-      (let [command {:prefix "abc"
+      (let [command {:organization "abc"
                      :title (str "form title " (UUID/randomUUID))
                      :items [{:title {:en "en title"
                                       :fi "fi title"}
@@ -68,8 +68,8 @@
                           first)]
             (is (response-is-ok? response))
             ;; TODO: create an API for reading full forms (will be needed latest for editing forms)
-            (is (= (select-keys command [:title :prefix])
-                   (select-keys form [:title :prefix])))
+            (is (= (select-keys command [:title :organization])
+                   (select-keys form [:title :organization])))
             (is (= [{:optional true
                      :type "text"
                      :localizations {:en {:title "en title"
@@ -107,7 +107,7 @@
         (is (= "unauthorized" body))))
     (testing "create"
       (let [response (-> (request :post "/api/forms/create")
-                         (json-body {:prefix "abc"
+                         (json-body {:organization "abc"
                                      :title "the title"
                                      :items []})
                          app)]
@@ -125,7 +125,7 @@
     (testing "create"
       (let [response (-> (request :post "/api/forms/create")
                          (authenticate "42" "alice")
-                         (json-body {:prefix "abc"
+                         (json-body {:organization "abc"
                                      :title "the title"
                                      :items []})
                          app)]

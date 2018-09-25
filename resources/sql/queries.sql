@@ -38,7 +38,7 @@ SELECT
   id,
   owneruserid,
   modifieruserid,
-  prefix,
+  organization,
   resid,
   start,
   endt
@@ -47,8 +47,8 @@ FROM resource
 -- :name create-resource! :insert
 -- :doc Create a single resource
 INSERT INTO resource
-(resid, prefix, ownerUserId, modifieruserid, endt)
-VALUES (:resid, :prefix, :owneruserid, :modifieruserid,
+(resid, organization, ownerUserId, modifieruserid, endt)
+VALUES (:resid, :organization, :owneruserid, :modifieruserid,
  /*~ (if (:endt params) */ :endt /*~*/ NULL /*~ ) ~*/
 )
 
@@ -67,7 +67,7 @@ VALUES (:id, :langcode, :title)
 -- :name get-forms :? :*
 SELECT
   id,
-  prefix,
+  organization,
   title,
   start,
   endt
@@ -76,7 +76,7 @@ FROM application_form
 -- :name get-form-for-application :? :1
 SELECT
   form.id as formid,
-  form.prefix as prefix,
+  form.organization as organization,
   form.title as formtitle,
   form.visibility as formvisibility
 FROM catalogue_item_application_items ciai
@@ -124,9 +124,9 @@ WHERE 1=1
 
 -- :name create-form! :insert
 INSERT INTO application_form
-(prefix, title, modifierUserId, ownerUserId, visibility, endt)
+(organization, title, modifierUserId, ownerUserId, visibility, endt)
 VALUES
-(:prefix,
+(:organization,
  :title,
  :user,
  :user,
@@ -284,9 +284,9 @@ VALUES
 
 -- :name create-workflow! :insert
 INSERT INTO workflow
-(prefix, ownerUserId, modifierUserId, title, fnlround, endt)
+(organization, ownerUserId, modifierUserId, title, fnlround, endt)
 VALUES
-(:prefix,
+(:organization,
  :owneruserid,
  :modifieruserid,
  :title,
@@ -379,7 +379,7 @@ AND ci.id = :catid
 
 -- :name get-workflows :? :*
 SELECT
-  wf.id, wf.prefix, wf.owneruserid, wf.modifieruserid, wf.title, wf.fnlround, wf.visibility, wf.start, wf.endt
+  wf.id, wf.organization, wf.owneruserid, wf.modifieruserid, wf.title, wf.fnlround, wf.visibility, wf.start, wf.endt
 FROM workflow wf
 
 -- :name clear-field-value! :!

@@ -157,7 +157,7 @@
             "after move 3")))))
 
 (deftest build-request-test
-  (let [form {:prefix "abc"
+  (let [form {:organization "abc"
               :title "the title"
               :items [{:title {:en "en title"
                                :fi "fi title"}
@@ -167,7 +167,7 @@
                                       :fi "fi prompt"}}]}
         languages [:en :fi]]
     (testing "valid form"
-      (is (= {:prefix "abc"
+      (is (= {:organization "abc"
               :title "the title"
               :items [{:title {:en "en title"
                                :fi "fi title"}
@@ -177,14 +177,14 @@
                                       :fi "fi prompt"}}]}
              (build-request form languages))))
 
-    (testing "missing prefix"
-      (is (nil? (build-request (assoc-in form [:prefix] "") languages))))
+    (testing "missing organization"
+      (is (nil? (build-request (assoc-in form [:organization] "") languages))))
 
     (testing "missing title"
       (is (nil? (build-request (assoc-in form [:title] "") languages))))
 
     (testing "zero items is ok"
-      (is (= {:prefix "abc"
+      (is (= {:organization "abc"
               :title "the title"
               :items []}
              (build-request (assoc-in form [:items] []) languages))))
@@ -196,7 +196,7 @@
              (build-request (assoc-in form [:items 0 :title] nil) languages))))
 
     (testing "missing optional implies false"
-      (is (= {:prefix "abc"
+      (is (= {:organization "abc"
               :title "the title"
               :items [{:title {:en "en title"
                                :fi "fi title"}
@@ -210,7 +210,7 @@
       (is (nil? (build-request (assoc-in form [:items 0 :type] nil) languages))))
 
     (testing "input prompt is optional"
-      (is (= {:prefix "abc"
+      (is (= {:organization "abc"
               :title "the title"
               :items [{:title {:en "en title"
                                :fi "fi title"}
@@ -228,7 +228,7 @@
              (build-request (assoc-in form [:items 0 :input-prompt] {:en "en prompt"}) languages))))
 
     (testing "date fields won't have an input prompt"
-      (is (= {:prefix "abc"
+      (is (= {:organization "abc"
               :title "the title"
               :items [{:title {:en "en title"
                                :fi "fi title"}

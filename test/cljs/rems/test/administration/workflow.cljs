@@ -3,7 +3,7 @@
             [rems.administration.workflow :refer [build-request]]))
 
 (deftest build-request-test
-  (let [form {:prefix "abc"
+  (let [form {:organization "abc"
               :title "workflow title"
               :rounds [{:type :review
                         :actors [{:userid "alice"}
@@ -11,7 +11,7 @@
                        {:type :approval
                         :actors [{:userid "carl"}]}]}]
     (testing "valid form"
-      (is (= {:prefix "abc"
+      (is (= {:organization "abc"
               :title "workflow title"
               :rounds [{:type :review
                         :actors [{:userid "alice"}
@@ -20,12 +20,12 @@
                         :actors [{:userid "carl"}]}]}
              (build-request form))))
     (testing "auto-approved workflow"
-      (is (= {:prefix "abc"
+      (is (= {:organization "abc"
               :title "workflow title"
               :rounds []}
              (build-request (assoc form :rounds [])))))
-    (testing "missing prefix"
-      (is (nil? (build-request (assoc form :prefix "")))))
+    (testing "missing organization"
+      (is (nil? (build-request (assoc form :organization "")))))
     (testing "missing title"
       (is (nil? (build-request (assoc form :title "")))))
     (testing "missing round type"

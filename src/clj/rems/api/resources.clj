@@ -14,7 +14,7 @@
   {:id s/Num
    :owneruserid s/Str
    :modifieruserid s/Str
-   :prefix s/Str
+   :organization s/Str
    :resid s/Str
    :start DateTime
    :end (s/maybe DateTime)
@@ -23,15 +23,15 @@
 
 (def CreateResourceCommand
   {:resid s/Str
-   :prefix s/Str
+   :organization s/Str
    :licenses [s/Num]})
 
 (defn- format-resource
-  [{:keys [id owneruserid modifieruserid prefix resid start endt active?]}]
+  [{:keys [id owneruserid modifieruserid organization resid start endt active?]}]
   {:id id
    :owneruserid owneruserid
    :modifieruserid modifieruserid
-   :prefix prefix
+   :organization organization
    :resid resid
    :start start
    :end endt
@@ -43,8 +43,8 @@
      (assoc (format-resource res)
             :licenses (licenses/get-resource-licenses (:id res))))))
 
-(defn- create-resource [{:keys [resid prefix licenses]}]
-  (let [id (:id (db/create-resource! {:resid resid :prefix prefix :owneruserid (get-user-id) :modifieruserid (get-user-id)}))]
+(defn- create-resource [{:keys [resid organization licenses]}]
+  (let [id (:id (db/create-resource! {:resid resid :organization organization :owneruserid (get-user-id) :modifieruserid (get-user-id)}))]
     (doseq [licid licenses]
       (db/create-resource-license! {:resid id :licid licid}))))
 
