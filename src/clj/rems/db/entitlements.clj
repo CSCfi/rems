@@ -8,7 +8,8 @@
             [rems.config :refer [env]]
             [rems.db.core :as db]
             [rems.roles :refer [has-roles?]]
-            [rems.text :as text]))
+            [rems.text :as text]
+            [rems.util :refer [get-user-id]]))
 
 ;; TODO move Entitlement schema here from rems.api?
 
@@ -19,10 +20,11 @@
    :mail mail})
 
 (defn get-entitlements-for-api [user-or-nil resource-or-nil]
-  (when-not (has-roles? :approver)
-    (throw-unauthorized))
-  (mapv entitlement-to-api (db/get-entitlements {:user user-or-nil
-                                                 :resource resource-or-nil})))
+  (if (has-roles? :approver)
+    (mapv entitlement-to-api (db/get-entitlements {:user user-or-nil
+                                                   :resource resource-or-nil}))
+    (mapv entitlement-to-api (db/get-entitlements {:user (get-user-id)
+                                                   :resource resource-or-nil}))))
 
 (defn get-entitlements-for-export
   "Returns a CSV string representing entitlements"
