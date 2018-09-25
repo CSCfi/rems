@@ -463,12 +463,14 @@
     :title (str (text :t.applicant-info/applicant))
     :always [:div.row
              [:div.col-md-6
-              [info-field (text :t.applicant-info/username) (get user-attributes "commonName")]]
+              [info-field (text :t.applicant-info/username) (or (get user-attributes "commonName")
+                                                                (get user-attributes "eppn"))]]
              [:div.col-md-6
               [info-field (text :t.applicant-info/email) (get user-attributes "mail")]]]
     :collapse (into [:form]
-                    (for [[k v] (dissoc user-attributes "commonName" "mail")]
-                      [info-field k v]))}])
+                     (for [[k v] (dissoc user-attributes "commonName" "mail")]
+                       [info-field k v]))}])
+
 
 ;; Approval
 
@@ -756,17 +758,15 @@
    (example "info-field with data"
             [info-field "Name" "Bob Tester"])
    (component-info applicant-info)
-   ;; TODO: fix applicant-info example when we have roles
-   (example "applicant-info for applicant shows no details"
+   (example "applicant-info"
             [applicant-info "info1" {"eppn" "developer@uu.id"
                                      "mail" "developer@uu.id"
                                      "commonName" "Deve Loper"
                                      "organization" "Testers"
                                      "address" "Testikatu 1, 00100 Helsinki"}])
-   (example "applicant-info for approver shows attributes"
+   (example "applicant-info with name missing"
             [applicant-info "info2" {"eppn" "developer@uu.id"
                                      "mail" "developer@uu.id"
-                                     "commonName" "Deve Loper"
                                      "organization" "Testers"
                                      "address" "Testikatu 1, 00100 Helsinki"}])
 
