@@ -17,7 +17,7 @@
 
 (def Workflow
   {:id s/Num
-   :prefix s/Str
+   :organization s/Str
    :owneruserid s/Str
    :modifieruserid s/Str
    :title s/Str
@@ -28,9 +28,9 @@
    :actors [Actor]})
 
 (defn- format-workflow
-  [{:keys [id prefix owneruserid modifieruserid title fnlround start endt active?]}]
+  [{:keys [id organization owneruserid modifieruserid title fnlround start endt active?]}]
   {:id id
-   :prefix prefix
+   :organization organization
    :owneruserid owneruserid
    :modifieruserid modifieruserid
    :title title
@@ -40,7 +40,7 @@
    :active active?})
 
 (def CreateWorkflowCommand
-  {:prefix s/Str
+  {:organization s/Str
    :title s/Str
    :rounds [{:type (s/enum :approval :review)
              :actors [{:userid s/Str}]}]})
@@ -55,8 +55,8 @@
       (assoc (format-workflow wf)
         :actors (db/get-workflow-actors {:wfid (:id wf)})))))
 
-(defn create-workflow [{:keys [prefix title rounds]}]
-  (let [wfid (:id (db/create-workflow! {:prefix prefix,
+(defn create-workflow [{:keys [organization title rounds]}]
+  (let [wfid (:id (db/create-workflow! {:organization organization,
                                         :owneruserid (get-user-id),
                                         :modifieruserid (get-user-id),
                                         :title title,

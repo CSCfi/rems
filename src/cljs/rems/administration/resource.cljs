@@ -49,11 +49,11 @@
 ; form submit
 
 (defn- valid-request? [request]
-  (and (not (str/blank? (:prefix request)))
+  (and (not (str/blank? (:organization request)))
        (not (str/blank? (:resid request)))))
 
 (defn build-request [form]
-  (let [request {:prefix (:prefix form)
+  (let [request {:organization (:organization form)
                  :resid (:resid form)
                  :licenses (map :id (:licenses form))}]
     (when (valid-request? request)
@@ -98,8 +98,8 @@
 (def ^:private context {:get-form ::form
                         :update-form ::set-form-field})
 
-(defn- resource-prefix-field []
-  [text-field context {:keys [:prefix]
+(defn- resource-organization-field []
+  [text-field context {:keys [:organization]
                        :label (text :t.create-resource/organization)
                        :placeholder (text :t.create-resource/organization-placeholder)}])
 
@@ -144,7 +144,7 @@
    {:id "create-resource"
     :title (text :t.navigation/create-resource)
     :always [:div
-             [resource-prefix-field]
+             [resource-organization-field]
              [resource-id-field]
              [resource-licenses-field]
 

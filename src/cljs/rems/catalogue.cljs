@@ -142,4 +142,4 @@
    (example "catalogue-list with item linked to urn.fi"
             [catalogue-list [{:title "Item title" :resid "urn:nbn:fi:lb-201403262"}] nil {:sort-column :name, :sort-order :asc}])
    (example "catalogue-list with item linked to example.org"
-            [catalogue-list [{:title "Item title" :resid "urn:nbn:fi:lb-201403262"}] nil {:sort-column :name, :sort-order :asc} {:urn-prefix "http://example.org/"}])])
+            [catalogue-list [{:title "Item title" :resid "urn:nbn:fi:lb-201403262"}] nil {:sort-column :name, :sort-order :asc} {:urn-organization "http://example.org/"}])])

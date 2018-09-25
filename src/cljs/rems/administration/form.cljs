@@ -88,7 +88,7 @@
          (nil? (:input-prompt item)))))
 
 (defn- valid-request? [request languages]
-  (and (not (str/blank? (:prefix request)))
+  (and (not (str/blank? (:organization request)))
        (not (str/blank? (:title request)))
        (every? #(valid-request-item? % languages) (:items request))))
 
@@ -104,7 +104,7 @@
                    (build-localized-string (:input-prompt item) languages))})
 
 (defn build-request [form languages]
-  (let [request {:prefix (:prefix form)
+  (let [request {:organization (:organization form)
                  :title (:title form)
                  :items (map #(build-request-item % languages) (:items form))}]
     (when (valid-request? request languages)
@@ -127,8 +127,8 @@
 (def ^:private context {:get-form ::form
                         :update-form ::set-form-field})
 
-(defn- form-prefix-field []
-  [text-field context {:keys [:prefix]
+(defn- form-organization-field []
+  [text-field context {:keys [:organization]
                        :label (text :t.create-resource/organization) ; TODO: extract common translation
                        :placeholder (text :t.create-resource/organization-placeholder)}]) ; TODO: extract common translation
 
@@ -216,7 +216,7 @@
      {:id "create-form"
       :title (text :t.administration/create-form)
       :always [:div
-               [form-prefix-field]
+               [form-organization-field]
                [form-title-field]
 
                (doall (for [item (range (count (:items form)))]
