@@ -26,13 +26,13 @@ DELETE FROM public.application_form_item_map CASCADE;
 DELETE FROM public.application_form_item CASCADE;
 DELETE FROM public.application_form CASCADE;
 
-INSERT INTO public.workflow (id, prefix, owneruserid, modifieruserid, title, fnlround, visibility, start, endt)
+INSERT INTO public.workflow (id, organization, owneruserid, modifieruserid, title, fnlround, visibility, start, endt)
 SELECT id, 'default', (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(owneruserid AS integer)), (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifieruserid AS integer)), title, fnlround, CAST(visibility::text AS scope), start, "end" FROM transfer.rms_workflow;
 
 SELECT setval('workflow_id_seq', (SELECT max(id) FROM public.workflow));
 
-INSERT INTO public.resource (id, owneruserid, modifierUserId, prefix, resId, start, endt)
-SELECT id, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifierUserId AS integer)), (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifierUserId AS integer)), prefix, resId, start, "end" FROM transfer.rms_resource;
+INSERT INTO public.resource (id, owneruserid, modifierUserId, organization, resId, start, endt)
+SELECT id, (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifierUserId AS integer)), (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifierUserId AS integer)), organization, resId, start, "end" FROM transfer.rms_resource;
 
 SELECT setval('resource_id_seq', (SELECT max(id) FROM public.resource));
 
@@ -60,7 +60,7 @@ SELECT setval('resource_id_seq', (SELECT max(id) FROM public.resource));
 -- Let's reuse the metaId as the formId, to make copying catalogue_item simpler
 
 -- Create forms
-INSERT INTO public.application_form (id, prefix, ownerUserId, modifierUserId, title, visibility, start, endt)
+INSERT INTO public.application_form (id, organization, ownerUserId, modifierUserId, title, visibility, start, endt)
 SELECT id, 'default', (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(owneruserid AS integer)), (SELECT userId FROM transfer.user_mapping WHERE expandoId = CAST(modifieruserid AS integer)), COALESCE(title,'unknown'), CAST(visibility::text AS scope), start, "end"
 FROM transfer.rms_application_form_meta;
 
