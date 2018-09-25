@@ -435,6 +435,11 @@
   ;; dispatch by event type
   (fn [_application event] (:event event)))
 
+(defn get-event-types
+  "Fetch sequence of supported event names."
+  []
+  (keys (methods apply-event)))
+
 (defmethod apply-event "apply"
   [application event]
   (assert (#{"draft" "returned" "withdrawn"} (:state application))

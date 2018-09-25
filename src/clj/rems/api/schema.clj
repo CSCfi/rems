@@ -43,7 +43,8 @@
    :round s/Num
    :event s/Str
    :comment (s/maybe s/Str)
-   :time DateTime})
+   :time DateTime
+   :eventdata s/Any})
 
 (def Application
   {:id (s/maybe s/Num) ;; does not exist for unsaved draft
