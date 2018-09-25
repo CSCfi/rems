@@ -129,8 +129,8 @@
 
 (defn- form-prefix-field []
   [text-field context {:keys [:prefix]
-                       :label (text :t.create-resource/prefix) ; TODO: extract common translation
-                       :placeholder (text :t.create-resource/prefix-placeholder)}]) ; TODO: extract common translation
+                       :label (text :t.create-resource/organization) ; TODO: extract common translation
+                       :placeholder (text :t.create-resource/organization-placeholder)}]) ; TODO: extract common translation
 
 (defn- form-title-field []
   [text-field context {:keys [:title]

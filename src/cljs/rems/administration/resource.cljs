@@ -100,8 +100,8 @@
 
 (defn- resource-prefix-field []
   [text-field context {:keys [:prefix]
-                       :label (text :t.create-resource/prefix)
-                       :placeholder (text :t.create-resource/prefix-placeholder)}])
+                       :label (text :t.create-resource/organization)
+                       :placeholder (text :t.create-resource/organization-placeholder)}])
 
 (defn- resource-id-field []
   [text-field context {:keys [:resid]
