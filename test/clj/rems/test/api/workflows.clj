@@ -30,7 +30,7 @@
              (:actors simple)))))
   (testing "create"
     (let [response (-> (request :post (str "/api/workflows/create"))
-                       (json-body {:prefix "abc"
+                       (json-body {:organization "abc"
                                    :title "workflow title"
                                    :rounds [{:type :review
                                              :actors [{:userid "alice"}
@@ -51,16 +51,16 @@
               workflow (first (filter #(= id (:id %)) workflows))]
           (is (response-is-ok? response))
           (is (= {:id id
-                  :prefix "abc"
+                  :organization "abc"
                   :title "workflow title"
                   :final-round 1
                   :actors [{:actoruserid "alice", :role "reviewer", :round 0}
                            {:actoruserid "bob", :role "reviewer", :round 0}
                            {:actoruserid "carl", :role "approver", :round 1}]}
-                 (select-keys workflow [:id :prefix :title :final-round :actors])))))))
+                 (select-keys workflow [:id :organization :title :final-round :actors])))))))
   (testing "create auto-approved workflow"
     (let [response (-> (request :post (str "/api/workflows/create"))
-                       (json-body {:prefix "abc"
+                       (json-body {:organization "abc"
                                    :title "auto-approved workflow"
                                    :rounds []})
                        (authenticate "42" "owner")
@@ -77,11 +77,11 @@
               workflow (first (filter #(= id (:id %)) workflows))]
           (is (response-is-ok? response))
           (is (= {:id id
-                  :prefix "abc"
+                  :organization "abc"
                   :title "auto-approved workflow"
                   :final-round 0
                   :actors []}
-                 (select-keys workflow [:id :prefix :title :final-round :actors]))))))))
+                 (select-keys workflow [:id :organization :title :final-round :actors]))))))))
 
 (deftest workflows-api-filtering-test
   (let [unfiltered-response (-> (request :get "/api/workflows")
@@ -109,7 +109,7 @@
         (is (= "unauthorized" (read-body response)))))
     (testing "create"
       (let [response (-> (request :post (str "/api/workflows/create"))
-                         (json-body {:prefix "abc"
+                         (json-body {:organization "abc"
                                      :title "workflow title"
                                      :rounds [{:type :approval
                                                :actors [{:userid "bob"}]}]})
@@ -126,7 +126,7 @@
         (is (= "unauthorized" (read-body response)))))
     (testing "create"
       (let [response (-> (request :post (str "/api/workflows/create"))
-                         (json-body {:prefix "abc"
+                         (json-body {:organization "abc"
                                      :title "workflow title"
                                      :rounds [{:type :approval
                                                :actors [{:userid "bob"}]}]})

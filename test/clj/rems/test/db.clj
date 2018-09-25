@@ -46,7 +46,7 @@
     (is (empty? (db/get-catalogue-items))))
 
   (testing "with test database"
-    (let [resid (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :prefix "nbn" :owneruserid 1 :modifieruserid 1}))]
+    (let [resid (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :organization "nbn" :owneruserid 1 :modifieruserid 1}))]
       (db/create-catalogue-item! {:title "ELFA Corpus" :form nil :resid resid :wfid nil})
       (db/create-catalogue-item! {:title "B" :form nil :resid nil :wfid nil})
       (is (= ["B" "ELFA Corpus"] (sort (map :title (db/get-catalogue-items))))
@@ -61,8 +61,8 @@
   (binding [context/*user* {"eppn" "test-user"}
             context/*lang* :en]
     (let [uid (get-user-id)
-          form (db/create-form! {:prefix "abc" :title "internal-title" :user uid})
-          wf (db/create-workflow! {:prefix "abc" :modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 0})
+          form (db/create-form! {:organization "abc" :title "internal-title" :user uid})
+          wf (db/create-workflow! {:organization "abc" :modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 0})
           license (db/create-license! {:modifieruserid uid :owneruserid uid :title "non-localized license" :type "link" :textcontent "http://test.org"})
           license-fi (db/create-license-localization! {:licid (:id license) :langcode "fi" :title "Testi lisenssi" :textcontent "http://testi.fi"})
           license-en (db/create-license-localization! {:licid (:id license) :langcode "en" :title "Test license" :textcontent "http://test.com"})
@@ -186,7 +186,7 @@
   (binding [context/*user* {"eppn" "test-user"}]
     (db/add-user! {:user "test-user" :userattrs nil})
     (let [uid (get-user-id)
-          wf (:id (db/create-workflow! {:prefix "abc" :owneruserid uid :modifieruserid uid :title "" :fnlround 0}))
+          wf (:id (db/create-workflow! {:organization "abc" :owneruserid uid :modifieruserid uid :title "" :fnlround 0}))
           item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
           app (applications/create-new-draft wf)]
       (db/add-application-item! {:application app :item item})
@@ -215,9 +215,9 @@
   (binding [context/*user* {"eppn" "test-user"}]
     (db/add-user! {:user "test-user" :userattrs nil})
     (let [uid (get-user-id)
-          wf (:id (db/create-workflow! {:prefix "abc" :owneruserid uid :modifieruserid uid :title "" :fnlround 0}))
-          res1 (:id (db/create-resource! {:resid "resid111" :prefix "abc" :owneruserid uid :modifieruserid uid}))
-          res2 (:id (db/create-resource! {:resid "resid222" :prefix "abc" :owneruserid uid :modifieruserid uid}))
+          wf (:id (db/create-workflow! {:organization "abc" :owneruserid uid :modifieruserid uid :title "" :fnlround 0}))
+          res1 (:id (db/create-resource! {:resid "resid111" :organization "abc" :owneruserid uid :modifieruserid uid}))
+          res2 (:id (db/create-resource! {:resid "resid222" :organization "abc" :owneruserid uid :modifieruserid uid}))
           item1 (:id (db/create-catalogue-item! {:title "item" :form nil :resid res1 :wfid wf}))
           item2 (:id (db/create-catalogue-item! {:title "item" :form nil :resid res2 :wfid wf}))
           app (applications/create-new-draft wf)]
@@ -252,7 +252,7 @@
     (db/add-user! {:user "approver2" :userattrs nil})
     (db/add-user! {:user "applicant" :userattrs nil})
     (testing "approval flow"
-      (let [wf (:id (db/create-workflow! {:prefix "abc" :owneruserid "owner" :modifieruserid "owner" :title "" :fnlround 1}))
+      (let [wf (:id (db/create-workflow! {:organization "abc" :owneruserid "owner" :modifieruserid "owner" :title "" :fnlround 1}))
             item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
             app (applications/create-new-draft wf)
             get-phases (fn [] (applications/get-application-phases (:state (applications/get-application-state app))))]
@@ -293,7 +293,7 @@
                  (get-phases))))))
 
     (testing "return flow"
-      (let [wf (:id (db/create-workflow! {:prefix "abc" :owneruserid "owner" :modifieruserid "owner" :title "" :fnlround 1}))
+      (let [wf (:id (db/create-workflow! {:organization "abc" :owneruserid "owner" :modifieruserid "owner" :title "" :fnlround 1}))
             item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
             app (applications/create-new-draft wf)
             get-phases (fn [] (applications/get-application-phases (:state (applications/get-application-state app))))]
@@ -325,7 +325,7 @@
                  (get-phases))))))
 
     (testing "rejection flow"
-      (let [wf (:id (db/create-workflow! {:prefix "abc" :owneruserid "owner" :modifieruserid "owner" :title "" :fnlround 1}))
+      (let [wf (:id (db/create-workflow! {:organization "abc" :owneruserid "owner" :modifieruserid "owner" :title "" :fnlround 1}))
             item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
             app (applications/create-new-draft wf)
             get-phases (fn [] (applications/get-application-phases (:state (applications/get-application-state app))))]
@@ -369,8 +369,8 @@
   (binding [context/*user* {"eppn" "test-user"}]
     (let [uid (get-user-id)
           uid2 "another-user"
-          wfid1 (:id (db/create-workflow! {:prefix "abc" :owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 0}))
-          wfid2 (:id (db/create-workflow! {:prefix "abc" :owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 1}))
+          wfid1 (:id (db/create-workflow! {:organization "abc" :owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 0}))
+          wfid2 (:id (db/create-workflow! {:organization "abc" :owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 1}))
           _ (actors/add-approver! wfid1 uid 0)
           _ (actors/add-approver! wfid2 uid2 0)
           _ (actors/add-approver! wfid2 uid 1)
@@ -460,8 +460,8 @@
   (binding [context/*user* {"eppn" "test-user"}]
     (let [uid (get-user-id)
           uid2 "another-user"
-          wfid1 (:id (db/create-workflow! {:prefix "abc" :owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 0}))
-          wfid2 (:id (db/create-workflow! {:prefix "abc" :modifieruserid "workflow-owner" :owneruserid "workflow-owner" :title "" :fnlround 1}))
+          wfid1 (:id (db/create-workflow! {:organization "abc" :owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 0}))
+          wfid2 (:id (db/create-workflow! {:organization "abc" :modifieruserid "workflow-owner" :owneruserid "workflow-owner" :title "" :fnlround 1}))
           _ (actors/add-reviewer! wfid1 uid 0)
           _ (actors/add-reviewer! wfid2 uid2 0)
           _ (actors/add-reviewer! wfid2 uid 1)
@@ -576,7 +576,7 @@
     (db/add-user! {:user "event-test-approver", :userattrs nil})
     (db/add-user! {:user "event-test-reviewer", :userattrs nil})
     (let [uid (get-user-id)
-          wf (:id (db/create-workflow! {:prefix "abc" :modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 1}))
+          wf (:id (db/create-workflow! {:organization "abc" :modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 1}))
           item (:id (db/create-catalogue-item! {:title "A" :form nil :resid nil :wfid wf}))
           fetch (fn [app] (select-keys (applications/get-application-state app)
                                        [:state :curround]))]
@@ -691,7 +691,7 @@
           (is (= {:curround 0 :state "applied"} (fetch app)))))
 
       (testing "review"
-        (let [rev-wf (:id (db/create-workflow! {:prefix "abc" :owneruserid uid :modifieruserid uid :title "Review workflow" :fnlround 1}))
+        (let [rev-wf (:id (db/create-workflow! {:organization "abc" :owneruserid uid :modifieruserid uid :title "Review workflow" :fnlround 1}))
               rev-item (:id (db/create-catalogue-item! {:title "Review item" :resid nil :wfid rev-wf :form nil}))
               rev-app (applications/create-new-draft rev-wf)]
           (db/add-application-item! {:application rev-app :item rev-item})
@@ -759,8 +759,8 @@
             (is (= {:curround 1 :state "closed"} (fetch app))))))
 
       (testing "autoapprove"
-        (let [res-abc (:id (db/create-resource! {:resid "ABC" :prefix "abc" :owneruserid uid :modifieruserid uid}))
-              auto-wf (:id (db/create-workflow! {:prefix "abc" :modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 1}))
+        (let [res-abc (:id (db/create-resource! {:resid "ABC" :organization "abc" :owneruserid uid :modifieruserid uid}))
+              auto-wf (:id (db/create-workflow! {:organization "abc" :modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 1}))
               auto-item (:id (db/create-catalogue-item! {:title "A" :form nil :resid res-abc :wfid auto-wf}))
               auto-app (applications/create-new-draft auto-wf)]
           (db/add-application-item! {:application auto-app :item auto-item})
@@ -776,7 +776,7 @@
           (is (contains? (set (map #(select-keys % [:catappid :resid :userid])
                                    (db/get-entitlements)))
                          {:catappid auto-app :resid "ABC" :userid uid}))))
-      (let [new-wf (:id (db/create-workflow! {:prefix "abc" :modifieruserid uid :owneruserid uid :title "3rd party review workflow" :fnlround 0}))
+      (let [new-wf (:id (db/create-workflow! {:organization "abc" :modifieruserid uid :owneruserid uid :title "3rd party review workflow" :fnlround 0}))
             new-item (:id (db/create-catalogue-item! {:title "A" :form nil :resid nil :wfid new-wf}))]
         (actors/add-approver! new-wf uid 0)
         (db/add-user! {:user "third-party-reviewer", :userattrs (cheshire/generate-string {"eppn" "third-party-reviewer" "mail" ""})})
@@ -877,9 +877,9 @@
 (deftest test-get-entitlements-for-export
   (db/add-user! {:user "jack" :userattrs nil})
   (db/add-user! {:user "jill" :userattrs nil})
-  (let [wf (:id (db/create-workflow! {:prefix "abc" :modifieruserid "owner" :owneruserid "owner" :title "Test workflow" :fnlround 1}))
-        res1 (:id (db/create-resource! {:resid "resource1" :prefix "pre" :owneruserid "owner" :modifieruserid "owner"}))
-        res2 (:id (db/create-resource! {:resid "resource2" :prefix "pre" :owneruserid "owner" :modifieruserid "owner"}))
+  (let [wf (:id (db/create-workflow! {:organization "abc" :modifieruserid "owner" :owneruserid "owner" :title "Test workflow" :fnlround 1}))
+        res1 (:id (db/create-resource! {:resid "resource1" :organization "pre" :owneruserid "owner" :modifieruserid "owner"}))
+        res2 (:id (db/create-resource! {:resid "resource2" :organization "pre" :owneruserid "owner" :modifieruserid "owner"}))
         item1 (:id (db/create-catalogue-item! {:title "item1" :form nil :resid res1 :wfid wf}))
         item2 (:id (db/create-catalogue-item! {:title "item2" :form nil :resid res2 :wfid wf}))
         jack-app (binding [context/*user* {"eppn" "jack"}]
@@ -926,10 +926,10 @@
                                     :remove (str (:uri server) "/remove")}}]
       (let [uid "bob"
             admin "owner"
-            prefix "foo"
-            wf (:id (db/create-workflow! {:prefix "abc" :modifieruserid admin :owneruserid admin :title "Test workflow" :fnlround 1}))
-            res1 (:id (db/create-resource! {:resid "resource1" :prefix prefix :owneruserid admin :modifieruserid admin}))
-            res2 (:id (db/create-resource! {:resid "resource2" :prefix prefix :owneruserid admin :modifieruserid admin}))
+            organization "foo"
+            wf (:id (db/create-workflow! {:organization "abc" :modifieruserid admin :owneruserid admin :title "Test workflow" :fnlround 1}))
+            res1 (:id (db/create-resource! {:resid "resource1" :organization organization :owneruserid admin :modifieruserid admin}))
+            res2 (:id (db/create-resource! {:resid "resource2" :organization organization :owneruserid admin :modifieruserid admin}))
             item1 (:id (db/create-catalogue-item! {:title "item1" :form nil :resid res1 :wfid wf}))
             item2 (:id (db/create-catalogue-item! {:title "item2" :form nil :resid res2 :wfid wf}))]
         (db/add-user! {:user uid :userattrs (cheshire/generate-string {"mail" "b@o.b"})})

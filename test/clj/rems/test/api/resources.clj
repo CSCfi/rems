@@ -20,14 +20,14 @@
             data (read-body response)]
         (is (response-is-ok? response))
         (is (coll-is-not-empty? data))
-        (is (= #{:id :owneruserid :modifieruserid :prefix :resid :start :end :active :licenses} (set (keys (first data)))))))
+        (is (= #{:id :owneruserid :modifieruserid :organization :resid :start :end :active :licenses} (set (keys (first data)))))))
     (testing "create"
       (let [licid 1
             resid "RESOURCE-API-TEST"]
         (let [response (-> (request :post "/api/resources/create")
                            (authenticate api-key user-id)
                            (json-body {:resid resid
-                                       :prefix "TEST-PREFIX"
+                                       :organization "TEST-ORGANIZATION"
                                        :licenses [licid]})
                            app)]
           (is (response-is-ok? response)))
@@ -68,7 +68,7 @@
     (testing "create"
       (let [response (-> (request :post "/api/resources/create")
                          (json-body {:resid "r"
-                                     :prefix "p"
+                                     :organization "o"
                                      :licenses []})
                          app)]
         (is (response-is-forbidden? response))
@@ -87,7 +87,7 @@
         (let [response (-> (request :post "/api/resources/create")
                            (authenticate api-key user-id)
                            (json-body {:resid "r"
-                                       :prefix "p"
+                                       :organization "o"
                                        :licenses []})
                            app)]
           (is (response-is-unauthorized? response))
@@ -106,7 +106,7 @@
         (let [response (-> (request :post "/api/resources/create")
                            (authenticate api-key user-id)
                            (json-body {:resid "r"
-                                       :prefix "p"
+                                       :organization "o"
                                        :licenses []})
                            app)]
           (is (response-is-unauthorized? response))
