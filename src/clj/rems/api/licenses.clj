@@ -30,4 +30,4 @@
       :body [command CreateLicenseCommand]
       (check-user)
       (check-roles :owner)
-      (ok (licenses/create-license command)))))
+      (ok (licenses/create-license! command)))))

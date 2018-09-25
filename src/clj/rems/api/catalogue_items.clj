@@ -4,7 +4,6 @@
             [rems.api.util :refer [check-user check-roles]]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
-            [rems.util :refer [get-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
@@ -59,7 +58,7 @@
       :return CreateCatalogueItemResponse
       (check-user)
       (check-roles :owner)
-      (ok (catalogue/create-catalogue-item-command! command)))
+      (ok (catalogue/create-catalogue-item! command)))
 
     (PUT "/update" []
       :summary "Update catalogue item"
@@ -76,4 +75,4 @@
       :return SuccessResponse
       (check-user)
       (check-roles :owner)
-      (ok (catalogue/create-catalogue-item-localization-command! command)))))
+      (ok (catalogue/create-catalogue-item-localization! command)))))
