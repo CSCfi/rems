@@ -11,6 +11,10 @@ CREATE TYPE application_event_type AS ENUM (
   'third-party-review' -- applied --> applied
 );
 --;;
+-- I'm sorry, you're going to lose all unsupported events
+DELETE FROM application_event
+  WHERE event NOT IN (SELECT unnest(enum_range(NULL::application_event_type))::text)
+--;;
 ALTER TABLE application_event
   ALTER COLUMN event TYPE application_event_type
     USING CAST(event AS application_event_type);
