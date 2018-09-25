@@ -69,6 +69,17 @@
                                :user (get-user-id)
                                :value value})))))
 
+(defn- save-attachments
+  [application-id input]
+  (let [form (get-form-for application-id)]
+    (doseq [{item-id :id} (:items form)]
+      (when-let [value (get input item-id)]
+        (db/save-attachment! {:application application-id
+                              :form (:id form)
+                              :item item-id
+                              :user (get-user-id)
+                              :data value})))))
+
 (defn save-licenses
   [application-id input]
   (let [form (get-form-for application-id)]

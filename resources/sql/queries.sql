@@ -249,6 +249,17 @@ ON CONFLICT (catAppId, formMapId)
 DO UPDATE
 SET (modifierUserId, value) = (:user, :value)
 
+-- :name save-attachment! :!
+INSERT INTO application_attachments
+(catAppId, modifierUserId, data, formMapId)
+VALUES
+(:application, :user, :data,
+ (SELECT id FROM application_form_item_map
+  WHERE formId = :form AND formItemId = :item))
+ON CONFLICT (catAppId, formMapId)
+DO UPDATE
+SET (modifierUserId, data) = (:user, :data)
+
 -- :name save-license-approval! :!
 -- NB: this is not atomic
 INSERT INTO application_license_approval_values
