@@ -77,7 +77,7 @@
 (defn- create-expired-form! []
   (let [yesterday (time/minus (time/now) (time/days 1))]
     ;; only used from create-test-data!
-    (db/create-form! {:prefix "nbn" :title "Expired form, should not be seen" :user (+fake-users+ :owner) :endt yesterday})))
+    (db/create-form! {:organization "nbn" :title "Expired form, should not be seen" :user (+fake-users+ :owner) :endt yesterday})))
 
 (defn- create-expired-license! []
   (let [owner (+fake-users+ :owner) ; only used from create-test-data!
@@ -88,7 +88,7 @@
   "Creates a bilingual form with all supported field types. Returns id of the form meta."
   [users]
   (let [owner (users :owner)
-        form (db/create-form! {:prefix "nbn" :title "Yksinkertainen lomake" :user owner})
+        form (db/create-form! {:organization "nbn" :title "Yksinkertainen lomake" :user owner})
         name (db/create-form-item! {:type "text" :optional false :user owner :value 0})
         purpose (db/create-form-item! {:type "texta" :optional false :user owner :value 0})
         start-date (db/create-form-item! {:type "date" :optional true :user owner :value 0})
@@ -118,12 +118,12 @@
         approver2 (users :approver2)
         reviewer (users :reviewer)
         owner (users :owner)
-        minimal (:id (db/create-workflow! {:prefix "nbn" :owneruserid owner :modifieruserid owner :title "minimal" :fnlround 0}))
-        simple (:id (db/create-workflow! {:prefix "nbn" :owneruserid owner :modifieruserid owner :title "simple" :fnlround 0}))
-        with-review (:id (db/create-workflow! {:prefix "nbn" :owneruserid owner :modifieruserid owner :title "with review" :fnlround 1}))
-        two-round (:id (db/create-workflow! {:prefix "nbn" :owneruserid owner :modifieruserid owner :title "two rounds" :fnlround 1}))
-        different (:id (db/create-workflow! {:prefix "nbn" :owneruserid owner :modifieruserid owner :title "two rounds, different approvers" :fnlround 1}))
-        expired (:id (db/create-workflow! {:prefix "nbn" :owneruserid owner :modifieruserid owner :title "workflow has already expired, should not be seen" :fnlround 0 :endt (time/minus (time/now) (time/years 1))}))]
+        minimal (:id (db/create-workflow! {:organization "nbn" :owneruserid owner :modifieruserid owner :title "minimal" :fnlround 0}))
+        simple (:id (db/create-workflow! {:organization "nbn" :owneruserid owner :modifieruserid owner :title "simple" :fnlround 0}))
+        with-review (:id (db/create-workflow! {:organization "nbn" :owneruserid owner :modifieruserid owner :title "with review" :fnlround 1}))
+        two-round (:id (db/create-workflow! {:organization "nbn" :owneruserid owner :modifieruserid owner :title "two rounds" :fnlround 1}))
+        different (:id (db/create-workflow! {:organization "nbn" :owneruserid owner :modifieruserid owner :title "two rounds, different approvers" :fnlround 1}))
+        expired (:id (db/create-workflow! {:organization "nbn" :owneruserid owner :modifieruserid owner :title "workflow has already expired, should not be seen" :fnlround 0 :endt (time/minus (time/now) (time/years 1))}))]
     ;; either approver1 or approver2 can approve
     (actors/add-approver! simple approver1 0)
     (actors/add-approver! simple approver2 0)
@@ -262,7 +262,7 @@
 (defn- create-application-with-expired-resource-license! [wfid form users]
   (let [applicant (users :applicant1)
         owner (users :owner)
-        resource-id (:id (db/create-resource! {:resid "Resource that has expired license" :prefix "nbn" :owneruserid owner :modifieruserid owner}))
+        resource-id (:id (db/create-resource! {:resid "Resource that has expired license" :organization "nbn" :owneruserid owner :modifieruserid owner}))
         year-ago (time/minus (time/now) (time/years 1))
         yesterday (time/minus (time/now) (time/days 1))
         licid-expired (create-resource-license! resource-id "License that has expired" owner)
@@ -276,7 +276,7 @@
 (defn- create-application-before-new-resource-license! [wfid form users]
   (let [applicant (users :applicant1)
         owner (users :owner)
-        resource-id (:id (db/create-resource! {:resid "Resource that has a new resource license" :prefix "nbn" :owneruserid owner :modifieruserid owner}))
+        resource-id (:id (db/create-resource! {:resid "Resource that has a new resource license" :organization "nbn" :owneruserid owner :modifieruserid owner}))
         yesterday (time/minus (time/now) (time/days 1))
         licid-new (create-resource-license! resource-id "License that was just created" owner)
         _ (db/set-resource-license-validity! {:licid licid-new :start (time/now) :end nil})
@@ -289,9 +289,9 @@
 (defn create-test-data! []
   (db/add-api-key! {:apikey 42 :comment "test data"})
   (create-users-and-roles!)
-  (let [res1 (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :prefix "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner)}))
-        res2 (:id (db/create-resource! {:resid "Extra Data" :prefix "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner)}))
-        res3 (:id (db/create-resource! {:resid "Expired Resource, should not be seen" :prefix "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner) :endt (time/minus (time/now) (time/years 1))}))
+  (let [res1 (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner)}))
+        res2 (:id (db/create-resource! {:resid "Extra Data" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner)}))
+        res3 (:id (db/create-resource! {:resid "Expired Resource, should not be seen" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner) :endt (time/minus (time/now) (time/years 1))}))
         form (create-basic-form! +fake-users+)
         _ (create-expired-form!)
         workflows (create-workflows! +fake-users+)
@@ -325,8 +325,8 @@
 
 (defn create-demo-data! []
   (create-demo-users-and-roles!)
-  (let [res1 (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :prefix "nbn" :owneruserid (+demo-users+ :owner) :modifieruserid (+demo-users+ :owner)}))
-        res2 (:id (db/create-resource! {:resid "Extra Data" :prefix "nbn" :owneruserid (+demo-users+ :owner) :modifieruserid (+demo-users+ :owner)}))
+  (let [res1 (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :organization "nbn" :owneruserid (+demo-users+ :owner) :modifieruserid (+demo-users+ :owner)}))
+        res2 (:id (db/create-resource! {:resid "Extra Data" :organization "nbn" :owneruserid (+demo-users+ :owner) :modifieruserid (+demo-users+ :owner)}))
         form (create-basic-form! +demo-users+)
         workflows (create-workflows! +demo-users+)
         minimal (create-catalogue-item! res1 (:minimal workflows) form
