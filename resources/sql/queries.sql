@@ -455,7 +455,7 @@ WHERE userId = :user
 
 -- :name get-application-events :? :*
 SELECT
-  userId, round, event, comment, time
+  userId, round, event, comment, eventData::TEXT, time
 FROM application_event
 WHERE appId = :application
 ORDER BY id ASC
@@ -463,16 +463,19 @@ ORDER BY id ASC
 -- TODO: consider refactoring this into get-application-events
 -- :name get-all-application-events :? :*
 SELECT
-  appId, userId, round, event, comment, time
+  appId, userId, round, event, comment, eventData::TEXT, time
 FROM application_event
 ORDER BY id ASC
 
 -- :name add-application-event! :insert
-INSERT INTO application_event (appId, userId, round, event, comment)
-VALUES (:application, :user, :round, CAST (:event AS application_event_type), :comment)
-
--- :name get-application-event-types :? :*
-SELECT unnest(enum_range(NULL::application_event_type));
+INSERT INTO application_event (appId, userId, round, event, comment, eventData)
+VALUES (:application, :user, :round, :event, :comment,
+/*~ (if (:eventdata params) */
+        :eventdata::jsonb
+/*~*/
+        NULL
+/*~ ) ~*/
+        )
 
 -- :name get-application-states :? :*
 SELECT unnest(enum_range(NULL::application_state));

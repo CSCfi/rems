@@ -34,6 +34,7 @@
 
 (defn localize-event [event]
   (case event
+    "add-member" :t.application.events/add-member
     "apply" :t.applications.events/apply
     "approve" :t.applications.events/approve
     "autoapprove" :t.applications.events/autoapprove

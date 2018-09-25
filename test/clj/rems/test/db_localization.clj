@@ -4,6 +4,7 @@
             [mount.core :as mount]
             [rems.config :refer [env]]
             [rems.db.core :as db]
+            [rems.db.applications :as applications]
             [rems.test.locales :refer [loc-en]]))
 
 (use-fixtures
@@ -34,9 +35,8 @@
              (dissoc :unknown)
              (keys)
              (sort))
-         (->> (rems.db.core/get-application-event-types)
-              (map :unnest)
+         (->> (applications/get-event-types)
               (map keyword)
               (sort))))
-  (is (not (contains? (set (map rems.text/localize-event (map :unnest (rems.db.core/get-application-event-types))))
+  (is (not (contains? (set (map rems.text/localize-event (applications/get-event-types)))
                       :t.applications.events/unknown))))
