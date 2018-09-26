@@ -66,6 +66,10 @@
    :name (s/maybe s/Str)
    :email (s/maybe s/Str)})
 
+(def AddMemberCommand
+  {:application-id s/Num
+   :member s/Str})
+
 ;; Api implementation
 
 (defn- api-judge [{:keys [command application-id round comment]}]
@@ -193,4 +197,14 @@
                                         (:round request)
                                         (:comment request)
                                         (:recipients request))
+      (ok {:success true}))
+
+    (POST "/add_member" []
+      :summary "Add a member to an application"
+      :body [request AddMemberCommand]
+      :return SuccessResponse
+      (check-user)
+      ;; TODO: provide a nicer error message when user doesn't exist?
+      (applications/add-member (:application-id request)
+                               (:member request))
       (ok {:success true}))))
