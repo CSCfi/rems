@@ -10,7 +10,8 @@
             [ring.util.response :refer [content-type not-found redirect response]]))
 
 (defn- apply-for-resource [resource]
-  (let [items (catalogue/get-localized-catalogue-items {:resource resource})]
+  (let [items (->> (catalogue/get-localized-catalogue-items {:resource resource})
+                   (remove catalogue/disabled-catalogue-item?))]
     (cond
       (= 0 (count items)) (not-found "Resource not found")
       (< 1 (count items)) (not-found "Resource ID is not unique")

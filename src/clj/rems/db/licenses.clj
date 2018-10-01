@@ -22,8 +22,8 @@
     (doall
      (for [lic licenses]
        (assoc lic :localizations
-             (into {} (for [{:keys [langcode title textcontent]} (get localizations (:id lic))]
-                   [langcode {:title title :textcontent textcontent}])))))))
+              (into {} (for [{:keys [langcode title textcontent]} (get localizations (:id lic))]
+                         [langcode {:title title :textcontent textcontent}])))))))
 
 (defn get-resource-licenses
   "Get resource licenses for given resource id"
