@@ -10,6 +10,7 @@
             [rems.pdf :as pdf]
             [rems.util :refer [get-user-id]]
             [ring.util.http-response :refer :all]
+            [ring.swagger.upload :as upload]
             [schema.core :as s]))
 
 ;; Response models
@@ -207,4 +208,14 @@
       ;; TODO: provide a nicer error message when user doesn't exist?
       (applications/add-member (:application-id request)
                                (:member request))
+      (ok {:success true}))
+
+    (POST "/add_attachment" []
+      :summary "Add an attachment file related to an application field"
+      :multipart-params [file :- upload/TempFileUpload]
+      :query-params [application-id :- (describe s/Int "application id")
+                     field-id :- (describe s/Int "application form field id the attachment is related to")]
+      :middleware [upload/wrap-multipart-params]
+      :return SuccessResponse
+      (form/save-attachment! file application-id field-id)
       (ok {:success true}))))

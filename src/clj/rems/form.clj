@@ -10,7 +10,8 @@
             [rems.InvalidRequestException]
             [rems.roles :refer [has-roles?]]
             [rems.text :refer :all]
-            [rems.util :refer [get-user-id getx]]))
+            [rems.util :refer [get-user-id getx]])
+  (:import [java.io ByteArrayOutputStream FileInputStream]))
 
 (defn- title-localizations [item]
   (into {} (for [[lang {title :title}] (:localizations item)
@@ -69,16 +70,19 @@
                                :user (get-user-id)
                                :value value})))))
 
-(defn- save-attachments
-  [application-id input]
-  (let [form (get-form-for application-id)]
-    (doseq [{item-id :id} (:items form)]
-      (when-let [value (get input item-id)]
-        (db/save-attachment! {:application application-id
-                              :form (:id form)
-                              :item item-id
-                              :user (get-user-id)
-                              :data value})))))
+(defn save-attachment!
+  [{:keys [tempfile filename]} application-id item-id]
+  (let [form (get-form-for application-id)
+        byte-array (with-open [input (FileInputStream. tempfile)
+                               buffer (ByteArrayOutputStream.)]
+                     (clojure.java.io/copy input buffer)
+                     (.toByteArray buffer))]
+    (db/save-attachment! {:application application-id
+                          :form (:id form)
+                          :item item-id
+                          :user (get-user-id)
+                          :filename filename
+                          :data byte-array})))
 
 (defn save-licenses
   [application-id input]
