@@ -4,6 +4,7 @@ CREATE TABLE application_attachments (
     formMapId integer DEFAULT NULL,
     modifierUserId varchar(255) NOT NULL,
     filename varchar(255) NOT NULL,
+    type varchar(255) NOT NULL,
     data bytea NOT NULL,
     start timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT application_attachments_ibfk_1 FOREIGN KEY (catAppId) REFERENCES catalogue_item_application (id),

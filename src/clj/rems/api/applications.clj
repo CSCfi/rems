@@ -152,6 +152,21 @@
       (check-roles :approver)
       (ok (get-reviewers)))
 
+    (GET "/attachments/" []
+      :summary "Get an attachment for a field in an application"
+      :query-params [application-id :- (describe s/Int "application id")
+                     field-id :- (describe s/Int "application form field id the attachment is related to")]
+      (check-user)
+      (let [form (db/get-form-for-application {:application application-id})]
+        (if-let [attachment (db/get-attachment {:item field-id
+                                                :form (:formid form)
+                                                :application application-id})]
+          (-> (:data attachment)
+              (java.io.ByteArrayInputStream.)
+              (ok)
+              (content-type (:type attachment)))
+          (not-found! "not found"))))
+
     (GET "/:application-id" []
       :summary "Get application by `application-id`"
       :path-params [application-id :- (describe s/Num "application id")]

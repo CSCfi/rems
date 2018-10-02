@@ -251,14 +251,21 @@ SET (modifierUserId, value) = (:user, :value)
 
 -- :name save-attachment! :!
 INSERT INTO application_attachments
-(catAppId, modifierUserId, filename, data, formMapId)
+(catAppId, modifierUserId, filename, type, data, formMapId)
 VALUES
-(:application, :user, :filename, :data,
+(:application, :user, :filename, :type, :data,
  (SELECT id FROM application_form_item_map
   WHERE formId = :form AND formItemId = :item))
 ON CONFLICT (catAppId, formMapId)
 DO UPDATE
-SET (modifierUserId, filename, data) = (:user, :filename, :data)
+SET (modifierUserId, filename, type, data) = (:user, :filename, :type, :data)
+
+-- :name get-attachment :? :1
+SELECT filename, type, data FROM application_attachments attachments
+LEFT OUTER JOIN application_form_item_map itemmap ON attachments.formMapId = itemmap.id
+WHERE attachments.catAppId = :application
+  AND itemmap.formItemId = :item
+  AND itemmap.formId = :form
 
 -- :name save-license-approval! :!
 -- NB: this is not atomic

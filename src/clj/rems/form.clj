@@ -71,7 +71,7 @@
                                :value value})))))
 
 (defn save-attachment!
-  [{:keys [tempfile filename]} application-id item-id]
+  [{:keys [tempfile filename content-type]} application-id item-id]
   (let [form (get-form-for application-id)
         byte-array (with-open [input (FileInputStream. tempfile)
                                buffer (ByteArrayOutputStream.)]
@@ -82,6 +82,7 @@
                           :item item-id
                           :user (get-user-id)
                           :filename filename
+                          :type content-type
                           :data byte-array})))
 
 (defn save-licenses
