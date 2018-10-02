@@ -1,5 +1,6 @@
 (ns rems.api.users
   (:require [compojure.api.sweet :refer :all]
+            [rems.api.schema :refer :all]
             [rems.api.util :refer [check-roles check-user]]
             [rems.db.users :as users]
             [ring.util.http-response :refer :all]
@@ -20,6 +21,8 @@
     (POST "/create" []
       :summary "Create user"
       :body [command CreateUserCommand]
+      :return SuccessResponse
       (check-user)
       (check-roles :owner)
-      (ok (create-user command)))))
+      (create-user command)
+      (ok {:success true}))))
