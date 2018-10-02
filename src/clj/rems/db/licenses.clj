@@ -6,24 +6,24 @@
 
 (defn- format-licenses [licenses]
   (doall
-    (for [license licenses]
-      {:id (:id license)
-       :licensetype (:type license)
-       :start (:start license)
-       :end (:endt license)
-       ;; TODO why do licenses have a non-localized title & content while items don't?
-       :title (:title license)
-       :textcontent (:textcontent license)})))
+   (for [license licenses]
+     {:id (:id license)
+      :licensetype (:type license)
+      :start (:start license)
+      :end (:endt license)
+      ;; TODO why do licenses have a non-localized title & content while items don't?
+      :title (:title license)
+      :textcontent (:textcontent license)})))
 
 (defn- localize-licenses [licenses]
   (let [localizations (->> (db/get-license-localizations)
                            (map #(update-in % [:langcode] keyword))
                            (group-by :licid))]
     (doall
-      (for [lic licenses]
-        (assoc lic :localizations
-                   (into {} (for [{:keys [langcode title textcontent]} (get localizations (:id lic))]
-                              [langcode {:title title :textcontent textcontent}])))))))
+     (for [lic licenses]
+       (assoc lic :localizations
+              (into {} (for [{:keys [langcode title textcontent]} (get localizations (:id lic))]
+                         [langcode {:title title :textcontent textcontent}])))))))
 
 (defn get-resource-licenses
   "Get resource licenses for given resource id"
@@ -63,7 +63,7 @@
        (filter (fn [license] (db/now-active? now (:start license) (:end license))))
        (distinct-by :id)))
 
-(defn create-license [{:keys [title licensetype textcontent localizations]}]
+(defn create-license! [{:keys [title licensetype textcontent localizations]}]
   (let [license (db/create-license! {:owneruserid (get-user-id)
                                      :modifieruserid (get-user-id)
                                      :type licensetype

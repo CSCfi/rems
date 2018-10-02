@@ -9,11 +9,11 @@
   ((resolve 'rems.standalone/start-app)))
 
 (defn run-tests [& namespaces]
-  (reload)
+  (repl/refresh)
   (ef/run-tests (ef/find-tests namespaces) {:multithread? false}))
 
 (defn run-all-tests []
-  (reload)
+  (repl/refresh)
   (ef/run-tests (ef/find-tests "test/clj") {:multithread? false}))
 
 (defn pptransit []

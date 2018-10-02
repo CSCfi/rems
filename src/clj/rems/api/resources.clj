@@ -2,10 +2,8 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
             [rems.api.util :refer [check-roles check-user]]
-            [rems.db.core :as db]
             [rems.db.licenses :as licenses]
             [rems.db.resource :as resource]
-            [rems.util :refer [get-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
   (:import [org.joda.time DateTime]))
@@ -43,11 +41,6 @@
      (assoc (format-resource res)
             :licenses (licenses/get-resource-licenses (:id res))))))
 
-(defn- create-resource [{:keys [resid organization licenses]}]
-  (let [id (:id (db/create-resource! {:resid resid :organization organization :owneruserid (get-user-id) :modifieruserid (get-user-id)}))]
-    (doseq [licid licenses]
-      (db/create-resource-license! {:resid id :licid licid}))))
-
 (def resources-api
   (context "/resources" []
     :tags ["resources"]
@@ -65,4 +58,4 @@
       :body [command CreateResourceCommand]
       (check-user)
       (check-roles :owner)
-      (ok (create-resource command)))))
+      (ok (resource/create-resource! command)))))
