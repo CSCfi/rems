@@ -235,21 +235,8 @@
   (fn [event]
     (rf/dispatch [::set-field id (.. event -target -value)])))
 
-(defn- set-attachment
-  [id]
-  (fn [event]
-    (rf/dispatch [::set-field id (aget (.. event -target -files) 0)])))
-
 (defn- id-to-name [id]
   (str "field" id))
-
-(defn- reset-attachment-field
-  [id]
-  (-> js/document
-      (.getElementById (id-to-name id))
-      (.-value)
-      (set! nil))
-  (rf/dispatch [::set-field id ""]))
 
 (defn- field-validation-message [validation title]
   (when validation
@@ -287,21 +274,6 @@
                             :value value
                             :readOnly readonly
                             :onChange (set-field-value id)}]])
-
-(defn attachment-field
-  [{:keys [title id readonly optional value validation] :as opts}]
-  [basic-field opts
-   [:div
-    [:input {:type "file"
-             :id (id-to-name id)
-             :name (id-to-name id)
-             :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
-             :class (when validation "is-invalid")
-             :disabled readonly
-             :onChange (set-attachment id)}]
-    (when (not readonly)
-      [:div.btn.fas.fa-times {:type "button"
-                              :on-click #(reset-attachment-field id)}])]])
 
 (defn- date-field
   [{:keys [title id readonly optional value min max validation] :as opts}]
@@ -367,7 +339,6 @@
   (case (:type f)
     "text" [text-field f]
     "texta" [texta-field f]
-    "attachment" [attachment-field f]
     "date" [date-field f]
     "label" [label f]
     "license" (case (:licensetype f)
@@ -835,12 +806,6 @@
             [:form
              [field {:type "texta" :title "Title" :inputprompt "prompt"
                      :validation {:key :t.form.validation.required}}]])
-   (example "editable field of type \"attachment\""
-            [:form
-             [field {:type "attachment" :title "Title"}]])
-   (example "non-editable field of type \"attachment\""
-            [:form
-             [field {:type "attachment" :title "Title" :readonly true}]])
    (example "field of type \"date\""
             [:form
              [field {:type "date" :title "Title"}]])
