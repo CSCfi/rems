@@ -145,6 +145,7 @@
                 :type-text "Text field"
                 :type-texta "Text area"
                 :type-date "Date field"
+                :type-attachment "Attachment"
                 :optional "Optional"
                 :add-form-item "Add field"
                 :remove-form-item "Remove field"
