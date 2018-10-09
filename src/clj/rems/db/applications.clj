@@ -17,7 +17,8 @@
             [rems.util :refer [get-user-id
                                get-username
                                getx
-                               getx-user-id]]))
+                               getx-user-id]])
+  (:import [java.io ByteArrayOutputStream FileInputStream]))
 
 (defn draft?
   "Is the given `application-id` for an unsaved draft application?"
@@ -395,6 +396,23 @@
       :applicant-attributes (users/get-user-attributes (:applicantuserid application))
       :items items
       :licenses licenses})))
+
+(defn save-attachment!
+  [{:keys [tempfile filename content-type]} application-id item-id]
+  (let [form (get-form-for application-id)
+        byte-array (with-open [input (FileInputStream. tempfile)
+                               buffer (ByteArrayOutputStream.)]
+                     (clojure.java.io/copy input buffer)
+                     (.toByteArray buffer))]
+    (when-not (#{"draft" "returned" "withdrawn"} (:state (:application form)))
+      (throw-unauthorized))
+    (db/save-attachment! {:application application-id
+                          :form (:id form)
+                          :item item-id
+                          :user (get-user-id)
+                          :filename filename
+                          :type content-type
+                          :data byte-array})))
 
 (defn get-draft-form-for
   "Returns a draft form structure like `get-form-for` used when a new application is created."
