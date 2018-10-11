@@ -225,6 +225,7 @@
                                (:member request))
       (ok {:success true}))
 
+;; TODO: think about size limit
     (POST "/add_attachment" []
       :summary "Add an attachment file related to an application field"
       :multipart-params [file :- upload/TempFileUpload]
