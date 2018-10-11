@@ -1,9 +1,7 @@
 (ns rems.api.schema
   "Shared schema definitions for the API"
-  (:require
-   [schema.core :as s])
-  (:import
-   [org.joda.time DateTime]))
+  (:require [schema.core :as s])
+  (:import (org.joda.time DateTime)))
 
 (def CatalogueItem
   {:id s/Num

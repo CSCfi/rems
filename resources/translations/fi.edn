@@ -145,6 +145,7 @@
                 :type-text "Tekstikenttä"
                 :type-texta "Tekstialue"
                 :type-date "Päivämäärä"
+                :type-attachment "Liitetiedosto"
                 :optional "Ei pakollinen"
                 :add-form-item "Lisää kenttä"
                 :remove-form-item "Poista kenttä"

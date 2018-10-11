@@ -64,9 +64,9 @@
           form (db/create-form! {:organization "abc" :title "internal-title" :user uid})
           wf (db/create-workflow! {:organization "abc" :modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 0})
           license (db/create-license! {:modifieruserid uid :owneruserid uid :title "non-localized license" :type "link" :textcontent "http://test.org"})
-          license-fi (db/create-license-localization! {:licid (:id license) :langcode "fi" :title "Testi lisenssi" :textcontent "http://testi.fi"})
-          license-en (db/create-license-localization! {:licid (:id license) :langcode "en" :title "Test license" :textcontent "http://test.com"})
-          wf-license (db/create-workflow-license! {:wfid (:id wf) :licid (:id license) :round 0})
+          _ (db/create-license-localization! {:licid (:id license) :langcode "fi" :title "Testi lisenssi" :textcontent "http://testi.fi"})
+          _ (db/create-license-localization! {:licid (:id license) :langcode "en" :title "Test license" :textcontent "http://test.com"})
+          _ (db/create-workflow-license! {:wfid (:id wf) :licid (:id license) :round 0})
           _ (db/set-workflow-license-validity! {:licid (:id license) :start (time/minus (time/now) (time/years 1)) :end nil})
           item (db/create-catalogue-item! {:title "item" :form (:id form) :resid nil :wfid (:id wf)})
           item-c (db/create-form-item!

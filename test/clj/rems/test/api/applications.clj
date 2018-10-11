@@ -76,12 +76,11 @@
           (is (= application-id (:id (:application application))))
           (is (= "draft" (:state (:application application))))
           (is (= 2 (count (:licenses application))))
-          (is (= 3 (count (:items application))))))
+          (is (= 4 (count (:items application))))))
       (testing "retrieving as other user"
         (let [response (-> (request :get (str "/api/applications/" application-id))
                            (authenticate api-key another-user)
-                           app)
-              application (read-body response)]
+                           app)]
           (is (response-is-unauthorized? response))))
       (testing "saving as other user"
         (let [response (-> (request :post (str "/api/applications/save"))
@@ -222,8 +221,7 @@
                          (json-body {:command "save"
                                      :catalogue-items [catid]
                                      :items {1 ""}})
-                         app)
-            cmd-response (read-body response)]
+                         app)]
         ;; TODO should we actually return a nice error message here?
         (is (= 400 (:status response)) "should not be able to save draft with disbled item")))
     (testing "submit for application with disabled item"
@@ -234,8 +232,7 @@
                                      :catalogue-items [catid]
                                      :items {1 "x" 2 "y" 3 "z"}
                                      :licenses {1 "approved" 2 "approved"}})
-                         app)
-            cmd-response (read-body response)]
+                         app)]
         (is (= 400 (:status response)) "should not be possible to submit with disabled item")))))
 
 (deftest application-api-roles
@@ -552,6 +549,69 @@
         (is (response-is-unauthorized? response))
         (is (= "invalid api key" body))))))
 
+(def testfile (clojure.java.io/file "./test-data/test.txt"))
+
+(def filecontent {:tempfile testfile
+                  :content-type "text/plain"
+                  :filename "test.txt"
+                  :size (.length testfile)})
+
+(deftest application-api-attachments
+  (let [api-key "42"
+        user-id "alice"
+        catid 2
+        field-id 5
+        response (-> (request :post (str "/api/applications/save"))
+                     (authenticate api-key user-id)
+                     (json-body {:command "save"
+                                 :catalogue-items [catid]
+                                 :items {1 ""}})
+                     app
+                     read-body)
+        app-id (:id response)]
+    (testing "uploading attachment for a draft"
+      (let [response (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
+                         (assoc :params {"file" filecontent})
+                         (assoc :multipart-params {"file" filecontent})
+                         (authenticate api-key user-id)
+                         app)]
+        (is (response-is-ok? response))))
+    (testing "retrieving attachment for a draft"
+      (let [response (-> (request :get (str "/api/applications/attachments/") {:application-id app-id :field-id field-id})
+                         (authenticate api-key user-id)
+                         app)]
+        (is (response-is-ok? response))
+        (is (= (slurp testfile) (slurp (:body response))))))
+    (testing "uploading attachment as non-applicant"
+      (let [response (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
+                         (assoc :params {"file" filecontent})
+                         (assoc :multipart-params {"file" filecontent})
+                         (authenticate api-key "carl")
+                         app)]
+        (is (response-is-unauthorized? response))))
+    (testing "retrieving attachment as non-applicant"
+      (let [response (-> (request :get (str "/api/applications/attachments/") {:application-id app-id :field-id field-id})
+                         (authenticate api-key "carl")
+                         app)]
+        (is (response-is-unauthorized? response))))
+    (testing "uploading attachment for a submitted application"
+      (let [body (-> (request :post (str "/api/applications/save"))
+                         (authenticate api-key user-id)
+                         (json-body {:application-id app-id
+                                     :command "submit"
+                                     :catalogue-items [catid]
+                                     :items {1 "x" 2 "y" 3 "z"}
+                                     :licenses {1 "approved" 2 "approved"}})
+                         app
+                         read-body)]
+        (is (= "applied" (:state body)))
+        (let [response (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
+                           (assoc :params {"file" filecontent})
+                           (assoc :multipart-params {"file" filecontent})
+                           (authenticate api-key user-id)
+                           app)]
+          (is (response-is-unauthorized? response)))))))
+
 (deftest applications-api-security-test
   (testing "listing without authentication"
     (let [response (-> (request :get (str "/api/applications"))
@@ -602,6 +662,21 @@
                                :application-id 2
                                :round 0
                                :comment "msg"})
+                   app
+                   read-body)]
+      (is (= "invalid api key" body))))
+  (testing "upload attachment without authentication"
+    (let [body (-> (request :post (str "/api/applications/add_attachment"))
+                   (assoc :params {"file" filecontent})
+                   (assoc :multipart-params {"file" filecontent})
+                   app
+                   read-body)]
+         (is (str/includes? body "Invalid anti-forgery token"))))
+  (testing "upload attachment with wrong API-Key"
+    (let [body (-> (request :post (str "/api/applications/add_attachment"))
+                   (assoc :params {"file" filecontent})
+                   (assoc :multipart-params {"file" filecontent})
+                   (authenticate "invalid-api-key" "developer")
                    app
                    read-body)]
       (is (= "invalid api key" body)))))

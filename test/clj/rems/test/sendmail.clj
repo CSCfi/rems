@@ -39,7 +39,7 @@
 (defn- subject-to-check [subject]
   (str "([:t.email/" subject "-subject :t/missing])"))
 
-(defn- status-msg-to-check [username appid catid item-title status-key]
+(defn- status-msg-to-check [username appid item-title status-key]
   (str "([:t.email/status-changed-msg :t/missing] [\"" username "\" " appid " \"" item-title "\" \"([:t.applications.states/" status-key " :t/missing])\" \"localhost:3000/form/" appid "\"])"))
 
 (deftest test-sending-email
@@ -109,7 +109,7 @@
             (binding [context/*user* {"eppn" "approver"}]
               (applications/approve-application app1 1 "")
               (conjure/verify-call-times-for email/send-mail 1)
-              (conjure/verify-first-call-args-for email/send-mail "invalid-addr" (subject-to-check "status-changed") (status-msg-to-check "Test User" app1 item1 "item" "approved")))))
+              (conjure/verify-first-call-args-for email/send-mail "invalid-addr" (subject-to-check "status-changed") (status-msg-to-check "Test User" app1 "item" "approved")))))
         (conjure/mocking [email/send-mail]
           (applications/submit-application app2)
           (applications/submit-application app3))
@@ -118,12 +118,12 @@
             (conjure/mocking [email/send-mail]
               (applications/reject-application app2 0 "")
               (conjure/verify-call-times-for email/send-mail 1)
-              (conjure/verify-first-call-args-for email/send-mail "invalid-addr" (subject-to-check "status-changed") (status-msg-to-check "Test User" app2 item2 "item2" "rejected"))))
+              (conjure/verify-first-call-args-for email/send-mail "invalid-addr" (subject-to-check "status-changed") (status-msg-to-check "Test User" app2 "item2" "rejected"))))
           (testing "Applicant gets notified when application is returned to him/her"
             (conjure/mocking [email/send-mail]
               (applications/return-application app3 0 "")
               (conjure/verify-call-times-for email/send-mail 1)
-              (conjure/verify-first-call-args-for email/send-mail "invalid-addr" (subject-to-check "status-changed") (status-msg-to-check "Test User" app3 item2 "item2" "returned"))))
+              (conjure/verify-first-call-args-for email/send-mail "invalid-addr" (subject-to-check "status-changed") (status-msg-to-check "Test User" app3 "item2" "returned"))))
           (testing "Emails should not be sent when actions fail"
             (conjure/mocking [email/send-mail]
               (is (thrown? NotAuthorizedException (applications/approve-application app4 1 ""))
@@ -143,13 +143,13 @@
           (conjure/mocking [email/send-mail]
             (applications/close-application app1 1 "")
             (conjure/verify-call-times-for email/send-mail 1)
-            (conjure/verify-first-call-args-for email/send-mail "invalid-addr" (subject-to-check "status-changed") (status-msg-to-check "Test User" app1 item1 "item" "closed"))))
+            (conjure/verify-first-call-args-for email/send-mail "invalid-addr" (subject-to-check "status-changed") (status-msg-to-check "Test User" app1 "item" "closed"))))
         (testing "Applicant is notified of withdrawn application"
           (conjure/mocking [email/send-mail]
             (applications/submit-application app4)
             (applications/withdraw-application app4 0 "")
             (conjure/verify-call-times-for email/send-mail 3)
-            (conjure/verify-nth-call-args-for 3 email/send-mail "invalid-addr" (subject-to-check "status-changed") (status-msg-to-check "Test User" app4 item2 "item2" "withdrawn"))))
+            (conjure/verify-nth-call-args-for 3 email/send-mail "invalid-addr" (subject-to-check "status-changed") (status-msg-to-check "Test User" app4 "item2" "withdrawn"))))
         (testing "3rd party reviewer is notified after a review request"
           (conjure/mocking [email/send-mail]
             (applications/submit-application app4)

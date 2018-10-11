@@ -1,8 +1,8 @@
 (ns rems.text
   (:require [clj-time.core :as time]
             [clj-time.format :as format]
-            [rems.locales :as locales]
             [rems.context :as context]
+            [rems.locales :as locales]
             [taoensso.tempura :as tempura]))
 
 (defn with-language [lang f]

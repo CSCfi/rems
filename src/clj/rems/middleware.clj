@@ -12,13 +12,13 @@
             [rems.locales :refer [tempura-config]]
             [rems.util :refer [get-user-id]]
             [ring-ttl-session.core :refer [ttl-memory-store]]
-            [ring.middleware.anti-forgery :refer [wrap-anti-forgery *anti-forgery-token*]]
+            [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
             [ring.middleware.defaults :refer [site-defaults
                                               wrap-defaults]]
             [ring.middleware.format :refer [wrap-restful-format]]
             [ring.middleware.webjars :refer [wrap-webjars]]
-            [ring.util.response :refer [redirect content-type]]
             [ring.util.http-response :refer [unauthorized]]
+            [ring.util.response :refer [redirect]]
             [taoensso.tempura :as tempura])
   (:import (javax.servlet ServletContext)))
 

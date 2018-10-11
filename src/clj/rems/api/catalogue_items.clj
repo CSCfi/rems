@@ -1,7 +1,7 @@
 (ns rems.api.catalogue-items
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
-            [rems.api.util :refer [check-user check-roles]]
+            [rems.api.util :refer [check-roles check-user]]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [ring.util.http-response :refer :all]

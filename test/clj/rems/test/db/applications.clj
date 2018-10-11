@@ -1,7 +1,6 @@
 (ns rems.test.db.applications
   (:require [clojure.test :refer :all]
-            [rems.db.applications :refer :all]
-            [rems.db.core :as db]))
+            [rems.db.applications :refer :all]))
 
 (deftest test-handling-event?
   (are [en] (handling-event? nil {:event en})

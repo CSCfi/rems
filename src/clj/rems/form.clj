@@ -12,18 +12,6 @@
             [rems.text :refer :all]
             [rems.util :refer [get-user-id getx]]))
 
-
-(defn- may-see-event?
-  "May the current user see this event?
-
-  Applicants can't see review events, reviewers and approvers can see everything."
-  [event]
-  ;; could implement more granular checking based on authors etc.
-  ;; now strictly role-based
-  (let [applicant-types #{"apply" "autoapprove" "approve" "reject" "return" "withdraw" "close"}]
-    (or (has-roles? :reviewer :approver) ;; reviewer and approver can see everything
-        (applicant-types (:event event)))))
-
 (defn- title-localizations [item]
   (into {} (for [[lang {title :title}] (:localizations item)
                  :when title]

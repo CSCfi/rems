@@ -1,6 +1,5 @@
 (ns ^:integration rems.test.api.resources
-  (:require [clojure.string :as str]
-            [clojure.test :refer :all]
+  (:require [clojure.test :refer :all]
             [rems.handler :refer [app]]
             [rems.test.api :refer :all]
             [ring.mock.request :refer :all]))

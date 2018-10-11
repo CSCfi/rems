@@ -10,6 +10,7 @@
             [rems.pdf :as pdf]
             [rems.util :refer [get-user-id]]
             [ring.util.http-response :refer :all]
+            [ring.swagger.upload :as upload]
             [schema.core :as s]))
 
 ;; Response models
@@ -151,6 +152,21 @@
       (check-roles :approver)
       (ok (get-reviewers)))
 
+    (GET "/attachments/" []
+      :summary "Get an attachment for a field in an application"
+      :query-params [application-id :- (describe s/Int "application id")
+                     field-id :- (describe s/Int "application form field id the attachment is related to")]
+      (check-user)
+      (let [form (applications/get-form-for application-id)]
+        (if-let [attachment (db/get-attachment {:item field-id
+                                                :form (:id form)
+                                                :application application-id})]
+          (-> (:data attachment)
+              (java.io.ByteArrayInputStream.)
+              (ok)
+              (content-type (:type attachment)))
+          (not-found! "not found"))))
+
     (GET "/:application-id" []
       :summary "Get application by `application-id`"
       :path-params [application-id :- (describe s/Num "application id")]
@@ -207,4 +223,15 @@
       ;; TODO: provide a nicer error message when user doesn't exist?
       (applications/add-member (:application-id request)
                                (:member request))
+      (ok {:success true}))
+
+;; TODO: think about size limit
+    (POST "/add_attachment" []
+      :summary "Add an attachment file related to an application field"
+      :multipart-params [file :- upload/TempFileUpload]
+      :query-params [application-id :- (describe s/Int "application id")
+                     field-id :- (describe s/Int "application form field id the attachment is related to")]
+      :middleware [upload/wrap-multipart-params]
+      :return SuccessResponse
+      (applications/save-attachment! file application-id field-id)
       (ok {:success true}))))

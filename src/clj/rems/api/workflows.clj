@@ -7,7 +7,7 @@
             [rems.util :refer [get-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
-  (:import [org.joda.time DateTime]))
+  (:import (org.joda.time DateTime)))
 
 (def Actor
   {:actoruserid s/Str

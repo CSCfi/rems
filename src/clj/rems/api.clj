@@ -1,12 +1,11 @@
 (ns rems.api
-  (:require [cognitect.transit :as transit]
-            [cheshire.generate :as cheshire]
+  (:require [cheshire.generate :as cheshire]
+            [cognitect.transit :as transit]
             [compojure.api.exception :as ex]
             [compojure.api.sweet :refer :all]
             [muuntaja.core :as muuntaja]
             [muuntaja.format.json :refer [json-format]]
             [muuntaja.format.transit :as transit-format]
-            [muuntaja.middleware :refer [wrap-format wrap-params]]
             [rems.api.actions :refer [actions-api]]
             [rems.api.applications :refer [applications-api]]
             [rems.api.catalogue :refer [catalogue-api]]
@@ -21,9 +20,9 @@
             [ring.middleware.cors :refer [wrap-cors]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
-  (:import rems.auth.NotAuthorizedException
-           rems.InvalidRequestException
-           [org.joda.time ReadableInstant DateTime]))
+  (:import (org.joda.time DateTime ReadableInstant)
+           (rems InvalidRequestException)
+           (rems.auth NotAuthorizedException)))
 
 (defn unauthorized-handler
   [exception ex-data request]
