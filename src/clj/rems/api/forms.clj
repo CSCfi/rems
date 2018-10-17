@@ -36,6 +36,9 @@
             :type (s/enum "text" "texta" "date" "attachment")
             :input-prompt (s/maybe {s/Keyword s/Str})}]})
 
+(def CreateFormResponse
+  {:id s/Num})
+
 (def forms-api
   (context "/forms" []
     :tags ["forms"]
@@ -51,6 +54,7 @@
     (POST "/create" []
       :summary "Create form"
       :body [command CreateFormCommand]
+      :return CreateFormResponse
       (check-user)
       (check-roles :owner)
       (ok (form/create-form! command)))))

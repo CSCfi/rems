@@ -44,6 +44,9 @@
    :rounds [{:type (s/enum :approval :review)
              :actors [{:userid s/Str}]}]})
 
+(def CreateWorkflowResponse
+  {:id s/Num})
+
 ; TODO: deduplicate or decouple with /api/applications/reviewers API?
 (def AvailableActor Reviewer)
 (def get-available-actors get-reviewers)
@@ -69,6 +72,7 @@
     (POST "/create" []
       :summary "Create workflow"
       :body [command CreateWorkflowCommand]
+      :return CreateWorkflowResponse
       (check-user)
       (check-roles :owner)
       (ok (workflow/create-workflow! command)))
