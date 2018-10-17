@@ -49,7 +49,7 @@
     :tags ["resources"]
 
     (GET "/" []
-      :summary "Get resources"
+      :summary "Get resources (roles: owner)"
       :query-params [{active :- (describe s/Bool "filter active or inactive resources") nil}]
       :return [Resource]
       (check-user)
@@ -57,7 +57,7 @@
       (ok (get-resources (when-not (nil? active) {:active? active}))))
 
     (POST "/create" []
-      :summary "Create resource"
+      :summary "Create resource (roles: owner)"
       :body [command CreateResourceCommand]
       :return CreateResourceResponse
       (check-user)

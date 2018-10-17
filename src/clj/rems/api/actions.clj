@@ -23,7 +23,7 @@
     :tags ["actions"]
 
     (GET "/" []
-      :summary "Get actions page reviewable and approvable applications"
+      :summary "Get actions page reviewable and approvable applications (roles: approver, reviewer)"
       :return GetActionsResponse
       (check-user)
       (ok {:approver? true
@@ -31,7 +31,7 @@
            :approvals (applications/get-approvals)
            :reviews (applications/get-applications-to-review)}))
     (GET "/handled" []
-      :summary "Get data for applications that have been acted on (for example approved or reviewed)"
+      :summary "Get data for applications that have been acted on (for example approved or reviewed) (roles: approver, reviewer)"
       :return GetHandledActionsResponse
       (check-user)
       (ok {:approver? true

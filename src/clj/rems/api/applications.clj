@@ -132,13 +132,13 @@
     :tags ["applications"]
 
     (GET "/" []
-      :summary "Get current user's all applications"
+      :summary "Get current user's all applications (roles: applicant)"
       :return GetApplicationsResponse
       (check-user)
       (ok (applications/get-my-applications)))
 
     (GET "/draft" []
-      :summary "Get application (draft) for `catalogue-items`"
+      :summary "Get application (draft) for `catalogue-items` (roles: applicant)"
       :query-params [catalogue-items :- (describe [s/Num] "catalogue item ids")]
       :return GetApplicationResponse
       (check-user)
@@ -146,14 +146,14 @@
         (ok (applications/get-draft-form-for app))))
 
     (GET "/reviewers" []
-      :summary "Available third party reviewers"
+      :summary "Available third party reviewers (roles: approver)"
       :return [Reviewer]
       (check-user)
       (check-roles :approver)
       (ok (get-reviewers)))
 
     (GET "/attachments/" []
-      :summary "Get an attachment for a field in an application"
+      :summary "Get an attachment for a field in an application (roles: approver, applicant, reviewer)"
       :query-params [application-id :- (describe s/Int "application id")
                      field-id :- (describe s/Int "application form field id the attachment is related to")]
       (check-user)
@@ -168,7 +168,7 @@
           (not-found! "not found"))))
 
     (GET "/:application-id" []
-      :summary "Get application by `application-id`"
+      :summary "Get application by `application-id` (roles: approver, applicant, reviewer)"
       :path-params [application-id :- (describe s/Num "application id")]
       :responses {200 {:schema GetApplicationResponse}
                   404 {:schema s/Str :description "Not found"}}
@@ -178,7 +178,7 @@
         (not-found! "not found")))
 
     (GET "/:application-id/pdf" []
-      :summary "Get a pdf version of an application."
+      :summary "Get a pdf version of an application. (roles: approver, applicant, reviewer)"
       :path-params [application-id :- (describe s/Num "application id")]
       :produces ["application/pdf"]
       (check-user)
@@ -191,21 +191,21 @@
         (not-found! "not found")))
 
     (POST "/save" []
-      :summary "Create a new application, change an existing one or submit an application"
+      :summary "Create a new application, change an existing one or submit an application (roles: applicant)"
       :body [request SaveApplicationCommand]
       :return SaveApplicationResponse
       (check-user)
       (ok (form/api-save (fix-keys request))))
 
     (POST "/judge" []
-      :summary "Judge an application"
+      :summary "Judge an application (roles: approver, applicant, reviewer)"
       :body [request JudgeApplicationCommand]
       :return SuccessResponse
       (check-user)
       (ok (api-judge request)))
 
     (POST "/review_request" []
-      :summary "Request a review"
+      :summary "Request a review (roles: approver)"
       :body [request ReviewRequestCommand]
       :return SuccessResponse
       (check-user)
@@ -216,7 +216,7 @@
       (ok {:success true}))
 
     (POST "/add_member" []
-      :summary "Add a member to an application"
+      :summary "Add a member to an application (roles: applicant)"
       :body [request AddMemberCommand]
       :return SuccessResponse
       (check-user)
@@ -227,7 +227,7 @@
 
 ;; TODO: think about size limit
     (POST "/add_attachment" []
-      :summary "Add an attachment file related to an application field"
+      :summary "Add an attachment file related to an application field (roles: applicant)"
       :multipart-params [file :- upload/TempFileUpload]
       :query-params [application-id :- (describe s/Int "application id")
                      field-id :- (describe s/Int "application form field id the attachment is related to")]

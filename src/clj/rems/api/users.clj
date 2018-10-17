@@ -19,7 +19,7 @@
     :tags ["users"]
 
     (POST "/create" []
-      :summary "Create user"
+      :summary "Create user (roles: owner)"
       :body [command CreateUserCommand]
       :return SuccessResponse
       (check-user)

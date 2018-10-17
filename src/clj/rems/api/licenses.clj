@@ -21,7 +21,7 @@
     :tags ["licenses"]
 
     (GET "/" []
-      :summary "Get licenses"
+      :summary "Get licenses (roles: owner)"
       :query-params [{active :- (describe s/Bool "filter active or inactive licenses") nil}]
       :return [License]
       (check-user)
@@ -29,7 +29,7 @@
       (ok (licenses/get-all-licenses (when-not (nil? active) {:active? active}))))
 
     (POST "/create" []
-      :summary "Create license"
+      :summary "Create license (roles: owner)"
       :body [command CreateLicenseCommand]
       :return CreateLicenseResponse
       (check-user)

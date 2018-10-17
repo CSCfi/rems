@@ -62,7 +62,7 @@
     :tags ["workflows"]
 
     (GET "/" []
-      :summary "Get workflows"
+      :summary "Get workflows (roles: owner)"
       :query-params [{active :- (describe s/Bool "filter active or inactive workflows") nil}]
       :return [Workflow]
       (check-user)
@@ -70,7 +70,7 @@
       (ok (get-workflows (when-not (nil? active) {:active? active}))))
 
     (POST "/create" []
-      :summary "Create workflow"
+      :summary "Create workflow (roles: owner)"
       :body [command CreateWorkflowCommand]
       :return CreateWorkflowResponse
       (check-user)
@@ -78,7 +78,7 @@
       (ok (workflow/create-workflow! command)))
 
     (GET "/actors" []
-      :summary "List of available actors"
+      :summary "List of available actors (roles: owner)"
       :return [AvailableActor]
       (check-user)
       (check-roles :owner)

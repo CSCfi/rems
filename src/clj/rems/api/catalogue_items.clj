@@ -35,14 +35,14 @@
     :tags ["catalogue items"]
 
     (GET "/" []
-      :summary "Get catalogue items"
+      :summary "Get catalogue items (roles: all)"
       :query-params [{resource :- (describe s/Str "resource id (optional)") nil}]
       :return GetCatalogueItemsResponse
       (check-user)
       (ok (catalogue/get-localized-catalogue-items {:resource resource})))
 
     (GET "/:item-id" []
-      :summary "Get a single catalogue item"
+      :summary "Get a single catalogue item (roles: all)"
       :path-params [item-id :- (describe s/Num "catalogue item")]
       :responses {200 {:schema CatalogueItem}
                   404 {:schema s/Str :description "Not found"}}
@@ -53,7 +53,7 @@
         (not-found! "not found")))
 
     (POST "/create" []
-      :summary "Create a new catalogue item"
+      :summary "Create a new catalogue item (roles: owner)"
       :body [command CreateCatalogueItemCommand]
       :return CreateCatalogueItemResponse
       (check-user)
@@ -61,7 +61,7 @@
       (ok (catalogue/create-catalogue-item! command)))
 
     (PUT "/update" []
-      :summary "Update catalogue item"
+      :summary "Update catalogue item (roles: owner)"
       :body [command UpdateCatalogueItemCommand]
       :return SuccessResponse
       (check-user)
@@ -70,7 +70,7 @@
       (ok {:success true}))
 
     (POST "/create-localization" []
-      :summary "Create a new catalogue item localization"
+      :summary "Create a new catalogue item localization (roles: owner)"
       :body [command CreateCatalogueItemLocalizationCommand]
       :return SuccessResponse
       (check-user)

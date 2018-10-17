@@ -44,7 +44,7 @@
     :tags ["forms"]
 
     (GET "/" []
-      :summary "Get forms"
+      :summary "Get forms (roles: owner)"
       :query-params [{active :- (describe s/Bool "filter active or inactive forms") nil}]
       :return [Form]
       (check-user)
@@ -52,7 +52,7 @@
       (ok (get-forms (when-not (nil? active) {:active? active}))))
 
     (POST "/create" []
-      :summary "Create form"
+      :summary "Create form (roles: owner)"
       :body [command CreateFormCommand]
       :return CreateFormResponse
       (check-user)

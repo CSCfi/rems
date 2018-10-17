@@ -14,7 +14,7 @@
     :tags ["entitlements"]
 
     (GET "/" []
-      :summary "With proper privileges gets all entitlements, otherwise returns user's own entitlements."
+      :summary "With proper privileges gets all entitlements, otherwise returns user's own entitlements. (roles: approver, applicant)"
       :query-params [{user :- (describe s/Str "return entitlements for this user (optional), ignored if the user doesn't have appropriate privileges") nil}
                      {resource :- (describe s/Str "return entitlements for this resource (optional)") nil}]
       :return GetEntitlementsResponse
