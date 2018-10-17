@@ -74,4 +74,5 @@
       (db/create-license-localization! {:licid licid
                                         :langcode (name langcode)
                                         :title (:title localization)
-                                        :textcontent (:textcontent localization)}))))
+                                        :textcontent (:textcontent localization)}))
+    {:id licid}))

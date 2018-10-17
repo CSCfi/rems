@@ -24,6 +24,9 @@
    :organization s/Str
    :licenses [s/Num]})
 
+(def CreateResourceResponse
+  {:id s/Num})
+
 (defn- format-resource
   [{:keys [id owneruserid modifieruserid organization resid start endt active?]}]
   {:id id
@@ -56,6 +59,7 @@
     (POST "/create" []
       :summary "Create resource"
       :body [command CreateResourceCommand]
+      :return CreateResourceResponse
       (check-user)
       (check-roles :owner)
       (ok (resource/create-resource! command)))))

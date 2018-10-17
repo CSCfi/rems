@@ -13,6 +13,9 @@
    :localizations {s/Keyword {:title s/Str
                               :textcontent s/Str}}})
 
+(def CreateLicenseResponse
+  {:id s/Num})
+
 (def licenses-api
   (context "/licenses" []
     :tags ["licenses"]
@@ -28,6 +31,7 @@
     (POST "/create" []
       :summary "Create license"
       :body [command CreateLicenseCommand]
+      :return CreateLicenseResponse
       (check-user)
       (check-roles :owner)
       (ok (licenses/create-license! command)))))
