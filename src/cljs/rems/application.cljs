@@ -198,6 +198,17 @@
      (judge-application command application-id round comment)
      {})))
 
+;;; saving attachment
+(defn- save-attachment [application-id field-id form-data]
+  (post! (str "/api/applications/add_attachment?application-id=" application-id "&field-id=" field-id)
+    {:body form-data}))
+
+(rf/reg-event-fx
+ ::save-attachment
+ (fn [{:keys [db]} [_ field-id file]]
+   (let [application-id (get-in db [::application :application :id])]
+     (save-attachment application-id field-id file))))
+
 ;;;; UI components ;;;;
 
 (defn- format-validation-messages
@@ -238,6 +249,15 @@
 (defn- id-to-name [id]
   (str "field" id))
 
+(defn- set-attachment
+  [id]
+  (fn [event]
+    (let [filecontent (aget (.. event -target -files) 0)
+          form-data (doto
+                     (js/FormData.)
+                      (.append "file" filecontent))]
+      (rf/dispatch [::save-attachment id form-data]))))
+
 (defn- field-validation-message [validation title]
   (when validation
     [:div {:class "text-danger"}
@@ -274,6 +294,18 @@
                             :value value
                             :readOnly readonly
                             :onChange (set-field-value id)}]])
+
+(defn attachment-field
+  [{:keys [title id readonly optional value validation] :as opts}]
+  [basic-field opts
+   [:div
+    [:input {:type "file"
+             :id (id-to-name id)
+             :name (id-to-name id)
+             :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
+             :class (when validation "is-invalid")
+             :disabled readonly
+             :onChange (set-attachment id)}]]])
 
 (defn- date-field
   [{:keys [title id readonly optional value min max validation] :as opts}]
@@ -340,6 +372,7 @@
     "text" [text-field f]
     "texta" [texta-field f]
     "date" [date-field f]
+    "attachment" [attachment-field f]
     "label" [label f]
     "license" (case (:licensetype f)
                 "link" [link-license f]
@@ -806,6 +839,12 @@
             [:form
              [field {:type "texta" :title "Title" :inputprompt "prompt"
                      :validation {:key :t.form.validation.required}}]])
+   (example "editable field of type \"attachment\""
+            [:form
+             [field {:type "attachment" :title "Title"}]])
+   (example "non-editable field of type \"attachment\""
+            [:form
+             [field {:type "attachment" :title "Title" :readonly true}]])
    (example "field of type \"date\""
             [:form
              [field {:type "date" :title "Title"}]])
