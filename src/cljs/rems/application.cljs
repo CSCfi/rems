@@ -201,13 +201,42 @@
 ;;; saving attachment
 (defn- save-attachment [application-id field-id form-data]
   (post! (str "/api/applications/add_attachment?application-id=" application-id "&field-id=" field-id)
-    {:body form-data}))
+         {:body form-data
+          :error-handler (fn [_] (rf/dispatch [::set-status :failed]))}))
+
+(defn- save-application-with-attachment [field-id form-data catalogue-items items licenses]
+(let [payload {:command "save"
+               :items items
+               :licenses licenses
+               :catalogue-items catalogue-items}]
+  (post! "/api/applications/save"
+         {:handler (fn [resp]
+                     (if (:success resp)
+                       (do (save-attachment (:id resp) field-id form-data)
+                           (rf/dispatch [::set-status :saved])
+                                   ;; HACK: we both set the location, and fire a fetch-application event
+                                   ;; because if the location didn't change, secretary won't fire the event
+                           (navigate-to (:id resp))
+                           (rf/dispatch [::enter-application-page (:id resp)]))
+                       (rf/dispatch [::set-status :failed (:validation resp)])))
+          :error-handler (fn [_] (rf/dispatch [::set-status :failed]))
+          :params payload})))
 
 (rf/reg-event-fx
  ::save-attachment
  (fn [{:keys [db]} [_ field-id file]]
    (let [application-id (get-in db [::application :application :id])]
-     (save-attachment application-id field-id file))))
+     (if application-id
+       (save-attachment application-id field-id file)
+       (let [catalogue-items (get-in db [::application :catalogue-items])
+             catalogue-ids (mapv :id catalogue-items)
+             items (get-in db [::edit-application :items])
+                               ;; TODO change api to booleans
+             licenses (into {}
+                            (for [[id checked?] (get-in db [::edit-application :licenses])
+                                  :when checked?]
+                              [id "approved"]))]
+         (save-application-with-attachment field-id file catalogue-ids items licenses))))))
 
 ;;;; UI components ;;;;
 
