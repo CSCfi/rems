@@ -328,13 +328,17 @@
   [{:keys [title id readonly optional value validation] :as opts}]
   [basic-field opts
    [:div
-    [:input {:type "file"
-             :id (id-to-name id)
-             :name (id-to-name id)
-             :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
-             :class (when validation "is-invalid")
-             :disabled readonly
-             :onChange (set-attachment id)}]]])
+    [:input {:style {:display "none"}
+     :type "file"
+     :id (id-to-name id)
+     :name (id-to-name id)
+     :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
+     :class (when validation "is-invalid")
+     :disabled readonly
+     :onChange (set-attachment id)}]
+    [:button.btn.btn-secondary {:on-click (fn [e] (.click (.getElementById js/document (id-to-name id))))} (text :t.form/upload)]
+    (when (not-empty value)
+      [:div {:style {:display "inline-block" :margin-left "10px"}} value])]])
 
 (defn- date-field
   [{:keys [title id readonly optional value min max validation] :as opts}]

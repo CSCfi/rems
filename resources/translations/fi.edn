@@ -215,6 +215,7 @@
          :saved "Luonnos tallennettu."
          :submit "Lähetä hakemus"
          :submitted "Hakemus lähetetty."
+         :upload "Lisää liitetiedosto"
          :user "Käyttäjä"
          :validation {:errors "Lähetys epäonnistui. Tarkista seuraavat kentät."
                       :required "Kenttä \"%1\" on pakollinen."}}
