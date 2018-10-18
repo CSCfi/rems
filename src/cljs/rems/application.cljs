@@ -285,6 +285,7 @@
           form-data (doto
                      (js/FormData.)
                       (.append "file" filecontent))]
+      (rf/dispatch [::set-field id (.-name filecontent)])
       (rf/dispatch [::save-attachment id form-data]))))
 
 (defn- field-validation-message [validation title]
