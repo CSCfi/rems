@@ -325,20 +325,22 @@
                             :onChange (set-field-value id)}]])
 
 (defn attachment-field
-  [{:keys [title id readonly optional value validation] :as opts}]
+  [{:keys [title id readonly optional value validation app-id] :as opts}]
   [basic-field opts
    [:div
-    [:input {:style {:display "none"}
-     :type "file"
-     :id (id-to-name id)
-     :name (id-to-name id)
-     :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
-     :class (when validation "is-invalid")
-     :disabled readonly
-     :onChange (set-attachment id)}]
-    [:button.btn.btn-secondary {:on-click (fn [e] (.click (.getElementById js/document (id-to-name id))))} (text :t.form/upload)]
+    (when (not readonly)
+      [:div..upload-file
+       [:input {:style {:display "none"}
+                :type "file"
+                :id (id-to-name id)
+                :name (id-to-name id)
+                :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
+                :class (when validation "is-invalid")
+                :disabled readonly
+                :onChange (set-attachment id)}]
+       [:button.btn.btn-secondary {:on-click (fn [e] (.click (.getElementById js/document (id-to-name id))))} (text :t.form/upload)]])
     (when (not-empty value)
-      [:div {:style {:display "inline-block" :margin-left "10px"}} value])]])
+      [:a {:href (str "/api/applications/attachments/?application-id=" app-id "&field-id=" id) :target "_blank"} value])]])
 
 (defn- date-field
   [{:keys [title id readonly optional value min max validation] :as opts}]
@@ -450,7 +452,8 @@
                [field (assoc (localize-item item)
                         :validation (get-in validation-by-field-id [:item (:id item)])
                         :readonly readonly?
-                        :value (get items (:id item)))]))
+                        :value (get items (:id item))
+                        :app-id (:id application))]))
        (when-let [form-licenses (not-empty (:licenses form))]
          [:div.form-group.field
           [:h4 (text :t.form/licenses)]
@@ -877,7 +880,7 @@
              [field {:type "attachment" :title "Title"}]])
    (example "non-editable field of type \"attachment\""
             [:form
-             [field {:type "attachment" :title "Title" :readonly true}]])
+             [field {:type "attachment" :title "Title" :readonly true :value "test.txt"}]])
    (example "field of type \"date\""
             [:form
              [field {:type "date" :title "Title"}]])
