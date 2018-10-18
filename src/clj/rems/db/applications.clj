@@ -282,6 +282,16 @@
      :catalogue-items items
      :events []}))
 
+(defn- get-item-value [item form-id application-id]
+  (let [query-params {:item (:id item)
+                      :form form-id
+                      :application application-id}]
+    (if (= "attachment" (:type item))
+      (:filename
+       (db/get-attachment query-params))
+      (:value
+       (db/get-field-value query-params)))))
+
 (defn- process-item
   "Returns an item structure like this:
 
@@ -302,10 +312,7 @@
                              [(keyword langcode) {:title title :inputprompt inputprompt}]))
    :value (or
            (when-not (draft? application-id)
-             (:value
-              (db/get-field-value {:item (:id item)
-                                   :form form-id
-                                   :application application-id})))
+             (get-item-value item form-id application-id))
            "")})
 
 (defn- process-license
