@@ -287,10 +287,8 @@
                       :form form-id
                       :application application-id}]
     (if (= "attachment" (:type item))
-      (:filename
-       (db/get-attachment query-params))
-      (:value
-       (db/get-field-value query-params)))))
+      (:filename (db/get-attachment query-params))
+      (:value (db/get-field-value query-params)))))
 
 (defn- process-item
   "Returns an item structure like this:
