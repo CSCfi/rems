@@ -85,7 +85,8 @@
             :name "rems.war"}
 
   ;; flag tests that need a db with ^:integration
-  :test-selectors {:default (complement :integration)
+  :test-selectors {:default #(not (or (:integration %) (:browser %)))
+                   :browser :browser
                    :all (constantly true)}
   :eftest {:multithread? false} ;; integration tests aren't safe to run in parallel
 
@@ -132,7 +133,8 @@
                                 [pjstadig/humane-test-output "0.8.3"]
                                 [re-frisk "0.5.4"]
                                 [ring/ring-mock "0.3.2" :exclusions [cheshire]]
-                                [se.haleby/stub-http "0.2.5"]]
+                                [se.haleby/stub-http "0.2.5"]
+                                [etaoin "0.2.9"]]
 
                  :plugins [[com.jakemccrary/lein-test-refresh "0.21.1"]
                            [lein-ancient "0.6.15"]

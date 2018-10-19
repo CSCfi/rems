@@ -67,6 +67,12 @@ To run all tests and output coverage:
 lein with-profile test cloverage
 ```
 
+To run browser tests (requires chromedriver in $PATH):
+
+```
+lein eftest :browser
+```
+
 Start REPL and run tests in there:
 
 ```
