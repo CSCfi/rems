@@ -1,4 +1,4 @@
-(ns rems.test.browser
+(ns ^:browser rems.test.browser
   (:require [clojure.test :refer :all]
             [etaoin.api :refer :all]
             [mount.core :as mount]
@@ -15,7 +15,7 @@
   "Executes a test running a driver.
    Bounds a driver with the global *driver* variable."
   [f]
-  (with-chrome {} driver
+  (with-chrome-headless {} driver
     (binding [*driver* driver]
       (f))))
 
@@ -36,9 +36,10 @@
 
 ;; now declare your tests
 
-(deftest ^:browser
+(deftest
   test-new-application
   (doto *driver*
+    (set-window-size 1920 1080) ; Buttons get over each other in default sizes
     (go "http://localhost:3001")
     (click-visible {:class :login-btn}) ; Get login choices
     (click-visible {:class :user}) ; Choose first, "developer"
@@ -47,12 +48,15 @@
     (click-visible [{:class "cart-item separator"} {:class "btn btn-primary"}]) ; Click "Apply"
     (wait-visible :field1)
     ; On application page
+    ; Need to use fill-human, because human is so quick that the form
+    ; drops characters here and there
     (fill-human :field1 "Test name")
     (fill-human :field2 "Test purpose")
     (click-visible {:name :license1}) ; Accept license
     (click-visible {:name :license2}) ; Accept terms
     (click-visible :submit)
-    (click-visible {:class "nav-item nav-link active"}))
+    (click-visible {:class "nav-item nav-link active"})
+    (wait-visible {:data-th :Resource}))
   (is (= "Deve Loper /"
          (get-element-text *driver* {:class :user-name})))
   (is (= "ELFA Corpus, direct approval"
