@@ -1,6 +1,11 @@
 (ns rems.test.browser
   (:require [clojure.test :refer :all]
-            [etaoin.api :refer :all]))
+            [etaoin.api :refer :all]
+            [mount.core :as mount]
+            [luminus-migrations.core :as migrations]
+            [rems.standalone]
+            [rems.config]
+            [rems.db.test-data :as test-data]))
 
 (def ^:dynamic
   *driver*
@@ -14,16 +19,27 @@
     (binding [*driver* driver]
       (f))))
 
+(defn fixture-standalone [f]
+  (mount/start)
+  (migrations/migrate ["reset"] (select-keys rems.config/env [:database-url]))
+  (test-data/create-test-data!)
+  (f)
+  (mount/stop))
+
 (use-fixtures
   :each ;; start and stop driver for each test
   fixture-driver)
+
+(use-fixtures
+  :once
+  fixture-standalone)
 
 ;; now declare your tests
 
 (deftest ^:browser
   test-new-application
   (doto *driver*
-    (go "http://localhost:3000")
+    (go "http://localhost:3001")
     (click-visible {:class :login-btn}) ; Get login choices
     (click-visible {:class :user}) ; Choose first, "developer"
     (click-visible {:class "nav-item nav-link"}) ; Go to catalogue
