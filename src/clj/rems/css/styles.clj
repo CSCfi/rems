@@ -320,6 +320,8 @@
    [(s/descendant :.example-page :.example) {:margin-bottom (u/rem 4)}]
    [:.example-content {:border "1px dashed black"}]
    [:.example-content-end {:clear "both"}]
+   [:.upload-file {:display "inline-block"
+                   :margin-right (u/px 10)}]
    [:form.inline
     :.form-actions.inline
     {:display :inline-block}

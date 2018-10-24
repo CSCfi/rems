@@ -198,6 +198,46 @@
      (judge-application command application-id round comment)
      {})))
 
+;;; saving attachment
+(defn- save-attachment [application-id field-id form-data]
+  (post! (str "/api/applications/add_attachment?application-id=" application-id "&field-id=" field-id)
+         {:body form-data
+          :error-handler (fn [_] (rf/dispatch [::set-status :failed]))}))
+
+(defn- save-application-with-attachment [field-id form-data catalogue-items items licenses]
+(let [payload {:command "save"
+               :items items
+               :licenses licenses
+               :catalogue-items catalogue-items}]
+  (post! "/api/applications/save"
+         {:handler (fn [resp]
+                     (if (:success resp)
+                       (do (save-attachment (:id resp) field-id form-data)
+                           (rf/dispatch [::set-status :saved])
+                                   ;; HACK: we both set the location, and fire a fetch-application event
+                                   ;; because if the location didn't change, secretary won't fire the event
+                           (navigate-to (:id resp))
+                           (rf/dispatch [::enter-application-page (:id resp)]))
+                       (rf/dispatch [::set-status :failed (:validation resp)])))
+          :error-handler (fn [_] (rf/dispatch [::set-status :failed]))
+          :params payload})))
+
+(rf/reg-event-fx
+ ::save-attachment
+ (fn [{:keys [db]} [_ field-id file]]
+   (let [application-id (get-in db [::application :application :id])]
+     (if application-id
+       (save-attachment application-id field-id file)
+       (let [catalogue-items (get-in db [::application :catalogue-items])
+             catalogue-ids (mapv :id catalogue-items)
+             items (get-in db [::edit-application :items])
+                               ;; TODO change api to booleans
+             licenses (into {}
+                            (for [[id checked?] (get-in db [::edit-application :licenses])
+                                  :when checked?]
+                              [id "approved"]))]
+         (save-application-with-attachment field-id file catalogue-ids items licenses))))))
+
 ;;;; UI components ;;;;
 
 (defn- format-validation-messages
@@ -238,6 +278,16 @@
 (defn- id-to-name [id]
   (str "field" id))
 
+(defn- set-attachment
+  [id]
+  (fn [event]
+    (let [filecontent (aget (.. event -target -files) 0)
+          form-data (doto
+                     (js/FormData.)
+                      (.append "file" filecontent))]
+      (rf/dispatch [::set-field id (.-name filecontent)])
+      (rf/dispatch [::save-attachment id form-data]))))
+
 (defn- field-validation-message [validation title]
   (when validation
     [:div {:class "text-danger"}
@@ -274,6 +324,24 @@
                             :value value
                             :readOnly readonly
                             :onChange (set-field-value id)}]])
+
+(defn attachment-field
+  [{:keys [title id readonly optional value validation app-id] :as opts}]
+  [basic-field opts
+   [:div
+    (when (not readonly)
+      [:div..upload-file
+       [:input {:style {:display "none"}
+                :type "file"
+                :id (id-to-name id)
+                :name (id-to-name id)
+                :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
+                :class (when validation "is-invalid")
+                :disabled readonly
+                :onChange (set-attachment id)}]
+       [:button.btn.btn-secondary {:on-click (fn [e] (.click (.getElementById js/document (id-to-name id))))} (text :t.form/upload)]])
+    (when (not-empty value)
+      [:a {:href (str "/api/applications/attachments/?application-id=" app-id "&field-id=" id) :target "_blank"} value])]])
 
 (defn- date-field
   [{:keys [title id readonly optional value min max validation] :as opts}]
@@ -340,6 +408,7 @@
     "text" [text-field f]
     "texta" [texta-field f]
     "date" [date-field f]
+    "attachment" [attachment-field f]
     "label" [label f]
     "license" (case (:licensetype f)
                 "link" [link-license f]
@@ -384,7 +453,8 @@
                [field (assoc (localize-item item)
                         :validation (get-in validation-by-field-id [:item (:id item)])
                         :readonly readonly?
-                        :value (get items (:id item)))]))
+                        :value (get items (:id item))
+                        :app-id (:id application))]))
        (when-let [form-licenses (not-empty (:licenses form))]
          [:div.form-group.field
           [:h4 (text :t.form/licenses)]
@@ -806,6 +876,12 @@
             [:form
              [field {:type "texta" :title "Title" :inputprompt "prompt"
                      :validation {:key :t.form.validation.required}}]])
+   (example "editable field of type \"attachment\""
+            [:form
+             [field {:type "attachment" :title "Title"}]])
+   (example "non-editable field of type \"attachment\""
+            [:form
+             [field {:type "attachment" :title "Title" :readonly true :value "test.txt"}]])
    (example "field of type \"date\""
             [:form
              [field {:type "date" :title "Title"}]])

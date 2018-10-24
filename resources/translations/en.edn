@@ -214,6 +214,7 @@
          :saved "Draft saved."
          :submit "Send application"
          :submitted "Application submitted."
+         :upload "Upload an attachment"
          :user "User"
          :validation {:errors "There were problems. Check the following fields."
                       :required "Field \"%1\" is required."}}

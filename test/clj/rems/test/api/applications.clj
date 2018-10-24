@@ -549,10 +549,17 @@
 
 (def testfile (clojure.java.io/file "./test-data/test.txt"))
 
+(def malicious-file (clojure.java.io/file "./test-data/malicious_test.html"))
+
 (def filecontent {:tempfile testfile
                   :content-type "text/plain"
                   :filename "test.txt"
                   :size (.length testfile)})
+
+(def malicious-content {:tempfile malicious-file
+                        :content-type "text/html"
+                        :filename "malicious_test.html"
+                        :size (.length malicious-file)})
 
 (deftest application-api-attachments
   (let [api-key "42"
@@ -574,6 +581,13 @@
                          (authenticate api-key user-id)
                          app)]
         (is (response-is-ok? response))))
+    (testing "uploading malicious file for a draft"
+      (let [response (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
+                         (assoc :params {"file" malicious-content})
+                         (assoc :multipart-params {"file" malicious-content})
+                         (authenticate api-key user-id)
+                         app)]
+        (is (= 400 (:status response)))))
     (testing "retrieving attachment for a draft"
       (let [response (-> (request :get (str "/api/applications/attachments/") {:application-id app-id :field-id field-id})
                          (authenticate api-key user-id)
