@@ -657,9 +657,9 @@
                            [return-button]
                            [review-request-button]
                            [approve-button]])
-                        (when (= "normal" (:review-type app))
+                        (when (= :normal (:review-type app))
                           [[review-button]])
-                        (when (= "third-party" (:review-type app))
+                        (when (= :third-party (:review-type app))
                           [[third-party-review-button]]))]
     (if (empty? buttons)
       [:div]
