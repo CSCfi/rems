@@ -127,6 +127,21 @@
      :name (get u "commonName")
      :email (get u "mail")}))
 
+(defn- check-attachment-content-type
+  "Checks that content-type matches the allowed ones listed on the UI side:
+   .pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
+  [content-type]
+  (prn content-type)
+  (when-not (or (#{"application/pdf"
+                   "application/msword"
+                   "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                   "application/vnd.ms-powerpoint"
+                   "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                   "text/plain"}
+                 content-type)
+                (.startsWith content-type "image/"))
+    (throw (rems.InvalidRequestException. (str "Unsupported content-type: " content-type)))))
+
 (def applications-api
   (context "/applications" []
     :tags ["applications"]
@@ -161,10 +176,11 @@
         (if-let [attachment (db/get-attachment {:item field-id
                                                 :form (:id form)
                                                 :application application-id})]
-          (-> (:data attachment)
-              (java.io.ByteArrayInputStream.)
-              (ok)
-              (content-type (:type attachment)))
+          (do (check-attachment-content-type (:type attachment))
+              (-> (:data attachment)
+                  (java.io.ByteArrayInputStream.)
+                  (ok)
+                  (content-type (:type attachment))))
           (not-found! "not found"))))
 
     (GET "/:application-id" []
@@ -233,5 +249,6 @@
                      field-id :- (describe s/Int "application form field id the attachment is related to")]
       :middleware [upload/wrap-multipart-params]
       :return SuccessResponse
+      (check-attachment-content-type (:content-type file))
       (applications/save-attachment! file application-id field-id)
       (ok {:success true}))))
