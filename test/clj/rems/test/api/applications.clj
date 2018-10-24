@@ -439,11 +439,9 @@
                        :application
                        :events)]
         (is (= [{:userid nil :comment nil :event "apply"}
-                {:userid nil :comment nil :event "review-request"}
-                {:userid nil :comment nil :event "third-party-review"}
                 {:userid nil :comment "I approve this" :event "approve"}]
                (map #(select-keys % [:userid :comment :event]) events))
-            "does not see review event comments nor users, but sees approval comment")))))
+            "does not see review events nor users, but sees approval comment")))))
 ;; TODO non-happy path tests for review?
 
 ;; TODO test for event filtering when it gets implemented

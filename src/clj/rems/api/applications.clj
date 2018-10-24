@@ -90,12 +90,10 @@
       (update-in [:items] longify-keys)
       (update-in [:licenses] longify-keys)))
 
-(defn- hide-sensitive-comments [events]
-  (map (fn [event]
-         (if (contains? #{"third-party-review" "review-request"} (:event event))
-           (assoc event :comment nil) ; remove sensitive comment
-           event))
-       events))
+(defn- hide-sensitive-events [events]
+  (filter (fn [event]
+            ((complement contains?) #{"third-party-review" "review-request" "review"} (:event event)))
+          events))
 
 (defn- hide-users [events]
   (map (fn [event]
@@ -107,7 +105,7 @@
     (if is-handler?
       application
       (-> application
-          (update-in [:application :events] hide-sensitive-comments)
+          (update-in [:application :events] hide-sensitive-events)
           (update-in [:application :events] hide-users)))))
 
 (defn api-get-application [application-id]
