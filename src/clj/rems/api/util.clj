@@ -31,4 +31,5 @@
 (defmethod restructure-param :roles [_ roles acc]
   (-> acc
       (update-in [:info :public :summary] add-roles-documentation roles)
-      (update-in [:lets] into ['_ `(check-roles ~@roles)])))
+      (update-in [:lets] into ['_ `(do (check-user)
+                                       (check-roles ~@roles))])))

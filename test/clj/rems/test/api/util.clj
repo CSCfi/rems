@@ -27,19 +27,28 @@
                   :roles #{:approver}
                   (ok {:success true}))]
 
-      (testing "but user doesn't have it"
-        (binding [context/*roles* #{:applicant}]
-          (is (thrown? NotAuthorizedException
-                       (route {:request-method :get
-                               :uri "/foo"})))))
-
       (testing "and user has it"
-        (binding [context/*roles* #{:approver}]
+        (binding [context/*roles* #{:approver}
+                  context/*user* {"eppn" "user1"}]
           (is (= {:status 200
                   :headers {}
                   :body {:success true}}
                  (route {:request-method :get
-                         :uri "/foo"})))))))
+                         :uri "/foo"})))))
+
+      (testing "but user doesn't have it"
+        (binding [context/*roles* #{}
+                  context/*user* {"eppn" "user1"}]
+          (is (thrown? NotAuthorizedException
+                       (route {:request-method :get
+                               :uri "/foo"})))))
+
+      (testing "but user is not logged in"
+        (binding [context/*roles* #{:approver}
+                  context/*user* nil]
+          (is (thrown? NotAuthorizedException
+                       (route {:request-method :get
+                               :uri "/foo"})))))))
 
   (testing "required roles are added to summary documentation"
     (let [route (GET "/foo" []
