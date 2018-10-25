@@ -6,7 +6,7 @@
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
 
-(def Form
+(s/defschema Form
   {:id s/Num
    :organization s/Str
    :title s/Str
@@ -28,7 +28,7 @@
    (for [wf (form/get-forms filters)]
      (format-form wf))))
 
-(def CreateFormCommand
+(s/defschema CreateFormCommand
   {:organization s/Str
    :title s/Str
    :items [{:title {s/Keyword s/Str}
@@ -36,7 +36,7 @@
             :type (s/enum "text" "texta" "date" "attachment")
             :input-prompt (s/maybe {s/Keyword s/Str})}]})
 
-(def CreateFormResponse
+(s/defschema CreateFormResponse
   {:id s/Num})
 
 (def forms-api

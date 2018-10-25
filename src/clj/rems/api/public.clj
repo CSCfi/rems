@@ -5,16 +5,16 @@
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
-(def GetTranslationsResponse
+(s/defschema GetTranslationsResponse
   s/Any)
 
-(def GetThemeResponse
+(s/defschema GetThemeResponse
   s/Any)
 
-(def ExtraPage
+(s/defschema ExtraPage
   {s/Keyword s/Any})
 
-(def GetConfigResponse
+(s/defschema GetConfigResponse
   {:authentication s/Keyword
    :alternative-login-url (s/maybe s/Str)
    :extra-pages [ExtraPage]

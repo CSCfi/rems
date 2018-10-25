@@ -6,7 +6,7 @@
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
-(def CreateUserCommand
+(s/defschema CreateUserCommand
   {:eppn s/Str
    :mail s/Str
    :commonName s/Str})

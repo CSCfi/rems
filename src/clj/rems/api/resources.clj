@@ -8,7 +8,7 @@
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
 
-(def Resource
+(s/defschema Resource
   {:id s/Num
    :owneruserid s/Str
    :modifieruserid s/Str
@@ -19,12 +19,12 @@
    :active s/Bool
    :licenses [ResourceLicense]})
 
-(def CreateResourceCommand
+(s/defschema CreateResourceCommand
   {:resid s/Str
    :organization s/Str
    :licenses [s/Num]})
 
-(def CreateResourceResponse
+(s/defschema CreateResourceResponse
   {:id s/Num})
 
 (defn- format-resource

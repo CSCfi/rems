@@ -15,10 +15,10 @@
 
 ;; Response models
 
-(def GetApplicationsResponse
+(s/defschema GetApplicationsResponse
   [Application])
 
-(def GetApplicationResponse
+(s/defschema GetApplicationResponse
   {:id (s/maybe s/Num)
    :catalogue-items [CatalogueItem]
    :applicant-attributes (s/maybe {s/Str s/Str})
@@ -27,7 +27,7 @@
    :title s/Str
    :items [Item]})
 
-(def SaveApplicationCommand
+(s/defschema SaveApplicationCommand
   {:command (s/enum "save" "submit")
    (s/optional-key :application-id) s/Num
    (s/optional-key :catalogue-items) [s/Num]
@@ -36,38 +36,38 @@
    :items {s/Keyword s/Str}
    (s/optional-key :licenses) {s/Keyword s/Str}})
 
-(def ValidationMessage
+(s/defschema ValidationMessage
   {:type (s/enum :item :license)
    :id s/Num
    :title {s/Keyword s/Str}
    :key s/Keyword
    :text s/Str})
 
-(def SaveApplicationResponse
+(s/defschema SaveApplicationResponse
   {:success s/Bool
    :valid s/Bool
    (s/optional-key :id) s/Num
    (s/optional-key :state) s/Str
    (s/optional-key :validation) [ValidationMessage]})
 
-(def JudgeApplicationCommand
+(s/defschema JudgeApplicationCommand
   {:command (s/enum "approve" "close" "reject" "return" "review" "third-party-review" "withdraw")
    :application-id s/Num
    :round s/Num
    :comment s/Str})
 
-(def ReviewRequestCommand
+(s/defschema ReviewRequestCommand
   {:application-id s/Num
    :round s/Num
    :comment s/Str
    :recipients [s/Str]})
 
-(def Reviewer
+(s/defschema Reviewer
   {:userid s/Str
    :name (s/maybe s/Str)
    :email (s/maybe s/Str)})
 
-(def AddMemberCommand
+(s/defschema AddMemberCommand
   {:application-id s/Num
    :member s/Str})
 

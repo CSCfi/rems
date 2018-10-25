@@ -7,26 +7,26 @@
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
-(def GetCatalogueItemsResponse
+(s/defschema GetCatalogueItemsResponse
   [CatalogueItem])
 
 ;; TODO resid is misleading: it's the internal id, not the string id
 ;; Should we take the string id instead?
-(def CreateCatalogueItemCommand
+(s/defschema CreateCatalogueItemCommand
   {:title s/Str
    :form s/Num
    :resid s/Num
    :wfid s/Num})
 
-(def CreateCatalogueItemResponse
+(s/defschema CreateCatalogueItemResponse
   CatalogueItem)
 
-(def CreateCatalogueItemLocalizationCommand
+(s/defschema CreateCatalogueItemLocalizationCommand
   {:id s/Num
    :langcode s/Str
    :title s/Str})
 
-(def UpdateCatalogueItemCommand
+(s/defschema UpdateCatalogueItemCommand
   {:id s/Num
    :state (s/enum "disabled" "enabled")})
 

@@ -6,14 +6,14 @@
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
-(def CreateLicenseCommand
+(s/defschema CreateLicenseCommand
   {:licensetype (s/enum "link" "text")
    :title s/Str
    :textcontent s/Str
    :localizations {s/Keyword {:title s/Str
                               :textcontent s/Str}}})
 
-(def CreateLicenseResponse
+(s/defschema CreateLicenseResponse
   {:id s/Num})
 
 (def licenses-api

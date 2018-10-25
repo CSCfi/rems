@@ -9,12 +9,12 @@
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
 
-(def Actor
+(s/defschema Actor
   {:actoruserid s/Str
    :round s/Num
    :role (s/enum "approver" "reviewer")})
 
-(def Workflow
+(s/defschema Workflow
   {:id s/Num
    :organization s/Str
    :owneruserid s/Str
@@ -38,17 +38,17 @@
    :end endt
    :active active?})
 
-(def CreateWorkflowCommand
+(s/defschema CreateWorkflowCommand
   {:organization s/Str
    :title s/Str
    :rounds [{:type (s/enum :approval :review)
              :actors [{:userid s/Str}]}]})
 
-(def CreateWorkflowResponse
+(s/defschema CreateWorkflowResponse
   {:id s/Num})
 
 ; TODO: deduplicate or decouple with /api/applications/reviewers API?
-(def AvailableActor Reviewer)
+(s/defschema AvailableActor Reviewer)
 (def get-available-actors get-reviewers)
 
 (defn- get-workflows [filters]
