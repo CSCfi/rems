@@ -13,7 +13,7 @@
     :tags ["catalogue"]
 
     (GET "/" []
-      :summary "Get the catalogue of items for the UI (does not include disabled) (roles: all)"
+      :summary "Get the catalogue of items for the UI (does not include disabled)"
       :return GetCatalogueResponse
       (check-user)
       (ok (catalogue/get-localized-catalogue-items)))))

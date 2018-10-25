@@ -1,7 +1,7 @@
 (ns rems.api.workflows
   (:require [compojure.api.sweet :refer :all]
             [rems.api.applications :refer [Reviewer get-reviewers]]
-            [rems.api.util :refer [check-roles check-user]]
+            [rems.api.util]
             [rems.db.core :as db]
             [rems.db.workflow :as workflow]
             [rems.util :refer [get-user-id]]
@@ -62,24 +62,21 @@
     :tags ["workflows"]
 
     (GET "/" []
-      :summary "Get workflows (roles: owner)"
+      :summary "Get workflows"
+      :roles #{:owner}
       :query-params [{active :- (describe s/Bool "filter active or inactive workflows") nil}]
       :return [Workflow]
-      (check-user)
-      (check-roles :owner)
       (ok (get-workflows (when-not (nil? active) {:active? active}))))
 
     (POST "/create" []
-      :summary "Create workflow (roles: owner)"
+      :summary "Create workflow"
+      :roles #{:owner}
       :body [command CreateWorkflowCommand]
       :return CreateWorkflowResponse
-      (check-user)
-      (check-roles :owner)
       (ok (workflow/create-workflow! command)))
 
     (GET "/actors" []
-      :summary "List of available actors (roles: owner)"
+      :summary "List of available actors"
+      :roles #{:owner}
       :return [AvailableActor]
-      (check-user)
-      (check-roles :owner)
       (ok (get-available-actors)))))

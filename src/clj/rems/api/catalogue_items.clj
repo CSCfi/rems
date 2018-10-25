@@ -1,7 +1,7 @@
 (ns rems.api.catalogue-items
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
-            [rems.api.util :refer [check-roles check-user]]
+            [rems.api.util :refer [check-user]]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [ring.util.http-response :refer :all]
@@ -35,14 +35,14 @@
     :tags ["catalogue items"]
 
     (GET "/" []
-      :summary "Get catalogue items (roles: all)"
+      :summary "Get catalogue items"
       :query-params [{resource :- (describe s/Str "resource id (optional)") nil}]
       :return GetCatalogueItemsResponse
       (check-user)
       (ok (catalogue/get-localized-catalogue-items {:resource resource})))
 
     (GET "/:item-id" []
-      :summary "Get a single catalogue item (roles: all)"
+      :summary "Get a single catalogue item"
       :path-params [item-id :- (describe s/Num "catalogue item")]
       :responses {200 {:schema CatalogueItem}
                   404 {:schema s/Str :description "Not found"}}
@@ -53,26 +53,23 @@
         (not-found! "not found")))
 
     (POST "/create" []
-      :summary "Create a new catalogue item (roles: owner)"
+      :summary "Create a new catalogue item"
+      :roles #{:owner}
       :body [command CreateCatalogueItemCommand]
       :return CreateCatalogueItemResponse
-      (check-user)
-      (check-roles :owner)
       (ok (catalogue/create-catalogue-item! command)))
 
     (PUT "/update" []
-      :summary "Update catalogue item (roles: owner)"
+      :summary "Update catalogue item"
+      :roles #{:owner}
       :body [command UpdateCatalogueItemCommand]
       :return SuccessResponse
-      (check-user)
-      (check-roles :owner)
       (db/set-catalogue-item-state! {:item (:id command) :state (:state command)})
       (ok {:success true}))
 
     (POST "/create-localization" []
-      :summary "Create a new catalogue item localization (roles: owner)"
+      :summary "Create a new catalogue item localization"
+      :roles #{:owner}
       :body [command CreateCatalogueItemLocalizationCommand]
       :return SuccessResponse
-      (check-user)
-      (check-roles :owner)
       (ok (catalogue/create-catalogue-item-localization! command)))))

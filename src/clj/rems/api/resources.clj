@@ -1,7 +1,7 @@
 (ns rems.api.resources
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
-            [rems.api.util :refer [check-roles check-user]]
+            [rems.api.util]
             [rems.db.licenses :as licenses]
             [rems.db.resource :as resource]
             [ring.util.http-response :refer :all]
@@ -49,17 +49,15 @@
     :tags ["resources"]
 
     (GET "/" []
-      :summary "Get resources (roles: owner)"
+      :summary "Get resources"
+      :roles #{:owner}
       :query-params [{active :- (describe s/Bool "filter active or inactive resources") nil}]
       :return [Resource]
-      (check-user)
-      (check-roles :owner)
       (ok (get-resources (when-not (nil? active) {:active? active}))))
 
     (POST "/create" []
-      :summary "Create resource (roles: owner)"
+      :summary "Create resource"
+      :roles #{:owner}
       :body [command CreateResourceCommand]
       :return CreateResourceResponse
-      (check-user)
-      (check-roles :owner)
       (ok (resource/create-resource! command)))))

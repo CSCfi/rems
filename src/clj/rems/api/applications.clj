@@ -2,7 +2,7 @@
   (:require [clojure.string :as str]
             [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
-            [rems.api.util :refer [check-roles check-user longify-keys]]
+            [rems.api.util :refer [longify-keys]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.users :as users]
@@ -132,31 +132,30 @@
     :tags ["applications"]
 
     (GET "/" []
-      :summary "Get current user's all applications (roles: applicant)"
+      :summary "Get current user's all applications"
+      :roles #{:applicant}
       :return GetApplicationsResponse
-      (check-user)
       (ok (applications/get-my-applications)))
 
     (GET "/draft" []
-      :summary "Get application (draft) for `catalogue-items` (roles: applicant)"
+      :summary "Get application (draft) for `catalogue-items`"
+      :roles #{:applicant}
       :query-params [catalogue-items :- (describe [s/Num] "catalogue item ids")]
       :return GetApplicationResponse
-      (check-user)
       (let [app (applications/make-draft-application catalogue-items)]
         (ok (applications/get-draft-form-for app))))
 
     (GET "/reviewers" []
-      :summary "Available third party reviewers (roles: approver)"
+      :summary "Available third party reviewers"
+      :roles #{:approver}
       :return [Reviewer]
-      (check-user)
-      (check-roles :approver)
       (ok (get-reviewers)))
 
     (GET "/attachments/" []
-      :summary "Get an attachment for a field in an application (roles: approver, applicant, reviewer)"
+      :summary "Get an attachment for a field in an application"
+      :roles #{:applicant :approver :reviewer}
       :query-params [application-id :- (describe s/Int "application id")
                      field-id :- (describe s/Int "application form field id the attachment is related to")]
-      (check-user)
       (let [form (applications/get-form-for application-id)]
         (if-let [attachment (db/get-attachment {:item field-id
                                                 :form (:id form)
@@ -168,20 +167,20 @@
           (not-found! "not found"))))
 
     (GET "/:application-id" []
-      :summary "Get application by `application-id` (roles: approver, applicant, reviewer)"
+      :summary "Get application by `application-id`"
+      :roles #{:applicant :approver :reviewer}
       :path-params [application-id :- (describe s/Num "application id")]
       :responses {200 {:schema GetApplicationResponse}
                   404 {:schema s/Str :description "Not found"}}
-      (check-user)
       (if-let [app (api-get-application application-id)]
         (ok app)
         (not-found! "not found")))
 
     (GET "/:application-id/pdf" []
-      :summary "Get a pdf version of an application. (roles: approver, applicant, reviewer)"
+      :summary "Get a pdf version of an application"
+      :roles #{:applicant :approver :reviewer}
       :path-params [application-id :- (describe s/Num "application id")]
       :produces ["application/pdf"]
-      (check-user)
       (if-let [app (api-get-application application-id)]
         (-> app
             (pdf/application-to-pdf-bytes)
@@ -191,24 +190,24 @@
         (not-found! "not found")))
 
     (POST "/save" []
-      :summary "Create a new application, change an existing one or submit an application (roles: applicant)"
+      :summary "Create a new application, change an existing one or submit an application"
+      :roles #{:applicant}
       :body [request SaveApplicationCommand]
       :return SaveApplicationResponse
-      (check-user)
       (ok (form/api-save (fix-keys request))))
 
     (POST "/judge" []
-      :summary "Judge an application (roles: approver, applicant, reviewer)"
+      :summary "Judge an application"
+      :roles #{:applicant :approver :reviewer}
       :body [request JudgeApplicationCommand]
       :return SuccessResponse
-      (check-user)
       (ok (api-judge request)))
 
     (POST "/review_request" []
-      :summary "Request a review (roles: approver)"
+      :summary "Request a review"
+      :roles #{:approver}
       :body [request ReviewRequestCommand]
       :return SuccessResponse
-      (check-user)
       (applications/send-review-request (:application-id request)
                                         (:round request)
                                         (:comment request)
@@ -216,18 +215,19 @@
       (ok {:success true}))
 
     (POST "/add_member" []
-      :summary "Add a member to an application (roles: applicant)"
+      :summary "Add a member to an application"
+      :roles #{:applicant}
       :body [request AddMemberCommand]
       :return SuccessResponse
-      (check-user)
       ;; TODO: provide a nicer error message when user doesn't exist?
       (applications/add-member (:application-id request)
                                (:member request))
       (ok {:success true}))
 
-;; TODO: think about size limit
+    ;; TODO: think about size limit
     (POST "/add_attachment" []
-      :summary "Add an attachment file related to an application field (roles: applicant)"
+      :summary "Add an attachment file related to an application field"
+      :roles #{:applicant}
       :multipart-params [file :- upload/TempFileUpload]
       :query-params [application-id :- (describe s/Int "application id")
                      field-id :- (describe s/Int "application form field id the attachment is related to")]

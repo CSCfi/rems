@@ -1,6 +1,6 @@
 (ns rems.api.forms
   (:require [compojure.api.sweet :refer :all]
-            [rems.api.util :refer [check-roles check-user]]
+            [rems.api.util]
             [rems.db.form :as form]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
@@ -44,17 +44,15 @@
     :tags ["forms"]
 
     (GET "/" []
-      :summary "Get forms (roles: owner)"
+      :summary "Get forms"
+      :roles #{:owner}
       :query-params [{active :- (describe s/Bool "filter active or inactive forms") nil}]
       :return [Form]
-      (check-user)
-      (check-roles :owner)
       (ok (get-forms (when-not (nil? active) {:active? active}))))
 
     (POST "/create" []
-      :summary "Create form (roles: owner)"
+      :summary "Create form"
+      :roles #{:owner}
       :body [command CreateFormCommand]
       :return CreateFormResponse
-      (check-user)
-      (check-roles :owner)
       (ok (form/create-form! command)))))
