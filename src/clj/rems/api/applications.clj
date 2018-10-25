@@ -67,6 +67,9 @@
    :name (s/maybe s/Str)
    :email (s/maybe s/Str)})
 
+(s/defschema Reviewers
+  [Reviewer])
+
 (s/defschema AddMemberCommand
   {:application-id s/Num
    :member s/Str})
@@ -161,7 +164,7 @@
     (GET "/reviewers" []
       :summary "Available third party reviewers"
       :roles #{:approver}
-      :return [Reviewer]
+      :return Reviewers
       (ok (get-reviewers)))
 
     (GET "/attachments/" []

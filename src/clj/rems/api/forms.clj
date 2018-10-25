@@ -14,6 +14,9 @@
    :end (s/maybe DateTime)
    :active s/Bool})
 
+(s/defschema Forms
+  [Form])
+
 (defn- format-form
   [{:keys [id organization title start endt active?]}]
   {:id id
@@ -47,7 +50,7 @@
       :summary "Get forms"
       :roles #{:owner}
       :query-params [{active :- (describe s/Bool "filter active or inactive forms") nil}]
-      :return [Form]
+      :return Forms
       (ok (get-forms (when-not (nil? active) {:active? active}))))
 
     (POST "/create" []

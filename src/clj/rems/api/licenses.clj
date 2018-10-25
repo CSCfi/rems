@@ -24,7 +24,7 @@
       :summary "Get licenses"
       :roles #{:owner}
       :query-params [{active :- (describe s/Bool "filter active or inactive licenses") nil}]
-      :return [License]
+      :return Licenses
       (ok (licenses/get-all-licenses (when-not (nil? active) {:active? active}))))
 
     (POST "/create" []

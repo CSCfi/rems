@@ -22,6 +22,9 @@
    :textcontent s/Str
    :localizations {s/Keyword {:title s/Str :textcontent s/Str}}})
 
+(s/defschema Licenses
+  [License])
+
 (s/defschema ResourceLicense License)
 
 (s/defschema ApplicationLicense

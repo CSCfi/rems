@@ -26,6 +26,9 @@
    :active s/Bool
    :actors [Actor]})
 
+(s/defschema Workflows
+  [Workflow])
+
 (defn- format-workflow
   [{:keys [id organization owneruserid modifieruserid title fnlround start endt active?]}]
   {:id id
@@ -49,6 +52,7 @@
 
 ; TODO: deduplicate or decouple with /api/applications/reviewers API?
 (s/defschema AvailableActor Reviewer)
+(s/defschema AvailableActors [AvailableActor])
 (def get-available-actors get-reviewers)
 
 (defn- get-workflows [filters]
@@ -65,7 +69,7 @@
       :summary "Get workflows"
       :roles #{:owner}
       :query-params [{active :- (describe s/Bool "filter active or inactive workflows") nil}]
-      :return [Workflow]
+      :return Workflows
       (ok (get-workflows (when-not (nil? active) {:active? active}))))
 
     (POST "/create" []
@@ -78,5 +82,5 @@
     (GET "/actors" []
       :summary "List of available actors"
       :roles #{:owner}
-      :return [AvailableActor]
+      :return AvailableActors
       (ok (get-available-actors)))))

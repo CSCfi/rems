@@ -19,6 +19,9 @@
    :active s/Bool
    :licenses [ResourceLicense]})
 
+(s/defschema Resources
+  [Resource])
+
 (s/defschema CreateResourceCommand
   {:resid s/Str
    :organization s/Str
@@ -52,7 +55,7 @@
       :summary "Get resources"
       :roles #{:owner}
       :query-params [{active :- (describe s/Bool "filter active or inactive resources") nil}]
-      :return [Resource]
+      :return Resources
       (ok (get-resources (when-not (nil? active) {:active? active}))))
 
     (POST "/create" []
