@@ -1,5 +1,7 @@
 (ns rems.api.util
-  (:require [rems.auth.util :refer [throw-unauthorized]]
+  (:require [clojure.string :as str]
+            [compojure.api.meta :refer [restructure-param]]
+            [rems.auth.util :refer [throw-unauthorized]]
             [rems.roles :refer [has-roles?]]
             [rems.util :refer [get-user-id]]))
 
@@ -14,3 +16,20 @@
 (defn longify-keys [m]
   (into {} (for [[k v] m]
              [(Long/parseLong (name k)) v])))
+
+(defn add-roles-documentation [summary roles]
+  (when (nil? summary)
+    (throw (IllegalArgumentException. "Route must have a :summary when using :roles")))
+  (str summary
+       " (roles: "
+       (->> roles
+            (map name)
+            (sort)
+            (str/join ", "))
+       ")"))
+
+(defmethod restructure-param :roles [_ roles acc]
+  (-> acc
+      (update-in [:info :public :summary] add-roles-documentation roles)
+      (update-in [:lets] into ['_ `(do (check-user)
+                                       (check-roles ~@roles))])))

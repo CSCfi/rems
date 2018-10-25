@@ -6,15 +6,14 @@
   (:import (java.util UUID)))
 
 (use-fixtures
-  :once
+ :once
   api-fixture)
 
 (defn- get-draft-form [form-id]
   ;; XXX: there is no simple API for reading the form items
   (let [api-key "42"
-        user-id "owner"
         catalogue-item-response (-> (request :post "/api/catalogue-items/create")
-                                    (authenticate api-key user-id)
+                                    (authenticate api-key "owner")
                                     (json-body {:title "tmp"
                                                 :form form-id
                                                 :resid 1
@@ -22,7 +21,7 @@
                                     app)
         catalogue-item (read-body catalogue-item-response)
         draft-response (-> (request :get "/api/applications/draft" {:catalogue-items (:id catalogue-item)})
-                           (authenticate api-key user-id)
+                           (authenticate api-key "alice")
                            app)
         draft (read-body draft-response)]
     (assert (response-is-ok? catalogue-item-response))

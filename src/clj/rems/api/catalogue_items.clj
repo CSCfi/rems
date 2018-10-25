@@ -1,7 +1,7 @@
 (ns rems.api.catalogue-items
   (:require [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
-            [rems.api.util :refer [check-roles check-user]]
+            [rems.api.util :refer [check-user]]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [ring.util.http-response :refer :all]
@@ -54,25 +54,22 @@
 
     (POST "/create" []
       :summary "Create a new catalogue item"
+      :roles #{:owner}
       :body [command CreateCatalogueItemCommand]
       :return CreateCatalogueItemResponse
-      (check-user)
-      (check-roles :owner)
       (ok (catalogue/create-catalogue-item! command)))
 
     (PUT "/update" []
       :summary "Update catalogue item"
+      :roles #{:owner}
       :body [command UpdateCatalogueItemCommand]
       :return SuccessResponse
-      (check-user)
-      (check-roles :owner)
       (db/set-catalogue-item-state! {:item (:id command) :state (:state command)})
       (ok {:success true}))
 
     (POST "/create-localization" []
       :summary "Create a new catalogue item localization"
+      :roles #{:owner}
       :body [command CreateCatalogueItemLocalizationCommand]
       :return SuccessResponse
-      (check-user)
-      (check-roles :owner)
       (ok (catalogue/create-catalogue-item-localization! command)))))
