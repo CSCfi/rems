@@ -1,6 +1,7 @@
 (ns rems.application
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
+            [rems.atoms :refer [textarea]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
             [rems.db.catalogue :refer [get-catalogue-item-title]]
@@ -317,13 +318,13 @@
 (defn- texta-field
   [{:keys [title id inputprompt readonly optional value validation] :as opts}]
   [basic-field opts
-   [:textarea.form-control {:id (id-to-name id)
-                            :name (id-to-name id)
-                            :placeholder inputprompt
-                            :class (when validation "is-invalid")
-                            :value value
-                            :readOnly readonly
-                            :onChange (set-field-value id)}]])
+   [textarea {:id (id-to-name id)
+              :name (id-to-name id)
+              :placeholder inputprompt
+              :class (if validation "form-control is-invalid" "form-control")
+              :value value
+              :readOnly readonly
+              :onChange (set-field-value id)}]])
 
 (defn attachment-field
   [{:keys [title id readonly optional value validation app-id] :as opts}]
@@ -693,8 +694,9 @@
         [:div.modal-body
          [:div.form-group
           [:label {:for "review-comment"} (text :t.form/add-comments-not-shown-to-applicant)]
-          [:textarea#review-comment.form-control {:name "comment" :placeholder (text :t.form/comment)
-                                                  :on-change #(rf/dispatch [::set-review-comment (.. % -target -value)])}]]
+          [textarea {:id "review-comment"
+                     :name "comment" :placeholder (text :t.form/comment)
+                     :on-change #(rf/dispatch [::set-review-comment (.. % -target -value)])}]]
          [:div.form-group
           [:label (text :t.actions/review-request-selection)]
           [autocomplete/component
@@ -742,10 +744,11 @@
                    (cond (:is-applicant? app) (text :t.form/add-comments)
                          (:can-third-party-review? app) (text :t.form/add-comments-not-shown-to-applicant)
                          :else (text :t.form/add-comments-shown-to-applicant))]
-                  [:textarea#judge-comment.form-control
-                   {:name "judge-comment" :placeholder "Comment"
-                    :value @(rf/subscribe [::judge-comment])
-                    :onChange #(rf/dispatch [::set-judge-comment (.. % -target -value)])}]]
+                  [textarea {:id "judge-comment"
+                             :contenteditable true
+                             :name "judge-comment" :placeholder "Comment"
+                             :value @(rf/subscribe [::judge-comment])
+                             :onChange #(rf/dispatch [::set-judge-comment (.. % -target -value)])}]]
                  (into [:div.col.commands]
                        buttons)]}])))
 

@@ -1,4 +1,5 @@
-(ns rems.atoms)
+(ns rems.atoms
+  (:require [komponentit.autosize :as autosize]))
 
 (defn external-link []
   [:i {:class "fa fa-external-link-alt"}])
@@ -16,3 +17,6 @@
 
 (defn search-symbol []
   [:i.fa {:class "fa-search"}])
+
+(defn textarea [attrs]
+  [autosize/textarea (merge {:class "form-control" :min-rows 5} attrs)])
