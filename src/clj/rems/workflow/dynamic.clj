@@ -61,14 +61,16 @@
   [application workflow event]
   (assoc application :state ::returned))
 
-(defn- apply-events [application events]
-  (reduce apply-event application events))
+(defn apply-events [application events]
+  (reduce (fn [application event] (apply-event application (:workflow application) event))
+          application
+          events))
 
 
 
 
 ;;; Commands
-(defmulti ^:private handle-command
+(defmulti handle-command
   "Handles a command by an event."
   (fn [cmd _application] (:type cmd)))
 
