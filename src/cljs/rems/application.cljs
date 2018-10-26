@@ -719,38 +719,124 @@
    {:type "button" :data-toggle "modal" :data-target "#review-request-modal"}
    (text :t.actions/review-request)])
 
+;;; Actions tabs
+
+(defn- action-tab [action-name text]
+  [:a.nav-item.nav-link
+   {:id (str action-name "-tab") :data-toggle "tab" :href (str "#" action-name) :role "tab" :aria-controls action-name :aria-selected false}
+   text])
+
+(defn- approve-tab []
+  [action-tab "actions-approve" (text :t.actions/approve)])
+
+(defn- reject-tab []
+  [action-tab "actions-reject" (text :t.actions/reject)])
+
+(defn- return-tab []
+  [action-tab "actions-return" (text :t.actions/return)])
+
+(defn- review-tab []
+  [action-tab "actions-review" (text :t.actions/review)])
+
+(defn- third-party-review-tab []
+  [action-tab "actions-3rd-party-review" (text :t.actions/review)])
+
+(defn- close-tab []
+  [action-tab "actions-close" (text :t.actions/close)])
+
+(defn- withdraw-tab []
+  [action-tab "actions-withdraw" (text :t.actions/withdraw)])
+
+(defn- review-request-tab []
+  [action-tab "actions-review-request" (text :t.actions/review-request)])
+
+(defn- action-comment [label-title]
+  [:div.form-group
+   [:label {:for "judge-comment"} label-title]
+   [textarea {:id "judge-comment"
+              :name "judge-comment" :placeholder "Comment"
+              :value @(rf/subscribe [::judge-comment])
+              :onChange #(rf/dispatch [::set-judge-comment (.. % -target -value)])}]])
+
+(defn- action-form [id comment-title button]
+  [:div.tab-pane.fade {:id id :role "tabpanel" :aria-labelledby (str id "-tab")}
+   (when comment-title
+     [action-comment comment-title])
+   [:div.col.commands
+    button]])
+
+(defn- approve-form []
+  [action-form "actions-approve"
+               (text :t.form/add-comments-shown-to-applicant)
+               [approve-button]])
+
+(defn- reject-form []
+  [action-form "actions-reject"
+               (text :t.form/add-comments-shown-to-applicant)
+               [reject-button]])
+
+(defn- return-form []
+  [action-form "actions-return"
+               (text :t.form/add-comments-shown-to-applicant)
+               [return-button]])
+
+(defn- review-form []
+  [action-form "actions-review"
+               (text :t.form/add-comments-not-shown-to-applicant)
+               [review-button]])
+
+(defn- third-party-review-form []
+  [action-form "actions-3rd-party-review"
+               (text :t.form/add-comments-not-shown-to-applicant)
+               [third-party-review-button]])
+
+(defn- close-form []
+  [action-form "actions-close"
+               (text :t.form/add-comments-shown-to-applicant)
+               [close-button]])
+
+(defn- withdraw-form []
+  [action-form "actions-withdraw"
+               (text :t.form/add-comments)
+               [withdraw-button]])
+
+(defn- review-request-form []
+  [action-form "actions-review-request" nil [review-request-button]])
+
+(defn- actions-tab-content []
+ [:div.tab-content
+  [approve-form]
+  [reject-form]
+  [return-form]
+  [review-form]
+  [third-party-review-form]
+  [close-form]
+  [withdraw-form]
+  [review-request-form]])
+
 (defn- actions-form [app]
-  (let [buttons (concat (when (:can-close? app)
-                          [[close-button]])
-                        (when (:can-withdraw? app)
-                          [[withdraw-button]])
-                        (when (:can-approve? app)
-                          [[reject-button]
-                           [return-button]
-                           [review-request-button]
-                           [approve-button]])
-                        (when (= :normal (:review-type app))
-                          [[review-button]])
-                        (when (= :third-party (:review-type app))
-                          [[third-party-review-button]]))]
-    (if (empty? buttons)
+  (let [tabs (concat (when (:can-close? app)
+                       [[close-tab]])
+                     (when (:can-withdraw? app)
+                       [[withdraw-tab]])
+                     (when (:can-approve? app)
+                       [[reject-tab]
+                        [return-tab]
+                        [review-request-tab]
+                        [approve-tab]])
+                     (when (= :normal (:review-type app))
+                       [[review-tab]])
+                     (when (= :third-party (:review-type app))
+                       [[third-party-review-tab]]))]
+    (if (empty? tabs)
       [:div]
       [collapsible/component
        {:id "actions"
         :title (text :t.form/actions)
         :always [:div
-                 [:div.form-group
-                  [:label {:for "judge-comment"}
-                   (cond (:is-applicant? app) (text :t.form/add-comments)
-                         (:can-third-party-review? app) (text :t.form/add-comments-not-shown-to-applicant)
-                         :else (text :t.form/add-comments-shown-to-applicant))]
-                  [textarea {:id "judge-comment"
-                             :contenteditable true
-                             :name "judge-comment" :placeholder "Comment"
-                             :value @(rf/subscribe [::judge-comment])
-                             :onChange #(rf/dispatch [::set-judge-comment (.. % -target -value)])}]]
-                 (into [:div.col.commands]
-                       buttons)]}])))
+                (into [:nav#pills-tab.nav.nav-tabs.mb-3 {:role "tablist"}]
+                      tabs)
+                [actions-tab-content]]}])))
 
 ;; Whole application
 
