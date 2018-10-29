@@ -149,6 +149,7 @@
                                :orientation :vertical
                                :options [{:value "attachment", :label (text :t.create-form/type-attachment)}
                                          {:value "date", :label (text :t.create-form/type-date)}
+                                         {:value "label", :label (text :t.create-form/type-label)}
                                          {:value "text", :label (text :t.create-form/type-text)}
                                          {:value "texta", :label (text :t.create-form/type-texta)}]}])
 
