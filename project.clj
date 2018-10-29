@@ -56,7 +56,7 @@
   :min-lein-version "2.0.0"
 
   :source-paths ["src/clj" "src/cljc"]
-  :test-paths ["test/clj"]
+  :test-paths ["src/clj" "src/cljc" "test/clj"] ;; also run tests from src files
   :resource-paths ["resources" "target/cljsbuild"]
   :target-path "target/%s/"
   :main rems.standalone
