@@ -722,33 +722,34 @@
 ;;; Actions tabs
 
 (defn- action-tab [action-name text]
-  [:a.nav-item.nav-link
-   {:id (str action-name "-tab") :data-toggle "tab" :href (str "#" action-name) :role "tab" :aria-controls action-name :aria-selected false}
-   text])
+  (let [action-name (str "actions-" action-name)]
+    [:a.nav-item.nav-link
+     {:id (str action-name "-tab") :data-toggle "tab" :href (str "#" action-name) :role "tab" :aria-controls action-name :aria-selected false}
+     text]))
 
 (defn- approve-tab []
-  [action-tab "actions-approve" (text :t.actions/approve)])
+  [action-tab "approve" (text :t.actions/approve)])
 
 (defn- reject-tab []
-  [action-tab "actions-reject" (text :t.actions/reject)])
+  [action-tab "reject" (text :t.actions/reject)])
 
 (defn- return-tab []
-  [action-tab "actions-return" (text :t.actions/return)])
+  [action-tab "return" (text :t.actions/return)])
 
 (defn- review-tab []
-  [action-tab "actions-review" (text :t.actions/review)])
+  [action-tab "review" (text :t.actions/review)])
 
 (defn- third-party-review-tab []
-  [action-tab "actions-3rd-party-review" (text :t.actions/review)])
+  [action-tab "3rd-party-review" (text :t.actions/review)])
 
 (defn- close-tab []
-  [action-tab "actions-close" (text :t.actions/close)])
+  [action-tab "close" (text :t.actions/close)])
 
 (defn- withdraw-tab []
-  [action-tab "actions-withdraw" (text :t.actions/withdraw)])
+  [action-tab "withdraw" (text :t.actions/withdraw)])
 
 (defn- review-request-tab []
-  [action-tab "actions-review-request" (text :t.actions/review-request)])
+  [action-tab "review-request" (text :t.actions/review-request)])
 
 (defn- action-comment [label-title]
   [:div.form-group
@@ -759,49 +760,50 @@
               :onChange #(rf/dispatch [::set-judge-comment (.. % -target -value)])}]])
 
 (defn- action-form [id comment-title button]
-  [:div.tab-pane.fade {:id id :role "tabpanel" :aria-labelledby (str id "-tab")}
-   (when comment-title
-     [action-comment comment-title])
-   [:div.col.commands
-    button]])
+  (let [id (str "actions-" id)]
+    [:div.tab-pane.fade {:id id :role "tabpanel" :aria-labelledby (str id "-tab")}
+     (when comment-title
+       [action-comment comment-title])
+     [:div.col.commands
+      button]]))
 
 (defn- approve-form []
-  [action-form "actions-approve"
+  [action-form "approve"
                (text :t.form/add-comments-shown-to-applicant)
                [approve-button]])
 
 (defn- reject-form []
-  [action-form "actions-reject"
+  [action-form "reject"
                (text :t.form/add-comments-shown-to-applicant)
                [reject-button]])
 
 (defn- return-form []
-  [action-form "actions-return"
+  [action-form "return"
                (text :t.form/add-comments-shown-to-applicant)
                [return-button]])
 
 (defn- review-form []
-  [action-form "actions-review"
+  [action-form "review"
                (text :t.form/add-comments-not-shown-to-applicant)
                [review-button]])
 
 (defn- third-party-review-form []
-  [action-form "actions-3rd-party-review"
+  [action-form "3rd-party-review"
                (text :t.form/add-comments-not-shown-to-applicant)
                [third-party-review-button]])
 
 (defn- close-form []
-  [action-form "actions-close"
+  [action-form "close"
                (text :t.form/add-comments-shown-to-applicant)
                [close-button]])
 
 (defn- withdraw-form []
-  [action-form "actions-withdraw"
+  [action-form "withdraw"
                (text :t.form/add-comments)
                [withdraw-button]])
 
 (defn- review-request-form []
-  [action-form "actions-review-request" nil [review-request-button]])
+  [action-form "review-request" nil [review-request-button]])
 
 (defn- actions-tab-content []
  [:div.tab-content
