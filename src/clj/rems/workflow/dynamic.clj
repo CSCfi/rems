@@ -35,8 +35,8 @@
    :handlers [UserId]})
 
 (def States #{::draft ::submitted ::approved ::rejected ::closed})
-(def CommandTypes #{::submit ::return ::accept-license ::require-license ::request-decision ::decide ::request-comment ::comment ::approve ::reject ::close})
-(def EventTypes #{:event/submitted :event/returned :event/license-required :event/license-accepted :event/comment-requested :event/commented :event/decision-requested :event/decided :event/approved :event/rejected :event/closed})
+(def CommandTypes #{::submit ::return #_::accept-license #_::require-license ::request-decision ::decide #_::request-comment #_::comment ::approve ::reject ::close})
+(def EventTypes #{:event/submitted :event/returned #_:event/license-required #_:event/license-accepted #_:event/comment-requested #_:event/commented :event/decision-requested :event/decided :event/approved :event/rejected :event/closed})
 
 
 
