@@ -17,7 +17,8 @@
             [rems.util :refer [get-user-id
                                get-username
                                getx
-                               getx-user-id]])
+                               getx-user-id]]
+            [rems.workflow.dynamic :as dynamic])
   (:import [java.io ByteArrayOutputStream FileInputStream]))
 
 (defn draft?
@@ -601,6 +602,7 @@
                           (db/get-application-events {:application application-id})))
   ([application events]
    (let [application (-> application
+                         (dissoc :workflow)
                          (assoc :state "draft" :curround 0) ;; reset state
                          (assoc :events events)
                          (assoc :last-modified (or (:time (last events))
@@ -759,3 +761,37 @@
     (db/add-application-event! {:application application-id :user uid :round 0
                                 :comment nil
                                 :event "add-member" :eventdata (cheshire/generate-string {"uid" member})})))
+
+;;; Dynamic workflows ;;;
+
+(defn- fix-workflow-from-db [wf]
+  (update (cheshire/parse-string wf keyword)
+          :type keyword))
+
+(defn- fix-event-from-db [event]
+  (update (cheshire/parse-string (:eventdata event) keyword)
+          :event keyword))
+
+(defn get-dynamic-application-state [application-id]
+  (let [application (first (db/get-applications {:id application-id}))
+        fixed-application (assoc application
+                                 :state ::dynamic/draft
+                                 :workflow (fix-workflow-from-db (:workflow application)))
+        events (map fix-event-from-db (db/get-application-events {:application application-id}))]
+    (assert (= :workflow/dynamic (get-in fixed-application [:workflow :type])))
+    (prn :EVENTS events)
+    (dynamic/apply-events fixed-application events)))
+
+(defn- add-dynamic-event! [event]
+  (db/add-application-event! {:application (:application-id event)
+                              :user (:actor event)
+                              :comment nil
+                              :round -1
+                              :event (str (:event event))
+                              :eventdata (cheshire/generate-string event)}))
+
+(defn dynamic-command! [cmd]
+  (let [app (get-dynamic-application-state (:application-id cmd))
+        result (dynamic/handle-command cmd app)]
+    (assert (:success result) result)
+    (add-dynamic-event! (:result result))))

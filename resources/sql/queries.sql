@@ -181,7 +181,7 @@ RETURNING catAppId, catItemId
 -- - Use {:id id} to get a specific application
 -- - Use {:applicant user} to filter by applicant
 SELECT
-  app.id, app.applicantUserId, app.start, wf.id as wfid, wf.fnlround
+  app.id, app.applicantUserId, app.start, wf.id as wfid, wf.fnlround, wf.workflowBody::TEXT as workflow
 FROM catalogue_item_application app
 LEFT OUTER JOIN workflow wf ON app.wfid = wf.id
 WHERE 1=1
@@ -302,14 +302,15 @@ VALUES
 
 -- :name create-workflow! :insert
 INSERT INTO workflow
-(organization, ownerUserId, modifierUserId, title, fnlround, endt)
+(organization, ownerUserId, modifierUserId, title, fnlround, endt, workflowBody)
 VALUES
 (:organization,
  :owneruserid,
  :modifieruserid,
  :title,
  :fnlround,
- /*~ (if (:endt params) */ :endt /*~*/ NULL /*~ ) ~*/
+ /*~ (if (:endt params) */ :endt /*~*/ NULL /*~ ) ~*/,
+ /*~ (if (:workflow params) */ :workflow::jsonb /*~*/ NULL /*~ ) ~*/
  )
 
 -- :name create-workflow-license! :insert
