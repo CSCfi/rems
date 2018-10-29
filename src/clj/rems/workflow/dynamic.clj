@@ -7,30 +7,31 @@
 
 ;;; Schemas
 
+;; can't use defschema for this alias since s/Str is just String, which doesn't have metadata
 (def UserId s/Str)
 
-(def Event
+(s/defschema Event
   {:actor UserId
    :application-id Long
    :event s/Keyword
    :comment (s/maybe s/Str)
    :time DateTime})
 
-(def Command
+(s/defschema Command
   {:type s/Keyword
    :actor UserId
    :application-id Long
    :time DateTime})
 
-(def RequestDecisionCommand
+(s/defschema RequestDecisionCommand
   (assoc Command
          :decider UserId))
 
-(def DecisionCommand
+(s/defschema DecisionCommand
   (assoc Command
          :decision (s/enum :approve :reject)))
 
-(def Workflow
+(s/defschema Workflow
   {:type :workflow/dynamic
    :handlers [UserId]})
 
