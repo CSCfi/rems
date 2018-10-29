@@ -6,13 +6,16 @@
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
 
-(def Form
+(s/defschema Form
   {:id s/Num
    :organization s/Str
    :title s/Str
    :start DateTime
    :end (s/maybe DateTime)
    :active s/Bool})
+
+(s/defschema Forms
+  [Form])
 
 (defn- format-form
   [{:keys [id organization title start endt active?]}]
@@ -28,7 +31,7 @@
    (for [wf (form/get-forms filters)]
      (format-form wf))))
 
-(def CreateFormCommand
+(s/defschema CreateFormCommand
   {:organization s/Str
    :title s/Str
    :items [{:title {s/Keyword s/Str}
@@ -36,7 +39,7 @@
             :type (s/enum "attachment" "date" "label" "text" "texta")
             :input-prompt (s/maybe {s/Keyword s/Str})}]})
 
-(def CreateFormResponse
+(s/defschema CreateFormResponse
   {:id s/Num})
 
 (def forms-api
@@ -47,7 +50,7 @@
       :summary "Get forms"
       :roles #{:owner}
       :query-params [{active :- (describe s/Bool "filter active or inactive forms") nil}]
-      :return [Form]
+      :return Forms
       (ok (get-forms (when-not (nil? active) {:active? active}))))
 
     (POST "/create" []

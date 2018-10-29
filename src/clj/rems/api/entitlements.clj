@@ -6,7 +6,7 @@
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
-(def GetEntitlementsResponse
+(s/defschema GetEntitlementsResponse
   [Entitlement])
 
 (def entitlements-api

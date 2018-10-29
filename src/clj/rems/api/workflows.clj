@@ -9,12 +9,12 @@
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
 
-(def Actor
+(s/defschema Actor
   {:actoruserid s/Str
    :round s/Num
    :role (s/enum "approver" "reviewer")})
 
-(def Workflow
+(s/defschema Workflow
   {:id s/Num
    :organization s/Str
    :owneruserid s/Str
@@ -25,6 +25,9 @@
    :end (s/maybe DateTime)
    :active s/Bool
    :actors [Actor]})
+
+(s/defschema Workflows
+  [Workflow])
 
 (defn- format-workflow
   [{:keys [id organization owneruserid modifieruserid title fnlround start endt active?]}]
@@ -38,17 +41,18 @@
    :end endt
    :active active?})
 
-(def CreateWorkflowCommand
+(s/defschema CreateWorkflowCommand
   {:organization s/Str
    :title s/Str
    :rounds [{:type (s/enum :approval :review)
              :actors [{:userid s/Str}]}]})
 
-(def CreateWorkflowResponse
+(s/defschema CreateWorkflowResponse
   {:id s/Num})
 
 ; TODO: deduplicate or decouple with /api/applications/reviewers API?
-(def AvailableActor Reviewer)
+(s/defschema AvailableActor Reviewer)
+(s/defschema AvailableActors [AvailableActor])
 (def get-available-actors get-reviewers)
 
 (defn- get-workflows [filters]
@@ -65,7 +69,7 @@
       :summary "Get workflows"
       :roles #{:owner}
       :query-params [{active :- (describe s/Bool "filter active or inactive workflows") nil}]
-      :return [Workflow]
+      :return Workflows
       (ok (get-workflows (when-not (nil? active) {:active? active}))))
 
     (POST "/create" []
@@ -78,5 +82,5 @@
     (GET "/actors" []
       :summary "List of available actors"
       :roles #{:owner}
-      :return [AvailableActor]
+      :return AvailableActors
       (ok (get-available-actors)))))

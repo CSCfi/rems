@@ -6,14 +6,14 @@
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
-(def CreateLicenseCommand
+(s/defschema CreateLicenseCommand
   {:licensetype (s/enum "link" "text")
    :title s/Str
    :textcontent s/Str
    :localizations {s/Keyword {:title s/Str
                               :textcontent s/Str}}})
 
-(def CreateLicenseResponse
+(s/defschema CreateLicenseResponse
   {:id s/Num})
 
 (def licenses-api
@@ -24,7 +24,7 @@
       :summary "Get licenses"
       :roles #{:owner}
       :query-params [{active :- (describe s/Bool "filter active or inactive licenses") nil}]
-      :return [License]
+      :return Licenses
       (ok (licenses/get-all-licenses (when-not (nil? active) {:active? active}))))
 
     (POST "/create" []

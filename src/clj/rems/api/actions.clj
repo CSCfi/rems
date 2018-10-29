@@ -6,13 +6,13 @@
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
-(def GetActionsResponse
+(s/defschema GetActionsResponse
   {:approver? s/Bool
    :reviewer? s/Bool
    :approvals [Application]
    :reviews [Application]})
 
-(def GetHandledActionsResponse
+(s/defschema GetHandledActionsResponse
   {:approver? s/Bool
    :reviewer? s/Bool
    :handled-approvals [Application]

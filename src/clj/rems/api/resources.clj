@@ -8,7 +8,7 @@
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
 
-(def Resource
+(s/defschema Resource
   {:id s/Num
    :owneruserid s/Str
    :modifieruserid s/Str
@@ -19,12 +19,15 @@
    :active s/Bool
    :licenses [ResourceLicense]})
 
-(def CreateResourceCommand
+(s/defschema Resources
+  [Resource])
+
+(s/defschema CreateResourceCommand
   {:resid s/Str
    :organization s/Str
    :licenses [s/Num]})
 
-(def CreateResourceResponse
+(s/defschema CreateResourceResponse
   {:id s/Num})
 
 (defn- format-resource
@@ -52,7 +55,7 @@
       :summary "Get resources"
       :roles #{:owner}
       :query-params [{active :- (describe s/Bool "filter active or inactive resources") nil}]
-      :return [Resource]
+      :return Resources
       (ok (get-resources (when-not (nil? active) {:active? active}))))
 
     (POST "/create" []

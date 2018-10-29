@@ -3,7 +3,7 @@
   (:require [schema.core :as s])
   (:import (org.joda.time DateTime)))
 
-(def CatalogueItem
+(s/defschema CatalogueItem
   {:id s/Num
    :title s/Str
    :wfid s/Num
@@ -13,7 +13,7 @@
    (s/optional-key :langcode) s/Keyword
    :localizations (s/maybe {s/Any s/Any})})
 
-(def License
+(s/defschema License
   {:id s/Num
    :licensetype (s/enum "text" "link" "attachment")
    :start DateTime
@@ -22,21 +22,24 @@
    :textcontent s/Str
    :localizations {s/Keyword {:title s/Str :textcontent s/Str}}})
 
-(def ResourceLicense License)
+(s/defschema Licenses
+  [License])
 
-(def ApplicationLicense
+(s/defschema ResourceLicense License)
+
+(s/defschema ApplicationLicense
   (merge License
          {:type (s/eq "license") ;; TODO this is pretty redundant
           :approved s/Bool}))
 
-(def Item
+(s/defschema Item
   {:id s/Num
    :localizations {s/Keyword {:title s/Str :inputprompt (s/maybe s/Str)}}
    :optional s/Bool
    :type s/Str
    :value (s/maybe s/Str)})
 
-(def Event
+(s/defschema Event
   {:userid (s/maybe s/Str)
    :round s/Num
    :event s/Str
@@ -44,7 +47,7 @@
    :time DateTime
    :eventdata s/Any})
 
-(def Application
+(s/defschema Application
   {:id (s/maybe s/Num) ;; does not exist for unsaved draft
    :formid s/Num
    :state s/Str
@@ -65,11 +68,11 @@
    (s/optional-key :last-modified) DateTime
    (s/optional-key :members) [s/Str]})
 
-(def Entitlement
+(s/defschema Entitlement
   {:resource s/Str
    :application-id s/Num
    :start s/Str
    :mail s/Str})
 
-(def SuccessResponse
+(s/defschema SuccessResponse
   {:success s/Bool})

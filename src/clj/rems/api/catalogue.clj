@@ -3,9 +3,10 @@
             [rems.api.schema :refer :all]
             [rems.api.util :refer [check-user]]
             [rems.db.catalogue :as catalogue]
-            [ring.util.http-response :refer :all]))
+            [ring.util.http-response :refer :all]
+            [schema.core :as s]))
 
-(def GetCatalogueResponse
+(s/defschema GetCatalogueResponse
   [CatalogueItem])
 
 (def catalogue-api
