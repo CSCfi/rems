@@ -724,7 +724,12 @@
 (defn- action-tab [action-name text]
   (let [action-name (str "actions-" action-name)]
     [:a.nav-item.nav-link
-     {:id (str action-name "-tab") :data-toggle "tab" :href (str "#" action-name) :role "tab" :aria-controls action-name :aria-selected false}
+     {:id (str action-name "-tab")
+      :data-toggle "tab"
+      :href (str "#" action-name)
+      :role "tab"
+      :aria-controls action-name
+      :aria-selected false}
      text]))
 
 (defn- approve-tab []
