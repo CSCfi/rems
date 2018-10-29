@@ -132,44 +132,44 @@
   :catalogue {:catalogue "Catalogue"
               :header "Resource"
               :more-info "More info"}
-  :collapse {:show-more "Show more"
-             :show-less "Show less"}
+  :collapse {:show-less "Show less"
+             :show-more "Show more"}
   :create-catalogue-item {:form-selection "Form"
                           :resource-selection "Resource"
                           :title "Name"
                           :title-placeholder "Name"
                           :workflow-selection "Workflow"}
-  :create-form {:title "Form name"
-                :item-title "Field title"
+  :create-form {:add-form-item "Add field"
                 :input-prompt "Placeholder text"
-                :type-text "Text field"
-                :type-texta "Text area"
+                :item-title "Field title"
+                :move-form-item-down "Move down"
+                :move-form-item-up "Move up"
+                :optional "Optional"
+                :remove-form-item "Remove field"
+                :title "Form name"
+                :type-attachment "Attachment"
                 :type-date "Date field"
                 :type-label "Label"
-                :type-attachment "Attachment"
-                :optional "Optional"
-                :add-form-item "Add field"
-                :remove-form-item "Remove field"
-                :move-form-item-up "Move up"
-                :move-form-item-down "Move down"}
-  :create-license {:title "License name"
-                   :external-link "External link"
+                :type-text "Text field"
+                :type-texta "Text area"}
+  :create-license {:external-link "External link"
                    :inline-text "Inline text"
+                   :license-text "License text"
                    :link-to-license "Link to the license"
-                   :license-text "License text"}
+                   :title "License name"}
   :create-resource {:licenses-selection "Terms of Use"
                     :organization "Organization"
                     :organization-placeholder "testorganization.org"
                     :resid "Resource identifier"
                     :resid-placeholder "urn:test:fi:some-uuid"}
-  :create-workflow {:title "Title"
+  :create-workflow {:add-round "Add round"
                     :approval-round "Approval round"
-                    :review-round "Review round"
                     :approvers "Approvers"
-                    :reviewers "Reviewers"
-                    :add-round "Add round"
                     :remove-round "Remove round"
-                    :round-n "Round %1"}
+                    :reviewers "Reviewers"
+                    :review-round "Review round"
+                    :round-n "Round %1"
+                    :title "Title"}
   :email {:action-not-needed-msg "Dear %1,
                                   Applicant's %2 submitted application %3 no longer requires your attention.
                                   Please do not reply to this automatically generated message."
