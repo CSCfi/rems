@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/CSCfi/rems.svg?branch=master)](https://travis-ci.org/CSCfi/rems)
+
 # Resource Entitlement Management System
 
 ## Getting started
@@ -104,11 +105,13 @@ Documentation files can be found under the [docs](./docs) folder.
 
 Documentation can also be read from the browser by launching user docs server with the command:
 `mkdocs serve`
+or simply by visiting https://rems2docs.rahtiapp.fi.
 
 Alternatively docker images can be used for running the documentation server:
+
 ```
 docker build . -f docs-server/Dockerfile -t rems-mkdocs-server
 docker run -it -p 8000:8000 --name rems-user-guide rems-mkdocs-server --rm
 ```
 
-*Note* live reload is disabled for the docker version of mkdocs.
+_Note_ live reload is disabled for the docker version of mkdocs.
