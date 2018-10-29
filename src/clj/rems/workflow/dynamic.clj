@@ -50,16 +50,20 @@
   (is (= EventTypes (set (get-event-types)))))
 
 (defmethod apply-event [:event/submitted :workflow/dynamic]
-  [application workflow event]
+  [application _workflow _event]
   (assoc application :state ::submitted ))
 
 (defmethod apply-event [:event/approved :workflow/dynamic]
-  [application workflow event]
+  [application _workflow _event]
   (assoc application :state ::approved))
 
 (defmethod apply-event [:event/returned :workflow/dynamic]
-  [application workflow event]
+  [application _workflow _event]
   (assoc application :state ::returned))
+
+(defmethod apply-event [:event/closed :workflow/dynamic]
+  [application _workflow _event]
+  (assoc application :state ::closed))
 
 (defn apply-events [application events]
   (reduce (fn [application event] (apply-event application (:workflow application) event))
@@ -70,6 +74,7 @@
 
 
 ;;; Commands
+
 (defmulti handle-command
   "Handles a command by an event."
   (fn [cmd _application] (:type cmd)))
@@ -97,9 +102,13 @@
                         :application-id (:application-id cmd)
                         :time (:time cmd)}}))
 
+(defn- handler?
+  [application user]
+  (contains? (set (:handlers (:workflow application))) user))
+
 (defmethod handle-command ::approve
   [cmd application]
-  (cond (not (contains? (set (:handlers (:workflow application))) (:actor cmd)))  {:errors [:unauthorized]}
+  (cond (not (handler? application (:actor cmd))) {:errors [:unauthorized]}
         (not= ::submitted (:state application)) {:errors [[:invalid-state (:state application)]]}
         :else {:success true
                :result {:event :event/approved
@@ -109,7 +118,7 @@
 
 (defmethod handle-command ::reject
   [cmd application]
-  (cond (not (contains? (set (:handlers (:workflow application))) (:actor cmd)))  {:errors [:unauthorized]}
+  (cond (not (handler? application (:actor cmd)))  {:errors [:unauthorized]}
         (not= ::submitted (:state application)) {:errors [[:invalid-state (:state application)]]}
         :else {:success true
                :result {:event :event/rejected
@@ -119,10 +128,20 @@
 
 (defmethod handle-command ::return
   [cmd application]
-  (cond (not (contains? (set (:handlers (:workflow application))) (:actor cmd)))  {:errors [:unauthorized]}
+  (cond (not (handler? application (:actor cmd)))  {:errors [:unauthorized]}
         (not= ::submitted (:state application)) {:errors [[:invalid-state (:state application)]]}
         :else {:success true
                :result {:event :event/returned
+                        :actor (:actor cmd)
+                        :application-id (:application-id cmd)
+                        :time (:time cmd)}}))
+
+(defmethod handle-command ::close
+  [cmd application]
+  (cond (not (handler? application (:actor cmd)))  {:errors [:unauthorized]}
+        (not= ::approved (:state application)) {:errors [[:invalid-state (:state application)]]}
+        :else {:success true
+               :result {:event :event/closed
                         :actor (:actor cmd)
                         :application-id (:application-id cmd)
                         :time (:time cmd)}}))
@@ -150,7 +169,7 @@
                                               [{:actor "applicant" :type ::submit}
                                                {:actor "assistant" :type ::approve}]))))))
 
-(deftest test-submit-return-submit-approve
+(deftest test-submit-return-submit-approve-close
   (let [application {:state ::draft
                      :applicantuserid "applicant"
                      :workflow {:type :workflow/dynamic
@@ -159,6 +178,8 @@
                                              [{:actor "applicant" :type ::submit}
                                               {:actor "assistant" :type ::return}])
         approved-application (apply-commands returned-application [{:actor "applicant" :type ::submit}
-                                                                   {:actor "assistant" :type ::approve}])]
+                                                                   {:actor "assistant" :type ::approve}])
+        closed-application (apply-command approved-application {:actor "assistant" :type ::close})]
     (is (= ::returned (:state returned-application)))
-    (is (= ::approved (:state approved-application)))))
+    (is (= ::approved (:state approved-application)))
+    (is (= ::closed (:state closed-application)))))
