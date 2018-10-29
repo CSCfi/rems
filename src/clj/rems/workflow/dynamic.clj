@@ -57,6 +57,10 @@
   [application _workflow _event]
   (assoc application :state ::approved))
 
+(defmethod apply-event [:event/rejected :workflow/dynamic]
+  [application _workflow _event]
+  (assoc application :state ::rejected))
+
 (defmethod apply-event [:event/returned :workflow/dynamic]
   [application _workflow _event]
   (assoc application :state ::returned))
@@ -160,14 +164,17 @@
 
 ;;; Tests
 
-(deftest test-submit-approve
+(deftest test-submit-approve-or-reject
   (let [application {:state ::draft
                      :applicantuserid "applicant"
                      :workflow {:type :workflow/dynamic
                                 :handlers ["assistant"]}}]
     (is (= ::approved (:state (apply-commands application
                                               [{:actor "applicant" :type ::submit}
-                                               {:actor "assistant" :type ::approve}]))))))
+                                               {:actor "assistant" :type ::approve}]))))
+    (is (= ::rejected (:state (apply-commands application
+                                              [{:actor "applicant" :type ::submit}
+                                               {:actor "assistant" :type ::reject}]))))))
 
 (deftest test-submit-return-submit-approve-close
   (let [application {:state ::draft
