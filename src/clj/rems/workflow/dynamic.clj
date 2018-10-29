@@ -22,6 +22,14 @@
    :application-id Long
    :time DateTime})
 
+(def RequestDecisionCommand
+  (assoc Command
+         :decider UserId))
+
+(def DecisionCommand
+  (assoc Command
+         :decision (s/enum :approve :reject)))
+
 (def Workflow
   {:type :workflow/dynamic
    :handlers [UserId]})
@@ -68,6 +76,16 @@
 (defmethod apply-event [:event/closed :workflow/dynamic]
   [application _workflow _event]
   (assoc application :state ::closed))
+
+(defmethod apply-event [:event/decision-requested :workflow/dynamic]
+  [application _workflow event]
+  (assoc application :decider (:decider event)))
+
+(defmethod apply-event [:event/decided :workflow/dynamic]
+  [application _workflow event]
+  (-> application
+      (assoc :decision (:decision event))
+      (dissoc :decider)))
 
 (defn apply-events [application events]
   (reduce (fn [application event] (apply-event application (:workflow application) event))
@@ -150,6 +168,28 @@
                         :application-id (:application-id cmd)
                         :time (:time cmd)}}))
 
+(defmethod handle-command ::request-decision
+  [cmd application]
+  (cond (not (handler? application (:actor cmd)))  {:errors [:unauthorized]}
+        (not= ::submitted (:state application)) {:errors [[:invalid-state (:state application)]]}
+        :else {:success true
+               :result {:event :event/decision-requested
+                        :actor (:actor cmd)
+                        :decider (:decider cmd)
+                        :application-id (:application-id cmd)
+                        :time (:time cmd)}}))
+
+(defmethod handle-command ::decide
+  [cmd application]
+  (cond (not= (:actor cmd) (:decider application)) {:errors [:unauthorized]}
+        (not= ::submitted (:state application)) {:errors [[:invalid-state (:state application)]]}
+        :else {:success true
+               :result {:event :event/decided
+                        :actor (:actor cmd)
+                        :decision (:decision cmd)
+                        :application-id (:application-id cmd)
+                        :time (:time cmd)}}))
+
 (defn- apply-command [application cmd]
   (let [result (handle-command cmd application)]
     (assert (:success result) (pr-str result))
@@ -190,3 +230,13 @@
     (is (= ::returned (:state returned-application)))
     (is (= ::approved (:state approved-application)))
     (is (= ::closed (:state closed-application)))))
+
+(deftest test-decision
+  (let [application {:state ::submitted
+                     :applicantuserid "applicant"
+                     :workflow {:type :workflow/dynamic
+                                :handlers ["assistant"]}}
+        requested (apply-command application {:actor "assistant" :decider "deity" :type ::request-decision})
+        decided (apply-command requested {:actor "deity" :decision :approved :type ::decide})]
+    (is (= {:decider "deity"} (select-keys requested [:decider :decision])))
+    (is (= {:decision :approved} (select-keys decided [:decider :decision])))))
