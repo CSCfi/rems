@@ -115,81 +115,97 @@
     (when-not (:success result)
       result)))
 
-(defmethod handle-command ::submit
-  [cmd application]
-  (cond (not= (:actor cmd) (:applicantuserid application)) {:errors [:unauthorized]}
-        (not (contains? #{::draft ::returned} (:state application))) {:errors [[:invalid-state (:state application)]]}
-        :else {:success true
-               :result {:event :event/submitted
-                        :actor (:actor cmd)
-                        :application-id (:application-id cmd)
-                        :time (:time cmd)}}))
+(defn- applicant-error
+  [application cmd]
+  (when-not (= (:actor cmd) (:applicantuserid application))
+    {:errors [:unauthorized]}))
 
 (defn- handler?
   [application user]
   (contains? (set (:handlers (:workflow application))) user))
 
+(defn- handler-error
+  [application cmd]
+  (when-not (handler? application (:actor cmd))
+    {:errors [:unauthorized]}))
+
+(defn- state-error
+  [application & states]
+  (when-not (contains? (set states) (:state application))
+    {:errors [[:invalid-state (:state application)]]}))
+
+(defmethod handle-command ::submit
+  [cmd application]
+  (or (applicant-error application cmd)
+      (state-error application ::draft ::returned)
+      {:success true
+       :result {:event :event/submitted
+                :actor (:actor cmd)
+                :application-id (:application-id cmd)
+                :time (:time cmd)}}))
+
 (defmethod handle-command ::approve
   [cmd application]
-  (cond (not (handler? application (:actor cmd))) {:errors [:unauthorized]}
-        (not= ::submitted (:state application)) {:errors [[:invalid-state (:state application)]]}
-        :else {:success true
-               :result {:event :event/approved
-                        :actor (:actor cmd)
-                        :application-id (:application-id cmd)
-                        :time (:time cmd)}}))
+  (or (handler-error application cmd)
+      (state-error application ::submitted)
+      {:success true
+       :result {:event :event/approved
+                :actor (:actor cmd)
+                :application-id (:application-id cmd)
+                :time (:time cmd)}}))
 
 (defmethod handle-command ::reject
   [cmd application]
-  (cond (not (handler? application (:actor cmd)))  {:errors [:unauthorized]}
-        (not= ::submitted (:state application)) {:errors [[:invalid-state (:state application)]]}
-        :else {:success true
-               :result {:event :event/rejected
-                        :actor (:actor cmd)
-                        :application-id (:application-id cmd)
-                        :time (:time cmd)}}))
+  (or (handler-error application cmd)
+      (state-error application ::submitted)
+      {:success true
+       :result {:event :event/rejected
+                :actor (:actor cmd)
+                :application-id (:application-id cmd)
+                :time (:time cmd)}}))
 
 (defmethod handle-command ::return
   [cmd application]
-  (cond (not (handler? application (:actor cmd)))  {:errors [:unauthorized]}
-        (not= ::submitted (:state application)) {:errors [[:invalid-state (:state application)]]}
-        :else {:success true
-               :result {:event :event/returned
-                        :actor (:actor cmd)
-                        :application-id (:application-id cmd)
-                        :time (:time cmd)}}))
+  (or (handler-error application cmd)
+      (state-error application ::submitted)
+      {:success true
+       :result {:event :event/returned
+                :actor (:actor cmd)
+                :application-id (:application-id cmd)
+                :time (:time cmd)}}))
 
 (defmethod handle-command ::close
   [cmd application]
-  (cond (not (handler? application (:actor cmd)))  {:errors [:unauthorized]}
-        (not= ::approved (:state application)) {:errors [[:invalid-state (:state application)]]}
-        :else {:success true
-               :result {:event :event/closed
-                        :actor (:actor cmd)
-                        :application-id (:application-id cmd)
-                        :time (:time cmd)}}))
+  (or (handler-error application cmd)
+      (state-error application ::approved)
+      {:success true
+       :result {:event :event/closed
+                :actor (:actor cmd)
+                :application-id (:application-id cmd)
+                :time (:time cmd)}}))
 
 (defmethod handle-command ::request-decision
   [cmd application]
-  (cond (not (handler? application (:actor cmd)))  {:errors [:unauthorized]}
-        (not= ::submitted (:state application)) {:errors [[:invalid-state (:state application)]]}
-        :else {:success true
-               :result {:event :event/decision-requested
-                        :actor (:actor cmd)
-                        :decider (:decider cmd)
-                        :application-id (:application-id cmd)
-                        :time (:time cmd)}}))
+  (or (handler-error application cmd)
+      (state-error application ::submitted)
+      {:success true
+       :result {:event :event/decision-requested
+                :actor (:actor cmd)
+                :decider (:decider cmd)
+                :application-id (:application-id cmd)
+                :time (:time cmd)}}))
 
 (defmethod handle-command ::decide
   [cmd application]
-  (cond (not= (:actor cmd) (:decider application)) {:errors [:unauthorized]}
-        (not= ::submitted (:state application)) {:errors [[:invalid-state (:state application)]]}
-        :else {:success true
-               :result {:event :event/decided
-                        :actor (:actor cmd)
-                        :decision (:decision cmd)
-                        :application-id (:application-id cmd)
-                        :time (:time cmd)}}))
+  (or (when-not (= (:actor cmd) (:decider application))
+        {:errors [:unauthorized]})
+      (state-error application ::submitted)
+      {:success true
+       :result {:event :event/decided
+                :actor (:actor cmd)
+                :decision (:decision cmd)
+                :application-id (:application-id cmd)
+                :time (:time cmd)}}))
 
 (defn- apply-command [application cmd]
   (let [result (handle-command cmd application)]
