@@ -755,7 +755,7 @@
   [:div.form-group
    [:label {:for "judge-comment"} label-title]
    [textarea {:id "judge-comment"
-              :name "judge-comment" :placeholder "Comment"
+              :name "judge-comment" :placeholder (text :t.actions/comment-placeholder)
               :value @(rf/subscribe [::judge-comment])
               :onChange #(rf/dispatch [::set-judge-comment (.. % -target -value)])}]])
 

@@ -53,6 +53,7 @@
             :cancel "Cancel"
             :close "Delete"
             :close-success "Application deleted"
+            :comment-placeholder "Comment"
             :created "Created"
             :empty "You don't have any applications to process."
             :export-entitlements "Export entitlements as csv"

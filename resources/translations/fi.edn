@@ -53,6 +53,7 @@
             :cancel "Peruuta"
             :close "Poista"
             :close-success "Hakemus poistettu"
+            :comment-placeholder "Kommentti"
             :created "Luotu"
             :empty "Sinulla ei ole hakemuksia käsiteltäväksi."
             :export-entitlements "Lataa käyttöoikeudet csv-tiedostona"
