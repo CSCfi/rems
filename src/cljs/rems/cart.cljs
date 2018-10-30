@@ -5,7 +5,7 @@
             [rems.application :as application]
             [rems.db.catalogue :refer [get-catalogue-item-title]]
             [rems.text :refer [text text-format]]
-            [rems.util :refer [select-vals]]
+            [rems.common-util :refer [select-vals]]
             [secretary.core :as secretary])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 

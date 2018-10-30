@@ -2,7 +2,8 @@
   "querying localized licenses"
   (:require [clj-time.core :as time]
             [rems.db.core :as db]
-            [rems.util :refer [distinct-by get-user-id]]))
+            [rems.common-util :refer [distinct-by]]
+            [rems.util :refer [get-user-id]]))
 
 (defn- format-licenses [licenses]
   (doall

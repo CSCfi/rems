@@ -2,7 +2,7 @@
   (:require [clojure.core.memoize :as memo]
             [rems.context :as context]
             [rems.db.core :as db]
-            [rems.util :refer [index-by]]))
+            [rems.common-util :refer [index-by]]))
 
 (def +localizations-cache-time-ms+ (* 5 60 1000))
 

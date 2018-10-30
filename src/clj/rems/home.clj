@@ -6,7 +6,7 @@
             [rems.css.styles :as styles]
             [rems.db.catalogue :as catalogue]
             [rems.layout :as layout]
-            [rems.util :refer [index-by]]
+            [rems.common-util :refer [index-by]]
             [ring.util.response :refer [content-type not-found redirect response]]))
 
 (defn- apply-for-resource [resource]

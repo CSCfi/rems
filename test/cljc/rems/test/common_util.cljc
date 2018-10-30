@@ -1,6 +1,6 @@
-(ns rems.test.util
-  (:require [clojure.test :refer :all]
-            [rems.util :refer :all]))
+(ns rems.test.common-util
+  (:require #?(:clj [clojure.test :refer :all])
+            [rems.common-util :refer :all]))
 
 (deftest select-vals-test
   (is (= [] (select-vals nil nil)))
@@ -14,3 +14,10 @@
 (deftest test-distinct-by
   (is (= [1 2]
          (sort (distinct-by even? [1 2 3 4])))))
+
+(deftest vec-dissoc-test
+  (is (vector? (vec-dissoc ["a"] 0)))
+  (is (= [] (vec-dissoc ["a"] 0)))
+  (is (= ["b", "c"] (vec-dissoc ["a", "b", "c"] 0)))
+  (is (= ["a", "c"] (vec-dissoc ["a", "b", "c"] 1)))
+  (is (= ["a", "b"] (vec-dissoc ["a", "b", "c"] 2))))
