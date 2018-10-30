@@ -206,22 +206,22 @@
           :error-handler (fn [_] (rf/dispatch [::set-status :failed]))}))
 
 (defn- save-application-with-attachment [field-id form-data catalogue-items items licenses]
-(let [payload {:command "save"
-               :items items
-               :licenses licenses
-               :catalogue-items catalogue-items}]
-  (post! "/api/applications/save"
-         {:handler (fn [resp]
-                     (if (:success resp)
-                       (do (save-attachment (:id resp) field-id form-data)
-                           (rf/dispatch [::set-status :saved])
-                                   ;; HACK: we both set the location, and fire a fetch-application event
-                                   ;; because if the location didn't change, secretary won't fire the event
-                           (navigate-to (:id resp))
-                           (rf/dispatch [::enter-application-page (:id resp)]))
-                       (rf/dispatch [::set-status :failed (:validation resp)])))
-          :error-handler (fn [_] (rf/dispatch [::set-status :failed]))
-          :params payload})))
+  (let [payload {:command "save"
+                 :items items
+                 :licenses licenses
+                 :catalogue-items catalogue-items}]
+    (post! "/api/applications/save"
+           {:handler (fn [resp]
+                       (if (:success resp)
+                         (do (save-attachment (:id resp) field-id form-data)
+                             (rf/dispatch [::set-status :saved])
+                             ;; HACK: we both set the location, and fire a fetch-application event
+                             ;; because if the location didn't change, secretary won't fire the event
+                             (navigate-to (:id resp))
+                             (rf/dispatch [::enter-application-page (:id resp)]))
+                         (rf/dispatch [::set-status :failed (:validation resp)])))
+            :error-handler (fn [_] (rf/dispatch [::set-status :failed]))
+            :params payload})))
 
 (rf/reg-event-fx
  ::save-attachment
@@ -232,7 +232,7 @@
        (let [catalogue-items (get-in db [::application :catalogue-items])
              catalogue-ids (mapv :id catalogue-items)
              items (get-in db [::edit-application :items])
-                               ;; TODO change api to booleans
+             ;; TODO change api to booleans
              licenses (into {}
                             (for [[id checked?] (get-in db [::edit-application :licenses])
                                   :when checked?]
@@ -406,10 +406,11 @@
 
 (defn- field [f]
   (case (:type f)
+    "attachment" [attachment-field f]
+    "date" [date-field f]
+    "description" [text-field f] ;; a text field whose value is shown in various UIs to help identify the application
     "text" [text-field f]
     "texta" [texta-field f]
-    "date" [date-field f]
-    "attachment" [attachment-field f]
     "label" [label f]
     "license" (case (:licensetype f)
                 "link" [link-license f]
@@ -539,8 +540,8 @@
              [:div.col-md-6
               [info-field (text :t.applicant-info/email) (get user-attributes "mail")]]]
     :collapse (into [:form]
-                     (for [[k v] (dissoc user-attributes "commonName" "mail")]
-                       [info-field k v]))}])
+                    (for [[k v] (dissoc user-attributes "commonName" "mail")]
+                      [info-field k v]))}])
 
 
 ;; Approval
@@ -774,52 +775,52 @@
 
 (defn- approve-form []
   [action-form "approve"
-               (text :t.form/add-comments-shown-to-applicant)
-               [approve-button]])
+   (text :t.form/add-comments-shown-to-applicant)
+   [approve-button]])
 
 (defn- reject-form []
   [action-form "reject"
-               (text :t.form/add-comments-shown-to-applicant)
-               [reject-button]])
+   (text :t.form/add-comments-shown-to-applicant)
+   [reject-button]])
 
 (defn- return-form []
   [action-form "return"
-               (text :t.form/add-comments-shown-to-applicant)
-               [return-button]])
+   (text :t.form/add-comments-shown-to-applicant)
+   [return-button]])
 
 (defn- review-form []
   [action-form "review"
-               (text :t.form/add-comments-not-shown-to-applicant)
-               [review-button]])
+   (text :t.form/add-comments-not-shown-to-applicant)
+   [review-button]])
 
 (defn- third-party-review-form []
   [action-form "3rd-party-review"
-               (text :t.form/add-comments-not-shown-to-applicant)
-               [third-party-review-button]])
+   (text :t.form/add-comments-not-shown-to-applicant)
+   [third-party-review-button]])
 
 (defn- close-form []
   [action-form "close"
-               (text :t.form/add-comments-shown-to-applicant)
-               [close-button]])
+   (text :t.form/add-comments-shown-to-applicant)
+   [close-button]])
 
 (defn- withdraw-form []
   [action-form "withdraw"
-               (text :t.form/add-comments)
-               [withdraw-button]])
+   (text :t.form/add-comments)
+   [withdraw-button]])
 
 (defn- review-request-form []
   [action-form "review-request" nil [review-request-button]])
 
 (defn- actions-tab-content []
- [:div.tab-content
-  [approve-form]
-  [reject-form]
-  [return-form]
-  [review-form]
-  [third-party-review-form]
-  [close-form]
-  [withdraw-form]
-  [review-request-form]])
+  [:div.tab-content
+   [approve-form]
+   [reject-form]
+   [return-form]
+   [review-form]
+   [third-party-review-form]
+   [close-form]
+   [withdraw-form]
+   [review-request-form]])
 
 (defn- actions-form [app]
   (let [tabs (concat (when (:can-close? app)
@@ -841,9 +842,9 @@
        {:id "actions"
         :title (text :t.form/actions)
         :always [:div
-                (into [:nav#pills-tab.nav.nav-tabs.mb-3 {:role "tablist"}]
-                      tabs)
-                [actions-tab-content]]}])))
+                 (into [:nav#pills-tab.nav.nav-tabs.mb-3 {:role "tablist"}]
+                       tabs)
+                 [actions-tab-content]]}])))
 
 ;; Whole application
 
@@ -987,6 +988,9 @@
    (example "field of type \"label\""
             [:form
              [field {:type "label" :title "Lorem ipsum dolor sit amet"}]])
+   (example "field of type \"description\""
+            [:form
+             [field {:type "description" :title "Title" :inputprompt "prompt"}]])
    (example "link license"
             [:form
              [field {:type "license" :title "Link to license" :licensetype "link" :textcontent "/guide"}]])

@@ -60,7 +60,7 @@
 
 (defmethod apply-event [:event/submitted :workflow/dynamic]
   [application _workflow _event]
-  (assoc application :state ::submitted ))
+  (assoc application :state ::submitted))
 
 (defmethod apply-event [:event/approved :workflow/dynamic]
   [application _workflow _event]

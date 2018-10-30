@@ -150,6 +150,7 @@
                 :title "Form name"
                 :type-attachment "Attachment"
                 :type-date "Date field"
+                :type-description "Description"
                 :type-label "Label"
                 :type-text "Text field"
                 :type-texta "Text area"}

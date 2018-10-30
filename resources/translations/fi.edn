@@ -150,6 +150,7 @@
                 :title "Lomakkeen nimi"
                 :type-attachment "Liitetiedosto"
                 :type-date "Päivämäärä"
+                :type-description "Kuvaus"
                 :type-label "Infokenttä"
                 :type-text "Tekstikenttä"
                 :type-texta "Tekstialue"}

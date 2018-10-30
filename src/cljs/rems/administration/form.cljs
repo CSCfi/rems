@@ -59,7 +59,7 @@
 ;;;; form submit
 
 (defn- uses-input-prompt? [item]
-  (contains? #{"text" "texta"} (:type item)))
+  (contains? #{"text" "texta" "description"} (:type item)))
 
 (defn- localized-string? [lstr languages]
   (and (= (set (keys lstr))
@@ -149,6 +149,7 @@
                                :orientation :vertical
                                :options [{:value "attachment", :label (text :t.create-form/type-attachment)}
                                          {:value "date", :label (text :t.create-form/type-date)}
+                                         {:value "description", :label (text :t.create-form/type-description)}
                                          {:value "label", :label (text :t.create-form/type-label)}
                                          {:value "text", :label (text :t.create-form/type-text)}
                                          {:value "texta", :label (text :t.create-form/type-texta)}]}])
