@@ -149,10 +149,10 @@
                                :orientation :vertical
                                :options [{:value "attachment", :label (text :t.create-form/type-attachment)}
                                          {:value "date", :label (text :t.create-form/type-date)}
+                                         {:value "description", :label (text :t.create-form/type-description)}
                                          {:value "label", :label (text :t.create-form/type-label)}
                                          {:value "text", :label (text :t.create-form/type-text)}
-                                         {:value "texta", :label (text :t.create-form/type-texta)}
-                                         {:value "description", :label (text :t.create-form/type-description)}]}])
+                                         {:value "texta", :label (text :t.create-form/type-texta)}]}])
 
 (defn- form-item-optional-checkbox [item]
   [checkbox context {:keys [:items item :optional]

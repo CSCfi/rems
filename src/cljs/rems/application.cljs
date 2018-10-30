@@ -406,12 +406,12 @@
 
 (defn- field [f]
   (case (:type f)
+    "attachment" [attachment-field f]
+    "date" [date-field f]
+    "description" [text-field f]
     "text" [text-field f]
     "texta" [texta-field f]
-    "date" [date-field f]
-    "attachment" [attachment-field f]
     "label" [label f]
-    "description" [text-field f]
     "license" (case (:licensetype f)
                 "link" [link-license f]
                 "text" [text-license f]
