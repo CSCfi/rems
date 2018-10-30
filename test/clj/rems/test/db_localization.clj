@@ -5,7 +5,8 @@
             [rems.config :refer [env]]
             [rems.db.core :as db]
             [rems.db.applications :as applications]
-            [rems.test.locales :refer [loc-en]]))
+            [rems.test.locales :refer [loc-en]]
+            [rems.test.tempura :refer [with-fake-tempura]]))
 
 (use-fixtures
   :once
@@ -27,8 +28,9 @@
               (map :unnest)
               (map keyword)
               (sort))))
-  (is (not (contains? (set (map rems.text/localize-state (map :unnest (rems.db.core/get-application-states))))
-                      :t.applications.states/unknown))))
+  (with-fake-tempura
+    (is (not (contains? (set (map rems.text/localize-state (map :unnest (rems.db.core/get-application-states))))
+                        :t.applications.states/unknown)))))
 
 (deftest test-all-event-localizations
   (is (= (-> (:events (:applications (:t loc-en)))
@@ -38,5 +40,6 @@
          (->> (applications/get-event-types)
               (map keyword)
               (sort))))
-  (is (not (contains? (set (map rems.text/localize-event (applications/get-event-types)))
-                      :t.applications.events/unknown))))
+  (with-fake-tempura
+    (is (not (contains? (set (map rems.text/localize-event (applications/get-event-types)))
+                        :t.applications.events/unknown)))))

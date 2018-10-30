@@ -13,7 +13,7 @@
     (list
      [:paragraph
       (text :t.applications/state)
-      (when state [:phrase ": " (text (localize-state state))])]
+      (when state [:phrase ": " (localize-state state)])]
      [:heading (text :t.applicant-info/applicant)]
      [:paragraph (get user "eppn")]
      [:paragraph (get user "mail")]
@@ -31,7 +31,7 @@
        (into
         [:table {:header [(text :t.form/user) (text :t.form/event) (text :t.form/comment) (text :t.form/date)]}]
         (for [e events]
-          [(:userid e) (text (localize-event (:event e))) (:comment e) (localize-time (:time e))]))))))
+          [(:userid e) (localize-event (:event e)) (:comment e) (localize-time (:time e))]))))))
 
 (defn- render-field [field]
   (list
