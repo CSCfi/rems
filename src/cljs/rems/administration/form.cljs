@@ -59,7 +59,7 @@
 ;;;; form submit
 
 (defn- uses-input-prompt? [item]
-  (contains? #{"text" "texta"} (:type item)))
+  (contains? #{"text" "texta" "description"} (:type item)))
 
 (defn- localized-string? [lstr languages]
   (and (= (set (keys lstr))
@@ -151,7 +151,8 @@
                                          {:value "date", :label (text :t.create-form/type-date)}
                                          {:value "label", :label (text :t.create-form/type-label)}
                                          {:value "text", :label (text :t.create-form/type-text)}
-                                         {:value "texta", :label (text :t.create-form/type-texta)}]}])
+                                         {:value "texta", :label (text :t.create-form/type-texta)}
+                                         {:value "description", :label (text :t.create-form/type-description)}]}])
 
 (defn- form-item-optional-checkbox [item]
   [checkbox context {:keys [:items item :optional]

@@ -411,6 +411,7 @@
     "date" [date-field f]
     "attachment" [attachment-field f]
     "label" [label f]
+    "description" [text-field f]
     "license" (case (:licensetype f)
                 "link" [link-license f]
                 "text" [text-license f]
@@ -987,6 +988,9 @@
    (example "field of type \"label\""
             [:form
              [field {:type "label" :title "Lorem ipsum dolor sit amet"}]])
+   (example "field of type \"description\""
+            [:form
+             [field {:type "description" :title "Title" :inputprompt "prompt"}]])
    (example "link license"
             [:form
              [field {:type "license" :title "Link to license" :licensetype "link" :textcontent "/guide"}]])
