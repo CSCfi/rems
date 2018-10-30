@@ -53,8 +53,9 @@
   (format/formatter "yyyy-MM-dd HH:mm" (time/default-time-zone)))
 
 (defn localize-time [time]
-  (when time
-    (format/unparse-local time-format (time/to-default-time-zone (format/parse time)))))
+  (let [time (if (string? time) (format/parse time) time)]
+    (when time
+      (format/unparse-local time-format (time/to-default-time-zone time)))))
 
 (defn localize-item
   ([item]
