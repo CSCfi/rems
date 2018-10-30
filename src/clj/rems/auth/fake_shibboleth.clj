@@ -59,7 +59,6 @@ a:visited { color: #fff; }
                [:body
                 [:div.login
                  [:h1 "Development Login"]
-                 [:div.users (map user-selection ["developer" "alice" "bob" "carl"])]
                  [:div.users (->> (map :userid (db/get-users))
                                   (sort)
                                   (distinct)
