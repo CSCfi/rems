@@ -408,7 +408,7 @@
   (case (:type f)
     "attachment" [attachment-field f]
     "date" [date-field f]
-    "description" [text-field f]
+    "description" [text-field f] ;; a text field whose value is shown in various UIs to help identify the application
     "text" [text-field f]
     "texta" [texta-field f]
     "label" [label f]
