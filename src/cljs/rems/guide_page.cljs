@@ -36,9 +36,6 @@
    [:div.alert.alert-danger "Danger level message"]])
 
 (defn guide-page []
-  ;; (binding [context/*root-path* "path/"
-  ;;           context/*roles* #{:applicant}]
-  ;;   (with-language :en
   [:div.container
    [:div.example-page
     [:h1 "Component Guide"]
