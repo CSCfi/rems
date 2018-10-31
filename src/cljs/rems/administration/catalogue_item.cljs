@@ -4,16 +4,24 @@
             [rems.administration.components :refer [text-field]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
+            [rems.spinner :as spinner]
             [rems.text :refer [text]]
             [rems.util :refer [dispatch! fetch post!]]))
 
 (defn- reset-form [db]
-  (dissoc db ::form))
+  (assoc (dissoc db ::form)
+         ::loading? true
+         ::loading-progress 0))
+
+(defn- update-loading [db]
+  (let [progress (::loading-progress db)]
+    (if (<= 2 progress)
+      (dissoc db ::loading-progress ::loading?)
+      (assoc db ::loading-progress (inc progress)))))
 
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   ; TODO: loading indicator
    {:db (reset-form db)
     ::fetch-workflows nil
     ::fetch-resources nil
@@ -62,6 +70,10 @@
  (fn [db [_ form]]
    (assoc-in db [::form :form] form)))
 
+(rf/reg-sub
+ ::loading?
+ (fn [db _]
+   (::loading? db)))
 
 ; form submit
 
@@ -104,7 +116,8 @@
 (rf/reg-event-db
  ::fetch-workflows-result
  (fn [db [_ workflows]]
-   (assoc db ::workflows workflows)))
+   (assoc db ::workflows workflows)
+   (update-loading db)))
 
 (rf/reg-sub
  ::workflows
@@ -125,7 +138,8 @@
 (rf/reg-event-db
  ::fetch-resources-result
  (fn [db [_ resources]]
-   (assoc db ::resources resources)))
+   (assoc db ::resources resources)
+   (update-loading db)))
 
 (rf/reg-sub
  ::resources
@@ -146,7 +160,8 @@
 (rf/reg-event-db
  ::fetch-forms-result
  (fn [db [_ forms]]
-   (assoc db ::forms forms)))
+   (assoc db ::forms forms)
+   (update-loading db)))
 
 (rf/reg-sub
  ::forms
@@ -226,15 +241,19 @@
      (text :t.administration/save)]))
 
 (defn create-catalogue-item-page []
-  [collapsible/component
-   {:id "create-catalogue-item"
-    :title (text :t.navigation/create-catalogue-item)
-    :always [:div
-             [catalogue-item-title-field]
-             [catalogue-item-workflow-field]
-             [catalogue-item-resource-field]
-             [catalogue-item-form-field]
+  (let [loading? (rf/subscribe [::loading?])]
+    [collapsible/component
+     {:id "create-catalogue-item"
+      :title (text :t.navigation/create-catalogue-item)
+      :always [:div
+               (if @loading?
+                 [:div#catalogue-item-loader [spinner/big]]
+                 [:div#catalogue-item-editor
+                  [catalogue-item-title-field]
+                  [catalogue-item-workflow-field]
+                  [catalogue-item-resource-field]
+                  [catalogue-item-form-field]
 
-             [:div.col.commands
-              [cancel-button]
-              [save-catalogue-item-button]]]}])
+                  [:div.col.commands
+                   [cancel-button]
+                   [save-catalogue-item-button]]])]}]))
