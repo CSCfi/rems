@@ -1,8 +1,8 @@
 (ns ^:integration rems.test.api.workflows
   (:require [clojure.test :refer :all]
+            [rems.common-util :refer [index-by]]
             [rems.handler :refer [app]]
             [rems.test.api :refer :all]
-            [rems.common-util :refer [index-by]]
             [ring.mock.request :refer :all]))
 
 (use-fixtures

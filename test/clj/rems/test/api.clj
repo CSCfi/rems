@@ -5,7 +5,6 @@
             [mount.core :as mount]
             [rems.config :refer [env]]
             [rems.db.core :as db]
-            [rems.handler :refer :all]
             [rems.db.test-data :as test-data]))
 
 (defn api-fixture [f]

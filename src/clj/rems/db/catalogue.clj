@@ -1,8 +1,7 @@
 (ns rems.db.catalogue
   (:require [clojure.core.memoize :as memo]
-            [rems.context :as context]
-            [rems.db.core :as db]
-            [rems.common-util :refer [index-by]]))
+            [rems.common-util :refer [index-by]]
+            [rems.db.core :as db]))
 
 (def +localizations-cache-time-ms+ (* 5 60 1000))
 

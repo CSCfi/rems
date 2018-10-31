@@ -3,8 +3,8 @@
             [luminus-migrations.core :as migrations]
             [mount.core :as mount]
             [rems.config :refer [env]]
-            [rems.db.core :as db]
             [rems.db.applications :as applications]
+            [rems.db.core :as db]
             [rems.test.locales :refer [loc-en]]
             [rems.test.tempura :refer [with-fake-tempura]]))
 

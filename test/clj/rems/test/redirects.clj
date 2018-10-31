@@ -5,12 +5,12 @@
             [rems.db.core :as db]
             [rems.db.resource :as resource]
             [rems.handler :refer [app]]
-            [rems.home :refer [home-routes]]
+            ;[rems.home :refer [home-routes]]
             [rems.test.api :refer :all]
             [ring.mock.request :refer :all]))
 
 (use-fixtures
- :once
+  :once
   api-fixture)
 
 (def test-user {"eppn" "test-user"})

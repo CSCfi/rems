@@ -2,11 +2,11 @@
   (:require [compojure.core :refer [GET defroutes]]
             [markdown.core :as md]
             [rems.auth.util :as auth-util]
+            [rems.common-util :refer [index-by]]
             [rems.config :refer [env]]
             [rems.css.styles :as styles]
             [rems.db.catalogue :as catalogue]
             [rems.layout :as layout]
-            [rems.common-util :refer [index-by]]
             [ring.util.response :refer [content-type not-found redirect response]]))
 
 (defn- apply-for-resource [resource]

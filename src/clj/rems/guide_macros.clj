@@ -1,9 +1,6 @@
 (ns rems.guide-macros
   "Utilities for component guide."
-  (:require [clojure.pprint :refer [code-dispatch write]]
-            [rems.context :as context]
-            [rems.locales :as locales]
-            [taoensso.tempura :as tempura]))
+  (:require [clojure.pprint :refer [code-dispatch write]]))
 
 (defmacro component-info [component]
   `(let [m# (meta (var ~component))]

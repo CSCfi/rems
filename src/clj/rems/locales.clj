@@ -1,7 +1,7 @@
 (ns rems.locales
-  (:require [mount.core :refer [defstate]]
-            [rems.config :refer [env]]
-            [clojure.java.io :as io])
+  (:require [clojure.java.io :as io]
+            [mount.core :refer [defstate]]
+            [rems.config :refer [env]])
   (:import (java.io FileNotFoundException)))
 
 (defn- load-translation [language translations-directory]
