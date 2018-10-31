@@ -16,8 +16,3 @@
   ([title content]
    (let [src (with-out-str (write content :dispatch code-dispatch))]
      `(rems.guide-functions/render-example ~title ~src ~content))))
-
-(defmacro with-language [lang & body]
-  `(binding [context/*lang* ~lang
-             context/*tempura* (partial tempura/tr (locales/tempura-config) [~lang])]
-     ~@body))

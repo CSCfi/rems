@@ -2,7 +2,7 @@
   (:require [clojure.core.memoize :as memo]
             [rems.context :as context]
             [rems.db.core :as db]
-            [rems.util :refer [index-by]]))
+            [rems.common-util :refer [index-by]]))
 
 (def +localizations-cache-time-ms+ (* 5 60 1000))
 
@@ -35,10 +35,6 @@
 (defn get-localized-catalogue-item [id]
   (when-let [item (db/get-catalogue-item {:item id})]
     (localize-catalogue-item item)))
-
-(defn get-catalogue-item-title [item]
-  (let [localized-title (get-in item [:localizations context/*lang* :title])]
-    (or localized-title (:title item))))
 
 (defn disabled-catalogue-item? [item]
   (= (:state item) "disabled"))

@@ -8,7 +8,8 @@
             [rems.phase :refer [phases get-application-phases]]
             [rems.spinner :as spinner]
             [rems.text :refer [text text-format localize-state localize-event localize-time localize-item]]
-            [rems.util :refer [dispatch! fetch index-by post!]]
+            [rems.common-util :refer [index-by]]
+            [rems.util :refer [dispatch! fetch post!]]
             [secretary.core :as secretary])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 

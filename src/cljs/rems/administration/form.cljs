@@ -5,7 +5,8 @@
             [rems.application :refer [enrich-user]]
             [rems.collapsible :as collapsible]
             [rems.text :refer [text text-format localize-item]]
-            [rems.util :refer [dispatch! fetch post! vec-dissoc]]))
+            [rems.common-util :refer [vec-dissoc]]
+            [rems.util :refer [dispatch! fetch post!]]))
 
 (defn- reset-form [db]
   (assoc db ::form {:items []}))
