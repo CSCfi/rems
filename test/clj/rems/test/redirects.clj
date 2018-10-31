@@ -5,7 +5,6 @@
             [rems.db.core :as db]
             [rems.db.resource :as resource]
             [rems.handler :refer [app]]
-            ;[rems.home :refer [home-routes]]
             [rems.test.api :refer :all]
             [ring.mock.request :refer :all]))
 
