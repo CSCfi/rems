@@ -81,15 +81,17 @@
             :view "Näytä"
             :withdraw "Palauta muokattavaksi"
             :withdraw-success "Hakemus palautettu muokattavaksi"}
-  :administration {:create-catalogue-item "Uusi kielivara"
+  :administration {:cancel "Peruuta"
+                   :create-catalogue-item "Uusi kielivara"
                    :create-form "Uusi lomake"
                    :create-license "Uusi lisenssi"
                    :create-resource "Uusi resurssi"
                    :create-workflow "Uusi työvuo"
                    :disable "Poista käytöstä"
                    :enable "Ota käyttöön"
-                   :save "Tallenna"
-                   :cancel "Peruuta"}
+                   :organization "Organisaatio"
+                   :organization-placeholder "testorganization.org"
+                   :save "Tallenna"}
   :applicant-info {:applicant "Hakija"
                    :email "Sähköposti"
                    :username "Nimi"}
@@ -160,8 +162,6 @@
                    :link-to-license "Linkki lisenssiin"
                    :title "Lisenssin nimi"}
   :create-resource {:licenses-selection "Käyttöehdot"
-                    :organization "Organisaatio"
-                    :organization-placeholder "testorganization.org"
                     :resid "Resurssin tunniste"
                     :resid-placeholder "urn:test:fi:some-uuid"}
   :create-workflow {:add-round "Lisää kierros"

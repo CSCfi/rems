@@ -108,8 +108,8 @@
 
 (defn- resource-organization-field []
   [text-field context {:keys [:organization]
-                       :label (text :t.create-resource/organization)
-                       :placeholder (text :t.create-resource/organization-placeholder)}])
+                       :label (text :t.administration/organization)
+                       :placeholder (text :t.administration/organization-placeholder)}])
 
 (defn- resource-id-field []
   [text-field context {:keys [:resid]

@@ -81,15 +81,17 @@
             :view "View"
             :withdraw "Withdraw"
             :withdraw-success "Application withdrawn"}
-  :administration {:create-catalogue-item "Create catalogue item"
+  :administration {:cancel "Cancel"
+                   :create-catalogue-item "Create catalogue item"
                    :create-form "Create form"
                    :create-license "Create license"
                    :create-resource "Create resource"
                    :create-workflow "Create workflow"
                    :disable "Disable"
                    :enable "Enable"
-                   :save "Save"
-                   :cancel "Cancel"}
+                   :organization "Organization"
+                   :organization-placeholder "testorganization.org"
+                   :save "Save"}
   :applicant-info {:applicant "Applicant"
                    :email "Email"
                    :username "Name"}
@@ -160,8 +162,6 @@
                    :link-to-license "Link to the license"
                    :title "License name"}
   :create-resource {:licenses-selection "Terms of Use"
-                    :organization "Organization"
-                    :organization-placeholder "testorganization.org"
                     :resid "Resource identifier"
                     :resid-placeholder "urn:test:fi:some-uuid"}
   :create-workflow {:add-round "Add round"
