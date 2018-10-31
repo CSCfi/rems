@@ -5,20 +5,26 @@
             [rems.application :refer [enrich-user]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
+            [rems.spinner :as spinner]
             [rems.text :refer [text text-format localize-item]]
             [rems.common-util :refer [vec-dissoc]]
             [rems.util :refer [dispatch! fetch post!]]))
 
 (defn- reset-form [db]
-  (assoc db ::form {:rounds []}))
+  (assoc db
+         ::form {:rounds []}
+         ::loading? true))
 
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   ; TODO: loading indicator
    {:db (reset-form db)
     ::fetch-actors nil}))
 
+(rf/reg-sub
+ ::loading?
+ (fn [db _]
+   (::loading? db)))
 
 ; form state
 
@@ -31,7 +37,6 @@
  ::set-form-field
  (fn [db [_ keys value]]
    (assoc-in db (concat [::form] keys) value)))
-
 
 ; form submit
 
@@ -105,7 +110,9 @@
 (rf/reg-event-db
  ::fetch-actors-result
  (fn [db [_ actors]]
-   (assoc db ::actors (map enrich-user actors))))
+   (-> db
+       (assoc ::actors (map enrich-user actors))
+       (dissoc ::loading?))))
 
 (rf/reg-sub
  ::actors
@@ -199,28 +206,32 @@
 (defn create-workflow-page []
   (let [form @(rf/subscribe [::form])
         num-rounds (count (:rounds form))
-        last-round (dec num-rounds)]
+        last-round (dec num-rounds)
+        loading? (rf/subscribe [::loading?])]
     [collapsible/component
      {:id "create-workflow"
       :title (text :t.administration/create-workflow)
       :always [:div
-               [workflow-organization-field]
-               [workflow-title-field]
+               (if @loading?
+                 [:div#workflow-loader [spinner/big]]
+                 [:div#workflow-editor
+                  [workflow-organization-field]
+                  [workflow-title-field]
 
-               (doall (for [round (range num-rounds)]
-                        [:div.workflow-round
-                         {:key round}
-                         [remove-round-button round]
+                  (doall (for [round (range num-rounds)]
+                           [:div.workflow-round
+                            {:key round}
+                            [remove-round-button round]
 
-                         [:h2 (text-format :t.create-workflow/round-n (inc round))]
-                         [round-type-radio-group round]
-                         [workflow-actors-field round]
-                         (when (not= round last-round)
-                           [next-workflow-arrow])]))
+                            [:h2 (text-format :t.create-workflow/round-n (inc round))]
+                            [round-type-radio-group round]
+                            [workflow-actors-field round]
+                            (when (not= round last-round)
+                              [next-workflow-arrow])]))
 
-               [:div.workflow-round.new-workflow-round
-                [add-round-button]]
+                  [:div.workflow-round.new-workflow-round
+                   [add-round-button]]
 
-               [:div.col.commands
-                [cancel-button]
-                [save-workflow-button]]]}]))
+                  [:div.col.commands
+                   [cancel-button]
+                   [save-workflow-button]]])]}]))
