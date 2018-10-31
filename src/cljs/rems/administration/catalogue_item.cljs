@@ -27,6 +27,10 @@
     ::fetch-resources nil
     ::fetch-forms nil}))
 
+(rf/reg-sub
+ ::loading?
+ (fn [db _]
+   (::loading? db)))
 
 ; form state
 
@@ -70,10 +74,6 @@
  (fn [db [_ form]]
    (assoc-in db [::form :form] form)))
 
-(rf/reg-sub
- ::loading?
- (fn [db _]
-   (::loading? db)))
 
 ; form submit
 

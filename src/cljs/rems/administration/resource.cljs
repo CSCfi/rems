@@ -19,6 +19,10 @@
    {:db (reset-form db)
     ::fetch-licenses nil}))
 
+(rf/reg-sub
+ ::loading?
+ (fn [db _]
+   (::loading? db)))
 
 ; form state
 
@@ -96,10 +100,6 @@
  (fn [db _]
    (::licenses db)))
 
-(rf/reg-sub
- ::loading?
- (fn [db _]
-   (::loading? db)))
 
 ;;;; UI ;;;;
 
@@ -155,7 +155,8 @@
       :always [:div
                (if @loading?
                  [:div#resource-loader [spinner/big]]
-                 [:div#resource-editor [resource-organization-field]
+                 [:div#resource-editor
+                  [resource-organization-field]
                   [resource-id-field]
                   [resource-licenses-field]
 
