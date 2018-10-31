@@ -5,8 +5,8 @@
             [mount.core :as mount]
             [rems.config :refer [env]]
             [rems.db.core :as db]
-            [rems.handler :refer :all]
-            [rems.db.test-data :as test-data]))
+            [rems.db.test-data :as test-data]
+            [rems.handler :refer :all]))
 
 (defn api-fixture [f]
   (mount/start
@@ -47,3 +47,8 @@
   (cond
     (string? body) body
     true (parse-stream (clojure.java.io/reader body) true)))
+
+(defn read-ok-body [response]
+  (assert (response-is-ok? response)
+          (str "response status was " (:status response)))
+  (read-body response))

@@ -608,14 +608,14 @@
         (is (response-is-unauthorized? response))))
     (testing "uploading attachment for a submitted application"
       (let [body (-> (request :post (str "/api/applications/save"))
-                         (authenticate api-key user-id)
-                         (json-body {:application-id app-id
-                                     :command "submit"
-                                     :catalogue-items [catid]
-                                     :items {1 "x" 2 "y" 3 "z"}
-                                     :licenses {1 "approved" 2 "approved"}})
-                         app
-                         read-body)]
+                     (authenticate api-key user-id)
+                     (json-body {:application-id app-id
+                                 :command "submit"
+                                 :catalogue-items [catid]
+                                 :items {1 "x" 2 "y" 3 "z"}
+                                 :licenses {1 "approved" 2 "approved"}})
+                     app
+                     read-body)]
         (is (= "applied" (:state body)))
         (let [response (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
                            (assoc :params {"file" filecontent})
@@ -683,7 +683,7 @@
                    (assoc :multipart-params {"file" filecontent})
                    app
                    read-body)]
-         (is (str/includes? body "Invalid anti-forgery token"))))
+      (is (str/includes? body "Invalid anti-forgery token"))))
   (testing "upload attachment with wrong API-Key"
     (let [body (-> (request :post (str "/api/applications/add_attachment"))
                    (assoc :params {"file" filecontent})
@@ -711,3 +711,93 @@
       (is (response-is-ok? response))
       (is (= "application/pdf" (get-in response [:headers "Content-Type"])))
       (is (.startsWith (slurp (:body response)) "%PDF-1.")))))
+
+(deftest application-description-test
+  (testing "applications without description field have no description"
+    (let [form-id (-> (request :post "/api/forms/create")
+                      (authenticate "42" "owner")
+                      (json-body {:organization "abc"
+                                  :title ""
+                                  :items []})
+                      app
+                      read-ok-body
+                      :id)
+          cat-item-id (-> (request :post "/api/catalogue-items/create")
+                          (authenticate "42" "owner")
+                          (json-body {:title ""
+                                      :form form-id
+                                      :resid 1
+                                      :wfid 1})
+                          app
+                          read-ok-body
+                          :id)
+          app-id (-> (request :post (str "/api/applications/save"))
+                     (authenticate "42" "alice")
+                     (json-body {:command "save"
+                                 :catalogue-items [cat-item-id]
+                                 :items {}
+                                 :licenses {}})
+                     app
+                     read-ok-body
+                     :id)]
+      (is (= nil
+             (get-in (-> (request :get (str "/api/applications/" app-id))
+                         (authenticate "42" "alice")
+                         app
+                         read-ok-body)
+                     [:application :description])
+             (get-in (-> (request :get (str "/api/applications/"))
+                         (authenticate "42" "alice")
+                         app
+                         read-ok-body
+                         (->> (filter #(= app-id (:id %))))
+                         first)
+                     [:description])))))
+
+  (testing "applications with description field have a description"
+    (let [form-id (-> (request :post (str "/api/forms/create"))
+                      (authenticate "42" "owner")
+                      (json-body {:organization "abc"
+                                  :title ""
+                                  :items [{:title {:en ""}
+                                           :optional false
+                                           :type "description"
+                                           :input-prompt {:en ""}}]})
+                      app
+                      read-ok-body
+                      :id)
+          cat-item-id (-> (request :post "/api/catalogue-items/create")
+                          (authenticate "42" "owner")
+                          (json-body {:title ""
+                                      :form form-id
+                                      :resid 1
+                                      :wfid 1})
+                          app
+                          read-ok-body
+                          :id)
+          draft (-> (request :get (str "/api/applications/draft?catalogue-items=" cat-item-id))
+                    (authenticate "42" "alice")
+                    app
+                    read-ok-body)
+          app-id (-> (request :post (str "/api/applications/save"))
+                     (authenticate "42" "alice")
+                     (json-body {:command "save"
+                                 :catalogue-items [cat-item-id]
+                                 :items {(get-in draft [:items 0 :id]) "some description text"}
+                                 :licenses {}})
+                     app
+                     read-ok-body
+                     :id)]
+      (is (= "some description text"
+             (get-in (-> (request :get (str "/api/applications/" app-id))
+                         (authenticate "42" "alice")
+                         app
+                         read-ok-body)
+                     [:application :description])
+             (get-in (-> (request :get (str "/api/applications/"))
+                         (authenticate "42" "alice")
+                         app
+                         read-ok-body
+                         (->> (filter #(= app-id (:id %))))
+                         first)
+                     [:description]))))))

@@ -192,6 +192,23 @@
     (get-catalogue-items (mapv :item application-items)
                          localized-items)))
 
+(declare process-item)
+(defn- enrich-application-description [app]
+  ;; XXX: the database schema is a horror for trying to query the description, so here is a copy-paste from get-form-for
+  (let [application-id (:id app)
+        form (db/get-form-for-application {:application application-id})
+        _ (assert form)
+        application (get-application-state application-id)
+        _ (assert application)
+        form-id (:formid form)
+        _ (assert form-id)
+        items (mapv #(process-item application-id form-id %)
+                    (db/get-form-items {:id form-id}))
+        description (-> (filter #(= "description" (:type %)) items)
+                        first
+                        :value)]
+    (assoc app :description description)))
+
 (defn- get-applications-impl-batch
   "Prefetches all possibly relevant data from the database and returns all the applications, according to the query parameters, with all the events
   and catalogue items associated with them."
@@ -206,9 +223,10 @@
                               :when (= (:id app) (:appid e))]
                           ;; :appid needed only for batching
                           (dissoc e :appid))]
-         (assoc (get-application-state app app-events)
-                :formid (:formid (first catalogue-items))
-                :catalogue-items catalogue-items))))))
+         (enrich-application-description
+          (assoc (get-application-state app app-events)
+                 :formid (:formid (first catalogue-items))
+                 :catalogue-items catalogue-items)))))))
 
 (defn get-my-applications []
   (filter
@@ -379,6 +397,9 @@
          catalogue-items (get-catalogue-items catalogue-item-ids)
          items (mapv #(process-item application-id form-id %)
                      (db/get-form-items {:id form-id}))
+         description (-> (filter #(= "description" (:type %)) items)
+                         first
+                         :value)
          licenses (get-application-licenses application catalogue-item-ids)
          review-type (cond
                        (can-review? application) :normal
@@ -398,7 +419,8 @@
                           :can-withdraw? (can-withdraw? application)
                           :can-third-party-review? (can-third-party-review? application)
                           :is-applicant? (is-applicant? application)
-                          :review-type review-type)
+                          :review-type review-type
+                          :description description)
       :applicant-attributes (users/get-user-attributes (:applicantuserid application))
       :items items
       :licenses licenses})))
