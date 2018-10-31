@@ -1,5 +1,3 @@
-Approve/Review modal dialogs
-
 Check that all components are responsive and work acceptably in pad or phone
 
 # Technical improvements
@@ -9,7 +7,6 @@ Check that all components are responsive and work acceptably in pad or phone
 ./src/cljs/rems/application.cljs:18:;; TODO named secretary routes give us equivalent functions
 ./src/cljs/rems/application.cljs:19:;; TODO should the secretary route definitions be in
 
-./src/cljs/rems/application.cljs:759: ;; TODO: fix applicant-info example when we have roles
 ./src/cljs/rems/phase.cljs:6:;; TODO compute these on the server side?
 
 ./src/cljs/rems/application.cljs:78: ;; TODO: should this be here?
