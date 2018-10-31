@@ -334,6 +334,38 @@
          (or (:start application) (time/now))
          {:wfid (:wfid application) :items catalogue-item-ids})))
 
+;;; Application phases
+
+(defn get-application-phases [state]
+  (cond (= state "rejected")
+        [{:phase :apply :completed? true :text :t.phases/apply}
+         {:phase :approve :completed? true :rejected? true :text :t.phases/approve}
+         {:phase :result :completed? true :rejected? true :text :t.phases/rejected}]
+
+        (= state "approved")
+        [{:phase :apply :completed? true :text :t.phases/apply}
+         {:phase :approve :completed? true :approved? true :text :t.phases/approve}
+         {:phase :result :completed? true :approved? true :text :t.phases/approved}]
+
+        (= state "closed")
+        [{:phase :apply :closed? true :text :t.phases/apply}
+         {:phase :approve :closed? true :text :t.phases/approve}
+         {:phase :result :closed? true :text :t.phases/approved}]
+
+        (contains? #{"draft" "returned" "withdrawn"} state)
+        [{:phase :apply :active? true :text :t.phases/apply}
+         {:phase :approve :text :t.phases/approve}
+         {:phase :result :text :t.phases/approved}]
+
+        (= "applied" state)
+        [{:phase :apply :completed? true :text :t.phases/apply}
+         {:phase :approve :active? true :text :t.phases/approve}
+         {:phase :result :text :t.phases/approved}]
+
+        :else
+        [{:phase :apply :active? true :text :t.phases/apply}
+         {:phase :approve :text :t.phases/approve}
+         {:phase :result :text :t.phases/approved}]))
 
 (defn get-form-for
   "Returns a form structure like this:
@@ -401,7 +433,8 @@
                           :review-type review-type)
       :applicant-attributes (users/get-user-attributes (:applicantuserid application))
       :items items
-      :licenses licenses})))
+      :licenses licenses
+      :phases (get-application-phases (:state application))})))
 
 (defn save-attachment!
   [{:keys [tempfile filename content-type]} application-id item-id]
@@ -441,7 +474,8 @@
                           :review-type nil)
       :applicant-attributes (users/get-user-attributes (:applicantuserid application))
       :items items
-      :licenses licenses})))
+      :licenses licenses
+      :phases (get-application-phases (:state application))})))
 
 (defn create-new-draft [wfid]
   (let [uid (get-user-id)
@@ -559,40 +593,6 @@
 
 (defn- apply-events [application events]
   (reduce apply-event application events))
-
-
-;;; Application phases
-
-(defn get-application-phases [state]
-  (cond (= state "rejected")
-        [{:phase :apply :completed? true :text :t.phases/apply}
-         {:phase :approve :completed? true :rejected? true :text :t.phases/approve}
-         {:phase :result :completed? true :rejected? true :text :t.phases/rejected}]
-
-        (= state "approved")
-        [{:phase :apply :completed? true :text :t.phases/apply}
-         {:phase :approve :completed? true :approved? true :text :t.phases/approve}
-         {:phase :result :completed? true :approved? true :text :t.phases/approved}]
-
-        (= state "closed")
-        [{:phase :apply :closed? true :text :t.phases/apply}
-         {:phase :approve :closed? true :text :t.phases/approve}
-         {:phase :result :closed? true :text :t.phases/approved}]
-
-        (contains? #{"draft" "returned" "withdrawn"} state)
-        [{:phase :apply :active? true :text :t.phases/apply}
-         {:phase :approve :text :t.phases/approve}
-         {:phase :result :text :t.phases/approved}]
-
-        (= "applied" state)
-        [{:phase :apply :completed? true :text :t.phases/apply}
-         {:phase :approve :active? true :text :t.phases/approve}
-         {:phase :result :text :t.phases/approved}]
-
-        :else
-        [{:phase :apply :active? true :text :t.phases/apply}
-         {:phase :approve :text :t.phases/approve}
-         {:phase :result :text :t.phases/approved}]))
 
 ;;; Public event api
 

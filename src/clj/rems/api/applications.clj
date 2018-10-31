@@ -18,12 +18,22 @@
 (s/defschema GetApplicationsResponse
   [Application])
 
+(s/defschema Phases
+  [{:phase s/Keyword
+    (s/optional-key :active?) s/Bool
+    (s/optional-key :approved?) s/Bool
+    (s/optional-key :closed?) s/Bool
+    (s/optional-key :completed?) s/Bool
+    (s/optional-key :rejected?) s/Bool
+    :text s/Keyword}])
+
 (s/defschema GetApplicationResponse
   {:id (s/maybe s/Num)
    :catalogue-items [CatalogueItem]
    :applicant-attributes (s/maybe {s/Str s/Str})
    :application (s/maybe Application)
    :licenses [ApplicationLicense]
+   :phases Phases
    :title s/Str
    :items [Item]})
 

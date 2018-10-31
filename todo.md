@@ -7,8 +7,6 @@ Check that all components are responsive and work acceptably in pad or phone
 ./src/cljs/rems/application.cljs:18:;; TODO named secretary routes give us equivalent functions
 ./src/cljs/rems/application.cljs:19:;; TODO should the secretary route definitions be in
 
-./src/cljs/rems/phase.cljs:6:;; TODO compute these on the server side?
-
 ./src/cljs/rems/application.cljs:78: ;; TODO: should this be here?
 ./src/cljs/rems/application.cljs:217: ;; TODO should this case and perhaps unnecessary mapping from keywords to Bootstrap be removed?
 ./src/cljs/rems/application.cljs:703: ;; TODO should rename :application
