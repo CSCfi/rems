@@ -4,16 +4,18 @@
             [rems.administration.components :refer [text-field]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
+            [rems.spinner :as spinner]
             [rems.text :refer [text localize-item]]
             [rems.util :refer [dispatch! fetch post!]]))
 
 (defn- reset-form [db]
-  (assoc db ::form {:licenses #{}}))
+  (assoc db
+         ::form {:licenses #{}}
+         ::loading? true))
 
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   ; TODO: loading indicator
    {:db (reset-form db)
     ::fetch-licenses nil}))
 
@@ -85,13 +87,19 @@
 (rf/reg-event-db
  ::fetch-licenses-result
  (fn [db [_ licenses]]
-   (assoc db ::licenses licenses)))
+   (-> db
+       (assoc ::licenses licenses)
+       (dissoc ::loading?))))
 
 (rf/reg-sub
  ::licenses
  (fn [db _]
    (::licenses db)))
 
+(rf/reg-sub
+ ::loading?
+ (fn [db _]
+   (::loading? db)))
 
 ;;;; UI ;;;;
 
@@ -140,14 +148,17 @@
    (text :t.administration/cancel)])
 
 (defn create-resource-page []
-  [collapsible/component
-   {:id "create-resource"
-    :title (text :t.navigation/create-resource)
-    :always [:div
-             [resource-organization-field]
-             [resource-id-field]
-             [resource-licenses-field]
+  (let [loading? (rf/subscribe [::loading?])]
+    [collapsible/component
+     {:id "create-resource"
+      :title (text :t.navigation/create-resource)
+      :always [:div
+               (if @loading?
+                 [:div#resource-loader [spinner/big]]
+                 [:div#resource-editor [resource-organization-field]
+                  [resource-id-field]
+                  [resource-licenses-field]
 
-             [:div.col.commands
-              [cancel-button]
-              [save-resource-button]]]}])
+                  [:div.col.commands
+                   [cancel-button]
+                   [save-resource-button]]])]}]))
