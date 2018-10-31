@@ -104,7 +104,7 @@ SELECT
 FROM application_form form
 LEFT OUTER JOIN application_form_item_map itemmap ON form.id = itemmap.formId
 LEFT OUTER JOIN application_form_item item ON item.id = itemmap.formItemId
-WHERE form.id = :id
+WHERE form.id = :id AND item.id IS NOT NULL
 ORDER BY itemorder
 
 -- :name get-all-form-items :? :*
