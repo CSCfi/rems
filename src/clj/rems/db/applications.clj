@@ -399,7 +399,10 @@
                  :title \"LGPL\"
                  :textcontent \"http://foo\"
                  :localizations {\"fi\" {:title \"...\" :textcontent \"...\"}}
-                 :approved false}]}"
+                 :approved false}]}
+     :phases [{:phase :apply :active? true :text :t.phases/apply}
+              {:phase :approve :text :t.phases/approve}
+              {:phase :result :text :t.phases/approved}]"
   ([application-id]
    (let [form (db/get-form-for-application {:application application-id})
          _ (assert form)
