@@ -26,8 +26,8 @@ before_script:
 script:
   # verify that we can run unit tests without the database:
   - DATABASE_URL=invalid lein test
-  # run all tests with coverage tracking:
-  - lein with-profile test cloverage
+  # build cljs and run all tests with coverage tracking:
+  - lein run-cloverage
   # frontend tests on phantomjs in travis for now
   - lein doo chrome-headless test once
   - lein uberwar
