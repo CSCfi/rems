@@ -1,7 +1,7 @@
 (ns rems.application
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
-            [rems.atoms :refer [textarea]]
+            [rems.atoms :refer [external-link textarea]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
             [rems.db.catalogue :refer [get-catalogue-item-title]]
@@ -386,7 +386,7 @@
   [{:keys [title id textcontent readonly approved validation]}]
   [license id title approved readonly validation
    [:a {:href textcontent :target "_blank"}
-    title " "]])
+    title " " [external-link]]])
 
 (defn- text-license
   [{:keys [title id textcontent approved readonly validation]}]
