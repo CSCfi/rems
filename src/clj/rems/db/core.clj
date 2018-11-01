@@ -1,4 +1,4 @@
-(ns rems.db.core
+(ns ^{:resource-deps ["sql/queries.sql"]} rems.db.core
   (:require [clj-time.core :as time]
             [clj-time.jdbc] ;; convert db timestamps to joda-time objects
             [clojure.set :refer [superset?]]

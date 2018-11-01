@@ -26,6 +26,7 @@
                  [metosin/compojure-api "2.0.0-alpha18" :exclusions [cheshire com.fasterxml.jackson.core/jackson-core]]
                  [metosin/komponentit "0.3.5"]
                  [mount "0.1.13"]
+                 [org.clojars.luontola/ns-tracker "0.3.1-patch1"]
                  [org.clojars.pntblnk/clj-ldap "0.0.16"]
                  [org.clojars.runa/conjure "2.2.0"]
                  [org.clojure/clojure "1.9.0"]
@@ -49,7 +50,7 @@
                  [ring-webjars "0.2.0"]
                  [ring/ring-core "1.6.3"]
                  [ring/ring-defaults "0.3.2"]
-                 [ring/ring-devel "1.6.3"]
+                 [ring/ring-devel "1.6.3" :exclusions [ns-tracker]]
                  [ring/ring-servlet "1.6.3"]
                  [secretary "1.2.3"]]
 
