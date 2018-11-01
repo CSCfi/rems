@@ -98,6 +98,9 @@
         :paths {:karma "node_modules/karma/bin/karma"}
         :alias {:default [:chrome-headless]}}
 
+  :aliases {"browsertests" ["do" ["cljsbuild" "once"] ["eftest" ":browser"]]
+            "run-cloverage" ["do" ["cljsbuild" "once"] ["with-profile" "test" "cloverage"]]}
+
   :profiles
   {:uberjar {:omit-source true
              :prep-tasks [["shell" "sh" "-c" "mkdir -p target/uberjar/resources && git describe --always --dirty=-custom > target/uberjar/resources/git-describe.txt"]

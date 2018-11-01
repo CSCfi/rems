@@ -55,7 +55,7 @@ jobs:
           - v2-dependencies-{{ checksum "project.clj" }}
       - run: ./dev_db.sh
       # run all tests with coverage tracking:
-      - run: lein with-profile test cloverage
+      - run: lein run-cloverage
 
   doo:
     <<: *defaults
