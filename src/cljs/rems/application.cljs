@@ -31,11 +31,11 @@
 
 (defn- reset-state [db]
   (assoc db
-    ::application nil
-    ::edit-application nil
-    ::judge-comment ""
-    ::review-comment ""
-    ::send-third-party-review-request-success false))
+         ::application nil
+         ::edit-application nil
+         ::judge-comment ""
+         ::review-comment ""
+         ::send-third-party-review-request-success false))
 
 (rf/reg-sub
  ::application
@@ -76,14 +76,14 @@
  (fn [db [_ application]]
    (-> db
        (assoc
-         ::application application
-         ;; TODO: should this be here?
-         ::edit-application {:items (into {}
-                                          (for [field (:items application)]
-                                            [(:id field) (:value field)]))
-                             :licenses (into {}
-                                             (for [license (:licenses application)]
-                                               [(:id license) (:approved license)]))})
+        ::application application
+        ;; TODO: should this be here?
+        ::edit-application {:items (into {}
+                                         (for [field (:items application)]
+                                           [(:id field) (:value field)]))
+                            :licenses (into {}
+                                            (for [license (:licenses application)]
+                                              [(:id license) (:approved license)]))})
        (dissoc ::loading-application?))))
 
 ;;; new application
@@ -285,7 +285,7 @@
   (fn [event]
     (let [filecontent (aget (.. event -target -files) 0)
           form-data (doto
-                     (js/FormData.)
+                        (js/FormData.)
                       (.append "file" filecontent))]
       (rf/dispatch [::set-field id (.-name filecontent)])
       (rf/dispatch [::save-attachment id form-data]))))
@@ -454,19 +454,19 @@
        (into [:div]
              (for [item (:items form)]
                [field (assoc (localize-item item)
-                        :validation (get-in validation-by-field-id [:item (:id item)])
-                        :readonly readonly?
-                        :value (get items (:id item))
-                        :app-id (:id application))]))
+                             :validation (get-in validation-by-field-id [:item (:id item)])
+                             :readonly readonly?
+                             :value (get items (:id item))
+                             :app-id (:id application))]))
        (when-let [form-licenses (not-empty (:licenses form))]
          [:div.form-group.field
           [:h4 (text :t.form/licenses)]
           (into [:div]
                 (for [license form-licenses]
                   [field (assoc (localize-item license)
-                           :validation (get-in validation-by-field-id [:license (:id license)])
-                           :readonly readonly?
-                           :approved (get licenses (:id license)))]))])
+                                :validation (get-in validation-by-field-id [:license (:id license)])
+                                :readonly readonly?
+                                :approved (get licenses (:id license)))]))])
        (when-not readonly?
          [:div.col.commands
           [status-widget]
