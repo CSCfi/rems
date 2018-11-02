@@ -332,7 +332,7 @@
   [basic-field opts
    [:div
     (when (not readonly)
-      [:div..upload-file
+      [:div.upload-file
        [:input {:style {:display "none"}
                 :type "file"
                 :id (id-to-name id)
