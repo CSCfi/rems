@@ -351,7 +351,7 @@
    [:input.form-control {:type "date"
                          :name (id-to-name id)
                          :class (when validation "is-invalid")
-                         ; using :value would reset user input while the user is typing, thus making the component unusable
+                         ;; using :value would reset user input while the user is typing, thus making the component unusable
                          :defaultValue value
                          :readOnly readonly
                          :min min
@@ -492,7 +492,7 @@
 
 (defn- application-header [state events]
   (let [has-users? (boolean (some :userid events))
-        ; the event times have millisecond differences, so they need to be formatted to minute precision before deduping
+        ;; the event times have millisecond differences, so they need to be formatted to minute precision before deduping
         events (->> events
                     (map format-event)
                     dedupe)
