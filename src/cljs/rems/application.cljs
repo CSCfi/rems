@@ -314,7 +314,7 @@
                          :class (when validation "is-invalid")
                          :value value
                          :readOnly readonly
-                         :onChange (set-field-value id)}]])
+                         :on-change (set-field-value id)}]])
 
 (defn- texta-field
   [{:keys [title id inputprompt readonly optional value validation] :as opts}]
@@ -325,7 +325,7 @@
               :class (if validation "form-control is-invalid" "form-control")
               :value value
               :readOnly readonly
-              :onChange (set-field-value id)}]])
+              :on-change (set-field-value id)}]])
 
 (defn attachment-field
   [{:keys [title id readonly optional value validation app-id] :as opts}]
@@ -340,7 +340,7 @@
                 :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
                 :class (when validation "is-invalid")
                 :disabled readonly
-                :onChange (set-attachment id)}]
+                :on-change (set-attachment id)}]
        [:button.btn.btn-secondary {:on-click (fn [e] (.click (.getElementById js/document (id-to-name id))))} (text :t.form/upload)]])
     (when (not-empty value)
       [:a {:href (str "/api/applications/attachments/?application-id=" app-id "&field-id=" id) :target "_blank"} value])]])
@@ -356,7 +356,7 @@
                          :readOnly readonly
                          :min min
                          :max max
-                         :onChange (set-field-value id)}]])
+                         :on-change (set-field-value id)}]])
 
 (defn- label [{title :title}]
   [:div.form-group
@@ -376,7 +376,7 @@
               :disabled readonly
               :class (when validation "is-invalid")
               :checked approved
-              :onChange (set-license-approval id)}]]
+              :on-change (set-license-approval id)}]]
     [:div.col content]]
    [:div.row
     [:div.col
@@ -764,7 +764,7 @@
    [textarea {:id "judge-comment"
               :name "judge-comment" :placeholder (text :t.actions/comment-placeholder)
               :value @(rf/subscribe [::judge-comment])
-              :onChange #(rf/dispatch [::set-judge-comment (.. % -target -value)])}]])
+              :on-change #(rf/dispatch [::set-judge-comment (.. % -target -value)])}]])
 
 (defn- action-form [id comment-title button]
   (let [id (str "actions-" id)]
