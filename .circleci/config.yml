@@ -5,16 +5,7 @@
 version: 2
 jobs:
   build:
-    docker:
-      # specify the version you desire here
-      - image: circleci/clojure:lein-2.8.1-node-browsers
-
-      # Specify service dependencies here if necessary
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      # - image: circleci/postgres:9.4
-      - image: postgres:9.5
-
+    executor: machine
     working_directory: ~/repo
 
     environment:
@@ -39,14 +30,10 @@ jobs:
             - ~/.m2
           key: v1-dependencies-{{ checksum "project.clj" }}
 
-      - run: sudo apt install postgresql-client
-      - run: psql -h localhost -U postgres < resources/sql/init.sql
-      - run: lein run migrate
-
-      - run: lein test
-            # verify that we can run unit tests without the database:
+      - run: ./dev_db.sh
+      # verify that we can run unit tests without the database:
       - run: DATABASE_URL=invalid lein test
-            # run all tests with coverage tracking:
+      # run all tests with coverage tracking:
       - run: lein with-profile test cloverage
       - run: lein doo chrome-headless test once
       - run: lein uberwar
