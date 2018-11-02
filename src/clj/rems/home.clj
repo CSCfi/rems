@@ -32,6 +32,7 @@
   (GET "/apply-for" {{:keys [resource]} :params} (apply-for-resource resource))
   (GET "/landing_page" req (redirect "/#/redirect")) ; DEPRECATED: legacy url redirect
   (GET "/markdown/:filename" [filename] (markdown-page filename))
+  (GET "/favicon.ico" [] (redirect "/img/favicon.ico"))
   (GET "/css/screen.css" [] (-> styles/screen
                                 (response)
                                 (content-type "text/css"))))
