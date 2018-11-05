@@ -840,7 +840,6 @@
       [:div]
       [collapsible/component
        {:id "actions"
-        :title (text :t.form/actions)
         :always [:div
                  (into [:nav#pills-tab.nav.nav-tabs.mb-3 {:role "tablist"}]
                        tabs)
