@@ -31,11 +31,11 @@
 
 (defn- reset-state [db]
   (assoc db
-    ::application nil
-    ::edit-application nil
-    ::judge-comment ""
-    ::review-comment ""
-    ::send-third-party-review-request-success false))
+         ::application nil
+         ::edit-application nil
+         ::judge-comment ""
+         ::review-comment ""
+         ::send-third-party-review-request-success false))
 
 (rf/reg-sub
  ::application
@@ -76,14 +76,14 @@
  (fn [db [_ application]]
    (-> db
        (assoc
-         ::application application
-         ;; TODO: should this be here?
-         ::edit-application {:items (into {}
-                                          (for [field (:items application)]
-                                            [(:id field) (:value field)]))
-                             :licenses (into {}
-                                             (for [license (:licenses application)]
-                                               [(:id license) (:approved license)]))})
+        ::application application
+        ;; TODO: should this be here?
+        ::edit-application {:items (into {}
+                                         (for [field (:items application)]
+                                           [(:id field) (:value field)]))
+                            :licenses (into {}
+                                            (for [license (:licenses application)]
+                                              [(:id license) (:approved license)]))})
        (dissoc ::loading-application?))))
 
 ;;; new application
@@ -285,7 +285,7 @@
   (fn [event]
     (let [filecontent (aget (.. event -target -files) 0)
           form-data (doto
-                     (js/FormData.)
+                        (js/FormData.)
                       (.append "file" filecontent))]
       (rf/dispatch [::set-field id (.-name filecontent)])
       (rf/dispatch [::save-attachment id form-data]))))
@@ -314,7 +314,7 @@
                          :class (when validation "is-invalid")
                          :value value
                          :readOnly readonly
-                         :onChange (set-field-value id)}]])
+                         :on-change (set-field-value id)}]])
 
 (defn- texta-field
   [{:keys [title id inputprompt readonly optional value validation] :as opts}]
@@ -325,14 +325,14 @@
               :class (if validation "form-control is-invalid" "form-control")
               :value value
               :readOnly readonly
-              :onChange (set-field-value id)}]])
+              :on-change (set-field-value id)}]])
 
 (defn attachment-field
   [{:keys [title id readonly optional value validation app-id] :as opts}]
   [basic-field opts
    [:div
     (when (not readonly)
-      [:div..upload-file
+      [:div.upload-file
        [:input {:style {:display "none"}
                 :type "file"
                 :id (id-to-name id)
@@ -340,7 +340,7 @@
                 :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
                 :class (when validation "is-invalid")
                 :disabled readonly
-                :onChange (set-attachment id)}]
+                :on-change (set-attachment id)}]
        [:button.btn.btn-secondary {:on-click (fn [e] (.click (.getElementById js/document (id-to-name id))))} (text :t.form/upload)]])
     (when (not-empty value)
       [:a {:href (str "/api/applications/attachments/?application-id=" app-id "&field-id=" id) :target "_blank"} value])]])
@@ -351,12 +351,12 @@
    [:input.form-control {:type "date"
                          :name (id-to-name id)
                          :class (when validation "is-invalid")
-                         ; using :value would reset user input while the user is typing, thus making the component unusable
+                         ;; using :value would reset user input while the user is typing, thus making the component unusable
                          :defaultValue value
                          :readOnly readonly
                          :min min
                          :max max
-                         :onChange (set-field-value id)}]])
+                         :on-change (set-field-value id)}]])
 
 (defn- label [{title :title}]
   [:div.form-group
@@ -376,7 +376,7 @@
               :disabled readonly
               :class (when validation "is-invalid")
               :checked approved
-              :onChange (set-license-approval id)}]]
+              :on-change (set-license-approval id)}]]
     [:div.col content]]
    [:div.row
     [:div.col
@@ -454,19 +454,19 @@
        (into [:div]
              (for [item (:items form)]
                [field (assoc (localize-item item)
-                        :validation (get-in validation-by-field-id [:item (:id item)])
-                        :readonly readonly?
-                        :value (get items (:id item))
-                        :app-id (:id application))]))
+                             :validation (get-in validation-by-field-id [:item (:id item)])
+                             :readonly readonly?
+                             :value (get items (:id item))
+                             :app-id (:id application))]))
        (when-let [form-licenses (not-empty (:licenses form))]
          [:div.form-group.field
           [:h4 (text :t.form/licenses)]
           (into [:div]
                 (for [license form-licenses]
                   [field (assoc (localize-item license)
-                           :validation (get-in validation-by-field-id [:license (:id license)])
-                           :readonly readonly?
-                           :approved (get licenses (:id license)))]))])
+                                :validation (get-in validation-by-field-id [:license (:id license)])
+                                :readonly readonly?
+                                :approved (get licenses (:id license)))]))])
        (when-not readonly?
          [:div.col.commands
           [status-widget]
@@ -492,7 +492,7 @@
 
 (defn- application-header [state events]
   (let [has-users? (boolean (some :userid events))
-        ; the event times have millisecond differences, so they need to be formatted to minute precision before deduping
+        ;; the event times have millisecond differences, so they need to be formatted to minute precision before deduping
         events (->> events
                     (map format-event)
                     dedupe)
@@ -764,7 +764,7 @@
    [textarea {:id "judge-comment"
               :name "judge-comment" :placeholder (text :t.actions/comment-placeholder)
               :value @(rf/subscribe [::judge-comment])
-              :onChange #(rf/dispatch [::set-judge-comment (.. % -target -value)])}]])
+              :on-change #(rf/dispatch [::set-judge-comment (.. % -target -value)])}]])
 
 (defn- action-form [id comment-title button]
   (let [id (str "actions-" id)]
