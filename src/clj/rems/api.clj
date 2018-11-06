@@ -75,7 +75,7 @@
    {;; TODO: should this be in rems.middleware?
     :formats muuntaja
     :middleware [cors-middleware]
-    :exceptions {:handlers {NotAuthorizedException (ex/with-logging unauthorized-handler)
+    :exceptions {:handlers {NotAuthorizedException unauthorized-handler
                             InvalidRequestException (ex/with-logging invalid-handler)
                             ;; add logging to validation handlers
                             ::ex/request-validation (ex/with-logging ex/request-validation-handler)
