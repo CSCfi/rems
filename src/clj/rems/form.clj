@@ -67,7 +67,10 @@
                                :form (:id form)
                                :item item-id
                                :user (get-user-id)
-                               :value value})))))
+                               :value value})
+        (when (= "description" (:type item))
+          (db/update-application-description! {:id application-id
+                                               :description value}))))))
 
 (defn save-licenses
   [application-id input]
