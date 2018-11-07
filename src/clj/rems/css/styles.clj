@@ -55,7 +55,7 @@
                            :background-position [[:center :center]]}]
                          [:.logo
                           {:height (u/px 150)}]))
-   (stylesheet/at-media {:min-width (u/px 768)}
+   (stylesheet/at-media {:min-width (u/px 992)}
                         (list
                          [(s/descendant :.rems-table :td:before)
                           {:display "none"}]
@@ -204,7 +204,6 @@
                     :flex-wrap :none
                     :min-height (u/px 300)
                     :flex-grow "1"}]
-   [:.container {:max-width (u/px 891)}]
    [(s/> :.spaced-sections "*:not(:first-child)") {:margin-top (u/rem 1)}]
    [:.btn-primary
     [:&:hover
