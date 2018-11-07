@@ -55,6 +55,7 @@
             :close-success "Application deleted"
             :comment-placeholder "Comment"
             :created "Created"
+            :description "Description"
             :empty "You don't have any applications to process."
             :export-entitlements "Export entitlements as csv"
             :handled-approvals "Handled applications"

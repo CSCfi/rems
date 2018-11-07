@@ -55,6 +55,7 @@
             :close-success "Hakemus poistettu"
             :comment-placeholder "Kommentti"
             :created "Luotu"
+            :description "Kuvaus"
             :empty "Sinulla ei ole hakemuksia käsiteltäväksi."
             :export-entitlements "Lataa käyttöoikeudet csv-tiedostona"
             :handled-approvals "Käsitellyt hakemukset"
