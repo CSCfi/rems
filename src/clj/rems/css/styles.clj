@@ -59,6 +59,8 @@
                         (list
                          [(s/descendant :.rems-table :td:before)
                           {:display "none"}]
+                         [:.rems-table-search-toggle
+                          {:display "flex !important"}]
                          [:.rems-table
                           [:th
                            :td
@@ -132,6 +134,8 @@
      {:color "#000"}]
     [:tr
      [(s/& (s/nth-child "2n")) {:background "#fff"}]]]
+   [:.rems-table-search-toggle ;; TODO: search fields are not visible in mobile mode
+    {:display "none !important"}]
    [:.rems-table {:margin "1em 0"
                   :min-width "100%"
                   :background-color (util/get-theme-attribute :table-bgcolor)

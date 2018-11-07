@@ -77,7 +77,7 @@
    opts: possibly options with {:class classes for the table}"
   [column-definitions visible-columns {:keys [sort-column sort-order filters show-filters] :as sorting} set-sorting id-function items & [opts]]
   [:div
-   [:div.d-flex.flex-row-reverse
+   [:div.rems-table-search-toggle.d-flex.flex-row-reverse
     [:div.btn
      {:class (if show-filters "btn-secondary" "btn-primary")
       :on-click (fn [] (set-sorting
