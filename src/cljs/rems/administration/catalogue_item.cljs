@@ -9,9 +9,9 @@
             [rems.util :refer [dispatch! fetch post!]]))
 
 (defn- reset-form [db]
-  (assoc (dissoc db ::form)
-         ::loading? true
-         ::loading-progress 0))
+  (-> (dissoc db ::form)
+      (assoc ::loading? true
+             ::loading-progress 0)))
 
 (defn- update-loading [db]
   (let [progress (::loading-progress db)]
@@ -116,8 +116,8 @@
 (rf/reg-event-db
  ::fetch-workflows-result
  (fn [db [_ workflows]]
-   (assoc db ::workflows workflows)
-   (update-loading db)))
+   (-> (assoc db ::workflows workflows)
+       (update-loading))))
 
 (rf/reg-sub
  ::workflows
@@ -138,8 +138,8 @@
 (rf/reg-event-db
  ::fetch-resources-result
  (fn [db [_ resources]]
-   (assoc db ::resources resources)
-   (update-loading db)))
+   (-> (assoc db ::resources resources)
+       (update-loading))))
 
 (rf/reg-sub
  ::resources
@@ -160,8 +160,8 @@
 (rf/reg-event-db
  ::fetch-forms-result
  (fn [db [_ forms]]
-   (assoc db ::forms forms)
-   (update-loading db)))
+   (-> (assoc db ::forms forms)
+       (update-loading))))
 
 (rf/reg-sub
  ::forms
