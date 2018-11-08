@@ -4,7 +4,6 @@
   be manually compiled by calling the function
   rems.css.styles/generate-css"
   (:require [garden.core :as g]
-            [garden.def :refer [defstyles]]
             [garden.selectors :as s]
             [garden.stylesheet :as stylesheet]
             [garden.units :as u]

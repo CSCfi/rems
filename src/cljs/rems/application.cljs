@@ -5,7 +5,7 @@
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
             [rems.db.catalogue :refer [get-catalogue-item-title]]
-            [rems.phase :refer [phases get-application-phases]]
+            [rems.phase :refer [phases]]
             [rems.spinner :as spinner]
             [rems.text :refer [text text-format localize-state localize-event localize-time localize-item]]
             [rems.common-util :refer [index-by]]
@@ -490,7 +490,7 @@
    :comment (:comment event)
    :time (localize-time (:time event))})
 
-(defn- application-header [state events]
+(defn- application-header [state phases-data events]
   (let [has-users? (boolean (some :userid events))
         ;; the event times have millisecond differences, so they need to be formatted to minute precision before deduping
         events (->> events
@@ -504,7 +504,7 @@
               (text :t.applications/state)
               (when state (list ": " (localize-state state)))]
       :always [:div
-               [:div.mb-3 {:class (str "state-" state)} (phases (get-application-phases state))]
+               [:div.mb-3 {:class (str "state-" state)} (phases phases-data)]
                (when last-event
                  (info-field (text :t.applications/latest-comment)
                              (:comment last-event)))]
@@ -873,6 +873,7 @@
   ;; TODO should rename :application
   (let [app (:application application)
         state (:state app)
+        phases (:phases application)
         events (:events app)
         user-attributes (:applicant-attributes application)]
     [:div
@@ -888,7 +889,7 @@
         {:status :failure
          :contents [:div (text :t.form/validation.errors)
                     [format-validation-messages (:validation edit-application) language]]}])
-     [application-header state events]
+     [application-header state phases events]
      (when user-attributes
        [:div.mt-3 [applicant-info "applicant-info" user-attributes]])
      [:div.mt-3 [applied-resources (:catalogue-items application)]]

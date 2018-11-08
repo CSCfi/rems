@@ -1,6 +1,5 @@
 (ns rems.standalone
   "Run the REMS app in an embedded http server."
-  (:refer-clojure :exclude [parse-opts])
   (:require [clojure.tools.cli :refer [parse-opts]]
             [clojure.tools.logging :as log]
             [hara.io.scheduler :as scheduler]
@@ -13,6 +12,7 @@
             [rems.handler :as handler]
             [rems.tasks :as tasks]
             [rems.validate :as validate])
+  (:refer-clojure :exclude [parse-opts])
   (:gen-class))
 
 (def cli-options

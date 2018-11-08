@@ -4,7 +4,6 @@
             [rems.api.util]
             [rems.db.core :as db]
             [rems.db.workflow :as workflow]
-            [rems.util :refer [get-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
