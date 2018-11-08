@@ -284,8 +284,7 @@
   [id]
   (fn [event]
     (let [filecontent (aget (.. event -target -files) 0)
-          form-data (doto
-                        (js/FormData.)
+          form-data (doto (js/FormData.)
                       (.append "file" filecontent))]
       (rf/dispatch [::set-field id (.-name filecontent)])
       (rf/dispatch [::save-attachment id form-data]))))
@@ -889,12 +888,13 @@
         {:status :failure
          :contents [:div (text :t.form/validation.errors)
                     [format-validation-messages (:validation edit-application) language]]}])
-     [application-header state phases events]
-     (when user-attributes
-       [:div.mt-3 [applicant-info "applicant-info" user-attributes]])
-     [:div.mt-3 [applied-resources (:catalogue-items application)]]
-     [:div.my-3 [fields application edit-application]]
-     [:div.mb-3 [actions-form app]]
+     [:div.spaced-sections
+      [application-header state phases events]
+      (when user-attributes
+        [applicant-info "applicant-info" user-attributes])
+      [applied-resources (:catalogue-items application)]
+      [fields application edit-application]
+      [actions-form app]]
      [review-request-modal]]))
 
 ;;;; Entrypoint ;;;;

@@ -205,6 +205,7 @@
                     :min-height (u/px 300)
                     :flex-grow "1"}]
    [:.container {:max-width (u/px 891)}]
+   [(s/> :.spaced-sections "*:not(:first-child)") {:margin-top (u/rem 1)}]
    [:.btn-primary
     [:&:hover
      :&:focus
