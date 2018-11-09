@@ -38,28 +38,31 @@
 
 (deftest
   test-new-application
-  (doto *driver*
-    (set-window-size 1920 1080) ; Buttons get over each other in default sizes
-    (go "http://localhost:3001")
-    (click-visible {:class :login-btn}) ; Get login choices
-    (click-visible {:class :user}) ; Choose first, "developer"
-    (click-visible {:class "nav-item nav-link"}) ; Go to catalogue
-    (click-visible [{:class "rems-table catalogue"} {:class "btn btn-primary "}]) ; Click "Add to cart" on first item
-    (click-visible [{:class "cart-item separator"} {:class "btn btn-primary"}]) ; Click "Apply"
-    (wait-visible :field1)
-    ; On application page
-    ; Need to use fill-human, because human is so quick that the form
-    ; drops characters here and there
-    (fill-human :field1 "Test name")
-    (fill-human :field2 "Test purpose")
-    (click-visible {:name :license1}) ; Accept license
-    (click-visible {:name :license2}) ; Accept terms
-    (click-visible :submit)
-    (click-visible {:class "nav-item nav-link active"})
-    (wait-visible {:data-th :Resource}))
-  (is (= "Deve Loper /"
-         (get-element-text *driver* {:class :user-name})))
-  (is (= "ELFA Corpus, direct approval"
-         (get-element-text *driver* {:data-th :Resource})))
-  (is (= "Approved"
-         (get-element-text *driver* {:data-th :State}))))
+  (with-postmortem *driver* {:dir "browsertest-errors"}
+    (doto *driver*
+      (set-window-size 1920 1080) ; Buttons get over each other in default sizes
+      (go "http://localhost:3001")
+      (screenshot "browsertest-errors/landing-page.png")
+      (click-visible {:class :login-btn}) ; Get login choices
+      (screenshot "browsertest-errors/login-page.png")
+      (click-visible {:class :user}) ; Choose first, "developer"
+      (click-visible {:class "nav-item nav-link"}) ; Go to catalogue
+      (click-visible [{:class "rems-table catalogue"} {:class "btn btn-primary "}]) ; Click "Add to cart" on first item
+      (click-visible [{:class "cart-item separator"} {:class "btn btn-primary"}]) ; Click "Apply"
+      (wait-visible :field1)
+      ; On application page
+      ; Need to use fill-human, because human is so quick that the form
+      ; drops characters here and there
+      (fill-human :field1 "Test name")
+      (fill-human :field2 "Test purpose")
+      (click-visible {:name :license1}) ; Accept license
+      (click-visible {:name :license2}) ; Accept terms
+      (click-visible :submit)
+      (click-visible {:class "nav-item nav-link active"})
+      (wait-visible {:data-th :Resource}))
+    (is (= "Deve Loper /"
+           (get-element-text *driver* {:class :user-name})))
+    (is (= "ELFA Corpus, direct approval"
+           (get-element-text *driver* {:data-th :Resource})))
+    (is (= "Approved"
+           (get-element-text *driver* {:data-th :State})))))

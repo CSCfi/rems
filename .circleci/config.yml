@@ -56,6 +56,8 @@ jobs:
       - run: ./dev_db.sh
       # run all tests with coverage tracking:
       - run: lein run-cloverage
+      - store_artifacts:
+          path: browsertest-errors
 
   doo:
     <<: *defaults
