@@ -5,4 +5,4 @@
   "Middleware for dev use. Autoreload, style reloading."
   [handler]
   (-> handler
-      wrap-reload))
+      (wrap-reload {:dirs ["src" "resources"]})))

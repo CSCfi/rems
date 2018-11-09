@@ -66,7 +66,8 @@
    :catalogue-items [CatalogueItem]
    (s/optional-key :review-type) (s/maybe (s/enum :normal :third-party))
    (s/optional-key :last-modified) DateTime
-   (s/optional-key :members) [s/Str]})
+   (s/optional-key :members) [s/Str]
+   (s/optional-key :description) (s/maybe s/Str)})
 
 (s/defschema Entitlement
   {:resource s/Str
