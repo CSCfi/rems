@@ -1,0 +1,108 @@
+# Clojure CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-clojure/ for more details
+#
+version: 2
+
+defaults: &defaults
+  executor: machine
+  working_directory: ~/repo
+  environment:
+    LEIN_ROOT: "true"
+    # Customize the JVM maximum heap limit
+    JVM_OPTS: -Xmx3200m
+
+jobs:
+  build:
+    <<: *defaults
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+          - v2-dependencies-{{ checksum "project.clj" }}
+          # fallback to using the latest cache if no exact match is found
+          - v2-dependencies-
+
+      - run: lein deps
+
+      - save_cache:
+          paths:
+            - ~/.m2
+            # node_modules won't pick up updates to sub dependencies
+            # unless the project.clj is changed. This might create differences
+            # between dev, CI and actual deployment.
+            - node_modules
+          key: v2-dependencies-{{ checksum "project.clj" }}
+
+  without-db:
+    <<: *defaults
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+          - v2-dependencies-{{ checksum "project.clj" }}
+      # verify that we can run unit tests without the database:
+      - run: DATABASE_URL=invalid lein test
+
+  cloverage:
+    <<: *defaults
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+          - v2-dependencies-{{ checksum "project.clj" }}
+      - run: ./dev_db.sh
+      # run all tests with coverage tracking:
+      - run: lein with-profile test cloverage
+
+  doo:
+    <<: *defaults
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+          - v2-dependencies-{{ checksum "project.clj" }}
+      - run: ./dev_db.sh
+      - run: lein doo chrome-headless test once
+
+  transfer:
+    <<: *defaults
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+          - v2-dependencies-{{ checksum "project.clj" }}
+      - run: ./dev_db.sh
+      - run: ./dev_transfer.sh transfer-test-data/demo_liferay_20180115.sql transfer-test-data/demo_rems_20180115.sql && lein run validate
+
+  war:
+    <<: *defaults
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+          - v2-dependencies-{{ checksum "project.clj" }}
+      - run: lein uberwar
+
+workflows:
+  version: 2
+  build-test-and-deploy:
+    jobs:
+        - build
+        - without-db:
+            requires:
+              - build
+        - cloverage:
+            requires:
+              - build
+        - doo:
+            requires:
+              - build
+        - transfer:
+            requires:
+              - build
+        - war:
+            requires:
+              - build

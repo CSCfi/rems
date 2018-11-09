@@ -4,7 +4,6 @@
   be manually compiled by calling the function
   rems.css.styles/generate-css"
   (:require [garden.core :as g]
-            [garden.def :refer [defstyles]]
             [garden.selectors :as s]
             [garden.stylesheet :as stylesheet]
             [garden.units :as u]
@@ -206,6 +205,7 @@
                     :min-height (u/px 300)
                     :flex-grow "1"}]
    [:.container {:max-width (u/px 891)}]
+   [(s/> :.spaced-sections "*:not(:first-child)") {:margin-top (u/rem 1)}]
    [:.btn-primary
     [:&:hover
      :&:focus

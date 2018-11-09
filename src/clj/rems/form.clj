@@ -1,14 +1,13 @@
 (ns rems.form
   (:require [rems.db.applications :refer [create-new-draft
                                           get-application-state
+                                          get-catalogue-items-by-application-id
                                           get-form-for
                                           make-draft-application
-                                          submit-application
-                                          get-catalogue-items-by-application-id]]
+                                          submit-application]]
             [rems.db.catalogue :refer [disabled-catalogue-item?]]
             [rems.db.core :as db]
             [rems.InvalidRequestException]
-            [rems.roles :refer [has-roles?]]
             [rems.text :refer :all]
             [rems.util :refer [get-user-id getx]]))
 

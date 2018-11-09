@@ -173,30 +173,28 @@
     (fn [reviews]
       (if @loading-actions?
         [spinner/big]
-        [:div
+        [:div.spaced-sections
          (when (:reviewer? @actions)
-           [:div
-            [collapsible/component
-             {:id "open-reviews"
-              :open? true
-              :title (text :t.actions/open-reviews)
-              :collapse [open-reviews (:reviews @actions)]}]
-            [:div.my-3
-             [collapsible/component
-              {:id "handled-reviews"
-               :on-open #(rf/dispatch [:rems.actions/start-fetch-handled-actions])
-               :title (text :t.actions/handled-reviews)
-               :collapse [handled-reviews (:handled-reviews @handled-actions) @loading-handled-actions?]}]]])
+           [collapsible/component
+            {:id "open-reviews"
+             :open? true
+             :title (text :t.actions/open-reviews)
+             :collapse [open-reviews (:reviews @actions)]}])
+         (when (:reviewer? @actions)
+           [collapsible/component
+            {:id "handled-reviews"
+             :on-open #(rf/dispatch [:rems.actions/start-fetch-handled-actions])
+             :title (text :t.actions/handled-reviews)
+             :collapse [handled-reviews (:handled-reviews @handled-actions) @loading-handled-actions?]}])
          (when (:approver? @actions)
-           [:div
-            [collapsible/component
-             {:id "open-approvals"
-              :open? true
-              :title (text :t.actions/open-approvals)
-              :collapse [open-approvals (:approvals @actions)]}]
-            [:div.mt-3
-             [collapsible/component
-              {:id "handled-approvals"
-               :on-open #(rf/dispatch [:rems.actions/start-fetch-handled-actions])
-               :title (text :t.actions/handled-approvals)
-               :collapse [handled-approvals (:handled-approvals @handled-actions) @loading-handled-actions?]}]]])]))))
+           [collapsible/component
+            {:id "open-approvals"
+             :open? true
+             :title (text :t.actions/open-approvals)
+             :collapse [open-approvals (:approvals @actions)]}])
+         (when (:approver? @actions)
+           [collapsible/component
+            {:id "handled-approvals"
+             :on-open #(rf/dispatch [:rems.actions/start-fetch-handled-actions])
+             :title (text :t.actions/handled-approvals)
+             :collapse [handled-approvals (:handled-approvals @handled-actions) @loading-handled-actions?]}])]))))

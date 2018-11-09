@@ -1,6 +1,6 @@
 (ns rems.util
-  (:require [rems.context :as context]
-            [rems.config :refer [env]]))
+  (:require [rems.config :refer [env]]
+            [rems.context :as context]))
 
 (defn errorf
   "Throw a RuntimeException, args passed to `clojure.core/format`."
