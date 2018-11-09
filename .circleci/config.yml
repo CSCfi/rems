@@ -30,6 +30,9 @@ jobs:
       - save_cache:
           paths:
             - ~/.m2
+            # node_modules won't pick up updates to sub dependencies
+            # unless the project.clj is changed. This might create differences
+            # between dev, CI and actual deployment.
             - node_modules
           key: v2-dependencies-{{ checksum "project.clj" }}
 
