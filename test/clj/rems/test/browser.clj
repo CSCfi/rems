@@ -45,7 +45,7 @@
       (screenshot "browsertest-errors/landing-page.png")
       (click-visible {:class :login-btn}) ; Get login choices
       (screenshot "browsertest-errors/login-page.png")
-      (click-visible {:class :user}) ; Choose first, "developer"
+      (click-visible {:tag :a :fn/text "developer"}) ; Choose "developer"
       (click-visible {:class "nav-item nav-link"}) ; Go to catalogue
       (click-visible [{:class "rems-table catalogue"} {:class "btn btn-primary "}]) ; Click "Add to cart" on first item
       (click-visible [{:class "cart-item separator"} {:class "btn btn-primary"}]) ; Click "Apply"
