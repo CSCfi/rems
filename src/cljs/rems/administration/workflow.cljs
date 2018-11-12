@@ -12,7 +12,8 @@
 
 (defn- reset-form [db]
   (assoc db
-         ::form {:rounds []}
+         ::form {:type :auto-approve
+                 :rounds []}
          ::loading? true))
 
 (rf/reg-event-fx
@@ -40,25 +41,35 @@
 
 ; form submit
 
+(defn- valid-round? [round]
+  (and (not (nil? (:type round)))
+       (not (empty? (:actors round)))))
+
 (defn- valid-request? [request]
   (and (not (str/blank? (:organization request)))
        (not (str/blank? (:title request)))
-       (every? (fn [round]
-                 (and (not (nil? (:type round)))
-                      (not (empty? (:actors round)))))
-               (:rounds request))))
+       (case (:type request)
+         :auto-approve true
+         :dynamic (not (empty? (:handlers request)))
+         :rounds (every? valid-round? (:rounds request))
+         nil false)))
 
-(defn- build-actor-request [actor]
+(defn- build-request-user [actor]
   {:userid (:userid actor)})
 
-(defn- build-round-request [round]
+(defn- build-request-round [round]
   {:type (:type round)
-   :actors (map build-actor-request (:actors round))})
+   :actors (map build-request-user (:actors round))})
 
 (defn build-request [form]
   (let [request {:organization (:organization form)
                  :title (:title form)
-                 :rounds (map build-round-request (:rounds form))}]
+                 :type (:type form)}
+        request (case (:type form)
+                  :auto-approve request
+                  :dynamic (assoc request :handlers (map build-request-user (:handlers form)))
+                  :rounds (assoc request :rounds (map build-request-round (:rounds form)))
+                  nil nil)]
     (when (valid-request? request)
       request)))
 
@@ -134,6 +145,16 @@
   [text-field context {:keys [:title]
                        :label (text :t.create-workflow/title)}])
 
+(defn- workflow-type-field []
+  [radio-button-group context {:keys [:type]
+                               :orientation :horizontal
+                               :options [{:value :auto-approve
+                                          :label "Auto-approve"} ;; TODO: translation
+                                         {:value :dynamic
+                                          :label "Dynamic workflow"} ;; TODO: translation
+                                         {:value :rounds
+                                          :label "Static rounds"}]}])
+
 (defn- round-type-radio-group [round]
   [radio-button-group context {:keys [:rounds round :type]
                                :orientation :horizontal
@@ -203,10 +224,38 @@
    {:on-click #(dispatch! "/#/administration")}
    (text :t.administration/cancel)])
 
-(defn create-workflow-page []
+(defn round-workflow-form []
   (let [form @(rf/subscribe [::form])
         num-rounds (count (:rounds form))
-        last-round (dec num-rounds)
+        last-round (dec num-rounds)]
+    [:div
+     (doall (for [round (range num-rounds)]
+              [:div.workflow-round
+               {:key round}
+               [remove-round-button round]
+
+               [:h2 (text-format :t.create-workflow/round-n (inc round))]
+               [round-type-radio-group round]
+               [workflow-actors-field round]
+               (when (not= round last-round)
+                 [next-workflow-arrow])]))
+
+     [:div.workflow-round.new-workflow-round
+      [add-round-button]]]))
+
+(defn dynamic-workflow-form []
+  "TODO") ;; TODO: selection list for handlers
+
+(def workflow-types {:dynamic {:form [dynamic-workflow-form]
+                               :valid? (constantly true)}
+                     :rounds {:form [round-workflow-form]
+                              :valid? (constantly true)}
+                     :auto-approve {:form nil
+                                    :valid? (constantly true)}})
+
+(defn create-workflow-page []
+  (let [form @(rf/subscribe [::form])
+        workflow-type (:type form)
         loading? (rf/subscribe [::loading?])]
     [collapsible/component
      {:id "create-workflow"
@@ -217,20 +266,9 @@
                  [:div#workflow-editor
                   [workflow-organization-field]
                   [workflow-title-field]
+                  [workflow-type-field]
 
-                  (doall (for [round (range num-rounds)]
-                           [:div.workflow-round
-                            {:key round}
-                            [remove-round-button round]
-
-                            [:h2 (text-format :t.create-workflow/round-n (inc round))]
-                            [round-type-radio-group round]
-                            [workflow-actors-field round]
-                            (when (not= round last-round)
-                              [next-workflow-arrow])]))
-
-                  [:div.workflow-round.new-workflow-round
-                   [add-round-button]]
+                  (get-in workflow-types [workflow-type :form])
 
                   [:div.col.commands
                    [cancel-button]

@@ -32,6 +32,7 @@
     (let [response (-> (request :post (str "/api/workflows/create"))
                        (json-body {:organization "abc"
                                    :title "workflow title"
+                                   :type :rounds
                                    :rounds [{:type :review
                                              :actors [{:userid "alice"}
                                                       {:userid "bob"}]}
@@ -62,7 +63,7 @@
     (let [response (-> (request :post (str "/api/workflows/create"))
                        (json-body {:organization "abc"
                                    :title "auto-approved workflow"
-                                   :rounds []})
+                                   :type :auto-approve})
                        (authenticate "42" "owner")
                        app)
           body (read-body response)
@@ -111,6 +112,7 @@
       (let [response (-> (request :post (str "/api/workflows/create"))
                          (json-body {:organization "abc"
                                      :title "workflow title"
+                                     :type :rounds
                                      :rounds [{:type :approval
                                                :actors [{:userid "bob"}]}]})
                          app)]
@@ -128,6 +130,7 @@
       (let [response (-> (request :post (str "/api/workflows/create"))
                          (json-body {:organization "abc"
                                      :title "workflow title"
+                                     :type :rounds
                                      :rounds [{:type :approval
                                                :actors [{:userid "bob"}]}]})
                          (authenticate "42" "alice")

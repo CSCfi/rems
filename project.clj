@@ -87,7 +87,8 @@
 
   ;; flag tests that need a db with ^:integration
   :test-selectors {:default (complement :integration)
-                   :all (constantly true)}
+                   :all (constantly true)
+                   :focused :focused}
   :eftest {:multithread? false} ;; integration tests aren't safe to run in parallel
 
   ;; cljs testing
