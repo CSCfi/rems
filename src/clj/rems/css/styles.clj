@@ -55,10 +55,12 @@
                            :background-position [[:center :center]]}]
                          [:.logo
                           {:height (u/px 150)}]))
-   (stylesheet/at-media {:min-width (u/px 768)}
+   (stylesheet/at-media {:min-width (u/px 992)}
                         (list
                          [(s/descendant :.rems-table :td:before)
                           {:display "none"}]
+                         [:.rems-table-search-toggle
+                          {:display "flex !important"}]
                          [:.rems-table
                           [:th
                            :td
@@ -132,6 +134,8 @@
      {:color "#000"}]
     [:tr
      [(s/& (s/nth-child "2n")) {:background "#fff"}]]]
+   [:.rems-table-search-toggle ;; TODO: search fields are not visible in mobile mode
+    {:display "none !important"}]
    [:.rems-table {:margin "1em 0"
                   :min-width "100%"
                   :background-color (util/get-theme-attribute :table-bgcolor)
@@ -204,7 +208,6 @@
                     :flex-wrap :none
                     :min-height (u/px 300)
                     :flex-grow "1"}]
-   [:.container {:max-width (u/px 891)}]
    [(s/> :.spaced-sections "*:not(:first-child)") {:margin-top (u/rem 1)}]
    [:.btn-primary
     [:&:hover

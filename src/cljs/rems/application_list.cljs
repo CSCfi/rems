@@ -13,14 +13,16 @@
   (str/join ", " (map :title (:catalogue-items app))))
 
 (def +all-columns+
-  [:id :resource :applicant :state :created :last-modified :view])
+  [:id :description :resource :applicant :state :created :last-modified :view])
 
 (def +default-columns+
-  [:id :resource :applicant :state :created :view])
+  [:id :description :resource :applicant :state :created :view])
 
 (def ^:private +columns+
   {:id {:value :id
         :header #(text :t.actions/application)}
+   :description {:value :description
+                 :header #(text :t.actions/description)}
    :resource {:value get-catalogue-items
               :header #(text :t.actions/resource)}
    :applicant {:value :applicantuserid

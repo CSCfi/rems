@@ -153,7 +153,7 @@
       [:div
        top-buttons
        [application-list/component
-        [:id :resource :applicant :state :last-modified :view]
+        [:id :description :resource :applicant :state :last-modified :view]
         @(rf/subscribe [::sorting key])
         #(rf/dispatch [::set-sorting key %])
         apps]])))
