@@ -91,7 +91,7 @@
   :eftest {:multithread? false} ;; integration tests aren't safe to run in parallel
 
   ;; cljs testing
-  :npm {:devDependencies [[karma "2.0.5"]
+  :npm {:devDependencies [[karma "3.1.1"]
                           [karma-cljs-test "0.1.0"]
                           [karma-chrome-launcher "2.2.0"]]}
   :doo {:build "test"
