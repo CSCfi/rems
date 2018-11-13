@@ -5,9 +5,10 @@
             [rems.application :refer [enrich-user]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
+            [rems.common-util :refer [vec-dissoc]]
+            [rems.config :refer [dev-environment?]]
             [rems.spinner :as spinner]
             [rems.text :refer [text text-format localize-item]]
-            [rems.common-util :refer [vec-dissoc]]
             [rems.util :refer [dispatch! fetch post!]]))
 
 (defn- reset-form [db]
@@ -161,12 +162,14 @@
 (defn- workflow-type-field []
   [radio-button-group context {:keys [:type]
                                :orientation :horizontal
-                               :options [{:value :auto-approve
-                                          :label (text :t.create-workflow/auto-approve-workflow)}
-                                         {:value :dynamic
-                                          :label (text :t.create-workflow/dynamic-workflow)}
-                                         {:value :rounds
-                                          :label (text :t.create-workflow/rounds-workflow)}]}])
+                               :options (remove #(and (not (dev-environment?)) ;; TODO: remove this feature toggle after dynamic workflow is implemented
+                                                      (= :dynamic (:value %)))
+                                                [{:value :auto-approve
+                                                  :label (text :t.create-workflow/auto-approve-workflow)}
+                                                 {:value :dynamic
+                                                  :label (text :t.create-workflow/dynamic-workflow)}
+                                                 {:value :rounds
+                                                  :label (text :t.create-workflow/rounds-workflow)}])}])
 
 (defn- round-type-radio-group [round]
   [radio-button-group context {:keys [:rounds round :type]
