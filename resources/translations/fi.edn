@@ -168,10 +168,17 @@
   :create-workflow {:add-round "Lisää kierros"
                     :approval-round "Hyväksymiskierros"
                     :approvers "Hyväksyjät"
+                    :auto-approve-workflow "Automaattinen hyväksyntä"
+                    :auto-approve-workflow-description "Hakemus hyväksytään välittömästi, keneltäkään sen kummemmin kysymättä."
+                    :dynamic-workflow "Dynaaminen työvuo"
+                    :dynamic-workflow-description "Hakemuksen käsittelijä päättää tapauskohtaisesti, että kenen katselmointia tai hyväksyntää hakemus tarvitsee."
+                    :handlers "Käsittelijät"
                     :remove-round "Poista kierros"
-                    :reviewers "Katselmoijat"
                     :review-round "Katselmointikierros"
+                    :reviewers "Katselmoijat"
                     :round-n "Kierros %1"
+                    :rounds-workflow "Kierrospohjainen työvuo"
+                    :rounds-workflow-description "Hakemus valuu ennaltapäätettyjen katselmointi- ja hyväksymiskierrosten läpi."
                     :title "Työvuon nimi"}
   :email {:action-not-needed-msg "Hyvä %1,
                                   Hakijan %2 hakemus %3 ei enää vaadi huomiotanne.

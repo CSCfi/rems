@@ -162,11 +162,11 @@
   [radio-button-group context {:keys [:type]
                                :orientation :horizontal
                                :options [{:value :auto-approve
-                                          :label "Auto-approve"} ;; TODO: translation
+                                          :label (text :t.create-workflow/auto-approve-workflow)}
                                          {:value :dynamic
-                                          :label "Dynamic workflow"} ;; TODO: translation
+                                          :label (text :t.create-workflow/dynamic-workflow)}
                                          {:value :rounds
-                                          :label "Static rounds"}]}])
+                                          :label (text :t.create-workflow/rounds-workflow)}]}])
 
 (defn- round-type-radio-group [round]
   [radio-button-group context {:keys [:rounds round :type]
@@ -237,11 +237,15 @@
    {:on-click #(dispatch! "/#/administration")}
    (text :t.administration/cancel)])
 
+(defn workflow-type-description [description]
+  [:div.alert.alert-info description])
+
 (defn round-workflow-form []
   (let [form @(rf/subscribe [::form])
         num-rounds (count (:rounds form))
         last-round (dec num-rounds)]
     [:div
+     [workflow-type-description (text :t.create-workflow/rounds-workflow-description)]
      (doall (for [round (range num-rounds)]
               [:div.workflow-round
                {:key round}
@@ -261,7 +265,7 @@
         all-handlers @(rf/subscribe [::actors])
         selected-handlers (get-in form [:handlers])]
     [:div.form-group
-     [:label "Handlers"] ;; TODO: translation
+     [:label (text :t.create-workflow/handlers)]
      [autocomplete/component
       {:value (sort-by :userid selected-handlers)
        :items all-handlers
@@ -274,14 +278,13 @@
        :remove-fn #(rf/dispatch [::remove-handler %])}]]))
 
 (defn dynamic-workflow-form []
-  [workflow-handlers-field])
+  [:div
+   [workflow-type-description (text :t.create-workflow/dynamic-workflow-description)]
+   [workflow-handlers-field]])
 
-(def workflow-types {:dynamic {:form [dynamic-workflow-form]
-                               :valid? (constantly true)}
-                     :rounds {:form [round-workflow-form]
-                              :valid? (constantly true)}
-                     :auto-approve {:form nil
-                                    :valid? (constantly true)}})
+(defn auto-approve-workflow-form []
+  [:div
+   [workflow-type-description (text :t.create-workflow/auto-approve-workflow-description)]])
 
 (defn create-workflow-page []
   (let [form @(rf/subscribe [::form])
@@ -298,7 +301,10 @@
                   [workflow-title-field]
                   [workflow-type-field]
 
-                  (get-in workflow-types [workflow-type :form])
+                  (case workflow-type
+                    :auto-approve [auto-approve-workflow-form]
+                    :dynamic [dynamic-workflow-form]
+                    :rounds [round-workflow-form])
 
                   [:div.col.commands
                    [cancel-button]
