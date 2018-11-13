@@ -130,8 +130,8 @@
 
 (defn- form-organization-field []
   [text-field context {:keys [:organization]
-                       :label (text :t.create-resource/organization) ; TODO: extract common translation
-                       :placeholder (text :t.create-resource/organization-placeholder)}]) ; TODO: extract common translation
+                       :label (text :t.administration/organization)
+                       :placeholder (text :t.administration/organization-placeholder)}])
 
 (defn- form-title-field []
   [text-field context {:keys [:title]
