@@ -27,7 +27,7 @@
  (fn [db _]
    (::loading? db)))
 
-; form state
+;;; form state
 
 (rf/reg-sub
  ::form
@@ -39,7 +39,7 @@
  (fn [db [_ keys value]]
    (assoc-in db (concat [::form] keys) value)))
 
-; form submit
+;;; form submit
 
 (defn- valid-round? [round]
   (and (not (nil? (:type round)))
@@ -85,7 +85,7 @@
    {}))
 
 
-; selected actors
+;;; selected actors
 
 (defn- remove-actor [actors actor]
   (filter #(not= (:userid %)
@@ -108,7 +108,20 @@
    (update-in db [::form :rounds round :actors] add-actor actor)))
 
 
-; available actors
+;;; selected handlers
+
+(rf/reg-event-db
+ ::remove-handler
+ (fn [db [_ handler]]
+   (update-in db [::form :handlers] remove-actor handler)))
+
+(rf/reg-event-db
+ ::add-handler
+ (fn [db [_ handler]]
+   (update-in db [::form :handlers] add-actor handler)))
+
+
+;;; available actors
 
 (defn- fetch-actors []
   (fetch "/api/workflows/actors" {:handler #(rf/dispatch [::fetch-actors-result %])}))
@@ -243,8 +256,25 @@
      [:div.workflow-round.new-workflow-round
       [add-round-button]]]))
 
+(defn- workflow-handlers-field []
+  (let [form @(rf/subscribe [::form])
+        all-handlers @(rf/subscribe [::actors])
+        selected-handlers (get-in form [:handlers])]
+    [:div.form-group
+     [:label "Handlers"] ;; TODO: translation
+     [autocomplete/component
+      {:value (sort-by :userid selected-handlers)
+       :items all-handlers
+       :value->text #(:display %2)
+       :item->key :userid
+       :item->text :display
+       :item->value identity
+       :search-fields [:display :userid]
+       :add-fn #(rf/dispatch [::add-handler %])
+       :remove-fn #(rf/dispatch [::remove-handler %])}]]))
+
 (defn dynamic-workflow-form []
-  "TODO") ;; TODO: selection list for handlers
+  [workflow-handlers-field])
 
 (def workflow-types {:dynamic {:form [dynamic-workflow-form]
                                :valid? (constantly true)}
