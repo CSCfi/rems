@@ -414,6 +414,9 @@
          catalogue-items (get-catalogue-items catalogue-item-ids)
          items (mapv #(process-item application-id form-id %)
                      (db/get-form-items {:id form-id}))
+         description (-> (filter #(= "description" (:type %)) items)
+                         first
+                         :value)
          licenses (get-application-licenses application catalogue-item-ids)
          review-type (cond
                        (can-review? application) :normal
@@ -433,7 +436,8 @@
                           :can-withdraw? (can-withdraw? application)
                           :can-third-party-review? (can-third-party-review? application)
                           :is-applicant? (is-applicant? application)
-                          :review-type review-type)
+                          :review-type review-type
+                          :description description)
       :applicant-attributes (users/get-user-attributes (:applicantuserid application))
       :items items
       :licenses licenses

@@ -104,7 +104,7 @@ SELECT
 FROM application_form form
 LEFT OUTER JOIN application_form_item_map itemmap ON form.id = itemmap.formId
 LEFT OUTER JOIN application_form_item item ON item.id = itemmap.formItemId
-WHERE form.id = :id
+WHERE form.id = :id AND item.id IS NOT NULL
 ORDER BY itemorder
 
 -- :name get-all-form-items :? :*
@@ -181,7 +181,7 @@ RETURNING catAppId, catItemId
 -- - Use {:id id} to get a specific application
 -- - Use {:applicant user} to filter by applicant
 SELECT
-  app.id, app.applicantUserId, app.start, wf.id as wfid, wf.fnlround, wf.workflowBody::TEXT as workflow
+  app.id, app.applicantUserId, app.start, app.description, wf.id as wfid, wf.fnlround, wf.workflowBody::TEXT as workflow
 FROM catalogue_item_application app
 LEFT OUTER JOIN workflow wf ON app.wfid = wf.id
 WHERE 1=1
@@ -191,6 +191,11 @@ WHERE 1=1
 /*~ (when (:applicant params) */
   AND app.applicantUserId = :applicant
 /*~ ) ~*/
+
+-- :name update-application-description! :!
+UPDATE catalogue_item_application
+SET description = :description
+WHERE id = :id
 
 -- :name get-application-items :? :*
 -- :doc
