@@ -326,10 +326,10 @@
                              application
                              {}))))
     (testing "decider must be a valid user"
-        (is (= {:errors [[:invalid-user "deity2"]]}
-               (handle-command {:actor "assistant" :decider "deity2" :type ::request-decision}
-                               application
-                               injections))))
+      (is (= {:errors [[:invalid-user "deity2"]]}
+             (handle-command {:actor "assistant" :decider "deity2" :type ::request-decision}
+                             application
+                             injections))))
     (testing "deciding before ::request-decision should fail"
       (is (= {:errors [:unauthorized]}
              (handle-command {:actor "deity" :decision :approved :type ::decide}
@@ -352,10 +352,10 @@
                                       (apply-command requested {:actor "deity" :decision :rejected :type ::decide} injections)
                                       [:decider :decision]))))
       (testing "other decisions are not possible"
-            (is (= {:errors [[:invalid-decision :foobar]]}
-                   (handle-command {:actor "deity" :decision :foobar :type ::decide}
-                                   requested
-                                   injections)))))))
+        (is (= {:errors [[:invalid-decision :foobar]]}
+               (handle-command {:actor "deity" :decision :foobar :type ::decide}
+                               requested
+                               injections)))))))
 
 (deftest test-add-member
   (let [application {:state ::submitted
@@ -392,12 +392,12 @@
                          :handlers ["assistant"]}}]
     (testing "draft"
       (let [draft (assoc base :state ::draft)]
-      (is (= #{::submit ::add-member}
-             (possible-commands "applicant" draft)))
-      (is (= #{}
-             (possible-commands "assistant" draft)))
-      (is (= #{}
-             (possible-commands "somebody else" draft)))))
+        (is (= #{::submit ::add-member}
+               (possible-commands "applicant" draft)))
+        (is (= #{}
+               (possible-commands "assistant" draft)))
+        (is (= #{}
+               (possible-commands "somebody else" draft)))))
     (testing "submitted"
       (let [submitted (assoc base :state ::submitted)]
         (is (= #{::add-member}
