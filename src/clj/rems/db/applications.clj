@@ -797,8 +797,12 @@
                               :event (str (:event event))
                               :eventdata (cheshire/generate-string event)}))
 
+(defn- valid-user? [userid]
+  (not (nil? (users/get-user-attributes userid))))
+
 (defn dynamic-command! [cmd]
   (let [app (get-dynamic-application-state (:application-id cmd))
-        result (dynamic/handle-command cmd app)]
+        injections {:valid-user? valid-user?}
+        result (dynamic/handle-command cmd app injections)]
     (assert (:success result) result)
     (add-dynamic-event! (:result result))))

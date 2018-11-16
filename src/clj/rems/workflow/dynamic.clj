@@ -104,7 +104,7 @@
 
 (defmulti handle-command
   "Handles a command by an event."
-  (fn [cmd _application] (:type cmd)))
+  (fn [cmd _application _injections] (:type cmd)))
 
 (defn get-command-types
   "Fetch sequence of supported command names."
@@ -138,8 +138,14 @@
   (when-not (contains? (set states) (:state application))
     {:errors [[:invalid-state (:state application)]]}))
 
+(defn- valid-user-error
+  [injections user]
+  (cond
+    (not (:valid-user? injections)) {:errors [[:missing-injection :valid-user?]]}
+    (not ((:valid-user? injections) user)) {:errors [[:invalid-user user]]}))
+
 (defmethod handle-command ::submit
-  [cmd application]
+  [cmd application _injections]
   (or (applicant-error application cmd)
       (state-error application ::draft ::returned)
       {:success true
@@ -149,7 +155,7 @@
                 :time (:time cmd)}}))
 
 (defmethod handle-command ::approve
-  [cmd application]
+  [cmd application _injections]
   (or (handler-error application cmd)
       (state-error application ::submitted)
       {:success true
@@ -159,7 +165,7 @@
                 :time (:time cmd)}}))
 
 (defmethod handle-command ::reject
-  [cmd application]
+  [cmd application _injections]
   (or (handler-error application cmd)
       (state-error application ::submitted)
       {:success true
@@ -169,7 +175,7 @@
                 :time (:time cmd)}}))
 
 (defmethod handle-command ::return
-  [cmd application]
+  [cmd application _injections]
   (or (handler-error application cmd)
       (state-error application ::submitted)
       {:success true
@@ -179,7 +185,7 @@
                 :time (:time cmd)}}))
 
 (defmethod handle-command ::close
-  [cmd application]
+  [cmd application _injections]
   (or (handler-error application cmd)
       (state-error application ::approved)
       {:success true
@@ -189,9 +195,10 @@
                 :time (:time cmd)}}))
 
 (defmethod handle-command ::request-decision
-  [cmd application]
+  [cmd application injections]
   (or (handler-error application cmd)
       (state-error application ::submitted)
+      (valid-user-error injections (:decider cmd))
       {:success true
        :result {:event :event/decision-requested
                 :actor (:actor cmd)
@@ -200,10 +207,12 @@
                 :time (:time cmd)}}))
 
 (defmethod handle-command ::decide
-  [cmd application]
+  [cmd application _injections]
   (or (when-not (= (:actor cmd) (:decider application))
         {:errors [:unauthorized]})
       (state-error application ::submitted)
+      (when-not (contains? #{:approved :rejected} (:decision cmd))
+        {:errors [[:invalid-decision (:decision cmd)]]})
       {:success true
        :result {:event :event/decided
                 :actor (:actor cmd)
@@ -212,11 +221,11 @@
                 :time (:time cmd)}}))
 
 (defmethod handle-command ::add-member
-  [cmd application]
+  [cmd application injections]
   ;; TODO should handler be able to add members?
-  ;; TODO check that member is valid
   (or (applicant-error application cmd)
       (state-error application ::draft ::submitted) ;; TODO which states?
+      (valid-user-error injections (:member cmd))
       {:success true
        :result {:event :event/member-added
                 :actor (:actor cmd)
@@ -224,13 +233,20 @@
                 :application-id (:application-id cmd)
                 :time (:time cmd)}}))
 
-(defn- apply-command [application cmd]
-  (let [result (handle-command cmd application)]
-    (assert (:success result) (pr-str result))
-    (apply-event application (:workflow application) (getx result :result))))
+(defn- apply-command
+  ([application cmd]
+   (apply-command application cmd nil))
+  ([application cmd injections]
+   (let [result (handle-command cmd application injections)]
+     (assert (:success result) (pr-str result))
+     (apply-event application (:workflow application) (getx result :result)))))
 
-(defn- apply-commands [application commands]
-  (reduce apply-command application commands))
+(defn- apply-commands
+  ([application commands]
+   (apply-commands application commands nil))
+  ([application commands injections]
+   (reduce (fn [app cmd] (apply-command app cmd injections))
+           application commands)))
 
 
 
@@ -270,10 +286,40 @@
                      :applicantuserid "applicant"
                      :workflow {:type :workflow/dynamic
                                 :handlers ["assistant"]}}
-        requested (apply-command application {:actor "assistant" :decider "deity" :type ::request-decision})
-        decided (apply-command requested {:actor "deity" :decision :approved :type ::decide})]
+        injections {:valid-user? #{"deity"}}
+        requested (apply-command application {:actor "assistant" :decider "deity" :type ::request-decision} injections)
+        decided (apply-command requested {:actor "deity" :decision :approved :type ::decide} injections)]
     (is (= {:decider "deity"} (select-keys requested [:decider :decision])))
     (is (= {:decision :approved} (select-keys decided [:decider :decision])))))
+
+(deftest test-decision-errors
+  (let [application {:state ::submitted
+                     :applicantuserid "applicant"
+                     :workflow {:type :workflow/dynamic
+                                :handlers ["assistant"]}}
+        injections {:valid-user? #{"deity"}}]
+    (is (= {:errors [[:missing-injection :valid-user?]]}
+           (handle-command {:actor "assistant" :decider "deity" :type ::request-decision}
+                           application
+                           {})))
+    (is (= {:errors [[:invalid-user "deity2"]]}
+           (handle-command {:actor "assistant" :decider "deity2" :type ::request-decision}
+                           application
+                           injections)))
+    (is (= {:errors [:unauthorized]}
+           (handle-command {:actor "deity" :decision :approved :type ::decide}
+                           application
+                           injections)))
+    (let [requested (apply-command application {:actor "assistant" :decider "deity" :type ::request-decision} injections)]
+      (is (= {:errors [:unauthorized]}
+             (handle-command {:actor "deity2" :decision :approved :type ::decide}
+                             requested
+                             injections)))
+      (is (= {:errors [[:invalid-decision :foobar]]}
+             (handle-command {:actor "deity" :decision :foobar :type ::decide}
+                             requested
+                             injections))))))
+
 
 (deftest test-add-member
   (is (= ["member1" "member2"]
@@ -282,4 +328,5 @@
                            :applicantuserid "applicant"
                            :workflow {:type :workflow/dynamic}}
                           [{:type ::add-member :actor "applicant" :member "member1"}
-                           {:type ::add-member :actor "applicant" :member "member2"}])))))
+                           {:type ::add-member :actor "applicant" :member "member2"}]
+                          {:valid-user? #{"member1" "member2"}})))))
