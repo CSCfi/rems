@@ -1,7 +1,6 @@
 (ns rems.administration
   (:require [re-frame.core :as rf]
             [rems.atoms :refer [external-link]]
-            [rems.config :refer [dev-environment?]]
             [rems.db.catalogue :refer [urn-catalogue-item? get-catalogue-item-title disabled-catalogue-item?]]
             [rems.spinner :as spinner]
             [rems.table :as table]
@@ -143,8 +142,7 @@
               [[:div
                 [:div.col.commands
                  [to-create-workflow-button]
-                 (when (dev-environment?)
-                   [to-create-form-button])
+                 [to-create-form-button]
                  [to-create-license-button]
                  [to-create-resource-button]
                  [to-create-catalogue-item-button]]
