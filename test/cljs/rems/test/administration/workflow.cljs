@@ -13,9 +13,10 @@
       (testing "missing title"
         (is (nil? (build-request (assoc form :title "")))))
       (testing "missing workflow type"
-        (is (nil? (build-request (assoc form :type nil)))))
+        (is (thrown-with-msg? js/Error #"No matching clause"
+                              (build-request (assoc form :type nil)))))
       (testing "invalid workflow type"
-        (is (thrown-with-msg? js/Error #"No matching clause: :no-such-type"
+        (is (thrown-with-msg? js/Error #"No matching clause"
                               (build-request (assoc form :type :no-such-type)))))))
 
   (testing "auto-approved workflow"

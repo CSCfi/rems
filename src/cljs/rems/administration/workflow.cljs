@@ -13,8 +13,7 @@
 
 (defn- reset-form [db]
   (assoc db
-         ::form {:type :auto-approve
-                 :rounds []}
+         ::form {:type :auto-approve}
          ::loading? true))
 
 (rf/reg-event-fx
@@ -69,8 +68,7 @@
         request (case (:type form)
                   :auto-approve request
                   :dynamic (assoc request :handlers (map build-request-user (:handlers form)))
-                  :rounds (assoc request :rounds (map build-request-round (:rounds form)))
-                  nil nil)]
+                  :rounds (assoc request :rounds (map build-request-round (:rounds form))))]
     (when (valid-request? request)
       request)))
 
@@ -162,13 +160,12 @@
 (defn- workflow-type-field []
   [radio-button-group context {:keys [:type]
                                :orientation :horizontal
-                               :options (remove #(and (not (dev-environment?)) ;; TODO: remove this feature toggle after dynamic workflow is implemented
-                                                      (= :dynamic (:value %)))
-                                                [{:value :auto-approve
-                                                  :label (text :t.create-workflow/auto-approve-workflow)}
-                                                 {:value :dynamic
-                                                  :label (text :t.create-workflow/dynamic-workflow)}
-                                                 {:value :rounds
+                               :options (concat [{:value :auto-approve
+                                                  :label (text :t.create-workflow/auto-approve-workflow)}]
+                                                (when (dev-environment?) ;; TODO: remove this feature toggle after dynamic workflow is implemented
+                                                  [{:value :dynamic
+                                                    :label (text :t.create-workflow/dynamic-workflow)}])
+                                                [{:value :rounds
                                                   :label (text :t.create-workflow/rounds-workflow)}])}])
 
 (defn- round-type-radio-group [round]
@@ -249,16 +246,16 @@
         last-round (dec num-rounds)]
     [:div
      [workflow-type-description (text :t.create-workflow/rounds-workflow-description)]
-     (doall (for [round (range num-rounds)]
-              [:div.workflow-round
-               {:key round}
-               [remove-round-button round]
+     (for [round (range num-rounds)]
+       [:div.workflow-round
+        {:key round}
+        [remove-round-button round]
 
-               [:h2 (text-format :t.create-workflow/round-n (inc round))]
-               [round-type-radio-group round]
-               [workflow-actors-field round]
-               (when (not= round last-round)
-                 [next-workflow-arrow])]))
+        [:h2 (text-format :t.create-workflow/round-n (inc round))]
+        [round-type-radio-group round]
+        [workflow-actors-field round]
+        (when (not= round last-round)
+          [next-workflow-arrow])])
 
      [:div.workflow-round.new-workflow-round
       [add-round-button]]]))
