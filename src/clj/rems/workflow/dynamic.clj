@@ -59,8 +59,10 @@
   (is (= EventTypes (set (get-event-types)))))
 
 (defmethod apply-event [:event/submitted :workflow/dynamic]
-  [application _workflow _event]
-  (assoc application :state ::submitted))
+  [application _workflow event]
+  (assoc application
+         :state ::submitted
+         :members [(:actor event)]))
 
 (defmethod apply-event [:event/approved :workflow/dynamic]
   [application _workflow _event]
@@ -258,13 +260,16 @@
   (let [application {:state ::draft
                      :applicantuserid "applicant"
                      :workflow {:type :workflow/dynamic
-                                :handlers ["assistant"]}}]
-    (is (= ::approved (:state (apply-commands application
-                                              [{:actor "applicant" :type ::submit}
-                                               {:actor "assistant" :type ::approve}]))))
-    (is (= ::rejected (:state (apply-commands application
-                                              [{:actor "applicant" :type ::submit}
-                                               {:actor "assistant" :type ::reject}]))))))
+                                :handlers ["assistant"]}}
+        submitted (apply-command application {:actor "applicant" :type ::submit})]
+    (testing "submitter is member"
+      (is (= ["applicant"] (:members submitted))))
+    (testing "approving"
+      (is (= ::approved (:state (apply-command submitted
+                                               {:actor "assistant" :type ::approve})))))
+    (testing "rejecting"
+      (is (= ::rejected (:state (apply-command submitted
+                                               {:actor "assistant" :type ::reject})))))))
 
 (deftest test-submit-return-submit-approve-close
   (let [application {:state ::draft
@@ -326,11 +331,12 @@
 
 (deftest test-add-member
   (let [application {:state ::submitted
+                     :members ["applicant" "somebody"]
                      :applicantuserid "applicant"
                      :workflow {:type :workflow/dynamic}}
         injections {:valid-user? #{"member1" "member2"}}]
     (testing "add two members"
-      (is (= ["member1" "member2"]
+      (is (= ["applicant" "somebody" "member1" "member2"]
              (:members
               (apply-commands application
                               [{:type ::add-member :actor "applicant" :member "member1"}

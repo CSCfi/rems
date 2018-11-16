@@ -1009,7 +1009,7 @@
                                       :actor "alice"
                                       :member "bob"
                                       :application-id app-id})
-      (is (= ["bob"]
+      (is (= ["alice" "bob"]
              (:members (applications/get-dynamic-application-state app-id))))
       (applications/dynamic-command! {:type :rems.workflow.dynamic/approve
                                       :actor "handler"
