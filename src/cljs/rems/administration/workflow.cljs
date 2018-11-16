@@ -5,14 +5,15 @@
             [rems.application :refer [enrich-user]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
+            [rems.common-util :refer [vec-dissoc]]
+            [rems.config :refer [dev-environment?]]
             [rems.spinner :as spinner]
             [rems.text :refer [text text-format localize-item]]
-            [rems.common-util :refer [vec-dissoc]]
             [rems.util :refer [dispatch! fetch post!]]))
 
 (defn- reset-form [db]
   (assoc db
-         ::form {:rounds []}
+         ::form {:type :auto-approve}
          ::loading? true))
 
 (rf/reg-event-fx
@@ -26,7 +27,7 @@
  (fn [db _]
    (::loading? db)))
 
-; form state
+;;; form state
 
 (rf/reg-sub
  ::form
@@ -38,27 +39,36 @@
  (fn [db [_ keys value]]
    (assoc-in db (concat [::form] keys) value)))
 
-; form submit
+;;; form submit
+
+(defn- valid-round? [round]
+  (and (not (nil? (:type round)))
+       (not (empty? (:actors round)))))
 
 (defn- valid-request? [request]
   (and (not (str/blank? (:organization request)))
        (not (str/blank? (:title request)))
-       (every? (fn [round]
-                 (and (not (nil? (:type round)))
-                      (not (empty? (:actors round)))))
-               (:rounds request))))
+       (case (:type request)
+         :auto-approve true
+         :dynamic (not (empty? (:handlers request)))
+         :rounds (every? valid-round? (:rounds request))
+         nil false)))
 
-(defn- build-actor-request [actor]
+(defn- build-request-user [actor]
   {:userid (:userid actor)})
 
-(defn- build-round-request [round]
+(defn- build-request-round [round]
   {:type (:type round)
-   :actors (map build-actor-request (:actors round))})
+   :actors (map build-request-user (:actors round))})
 
 (defn build-request [form]
   (let [request {:organization (:organization form)
                  :title (:title form)
-                 :rounds (map build-round-request (:rounds form))}]
+                 :type (:type form)}
+        request (case (:type form)
+                  :auto-approve request
+                  :dynamic (assoc request :handlers (map build-request-user (:handlers form)))
+                  :rounds (assoc request :rounds (map build-request-round (:rounds form))))]
     (when (valid-request? request)
       request)))
 
@@ -74,7 +84,7 @@
    {}))
 
 
-; selected actors
+;;; selected actors
 
 (defn- remove-actor [actors actor]
   (filter #(not= (:userid %)
@@ -97,7 +107,20 @@
    (update-in db [::form :rounds round :actors] add-actor actor)))
 
 
-; available actors
+;;; selected handlers
+
+(rf/reg-event-db
+ ::remove-handler
+ (fn [db [_ handler]]
+   (update-in db [::form :handlers] remove-actor handler)))
+
+(rf/reg-event-db
+ ::add-handler
+ (fn [db [_ handler]]
+   (update-in db [::form :handlers] add-actor handler)))
+
+
+;;; available actors
 
 (defn- fetch-actors []
   (fetch "/api/workflows/actors" {:handler #(rf/dispatch [::fetch-actors-result %])}))
@@ -133,6 +156,17 @@
 (defn- workflow-title-field []
   [text-field context {:keys [:title]
                        :label (text :t.create-workflow/title)}])
+
+(defn- workflow-type-field []
+  [radio-button-group context {:keys [:type]
+                               :orientation :horizontal
+                               :options (concat [{:value :auto-approve
+                                                  :label (text :t.create-workflow/auto-approve-workflow)}]
+                                                (when (dev-environment?) ;; TODO: remove this feature toggle after dynamic workflow is implemented
+                                                  [{:value :dynamic
+                                                    :label (text :t.create-workflow/dynamic-workflow)}])
+                                                [{:value :rounds
+                                                  :label (text :t.create-workflow/rounds-workflow)}])}])
 
 (defn- round-type-radio-group [round]
   [radio-button-group context {:keys [:rounds round :type]
@@ -203,10 +237,58 @@
    {:on-click #(dispatch! "/#/administration")}
    (text :t.administration/cancel)])
 
-(defn create-workflow-page []
+(defn workflow-type-description [description]
+  [:div.alert.alert-info description])
+
+(defn round-workflow-form []
   (let [form @(rf/subscribe [::form])
         num-rounds (count (:rounds form))
-        last-round (dec num-rounds)
+        last-round (dec num-rounds)]
+    [:div
+     [workflow-type-description (text :t.create-workflow/rounds-workflow-description)]
+     (for [round (range num-rounds)]
+       [:div.workflow-round
+        {:key round}
+        [remove-round-button round]
+
+        [:h2 (text-format :t.create-workflow/round-n (inc round))]
+        [round-type-radio-group round]
+        [workflow-actors-field round]
+        (when (not= round last-round)
+          [next-workflow-arrow])])
+
+     [:div.workflow-round.new-workflow-round
+      [add-round-button]]]))
+
+(defn- workflow-handlers-field []
+  (let [form @(rf/subscribe [::form])
+        all-handlers @(rf/subscribe [::actors])
+        selected-handlers (get-in form [:handlers])]
+    [:div.form-group
+     [:label (text :t.create-workflow/handlers)]
+     [autocomplete/component
+      {:value (sort-by :userid selected-handlers)
+       :items all-handlers
+       :value->text #(:display %2)
+       :item->key :userid
+       :item->text :display
+       :item->value identity
+       :search-fields [:display :userid]
+       :add-fn #(rf/dispatch [::add-handler %])
+       :remove-fn #(rf/dispatch [::remove-handler %])}]]))
+
+(defn dynamic-workflow-form []
+  [:div
+   [workflow-type-description (text :t.create-workflow/dynamic-workflow-description)]
+   [workflow-handlers-field]])
+
+(defn auto-approve-workflow-form []
+  [:div
+   [workflow-type-description (text :t.create-workflow/auto-approve-workflow-description)]])
+
+(defn create-workflow-page []
+  (let [form @(rf/subscribe [::form])
+        workflow-type (:type form)
         loading? (rf/subscribe [::loading?])]
     [collapsible/component
      {:id "create-workflow"
@@ -217,20 +299,12 @@
                  [:div#workflow-editor
                   [workflow-organization-field]
                   [workflow-title-field]
+                  [workflow-type-field]
 
-                  (doall (for [round (range num-rounds)]
-                           [:div.workflow-round
-                            {:key round}
-                            [remove-round-button round]
-
-                            [:h2 (text-format :t.create-workflow/round-n (inc round))]
-                            [round-type-radio-group round]
-                            [workflow-actors-field round]
-                            (when (not= round last-round)
-                              [next-workflow-arrow])]))
-
-                  [:div.workflow-round.new-workflow-round
-                   [add-round-button]]
+                  (case workflow-type
+                    :auto-approve [auto-approve-workflow-form]
+                    :dynamic [dynamic-workflow-form]
+                    :rounds [round-workflow-form])
 
                   [:div.col.commands
                    [cancel-button]

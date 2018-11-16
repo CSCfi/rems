@@ -43,8 +43,10 @@
 (s/defschema CreateWorkflowCommand
   {:organization s/Str
    :title s/Str
-   :rounds [{:type (s/enum :approval :review)
-             :actors [{:userid s/Str}]}]})
+   :type s/Keyword
+   (s/optional-key :handlers) [{:userid s/Str}]
+   (s/optional-key :rounds) [{:type (s/enum :approval :review)
+                              :actors [{:userid s/Str}]}]})
 
 (s/defschema CreateWorkflowResponse
   {:id s/Num})

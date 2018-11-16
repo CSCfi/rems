@@ -168,10 +168,17 @@
   :create-workflow {:add-round "Add round"
                     :approval-round "Approval round"
                     :approvers "Approvers"
+                    :auto-approve-workflow "Auto-approve"
+                    :auto-approve-workflow-description "The application will be approved immediately without human intervention."
+                    :dynamic-workflow "Dynamic workflow"
+                    :dynamic-workflow-description "The handler will decide on a case by case basis that who needs to review or approve the application."
+                    :handlers "Handlers"
                     :remove-round "Remove round"
-                    :reviewers "Reviewers"
                     :review-round "Review round"
+                    :reviewers "Reviewers"
                     :round-n "Round %1"
+                    :rounds-workflow "Round-based workflow"
+                    :rounds-workflow-description "The application will flow through a predetermined list of review and approval rounds."
                     :title "Title"}
   :email {:action-not-needed-msg "Dear %1,
                                   Applicant's %2 submitted application %3 no longer requires your attention.
