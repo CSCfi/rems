@@ -786,7 +786,6 @@
                                  :workflow (fix-workflow-from-db (:workflow application)))
         events (map fix-event-from-db (db/get-application-events {:application application-id}))]
     (assert (= :workflow/dynamic (get-in fixed-application [:workflow :type])))
-    (prn :EVENTS events)
     (dynamic/apply-events fixed-application events)))
 
 (defn- add-dynamic-event! [event]
