@@ -325,11 +325,29 @@
                                    injections)))))))
 
 (deftest test-add-member
-  (is (= ["member1" "member2"]
-         (:members
-          (apply-commands {:state ::submitted
-                           :applicantuserid "applicant"
-                           :workflow {:type :workflow/dynamic}}
-                          [{:type ::add-member :actor "applicant" :member "member1"}
-                           {:type ::add-member :actor "applicant" :member "member2"}]
-                          {:valid-user? #{"member1" "member2"}})))))
+  (let [application {:state ::submitted
+                     :applicantuserid "applicant"
+                     :workflow {:type :workflow/dynamic}}
+        injections {:valid-user? #{"member1" "member2"}}]
+    (testing "add two members"
+      (is (= ["member1" "member2"]
+             (:members
+              (apply-commands application
+                              [{:type ::add-member :actor "applicant" :member "member1"}
+                               {:type ::add-member :actor "applicant" :member "member2"}]
+                              injections)))))
+    (testing "only applicant can add members"
+      (is (= {:errors [:unauthorized]}
+             (handle-command {:type ::add-member :actor "member1" :member "member1"}
+                             application
+                             injections))))
+    (testing "only valid users can be added"
+      (is (= {:errors [[:invalid-user "member3"]]}
+             (handle-command {:type ::add-member :actor "applicant" :member "member3"}
+                             application
+                             injections))))
+    (testing "can't add members to approved application"
+      (is (= {:errors [[:invalid-state ::approved]]}
+             (handle-command {:type ::add-member :actor "applicant" :member "member1"}
+                             (assoc application :state ::approved)
+                             injections))))))
