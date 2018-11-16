@@ -286,17 +286,6 @@
                      :applicantuserid "applicant"
                      :workflow {:type :workflow/dynamic
                                 :handlers ["assistant"]}}
-        injections {:valid-user? #{"deity"}}
-        requested (apply-command application {:actor "assistant" :decider "deity" :type ::request-decision} injections)
-        decided (apply-command requested {:actor "deity" :decision :approved :type ::decide} injections)]
-    (is (= {:decider "deity"} (select-keys requested [:decider :decision])))
-    (is (= {:decision :approved} (select-keys decided [:decider :decision])))))
-
-(deftest test-decision-errors
-  (let [application {:state ::submitted
-                     :applicantuserid "applicant"
-                     :workflow {:type :workflow/dynamic
-                                :handlers ["assistant"]}}
         injections {:valid-user? #{"deity"}}]
     (testing "required :valid-user? injection"
       (is (= {:errors [[:missing-injection :valid-user?]]}
@@ -304,27 +293,36 @@
                              application
                              {}))))
     (testing "decider must be a valid user"
-      (is (= {:errors [[:invalid-user "deity2"]]}
-             (handle-command {:actor "assistant" :decider "deity2" :type ::request-decision}
+        (is (= {:errors [[:invalid-user "deity2"]]}
+               (handle-command {:actor "assistant" :decider "deity2" :type ::request-decision}
+                               application
+                               injections))))
+    (testing "deciding before ::request-decision should fail"
+      (is (= {:errors [:unauthorized]}
+             (handle-command {:actor "deity" :decision :approved :type ::decide}
                              application
                              injections))))
-    (testing "deciding before ::request-decision should fail"
-    (is (= {:errors [:unauthorized]}
-           (handle-command {:actor "deity" :decision :approved :type ::decide}
-                           application
-                           injections)))
     (let [requested (apply-command application {:actor "assistant" :decider "deity" :type ::request-decision} injections)]
+      (testing "request decision succesfully"
+        (is (= {:decider "deity"} (select-keys requested [:decider :decision]))))
       (testing "only the requested user can decide"
         (is (= {:errors [:unauthorized]}
                (handle-command {:actor "deity2" :decision :approved :type ::decide}
                                requested
                                injections))))
+      (testing "succesfully approved"
+        (is (= {:decision :approved} (select-keys
+                                      (apply-command requested {:actor "deity" :decision :approved :type ::decide} injections)
+                                      [:decider :decision]))))
+      (testing "successfully rejected"
+        (is (= {:decision :rejected} (select-keys
+                                      (apply-command requested {:actor "deity" :decision :rejected :type ::decide} injections)
+                                      [:decider :decision]))))
       (testing "other decisions are not possible"
-        (is (= {:errors [[:invalid-decision :foobar]]}
-               (handle-command {:actor "deity" :decision :foobar :type ::decide}
-                               requested
-                               injections))))))))
-
+            (is (= {:errors [[:invalid-decision :foobar]]}
+                   (handle-command {:actor "deity" :decision :foobar :type ::decide}
+                                   requested
+                                   injections)))))))
 
 (deftest test-add-member
   (is (= ["member1" "member2"]
