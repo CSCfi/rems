@@ -36,8 +36,8 @@
    :handlers [UserId]})
 
 (def States #{::draft ::submitted ::approved ::rejected ::closed})
-(def CommandTypes #{::submit ::return #_::accept-license #_::require-license ::request-decision ::decide #_::request-comment #_::comment ::approve ::reject ::close})
-(def EventTypes #{:event/submitted :event/returned #_:event/license-required #_:event/license-accepted #_:event/comment-requested #_:event/commented :event/decision-requested :event/decided :event/approved :event/rejected :event/closed})
+(def CommandTypes #{::submit ::return #_::accept-license #_::require-license ::request-decision ::decide #_::request-comment #_::comment ::approve ::reject ::close ::add-member})
+(def EventTypes #{:event/submitted :event/returned #_:event/license-required #_:event/license-accepted #_:event/comment-requested #_:event/commented :event/decision-requested :event/decided :event/approved :event/rejected :event/closed :event/member-added})
 
 
 
@@ -87,6 +87,10 @@
   (-> application
       (assoc :decision (:decision event))
       (dissoc :decider)))
+
+(defmethod apply-event [:event/member-added :workflow/dynamic]
+  [application _workflow event]
+  (update application :members #(vec (conj % (:member event)))))
 
 (defn apply-events [application events]
   (reduce (fn [application event] (apply-event application (:workflow application) event))
@@ -207,6 +211,19 @@
                 :application-id (:application-id cmd)
                 :time (:time cmd)}}))
 
+(defmethod handle-command ::add-member
+  [cmd application]
+  ;; TODO should handler be able to add members?
+  ;; TODO check that member is valid
+  (or (applicant-error application cmd)
+      (state-error application ::draft ::submitted) ;; TODO which states?
+      {:success true
+       :result {:event :event/member-added
+                :actor (:actor cmd)
+                :member (:member cmd)
+                :application-id (:application-id cmd)
+                :time (:time cmd)}}))
+
 (defn- apply-command [application cmd]
   (let [result (handle-command cmd application)]
     (assert (:success result) (pr-str result))
@@ -257,3 +274,12 @@
         decided (apply-command requested {:actor "deity" :decision :approved :type ::decide})]
     (is (= {:decider "deity"} (select-keys requested [:decider :decision])))
     (is (= {:decision :approved} (select-keys decided [:decider :decision])))))
+
+(deftest test-add-member
+  (is (= ["member1" "member2"]
+         (:members
+          (apply-commands {:state ::submitted
+                           :applicantuserid "applicant"
+                           :workflow {:type :workflow/dynamic}}
+                          [{:type ::add-member :actor "applicant" :member "member1"}
+                           {:type ::add-member :actor "applicant" :member "member2"}])))))
