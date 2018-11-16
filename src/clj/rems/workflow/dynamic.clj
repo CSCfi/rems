@@ -387,56 +387,60 @@
                              injections))))))
 
 (deftest test-possible-commands
-  (let [base {:applicantuserid "applicant"
-              :workflow {:type :workflow/dynamic
-                         :handlers ["assistant"]}}]
+  (let [draft {:state ::draft
+               :applicantuserid "applicant"
+               :workflow {:type :workflow/dynamic
+                          :handlers ["assistant"]}}]
     (testing "draft"
-      (let [draft (assoc base :state ::draft)]
-        (is (= #{::submit ::add-member}
-               (possible-commands "applicant" draft)))
-        (is (= #{}
-               (possible-commands "assistant" draft)))
-        (is (= #{}
-               (possible-commands "somebody else" draft)))))
-    (testing "submitted"
-      (let [submitted (assoc base :state ::submitted)]
+      (is (= #{::submit ::add-member}
+             (possible-commands "applicant" draft)))
+      (is (= #{}
+             (possible-commands "assistant" draft)))
+      (is (= #{}
+             (possible-commands "somebody else" draft))))
+    (let [submitted (apply-events draft [{:event :event/submitted
+                                          :actor "applicant"}])]
+      (testing "submitted"
         (is (= #{::add-member}
                (possible-commands "applicant" submitted)))
         (is (= #{::approve ::reject ::return ::request-decision}
                (possible-commands "assistant" submitted)))
         (is (= #{}
-               (possible-commands "somebody else" submitted)))))
-    (testing "decision requested"
-      (let [requested (assoc base
-                             :state ::submitted
-                             :decider "decider")]
-        (is (= #{::add-member}
-               (possible-commands "applicant" requested)))
-        (is (= #{::approve ::reject ::return ::request-decision}
-               (possible-commands "assistant" requested)))
-        (is (= #{::decide}
-               (possible-commands "decider" requested)))))
-    (testing "approved"
-      (let [approved (assoc base :state ::approved)]
-        (is (= #{}
-               (possible-commands "applicant" approved)))
-        (is (= #{::close}
-               (possible-commands "assistant" approved)))
-        (is (= #{}
-               (possible-commands "somebody else" approved)))))
-    (testing "rejected"
-      (let [rejected (assoc base :state ::rejected)]
-        (is (= #{}
-               (possible-commands "applicant" rejected)))
-        (is (= #{}
-               (possible-commands "assistant" rejected)))
-        (is (= #{}
-               (possible-commands "somebody else" rejected)))))
-    (testing "closed"
-      (let [closed (assoc base :state ::closed)]
-        (is (= #{}
-               (possible-commands "applicant" closed)))
-        (is (= #{}
-               (possible-commands "assistant" closed)))
-        (is (= #{}
-               (possible-commands "somebody else" closed)))))))
+               (possible-commands "somebody else" submitted))))
+      (let [requested (apply-events submitted [{:event :event/decision-requested
+                                                :actor "assistant"
+                                                :decider "decider"}])]
+        (testing "decision requested"
+          (is (= #{::add-member}
+                 (possible-commands "applicant" requested)))
+          (is (= #{::approve ::reject ::return ::request-decision}
+                 (possible-commands "assistant" requested)))
+          (is (= #{::decide}
+                 (possible-commands "decider" requested)))))
+      (let [rejected (apply-events submitted [{:event :event/rejected
+                                               :actor "assistant"}])]
+        (testing "rejected"
+          (is (= #{}
+                 (possible-commands "applicant" rejected)))
+          (is (= #{}
+                 (possible-commands "assistant" rejected)))
+          (is (= #{}
+                 (possible-commands "somebody else" rejected)))))
+      (let [approved (apply-events submitted [{:event :event/approved
+                                               :actor "assistant"}])]
+        (testing "approved"
+          (is (= #{}
+                 (possible-commands "applicant" approved)))
+          (is (= #{::close}
+                 (possible-commands "assistant" approved)))
+          (is (= #{}
+                 (possible-commands "somebody else" approved))))
+        (testing "closed"
+          (let [closed (apply-events approved [{:event :event/closed
+                                                :actor "assistant"}])]
+            (is (= #{}
+                   (possible-commands "applicant" closed)))
+            (is (= #{}
+                   (possible-commands "assistant" closed)))
+            (is (= #{}
+                   (possible-commands "somebody else" closed)))))))))
