@@ -99,9 +99,6 @@
           application
           events))
 
-
-
-
 ;;; Commands
 
 (defmulti handle-command
@@ -116,8 +113,8 @@
 (deftest test-all-command-types-handled
   (is (= CommandTypes (set (get-command-types)))))
 
-(defn impossible-command? [cmd application]
-  (let [result (handle-command cmd application)]
+(defn impossible-command? [cmd application injections]
+  (let [result (handle-command cmd application injections)]
     (when-not (:success result)
       result)))
 
@@ -251,8 +248,39 @@
            application commands)))
 
 
+;;; Possible commands
 
+(defn- command-candidates [actor application-state]
+  ;; NB! not setting :time or :application-id here since we don't
+  ;; validate them
+  [{:type ::submit
+    :actor actor}
+   {:type ::approve
+    :actor actor}
+   {:type ::reject
+    :actor actor}
+   {:type ::return
+    :actor actor}
+   {:type ::close
+    :actor actor}
+   {:type ::request-decision
+    :actor actor
+    :decider "decider"}
+   {:type ::decide
+    :actor actor
+    :decision :approved}
+   {:type ::add-member
+    :actor actor
+    :member "member"}])
 
+(def ^:private injections-for-possible-commands
+  {:valid-user? (constantly true)})
+
+(defn possible-commands [actor application-state]
+  (set
+   (map :type
+        (remove #(impossible-command? % application-state injections-for-possible-commands)
+                (command-candidates actor application-state)))))
 
 ;;; Tests
 
@@ -357,3 +385,58 @@
              (handle-command {:type ::add-member :actor "applicant" :member "member1"}
                              (assoc application :state ::approved)
                              injections))))))
+
+(deftest test-possible-commands
+  (let [base {:applicantuserid "applicant"
+              :workflow {:type :workflow/dynamic
+                         :handlers ["assistant"]}}]
+    (testing "draft"
+      (let [draft (assoc base :state ::draft)]
+      (is (= #{::submit ::add-member}
+             (possible-commands "applicant" draft)))
+      (is (= #{}
+             (possible-commands "assistant" draft)))
+      (is (= #{}
+             (possible-commands "somebody else" draft)))))
+    (testing "submitted"
+      (let [submitted (assoc base :state ::submitted)]
+        (is (= #{::add-member}
+               (possible-commands "applicant" submitted)))
+        (is (= #{::approve ::reject ::return ::request-decision}
+               (possible-commands "assistant" submitted)))
+        (is (= #{}
+               (possible-commands "somebody else" submitted)))))
+    (testing "decision requested"
+      (let [requested (assoc base
+                             :state ::submitted
+                             :decider "decider")]
+        (is (= #{::add-member}
+               (possible-commands "applicant" requested)))
+        (is (= #{::approve ::reject ::return ::request-decision}
+               (possible-commands "assistant" requested)))
+        (is (= #{::decide}
+               (possible-commands "decider" requested)))))
+    (testing "approved"
+      (let [approved (assoc base :state ::approved)]
+        (is (= #{}
+               (possible-commands "applicant" approved)))
+        (is (= #{::close}
+               (possible-commands "assistant" approved)))
+        (is (= #{}
+               (possible-commands "somebody else" approved)))))
+    (testing "rejected"
+      (let [rejected (assoc base :state ::rejected)]
+        (is (= #{}
+               (possible-commands "applicant" rejected)))
+        (is (= #{}
+               (possible-commands "assistant" rejected)))
+        (is (= #{}
+               (possible-commands "somebody else" rejected)))))
+    (testing "closed"
+      (let [closed (assoc base :state ::closed)]
+        (is (= #{}
+               (possible-commands "applicant" closed)))
+        (is (= #{}
+               (possible-commands "assistant" closed)))
+        (is (= #{}
+               (possible-commands "somebody else" closed)))))))
