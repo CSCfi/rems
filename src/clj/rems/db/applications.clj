@@ -478,6 +478,7 @@
       :application (assoc application
                           :can-approve? false
                           :can-close? false
+                          :is-applicant? true
                           :review-type nil)
       :applicant-attributes (users/get-user-attributes (:applicantuserid application))
       :items items

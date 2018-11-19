@@ -340,7 +340,7 @@
                 :class (when validation "is-invalid")
                 :disabled readonly
                 :on-change (set-attachment id)}]
-       [:button.btn.btn-secondary {:on-click (fn [e] (.click (.getElementById js/document (id-to-name id))))} (text :t.form/upload)]])
+       [:button.btn.btn-default {:on-click (fn [e] (.click (.getElementById js/document (id-to-name id))))} (text :t.form/upload)]])
     (when (not-empty value)
       [:a {:href (str "/api/applications/attachments/?application-id=" app-id "&field-id=" id) :target "_blank"} value])]])
 
@@ -427,13 +427,13 @@
              :failed [:i {:class "fa fa-times-circle text-danger"}])]))
 
 (defn- save-button []
-  [:button#save.btn.btn-secondary
-   {:name "save" :onClick #(rf/dispatch [::save-application "save"])}
+  [:button#save.btn.btn-default.mr-3
+   {:name "save" :on-click #(rf/dispatch [::save-application "save"])}
    (text :t.form/save)])
 
 (defn- submit-button []
   [:button#submit.btn.btn-primary
-   {:name "submit" :onClick #(rf/dispatch [::save-application "submit"])}
+   {:name "submit" :on-click #(rf/dispatch [::save-application "submit"])}
    (text :t.form/submit)])
 
 (defn- fields [form edit-application]
@@ -547,38 +547,38 @@
 ;; Approval
 
 (defn- approve-button []
-  [:button#submit.btn.btn-primary
-   {:name "approve" :onClick #(rf/dispatch [::judge-application "approve"])}
+  [:button#submit.btn.btn-secondary
+   {:name "approve" :on-click #(rf/dispatch [::judge-application "approve"])}
    (text :t.actions/approve)])
 
 (defn- reject-button []
   [:button#submit.btn.btn-secondary
-   {:name "reject" :onClick #(rf/dispatch [::judge-application "reject"])}
+   {:name "reject" :on-click #(rf/dispatch [::judge-application "reject"])}
    (text :t.actions/reject)])
 
 (defn- return-button []
   [:button#submit.btn.btn-secondary
-   {:name "return" :onClick #(rf/dispatch [::judge-application "return"])}
+   {:name "return" :on-click #(rf/dispatch [::judge-application "return"])}
    (text :t.actions/return)])
 
 (defn- review-button []
   [:button#submit.btn.btn-primary
-   {:name "review" :onClick #(rf/dispatch [::judge-application "review"])}
+   {:name "review" :on-click #(rf/dispatch [::judge-application "review"])}
    (text :t.actions/review)])
 
 (defn- third-party-review-button []
   [:button#submit.btn.btn-primary
-   {:name "third-party-review" :onClick #(rf/dispatch [::judge-application "third-party-review"])}
+   {:name "third-party-review" :on-click #(rf/dispatch [::judge-application "third-party-review"])}
    (text :t.actions/review)])
 
 (defn- close-button []
   [:button#submit.btn.btn-secondary
-   {:name "close" :onClick #(rf/dispatch [::judge-application "close"])}
+   {:name "close" :on-click #(rf/dispatch [::judge-application "close"])}
    (text :t.actions/close)])
 
 (defn- withdraw-button []
   [:button#submit.btn.btn-secondary
-   {:name "withdraw" :onClick #(rf/dispatch [::judge-application "withdraw"])}
+   {:name "withdraw" :on-click #(rf/dispatch [::judge-application "withdraw"])}
    (text :t.actions/withdraw)])
 
 ;;;; More events and actions ;;;;
@@ -715,47 +715,43 @@
          [:button.btn.btn-primary {:data-dismiss "modal"
                                    :on-click #(rf/dispatch [::send-third-party-review-request selected-third-party-reviewers review-comment])} (text :t.actions/review-request)]]]]]]))
 
-(defn review-request-button []
-  [:button#review-request.btn.btn-secondary
+(defn request-review-button []
+  [:button#review-request.btn.btn-default
    {:type "button" :data-toggle "modal" :data-target "#review-request-modal"}
-   (text :t.actions/review-request)])
+   (str (text :t.actions/review-request) " ⯆")])
 
 ;;; Actions tabs
 
-(defn- action-tab [action-name text]
-  (let [action-name (str "actions-" action-name)]
-    [:a.nav-item.nav-link
-     {:id (str action-name "-tab")
-      :data-toggle "tab"
-      :href (str "#" action-name)
-      :role "tab"
-      :aria-controls action-name
-      :aria-selected false}
-     text]))
+(defn- action-button [id content]
+  [:button.btn.btn-default.mr-3
+   {:id id
+    :type "button" :data-toggle "collapse" :data-target (str "#actions-" id)}
+   (str content " ⯆")])
 
 (defn- approve-tab []
-  [action-tab "approve" (text :t.actions/approve)])
+  [action-button "approve" (text :t.actions/approve)])
 
 (defn- reject-tab []
-  [action-tab "reject" (text :t.actions/reject)])
+  [action-button "reject" (text :t.actions/reject)])
 
 (defn- return-tab []
-  [action-tab "return" (text :t.actions/return)])
+  [action-button "return" (text :t.actions/return)])
 
 (defn- review-tab []
-  [action-tab "review" (text :t.actions/review)])
+  [action-button "review" (text :t.actions/review)])
 
 (defn- third-party-review-tab []
-  [action-tab "3rd-party-review" (text :t.actions/review)])
+  [action-button "3rd-party-review" (text :t.actions/review)])
 
 (defn- close-tab []
-  [action-tab "close" (text :t.actions/close)])
+  [action-button "close" (text :t.actions/close)])
 
 (defn- withdraw-tab []
-  [action-tab "withdraw" (text :t.actions/withdraw)])
+  [action-button "withdraw" (text :t.actions/withdraw)])
 
 (defn- review-request-tab []
-  [action-tab "review-request" (text :t.actions/review-request)])
+  [:div.mr-3 {:style {:display :inline-block}} [request-review-button]]
+  #_[action-button "review-request" (text :t.actions/review-request)])
 
 (defn- action-comment [label-title]
   [:div.form-group
@@ -765,54 +761,68 @@
               :value @(rf/subscribe [::judge-comment])
               :on-change #(rf/dispatch [::set-judge-comment (.. % -target -value)])}]])
 
-(defn- action-form [id comment-title button]
-  (let [id (str "actions-" id)]
-    [:div.tab-pane.fade {:id id :role "tabpanel" :aria-labelledby (str id "-tab")}
-     (when comment-title
-       [action-comment comment-title])
-     [:div.col.commands
-      button]]))
+;; TODO move to common?
+(defn- cancel-button []
+  [:button.btn.btn-default
+   {:on-click #(dispatch! "/#/administration")}
+   (text :t.administration/cancel)])
+
+(defn- action-form [id title comment-title button]
+  [:div.collapse {:id (str "actions-" id) :data-parent "#actions-tabs"}
+   [:h2.mt-5 title]
+   (when comment-title
+     [action-comment comment-title])
+   [:div.col.commands
+    [cancel-button]
+    button]])
 
 (defn- approve-form []
   [action-form "approve"
+   (text :t.actions/approve)
    (text :t.form/add-comments-shown-to-applicant)
    [approve-button]])
 
 (defn- reject-form []
   [action-form "reject"
+   (text :t.actions/reject)
    (text :t.form/add-comments-shown-to-applicant)
    [reject-button]])
 
 (defn- return-form []
   [action-form "return"
+   (text :t.actions/return)
    (text :t.form/add-comments-shown-to-applicant)
    [return-button]])
 
 (defn- review-form []
   [action-form "review"
+   (text :t.actions/review)
    (text :t.form/add-comments-not-shown-to-applicant)
    [review-button]])
 
 (defn- third-party-review-form []
   [action-form "3rd-party-review"
+   (text :t.actions/review-request)
    (text :t.form/add-comments-not-shown-to-applicant)
    [third-party-review-button]])
 
 (defn- close-form []
   [action-form "close"
+   (text :t.actions/close)
    (text :t.form/add-comments-shown-to-applicant)
    [close-button]])
 
 (defn- withdraw-form []
   [action-form "withdraw"
+   (text :t.actions/withdraw)
    (text :t.form/add-comments)
    [withdraw-button]])
 
 (defn- review-request-form []
-  [action-form "review-request" nil [review-request-button]])
+  [action-form "review-request" nil [request-review-button]])
 
-(defn- actions-tab-content []
-  [:div.tab-content
+(defn- actions-content []
+  [:div#actions-tabs.mt-3
    [approve-form]
    [reject-form]
    [return-form]
@@ -823,27 +833,33 @@
    [review-request-form]])
 
 (defn- actions-form [app]
-  (let [tabs (concat (when (:can-close? app)
-                       [[close-tab]])
+  (let [state (:state app)
+        editable? (contains? #{"draft" "returned" "withdrawn"} state)
+        tabs (concat (when (:can-close? app)
+                       [^{:key :close-tab} [close-tab]])
                      (when (:can-withdraw? app)
-                       [[withdraw-tab]])
+                       [^{:key :withdraw-tab} [withdraw-tab]])
                      (when (:can-approve? app)
-                       [[reject-tab]
-                        [return-tab]
-                        [review-request-tab]
-                        [approve-tab]])
+                       [^{:key :review-request-tab} [review-request-tab]
+                        ^{:key :return-tab} [return-tab]
+                        ^{:key :reject-tab} [reject-tab]
+                        ^{:key :approve-tab} [approve-tab]])
                      (when (= :normal (:review-type app))
-                       [[review-tab]])
+                       [^{:key :review-tab} [review-tab]])
                      (when (= :third-party (:review-type app))
-                       [[third-party-review-tab]]))]
+                       [^{:key :third-party-review-tab} [third-party-review-tab]])
+                     (when (and (:is-applicant? app) editable?)
+                       [^{:key :save-button} [save-button]
+                        ^{:key :submit-button} [submit-button]]))]
     (if (empty? tabs)
       [:div]
       [collapsible/component
        {:id "actions"
+        :title (text :t.form/actions)
         :always [:div
-                 (into [:nav#pills-tab.nav.nav-tabs.mb-3 {:role "tablist"}]
-                       tabs)
-                 [actions-tab-content]]}])))
+                 [status-widget]
+                 tabs
+                 [actions-content]]}])))
 
 ;; Whole application
 
@@ -1014,7 +1030,7 @@
              {:title "Form title"
               :application {:id 17 :state "draft"
                             :can-approve? false
-                            :can-close? false
+                            :can-close? true
                             :review-type nil}
               :catalogue-items [{:title "An applied item"}]
               :items [{:id 1 :type "text" :title "Field 1" :inputprompt "prompt 1"}
