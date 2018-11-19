@@ -743,8 +743,11 @@
 (defn- third-party-review-tab []
   [action-button "3rd-party-review" (text :t.actions/review)])
 
-(defn- close-tab []
-  [action-button "close" (text :t.actions/close)])
+(defn- applicant-close-tab []
+  [action-button "applicant-close" (text :t.actions/close)])
+
+(defn- approver-close-tab []
+  [action-button "approver-close" (text :t.actions/close)])
 
 (defn- withdraw-tab []
   [action-button "withdraw" (text :t.actions/withdraw)])
@@ -806,8 +809,14 @@
    (text :t.form/add-comments-not-shown-to-applicant)
    [third-party-review-button]])
 
-(defn- close-form []
-  [action-form "close"
+(defn- applicant-close-form []
+  [action-form "applicant-close"
+   (text :t.actions/close)
+   (text :t.form/add-comments)
+   [close-button]])
+
+(defn- approver-close-form []
+  [action-form "approver-close"
    (text :t.actions/close)
    (text :t.form/add-comments-shown-to-applicant)
    [close-button]])
@@ -828,7 +837,8 @@
    [return-form]
    [review-form]
    [third-party-review-form]
-   [close-form]
+   [applicant-close-form]
+   [approver-close-form]
    [withdraw-form]
    [review-request-form]])
 
@@ -836,7 +846,9 @@
   (let [state (:state app)
         editable? (contains? #{"draft" "returned" "withdrawn"} state)
         tabs (concat (when (:can-close? app)
-                       [^{:key :close-tab} [close-tab]])
+                       [(if (:is-applicant? app)
+                          ^{:key :applicant-close-tab} [applicant-close-tab]
+                          ^{:key :approver-close-tab} [approver-close-tab])])
                      (when (:can-withdraw? app)
                        [^{:key :withdraw-tab} [withdraw-tab]])
                      (when (:can-approve? app)
