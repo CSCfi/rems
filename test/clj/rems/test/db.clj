@@ -989,8 +989,9 @@
 
 (deftest test-dynamic-workflow
   (binding [context/*user* {"eppn" "alice"}]
-    (db/add-user! {:user "alice" :userattrs nil})
-    (db/add-user! {:user "handler" :userattrs nil})
+    (db/add-user! {:user "alice" :userattrs "{}"})
+    (db/add-user! {:user "bob" :userattrs "{}"})
+    (db/add-user! {:user "handler" :userattrs "{}"})
     (let [workflow {:type :workflow/dynamic
                     :handlers ["handler"]}
           wfid (:id (db/create-workflow! {:organization "abc" :modifieruserid "owner" :owneruserid "owner" :title "dynamic" :fnlround -1 :workflow (cheshire/generate-string workflow)}))
@@ -1004,6 +1005,12 @@
                                       :application-id app-id})
       (is (= :rems.workflow.dynamic/submitted
              (:state (applications/get-dynamic-application-state app-id))))
+      (applications/dynamic-command! {:type :rems.workflow.dynamic/add-member
+                                      :actor "alice"
+                                      :member "bob"
+                                      :application-id app-id})
+      (is (= ["alice" "bob"]
+             (:members (applications/get-dynamic-application-state app-id))))
       (applications/dynamic-command! {:type :rems.workflow.dynamic/approve
                                       :actor "handler"
                                       :application-id app-id})

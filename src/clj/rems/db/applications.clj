@@ -786,7 +786,6 @@
                                  :workflow (fix-workflow-from-db (:workflow application)))
         events (map fix-event-from-db (db/get-application-events {:application application-id}))]
     (assert (= :workflow/dynamic (get-in fixed-application [:workflow :type])))
-    (prn :EVENTS events)
     (dynamic/apply-events fixed-application events)))
 
 (defn- add-dynamic-event! [event]
@@ -797,8 +796,12 @@
                               :event (str (:event event))
                               :eventdata (cheshire/generate-string event)}))
 
+(defn- valid-user? [userid]
+  (not (nil? (users/get-user-attributes userid))))
+
 (defn dynamic-command! [cmd]
   (let [app (get-dynamic-application-state (:application-id cmd))
-        result (dynamic/handle-command cmd app)]
+        injections {:valid-user? valid-user?}
+        result (dynamic/handle-command cmd app injections)]
     (assert (:success result) result)
     (add-dynamic-event! (:result result))))
