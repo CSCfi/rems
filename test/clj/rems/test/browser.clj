@@ -7,8 +7,7 @@
             [rems.config]
             [rems.db.test-data :as test-data]))
 
-(def ^:dynamic
-  *driver*
+(def ^:dynamic *driver*
   "Current driver")
 
 (defn fixture-driver
@@ -34,19 +33,37 @@
   :once
   fixture-standalone)
 
+;; test helpers
+
+(defn login-as [username]
+  (doto *driver*
+    (set-window-size 1400 2000) ;; big enough to show the whole page without scrolling
+    (go "http://localhost:3001")
+    (screenshot "browsertest-errors/landing-page.png")
+    (click-visible {:class "login-btn"})
+    (screenshot "browsertest-errors/login-page.png")
+    (click-visible [{:class "users"} {:tag :a, :fn/text username}])))
+
+(defn click-navigation-menu [link-text]
+  (doto *driver*
+    (click-visible [:big-navbar {:tag :a, :fn/has-text link-text}])
+    (wait-visible [{:tag :h2, :fn/has-text link-text}])))
+
+(defn go-to-catalogue []
+  (click-navigation-menu "Catalogue")
+  (wait-has-text *driver* {:tag :h2} "Catalogue"))
+
+(defn go-to-applications []
+  (click-navigation-menu "Applications")
+  (wait-has-text *driver* {:tag :h2} "Applications"))
+
 ;; now declare your tests
 
-(deftest
-  test-new-application
+(deftest test-new-application
   (with-postmortem *driver* {:dir "browsertest-errors"}
+    (login-as "developer")
+    (go-to-catalogue)
     (doto *driver*
-      (set-window-size 1920 1080) ; Buttons get over each other in default sizes
-      (go "http://localhost:3001")
-      (screenshot "browsertest-errors/landing-page.png")
-      (click-visible {:class :login-btn}) ; Get login choices
-      (screenshot "browsertest-errors/login-page.png")
-      (click-visible {:tag :a :fn/text "developer"}) ; Choose "developer"
-      (click-visible {:class "nav-item nav-link"}) ; Go to catalogue
       (click-visible [{:class "rems-table catalogue"} {:class "btn btn-primary "}]) ; Click "Add to cart" on first item
       (click-visible [{:class "cart-item separator"} {:class "btn btn-primary"}]) ; Click "Apply"
       (wait-visible :field1)
@@ -58,11 +75,12 @@
       (click-visible {:name :license1}) ; Accept license
       (click-visible {:name :license2}) ; Accept terms
       (click-visible :submit)
-      (click-visible {:class "nav-item nav-link active"})
-      (wait-visible {:data-th :Resource}))
+      (wait-has-text :application-state "State: Approved"))
+    (go-to-applications)
+
     (is (= "Deve Loper /"
-           (get-element-text *driver* {:class :user-name})))
+           (get-element-text *driver* {:class "user-name"})))
     (is (= "ELFA Corpus, direct approval"
-           (get-element-text *driver* {:data-th :Resource})))
+           (get-element-text *driver* {:data-th "Resource"})))
     (is (= "Approved"
-           (get-element-text *driver* {:data-th :State})))))
+           (get-element-text *driver* {:data-th "State"})))))

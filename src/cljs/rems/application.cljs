@@ -499,9 +499,10 @@
                      (last events))]
     [collapsible/component
      {:id "header"
-      :title [:span
-              (text :t.applications/state)
-              (when state (list ": " (localize-state state)))]
+      :title [:span#application-state
+              (str
+                (text :t.applications/state)
+                (when state (str ": " (localize-state state))))]
       :always [:div
                [:div.mb-3 {:class (str "state-" state)} (phases phases-data)]
                (when last-event
