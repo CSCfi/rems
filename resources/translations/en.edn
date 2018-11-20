@@ -64,6 +64,7 @@
             :load-application-states "Load application states"
             :no-handled-yet "You have not handled any applications yet."
             :not-implemented "Not implemented yet"
+            :ok "Ok"
             :open-approvals "Open applications"
             :open-reviews "Open reviews"
             :reject "Reject"
