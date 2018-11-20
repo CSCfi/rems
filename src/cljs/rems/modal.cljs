@@ -19,7 +19,9 @@
     :on-click on-close}
    [:div {:style {:border-radius "0.25rem"
                   :min-width "50%"
-                  :background-color "#fff"}} content]])
+                  :background-color "#fff"}
+          :on-click (fn [e] (.stopPropagation e))}
+    content]])
 
 (defn component
   "Displays a modal dialog
