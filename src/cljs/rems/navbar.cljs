@@ -28,7 +28,7 @@
     [:div.user.px-2.px-sm-0
      [:i.fa.fa-user]
      [:span.user-name (str (:commonName user) " /")]
-     [atoms/link-to {:class (str "px-0 nav-link")} (url-dest "/logout") (text :t.navigation/logout)]]))
+     [atoms/link-to {:id "logout", :class (str "px-0 nav-link")} (url-dest "/logout") (text :t.navigation/logout)]]))
 
 (defn navbar-items [e page-id identity]
   ;;TODO: get navigation options from subscription

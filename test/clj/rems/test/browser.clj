@@ -42,20 +42,32 @@
     (screenshot "browsertest-errors/landing-page.png")
     (click-visible {:class "login-btn"})
     (screenshot "browsertest-errors/login-page.png")
-    (click-visible [{:class "users"} {:tag :a, :fn/text username}])))
+    (click-visible [{:class "users"} {:tag :a, :fn/text username}])
+    (wait-visible :logout)))
 
 (defn click-navigation-menu [link-text]
-  (doto *driver*
-    (click-visible [:big-navbar {:tag :a, :fn/has-text link-text}])
-    (wait-visible [{:tag :h2, :fn/has-text link-text}])))
+  (click-visible *driver* [:big-navbar {:tag :a, :fn/text link-text}]))
 
 (defn go-to-catalogue []
   (click-navigation-menu "Catalogue")
-  (wait-has-text *driver* {:tag :h2} "Catalogue"))
+  (wait-visible *driver* {:tag :h2, :fn/text "Catalogue"}))
 
 (defn go-to-applications []
   (click-navigation-menu "Applications")
-  (wait-has-text *driver* {:tag :h2} "Applications"))
+  (wait-visible *driver* {:tag :h2, :fn/text "Applications"}))
+
+(defn add-to-cart [resource-name]
+  (click-visible *driver* [{:css "table.catalogue"}
+                           {:fn/text resource-name}
+                           {:xpath "./ancestor::tr"}
+                           {:css "button.add-to-cart"}]))
+
+(defn apply-for-resource [resource-name]
+  (click-visible *driver* [{:css "table.cart"}
+                           {:fn/text resource-name}
+                           {:xpath "./ancestor::tr"}
+                           {:css "button.apply-for-resource"}])
+  (wait-visible *driver* {:tag :h2, :fn/text "Application"}))
 
 ;; now declare your tests
 
@@ -63,10 +75,10 @@
   (with-postmortem *driver* {:dir "browsertest-errors"}
     (login-as "developer")
     (go-to-catalogue)
+    (add-to-cart "ELFA Corpus, direct approval")
+    (apply-for-resource "ELFA Corpus, direct approval")
+
     (doto *driver*
-      (click-visible [{:class "rems-table catalogue"} {:class "btn btn-primary "}]) ; Click "Add to cart" on first item
-      (click-visible [{:class "cart-item separator"} {:class "btn btn-primary"}]) ; Click "Apply"
-      (wait-visible :field1)
       ; On application page
       ; Need to use fill-human, because human is so quick that the form
       ; drops characters here and there
@@ -78,8 +90,6 @@
       (wait-has-text :application-state "State: Approved"))
     (go-to-applications)
 
-    (is (= "Deve Loper /"
-           (get-element-text *driver* {:class "user-name"})))
     (is (= "ELFA Corpus, direct approval"
            (get-element-text *driver* {:data-th "Resource"})))
     (is (= "Approved"

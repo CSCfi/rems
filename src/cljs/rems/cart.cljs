@@ -33,7 +33,7 @@
   [item]
   (let [cart @(rf/subscribe [::cart])
         disabled? (and cart (contains? (set (map :id cart)) (:id item)))]
-    [:button.btn.btn-primary
+    [:button.btn.btn-primary.add-to-cart
      {:type "submit"
       :disabled disabled?
       :class (if disabled? " disabled" "")
@@ -43,7 +43,7 @@
 (defn remove-from-cart-button
   "Hiccup fragment that contains a button that removes the given item from the cart"
   [item]
-  [:button.btn.btn-secondary
+  [:button.btn.btn-secondary.remove-from-cart
    {:type "submit"
     :on-click #(rf/dispatch [::remove-item item])}
    (text :t.cart/remove)])
@@ -54,7 +54,7 @@
        (mapv edn/read-string)))
 
 (defn- apply-button [items]
-  [:button.btn.btn-primary {:on-click #(application/apply-for items)}
+  [:button.btn.btn-primary.apply-for-resource {:on-click #(application/apply-for items)}
    (text :t.cart/apply)])
 
 (defn- item-view [item language & [apply-button?]]
