@@ -1,5 +1,6 @@
 (ns rems.api
   (:require [cheshire.generate :as cheshire]
+            [clojure.tools.logging :as log]
             [cognitect.transit :as transit]
             [compojure.api.exception :as ex]
             [compojure.api.sweet :refer :all]
@@ -26,6 +27,7 @@
 
 (defn unauthorized-handler
   [exception ex-data request]
+  (log/info "User is unauthorized")
   (unauthorized "unauthorized"))
 
 (defn invalid-handler
