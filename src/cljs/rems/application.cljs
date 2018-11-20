@@ -445,7 +445,7 @@
   [:div {:class (when (= :failed status) "alert alert-danger")}
    (case status
      nil ""
-     :pending [spinner/small]
+     :pending [spinner/big]
      :saved [:div [:i {:class ["fa fa-check-circle text-success"]}] (text :t.form/success)]
      :failed [:div [:i {:class "fa fa-times-circle text-danger"}]
               (str (text :t.form/failed) ": " (:status error) " " (:status-text error))])])
