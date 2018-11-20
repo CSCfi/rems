@@ -740,7 +740,7 @@
   [:button.btn.btn-default.mr-3
    {:id id
     :type "button" :data-toggle "collapse" :data-target (str "#actions-" id)}
-   (str content " ⯆")])
+   (str content " ...")])
 
 (defn- approve-tab []
   [action-button "approve" (text :t.actions/approve)])
