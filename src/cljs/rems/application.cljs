@@ -5,6 +5,7 @@
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
             [rems.db.catalogue :refer [get-catalogue-item-title]]
+            [rems.modal :as modal]
             [rems.phase :refer [phases]]
             [rems.spinner :as spinner]
             [rems.text :refer [text text-format localize-state localize-event localize-time localize-item]]
@@ -133,14 +134,22 @@
 ;; status can be :pending :saved :failed or nil
 (rf/reg-event-db
  ::set-status
- (fn [db [_ value validation]]
+ (fn [db [_ {:keys [status description validation error]}]]
    (-> db
-       (assoc-in [::edit-application :status] value)
+       (assoc-in [::edit-application :status] {:open? (not (nil? status))
+                                               :status status
+                                               :description description
+                                               :error error})
        (assoc-in [::edit-application :validation] validation))))
+
+(rf/reg-sub
+ ::status
+ (fn [db _]
+   (get-in db [::edit-application :status])))
 
 ;;; saving application
 
-(defn- save-application [command application-id catalogue-items items licenses]
+(defn- save-application [command description application-id catalogue-items items licenses]
   (let [payload (merge {:command command
                         :items items
                         :licenses licenses}
@@ -150,18 +159,23 @@
     (post! "/api/applications/save"
            {:handler (fn [resp]
                        (if (:success resp)
-                         (do (rf/dispatch [::set-status :saved])
+                         (do (rf/dispatch [::set-status {:status :saved
+                                                         :description description}])
                              ;; HACK: we both set the location, and fire a fetch-application event
                              ;; because if the location didn't change, secretary won't fire the event
                              (navigate-to (:id resp))
                              (rf/dispatch [::enter-application-page (:id resp)]))
-                         (rf/dispatch [::set-status :failed (:validation resp)])))
-            :error-handler (fn [_] (rf/dispatch [::set-status :failed]))
+                         (rf/dispatch [::set-status {:status :failed
+                                                     :description description
+                                                     :validation (:validation resp)}])))
+            :error-handler (fn [error] (rf/dispatch [::set-status {:status :failed
+                                                                   :description description
+                                                                   :error error}]))
             :params payload})))
 
 (rf/reg-event-fx
  ::save-application
- (fn [{:keys [db]} [_ command]]
+ (fn [{:keys [db]} [_ command description]]
    (let [app-id (get-in db [::application :application :id])
          catalogue-items (get-in db [::application :catalogue-items])
          catalogue-ids (mapv :id catalogue-items)
@@ -175,8 +189,9 @@
        (doseq [i catalogue-items]
          (rf/dispatch [:rems.cart/remove-item i])))
      ;; TODO disable form while saving?
-     (rf/dispatch [::set-status :pending])
-     (save-application command app-id catalogue-ids items licenses))
+     (rf/dispatch [::set-status {:status :pending
+                                 :description description}])
+     (save-application command description app-id catalogue-ids items licenses))
    {}))
 
 ;;; judging application
@@ -201,35 +216,43 @@
      {})))
 
 ;;; saving attachment
-(defn- save-attachment [application-id field-id form-data]
+(defn- save-attachment [application-id field-id form-data description]
   (post! (str "/api/applications/add_attachment?application-id=" application-id "&field-id=" field-id)
          {:body form-data
-          :error-handler (fn [_] (rf/dispatch [::set-status :failed]))}))
+          :error-handler (fn [_] (rf/dispatch [::set-status {:status :failed
+                                                             :description description}]))}))
 
-(defn- save-application-with-attachment [field-id form-data catalogue-items items licenses]
+(defn- save-application-with-attachment [field-id form-data catalogue-items items licenses description]
   (let [payload {:command "save"
                  :items items
                  :licenses licenses
                  :catalogue-items catalogue-items}]
+    ;; TODO this logic should be rewritten as a chain of save, save-attachment instead
     (post! "/api/applications/save"
            {:handler (fn [resp]
                        (if (:success resp)
-                         (do (save-attachment (:id resp) field-id form-data)
-                             (rf/dispatch [::set-status :saved])
+                         (do (save-attachment (:id resp) field-id form-data description)
+                             (rf/dispatch [::set-status {:status :saved
+                                                         :description description ; TODO here should be saving?
+                                                         }])
                              ;; HACK: we both set the location, and fire a fetch-application event
                              ;; because if the location didn't change, secretary won't fire the event
                              (navigate-to (:id resp))
                              (rf/dispatch [::enter-application-page (:id resp)]))
-                         (rf/dispatch [::set-status :failed (:validation resp)])))
-            :error-handler (fn [_] (rf/dispatch [::set-status :failed]))
+                         (rf/dispatch [::set-status {:status :failed
+                                                     :description description ; TODO here should be saving?
+                                                     :validation (:validation resp)}])))
+            :error-handler (fn [_] (rf/dispatch [::set-status {:status :failed
+                                                               :description description ; TODO here should be saving?
+                                                               }]))
             :params payload})))
 
 (rf/reg-event-fx
  ::save-attachment
- (fn [{:keys [db]} [_ field-id file]]
+ (fn [{:keys [db]} [_ field-id file description]]
    (let [application-id (get-in db [::application :application :id])]
      (if application-id
-       (save-attachment application-id field-id file)
+       (save-attachment application-id field-id file description)
        (let [catalogue-items (get-in db [::application :catalogue-items])
              catalogue-ids (mapv :id catalogue-items)
              items (get-in db [::edit-application :items])
@@ -238,7 +261,7 @@
                             (for [[id checked?] (get-in db [::edit-application :licenses])
                                   :when checked?]
                               [id "approved"]))]
-         (save-application-with-attachment field-id file catalogue-ids items licenses))))))
+         (save-application-with-attachment field-id file catalogue-ids items licenses description))))))
 
 ;;;; UI components ;;;;
 
@@ -281,13 +304,13 @@
   (str "field" id))
 
 (defn- set-attachment
-  [id]
+  [id description]
   (fn [event]
     (let [filecontent (aget (.. event -target -files) 0)
           form-data (doto (js/FormData.)
                       (.append "file" filecontent))]
       (rf/dispatch [::set-field id (.-name filecontent)])
-      (rf/dispatch [::save-attachment id form-data]))))
+      (rf/dispatch [::save-attachment id form-data description]))))
 
 (defn- field-validation-message [validation title]
   (when validation
@@ -339,7 +362,7 @@
                 :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
                 :class (when validation "is-invalid")
                 :disabled readonly
-                :on-change (set-attachment id)}]
+                :on-change (set-attachment id title)}]
        [:button.btn.btn-default {:on-click (fn [e] (.click (.getElementById js/document (id-to-name id))))} (text :t.form/upload)]])
     (when (not-empty value)
       [:a {:href (str "/api/applications/attachments/?application-id=" app-id "&field-id=" id) :target "_blank"} value])]])
@@ -418,23 +441,40 @@
                 [unsupported-field f])
     [unsupported-field f]))
 
-(defn- status-widget []
-  (let [status (:status @(rf/subscribe [::edit-application]))]
-    [:span (case status
-             nil ""
-             :pending [spinner/small]
-             :saved [:i {:class "fa fa-check-circle"}]
-             :failed [:i {:class "fa fa-times-circle text-danger"}])]))
+(defn- status-widget [status error]
+  [:div {:class (when (= :failed status) "alert alert-danger")}
+   (case status
+     nil ""
+     :pending [spinner/small]
+     :saved [:div [:i {:class ["fa fa-check-circle text-success"]}] (text :t.form/success)]
+     :failed [:div [:i {:class "fa fa-times-circle text-danger"}]
+              (str (text :t.form/failed) ": " (:status error) " " (:status-text error))])])
+
+(defn- status-modal [state content]
+  [modal/notification {:title (:description state)
+                       :content (or content [status-widget (:status state) (:error state)])
+                       :on-close #(rf/dispatch [::set-status nil])
+                       :shade? true
+                       }])
+
+(defn- button-wrapper [{:keys [id text class callback]}]
+  [:button.btn.mr-3
+   {:id id
+    :name id
+    :class (or class :btn-default)
+    :on-click callback}
+   text])
 
 (defn- save-button []
-  [:button#save.btn.btn-default.mr-3
-   {:name "save" :on-click #(rf/dispatch [::save-application "save"])}
-   (text :t.form/save)])
+  [button-wrapper {:id "save"
+                  :text (text :t.form/save)
+                  :callback #(rf/dispatch [::save-application "save" (text :t.form/save)])}])
 
 (defn- submit-button []
-  [:button#submit.btn.btn-primary
-   {:name "submit" :on-click #(rf/dispatch [::save-application "submit"])}
-   (text :t.form/submit)])
+  [button-wrapper {:id "submit"
+                  :text (text :t.form/submit)
+                  :class :btn-primary
+                  :callback #(rf/dispatch [::save-application "submit" (text :t.form/submit)])}])
 
 (defn- fields [form edit-application]
   (let [application (:application form)
@@ -465,12 +505,7 @@
                   [field (assoc (localize-item license)
                                 :validation (get-in validation-by-field-id [:license (:id license)])
                                 :readonly readonly?
-                                :approved (get licenses (:id license)))]))])
-       (when-not readonly?
-         [:div.col.commands
-          [status-widget]
-          [save-button]
-          [submit-button]])]}]))
+                                :approved (get licenses (:id license)))]))])]}]))
 
 ;; Header
 
@@ -869,7 +904,6 @@
        {:id "actions"
         :title (text :t.form/actions)
         :always [:div
-                 [status-widget]
                  tabs
                  [actions-content]]}])))
 
@@ -895,47 +929,51 @@
                        ^{:key (:id item)}
                        [:li (get-catalogue-item-title item language)]))]}]))
 
-(defn- render-application [application edit-application language]
+(defn- render-application [application edit-application language status]
   ;; TODO should rename :application
   (let [app (:application application)
         state (:state app)
         phases (:phases application)
         events (:events app)
-        user-attributes (:applicant-attributes application)]
+        user-attributes (:applicant-attributes application)
+        messages (remove nil?
+                         [(disabled-items-warning (:catalogue-items application)) ; NB: eval this here so we get nil or a warning
+                          (when @(rf/subscribe [::send-third-party-review-request-message])
+                            [flash-message
+                             {:status :success
+                              :contents (text :t.actions/review-request-success)}])
+                          (when (:validation edit-application)
+                            [flash-message
+                             {:status :failure
+                              :contents [:div (text :t.form/validation.errors)
+                                         [format-validation-messages (:validation edit-application) language]]}])])]
     [:div
      [:div {:class "float-right"} [pdf-button (:id app)]]
      [:h2 (text :t.applications/application)]
-     [disabled-items-warning (:catalogue-items application)]
-     (when @(rf/subscribe [::send-third-party-review-request-message])
-       [flash-message
-        {:status :success
-         :contents (text :t.actions/review-request-success)}])
-     (when (:validation edit-application)
-       [flash-message
-        {:status :failure
-         :contents [:div (text :t.form/validation.errors)
-                    [format-validation-messages (:validation edit-application) language]]}])
-     [:div.spaced-sections
-      [application-header state phases events]
-      (when user-attributes
-        [applicant-info "applicant-info" user-attributes])
-      [applied-resources (:catalogue-items application)]
-      [fields application edit-application]
-      [actions-form app]]
-     [review-request-modal]]))
+     (into [:div] messages)
+     [application-header state phases events]
+     (when user-attributes
+       [:div.mt-3 [applicant-info "applicant-info" user-attributes]])
+     [:div.mt-3 [applied-resources (:catalogue-items application)]]
+     [:div.my-3 [fields application edit-application]]
+     [:div.mb-3 [actions-form app]]
+     [review-request-modal]
+     (when (:open? status)
+       [status-modal status (when (seq messages) (into [:div] messages))])]))
 
 ;;;; Entrypoint ;;;;
 
 (defn application-page []
-  (let [application (rf/subscribe [::application])
-        edit-application (rf/subscribe [::edit-application])
-        language (rf/subscribe [:language])
-        loading? (rf/subscribe [::loading-application?])]
-    (if @loading?
+  (let [application @(rf/subscribe [::application])
+        edit-application @(rf/subscribe [::edit-application])
+        language @(rf/subscribe [:language])
+        loading? @(rf/subscribe [::loading-application?])
+        status @(rf/subscribe [::status])]
+    (if loading?
       [:div
        [:h2 (text :t.applications/application)]
        [spinner/big]]
-      [render-application @application @edit-application @language])))
+      [render-application application edit-application language status])))
 
 ;;;; Guide ;;;;
 
