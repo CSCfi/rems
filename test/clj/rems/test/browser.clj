@@ -1,5 +1,6 @@
 (ns ^:browser rems.test.browser
-  (:require [clojure.string :as str]
+  (:require [clojure.java.io :as io]
+            [clojure.string :as str]
             [clojure.test :refer :all]
             [etaoin.api :refer :all]
             [luminus-migrations.core :as migrations]
@@ -10,6 +11,9 @@
 
 (def ^:dynamic *driver*
   "Current driver")
+
+(def reporting-dir (doto (io/file "browsertest-errors")
+                     (.mkdirs)))
 
 (defn fixture-driver
   "Executes a test running a driver.
@@ -40,9 +44,9 @@
   (doto *driver*
     (set-window-size 1400 2000) ;; big enough to show the whole page without scrolling
     (go "http://localhost:3001")
-    (screenshot "browsertest-errors/landing-page.png")
+    (screenshot (io/file reporting-dir "landing-page.png"))
     (click-visible {:class "login-btn"})
-    (screenshot "browsertest-errors/login-page.png")
+    (screenshot (io/file reporting-dir "login-page.png"))
     (click-visible [{:class "users"} {:tag :a, :fn/text username}])
     (wait-visible :logout)))
 
@@ -110,7 +114,7 @@
 ;;; tests
 
 (deftest test-new-application
-  (with-postmortem *driver* {:dir "browsertest-errors"}
+  (with-postmortem *driver* {:dir reporting-dir}
     (login-as "developer")
 
     (go-to-catalogue)
