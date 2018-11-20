@@ -791,6 +791,7 @@
 (defn- withdraw-tab []
   [action-button "withdraw" (text :t.actions/withdraw)])
 
+;; TODO don't use modal but tab
 (defn- review-request-tab []
   [:div.mr-3 {:style {:display :inline-block}} [request-review-button]]
   #_[action-button "review-request" (text :t.actions/review-request)])
