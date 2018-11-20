@@ -37,9 +37,10 @@
                                                      :space-between
                                                      :align-items :center}}
                           title
-                          [:i.ml-3.fa.fa-times
-                           {:style {:color "#ccc"}
-                            :on-click on-close}]]
+                          [:a {:href "#"
+                               :on-click on-close}
+                           [:i.ml-3.fa.fa-times
+                            {:style {:color "#ccc"}}]]]
                   :always [:div.full
                            [:div.modal--content content]
                            (into [:div.modal--commands.commands {:style {:padding 0}}]
