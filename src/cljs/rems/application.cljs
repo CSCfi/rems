@@ -765,7 +765,7 @@
 (defn request-review-button []
   [:button#review-request.btn.btn-default
    {:type "button" :data-toggle "modal" :data-target "#review-request-modal"}
-   (str (text :t.actions/review-request) " ⯆")])
+   (str (text :t.actions/review-request) " ...")])
 
 ;;; Actions tabs
 
@@ -773,7 +773,7 @@
   [:button.btn.btn-default.mr-3
    {:id id
     :type "button" :data-toggle "collapse" :data-target (str "#actions-" id)}
-   (str content " ⯆")])
+   (str content " ...")])
 
 (defn- approve-tab []
   [action-button "approve" (text :t.actions/approve)])
