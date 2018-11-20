@@ -55,11 +55,13 @@
 
 (defn go-to-catalogue []
   (click-navigation-menu "Catalogue")
-  (wait-visible *driver* {:tag :h2, :fn/text "Catalogue"}))
+  (wait-visible *driver* {:tag :h2, :fn/text "Catalogue"})
+  (wait-invisible *driver* {:css ".fa-spinner"}))
 
 (defn go-to-applications []
   (click-navigation-menu "Applications")
-  (wait-visible *driver* {:tag :h2, :fn/text "Applications"}))
+  (wait-visible *driver* {:tag :h2, :fn/text "Applications"})
+  (wait-invisible *driver* {:css ".fa-spinner"}))
 
 ;;; catalogue page
 
