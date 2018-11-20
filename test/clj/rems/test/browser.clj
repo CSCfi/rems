@@ -33,7 +33,7 @@
   :once
   fixture-standalone)
 
-;; test helpers
+;;; test helpers
 
 (defn login-as [username]
   (doto *driver*
@@ -56,6 +56,8 @@
   (click-navigation-menu "Applications")
   (wait-visible *driver* {:tag :h2, :fn/text "Applications"}))
 
+;;; catalogue page
+
 (defn add-to-cart [resource-name]
   (click-visible *driver* [{:css "table.catalogue"}
                            {:fn/text resource-name}
@@ -69,27 +71,45 @@
                            {:css "button.apply-for-resource"}])
   (wait-visible *driver* {:tag :h2, :fn/text "Application"}))
 
-;; now declare your tests
+;;; application page
+
+;; Need to use `fill-human`, because `fill` is so quick that the form
+;; drops characters here and there
+
+(defn fill-form-text-field [name input]
+  (fill-human *driver* [:form
+                        {:tag :label, :fn/text name}
+                        {:xpath "./ancestor::div[@class='form-group field']"}
+                        {:css "input[type='text']"}]
+              input))
+
+(defn fill-form-text-area [name input]
+  (fill-human *driver* [:form
+                        {:tag :label, :fn/text name}
+                        {:xpath "./ancestor::div[@class='form-group field']"}
+                        {:css "textarea"}]
+              input))
+
+;;; now declare your tests
 
 (deftest test-new-application
   (with-postmortem *driver* {:dir "browsertest-errors"}
     (login-as "developer")
+
     (go-to-catalogue)
     (add-to-cart "ELFA Corpus, direct approval")
     (apply-for-resource "ELFA Corpus, direct approval")
 
+    ; On application page
+    (fill-form-text-field "Project name" "Test name")
+    (fill-form-text-area "Purpose of the project" "Test purpose")
     (doto *driver*
-      ; On application page
-      ; Need to use fill-human, because human is so quick that the form
-      ; drops characters here and there
-      (fill-human :field1 "Test name")
-      (fill-human :field2 "Test purpose")
       (click-visible {:name :license1}) ; Accept license
       (click-visible {:name :license2}) ; Accept terms
       (click-visible :submit)
       (wait-has-text :application-state "State: Approved"))
-    (go-to-applications)
 
+    (go-to-applications)
     (is (= "ELFA Corpus, direct approval"
            (get-element-text *driver* {:data-th "Resource"})))
     (is (= "Approved"
