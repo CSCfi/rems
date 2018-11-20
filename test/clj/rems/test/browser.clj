@@ -1,11 +1,12 @@
 (ns ^:browser rems.test.browser
-  (:require [clojure.test :refer :all]
+  (:require [clojure.string :as str]
+            [clojure.test :refer :all]
             [etaoin.api :refer :all]
-            [mount.core :as mount]
             [luminus-migrations.core :as migrations]
-            [rems.standalone]
+            [mount.core :as mount]
             [rems.config]
-            [rems.db.test-data :as test-data]))
+            [rems.db.test-data :as test-data]
+            [rems.standalone]))
 
 (def ^:dynamic *driver*
   "Current driver")
@@ -33,7 +34,7 @@
   :once
   fixture-standalone)
 
-;;; test helpers
+;;; basic navigation
 
 (defn login-as [username]
   (doto *driver*
@@ -73,13 +74,40 @@
 
 ;;; application page
 
-(defn fill-form-field [label input]
-  (let [id (get-element-attr *driver* [:form {:tag :label, :fn/text label}] :for)]
-    ;; Need to use `fill-human`, because `fill` is so quick that the form
-    ;; drops characters here and there
-    (fill-human *driver* {:id id} input)))
+(defn fill-form-field [label text]
+  (let [id (get-element-attr *driver* [:form
+                                       {:tag :label, :fn/text label}]
+                             :for)]
+    ;; XXX: need to use `fill-human`, because `fill` is so quick that the form drops characters here and there
+    (fill-human *driver* {:id id} text)))
 
-;;; now declare your tests
+(defn accept-license [label]
+  ;; XXX: assumes that the checkbox is unchecked
+  (click-visible *driver* [:licenses
+                           {:tag :a, :fn/text label}
+                           {:xpath "./ancestor::div[@class='license']"}
+                           {:css "input[type='checkbox']"}]))
+
+(defn send-application []
+  (click-visible *driver* :submit)
+  (wait-has-class *driver* :apply-phase "completed"))
+
+(defn get-application-id []
+  (last (str/split (get-url *driver*) #"/")))
+
+;; applications page
+
+(defn get-application-summary [application-id]
+  (let [row (query *driver* [{:css "table.applications"}
+                             {:tag :td, :class "id", :fn/text application-id}
+                             {:xpath "./ancestor::tr"}])]
+    {:id (get-element-text-el *driver* (child *driver* row {:css ".id"}))
+     :description (get-element-text-el *driver* (child *driver* row {:css ".description"}))
+     :resource (get-element-text-el *driver* (child *driver* row {:css ".resource"}))
+     :applicant (get-element-text-el *driver* (child *driver* row {:css ".applicant"}))
+     :state (get-element-text-el *driver* (child *driver* row {:css ".state"}))}))
+
+;;; tests
 
 (deftest test-new-application
   (with-postmortem *driver* {:dir "browsertest-errors"}
@@ -89,17 +117,18 @@
     (add-to-cart "ELFA Corpus, direct approval")
     (apply-for-resource "ELFA Corpus, direct approval")
 
-    ; On application page
     (fill-form-field "Project name" "Test name")
     (fill-form-field "Purpose of the project" "Test purpose")
-    (doto *driver*
-      (click-visible {:name :license1}) ; Accept license
-      (click-visible {:name :license2}) ; Accept terms
-      (click-visible :submit)
-      (wait-has-text :application-state "State: Approved"))
+    (accept-license "CC Attribution 4.0")
+    (accept-license "General Terms of Use")
+    (send-application)
+    (is (= "State: Approved" (get-element-text *driver* :application-state)))
 
-    (go-to-applications)
-    (is (= "ELFA Corpus, direct approval"
-           (get-element-text *driver* {:data-th "Resource"})))
-    (is (= "Approved"
-           (get-element-text *driver* {:data-th "State"})))))
+    (let [application-id (get-application-id)]
+      (go-to-applications)
+      (is (= {:id application-id
+              :description ""
+              :resource "ELFA Corpus, direct approval"
+              :applicant "developer"
+              :state "Approved"}
+             (get-application-summary application-id))))))
