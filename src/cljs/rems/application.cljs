@@ -196,23 +196,31 @@
 
 ;;; judging application
 
-(defn- judge-application [command application-id round comment]
+(defn- judge-application [command application-id round comment description]
   (post! "/api/applications/judge"
          {:params {:command command
                    :application-id application-id
                    :round round
                    :comment comment}
           :handler (fn [resp]
-                     (rf/dispatch [::enter-application-page application-id]))}))
+                     (rf/dispatch [::set-status {:status :saved
+                                                 :description description}])
+                     (rf/dispatch [::enter-application-page application-id]))
+          :error-handler (fn [error]
+                           (rf/dispatch [::set-status {:status :failed
+                                                       :description description
+                                                       :error error}]))}))
 
 (rf/reg-event-fx
  ::judge-application
- (fn [{:keys [db]} [_ command]]
+ (fn [{:keys [db]} [_ command description]]
    (let [application-id (get-in db [::application :application :id])
          round (get-in db [::application :application :curround])
          comment (get db ::judge-comment "")]
+     (rf/dispatch [::set-status {:status :pending
+                                 :description description}])
      (rf/dispatch [::set-judge-comment ""])
-     (judge-application command application-id round comment)
+     (judge-application command application-id round comment description)
      {})))
 
 ;;; saving attachment
@@ -585,40 +593,40 @@
   [button-wrapper {:id "approve"
                    :class "btn-primary"
                    :text (text :t.actions/approve)
-                   :on-click #(rf/dispatch [::judge-application "approve"])}])
+                   :on-click #(rf/dispatch [::judge-application "approve" (text :t.actions/approve)])}])
 
 (defn- reject-button []
   [button-wrapper {:id "reject"
                    :class "btn-danger"
                    :text (text :t.actions/reject)
-                   :on-click #(rf/dispatch [::judge-application "reject"])}])
+                   :on-click #(rf/dispatch [::judge-application "reject" (text :t.actions/reject)])}])
 
 (defn- return-button []
   [button-wrapper {:id "return"
                    :text (text :t.actions/return)
-                   :on-click #(rf/dispatch [::judge-application "return"])}])
+                   :on-click #(rf/dispatch [::judge-application "return" (text :t.actions/return)])}])
 
 (defn- review-button []
   [button-wrapper {:id "review"
                    :text (text :t.actions/review)
                    :class "btn-primary"
-                   :on-click #(rf/dispatch [::judge-application "review"])}])
+                   :on-click #(rf/dispatch [::judge-application "review" (text :t.actions/review)])}])
 
 (defn- third-party-review-button []
   [button-wrapper {:id "third-party-review"
                    :text (text :t.actions/review)
                    :class "btn-primary"
-                   :on-click #(rf/dispatch [::judge-application "third-party-review"])}])
+                   :on-click #(rf/dispatch [::judge-application "third-party-review" (text :t.actions/review)])}])
 
 (defn- close-button []
   [button-wrapper {:id "close"
                    :text (text :t.actions/close)
-                   :on-click #(rf/dispatch [::judge-application "close"])}])
+                   :on-click #(rf/dispatch [::judge-application "close" (text :t.actions/close)])}])
 
 (defn- withdraw-button []
   [button-wrapper {:id "withdraw"
                    :text (text :t.actions/withdraw)
-                   :on-click #(rf/dispatch [::judge-application "withdraw"])}])
+                   :on-click #(rf/dispatch [::judge-application "withdraw" (text :t.actions/withdraw)])}])
 
 ;;;; More events and actions ;;;;
 
