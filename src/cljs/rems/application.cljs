@@ -785,7 +785,7 @@
 
 (defn- action-form [id title comment-title button content]
   [:div.collapse {:id (str "actions-" id) :data-parent "#actions-tabs"}
-   [:h2.mt-5 title]
+   [:h4.mt-5 title]
    content
    (when comment-title
      [action-comment comment-title])
