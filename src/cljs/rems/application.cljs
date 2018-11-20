@@ -613,7 +613,7 @@
                    :on-click #(rf/dispatch [::judge-application "review" (text :t.actions/review)])}])
 
 (defn- third-party-review-button []
-  [button-wrapper {:id "third-party-review"
+  [button-wrapper {:id "request-review"
                    :text (text :t.actions/review)
                    :class "btn-primary"
                    :on-click #(rf/dispatch [::judge-application "third-party-review" (text :t.actions/review)])}])
@@ -695,25 +695,32 @@
 
 ;;; third-party review
 
-(defn- send-third-party-review-request [reviewers user application-id round comment]
+(defn- send-third-party-review-request [reviewers user application-id round comment description]
   (post! "/api/applications/review_request"
          {:params {:application-id application-id
                    :round round
                    :comment comment
                    :recipients (map :userid reviewers)}
           :handler (fn [resp]
+                     (rf/dispatch [::set-status {:status :saved
+                                                 :description description}])
                      (rf/dispatch [::send-third-party-review-request-success true])
                      (rf/dispatch [::enter-application-page application-id])
-                     (scroll-to-top!))}))
+                     (scroll-to-top!))
+          :error-handler (fn [error]
+                           (rf/dispatch [::set-status {:status :failed
+                                                       :description description
+                                                       :error error}]))}))
 
 (rf/reg-event-fx
  ::send-third-party-review-request
- (fn [{:keys [db]} [_ reviewers comment]]
+ (fn [{:keys [db]} [_ reviewers comment description]]
    (let [application-id (get-in db [::application :application :id])
          round (get-in db [::application :application :curround])
          user (get-in db [:identity :user])]
-     (send-third-party-review-request reviewers user application-id round comment)
-     {})))
+     (send-third-party-review-request reviewers user application-id round comment description)
+     {:dispatch [::set-status {:status :pending
+                               :description description}]})))
 
 (rf/reg-event-db
  ::send-third-party-review-request-success
@@ -726,46 +733,6 @@
    (::send-third-party-review-request-message db)))
 
 ;;;; More UI components ;;;;
-
-(defn- review-request-modal []
-  (let [selected-third-party-reviewers @(rf/subscribe [::selected-third-party-reviewers])
-        potential-third-party-reviewers @(rf/subscribe [::potential-third-party-reviewers])
-        review-comment @(rf/subscribe [::review-comment])]
-    [:div.modal.fade {:id "review-request-modal" :role "dialog" :aria-labelledby "confirmModalLabel" :aria-hidden "true"}
-     [:div.modal-dialog {:role "document"}
-      [:div.modal-content
-       [:div
-        [:div.modal-header
-         [:h5#confirmModalLabel.modal-title (text :t.actions/review-request)]
-         [:button.close {:type "button" :data-dismiss "modal" :aria-label (text :t.actions/cancel)}
-          [:span {:aria-hidden "true"} "\u00D7"]]]
-        [:div.modal-body
-         [:div.form-group
-          [:label {:for "review-comment"} (text :t.form/add-comments-not-shown-to-applicant)]
-          [textarea {:id "review-comment"
-                     :name "comment" :placeholder (text :t.form/comment)
-                     :on-change #(rf/dispatch [::set-review-comment (.. % -target -value)])}]]
-         [:div.form-group
-          [:label (text :t.actions/review-request-selection)]
-          [autocomplete/component
-           {:value (sort-by :display selected-third-party-reviewers)
-            :items potential-third-party-reviewers
-            :value->text #(:display %2)
-            :item->key :userid
-            :item->text :display
-            :item->value identity
-            :search-fields [:name :email]
-            :add-fn #(rf/dispatch [::add-selected-third-party-reviewer %])
-            :remove-fn #(rf/dispatch [::remove-selected-third-party-reviewer %])}]]]
-        [:div.modal-footer
-         [:button.btn.btn-secondary {:data-dismiss "modal"} (text :t.actions/cancel)]
-         [:button.btn.btn-primary {:data-dismiss "modal"
-                                   :on-click #(rf/dispatch [::send-third-party-review-request selected-third-party-reviewers review-comment])} (text :t.actions/review-request)]]]]]]))
-
-(defn request-review-button []
-  [:button#review-request.btn.btn-default
-   {:type "button" :data-toggle "modal" :data-target "#review-request-modal"}
-   (str (text :t.actions/review-request) " ⯆")])
 
 ;;; Actions tabs
 
@@ -788,7 +755,7 @@
   [action-button "review" (text :t.actions/review)])
 
 (defn- third-party-review-tab []
-  [action-button "3rd-party-review" (text :t.actions/review)])
+  [action-button "third-party-review" (text :t.actions/review)])
 
 (defn- applicant-close-tab []
   [action-button "applicant-close" (text :t.actions/close)])
@@ -799,10 +766,8 @@
 (defn- withdraw-tab []
   [action-button "withdraw" (text :t.actions/withdraw)])
 
-;; TODO don't use modal but tab
 (defn- review-request-tab []
-  [:div.mr-3 {:style {:display :inline-block}} [request-review-button]]
-  #_[action-button "review-request" (text :t.actions/review-request)])
+  [action-button "review-request" (text :t.actions/review-request)])
 
 (defn- action-comment [label-title]
   [:div.form-group
@@ -812,15 +777,16 @@
               :value @(rf/subscribe [::judge-comment])
               :on-change #(rf/dispatch [::set-judge-comment (.. % -target -value)])}]])
 
-;; TODO move to common?
+;; TODO fix this, not supposed to be administration!
 (defn- cancel-button []
   [:button.btn.btn-default
    {:on-click #(dispatch! "/#/administration")}
    (text :t.administration/cancel)])
 
-(defn- action-form [id title comment-title button]
+(defn- action-form [id title comment-title button content]
   [:div.collapse {:id (str "actions-" id) :data-parent "#actions-tabs"}
    [:h2.mt-5 title]
+   content
    (when comment-title
      [action-comment comment-title])
    [:div.col.commands
@@ -852,8 +818,8 @@
    [review-button]])
 
 (defn- third-party-review-form []
-  [action-form "3rd-party-review"
-   (text :t.actions/review-request)
+  [action-form "third-party-review"
+   (text :t.actions/review)
    (text :t.form/add-comments-not-shown-to-applicant)
    [third-party-review-button]])
 
@@ -875,8 +841,33 @@
    (text :t.form/add-comments)
    [withdraw-button]])
 
-(defn- review-request-form []
-  [action-form "review-request" nil [request-review-button]])
+(defn- request-review-form []
+  (let [selected-third-party-reviewers @(rf/subscribe [::selected-third-party-reviewers])
+        potential-third-party-reviewers @(rf/subscribe [::potential-third-party-reviewers])
+        review-comment @(rf/subscribe [::review-comment])]
+    [action-form "review-request"
+     (text :t.actions/review-request)
+     nil
+     [button-wrapper {:id "request-review"
+                      :text (text :t.actions/review-request)
+                      :on-click #(rf/dispatch [::send-third-party-review-request selected-third-party-reviewers review-comment (text :t.actions/review-request)])}]
+     [:div [:div.form-group
+            [:label {:for "review-comment"} (text :t.form/add-comments-not-shown-to-applicant)]
+            [textarea {:id "review-comment"
+                       :name "comment" :placeholder (text :t.form/comment)
+                       :on-change #(rf/dispatch [::set-review-comment (.. % -target -value)])}]]
+      [:div.form-group
+       [:label (text :t.actions/review-request-selection)]
+       [autocomplete/component
+        {:value (sort-by :display selected-third-party-reviewers)
+         :items potential-third-party-reviewers
+         :value->text #(:display %2)
+         :item->key :userid
+         :item->text :display
+         :item->value identity
+         :search-fields [:name :email]
+         :add-fn #(rf/dispatch [::add-selected-third-party-reviewer %])
+         :remove-fn #(rf/dispatch [::remove-selected-third-party-reviewer %])}]]]]))
 
 (defn- actions-content []
   [:div#actions-tabs.mt-3
@@ -884,11 +875,11 @@
    [reject-form]
    [return-form]
    [review-form]
+   [request-review-form]
    [third-party-review-form]
    [applicant-close-form]
    [approver-close-form]
-   [withdraw-form]
-   [review-request-form]])
+   [withdraw-form]])
 
 (defn- actions-form [app]
   (let [state (:state app)
@@ -970,7 +961,6 @@
      [:div.mt-3 [applied-resources (:catalogue-items application)]]
      [:div.my-3 [fields application edit-application]]
      [:div.mb-3 [actions-form app]]
-     [review-request-modal]
      (when (:open? status)
        [status-modal status (when (seq messages) (into [:div] messages))])]))
 
