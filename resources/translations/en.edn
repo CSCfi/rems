@@ -207,7 +207,7 @@
           :status-changed-subject "Application state change"}
   :footer "Powered by CSC - IT Center for Science"
   :form {:actions "Actions"
-         :add-comments "Add comment to the decision"
+         :add-comments "Add comment"
          :add-comments-shown-to-applicant "Add comment to the decision (shown to applicant)"
          :add-comments-not-shown-to-applicant "Add comment to the decision (not shown to applicant)"
          :alert-disabled-items "The following resources can't be applied anymore. Consider closing this draft and creating a new application."
