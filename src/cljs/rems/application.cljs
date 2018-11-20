@@ -457,24 +457,24 @@
                        :shade? true
                        }])
 
-(defn- button-wrapper [{:keys [id text class callback]}]
+(defn- button-wrapper [{:keys [id text class on-click]}]
   [:button.btn.mr-3
    {:id id
     :name id
     :class (or class :btn-default)
-    :on-click callback}
+    :on-click on-click}
    text])
 
 (defn- save-button []
   [button-wrapper {:id "save"
                    :text (text :t.form/save)
-                   :callback #(rf/dispatch [::save-application "save" (text :t.form/save)])}])
+                   :on-click #(rf/dispatch [::save-application "save" (text :t.form/save)])}])
 
 (defn- submit-button []
   [button-wrapper {:id "submit"
                    :text (text :t.form/submit)
                    :class :btn-primary
-                   :callback #(rf/dispatch [::save-application "submit" (text :t.form/submit)])}])
+                   :on-click #(rf/dispatch [::save-application "submit" (text :t.form/submit)])}])
 
 (defn- fields [form edit-application]
   (let [application (:application form)
@@ -585,40 +585,40 @@
   [button-wrapper {:id "approve"
                    :class "btn-primary"
                    :text (text :t.actions/approve)
-                   :callback #(rf/dispatch [::judge-application "approve"])}])
+                   :on-click #(rf/dispatch [::judge-application "approve"])}])
 
 (defn- reject-button []
   [button-wrapper {:id "reject"
                    :class "btn-danger"
                    :text (text :t.actions/reject)
-                   :callback #(rf/dispatch [::judge-application "reject"])}])
+                   :on-click #(rf/dispatch [::judge-application "reject"])}])
 
 (defn- return-button []
   [button-wrapper {:id "return"
                    :text (text :t.actions/return)
-                   :callback #(rf/dispatch [::judge-application "return"])}])
+                   :on-click #(rf/dispatch [::judge-application "return"])}])
 
 (defn- review-button []
   [button-wrapper {:id "review"
                    :text (text :t.actions/review)
                    :class "btn-primary"
-                   :callback #(rf/dispatch [::judge-application "review"])}])
+                   :on-click #(rf/dispatch [::judge-application "review"])}])
 
 (defn- third-party-review-button []
   [button-wrapper {:id "third-party-review"
                    :text (text :t.actions/review)
                    :class "btn-primary"
-                   :callback #(rf/dispatch [::judge-application "third-party-review"])}])
+                   :on-click #(rf/dispatch [::judge-application "third-party-review"])}])
 
 (defn- close-button []
   [button-wrapper {:id "close"
                    :text (text :t.actions/close)
-                   :callback #(rf/dispatch [::judge-application "close"])}])
+                   :on-click #(rf/dispatch [::judge-application "close"])}])
 
 (defn- withdraw-button []
   [button-wrapper {:id "withdraw"
                    :text (text :t.actions/withdraw)
-                   :callback #(rf/dispatch [::judge-application "withdraw"])}])
+                   :on-click #(rf/dispatch [::judge-application "withdraw"])}])
 
 ;;;; More events and actions ;;;;
 
