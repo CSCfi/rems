@@ -73,22 +73,11 @@
 
 ;;; application page
 
-;; Need to use `fill-human`, because `fill` is so quick that the form
-;; drops characters here and there
-
-(defn fill-form-text-field [name input]
-  (fill-human *driver* [:form
-                        {:tag :label, :fn/text name}
-                        {:xpath "./ancestor::div[@class='form-group field']"}
-                        {:css "input[type='text']"}]
-              input))
-
-(defn fill-form-text-area [name input]
-  (fill-human *driver* [:form
-                        {:tag :label, :fn/text name}
-                        {:xpath "./ancestor::div[@class='form-group field']"}
-                        {:css "textarea"}]
-              input))
+(defn fill-form-field [label input]
+  (let [id (get-element-attr *driver* [:form {:tag :label, :fn/text label}] :for)]
+    ;; Need to use `fill-human`, because `fill` is so quick that the form
+    ;; drops characters here and there
+    (fill-human *driver* {:id id} input)))
 
 ;;; now declare your tests
 
@@ -101,8 +90,8 @@
     (apply-for-resource "ELFA Corpus, direct approval")
 
     ; On application page
-    (fill-form-text-field "Project name" "Test name")
-    (fill-form-text-area "Purpose of the project" "Test purpose")
+    (fill-form-field "Project name" "Test name")
+    (fill-form-field "Purpose of the project" "Test purpose")
     (doto *driver*
       (click-visible {:name :license1}) ; Accept license
       (click-visible {:name :license2}) ; Accept terms
