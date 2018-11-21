@@ -371,7 +371,7 @@
                 :class (when validation "is-invalid")
                 :disabled readonly
                 :on-change (set-attachment id title)}]
-       [:button.btn.btn-default {:on-click (fn [e] (.click (.getElementById js/document (id-to-name id))))} (text :t.form/upload)]])
+       [:button.btn.btn-secondary {:on-click (fn [e] (.click (.getElementById js/document (id-to-name id))))} (text :t.form/upload)]])
     (when (not-empty value)
       [:a {:href (str "/api/applications/attachments/?application-id=" app-id "&field-id=" id) :target "_blank"} value])]])
 
@@ -456,7 +456,7 @@
      :pending [spinner/big]
      :saved [:div [:i {:class ["fa fa-check-circle text-success"]}] (text :t.form/success)]
      :failed [:div [:i {:class "fa fa-times-circle text-danger"}]
-              (str (text :t.form/failed) ": " (:status error) " " (:status-text error))])])
+              (str (text :t.form/failed) ": " (:status-text error) "(" (:status error) ")")])])
 
 (defn- status-modal [state content]
   [modal/notification {:title (:description state)
@@ -469,7 +469,7 @@
   [:button.btn.mr-3
    {:id id
     :name id
-    :class (or class :btn-default)
+    :class (or class :btn-secondary)
     :on-click on-click}
    text])
 
@@ -737,7 +737,7 @@
 ;;; Actions tabs
 
 (defn- action-button [id content]
-  [:button.btn.btn-default.mr-3
+  [:button.btn.btn-secondary.mr-3
    {:id id
     :type "button" :data-toggle "collapse" :data-target (str "#actions-" id)}
    (str content " ...")])
@@ -779,7 +779,7 @@
 
 ;; TODO fix this, not supposed to be administration!
 (defn- cancel-button []
-  [:button.btn.btn-default
+  [:button.btn.btn-secondary
    {:on-click #(dispatch! "/#/administration")}
    (text :t.administration/cancel)])
 
