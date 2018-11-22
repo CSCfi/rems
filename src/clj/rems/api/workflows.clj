@@ -20,6 +20,7 @@
    :modifieruserid s/Str
    :title s/Str
    :final-round s/Num
+   :workflow s/Any
    :start DateTime
    :end (s/maybe DateTime)
    :active s/Bool
@@ -29,13 +30,14 @@
   [Workflow])
 
 (defn- format-workflow
-  [{:keys [id organization owneruserid modifieruserid title fnlround start endt active?]}]
+  [{:keys [id organization owneruserid modifieruserid title fnlround workflow start endt active?]}]
   {:id id
    :organization organization
    :owneruserid owneruserid
    :modifieruserid modifieruserid
    :title title
    :final-round fnlround
+   :workflow workflow
    :start start
    :end endt
    :active active?})
