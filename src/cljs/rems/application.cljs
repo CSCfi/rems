@@ -398,7 +398,7 @@
     (rf/dispatch [::set-license id (.. event -target -checked)])))
 
 (defn- license [id title approved readonly validation content]
-  [:div
+  [:div.license
    [:div.row
     [:div.col-1
      [:input {:type "checkbox"
@@ -456,7 +456,7 @@
      :pending [spinner/big]
      :saved [:div [:i {:class ["fa fa-check-circle text-success"]}] (text :t.form/success)]
      :failed [:div [:i {:class "fa fa-times-circle text-danger"}]
-              (str (text :t.form/failed) ": " (:status-text error) "(" (:status error) ")")])])
+              (str (text :t.form/failed) ": " (:status-text error) " (" (:status error) ")")])])
 
 (defn- status-modal [state content]
   [modal/notification {:title (:description state)
@@ -508,7 +508,7 @@
        (when-let [form-licenses (not-empty (:licenses form))]
          [:div.form-group.field
           [:h4 (text :t.form/licenses)]
-          (into [:div]
+          (into [:div#licenses]
                 (for [license form-licenses]
                   [field (assoc (localize-item license)
                                 :validation (get-in validation-by-field-id [:license (:id license)])
@@ -542,9 +542,10 @@
                      (last events))]
     [collapsible/component
      {:id "header"
-      :title [:span
-              (text :t.applications/state)
-              (when state (list ": " (localize-state state)))]
+      :title [:span#application-state
+              (str
+                (text :t.applications/state)
+                (when state (str ": " (localize-state state))))]
       :always [:div
                [:div.mb-3 {:class (str "state-" state)} (phases phases-data)]
                (when last-event

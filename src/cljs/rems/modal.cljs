@@ -39,7 +39,7 @@
                                                      :space-between
                                                      :align-items :center}}
                           title
-                          [:a.link.ml-3 {:on-click on-close}
+                          [:button.btn.btn-link.link.ml-3 {:on-click on-close}
                            [:i.fa.fa-times {:style {:margin 0}}]]]
                   :always [:div.full
                            [:div.modal--content content]
