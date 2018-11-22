@@ -61,11 +61,19 @@ To run tests that need a database:
 lein eftest :all
 ```
 
-To run all tests and output coverage:
+To run all tests and output coverage (the alias also builds cljs):
 
 ```
-lein with-profile test cloverage
+lein run-cloverage
 ```
+
+To run browser tests (requires chromedriver in $PATH, the alias also builds cljs):
+
+```
+lein browsertests
+```
+
+If browser tests fail, screenshots and DOM are written in `browsertest-errors`.
 
 Start REPL and run tests in there:
 
