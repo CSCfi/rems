@@ -75,7 +75,7 @@
   (click-visible *driver* [{:css "table.cart"}
                            {:fn/text resource-name}
                            {:xpath "./ancestor::tr"}
-                           {:css "button.apply-for-resource"}])
+                           {:css "button.apply-for-catalogue-items"}])
   (wait-visible *driver* {:tag :h2, :fn/text "Application"}))
 
 ;;; application page

@@ -54,7 +54,7 @@
        (mapv edn/read-string)))
 
 (defn- apply-button [items]
-  [:button.btn.btn-primary.apply-for-resource {:on-click #(application/apply-for items)}
+  [:button.btn.btn-primary.apply-for-catalogue-items {:on-click #(application/apply-for items)}
    (text :t.cart/apply)])
 
 (defn- item-view [item language & [apply-button?]]
