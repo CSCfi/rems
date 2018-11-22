@@ -456,7 +456,7 @@
      :pending [spinner/big]
      :saved [:div [:i {:class ["fa fa-check-circle text-success"]}] (text :t.form/success)]
      :failed [:div [:i {:class "fa fa-times-circle text-danger"}]
-              (str (text :t.form/failed) ": " (:status-text error) "(" (:status error) ")")])])
+              (str (text :t.form/failed) ": " (:status-text error) " (" (:status error) ")")])])
 
 (defn- status-modal [state content]
   [modal/notification {:title (:description state)
