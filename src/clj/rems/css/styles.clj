@@ -232,7 +232,7 @@
    [:.icon-link {:color "#6c757d" ; same colors as .btn-secondary
                  :cursor "pointer"}
     [:&:hover {:color "#5a6268"}]]
-   [:.modal--title ["a.link:not([href]):not([tabindex])"
+   [:.modal--title [:.link
                     {:border-radius "0.25em"
                      :padding "0.25em"
                      :text-align :center
