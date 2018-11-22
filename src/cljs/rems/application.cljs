@@ -5,6 +5,7 @@
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
             [rems.db.catalogue :refer [get-catalogue-item-title]]
+            [rems.modal :as modal]
             [rems.phase :refer [phases]]
             [rems.spinner :as spinner]
             [rems.text :refer [text text-format localize-state localize-event localize-time localize-item]]
@@ -133,14 +134,22 @@
 ;; status can be :pending :saved :failed or nil
 (rf/reg-event-db
  ::set-status
- (fn [db [_ value validation]]
+ (fn [db [_ {:keys [status description validation error]}]]
    (-> db
-       (assoc-in [::edit-application :status] value)
+       (assoc-in [::edit-application :status] {:open? (not (nil? status))
+                                               :status status
+                                               :description description
+                                               :error error})
        (assoc-in [::edit-application :validation] validation))))
+
+(rf/reg-sub
+ ::status
+ (fn [db _]
+   (get-in db [::edit-application :status])))
 
 ;;; saving application
 
-(defn- save-application [command application-id catalogue-items items licenses]
+(defn- save-application [command description application-id catalogue-items items licenses]
   (let [payload (merge {:command command
                         :items items
                         :licenses licenses}
@@ -150,18 +159,23 @@
     (post! "/api/applications/save"
            {:handler (fn [resp]
                        (if (:success resp)
-                         (do (rf/dispatch [::set-status :saved])
+                         (do (rf/dispatch [::set-status {:status :saved
+                                                         :description description}])
                              ;; HACK: we both set the location, and fire a fetch-application event
                              ;; because if the location didn't change, secretary won't fire the event
                              (navigate-to (:id resp))
                              (rf/dispatch [::enter-application-page (:id resp)]))
-                         (rf/dispatch [::set-status :failed (:validation resp)])))
-            :error-handler (fn [_] (rf/dispatch [::set-status :failed]))
+                         (rf/dispatch [::set-status {:status :failed
+                                                     :description description
+                                                     :validation (:validation resp)}])))
+            :error-handler (fn [error] (rf/dispatch [::set-status {:status :failed
+                                                                   :description description
+                                                                   :error error}]))
             :params payload})))
 
 (rf/reg-event-fx
  ::save-application
- (fn [{:keys [db]} [_ command]]
+ (fn [{:keys [db]} [_ command description]]
    (let [app-id (get-in db [::application :application :id])
          catalogue-items (get-in db [::application :catalogue-items])
          catalogue-ids (mapv :id catalogue-items)
@@ -175,61 +189,78 @@
        (doseq [i catalogue-items]
          (rf/dispatch [:rems.cart/remove-item i])))
      ;; TODO disable form while saving?
-     (rf/dispatch [::set-status :pending])
-     (save-application command app-id catalogue-ids items licenses))
+     (rf/dispatch [::set-status {:status :pending
+                                 :description description}])
+     (save-application command description app-id catalogue-ids items licenses))
    {}))
 
 ;;; judging application
 
-(defn- judge-application [command application-id round comment]
+(defn- judge-application [command application-id round comment description]
   (post! "/api/applications/judge"
          {:params {:command command
                    :application-id application-id
                    :round round
                    :comment comment}
           :handler (fn [resp]
-                     (rf/dispatch [::enter-application-page application-id]))}))
+                     (rf/dispatch [::set-status {:status :saved
+                                                 :description description}])
+                     (rf/dispatch [::enter-application-page application-id]))
+          :error-handler (fn [error]
+                           (rf/dispatch [::set-status {:status :failed
+                                                       :description description
+                                                       :error error}]))}))
 
 (rf/reg-event-fx
  ::judge-application
- (fn [{:keys [db]} [_ command]]
+ (fn [{:keys [db]} [_ command description]]
    (let [application-id (get-in db [::application :application :id])
          round (get-in db [::application :application :curround])
          comment (get db ::judge-comment "")]
+     (rf/dispatch [::set-status {:status :pending
+                                 :description description}])
      (rf/dispatch [::set-judge-comment ""])
-     (judge-application command application-id round comment)
+     (judge-application command application-id round comment description)
      {})))
 
 ;;; saving attachment
-(defn- save-attachment [application-id field-id form-data]
+(defn- save-attachment [application-id field-id form-data description]
   (post! (str "/api/applications/add_attachment?application-id=" application-id "&field-id=" field-id)
          {:body form-data
-          :error-handler (fn [_] (rf/dispatch [::set-status :failed]))}))
+          :error-handler (fn [_] (rf/dispatch [::set-status {:status :failed
+                                                             :description description}]))}))
 
-(defn- save-application-with-attachment [field-id form-data catalogue-items items licenses]
+(defn- save-application-with-attachment [field-id form-data catalogue-items items licenses description]
   (let [payload {:command "save"
                  :items items
                  :licenses licenses
                  :catalogue-items catalogue-items}]
+    ;; TODO this logic should be rewritten as a chain of save, save-attachment instead
     (post! "/api/applications/save"
            {:handler (fn [resp]
                        (if (:success resp)
-                         (do (save-attachment (:id resp) field-id form-data)
-                             (rf/dispatch [::set-status :saved])
+                         (do (save-attachment (:id resp) field-id form-data description)
+                             (rf/dispatch [::set-status {:status :saved
+                                                         :description description ; TODO here should be saving?
+                                                         }])
                              ;; HACK: we both set the location, and fire a fetch-application event
                              ;; because if the location didn't change, secretary won't fire the event
                              (navigate-to (:id resp))
                              (rf/dispatch [::enter-application-page (:id resp)]))
-                         (rf/dispatch [::set-status :failed (:validation resp)])))
-            :error-handler (fn [_] (rf/dispatch [::set-status :failed]))
+                         (rf/dispatch [::set-status {:status :failed
+                                                     :description description ; TODO here should be saving?
+                                                     :validation (:validation resp)}])))
+            :error-handler (fn [_] (rf/dispatch [::set-status {:status :failed
+                                                               :description description ; TODO here should be saving?
+                                                               }]))
             :params payload})))
 
 (rf/reg-event-fx
  ::save-attachment
- (fn [{:keys [db]} [_ field-id file]]
+ (fn [{:keys [db]} [_ field-id file description]]
    (let [application-id (get-in db [::application :application :id])]
      (if application-id
-       (save-attachment application-id field-id file)
+       (save-attachment application-id field-id file description)
        (let [catalogue-items (get-in db [::application :catalogue-items])
              catalogue-ids (mapv :id catalogue-items)
              items (get-in db [::edit-application :items])
@@ -238,7 +269,7 @@
                             (for [[id checked?] (get-in db [::edit-application :licenses])
                                   :when checked?]
                               [id "approved"]))]
-         (save-application-with-attachment field-id file catalogue-ids items licenses))))))
+         (save-application-with-attachment field-id file catalogue-ids items licenses description))))))
 
 ;;;; UI components ;;;;
 
@@ -281,13 +312,13 @@
   (str "field" id))
 
 (defn- set-attachment
-  [id]
+  [id description]
   (fn [event]
     (let [filecontent (aget (.. event -target -files) 0)
           form-data (doto (js/FormData.)
                       (.append "file" filecontent))]
       (rf/dispatch [::set-field id (.-name filecontent)])
-      (rf/dispatch [::save-attachment id form-data]))))
+      (rf/dispatch [::save-attachment id form-data description]))))
 
 (defn- field-validation-message [validation title]
   (when validation
@@ -339,7 +370,7 @@
                 :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
                 :class (when validation "is-invalid")
                 :disabled readonly
-                :on-change (set-attachment id)}]
+                :on-change (set-attachment id title)}]
        [:button.btn.btn-secondary {:on-click (fn [e] (.click (.getElementById js/document (id-to-name id))))} (text :t.form/upload)]])
     (when (not-empty value)
       [:a {:href (str "/api/applications/attachments/?application-id=" app-id "&field-id=" id) :target "_blank"} value])]])
@@ -418,23 +449,40 @@
                 [unsupported-field f])
     [unsupported-field f]))
 
-(defn- status-widget []
-  (let [status (:status @(rf/subscribe [::edit-application]))]
-    [:span (case status
-             nil ""
-             :pending [spinner/small]
-             :saved [:i {:class "fa fa-check-circle"}]
-             :failed [:i {:class "fa fa-times-circle text-danger"}])]))
+(defn- status-widget [status error]
+  [:div {:class (when (= :failed status) "alert alert-danger")}
+   (case status
+     nil ""
+     :pending [spinner/big]
+     :saved [:div [:i {:class ["fa fa-check-circle text-success"]}] (text :t.form/success)]
+     :failed [:div [:i {:class "fa fa-times-circle text-danger"}]
+              (str (text :t.form/failed) ": " (:status-text error) " (" (:status error) ")")])])
+
+(defn- status-modal [state content]
+  [modal/notification {:title (:description state)
+                       :content (or content [status-widget (:status state) (:error state)])
+                       :on-close #(rf/dispatch [::set-status nil])
+                       :shade? true
+                       }])
+
+(defn- button-wrapper [{:keys [id text class on-click]}]
+  [:button.btn.mr-3
+   {:id id
+    :name id
+    :class (or class :btn-secondary)
+    :on-click on-click}
+   text])
 
 (defn- save-button []
-  [:button#save.btn.btn-secondary
-   {:name "save" :onClick #(rf/dispatch [::save-application "save"])}
-   (text :t.form/save)])
+  [button-wrapper {:id "save"
+                   :text (text :t.form/save)
+                   :on-click #(rf/dispatch [::save-application "save" (text :t.form/save)])}])
 
 (defn- submit-button []
-  [:button#submit.btn.btn-primary
-   {:name "submit" :onClick #(rf/dispatch [::save-application "submit"])}
-   (text :t.form/submit)])
+  [button-wrapper {:id "submit"
+                   :text (text :t.form/submit)
+                   :class :btn-primary
+                   :on-click #(rf/dispatch [::save-application "submit" (text :t.form/submit)])}])
 
 (defn- fields [form edit-application]
   (let [application (:application form)
@@ -465,12 +513,7 @@
                   [field (assoc (localize-item license)
                                 :validation (get-in validation-by-field-id [:license (:id license)])
                                 :readonly readonly?
-                                :approved (get licenses (:id license)))]))])
-       (when-not readonly?
-         [:div.col.commands
-          [status-widget]
-          [save-button]
-          [submit-button]])]}]))
+                                :approved (get licenses (:id license)))]))])]}]))
 
 ;; Header
 
@@ -548,39 +591,43 @@
 ;; Approval
 
 (defn- approve-button []
-  [:button#submit.btn.btn-primary
-   {:name "approve" :onClick #(rf/dispatch [::judge-application "approve"])}
-   (text :t.actions/approve)])
+  [button-wrapper {:id "approve"
+                   :class "btn-primary"
+                   :text (text :t.actions/approve)
+                   :on-click #(rf/dispatch [::judge-application "approve" (text :t.actions/approve)])}])
 
 (defn- reject-button []
-  [:button#submit.btn.btn-secondary
-   {:name "reject" :onClick #(rf/dispatch [::judge-application "reject"])}
-   (text :t.actions/reject)])
+  [button-wrapper {:id "reject"
+                   :class "btn-danger"
+                   :text (text :t.actions/reject)
+                   :on-click #(rf/dispatch [::judge-application "reject" (text :t.actions/reject)])}])
 
 (defn- return-button []
-  [:button#submit.btn.btn-secondary
-   {:name "return" :onClick #(rf/dispatch [::judge-application "return"])}
-   (text :t.actions/return)])
+  [button-wrapper {:id "return"
+                   :text (text :t.actions/return)
+                   :on-click #(rf/dispatch [::judge-application "return" (text :t.actions/return)])}])
 
 (defn- review-button []
-  [:button#submit.btn.btn-primary
-   {:name "review" :onClick #(rf/dispatch [::judge-application "review"])}
-   (text :t.actions/review)])
+  [button-wrapper {:id "review"
+                   :text (text :t.actions/review)
+                   :class "btn-primary"
+                   :on-click #(rf/dispatch [::judge-application "review" (text :t.actions/review)])}])
 
 (defn- third-party-review-button []
-  [:button#submit.btn.btn-primary
-   {:name "third-party-review" :onClick #(rf/dispatch [::judge-application "third-party-review"])}
-   (text :t.actions/review)])
+  [button-wrapper {:id "third-party-review"
+                   :text (text :t.actions/review)
+                   :class "btn-primary"
+                   :on-click #(rf/dispatch [::judge-application "third-party-review" (text :t.actions/review)])}])
 
 (defn- close-button []
-  [:button#submit.btn.btn-secondary
-   {:name "close" :onClick #(rf/dispatch [::judge-application "close"])}
-   (text :t.actions/close)])
+  [button-wrapper {:id "close"
+                   :text (text :t.actions/close)
+                   :on-click #(rf/dispatch [::judge-application "close" (text :t.actions/close)])}])
 
 (defn- withdraw-button []
-  [:button#submit.btn.btn-secondary
-   {:name "withdraw" :onClick #(rf/dispatch [::judge-application "withdraw"])}
-   (text :t.actions/withdraw)])
+  [button-wrapper {:id "withdraw"
+                   :text (text :t.actions/withdraw)
+                   :on-click #(rf/dispatch [::judge-application "withdraw" (text :t.actions/withdraw)])}])
 
 ;;;; More events and actions ;;;;
 
@@ -716,47 +763,47 @@
          [:button.btn.btn-primary {:data-dismiss "modal"
                                    :on-click #(rf/dispatch [::send-third-party-review-request selected-third-party-reviewers review-comment])} (text :t.actions/review-request)]]]]]]))
 
-(defn review-request-button []
+(defn request-review-button []
   [:button#review-request.btn.btn-secondary
    {:type "button" :data-toggle "modal" :data-target "#review-request-modal"}
-   (text :t.actions/review-request)])
+   (str (text :t.actions/review-request) " ...")])
 
 ;;; Actions tabs
 
-(defn- action-tab [action-name text]
-  (let [action-name (str "actions-" action-name)]
-    [:a.nav-item.nav-link
-     {:id (str action-name "-tab")
-      :data-toggle "tab"
-      :href (str "#" action-name)
-      :role "tab"
-      :aria-controls action-name
-      :aria-selected false}
-     text]))
+(defn- action-button [id content]
+  [:button.btn.btn-secondary.mr-3
+   {:id id
+    :type "button" :data-toggle "collapse" :data-target (str "#actions-" id)}
+   (str content " ...")])
 
 (defn- approve-tab []
-  [action-tab "approve" (text :t.actions/approve)])
+  [action-button "approve" (text :t.actions/approve)])
 
 (defn- reject-tab []
-  [action-tab "reject" (text :t.actions/reject)])
+  [action-button "reject" (text :t.actions/reject)])
 
 (defn- return-tab []
-  [action-tab "return" (text :t.actions/return)])
+  [action-button "return" (text :t.actions/return)])
 
 (defn- review-tab []
-  [action-tab "review" (text :t.actions/review)])
+  [action-button "review" (text :t.actions/review)])
 
 (defn- third-party-review-tab []
-  [action-tab "3rd-party-review" (text :t.actions/review)])
+  [action-button "3rd-party-review" (text :t.actions/review)])
 
-(defn- close-tab []
-  [action-tab "close" (text :t.actions/close)])
+(defn- applicant-close-tab []
+  [action-button "applicant-close" (text :t.actions/close)])
+
+(defn- approver-close-tab []
+  [action-button "approver-close" (text :t.actions/close)])
 
 (defn- withdraw-tab []
-  [action-tab "withdraw" (text :t.actions/withdraw)])
+  [action-button "withdraw" (text :t.actions/withdraw)])
 
+;; TODO don't use modal but tab
 (defn- review-request-tab []
-  [action-tab "review-request" (text :t.actions/review-request)])
+  [:div.mr-3 {:style {:display :inline-block}} [request-review-button]]
+  #_[action-button "review-request" (text :t.actions/review-request)])
 
 (defn- action-comment [label-title]
   [:div.form-group
@@ -766,86 +813,113 @@
               :value @(rf/subscribe [::judge-comment])
               :on-change #(rf/dispatch [::set-judge-comment (.. % -target -value)])}]])
 
-(defn- action-form [id comment-title button]
-  (let [id (str "actions-" id)]
-    [:div.tab-pane.fade {:id id :role "tabpanel" :aria-labelledby (str id "-tab")}
-     (when comment-title
-       [action-comment comment-title])
-     [:div.col.commands
-      button]]))
+;; TODO move to common?
+(defn- cancel-button []
+  [:button.btn.btn-secondary
+   {:on-click #(dispatch! "/#/administration")}
+   (text :t.administration/cancel)])
+
+(defn- action-form [id title comment-title button]
+  [:div.collapse {:id (str "actions-" id) :data-parent "#actions-tabs"}
+   [:h2.mt-5 title]
+   (when comment-title
+     [action-comment comment-title])
+   [:div.col.commands
+    [cancel-button]
+    button]])
 
 (defn- approve-form []
   [action-form "approve"
+   (text :t.actions/approve)
    (text :t.form/add-comments-shown-to-applicant)
    [approve-button]])
 
 (defn- reject-form []
   [action-form "reject"
+   (text :t.actions/reject)
    (text :t.form/add-comments-shown-to-applicant)
    [reject-button]])
 
 (defn- return-form []
   [action-form "return"
+   (text :t.actions/return)
    (text :t.form/add-comments-shown-to-applicant)
    [return-button]])
 
 (defn- review-form []
   [action-form "review"
+   (text :t.actions/review)
    (text :t.form/add-comments-not-shown-to-applicant)
    [review-button]])
 
 (defn- third-party-review-form []
   [action-form "3rd-party-review"
+   (text :t.actions/review-request)
    (text :t.form/add-comments-not-shown-to-applicant)
    [third-party-review-button]])
 
-(defn- close-form []
-  [action-form "close"
+(defn- applicant-close-form []
+  [action-form "applicant-close"
+   (text :t.actions/close)
+   (text :t.form/add-comments)
+   [close-button]])
+
+(defn- approver-close-form []
+  [action-form "approver-close"
+   (text :t.actions/close)
    (text :t.form/add-comments-shown-to-applicant)
    [close-button]])
 
 (defn- withdraw-form []
   [action-form "withdraw"
+   (text :t.actions/withdraw)
    (text :t.form/add-comments)
    [withdraw-button]])
 
 (defn- review-request-form []
-  [action-form "review-request" nil [review-request-button]])
+  [action-form "review-request" nil [request-review-button]])
 
-(defn- actions-tab-content []
-  [:div.tab-content
+(defn- actions-content []
+  [:div#actions-tabs.mt-3
    [approve-form]
    [reject-form]
    [return-form]
    [review-form]
    [third-party-review-form]
-   [close-form]
+   [applicant-close-form]
+   [approver-close-form]
    [withdraw-form]
    [review-request-form]])
 
 (defn- actions-form [app]
-  (let [tabs (concat (when (:can-close? app)
-                       [[close-tab]])
+  (let [state (:state app)
+        editable? (contains? #{"draft" "returned" "withdrawn"} state)
+        tabs (concat (when (:can-close? app)
+                       [(if (:is-applicant? app)
+                          ^{:key :applicant-close-tab} [applicant-close-tab]
+                          ^{:key :approver-close-tab} [approver-close-tab])])
                      (when (:can-withdraw? app)
-                       [[withdraw-tab]])
+                       [^{:key :withdraw-tab} [withdraw-tab]])
                      (when (:can-approve? app)
-                       [[reject-tab]
-                        [return-tab]
-                        [review-request-tab]
-                        [approve-tab]])
+                       [^{:key :review-request-tab} [review-request-tab]
+                        ^{:key :return-tab} [return-tab]
+                        ^{:key :reject-tab} [reject-tab]
+                        ^{:key :approve-tab} [approve-tab]])
                      (when (= :normal (:review-type app))
-                       [[review-tab]])
+                       [^{:key :review-tab} [review-tab]])
                      (when (= :third-party (:review-type app))
-                       [[third-party-review-tab]]))]
+                       [^{:key :third-party-review-tab} [third-party-review-tab]])
+                     (when (and (:is-applicant? app) editable?)
+                       [^{:key :save-button} [save-button]
+                        ^{:key :submit-button} [submit-button]]))]
     (if (empty? tabs)
       [:div]
       [collapsible/component
        {:id "actions"
         :title (text :t.form/actions)
         :always [:div
-                 (into [:nav#pills-tab.nav.nav-tabs.mb-3 {:role "tablist"}]
-                       tabs)
-                 [actions-tab-content]]}])))
+                 tabs
+                 [actions-content]]}])))
 
 ;; Whole application
 
@@ -869,47 +943,51 @@
                        ^{:key (:id item)}
                        [:li (get-catalogue-item-title item language)]))]}]))
 
-(defn- render-application [application edit-application language]
+(defn- render-application [application edit-application language status]
   ;; TODO should rename :application
   (let [app (:application application)
         state (:state app)
         phases (:phases application)
         events (:events app)
-        user-attributes (:applicant-attributes application)]
+        user-attributes (:applicant-attributes application)
+        messages (remove nil?
+                         [(disabled-items-warning (:catalogue-items application)) ; NB: eval this here so we get nil or a warning
+                          (when @(rf/subscribe [::send-third-party-review-request-message])
+                            [flash-message
+                             {:status :success
+                              :contents (text :t.actions/review-request-success)}])
+                          (when (:validation edit-application)
+                            [flash-message
+                             {:status :failure
+                              :contents [:div (text :t.form/validation.errors)
+                                         [format-validation-messages (:validation edit-application) language]]}])])]
     [:div
      [:div {:class "float-right"} [pdf-button (:id app)]]
      [:h2 (text :t.applications/application)]
-     [disabled-items-warning (:catalogue-items application)]
-     (when @(rf/subscribe [::send-third-party-review-request-message])
-       [flash-message
-        {:status :success
-         :contents (text :t.actions/review-request-success)}])
-     (when (:validation edit-application)
-       [flash-message
-        {:status :failure
-         :contents [:div (text :t.form/validation.errors)
-                    [format-validation-messages (:validation edit-application) language]]}])
-     [:div.spaced-sections
-      [application-header state phases events]
-      (when user-attributes
-        [applicant-info "applicant-info" user-attributes])
-      [applied-resources (:catalogue-items application)]
-      [fields application edit-application]
-      [actions-form app]]
-     [review-request-modal]]))
+     (into [:div] messages)
+     [application-header state phases events]
+     (when user-attributes
+       [:div.mt-3 [applicant-info "applicant-info" user-attributes]])
+     [:div.mt-3 [applied-resources (:catalogue-items application)]]
+     [:div.my-3 [fields application edit-application]]
+     [:div.mb-3 [actions-form app]]
+     [review-request-modal]
+     (when (:open? status)
+       [status-modal status (when (seq messages) (into [:div] messages))])]))
 
 ;;;; Entrypoint ;;;;
 
 (defn application-page []
-  (let [application (rf/subscribe [::application])
-        edit-application (rf/subscribe [::edit-application])
-        language (rf/subscribe [:language])
-        loading? (rf/subscribe [::loading-application?])]
-    (if @loading?
+  (let [application @(rf/subscribe [::application])
+        edit-application @(rf/subscribe [::edit-application])
+        language @(rf/subscribe [:language])
+        loading? @(rf/subscribe [::loading-application?])
+        status @(rf/subscribe [::status])]
+    (if loading?
       [:div
        [:h2 (text :t.applications/application)]
        [spinner/big]]
-      [render-application @application @edit-application @language])))
+      [render-application application edit-application language status])))
 
 ;;;; Guide ;;;;
 
@@ -1016,7 +1094,7 @@
              {:title "Form title"
               :application {:id 17 :state "draft"
                             :can-approve? false
-                            :can-close? false
+                            :can-close? true
                             :review-type nil}
               :catalogue-items [{:title "An applied item"}]
               :items [{:id 1 :type "text" :title "Field 1" :inputprompt "prompt 1"}

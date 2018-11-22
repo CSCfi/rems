@@ -9,6 +9,7 @@
             [rems.catalogue :as catalogue]
             [rems.collapsible :as collapsible]
             [rems.language-switcher :as language-switcher]
+            [rems.modal :as modal]
             [rems.navbar :as nav]
             [rems.phase :as phase]
             [rems.spinner :as spinner])
@@ -67,6 +68,9 @@
 
     [:h2 "Collapsible component"]
     [collapsible/guide]
+
+    [:h2 "Modal"]
+    [modal/guide]
 
     [:h2 "Applications"]
     [application/guide]
