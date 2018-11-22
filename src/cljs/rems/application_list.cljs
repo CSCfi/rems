@@ -52,7 +52,7 @@
 
    set-sorting is a callback that is called with a new sorting when it changes"
   [columns sorting set-sorting apps]
-  [table/component +columns+ columns sorting set-sorting :id apps])
+  [table/component +columns+ columns sorting set-sorting :id apps {:class "applications"}])
 
 (def ^:private +example-applications+
   [{:id 1 :catalogue-items [{:title "Item 5"}] :state "draft" :applicantuserid "alice"

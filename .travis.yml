@@ -3,6 +3,9 @@ lein: 2.8.1
 dist: trusty
 addons:
   chrome: stable
+  apt:
+    packages:
+      - chromium-chromedriver
 branches:
   only:
     - master
@@ -19,12 +22,12 @@ services:
 before_script:
   - sudo service postgresql stop # why is this running even though we didn't ask for it?
   - ./dev_db.sh
+  - ln -s /usr/lib/chromium-browser/chromedriver ~/bin/chromedriver
 script:
   # verify that we can run unit tests without the database:
   - DATABASE_URL=invalid lein test
-  # run all tests with coverage tracking:
-  - lein with-profile test cloverage
-  # frontend tests on phantomjs in travis for now
+  # build cljs and run all tests with coverage tracking:
+  - lein run-cloverage
   - lein doo chrome-headless test once
   - lein uberwar
   - ./dev_transfer.sh transfer-test-data/demo_liferay_20180115.sql transfer-test-data/demo_rems_20180115.sql && lein run validate
