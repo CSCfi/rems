@@ -1,10 +1,15 @@
 (ns rems.db.workflow
   (:require [rems.db.core :as db]
             [rems.db.workflow-actors :as actors]
-            [rems.util :refer [get-user-id]]))
+            [rems.util :refer [get-user-id]]
+            [cheshire.core :as cheshire]))
+
+(defn- parse-workflow-body [json]
+  (cheshire/parse-string json true))
 
 (defn get-workflows [filters]
   (->> (db/get-workflows)
+       (map #(update % :workflow parse-workflow-body))
        (map db/assoc-active)
        (db/apply-filters filters)))
 
@@ -14,6 +19,16 @@
                                         :modifieruserid (get-user-id),
                                         :title title,
                                         :fnlround 0}))]
+    {:id wfid}))
+
+(defn- create-dynamic-workflow! [{:keys [organization title type handlers]}]
+  (let [wfid (:id (db/create-workflow! {:organization organization,
+                                        :owneruserid (get-user-id),
+                                        :modifieruserid (get-user-id),
+                                        :title title,
+                                        :fnlround 0
+                                        :workflow (cheshire/generate-string {:type type
+                                                                             :handlers handlers})}))]
     {:id wfid}))
 
 (defn- create-rounds-workflow! [{:keys [organization title rounds]}]
@@ -33,5 +48,5 @@
 (defn create-workflow! [command]
   (case (:type command)
     :auto-approve (create-auto-approve-workflow! command)
-    :dynamic (assert false "TODO") ;; TODO
+    :dynamic (create-dynamic-workflow! command)
     :rounds (create-rounds-workflow! command)))

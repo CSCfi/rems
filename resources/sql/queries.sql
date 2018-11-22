@@ -403,7 +403,8 @@ AND ci.id = :catid
 
 -- :name get-workflows :? :*
 SELECT
-  wf.id, wf.organization, wf.owneruserid, wf.modifieruserid, wf.title, wf.fnlround, wf.visibility, wf.start, wf.endt
+  wf.id, wf.organization, wf.owneruserid, wf.modifieruserid, wf.title, wf.fnlround, wf.visibility, wf.start, wf.endt,
+  wf.workflowBody::TEXT as workflow
 FROM workflow wf
 
 -- :name clear-field-value! :!

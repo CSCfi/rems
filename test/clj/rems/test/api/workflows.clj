@@ -28,6 +28,7 @@
                :round 0
                :role "approver"}]
              (:actors simple)))))
+
   (testing "create"
     (let [response (-> (request :post (str "/api/workflows/create"))
                        (json-body {:organization "abc"
@@ -59,6 +60,7 @@
                            {:actoruserid "bob", :role "reviewer", :round 0}
                            {:actoruserid "carl", :role "approver", :round 1}]}
                  (select-keys workflow [:id :organization :title :final-round :actors])))))))
+
   (testing "create auto-approved workflow"
     (let [response (-> (request :post (str "/api/workflows/create"))
                        (json-body {:organization "abc"
@@ -82,7 +84,35 @@
                   :title "auto-approved workflow"
                   :final-round 0
                   :actors []}
-                 (select-keys workflow [:id :organization :title :final-round :actors]))))))))
+                 (select-keys workflow [:id :organization :title :final-round :actors])))))))
+
+  (testing "create dynamic workflow"
+    (let [response (-> (request :post (str "/api/workflows/create"))
+                       (json-body {:organization "abc"
+                                   :title "dynamic workflow"
+                                   :type :dynamic
+                                   :handlers [{:userid "bob"}
+                                              {:userid "carl"}]})
+                       (authenticate "42" "owner")
+                       app)
+          body (read-body response)
+          id (:id body)]
+      (is (response-is-ok? response))
+      (is (< 0 id))
+      (testing "and fetch"
+        (let [response (-> (request :get "/api/workflows")
+                           (authenticate "42" "owner")
+                           app)
+              workflows (read-body response)
+              workflow (first (filter #(= id (:id %)) workflows))]
+          (is (response-is-ok? response))
+          (is (= {:id id
+                  :organization "abc"
+                  :title "dynamic workflow"
+                  :workflow {:type "dynamic"
+                             :handlers [{:userid "bob"}
+                                        {:userid "carl"}]}}
+                 (select-keys workflow [:id :organization :title :workflow]))))))))
 
 (deftest workflows-api-filtering-test
   (let [unfiltered-response (-> (request :get "/api/workflows")
