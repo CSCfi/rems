@@ -870,27 +870,35 @@
          :add-fn #(rf/dispatch [::add-selected-third-party-reviewer %])
          :remove-fn #(rf/dispatch [::remove-selected-third-party-reviewer %])}]]]]))
 
-(defn- actions-form [app]
+(defn- dynamic-actions [app]
+  [])
+
+(defn- static-actions [app]
   (let [state (:state app)
-        editable? (contains? #{"draft" "returned" "withdrawn"} state)
-        tabs (concat (when (:can-close? app)
-                       [(if (:is-applicant? app)
-                          ^{:key :applicant-close-tab} [applicant-close-tab]
-                          ^{:key :approver-close-tab} [approver-close-tab])])
-                     (when (:can-withdraw? app)
-                       [^{:key :withdraw-tab} [withdraw-tab]])
-                     (when (:can-approve? app)
-                       [^{:key :review-request-tab} [review-request-tab]
-                        ^{:key :return-tab} [return-tab]
-                        ^{:key :reject-tab} [reject-tab]
-                        ^{:key :approve-tab} [approve-tab]])
-                     (when (= :normal (:review-type app))
-                       [^{:key :review-tab} [review-tab]])
-                     (when (= :third-party (:review-type app))
-                       [^{:key :third-party-review-tab} [third-party-review-tab]])
-                     (when (and (:is-applicant? app) editable?)
-                       [^{:key :save-button} [save-button]
-                        ^{:key :submit-button} [submit-button]]))
+        editable? (contains? #{"draft" "returned" "withdrawn"} state)]
+    (concat (when (:can-close? app)
+              [(if (:is-applicant? app)
+                 ^{:key :applicant-close-tab} [applicant-close-tab]
+                 ^{:key :approver-close-tab} [approver-close-tab])])
+            (when (:can-withdraw? app)
+              [^{:key :withdraw-tab} [withdraw-tab]])
+            (when (:can-approve? app)
+              [^{:key :review-request-tab} [review-request-tab]
+               ^{:key :return-tab} [return-tab]
+               ^{:key :reject-tab} [reject-tab]
+               ^{:key :approve-tab} [approve-tab]])
+            (when (= :normal (:review-type app))
+              [^{:key :review-tab} [review-tab]])
+            (when (= :third-party (:review-type app))
+              [^{:key :third-party-review-tab} [third-party-review-tab]])
+            (when (and (:is-applicant? app) editable?)
+              [^{:key :save-button} [save-button]
+               ^{:key :submit-button} [submit-button]]))))
+
+(defn- actions-form [app]
+  (let [tabs (if (= :dynamic (get-in app [:workflow :type]))
+               (dynamic-actions app)
+               (static-actions app))
         forms [:div#actions-tabs.mt-3
                [approve-form]
                [reject-form]
