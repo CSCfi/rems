@@ -544,8 +544,8 @@
      {:id "header"
       :title [:span#application-state
               (str
-                (text :t.applications/state)
-                (when state (str ": " (localize-state state))))]
+               (text :t.applications/state)
+               (when state (str ": " (localize-state state))))]
       :always [:div
                [:div.mb-3 {:class (str "state-" state)} (phases phases-data)]
                (when last-event
