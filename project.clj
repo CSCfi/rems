@@ -105,7 +105,7 @@
 
   :profiles
   {:uberjar {:omit-source true
-             :prep-tasks [["shell" "sh" "-c" "mkdir -p target/uberjar/resources && git describe --always --dirty=-custom > target/uberjar/resources/git-describe.txt"]
+             :prep-tasks [["shell" "sh" "-c" "mkdir -p target/uberjar/resources && git describe --tags --long --always --dirty=-custom > target/uberjar/resources/git-describe.txt"]
                           "compile"
                           ["cljsbuild" "once" "min"]]
              :cljsbuild {:builds {:min {:source-paths ["src/cljc" "src/cljs"]
