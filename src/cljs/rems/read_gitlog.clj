@@ -21,4 +21,4 @@
         {:version version
          :revision revision
          :repo-url repo-url}))
-    (catch java.io.IOException _ "")))
+    (catch java.io.IOException _ nil)))
