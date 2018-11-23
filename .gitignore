@@ -21,3 +21,4 @@
 /.rebel_readline_history
 /package-lock.json
 /browsertest-errors
+/resources/git-describe.txt
