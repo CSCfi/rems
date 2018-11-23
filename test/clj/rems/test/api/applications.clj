@@ -801,6 +801,11 @@
                          app)
             data (read-body response)]
         (is (= "workflow/dynamic" (get-in data [:application :workflow :type])))
+        (is (= [{:actor "alice"
+                 :application-id 12
+                 :event "event/submitted"
+                 :time nil}]
+               (get-in data [:application :dynamic-events])))
         (is (= ["rems.workflow.dynamic/add-member"] (get-in data [:application :possible-commands])))))
     (testing "getting dynamic application as handler"
       (let [response (-> (request :get "/api/applications/12")

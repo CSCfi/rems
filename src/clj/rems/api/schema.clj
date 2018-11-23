@@ -40,25 +40,24 @@
    :value (s/maybe s/Str)})
 
 (s/defschema Event
-  s/Any
-  ;; HACK for dynamic applications
-  #_{:userid (s/maybe s/Str)
-     :round s/Num
-     :event s/Str
-     :comment (s/maybe s/Str)
-     :time DateTime
-     :eventdata s/Any})
+  {:userid (s/maybe s/Str)
+   :round s/Num
+   :event s/Str
+   :comment (s/maybe s/Str)
+   :time DateTime
+   :eventdata s/Any})
 
 (s/defschema Application
   {:id (s/maybe s/Num) ;; does not exist for unsaved draft
    :formid s/Num
-   :state s/Any ;; HACK for dynamic applications
+   :state (s/cond-pre s/Str s/Keyword) ;; HACK for dynamic applications
    :applicantuserid s/Str
    (s/optional-key :start) DateTime ;; does not exist for draft
    :wfid s/Num
    (s/optional-key :curround) s/Num ;; does not exist for draft
    (s/optional-key :fnlround) s/Num ;; does not exist for draft
-   :events [Event]
+   (s/optional-key :events) [Event]
+   (s/optional-key :dynamic-events) [s/Any] ;; TODO schema for dynamic events
    (s/optional-key :can-approve?) s/Bool
    (s/optional-key :can-close?) s/Bool
    (s/optional-key :can-withdraw?) s/Bool

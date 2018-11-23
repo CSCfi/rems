@@ -794,7 +794,7 @@
         events (map fix-event-from-db (db/get-application-events {:application application-id}))
         fixed-application (assoc application
                                  :state ::dynamic/draft
-                                 :events events
+                                 :dynamic-events events
                                  :workflow (fix-workflow-from-db (:workflow application)))]
     (assert (= :workflow/dynamic (get-in fixed-application [:workflow :type])))
     (dynamic/assoc-possible-commands ;; TODO: this shouldn't probably be here
