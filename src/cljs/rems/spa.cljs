@@ -24,6 +24,7 @@
             [rems.navbar :as nav]
             [rems.text :refer [text]]
             [rems.util :refer [dispatch! fetch]])
+  (:require-macros [rems.read-gitlog :refer [read-current-version]])
   (:import goog.History))
 
 ;;; subscriptions
@@ -207,7 +208,12 @@
 
 (defn footer []
   [:footer.footer
-   [:div.container [:nav.navbar [:div.navbar-text (text :t/footer)]]]])
+   [:div.container [:nav.navbar
+                    [:div.navbar-text (text :t/footer)]
+                    (when-let [{:keys [version revision repo-url]} (read-current-version)]
+                      [:div#footer-release-number
+                       [:a {:href (str repo-url revision)}
+                        version]])]]])
 
 (defn logo []
   [:div.logo [:div.container.img]])
