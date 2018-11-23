@@ -6,6 +6,7 @@
             [rems.db.core :as db]
             [rems.db.roles :as roles]
             [rems.db.users :as users]
+            [rems.db.workflow :as workflow]
             [rems.db.workflow-actors :as actors]
             [rems.locales :as locales]
             [rems.util :refer [get-user-id]]))
@@ -127,7 +128,10 @@
         with-review (:id (db/create-workflow! {:organization "nbn" :owneruserid owner :modifieruserid owner :title "with review" :fnlround 1}))
         two-round (:id (db/create-workflow! {:organization "nbn" :owneruserid owner :modifieruserid owner :title "two rounds" :fnlround 1}))
         different (:id (db/create-workflow! {:organization "nbn" :owneruserid owner :modifieruserid owner :title "two rounds, different approvers" :fnlround 1}))
-        expired (:id (db/create-workflow! {:organization "nbn" :owneruserid owner :modifieruserid owner :title "workflow has already expired, should not be seen" :fnlround 0 :endt (time/minus (time/now) (time/years 1))}))]
+        expired (:id (db/create-workflow! {:organization "nbn" :owneruserid owner :modifieruserid owner :title "workflow has already expired, should not be seen" :fnlround 0 :endt (time/minus (time/now) (time/years 1))}))
+        dynamic (binding [context/*user* {"eppn" "owner"}]
+                  (:id (workflow/create-workflow! {:organization "nbn" :title "dynamic workflow"
+                                                   :type :dynamic :handlers [approver1]})))]
     ;; either approver1 or approver2 can approve
     (actors/add-approver! simple approver1 0)
     (actors/add-approver! simple approver2 0)
@@ -172,7 +176,8 @@
      :with-review with-review
      :two-round two-round
      :different different
-     :expired expired}))
+     :expired expired
+     :dynamic dynamic}))
 
 (defn- create-resource-license! [resid text owner]
   (let [licid (:id (db/create-license!
@@ -250,6 +255,15 @@
         (applications/return-application app-id 0 "comment for return"))
       (applications/submit-application app-id))))
 
+(defn- create-dynamic-application! [catid wfid applicant]
+  (binding [context/*user* {"eppn" applicant}]
+    (let [app-id (applications/create-new-draft wfid)]
+      (db/add-application-item! {:application app-id :item catid})
+      (applications/dynamic-command! {:type :rems.workflow.dynamic/submit
+                                      :actor applicant
+                                      :application-id app-id})
+      app-id)))
+
 (defn- create-review-application! [catid wfid users]
   (let [applicant (users :applicant1)
         approver (users :approver1)
@@ -299,8 +313,8 @@
         _ (create-expired-form!)
         workflows (create-workflows! +fake-users+)
         _ (create-catalogue-item! res1 (:minimal workflows) form
-                                        {"en" "ELFA Corpus, direct approval"
-                                         "fi" "ELFA-korpus, suora hyväksyntä"})
+                                  {"en" "ELFA Corpus, direct approval"
+                                   "fi" "ELFA-korpus, suora hyväksyntä"})
         simple (create-catalogue-item! res1 (:simple workflows) form
                                        {"en" "ELFA Corpus, one approval"
                                         "fi" "ELFA-korpus, yksi hyväksyntä"})
@@ -311,8 +325,8 @@
                                             {"en" "ELFA Corpus, with review"
                                              "fi" "ELFA-korpus, katselmoinnilla"})
         _ (create-catalogue-item! res1 (:different workflows) form
-                                          {"en" "ELFA Corpus, two rounds of approval by different approvers"
-                                           "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})
+                                  {"en" "ELFA Corpus, two rounds of approval by different approvers"
+                                   "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})
         disabled (create-catalogue-item! res1 (:simple workflows) form
                                          {"en" "ELFA Corpus, one approval (extra data, disabled)"
                                           "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti, pois käytöstä)"})]
@@ -324,7 +338,10 @@
     (create-review-application! with-review (:with-review workflows) +fake-users+)
     (create-application-with-expired-resource-license! (:simple workflows) form +fake-users+)
     (create-application-before-new-resource-license!  (:simple workflows) form +fake-users+)
-    (create-expired-license!)))
+    (create-expired-license!)
+    (let [dynamic (create-catalogue-item! res1 (:dynamic workflows) form
+                                          {"en" "Dynamic workflow" "fi" "Dynaaminen työvuo"})]
+      (create-dynamic-application! dynamic (:dynamic workflows) (+fake-users+ :applicant1)))))
 
 (defn create-demo-data! []
   (create-demo-users-and-roles!)

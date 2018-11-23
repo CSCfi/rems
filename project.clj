@@ -88,6 +88,7 @@
   ;; flag tests that need a db with ^:integration
   :test-selectors {:default #(not (or (:integration %) (:browser %)))
                    :browser :browser
+                   :integration #(not (:browser %))
                    :all (constantly true)
                    :focused :focused}
   :eftest {:multithread? false} ;; integration tests aren't safe to run in parallel

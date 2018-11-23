@@ -145,12 +145,15 @@
 (defn is-applicant? [application]
   (= (:applicantuserid application) (get-user-id)))
 
+(declare is-dynamic-handler?)
+
 (defn may-see-application? [application]
   (let [application-id (:id application)]
     (or (is-applicant? application)
         (is-approver? application-id)
         (is-reviewer? application-id)
-        (is-third-party-reviewer? application))))
+        (is-third-party-reviewer? application)
+        (is-dynamic-handler? application))))
 
 (defn- can-close? [application]
   (let [application-id (:id application)]
@@ -379,7 +382,9 @@
                    :can-close? true
                    :can-withdraw? false
                    :can-third-party-review? false
-                   :is-applicant? true}
+                   :is-applicant? true
+                   :workflow {...}
+                   :possible-actions #{...}}
      :applicant-attributes {\"eppn\" \"developer\"
                             \"email\" \"developer@e.mail\"
                             \"displayName\" \"deve\"
@@ -399,10 +404,10 @@
                  :title \"LGPL\"
                  :textcontent \"http://foo\"
                  :localizations {\"fi\" {:title \"...\" :textcontent \"...\"}}
-                 :approved false}]}
+                 :approved false}]
      :phases [{:phase :apply :active? true :text :t.phases/apply}
               {:phase :approve :text :t.phases/approve}
-              {:phase :result :text :t.phases/approved}]"
+              {:phase :result :text :t.phases/approved}]}"
   ([application-id]
    (let [form (db/get-form-for-application {:application application-id})
          _ (assert form)
@@ -604,18 +609,22 @@
 
 ;;; Public event api
 
+(declare get-dynamic-application-state)
+
 (defn get-application-state
   ([application-id]
    (get-application-state (first (db/get-applications {:id application-id}))
                           (db/get-application-events {:application application-id})))
   ([application events]
-   (let [application (-> application
-                         (dissoc :workflow)
-                         (assoc :state "draft" :curround 0) ;; reset state
-                         (assoc :events events)
-                         (assoc :last-modified (or (:time (last events))
-                                                   (:start application))))]
-     (apply-events application events))))
+   (if (not (nil? (:workflow application)))
+     (get-dynamic-application-state (:id application))
+     (let [application (-> application
+                           (dissoc :workflow)
+                           (assoc :state "draft" :curround 0) ;; reset state
+                           (assoc :events events)
+                           (assoc :last-modified (or (:time (last events))
+                                                     (:start application))))]
+       (apply-events application events)))))
 
 (declare handle-state-change)
 
@@ -782,12 +791,15 @@
 
 (defn get-dynamic-application-state [application-id]
   (let [application (first (db/get-applications {:id application-id}))
+        events (map fix-event-from-db (db/get-application-events {:application application-id}))
         fixed-application (assoc application
                                  :state ::dynamic/draft
-                                 :workflow (fix-workflow-from-db (:workflow application)))
-        events (map fix-event-from-db (db/get-application-events {:application application-id}))]
+                                 :events events
+                                 :workflow (fix-workflow-from-db (:workflow application)))]
     (assert (= :workflow/dynamic (get-in fixed-application [:workflow :type])))
-    (dynamic/apply-events fixed-application events)))
+    (dynamic/assoc-possible-commands ;; TODO: this shouldn't probably be here
+     (getx-user-id)
+     (dynamic/apply-events fixed-application events))))
 
 (defn- add-dynamic-event! [event]
   (db/add-application-event! {:application (:application-id event)
@@ -806,3 +818,6 @@
         result (dynamic/handle-command cmd app injections)]
     (assert (:success result) result)
     (add-dynamic-event! (:result result))))
+
+(defn is-dynamic-handler? [application]
+  (contains? (set (get-in application [:workflow :handlers])) (getx-user-id)))

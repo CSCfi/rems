@@ -40,17 +40,19 @@
    :value (s/maybe s/Str)})
 
 (s/defschema Event
-  {:userid (s/maybe s/Str)
-   :round s/Num
-   :event s/Str
-   :comment (s/maybe s/Str)
-   :time DateTime
-   :eventdata s/Any})
+  s/Any
+  ;; HACK for dynamic applications
+  #_{:userid (s/maybe s/Str)
+     :round s/Num
+     :event s/Str
+     :comment (s/maybe s/Str)
+     :time DateTime
+     :eventdata s/Any})
 
 (s/defschema Application
   {:id (s/maybe s/Num) ;; does not exist for unsaved draft
    :formid s/Num
-   :state s/Str
+   :state s/Any ;; HACK for dynamic applications
    :applicantuserid s/Str
    (s/optional-key :start) DateTime ;; does not exist for draft
    :wfid s/Num
@@ -67,7 +69,9 @@
    (s/optional-key :review-type) (s/maybe (s/enum :normal :third-party))
    (s/optional-key :last-modified) DateTime
    (s/optional-key :members) [s/Str]
-   (s/optional-key :description) (s/maybe s/Str)})
+   (s/optional-key :description) (s/maybe s/Str)
+   (s/optional-key :workflow) s/Any
+   (s/optional-key :possible-commands) #{s/Keyword}})
 
 (s/defschema Entitlement
   {:resource s/Str

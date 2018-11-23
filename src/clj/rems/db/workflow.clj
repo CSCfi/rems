@@ -27,7 +27,7 @@
                                         :modifieruserid (get-user-id),
                                         :title title,
                                         :fnlround 0
-                                        :workflow (cheshire/generate-string {:type type
+                                        :workflow (cheshire/generate-string {:type :workflow/dynamic
                                                                              :handlers handlers})}))]
     {:id wfid}))
 
