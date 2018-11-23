@@ -210,7 +210,10 @@
   [:footer.footer
    [:div.container [:nav.navbar
                     [:div.navbar-text (text :t/footer)]
-                    [:div#footer-release-number (read-current-version)]]]])
+                    (let [{:keys [full commit]} (read-current-version)]
+                      [:div#footer-release-number
+                       [:a {:href (str "https://github.com/CSCfi/rems/commit/" commit)}
+                        full]])]]])
 
 (defn logo []
   [:div.logo [:div.container.img]])

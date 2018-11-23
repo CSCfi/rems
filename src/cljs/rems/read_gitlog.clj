@@ -4,8 +4,14 @@
 
 (defmacro read-current-version []
   (try
-    (-> "git-describe.txt"
-        io/resource
-        slurp
-        str/trim)
-    (catch java.io.IOException _ [])))
+    (let [full (-> "git-describe.txt"
+                   io/resource
+                   slurp
+                   str/trim)
+          [tag commits-since commit dirty] (str/split full #"-")]
+      {:full full
+       :tag tag
+       :commits-since commits-since
+       :commit commit
+       :dirty dirty})
+    (catch java.io.IOException _ "")))
