@@ -21,7 +21,7 @@
                                         :fnlround 0}))]
     {:id wfid}))
 
-(defn- create-dynamic-workflow! [{:keys [organization title type handlers]}]
+(defn- create-dynamic-workflow! [{:keys [organization title handlers]}]
   (let [wfid (:id (db/create-workflow! {:organization organization,
                                         :owneruserid (get-user-id),
                                         :modifieruserid (get-user-id),
