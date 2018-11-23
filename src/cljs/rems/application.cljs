@@ -569,7 +569,7 @@
                                      [:td (:userid e)])
                                    [:td (:event e)]
                                    [:td.event-comment (:comment e)]
-                                   [:td (:time e)]]))])])}]))
+                                   [:td.date (:time e)]]))])])}]))
 
 ;; Applicant info
 
