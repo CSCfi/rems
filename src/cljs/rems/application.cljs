@@ -870,18 +870,6 @@
          :add-fn #(rf/dispatch [::add-selected-third-party-reviewer %])
          :remove-fn #(rf/dispatch [::remove-selected-third-party-reviewer %])}]]]]))
 
-(defn- actions-content []
-  [:div#actions-tabs.mt-3
-   [approve-form]
-   [reject-form]
-   [return-form]
-   [review-form]
-   [request-review-form]
-   [third-party-review-form]
-   [applicant-close-form]
-   [approver-close-form]
-   [withdraw-form]])
-
 (defn- actions-form [app]
   (let [state (:state app)
         editable? (contains? #{"draft" "returned" "withdrawn"} state)
@@ -902,15 +890,23 @@
                        [^{:key :third-party-review-tab} [third-party-review-tab]])
                      (when (and (:is-applicant? app) editable?)
                        [^{:key :save-button} [save-button]
-                        ^{:key :submit-button} [submit-button]]))]
+                        ^{:key :submit-button} [submit-button]]))
+        forms [:div#actions-tabs.mt-3
+               [approve-form]
+               [reject-form]
+               [return-form]
+               [review-form]
+               [request-review-form]
+               [third-party-review-form]
+               [applicant-close-form]
+               [approver-close-form]
+               [withdraw-form]]]
     (if (empty? tabs)
       [:div]
       [collapsible/component
        {:id "actions"
         :title (text :t.form/actions)
-        :always [:div
-                 tabs
-                 [actions-content]]}])))
+        :always [:div tabs forms]}])))
 
 ;; Whole application
 
