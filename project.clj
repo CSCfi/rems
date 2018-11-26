@@ -129,9 +129,7 @@
 
    :project/dev {:dependencies [[binaryage/devtools "0.9.10"]
                                 [com.cemerick/piggieback "0.2.2"]
-                                ;; https://github.com/emezeske/lein-cljsbuild/issues/469
-                                ;; rrb-vector doesn't compile cleanly on cljs right now, see
-                                [quantum/org.clojure.core.rrb-vector "0.0.12"]
+                                [org.clojure/core.rrb-vector "0.0.13"]
                                 [doo "0.1.10" :exclusions [rrb-vector]]
                                 [eftest "0.5.2"]
                                 [figwheel-sidecar "0.5.16" :exclusions [org.clojure/tools.nrepl org.clojure/core.async com.fasterxml.jackson.core/jackson-core]]
