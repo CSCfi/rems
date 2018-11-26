@@ -544,8 +544,8 @@
      {:id "header"
       :title [:span#application-state
               (str
-                (text :t.applications/state)
-                (when state (str ": " (localize-state state))))]
+               (text :t.applications/state)
+               (when state (str ": " (localize-state state))))]
       :always [:div
                [:div.mb-3 {:class (str "state-" state)} (phases phases-data)]
                (when last-event
@@ -870,47 +870,64 @@
          :add-fn #(rf/dispatch [::add-selected-third-party-reviewer %])
          :remove-fn #(rf/dispatch [::remove-selected-third-party-reviewer %])}]]]]))
 
-(defn- actions-content []
-  [:div#actions-tabs.mt-3
-   [approve-form]
-   [reject-form]
-   [return-form]
-   [review-form]
-   [request-review-form]
-   [third-party-review-form]
-   [applicant-close-form]
-   [approver-close-form]
-   [withdraw-form]])
+(defn- dynamic-actions [app]
+  (mapcat #:rems.workflow.dynamic
+          {:submit [[save-button]
+                    [submit-button]]
+           :add-member nil ; TODO implement
+           :return [[return-tab]]
+           :request-decision nil ; TODO implement
+           :decide nil ; TODO implement
+           :request-comment [[review-request-tab]]
+           :approve [[approve-tab]]
+           :reject [[reject-tab]]
+           :close [(if (:is-applicant? app)
+                     [applicant-close-tab]
+                     [approver-close-tab])]}
+          (:possible-commands app)))
+
+(defn- static-actions [app]
+  (let [state (:state app)
+        editable? (contains? #{"draft" "returned" "withdrawn"} state)]
+    (concat (when (:can-close? app)
+              [(if (:is-applicant? app)
+                 [applicant-close-tab]
+                 [approver-close-tab])])
+            (when (:can-withdraw? app)
+              [[withdraw-tab]])
+            (when (:can-approve? app)
+              [[review-request-tab]
+               [return-tab]
+               [reject-tab]
+               [approve-tab]])
+            (when (= :normal (:review-type app))
+              [[review-tab]])
+            (when (= :third-party (:review-type app))
+              [[third-party-review-tab]])
+            (when (and (:is-applicant? app) editable?)
+              [[save-button]
+               [submit-button]]))))
 
 (defn- actions-form [app]
-  (let [state (:state app)
-        editable? (contains? #{"draft" "returned" "withdrawn"} state)
-        tabs (concat (when (:can-close? app)
-                       [(if (:is-applicant? app)
-                          ^{:key :applicant-close-tab} [applicant-close-tab]
-                          ^{:key :approver-close-tab} [approver-close-tab])])
-                     (when (:can-withdraw? app)
-                       [^{:key :withdraw-tab} [withdraw-tab]])
-                     (when (:can-approve? app)
-                       [^{:key :review-request-tab} [review-request-tab]
-                        ^{:key :return-tab} [return-tab]
-                        ^{:key :reject-tab} [reject-tab]
-                        ^{:key :approve-tab} [approve-tab]])
-                     (when (= :normal (:review-type app))
-                       [^{:key :review-tab} [review-tab]])
-                     (when (= :third-party (:review-type app))
-                       [^{:key :third-party-review-tab} [third-party-review-tab]])
-                     (when (and (:is-applicant? app) editable?)
-                       [^{:key :save-button} [save-button]
-                        ^{:key :submit-button} [submit-button]]))]
+  (let [tabs (if (= :workflow/dynamic (get-in app [:workflow :type]))
+               (dynamic-actions app)
+               (static-actions app))
+        forms [[:div#actions-tabs.mt-3
+                [approve-form]
+                [reject-form]
+                [return-form]
+                [review-form]
+                [request-review-form]
+                [third-party-review-form]
+                [applicant-close-form]
+                [approver-close-form]
+                [withdraw-form]]]]
     (if (empty? tabs)
       [:div]
       [collapsible/component
        {:id "actions"
         :title (text :t.form/actions)
-        :always [:div
-                 tabs
-                 [actions-content]]}])))
+        :always (into [:div] (concat tabs forms))}])))
 
 ;; Whole application
 
