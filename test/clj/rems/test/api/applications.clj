@@ -821,7 +821,19 @@
                  "rems.workflow.dynamic/return"}
                (set (get-in data [:application :possible-commands]))))))
 
-    (testing "sending commands"
+    (testing "send command with non-authorized user"
+      (let [response (-> (request :post (str "/api/applications/command"))
+                         (authenticate api-key user-id)
+                         (json-body {:type :rems.workflow.dynamic/approve
+                                     :actor "handler"
+                                     :application-id application-id})
+                         app)
+            data (read-body response)]
+        (is (= {:success false
+                :errors ["unauthorized"]}
+               data))))
+
+    (testing "send command with authorized user"
       (let [response (-> (request :post (str "/api/applications/command"))
                          (authenticate api-key handler-id)
                          (json-body {:type :rems.workflow.dynamic/approve

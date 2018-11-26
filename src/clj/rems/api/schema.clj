@@ -79,4 +79,5 @@
    :mail s/Str})
 
 (s/defschema SuccessResponse
-  {:success s/Bool})
+  {:success s/Bool
+   (s/optional-key :errors) s/Any})

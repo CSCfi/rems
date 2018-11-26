@@ -35,7 +35,8 @@
     (f)
     (mount/stop)))
 
-(use-fixtures :each
+(use-fixtures
+  :each
   (fn [f]
     (conman/with-transaction [rems.db.core/*db* {:isolation :serializable}]
       (jdbc/db-set-rollback-only! rems.db.core/*db*)
@@ -696,7 +697,7 @@
               rev-app (applications/create-new-draft rev-wf)]
           (db/add-application-item! {:application rev-app :item rev-item})
           (actors/add-reviewer! rev-wf "event-test-reviewer" 0)
-          (actors/add-approver! rev-wf  uid  1)
+          (actors/add-approver! rev-wf uid 1)
           (is (= {:curround 0 :state "draft"} (fetch rev-app)))
           (binding [context/*user* {"eppn" "event-test-reviewer"}]
             (is (thrown? NotAuthorizedException (applications/review-application rev-app 0 ""))
@@ -786,7 +787,7 @@
             (db/add-application-item! {:application new-app :item new-item})
             (applications/submit-application new-app)
             (is (= #{:applicant} (roles/get-roles "third-party-reviewer"))) ;; default role
-            (is (= #{:applicant} (roles/get-roles "another-reviewer")))   ;; default role
+            (is (= #{:applicant} (roles/get-roles "another-reviewer"))) ;; default role
             (applications/send-review-request new-app 0 "review?" "third-party-reviewer")
             (is (= #{:reviewer} (roles/get-roles "third-party-reviewer")))
             ;; should not send twice to third-party-reviewer, but another-reviewer should still be added
@@ -1000,19 +1001,19 @@
               :state :rems.workflow.dynamic/draft
               :workflow workflow}
              (select-keys (applications/get-dynamic-application-state app-id) [:applicantuserid :state :workflow])))
-      (applications/dynamic-command! {:type :rems.workflow.dynamic/submit
-                                      :actor "alice"
-                                      :application-id app-id})
+      (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/submit
+                                                :actor "alice"
+                                                :application-id app-id})))
       (is (= :rems.workflow.dynamic/submitted
              (:state (applications/get-dynamic-application-state app-id))))
-      (applications/dynamic-command! {:type :rems.workflow.dynamic/add-member
-                                      :actor "alice"
-                                      :member "bob"
-                                      :application-id app-id})
+      (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/add-member
+                                                :actor "alice"
+                                                :member "bob"
+                                                :application-id app-id})))
       (is (= ["alice" "bob"]
              (:members (applications/get-dynamic-application-state app-id))))
-      (applications/dynamic-command! {:type :rems.workflow.dynamic/approve
-                                      :actor "handler"
-                                      :application-id app-id})
+      (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/approve
+                                                :actor "handler"
+                                                :application-id app-id})))
       (is (= :rems.workflow.dynamic/approved
              (:state (applications/get-dynamic-application-state app-id)))))))

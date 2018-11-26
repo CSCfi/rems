@@ -271,9 +271,11 @@
 
     (POST "/command" []
       :summary "Submit a command for a dynamic application"
-      ;; TODO: command specific role checks
       :roles #{:applicant :approver :reviewer}
       :body [request DynamicCommand]
       :return SuccessResponse
-      (applications/dynamic-command! (assoc request :actor (get-user-id)))
-      (ok {:success true}))))
+      (let [errors (applications/dynamic-command! (assoc request :actor (get-user-id)))]
+        (if errors
+          (ok {:success false
+               :errors (:errors errors)})
+          (ok {:success true}))))))
