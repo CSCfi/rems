@@ -871,7 +871,19 @@
          :remove-fn #(rf/dispatch [::remove-selected-third-party-reviewer %])}]]]]))
 
 (defn- dynamic-actions [app]
-  [])
+  (mapcat #:rems.workflow.dynamic{:submit [^{:key :save-button} [save-button]
+                                           ^{:key :submit-button} [submit-button]]
+                                  :add-member nil
+                                  :return [^{:key :return-tab} [return-tab]]
+                                  :request-decision nil
+                                  :decide nil
+                                  :request-comment [^{:key :review-request-tab} [review-request-tab]]
+                                  :approve [^{:key :approve-tab} [approve-tab]]
+                                  :reject [^{:key :reject-tab} [reject-tab]]
+                                  :close [(if (:is-applicant? app)
+                                            ^{:key :applicant-close-tab} [applicant-close-tab]
+                                            ^{:key :approver-close-tab} [approver-close-tab])]}
+          (get-in app [:workflow :possible-actions] [:rems.workflow.dynamic/approve :rems.workflow.dynamic/reject :rems.workflow.dynamic/request-decision])))
 
 (defn- static-actions [app]
   (let [state (:state app)
@@ -896,7 +908,7 @@
                ^{:key :submit-button} [submit-button]]))))
 
 (defn- actions-form [app]
-  (let [tabs (if (= :dynamic (get-in app [:workflow :type]))
+  (let [tabs (if (= :dynamic (get-in app [:workflow :type] :dynamic))
                (dynamic-actions app)
                (static-actions app))
         forms [:div#actions-tabs.mt-3
