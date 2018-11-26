@@ -40,10 +40,12 @@
 
 ;;; basic navigation
 
+(def ^:private +test-url+ "http://localhost:3001/")
+
 (defn login-as [username]
   (doto *driver*
     (set-window-size 1400 2000) ;; big enough to show the whole page without scrolling
-    (go "http://localhost:3001")
+    (go +test-url+)
     (screenshot (io/file reporting-dir "landing-page.png"))
     (click-visible {:class "login-btn"})
     (screenshot (io/file reporting-dir "login-page.png"))
@@ -138,3 +140,10 @@
               :applicant "developer"
               :state "Approved"}
              (get-application-summary application-id))))))
+
+(deftest test-guide-page
+  (with-postmortem *driver* {:dir reporting-dir}
+    (go *driver* (str +test-url+ "#/guide"))
+    ;; if there is a js exception, nothing renders, so let's check
+    ;; that we have lots of examples in the dom:
+    (is (< 60 (count (query-all *driver* {:class :example}))))))
