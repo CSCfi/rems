@@ -807,7 +807,8 @@
                               :comment nil
                               :round -1
                               :event (str (:event event))
-                              :eventdata (cheshire/generate-string event)}))
+                              :eventdata (cheshire/generate-string event)})
+  nil)
 
 (defn- valid-user? [userid]
   (not (nil? (users/get-user-attributes userid))))
@@ -816,8 +817,9 @@
   (let [app (get-dynamic-application-state (:application-id cmd))
         injections {:valid-user? valid-user?}
         result (dynamic/handle-command cmd app injections)]
-    (assert (:success result) result)
-    (add-dynamic-event! (:result result))))
+    (if (:success result)
+      (add-dynamic-event! (:result result))
+      result)))
 
 (defn is-dynamic-handler? [application]
   (contains? (set (get-in application [:workflow :handlers])) (getx-user-id)))
