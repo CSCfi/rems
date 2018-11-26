@@ -7,7 +7,7 @@
   "Component for phase progress bar.
 
   Phases can contain the following keys:
-  :id         unique id of the phase
+  :phase      unique id of the phase
   :active?    is the phase currently active
   :completed? has the phase been completed
   :approved?  is the phase an approve phase that has been approved
@@ -25,46 +25,46 @@
                         (:completed? phase) [:i.fa.fa-check])
             (if (:text phase)
               (text (:text phase))
-              (:id phase))]])))
+              (:phase phase))]])))
 
 (defn guide
   []
   [:div
    (component-info phases)
    (example "phase, nothing yet"
-            [phases [{:id :alpha} {:id :beta} {:id :gamma} {:id :delta}]])
+            [phases [{:phase :alpha} {:phase :beta} {:phase :gamma} {:phase :delta}]])
    (example "phase 0 / 4, first active"
-            [phases [{:id :alpha :active? true} {:id :beta} {:id :gamma} {:id :delta}]])
+            [phases [{:phase :alpha :active? true} {:phase :beta} {:phase :gamma} {:phase :delta}]])
    (example "phase 1 / 4, second active"
-            [phases [{:id :alpha :completed? true} {:id :beta :active? true} {:id :gamma} {:id :delta}]])
+            [phases [{:phase :alpha :completed? true} {:phase :beta :active? true} {:phase :gamma} {:phase :delta}]])
    (example "phase 2 / 4, third active"
-            [phases [{:id :alpha :completed? true} {:id :beta :completed? true} {:id :gamma :active? true} {:id :delta}]])
+            [phases [{:phase :alpha :completed? true} {:phase :beta :completed? true} {:phase :gamma :active? true} {:phase :delta}]])
    (example "phase 3 / 4, fourth active"
-            [phases [{:id :alpha :completed? true} {:id :beta :completed? true} {:id :gamma :completed? true} {:id :delta :active? true}]])
+            [phases [{:phase :alpha :completed? true} {:phase :beta :completed? true} {:phase :gamma :completed? true} {:phase :delta :active? true}]])
    (example "phase 4 / 4, all done"
-            [phases [{:id :alpha :completed? true} {:id :beta :completed? true} {:id :gamma :completed? true} {:id :delta :completed? true}]])
+            [phases [{:phase :alpha :completed? true} {:phase :beta :completed? true} {:phase :gamma :completed? true} {:phase :delta :completed? true}]])
 
    (example "phase 2 / 3, second active"
-            [phases [{:id :alpha :completed? true} {:id :beta :active? true} {:id :gamma}]])
+            [phases [{:phase :alpha :completed? true} {:phase :beta :active? true} {:phase :gamma}]])
 
    (example "phase with localized names for each phase"
-            [phases [{:id :alpha :phase :apply :completed? true :text :t.phases/apply}
-                     {:id :beta :phase :approve :active? true :text :t.phases/approve}
-                     {:id :gamma :phase :result :text :t.phases/approved}]])
+            [phases [{:phase :apply :completed? true :text :t.phases/apply}
+                     {:phase :approve :active? true :text :t.phases/approve}
+                     {:phase :result :text :t.phases/approved}]])
 
    (example "phase with approved application"
             [:div.state-approved
-             [phases [{:id :alpha :phase :apply :completed? true :text :t.phases/apply}
-                      {:id :beta :phase :approve :completed? true :text :t.phases/approve}
-                      {:id :gamma :phase :result :completed? true :approved? true :text :t.phases/approved}]]])
+             [phases [{:phase :apply :completed? true :text :t.phases/apply}
+                      {:phase :approve :completed? true :text :t.phases/approve}
+                      {:phase :result :completed? true :approved? true :text :t.phases/approved}]]])
 
    (example "phase with rejected application"
             [:div.state-rejected
-             [phases [{:id :alpha :phase :apply :completed? true :text :t.phases/apply}
-                      {:id :beta :phase :approve :completed? true :rejected? true :text :t.phases/approve}
-                      {:id :gamma :phase :result :completed? true :rejected? true :text :t.phases/rejected}]]])
+             [phases [{:phase :apply :completed? true :text :t.phases/apply}
+                      {:phase :approve :completed? true :rejected? true :text :t.phases/approve}
+                      {:phase :result :completed? true :rejected? true :text :t.phases/rejected}]]])
 
    (example "phase with closed application"
-            [phases [{:id :alpha :phase :apply :closed? true :text :t.phases/apply}
-                     {:id :beta :phase :approve :closed? true :text :t.phases/approve}
-                     {:id :gamma :phase :result :closed? true :text :t.phases/approved}]])])
+            [phases [{:phase :apply :closed? true :text :t.phases/apply}
+                     {:phase :approve :closed? true :text :t.phases/approve}
+                     {:phase :result :closed? true :text :t.phases/approved}]])])
