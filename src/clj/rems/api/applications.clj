@@ -84,6 +84,11 @@
   {:application-id s/Num
    :member s/Str})
 
+(s/defschema DynamicCommand
+  {:type s/Keyword
+   :application-id s/Num
+   s/Keyword s/Any})
+
 ;; Api implementation
 
 (defn- api-judge [{:keys [command application-id round comment]}]
@@ -262,4 +267,13 @@
       :return SuccessResponse
       (check-attachment-content-type (:content-type file))
       (applications/save-attachment! file application-id field-id)
+      (ok {:success true}))
+
+    (POST "/command" []
+      :summary "Submit a command for a dynamic application"
+      ;; TODO: command specific role checks
+      :roles #{:applicant :approver :reviewer}
+      :body [request DynamicCommand]
+      :return SuccessResponse
+      (applications/dynamic-command! (assoc request :actor (get-user-id)))
       (ok {:success true}))))
