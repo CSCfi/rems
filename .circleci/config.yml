@@ -94,7 +94,7 @@ jobs:
     docker:
       - image: tianon/true
     steps:
-      - run: 'true'
+      - run: /true
 workflows:
   version: 2
   build-test-and-deploy:
