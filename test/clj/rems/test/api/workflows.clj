@@ -109,7 +109,7 @@
           (is (= {:id id
                   :organization "abc"
                   :title "dynamic workflow"
-                  :workflow {:type "dynamic"
+                  :workflow {:type "workflow/dynamic"
                              :handlers [{:userid "bob"}
                                         {:userid "carl"}]}}
                  (select-keys workflow [:id :organization :title :workflow]))))))))

@@ -282,6 +282,10 @@
         (remove #(impossible-command? % application-state injections-for-possible-commands)
                 (command-candidates actor application-state)))))
 
+(defn assoc-possible-commands [actor application-state]
+  (assoc application-state
+         :possible-commands (possible-commands actor application-state)))
+
 ;;; Tests
 
 (deftest test-submit-approve-or-reject

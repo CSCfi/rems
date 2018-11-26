@@ -789,3 +789,33 @@
       (is (= "some description text"
              (get-application-description-through-api-1 app-id)
              (get-application-description-through-api-2 app-id))))))
+
+(deftest test-dynamic-applications
+  (let [api-key "42"
+        user-id "alice"
+        handler-id "developer"]
+    (testing "getting dynamic application as applicant"
+      (let [response (-> (request :get "/api/applications/12")
+                         (authenticate api-key user-id)
+                         (header "Accept" "application/json")
+                         app)
+            data (read-body response)]
+        (is (= "workflow/dynamic" (get-in data [:application :workflow :type])))
+        (is (= [{:actor "alice"
+                 :application-id 12
+                 :event "event/submitted"
+                 :time nil}]
+               (get-in data [:application :dynamic-events])))
+        (is (= ["rems.workflow.dynamic/add-member"] (get-in data [:application :possible-commands])))))
+    (testing "getting dynamic application as handler"
+      (let [response (-> (request :get "/api/applications/12")
+                         (authenticate api-key handler-id)
+                         (header "Accept" "application/json")
+                         app)
+            data (read-body response)]
+        (is (= "workflow/dynamic" (get-in data [:application :workflow :type])))
+        (is (= #{"rems.workflow.dynamic/request-decision"
+                 "rems.workflow.dynamic/reject"
+                 "rems.workflow.dynamic/approve"
+                 "rems.workflow.dynamic/return"}
+               (set (get-in data [:application :possible-commands]))))))))

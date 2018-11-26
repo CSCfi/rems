@@ -21,13 +21,13 @@
                                         :fnlround 0}))]
     {:id wfid}))
 
-(defn- create-dynamic-workflow! [{:keys [organization title type handlers]}]
+(defn- create-dynamic-workflow! [{:keys [organization title handlers]}]
   (let [wfid (:id (db/create-workflow! {:organization organization,
                                         :owneruserid (get-user-id),
                                         :modifieruserid (get-user-id),
                                         :title title,
                                         :fnlround 0
-                                        :workflow (cheshire/generate-string {:type type
+                                        :workflow (cheshire/generate-string {:type :workflow/dynamic
                                                                              :handlers handlers})}))]
     {:id wfid}))
 
