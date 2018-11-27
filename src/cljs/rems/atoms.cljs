@@ -1,5 +1,6 @@
 (ns rems.atoms
-  (:require [komponentit.autosize :as autosize]))
+  (:require [komponentit.autosize :as autosize])
+  (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn external-link []
   [:i {:class "fa fa-external-link-alt"}])
@@ -20,3 +21,23 @@
 
 (defn textarea [attrs]
   [autosize/textarea (merge {:class "form-control" :min-rows 5} attrs)])
+
+(defn flash-message
+  "Displays a notification (aka flash) message.
+
+   :status   - one of the alert types from Bootstrap i.e. :success, :info, :warning or :danger
+   :contents - content to show inside the notification"
+  [{status :status contents :contents}]
+  (when status
+    [:div.alert {:class (str "alert-" (name status))} contents]))
+
+(defn guide []
+  [:div
+   (component-info flash-message)
+   (example "flash-message with info"
+            [flash-message {:status :info
+                            :contents "Hello world"}])
+
+   (example "flash-message with error"
+            [flash-message {:status :danger
+                            :contents "You fail"}])])

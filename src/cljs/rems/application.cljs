@@ -1,7 +1,7 @@
 (ns rems.application
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
-            [rems.atoms :refer [external-link textarea]]
+            [rems.atoms :refer [external-link flash-message textarea]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
             [rems.db.catalogue :refer [get-catalogue-item-title]]
@@ -333,15 +333,6 @@
   (into [:ul]
         (for [m msgs]
           [:li (text-format (:key m) (get-in m [:title language]))])))
-
-(defn flash-message
-  "Displays a notification (aka flash) message.
-
-   :status   - one of the alert types :success, :info, :warning or :failure
-   :contents - content to show inside the notification"
-  [{status :status contents :contents}]
-  (when status
-    [:div.alert {:class (str "alert-" (name status))} contents]))
 
 (defn- pdf-button [id]
   (when id
@@ -986,15 +977,6 @@
                                                  :fi {:title "Otsikko suomeksi 2"}}}
               {:state "enabled" :localizations {:en {:title "English title 3"}
                                                 :fi {:title "Otsikko suomeksi 3"}}}]])
-
-   (component-info flash-message)
-   (example "flash-message with info"
-            [flash-message {:status :info
-                            :contents "Hello world"}])
-
-   (example "flash-message with error"
-            [flash-message {:status :danger
-                            :contents "You fail"}])
 
    (component-info field)
    (example "field of type \"text\""
