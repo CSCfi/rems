@@ -71,12 +71,8 @@
  (fn [db [_ application]]
    (assoc db
           ::application application
-          ::edit-application {:items (into {}
-                                           (for [field (:items application)]
-                                             [(:id field) (:value field)]))
-                              :licenses (into {}
-                                              (for [license (:licenses application)]
-                                                [(:id license) (:approved license)]))})))
+          ::edit-application {:items (into {} (map (juxt :id :value) (:items application)))
+                              :licenses (into {} (map (juxt :id :approver) (:licenses application)))})))
 
 (rf/reg-event-fx
  ::enter-new-application-page
