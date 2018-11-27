@@ -69,15 +69,14 @@
 (rf/reg-event-db
  ::fetch-application-result
  (fn [db [_ application]]
-   (-> db
-       (assoc
-        ::application application
-        ::edit-application {:items (into {}
-                                         (for [field (:items application)]
-                                           [(:id field) (:value field)]))
-                            :licenses (into {}
-                                            (for [license (:licenses application)]
-                                              [(:id license) (:approved license)]))}))))
+   (assoc db
+          ::application application
+          ::edit-application {:items (into {}
+                                           (for [field (:items application)]
+                                             [(:id field) (:value field)]))
+                              :licenses (into {}
+                                              (for [license (:licenses application)]
+                                                [(:id license) (:approved license)]))})))
 
 (rf/reg-event-fx
  ::enter-new-application-page
