@@ -53,7 +53,6 @@
          ::send-third-party-review-request-success false))
 
 (rf/reg-sub ::application (fn [db _] (::application db)))
-(rf/reg-sub ::loading-application? (fn [db _] (not (:application db))))
 (rf/reg-sub ::edit-application (fn [db _] (::edit-application db)))
 (rf/reg-sub ::status (fn [db _] (get-in db [::edit-application :status])))
 
@@ -946,7 +945,7 @@
   (let [application @(rf/subscribe [::application])
         edit-application @(rf/subscribe [::edit-application])
         language @(rf/subscribe [:language])
-        loading? @(rf/subscribe [::loading-application?])
+        loading? (not application)
         status @(rf/subscribe [::status])]
     (if loading?
       [:div
