@@ -46,7 +46,7 @@
 (rf/reg-sub
  ::loading-application?
  (fn [db _]
-   (::loading-application? db)))
+   (not (:application db))))
 
 ;;; existing application
 
@@ -57,9 +57,7 @@
 (rf/reg-event-fx
  ::enter-application-page
  (fn [{:keys [db]} [_ id]]
-   (merge {:db (-> db
-                   (reset-state)
-                   (assoc ::loading-application? true))
+   (merge {:db (reset-state db)
            ::fetch-application [id]}
           (when (has-role? db :approver)
             {::fetch-potential-third-party-reviewers [(get-in db [:identity :user])]}))))
@@ -84,8 +82,7 @@
                                            [(:id field) (:value field)]))
                             :licenses (into {}
                                             (for [license (:licenses application)]
-                                              [(:id license) (:approved license)]))})
-       (dissoc ::loading-application?))))
+                                              [(:id license) (:approved license)]))}))))
 
 ;;; new application
 
