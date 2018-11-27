@@ -341,14 +341,7 @@
    :contents - content to show inside the notification"
   [{status :status contents :contents}]
   (when status
-    [:div.alert
-     ;; TODO should this case and perhaps unnecessary mapping from keywords to Bootstrap be removed?
-     {:class (case status
-               :success "alert-success"
-               :warning "alert-warning"
-               :failure "alert-danger"
-               :info "alert-info")}
-     contents]))
+    [:div.alert {:class (str "alert-" (name status))} contents]))
 
 (defn- pdf-button [id]
   (when id
@@ -914,7 +907,7 @@
                               :contents (text :t.actions/review-request-success)}])
                           (when (:validation edit-application)
                             [flash-message
-                             {:status :failure
+                             {:status :danger
                               :contents [:div (text :t.form/validation.errors)
                                          [format-validation-messages (:validation edit-application) language]]}])])]
     [:div
@@ -1000,7 +993,7 @@
                             :contents "Hello world"}])
 
    (example "flash-message with error"
-            [flash-message {:status :failure
+            [flash-message {:status :danger
                             :contents "You fail"}])
 
    (component-info field)
