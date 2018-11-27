@@ -241,8 +241,7 @@
                        (if (:success resp)
                          (do (save-attachment (:id resp) field-id form-data description)
                              (rf/dispatch [::set-status {:status :saved
-                                                         :description description ; TODO here should be saving?
-                                                         }])
+                                                         :description description}]) ; TODO here should be saving?
                              ;; HACK: we both set the location, and fire a fetch-application event
                              ;; because if the location didn't change, secretary won't fire the event
                              (navigate-to (:id resp))
@@ -251,8 +250,7 @@
                                                      :description description ; TODO here should be saving?
                                                      :validation (:validation resp)}])))
             :error-handler (fn [_] (rf/dispatch [::set-status {:status :failed
-                                                               :description description ; TODO here should be saving?
-                                                               }]))
+                                                               :description description}])) ; TODO here should be saving?
             :params payload})))
 
 (rf/reg-event-fx
@@ -334,59 +332,76 @@
    field-component
    [field-validation-message validation title]])
 
+(defn- read-only-field [{:keys [id value]}]
+  (let [value (if (str/blank? value)
+                " " ;; prevent the element from being collapsed
+                (str/trim value))]
+    [:div.form-control {:id id} value]))
+
 (defn- text-field
   [{:keys [title id inputprompt readonly optional value validation] :as opts}]
   [basic-field opts
-   [:input.form-control {:type "text"
-                         :id (id-to-name id)
-                         :name (id-to-name id)
-                         :placeholder inputprompt
-                         :class (when validation "is-invalid")
-                         :value value
-                         :readOnly readonly
-                         :on-change (set-field-value id)}]])
+   (if readonly
+     [read-only-field {:id (id-to-name id)
+                       :value value}]
+     [:input.form-control {:type "text"
+                           :id (id-to-name id)
+                           :name (id-to-name id)
+                           :placeholder inputprompt
+                           :class (when validation "is-invalid")
+                           :value value
+                           :on-change (set-field-value id)}])])
 
 (defn- texta-field
   [{:keys [title id inputprompt readonly optional value validation] :as opts}]
   [basic-field opts
-   [textarea {:id (id-to-name id)
-              :name (id-to-name id)
-              :placeholder inputprompt
-              :class (if validation "form-control is-invalid" "form-control")
-              :value value
-              :readOnly readonly
-              :on-change (set-field-value id)}]])
+   (if readonly
+     [read-only-field {:id (id-to-name id)
+                       :value value}]
+     [textarea {:id (id-to-name id)
+                :name (id-to-name id)
+                :placeholder inputprompt
+                :class (if validation "form-control is-invalid" "form-control")
+                :value value
+                :on-change (set-field-value id)}])])
 
 (defn attachment-field
   [{:keys [title id readonly optional value validation app-id] :as opts}]
-  [basic-field opts
-   [:div
-    (when (not readonly)
-      [:div.upload-file
-       [:input {:style {:display "none"}
-                :type "file"
-                :id (id-to-name id)
-                :name (id-to-name id)
-                :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
-                :class (when validation "is-invalid")
-                :disabled readonly
-                :on-change (set-attachment id title)}]
-       [:button.btn.btn-secondary {:on-click (fn [e] (.click (.getElementById js/document (id-to-name id))))} (text :t.form/upload)]])
-    (when (not-empty value)
-      [:a {:href (str "/api/applications/attachments/?application-id=" app-id "&field-id=" id) :target "_blank"} value])]])
+  (let [download-link (when (not-empty value)
+                        [:a {:href (str "/api/applications/attachments/?application-id=" app-id "&field-id=" id)
+                             :target "_blank"}
+                         value])]
+    [basic-field opts
+     (if readonly
+       [:div.form-control
+        (or download-link " ")] ;; prevent the element from being collapsed
+       [:div
+        [:div.upload-file
+         [:input {:style {:display "none"}
+                  :type "file"
+                  :id (id-to-name id)
+                  :name (id-to-name id)
+                  :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
+                  :class (when validation "is-invalid")
+                  :on-change (set-attachment id title)}]
+         [:button.btn.btn-secondary {:on-click (fn [e] (.click (.getElementById js/document (id-to-name id))))}
+          (text :t.form/upload)]]
+        download-link])]))
 
 (defn- date-field
   [{:keys [title id readonly optional value min max validation] :as opts}]
   [basic-field opts
-   [:input.form-control {:type "date"
-                         :name (id-to-name id)
-                         :class (when validation "is-invalid")
-                         ;; using :value would reset user input while the user is typing, thus making the component unusable
-                         :defaultValue value
-                         :readOnly readonly
-                         :min min
-                         :max max
-                         :on-change (set-field-value id)}]])
+   (if readonly
+     [read-only-field {:id (id-to-name id)
+                       :value value}] ;; TODO: format in user locale
+     [:input.form-control {:type "date"
+                           :name (id-to-name id)
+                           :class (when validation "is-invalid")
+                           ;; using :value would reset user input while the user is typing, thus making the component unusable
+                           :defaultValue value
+                           :min min
+                           :max max
+                           :on-change (set-field-value id)}])])
 
 (defn- label [{title :title}]
   [:div.form-group
@@ -399,18 +414,15 @@
 
 (defn- license [id title approved readonly validation content]
   [:div.license
-   [:div.row
-    [:div.col-1
-     [:input {:type "checkbox"
-              :name (str "license" id)
-              :disabled readonly
-              :class (when validation "is-invalid")
-              :checked approved
-              :on-change (set-license-approval id)}]]
-    [:div.col content]]
-   [:div.row
-    [:div.col
-     [field-validation-message validation title]]]])
+   [:div.form-check
+    [:input.form-check-input {:type "checkbox"
+                              :name (str "license" id)
+                              :disabled readonly
+                              :class (when validation "is-invalid")
+                              :checked approved
+                              :on-change (set-license-approval id)}]
+    [:span.form-check-label content]]
+   [field-validation-message validation title]])
 
 (defn- link-license
   [{:keys [title id textcontent readonly approved validation]}]
@@ -429,7 +441,7 @@
                                    :aria-controls (str "collapse" id)}
       title " " [:i {:class "fa fa-ellipsis-h"}]]]
     [:div.collapse {:id (str "collapse" id)}
-     [:div.license-block textcontent]]]])
+     [:div.license-block (str/trim textcontent)]]]])
 
 (defn- unsupported-field
   [f]
@@ -462,8 +474,7 @@
   [modal/notification {:title (:description state)
                        :content (or content [status-widget (:status state) (:error state)])
                        :on-close #(rf/dispatch [::set-status nil])
-                       :shade? true
-                       }])
+                       :shade? true}])
 
 (defn- button-wrapper [{:keys [id text class on-click]}]
   [:button.btn.mr-3
@@ -493,10 +504,8 @@
         readonly? (not editable?)]
     [collapsible/component
      {:id "form"
-      :class "slow"
-      :open? true
       :title (text :t.form/application)
-      :collapse
+      :always
       [:div
        (into [:div]
              (for [item (:items form)]
@@ -524,7 +533,7 @@
   [title value]
   [:div.form-group
    [:label title]
-   [:input.form-control {:type "text" :defaultValue value :readOnly true}]])
+   [:div.form-control value]])
 
 (defn- format-event [event]
   {:userid (:userid event)
@@ -1007,6 +1016,10 @@
        "sint occaecat cupidatat non proident, sunt in culpa qui officia "
        "deserunt mollit anim id est laborum."))
 
+(def ^:private lipsum-short "Lorem ipsum dolor sit amet")
+
+(def ^:private lipsum-paragraphs "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam vehicula malesuada gravida. Nulla in massa eget quam porttitor consequat id egestas urna. Aliquam non pharetra dolor. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Sed quis ante at nunc convallis aliquet at quis ligula. Aliquam accumsan consectetur risus. Quisque semper turpis a erat dapibus iaculis.\n\nCras sit amet laoreet lectus. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Phasellus vestibulum a metus in laoreet. Phasellus eleifend eget dui vitae tincidunt. Aenean eu sapien sed nibh viverra facilisis in ac nulla. Integer quis odio eu sapien porta interdum in eu nulla. Sed sodales efficitur diam, vel iaculis ante bibendum vel. Praesent pretium ut lorem sit amet viverra. Etiam luctus nisi eget pharetra rutrum.\n\n")
+
 (defn guide []
   [:div
    (component-info info-field)
@@ -1054,6 +1067,12 @@
             [:form
              [field {:type "text" :title "Title" :inputprompt "prompt"
                      :validation {:key :t.form.validation.required}}]])
+   (example "non-editable field of type \"text\" without text"
+            [:form
+             [field {:type "text" :title "Title" :inputprompt "prompt" :readonly true}]])
+   (example "non-editable field of type \"text\" with text"
+            [:form
+             [field {:type "text" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-short}]])
    (example "field of type \"texta\""
             [:form
              [field {:type "texta" :title "Title" :inputprompt "prompt"}]])
@@ -1061,15 +1080,33 @@
             [:form
              [field {:type "texta" :title "Title" :inputprompt "prompt"
                      :validation {:key :t.form.validation.required}}]])
-   (example "editable field of type \"attachment\""
+   (example "non-editable field of type \"texta\""
+            [:form
+             [field {:type "texta" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-paragraphs}]])
+   (example "field of type \"attachment\""
             [:form
              [field {:type "attachment" :title "Title"}]])
+   (example "field of type \"attachment\", file uploaded"
+            [:form
+             [field {:type "attachment" :title "Title" :value "test.txt"}]])
    (example "non-editable field of type \"attachment\""
+            [:form
+             [field {:type "attachment" :title "Title" :readonly true}]])
+   (example "non-editable field of type \"attachment\", file uploaded"
             [:form
              [field {:type "attachment" :title "Title" :readonly true :value "test.txt"}]])
    (example "field of type \"date\""
             [:form
              [field {:type "date" :title "Title"}]])
+   (example "field of type \"date\" with value"
+            [:form
+             [field {:type "date" :title "Title" :value "2000-12-31"}]])
+   (example "non-editable field of type \"date\""
+            [:form
+             [field {:type "date" :title "Title" :readonly true :value ""}]])
+   (example "non-editable field of type \"date\" with value"
+            [:form
+             [field {:type "date" :title "Title" :readonly true :value "2000-12-31"}]])
    (example "optional field"
             [:form
              [field {:type "texta" :optional "true" :title "Title" :inputprompt "prompt"}]])
@@ -1089,10 +1126,10 @@
    (example "text license"
             [:form
              [field {:type "license" :id 1 :title "A Text License" :licensetype "text"
-                     :textcontent lipsum}]])
+                     :textcontent lipsum-paragraphs}]])
    (example "text license with validation error"
             [:form
-             [field {:type "license" :id 1 :title "A Text License" :licensetype "text" :textcontent lipsum
+             [field {:type "license" :id 1 :title "A Text License" :licensetype "text" :textcontent lipsum-paragraphs
                      :validation {:field {:title "A Text License"} :key :t.form.validation.required}}]])
 
    (component-info render-application)

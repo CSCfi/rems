@@ -24,8 +24,7 @@
    [:a.text-primary {:on-click #(do (.collapse (js/$ (str "#" id "collapse")) "hide")
                                     (.collapse (js/$ (str "#" id "more")) "show")
                                     (.collapse (js/$ (str "#" id "less")) "hide"))}
-    (text :t.collapse/show-less)]
-   ])
+    (text :t.collapse/show-less)]])
 
 (defn- block [id expanded callback content-always content-hideable]
   [:div.collapse-content

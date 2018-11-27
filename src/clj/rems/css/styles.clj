@@ -336,6 +336,10 @@
    [:.upload-file {:display "inline-block"
                    :margin-right (u/px 10)}]
    [:textarea.form-control {:overflow "hidden"}]
+   [:div.form-control {:height "inherit"
+                       :white-space "pre-wrap"
+                       :border "none"
+                       :background-color "rgba(0,0,0,.01)"}]
    [:form.inline
     :.form-actions.inline
     {:display :inline-block}
@@ -359,10 +363,10 @@
     (s/> :.commands "*:not(:first-child)")
     {:margin-left (u/em 0.5)}]
 
-                                        ; form inputs
+   ;; form inputs
    ["input[type=date].form-control" {:width (u/em 12)}]
 
-                                        ; workflow editor
+   ;; workflow editor
    [:.workflow-round dashed-form-group
     [:h2 {:font-weight 500
           :font-size (u/rem 1.4)}]]
@@ -374,7 +378,7 @@
    [:.new-workflow-round {:text-align "center"}]
    [:.remove-workflow-round {:float "right"}]
 
-                                        ; form editor
+   ;; form editor
    [:.form-item dashed-form-group]
    [:.form-item-controls {:float "right"}
     [:* {:margin-left (u/em 0.25)}]]
@@ -397,8 +401,10 @@
                      :width "inherit"}]
    [:.card-header.clickable {:cursor "pointer"}]
    [(s/descendant :.card-header :a) {:color "inherit"}]
-                                        ;hax for opening misalignment
+   ;; hax for opening misalignment
    [:.license-title {:margin-top (u/px 3)}]
+   [:.license-block {:color "#000"
+                     :white-space "pre-wrap"}]
    [:.collapsing {:-webkit-transition "height 0.1s linear"
                   :-o-transition "height 0.1s linear"
                   :transition "height 0.1s linear"}]
@@ -465,7 +471,7 @@
 
    (generate-phase-styles)
    [(s/descendant :.document :h3) {:margin-top (u/rem 4)}]
-                                        ;These must be last as the parsing fails when the first non-standard element is met
+   ;; These must be last as the parsing fails when the first non-standard element is met
    (generate-form-placeholder-styles)))
 
 (defstate screen :start (g/css {:pretty-print? false} (build-screen)))
