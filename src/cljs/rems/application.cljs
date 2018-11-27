@@ -86,7 +86,8 @@
                                             (for [license (:licenses application)]
                                               [(:id license) (:approved license)]))}))))
 
-(rf/reg-event-fx ::enter-new-application-page
+(rf/reg-event-fx
+ ::enter-new-application-page
  (fn [{:keys [db]} [_ items]]
    {:db (reset-state db)
     ::fetch-draft-application items}))
@@ -238,7 +239,8 @@
 
 (rf/reg-sub ::potential-third-party-reviewers (fn [db _] (::potential-third-party-reviewers db)))
 
-(rf/reg-event-db ::set-selected-third-party-reviewers
+(rf/reg-event-db
+ ::set-selected-third-party-reviewers
  (fn [db [_ reviewers]]
    (assoc db ::selected-third-party-reviewers reviewers)))
 
