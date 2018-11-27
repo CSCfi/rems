@@ -138,14 +138,14 @@
   [application user]
   (contains? (set (:handlers (:workflow application))) user))
 
-(defn- handler-error
+(defn- actor-is-not-handler-error
   [application cmd]
   (when-not (handler? application (:actor cmd))
     {:errors [:unauthorized]}))
 
 (defn- state-error
-  [application & states]
-  (when-not (contains? (set states) (:state application))
+  [application & expected-states]
+  (when-not (contains? (set expected-states) (:state application))
     {:errors [[:invalid-state (:state application)]]}))
 
 (defn- valid-user-error
@@ -166,7 +166,7 @@
 
 (defmethod handle-command ::approve
   [cmd application _injections]
-  (or (handler-error application cmd)
+  (or (actor-is-not-handler-error application cmd)
       (state-error application ::submitted)
       {:success true
        :result {:event :event/approved
@@ -176,7 +176,7 @@
 
 (defmethod handle-command ::reject
   [cmd application _injections]
-  (or (handler-error application cmd)
+  (or (actor-is-not-handler-error application cmd)
       (state-error application ::submitted)
       {:success true
        :result {:event :event/rejected
@@ -186,7 +186,7 @@
 
 (defmethod handle-command ::return
   [cmd application _injections]
-  (or (handler-error application cmd)
+  (or (actor-is-not-handler-error application cmd)
       (state-error application ::submitted)
       {:success true
        :result {:event :event/returned
@@ -196,7 +196,7 @@
 
 (defmethod handle-command ::close
   [cmd application _injections]
-  (or (handler-error application cmd)
+  (or (actor-is-not-handler-error application cmd)
       (state-error application ::approved)
       {:success true
        :result {:event :event/closed
@@ -206,7 +206,7 @@
 
 (defmethod handle-command ::request-decision
   [cmd application injections]
-  (or (handler-error application cmd)
+  (or (actor-is-not-handler-error application cmd)
       (state-error application ::submitted)
       (valid-user-error injections (:decider cmd))
       {:success true
@@ -232,7 +232,7 @@
 
 (defmethod handle-command ::request-comment
   [cmd application injections]
-  (or (handler-error application cmd)
+  (or (actor-is-not-handler-error application cmd)
       (state-error application ::submitted)
       (valid-user-error injections (:commenter cmd))
       {:success true
