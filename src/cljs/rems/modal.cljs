@@ -51,7 +51,13 @@
        content
        [shade-wrapper content on-close])]))
 
-(defn notification [{:keys [title content on-close shade?] :as opts}]
+(defn notification
+  "Displays a modal notification dialog.
+
+  A notification dialog shows an OK button to close the dialog.
+
+  See `modal/component` for options."
+  [{:keys [title content on-close shade?] :as opts}]
   [component (assoc opts :commands [[:button.btn.btn-primary {:on-click on-close} (text :t.actions/ok)]])])
 
 (defn guide
