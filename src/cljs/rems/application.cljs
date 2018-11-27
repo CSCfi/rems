@@ -89,13 +89,13 @@
 (rf/reg-event-fx ::enter-new-application-page
  (fn [{:keys [db]} [_ items]]
    {:db (reset-state db)
-    ::fetch-draft-application [items]}))
+    ::fetch-draft-application items}))
 
 (defn- fetch-draft-application [items]
   (fetch (str "/api/applications/draft") {:handler #(rf/dispatch [::fetch-application-result %])
                                           :params {:catalogue-items items}}))
 
-(rf/reg-fx ::fetch-draft-application (fn [[items]] (fetch-draft-application items)))
+(rf/reg-fx ::fetch-draft-application fetch-draft-application)
 
 
 ;; status can be :pending :saved :failed or nil
