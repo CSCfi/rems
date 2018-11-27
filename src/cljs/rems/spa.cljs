@@ -13,7 +13,7 @@
             [rems.administration.resource :refer [create-resource-page]]
             [rems.administration.workflow :refer [create-workflow-page]]
             [rems.ajax :refer [load-interceptors!]]
-            [rems.application :refer [application-page fetch-application]]
+            [rems.application :refer [application-page]]
             [rems.applications :refer [applications-page]]
             [rems.atoms :as atoms]
             [rems.auth.auth :as auth]
