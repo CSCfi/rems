@@ -36,8 +36,8 @@
    :handlers [UserId]})
 
 (def States #{::draft ::submitted ::approved ::rejected ::closed})
-(def CommandTypes #{::submit ::return #_::accept-license #_::require-license ::request-decision ::decide #_::request-comment #_::comment ::approve ::reject ::close ::add-member})
-(def EventTypes #{:event/submitted :event/returned #_:event/license-required #_:event/license-accepted #_:event/comment-requested #_:event/commented :event/decision-requested :event/decided :event/approved :event/rejected :event/closed :event/member-added})
+(def CommandTypes #{::submit ::return #_::accept-license #_::require-license ::request-decision ::decide ::request-comment ::comment ::approve ::reject ::close ::add-member})
+(def EventTypes #{:event/submitted :event/returned #_:event/license-required #_:event/license-accepted :event/comment-requested :event/commented :event/decision-requested :event/decided :event/approved :event/rejected :event/closed :event/member-added})
 
 
 
@@ -62,6 +62,7 @@
   [application _workflow event]
   (assoc application
          :state ::submitted
+         :commenters #{}
          :members [(:actor event)]))
 
 (defmethod apply-event [:event/approved :workflow/dynamic]
@@ -89,6 +90,16 @@
   (-> application
       (assoc :decision (:decision event))
       (dissoc :decider)))
+
+(defmethod apply-event [:event/comment-requested :workflow/dynamic]
+  [application _workflow event]
+  (update application :commenters conj (:commenter event)))
+
+(defmethod apply-event [:event/commented :workflow/dynamic]
+  [application _workflow event]
+  ;; we don't store the comments in the state, they're available via
+  ;; the event list
+  (update application :commenters disj (:actor event)))
 
 (defmethod apply-event [:event/member-added :workflow/dynamic]
   [application _workflow event]
@@ -219,6 +230,30 @@
                 :application-id (:application-id cmd)
                 :time (:time cmd)}}))
 
+(defmethod handle-command ::request-comment
+  [cmd application injections]
+  (or (handler-error application cmd)
+      (state-error application ::submitted)
+      (valid-user-error injections (:commenter cmd))
+      {:success true
+       :result {:event :event/comment-requested
+                :actor (:actor cmd)
+                :commenter (:commenter cmd)
+                :application-id (:application-id cmd)
+                :time (:time cmd)}}))
+
+(defmethod handle-command ::comment
+  [cmd application _injections]
+  (or (when-not (contains? (:commenters application) (:actor cmd))
+        {:errors [:unauthorized]})
+      (state-error application ::submitted)
+      {:success true
+       :result {:event :event/commented
+                :actor (:actor cmd)
+                :comment (:comment cmd)
+                :application-id (:application-id cmd)
+                :time (:time cmd)}}))
+
 (defmethod handle-command ::add-member
   [cmd application injections]
   ;; TODO should handler be able to add members?
@@ -269,6 +304,12 @@
    {:type ::decide
     :actor actor
     :decision :approved}
+   {:type ::request-comment
+    :actor actor
+    :commenter "commenter"}
+   {:type ::comment
+    :actor actor
+    :comment "comment"}
    {:type ::add-member
     :actor actor
     :member "member"}])
@@ -347,10 +388,14 @@
                (handle-command {:actor "deity2" :decision :approved :type ::decide}
                                requested
                                injections))))
-      (testing "succesfully approved"
-        (is (= {:decision :approved} (select-keys
-                                      (apply-command requested {:actor "deity" :decision :approved :type ::decide} injections)
-                                      [:decider :decision]))))
+      (let [approved (apply-command requested {:actor "deity" :decision :approved :type ::decide} injections)]
+        (testing "succesfully approved"
+          (is (= {:decision :approved} (select-keys approved [:decider :decision]))))
+        (testing "cannot approve twice"
+          (is (= {:errors [:unauthorized]}
+                 (handle-command {:actor "deity" :decision :approved :type ::decide}
+                                 approved
+                                 injections)))))
       (testing "successfully rejected"
         (is (= {:decision :rejected} (select-keys
                                       (apply-command requested {:actor "deity" :decision :rejected :type ::decide} injections)
@@ -390,6 +435,48 @@
                              (assoc application :state ::approved)
                              injections))))))
 
+(deftest test-comment
+  (let [application {:state ::submitted
+                     :applicantuserid "applicant"
+                     :commenters #{}
+                     :workflow {:type :workflow/dynamic
+                                :handlers ["assistant"]}}
+        injections {:valid-user? #{"commenter" "commenter2"}}]
+    (testing "required :valid-user? injection"
+      (is (= {:errors [[:missing-injection :valid-user?]]}
+             (handle-command {:actor "assistant" :commenter "commenter" :type ::request-comment}
+                             application
+                             {}))))
+    (testing "commenter must be a valid user"
+      (is (= {:errors [[:invalid-user "commenter3"]]}
+             (handle-command {:actor "assistant" :commenter "commenter3" :type ::request-comment}
+                             application
+                             injections))))
+    (testing "commenting before ::request-comment should fail"
+      (is (= {:errors [:unauthorized]}
+             (handle-command {:actor "commenter" :decision :approved :type ::comment}
+                             application
+                             injections))))
+    (let [requested (apply-commands application
+                                    [{:actor "assistant" :commenter "commenter" :type ::request-comment}
+                                     {:actor "assistant" :commenter "commenter2" :type ::request-comment}]
+                                    injections)]
+      (testing "request comment succesfully"
+        (is (= #{"commenter2" "commenter"} (:commenters requested))))
+      (testing "only the requested commenter can comment"
+        (is (= {:errors [:unauthorized]}
+               (handle-command {:actor "commenter3" :comment "..." :type ::comment}
+                               requested
+                               injections))))
+      (let [commented (apply-command requested {:actor "commenter" :comment "..." :type ::comment} injections)]
+        (testing "succesfully approved"
+          (is (= #{"commenter2"} (:commenters commented))))
+        (testing "cannot comment twice"
+          (is (= {:errors [:unauthorized]}
+                 (handle-command {:actor "commenter" :comment "..." :type ::comment}
+                                 commented
+                                 injections))))))))
+
 (deftest test-possible-commands
   (let [draft {:state ::draft
                :applicantuserid "applicant"
@@ -407,17 +494,35 @@
       (testing "submitted"
         (is (= #{::add-member}
                (possible-commands "applicant" submitted)))
-        (is (= #{::approve ::reject ::return ::request-decision}
+        (is (= #{::approve ::reject ::return ::request-decision ::request-comment}
                (possible-commands "assistant" submitted)))
         (is (= #{}
                (possible-commands "somebody else" submitted))))
+      (let [requested (apply-events submitted [{:event :event/comment-requested
+                                                :actor "assistant"
+                                                :commenter "commenter"}])]
+        (testing "comment requested"
+          (is (= #{::add-member}
+                 (possible-commands "applicant" requested)))
+          (is (= #{::approve ::reject ::return ::request-decision ::request-comment}
+                 (possible-commands "assistant" requested)))
+          (is (= #{::comment}
+                 (possible-commands "commenter" requested))))
+        (let [commented (apply-events requested [{:event :event/commented
+                                                  :commenter "commenter"
+                                                  :comment "..."}])]
+          (testing "comment given"
+            (is (= #{::approve ::reject ::return ::request-decision ::request-comment}
+                   (possible-commands "assistant" requested)))
+            (is (= #{::comment}
+                   (possible-commands "commenter" requested))))))
       (let [requested (apply-events submitted [{:event :event/decision-requested
                                                 :actor "assistant"
                                                 :decider "decider"}])]
         (testing "decision requested"
           (is (= #{::add-member}
                  (possible-commands "applicant" requested)))
-          (is (= #{::approve ::reject ::return ::request-decision}
+          (is (= #{::approve ::reject ::return ::request-decision ::request-comment}
                  (possible-commands "assistant" requested)))
           (is (= #{::decide}
                  (possible-commands "decider" requested)))))
