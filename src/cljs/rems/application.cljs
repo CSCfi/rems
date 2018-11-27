@@ -350,7 +350,6 @@
                            :placeholder inputprompt
                            :class (when validation "is-invalid")
                            :value value
-                           :readOnly readonly
                            :on-change (set-field-value id)}])])
 
 (defn- texta-field
@@ -400,7 +399,6 @@
                            :class (when validation "is-invalid")
                            ;; using :value would reset user input while the user is typing, thus making the component unusable
                            :defaultValue value
-                           :readOnly readonly
                            :min min
                            :max max
                            :on-change (set-field-value id)}])])
