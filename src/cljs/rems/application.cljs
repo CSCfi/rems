@@ -443,7 +443,7 @@
                                    :aria-controls (str "collapse" id)}
       title " " [:i {:class "fa fa-ellipsis-h"}]]]
     [:div.collapse {:id (str "collapse" id)}
-     [:div.license-block textcontent]]]])
+     [:div.license-block (str/trim textcontent)]]]])
 
 (defn- unsupported-field
   [f]
@@ -1020,6 +1020,10 @@
        "sint occaecat cupidatat non proident, sunt in culpa qui officia "
        "deserunt mollit anim id est laborum."))
 
+(def ^:private lipsum-short "Lorem ipsum dolor sit amet")
+
+(def ^:private lipsum-paragraphs "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam vehicula malesuada gravida. Nulla in massa eget quam porttitor consequat id egestas urna. Aliquam non pharetra dolor. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Sed quis ante at nunc convallis aliquet at quis ligula. Aliquam accumsan consectetur risus. Quisque semper turpis a erat dapibus iaculis.\n\nCras sit amet laoreet lectus. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Phasellus vestibulum a metus in laoreet. Phasellus eleifend eget dui vitae tincidunt. Aenean eu sapien sed nibh viverra facilisis in ac nulla. Integer quis odio eu sapien porta interdum in eu nulla. Sed sodales efficitur diam, vel iaculis ante bibendum vel. Praesent pretium ut lorem sit amet viverra. Etiam luctus nisi eget pharetra rutrum.\n\n")
+
 (defn guide []
   [:div
    (component-info info-field)
@@ -1072,7 +1076,7 @@
              [field {:type "text" :title "Title" :inputprompt "prompt" :readonly true}]])
    (example "non-editable field of type \"text\" with text"
             [:form
-             [field {:type "text" :title "Title" :inputprompt "prompt" :readonly true :value "Lorem ipsum dolor sit amet"}]])
+             [field {:type "text" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-short}]])
    (example "field of type \"texta\""
             [:form
              [field {:type "texta" :title "Title" :inputprompt "prompt"}]])
@@ -1082,7 +1086,7 @@
                      :validation {:key :t.form.validation.required}}]])
    (example "non-editable field of type \"texta\""
             [:form
-             [field {:type "texta" :title "Title" :inputprompt "prompt" :readonly true :value "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam vehicula malesuada gravida. Nulla in massa eget quam porttitor consequat id egestas urna. Aliquam non pharetra dolor. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Sed quis ante at nunc convallis aliquet at quis ligula. Aliquam accumsan consectetur risus. Quisque semper turpis a erat dapibus iaculis.\n\nCras sit amet laoreet lectus. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Phasellus vestibulum a metus in laoreet. Phasellus eleifend eget dui vitae tincidunt. Aenean eu sapien sed nibh viverra facilisis in ac nulla. Integer quis odio eu sapien porta interdum in eu nulla. Sed sodales efficitur diam, vel iaculis ante bibendum vel. Praesent pretium ut lorem sit amet viverra. Etiam luctus nisi eget pharetra rutrum.\n"}]])
+             [field {:type "texta" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-paragraphs}]])
    (example "field of type \"attachment\""
             [:form
              [field {:type "attachment" :title "Title"}]])
@@ -1126,10 +1130,10 @@
    (example "text license"
             [:form
              [field {:type "license" :id 1 :title "A Text License" :licensetype "text"
-                     :textcontent lipsum}]])
+                     :textcontent lipsum-paragraphs}]])
    (example "text license with validation error"
             [:form
-             [field {:type "license" :id 1 :title "A Text License" :licensetype "text" :textcontent lipsum
+             [field {:type "license" :id 1 :title "A Text License" :licensetype "text" :textcontent lipsum-paragraphs
                      :validation {:field {:title "A Text License"} :key :t.form.validation.required}}]])
 
    (component-info render-application)
