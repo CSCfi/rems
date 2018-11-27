@@ -96,10 +96,10 @@
            :params {:catalogue-items items}})))
 
 
-;; status can be :pending :saved :failed or nil
 (rf/reg-event-db
  ::set-status
  (fn [db [_ {:keys [status description validation error]}]]
+   (assert (contains? #{:pending :saved :failed nil} status))
    (-> db
        (assoc-in [::edit-application :status] {:open? (not (nil? status))
                                                :status status
