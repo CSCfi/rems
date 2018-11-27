@@ -506,10 +506,8 @@
         readonly? (not editable?)]
     [collapsible/component
      {:id "form"
-      :class "slow"
-      :open? true
       :title (text :t.form/application)
-      :collapse
+      :always
       [:div
        (into [:div]
              (for [item (:items form)]
