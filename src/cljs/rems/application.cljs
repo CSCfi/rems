@@ -56,16 +56,12 @@
 (rf/reg-sub ::edit-application (fn [db _] (::edit-application db)))
 (rf/reg-sub ::status (fn [db _] (get-in db [::edit-application :status])))
 
-(defn- has-role? [db role]
-  (contains? (set (get-in db [:identity :roles]))
-             role))
-
 (rf/reg-event-fx
  ::enter-application-page
  (fn [{:keys [db]} [_ id]]
    (merge {:db (reset-state db)
            ::fetch-application [id]}
-          (when (has-role? db :approver)
+          (when (contains? (get-in db [:identity :roles]) :approver)
             {::fetch-potential-third-party-reviewers [(get-in db [:identity :user])]}))))
 
 (defn- fetch-application [id]
