@@ -403,6 +403,7 @@
    [(s/descendant :.card-header :a) {:color "inherit"}]
    ;; hax for opening misalignment
    [:.license-title {:margin-top (u/px 3)}]
+   [:.license-block {:color "#000"}]
    [:.collapsing {:-webkit-transition "height 0.1s linear"
                   :-o-transition "height 0.1s linear"
                   :transition "height 0.1s linear"}]

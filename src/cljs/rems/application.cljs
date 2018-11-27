@@ -416,18 +416,15 @@
 
 (defn- license [id title approved readonly validation content]
   [:div.license
-   [:div.row
-    [:div.col-1
-     [:input {:type "checkbox"
-              :name (str "license" id)
-              :disabled readonly
-              :class (when validation "is-invalid")
-              :checked approved
-              :on-change (set-license-approval id)}]]
-    [:div.col content]]
-   [:div.row
-    [:div.col
-     [field-validation-message validation title]]]])
+   [:div.form-check
+    [:input.form-check-input {:type "checkbox"
+                              :name (str "license" id)
+                              :disabled readonly
+                              :class (when validation "is-invalid")
+                              :checked approved
+                              :on-change (set-license-approval id)}]
+    [:span.form-check-label content]]
+   [field-validation-message validation title]])
 
 (defn- link-license
   [{:keys [title id textcontent readonly approved validation]}]
