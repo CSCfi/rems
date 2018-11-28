@@ -576,9 +576,29 @@
    :comment (:comment event)
    :time (localize-time (:time event))})
 
+(defn- events-view [events]
+  (let [has-users? (boolean (some :userid events))]
+    [:div
+     [:h4 (text :t.form/events)]
+     (into [:table#event-table.table.table-hover.mb-0
+            [:thead
+             [:tr
+              (when has-users?
+                [:th (text :t.form/user)])
+              [:th (text :t.form/event)]
+              [:th (text :t.form/comment)]
+              [:th (text :t.form/date)]]]
+            (into [:tbody]
+                  (for [e (sort-by :time > events)]
+                    [:tr
+                     (when has-users?
+                       [:td (:userid e)])
+                     [:td (:event e)]
+                     [:td.event-comment (:comment e)]
+                     [:td.date (:time e)]]))])]))
+
 (defn- application-header [state phases-data events]
-  (let [has-users? (boolean (some :userid events))
-        ;; the event times have millisecond differences, so they need to be formatted to minute precision before deduping
+  (let [ ;; the event times have millisecond differences, so they need to be formatted to minute precision before deduping
         events (->> events
                     (map format-event)
                     dedupe)
@@ -596,24 +616,7 @@
                  (info-field (text :t.applications/latest-comment)
                              (:comment last-event)))]
       :collapse (when (seq events)
-                  [:div
-                   [:h4 (text :t.form/events)]
-                   (into [:table#event-table.table.table-hover.mb-0
-                          [:thead
-                           [:tr
-                            (when has-users?
-                              [:th (text :t.form/user)])
-                            [:th (text :t.form/event)]
-                            [:th (text :t.form/comment)]
-                            [:th (text :t.form/date)]]]
-                          (into [:tbody]
-                                (for [e (sort-by :time > events)]
-                                  [:tr
-                                   (when has-users?
-                                     [:td (:userid e)])
-                                   [:td (:event e)]
-                                   [:td.event-comment (:comment e)]
-                                   [:td.date (:time e)]]))])])}]))
+                  [events-view events])}]))
 
 
 (defn applicant-info [id user-attributes]
