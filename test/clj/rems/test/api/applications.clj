@@ -815,7 +815,8 @@
                          app)
             data (read-body response)]
         (is (= "workflow/dynamic" (get-in data [:application :workflow :type])))
-        (is (= #{"rems.workflow.dynamic/request-decision"
+        (is (= #{"rems.workflow.dynamic/request-comment"
+                 "rems.workflow.dynamic/request-decision"
                  "rems.workflow.dynamic/reject"
                  "rems.workflow.dynamic/approve"
                  "rems.workflow.dynamic/return"}
