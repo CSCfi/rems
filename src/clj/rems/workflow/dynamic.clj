@@ -399,10 +399,14 @@
                  (handle-command {:actor "deity" :decision :approved :type ::decide}
                                  approved
                                  injections)))))
-      (testing "successfully rejected"
-        (is (= {:decision :rejected} (select-keys
-                                      (apply-command requested {:actor "deity" :decision :rejected :type ::decide} injections)
-                                      [:decider :decision]))))
+      (let [rejected (apply-command requested {:actor "deity" :decision :rejected :type ::decide} injections)]
+        (testing "successfully rejected"
+          (is (= {:decision :rejected} (select-keys rejected [:decider :decision]))))
+        (testing "can not reject twice"
+          (is (= {:errors [:unauthorized]}
+                 (handle-command {:actor "deity" :decision :rejected :type ::decide}
+                                 rejected
+                                 injections)))))
       (testing "other decisions are not possible"
         (is (= {:errors [[:invalid-decision :foobar]]}
                (handle-command {:actor "deity" :decision :foobar :type ::decide}
