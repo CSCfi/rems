@@ -29,6 +29,9 @@
 (defn navigate-to [id]
   (dispatch! (str "#/application/" id)))
 
+(defn- action-collapse-id [action-id]
+  (str "actions-" action-id))
+
 
 
 
@@ -669,7 +672,7 @@
 (defn- action-button [id content]
   [:button.btn.btn-secondary.mr-3
    {:id id
-    :type "button" :data-toggle "collapse" :data-target (str "#actions-" id)}
+    :type "button" :data-toggle "collapse" :data-target (str "#" (action-collapse-id id))}
    (str content " ...")])
 
 (defn- approve-tab []
@@ -709,11 +712,11 @@
 
 (defn- cancel-action-button [id]
   [:button.btn.btn-secondary
-   {:id (str "cancel-" id) :data-toggle "collapse" :data-target (str "#actions-" id)}
+   {:id (str "cancel-" id) :data-toggle "collapse" :data-target (str "#" (action-collapse-id id))}
    (text :t.actions/cancel)])
 
 (defn- action-form [id title comment-title button content]
-  [:div.collapse {:id (str "actions-" id) :data-parent "#actions-tabs"}
+  [:div.collapse {:id (action-collapse-id id) :data-parent "#actions-tabs"}
    [:h4.mt-5 title]
    content
    (when comment-title
