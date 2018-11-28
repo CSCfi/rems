@@ -62,7 +62,7 @@
    (merge {:db (reset-state db)
            ::fetch-application id}
           (when (contains? (get-in db [:identity :roles]) :approver)
-            {::fetch-potential-third-party-reviewers [(get-in db [:identity :user])]}))))
+            {::fetch-potential-third-party-reviewers (get-in db [:identity :user])}))))
 
 (rf/reg-fx ::fetch-application (fn [id] (fetch (str "/api/applications/" id) {:handler #(rf/dispatch [::fetch-application-result %])})))
 
@@ -208,13 +208,13 @@
 (rf/reg-event-db ::set-license (fn [db [_ id value]] (assoc-in db [::edit-application :licenses id] value)))
 (rf/reg-event-db ::set-judge-comment (fn [db [_ value]] (assoc db ::judge-comment value)))
 
-(defn- fetch-potential-third-party-reviewers [user]
-  (fetch (str "/api/applications/reviewers")
-         {:handler #(do (rf/dispatch [::set-potential-third-party-reviewers %])
-                        (rf/dispatch [::set-selected-third-party-reviewers #{}]))
-          :headers {"x-rems-user-id" (:eppn user)}}))
-
-(rf/reg-fx ::fetch-potential-third-party-reviewers (fn [[user]] (fetch-potential-third-party-reviewers user)))
+(rf/reg-fx
+ ::fetch-potential-third-party-reviewers
+ (fn [user]
+   (fetch (str "/api/applications/reviewers")
+          {:handler #(do (rf/dispatch [::set-potential-third-party-reviewers %])
+                         (rf/dispatch [::set-selected-third-party-reviewers #{}]))
+           :headers {"x-rems-user-id" (:eppn user)}})))
 
 (defn enrich-user [user]
   (assoc user :display (str (:name user) " (" (:email user) ")")))
