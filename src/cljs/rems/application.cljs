@@ -58,7 +58,6 @@
 
 (rf/reg-sub ::application (fn [db _] (::application db)))
 (rf/reg-sub ::edit-application (fn [db _] (::edit-application db)))
-(rf/reg-sub ::status (fn [db _] (get-in db [::edit-application :status])))
 
 (rf/reg-event-fx
  ::enter-application-page
@@ -919,7 +918,7 @@
         edit-application @(rf/subscribe [::edit-application])
         language @(rf/subscribe [:language])
         loading? (not application)
-        status @(rf/subscribe [::status])]
+        status (:status edit-application)]
     (if loading?
       [:div
        [:h2 (text :t.applications/application)]
