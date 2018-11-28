@@ -64,7 +64,7 @@
        {:sort-column :name
         :sort-order :asc})))
 
-;;;; UI ;;;;
+;;;; UI
 
 (defn- disable-button [item]
   [:button.btn.btn-secondary

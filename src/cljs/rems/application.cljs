@@ -909,7 +909,7 @@
      (when (:open? status)
        [status-modal status (when (seq messages) (into [:div] messages))])]))
 
-;;;; Entrypoint ;;;;
+;;;; Entrypoint
 
 (defn application-page []
   (let [application @(rf/subscribe [::application])
