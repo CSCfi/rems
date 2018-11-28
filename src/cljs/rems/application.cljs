@@ -879,7 +879,6 @@
                        [:li (get-catalogue-item-title item language)]))]}]))
 
 (defn- render-application [application edit-application language status]
-  ;; TODO should rename :application
   (let [app (:application application)
         state (:state app)
         phases (:phases application)
