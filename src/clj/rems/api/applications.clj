@@ -8,7 +8,7 @@
             [rems.db.users :as users]
             [rems.form :as form]
             [rems.pdf :as pdf]
-            [rems.util :refer [get-user-id]]
+            [rems.util :refer [get-user-id update-present]]
             [ring.util.http-response :refer :all]
             [ring.swagger.upload :as upload]
             [schema.core :as s]))
@@ -158,6 +158,14 @@
                 (.startsWith content-type "image/"))
     (throw (rems.InvalidRequestException. (str "Unsupported content-type: " content-type)))))
 
+(defn- fix-command-from-api
+  [cmd]
+  ;; schema could do these coercions for us...
+  (update-present cmd :decision keyword)
+  (if (:decision cmd)
+    (update cmd :decision keyword)
+    cmd))
+
 (def applications-api
   (context "/applications" []
     :tags ["applications"]
@@ -274,7 +282,9 @@
       :roles #{:applicant :approver :reviewer}
       :body [request DynamicCommand]
       :return SuccessResponse
-      (let [errors (applications/dynamic-command! (assoc request :actor (get-user-id)))]
+      (let [cmd (assoc request :actor (get-user-id))
+            fixed (fix-command-from-api cmd)
+            errors (applications/dynamic-command! fixed)]
         (if errors
           (ok {:success false
                :errors (:errors errors)})

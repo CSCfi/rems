@@ -837,7 +837,7 @@
                                             :actor "handler" ;; TODO wtf?
                                             :application-id application-id}))))
 
-    (testing "send commands with authorized user"
+    (testing "send commands with authorized user:"
       (testing "request-decision"
         (is (= {:success true} (send-dynamic-command handler-id
                                                      {:type :rems.workflow.dynamic/request-decision
@@ -850,7 +850,16 @@
                   :state "rems.workflow.dynamic/submitted"}
                  (select-keys (:application data) [:id :decider :state])))))
       (testing "decide"
-        (is true)) ;; TODO
+        (is (= {:success true} (send-dynamic-command decider-id
+                                                     {:type :rems.workflow.dynamic/decide
+                                                      :actor decider-id
+                                                      :application-id application-id
+                                                      :decision :approved})))
+        (let [data (get-application handler-id application-id)]
+          (is (= {:id application-id
+                  :decision "approved"
+                  :state "rems.workflow.dynamic/submitted"}
+                 (select-keys (:application data) [:id :decider :decision :state])))))
       (testing "approve"
         (is (= {:success true} (send-dynamic-command handler-id {:type :rems.workflow.dynamic/approve
                                                                  :actor handler-id
@@ -859,5 +868,8 @@
           (is (= {:id application-id
                   :state "rems.workflow.dynamic/approved"}
                  (select-keys (:application data) [:id :state])))
-          (is (= ["event/submitted" "event/decision-requested" "event/approved"]
+          (is (= ["event/submitted"
+                  "event/decision-requested"
+                  "event/decided"
+                  "event/approved"]
                  (map :event (get-in data [:application :dynamic-events])))))))))
