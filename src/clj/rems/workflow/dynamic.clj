@@ -444,15 +444,15 @@
                      :commenters #{}
                      :workflow {:type :workflow/dynamic
                                 :handlers ["assistant"]}}
-        injections {:valid-user? #{"commenter" "commenter2"}}]
+        injections {:valid-user? #{"commenter" "commenter2" "commenter3"}}]
     (testing "required :valid-user? injection"
       (is (= {:errors [[:missing-injection :valid-user?]]}
              (handle-command {:actor "assistant" :commenter "commenter" :type ::request-comment}
                              application
                              {}))))
     (testing "commenter must be a valid user"
-      (is (= {:errors [[:invalid-user "commenter3"]]}
-             (handle-command {:actor "assistant" :commenter "commenter3" :type ::request-comment}
+      (is (= {:errors [[:invalid-user "invaliduser"]]}
+             (handle-command {:actor "assistant" :commenter "invaliduser" :type ::request-comment}
                              application
                              injections))))
     (testing "commenting before ::request-comment should fail"
@@ -472,13 +472,17 @@
                                requested
                                injections))))
       (let [commented (apply-command requested {:actor "commenter" :comment "..." :type ::comment} injections)]
-        (testing "succesfully approved"
+        (testing "succesfully commented"
           (is (= #{"commenter2"} (:commenters commented))))
         (testing "cannot comment twice"
           (is (= {:errors [:unauthorized]}
                  (handle-command {:actor "commenter" :comment "..." :type ::comment}
                                  commented
-                                 injections))))))))
+                                 injections))))
+        (testing "other commenter can also comment"
+          (is (= #{} (:commenters (apply-command commented
+                                                 {:actor "commenter2" :comment "..." :type ::comment}
+                                                 injections)))))))))
 
 (deftest test-possible-commands
   (let [draft {:state ::draft
@@ -512,13 +516,13 @@
           (is (= #{::comment}
                  (possible-commands "commenter" requested))))
         (let [commented (apply-events requested [{:event :event/commented
-                                                  :commenter "commenter"
+                                                  :actor "commenter"
                                                   :comment "..."}])]
           (testing "comment given"
             (is (= #{::approve ::reject ::return ::request-decision ::request-comment}
-                   (possible-commands "assistant" requested)))
-            (is (= #{::comment}
-                   (possible-commands "commenter" requested))))))
+                   (possible-commands "assistant" commented)))
+            (is (= #{}
+                   (possible-commands "commenter" commented))))))
       (let [requested (apply-events submitted [{:event :event/decision-requested
                                                 :actor "assistant"
                                                 :decider "decider"}])]
