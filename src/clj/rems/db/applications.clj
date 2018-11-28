@@ -17,7 +17,8 @@
             [rems.util :refer [get-user-id
                                get-username
                                getx
-                               getx-user-id]]
+                               getx-user-id
+                               update-present]]
             [rems.workflow.dynamic :as dynamic])
   (:import [java.io ByteArrayOutputStream FileInputStream]))
 
@@ -781,13 +782,17 @@
 
 ;;; Dynamic workflows
 
+;; TODO could use schemas for these coercions
 (defn- fix-workflow-from-db [wf]
   (update (cheshire/parse-string wf keyword)
           :type keyword))
 
 (defn- fix-event-from-db [event]
-  (update (cheshire/parse-string (:eventdata event) keyword)
-          :event keyword))
+  (-> event
+      :eventdata
+      (cheshire/parse-string keyword)
+      (update :event keyword)
+      (update-present :decision keyword)))
 
 (defn get-dynamic-application-state [application-id]
   (let [application (first (db/get-applications {:id application-id}))

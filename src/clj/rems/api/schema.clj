@@ -70,7 +70,10 @@
    (s/optional-key :members) [s/Str]
    (s/optional-key :description) (s/maybe s/Str)
    (s/optional-key :workflow) s/Any
-   (s/optional-key :possible-commands) #{s/Keyword}})
+   (s/optional-key :possible-commands) #{s/Keyword}
+   (s/optional-key :decider) s/Str
+   (s/optional-key :decision) s/Keyword
+   (s/optional-key :commenters) #{s/Str}})
 
 (s/defschema Entitlement
   {:resource s/Str

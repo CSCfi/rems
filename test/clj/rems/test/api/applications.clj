@@ -790,19 +790,30 @@
              (get-application-description-through-api-1 app-id)
              (get-application-description-through-api-2 app-id))))))
 
+(defn- send-dynamic-command [actor cmd]
+  (-> (request :post (str "/api/applications/command"))
+      (authenticate "42" actor)
+      (json-body cmd)
+      app
+      read-body))
+
+(defn- get-application [actor id]
+  (-> (request :get (str "/api/applications/" id))
+      (authenticate "42" actor)
+      app
+      read-body))
+
 (deftest dynamic-applications-test
   (let [api-key "42"
         user-id "alice"
         handler-id "developer"
+        decider-id "bob"
         application-id 12] ;; submitted dynamic application from test data
 
     (testing "getting dynamic application as applicant"
-      (let [response (-> (request :get (str "/api/applications/" application-id))
-                         (authenticate api-key user-id)
-                         app)
-            data (read-body response)]
+      (let [data (get-application user-id application-id)]
         (is (= "workflow/dynamic" (get-in data [:application :workflow :type])))
-        (is (= [{:actor "alice"
+        (is (= [{:actor user-id
                  :application-id application-id
                  :event "event/submitted"
                  :time nil}]
@@ -810,44 +821,51 @@
         (is (= ["rems.workflow.dynamic/add-member"] (get-in data [:application :possible-commands])))))
 
     (testing "getting dynamic application as handler"
-      (let [response (-> (request :get (str "/api/applications/" application-id))
-                         (authenticate api-key handler-id)
-                         app)
-            data (read-body response)]
+      (let [data (get-application handler-id application-id)]
         (is (= "workflow/dynamic" (get-in data [:application :workflow :type])))
-        (is (= #{"rems.workflow.dynamic/request-decision"
+        (is (= #{"rems.workflow.dynamic/request-comment"
+                 "rems.workflow.dynamic/request-decision"
                  "rems.workflow.dynamic/reject"
                  "rems.workflow.dynamic/approve"
                  "rems.workflow.dynamic/return"}
                (set (get-in data [:application :possible-commands]))))))
 
     (testing "send command with non-authorized user"
-      (let [response (-> (request :post (str "/api/applications/command"))
-                         (authenticate api-key user-id)
-                         (json-body {:type :rems.workflow.dynamic/approve
-                                     :actor "handler"
-                                     :application-id application-id})
-                         app)
-            data (read-body response)]
-        (is (= {:success false
-                :errors ["unauthorized"]}
-               data))))
+      (is (= {:success false
+              :errors ["unauthorized"]}
+             (send-dynamic-command user-id {:type :rems.workflow.dynamic/approve
+                                            :application-id application-id}))))
 
-    (testing "send command with authorized user"
-      (let [response (-> (request :post (str "/api/applications/command"))
-                         (authenticate api-key handler-id)
-                         (json-body {:type :rems.workflow.dynamic/approve
-                                     :actor "handler"
-                                     :application-id application-id})
-                         app)
-            data (read-body response)]
-        (is (= {:success true} data)))
-      (let [response (-> (request :get (str "/api/applications/" application-id))
-                         (authenticate api-key handler-id)
-                         app)
-            data (read-body response)]
-        (is (= {:id application-id
-                :state "rems.workflow.dynamic/approved"}
-               (select-keys (:application data) [:id :state])))
-        (is (= ["event/submitted" "event/approved"]
-               (map :event (get-in data [:application :dynamic-events]))))))))
+    (testing "send commands with authorized user:"
+      (testing "request-decision"
+        (is (= {:success true} (send-dynamic-command handler-id
+                                                     {:type :rems.workflow.dynamic/request-decision
+                                                      :application-id application-id
+                                                      :decider decider-id})))
+        (let [data (get-application handler-id application-id)]
+          (is (= {:id application-id
+                  :decider decider-id
+                  :state "rems.workflow.dynamic/submitted"}
+                 (select-keys (:application data) [:id :decider :state])))))
+      (testing "decide"
+        (is (= {:success true} (send-dynamic-command decider-id
+                                                     {:type :rems.workflow.dynamic/decide
+                                                      :application-id application-id
+                                                      :decision :approved})))
+        (let [data (get-application handler-id application-id)]
+          (is (= {:id application-id
+                  :decision "approved"
+                  :state "rems.workflow.dynamic/submitted"}
+                 (select-keys (:application data) [:id :decider :decision :state])))))
+      (testing "approve"
+        (is (= {:success true} (send-dynamic-command handler-id {:type :rems.workflow.dynamic/approve
+                                                                 :application-id application-id})))
+        (let [data (get-application handler-id application-id)]
+          (is (= {:id application-id
+                  :state "rems.workflow.dynamic/approved"}
+                 (select-keys (:application data) [:id :state])))
+          (is (= ["event/submitted"
+                  "event/decision-requested"
+                  "event/decided"
+                  "event/approved"]
+                 (map :event (get-in data [:application :dynamic-events])))))))))
