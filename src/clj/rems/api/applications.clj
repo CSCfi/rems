@@ -161,10 +161,7 @@
 (defn- fix-command-from-api
   [cmd]
   ;; schema could do these coercions for us...
-  (update-present cmd :decision keyword)
-  (if (:decision cmd)
-    (update cmd :decision keyword)
-    cmd))
+  (update-present cmd :decision keyword))
 
 (def applications-api
   (context "/applications" []
