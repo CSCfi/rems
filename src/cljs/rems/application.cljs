@@ -707,11 +707,11 @@
               :value @(rf/subscribe [::judge-comment])
               :on-change #(rf/dispatch [::set-judge-comment (.. % -target -value)])}]])
 
-;; TODO fix this, not supposed to be administration!
-(defn- cancel-button []
+(defn- cancel-button [id]
   [:button.btn.btn-secondary
-   {:on-click #(dispatch! "/#/administration")}
-   (text :t.administration/cancel)])
+   {:id (str "cancel-" id)
+    :data-toggle "collapse" :data-target (str "#actions-" id)}
+   (text :t.actions/cancel)])
 
 (defn- action-form [id title comment-title button content]
   [:div.collapse {:id (str "actions-" id) :data-parent "#actions-tabs"}
@@ -720,7 +720,7 @@
    (when comment-title
      [action-comment comment-title])
    [:div.col.commands
-    [cancel-button]
+    [cancel-button id]
     button]])
 
 (defn- approve-form []
