@@ -372,10 +372,7 @@
    [field-validation-message validation title]])
 
 (defn- read-only-field [{:keys [id value]}]
-  (let [value (if (str/blank? value)
-                " " ;; prevent the element from being collapsed
-                (str/trim value))]
-    [:div.form-control {:id id} value]))
+  [:div.form-control {:id id} (str/trim (str value))])
 
 (defn- text-field
   [{:keys [title id inputprompt readonly optional value validation] :as opts}]
@@ -412,8 +409,7 @@
                          value])]
     [basic-field opts
      (if readonly
-       [:div.form-control
-        (or download-link " ")] ;; prevent the element from being collapsed
+       [:div.form-control download-link]
        [:div
         [:div.upload-file
          [:input {:style {:display "none"}

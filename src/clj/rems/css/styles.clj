@@ -336,10 +336,11 @@
    [:.upload-file {:display "inline-block"
                    :margin-right (u/px 10)}]
    [:textarea.form-control {:overflow "hidden"}]
-   [:div.form-control {:height "inherit"
+   [:div.form-control {:height :auto
                        :white-space "pre-wrap"
                        :border "none"
-                       :background-color "rgba(0,0,0,.01)"}]
+                       :background-color "rgba(0,0,0,.01)"}
+    [:&:empty {:height (u/rem 2.25)}]]
    [:form.inline
     :.form-actions.inline
     {:display :inline-block}
