@@ -242,10 +242,13 @@
                 :application-id (:application-id cmd)
                 :time (:time cmd)}}))
 
+(defn- actor-is-not-commenter-error [application cmd]
+  (when-not (contains? (:commenters application) (:actor cmd))
+    {:errors [:unauthorized]}))
+
 (defmethod handle-command ::comment
   [cmd application _injections]
-  (or (when-not (contains? (:commenters application) (:actor cmd))
-        {:errors [:unauthorized]})
+  (or (actor-is-not-commenter-error application cmd)
       (state-error application ::submitted)
       {:success true
        :result {:event :event/commented
