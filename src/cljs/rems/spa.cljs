@@ -13,7 +13,7 @@
             [rems.administration.resource :refer [create-resource-page]]
             [rems.administration.workflow :refer [create-workflow-page]]
             [rems.ajax :refer [load-interceptors!]]
-            [rems.application :refer [application-page fetch-application]]
+            [rems.application :refer [application-page]]
             [rems.applications :refer [applications-page]]
             [rems.atoms :as atoms]
             [rems.auth.auth :as auth]
@@ -79,7 +79,8 @@
 (reg-sub
  :roles
  (fn [db _]
-   (get-in db [:identity :roles])))
+   (when-let [roles (get-in db [:identity :roles])]
+     (set roles))))
 
 ;;; handlers
 
@@ -146,7 +147,7 @@
  (fn [{:keys [db]}]
    ;; do we have the roles set by set-identity already?
    (if (get-in db [:identity :roles])
-     (let [roles (set (get-in db [:identity :roles]))]
+     (let [roles (get-in db [:identity :roles])]
        (println "Selecting landing page based on roles" roles)
        (.removeItem js/sessionStorage "rems-redirect-url")
        (cond

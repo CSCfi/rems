@@ -52,18 +52,21 @@
     (click-visible [{:class "users"} {:tag :a, :fn/text username}])
     (wait-visible :logout)))
 
+(defn- wait-page-loaded []
+  (wait-invisible *driver* {:css ".fa-spinner"}))
+
 (defn click-navigation-menu [link-text]
   (click-visible *driver* [:big-navbar {:tag :a, :fn/text link-text}]))
 
 (defn go-to-catalogue []
   (click-navigation-menu "Catalogue")
   (wait-visible *driver* {:tag :h2, :fn/text "Catalogue"})
-  (wait-invisible *driver* {:css ".fa-spinner"}))
+  (wait-page-loaded))
 
 (defn go-to-applications []
   (click-navigation-menu "Applications")
   (wait-visible *driver* {:tag :h2, :fn/text "Applications"})
-  (wait-invisible *driver* {:css ".fa-spinner"}))
+  (wait-page-loaded))
 
 ;;; catalogue page
 
@@ -78,7 +81,8 @@
                            {:fn/text resource-name}
                            {:xpath "./ancestor::tr"}
                            {:css "button.apply-for-catalogue-items"}])
-  (wait-visible *driver* {:tag :h2, :fn/text "Application"}))
+  (wait-visible *driver* {:tag :h2, :fn/text "Application"})
+  (wait-page-loaded))
 
 ;;; application page
 

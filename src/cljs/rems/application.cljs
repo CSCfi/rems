@@ -1,10 +1,11 @@
 (ns rems.application
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
-            [rems.atoms :refer [external-link textarea]]
+            [rems.atoms :refer [external-link flash-message textarea]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
             [rems.db.catalogue :refer [get-catalogue-item-title]]
+            [rems.guide-utils :refer [lipsum lipsum-short lipsum-paragraphs]]
             [rems.modal :as modal]
             [rems.phase :refer [phases]]
             [rems.spinner :as spinner]
@@ -28,6 +29,9 @@
 
 (defn navigate-to [id]
   (dispatch! (str "#/application/" id)))
+
+(defn- action-collapse-id [action-id]
+  (str "actions-" action-id))
 
 
 
@@ -54,54 +58,47 @@
 
 (rf/reg-sub ::application (fn [db _] (::application db)))
 (rf/reg-sub ::edit-application (fn [db _] (::edit-application db)))
-(rf/reg-sub ::status (fn [db _] (get-in db [::edit-application :status])))
-
-(defn- has-role? [db role]
-  (contains? (set (get-in db [:identity :roles]))
-             role))
 
 (rf/reg-event-fx
  ::enter-application-page
  (fn [{:keys [db]} [_ id]]
    (merge {:db (reset-state db)
-           ::fetch-application [id]}
-          (when (has-role? db :approver)
-            {::fetch-potential-third-party-reviewers [(get-in db [:identity :user])]}))))
+           ::fetch-application id}
+          (when (contains? (get-in db [:identity :roles]) :approver)
+            {::fetch-potential-third-party-reviewers (get-in db [:identity :user])}))))
 
-(defn- fetch-application [id]
-  (fetch (str "/api/applications/" id) {:handler #(rf/dispatch [::fetch-application-result %])}))
-
-(rf/reg-fx ::fetch-application (fn [[id]] (fetch-application id)))
+(rf/reg-fx
+ ::fetch-application
+ (fn [id]
+   (fetch (str "/api/applications/" id)
+          {:handler #(rf/dispatch [::fetch-application-result %])})))
 
 (rf/reg-event-db
  ::fetch-application-result
  (fn [db [_ application]]
-   (-> db
-       (assoc
-        ::application application
-        ::edit-application {:items (into {}
-                                         (for [field (:items application)]
-                                           [(:id field) (:value field)]))
-                            :licenses (into {}
-                                            (for [license (:licenses application)]
-                                              [(:id license) (:approved license)]))}))))
+   (assoc db
+          ::application application
+          ::edit-application {:items (into {} (map (juxt :id :value) (:items application)))
+                              :licenses (into {} (map (juxt :id :approver) (:licenses application)))})))
 
-(rf/reg-event-fx ::enter-new-application-page
+(rf/reg-event-fx
+ ::enter-new-application-page
  (fn [{:keys [db]} [_ items]]
    {:db (reset-state db)
-    ::fetch-draft-application [items]}))
+    ::fetch-draft-application items}))
 
-(defn- fetch-draft-application [items]
-  (fetch (str "/api/applications/draft") {:handler #(rf/dispatch [::fetch-application-result %])
-                                          :params {:catalogue-items items}}))
+(rf/reg-fx
+ ::fetch-draft-application
+ (fn [items]
+   (fetch (str "/api/applications/draft")
+          {:handler #(rf/dispatch [::fetch-application-result %])
+           :params {:catalogue-items items}})))
 
-(rf/reg-fx ::fetch-draft-application (fn [[items]] (fetch-draft-application items)))
 
-
-;; status can be :pending :saved :failed or nil
 (rf/reg-event-db
  ::set-status
  (fn [db [_ {:keys [status description validation error]}]]
+   (assert (contains? #{:pending :saved :failed nil} status))
    (-> db
        (assoc-in [::edit-application :status] {:open? (not (nil? status))
                                                :status status
@@ -218,13 +215,13 @@
 (rf/reg-event-db ::set-license (fn [db [_ id value]] (assoc-in db [::edit-application :licenses id] value)))
 (rf/reg-event-db ::set-judge-comment (fn [db [_ value]] (assoc db ::judge-comment value)))
 
-(defn- fetch-potential-third-party-reviewers [user]
-  (fetch (str "/api/applications/reviewers")
-         {:handler #(do (rf/dispatch [::set-potential-third-party-reviewers %])
-                        (rf/dispatch [::set-selected-third-party-reviewers #{}]))
-          :headers {"x-rems-user-id" (:eppn user)}}))
-
-(rf/reg-fx ::fetch-potential-third-party-reviewers (fn [[user]] (fetch-potential-third-party-reviewers user)))
+(rf/reg-fx
+ ::fetch-potential-third-party-reviewers
+ (fn [user]
+   (fetch (str "/api/applications/reviewers")
+          {:handler #(do (rf/dispatch [::set-potential-third-party-reviewers %])
+                         (rf/dispatch [::set-selected-third-party-reviewers #{}]))
+           :headers {"x-rems-user-id" (:eppn user)}})))
 
 (defn enrich-user [user]
   (assoc user :display (str (:name user) " (" (:email user) ")")))
@@ -232,12 +229,12 @@
 (rf/reg-event-db
  ::set-potential-third-party-reviewers
  (fn [db [_ reviewers]]
-   (assoc db ::potential-third-party-reviewers (for [reviewer reviewers]
-                                                 (enrich-user reviewer)))))
+   (assoc db ::potential-third-party-reviewers (map enrich-user reviewers))))
 
 (rf/reg-sub ::potential-third-party-reviewers (fn [db _] (::potential-third-party-reviewers db)))
 
-(rf/reg-event-db ::set-selected-third-party-reviewers
+(rf/reg-event-db
+ ::set-selected-third-party-reviewers
  (fn [db [_ reviewers]]
    (assoc db ::selected-third-party-reviewers reviewers)))
 
@@ -343,22 +340,6 @@
         (for [m msgs]
           [:li (text-format (:key m) (get-in m [:title language]))])))
 
-(defn flash-message
-  "Displays a notification (aka flash) message.
-
-   :status   - one of the alert types :success, :info, :warning or :failure
-   :contents - content to show inside the notification"
-  [{status :status contents :contents}]
-  (when status
-    [:div.alert
-     ;; TODO should this case and perhaps unnecessary mapping from keywords to Bootstrap be removed?
-     {:class (case status
-               :success "alert-success"
-               :warning "alert-warning"
-               :failure "alert-danger"
-               :info "alert-info")}
-     contents]))
-
 (defn- pdf-button [id]
   (when id
     [:a.btn.btn-secondary
@@ -397,10 +378,7 @@
    [field-validation-message validation title]])
 
 (defn- read-only-field [{:keys [id value]}]
-  (let [value (if (str/blank? value)
-                " " ;; prevent the element from being collapsed
-                (str/trim value))]
-    [:div.form-control {:id id} value]))
+  [:div.form-control {:id id} (str/trim (str value))])
 
 (defn- text-field
   [{:keys [title id inputprompt readonly optional value validation] :as opts}]
@@ -437,8 +415,7 @@
                          value])]
     [basic-field opts
      (if readonly
-       [:div.form-control
-        (or download-link " ")] ;; prevent the element from being collapsed
+       [:div.form-control download-link]
        [:div
         [:div.upload-file
          [:input {:style {:display "none"}
@@ -602,9 +579,29 @@
    :comment (:comment event)
    :time (localize-time (:time event))})
 
+(defn- events-view [events]
+  (let [has-users? (boolean (some :userid events))]
+    [:div
+     [:h4 (text :t.form/events)]
+     (into [:table#event-table.table.table-hover.mb-0
+            [:thead
+             [:tr
+              (when has-users?
+                [:th (text :t.form/user)])
+              [:th (text :t.form/event)]
+              [:th (text :t.form/comment)]
+              [:th (text :t.form/date)]]]
+            (into [:tbody]
+                  (for [e (sort-by :time > events)]
+                    [:tr
+                     (when has-users?
+                       [:td (:userid e)])
+                     [:td (:event e)]
+                     [:td.event-comment (:comment e)]
+                     [:td.date (:time e)]]))])]))
+
 (defn- application-header [state phases-data events]
-  (let [has-users? (boolean (some :userid events))
-        ;; the event times have millisecond differences, so they need to be formatted to minute precision before deduping
+  (let [;; the event times have millisecond differences, so they need to be formatted to minute precision before deduping
         events (->> events
                     (map format-event)
                     dedupe)
@@ -622,24 +619,7 @@
                  (info-field (text :t.applications/latest-comment)
                              (:comment last-event)))]
       :collapse (when (seq events)
-                  [:div
-                   [:h4 (text :t.form/events)]
-                   (into [:table#event-table.table.table-hover.mb-0
-                          [:thead
-                           [:tr
-                            (when has-users?
-                              [:th (text :t.form/user)])
-                            [:th (text :t.form/event)]
-                            [:th (text :t.form/comment)]
-                            [:th (text :t.form/date)]]]
-                          (into [:tbody]
-                                (for [e (sort-by :time > events)]
-                                  [:tr
-                                   (when has-users?
-                                     [:td (:userid e)])
-                                   [:td (:event e)]
-                                   [:td.event-comment (:comment e)]
-                                   [:td.date (:time e)]]))])])}]))
+                  [events-view events])}]))
 
 
 (defn applicant-info [id user-attributes]
@@ -699,34 +679,34 @@
 (defn- action-button [id content]
   [:button.btn.btn-secondary.mr-3
    {:id id
-    :type "button" :data-toggle "collapse" :data-target (str "#actions-" id)}
+    :type "button" :data-toggle "collapse" :data-target (str "#" (action-collapse-id id))}
    (str content " ...")])
 
-(defn- approve-tab []
+(defn- approve-action-button []
   [action-button "approve" (text :t.actions/approve)])
 
-(defn- reject-tab []
+(defn- reject-action-button []
   [action-button "reject" (text :t.actions/reject)])
 
-(defn- return-tab []
+(defn- return-action-button []
   [action-button "return" (text :t.actions/return)])
 
-(defn- review-tab []
+(defn- review-action-button []
   [action-button "review" (text :t.actions/review)])
 
-(defn- third-party-review-tab []
+(defn- third-party-review-action-button []
   [action-button "third-party-review" (text :t.actions/review)])
 
-(defn- applicant-close-tab []
+(defn- applicant-close-action-button []
   [action-button "applicant-close" (text :t.actions/close)])
 
-(defn- approver-close-tab []
+(defn- approver-close-action-button []
   [action-button "approver-close" (text :t.actions/close)])
 
-(defn- withdraw-tab []
+(defn- withdraw-action-button []
   [action-button "withdraw" (text :t.actions/withdraw)])
 
-(defn- review-request-tab []
+(defn- review-request-action-button []
   [action-button "review-request" (text :t.actions/review-request)])
 
 (defn- action-comment [label-title]
@@ -737,21 +717,18 @@
               :value @(rf/subscribe [::judge-comment])
               :on-change #(rf/dispatch [::set-judge-comment (.. % -target -value)])}]])
 
-;; TODO fix this, not supposed to be administration!
-(defn- cancel-button []
+(defn- cancel-action-button [id]
   [:button.btn.btn-secondary
-   {:on-click #(dispatch! "/#/administration")}
-   (text :t.administration/cancel)])
+   {:id (str "cancel-" id) :data-toggle "collapse" :data-target (str "#" (action-collapse-id id))}
+   (text :t.actions/cancel)])
 
 (defn- action-form [id title comment-title button content]
-  [:div.collapse {:id (str "actions-" id) :data-parent "#actions-tabs"}
+  [:div.collapse {:id (action-collapse-id id) :data-parent "#actions-forms"}
    [:h4.mt-5 title]
    content
    (when comment-title
      [action-comment comment-title])
-   [:div.col.commands
-    [cancel-button]
-    button]])
+   [:div.col.commands [cancel-action-button id] button]])
 
 (defn- approve-form []
   [action-form "approve"
@@ -834,15 +811,15 @@
           {:submit [[save-button]
                     [submit-button]]
            :add-member nil ; TODO implement
-           :return [[return-tab]]
+           :return [[return-action-button]]
            :request-decision nil ; TODO implement
            :decide nil ; TODO implement
-           :request-comment [[review-request-tab]]
-           :approve [[approve-tab]]
-           :reject [[reject-tab]]
+           :request-comment [[review-request-action-button]]
+           :approve [[approve-action-button]]
+           :reject [[reject-action-button]]
            :close [(if (:is-applicant? app)
-                     [applicant-close-tab]
-                     [approver-close-tab])]}
+                     [applicant-close-action-button]
+                     [approver-close-action-button])]}
           (:possible-commands app)))
 
 (defn- static-actions [app]
@@ -850,28 +827,28 @@
         editable? (contains? #{"draft" "returned" "withdrawn"} state)]
     (concat (when (:can-close? app)
               [(if (:is-applicant? app)
-                 [applicant-close-tab]
-                 [approver-close-tab])])
+                 [applicant-close-action-button]
+                 [approver-close-action-button])])
             (when (:can-withdraw? app)
-              [[withdraw-tab]])
+              [[withdraw-action-button]])
             (when (:can-approve? app)
-              [[review-request-tab]
-               [return-tab]
-               [reject-tab]
-               [approve-tab]])
+              [[review-request-action-button]
+               [return-action-button]
+               [reject-action-button]
+               [approve-action-button]])
             (when (= :normal (:review-type app))
-              [[review-tab]])
+              [[review-action-button]])
             (when (= :third-party (:review-type app))
-              [[third-party-review-tab]])
+              [[third-party-review-action-button]])
             (when (and (:is-applicant? app) editable?)
               [[save-button]
                [submit-button]]))))
 
 (defn- actions-form [app]
-  (let [tabs (if (= :workflow/dynamic (get-in app [:workflow :type]))
-               (dynamic-actions app)
-               (static-actions app))
-        forms [[:div#actions-tabs.mt-3
+  (let [actions (if (= :workflow/dynamic (get-in app [:workflow :type]))
+                  (dynamic-actions app)
+                  (static-actions app))
+        forms [[:div#actions-forms.mt-3
                 [approve-form]
                 [reject-form]
                 [return-form]
@@ -881,12 +858,11 @@
                 [applicant-close-form]
                 [approver-close-form]
                 [withdraw-form]]]]
-    (if (empty? tabs)
-      [:div]
+    (when (seq actions)
       [collapsible/component
        {:id "actions"
         :title (text :t.form/actions)
-        :always (into [:div] (concat tabs forms))}])))
+        :always (into [:div] (concat actions forms))}])))
 
 (defn- disabled-items-warning [catalogue-items]
   (let [language @(rf/subscribe [:language])]
@@ -909,7 +885,6 @@
                        [:li (get-catalogue-item-title item language)]))]}]))
 
 (defn- render-application [application edit-application language status]
-  ;; TODO should rename :application
   (let [app (:application application)
         state (:state app)
         phases (:phases application)
@@ -923,7 +898,7 @@
                               :contents (text :t.actions/review-request-success)}])
                           (when (:validation edit-application)
                             [flash-message
-                             {:status :failure
+                             {:status :danger
                               :contents [:div (text :t.form/validation.errors)
                                          [format-validation-messages (:validation edit-application) language]]}])])]
     [:div
@@ -939,14 +914,14 @@
      (when (:open? status)
        [status-modal status (when (seq messages) (into [:div] messages))])]))
 
-;;;; Entrypoint ;;;;
+;;;; Entrypoint
 
 (defn application-page []
   (let [application @(rf/subscribe [::application])
         edit-application @(rf/subscribe [::edit-application])
         language @(rf/subscribe [:language])
         loading? (not application)
-        status @(rf/subscribe [::status])]
+        status (:status edit-application)]
     (if loading?
       [:div
        [:h2 (text :t.applications/application)]
@@ -959,19 +934,6 @@
 
 
 ;;;; Guide
-
-(def ^:private lipsum
-  (str "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod "
-       "tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim "
-       "veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex "
-       "ea commodo consequat. Duis aute irure dolor in reprehenderit in "
-       "voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur "
-       "sint occaecat cupidatat non proident, sunt in culpa qui officia "
-       "deserunt mollit anim id est laborum."))
-
-(def ^:private lipsum-short "Lorem ipsum dolor sit amet")
-
-(def ^:private lipsum-paragraphs "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam vehicula malesuada gravida. Nulla in massa eget quam porttitor consequat id egestas urna. Aliquam non pharetra dolor. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Sed quis ante at nunc convallis aliquet at quis ligula. Aliquam accumsan consectetur risus. Quisque semper turpis a erat dapibus iaculis.\n\nCras sit amet laoreet lectus. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Phasellus vestibulum a metus in laoreet. Phasellus eleifend eget dui vitae tincidunt. Aenean eu sapien sed nibh viverra facilisis in ac nulla. Integer quis odio eu sapien porta interdum in eu nulla. Sed sodales efficitur diam, vel iaculis ante bibendum vel. Praesent pretium ut lorem sit amet viverra. Etiam luctus nisi eget pharetra rutrum.\n\n")
 
 (defn guide []
   [:div
@@ -1002,15 +964,6 @@
                                                  :fi {:title "Otsikko suomeksi 2"}}}
               {:state "enabled" :localizations {:en {:title "English title 3"}
                                                 :fi {:title "Otsikko suomeksi 3"}}}]])
-
-   (component-info flash-message)
-   (example "flash-message with info"
-            [flash-message {:status :info
-                            :contents "Hello world"}])
-
-   (example "flash-message with error"
-            [flash-message {:status :failure
-                            :contents "You fail"}])
 
    (component-info field)
    (example "field of type \"text\""

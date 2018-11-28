@@ -123,7 +123,7 @@
    {}))
 
 
-;;;; UI ;;;;
+;;;; UI
 
 (def ^:private context {:get-form ::form
                         :update-form ::set-form-field})

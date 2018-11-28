@@ -779,7 +779,7 @@
                                 :comment nil
                                 :event "add-member" :eventdata (cheshire/generate-string {"uid" member})})))
 
-;;; Dynamic workflows ;;;
+;;; Dynamic workflows
 
 (defn- fix-workflow-from-db [wf]
   (update (cheshire/parse-string wf keyword)
