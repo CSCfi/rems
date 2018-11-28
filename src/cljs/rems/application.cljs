@@ -222,8 +222,7 @@
 (rf/reg-event-db
  ::set-potential-third-party-reviewers
  (fn [db [_ reviewers]]
-   (assoc db ::potential-third-party-reviewers (for [reviewer reviewers]
-                                                 (enrich-user reviewer)))))
+   (assoc db ::potential-third-party-reviewers (map enrich-user reviewers))))
 
 (rf/reg-sub ::potential-third-party-reviewers (fn [db _] (::potential-third-party-reviewers db)))
 
