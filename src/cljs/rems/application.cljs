@@ -707,10 +707,9 @@
               :value @(rf/subscribe [::judge-comment])
               :on-change #(rf/dispatch [::set-judge-comment (.. % -target -value)])}]])
 
-(defn- cancel-button [id]
+(defn- cancel-action-button [id]
   [:button.btn.btn-secondary
-   {:id (str "cancel-" id)
-    :data-toggle "collapse" :data-target (str "#actions-" id)}
+   {:id (str "cancel-" id) :data-toggle "collapse" :data-target (str "#actions-" id)}
    (text :t.actions/cancel)])
 
 (defn- action-form [id title comment-title button content]
@@ -719,9 +718,7 @@
    content
    (when comment-title
      [action-comment comment-title])
-   [:div.col.commands
-    [cancel-button id]
-    button]])
+   [:div.col.commands [cancel-action-button id] button]])
 
 (defn- approve-form []
   [action-form "approve"
