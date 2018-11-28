@@ -597,7 +597,7 @@
                      [:td.date (:time e)]]))])]))
 
 (defn- application-header [state phases-data events]
-  (let [ ;; the event times have millisecond differences, so they need to be formatted to minute precision before deduping
+  (let [;; the event times have millisecond differences, so they need to be formatted to minute precision before deduping
         events (->> events
                     (map format-event)
                     dedupe)
