@@ -838,6 +838,19 @@
                                             :application-id application-id}))))
 
     (testing "send commands with authorized user"
+      (testing "request-decision"
+        (is (= {:success true} (send-dynamic-command handler-id
+                                                     {:type :rems.workflow.dynamic/request-decision
+                                                      :actor handler-id
+                                                      :application-id application-id
+                                                      :decider decider-id})))
+        (let [data (get-application handler-id application-id)]
+          (is (= {:id application-id
+                  :decider decider-id
+                  :state "rems.workflow.dynamic/submitted"}
+                 (select-keys (:application data) [:id :decider :state])))))
+      (testing "decide"
+        (is true)) ;; TODO
       (testing "approve"
         (is (= {:success true} (send-dynamic-command handler-id {:type :rems.workflow.dynamic/approve
                                                                  :actor handler-id
@@ -846,5 +859,5 @@
           (is (= {:id application-id
                   :state "rems.workflow.dynamic/approved"}
                  (select-keys (:application data) [:id :state])))
-          (is (= ["event/submitted" "event/approved"]
+          (is (= ["event/submitted" "event/decision-requested" "event/approved"]
                  (map :event (get-in data [:application :dynamic-events])))))))))
