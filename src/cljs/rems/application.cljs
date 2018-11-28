@@ -678,31 +678,31 @@
     :type "button" :data-toggle "collapse" :data-target (str "#" (action-collapse-id id))}
    (str content " ...")])
 
-(defn- approve-tab []
+(defn- approve-action-button []
   [action-button "approve" (text :t.actions/approve)])
 
-(defn- reject-tab []
+(defn- reject-action-button []
   [action-button "reject" (text :t.actions/reject)])
 
-(defn- return-tab []
+(defn- return-action-button []
   [action-button "return" (text :t.actions/return)])
 
-(defn- review-tab []
+(defn- review-action-button []
   [action-button "review" (text :t.actions/review)])
 
-(defn- third-party-review-tab []
+(defn- third-party-review-action-button []
   [action-button "third-party-review" (text :t.actions/review)])
 
-(defn- applicant-close-tab []
+(defn- applicant-close-action-button []
   [action-button "applicant-close" (text :t.actions/close)])
 
-(defn- approver-close-tab []
+(defn- approver-close-action-button []
   [action-button "approver-close" (text :t.actions/close)])
 
-(defn- withdraw-tab []
+(defn- withdraw-action-button []
   [action-button "withdraw" (text :t.actions/withdraw)])
 
-(defn- review-request-tab []
+(defn- review-request-action-button []
   [action-button "review-request" (text :t.actions/review-request)])
 
 (defn- action-comment [label-title]
@@ -719,7 +719,7 @@
    (text :t.actions/cancel)])
 
 (defn- action-form [id title comment-title button content]
-  [:div.collapse {:id (action-collapse-id id) :data-parent "#actions-tabs"}
+  [:div.collapse {:id (action-collapse-id id) :data-parent "#actions-forms"}
    [:h4.mt-5 title]
    content
    (when comment-title
@@ -807,15 +807,15 @@
           {:submit [[save-button]
                     [submit-button]]
            :add-member nil ; TODO implement
-           :return [[return-tab]]
+           :return [[return-action-button]]
            :request-decision nil ; TODO implement
            :decide nil ; TODO implement
-           :request-comment [[review-request-tab]]
-           :approve [[approve-tab]]
-           :reject [[reject-tab]]
+           :request-comment [[review-request-action-button]]
+           :approve [[approve-action-button]]
+           :reject [[reject-action-button]]
            :close [(if (:is-applicant? app)
-                     [applicant-close-tab]
-                     [approver-close-tab])]}
+                     [applicant-close-action-button]
+                     [approver-close-action-button])]}
           (:possible-commands app)))
 
 (defn- static-actions [app]
@@ -823,28 +823,28 @@
         editable? (contains? #{"draft" "returned" "withdrawn"} state)]
     (concat (when (:can-close? app)
               [(if (:is-applicant? app)
-                 [applicant-close-tab]
-                 [approver-close-tab])])
+                 [applicant-close-action-button]
+                 [approver-close-action-button])])
             (when (:can-withdraw? app)
-              [[withdraw-tab]])
+              [[withdraw-action-button]])
             (when (:can-approve? app)
-              [[review-request-tab]
-               [return-tab]
-               [reject-tab]
-               [approve-tab]])
+              [[review-request-action-button]
+               [return-action-button]
+               [reject-action-button]
+               [approve-action-button]])
             (when (= :normal (:review-type app))
-              [[review-tab]])
+              [[review-action-button]])
             (when (= :third-party (:review-type app))
-              [[third-party-review-tab]])
+              [[third-party-review-action-button]])
             (when (and (:is-applicant? app) editable?)
               [[save-button]
                [submit-button]]))))
 
 (defn- actions-form [app]
-  (let [tabs (if (= :workflow/dynamic (get-in app [:workflow :type]))
-               (dynamic-actions app)
-               (static-actions app))
-        forms [[:div#actions-tabs.mt-3
+  (let [actions (if (= :workflow/dynamic (get-in app [:workflow :type]))
+                  (dynamic-actions app)
+                  (static-actions app))
+        forms [[:div#actions-forms.mt-3
                 [approve-form]
                 [reject-form]
                 [return-form]
@@ -854,12 +854,11 @@
                 [applicant-close-form]
                 [approver-close-form]
                 [withdraw-form]]]]
-    (if (empty? tabs)
-      [:div]
+    (when (seq actions)
       [collapsible/component
        {:id "actions"
         :title (text :t.form/actions)
-        :always (into [:div] (concat tabs forms))}])))
+        :always (into [:div] (concat actions forms))}])))
 
 (defn- disabled-items-warning [catalogue-items]
   (let [language @(rf/subscribe [:language])]
