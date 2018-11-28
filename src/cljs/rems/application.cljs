@@ -67,7 +67,10 @@
           (when (contains? (get-in db [:identity :roles]) :approver)
             {::fetch-potential-third-party-reviewers (get-in db [:identity :user])}))))
 
-(rf/reg-fx ::fetch-application (fn [id] (fetch (str "/api/applications/" id) {:handler #(rf/dispatch [::fetch-application-result %])})))
+(rf/reg-fx
+ ::fetch-application
+ (fn [id] (fetch (str "/api/applications/" id)
+                 {:handler #(rf/dispatch [::fetch-application-result %])})))
 
 (rf/reg-event-db
  ::fetch-application-result
