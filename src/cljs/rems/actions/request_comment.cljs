@@ -70,36 +70,26 @@
  ::set-comment
  (fn [db [_ value]] (assoc db ::comment value)))
 
-(defn- send-request-comment! [{:keys [commenters application-id comment description]}]
+(defn- send-request-comment! [{:keys [commenters application-id comment on-success on-error]}]
   (post! "/api/applications/command"
          {:params {:application-id application-id
                    :type :rems.workflow.dynamic/request-comment
                    :comment comment
                    :commenters (map :userid commenters)}
-          :handler (fn [resp]
-                     ;; TODO use callbacks so no dependency?
-                     (rf/dispatch [:rems.application/set-status {:status :saved
-                                                                 :description description}])
-                     (rf/dispatch [::send-request-comment-success true])
-                     (rf/dispatch [:rems.application/enter-application-page application-id])
-                     #_(scroll-to-top!))
-          :error-handler (fn [error]
-                           (rf/dispatch [:rems.application/set-status {:status :failed
-                                                                       :description description
-                                                                       :error error}]))}))
+          :handler on-success
+          :error-handler on-error}))
 
 (rf/reg-event-fx
  ::send-request-comment
- (fn [{:keys [db]} [_ commenters comment description]]
-   (let [application-id (get-in db [:rems.application/application :application :id]) ; TODO circular dependency
-         user (get-in db [:identity :user])]
+ (fn [{:keys [db]} [_ {:keys [application-id commenters comment on-pending on-success on-error]}]]
+   (let [user (get-in db [:identity :user])]
      (send-request-comment! {:commenters commenters
                              :application-id application-id
                              :comment comment
-                             :description description})
-     ;; TODO where to set status?
-     {:dispatch [:rems.application/set-status {:status :pending
-                                               :description description}]})))
+                             :on-success on-success
+                             :on-error on-error})
+     (on-pending)
+     {})))
 
 (rf/reg-event-db
  ::send-comment-request-success
@@ -109,7 +99,6 @@
 
 (defn request-comment-view
   [{:keys [selected-commenters potential-commenters comment on-set-comment on-add-commenter on-remove-commenter on-send]}]
-  (prn comment)
   [action-form-view "request-comment"
    (text :t.actions/review-request) ; TODO change localization keys
    nil
@@ -138,14 +127,32 @@
    nil
    nil])
 
-(defn request-comment-form []
+(defn request-comment-form [application-id]
   (let [selected-commenters @(rf/subscribe [::selected-commenters])
         potential-commenters @(rf/subscribe [::potential-commenters])
-        comment @(rf/subscribe [::comment])]
+        comment @(rf/subscribe [::comment])
+        description (text :t.actions/review-request)
+        on-pending (fn []
+                     (rf/dispatch [:rems.application/set-status {:status :pending
+                                                                 :description description}]))
+        on-success (fn []
+                     ;; TODO use callbacks so no dependency?
+                     (rf/dispatch [:rems.application/set-status {:status :saved
+                                                                 :description description}])
+                     (rf/dispatch [:rems.application/enter-application-page application-id]))
+        on-error (fn [error]
+                   (rf/dispatch [:rems.application/set-status {:status :failed
+                                                               :description description
+                                                               :error error}]))]
     [request-comment-view {:selected-commenters selected-commenters
                            :potential-commenters potential-commenters
                            :comment comment
                            :on-set-comment #(rf/dispatch [::set-comment %])
                            :on-add-commenter #(rf/dispatch [::add-selected-commenter %])
                            :on-remove-commenter #(rf/dispatch [::remove-selected-commenter %])
-                           :on-send #(rf/dispatch [::send-request-comment selected-commenters comment (text :t.actions/review-request)])}]))
+                           :on-send #(rf/dispatch [::send-request-comment {:application-id application-id
+                                                                           :commenters selected-commenters
+                                                                           :comment comment
+                                                                           :on-pending on-pending
+                                                                           :on-success on-success
+                                                                           :on-error on-error}])}]))

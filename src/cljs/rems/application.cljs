@@ -840,7 +840,7 @@
                 [return-form]
                 [review-form]
                 [request-review-form]
-                [request-comment-form]
+                [request-comment-form (:id app)]
                 [third-party-review-form]
                 [applicant-close-form]
                 [approver-close-form]
