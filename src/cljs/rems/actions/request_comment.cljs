@@ -63,8 +63,9 @@
  (fn [db [_ value]] (assoc db ::comment value)))
 
 (defn- send-request-comment! [commenters user application-id comment description]
-  (post! "/api/applications/request_comment"
+  (post! "/api/applications/command"
          {:params {:application-id application-id
+                   :type :rems.workflow.dynamic/request-comment
                    :comment comment
                    :recipients (map :userid commenters)}
           :handler (fn [resp]
