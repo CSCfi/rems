@@ -75,7 +75,7 @@
          {:params {:application-id application-id
                    :type :rems.workflow.dynamic/request-comment
                    :comment comment
-                   :recipients (map :userid commenters)}
+                   :commenters (map :userid commenters)}
           :handler (fn [resp]
                      ;; TODO use callbacks so no dependency?
                      (rf/dispatch [:rems.application/set-status {:status :saved
