@@ -363,7 +363,7 @@
       (rf/dispatch [::set-field id (.-name filecontent)])
       (rf/dispatch [::save-attachment id form-data description]))))
 
-(defn- read-only-field [{:keys [id value]}]
+(defn- readonly-field [{:keys [id value]}]
   [:div.form-control {:id id} (str/trim (str value))])
 
 (defn- format-diff [diff]
@@ -407,8 +407,8 @@
                            :value value
                            :previous-value previous-value}])
      readonly (or readonly-component
-                  [read-only-field {:id (id-to-name id)
-                                    :value value}])
+                  [readonly-field {:id (id-to-name id)
+                                   :value value}])
      :else editor-component)
    [field-validation-message validation title]])
 
