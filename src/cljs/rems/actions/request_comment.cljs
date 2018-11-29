@@ -25,8 +25,7 @@
                      ::selected-commenters #{})}
          (when (contains? (get-in db [:identity :roles]) :approver) ; TODO handler role?
            {::fetch-potential-commenters [(get-in db [:identity :user])
-                                          #(do (rf/dispatch [::set-potential-commenters %])
-                                               (rf/dispatch [::set-selected-commenters #{}]))]})))
+                                          #(rf/dispatch [::set-potential-commenters %])]})))
 
 (rf/reg-event-fx ::open-form open-form)
 
@@ -42,7 +41,9 @@
 (rf/reg-event-db
  ::set-potential-commenters
  (fn [db [_ commenters]]
-   (assoc db ::potential-commenters (set (map enrich-user commenters)))))
+   (assoc db
+          ::potential-commenters (set (map enrich-user commenters))
+          ::selected-commenters #{})))
 
 (rf/reg-sub ::potential-commenters (fn [db _] (::potential-commenters db)))
 
