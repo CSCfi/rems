@@ -70,7 +70,7 @@
  ::set-comment
  (fn [db [_ value]] (assoc db ::comment value)))
 
-(defn- send-request-comment! [commenters user application-id comment description]
+(defn- send-request-comment! [{:keys [commenters application-id comment description]}]
   (post! "/api/applications/command"
          {:params {:application-id application-id
                    :type :rems.workflow.dynamic/request-comment
@@ -93,7 +93,10 @@
  (fn [{:keys [db]} [_ commenters comment description]]
    (let [application-id (get-in db [:rems.application/application :application :id]) ; TODO circular dependency
          user (get-in db [:identity :user])]
-     (send-request-comment! commenters user application-id comment description)
+     (send-request-comment! {:commenters commenters
+                             :application-id application-id
+                             :comment comment
+                             :description description})
      ;; TODO where to set status?
      {:dispatch [:rems.application/set-status {:status :pending
                                                :description description}]})))
