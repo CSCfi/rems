@@ -6,26 +6,34 @@
             [rems.text :refer [text]]
             [rems.util :refer [fetch post!]]))
 
-(rf/reg-fx
- ::fetch-potential-commenters
- (fn [user]
-   (fetch (str "/api/applications/reviewers") ; TODO separate API for commenters
-          {:handler #(do (rf/dispatch [::set-potential-commenters %])
-                         (rf/dispatch [::set-selected-commenters #{}]))
-           :headers {"x-rems-user-id" (:eppn user)}})))
+(defn fetch-potential-commenters
+  [[user on-success]]
+  (fetch (str "/api/applications/reviewers") ; TODO separate API for commenters
+         {:handler on-success
+          :headers {"x-rems-user-id" (:eppn user)}}))
 
-(rf/reg-event-fx
- ::open-form
- (fn [{:keys [db]} [_]]
-   (prn (get-in db [:identity :roles]))
-   (merge {:db (assoc db
-                      ::comment ""
-                      ::potential-commenters #{}
-                      ::selected-commenters #{})}
-          (when (contains? (get-in db [:identity :roles]) :approver) ; TODO handler role?
-            {::fetch-potential-commenters (get-in db [:identity :user])}))))
+(rf/reg-fx ::fetch-potential-commenters fetch-potential-commenters)
 
+(comment
+  (fetch-potential-commenters [{:eppn "developer"} prn]))
 
+(defn open-form
+  [{:keys [db]} _]
+  (merge {:db (assoc db
+                     ::comment ""
+                     ::potential-commenters #{}
+                     ::selected-commenters #{})}
+         (when (contains? (get-in db [:identity :roles]) :approver) ; TODO handler role?
+           {::fetch-potential-commenters [(get-in db [:identity :user])
+                                          #(do (rf/dispatch [::set-potential-commenters %])
+                                               (rf/dispatch [::set-selected-commenters #{}]))]})))
+
+(rf/reg-event-fx ::open-form open-form)
+
+(comment
+  (open-form {:db {:identity {:roles #{:approver} :user {:eppn "developer"}}}}
+             [::open-form prn])
+  (rf/dispatch [::open-form]))
 
 ;; TODO together with application.cljs
 (defn enrich-user [user]
