@@ -77,8 +77,8 @@
                      #_(scroll-to-top!))
           :error-handler (fn [error]
                            (rf/dispatch [:rems.application/set-status {:status :failed
-                                                                        :description description
-                                                                        :error error}]))}))
+                                                                       :description description
+                                                                       :error error}]))}))
 
 (rf/reg-event-fx
  ::send-request-comment
