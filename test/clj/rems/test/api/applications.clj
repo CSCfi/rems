@@ -869,3 +869,29 @@
                   "event/decided"
                   "event/approved"]
                  (map :event (get-in data [:application :dynamic-events])))))))))
+
+(deftest dynamic-application-create-test
+  (let [api-key "42"
+        user-id "alice"
+        catid 9] ;; catalogue item with dynamic workflow in test-data
+    (let [response (-> (request :post (str "/api/applications/save"))
+                       (authenticate api-key user-id)
+                       (json-body {:command "save"
+                                   :catalogue-items [catid]
+                                   :items {1 "dynamic test"}})
+                       app
+                       read-body)
+          application-id (:id response)
+          data (get-application user-id application-id)]
+      (testing "create draft"
+        (is (some? application-id))
+        (is (= "workflow/dynamic" (get-in data [:application :workflow :type])))
+        (is (= "rems.workflow.dynamic/draft" (get-in data [:application :state])))
+        (is (= "dynamic test" (get-in data [:items 0 :value]))))
+      (testing "submitting"
+        (is (= {:success true} (send-dynamic-command user-id {:type :rems.workflow.dynamic/submit
+                                                              :application-id application-id})))
+        (let [submitted (get-application user-id application-id)]
+          (is (= "rems.workflow.dynamic/submitted" (get-in submitted [:application :state])))
+          (is (= ["event/submitted"]
+                 (map :event (get-in submitted [:application :dynamic-events])))))))))
