@@ -363,30 +363,6 @@
       (rf/dispatch [::set-field id (.-name filecontent)])
       (rf/dispatch [::save-attachment id form-data description]))))
 
-(defn- field-validation-message [validation title]
-  (when validation
-    [:div {:class "text-danger"}
-     (text-format (:key validation) title)]))
-
-(defn- basic-field [{:keys [title id optional previous-value diff validation]} field-component]
-  [:div.form-group.field
-   [:label {:for (id-to-name id)}
-    title " "
-    (when optional
-      (text :t.form/optional))]
-   (when previous-value
-     [:a.show-diff {:href "#"
-                    :on-click (fn [event]
-                                (.preventDefault event)
-                                (rf/dispatch [::toggle-diff id]))}
-      [:i.fas.fa-exclamation-circle]
-      " "
-      (if diff
-        (text :t.form/diff-hide)
-        (text :t.form/diff-show))])
-   field-component
-   [field-validation-message validation title]])
-
 (defn- read-only-field [{:keys [id value]}]
   [:div.form-control {:id id} (str/trim (str value))])
 
@@ -404,71 +380,91 @@
     (into [:div.form-control.diff {:id id}]
           (format-diff diff))))
 
-(defn- text-field
-  [{:keys [title id inputprompt readonly optional value validation] :as opts}]
-  [basic-field opts
-   (if readonly
-     [read-only-field {:id (id-to-name id)
-                       :value value}]
-     [:input.form-control {:type "text"
-                           :id (id-to-name id)
-                           :name (id-to-name id)
-                           :placeholder inputprompt
-                           :class (when validation "is-invalid")
+(defn- field-validation-message [validation title]
+  (when validation
+    [:div {:class "text-danger"}
+     (text-format (:key validation) title)]))
+
+(defn- basic-field [{:keys [title id readonly readonly-component optional value previous-value diff diff-component validation]} editor-component]
+  [:div.form-group.field
+   [:label {:for (id-to-name id)}
+    title " "
+    (when optional
+      (text :t.form/optional))]
+   (when previous-value
+     [:a.show-diff {:href "#"
+                    :on-click (fn [event]
+                                (.preventDefault event)
+                                (rf/dispatch [::toggle-diff id]))}
+      [:i.fas.fa-exclamation-circle]
+      " "
+      (if diff
+        (text :t.form/diff-hide)
+        (text :t.form/diff-show))])
+   (cond
+     diff (or diff-component
+              [diff-field {:id (id-to-name id)
                            :value value
-                           :on-change (set-field-value id)}])])
+                           :previous-value previous-value}])
+     readonly (or readonly-component
+                  [read-only-field {:id (id-to-name id)
+                                    :value value}])
+     :else editor-component)
+   [field-validation-message validation title]])
+
+(defn- text-field
+  [{:keys [id inputprompt value validation] :as opts}]
+  [basic-field opts
+   [:input.form-control {:type "text"
+                         :id (id-to-name id)
+                         :name (id-to-name id)
+                         :placeholder inputprompt
+                         :class (when validation "is-invalid")
+                         :value value
+                         :on-change (set-field-value id)}]])
 
 (defn- texta-field
-  [{:keys [title id inputprompt readonly optional value previous-value diff validation] :as opts}]
+  [{:keys [id inputprompt value validation] :as opts}]
   [basic-field opts
-   (cond
-     diff [diff-field {:id (id-to-name id)
-                       :value value
-                       :previous-value previous-value}]
-     readonly [read-only-field {:id (id-to-name id)
-                                :value value}]
-     :else [textarea {:id (id-to-name id)
-                      :name (id-to-name id)
-                      :placeholder inputprompt
-                      :class (if validation "form-control is-invalid" "form-control")
-                      :value value
-                      :on-change (set-field-value id)}])])
+   [textarea {:id (id-to-name id)
+              :name (id-to-name id)
+              :placeholder inputprompt
+              :class (if validation "form-control is-invalid" "form-control")
+              :value value
+              :on-change (set-field-value id)}]])
 
 (defn attachment-field
-  [{:keys [title id readonly optional value validation app-id] :as opts}]
+  [{:keys [title id value validation app-id] :as opts}]
   (let [download-link (when (not-empty value)
                         [:a {:href (str "/api/applications/attachments/?application-id=" app-id "&field-id=" id)
                              :target "_blank"}
                          value])]
-    [basic-field opts
-     (if readonly
-       [:div.form-control download-link]
-       [:div
-        [:div.upload-file
-         [:input {:style {:display "none"}
-                  :type "file"
-                  :id (id-to-name id)
-                  :name (id-to-name id)
-                  :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
-                  :class (when validation "is-invalid")
-                  :on-change (set-attachment id title)}]
-         [:button.btn.btn-secondary {:on-click (fn [e] (.click (.getElementById js/document (id-to-name id))))}
-          (text :t.form/upload)]]
-        download-link])]))
+    ;; TODO: how to show diff for the attachment? will require adding :diff-component
+    [basic-field (assoc opts :readonly-component [:div.form-control download-link])
+     [:div
+      [:div.upload-file
+       [:input {:style {:display "none"}
+                :type "file"
+                :id (id-to-name id)
+                :name (id-to-name id)
+                :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
+                :class (when validation "is-invalid")
+                :on-change (set-attachment id title)}]
+       [:button.btn.btn-secondary {:on-click (fn [e] (.click (.getElementById js/document (id-to-name id))))}
+        (text :t.form/upload)]]
+      download-link]]))
 
 (defn- date-field
-  [{:keys [title id readonly optional value min max validation] :as opts}]
+  [{:keys [id value min max validation] :as opts}]
+  ;; TODO: format readonly value in user locale (give basic-field a formatted :value and :previous-value in opts)
   [basic-field opts
-   (if readonly
-     [read-only-field {:id (id-to-name id)
-                       :value value}] ;; TODO: format in user locale
-     [:input.form-control {:type "date"
-                           :name (id-to-name id)
-                           :class (when validation "is-invalid")
-                           :defaultValue value
-                           :min min
-                           :max max
-                           :on-change (set-field-value id)}])])
+   [:input.form-control {:type "date"
+                         :name (id-to-name id)
+                         :class (when validation "is-invalid")
+                         :defaultValue value
+                         :min min
+                         :max max
+                         :on-change (set-field-value id)}]])
 
 (defn- label [{title :title}]
   [:div.form-group
@@ -1020,6 +1016,12 @@
                                         (str/replace "ipsum primis in faucibus orci luctus" "eu mattis purus mi eu turpis")
                                         (str/replace "per inceptos himenaeos" "justo erat hendrerit magna"))]
      [:div
+      (example "editable field of type \"texta\" with previous value, diff hidden"
+               [:form
+                [field {:type "texta" :title "Title" :inputprompt "prompt" :value lipsum-paragraphs :previous-value previous-lipsum-paragraphs}]])
+      (example "editable field of type \"texta\" with previous value, diff shown"
+               [:form
+                [field {:type "texta" :title "Title" :inputprompt "prompt" :value lipsum-paragraphs :previous-value previous-lipsum-paragraphs :diff true}]])
       (example "non-editable field of type \"texta\" with previous value, diff hidden"
                [:form
                 [field {:type "texta" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-paragraphs :previous-value previous-lipsum-paragraphs}]])
