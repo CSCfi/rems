@@ -1,6 +1,8 @@
 (ns rems.application
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
+            [rems.actions.action :refer [action-form-view action-collapse-id button-wrapper]]
+            [rems.actions.request-comment :refer [request-comment-form]]
             [rems.atoms :refer [external-link flash-message textarea]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
@@ -30,8 +32,6 @@
 (defn navigate-to [id]
   (dispatch! (str "#/application/" id)))
 
-(defn- action-collapse-id [action-id]
-  (str "actions-" action-id))
 
 
 
@@ -516,14 +516,6 @@
                        :on-close #(rf/dispatch [::set-status nil])
                        :shade? true}])
 
-(defn- button-wrapper [{:keys [id text class on-click]}]
-  [:button.btn.mr-3
-   {:id id
-    :name id
-    :class (or class :btn-secondary)
-    :on-click on-click}
-   text])
-
 (defn- save-button []
   [button-wrapper {:id "save"
                    :text (text :t.form/save)
@@ -676,10 +668,13 @@
                    :text (text :t.actions/withdraw)
                    :on-click #(rf/dispatch [::judge-application "withdraw" (text :t.actions/withdraw)])}])
 
-(defn- action-button [id content]
+(defn- action-button [id content on-click]
   [:button.btn.btn-secondary.mr-3
    {:id id
-    :type "button" :data-toggle "collapse" :data-target (str "#" (action-collapse-id id))}
+    :type "button"
+    :data-toggle "collapse"
+    :data-target (str "#" (action-collapse-id id))
+    :on-click on-click}
    (str content " ...")])
 
 (defn- approve-action-button []
@@ -697,6 +692,9 @@
 (defn- third-party-review-action-button []
   [action-button "third-party-review" (text :t.actions/review)])
 
+(defn- request-comment-action-button []
+  [action-button "request-comment" (text :t.actions/comment) #(rf/dispatch [:rems.actions.request-comment/open-form])])
+
 (defn- applicant-close-action-button []
   [action-button "applicant-close" (text :t.actions/close)])
 
@@ -709,26 +707,14 @@
 (defn- review-request-action-button []
   [action-button "review-request" (text :t.actions/review-request)])
 
-(defn- action-comment [label-title]
-  [:div.form-group
-   [:label {:for "judge-comment"} label-title]
-   [textarea {:id "judge-comment"
-              :name "judge-comment" :placeholder (text :t.actions/comment-placeholder)
-              :value @(rf/subscribe [::judge-comment])
-              :on-change #(rf/dispatch [::set-judge-comment (.. % -target -value)])}]])
-
-(defn- cancel-action-button [id]
-  [:button.btn.btn-secondary
-   {:id (str "cancel-" id) :data-toggle "collapse" :data-target (str "#" (action-collapse-id id))}
-   (text :t.actions/cancel)])
-
-(defn- action-form [id title comment-title button content]
-  [:div.collapse {:id (action-collapse-id id) :data-parent "#actions-forms"}
-   [:h4.mt-5 title]
+(defn action-form [id title comment-title button content]
+  [action-form-view id
+   title
+   comment-title
+   button
    content
-   (when comment-title
-     [action-comment comment-title])
-   [:div.col.commands [cancel-action-button id] button]])
+   @(rf/subscribe [::judge-comment])
+   #(rf/dispatch [::set-judge-comment (.. % -target -value)])])
 
 (defn- approve-form []
   [action-form "approve"
@@ -814,7 +800,7 @@
            :return [[return-action-button]]
            :request-decision nil ; TODO implement
            :decide nil ; TODO implement
-           :request-comment [[review-request-action-button]]
+           :request-comment [[request-comment-action-button]]
            :approve [[approve-action-button]]
            :reject [[reject-action-button]]
            :close [(if (:is-applicant? app)
@@ -854,6 +840,7 @@
                 [return-form]
                 [review-form]
                 [request-review-form]
+                [request-comment-form]
                 [third-party-review-form]
                 [applicant-close-form]
                 [approver-close-form]
