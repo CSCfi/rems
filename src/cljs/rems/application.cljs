@@ -368,17 +368,41 @@
     [:div {:class "text-danger"}
      (text-format (:key validation) title)]))
 
-(defn- basic-field [{:keys [title id optional validation]} field-component]
+(defn- basic-field [{:keys [title id optional previous-value diff validation]} field-component]
   [:div.form-group.field
    [:label {:for (id-to-name id)}
     title " "
     (when optional
       (text :t.form/optional))]
+   (when previous-value
+     [:a.show-diff {:href "#"
+                    :on-click (fn [event]
+                                (.preventDefault event)
+                                (rf/dispatch [::toggle-diff id]))}
+      [:i.fas.fa-exclamation-circle]
+      " "
+      (if diff
+        (text :t.form/diff-hide)
+        (text :t.form/diff-show))])
    field-component
    [field-validation-message validation title]])
 
 (defn- read-only-field [{:keys [id value]}]
   [:div.form-control {:id id} (str/trim (str value))])
+
+(defn- format-diff [diff]
+  (map (fn [[change text]] (cond
+                             (pos? change) [:ins text]
+                             (neg? change) [:del text]
+                             :else text))
+       diff))
+
+(defn- diff-field [{:keys [id value previous-value]}]
+  (let [dmp (js/diff_match_patch.)
+        diff (.diff_main dmp (str/trim (str previous-value)) (str/trim (str value)))]
+    (.diff_cleanupSemantic dmp diff)
+    (into [:div.form-control.diff {:id id}]
+          (format-diff diff))))
 
 (defn- text-field
   [{:keys [title id inputprompt readonly optional value validation] :as opts}]
@@ -395,17 +419,20 @@
                            :on-change (set-field-value id)}])])
 
 (defn- texta-field
-  [{:keys [title id inputprompt readonly optional value validation] :as opts}]
+  [{:keys [title id inputprompt readonly optional value previous-value diff validation] :as opts}]
   [basic-field opts
-   (if readonly
-     [read-only-field {:id (id-to-name id)
-                       :value value}]
-     [textarea {:id (id-to-name id)
-                :name (id-to-name id)
-                :placeholder inputprompt
-                :class (if validation "form-control is-invalid" "form-control")
-                :value value
-                :on-change (set-field-value id)}])])
+   (cond
+     diff [diff-field {:id (id-to-name id)
+                       :value value
+                       :previous-value previous-value}]
+     readonly [read-only-field {:id (id-to-name id)
+                                :value value}]
+     :else [textarea {:id (id-to-name id)
+                      :name (id-to-name id)
+                      :placeholder inputprompt
+                      :class (if validation "form-control is-invalid" "form-control")
+                      :value value
+                      :on-change (set-field-value id)}])])
 
 (defn attachment-field
   [{:keys [title id readonly optional value validation app-id] :as opts}]
@@ -989,6 +1016,16 @@
    (example "non-editable field of type \"texta\""
             [:form
              [field {:type "texta" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-paragraphs}]])
+   (let [previous-lipsum-paragraphs (-> lipsum-paragraphs
+                                        (str/replace "ipsum primis in faucibus orci luctus" "eu mattis purus mi eu turpis")
+                                        (str/replace "per inceptos himenaeos" "justo erat hendrerit magna"))]
+     [:div
+      (example "non-editable field of type \"texta\" with previous value, diff hidden"
+               [:form
+                [field {:type "texta" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-paragraphs :previous-value previous-lipsum-paragraphs}]])
+      (example "non-editable field of type \"texta\" with previous value, diff shown"
+               [:form
+                [field {:type "texta" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-paragraphs :previous-value previous-lipsum-paragraphs :diff true}]])])
    (example "field of type \"attachment\""
             [:form
              [field {:type "attachment" :title "Title"}]])
