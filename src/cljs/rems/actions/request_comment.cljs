@@ -95,23 +95,22 @@
    ;; TODO where to set message?
    (assoc db ::send-comment-request-message value)))
 
-;; TODO potentially use local ratom
-;; TODO potentially use callbacks and dispatch in container
-(defn request-comment-view [selected-commenters potential-commenters comment on-comment]
+(defn request-comment-view
+  [{:keys [selected-commenters potential-commenters comment on-set-comment on-add-commenter on-remove-commenter on-send]}]
   (prn comment)
   [action-form-view "request-comment"
    (text :t.actions/review-request) ; TODO change localization keys
    nil
    [button-wrapper {:id "request-comment"
                     :text (text :t.actions/review-request)
-                    :on-click #(rf/dispatch [::send-request-comment selected-commenters comment (text :t.actions/review-request)])}]
+                    :on-click on-send}]
    [:div [:div.form-group
           [:label {:for "comment"} (text :t.form/add-comments-not-shown-to-applicant)]
           [textarea {:id "comment"
                      :name "comment"
                      :placeholder (text :t.form/comment)
                      :value comment
-                     :on-change #(rf/dispatch [::set-comment (.. % -target -value)])}]]
+                     :on-change #(on-set-comment (.. % -target -value))}]]
     [:div.form-group
      [:label (text :t.actions/review-request-selection)]
      [autocomplete/component
@@ -122,8 +121,8 @@
        :item->text :display
        :item->value identity
        :search-fields [:name :email]
-       :add-fn #(rf/dispatch [::add-selected-commenter %])
-       :remove-fn #(rf/dispatch [::remove-selected-commenter %])}]]]
+       :add-fn on-add-commenter
+       :remove-fn on-remove-commenter}]]]
    nil
    nil])
 
@@ -131,4 +130,10 @@
   (let [selected-commenters @(rf/subscribe [::selected-commenters])
         potential-commenters @(rf/subscribe [::potential-commenters])
         comment @(rf/subscribe [::comment])]
-    [request-comment-view selected-commenters potential-commenters comment #(rf/dispatch [::set-comment %])]))
+    [request-comment-view {:selected-commenters selected-commenters
+                           :potential-commenters potential-commenters
+                           :comment comment
+                           :on-set-comment #(rf/dispatch [::set-comment %])
+                           :on-add-commenter #(rf/dispatch [::add-selected-commenter %])
+                           :on-remove-commenter #(rf/dispatch [::remove-selected-commenter %])
+                           :on-send #(rf/dispatch [::send-request-comment selected-commenters comment (text :t.actions/review-request)])}]))
