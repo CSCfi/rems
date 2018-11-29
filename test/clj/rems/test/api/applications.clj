@@ -911,8 +911,8 @@
                                          :application-id application-id
                                          :items {}})
                              app)]
-          (is (not= 200 (:status try-submit)))
-          (is (= "unauthorized" (read-body try-submit)))))
+          (is (= 400 (:status try-submit)))
+          (is (= "Can not submit dynamic application via /save" (read-body try-submit)))))
       (testing "submitting"
         (is (= {:success true} (send-dynamic-command user-id {:type :rems.workflow.dynamic/submit
                                                               :application-id application-id})))
