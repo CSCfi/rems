@@ -41,25 +41,25 @@
 
 (rf/reg-event-db
  ::set-potential-commenters
- (fn [db [_ users]]
-   (assoc db ::potential-commenters (set (map enrich-user users)))))
+ (fn [db [_ commenters]]
+   (assoc db ::potential-commenters (set (map enrich-user commenters)))))
 
 (rf/reg-sub ::potential-commenters (fn [db _] (::potential-commenters db)))
 
 (rf/reg-event-db
  ::set-selected-commenters
- (fn [db [_ users]]
-   (assoc db ::selected-commenters users)))
+ (fn [db [_ commenters]]
+   (assoc db ::selected-commenters commenters)))
 
 (rf/reg-event-db
  ::add-selected-commenter
- (fn [db [_ user]]
-   (update db ::selected-commenters conj user)))
+ (fn [db [_ commenter]]
+   (update db ::selected-commenters conj commenter)))
 
 (rf/reg-event-db
  ::remove-selected-commenter
- (fn [db [_ user]]
-   (update db ::selected-commenters disj user)))
+ (fn [db [_ commenter]]
+   (update db ::selected-commenters disj commenter)))
 
 (rf/reg-sub ::selected-commenters (fn [db _] (::selected-commenters db)))
 (rf/reg-sub ::comment (fn [db _] (::comment db)))
