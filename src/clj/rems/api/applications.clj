@@ -57,7 +57,7 @@
   {:success s/Bool
    :valid s/Bool
    (s/optional-key :id) s/Num
-   (s/optional-key :state) s/Str
+   (s/optional-key :state) (s/cond-pre s/Str s/Keyword) ;; HACK for dynamic applications
    (s/optional-key :validation) [ValidationMessage]})
 
 (s/defschema JudgeApplicationCommand
