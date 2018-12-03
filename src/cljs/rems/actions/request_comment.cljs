@@ -100,10 +100,10 @@
 (defn request-comment-view
   [{:keys [selected-commenters potential-commenters comment on-set-comment on-add-commenter on-remove-commenter on-send]}]
   [action-form-view "request-comment"
-   (text :t.actions/review-request) ; TODO change localization keys
+   (text :t.actions/request-comment)
    nil
    [button-wrapper {:id "request-comment"
-                    :text (text :t.actions/review-request)
+                    :text (text :t.actions/request-comment)
                     :on-click on-send}]
    [:div [:div.form-group
           [:label {:for "comment"} (text :t.form/add-comments-not-shown-to-applicant)]
@@ -113,7 +113,7 @@
                      :value comment
                      :on-change #(on-set-comment (.. % -target -value))}]]
     [:div.form-group
-     [:label (text :t.actions/review-request-selection)]
+     [:label (text :t.actions/request-selection)]
      [autocomplete/component
       {:value (sort-by :display selected-commenters)
        :items potential-commenters
@@ -131,7 +131,7 @@
   (let [selected-commenters (rf/subscribe [::selected-commenters])
         potential-commenters (rf/subscribe [::potential-commenters])
         comment (rf/subscribe [::comment])
-        description (text :t.actions/review-request)
+        description (text :t.actions/request-comment)
         state (r/atom nil)
         on-pending #(reset! state {:status :pending})
         on-success #(reset! state {:status :saved })
@@ -142,7 +142,7 @@
       [:div
        (when (:status @state)
          [status-modal (assoc @state
-                              :description (text :t.actions/review-request)
+                              :description (text :t.actions/request-comment)
                               :on-close on-modal-close)])
        [request-comment-view {:selected-commenters @selected-commenters
                               :potential-commenters @potential-commenters

@@ -678,7 +678,7 @@
   [action-button "third-party-review" (text :t.actions/review)])
 
 (defn- request-comment-action-button []
-  [action-button "request-comment" (text :t.actions/comment) #(rf/dispatch [:rems.actions.request-comment/open-form])])
+  [action-button "request-comment" (text :t.actions/request-comment) #(rf/dispatch [:rems.actions.request-comment/open-form])])
 
 (defn- applicant-close-action-button []
   [action-button "applicant-close" (text :t.actions/close)])

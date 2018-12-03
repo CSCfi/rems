@@ -70,6 +70,8 @@
             :open-reviews "Open reviews"
             :reject "Reject"
             :reject-success "Application rejected"
+            :request-comment "Request comment"
+            :request-selection "Send request to user(s):"
             :resource "Resource"
             :return "Return to applicant"
             :return-success "Application returned"

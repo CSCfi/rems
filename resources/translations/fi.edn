@@ -69,6 +69,8 @@
             :open-reviews "Avoimet katselmoinnit"
             :reject "Hylkää"
             :reject-success "Hakemus hylätty"
+            :request-comment "Pyydä kommenttia"
+            :request-selection "Lähetä pyyntö henkilölle/henkilöille:"
             :resource "Kielivara"
             :return "Palauta hakijalle"
             :return-success "Hakemus palautettu"
