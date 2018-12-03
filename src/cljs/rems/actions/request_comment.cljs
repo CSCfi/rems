@@ -17,13 +17,17 @@
 (comment
   (fetch-potential-commenters [{:eppn "developer"} prn]))
 
+(defn- can-request-comment? [db]
+  (contains? (get-in db [:rems.application/application :application :possible-commands])
+             :rems.workflow.dynamic/request-comment))
+
 (defn open-form
   [{:keys [db]} _]
   (merge {:db (assoc db
                      ::comment ""
                      ::potential-commenters #{}
                      ::selected-commenters #{})}
-         (when (contains? (get-in db [:identity :roles]) :approver) ; TODO handler role?
+         (when (can-request-comment? db)
            {::fetch-potential-commenters [(get-in db [:identity :user])
                                           #(rf/dispatch [::set-potential-commenters %])]})))
 
