@@ -80,6 +80,14 @@
 (s/defschema Reviewers
   [Reviewer])
 
+(s/defschema Commenter
+  {:userid s/Str
+   :name (s/maybe s/Str)
+   :email (s/maybe s/Str)})
+
+(s/defschema Commenters
+  [Commenter])
+
 (s/defschema AddMemberCommand
   {:application-id s/Num
    :member s/Str})
@@ -136,9 +144,23 @@
       (str/blank? (get u "commonName"))
       (str/blank? (get u "mail"))))
 
+;; TODO Filter applicant, requesting user
 (defn get-reviewers []
   (for [u (->> (users/get-all-users)
                (remove invalid-reviewer?))]
+    {:userid (get u "eppn")
+     :name (get u "commonName")
+     :email (get u "mail")}))
+
+(defn invalid-commenter? [u]
+  (or (str/blank? (get u "eppn"))
+      (str/blank? (get u "commonName"))
+      (str/blank? (get u "mail"))))
+
+;; TODO Filter applicant, requesting user
+(defn get-commenters []
+  (for [u (->> (users/get-all-users)
+               (remove invalid-commenter?))]
     {:userid (get u "eppn")
      :name (get u "commonName")
      :email (get u "mail")}))
@@ -186,6 +208,12 @@
       :roles #{:approver}
       :return Reviewers
       (ok (get-reviewers)))
+
+    (GET "/commenters" []
+      :summary "Available third party commenters"
+      :roles #{:approver}
+      :return Commenters
+      (ok (get-commenters)))
 
     (GET "/attachments/" []
       :summary "Get an attachment for a field in an application"

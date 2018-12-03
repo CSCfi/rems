@@ -8,7 +8,7 @@
 
 (defn fetch-potential-commenters
   [[user on-success]]
-  (fetch (str "/api/applications/reviewers") ; TODO separate API for commenters
+  (fetch (str "/api/applications/commenters")
          {:handler on-success
           :headers {"x-rems-user-id" (:eppn user)}}))
 
