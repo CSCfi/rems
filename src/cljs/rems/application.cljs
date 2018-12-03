@@ -825,7 +825,7 @@
                 [return-form]
                 [review-form]
                 [request-review-form]
-                [request-comment-form (:id app)]
+                [request-comment-form (:id app) #(rf/dispatch [:rems.application/enter-application-page (:id app)])]
                 [third-party-review-form]
                 [applicant-close-form]
                 [approver-close-form]

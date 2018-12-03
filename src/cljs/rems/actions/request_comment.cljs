@@ -132,7 +132,7 @@
    nil
    nil])
 
-(defn request-comment-form [application-id]
+(defn request-comment-form [application-id on-finished]
   (let [selected-commenters (rf/subscribe [::selected-commenters])
         potential-commenters (rf/subscribe [::potential-commenters])
         comment (rf/subscribe [::comment])
@@ -142,8 +142,7 @@
         on-success #(reset! state {:status :saved })
         on-error #(reset! state {:status :failed :error %})
         on-modal-close #(do (reset! state nil)
-                            ;; TODO use callbacks so no dependency?
-                            (rf/dispatch [:rems.application/enter-application-page application-id]))]
+                            (on-finished))]
     (fn [application-id]
       [:div
        (when (:status @state)
