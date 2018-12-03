@@ -451,7 +451,7 @@
     [:div {:class "text-danger"}
      (text-format (:key validation) title)]))
 
-(defn- basic-field [{:keys [title id readonly readonly-component optional value previous-value diff diff-component validation]} editor-component]
+(defn basic-field [{:keys [title id readonly readonly-component optional value previous-value diff diff-component validation]} editor-component]
   [:div.form-group.field
    [:label {:for (id-to-name id)}
     title " "
