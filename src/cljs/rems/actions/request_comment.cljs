@@ -40,7 +40,7 @@
              [::open-form prn])
   (rf/dispatch [::open-form]))
 
-;; TODO together with application.cljs
+;; TODO together with application.cljs extract a user selection component
 (defn enrich-user [user]
   (assoc user :display (str (:name user) " (" (:email user) ")")))
 
