@@ -78,7 +78,7 @@
  (fn [db [_ application]]
    (assoc db
           ::application application
-          ::edit-application {:items (into {} (map (juxt :id :value) (:items application)))
+          ::edit-application {:items (into {} (map (juxt :id #(select-keys % [:value])) (:items application)))
                               :licenses (into {} (map (juxt :id :approver) (:licenses application)))})))
 
 (rf/reg-event-fx
@@ -106,9 +106,13 @@
                                                :error error})
        (assoc-in [::edit-application :validation] validation))))
 
+(defn- item-values-by-id [items]
+  (into {} (for [[k v] items]
+             [k (:value v)])))
+
 (defn- save-application [command description application-id catalogue-items items licenses]
   (let [payload (merge {:command command
-                        :items items
+                        :items (item-values-by-id items)
                         :licenses licenses}
                        (if application-id
                          {:application-id application-id}
@@ -159,7 +163,7 @@
 
 (defn- save-application-with-attachment [field-id form-data catalogue-items items licenses description]
   (let [payload {:command "save"
-                 :items items
+                 :items (item-values-by-id items)
                  :licenses licenses
                  :catalogue-items catalogue-items}]
     ;; TODO this logic should be rewritten as a chain of save, save-attachment instead
@@ -211,7 +215,8 @@
 
 (rf/reg-sub ::judge-comment (fn [db _] (::judge-comment db)))
 
-(rf/reg-event-db ::set-field (fn [db [_ id value]] (assoc-in db [::edit-application :items id] value)))
+(rf/reg-event-db ::set-field (fn [db [_ id value]] (assoc-in db [::edit-application :items id :value] value)))
+(rf/reg-event-db ::toggle-diff (fn [db [_ id]] (update-in db [::edit-application :items id :diff] not)))
 (rf/reg-event-db ::set-license (fn [db [_ id value]] (assoc-in db [::edit-application :licenses id] value)))
 (rf/reg-event-db ::set-judge-comment (fn [db [_ value]] (assoc db ::judge-comment value)))
 
@@ -575,7 +580,10 @@
                [field (assoc (localize-item item)
                              :validation (get-in validation-by-field-id [:item (:id item)])
                              :readonly readonly?
-                             :value (get items (:id item))
+                             :value (get-in items [(:id item) :value])
+                             ;; TODO: db doesn't yet contain :previous-value
+                             :previous-value (get-in items [(:id item) :previous-value])
+                             :diff (get-in items [(:id item) :diff])
                              :app-id (:id application))]))
        (when-let [form-licenses (not-empty (:licenses form))]
          [:div.form-group.field
