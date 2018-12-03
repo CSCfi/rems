@@ -91,12 +91,6 @@
      (on-pending)
      {})))
 
-(rf/reg-event-db
- ::send-comment-request-success
- (fn [db [_ value]]
-   ;; TODO where to set message?
-   (assoc db ::send-comment-request-message value)))
-
 (defn request-comment-view
   [{:keys [selected-commenters potential-commenters comment on-set-comment on-add-commenter on-remove-commenter on-send]}]
   [action-form-view "request-comment"
