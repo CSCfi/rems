@@ -396,7 +396,8 @@
     title " "
     (when optional
       (text :t.form/optional))]
-   (when previous-value
+   (when (and previous-value
+              (not= value previous-value))
      [:a.show-diff {:href "#"
                     :on-click (fn [event]
                                 (.preventDefault event)
@@ -1035,7 +1036,10 @@
                 [field {:type "texta" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-paragraphs :previous-value previous-lipsum-paragraphs}]])
       (example "non-editable field of type \"texta\" with previous value, diff shown"
                [:form
-                [field {:type "texta" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-paragraphs :previous-value previous-lipsum-paragraphs :diff true}]])])
+                [field {:type "texta" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-paragraphs :previous-value previous-lipsum-paragraphs :diff true}]])
+      (example "non-editable field of type \"texta\" with previous value equal to current value"
+               [:form
+                [field {:type "texta" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-paragraphs :previous-value lipsum-paragraphs}]])])
    (example "field of type \"attachment\""
             [:form
              [field {:type "attachment" :title "Title"}]])
