@@ -169,7 +169,6 @@
   "Checks that content-type matches the allowed ones listed on the UI side:
    .pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
   [content-type]
-  (prn content-type)
   (when-not (or (#{"application/pdf"
                    "application/msword"
                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
