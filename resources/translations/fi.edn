@@ -242,7 +242,7 @@
   :login {:alternative "Muut kirjautumisvaihtoehdot"
           :text "Kirjaudu sisään Haka-tunnuksillasi"
           :title "Kirjaudu sisään"}
-  :missing "Käännös puuttuu"
+  :missing "Käännös puuttuu %1"
   :navigation {:about "Info"
                :actions "Toiminnot"
                :administration "Ylläpito"

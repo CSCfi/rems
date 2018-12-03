@@ -242,7 +242,7 @@
   :login {:alternative "Other sign in options"
           :text "Login by using your Haka credentials"
           :title "Login"}
-  :missing "Missing translation"
+  :missing "Missing translation %1"
   :navigation {:about "About"
                :actions "Actions"
                :administration "Administration"

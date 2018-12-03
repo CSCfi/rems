@@ -14,16 +14,18 @@
                     context/*tempura* (partial tr (locales/tempura-config) [lang])]
             (f))))
 
+(declare text-format)
+
 (defn text
   "Return the tempura translation for a given key. Additional fallback
   keys can be given."
   [& ks]
-  #?(:clj (context/*tempura* (conj (vec ks) :t/missing))
+  #?(:clj (context/*tempura* (conj (vec ks) (text-format :t.missing (vec ks))))
      :cljs (let [translations (rf/subscribe [:translations])
                  language (rf/subscribe [:language])]
              (tr {:dict @translations}
                  [@language]
-                 (conj (vec ks) :t/missing)))))
+                 (conj (vec ks) (text-format :t.missing (vec ks)))))))
 
 (defn text-format
   "Return the tempura translation for a given key & format arguments"
