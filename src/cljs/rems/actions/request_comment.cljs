@@ -1,8 +1,10 @@
 (ns rems.actions.request-comment
   (:require [re-frame.core :as rf]
+            [reagent.core :as r]
             [rems.actions.action :refer [action-form-view button-wrapper]]
             [rems.atoms :refer [textarea]]
             [rems.autocomplete :as autocomplete]
+            [rems.status-modal :refer [status-modal]]
             [rems.text :refer [text]]
             [rems.util :refer [fetch post!]]))
 
@@ -79,7 +81,7 @@
                    :type :rems.workflow.dynamic/request-comment
                    :comment comment
                    :commenters (map :userid commenters)}
-          :handler on-success
+          :handler on-success ; TODO interpret :errors as failure
           :error-handler on-error}))
 
 (rf/reg-event-fx
@@ -131,31 +133,32 @@
    nil])
 
 (defn request-comment-form [application-id]
-  (let [selected-commenters @(rf/subscribe [::selected-commenters])
-        potential-commenters @(rf/subscribe [::potential-commenters])
-        comment @(rf/subscribe [::comment])
+  (let [selected-commenters (rf/subscribe [::selected-commenters])
+        potential-commenters (rf/subscribe [::potential-commenters])
+        comment (rf/subscribe [::comment])
         description (text :t.actions/review-request)
-        on-pending (fn []
-                     (rf/dispatch [:rems.application/set-status {:status :pending
-                                                                 :description description}]))
-        on-success (fn []
-                     ;; TODO use callbacks so no dependency?
-                     (rf/dispatch [:rems.application/set-status {:status :saved
-                                                                 :description description}])
-                     (rf/dispatch [:rems.application/enter-application-page application-id]))
-        on-error (fn [error]
-                   (rf/dispatch [:rems.application/set-status {:status :failed
-                                                               :description description
-                                                               :error error}]))]
-    [request-comment-view {:selected-commenters selected-commenters
-                           :potential-commenters potential-commenters
-                           :comment comment
-                           :on-set-comment #(rf/dispatch [::set-comment %])
-                           :on-add-commenter #(rf/dispatch [::add-selected-commenter %])
-                           :on-remove-commenter #(rf/dispatch [::remove-selected-commenter %])
-                           :on-send #(rf/dispatch [::send-request-comment {:application-id application-id
-                                                                           :commenters selected-commenters
-                                                                           :comment comment
-                                                                           :on-pending on-pending
-                                                                           :on-success on-success
-                                                                           :on-error on-error}])}]))
+        state (r/atom nil)
+        on-pending #(reset! state {:status :pending})
+        on-success #(reset! state {:status :saved })
+        on-error #(reset! state {:status :failed :error %})
+        on-modal-close #(do (reset! state nil)
+                            ;; TODO use callbacks so no dependency?
+                            (rf/dispatch [:rems.application/enter-application-page application-id]))]
+    (fn [application-id]
+      [:div
+       (when (:status @state)
+         [status-modal (assoc @state
+                              :description (text :t.actions/review-request)
+                              :on-close on-modal-close)])
+       [request-comment-view {:selected-commenters @selected-commenters
+                              :potential-commenters @potential-commenters
+                              :comment @comment
+                              :on-set-comment #(rf/dispatch [::set-comment %])
+                              :on-add-commenter #(rf/dispatch [::add-selected-commenter %])
+                              :on-remove-commenter #(rf/dispatch [::remove-selected-commenter %])
+                              :on-send #(rf/dispatch [::send-request-comment {:application-id application-id
+                                                                              :commenters @selected-commenters
+                                                                              :comment @comment
+                                                                              :on-pending on-pending
+                                                                              :on-success on-success
+                                                                              :on-error on-error}])}]])))

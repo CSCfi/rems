@@ -8,9 +8,9 @@
             [rems.collapsible :as collapsible]
             [rems.db.catalogue :refer [get-catalogue-item-title]]
             [rems.guide-utils :refer [lipsum lipsum-short lipsum-paragraphs]]
-            [rems.modal :as modal]
             [rems.phase :refer [phases]]
             [rems.spinner :as spinner]
+            [rems.status-modal :refer [status-modal]]
             [rems.text :refer [text text-format localize-state localize-event localize-time localize-item]]
             [rems.common-util :refer [index-by]]
             [rems.util :refer [dispatch! fetch post!]]
@@ -501,21 +501,6 @@
                 [unsupported-field f])
     [unsupported-field f]))
 
-(defn- status-widget [status error]
-  [:div {:class (when (= :failed status) "alert alert-danger")}
-   (case status
-     nil ""
-     :pending [spinner/big]
-     :saved [:div [:i {:class ["fa fa-check-circle text-success"]}] (text :t.form/success)]
-     :failed [:div [:i {:class "fa fa-times-circle text-danger"}]
-              (str (text :t.form/failed) ": " (:status-text error) " (" (:status error) ")")])])
-
-(defn- status-modal [state content]
-  [modal/notification {:title (:description state)
-                       :content (or content [status-widget (:status state) (:error state)])
-                       :on-close #(rf/dispatch [::set-status nil])
-                       :shade? true}])
-
 (defn- save-button []
   [button-wrapper {:id "save"
                    :text (text :t.form/save)
@@ -899,7 +884,9 @@
      [:div.my-3 [fields application edit-application]]
      [:div.mb-3 [actions-form app]]
      (when (:open? status)
-       [status-modal status (when (seq messages) (into [:div] messages))])]))
+       [status-modal (assoc status
+                            :content (when (seq messages) (into [:div] messages))
+                            :on-close #(rf/dispatch [::set-status nil]))])]))
 
 ;;;; Entrypoint
 
