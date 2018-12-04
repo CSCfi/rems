@@ -71,6 +71,7 @@
    (get-events-of-type app round "third-party-review")))
 
 (declare is-commenter?)
+(declare can-comment?)
 (declare is-dynamic-application?)
 
 (defn reviewed?
@@ -80,14 +81,15 @@
    (reviewed? app context/*user*))
   ([app user]
    (if (is-dynamic-application? app)
-     (is-commenter? (get-user-id user) (get-application-state (:id app)))
+     (and (is-commenter? (get-user-id user) (get-application-state (:id app)))
+          (not (can-comment? (get-user-id user) (:id app))))
      (contains? (set (map :userid (concat (get-review-events app) (get-third-party-review-events app))))
                 (get-user-id user))))
   ([app user round]
    (reviewed? (update app :events (fn [events] (filter #(= round (:round %)) events))) user)))
 
 (comment
-  (reviewed? (get-application-state 12) "bob"))
+  (reviewed? (get-application-state 23) "bob"))
 
 (declare fix-workflow-from-db)
 (declare is-dynamic-handler?)
@@ -151,8 +153,9 @@
 
 (defn- can-comment?
   "Checks if the current user can perform a comment action for the given application."
-  [application]
-  (contains? (get application :possible-commands) :rems.workflow.dynamic/comment))
+  [user-id application-id]
+  (let [application (dynamic/assoc-possible-commands user-id (get-application-state application-id))]
+    (contains? (get application :possible-commands) :rems.workflow.dynamic/comment)))
 
 (defn get-approvers [application]
   (actors/get-by-role (:id application) "approver"))
@@ -315,7 +318,7 @@
         (fn [app] (and (not (reviewed? app))
                        (or (can-review? app)
                            (can-third-party-review? app)
-                           (can-comment? app)))))
+                           (can-comment? (getx-user-id) (:id app))))))
        (mapv assoc-review-type-to-app)))
 
 (defn check-review-timeout
