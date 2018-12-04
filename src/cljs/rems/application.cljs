@@ -69,11 +69,17 @@
           (when (contains? (get-in db [:identity :roles]) :approver)
             {::fetch-potential-third-party-reviewers (get-in db [:identity :user])}))))
 
+(defn fetch-application [id on-success]
+  (fetch (str "/api/applications/" id)
+         {:handler on-success}))
+
+(comment
+  (fetch-application 19 prn))
+
 (rf/reg-fx
  ::fetch-application
  (fn [id]
-   (fetch (str "/api/applications/" id)
-          {:handler #(rf/dispatch [::fetch-application-result %])})))
+   (fetch-application id #(rf/dispatch [::fetch-application-result %]))))
 
 (rf/reg-event-db
  ::fetch-application-result
@@ -108,13 +114,43 @@
                                                :error error})
        (assoc-in [::edit-application :validation] validation))))
 
-(defn- save-application [command description application-id catalogue-items items licenses]
-  (let [payload (merge {:command command
-                        :items items
-                        :licenses licenses}
-                       (if application-id
-                         {:application-id application-id}
-                         {:catalogue-items catalogue-items}))]
+(defn- save-application [app description application-id catalogue-items items licenses on-success]
+  (post! "/api/applications/save"
+         {:handler (fn [resp]
+                     (if (:success resp)
+                       (on-success resp)
+                       (rf/dispatch [::set-status {:status :failed
+                                                   :description description
+                                                   :validation (:validation resp)}])))
+          :error-handler (fn [error] (rf/dispatch [::set-status {:status :failed
+                                                                 :description description
+                                                                 :error error}]))
+          :params (merge {:command "save"
+                          :items items
+                          :licenses licenses}
+                         (if application-id
+                           {:application-id application-id}
+                           {:catalogue-items catalogue-items}))}))
+
+(defn- submit-application [app description application-id catalogue-items items licenses]
+  (if (= :workflow/dynamic (get-in app [:workflow :type]))
+    (post! "/api/applications/command"
+           {:handler (fn [resp]
+                       (if (:success resp)
+                         (do (rf/dispatch [::set-status {:status :saved
+                                                         :description description}])
+                             ;; HACK: we both set the location, and fire a fetch-application event
+                             ;; because if the location didn't change, secretary won't fire the event
+                             (navigate-to application-id)
+                             (rf/dispatch [::enter-application-page application-id]))
+                         (rf/dispatch [::set-status {:status :failed
+                                                     :description description
+                                                     :validation (:validation resp)}])))
+            :error-handler (fn [error] (rf/dispatch [::set-status {:status :failed
+                                                                   :description description
+                                                                   :error error}]))
+            :params {:type :rems.workflow.dynamic/submit
+                     :application-id application-id}})
     (post! "/api/applications/save"
            {:handler (fn [resp]
                        (if (:success resp)
@@ -122,20 +158,26 @@
                                                          :description description}])
                              ;; HACK: we both set the location, and fire a fetch-application event
                              ;; because if the location didn't change, secretary won't fire the event
-                             (navigate-to (:id resp))
-                             (rf/dispatch [::enter-application-page (:id resp)]))
+                             (navigate-to application-id)
+                             (rf/dispatch [::enter-application-page application-id]))
                          (rf/dispatch [::set-status {:status :failed
                                                      :description description
                                                      :validation (:validation resp)}])))
             :error-handler (fn [error] (rf/dispatch [::set-status {:status :failed
                                                                    :description description
                                                                    :error error}]))
-            :params payload})))
+            :params (merge {:command :submit
+                            :items items
+                            :licenses licenses}
+                           (if application-id
+                             {:application-id application-id}
+                             {:catalogue-items catalogue-items}))})))
 
 (rf/reg-event-fx
  ::save-application
  (fn [{:keys [db]} [_ command description]]
-   (let [app-id (get-in db [::application :application :id])
+   (let [app (get-in db [::application :application])
+         app-id (get-in db [::application :application :id])
          catalogue-items (get-in db [::application :catalogue-items])
          catalogue-ids (mapv :id catalogue-items)
          items (get-in db [::edit-application :items])
@@ -150,7 +192,19 @@
      ;; TODO disable form while saving?
      (rf/dispatch [::set-status {:status :pending
                                  :description description}])
-     (save-application command description app-id catalogue-ids items licenses))
+     (save-application app description app-id catalogue-ids items licenses
+                       (fn [resp]
+                         (if (= command "submit")
+                           (fetch-application (:id resp)
+                                              (fn [app]
+                                                (submit-application (:application app) description (:id resp) catalogue-ids items licenses)))
+                           (do
+                             (rf/dispatch [::set-status {:status :saved
+                                                         :description description}])
+                             ;; HACK: we both set the location, and fire a fetch-application event
+                             ;; because if the location didn't change, secretary won't fire the event
+                             (navigate-to (:id resp))
+                             (rf/dispatch [::enter-application-page (:id resp)]))))))
    {}))
 
 (defn- save-attachment [application-id field-id form-data description]
@@ -848,7 +902,7 @@
       [collapsible/component
        {:id "actions"
         :title (text :t.form/actions)
-        :always (into [:div] (concat actions forms))}])))
+        :always (into [:div [:div.commands actions]] forms)}])))
 
 (defn- disabled-items-warning [catalogue-items]
   (let [language @(rf/subscribe [:language])]
