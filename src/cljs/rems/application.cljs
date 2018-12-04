@@ -656,8 +656,9 @@
                    :on-click #(rf/dispatch [::judge-application "withdraw" (text :t.actions/withdraw)])}])
 
 (defn- action-button [id content on-click]
-  [:button.btn.btn-secondary.mr-3
+  [:button.btn.mr-3
    {:id id
+    :class (if (contains? #{"approve" "approve-reject"} id) "btn-primary" "btn-secondary")
     :type "button"
     :data-toggle "collapse"
     :data-target (str "#" (action-collapse-id id))
