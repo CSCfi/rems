@@ -8,7 +8,8 @@
 
 (deftest longify-keys-test
   (is (= {} (longify-keys nil)))
-  (is (= {42 42} (longify-keys {:42 42}))))
+  (is (= {42 42} (longify-keys {:42 42})) "converts keywords to numbers")
+  (is (= {42 42} (longify-keys {42 42})) "keeps numbers as numbers"))
 
 (deftest route-role-check-test
   (testing "no roles required"
