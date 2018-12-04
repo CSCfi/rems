@@ -394,27 +394,27 @@
 ;;; Application phases
 
 (defn get-application-phases [state]
-  (cond (= state "rejected")
+  (cond (contains? #{"rejected" :rems.workflow.dynamic/rejected} state)
         [{:phase :apply :completed? true :text :t.phases/apply}
          {:phase :approve :completed? true :rejected? true :text :t.phases/approve}
          {:phase :result :completed? true :rejected? true :text :t.phases/rejected}]
 
-        (= state "approved")
+        (contains? #{"approved" :rems.workflow.dynamic/approved} state)
         [{:phase :apply :completed? true :text :t.phases/apply}
          {:phase :approve :completed? true :approved? true :text :t.phases/approve}
          {:phase :result :completed? true :approved? true :text :t.phases/approved}]
 
-        (= state "closed")
+        (contains? #{"closed" :rems.workflow.dynamic/closed} state)
         [{:phase :apply :closed? true :text :t.phases/apply}
          {:phase :approve :closed? true :text :t.phases/approve}
          {:phase :result :closed? true :text :t.phases/approved}]
 
-        (contains? #{"draft" "returned" "withdrawn"} state)
+        (contains? #{"draft" "returned" "withdrawn" :rems.workflow.dynamic/draft} state)
         [{:phase :apply :active? true :text :t.phases/apply}
          {:phase :approve :text :t.phases/approve}
          {:phase :result :text :t.phases/approved}]
 
-        (= "applied" state)
+        (contains? #{"applied" :rems.workflow.dynamic/submitted} state)
         [{:phase :apply :completed? true :text :t.phases/apply}
          {:phase :approve :active? true :text :t.phases/approve}
          {:phase :result :text :t.phases/approved}]
