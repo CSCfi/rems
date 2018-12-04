@@ -392,6 +392,8 @@
          {:phase :approve :text :t.phases/approve}
          {:phase :result :text :t.phases/approved}]))
 
+(declare is-dynamic-application?)
+
 (defn get-form-for
   "Returns a form structure like this:
 
