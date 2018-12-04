@@ -139,6 +139,7 @@
     (-> (applications/get-form-for application-id)
         (hide-sensitive-information (get-user-id)))))
 
+;; TODO lots of duplication in invalid-reviewer? invalid-commenter? etc. fns
 (defn invalid-reviewer? [u]
   (or (str/blank? (get u "eppn"))
       (str/blank? (get u "commonName"))
