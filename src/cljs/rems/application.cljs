@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.actions.action :refer [action-form-view action-collapse-id button-wrapper]]
+            [rems.actions.comment :refer [comment-form]]
             [rems.actions.request-comment :refer [request-comment-form]]
             [rems.atoms :refer [external-link flash-message textarea]]
             [rems.autocomplete :as autocomplete]
@@ -680,6 +681,9 @@
 (defn- request-comment-action-button []
   [action-button "request-comment" (text :t.actions/request-comment) #(rf/dispatch [:rems.actions.request-comment/open-form])])
 
+(defn- comment-action-button []
+  [action-button "comment" (text :t.actions/comment) #(rf/dispatch [:rems.actions.comment/open-form])])
+
 (defn- applicant-close-action-button []
   [action-button "applicant-close" (text :t.actions/close)])
 
@@ -786,6 +790,7 @@
            :request-decision nil ; TODO implement
            :decide nil ; TODO implement
            :request-comment [[request-comment-action-button]]
+           :comment [[comment-action-button]]
            :approve [[approve-action-button]]
            :reject [[reject-action-button]]
            :close [(if (:is-applicant? app)
@@ -826,6 +831,7 @@
                 [review-form]
                 [request-review-form]
                 [request-comment-form (:id app) #(rf/dispatch [:rems.application/enter-application-page (:id app)])]
+                [comment-form (:id app) #(rf/dispatch [:rems.application/enter-application-page (:id app)])]
                 [third-party-review-form]
                 [applicant-close-form]
                 [approver-close-form]

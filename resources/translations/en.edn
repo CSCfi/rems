@@ -54,6 +54,7 @@
             :cancel "Cancel"
             :close "Delete"
             :close-success "Application deleted"
+            :comment "Comment"
             :comment-placeholder "Comment"
             :created "Created"
             :description "Description"
