@@ -22,11 +22,6 @@
             [rems.workflow.dynamic :as dynamic])
   (:import [java.io ByteArrayOutputStream FileInputStream]))
 
-;; TODO could use schemas for these coercions
-(defn- fix-workflow-from-db [wf]
-  (update (cheshire/parse-string wf keyword)
-          :type keyword))
-
 (defn draft?
   "Is the given `application-id` for an unsaved draft application?"
   [application-id]
@@ -85,6 +80,8 @@
               (get-user-id userid)))
   ([app userid round]
    (reviewed? (update app :events (fn [events] (filter #(= round (:round %)) events))) userid)))
+
+(declare fix-workflow-from-db)
 
 (defn- is-handler? [application-id user-id]
   (let [workflow (fix-workflow-from-db (:workflow (first (db/get-applications {:id application-id}))))]
@@ -812,6 +809,11 @@
 
 ;;; Dynamic workflows
 
+
+;; TODO could use schemas for these coercions
+(defn- fix-workflow-from-db [wf]
+  (update (cheshire/parse-string wf keyword)
+          :type keyword))
 
 (defn- fix-event-from-db [event]
   (-> event
