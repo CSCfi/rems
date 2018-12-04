@@ -138,12 +138,15 @@
   "Checks if a given user has been requested to review the given application. If no user is provided, the function checks review requests for the current user.
    Additionally a specific round can be provided to narrow the check to apply only to the given round."
   ([user application]
-   (contains? (get application :possible-commands) :rems.workflow.dynamic/comment)))
+   ;; TODO calculate in backend?
+   (->> (:dynamic-events application)
+        (mapcat :commenters)
+        (some #{user}))))
 
 (defn- can-comment?
   "Checks if the current user can perform a comment action for the given application."
   [application]
-  (is-commenter? (getx-user-id) application))
+  (contains? (get application :possible-commands) :rems.workflow.dynamic/comment))
 
 (defn get-approvers [application]
   (actors/get-by-role (:id application) "approver"))
