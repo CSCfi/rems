@@ -434,7 +434,7 @@
    (let [form (db/get-form-for-application {:application application-id})
          _ (assert form)
          application (get-application-state application-id)
-         application (if (= :workflow/dynamic (get-in application [:workflow :type]))
+         application (if (is-dynamic-application? application)
                        (dynamic/assoc-possible-commands (getx-user-id) application) ; TODO move even higher?
                        application)
          _ (assert application)
@@ -829,7 +829,7 @@
                                  :state ::dynamic/draft
                                  :dynamic-events events
                                  :workflow (fix-workflow-from-db (:workflow application)))]
-    (assert (= :workflow/dynamic (get-in fixed-application [:workflow :type])))
+    (assert (is-dynamic-application? fixed-application))
     (dynamic/apply-events fixed-application events)))
 
 (defn- add-dynamic-event! [event]
@@ -854,3 +854,7 @@
 
 (defn is-dynamic-handler? [application user-id]
   (contains? (set (get-in application [:workflow :handlers])) user-id))
+
+;; TODO use also in UI side?
+(defn is-dynamic-application? [application]
+  (= :workflow/dynamic (get-in application [:workflow :type])))
