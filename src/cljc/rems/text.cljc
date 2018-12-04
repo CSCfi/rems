@@ -45,6 +45,11 @@
           "returned" :t.applications.states/returned
           "withdrawn" :t.applications.states/withdrawn
           "closed" :t.applications.states/closed
+          :rems.workflow.dynamic/draft :t.applications.states/draft
+          :rems.workflow.dynamic/submitted :t.applications.states/applied
+          :rems.workflow.dynamic/approved :t.applications.states/approved
+          :rems.workflow.dynamic/rejected :t.applications.states/rejected
+          :rems.workflow.dynamic/closed :t.applications.states/closed
           :t.applications.states/unknown)))
 
 (defn localize-event [event]
