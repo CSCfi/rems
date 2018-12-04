@@ -43,8 +43,8 @@
    (s/optional-key :catalogue-items) [s/Num]
    ;; NOTE: compojure-api only supports keyword keys properly, see
    ;; https://github.com/metosin/compojure-api/issues/341
-   :items {s/Keyword s/Str}
-   (s/optional-key :licenses) {s/Keyword s/Str}})
+   :items {s/Any s/Str}
+   (s/optional-key :licenses) {s/Any s/Str}})
 
 (s/defschema ValidationMessage
   {:type (s/enum :item :license)
