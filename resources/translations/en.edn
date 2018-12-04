@@ -50,6 +50,7 @@
   :actions {:applicant "Applicant"
             :application "Application"
             :approve "Approve"
+            :approve-reject "Approve or reject"
             :approve-success "Application approved"
             :cancel "Cancel"
             :close "Delete"

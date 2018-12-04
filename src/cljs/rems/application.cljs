@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.actions.action :refer [action-form-view action-collapse-id button-wrapper]]
+            [rems.actions.approve-reject :refer [approve-reject-form]]
             [rems.actions.comment :refer [comment-form]]
             [rems.actions.request-comment :refer [request-comment-form]]
             [rems.atoms :refer [external-link flash-message textarea]]
@@ -684,6 +685,9 @@
 (defn- comment-action-button []
   [action-button "comment" (text :t.actions/comment) #(rf/dispatch [:rems.actions.comment/open-form])])
 
+(defn- approve-reject-action-button []
+  [action-button "approve-reject" (text :t.actions/approve-reject)])
+
 (defn- applicant-close-action-button []
   [action-button "applicant-close" (text :t.actions/close)])
 
@@ -782,21 +786,22 @@
          :remove-fn #(rf/dispatch [::remove-selected-third-party-reviewer %])}]]]]))
 
 (defn- dynamic-actions [app]
-  (mapcat #:rems.workflow.dynamic
-          {:submit [[save-button]
-                    [submit-button]]
-           :add-member nil ; TODO implement
-           :return [[return-action-button]]
-           :request-decision nil ; TODO implement
-           :decide nil ; TODO implement
-           :request-comment [[request-comment-action-button]]
-           :comment [[comment-action-button]]
-           :approve [[approve-action-button]]
-           :reject [[reject-action-button]]
-           :close [(if (:is-applicant? app)
-                     [applicant-close-action-button]
-                     [approver-close-action-button])]}
-          (:possible-commands app)))
+  (distinct
+   (mapcat #:rems.workflow.dynamic
+           {:submit [[save-button]
+                     [submit-button]]
+            :add-member nil ; TODO implement
+            :return [[return-action-button]]
+            :request-decision nil ; TODO implement
+            :decide nil ; TODO implement
+            :request-comment [[request-comment-action-button]]
+            :comment [[comment-action-button]]
+            :approve [[approve-reject-action-button]]
+            :reject [[approve-reject-action-button]]
+            :close [(if (:is-applicant? app)
+                      [applicant-close-action-button]
+                      [approver-close-action-button])]}
+           (:possible-commands app))))
 
 (defn- static-actions [app]
   (let [state (:state app)
@@ -824,14 +829,16 @@
   (let [actions (if (= :workflow/dynamic (get-in app [:workflow :type]))
                   (dynamic-actions app)
                   (static-actions app))
+        reload #(rf/dispatch [:rems.application/enter-application-page (:id app)])
         forms [[:div#actions-forms.mt-3
                 [approve-form]
                 [reject-form]
                 [return-form]
                 [review-form]
                 [request-review-form]
-                [request-comment-form (:id app) #(rf/dispatch [:rems.application/enter-application-page (:id app)])]
-                [comment-form (:id app) #(rf/dispatch [:rems.application/enter-application-page (:id app)])]
+                [request-comment-form (:id app) reload]
+                [comment-form (:id app) reload]
+                [approve-reject-form (:id app) reload]
                 [third-party-review-form]
                 [applicant-close-form]
                 [approver-close-form]

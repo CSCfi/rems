@@ -49,6 +49,7 @@
   :actions {:applicant "Hakija"
             :application "Hakemus"
             :approve "Hyväksy"
+            :approve-reject "Hyväksy tai hylkää"
             :approve-success "Hakemus hyväksytty"
             :cancel "Peruuta"
             :close "Poista"
