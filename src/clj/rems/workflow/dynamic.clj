@@ -232,11 +232,16 @@
                 :application-id (:application-id cmd)
                 :time (:time cmd)}}))
 
+(defn- invalid-users-errors
+  "Checks the given users for validity and merges the errors"
+  [user-ids injections]
+  (apply merge-with into (keep (partial valid-user-error injections) user-ids)))
+
 (defmethod handle-command ::request-comment
   [cmd application injections]
   (or (actor-is-not-handler-error application cmd)
       (state-error application ::submitted)
-      (apply merge-with into (keep (partial valid-user-error injections) (:commenters cmd)))
+      (invalid-users-errors (:commenters cmd) injections)
       {:success true
        :result {:event :event/comment-requested
                 :actor (:actor cmd)
