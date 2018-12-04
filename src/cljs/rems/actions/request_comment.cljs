@@ -95,9 +95,9 @@
   [action-form-view "request-comment"
    (text :t.actions/request-comment)
    nil
-   [button-wrapper {:id "request-comment"
+   [[button-wrapper {:id "request-comment"
                     :text (text :t.actions/request-comment)
-                    :on-click on-send}]
+                    :on-click on-send}]]
    [:div [:div.form-group
           [:label {:for "comment"} (text :t.form/add-comments-not-shown-to-applicant)]
           [textarea {:id "comment"

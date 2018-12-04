@@ -43,9 +43,9 @@
   [action-form-view "comment"
    (text :t.actions/comment)
    nil
-   [button-wrapper {:id "comment"
+   [[button-wrapper {:id "comment"
                     :text (text :t.actions/comment)
-                    :on-click on-send}]
+                    :on-click on-send}]]
    [:div [:div.form-group
           [:label {:for "comment"} (text :t.form/add-comments-not-shown-to-applicant)]
           [textarea {:id "comment"

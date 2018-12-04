@@ -7,7 +7,7 @@
   (str "actions-" action-id))
 
 (defn button-wrapper [{:keys [id text class on-click]}]
-  [:button.btn.mr-3
+  [:button.btn
    {:id id
     :name id
     :class (or class :btn-secondary)
@@ -27,10 +27,10 @@
               :value comment
               :on-change on-comment}]])
 
-(defn action-form-view [id title comment-title button content comment on-comment]
+(defn action-form-view [id title comment-title buttons content comment on-comment]
   [:div.collapse {:id (action-collapse-id id) :data-parent "#actions-forms"}
    [:h4.mt-5 title]
    content
    (when comment-title
      [action-comment comment-title comment on-comment])
-   [:div.col.commands [cancel-action-button id] button]])
+   (into [:div.col.commands.mr-3 [cancel-action-button id]] buttons)])

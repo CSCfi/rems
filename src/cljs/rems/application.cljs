@@ -700,7 +700,7 @@
   [action-form-view id
    title
    comment-title
-   button
+   [button]
    content
    @(rf/subscribe [::judge-comment])
    #(rf/dispatch [::set-judge-comment (.. % -target -value)])])
