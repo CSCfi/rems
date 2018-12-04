@@ -94,6 +94,8 @@
         perform-submit? (and submit? valid?)
         success? (or (not submit?) perform-submit?)]
     (when perform-submit?
+      (when (get-in form [:application :workflow :type])
+        (throw (rems.InvalidRequestException. (str "Can not submit dynamic application via /save"))))
       (submit-application application-id))
     (merge {:valid? valid?
             :success? success?}

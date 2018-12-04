@@ -156,6 +156,8 @@
 
 (defmethod handle-command ::submit
   [cmd application _injections]
+  ;; TODO injections should include form validation info so that we
+  ;; can fail when trying to submit an incomplete form
   (or (applicant-error application cmd)
       (state-error application ::draft ::returned)
       {:success true

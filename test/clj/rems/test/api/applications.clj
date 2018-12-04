@@ -869,3 +869,54 @@
                   "event/decided"
                   "event/approved"]
                  (map :event (get-in data [:application :dynamic-events])))))))))
+
+(deftest dynamic-application-create-test
+  (let [api-key "42"
+        user-id "alice"
+        catid 9] ;; catalogue item with dynamic workflow in test-data
+    (testing "get draft"
+      (let [draft (create-application-draft-for-catalogue-item catid)]
+        (is (= "alice" (get-in draft [:application :applicantuserid])))))
+    (let [response (-> (request :post (str "/api/applications/save"))
+                       (authenticate api-key user-id)
+                       (json-body {:command "save"
+                                   :catalogue-items [catid]
+                                   :items {1 "dynamic test"}})
+                       app
+                       read-body)
+          application-id (:id response)]
+      (testing "create application"
+        (is (some? application-id))
+        (let [saved (get-application user-id application-id)]
+          (is (= "workflow/dynamic" (get-in saved [:application :workflow :type])))
+          (is (= "rems.workflow.dynamic/draft" (get-in saved [:application :state])))
+          (is (= "dynamic test" (get-in saved [:items 0 :value])))))
+      (testing "change fields"
+        (let [save-again (-> (request :post (str "/api/applications/save"))
+                             (authenticate api-key user-id)
+                             (json-body {:command "save"
+                                         :application-id application-id
+                                         :items {1 "dynamic test2"
+                                                 2 "purpose"}})
+                             app
+                             read-body)
+              saved (get-application user-id application-id)]
+          (is (true? (:success save-again)))
+          (is (= application-id (:id save-again)))
+          (is (= "dynamic test2" (get-in saved [:items 0 :value])))))
+      (testing "old-style submit fails"
+        (let [try-submit (-> (request :post (str "/api/applications/save"))
+                             (authenticate api-key user-id)
+                             (json-body {:command "submit"
+                                         :application-id application-id
+                                         :items {}})
+                             app)]
+          (is (= 400 (:status try-submit)))
+          (is (= "Can not submit dynamic application via /save" (read-body try-submit)))))
+      (testing "submitting"
+        (is (= {:success true} (send-dynamic-command user-id {:type :rems.workflow.dynamic/submit
+                                                              :application-id application-id})))
+        (let [submitted (get-application user-id application-id)]
+          (is (= "rems.workflow.dynamic/submitted" (get-in submitted [:application :state])))
+          (is (= ["event/submitted"]
+                 (map :event (get-in submitted [:application :dynamic-events])))))))))
