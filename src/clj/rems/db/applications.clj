@@ -70,19 +70,26 @@
   ([app round]
    (get-events-of-type app round "third-party-review")))
 
+(declare is-commenter?)
+(declare is-dynamic-application?)
+
 (defn reviewed?
   "Returns true if the application, given as parameter, has already been reviewed normally or as a 3rd party actor by the current user.
    Otherwise, current hasn't yet provided feedback and false is returned."
   ([app]
    (reviewed? app context/*user*))
-  ([app userid]
-   (contains? (set (map :userid (concat (get-review-events app) (get-third-party-review-events app))))
-              (get-user-id userid)))
-  ([app userid round]
-   (reviewed? (update app :events (fn [events] (filter #(= round (:round %)) events))) userid)))
+  ([app user]
+   (if (is-dynamic-application? app)
+     (is-commenter? (get-user-id user) (get-application-state (:id app)))
+     (contains? (set (map :userid (concat (get-review-events app) (get-third-party-review-events app))))
+                (get-user-id user))))
+  ([app user round]
+   (reviewed? (update app :events (fn [events] (filter #(= round (:round %)) events))) user)))
+
+(comment
+  (reviewed? (get-application-state 12) "bob"))
 
 (declare fix-workflow-from-db)
-
 (declare is-dynamic-handler?)
 
 (defn can-act-as?
@@ -271,8 +278,14 @@
   (let [actors (db/get-actors-for-applications {:role "reviewer"})]
     (->> (get-applications-impl-batch {})
          (filterv reviewed?)
-         (filterv (fn [app] (or (is-actor? (actors/filter-by-application-id actors (:id app)))
-                                (is-third-party-reviewer? (get-user-id) app)))))))
+         (filterv (fn [app]
+                    (or (is-actor? (actors/filter-by-application-id actors (:id app)))
+                        (is-third-party-reviewer? (get-user-id) app)
+                        (is-commenter? (get-user-id) app)))))))
+
+(comment
+  (binding [context/*user* {"eppn" "bob"}]
+    (get-handled-reviews)))
 
 (defn- check-for-unneeded-actions
   "Checks whether the current event will advance into the next workflow round and notifies to all actors, who didn't react, by email that their attention is no longer needed."
@@ -407,8 +420,6 @@
         [{:phase :apply :active? true :text :t.phases/apply}
          {:phase :approve :text :t.phases/approve}
          {:phase :result :text :t.phases/approved}]))
-
-(declare is-dynamic-application?)
 
 (defn get-form-for
   "Returns a form structure like this:
