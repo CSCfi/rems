@@ -32,7 +32,7 @@
 
 (comment
   (open-form {:db {:identity {:roles #{:approver} :user {:eppn "developer"}}}}
-             [::open-form prn])
+             [::open-form])
   (rf/dispatch [::open-form]))
 
 ;; TODO together with application.cljs extract a user selection component
