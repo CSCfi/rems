@@ -2,6 +2,7 @@
   "Query functions for forms and applications."
   (:require [cheshire.core :as cheshire]
             [clj-time.core :as time]
+            [clj-time.coerce :as time-coerce]
             [clojure.set :refer [difference
                                  union]]
             [rems.auth.util :refer [throw-unauthorized]]
@@ -19,7 +20,8 @@
                                getx
                                getx-user-id
                                update-present]]
-            [rems.workflow.dynamic :as dynamic])
+            [rems.workflow.dynamic :as dynamic]
+            [clj-time.coerce :as time-coerce])
   (:import [java.io ByteArrayOutputStream FileInputStream]))
 
 (defn draft?
@@ -852,6 +854,7 @@
       :eventdata
       (cheshire/parse-string keyword)
       (update :event keyword)
+      (update :time #(when % (time-coerce/from-long (Long/parseLong %))))
       (update-present :decision keyword)))
 
 (defn get-dynamic-application-state [application-id]

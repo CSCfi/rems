@@ -11,7 +11,8 @@
             [rems.util :refer [get-user-id update-present]]
             [ring.util.http-response :refer :all]
             [ring.swagger.upload :as upload]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [clj-time.core :as time]))
 
 ;; Response models
 
@@ -310,6 +311,7 @@
       :return SuccessResponse
       (let [cmd (assoc request :actor (get-user-id))
             fixed (fix-command-from-api cmd)
+            fixed (assoc fixed :time (time/now))
             errors (applications/dynamic-command! fixed)]
         (if errors
           (ok {:success false
