@@ -174,6 +174,7 @@
        :result {:event :event/approved
                 :actor (:actor cmd)
                 :application-id (:application-id cmd)
+                :comment (:comment cmd)
                 :time (:time cmd)}}))
 
 (defmethod handle-command ::reject
@@ -184,6 +185,7 @@
        :result {:event :event/rejected
                 :actor (:actor cmd)
                 :application-id (:application-id cmd)
+                :comment (:comment cmd)
                 :time (:time cmd)}}))
 
 (defmethod handle-command ::return
@@ -194,6 +196,7 @@
        :result {:event :event/returned
                 :actor (:actor cmd)
                 :application-id (:application-id cmd)
+                :comment (:comment cmd)
                 :time (:time cmd)}}))
 
 (defmethod handle-command ::close
@@ -204,6 +207,7 @@
        :result {:event :event/closed
                 :actor (:actor cmd)
                 :application-id (:application-id cmd)
+                :comment (:comment cmd)
                 :time (:time cmd)}}))
 
 (defmethod handle-command ::request-decision
@@ -216,6 +220,7 @@
                 :actor (:actor cmd)
                 :decider (:decider cmd)
                 :application-id (:application-id cmd)
+                :comment (:comment cmd)
                 :time (:time cmd)}}))
 
 (defmethod handle-command ::decide
@@ -230,6 +235,7 @@
                 :actor (:actor cmd)
                 :decision (:decision cmd)
                 :application-id (:application-id cmd)
+                :comment (:comment cmd)
                 :time (:time cmd)}}))
 
 (defn- invalid-users-errors
@@ -247,6 +253,7 @@
                 :actor (:actor cmd)
                 :commenters (:commenters cmd)
                 :application-id (:application-id cmd)
+                :comment (:comment cmd)
                 :time (:time cmd)}}))
 
 (defn- actor-is-not-commenter-error [application cmd]
