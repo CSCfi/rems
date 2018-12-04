@@ -166,7 +166,7 @@
             :error-handler (fn [error] (rf/dispatch [::set-status {:status :failed
                                                                    :description description
                                                                    :error error}]))
-            :params (merge {:command :submit
+            :params (merge {:command "submit"
                             :items items
                             :licenses licenses}
                            (if application-id
