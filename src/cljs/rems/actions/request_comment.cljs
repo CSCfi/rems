@@ -82,14 +82,13 @@
 (rf/reg-event-fx
  ::send-request-comment
  (fn [{:keys [db]} [_ {:keys [application-id commenters comment on-pending on-success on-error]}]]
-   (let [user (get-in db [:identity :user])]
-     (send-request-comment! {:commenters commenters
-                             :application-id application-id
-                             :comment comment
-                             :on-success on-success
-                             :on-error on-error})
-     (on-pending)
-     {})))
+   (send-request-comment! {:commenters commenters
+                           :application-id application-id
+                           :comment comment
+                           :on-success on-success
+                           :on-error on-error})
+   (on-pending)
+   {}))
 
 (defn request-comment-view
   [{:keys [selected-commenters potential-commenters comment on-set-comment on-add-commenter on-remove-commenter on-send]}]
