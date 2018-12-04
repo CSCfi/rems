@@ -21,8 +21,8 @@
           handled-body (get-response-body "developer" "actions/handled")]
       (is (:approver? actions-body))
       (is (:approver? handled-body))
-      (is (= [2 8 10 11] (map :id (:approvals actions-body))))
-      (is (= [2 2 3 7 8] (sort (map :id (mapcat :catalogue-items (:approvals actions-body))))))
+      (is (= [2 8 10 11 12] (map :id (:approvals actions-body))))
+      (is (= [2 2 3 7 8 9] (sort (map :id (mapcat :catalogue-items (:approvals actions-body))))))
       (is (= [3 4 5 7 9] (map :id (:handled-approvals handled-body))))
       (is (empty? (:reviews body)))
       (is (empty? (:handled-reviews handled-body)))))

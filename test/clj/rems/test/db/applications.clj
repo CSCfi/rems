@@ -1,6 +1,34 @@
-(ns rems.test.db.applications
+(ns ^:integration rems.test.db.applications
   (:require [clojure.test :refer :all]
-            [rems.db.applications :refer :all]))
+            [luminus-migrations.core :as migrations]
+            [mount.core :as mount]
+            [rems.config :refer [env]]
+            [rems.context :as context]
+            [rems.db.applications :refer :all]
+            [rems.db.core :as db]
+            [rems.db.test-data :as test-data]))
+
+(use-fixtures
+  :once
+  (fn [f]
+    (mount/start
+     #'rems.config/env
+     #'rems.db.core/*db*)
+    (db/assert-test-database!)
+    (migrations/migrate ["reset"] (select-keys env [:database-url]))
+    (test-data/create-test-data!)
+    (f)
+    (mount/stop)))
+
+(deftest can-act-as?-test
+  (binding [context/*user* {"eppn" "developer"}]
+    (is (can-act-as? (first (db/get-applications {:id 12}))
+                     "approver"))
+    (is (not (can-act-as? (first (db/get-applications {:id 12}))
+                          "reviewer"))))
+  (binding [context/*user* {"eppn" "alice"}]
+    (is (not (can-act-as? (first (db/get-applications {:id 12}))
+                          "approver")))))
 
 (deftest test-handling-event?
   (are [en] (handling-event? nil {:event en})

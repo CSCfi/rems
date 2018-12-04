@@ -22,6 +22,11 @@
             [rems.workflow.dynamic :as dynamic])
   (:import [java.io ByteArrayOutputStream FileInputStream]))
 
+;; TODO could use schemas for these coercions
+(defn- fix-workflow-from-db [wf]
+  (update (cheshire/parse-string wf keyword)
+          :type keyword))
+
 (defn draft?
   "Is the given `application-id` for an unsaved draft application?"
   [application-id]
@@ -81,18 +86,27 @@
   ([app userid round]
    (reviewed? (update app :events (fn [events] (filter #(= round (:round %)) events))) userid)))
 
-(defn- can-act-as?
+(defn- is-handler? [application-id user-id]
+  (let [workflow (fix-workflow-from-db (:workflow (first (db/get-applications {:id application-id}))))]
+    (prn workflow)
+    (contains? (set (:handlers workflow))
+               user-id)))
+
+(defn can-act-as?
   [application role]
-  (and (= "applied" (:state application))
-       (contains? (set (actors/get-by-role (:id application) (:curround application) role))
-                  (get-user-id))))
+  (or (and (= "applied" (:state application))
+           (contains? (set (actors/get-by-role (:id application) (:curround application) role))
+                      (getx-user-id)))
+      (and (= "approver" role)
+           (is-handler? (:id application) (getx-user-id)))))
 
 (defn- is-actor? [actors]
   (contains? (set actors)
              (get-user-id)))
 
 (defn- has-actor-role? [application-id role]
-  (is-actor? (actors/get-by-role application-id role)))
+  (or (is-actor? (actors/get-by-role application-id role))
+      (is-handler? application-id (getx-user-id))))
 
 (defn- can-approve? [application]
   (can-act-as? application "approver"))
@@ -214,15 +228,28 @@
                 :formid (:formid (first catalogue-items))
                 :catalogue-items catalogue-items))))))
 
+(comment
+  (binding [context/*user* {"eppn" "developer"}]
+    (->> (get-applications-impl-batch {})
+         (mapv :id))))
+
 (defn get-my-applications []
   (filter
    #(not= (:state %) "closed") ; don't show deleted applications
    (get-applications-impl-batch {:applicant (getx-user-id)})))
 
+(comment
+  (->> (get-applications-impl-batch {:applicant "developer"})
+       (mapv :id)))
+
 (defn get-approvals []
-  (filterv
-   can-approve?
-   (get-applications-impl-batch {})))
+  (->> (get-applications-impl-batch {})
+       (filterv can-approve?)))
+
+(comment
+  (binding [context/*user* {"eppn" "developer"}]
+    (->> (get-approvals)
+         (mapv :id))))
 
 (defn get-handled-approvals []
   (let [actors (db/get-actors-for-applications {:role "approver"})]
@@ -413,6 +440,9 @@
    (let [form (db/get-form-for-application {:application application-id})
          _ (assert form)
          application (get-application-state application-id)
+         application (if (= :workflow/dynamic (get-in application [:workflow :type]))
+                       (dynamic/assoc-possible-commands (getx-user-id) application) ; TODO move even higher?
+                       application)
          _ (assert application)
          form-id (:formid form)
          _ (assert form-id)
@@ -782,10 +812,6 @@
 
 ;;; Dynamic workflows
 
-;; TODO could use schemas for these coercions
-(defn- fix-workflow-from-db [wf]
-  (update (cheshire/parse-string wf keyword)
-          :type keyword))
 
 (defn- fix-event-from-db [event]
   (-> event
@@ -802,9 +828,7 @@
                                  :dynamic-events events
                                  :workflow (fix-workflow-from-db (:workflow application)))]
     (assert (= :workflow/dynamic (get-in fixed-application [:workflow :type])))
-    (dynamic/assoc-possible-commands ;; TODO: this shouldn't probably be here
-     (getx-user-id)
-     (dynamic/apply-events fixed-application events))))
+    (dynamic/apply-events fixed-application events)))
 
 (defn- add-dynamic-event! [event]
   (db/add-application-event! {:application (:application-id event)
