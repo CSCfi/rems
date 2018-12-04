@@ -133,6 +133,18 @@
   (and (= "applied" (:state application))
        (is-third-party-reviewer? (get-user-id) (:curround application) application)))
 
+;; TODO add to tests
+(defn- is-commenter?
+  "Checks if a given user has been requested to review the given application. If no user is provided, the function checks review requests for the current user.
+   Additionally a specific round can be provided to narrow the check to apply only to the given round."
+  ([user application]
+   (contains? (get application :possible-commands) :rems.workflow.dynamic/comment)))
+
+(defn- can-comment?
+  "Checks if the current user can perform a comment action for the given application."
+  [application]
+  (is-commenter? (getx-user-id) application))
+
 (defn get-approvers [application]
   (actors/get-by-role (:id application) "approver"))
 
@@ -162,7 +174,8 @@
         (is-approver? application-id)
         (is-reviewer? application-id)
         (is-third-party-reviewer? application)
-        (is-dynamic-handler? application user-id))))
+        (is-dynamic-handler? application user-id)
+        (is-commenter? user-id application))))
 
 (defn- can-close? [application]
   (let [application-id (:id application)]
@@ -286,7 +299,8 @@
        (filterv
         (fn [app] (and (not (reviewed? app))
                        (or (can-review? app)
-                           (can-third-party-review? app)))))
+                           (can-third-party-review? app)
+                           (can-comment? app)))))
        (mapv assoc-review-type-to-app)))
 
 (defn check-review-timeout
