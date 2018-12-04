@@ -135,8 +135,7 @@
 
 ;; TODO add to tests
 (defn- is-commenter?
-  "Checks if a given user has been requested to review the given application. If no user is provided, the function checks review requests for the current user.
-   Additionally a specific round can be provided to narrow the check to apply only to the given round."
+  "Checks if a given user has been requested to comment the given application."
   ([user application]
    ;; TODO calculate in backend?
    (->> (:dynamic-events application)
