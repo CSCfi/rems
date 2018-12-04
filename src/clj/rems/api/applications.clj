@@ -116,6 +116,7 @@
       (update-in [:items] longify-keys)
       (update-in [:licenses] longify-keys)))
 
+;; TODO dynamic events hiding
 (defn- hide-sensitive-events [events]
   (filter (fn [event]
             ((complement contains?) #{"third-party-review" "review-request" "review"} (:event event)))

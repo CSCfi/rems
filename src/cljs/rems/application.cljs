@@ -924,11 +924,19 @@
                        ^{:key (:id item)}
                        [:li (get-catalogue-item-title item language)]))]}]))
 
+(defn- dynamic-event->event [{:keys [time actor event comment]}]
+  {:userid actor
+   :time time
+   :event (name event)
+   :comment comment})
+
 (defn- render-application [application edit-application language status]
   (let [app (:application application)
         state (:state app)
         phases (:phases application)
-        events (:events app)
+        events (concat
+                 (:events app)
+                 (map dynamic-event->event (:dynamic-events app)))
         user-attributes (:applicant-attributes application)
         messages (remove nil?
                          [(disabled-items-warning (:catalogue-items application)) ; NB: eval this here so we get nil or a warning

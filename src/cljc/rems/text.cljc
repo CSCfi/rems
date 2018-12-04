@@ -54,6 +54,7 @@
 
 (defn localize-event [event]
   (text (case event
+          ;; static
           "add-member" :t.application.events/add-member
           "apply" :t.applications.events/apply
           "approve" :t.applications.events/approve
@@ -65,6 +66,15 @@
           "review-request" :t.applications.events/review-request
           "withdraw" :t.applications.events/withdraw
           "third-party-review" :t.applications.events/third-party-review
+
+          ;; TODO add complete event types with possibly improved localization
+          ;; dynamic
+          "submitted" :t.applications.events/apply
+          "comment-requested" :t.applications.events/review-request
+          "commented" :t.applications.events/review
+          "approved" :t.applications.events/approve
+          "rejected" :t.applications.events/reject
+
           :t.applications.events/unknown)))
 
 
