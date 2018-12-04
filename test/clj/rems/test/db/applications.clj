@@ -22,12 +22,12 @@
 
 (deftest can-act-as?-test
   (binding [context/*user* {"eppn" "developer"}]
-    (is (can-act-as? (first (db/get-applications {:id 12}))
-                     "approver"))
-    (is (not (can-act-as? (first (db/get-applications {:id 12}))
+    (is (can-act-as? (get-application-state 12)
+        "approver"))
+    (is (not (can-act-as? (get-application-state 12)
                           "reviewer"))))
   (binding [context/*user* {"eppn" "alice"}]
-    (is (not (can-act-as? (first (db/get-applications {:id 12}))
+    (is (not (can-act-as? (get-application-state 12)
                           "approver")))))
 
 (deftest test-handling-event?

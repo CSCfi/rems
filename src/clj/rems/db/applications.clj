@@ -83,11 +83,7 @@
 
 (declare fix-workflow-from-db)
 
-(defn- is-handler? [application-id user-id]
-  (let [workflow (fix-workflow-from-db (:workflow (first (db/get-applications {:id application-id}))))]
-    (prn workflow)
-    (contains? (set (:handlers workflow))
-               user-id)))
+(declare is-dynamic-handler?)
 
 (defn can-act-as?
   [application role]
@@ -95,15 +91,17 @@
            (contains? (set (actors/get-by-role (:id application) (:curround application) role))
                       (getx-user-id)))
       (and (= "approver" role)
-           (is-handler? (:id application) (getx-user-id)))))
+           (is-dynamic-handler? application (getx-user-id)))))
 
 (defn- is-actor? [actors]
   (contains? (set actors)
              (get-user-id)))
 
+(declare get-application-state)
+
 (defn- has-actor-role? [application-id role]
   (or (is-actor? (actors/get-by-role application-id role))
-      (is-handler? application-id (getx-user-id))))
+      (is-dynamic-handler? (get-application-state application-id) (getx-user-id))))
 
 (defn- can-approve? [application]
   (can-act-as? application "approver"))
@@ -157,15 +155,14 @@
 (defn is-applicant? [application]
   (= (:applicantuserid application) (get-user-id)))
 
-(declare is-dynamic-handler?)
-
 (defn may-see-application? [application]
-  (let [application-id (:id application)]
+  (let [application-id (:id application)
+        user-id (getx-user-id)]
     (or (is-applicant? application)
         (is-approver? application-id)
         (is-reviewer? application-id)
         (is-third-party-reviewer? application)
-        (is-dynamic-handler? application))))
+        (is-dynamic-handler? application user-id))))
 
 (defn- can-close? [application]
   (let [application-id (:id application)]
@@ -654,6 +651,9 @@
                                                      (:start application))))]
        (apply-events application events)))))
 
+(comment
+  (get-application-state 12))
+
 (declare handle-state-change)
 
 (defn try-autoapprove-application
@@ -852,5 +852,5 @@
       (add-dynamic-event! (:result result))
       result)))
 
-(defn is-dynamic-handler? [application]
-  (contains? (set (get-in application [:workflow :handlers])) (getx-user-id)))
+(defn is-dynamic-handler? [application user-id]
+  (contains? (set (get-in application [:workflow :handlers])) user-id))
