@@ -572,12 +572,17 @@
                    :class :btn-primary
                    :on-click #(rf/dispatch [::save-application "submit" (text :t.form/submit)])}])
 
+(defn- editable-state? [state]
+  (contains? #{"draft" "returned" "withdrawn"
+               :rems.workflow.dynamic/draft :rems.workflow.dynamic/returned}
+             state))
+
 (defn- fields [form edit-application]
   (let [application (:application form)
         {:keys [items licenses validation]} edit-application
         validation-by-field-id (index-by [:type :id] validation)
         state (:state application)
-        editable? (#{"draft" "returned" "withdrawn"} state)
+        editable? (editable-state? state)
         readonly? (not editable?)]
     [collapsible/component
      {:id "form"
@@ -873,7 +878,7 @@
 
 (defn- static-actions [app]
   (let [state (:state app)
-        editable? (contains? #{"draft" "returned" "withdrawn"} state)]
+        editable? (editable-state? state)]
     (concat (when (:can-close? app)
               [(if (:is-applicant? app)
                  [applicant-close-action-button]
@@ -953,8 +958,8 @@
         state (:state app)
         phases (:phases application)
         events (concat
-                 (:events app)
-                 (map dynamic-event->event (:dynamic-events app)))
+                (:events app)
+                (map dynamic-event->event (:dynamic-events app)))
         user-attributes (:applicant-attributes application)
         messages (remove nil?
                          [(disabled-items-warning (:catalogue-items application)) ; NB: eval this here so we get nil or a warning
