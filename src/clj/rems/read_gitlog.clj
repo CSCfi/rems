@@ -5,7 +5,7 @@
 
 (def ^:private version-description-file "git-describe.txt")
 (def ^:private version-revision-file "git-revision.txt")
-(def ^:private repo-url "https://github.com/CSCfi/rems/commit/")
+(def ^:private repo-url "https://github.com/CSCfi/rems/commits/")
 
 (defn- read-file [name]
   (some-> name
