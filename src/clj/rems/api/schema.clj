@@ -47,6 +47,12 @@
    :time DateTime
    :eventdata s/Any})
 
+(s/defschema DynamicEvent
+  {:actor s/Str
+   :time (s/maybe DateTime) ; TODO should always have time
+   (s/optional-key :comment) (s/maybe s/Str)
+   s/Any s/Any})
+
 (s/defschema Application
   {:id (s/maybe s/Num) ;; does not exist for unsaved draft
    :formid s/Num
@@ -57,7 +63,7 @@
    (s/optional-key :curround) s/Num ;; does not exist for draft
    (s/optional-key :fnlround) s/Num ;; does not exist for draft
    (s/optional-key :events) [Event]
-   (s/optional-key :dynamic-events) [s/Any] ;; TODO schema for dynamic events
+   (s/optional-key :dynamic-events) [DynamicEvent]
    (s/optional-key :can-approve?) s/Bool
    (s/optional-key :can-close?) s/Bool
    (s/optional-key :can-withdraw?) s/Bool

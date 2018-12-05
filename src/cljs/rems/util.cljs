@@ -38,7 +38,7 @@
   [url opts]
   (js/window.rems.hooks.put url (clj->js opts))
   (PUT url (merge {:error-handler (wrap-default-error-handler (:error-handler opts))
-                   :format :json
+                   :format :transit
                    :response-format :transit}
                   opts)))
 
@@ -51,6 +51,6 @@
   [url opts]
   (js/window.rems.hooks.put url (clj->js opts))
   (POST url (merge {:error-handler (wrap-default-error-handler (:error-handler opts))
-                    :format :json
+                    :format :transit
                     :response-format :transit}
                    opts)))

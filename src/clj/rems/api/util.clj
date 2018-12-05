@@ -15,7 +15,9 @@
 
 (defn longify-keys [m]
   (into {} (for [[k v] m]
-             [(Long/parseLong (name k)) v])))
+             (if (keyword? k)
+               [(Long/parseLong (name k)) v]
+               [k v]))))
 
 (defn add-roles-documentation [summary roles]
   (when (nil? summary)

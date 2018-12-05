@@ -11,7 +11,8 @@
             [rems.util :refer [get-user-id update-present]]
             [ring.util.http-response :refer :all]
             [ring.swagger.upload :as upload]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [clj-time.core :as time]))
 
 ;; Response models
 
@@ -43,8 +44,8 @@
    (s/optional-key :catalogue-items) [s/Num]
    ;; NOTE: compojure-api only supports keyword keys properly, see
    ;; https://github.com/metosin/compojure-api/issues/341
-   :items {s/Keyword s/Str}
-   (s/optional-key :licenses) {s/Keyword s/Str}})
+   :items {s/Any s/Str}
+   (s/optional-key :licenses) {s/Any s/Str}})
 
 (s/defschema ValidationMessage
   {:type (s/enum :item :license)
@@ -80,6 +81,22 @@
 (s/defschema Reviewers
   [Reviewer])
 
+(s/defschema Commenter
+  {:userid s/Str
+   :name (s/maybe s/Str)
+   :email (s/maybe s/Str)})
+
+(s/defschema Commenters
+  [Commenter])
+
+(s/defschema Decider
+  {:userid s/Str
+   :name (s/maybe s/Str)
+   :email (s/maybe s/Str)})
+
+(s/defschema Deciders
+  [Decider])
+
 (s/defschema AddMemberCommand
   {:application-id s/Num
    :member s/Str})
@@ -108,6 +125,7 @@
       (update-in [:items] longify-keys)
       (update-in [:licenses] longify-keys)))
 
+;; TODO dynamic events hiding
 (defn- hide-sensitive-events [events]
   (filter (fn [event]
             ((complement contains?) #{"third-party-review" "review-request" "review"} (:event event)))
@@ -131,14 +149,42 @@
     (-> (applications/get-form-for application-id)
         (hide-sensitive-information (get-user-id)))))
 
+;; TODO lots of duplication in invalid-reviewer? invalid-commenter? etc. fns
 (defn invalid-reviewer? [u]
   (or (str/blank? (get u "eppn"))
       (str/blank? (get u "commonName"))
       (str/blank? (get u "mail"))))
 
+;; TODO Filter applicant, requesting user
 (defn get-reviewers []
   (for [u (->> (users/get-all-users)
                (remove invalid-reviewer?))]
+    {:userid (get u "eppn")
+     :name (get u "commonName")
+     :email (get u "mail")}))
+
+(defn invalid-commenter? [u]
+  (or (str/blank? (get u "eppn"))
+      (str/blank? (get u "commonName"))
+      (str/blank? (get u "mail"))))
+
+;; TODO Filter applicant, requesting user
+(defn get-commenters []
+  (for [u (->> (users/get-all-users)
+               (remove invalid-commenter?))]
+    {:userid (get u "eppn")
+     :name (get u "commonName")
+     :email (get u "mail")}))
+
+(defn invalid-decider? [u]
+  (or (str/blank? (get u "eppn"))
+      (str/blank? (get u "commonName"))
+      (str/blank? (get u "mail"))))
+
+;; TODO Filter applicant, requesting user
+(defn get-deciders []
+  (for [u (->> (users/get-all-users)
+               (remove invalid-decider?))]
     {:userid (get u "eppn")
      :name (get u "commonName")
      :email (get u "mail")}))
@@ -147,7 +193,6 @@
   "Checks that content-type matches the allowed ones listed on the UI side:
    .pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
   [content-type]
-  (prn content-type)
   (when-not (or (#{"application/pdf"
                    "application/msword"
                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -186,6 +231,18 @@
       :roles #{:approver}
       :return Reviewers
       (ok (get-reviewers)))
+
+    (GET "/commenters" []
+      :summary "Available third party commenters"
+      :roles #{:approver}
+      :return Commenters
+      (ok (get-commenters)))
+
+    (GET "/deciders" []
+      :summary "Available deciders"
+      :roles #{:approver}
+      :return Deciders
+      (ok (get-deciders)))
 
     (GET "/attachments/" []
       :summary "Get an attachment for a field in an application"
@@ -281,6 +338,7 @@
       :return SuccessResponse
       (let [cmd (assoc request :actor (get-user-id))
             fixed (fix-command-from-api cmd)
+            fixed (assoc fixed :time (time/now))
             errors (applications/dynamic-command! fixed)]
         (if errors
           (ok {:success false

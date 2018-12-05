@@ -93,7 +93,7 @@
 
 (defmethod apply-event [:event/comment-requested :workflow/dynamic]
   [application _workflow event]
-  (update application :commenters conj (:commenter event)))
+  (update application :commenters into (:commenters event)))
 
 (defmethod apply-event [:event/commented :workflow/dynamic]
   [application _workflow event]
@@ -174,6 +174,7 @@
        :result {:event :event/approved
                 :actor (:actor cmd)
                 :application-id (:application-id cmd)
+                :comment (:comment cmd)
                 :time (:time cmd)}}))
 
 (defmethod handle-command ::reject
@@ -184,6 +185,7 @@
        :result {:event :event/rejected
                 :actor (:actor cmd)
                 :application-id (:application-id cmd)
+                :comment (:comment cmd)
                 :time (:time cmd)}}))
 
 (defmethod handle-command ::return
@@ -194,6 +196,7 @@
        :result {:event :event/returned
                 :actor (:actor cmd)
                 :application-id (:application-id cmd)
+                :comment (:comment cmd)
                 :time (:time cmd)}}))
 
 (defmethod handle-command ::close
@@ -204,6 +207,7 @@
        :result {:event :event/closed
                 :actor (:actor cmd)
                 :application-id (:application-id cmd)
+                :comment (:comment cmd)
                 :time (:time cmd)}}))
 
 (defmethod handle-command ::request-decision
@@ -216,6 +220,7 @@
                 :actor (:actor cmd)
                 :decider (:decider cmd)
                 :application-id (:application-id cmd)
+                :comment (:comment cmd)
                 :time (:time cmd)}}))
 
 (defmethod handle-command ::decide
@@ -230,18 +235,25 @@
                 :actor (:actor cmd)
                 :decision (:decision cmd)
                 :application-id (:application-id cmd)
+                :comment (:comment cmd)
                 :time (:time cmd)}}))
+
+(defn- invalid-users-errors
+  "Checks the given users for validity and merges the errors"
+  [user-ids injections]
+  (apply merge-with into (keep (partial valid-user-error injections) user-ids)))
 
 (defmethod handle-command ::request-comment
   [cmd application injections]
   (or (actor-is-not-handler-error application cmd)
       (state-error application ::submitted)
-      (valid-user-error injections (:commenter cmd))
+      (invalid-users-errors (:commenters cmd) injections)
       {:success true
        :result {:event :event/comment-requested
                 :actor (:actor cmd)
-                :commenter (:commenter cmd)
+                :commenters (:commenters cmd)
                 :application-id (:application-id cmd)
+                :comment (:comment cmd)
                 :time (:time cmd)}}))
 
 (defn- actor-is-not-commenter-error [application cmd]
@@ -311,7 +323,7 @@
     :decision :approved}
    {:type ::request-comment
     :actor actor
-    :commenter "commenter"}
+    :commenters ["commenter"]}
    {:type ::comment
     :actor actor
     :comment "comment"}
@@ -453,12 +465,12 @@
         injections {:valid-user? #{"commenter" "commenter2" "commenter3"}}]
     (testing "required :valid-user? injection"
       (is (= {:errors [[:missing-injection :valid-user?]]}
-             (handle-command {:actor "assistant" :commenter "commenter" :type ::request-comment}
+             (handle-command {:actor "assistant" :commenters ["commenter"] :type ::request-comment}
                              application
                              {}))))
-    (testing "commenter must be a valid user"
-      (is (= {:errors [[:invalid-user "invaliduser"]]}
-             (handle-command {:actor "assistant" :commenter "invaliduser" :type ::request-comment}
+    (testing "commenters must be a valid users"
+      (is (= {:errors [[:invalid-user "invaliduser"] [:invalid-user "invaliduser2"]]}
+             (handle-command {:actor "assistant" :commenters ["invaliduser" "commenter" "invaliduser2"] :type ::request-comment}
                              application
                              injections))))
     (testing "commenting before ::request-comment should fail"
@@ -467,8 +479,8 @@
                              application
                              injections))))
     (let [requested (apply-commands application
-                                    [{:actor "assistant" :commenter "commenter" :type ::request-comment}
-                                     {:actor "assistant" :commenter "commenter2" :type ::request-comment}]
+                                    [{:actor "assistant" :commenters ["commenter"] :type ::request-comment}
+                                     {:actor "assistant" :commenters ["commenter2"] :type ::request-comment}]
                                     injections)]
       (testing "request comment succesfully"
         (is (= #{"commenter2" "commenter"} (:commenters requested))))
@@ -513,7 +525,7 @@
                (possible-commands "somebody else" submitted))))
       (let [requested (apply-events submitted [{:event :event/comment-requested
                                                 :actor "assistant"
-                                                :commenter "commenter"}])]
+                                                :commenters ["commenter"]}])]
         (testing "comment requested"
           (is (= #{::add-member}
                  (possible-commands "applicant" requested)))
