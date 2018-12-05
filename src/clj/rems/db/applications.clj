@@ -307,7 +307,7 @@
          (filterv handled?)
          (filterv (fn [app]
                     (let [application (get-application-state (:id app))]
-                      (if (= (is-dynamic-application? application))
+                      (if (is-dynamic-application? application)
                         (contains? (set (actors-of-dynamic-application application)) (getx-user-id))
                         (is-actor? (actors/filter-by-application-id actors (:id app))))))))))
 
