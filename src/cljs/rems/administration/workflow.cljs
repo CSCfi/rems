@@ -74,7 +74,7 @@
 
 (defn- create-workflow [request]
   (post! "/api/workflows/create" {:params request
-                                  ; TODO: error handling
+                                        ; TODO: error handling
                                   :handler (fn [resp] (dispatch! "#/administration"))}))
 
 (rf/reg-event-fx
@@ -162,9 +162,8 @@
                                :orientation :horizontal
                                :options (concat [{:value :auto-approve
                                                   :label (text :t.create-workflow/auto-approve-workflow)}]
-                                                (when (dev-environment?) ;; TODO: remove this feature toggle after dynamic workflow is implemented
-                                                  [{:value :dynamic
-                                                    :label (text :t.create-workflow/dynamic-workflow)}])
+                                                [{:value :dynamic
+                                                  :label (text :t.create-workflow/dynamic-workflow)}]
                                                 [{:value :rounds
                                                   :label (text :t.create-workflow/rounds-workflow)}])}])
 
@@ -207,7 +206,7 @@
      {:href "#"
       :on-click (fn [event]
                   (.preventDefault event)
-                  ; TODO: refactor to re-frame events
+                                        ; TODO: refactor to re-frame events
                   (rf/dispatch [::set-form-field [:rounds (count (:rounds form))] {}]))}
      (text :t.create-workflow/add-round)]))
 
@@ -217,7 +216,7 @@
      {:href "#"
       :on-click (fn [event]
                   (.preventDefault event)
-                  ; TODO: refactor to re-frame events
+                                        ; TODO: refactor to re-frame events
                   (rf/dispatch [::set-form-field [:rounds] (vec-dissoc (:rounds form) round)]))
       :aria-label (text :t.create-workflow/remove-round)
       :title (text :t.create-workflow/remove-round)}
