@@ -1,10 +1,11 @@
 (ns rems.application
   (:require [clojure.string :as str]
+            [medley.core :refer [map-vals]]
             [re-frame.core :as rf]
             [rems.actions.action :refer [action-form-view action-collapse-id button-wrapper]]
             [rems.actions.approve-reject :refer [approve-reject-form]]
-            [rems.actions.comment :refer [comment-form]]
             [rems.actions.close :refer [close-form]]
+            [rems.actions.comment :refer [comment-form]]
             [rems.actions.decide :refer [decide-form]]
             [rems.actions.request-comment :refer [request-comment-form]]
             [rems.actions.request-decision :refer [request-decision-form]]
@@ -12,13 +13,13 @@
             [rems.atoms :refer [external-link flash-message textarea]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
+            [rems.common-util :refer [index-by]]
             [rems.db.catalogue :refer [get-catalogue-item-title]]
             [rems.guide-utils :refer [lipsum lipsum-short lipsum-paragraphs]]
             [rems.phase :refer [phases]]
             [rems.spinner :as spinner]
             [rems.status-modal :refer [status-modal]]
             [rems.text :refer [localize-decision localize-event localize-item localize-state localize-time text text-format]]
-            [rems.common-util :refer [index-by]]
             [rems.util :refer [dispatch! fetch post!]]
             [secretary.core :as secretary])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
@@ -90,7 +91,8 @@
  (fn [db [_ application]]
    (assoc db
           ::application application
-          ::edit-application {:items (into {} (map (juxt :id #(select-keys % [:value])) (:items application)))
+          ::edit-application {:items (into {} (for [item (:items application)]
+                                                [(:id item) {:value (:value item)}]))
                               :licenses (into {} (map (juxt :id :approver) (:licenses application)))})))
 
 (rf/reg-event-fx
@@ -118,10 +120,6 @@
                                                :error error})
        (assoc-in [::edit-application :validation] validation))))
 
-(defn- item-values-by-id [items]
-  (into {} (for [[k v] items]
-             [k (:value v)])))
-
 (defn- save-application [app description application-id catalogue-items items licenses on-success]
   (post! "/api/applications/save"
          {:handler (fn [resp]
@@ -134,7 +132,7 @@
                                                                  :description description
                                                                  :error error}]))
           :params (merge {:command "save"
-                          :items (item-values-by-id items)
+                          :items (map-vals :value items)
                           :licenses licenses}
                          (if application-id
                            {:application-id application-id}
@@ -175,7 +173,7 @@
                                                                    :description description
                                                                    :error error}]))
             :params (merge {:command "submit"
-                            :items (item-values-by-id items)
+                            :items (map-vals :value items)
                             :licenses licenses}
                            (if application-id
                              {:application-id application-id}
@@ -223,7 +221,7 @@
 
 (defn- save-application-with-attachment [field-id form-data catalogue-items items licenses description]
   (let [payload {:command "save"
-                 :items (item-values-by-id items)
+                 :items (map-vals :value items)
                  :licenses licenses
                  :catalogue-items catalogue-items}]
     ;; TODO this logic should be rewritten as a chain of save, save-attachment instead
@@ -432,24 +430,41 @@
 (defn- readonly-field [{:keys [id value]}]
   [:div.form-control {:id id} (str/trim (str value))])
 
-(defn- format-diff [diff]
-  (map (fn [[change text]] (cond
-                             (pos? change) [:ins text]
-                             (neg? change) [:del text]
-                             :else text))
-       diff))
+(defn- diff [value previous-value]
+  (let [dmp (js/diff_match_patch.)
+        diff (.diff_main dmp
+                         (str/trim (str previous-value))
+                         (str/trim (str value)))]
+    (.diff_cleanupSemantic dmp diff)
+    diff))
+
+(defn- formatted-diff [value previous-value]
+  (->> (diff value previous-value)
+       (map (fn [[change text]]
+              (cond
+                (pos? change) [:ins text]
+                (neg? change) [:del text]
+                :else text)))))
 
 (defn- diff-field [{:keys [id value previous-value]}]
-  (let [dmp (js/diff_match_patch.)
-        diff (.diff_main dmp (str/trim (str previous-value)) (str/trim (str value)))]
-    (.diff_cleanupSemantic dmp diff)
-    (into [:div.form-control.diff {:id id}]
-          (format-diff diff))))
+  (into [:div.form-control.diff {:id id}]
+        (formatted-diff value previous-value)))
 
 (defn- field-validation-message [validation title]
   (when validation
     [:div {:class "text-danger"}
      (text-format (:key validation) title)]))
+
+(defn- toggle-diff-button [item-id diff-visible]
+  [:a.toggle-diff {:href "#"
+                   :on-click (fn [event]
+                               (.preventDefault event)
+                               (rf/dispatch [::toggle-diff item-id]))}
+   [:i.fas.fa-exclamation-circle]
+   " "
+   (if diff-visible
+     (text :t.form/diff-hide)
+     (text :t.form/diff-show))])
 
 (defn basic-field [{:keys [title id readonly readonly-component optional value previous-value diff diff-component validation]} editor-component]
   [:div.form-group.field
@@ -459,15 +474,7 @@
       (text :t.form/optional))]
    (when (and previous-value
               (not= value previous-value))
-     [:a.show-diff {:href "#"
-                    :on-click (fn [event]
-                                (.preventDefault event)
-                                (rf/dispatch [::toggle-diff id]))}
-      [:i.fas.fa-exclamation-circle]
-      " "
-      (if diff
-        (text :t.form/diff-hide)
-        (text :t.form/diff-show))])
+     [toggle-diff-button id diff])
    (cond
      diff (or diff-component
               [diff-field {:id (id-to-name id)
@@ -506,7 +513,7 @@
                         [:a {:href (str "/api/applications/attachments/?application-id=" app-id "&field-id=" id)
                              :target "_blank"}
                          value])]
-    ;; TODO: how to show diff for the attachment? will require adding :diff-component
+    ;; TODO: custom :diff-component, for example link to both old and new attachment
     [basic-field (assoc opts :readonly-component [:div.form-control download-link])
      [:div
       [:div.upload-file
@@ -625,7 +632,7 @@
                              :validation (get-in validation-by-field-id [:item (:id item)])
                              :readonly readonly?
                              :value (get-in items [(:id item) :value])
-                             ;; TODO: db doesn't yet contain :previous-value
+                             ;; TODO: db doesn't yet contain :previous-value so this is always nil
                              :previous-value (get-in items [(:id item) :previous-value])
                              :diff (get-in items [(:id item) :diff])
                              :app-id (:id application))]))
@@ -992,9 +999,8 @@
   (let [app (:application application)
         state (:state app)
         phases (:phases application)
-        events (concat
-                (:events app)
-                (map dynamic-event->event (:dynamic-events app)))
+        events (concat (:events app)
+                       (map dynamic-event->event (:dynamic-events app)))
         user-attributes (:applicant-attributes application)
         messages (remove nil?
                          [(disabled-items-warning (:catalogue-items application)) ; NB: eval this here so we get nil or a warning
