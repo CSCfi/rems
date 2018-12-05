@@ -119,6 +119,7 @@
                                   :closed "Poistettu"
                                   :draft "Luonnos"
                                   :rejected "Hylätty"
+                                  :returned "Palautettu"
                                   :submitted "Haettu"}
                  :empty "Sinulla ei ole hakemuksia."
                  :events {:add-member "Lisätty jäsen"

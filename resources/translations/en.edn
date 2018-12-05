@@ -120,6 +120,7 @@
                                   :closed "Deleted"
                                   :draft "Draft"
                                   :rejected "Rejected"
+                                  :returned "Returned"
                                   :submitted "Submitted"}
                  :empty "You don't have any applications."
                  :events {:add-member "Added member"

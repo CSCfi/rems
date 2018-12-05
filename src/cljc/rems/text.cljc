@@ -50,6 +50,7 @@
           :rems.workflow.dynamic/approved :t.applications.dynamic-states/approved
           :rems.workflow.dynamic/rejected :t.applications.dynamic-states/rejected
           :rems.workflow.dynamic/closed :t.applications.dynamic-states/closed
+          :rems.workflow.dynamic/returned :t.applications.dynamic-states/returned
           :t.applications.states/unknown)))
 
 (defn localize-event [event]

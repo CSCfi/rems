@@ -7,6 +7,7 @@
             [rems.actions.decide :refer [decide-form]]
             [rems.actions.request-comment :refer [request-comment-form]]
             [rems.actions.request-decision :refer [request-decision-form]]
+            [rems.actions.return-action :refer [return-form]]
             [rems.atoms :refer [external-link flash-message textarea]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
@@ -728,8 +729,8 @@
 (defn- reject-action-button []
   [action-button "reject" (text :t.actions/reject)])
 
-(defn- return-action-button []
-  [action-button "return" (text :t.actions/return)])
+(defn- static-return-action-button []
+  [action-button "static-return" (text :t.actions/return)])
 
 (defn- review-action-button []
   [action-button "review" (text :t.actions/review)])
@@ -748,6 +749,9 @@
 
 (defn- decide-action-button []
   [action-button "decide" (text :t.actions/decide) #(rf/dispatch [:rems.actions.decide/open-form])])
+
+(defn- return-action-button []
+  [action-button "return" (text :t.actions/return) #(rf/dispatch [:rems.actions.return/open-form])])
 
 (defn- approve-reject-action-button []
   [action-button "approve-reject" (text :t.actions/approve-reject)])
@@ -785,8 +789,8 @@
    (text :t.form/add-comments-shown-to-applicant)
    [reject-button]])
 
-(defn- return-form []
-  [action-form "return"
+(defn- static-return-form []
+  [action-form "static-return"
    (text :t.actions/return)
    (text :t.form/add-comments-shown-to-applicant)
    [return-button]])
@@ -878,7 +882,7 @@
               [[withdraw-action-button]])
             (when (:can-approve? app)
               [[review-request-action-button]
-               [return-action-button]
+               [static-return-action-button]
                [reject-action-button]
                [approve-action-button]])
             (when (= :normal (:review-type app))
@@ -897,13 +901,14 @@
         forms [[:div#actions-forms.mt-3
                 [approve-form]
                 [reject-form]
-                [return-form]
+                [static-return-form]
                 [review-form]
                 [request-review-form]
                 [request-comment-form (:id app) reload]
                 [request-decision-form (:id app) reload]
                 [comment-form (:id app) reload]
                 [decide-form (:id app) reload]
+                [return-form (:id app) reload]
                 [approve-reject-form (:id app) reload]
                 [third-party-review-form]
                 [applicant-close-form]
