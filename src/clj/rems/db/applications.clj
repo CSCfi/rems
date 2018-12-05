@@ -74,6 +74,8 @@
 
 (declare is-commenter?)
 (declare can-comment?)
+(declare is-decider?)
+(declare can-decide?)
 (declare is-dynamic-application?)
 
 (defn reviewed?
@@ -83,8 +85,11 @@
    (reviewed? app context/*user*))
   ([app user]
    (if (is-dynamic-application? app)
-     (and (is-commenter? (get-user-id user) (get-application-state (:id app)))
-          (not (can-comment? (get-user-id user) (:id app))))
+     (let [app-state (get-application-state (:id app))]
+       (or (and (is-commenter? (get-user-id user) app-state)
+                (not (can-comment? (get-user-id user) (:id app))))
+           (and (is-decider? (get-user-id user) app-state)
+                (not (can-decide? (get-user-id user) (:id app))))))
      (contains? (set (map :userid (concat (get-review-events app) (get-third-party-review-events app))))
                 (get-user-id user))))
   ([app user round]
@@ -159,6 +164,21 @@
   (let [application (dynamic/assoc-possible-commands user-id (get-application-state application-id))]
     (contains? (get application :possible-commands) :rems.workflow.dynamic/comment)))
 
+;; TODO add to tests
+(defn- is-decider?
+  "Checks if a given user has been requested to decide on the given application."
+  ([user application]
+   ;; TODO calculate in backend?
+   (->> (:dynamic-events application)
+        (map :decider)
+        (some #{user}))))
+
+(defn- can-decide?
+  "Checks if the current user can perform a decide action for the given application."
+  [user-id application-id]
+  (let [application (dynamic/assoc-possible-commands user-id (get-application-state application-id))]
+    (contains? (get application :possible-commands) :rems.workflow.dynamic/decide)))
+
 (defn get-approvers [application]
   (actors/get-by-role (:id application) "approver"))
 
@@ -189,7 +209,8 @@
         (is-reviewer? application-id)
         (is-third-party-reviewer? application)
         (is-dynamic-handler? application user-id)
-        (is-commenter? user-id application))))
+        (is-commenter? user-id application)
+        (is-decider? user-id application))))
 
 (defn- can-close? [application]
   (let [application-id (:id application)]
@@ -286,10 +307,13 @@
          (filterv (fn [app]
                     (or (is-actor? (actors/filter-by-application-id actors (:id app)))
                         (is-third-party-reviewer? (get-user-id) app)
-                        (is-commenter? (get-user-id) app)))))))
+                        (is-commenter? (get-user-id) app)
+                        (is-decider? (get-user-id) app)))))))
 
 (comment
   (binding [context/*user* {"eppn" "bob"}]
+    (get-handled-reviews))
+  (binding [context/*user* {"eppn" "carl"}]
     (get-handled-reviews)))
 
 (defn- check-for-unneeded-actions
@@ -320,7 +344,8 @@
         (fn [app] (and (not (reviewed? app))
                        (or (can-review? app)
                            (can-third-party-review? app)
-                           (can-comment? (getx-user-id) (:id app))))))
+                           (can-comment? (getx-user-id) (:id app))
+                           (can-decide? (getx-user-id) (:id app))))))
        (mapv assoc-review-type-to-app)))
 
 (defn check-review-timeout

@@ -5,6 +5,7 @@
             [rems.actions.approve-reject :refer [approve-reject-form]]
             [rems.actions.comment :refer [comment-form]]
             [rems.actions.request-comment :refer [request-comment-form]]
+            [rems.actions.request-decision :refer [request-decision-form]]
             [rems.atoms :refer [external-link flash-message textarea]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
@@ -737,6 +738,9 @@
 (defn- request-comment-action-button []
   [action-button "request-comment" (text :t.actions/request-comment) #(rf/dispatch [:rems.actions.request-comment/open-form])])
 
+(defn- request-decision-action-button []
+  [action-button "request-decision" (text :t.actions/request-decision) #(rf/dispatch [:rems.actions.request-decision/open-form])])
+
 (defn- comment-action-button []
   [action-button "comment" (text :t.actions/comment) #(rf/dispatch [:rems.actions.comment/open-form])])
 
@@ -847,7 +851,7 @@
                      [submit-button]]
             :add-member nil ; TODO implement
             :return [[return-action-button]]
-            :request-decision nil ; TODO implement
+            :request-decision [[request-decision-action-button]]
             :decide nil ; TODO implement
             :request-comment [[request-comment-action-button]]
             :comment [[comment-action-button]]
@@ -892,6 +896,7 @@
                 [review-form]
                 [request-review-form]
                 [request-comment-form (:id app) reload]
+                [request-decision-form (:id app) reload]
                 [comment-form (:id app) reload]
                 [approve-reject-form (:id app) reload]
                 [third-party-review-form]

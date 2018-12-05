@@ -89,6 +89,14 @@
 (s/defschema Commenters
   [Commenter])
 
+(s/defschema Decider
+  {:userid s/Str
+   :name (s/maybe s/Str)
+   :email (s/maybe s/Str)})
+
+(s/defschema Deciders
+  [Decider])
+
 (s/defschema AddMemberCommand
   {:application-id s/Num
    :member s/Str})
@@ -168,6 +176,19 @@
      :name (get u "commonName")
      :email (get u "mail")}))
 
+(defn invalid-decider? [u]
+  (or (str/blank? (get u "eppn"))
+      (str/blank? (get u "commonName"))
+      (str/blank? (get u "mail"))))
+
+;; TODO Filter applicant, requesting user
+(defn get-deciders []
+  (for [u (->> (users/get-all-users)
+               (remove invalid-decider?))]
+    {:userid (get u "eppn")
+     :name (get u "commonName")
+     :email (get u "mail")}))
+
 (defn- check-attachment-content-type
   "Checks that content-type matches the allowed ones listed on the UI side:
    .pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
@@ -216,6 +237,12 @@
       :roles #{:approver}
       :return Commenters
       (ok (get-commenters)))
+
+    (GET "/deciders" []
+      :summary "Available deciders"
+      :roles #{:approver}
+      :return Deciders
+      (ok (get-deciders)))
 
     (GET "/attachments/" []
       :summary "Get an attachment for a field in an application"

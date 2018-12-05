@@ -72,6 +72,7 @@
             :reject "Hylkää"
             :reject-success "Hakemus hylätty"
             :request-comment "Pyydä kommenttia"
+            :request-decision "Pyydä päätöstä"
             :request-selection "Lähetä pyyntö henkilölle/henkilöille:"
             :resource "Kielivara"
             :return "Palauta hakijalle"
