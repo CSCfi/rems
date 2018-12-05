@@ -401,8 +401,9 @@
 (defn- pdf-button [id]
   (when id
     [:a.btn.btn-secondary
-     {:href (str "/api/applications/" id "/pdf")}
-     "PDF"]))
+     {:href (str "/api/applications/" id "/pdf")
+      :target :_new}
+     "PDF " (external-link)]))
 
 (defn- set-field-value
   [id]
@@ -526,7 +527,7 @@
   [{:keys [title id textcontent readonly approved validation]}]
   [license id title approved readonly validation
    [:a {:href textcontent :target "_blank"}
-    title " " [external-link]]])
+    title " " (external-link)]])
 
 (defn- text-license
   [{:keys [title id textcontent approved readonly validation]}]
