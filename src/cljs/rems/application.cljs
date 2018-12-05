@@ -4,6 +4,7 @@
             [rems.actions.action :refer [action-form-view action-collapse-id button-wrapper]]
             [rems.actions.approve-reject :refer [approve-reject-form]]
             [rems.actions.comment :refer [comment-form]]
+            [rems.actions.close :refer [close-form]]
             [rems.actions.decide :refer [decide-form]]
             [rems.actions.request-comment :refer [request-comment-form]]
             [rems.actions.request-decision :refer [request-decision-form]]
@@ -601,12 +602,17 @@
                    :class :btn-primary
                    :on-click #(rf/dispatch [::save-application "submit" (text :t.form/submit)])}])
 
+(defn- editable-state? [state]
+  (contains? #{"draft" "returned" "withdrawn"
+               :rems.workflow.dynamic/draft :rems.workflow.dynamic/returned}
+             state))
+
 (defn- fields [form edit-application]
   (let [application (:application form)
         {:keys [items licenses validation]} edit-application
         validation-by-field-id (index-by [:type :id] validation)
         state (:state application)
-        editable? (#{"draft" "returned" "withdrawn"} state)
+        editable? (editable-state? state)
         readonly? (not editable?)]
     [collapsible/component
      {:id "form"
@@ -779,6 +785,9 @@
 (defn- comment-action-button []
   [action-button "comment" (text :t.actions/comment) #(rf/dispatch [:rems.actions.comment/open-form])])
 
+(defn- close-action-button []
+  [action-button "close" (text :t.actions/close) #(rf/dispatch [:rems.actions.close/open-form])])
+
 (defn- decide-action-button []
   [action-button "decide" (text :t.actions/decide) #(rf/dispatch [:rems.actions.decide/open-form])])
 
@@ -888,24 +897,22 @@
 (defn- dynamic-actions [app]
   (distinct
    (mapcat #:rems.workflow.dynamic
-               {:submit [[save-button]
-                         [submit-button]]
-                :add-member nil ; TODO implement
-                :return [[return-action-button]]
-                :request-decision [[request-decision-action-button]]
-                :decide [[decide-action-button]]
-                :request-comment [[request-comment-action-button]]
-                :comment [[comment-action-button]]
-                :approve [[approve-reject-action-button]]
-                :reject [[approve-reject-action-button]]
-                :close [(if (:is-applicant? app)
-                          [applicant-close-action-button]
-                          [approver-close-action-button])]}
+           {:submit [[save-button]
+                     [submit-button]]
+            :add-member nil ; TODO implement
+            :return [[return-action-button]]
+            :request-decision [[request-decision-action-button]]
+            :decide [[decide-action-button]]
+            :request-comment [[request-comment-action-button]]
+            :comment [[comment-action-button]]
+            :approve [[approve-reject-action-button]]
+            :reject [[approve-reject-action-button]]
+            :close [[close-action-button]]}
            (:possible-commands app))))
 
 (defn- static-actions [app]
   (let [state (:state app)
-        editable? (contains? #{"draft" "returned" "withdrawn"} state)]
+        editable? (editable-state? state)]
     (concat (when (:can-close? app)
               [(if (:is-applicant? app)
                  [applicant-close-action-button]
@@ -939,6 +946,7 @@
                 [request-comment-form (:id app) reload]
                 [request-decision-form (:id app) reload]
                 [comment-form (:id app) reload]
+                [close-form (:id app) reload]
                 [decide-form (:id app) reload]
                 [return-form (:id app) reload]
                 [approve-reject-form (:id app) reload]
@@ -985,8 +993,8 @@
         state (:state app)
         phases (:phases application)
         events (concat
-                 (:events app)
-                 (map dynamic-event->event (:dynamic-events app)))
+                (:events app)
+                (map dynamic-event->event (:dynamic-events app)))
         user-attributes (:applicant-attributes application)
         messages (remove nil?
                          [(disabled-items-warning (:catalogue-items application)) ; NB: eval this here so we get nil or a warning
