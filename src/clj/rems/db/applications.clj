@@ -38,13 +38,17 @@
 ;;; Query functions
 
 (defn handling-event? [app e]
-  (or (contains? #{"approve" "autoapprove" "reject" "return" "review"} (:event e)) ;; definitely not by applicant
+  (or (contains? #{"approve" "autoapprove" "reject" "return" "review"
+                   :rems.workflow.dynamic/approved :rems.workflow.dynamic/rejected :rems.workflow.dynamic/returned} (:event e)) ;; definitely not by applicant
+      (and (= :rems.workflow.dynamic/closed (:event e)) (not= (:applicantuserid app) (:actor e))) ;; not by applicant
       (and (= "close" (:event e)) (not= (:applicantuserid app) (:userid e))))) ;; not by applicant
 
 (defn handled? [app]
-  (or (contains? #{"approved" "rejected" "returned"} (:state app)) ;; by approver action
-      (and (contains? #{"closed" "withdrawn"} (:state app))
-           (some (partial handling-event? app) (:events app)))))
+  (or (contains? #{"approved" "rejected" "returned"
+                   :rems.workflow.dynamic/returned :rems.workflow.dynamic/approved :rems.workflow.dynamic/rejected} (:state app)) ;; by approver action
+      (and (contains? #{"closed" "withdrawn"
+                        :rems.workflow.dynamic/closed} (:state app))
+           (some (partial handling-event? app) (concat (:events app) (:dynamic-events app))))))
 
 (defn- get-events-of-type
   "Returns all events of a given type that have occured in an application. Optionally a round parameter can be provided to focus on events occuring during a given round."
@@ -107,7 +111,8 @@
            (contains? (set (actors/get-by-role (:id application) (:curround application) role))
                       (getx-user-id)))
       (and (= "approver" role)
-           (is-dynamic-handler? application (getx-user-id)))))
+           (contains? (dynamic/possible-commands (getx-user-id) (get-application-state (:id application)))
+                      :rems.workflow.dynamic/approve))))
 
 (defn- is-actor? [actors]
   (contains? (set actors)
@@ -293,11 +298,23 @@
     (->> (get-approvals)
          (mapv :id))))
 
+(defn actors-of-dynamic-application [application]
+  (map :actor (:dynamic-events application)))
+
 (defn get-handled-approvals []
   (let [actors (db/get-actors-for-applications {:role "approver"})]
     (->> (get-applications-impl-batch {})
          (filterv handled?)
-         (filterv (fn [app] (is-actor? (actors/filter-by-application-id actors (:id app))))))))
+         (filterv (fn [app]
+                    (let [application (get-application-state (:id app))]
+                      (if (= (is-dynamic-application? application))
+                        (contains? (set (actors-of-dynamic-application application)) (getx-user-id))
+                        (is-actor? (actors/filter-by-application-id actors (:id app))))))))))
+
+(comment
+  (binding [context/*user* {"eppn" "developer"}]
+    (->> (get-handled-approvals)
+         (mapv :id))))
 
 ;; TODO: consider refactoring to finding the review events from the current user and mapping those to applications
 (defn get-handled-reviews []
