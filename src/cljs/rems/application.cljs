@@ -4,6 +4,7 @@
             [rems.actions.action :refer [action-form-view action-collapse-id button-wrapper]]
             [rems.actions.approve-reject :refer [approve-reject-form]]
             [rems.actions.comment :refer [comment-form]]
+            [rems.actions.close :refer [close-form]]
             [rems.actions.decide :refer [decide-form]]
             [rems.actions.request-comment :refer [request-comment-form]]
             [rems.actions.request-decision :refer [request-decision-form]]
@@ -752,6 +753,9 @@
 (defn- comment-action-button []
   [action-button "comment" (text :t.actions/comment) #(rf/dispatch [:rems.actions.comment/open-form])])
 
+(defn- close-action-button []
+  [action-button "close" (text :t.actions/close) #(rf/dispatch [:rems.actions.close/open-form])])
+
 (defn- decide-action-button []
   [action-button "decide" (text :t.actions/decide) #(rf/dispatch [:rems.actions.decide/open-form])])
 
@@ -871,9 +875,7 @@
             :comment [[comment-action-button]]
             :approve [[approve-reject-action-button]]
             :reject [[approve-reject-action-button]]
-            :close [(if (:is-applicant? app)
-                      [applicant-close-action-button]
-                      [approver-close-action-button])]}
+            :close [[close-action-button]]}
            (:possible-commands app))))
 
 (defn- static-actions [app]
@@ -912,6 +914,7 @@
                 [request-comment-form (:id app) reload]
                 [request-decision-form (:id app) reload]
                 [comment-form (:id app) reload]
+                [close-form (:id app) reload]
                 [decide-form (:id app) reload]
                 [return-form (:id app) reload]
                 [approve-reject-form (:id app) reload]
