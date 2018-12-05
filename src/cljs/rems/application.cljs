@@ -466,7 +466,22 @@
      (text :t.form/diff-hide)
      (text :t.form/diff-show))])
 
-(defn basic-field [{:keys [title id readonly readonly-component optional value previous-value diff diff-component validation]} editor-component]
+(defn basic-field
+  "Common parts of a form field.
+
+  :title - string (required), field title to show to the user
+  :id - number (required), field id
+  :readonly - boolean, true if the field should not be editable
+  :readonly-component - HTML, custom component for a readonly field
+  :optional - boolean, true if the field is not required
+  :value - string, the current value of the field
+  :previous-value - string, the previously submitted value of the field
+  :diff - boolean, true if should show the diff between :value and :previous-value
+  :diff-component - HTML, custom component for rendering a diff
+  :validation - validation errors
+
+  editor-component - HTML, form component for editing the field"
+  [{:keys [title id readonly readonly-component optional value previous-value diff diff-component validation]} editor-component]
   [:div.form-group.field
    [:label {:for (id-to-name id)}
     title " "
