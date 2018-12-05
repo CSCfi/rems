@@ -1,10 +1,11 @@
 (ns rems.application
   (:require [clojure.string :as str]
+            [medley.core :refer [map-vals]]
             [re-frame.core :as rf]
             [rems.actions.action :refer [action-form-view action-collapse-id button-wrapper]]
             [rems.actions.approve-reject :refer [approve-reject-form]]
-            [rems.actions.comment :refer [comment-form]]
             [rems.actions.close :refer [close-form]]
+            [rems.actions.comment :refer [comment-form]]
             [rems.actions.decide :refer [decide-form]]
             [rems.actions.request-comment :refer [request-comment-form]]
             [rems.actions.request-decision :refer [request-decision-form]]
@@ -12,13 +13,13 @@
             [rems.atoms :refer [external-link flash-message textarea]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
+            [rems.common-util :refer [index-by]]
             [rems.db.catalogue :refer [get-catalogue-item-title]]
             [rems.guide-utils :refer [lipsum lipsum-short lipsum-paragraphs]]
             [rems.phase :refer [phases]]
             [rems.spinner :as spinner]
             [rems.status-modal :refer [status-modal]]
             [rems.text :refer [localize-decision localize-event localize-item localize-state localize-time text text-format]]
-            [rems.common-util :refer [index-by]]
             [rems.util :refer [dispatch! fetch post!]]
             [secretary.core :as secretary])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
@@ -90,7 +91,8 @@
  (fn [db [_ application]]
    (assoc db
           ::application application
-          ::edit-application {:items (into {} (map (juxt :id :value) (:items application)))
+          ::edit-application {:items (into {} (for [item (:items application)]
+                                                [(:id item) {:value (:value item)}]))
                               :licenses (into {} (map (juxt :id :approver) (:licenses application)))})))
 
 (rf/reg-event-fx
@@ -130,7 +132,7 @@
                                                                  :description description
                                                                  :error error}]))
           :params (merge {:command "save"
-                          :items items
+                          :items (map-vals :value items)
                           :licenses licenses}
                          (if application-id
                            {:application-id application-id}
@@ -171,7 +173,7 @@
                                                                    :description description
                                                                    :error error}]))
             :params (merge {:command "submit"
-                            :items items
+                            :items (map-vals :value items)
                             :licenses licenses}
                            (if application-id
                              {:application-id application-id}
@@ -219,7 +221,7 @@
 
 (defn- save-application-with-attachment [field-id form-data catalogue-items items licenses description]
   (let [payload {:command "save"
-                 :items items
+                 :items (map-vals :value items)
                  :licenses licenses
                  :catalogue-items catalogue-items}]
     ;; TODO this logic should be rewritten as a chain of save, save-attachment instead
@@ -271,7 +273,8 @@
 
 (rf/reg-sub ::judge-comment (fn [db _] (::judge-comment db)))
 
-(rf/reg-event-db ::set-field (fn [db [_ id value]] (assoc-in db [::edit-application :items id] value)))
+(rf/reg-event-db ::set-field (fn [db [_ id value]] (assoc-in db [::edit-application :items id :value] value)))
+(rf/reg-event-db ::toggle-diff (fn [db [_ id]] (update-in db [::edit-application :items id :diff] not)))
 (rf/reg-event-db ::set-license (fn [db [_ id value]] (assoc-in db [::edit-application :licenses id] value)))
 (rf/reg-event-db ::set-judge-comment (fn [db [_ value]] (assoc db ::judge-comment value)))
 
@@ -424,85 +427,133 @@
       (rf/dispatch [::set-field id (.-name filecontent)])
       (rf/dispatch [::save-attachment id form-data description]))))
 
+(defn- readonly-field [{:keys [id value]}]
+  [:div.form-control {:id id} (str/trim (str value))])
+
+(defn- diff [value previous-value]
+  (let [dmp (js/diff_match_patch.)
+        diff (.diff_main dmp
+                         (str/trim (str previous-value))
+                         (str/trim (str value)))]
+    (.diff_cleanupSemantic dmp diff)
+    diff))
+
+(defn- formatted-diff [value previous-value]
+  (->> (diff value previous-value)
+       (map (fn [[change text]]
+              (cond
+                (pos? change) [:ins text]
+                (neg? change) [:del text]
+                :else text)))))
+
+(defn- diff-field [{:keys [id value previous-value]}]
+  (into [:div.form-control.diff {:id id}]
+        (formatted-diff value previous-value)))
+
 (defn- field-validation-message [validation title]
   (when validation
     [:div {:class "text-danger"}
      (text-format (:key validation) title)]))
 
-(defn- basic-field [{:keys [title id optional validation]} field-component]
+(defn- toggle-diff-button [item-id diff-visible]
+  [:a.toggle-diff {:href "#"
+                   :on-click (fn [event]
+                               (.preventDefault event)
+                               (rf/dispatch [::toggle-diff item-id]))}
+   [:i.fas.fa-exclamation-circle]
+   " "
+   (if diff-visible
+     (text :t.form/diff-hide)
+     (text :t.form/diff-show))])
+
+(defn basic-field
+  "Common parts of a form field.
+
+  :title - string (required), field title to show to the user
+  :id - number (required), field id
+  :readonly - boolean, true if the field should not be editable
+  :readonly-component - HTML, custom component for a readonly field
+  :optional - boolean, true if the field is not required
+  :value - string, the current value of the field
+  :previous-value - string, the previously submitted value of the field
+  :diff - boolean, true if should show the diff between :value and :previous-value
+  :diff-component - HTML, custom component for rendering a diff
+  :validation - validation errors
+
+  editor-component - HTML, form component for editing the field"
+  [{:keys [title id readonly readonly-component optional value previous-value diff diff-component validation]} editor-component]
   [:div.form-group.field
    [:label {:for (id-to-name id)}
     title " "
     (when optional
       (text :t.form/optional))]
-   field-component
+   (when (and previous-value
+              (not= value previous-value))
+     [toggle-diff-button id diff])
+   (cond
+     diff (or diff-component
+              [diff-field {:id (id-to-name id)
+                           :value value
+                           :previous-value previous-value}])
+     readonly (or readonly-component
+                  [readonly-field {:id (id-to-name id)
+                                   :value value}])
+     :else editor-component)
    [field-validation-message validation title]])
 
-(defn- read-only-field [{:keys [id value]}]
-  [:div.form-control {:id id} (str/trim (str value))])
-
 (defn- text-field
-  [{:keys [title id inputprompt readonly optional value validation] :as opts}]
+  [{:keys [id inputprompt value validation] :as opts}]
   [basic-field opts
-   (if readonly
-     [read-only-field {:id (id-to-name id)
-                       :value value}]
-     [:input.form-control {:type "text"
-                           :id (id-to-name id)
-                           :name (id-to-name id)
-                           :placeholder inputprompt
-                           :class (when validation "is-invalid")
-                           :value value
-                           :on-change (set-field-value id)}])])
+   [:input.form-control {:type "text"
+                         :id (id-to-name id)
+                         :name (id-to-name id)
+                         :placeholder inputprompt
+                         :class (when validation "is-invalid")
+                         :value value
+                         :on-change (set-field-value id)}]])
 
 (defn- texta-field
-  [{:keys [title id inputprompt readonly optional value validation] :as opts}]
+  [{:keys [id inputprompt value validation] :as opts}]
   [basic-field opts
-   (if readonly
-     [read-only-field {:id (id-to-name id)
-                       :value value}]
-     [textarea {:id (id-to-name id)
-                :name (id-to-name id)
-                :placeholder inputprompt
-                :class (if validation "form-control is-invalid" "form-control")
-                :value value
-                :on-change (set-field-value id)}])])
+   [textarea {:id (id-to-name id)
+              :name (id-to-name id)
+              :placeholder inputprompt
+              :class (if validation "form-control is-invalid" "form-control")
+              :value value
+              :on-change (set-field-value id)}]])
 
 (defn attachment-field
-  [{:keys [title id readonly optional value validation app-id] :as opts}]
+  [{:keys [title id value validation app-id] :as opts}]
   (let [download-link (when (not-empty value)
                         [:a {:href (str "/api/applications/attachments/?application-id=" app-id "&field-id=" id)
                              :target "_blank"}
                          value])]
-    [basic-field opts
-     (if readonly
-       [:div.form-control download-link]
-       [:div
-        [:div.upload-file
-         [:input {:style {:display "none"}
-                  :type "file"
-                  :id (id-to-name id)
-                  :name (id-to-name id)
-                  :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
-                  :class (when validation "is-invalid")
-                  :on-change (set-attachment id title)}]
-         [:button.btn.btn-secondary {:on-click (fn [e] (.click (.getElementById js/document (id-to-name id))))}
-          (text :t.form/upload)]]
-        download-link])]))
+    ;; TODO: custom :diff-component, for example link to both old and new attachment
+    [basic-field (assoc opts :readonly-component [:div.form-control download-link])
+     [:div
+      [:div.upload-file
+       [:input {:style {:display "none"}
+                :type "file"
+                :id (id-to-name id)
+                :name (id-to-name id)
+                :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
+                :class (when validation "is-invalid")
+                :on-change (set-attachment id title)}]
+       [:button.btn.btn-secondary {:on-click (fn [e] (.click (.getElementById js/document (id-to-name id))))}
+        (text :t.form/upload)]]
+      download-link]]))
 
 (defn- date-field
-  [{:keys [title id readonly optional value min max validation] :as opts}]
+  [{:keys [id value min max validation] :as opts}]
+  ;; TODO: format readonly value in user locale (give basic-field a formatted :value and :previous-value in opts)
   [basic-field opts
-   (if readonly
-     [read-only-field {:id (id-to-name id)
-                       :value value}] ;; TODO: format in user locale
-     [:input.form-control {:type "date"
-                           :name (id-to-name id)
-                           :class (when validation "is-invalid")
-                           :defaultValue value
-                           :min min
-                           :max max
-                           :on-change (set-field-value id)}])])
+   [:input.form-control {:type "date"
+                         :name (id-to-name id)
+                         :class (when validation "is-invalid")
+                         :defaultValue value
+                         :min min
+                         :max max
+                         :on-change (set-field-value id)}]])
 
 (defn- label [{title :title}]
   [:div.form-group
@@ -595,7 +646,10 @@
                [field (assoc (localize-item item)
                              :validation (get-in validation-by-field-id [:item (:id item)])
                              :readonly readonly?
-                             :value (get items (:id item))
+                             :value (get-in items [(:id item) :value])
+                             ;; TODO: db doesn't yet contain :previous-value so this is always nil
+                             :previous-value (get-in items [(:id item) :previous-value])
+                             :diff (get-in items [(:id item) :diff])
                              :app-id (:id application))]))
        (when-let [form-licenses (not-empty (:licenses form))]
          [:div.form-group.field
@@ -960,9 +1014,8 @@
   (let [app (:application application)
         state (:state app)
         phases (:phases application)
-        events (concat
-                (:events app)
-                (map dynamic-event->event (:dynamic-events app)))
+        events (concat (:events app)
+                       (map dynamic-event->event (:dynamic-events app)))
         user-attributes (:applicant-attributes application)
         messages (remove nil?
                          [(disabled-items-warning (:catalogue-items application)) ; NB: eval this here so we get nil or a warning
@@ -1065,6 +1118,25 @@
    (example "non-editable field of type \"texta\""
             [:form
              [field {:type "texta" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-paragraphs}]])
+   (let [previous-lipsum-paragraphs (-> lipsum-paragraphs
+                                        (str/replace "ipsum primis in faucibus orci luctus" "eu mattis purus mi eu turpis")
+                                        (str/replace "per inceptos himenaeos" "justo erat hendrerit magna"))]
+     [:div
+      (example "editable field of type \"texta\" with previous value, diff hidden"
+               [:form
+                [field {:type "texta" :title "Title" :inputprompt "prompt" :value lipsum-paragraphs :previous-value previous-lipsum-paragraphs}]])
+      (example "editable field of type \"texta\" with previous value, diff shown"
+               [:form
+                [field {:type "texta" :title "Title" :inputprompt "prompt" :value lipsum-paragraphs :previous-value previous-lipsum-paragraphs :diff true}]])
+      (example "non-editable field of type \"texta\" with previous value, diff hidden"
+               [:form
+                [field {:type "texta" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-paragraphs :previous-value previous-lipsum-paragraphs}]])
+      (example "non-editable field of type \"texta\" with previous value, diff shown"
+               [:form
+                [field {:type "texta" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-paragraphs :previous-value previous-lipsum-paragraphs :diff true}]])
+      (example "non-editable field of type \"texta\" with previous value equal to current value"
+               [:form
+                [field {:type "texta" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-paragraphs :previous-value lipsum-paragraphs}]])])
    (example "field of type \"attachment\""
             [:form
              [field {:type "attachment" :title "Title"}]])
