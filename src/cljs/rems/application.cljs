@@ -4,6 +4,7 @@
             [rems.actions.action :refer [action-form-view action-collapse-id button-wrapper]]
             [rems.actions.approve-reject :refer [approve-reject-form]]
             [rems.actions.comment :refer [comment-form]]
+            [rems.actions.decide :refer [decide-form]]
             [rems.actions.request-comment :refer [request-comment-form]]
             [rems.actions.request-decision :refer [request-decision-form]]
             [rems.atoms :refer [external-link flash-message textarea]]
@@ -14,7 +15,7 @@
             [rems.phase :refer [phases]]
             [rems.spinner :as spinner]
             [rems.status-modal :refer [status-modal]]
-            [rems.text :refer [text text-format localize-state localize-event localize-time localize-item]]
+            [rems.text :refer [localize-decision localize-event localize-item localize-state localize-time text text-format]]
             [rems.common-util :refer [index-by]]
             [rems.util :refer [dispatch! fetch post!]]
             [secretary.core :as secretary])
@@ -744,6 +745,9 @@
 (defn- comment-action-button []
   [action-button "comment" (text :t.actions/comment) #(rf/dispatch [:rems.actions.comment/open-form])])
 
+(defn- decide-action-button []
+  [action-button "decide" (text :t.actions/decide) #(rf/dispatch [:rems.actions.decide/open-form])])
+
 (defn- approve-reject-action-button []
   [action-button "approve-reject" (text :t.actions/approve-reject)])
 
@@ -852,7 +856,7 @@
             :add-member nil ; TODO implement
             :return [[return-action-button]]
             :request-decision [[request-decision-action-button]]
-            :decide nil ; TODO implement
+            :decide [[decide-action-button]]
             :request-comment [[request-comment-action-button]]
             :comment [[comment-action-button]]
             :approve [[approve-reject-action-button]]
@@ -898,6 +902,7 @@
                 [request-comment-form (:id app) reload]
                 [request-decision-form (:id app) reload]
                 [comment-form (:id app) reload]
+                [decide-form (:id app) reload]
                 [approve-reject-form (:id app) reload]
                 [third-party-review-form]
                 [applicant-close-form]
@@ -929,11 +934,13 @@
                        ^{:key (:id item)}
                        [:li (get-catalogue-item-title item language)]))]}]))
 
-(defn- dynamic-event->event [{:keys [time actor event comment]}]
+(defn- dynamic-event->event [{:keys [time actor event comment decision]}]
   {:userid actor
    :time time
    :event (name event)
-   :comment comment})
+   :comment (if (= :event/decided event)
+              (str (localize-decision decision) ": " comment)
+              comment)})
 
 (defn- render-application [application edit-application language status]
   (let [app (:application application)

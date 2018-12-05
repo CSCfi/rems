@@ -81,6 +81,11 @@
 
           :t.applications.events/unknown)))
 
+(defn localize-decision [decision]
+  (text (case decision
+          :approved :t.applications.dynamic-events/approved
+          :rejected :t.applications.dynamic-events/rejected
+          :t.applications.events/unknown)))
 
 (def ^:private time-format
   (format/formatter "yyyy-MM-dd HH:mm" (time/default-time-zone)))
