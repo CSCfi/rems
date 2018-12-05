@@ -374,4 +374,8 @@
     (create-bundled-application! simple bundable (:simple workflows) (+demo-users+ :applicant2) (+demo-users+ :approver1))
     (create-review-application! with-review (:with-review workflows) +demo-users+)
     (create-application-with-expired-resource-license! (:simple workflows) form +demo-users+)
-    (create-application-before-new-resource-license!  (:simple workflows) form +demo-users+)))
+    (create-application-before-new-resource-license!  (:simple workflows) form +demo-users+)
+    (create-expired-license!)
+    (let [dynamic (create-catalogue-item! res1 (:dynamic workflows) form
+                                          {"en" "Dynamic workflow" "fi" "Dynaaminen työvuo"})]
+      (create-dynamic-application! dynamic (:dynamic workflows) (+demo-users+ :applicant1)))))
