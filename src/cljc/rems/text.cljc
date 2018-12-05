@@ -45,11 +45,11 @@
           "returned" :t.applications.states/returned
           "withdrawn" :t.applications.states/withdrawn
           "closed" :t.applications.states/closed
-          :rems.workflow.dynamic/draft :t.applications.states/draft
-          :rems.workflow.dynamic/submitted :t.applications.states/applied
-          :rems.workflow.dynamic/approved :t.applications.states/approved
-          :rems.workflow.dynamic/rejected :t.applications.states/rejected
-          :rems.workflow.dynamic/closed :t.applications.states/closed
+          :rems.workflow.dynamic/draft :t.applications.dynamic-states/draft
+          :rems.workflow.dynamic/submitted :t.applications.dynamic-states/submitted
+          :rems.workflow.dynamic/approved :t.applications.dynamic-states/approved
+          :rems.workflow.dynamic/rejected :t.applications.dynamic-states/rejected
+          :rems.workflow.dynamic/closed :t.applications.dynamic-states/closed
           :t.applications.states/unknown)))
 
 (defn localize-event [event]
@@ -67,13 +67,17 @@
           "withdraw" :t.applications.events/withdraw
           "third-party-review" :t.applications.events/third-party-review
 
-          ;; TODO add complete event types with possibly improved localization
           ;; dynamic
-          "submitted" :t.applications.events/apply
-          "comment-requested" :t.applications.events/review-request
-          "commented" :t.applications.events/review
-          "approved" :t.applications.events/approve
-          "rejected" :t.applications.events/reject
+          "submitted" :t.applications.dynamic-events/submitted
+          "returned" :t.applications.dynamic-events/returned
+          "comment-requested" :t.applications.dynamic-events/comment-requested
+          "commented" :t.applications.dynamic-events/commented
+          "decision-requested" :t.applications.dynamic-events/decision-requested
+          "decided" :t.applications.dynamic-events/decided
+          "approved" :t.applications.dynamic-events/approved
+          "rejected" :t.applications.dynamic-events/rejected
+          "closed" :t.applications.dynamic-events/closed
+          "member-added" :t.applications.dynamic-events/member-added
 
           :t.applications.events/unknown)))
 
