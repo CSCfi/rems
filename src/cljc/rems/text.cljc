@@ -14,17 +14,6 @@
                     context/*tempura* (partial tr (locales/tempura-config) [lang])]
             (f))))
 
-(defn text
-  "Return the tempura translation for a given key. Additional fallback
-  keys can be given."
-  [& ks]
-  #?(:clj (context/*tempura* (conj (vec ks) :t/missing))
-     :cljs (let [translations (rf/subscribe [:translations])
-                 language (rf/subscribe [:language])]
-             (tr {:dict @translations}
-                 [@language]
-                 (conj (vec ks) :t/missing)))))
-
 (defn text-format
   "Return the tempura translation for a given key & format arguments"
   [k & args]
@@ -36,6 +25,17 @@
                  [k :t/missing]
                  (vec args)))))
 
+(defn text
+  "Return the tempura translation for a given key. Additional fallback
+  keys can be given."
+  [& ks]
+  #?(:clj (context/*tempura* (conj (vec ks) (text-format :t.missing (vec ks))))
+     :cljs (let [translations (rf/subscribe [:translations])
+                 language (rf/subscribe [:language])]
+             (tr {:dict @translations}
+                 [@language]
+                 (conj (vec ks) (text-format :t.missing (vec ks)))))))
+
 (defn localize-state [state]
   (text (case state
           "draft" :t.applications.states/draft
@@ -45,10 +45,17 @@
           "returned" :t.applications.states/returned
           "withdrawn" :t.applications.states/withdrawn
           "closed" :t.applications.states/closed
+          :rems.workflow.dynamic/draft :t.applications.dynamic-states/draft
+          :rems.workflow.dynamic/submitted :t.applications.dynamic-states/submitted
+          :rems.workflow.dynamic/approved :t.applications.dynamic-states/approved
+          :rems.workflow.dynamic/rejected :t.applications.dynamic-states/rejected
+          :rems.workflow.dynamic/closed :t.applications.dynamic-states/closed
+          :rems.workflow.dynamic/returned :t.applications.dynamic-states/returned
           :t.applications.states/unknown)))
 
 (defn localize-event [event]
   (text (case event
+          ;; static
           "add-member" :t.application.events/add-member
           "apply" :t.applications.events/apply
           "approve" :t.applications.events/approve
@@ -60,8 +67,26 @@
           "review-request" :t.applications.events/review-request
           "withdraw" :t.applications.events/withdraw
           "third-party-review" :t.applications.events/third-party-review
+
+          ;; dynamic
+          "submitted" :t.applications.dynamic-events/submitted
+          "returned" :t.applications.dynamic-events/returned
+          "comment-requested" :t.applications.dynamic-events/comment-requested
+          "commented" :t.applications.dynamic-events/commented
+          "decision-requested" :t.applications.dynamic-events/decision-requested
+          "decided" :t.applications.dynamic-events/decided
+          "approved" :t.applications.dynamic-events/approved
+          "rejected" :t.applications.dynamic-events/rejected
+          "closed" :t.applications.dynamic-events/closed
+          "member-added" :t.applications.dynamic-events/member-added
+
           :t.applications.events/unknown)))
 
+(defn localize-decision [decision]
+  (text (case decision
+          :approved :t.applications.dynamic-events/approved
+          :rejected :t.applications.dynamic-events/rejected
+          :t.applications.events/unknown)))
 
 (def ^:private time-format
   (format/formatter "yyyy-MM-dd HH:mm" (time/default-time-zone)))

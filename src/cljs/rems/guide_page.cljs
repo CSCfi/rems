@@ -13,7 +13,8 @@
             [rems.modal :as modal]
             [rems.navbar :as nav]
             [rems.phase :as phase]
-            [rems.spinner :as spinner])
+            [rems.spinner :as spinner]
+            [rems.status-modal :as status-modal])
   (:require-macros [rems.guide-macros :refer [example]]))
 
 (defn color-box [id hex]
@@ -72,6 +73,7 @@
 
     [:h2 "Modal"]
     [modal/guide]
+    [status-modal/guide]
 
     [:h2 "Applications"]
     [application/guide]

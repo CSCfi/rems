@@ -1,15 +1,22 @@
 (ns rems.application
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
+            [rems.actions.action :refer [action-form-view action-collapse-id button-wrapper]]
+            [rems.actions.approve-reject :refer [approve-reject-form]]
+            [rems.actions.comment :refer [comment-form]]
+            [rems.actions.decide :refer [decide-form]]
+            [rems.actions.request-comment :refer [request-comment-form]]
+            [rems.actions.request-decision :refer [request-decision-form]]
+            [rems.actions.return-action :refer [return-form]]
             [rems.atoms :refer [external-link flash-message textarea]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
             [rems.db.catalogue :refer [get-catalogue-item-title]]
             [rems.guide-utils :refer [lipsum lipsum-short lipsum-paragraphs]]
-            [rems.modal :as modal]
             [rems.phase :refer [phases]]
             [rems.spinner :as spinner]
-            [rems.text :refer [text text-format localize-state localize-event localize-time localize-item]]
+            [rems.status-modal :refer [status-modal]]
+            [rems.text :refer [localize-decision localize-event localize-item localize-state localize-time text text-format]]
             [rems.common-util :refer [index-by]]
             [rems.util :refer [dispatch! fetch post!]]
             [secretary.core :as secretary])
@@ -30,8 +37,6 @@
 (defn navigate-to [id]
   (dispatch! (str "#/application/" id)))
 
-(defn- action-collapse-id [action-id]
-  (str "actions-" action-id))
 
 
 
@@ -67,11 +72,17 @@
           (when (contains? (get-in db [:identity :roles]) :approver)
             {::fetch-potential-third-party-reviewers (get-in db [:identity :user])}))))
 
+(defn fetch-application [id on-success]
+  (fetch (str "/api/applications/" id)
+         {:handler on-success}))
+
+(comment
+  (fetch-application 19 prn))
+
 (rf/reg-fx
  ::fetch-application
  (fn [id]
-   (fetch (str "/api/applications/" id)
-          {:handler #(rf/dispatch [::fetch-application-result %])})))
+   (fetch-application id #(rf/dispatch [::fetch-application-result %]))))
 
 (rf/reg-event-db
  ::fetch-application-result
@@ -106,13 +117,43 @@
                                                :error error})
        (assoc-in [::edit-application :validation] validation))))
 
-(defn- save-application [command description application-id catalogue-items items licenses]
-  (let [payload (merge {:command command
-                        :items items
-                        :licenses licenses}
-                       (if application-id
-                         {:application-id application-id}
-                         {:catalogue-items catalogue-items}))]
+(defn- save-application [app description application-id catalogue-items items licenses on-success]
+  (post! "/api/applications/save"
+         {:handler (fn [resp]
+                     (if (:success resp)
+                       (on-success resp)
+                       (rf/dispatch [::set-status {:status :failed
+                                                   :description description
+                                                   :validation (:validation resp)}])))
+          :error-handler (fn [error] (rf/dispatch [::set-status {:status :failed
+                                                                 :description description
+                                                                 :error error}]))
+          :params (merge {:command "save"
+                          :items items
+                          :licenses licenses}
+                         (if application-id
+                           {:application-id application-id}
+                           {:catalogue-items catalogue-items}))}))
+
+(defn- submit-application [app description application-id catalogue-items items licenses]
+  (if (= :workflow/dynamic (get-in app [:workflow :type]))
+    (post! "/api/applications/command"
+           {:handler (fn [resp]
+                       (if (:success resp)
+                         (do (rf/dispatch [::set-status {:status :saved
+                                                         :description description}])
+                             ;; HACK: we both set the location, and fire a fetch-application event
+                             ;; because if the location didn't change, secretary won't fire the event
+                             (navigate-to application-id)
+                             (rf/dispatch [::enter-application-page application-id]))
+                         (rf/dispatch [::set-status {:status :failed
+                                                     :description description
+                                                     :validation (:validation resp)}])))
+            :error-handler (fn [error] (rf/dispatch [::set-status {:status :failed
+                                                                   :description description
+                                                                   :error error}]))
+            :params {:type :rems.workflow.dynamic/submit
+                     :application-id application-id}})
     (post! "/api/applications/save"
            {:handler (fn [resp]
                        (if (:success resp)
@@ -120,20 +161,26 @@
                                                          :description description}])
                              ;; HACK: we both set the location, and fire a fetch-application event
                              ;; because if the location didn't change, secretary won't fire the event
-                             (navigate-to (:id resp))
-                             (rf/dispatch [::enter-application-page (:id resp)]))
+                             (navigate-to application-id)
+                             (rf/dispatch [::enter-application-page application-id]))
                          (rf/dispatch [::set-status {:status :failed
                                                      :description description
                                                      :validation (:validation resp)}])))
             :error-handler (fn [error] (rf/dispatch [::set-status {:status :failed
                                                                    :description description
                                                                    :error error}]))
-            :params payload})))
+            :params (merge {:command "submit"
+                            :items items
+                            :licenses licenses}
+                           (if application-id
+                             {:application-id application-id}
+                             {:catalogue-items catalogue-items}))})))
 
 (rf/reg-event-fx
  ::save-application
  (fn [{:keys [db]} [_ command description]]
-   (let [app-id (get-in db [::application :application :id])
+   (let [app (get-in db [::application :application])
+         app-id (get-in db [::application :application :id])
          catalogue-items (get-in db [::application :catalogue-items])
          catalogue-ids (mapv :id catalogue-items)
          items (get-in db [::edit-application :items])
@@ -148,7 +195,19 @@
      ;; TODO disable form while saving?
      (rf/dispatch [::set-status {:status :pending
                                  :description description}])
-     (save-application command description app-id catalogue-ids items licenses))
+     (save-application app description app-id catalogue-ids items licenses
+                       (fn [resp]
+                         (if (= command "submit")
+                           (fetch-application (:id resp)
+                                              (fn [app]
+                                                (submit-application (:application app) description (:id resp) catalogue-ids items licenses)))
+                           (do
+                             (rf/dispatch [::set-status {:status :saved
+                                                         :description description}])
+                             ;; HACK: we both set the location, and fire a fetch-application event
+                             ;; because if the location didn't change, secretary won't fire the event
+                             (navigate-to (:id resp))
+                             (rf/dispatch [::enter-application-page (:id resp)]))))))
    {}))
 
 (defn- save-attachment [application-id field-id form-data description]
@@ -343,8 +402,9 @@
 (defn- pdf-button [id]
   (when id
     [:a.btn.btn-secondary
-     {:href (str "/api/applications/" id "/pdf")}
-     "PDF"]))
+     {:href (str "/api/applications/" id "/pdf")
+      :target :_new}
+     "PDF " (external-link)]))
 
 (defn- set-field-value
   [id]
@@ -468,7 +528,7 @@
   [{:keys [title id textcontent readonly approved validation]}]
   [license id title approved readonly validation
    [:a {:href textcontent :target "_blank"}
-    title " " [external-link]]])
+    title " " (external-link)]])
 
 (defn- text-license
   [{:keys [title id textcontent approved readonly validation]}]
@@ -500,29 +560,6 @@
                 "text" [text-license f]
                 [unsupported-field f])
     [unsupported-field f]))
-
-(defn- status-widget [status error]
-  [:div {:class (when (= :failed status) "alert alert-danger")}
-   (case status
-     nil ""
-     :pending [spinner/big]
-     :saved [:div [:i {:class ["fa fa-check-circle text-success"]}] (text :t.form/success)]
-     :failed [:div [:i {:class "fa fa-times-circle text-danger"}]
-              (str (text :t.form/failed) ": " (:status-text error) " (" (:status error) ")")])])
-
-(defn- status-modal [state content]
-  [modal/notification {:title (:description state)
-                       :content (or content [status-widget (:status state) (:error state)])
-                       :on-close #(rf/dispatch [::set-status nil])
-                       :shade? true}])
-
-(defn- button-wrapper [{:keys [id text class on-click]}]
-  [:button.btn.mr-3
-   {:id id
-    :name id
-    :class (or class :btn-secondary)
-    :on-click on-click}
-   text])
 
 (defn- save-button []
   [button-wrapper {:id "save"
@@ -676,10 +713,14 @@
                    :text (text :t.actions/withdraw)
                    :on-click #(rf/dispatch [::judge-application "withdraw" (text :t.actions/withdraw)])}])
 
-(defn- action-button [id content]
-  [:button.btn.btn-secondary.mr-3
+(defn- action-button [id content on-click]
+  [:button.btn.mr-3
    {:id id
-    :type "button" :data-toggle "collapse" :data-target (str "#" (action-collapse-id id))}
+    :class (if (contains? #{"approve" "approve-reject"} id) "btn-primary" "btn-secondary")
+    :type "button"
+    :data-toggle "collapse"
+    :data-target (str "#" (action-collapse-id id))
+    :on-click on-click}
    (str content " ...")])
 
 (defn- approve-action-button []
@@ -688,14 +729,32 @@
 (defn- reject-action-button []
   [action-button "reject" (text :t.actions/reject)])
 
-(defn- return-action-button []
-  [action-button "return" (text :t.actions/return)])
+(defn- static-return-action-button []
+  [action-button "static-return" (text :t.actions/return)])
 
 (defn- review-action-button []
   [action-button "review" (text :t.actions/review)])
 
 (defn- third-party-review-action-button []
   [action-button "third-party-review" (text :t.actions/review)])
+
+(defn- request-comment-action-button []
+  [action-button "request-comment" (text :t.actions/request-comment) #(rf/dispatch [:rems.actions.request-comment/open-form])])
+
+(defn- request-decision-action-button []
+  [action-button "request-decision" (text :t.actions/request-decision) #(rf/dispatch [:rems.actions.request-decision/open-form])])
+
+(defn- comment-action-button []
+  [action-button "comment" (text :t.actions/comment) #(rf/dispatch [:rems.actions.comment/open-form])])
+
+(defn- decide-action-button []
+  [action-button "decide" (text :t.actions/decide) #(rf/dispatch [:rems.actions.decide/open-form])])
+
+(defn- return-action-button []
+  [action-button "return" (text :t.actions/return) #(rf/dispatch [:rems.actions.return/open-form])])
+
+(defn- approve-reject-action-button []
+  [action-button "approve-reject" (text :t.actions/approve-reject)])
 
 (defn- applicant-close-action-button []
   [action-button "applicant-close" (text :t.actions/close)])
@@ -709,26 +768,14 @@
 (defn- review-request-action-button []
   [action-button "review-request" (text :t.actions/review-request)])
 
-(defn- action-comment [label-title]
-  [:div.form-group
-   [:label {:for "judge-comment"} label-title]
-   [textarea {:id "judge-comment"
-              :name "judge-comment" :placeholder (text :t.actions/comment-placeholder)
-              :value @(rf/subscribe [::judge-comment])
-              :on-change #(rf/dispatch [::set-judge-comment (.. % -target -value)])}]])
-
-(defn- cancel-action-button [id]
-  [:button.btn.btn-secondary
-   {:id (str "cancel-" id) :data-toggle "collapse" :data-target (str "#" (action-collapse-id id))}
-   (text :t.actions/cancel)])
-
-(defn- action-form [id title comment-title button content]
-  [:div.collapse {:id (action-collapse-id id) :data-parent "#actions-forms"}
-   [:h4.mt-5 title]
+(defn action-form [id title comment-title button content]
+  [action-form-view id
+   title
+   comment-title
+   [button]
    content
-   (when comment-title
-     [action-comment comment-title])
-   [:div.col.commands [cancel-action-button id] button]])
+   @(rf/subscribe [::judge-comment])
+   #(rf/dispatch [::set-judge-comment (.. % -target -value)])])
 
 (defn- approve-form []
   [action-form "approve"
@@ -742,8 +789,8 @@
    (text :t.form/add-comments-shown-to-applicant)
    [reject-button]])
 
-(defn- return-form []
-  [action-form "return"
+(defn- static-return-form []
+  [action-form "static-return"
    (text :t.actions/return)
    (text :t.form/add-comments-shown-to-applicant)
    [return-button]])
@@ -807,20 +854,22 @@
          :remove-fn #(rf/dispatch [::remove-selected-third-party-reviewer %])}]]]]))
 
 (defn- dynamic-actions [app]
-  (mapcat #:rems.workflow.dynamic
-          {:submit [[save-button]
-                    [submit-button]]
-           :add-member nil ; TODO implement
-           :return [[return-action-button]]
-           :request-decision nil ; TODO implement
-           :decide nil ; TODO implement
-           :request-comment [[review-request-action-button]]
-           :approve [[approve-action-button]]
-           :reject [[reject-action-button]]
-           :close [(if (:is-applicant? app)
-                     [applicant-close-action-button]
-                     [approver-close-action-button])]}
-          (:possible-commands app)))
+  (distinct
+   (mapcat #:rems.workflow.dynamic
+           {:submit [[save-button]
+                     [submit-button]]
+            :add-member nil ; TODO implement
+            :return [[return-action-button]]
+            :request-decision [[request-decision-action-button]]
+            :decide [[decide-action-button]]
+            :request-comment [[request-comment-action-button]]
+            :comment [[comment-action-button]]
+            :approve [[approve-reject-action-button]]
+            :reject [[approve-reject-action-button]]
+            :close [(if (:is-applicant? app)
+                      [applicant-close-action-button]
+                      [approver-close-action-button])]}
+           (:possible-commands app))))
 
 (defn- static-actions [app]
   (let [state (:state app)
@@ -833,7 +882,7 @@
               [[withdraw-action-button]])
             (when (:can-approve? app)
               [[review-request-action-button]
-               [return-action-button]
+               [static-return-action-button]
                [reject-action-button]
                [approve-action-button]])
             (when (= :normal (:review-type app))
@@ -848,12 +897,19 @@
   (let [actions (if (= :workflow/dynamic (get-in app [:workflow :type]))
                   (dynamic-actions app)
                   (static-actions app))
+        reload #(rf/dispatch [:rems.application/enter-application-page (:id app)])
         forms [[:div#actions-forms.mt-3
                 [approve-form]
                 [reject-form]
-                [return-form]
+                [static-return-form]
                 [review-form]
                 [request-review-form]
+                [request-comment-form (:id app) reload]
+                [request-decision-form (:id app) reload]
+                [comment-form (:id app) reload]
+                [decide-form (:id app) reload]
+                [return-form (:id app) reload]
+                [approve-reject-form (:id app) reload]
                 [third-party-review-form]
                 [applicant-close-form]
                 [approver-close-form]
@@ -862,7 +918,7 @@
       [collapsible/component
        {:id "actions"
         :title (text :t.form/actions)
-        :always (into [:div] (concat actions forms))}])))
+        :always (into [:div [:div.commands actions]] forms)}])))
 
 (defn- disabled-items-warning [catalogue-items]
   (let [language @(rf/subscribe [:language])]
@@ -884,11 +940,21 @@
                        ^{:key (:id item)}
                        [:li (get-catalogue-item-title item language)]))]}]))
 
+(defn- dynamic-event->event [{:keys [time actor event comment decision]}]
+  {:userid actor
+   :time time
+   :event (name event)
+   :comment (if (= :event/decided event)
+              (str (localize-decision decision) ": " comment)
+              comment)})
+
 (defn- render-application [application edit-application language status]
   (let [app (:application application)
         state (:state app)
         phases (:phases application)
-        events (:events app)
+        events (concat
+                 (:events app)
+                 (map dynamic-event->event (:dynamic-events app)))
         user-attributes (:applicant-attributes application)
         messages (remove nil?
                          [(disabled-items-warning (:catalogue-items application)) ; NB: eval this here so we get nil or a warning
@@ -912,7 +978,9 @@
      [:div.my-3 [fields application edit-application]]
      [:div.mb-3 [actions-form app]]
      (when (:open? status)
-       [status-modal status (when (seq messages) (into [:div] messages))])]))
+       [status-modal (assoc status
+                            :content (when (seq messages) (into [:div] messages))
+                            :on-close #(rf/dispatch [::set-status nil]))])]))
 
 ;;;; Entrypoint
 
