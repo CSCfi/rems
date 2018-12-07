@@ -276,9 +276,8 @@
                 :catalogue-items catalogue-items))))))
 
 (comment
-  (binding [context/*user* {"eppn" "developer"}]
-    (->> (get-applications-impl-batch {})
-         (mapv :id))))
+  (->> (get-applications-impl-batch {})
+       (mapv :id)))
 
 (defn get-user-applications [user-id]
   (assert user-id "Must have user-id")
@@ -287,6 +286,8 @@
 
 (comment
   (->> (get-applications-impl-batch {:applicant "developer"})
+       (mapv :id))
+  (->> (get-applications-impl-batch {:applicant "alice"})
        (mapv :id)))
 
 (defn get-approvals []
