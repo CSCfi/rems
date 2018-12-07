@@ -261,7 +261,7 @@
   "Prefetches all possibly relevant data from the database and returns all the applications, according to the query parameters, with all the events
   and catalogue items associated with them."
   [query-params]
-  (let [events (db/get-all-application-events)
+  (let [events (db/get-application-events {})
         application-items (db/get-application-items)
         localized-items (get-localized-catalogue-items)]
     (doall
