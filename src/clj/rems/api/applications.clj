@@ -288,7 +288,7 @@
       :roles #{:applicant}
       :body [request SaveApplicationCommand]
       :return SaveApplicationResponse
-      (ok (form/api-save (fix-keys request))))
+      (ok (form/api-save (assoc (fix-keys request) :actor (getx-user-id)))))
 
     (POST "/judge" []
       :summary "Judge an application"

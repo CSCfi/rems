@@ -106,20 +106,20 @@
     (when (seq disabled-items)
       (throw (rems.InvalidRequestException. (str "Disabled catalogue items " (pr-str disabled-items)))))))
 
-(defn- create-new-draft-for-items [catalogue-item-ids]
+(defn- create-new-draft-for-items [user-id catalogue-item-ids]
   (let [draft (make-draft-application catalogue-item-ids)]
     (check-for-disabled-items! (getx draft :catalogue-items))
     (let [wfid (getx draft :wfid)
-          id (create-new-draft wfid)]
+          id (create-new-draft wfid user-id)]
       (save-application-items id catalogue-item-ids)
       id)))
 
 (defn api-save [request]
-  (let [{:keys [application-id items licenses command]} request
+  (let [{:keys [application-id items licenses command actor]} request
         catalogue-item-ids (:catalogue-items request)
         ;; if no application-id given, create a new application
         application-id (or application-id
-                           (create-new-draft-for-items catalogue-item-ids))
+                           (create-new-draft-for-items actor catalogue-item-ids))
         _ (check-for-disabled-items! (get-catalogue-items-by-application-id application-id))
         submit? (= command "submit")
         {:keys [success? valid? validation]} (save-form-inputs application-id submit? items licenses)]

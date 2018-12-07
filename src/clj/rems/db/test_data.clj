@@ -256,13 +256,12 @@
       (applications/submit-application app-id))))
 
 (defn- create-dynamic-application! [catid wfid applicant]
-  (binding [context/*user* {"eppn" applicant}]
-    (let [app-id (applications/create-new-draft wfid)]
-      (db/add-application-item! {:application app-id :item catid})
-      (applications/dynamic-command! {:type :rems.workflow.dynamic/submit
-                                      :actor applicant
-                                      :application-id app-id})
-      app-id)))
+  (let [app-id (applications/create-new-draft wfid applicant)]
+    (db/add-application-item! {:application app-id :item catid})
+    (applications/dynamic-command! {:type :rems.workflow.dynamic/submit
+                                    :actor applicant
+                                    :application-id app-id})
+    app-id))
 
 (defn- create-review-application! [catid wfid users]
   (let [applicant (users :applicant1)

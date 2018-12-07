@@ -592,10 +592,10 @@
       :licenses licenses
       :phases (get-application-phases (:state application))})))
 
-(defn create-new-draft [wfid]
-  (let [uid (get-user-id)
-        id (:id (db/create-application! {:user uid :wfid wfid}))]
-    id))
+(defn create-new-draft [wfid user-id]
+  (assert wfid)
+  (assert user-id)
+  (:id (db/create-application! {:user user-id :wfid wfid})))
 
 (defn create-new-draft-at-time [wfid time]
   (let [uid (get-user-id)
