@@ -317,7 +317,7 @@
         simple (create-catalogue-item! res1 (:simple workflows) form
                                        {"en" "ELFA Corpus, one approval"
                                         "fi" "ELFA-korpus, yksi hyväksyntä"})
-        bundable (create-catalogue-item! res2 (:simple workflows) form
+        bundlable (create-catalogue-item! res2 (:simple workflows) form
                                          {"en" "ELFA Corpus, one approval (extra data)"
                                           "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti)"})
         with-review (create-catalogue-item! res1 (:with-review workflows) form
@@ -333,7 +333,7 @@
     (db/set-catalogue-item-state! {:item disabled :state "disabled" :user (+fake-users+ :approver1)})
     (create-applications! simple (:simple workflows) (+fake-users+ :approver1) (+fake-users+ :approver1))
     (create-disabled-applications! disabled (:simple workflows) (+fake-users+ :approver1) (+fake-users+ :approver1))
-    (create-bundled-application! simple bundable (:simple workflows) (+fake-users+ :applicant1) (+fake-users+ :approver1))
+    (create-bundled-application! simple bundlable (:simple workflows) (+fake-users+ :applicant1) (+fake-users+ :approver1))
     (create-review-application! with-review (:with-review workflows) +fake-users+)
     (create-application-with-expired-resource-license! (:simple workflows) form +fake-users+)
     (create-application-before-new-resource-license!  (:simple workflows) form +fake-users+)
@@ -354,7 +354,7 @@
         simple (create-catalogue-item! res1 (:simple workflows) form
                                        {"en" "ELFA Corpus, one approval"
                                         "fi" "ELFA-korpus, yksi hyväksyntä"})
-        bundable (create-catalogue-item! res2 (:simple workflows) form
+        bundlable (create-catalogue-item! res2 (:simple workflows) form
                                          {"en" "ELFA Corpus, one approval (extra data)"
                                           "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti)"})
         with-review (create-catalogue-item! res1 (:with-review workflows) form
@@ -370,7 +370,7 @@
     (db/set-catalogue-item-state! {:item disabled :state "disabled" :user (+demo-users+ :owner)})
     (create-applications! simple (:simple workflows) (+demo-users+ :applicant1) (+demo-users+ :approver1))
     (create-disabled-applications! disabled (:simple workflows) (+demo-users+ :applicant1) (+demo-users+ :approver1))
-    (create-bundled-application! simple bundable (:simple workflows) (+demo-users+ :applicant2) (+demo-users+ :approver1))
+    (create-bundled-application! simple bundlable (:simple workflows) (+demo-users+ :applicant2) (+demo-users+ :approver1))
     (create-review-application! with-review (:with-review workflows) +demo-users+)
     (create-application-with-expired-resource-license! (:simple workflows) form +demo-users+)
     (create-application-before-new-resource-license!  (:simple workflows) form +demo-users+)
