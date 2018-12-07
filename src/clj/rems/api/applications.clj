@@ -8,7 +8,7 @@
             [rems.db.users :as users]
             [rems.form :as form]
             [rems.pdf :as pdf]
-            [rems.util :refer [get-user-id update-present]]
+            [rems.util :refer [getx-user-id update-present]]
             [ring.util.http-response :refer :all]
             [ring.swagger.upload :as upload]
             [schema.core :as s]
@@ -147,7 +147,7 @@
 (defn api-get-application [application-id]
   (when (not (empty? (db/get-applications {:id application-id})))
     (-> (applications/get-form-for application-id)
-        (hide-sensitive-information (get-user-id)))))
+        (hide-sensitive-information (getx-user-id)))))
 
 ;; TODO lots of duplication in invalid-reviewer? invalid-commenter? etc. fns
 (defn invalid-reviewer? [u]
@@ -336,7 +336,7 @@
       :roles #{:applicant :approver :reviewer}
       :body [request DynamicCommand]
       :return SuccessResponse
-      (let [cmd (assoc request :actor (get-user-id))
+      (let [cmd (assoc request :actor (getx-user-id))
             fixed (fix-command-from-api cmd)
             fixed (assoc fixed :time (time/now))
             errors (applications/dynamic-command! fixed)]
