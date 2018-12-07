@@ -349,8 +349,8 @@
         form (create-basic-form! +demo-users+)
         workflows (create-workflows! +demo-users+)
         _ (create-catalogue-item! res1 (:minimal workflows) form
-                                        {"en" "ELFA Corpus, direct approval"
-                                         "fi" "ELFA-korpus, suora hyväksyntä"})
+                                  {"en" "ELFA Corpus, direct approval"
+                                   "fi" "ELFA-korpus, suora hyväksyntä"})
         simple (create-catalogue-item! res1 (:simple workflows) form
                                        {"en" "ELFA Corpus, one approval"
                                         "fi" "ELFA-korpus, yksi hyväksyntä"})
@@ -361,8 +361,8 @@
                                             {"en" "ELFA Corpus, with review"
                                              "fi" "ELFA-korpus, katselmoinnilla"})
         _ (create-catalogue-item! res1 (:different workflows) form
-                                          {"en" "ELFA Corpus, two rounds of approval by different approvers"
-                                           "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})
+                                  {"en" "ELFA Corpus, two rounds of approval by different approvers"
+                                   "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})
         disabled (create-catalogue-item! res1 (:simple workflows) form
                                          {"en" "ELFA Corpus, one approval (extra data, disabled)"
                                           "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti, pois käytöstä)"})]
