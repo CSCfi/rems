@@ -280,10 +280,10 @@
     (->> (get-applications-impl-batch {})
          (mapv :id))))
 
-(defn get-my-applications []
-  (filter
-   #(not= (:state %) "closed") ; don't show deleted applications
-   (get-applications-impl-batch {:applicant (getx-user-id)})))
+(defn get-user-applications [user-id]
+  (assert user-id "Must have user-id")
+  (->> (get-applications-impl-batch {:applicant user-id})
+       (remove (comp #{"closed"} :state))))
 
 (comment
   (->> (get-applications-impl-batch {:applicant "developer"})

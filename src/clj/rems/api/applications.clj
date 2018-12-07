@@ -216,7 +216,7 @@
       :summary "Get current user's all applications"
       :roles #{:applicant}
       :return GetApplicationsResponse
-      (ok (applications/get-my-applications)))
+      (ok (applications/get-user-applications (getx-user-id))))
 
     (GET "/draft" []
       :summary "Get application (draft) for `catalogue-items`"

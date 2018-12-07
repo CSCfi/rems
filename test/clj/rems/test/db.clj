@@ -184,33 +184,31 @@
                  (->> form :application :events (map :comment)))))))))
 
 (deftest test-applications
-  (binding [context/*user* {"eppn" "test-user"}]
-    (db/add-user! {:user "test-user" :userattrs nil})
-    (let [uid (get-user-id)
-          wf (:id (db/create-workflow! {:organization "abc" :owneruserid uid :modifieruserid uid :title "" :fnlround 0}))
-          item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
-          app (applications/create-new-draft wf)]
-      (db/add-application-item! {:application app :item item})
-      (actors/add-approver! wf uid 0)
+  (let [uid "test-user"]
+    (binding [context/*user* {"eppn" uid}]
+      (db/add-user! {:user uid :userattrs nil})
+      (let [wf (:id (db/create-workflow! {:organization "abc" :owneruserid uid :modifieruserid uid :title "" :fnlround 0}))
+            item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
+            app (applications/create-new-draft wf)]
+        (db/add-application-item! {:application app :item item})
+        (actors/add-approver! wf uid 0)
 
-      (is (= [{:id app :state "draft"}]
-             (map #(select-keys % [:id :state])
-                  (applications/get-my-applications))))
-      (applications/submit-application app)
-      (is (= [{:id app :state "applied"}]
-             (map #(select-keys % [:id :state])
-                  (applications/get-my-applications))))
-      (applications/approve-application app 0 "comment")
-      (is (= [{:id app :state "approved"}]
-             (map #(select-keys % [:id :state])
-                  (applications/get-my-applications))))
-      (testing "deleted application is not shown"
-        (applications/close-application app 0 "c")
-        (is (empty? (applications/get-my-applications))))))
+        (is (= [{:id app :state "draft"}]
+               (map #(select-keys % [:id :state])
+                    (applications/get-user-applications uid))))
+        (applications/submit-application app)
+        (is (= [{:id app :state "applied"}]
+               (map #(select-keys % [:id :state])
+                    (applications/get-user-applications uid))))
+        (applications/approve-application app 0 "comment")
+        (is (= [{:id app :state "approved"}]
+               (map #(select-keys % [:id :state])
+                    (applications/get-user-applications uid))))
+        (testing "deleted application is not shown"
+          (applications/close-application app 0 "c"))
+        (is (empty? (applications/get-user-applications uid))))))
   (testing "should not allow missing user"
-    (is (thrown? Exception (applications/get-my-applications)))
-    (binding [context/*user* nil]
-      (is (thrown? Exception (applications/get-my-applications))))))
+    (is (thrown? AssertionError (applications/get-user-applications nil)))))
 
 (deftest test-multi-applications
   (binding [context/*user* {"eppn" "test-user"}]
@@ -227,7 +225,7 @@
       (db/add-application-item! {:application app :item item2})
       (actors/add-approver! wf uid 0)
 
-      (let [applications (applications/get-my-applications)]
+      (let [applications (applications/get-user-applications uid)]
         (is (= [{:id app :state "draft"}]
                (map #(select-keys % [:id :state]) applications)))
         (is (= [item1 item2] (sort (map :id (:catalogue-items (first applications)))))
@@ -236,12 +234,12 @@
       (applications/submit-application app)
       (is (= [{:id app :state "applied"}]
              (map #(select-keys % [:id :state])
-                  (applications/get-my-applications))))
+                  (applications/get-user-applications uid))))
 
       (applications/approve-application app 0 "comment")
       (is (= [{:id app :state "approved"}]
              (map #(select-keys % [:id :state])
-                  (applications/get-my-applications))))
+                  (applications/get-user-applications uid))))
 
       (is (= ["resid111" "resid222"] (sort (map :resid (db/get-entitlements {:application app}))))
           "should create entitlements for both resources"))))
