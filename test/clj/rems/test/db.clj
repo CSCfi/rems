@@ -383,7 +383,7 @@
           app3 (applications/create-new-draft wfid1 uid) ; should not see draft
           app4 (applications/create-new-draft wfid2 uid) ; should not see approved
 
-          can-approve? #(#'applications/can-approve? (applications/get-application-state %))]
+          can-approve? #(#'applications/can-approve? %1 (applications/get-application-state %2))]
 
       (db/add-application-item! {:application app1 :item (:id item1)})
       (db/add-application-item! {:application app2 :item (:id item2)})
@@ -411,13 +411,12 @@
           "should only see app4 in handled approvals")
 
       (testing "applications/can-approve?"
-        (is (can-approve? app1))
-        (is (not (can-approve? app2)))
-        (is (not (can-approve? app3)))
-        (is (not (can-approve? app4)))
-        (binding [context/*user* {"eppn" uid2}]
-          (is (not (can-approve? app1)))
-          (is (can-approve? app2))))
+        (is (can-approve? uid app1))
+        (is (not (can-approve? uid app2)))
+        (is (not (can-approve? uid app3)))
+        (is (not (can-approve? uid app4)))
+        (is (not (can-approve? uid2 app1)))
+        (is (can-approve? uid2 app2)))
 
       (testing "applications/is-approver?"
         (is (#'applications/is-approver? app1))
@@ -447,13 +446,12 @@
           "should only see app2")
 
       (testing "applications/can-approve? after changes"
-        (is (not (can-approve? app1)))
-        (is (can-approve? app2))
-        (is (not (can-approve? app3)))
-        (is (not (can-approve? app4)))
-        (binding [context/*user* {"eppn" uid2}]
-          (is (not (can-approve? app1)))
-          (is (not (can-approve? app2))))))))
+        (is (not (can-approve? uid app1)))
+        (is (can-approve? uid app2))
+        (is (not (can-approve? uid app3)))
+        (is (not (can-approve? uid app4)))
+        (is (not (can-approve? uid2 app1)))
+        (is (not (can-approve? uid2 app2)))))))
 
 (deftest test-get-applications-to-review
   (binding [context/*user* {"eppn" "test-user"}]
@@ -473,7 +471,7 @@
           app3 (applications/create-new-draft wfid1 uid) ; should not see draft
           app4 (applications/create-new-draft wfid2 uid)
 
-          can-review? #(#'applications/can-review? (applications/get-application-state %))]
+          can-review? #(#'applications/can-review? %1 (applications/get-application-state %2))]
       (db/add-application-item! {:application app1 :item item1})
       (db/add-application-item! {:application app2 :item item2})
       (db/add-application-item! {:application app3 :item item3})
@@ -498,13 +496,12 @@
           "should only see app4 in handled reviews")
 
       (testing "applications/can-review?"
-        (is (can-review? app1))
-        (is (not (can-review? app2)))
-        (is (not (can-review? app3)))
-        (is (not (can-review? app4)))
-        (binding [context/*user* {"eppn" uid2}]
-          (is (not (can-review? app1)))
-          (is (can-review? app2))))
+        (is (can-review? uid app1))
+        (is (not (can-review? uid app2)))
+        (is (not (can-review? uid app3)))
+        (is (not (can-review? uid app4)))
+        (is (not (can-review? uid2 app1)))
+        (is (can-review? uid2 app2)))
 
       (testing "applications/is-reviewer?"
         (is (#'applications/is-reviewer? app1))
@@ -539,13 +536,12 @@
           "should only see app2")
 
       (testing "applications/can-review? after changes"
-        (is (not (can-review? app1)))
-        (is (can-review? app2))
-        (is (not (can-review? app3)))
-        (is (not (can-review? app4)))
-        (binding [context/*user* {"eppn" uid2}]
-          (is (not (can-review? app1)))
-          (is (not (can-review? app2))))))))
+        (is (not (can-review? uid app1)))
+        (is (can-review? uid app2))
+        (is (not (can-review? uid app3)))
+        (is (not (can-review? uid app4)))
+        (is (not (can-review? uid2 app1)))
+        (is (not (can-review? uid2 app2)))))))
 
 (deftest test-users
   (db/add-user! {:user "pekka", :userattrs nil})

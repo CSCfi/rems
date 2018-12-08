@@ -106,12 +106,15 @@
 (declare is-dynamic-handler?)
 
 (defn can-act-as?
-  [application role]
+  [user-id application role]
+  (assert user-id)
+  (assert application)
+  (assert role)
   (or (and (= "applied" (:state application))
            (contains? (set (actors/get-by-role (:id application) (:curround application) role))
-                      (getx-user-id)))
+                      user-id))
       (and (= "approver" role)
-           (contains? (dynamic/possible-commands (getx-user-id) (get-application-state (:id application)))
+           (contains? (dynamic/possible-commands user-id (get-application-state (:id application)))
                       :rems.workflow.dynamic/approve))))
 
 (defn- is-actor? [actors]
@@ -124,14 +127,18 @@
   (or (is-actor? (actors/get-by-role application-id role))
       (is-dynamic-handler? (get-application-state application-id) (getx-user-id))))
 
-(defn- can-approve? [application]
-  (can-act-as? application "approver"))
+(defn- can-approve? [user-id application]
+  (assert user-id)
+  (assert application)
+  (can-act-as? user-id application "approver"))
 
 (defn- is-approver? [application-id]
   (has-actor-role? application-id "approver"))
 
-(defn- can-review? [application]
-  (can-act-as? application "reviewer"))
+(defn- can-review? [user-id application]
+  (assert user-id)
+  (assert application)
+  (can-act-as? user-id application "reviewer"))
 
 (defn- is-reviewer? [application-id]
   (has-actor-role? application-id "reviewer"))
@@ -292,7 +299,7 @@
 
 (defn get-approvals []
   (->> (get-applications-impl-batch {})
-       (filterv can-approve?)))
+       (filterv (partial can-approve? (getx-user-id)))))
 
 (comment
   (binding [context/*user* {"eppn" "developer"}]
@@ -360,7 +367,7 @@
   (->> (get-applications-impl-batch {})
        (filterv
         (fn [app] (and (not (reviewed? app))
-                       (or (can-review? app)
+                       (or (can-review? (getx-user-id) app)
                            (can-third-party-review? app)
                            (can-comment? (getx-user-id) (:id app))
                            (can-decide? (getx-user-id) (:id app))))))
@@ -526,7 +533,7 @@
                          :value)
          licenses (get-application-licenses application catalogue-item-ids)
          review-type (cond
-                       (can-review? application) :normal
+                       (can-review? (getx-user-id) application) :normal
                        (can-third-party-review? application) :third-party
                        :else nil)]
      (when application-id
@@ -538,7 +545,7 @@
       :application (assoc application
                           :formid form-id
                           :catalogue-items catalogue-items ;; TODO decide if catalogue-items are part of "form" or "application"
-                          :can-approve? (can-approve? application)
+                          :can-approve? (can-approve? (getx-user-id) application)
                           :can-close? (can-close? application)
                           :can-withdraw? (can-withdraw? application)
                           :can-third-party-review? (can-third-party-review? application)
@@ -800,22 +807,22 @@
     (handle-state-change application-id)))
 
 (defn approve-application [application-id round msg]
-  (when-not (can-approve? (get-application-state application-id))
+  (when-not (can-approve? (getx-user-id) (get-application-state application-id))
     (throw-unauthorized))
   (judge-application application-id "approve" round msg))
 
 (defn reject-application [application-id round msg]
-  (when-not (can-approve? (get-application-state application-id))
+  (when-not (can-approve? (getx-user-id) (get-application-state application-id))
     (throw-unauthorized))
   (judge-application application-id "reject" round msg))
 
 (defn return-application [application-id round msg]
-  (when-not (can-approve? (get-application-state application-id))
+  (when-not (can-approve? (getx-user-id) (get-application-state application-id))
     (throw-unauthorized))
   (judge-application application-id "return" round msg))
 
 (defn review-application [application-id round msg]
-  (when-not (can-review? (get-application-state application-id))
+  (when-not (can-review? (getx-user-id) (get-application-state application-id))
     (throw-unauthorized))
   (judge-application application-id "review" round msg))
 
@@ -830,7 +837,7 @@
 
 (defn send-review-request [application-id round msg recipients]
   (let [application (get-application-state application-id)]
-    (when-not (can-approve? application)
+    (when-not (can-approve? (getx-user-id) application)
       (throw-unauthorized))
     (when-not (= round (:curround application))
       (throw-unauthorized))
