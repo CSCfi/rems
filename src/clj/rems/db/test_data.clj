@@ -321,8 +321,8 @@
                                        {"en" "ELFA Corpus, one approval"
                                         "fi" "ELFA-korpus, yksi hyväksyntä"})
         bundlable (create-catalogue-item! res2 (:simple workflows) form
-                                         {"en" "ELFA Corpus, one approval (extra data)"
-                                          "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti)"})
+                                          {"en" "ELFA Corpus, one approval (extra data)"
+                                           "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti)"})
         with-review (create-catalogue-item! res1 (:with-review workflows) form
                                             {"en" "ELFA Corpus, with review"
                                              "fi" "ELFA-korpus, katselmoinnilla"})
@@ -358,8 +358,8 @@
                                        {"en" "ELFA Corpus, one approval"
                                         "fi" "ELFA-korpus, yksi hyväksyntä"})
         bundlable (create-catalogue-item! res2 (:simple workflows) form
-                                         {"en" "ELFA Corpus, one approval (extra data)"
-                                          "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti)"})
+                                          {"en" "ELFA Corpus, one approval (extra data)"
+                                           "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti)"})
         with-review (create-catalogue-item! res1 (:with-review workflows) form
                                             {"en" "ELFA Corpus, with review"
                                              "fi" "ELFA-korpus, katselmoinnilla"})
