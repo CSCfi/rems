@@ -46,16 +46,16 @@
   (testing "without catalogue items"
     (is (empty? (db/get-catalogue-items))))
 
-  (testing "with test database"
+  (testing "with two items"
     (let [resid (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :organization "nbn" :owneruserid 1 :modifieruserid 1}))]
       (db/create-catalogue-item! {:title "ELFA Corpus" :form nil :resid resid :wfid nil})
       (db/create-catalogue-item! {:title "B" :form nil :resid nil :wfid nil})
       (is (= ["B" "ELFA Corpus"] (sort (map :title (db/get-catalogue-items))))
-          "should find two items")
+          "should find the two items")
       (let [item-from-list (second (db/get-catalogue-items))
             item-by-id (db/get-catalogue-item {:item (:id item-from-list)})]
         (is (= item-from-list item-by-id)
-            "should find catalogue item by id")))))
+            "should find same catalogue item by id")))))
 
 (deftest test-form
   (binding [context/*user* {"eppn" "test-user"}
