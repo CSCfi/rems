@@ -114,13 +114,12 @@
                                                                      items1))))
           (testing "Applicant gets notified when application is approved"
             (conjure/mocking [email/status-change-alert]
-                             (binding [context/*user* {"eppn" "approver"}]
-                               (applications/approve-application app1 1 "")
-                               (conjure/verify-called-once-with-args email/status-change-alert
-                                                                     applicant-attrs
-                                                                     app1
-                                                                     items1
-                                                                     "approved"))))
+                             (applications/approve-application "approver" app1 1 "")
+                             (conjure/verify-called-once-with-args email/status-change-alert
+                                                                   applicant-attrs
+                                                                   app1
+                                                                   items1
+                                                                   "approved")))
           (conjure/mocking [email/send-mail]
                            (applications/submit-application "test-user" app2)
                            (applications/submit-application "test-user" app3))
@@ -143,7 +142,7 @@
                                                                      "returned")))
             (testing "Emails should not be sent when actions fail"
               (conjure/mocking [email/send-mail]
-                               (is (thrown? NotAuthorizedException (applications/approve-application app4 1 ""))
+                               (is (thrown? NotAuthorizedException (applications/approve-application "test-user" app4 1 ""))
                                    "Approval should fail")
                                (is (thrown? NotAuthorizedException (applications/reject-application app4 1 ""))
                                    "Rejection should fail")
@@ -191,8 +190,7 @@
           (testing "Actors are notified when their attention is no longer required"
             (conjure/mocking [email/action-not-needed]
                              (applications/submit-application "test-user" app5)
-                             (binding [context/*user* {"eppn" "approver"}]
-                               (applications/approve-application app5 0 ""))
+                             (applications/approve-application "approver" app5 0 "")
                              ;; NB: reviewer is here also approver
                              (conjure/verify-called-once-with-args email/action-not-needed
                                                                    reviewer-attrs
@@ -200,8 +198,8 @@
                                                                    app5))
             (conjure/mocking [email/action-not-needed]
                              (binding [context/*user* {"eppn" "approver"}]
-                               (applications/send-review-request app5 1 "" uid2)
-                               (applications/approve-application app5 1 ""))
+                               (applications/send-review-request app5 1 "" uid2))
+                             (applications/approve-application "approver" app5 1 "")
                              (conjure/verify-called-once-with-args email/action-not-needed
                                                                    reviewer-attrs
                                                                    common-name
@@ -210,8 +208,8 @@
             (conjure/mocking [email/action-not-needed]
                              (applications/submit-application "test-user" app6)
                              (binding [context/*user* {"eppn" "approver"}]
-                               (applications/send-review-request app6 0 "" "outside-reviewer")
-                               (applications/approve-application app6 0 ""))
+                               (applications/send-review-request app6 0 "" "outside-reviewer"))
+                             (applications/approve-application "approver" app6 0 "")
                              (conjure/verify-call-times-for email/action-not-needed 2)
                              (conjure/verify-nth-call-args-for 1
                                                                email/action-not-needed
@@ -228,8 +226,7 @@
                                (applications/send-review-request app6 1 "" "outside-reviewer"))
                              (binding [context/*user* {"eppn" "outside-reviewer"}]
                                (applications/perform-third-party-review app6 1 ""))
-                             (binding [context/*user* {"eppn" "approver"}]
-                               (applications/approve-application app6 1 ""))
+                             (applications/approve-application "approver" app6 1 "")
                              (conjure/verify-called-once-with-args email/action-not-needed
                                                                    reviewer-attrs
                                                                    common-name

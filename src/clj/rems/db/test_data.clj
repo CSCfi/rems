@@ -231,8 +231,7 @@
         (applications/reject-application application 0 "comment for rejection")))
     (let [application (create-draft! catid wfid "accepted application")]
       (applications/submit-application applicant application)
-      (binding [context/*user* {"eppn" approver}]
-        (applications/approve-application application 0 "comment for approval")))
+      (applications/approve-application approver application 0 "comment for approval"))
     (let [application (create-draft! catid wfid "returned application")]
       (applications/submit-application applicant application)
       (binding [context/*user* {"eppn" approver}]
@@ -244,8 +243,7 @@
     (create-draft! catid wfid "draft with disabled item")
     (let [application (create-draft! catid wfid "approved application with disabled item")]
       (applications/submit-application applicant application)
-      (binding [context/*user* {"eppn" approver}]
-        (applications/approve-application application 0 "comment for approval")))))
+      (applications/approve-application approver application 0 "comment for approval"))))
 
 (defn- create-bundled-application! [catid catid2 wfid applicant approver]
   (binding [context/*tempura* (locales/tempura-config)
@@ -274,8 +272,7 @@
         (applications/submit-application applicant app-id)
         (binding [context/*user* {"eppn" reviewer}]
           (applications/review-application app-id 0 "comment for review"))
-        (binding [context/*user* {"eppn" approver}]
-          (applications/approve-application app-id 1 "comment for approval"))))))
+        (applications/approve-application approver app-id 1 "comment for approval")))))
 
 (defn- create-application-with-expired-resource-license! [wfid form users]
   (let [applicant (users :applicant1)

@@ -797,34 +797,39 @@
     (email/confirm-application-creation application-id (get-catalogue-items-by-application-id application-id))
     (handle-state-change application-id)))
 
-(defn- judge-application [application-id event round msg]
+(defn- judge-application [approver-id application-id event round msg]
+  (assert approver-id)
+  (assert application-id)
+  (assert event)
+  (assert round)
+  (assert msg)
   (let [state (get-application-state application-id)]
     (when-not (= round (:curround state))
       (throw-unauthorized))
-    (db/add-application-event! {:application application-id :user (get-user-id)
+    (db/add-application-event! {:application application-id :user approver-id
                                 :round round :event event :comment msg})
     (check-for-unneeded-actions application-id round event)
     (handle-state-change application-id)))
 
-(defn approve-application [application-id round msg]
-  (when-not (can-approve? (getx-user-id) (get-application-state application-id))
+(defn approve-application [approver-id application-id round msg]
+  (when-not (can-approve? approver-id (get-application-state application-id))
     (throw-unauthorized))
-  (judge-application application-id "approve" round msg))
+  (judge-application approver-id application-id "approve" round msg))
 
 (defn reject-application [application-id round msg]
   (when-not (can-approve? (getx-user-id) (get-application-state application-id))
     (throw-unauthorized))
-  (judge-application application-id "reject" round msg))
+  (judge-application (getx-user-id) application-id "reject" round msg))
 
 (defn return-application [application-id round msg]
   (when-not (can-approve? (getx-user-id) (get-application-state application-id))
     (throw-unauthorized))
-  (judge-application application-id "return" round msg))
+  (judge-application (getx-user-id) application-id "return" round msg))
 
 (defn review-application [application-id round msg]
   (when-not (can-review? (getx-user-id) (get-application-state application-id))
     (throw-unauthorized))
-  (judge-application application-id "review" round msg))
+  (judge-application (getx-user-id) application-id "review" round msg))
 
 (defn perform-third-party-review [application-id round msg]
   (let [application (get-application-state application-id)]

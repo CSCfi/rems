@@ -25,7 +25,7 @@
               comment (get input "comment")
               comment (when-not (empty? comment) comment)]
           (case action
-            :approve (applications/approve-application id round comment)
+            :approve (applications/approve-application (getx-user-id) id round comment)
             :reject (applications/reject-application id round comment)
             :return (applications/return-application id round comment)
             :review (applications/review-application id round comment)

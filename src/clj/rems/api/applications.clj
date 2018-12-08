@@ -110,7 +110,7 @@
 
 (defn- api-judge [{:keys [command application-id round comment]}]
   (case command
-    "approve" (applications/approve-application application-id round comment)
+    "approve" (applications/approve-application (getx-user-id) application-id round comment)
     "close" (applications/close-application application-id round comment)
     "reject" (applications/reject-application application-id round comment)
     "return" (applications/return-application application-id round comment)

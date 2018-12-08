@@ -175,8 +175,7 @@
 
       (testing "get approved form as applicant"
         (db/add-user! {:user "approver" :userattrs nil})
-        (binding [context/*user* {"eppn" "approver"}]
-          (applications/approve-application app-id 0 "comment"))
+        (applications/approve-application "approver" app-id 0 "comment")
         (let [form (applications/get-form-for app-id)]
           (is (= "approved" (get-in form [:application :state])))
           (is (= ["" "X" ""] (map :value (:items form))))
@@ -199,8 +198,7 @@
       (is (= [{:id app :state "applied"}]
              (map #(select-keys % [:id :state])
                   (applications/get-user-applications uid))))
-      (binding [context/*user* {"eppn" uid}]
-        (applications/approve-application app 0 "comment"))
+      (applications/approve-application uid app 0 "comment")
       (is (= [{:id app :state "approved"}]
              (map #(select-keys % [:id :state])
                   (applications/get-user-applications uid))))
@@ -237,7 +235,7 @@
              (map #(select-keys % [:id :state])
                   (applications/get-user-applications uid))))
 
-      (applications/approve-application app 0 "comment")
+      (applications/approve-application uid app 0 "comment")
       (is (= [{:id app :state "approved"}]
              (map #(select-keys % [:id :state])
                   (applications/get-user-applications uid))))
@@ -274,8 +272,7 @@
                   {:phase :result :text :t.phases/approved}]
                  (get-phases))))
 
-        (binding [context/*user* {"eppn" "approver1"}]
-          (applications/approve-application app 0 "it's good"))
+        (applications/approve-application "approver1" app 0 "it's good")
 
         (testing "after first approval the application is in the second approval round"
           (is (= [{:phase :apply :completed? true :text :t.phases/apply}
@@ -283,8 +280,7 @@
                   {:phase :result :text :t.phases/approved}]
                  (get-phases))))
 
-        (binding [context/*user* {"eppn" "approver2"}]
-          (applications/approve-application app 1 "it's good"))
+        (applications/approve-application "approver2" app 1 "it's good")
 
         (testing "after both approvals the application is in approved phase"
           (is (= [{:phase :apply :completed? true :text :t.phases/apply}
@@ -347,8 +343,7 @@
                   {:phase :result :text :t.phases/approved}]
                  (get-phases))))
 
-        (binding [context/*user* {"eppn" "approver1"}]
-          (applications/approve-application app 0 "it's good"))
+        (applications/approve-application "approver1" app 0 "it's good")
 
         (testing "after first approval the application is in the second approval round"
           (is (= [{:phase :apply :completed? true :text :t.phases/apply}
@@ -396,9 +391,8 @@
       (applications/submit-application uid app1)
       (applications/submit-application uid app2)
       (applications/submit-application uid app4)
-      (binding [context/*user* {"eppn" uid2}]
-        (applications/approve-application app4 0 ""))
-      (applications/approve-application app4 1 "")
+      (applications/approve-application uid2 app4 0 "")
+      (applications/approve-application uid app4 1 "")
 
       (is (= [{:id app1 :state "applied" :curround 0}]
              (map #(select-keys % [:id :state :catid :curround])
@@ -430,9 +424,8 @@
           (is (#'applications/is-approver? app4))))
 
       ;; move app1 and app2 to round 1
-      (applications/approve-application app1 0 "")
-      (binding [context/*user* {"eppn" uid2}]
-        (applications/approve-application app2 0 ""))
+      (applications/approve-application uid app1 0 "")
+      (applications/approve-application uid2 app2 0 "")
 
       (is (= [{:id app1 :state "approved" :curround 0}
               {:id app4 :state "approved" :curround 1}]
@@ -584,7 +577,7 @@
 
           (is (= {:curround 0 :state "draft"} (fetch app)))
 
-          (is (thrown? NotAuthorizedException (applications/approve-application app 0 ""))
+          (is (thrown? NotAuthorizedException (applications/approve-application uid app 0 ""))
               "Should not be able to approve draft")
 
           (is (thrown? NotAuthorizedException (applications/withdraw-application app 0 ""))
@@ -604,7 +597,7 @@
           (is (thrown? NotAuthorizedException (applications/submit-application uid app)) ; TODO Wrong exception?
               "Should not be able to submit twice")
 
-          (is (thrown? NotAuthorizedException (applications/approve-application app 1 "")) ; TODO Wrong exception?
+          (is (thrown? NotAuthorizedException (applications/approve-application uid app 1 "")) ; TODO Wrong exception?
               "Should not be able to approve wrong round")
 
           (testing "withdrawing and resubmitting"
@@ -616,10 +609,10 @@
 
           (is (thrown? NotAuthorizedException (applications/review-application app 0 ""))
               "Should not be able to review as an approver")
-          (applications/approve-application app 0 "c1")
+          (applications/approve-application uid app 0 "c1")
           (is (= {:curround 1 :state "applied"} (fetch app)))
 
-          (is (thrown? NotAuthorizedException (applications/approve-application app 1 ""))
+          (is (thrown? NotAuthorizedException (applications/approve-application uid app 1 ""))
               "Should not be able to approve if not approver")
 
           (binding [context/*user* {"eppn" "event-test-approver"}]
@@ -628,8 +621,7 @@
 
           (is (empty? (db/get-entitlements)))
 
-          (binding [context/*user* {"eppn" "event-test-approver"}]
-            (applications/approve-application app 1 "c2"))
+          (applications/approve-application "event-test-approver" app 1 "c2")
           (is (= {:curround 1 :state "approved"} (fetch app)))
 
           (is (= [{:catappid app :resid nil :userid uid}]
@@ -702,7 +694,7 @@
           (binding [context/*user* {"eppn" "event-test-reviewer"}]
             (is (thrown? NotAuthorizedException (applications/review-application rev-app 1 ""))
                 "Should not be able to review wrong round")
-            (is (thrown? NotAuthorizedException (applications/approve-application rev-app 0 ""))
+            (is (thrown? NotAuthorizedException (applications/approve-application "event-test-reviewer" rev-app 0 ""))
                 "Should not be able to approve as reviewer")
             (applications/review-application rev-app 0 "looks good to me"))
           (is (= {:curround 1 :state "applied"} (fetch rev-app)))
@@ -737,18 +729,17 @@
           (let [app (applications/create-new-draft wf uid)]
             (db/add-application-item! {:application app :item item})
             (applications/submit-application uid app)
-            (applications/approve-application app 0 "c1")
-            (binding [context/*user* {"eppn" "event-test-approver"}]
-              (applications/approve-application app 1 "c2"))
+            (applications/approve-application uid app 0 "c1")
+            (applications/approve-application "event-test-approver" app 1 "c2")
             (applications/close-application app 1 "closing approved")
             (is (= {:curround 1 :state "closed"} (fetch app)))))
         (testing "an approved application as the approver"
           (let [app (applications/create-new-draft wf uid)]
             (db/add-application-item! {:application app :item item})
             (applications/submit-application uid app)
-            (applications/approve-application app 0 "c1")
+            (applications/approve-application uid app 0 "c1")
             (binding [context/*user* {"eppn" "event-test-approver"}]
-              (applications/approve-application app 1 "c2")
+              (applications/approve-application "event-test-approver" app 1 "c2")
               (applications/close-application app 1 "closing approved"))
             (is (= {:curround 1 :state "closed"} (fetch app))))))
 
@@ -793,7 +784,7 @@
               (is (thrown? NotAuthorizedException (applications/review-application new-app 0 "another comment"))
                   "Should not be able to do normal review"))
             (is (= (fetch new-app) {:curround 0 :state "applied"}))
-            (applications/approve-application new-app 0 "")
+            (applications/approve-application uid new-app 0 "")
             (is (= (fetch new-app) {:curround 0 :state "approved"}))
             (binding [context/*user* {"eppn" "third-party-reviewer"}]
               (is (thrown? NotAuthorizedException (applications/perform-third-party-review new-app 0 "another comment"))
@@ -828,7 +819,7 @@
             (applications/send-review-request app-to-return 0 "can you please review this?" "third-party-reviewer")
             (applications/close-application app-to-close 0 "closing")
             (is (= (fetch app-to-close) {:curround 0 :state "closed"}) "should be able to close application even without review")
-            (applications/approve-application app-to-approve 0 "approving")
+            (applications/approve-application uid app-to-approve 0 "approving")
             (is (= (fetch app-to-approve) {:curround 0 :state "approved"}) "should be able to approve application even without review")
             (applications/reject-application app-to-reject 0 "rejecting")
             (is (= (fetch app-to-reject) {:curround 0 :state "rejected"}) "should be able to reject application even without review")
