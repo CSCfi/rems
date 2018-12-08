@@ -30,8 +30,8 @@
             :return (applications/return-application id round comment)
             :review (applications/review-application id round comment)
             :review-request (applications/send-review-request id round comment (get input "recipients"))
-            :withdraw (applications/withdraw-application id round comment)
-            :close (applications/close-application id round comment)
+            :withdraw (applications/withdraw-application (getx-user-id) id round comment)
+            :close (applications/close-application (getx-user-id) id round comment)
             :third-party-review (applications/perform-third-party-review id round comment))
           (assoc (redirect (if (or (has-roles? :approver) (has-roles? :reviewer)) "/actions" "/applications") :see-other)
                  :flash [{:status :success

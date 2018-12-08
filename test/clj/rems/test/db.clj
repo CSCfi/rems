@@ -203,8 +203,7 @@
              (map #(select-keys % [:id :state])
                   (applications/get-user-applications uid))))
       (testing "deleted application is not shown"
-        (binding [context/*user* {"eppn" uid}]
-          (applications/close-application app 0 "c")))
+        (applications/close-application uid app 0 "c"))
       (is (empty? (applications/get-user-applications uid)))))
   (testing "should not allow missing user"
     (is (thrown? AssertionError (applications/get-user-applications nil)))))
@@ -413,15 +412,14 @@
         (is (can-approve? uid2 app2)))
 
       (testing "applications/is-approver?"
-        (is (#'applications/is-approver? app1))
-        (is (#'applications/is-approver? app2))
-        (is (#'applications/is-approver? app3))
-        (is (#'applications/is-approver? app4))
-        (binding [context/*user* {"eppn" uid2}]
-          (is (not (#'applications/is-approver? app1)))
-          (is (#'applications/is-approver? app2))
-          (is (not (#'applications/is-approver? app3)))
-          (is (#'applications/is-approver? app4))))
+        (is (#'applications/is-approver? uid app1))
+        (is (#'applications/is-approver? uid app2))
+        (is (#'applications/is-approver? uid app3))
+        (is (#'applications/is-approver? uid app4))
+        (is (not (#'applications/is-approver? uid2 app1)))
+        (is (#'applications/is-approver? uid2 app2))
+        (is (not (#'applications/is-approver? uid2 app3)))
+        (is (#'applications/is-approver? uid2 app4)))
 
       ;; move app1 and app2 to round 1
       (applications/approve-application uid app1 0 "")
@@ -497,15 +495,14 @@
         (is (can-review? uid2 app2)))
 
       (testing "applications/is-reviewer?"
-        (is (#'applications/is-reviewer? app1))
-        (is (#'applications/is-reviewer? app2))
-        (is (#'applications/is-reviewer? app3))
-        (is (#'applications/is-reviewer? app4))
-        (binding [context/*user* {"eppn" uid2}]
-          (is (not (#'applications/is-reviewer? app1)))
-          (is (#'applications/is-reviewer? app2))
-          (is (not (#'applications/is-reviewer? app3)))
-          (is (#'applications/is-reviewer? app4))))
+        (is (#'applications/is-reviewer? uid app1))
+        (is (#'applications/is-reviewer? uid app2))
+        (is (#'applications/is-reviewer? uid app3))
+        (is (#'applications/is-reviewer? uid app4))
+        (is (not (#'applications/is-reviewer? uid2 app1)))
+        (is (#'applications/is-reviewer? uid2 app2))
+        (is (not (#'applications/is-reviewer? uid2 app3)))
+        (is (#'applications/is-reviewer? uid2 app4)))
 
       ;; move app1 and app2 to round 1
       (applications/review-application app1 0 "")
@@ -580,7 +577,7 @@
           (is (thrown? NotAuthorizedException (applications/approve-application uid app 0 ""))
               "Should not be able to approve draft")
 
-          (is (thrown? NotAuthorizedException (applications/withdraw-application app 0 ""))
+          (is (thrown? NotAuthorizedException (applications/withdraw-application uid app 0 ""))
               "Should not be able to withdraw draft")
 
           (binding [context/*user* {"eppn" "event-test-approver"}]
@@ -601,7 +598,7 @@
               "Should not be able to approve wrong round")
 
           (testing "withdrawing and resubmitting"
-            (applications/withdraw-application app 0 "test withdraw")
+            (applications/withdraw-application uid app 0 "test withdraw")
             (is (= {:curround 0 :state "withdrawn"} (fetch app)))
 
             (applications/submit-application uid app)
@@ -615,9 +612,8 @@
           (is (thrown? NotAuthorizedException (applications/approve-application uid app 1 ""))
               "Should not be able to approve if not approver")
 
-          (binding [context/*user* {"eppn" "event-test-approver"}]
-            (is (thrown? NotAuthorizedException (applications/withdraw-application app 1 ""))
-                "Should not be able to withdraw as approver"))
+          (is (thrown? NotAuthorizedException (applications/withdraw-application "event-test-approver" app 1 ""))
+              "Should not be able to withdraw as approver")
 
           (is (empty? (db/get-entitlements)))
 
@@ -704,7 +700,7 @@
             (is (thrown? NotAuthorizedException (applications/review-application rev-app 0 ""))
                 "Should not be able to review when returned"))
           (applications/submit-application uid rev-app)
-          (applications/withdraw-application rev-app 0 "test withdraw")
+          (applications/withdraw-application uid rev-app 0 "test withdraw")
           (is (= {:curround 0 :state "withdrawn"} (fetch rev-app)))
           (binding [context/*user* {"eppn" "event-test-reviewer"}]
             (is (thrown? NotAuthorizedException (applications/review-application rev-app 0 ""))
@@ -714,16 +710,15 @@
         (testing "a draft as the applicant"
           (let [app (applications/create-new-draft wf uid)]
             (db/add-application-item! {:application app :item item})
-            (applications/close-application app 0 "closing draft")
+            (applications/close-application uid app 0 "closing draft")
             (is (= {:curround 0 :state "closed"} (fetch app)))))
         (testing "an applied application as the applicant"
           (let [app (applications/create-new-draft wf uid)]
             (db/add-application-item! {:application app :item item})
             (applications/submit-application uid app)
             (testing "as approver fails"
-              (binding [context/*user* {"eppn" "event-test-approver"}]
-                (is (thrown? NotAuthorizedException (applications/close-application app 0 "closing applied")))))
-            (applications/close-application app 0 "closing applied")
+              (is (thrown? NotAuthorizedException (applications/close-application "event-test-approver" app 0 "closing applied"))))
+            (applications/close-application uid app 0 "closing applied")
             (is (= {:curround 0 :state "closed"} (fetch app)))))
         (testing "an approved application as the applicant"
           (let [app (applications/create-new-draft wf uid)]
@@ -731,16 +726,15 @@
             (applications/submit-application uid app)
             (applications/approve-application uid app 0 "c1")
             (applications/approve-application "event-test-approver" app 1 "c2")
-            (applications/close-application app 1 "closing approved")
+            (applications/close-application uid app 1 "closing approved")
             (is (= {:curround 1 :state "closed"} (fetch app)))))
         (testing "an approved application as the approver"
           (let [app (applications/create-new-draft wf uid)]
             (db/add-application-item! {:application app :item item})
             (applications/submit-application uid app)
             (applications/approve-application uid app 0 "c1")
-            (binding [context/*user* {"eppn" "event-test-approver"}]
-              (applications/approve-application "event-test-approver" app 1 "c2")
-              (applications/close-application app 1 "closing approved"))
+            (applications/approve-application "event-test-approver" app 1 "c2")
+            (applications/close-application "event-test-approver" app 1 "closing approved")
             (is (= {:curround 1 :state "closed"} (fetch app))))))
 
       (testing "autoapprove"
@@ -817,7 +811,7 @@
             (applications/send-review-request app-to-approve 0 "can you please review this?" "third-party-reviewer")
             (applications/send-review-request app-to-reject 0 "can you please review this?" "third-party-reviewer")
             (applications/send-review-request app-to-return 0 "can you please review this?" "third-party-reviewer")
-            (applications/close-application app-to-close 0 "closing")
+            (applications/close-application uid app-to-close 0 "closing")
             (is (= (fetch app-to-close) {:curround 0 :state "closed"}) "should be able to close application even without review")
             (applications/approve-application uid app-to-approve 0 "approving")
             (is (= (fetch app-to-approve) {:curround 0 :state "approved"}) "should be able to approve application even without review")
@@ -961,7 +955,7 @@
                 (is (= [{"resource" "resource1" "application" application "user" "bob" "mail" "b@o.b"}
                         {"resource" "resource2" "application" application "user" "bob" "mail" "b@o.b"}]
                        body))))
-            (applications/close-application application 1 "close msg")
+            (applications/close-application uid application 1 "close msg")
             (testing "closing application should result in new POST"
               (let [data (second (stub/recorded-requests server))
                     target (:path data)

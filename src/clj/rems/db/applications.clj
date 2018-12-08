@@ -105,43 +105,48 @@
 (declare fix-workflow-from-db)
 (declare is-dynamic-handler?)
 
+(defn- is-actor? [user-id actors]
+  (assert user-id)
+  (assert actors)
+  (contains? (set actors) user-id))
+
 (defn can-act-as?
   [user-id application role]
   (assert user-id)
   (assert application)
   (assert role)
   (or (and (= "applied" (:state application))
-           (contains? (set (actors/get-by-role (:id application) (:curround application) role))
-                      user-id))
+           (is-actor? user-id (actors/get-by-role (:id application) (:curround application) role)))
       (and (= "approver" role)
            (contains? (dynamic/possible-commands user-id (get-application-state (:id application)))
                       :rems.workflow.dynamic/approve))))
 
-(defn- is-actor? [actors]
-  (contains? (set actors)
-             (get-user-id)))
-
 (declare get-application-state)
 
-(defn- has-actor-role? [application-id role]
-  (or (is-actor? (actors/get-by-role application-id role))
-      (is-dynamic-handler? (get-application-state application-id) (getx-user-id))))
+(defn- has-actor-role? [user-id application-id role]
+  (assert user-id)
+  (assert application-id)
+  (assert role)
+  (or (is-actor? user-id (actors/get-by-role application-id role))
+      (is-dynamic-handler? (get-application-state application-id) user-id)))
 
 (defn- can-approve? [user-id application]
   (assert user-id)
   (assert application)
   (can-act-as? user-id application "approver"))
 
-(defn- is-approver? [application-id]
-  (has-actor-role? application-id "approver"))
+(defn- is-approver? [user-id application-id]
+  (assert user-id)
+  (assert application-id)
+  (has-actor-role? user-id application-id "approver"))
 
 (defn- can-review? [user-id application]
   (assert user-id)
   (assert application)
   (can-act-as? user-id application "reviewer"))
 
-(defn- is-reviewer? [application-id]
-  (has-actor-role? application-id "reviewer"))
+(defn- is-reviewer? [user-id application-id]
+  (has-actor-role? user-id application-id "reviewer"))
 
 (defn- is-third-party-reviewer?
   "Checks if a given user has been requested to review the given application. If no user is provided, the function checks review requests for the current user.
@@ -210,29 +215,35 @@
         third-party-reviewers (get-third-party-reviewers application)]
     (union approvers reviewers third-party-reviewers)))
 
-(defn is-applicant? [application]
-  (= (:applicantuserid application) (get-user-id)))
+(defn is-applicant? [user-id application]
+  (assert user-id)
+  (assert application)
+  (= user-id (:applicantuserid application)))
 
 (defn may-see-application? [application]
   (let [application-id (:id application)
         user-id (getx-user-id)]
-    (or (is-applicant? application)
-        (is-approver? application-id)
-        (is-reviewer? application-id)
+    (or (is-applicant? user-id application)
+        (is-approver? user-id application-id)
+        (is-reviewer? user-id application-id)
         (is-third-party-reviewer? application)
         (is-dynamic-handler? application user-id)
         (is-commenter? user-id application)
         (is-decider? user-id application))))
 
-(defn- can-close? [application]
+(defn- can-close? [user-id application]
+  (assert user-id)
+  (assert application)
   (let [application-id (:id application)]
-    (or (and (is-approver? application-id)
+    (or (and (is-approver? user-id application-id)
              (= "approved" (:state application)))
-        (and (is-applicant? application)
+        (and (is-applicant? user-id  application)
              (not= "closed" (:state application))))))
 
-(defn- can-withdraw? [application]
-  (and (is-applicant? application)
+(defn- can-withdraw? [user-id application]
+  (assert user-id)
+  (assert application)
+  (and (is-applicant? user-id application)
        (= (:state application) "applied")))
 
 (defn- translate-catalogue-item [item]
@@ -317,7 +328,7 @@
                     (let [application (get-application-state (:id app))]
                       (if (is-dynamic-application? application)
                         (contains? (set (actors-of-dynamic-application application)) (getx-user-id))
-                        (is-actor? (actors/filter-by-application-id actors (:id app))))))))))
+                        (is-actor? (getx-user-id) (actors/filter-by-application-id actors (:id app))))))))))
 
 (comment
   (binding [context/*user* {"eppn" "developer"}]
@@ -330,10 +341,10 @@
     (->> (get-applications-impl-batch {})
          (filterv reviewed?)
          (filterv (fn [app]
-                    (or (is-actor? (actors/filter-by-application-id actors (:id app)))
+                    (or (is-actor? (getx-user-id) (actors/filter-by-application-id actors (:id app)))
                         (is-third-party-reviewer? (get-user-id) app)
-                        (is-commenter? (get-user-id) app)
-                        (is-decider? (get-user-id) app)))))))
+                        (is-commenter? (getx-user-id) app)
+                        (is-decider? (getx-user-id) app)))))))
 
 (comment
   (binding [context/*user* {"eppn" "bob"}]
@@ -358,7 +369,7 @@
                                                              (email/action-not-needed user-attrs applicant-name application-id))))))
 
 (defn assoc-review-type-to-app [app]
-  (assoc app :review-type (if (is-reviewer? (:id app)) :normal :third-party)))
+  (assoc app :review-type (if (is-reviewer? (getx-user-id) (:id app)) :normal :third-party)))
 
 (defn get-applications-to-review
   "Returns applications that are waiting for a normal or 3rd party review. Type of the review, with key :review and values :normal or :third-party,
@@ -546,10 +557,10 @@
                           :formid form-id
                           :catalogue-items catalogue-items ;; TODO decide if catalogue-items are part of "form" or "application"
                           :can-approve? (can-approve? (getx-user-id) application)
-                          :can-close? (can-close? application)
-                          :can-withdraw? (can-withdraw? application)
+                          :can-close? (can-close? (getx-user-id) application)
+                          :can-withdraw? (can-withdraw? (getx-user-id) application)
                           :can-third-party-review? (can-third-party-review? application)
-                          :is-applicant? (is-applicant? application)
+                          :is-applicant? (is-applicant? (getx-user-id) application)
                           :review-type review-type
                           :description description)
       :applicant-attributes (users/get-user-attributes (:applicantuserid application))
@@ -873,15 +884,15 @@
                                 :round round :event event :comment msg})
     (handle-state-change application-id)))
 
-(defn withdraw-application [application-id round msg]
+(defn withdraw-application [applicant-id application-id round msg]
   (let [application (get-application-state application-id)]
-    (when-not (can-withdraw? application)
+    (when-not (can-withdraw? applicant-id application)
       (throw-unauthorized))
     (unjudge-application application "withdraw" round msg)))
 
-(defn close-application [application-id round msg]
+(defn close-application [user-id application-id round msg]
   (let [application (get-application-state application-id)]
-    (when-not (can-close? application)
+    (when-not (can-close? user-id application)
       (throw-unauthorized))
     (unjudge-application application "close" round msg)))
 

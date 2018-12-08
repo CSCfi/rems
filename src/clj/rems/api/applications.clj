@@ -111,12 +111,12 @@
 (defn- api-judge [{:keys [command application-id round comment]}]
   (case command
     "approve" (applications/approve-application (getx-user-id) application-id round comment)
-    "close" (applications/close-application application-id round comment)
+    "close" (applications/close-application (getx-user-id) application-id round comment)
     "reject" (applications/reject-application application-id round comment)
     "return" (applications/return-application application-id round comment)
     "review" (applications/review-application application-id round comment)
     "third-party-review" (applications/perform-third-party-review application-id round comment)
-    "withdraw" (applications/withdraw-application application-id round comment))
+    "withdraw" (applications/withdraw-application (getx-user-id) application-id round comment))
   ;; failure communicated via an exception
   {:success true})
 

@@ -150,14 +150,14 @@
                                    "Review should fail")
                                (is (thrown? NotAuthorizedException (applications/return-application app4 1 ""))
                                    "Return should fail")
-                               (is (thrown? NotAuthorizedException (applications/close-application app4 2 ""))
+                               (is (thrown? NotAuthorizedException (applications/close-application "test-user" app4 2 ""))
                                    "closing should fail")
-                               (is (thrown? NotAuthorizedException (applications/withdraw-application app1 2 ""))
+                               (is (thrown? NotAuthorizedException (applications/withdraw-application "test-user" app1 2 ""))
                                    "withdraw should fail")
                                (conjure/verify-call-times-for email/send-mail 0))))
           (testing "Applicant is notified of closed application"
             (conjure/mocking [email/status-change-alert]
-                             (applications/close-application app1 1 "")
+                             (applications/close-application "approver" app1 1 "")
                              (conjure/verify-called-once-with-args email/status-change-alert
                                                                    applicant-attrs
                                                                    app1
@@ -166,7 +166,7 @@
           (testing "Applicant is notified of withdrawn application"
             (conjure/mocking [email/status-change-alert]
                              (applications/submit-application "test-user" app4)
-                             (applications/withdraw-application app4 0 "")
+                             (applications/withdraw-application "test-user" app4 0 "")
                              (conjure/verify-called-once-with-args email/status-change-alert
                                                                    applicant-attrs
                                                                    app4
