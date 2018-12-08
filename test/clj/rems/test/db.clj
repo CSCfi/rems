@@ -192,16 +192,16 @@
     (db/add-application-item! {:application app :item item})
     (actors/add-approver! wf uid 0)
 
-    (is (= [{:id app :state "draft"}]
-           (map #(select-keys % [:id :state])
+    (is (= [[app "draft"]]
+           (map (juxt :id :state)
                 (applications/get-user-applications uid))))
     (applications/submit-application uid app)
-    (is (= [{:id app :state "applied"}]
-           (map #(select-keys % [:id :state])
+    (is (= [[app "applied"]]
+           (map (juxt :id :state)
                 (applications/get-user-applications uid))))
     (applications/approve-application uid app 0 "comment")
-    (is (= [{:id app :state "approved"}]
-           (map #(select-keys % [:id :state])
+    (is (= [[app "approved"]]
+           (map (juxt :id :state)
                 (applications/get-user-applications uid))))
     (testing "deleted application is not shown"
       (applications/close-application uid app 0 "c"))
