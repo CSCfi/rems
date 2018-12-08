@@ -54,8 +54,7 @@
           "should find two items")
       (let [item-from-list (second (db/get-catalogue-items))
             item-by-id (db/get-catalogue-item {:item (:id item-from-list)})]
-        (is (= (select-keys item-from-list [:id :title])
-               (select-keys item-by-id [:id :title]))
+        (is (= item-from-list item-by-id)
             "should find catalogue item by id")))))
 
 (deftest test-form
