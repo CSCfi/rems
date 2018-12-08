@@ -114,12 +114,10 @@
       (save-application-items id catalogue-item-ids)
       id)))
 
-(defn api-save [request]
-  (let [{:keys [application-id items licenses command actor]} request
-        catalogue-item-ids (:catalogue-items request)
-        ;; if no application-id given, create a new application
+(defn api-save [{:keys [application-id catalogue-items items licenses command actor]}]
+  (let [;; if no application-id given, create a new application
         application-id (or application-id
-                           (create-new-draft-for-items actor catalogue-item-ids))
+                           (create-new-draft-for-items actor catalogue-items))
         _ (check-for-disabled-items! (get-catalogue-items-by-application-id application-id))
         submit? (= command "submit")
         {:keys [success? valid? validation]} (save-form-inputs actor application-id submit? items licenses)]
