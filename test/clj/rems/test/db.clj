@@ -187,6 +187,7 @@
         _ (db/add-user! {:user uid :userattrs nil})
         wf (:id (db/create-workflow! {:organization "abc" :owneruserid uid :modifieruserid uid :title "" :fnlround 0}))
         item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
+        _ (is (empty? (applications/get-user-applications uid)))
         app (applications/create-new-draft wf uid)]
     (db/add-application-item! {:application app :item item})
     (actors/add-approver! wf uid 0)
