@@ -185,28 +185,30 @@
 
 (deftest test-applications
   (let [uid "test-user"]
-    (binding [context/*user* {"eppn" uid}]
-      (db/add-user! {:user uid :userattrs nil})
-      (let [wf (:id (db/create-workflow! {:organization "abc" :owneruserid uid :modifieruserid uid :title "" :fnlround 0}))
-            item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
-            app (applications/create-new-draft wf uid)]
-        (db/add-application-item! {:application app :item item})
-        (actors/add-approver! wf uid 0)
+    (db/add-user! {:user uid :userattrs nil})
+    (let [wf (:id (db/create-workflow! {:organization "abc" :owneruserid uid :modifieruserid uid :title "" :fnlround 0}))
+          item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
+          app (applications/create-new-draft wf uid)]
+      (db/add-application-item! {:application app :item item})
+      (actors/add-approver! wf uid 0)
 
-        (is (= [{:id app :state "draft"}]
-               (map #(select-keys % [:id :state])
-                    (applications/get-user-applications uid))))
-        (applications/submit-application app)
-        (is (= [{:id app :state "applied"}]
-               (map #(select-keys % [:id :state])
-                    (applications/get-user-applications uid))))
-        (applications/approve-application app 0 "comment")
-        (is (= [{:id app :state "approved"}]
-               (map #(select-keys % [:id :state])
-                    (applications/get-user-applications uid))))
-        (testing "deleted application is not shown"
-          (applications/close-application app 0 "c"))
-        (is (empty? (applications/get-user-applications uid))))))
+      (is (= [{:id app :state "draft"}]
+             (map #(select-keys % [:id :state])
+                  (applications/get-user-applications uid))))
+      (binding [context/*user* {"eppn" uid}]
+        (applications/submit-application app))
+      (is (= [{:id app :state "applied"}]
+             (map #(select-keys % [:id :state])
+                  (applications/get-user-applications uid))))
+      (binding [context/*user* {"eppn" uid}]
+        (applications/approve-application app 0 "comment"))
+      (is (= [{:id app :state "approved"}]
+             (map #(select-keys % [:id :state])
+                  (applications/get-user-applications uid))))
+      (testing "deleted application is not shown"
+        (binding [context/*user* {"eppn" uid}]
+          (applications/close-application app 0 "c")))
+      (is (empty? (applications/get-user-applications uid)))))
   (testing "should not allow missing user"
     (is (thrown? AssertionError (applications/get-user-applications nil)))))
 
