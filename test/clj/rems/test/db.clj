@@ -199,6 +199,8 @@
     (is (= [[app "applied"]]
            (map (juxt :id :state)
                 (applications/get-user-applications uid))))
+    (is (empty? (applications/get-user-applications "someone else"))
+        "should not show to another user")
     (applications/approve-application uid app 0 "comment")
     (is (= [[app "approved"]]
            (map (juxt :id :state)
