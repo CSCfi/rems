@@ -85,7 +85,7 @@
                                       :licid licid
                                       :actoruserid (get-user-id)})))))
 
-(defn- save-form-inputs [application-id submit? items licenses]
+(defn- save-form-inputs [applicant-id application-id submit? items licenses]
   (save-fields application-id items)
   (save-licenses application-id licenses)
   (let [form (get-form-for application-id)
@@ -96,7 +96,7 @@
     (when perform-submit?
       (when (get-in form [:application :workflow :type])
         (throw (rems.InvalidRequestException. (str "Can not submit dynamic application via /save"))))
-      (submit-application application-id))
+      (submit-application applicant-id application-id))
     (merge {:valid? valid?
             :success? success?}
            (when-not valid? {:validation validation}))))
@@ -122,7 +122,7 @@
                            (create-new-draft-for-items actor catalogue-item-ids))
         _ (check-for-disabled-items! (get-catalogue-items-by-application-id application-id))
         submit? (= command "submit")
-        {:keys [success? valid? validation]} (save-form-inputs application-id submit? items licenses)]
+        {:keys [success? valid? validation]} (save-form-inputs actor application-id submit? items licenses)]
     (cond-> {:success success?
              :valid valid?}
       (not valid?) (assoc :validation validation)

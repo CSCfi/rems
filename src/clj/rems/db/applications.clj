@@ -777,14 +777,15 @@
     (when (try-autoapprove-application application)
       (recur application-id))))
 
-(defn submit-application [application-id]
-  (let [application (get-application-state application-id)
-        uid (get-user-id)]
-    (when-not (= uid (:applicantuserid application))
+(defn submit-application [applicant-id application-id]
+  (assert applicant-id)
+  (assert application-id)
+  (let [application (get-application-state application-id)]
+    (when-not (= applicant-id (:applicantuserid application))
       (throw-unauthorized))
     (when-not (#{"draft" "returned" "withdrawn"} (:state application))
       (throw-unauthorized))
-    (db/add-application-event! {:application application-id :user uid
+    (db/add-application-event! {:application application-id :user applicant-id
                                 :round 0 :event "apply" :comment nil})
     (email/confirm-application-creation application-id (get-catalogue-items-by-application-id application-id))
     (handle-state-change application-id)))

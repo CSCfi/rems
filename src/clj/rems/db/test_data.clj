@@ -223,17 +223,18 @@
   (binding [context/*tempura* (locales/tempura-config)
             context/*user* {"eppn" applicant}]
     (create-draft! catid wfid "draft application")
-    (applications/submit-application (create-draft! catid wfid "applied application"))
+    (let [application (create-draft! catid wfid "applied application")]
+      (applications/submit-application applicant application))
     (let [application (create-draft! catid wfid "rejected application")]
-      (applications/submit-application application)
+      (applications/submit-application applicant application)
       (binding [context/*user* {"eppn" approver}]
         (applications/reject-application application 0 "comment for rejection")))
     (let [application (create-draft! catid wfid "accepted application")]
-      (applications/submit-application application)
+      (applications/submit-application applicant application)
       (binding [context/*user* {"eppn" approver}]
         (applications/approve-application application 0 "comment for approval")))
     (let [application (create-draft! catid wfid "returned application")]
-      (applications/submit-application application)
+      (applications/submit-application applicant application)
       (binding [context/*user* {"eppn" approver}]
         (applications/return-application application 0 "comment for return")))))
 
@@ -242,7 +243,7 @@
             context/*user* {"eppn" applicant}]
     (create-draft! catid wfid "draft with disabled item")
     (let [application (create-draft! catid wfid "approved application with disabled item")]
-      (applications/submit-application application)
+      (applications/submit-application applicant application)
       (binding [context/*user* {"eppn" approver}]
         (applications/approve-application application 0 "comment for approval")))))
 
@@ -250,10 +251,10 @@
   (binding [context/*tempura* (locales/tempura-config)
             context/*user* {"eppn" applicant}]
     (let [app-id (create-draft! [catid catid2] wfid "bundled application")]
-      (applications/submit-application app-id)
+      (applications/submit-application applicant app-id)
       (binding [context/*user* {"eppn" approver}]
         (applications/return-application app-id 0 "comment for return"))
-      (applications/submit-application app-id))))
+      (applications/submit-application applicant app-id))))
 
 (defn- create-dynamic-application! [catid wfid applicant]
   (let [app-id (applications/create-new-draft wfid applicant)]
@@ -270,7 +271,7 @@
     (binding [context/*tempura* (locales/tempura-config)
               context/*user* {"eppn" applicant}]
       (let [app-id (create-draft! catid wfid "application with review")]
-        (applications/submit-application app-id)
+        (applications/submit-application applicant app-id)
         (binding [context/*user* {"eppn" reviewer}]
           (applications/review-application app-id 0 "comment for review"))
         (binding [context/*user* {"eppn" approver}]
@@ -288,7 +289,8 @@
                                                                                  "fi" "Resurssi jolla on vanhentunut resurssilisenssi"})]
     (binding [context/*tempura* (locales/tempura-config)
               context/*user* {"eppn" applicant}]
-      (applications/submit-application (create-draft! item-with-expired-license wfid "applied when license was valid that has since expired" (time/minus (time/now) (time/days 2)))))))
+      (let [application (create-draft! item-with-expired-license wfid "applied when license was valid that has since expired" (time/minus (time/now) (time/days 2)))]
+        (applications/submit-application applicant application)))))
 
 (defn- create-application-before-new-resource-license! [wfid form users]
   (let [applicant (users :applicant1)
@@ -300,7 +302,8 @@
                                                                                 "fi" "Resurssi jolla on uusi resurssilisenssi"})]
     (binding [context/*tempura* (locales/tempura-config)
               context/*user* {"eppn" applicant}]
-      (applications/submit-application (create-draft! item-without-new-license wfid "applied before license was valid" (time/minus (time/now) (time/days 2)))))))
+      (let [application (create-draft! item-without-new-license wfid "applied before license was valid" (time/minus (time/now) (time/days 2)))]
+        (applications/submit-application applicant application)))))
 
 (defn create-test-data! []
   (db/add-api-key! {:apikey 42 :comment "test data"})

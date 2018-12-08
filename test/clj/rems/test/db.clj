@@ -166,7 +166,7 @@
                                     :actoruserid uid
                                     :round 0
                                     :state "approved"})
-        (applications/submit-application app-id)
+        (applications/submit-application uid app-id)
         (binding [context/*user* {"eppn" "approver"}]
           (let [form (applications/get-form-for app-id)]
             (is (= "applied" (get-in form [:application :state])))
@@ -195,8 +195,7 @@
       (is (= [{:id app :state "draft"}]
              (map #(select-keys % [:id :state])
                   (applications/get-user-applications uid))))
-      (binding [context/*user* {"eppn" uid}]
-        (applications/submit-application app))
+      (applications/submit-application uid app)
       (is (= [{:id app :state "applied"}]
              (map #(select-keys % [:id :state])
                   (applications/get-user-applications uid))))
@@ -233,7 +232,7 @@
         (is (= [item1 item2] (sort (map :id (:catalogue-items (first applications)))))
             "includes both catalogue items"))
 
-      (applications/submit-application app)
+      (applications/submit-application uid app)
       (is (= [{:id app :state "applied"}]
              (map #(select-keys % [:id :state])
                   (applications/get-user-applications uid))))
@@ -267,7 +266,7 @@
                   {:phase :result :text :t.phases/approved}]
                  (get-phases))))
 
-        (applications/submit-application app)
+        (applications/submit-application "applicant" app)
 
         (testing "after submission the application is in first approval round"
           (is (= [{:phase :apply :completed? true :text :t.phases/apply}
@@ -308,7 +307,7 @@
                   {:phase :result :text :t.phases/approved}]
                  (get-phases))))
 
-        (applications/submit-application app)
+        (applications/submit-application "applicant" app)
 
         (testing "after submission the application is in first approval round"
           (is (= [{:phase :apply :completed? true :text :t.phases/apply}
@@ -340,7 +339,7 @@
                   {:phase :result :text :t.phases/approved}]
                  (get-phases))))
 
-        (applications/submit-application app)
+        (applications/submit-application "applicant" app)
 
         (testing "after submission the application is in first approval round"
           (is (= [{:phase :apply :completed? true :text :t.phases/apply}
@@ -394,10 +393,9 @@
       (db/add-user! {:user uid :userattrs nil})
       (db/add-user! {:user uid2 :userattrs nil})
 
-      (applications/submit-application app1)
-      (applications/submit-application app2)
-
-      (applications/submit-application app4)
+      (applications/submit-application uid app1)
+      (applications/submit-application uid app2)
+      (applications/submit-application uid app4)
       (binding [context/*user* {"eppn" uid2}]
         (applications/approve-application app4 0 ""))
       (applications/approve-application app4 1 "")
@@ -483,10 +481,9 @@
       (db/add-user! {:user uid :userattrs nil})
       (db/add-user! {:user uid2 :userattrs nil})
 
-      (applications/submit-application app1)
-      (applications/submit-application app2)
-
-      (applications/submit-application app4)
+      (applications/submit-application uid app1)
+      (applications/submit-application uid app2)
+      (applications/submit-application uid app4)
       (binding [context/*user* {"eppn" uid2}]
         (applications/review-application app4 0 ""))
       (applications/review-application app4 1 "")
@@ -598,27 +595,27 @@
               "Should not be able to withdraw draft")
 
           (binding [context/*user* {"eppn" "event-test-approver"}]
-            (is (thrown? NotAuthorizedException (applications/submit-application app))
+            (is (thrown? NotAuthorizedException (applications/submit-application "event-test-approver" app))
                 "Should not be able to submit when not applicant"))
 
-          (applications/submit-application app)
+          (applications/submit-application uid app)
           (is (= {:curround 0 :state "applied"} (fetch app)))
 
           (applications/try-autoapprove-application app)
           (is (= {:curround 0 :state "applied"} (fetch app))
               "Autoapprove should do nothing")
 
-          (is (thrown? NotAuthorizedException (applications/submit-application app))
+          (is (thrown? NotAuthorizedException (applications/submit-application uid app)) ; TODO Wrong exception?
               "Should not be able to submit twice")
 
-          (is (thrown? NotAuthorizedException (applications/approve-application app 1 ""))
+          (is (thrown? NotAuthorizedException (applications/approve-application app 1 "")) ; TODO Wrong exception?
               "Should not be able to approve wrong round")
 
           (testing "withdrawing and resubmitting"
             (applications/withdraw-application app 0 "test withdraw")
             (is (= {:curround 0 :state "withdrawn"} (fetch app)))
 
-            (applications/submit-application app)
+            (applications/submit-application uid app)
             (is (= {:curround 0 :state "applied"} (fetch app))))
 
           (is (thrown? NotAuthorizedException (applications/review-application app 0 ""))
@@ -660,7 +657,7 @@
           (db/add-application-item! {:application app :item item})
 
           (is (= {:curround 0 :state "draft"} (fetch app)))
-          (applications/submit-application app)
+          (applications/submit-application uid app)
           (is (= {:curround 0 :state "applied"} (fetch app)))
           (applications/reject-application app 0 "comment")
           (is (= {:curround 0 :state "rejected"} (fetch app)))))
@@ -672,7 +669,7 @@
           (is (thrown? NotAuthorizedException (applications/return-application app 0 "comment"))
               "Should not be able to return before submitting")
 
-          (applications/submit-application app)
+          (applications/submit-application uid app)
 
           (binding [context/*user* {"eppn" "event-test-approver"}]
             (is (thrown? NotAuthorizedException (applications/return-application app 0 "comment"))
@@ -685,10 +682,10 @@
               "Should not be able to return twice")
 
           (binding [context/*user* {"eppn" "event-test-approver"}]
-            (is (thrown? NotAuthorizedException (applications/submit-application app))
+            (is (thrown? NotAuthorizedException (applications/submit-application "event-test-approver" app)) ; TODO wrong exception?
                 "Should not be able to resubmit when not approver"))
 
-          (applications/submit-application app)
+          (applications/submit-application uid app)
           (is (= {:curround 0 :state "applied"} (fetch app)))))
 
       (testing "review"
@@ -704,7 +701,7 @@
                 "Should not be able to review a draft"))
           (is (thrown? NotAuthorizedException (applications/review-application rev-app 0 ""))
               "Should not be able to review if not reviewer")
-          (applications/submit-application rev-app)
+          (applications/submit-application uid rev-app)
           (is (= {:curround 0 :state "applied"} (fetch rev-app)))
           (binding [context/*user* {"eppn" "event-test-reviewer"}]
             (is (thrown? NotAuthorizedException (applications/review-application rev-app 1 ""))
@@ -718,7 +715,7 @@
           (binding [context/*user* {"eppn" "event-test-reviewer"}]
             (is (thrown? NotAuthorizedException (applications/review-application rev-app 0 ""))
                 "Should not be able to review when returned"))
-          (applications/submit-application rev-app)
+          (applications/submit-application uid rev-app)
           (applications/withdraw-application rev-app 0 "test withdraw")
           (is (= {:curround 0 :state "withdrawn"} (fetch rev-app)))
           (binding [context/*user* {"eppn" "event-test-reviewer"}]
@@ -734,7 +731,7 @@
         (testing "an applied application as the applicant"
           (let [app (applications/create-new-draft wf uid)]
             (db/add-application-item! {:application app :item item})
-            (applications/submit-application app)
+            (applications/submit-application uid app)
             (testing "as approver fails"
               (binding [context/*user* {"eppn" "event-test-approver"}]
                 (is (thrown? NotAuthorizedException (applications/close-application app 0 "closing applied")))))
@@ -743,7 +740,7 @@
         (testing "an approved application as the applicant"
           (let [app (applications/create-new-draft wf uid)]
             (db/add-application-item! {:application app :item item})
-            (applications/submit-application app)
+            (applications/submit-application uid app)
             (applications/approve-application app 0 "c1")
             (binding [context/*user* {"eppn" "event-test-approver"}]
               (applications/approve-application app 1 "c2"))
@@ -752,7 +749,7 @@
         (testing "an approved application as the approver"
           (let [app (applications/create-new-draft wf uid)]
             (db/add-application-item! {:application app :item item})
-            (applications/submit-application app)
+            (applications/submit-application uid app)
             (applications/approve-application app 0 "c1")
             (binding [context/*user* {"eppn" "event-test-approver"}]
               (applications/approve-application app 1 "c2")
@@ -766,7 +763,7 @@
               auto-app (applications/create-new-draft auto-wf uid)]
           (db/add-application-item! {:application auto-app :item auto-item})
           (is (= (fetch auto-app) {:curround 0 :state "draft"}))
-          (applications/submit-application auto-app)
+          (applications/submit-application uid auto-app)
           (is (= (fetch auto-app) {:curround 1 :state "approved"}))
           (is (= (->> (applications/get-application-state auto-app)
                       :events
@@ -785,7 +782,7 @@
         (testing "3rd party review"
           (let [new-app (applications/create-new-draft new-wf uid)]
             (db/add-application-item! {:application new-app :item new-item})
-            (applications/submit-application new-app)
+            (applications/submit-application uid new-app)
             (is (= #{:applicant} (roles/get-roles "third-party-reviewer"))) ;; default role
             (is (= #{:applicant} (roles/get-roles "another-reviewer"))) ;; default role
             (applications/send-review-request new-app 0 "review?" "third-party-reviewer")
@@ -825,10 +822,10 @@
             (db/add-application-item! {:application app-to-approve :item new-item})
             (db/add-application-item! {:application app-to-reject :item new-item})
             (db/add-application-item! {:application app-to-return :item new-item})
-            (applications/submit-application app-to-close)
-            (applications/submit-application app-to-approve)
-            (applications/submit-application app-to-reject)
-            (applications/submit-application app-to-return)
+            (applications/submit-application uid app-to-close)
+            (applications/submit-application uid app-to-approve)
+            (applications/submit-application uid app-to-reject)
+            (applications/submit-application uid app-to-return)
             (applications/send-review-request app-to-close 0 "can you please review this?" "third-party-reviewer")
             (applications/send-review-request app-to-approve 0 "can you please review this?" "third-party-reviewer")
             (applications/send-review-request app-to-reject 0 "can you please review this?" "third-party-reviewer")
@@ -897,7 +894,7 @@
         (binding [context/*user* {"eppn" "other-user"}]
           (is (thrown? NotAuthorizedException
                        (applications/add-member app "david")))))
-      (applications/submit-application app)
+      (applications/submit-application uid app)
       (testing "Can't add members to submitted application"
         (is (thrown? NotAuthorizedException
                      (applications/add-member app "david"))))
@@ -920,9 +917,9 @@
     (db/add-application-item! {:application jill-app :item item1})
     (db/add-application-item! {:application jill-app :item item2})
     (binding [context/*user* {"eppn" "jack"}]
-      (applications/submit-application jack-app))
+      (applications/submit-application "jack" jack-app))
     (binding [context/*user* {"eppn" "jill"}]
-      (applications/submit-application jill-app))
+      (applications/submit-application "jill" jill-app))
     ;; entitlements should now be added via autoapprove
     (binding [context/*roles* #{:approver}]
       (let [lines (split-lines (entitlements/get-entitlements-for-export))]
@@ -968,7 +965,7 @@
             (db/add-application-item! {:application application :item item1})
             (db/add-application-item! {:application application :item item2})
             ;; should get autoapproved, which calls update-entitlements-for
-            (applications/submit-application application)
+            (applications/submit-application uid application)
             (testing "application that is approved should result in POST"
               (let [data (first (stub/recorded-requests server))
                     target (:path data)

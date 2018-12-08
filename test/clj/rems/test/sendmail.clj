@@ -94,7 +94,7 @@
           (testing "Applicant and reviewer should receive an email about the new application"
             (conjure/mocking [email/confirm-application-creation
                               email/review-request]
-                             (applications/submit-application app1)
+                             (applications/submit-application "test-user" app1)
                              (conjure/verify-called-once-with-args email/confirm-application-creation
                                                                    app1
                                                                    items1)
@@ -122,8 +122,8 @@
                                                                      items1
                                                                      "approved"))))
           (conjure/mocking [email/send-mail]
-                           (applications/submit-application app2)
-                           (applications/submit-application app3))
+                           (applications/submit-application "test-user" app2)
+                           (applications/submit-application "test-user" app3))
           (binding [context/*user* {"eppn" "approver"}]
             (testing "Applicant gets notified when application is rejected"
               (conjure/mocking [email/status-change-alert]
@@ -166,7 +166,7 @@
                                                                    "closed")))
           (testing "Applicant is notified of withdrawn application"
             (conjure/mocking [email/status-change-alert]
-                             (applications/submit-application app4)
+                             (applications/submit-application "test-user" app4)
                              (applications/withdraw-application app4 0 "")
                              (conjure/verify-called-once-with-args email/status-change-alert
                                                                    applicant-attrs
@@ -176,7 +176,7 @@
           (testing "3rd party reviewer is notified after a review request"
             (conjure/mocking [email/review-request
                               email/status-change-alert]
-                             (applications/submit-application app4)
+                             (applications/submit-application "test-user" app4)
                              (binding [context/*user* {"eppn" "approver"}]
                                (applications/send-review-request app4 0 "" uid2)
                                (applications/send-review-request app4 0 "" uid2))
@@ -190,7 +190,7 @@
                                (applications/perform-third-party-review app4 0 ""))))
           (testing "Actors are notified when their attention is no longer required"
             (conjure/mocking [email/action-not-needed]
-                             (applications/submit-application app5)
+                             (applications/submit-application "test-user" app5)
                              (binding [context/*user* {"eppn" "approver"}]
                                (applications/approve-application app5 0 ""))
                              ;; NB: reviewer is here also approver
@@ -208,7 +208,7 @@
                                                                    app5)))
           (testing "Multiple rounds with lazy actors"
             (conjure/mocking [email/action-not-needed]
-                             (applications/submit-application app6)
+                             (applications/submit-application "test-user" app6)
                              (binding [context/*user* {"eppn" "approver"}]
                                (applications/send-review-request app6 0 "" "outside-reviewer")
                                (applications/approve-application app6 0 ""))
