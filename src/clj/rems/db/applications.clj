@@ -39,13 +39,19 @@
 
 (defn handling-event? [app e]
   (or (contains? #{"approve" "autoapprove" "reject" "return" "review"
-                   :rems.workflow.dynamic/approved :rems.workflow.dynamic/rejected :rems.workflow.dynamic/returned} (:event e)) ;; definitely not by applicant
+                   :rems.workflow.dynamic/approved
+                   :rems.workflow.dynamic/rejected
+                   :rems.workflow.dynamic/returned}
+                 (:event e)) ;; definitely not by applicant
       (and (= :event/closed (:event e)) (not= (:applicantuserid app) (:actor e))) ;; not by applicant
       (and (= "close" (:event e)) (not= (:applicantuserid app) (:userid e))))) ;; not by applicant
 
 (defn handled? [app]
   (or (contains? #{"approved" "rejected" "returned"
-                   :rems.workflow.dynamic/returned :rems.workflow.dynamic/approved :rems.workflow.dynamic/rejected} (:state app)) ;; by approver action
+                   :rems.workflow.dynamic/returned
+                   :rems.workflow.dynamic/approved
+                   :rems.workflow.dynamic/rejected}
+                 (:state app)) ;; by approver action
       (and (contains? #{"closed" "withdrawn"
                         :rems.workflow.dynamic/closed} (:state app))
            (some (partial handling-event? app) (concat (:events app) (:dynamic-events app))))))
