@@ -35,10 +35,9 @@
                                    :title "workflow title"
                                    :type :rounds
                                    :rounds [{:type :review
-                                             :actors [{:userid "alice"}
-                                                      {:userid "bob"}]}
+                                             :actors ["alice" "bob"]}
                                             {:type :approval
-                                             :actors [{:userid "carl"}]}]})
+                                             :actors ["carl"]}]})
                        (authenticate "42" "owner")
                        app)
           body (read-body response)
@@ -91,8 +90,7 @@
                        (json-body {:organization "abc"
                                    :title "dynamic workflow"
                                    :type :dynamic
-                                   :handlers [{:userid "bob"}
-                                              {:userid "carl"}]})
+                                   :handlers ["bob" "carl"]})
                        (authenticate "42" "owner")
                        app)
           body (read-body response)
@@ -110,8 +108,7 @@
                   :organization "abc"
                   :title "dynamic workflow"
                   :workflow {:type "workflow/dynamic"
-                             :handlers [{:userid "bob"}
-                                        {:userid "carl"}]}}
+                             :handlers ["bob" "carl"]}}
                  (select-keys workflow [:id :organization :title :workflow]))))))))
 
 (deftest workflows-api-filtering-test
@@ -144,7 +141,7 @@
                                      :title "workflow title"
                                      :type :rounds
                                      :rounds [{:type :approval
-                                               :actors [{:userid "bob"}]}]})
+                                               :actors ["bob"]}]})
                          app)]
         (is (response-is-forbidden? response))
         (is (= "<h1>Invalid anti-forgery token</h1>" (read-body response))))))
@@ -162,7 +159,7 @@
                                      :title "workflow title"
                                      :type :rounds
                                      :rounds [{:type :approval
-                                               :actors [{:userid "bob"}]}]})
+                                               :actors ["bob"]}]})
                          (authenticate "42" "alice")
                          app)]
         (is (response-is-unauthorized? response))
