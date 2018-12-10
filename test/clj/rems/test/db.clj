@@ -61,25 +61,25 @@
   (binding [context/*user* {"eppn" "test-user"}
             context/*lang* :en]
     (let [uid (get-user-id)
-          form (db/create-form! {:organization "abc" :title "internal-title" :user uid})
-          wf (db/create-workflow! {:organization "abc" :modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 0})
-          license (db/create-license! {:modifieruserid uid :owneruserid uid :title "non-localized license" :type "link" :textcontent "http://test.org"})
-          _ (db/create-license-localization! {:licid (:id license) :langcode "fi" :title "Testi lisenssi" :textcontent "http://testi.fi"})
-          _ (db/create-license-localization! {:licid (:id license) :langcode "en" :title "Test license" :textcontent "http://test.com"})
-          _ (db/create-workflow-license! {:wfid (:id wf) :licid (:id license) :round 0})
-          _ (db/set-workflow-license-validity! {:licid (:id license) :start (time/minus (time/now) (time/years 1)) :end nil})
-          item (db/create-catalogue-item! {:title "item" :form (:id form) :resid nil :wfid (:id wf)})
+          form-id (:id (db/create-form! {:organization "abc" :title "internal-title" :user uid}))
+          wf-id (:id (db/create-workflow! {:organization "abc" :modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 0}))
+          license-id (:id (db/create-license! {:modifieruserid uid :owneruserid uid :title "non-localized license" :type "link" :textcontent "http://test.org"}))
+          _ (db/create-license-localization! {:licid license-id :langcode "fi" :title "Testi lisenssi" :textcontent "http://testi.fi"})
+          _ (db/create-license-localization! {:licid license-id :langcode "en" :title "Test license" :textcontent "http://test.com"})
+          _ (db/create-workflow-license! {:wfid wf-id :licid license-id :round 0})
+          _ (db/set-workflow-license-validity! {:licid license-id :start (time/minus (time/now) (time/years 1)) :end nil})
+          item-id (:id (db/create-catalogue-item! {:title "item" :form form-id :resid nil :wfid wf-id}))
           item-c (db/create-form-item!
                   {:type "text" :user uid :value 0})
           item-a (db/create-form-item!
                   {:type "text" :user uid :value 0})
           item-b (db/create-form-item!
                   {:type "text" :user uid :value 0})
-          app-id (applications/create-new-draft (:id wf) uid)]
-      (db/add-application-item! {:application app-id :item (:id item)})
-      (db/link-form-item! {:form (:id form) :itemorder 2 :item (:id item-b) :user uid :optional false})
-      (db/link-form-item! {:form (:id form) :itemorder 1 :item (:id item-a) :user uid :optional false})
-      (db/link-form-item! {:form (:id form) :itemorder 3 :item (:id item-c) :user uid :optional false})
+          app-id (applications/create-new-draft wf-id uid)]
+      (db/add-application-item! {:application app-id :item item-id})
+      (db/link-form-item! {:form form-id :itemorder 2 :item (:id item-b) :user uid :optional false})
+      (db/link-form-item! {:form form-id :itemorder 1 :item (:id item-a) :user uid :optional false})
+      (db/link-form-item! {:form form-id :itemorder 3 :item (:id item-c) :user uid :optional false})
       (db/localize-form-item! {:item (:id item-a) :langcode "fi" :title "A-fi" :inputprompt "prompt"})
       (db/localize-form-item! {:item (:id item-b) :langcode "fi" :title "B-fi" :inputprompt "prompt"})
       (db/localize-form-item! {:item (:id item-c) :langcode "fi" :title "C-fi" :inputprompt "prompt"})
@@ -88,11 +88,11 @@
       (db/localize-form-item! {:item (:id item-c) :langcode "en" :title "C-en" :inputprompt "prompt"})
 
       (db/add-user! {:user uid :userattrs nil})
-      (actors/add-approver! (:id wf) uid 0)
-      (db/create-catalogue-item-localization! {:id (:id item) :langcode "en" :title "item-en"})
-      (db/create-catalogue-item-localization! {:id (:id item) :langcode "fi" :title "item-fi"})
+      (actors/add-approver! wf-id uid 0)
+      (db/create-catalogue-item-localization! {:id item-id :langcode "en" :title "item-en"})
+      (db/create-catalogue-item-localization! {:id item-id :langcode "fi" :title "item-fi"})
 
-      (is (:id item) "sanity check")
+      (is item-id "sanity check")
 
       (testing "get form for catalogue item"
         (with-redefs [catalogue/cached
@@ -112,12 +112,12 @@
       (testing "get partially filled form"
         (is app-id "sanity check")
         (db/save-field-value! {:application app-id
-                               :form (:id form)
+                               :form form-id
                                :item (:id item-b)
                                :user uid
                                :value "B"})
         (db/save-license-approval! {:catappid app-id
-                                    :licid (:id license)
+                                    :licid license-id
                                     :actoruserid uid
                                     :round 0
                                     :state "approved"})
@@ -129,29 +129,29 @@
 
         (testing "license field"
           (db/save-license-approval! {:catappid app-id
-                                      :licid (:id license)
+                                      :licid license-id
                                       :actoruserid uid
                                       :round 0
                                       :state "approved"})
           (is (= 1 (count (db/get-application-license-approval {:catappid app-id
-                                                                :licid (:id license)
+                                                                :licid license-id
                                                                 :actoruserid uid})))
               "saving a license approval twice should only create one row")
           (db/delete-license-approval! {:catappid app-id
-                                        :licid (:id license)
+                                        :licid license-id
                                         :actoruserid uid})
           (is (empty? (db/get-application-license-approval {:catappid app-id
-                                                            :licid (:id license)
+                                                            :licid license-id
                                                             :actoruserid uid}))
               "after deletion there should not be saved approvals")
           (let [f (applications/get-form-for app-id)]
             (is (= [false] (map :approved (:licenses f))))))
         (testing "reset field value"
           (db/clear-field-value! {:application app-id
-                                  :form (:id form)
+                                  :form form-id
                                   :item (:id item-b)})
           (db/save-field-value! {:application app-id
-                                 :form (:id form)
+                                 :form form-id
                                  :item (:id item-b)
                                  :user uid
                                  :value "X"})
@@ -159,9 +159,9 @@
             (is (= ["" "X" ""] (map :value (:items f)))))))
 
       (testing "get submitted form as approver"
-        (actors/add-approver! (:id wf) "approver" 0)
+        (actors/add-approver! wf-id "approver" 0)
         (db/save-license-approval! {:catappid app-id
-                                    :licid (:id license)
+                                    :licid license-id
                                     :actoruserid uid
                                     :round 0
                                     :state "approved"})
