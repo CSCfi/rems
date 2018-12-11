@@ -401,6 +401,7 @@
   [msgs language]
   (into [:ul]
         (for [m msgs]
+          ^{:key (str "message_list_item_" m)}
           [:li (text-format (:key m) (get-in m [:title language]))])))
 
 (defn- pdf-button [id]
@@ -416,7 +417,9 @@
     (rf/dispatch [::set-field id (.. event -target -value)])))
 
 (defn- id-to-name [id]
-  (str "field" id))
+  (if-not id
+    (str "id_missing")
+    (str "field" id)))
 
 (defn- set-attachment
   [id description]
@@ -643,6 +646,7 @@
       [:div
        (into [:div]
              (for [item (:items form)]
+               ^{:key (id-to-name (:id item))}
                [field (assoc (localize-item item)
                              :validation (get-in validation-by-field-id [:item (:id item)])
                              :readonly readonly?
@@ -656,6 +660,7 @@
           [:h4 (text :t.form/licenses)]
           (into [:div#licenses]
                 (for [license form-licenses]
+                  ^{:key (id-to-name (:id license))}
                   [field (assoc (localize-item license)
                                 :validation (get-in validation-by-field-id [:license (:id license)])
                                 :readonly readonly?
@@ -690,6 +695,7 @@
               [:th (text :t.form/date)]]]
             (into [:tbody]
                   (for [e (sort-by :time > events)]
+                    ^{:key (str "event_row_" (:userid e) "_"(:event e) "_" (:comment e) "_" (:time e))}
                     [:tr
                      (when has-users?
                        [:td (:userid e)])
@@ -731,6 +737,7 @@
               [info-field (text :t.applicant-info/email) (get user-attributes "mail")]]]
     :collapse (into [:form]
                     (for [[k v] (dissoc user-attributes "commonName" "mail")]
+                      ^{:key (str k "_" v)}
                       [info-field k v]))}])
 
 
@@ -919,17 +926,17 @@
 (defn- dynamic-actions [app]
   (distinct
    (mapcat #:rems.workflow.dynamic
-           {:submit [[save-button]
-                     [submit-button]]
+           {:submit [^{:key "save_action_button"} [save-button]
+                     ^{:key "submit_action_button"} [submit-button]]
             :add-member nil ; TODO implement
-            :return [[return-action-button]]
-            :request-decision [[request-decision-action-button]]
-            :decide [[decide-action-button]]
-            :request-comment [[request-comment-action-button]]
-            :comment [[comment-action-button]]
-            :approve [[approve-reject-action-button]]
-            :reject [[approve-reject-action-button]]
-            :close [[close-action-button]]}
+            :return [^{:key "return_action_button"} [return-action-button]]
+            :request-decision [^{:key "request-decision_action_button"} [request-decision-action-button]]
+            :decide [^{:key "decide_action_button"} [decide-action-button]]
+            :request-comment [^{:key "request-comment_action_button"} [request-comment-action-button]]
+            :comment [^{:key "comment_action_button"} [comment-action-button]]
+            :approve [^{:key "approve_action_button"} [approve-reject-action-button]]
+            :reject [^{:key "reject_action_button"} [approve-reject-action-button]]
+            :close [^{:key "close_action_button"} [close-action-button]]}
            (:possible-commands app))))
 
 (defn- static-actions [app]
@@ -937,21 +944,32 @@
         editable? (editable-state? state)]
     (concat (when (:can-close? app)
               [(if (:is-applicant? app)
+                 ^{:key "applicant-close_action_button"}
                  [applicant-close-action-button]
+                 ^{:key "approver-close_action_button"}
                  [approver-close-action-button])])
             (when (:can-withdraw? app)
-              [[withdraw-action-button]])
+              [^{:key "withdraw_action_button"}
+              [withdraw-action-button]])
             (when (:can-approve? app)
-              [[review-request-action-button]
+              [^{:key "review_request_action_button"}
+               [review-request-action-button]
+               ^{:key "static_return_action_button"}
                [static-return-action-button]
+               ^{:key "reject_action_button"}
                [reject-action-button]
+               ^{:key "approve_action_button"}
                [approve-action-button]])
             (when (= :normal (:review-type app))
-              [[review-action-button]])
+              [^{:key "review_action_button"}
+               [review-action-button]])
             (when (= :third-party (:review-type app))
-              [[third-party-review-action-button]])
+              [^{:key "third-party-review_action_button"}
+               [third-party-review-action-button]])
             (when (and (:is-applicant? app) editable?)
-              [[save-button]
+              [^{:key "save_action_button"}
+               [save-button]
+               ^{:key "submit_action_button"}
                [submit-button]]))))
 
 (defn- actions-form [app]
@@ -989,6 +1007,7 @@
        (text :t.form/alert-disabled-items)
        (into [:ul]
              (for [item items]
+               ^{:key (str "disabled_item_" item)}
                [:li (get-catalogue-item-title item language)]))])))
 
 (defn- applied-resources [catalogue-items]
@@ -999,7 +1018,7 @@
       :always [:div.form-items.form-group
                (into [:ul]
                      (for [item catalogue-items]
-                       ^{:key (:id item)}
+                       ^{:key (id-to-name (:id item))}
                        [:li (get-catalogue-item-title item language)]))]}]))
 
 (defn- dynamic-event->event [{:keys [time actor event comment decision]}]
@@ -1065,181 +1084,183 @@
 ;;;; Guide
 
 (defn guide []
-  [:div
-   (component-info info-field)
-   (example "info-field with data"
-            [info-field "Name" "Bob Tester"])
-   (component-info applicant-info)
-   (example "applicant-info"
-            [applicant-info "info1" {"eppn" "developer@uu.id"
-                                     "mail" "developer@uu.id"
-                                     "commonName" "Deve Loper"
-                                     "organization" "Testers"
-                                     "address" "Testikatu 1, 00100 Helsinki"}])
-   (example "applicant-info with name missing"
-            [applicant-info "info2" {"eppn" "developer@uu.id"
-                                     "mail" "developer@uu.id"
-                                     "organization" "Testers"
-                                     "address" "Testikatu 1, 00100 Helsinki"}])
+  (let [next-id (atom 0)
+        next-id! #(str "auto_id_" (swap! next-id inc))]
+    [:div
+    (component-info info-field)
+    (example "info-field with data"
+             [info-field "Name" "Bob Tester"])
+    (component-info applicant-info)
+    (example "applicant-info"
+             [applicant-info "info1" {"eppn" "developer@uu.id"
+                                      "mail" "developer@uu.id"
+                                      "commonName" "Deve Loper"
+                                      "organization" "Testers"
+                                      "address" "Testikatu 1, 00100 Helsinki"}])
+    (example "applicant-info with name missing"
+             [applicant-info "info2" {"eppn" "developer@uu.id"
+                                      "mail" "developer@uu.id"
+                                      "organization" "Testers"
+                                      "address" "Testikatu 1, 00100 Helsinki"}])
 
-   (component-info disabled-items-warning)
-   (example "no disabled items"
-            [disabled-items-warning []])
-   (example "two disabled items"
-            [disabled-items-warning
-             [{:state "disabled" :localizations {:en {:title "English title 1"}
-                                                 :fi {:title "Otsikko suomeksi 1"}}}
-              {:state "disabled" :localizations {:en {:title "English title 2"}
-                                                 :fi {:title "Otsikko suomeksi 2"}}}
-              {:state "enabled" :localizations {:en {:title "English title 3"}
-                                                :fi {:title "Otsikko suomeksi 3"}}}]])
+    (component-info disabled-items-warning)
+    (example "no disabled items"
+             [disabled-items-warning []])
+    (example "two disabled items"
+             [disabled-items-warning
+              [{:state "disabled" :localizations {:en {:title "English title 1"}
+                                                  :fi {:title "Otsikko suomeksi 1"}}}
+               {:state "disabled" :localizations {:en {:title "English title 2"}
+                                                  :fi {:title "Otsikko suomeksi 2"}}}
+               {:state "enabled" :localizations {:en {:title "English title 3"}
+                                                 :fi {:title "Otsikko suomeksi 3"}}}]])
 
-   (component-info field)
-   (example "field of type \"text\""
-            [:form
-             [field {:type "text" :title "Title" :inputprompt "prompt"}]])
-   (example "field of type \"text\" with validation error"
-            [:form
-             [field {:type "text" :title "Title" :inputprompt "prompt"
-                     :validation {:key :t.form.validation.required}}]])
-   (example "non-editable field of type \"text\" without text"
-            [:form
-             [field {:type "text" :title "Title" :inputprompt "prompt" :readonly true}]])
-   (example "non-editable field of type \"text\" with text"
-            [:form
-             [field {:type "text" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-short}]])
-   (example "field of type \"texta\""
-            [:form
-             [field {:type "texta" :title "Title" :inputprompt "prompt"}]])
-   (example "field of type \"texta\" with validation error"
-            [:form
-             [field {:type "texta" :title "Title" :inputprompt "prompt"
-                     :validation {:key :t.form.validation.required}}]])
-   (example "non-editable field of type \"texta\""
-            [:form
-             [field {:type "texta" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-paragraphs}]])
-   (let [previous-lipsum-paragraphs (-> lipsum-paragraphs
-                                        (str/replace "ipsum primis in faucibus orci luctus" "eu mattis purus mi eu turpis")
-                                        (str/replace "per inceptos himenaeos" "justo erat hendrerit magna"))]
-     [:div
-      (example "editable field of type \"texta\" with previous value, diff hidden"
-               [:form
-                [field {:type "texta" :title "Title" :inputprompt "prompt" :value lipsum-paragraphs :previous-value previous-lipsum-paragraphs}]])
-      (example "editable field of type \"texta\" with previous value, diff shown"
-               [:form
-                [field {:type "texta" :title "Title" :inputprompt "prompt" :value lipsum-paragraphs :previous-value previous-lipsum-paragraphs :diff true}]])
-      (example "non-editable field of type \"texta\" with previous value, diff hidden"
-               [:form
-                [field {:type "texta" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-paragraphs :previous-value previous-lipsum-paragraphs}]])
-      (example "non-editable field of type \"texta\" with previous value, diff shown"
-               [:form
-                [field {:type "texta" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-paragraphs :previous-value previous-lipsum-paragraphs :diff true}]])
-      (example "non-editable field of type \"texta\" with previous value equal to current value"
-               [:form
-                [field {:type "texta" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-paragraphs :previous-value lipsum-paragraphs}]])])
-   (example "field of type \"attachment\""
-            [:form
-             [field {:type "attachment" :title "Title"}]])
-   (example "field of type \"attachment\", file uploaded"
-            [:form
-             [field {:type "attachment" :title "Title" :value "test.txt"}]])
-   (example "non-editable field of type \"attachment\""
-            [:form
-             [field {:type "attachment" :title "Title" :readonly true}]])
-   (example "non-editable field of type \"attachment\", file uploaded"
-            [:form
-             [field {:type "attachment" :title "Title" :readonly true :value "test.txt"}]])
-   (example "field of type \"date\""
-            [:form
-             [field {:type "date" :title "Title"}]])
-   (example "field of type \"date\" with value"
-            [:form
-             [field {:type "date" :title "Title" :value "2000-12-31"}]])
-   (example "non-editable field of type \"date\""
-            [:form
-             [field {:type "date" :title "Title" :readonly true :value ""}]])
-   (example "non-editable field of type \"date\" with value"
-            [:form
-             [field {:type "date" :title "Title" :readonly true :value "2000-12-31"}]])
-   (example "optional field"
-            [:form
-             [field {:type "texta" :optional "true" :title "Title" :inputprompt "prompt"}]])
-   (example "field of type \"label\""
-            [:form
-             [field {:type "label" :title "Lorem ipsum dolor sit amet"}]])
-   (example "field of type \"description\""
-            [:form
-             [field {:type "description" :title "Title" :inputprompt "prompt"}]])
-   (example "link license"
-            [:form
-             [field {:type "license" :title "Link to license" :licensetype "link" :textcontent "/guide"}]])
-   (example "link license with validation error"
-            [:form
-             [field {:type "license" :title "Link to license" :licensetype "link" :textcontent "/guide"
-                     :validation {:field {:title "Link to license"} :key :t.form.validation.required}}]])
-   (example "text license"
-            [:form
-             [field {:type "license" :id 1 :title "A Text License" :licensetype "text"
-                     :textcontent lipsum-paragraphs}]])
-   (example "text license with validation error"
-            [:form
-             [field {:type "license" :id 1 :title "A Text License" :licensetype "text" :textcontent lipsum-paragraphs
-                     :validation {:field {:title "A Text License"} :key :t.form.validation.required}}]])
+    (component-info field)
+    (example "field of type \"text\""
+             [:form
+              [field {:id (next-id!) :type "text" :title "Title" :inputprompt "prompt"}]])
+    (example "field of type \"text\" with validation error"
+             [:form
+              [field {:id (next-id!) :type "text" :title "Title" :inputprompt "prompt"
+                      :validation {:key :t.form.validation.required}}]])
+    (example "non-editable field of type \"text\" without text"
+             [:form
+              [field {:id (next-id!) :type "text" :title "Title" :inputprompt "prompt" :readonly true}]])
+    (example "non-editable field of type \"text\" with text"
+             [:form
+              [field {:id (next-id!) :type "text" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-short}]])
+    (example "field of type \"texta\""
+             [:form
+              [field {:id (next-id!) :type "texta" :title "Title" :inputprompt "prompt"}]])
+    (example "field of type \"texta\" with validation error"
+             [:form
+              [field {:id (next-id!) :type "texta" :title "Title" :inputprompt "prompt"
+                      :validation {:key :t.form.validation.required}}]])
+    (example "non-editable field of type \"texta\""
+             [:form
+              [field {:type "texta" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-paragraphs}]])
+    (let [previous-lipsum-paragraphs (-> lipsum-paragraphs
+                                         (str/replace "ipsum primis in faucibus orci luctus" "eu mattis purus mi eu turpis")
+                                         (str/replace "per inceptos himenaeos" "justo erat hendrerit magna"))]
+      [:div
+       (example "editable field of type \"texta\" with previous value, diff hidden"
+                [:form
+                 [field {:id (next-id!) :type "texta" :title "Title" :inputprompt "prompt" :value lipsum-paragraphs :previous-value previous-lipsum-paragraphs}]])
+       (example "editable field of type \"texta\" with previous value, diff shown"
+                [:form
+                 [field {:id (next-id!) :type "texta" :title "Title" :inputprompt "prompt" :value lipsum-paragraphs :previous-value previous-lipsum-paragraphs :diff true}]])
+       (example "non-editable field of type \"texta\" with previous value, diff hidden"
+                [:form
+                 [field {:id (next-id!) :type "texta" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-paragraphs :previous-value previous-lipsum-paragraphs}]])
+       (example "non-editable field of type \"texta\" with previous value, diff shown"
+                [:form
+                 [field {:id (next-id!) :type "texta" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-paragraphs :previous-value previous-lipsum-paragraphs :diff true}]])
+       (example "non-editable field of type \"texta\" with previous value equal to current value"
+                [:form
+                 [field {:id (next-id!) :type "texta" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-paragraphs :previous-value lipsum-paragraphs}]])])
+    (example "field of type \"attachment\""
+             [:form
+              [field {:id (next-id!) :type "attachment" :title "Title"}]])
+    (example "field of type \"attachment\", file uploaded"
+             [:form
+              [field {:id (next-id!) :type "attachment" :title "Title" :value "test.txt"}]])
+    (example "non-editable field of type \"attachment\""
+             [:form
+              [field {:id (next-id!) :type "attachment" :title "Title" :readonly true}]])
+    (example "non-editable field of type \"attachment\", file uploaded"
+             [:form
+              [field {:id (next-id!) :type "attachment" :title "Title" :readonly true :value "test.txt"}]])
+    (example "field of type \"date\""
+             [:form
+              [field {:id (next-id!) :type "date" :title "Title"}]])
+    (example "field of type \"date\" with value"
+             [:form
+              [field {:id (next-id!) :type "date" :title "Title" :value "2000-12-31"}]])
+    (example "non-editable field of type \"date\""
+             [:form
+              [field {:id (next-id!) :type "date" :title "Title" :readonly true :value ""}]])
+    (example "non-editable field of type \"date\" with value"
+             [:form
+              [field {:id (next-id!) :type "date" :title "Title" :readonly true :value "2000-12-31"}]])
+    (example "optional field"
+             [:form
+              [field {:id (next-id!) :type "texta" :optional "true" :title "Title" :inputprompt "prompt"}]])
+    (example "field of type \"label\""
+             [:form
+              [field {:id (next-id!) :type "label" :title "Lorem ipsum dolor sit amet"}]])
+    (example "field of type \"description\""
+             [:form
+              [field {:id (next-id!) :type "description" :title "Title" :inputprompt "prompt"}]])
+    (example "link license"
+             [:form
+              [field {:id (next-id!) :type "license" :title "Link to license" :licensetype "link" :textcontent "/guide"}]])
+    (example "link license with validation error"
+             [:form
+              [field {:id (next-id!) :type "license" :title "Link to license" :licensetype "link" :textcontent "/guide"
+                      :validation {:field {:title "Link to license"} :key :t.form.validation.required}}]])
+    (example "text license"
+             [:form
+              [field {:id (next-id!) :type "license" :title "A Text License" :licensetype "text"
+                      :textcontent lipsum-paragraphs}]])
+    (example "text license with validation error"
+             [:form
+              [field {:id (next-id!) :type "license" :title "A Text License" :licensetype "text" :textcontent lipsum-paragraphs
+                      :validation {:field {:title "A Text License"} :key :t.form.validation.required}}]])
 
-   (component-info render-application)
-   (example "application, partially filled"
-            [render-application
-             {:title "Form title"
-              :application {:id 17 :state "draft"
-                            :can-approve? false
-                            :can-close? true
-                            :review-type nil}
-              :catalogue-items [{:title "An applied item"}]
-              :items [{:id 1 :type "text" :title "Field 1" :inputprompt "prompt 1"}
-                      {:id 2 :type "label" :title "Please input your wishes below."}
-                      {:id 3 :type "texta" :title "Field 2" :optional true :inputprompt "prompt 2"}
-                      {:id 4 :type "unsupported" :title "Field 3" :inputprompt "prompt 3"}
-                      {:id 5 :type "date" :title "Field 4"}]
-              :licenses [{:id 4 :type "license" :title "" :textcontent "" :licensetype "text"
-                          :localizations {:en {:title "A Text License" :textcontent lipsum}}}
-                         {:id 5 :type "license" :licensetype "link" :title "" :textcontent ""
-                          :localizations {:en {:title "Link to license" :textcontent "/guide"}}}]}
-             {:items {1 "abc"}
-              :licenses {4 false 5 true}}
-             :en])
-   (example "application, applied"
-            [render-application
-             {:title "Form title"
-              :application {:id 17 :state "applied"
-                            :can-approve? true
-                            :can-close? false
-                            :review-type nil}
-              :catalogue-items [{:title "An applied item"}]
-              :items [{:id 1 :type "text" :title "Field 1" :inputprompt "prompt 1"}]
-              :licenses [{:id 2 :type "license" :title "" :licensetype "text"
-                          :textcontent ""
-                          :localizations {:en {:title "A Text License" :textcontent lipsum}}}]}
-             {:items {1 "abc"}
-              :licenses {2 true}}
-             :en])
-   (example "application, approved"
-            [render-application
-             {:title "Form title"
-              :catalogue-items [{:title "An applied item"}]
-              :applicant-attributes {:eppn "eppn" :mail "email@example.com" :additional "additional field"}
-              :application {:id 17 :state "approved"
-                            :can-approve? false
-                            :can-close? true
-                            :review-type nil
-                            :events [{:event "approve" :comment "Looking good, approved!"}]}
-              :items [{:id 1 :type "text" :title "Field 1" :inputprompt "prompt 1"}
-                      {:id 2 :type "label" :title "Please input your wishes below."}
-                      {:id 3 :type "texta" :title "Field 2" :optional true :inputprompt "prompt 2"}
-                      {:id 4 :type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]
-              :licenses [{:id 5 :type "license" :title "A Text License" :licensetype "text"
-                          :textcontent lipsum}
-                         {:id 6 :type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
-                          :approved true}]
-              :comments [{:comment "a comment"}]}
-             {:items {1 "abc" 3 "def"}
-              :licenses {5 true 6 true}}])])
+    (component-info render-application)
+    (example "application, partially filled"
+             [render-application
+              {:title "Form title"
+               :application {:id 17 :state "draft"
+                             :can-approve? false
+                             :can-close? true
+                             :review-type nil}
+               :catalogue-items [{:title "An applied item"}]
+               :items [{:id 1 :type "text" :title "Field 1" :inputprompt "prompt 1"}
+                       {:id 2 :type "label" :title "Please input your wishes below."}
+                       {:id 3 :type "texta" :title "Field 2" :optional true :inputprompt "prompt 2"}
+                       {:id 4 :type "unsupported" :title "Field 3" :inputprompt "prompt 3"}
+                       {:id 5 :type "date" :title "Field 4"}]
+               :licenses [{:id 4 :type "license" :title "" :textcontent "" :licensetype "text"
+                           :localizations {:en {:title "A Text License" :textcontent lipsum}}}
+                          {:id 5 :type "license" :licensetype "link" :title "" :textcontent ""
+                           :localizations {:en {:title "Link to license" :textcontent "/guide"}}}]}
+              {:items {1 "abc"}
+               :licenses {4 false 5 true}}
+              :en])
+    (example "application, applied"
+             [render-application
+              {:title "Form title"
+               :application {:id 17 :state "applied"
+                             :can-approve? true
+                             :can-close? false
+                             :review-type nil}
+               :catalogue-items [{:title "An applied item"}]
+               :items [{:id 1 :type "text" :title "Field 1" :inputprompt "prompt 1"}]
+               :licenses [{:id 2 :type "license" :title "" :licensetype "text"
+                           :textcontent ""
+                           :localizations {:en {:title "A Text License" :textcontent lipsum}}}]}
+              {:items {1 "abc"}
+               :licenses {2 true}}
+              :en])
+    (example "application, approved"
+             [render-application
+              {:title "Form title"
+               :catalogue-items [{:title "An applied item"}]
+               :applicant-attributes {:eppn "eppn" :mail "email@example.com" :additional "additional field"}
+               :application {:id 17 :state "approved"
+                             :can-approve? false
+                             :can-close? true
+                             :review-type nil
+                             :events [{:event "approve" :comment "Looking good, approved!"}]}
+               :items [{:id 1 :type "text" :title "Field 1" :inputprompt "prompt 1"}
+                       {:id 2 :type "label" :title "Please input your wishes below."}
+                       {:id 3 :type "texta" :title "Field 2" :optional true :inputprompt "prompt 2"}
+                       {:id 4 :type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]
+               :licenses [{:id 5 :type "license" :title "A Text License" :licensetype "text"
+                           :textcontent lipsum}
+                          {:id 6 :type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
+                           :approved true}]
+               :comments [{:comment "a comment"}]}
+              {:items {1 "abc" 3 "def"}
+               :licenses {5 true 6 true}}])]))
