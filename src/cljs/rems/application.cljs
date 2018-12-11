@@ -93,7 +93,7 @@
           ::application application
           ::edit-application {:items (into {} (for [item (:items application)]
                                                 [(:id item) {:value (:value item)}]))
-                              :licenses (into {} (map (juxt :id :approver) (:licenses application)))})))
+                              :licenses (into {} (map (juxt :id :approved) (:licenses application)))})))
 
 (rf/reg-event-fx
  ::enter-new-application-page
