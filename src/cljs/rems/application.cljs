@@ -571,7 +571,7 @@
                               :name (str "license" id)
                               :disabled readonly
                               :class (when validation "is-invalid")
-                              :checked approved
+                              :checked (boolean approved)
                               :on-change (set-license-approval id)}]
     [:span.form-check-label content]]
    [field-validation-message validation title]])
