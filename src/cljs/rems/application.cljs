@@ -980,7 +980,9 @@
       [collapsible/component
        {:id "actions"
         :title (text :t.form/actions)
-        :always (into [:div [:div.commands actions]] forms)}])))
+        :always (into [:div (into [:div.commands]
+                                  actions)]
+                      forms)}])))
 
 (defn- disabled-items-warning [catalogue-items]
   (let [language @(rf/subscribe [:language])]
