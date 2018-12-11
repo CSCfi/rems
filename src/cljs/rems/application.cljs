@@ -664,7 +664,10 @@
                   [field (assoc (localize-item license)
                                 :validation (get-in validation-by-field-id [:license (:id license)])
                                 :readonly readonly?
-                                :approved (get licenses (:id license)))]))])]}]))
+                                :approved (let [licenses (if-not readonly?
+                                                           licenses
+                                                           (group-by :id (:licenses form)))]
+                                            (get licenses (:id license))))]))])]}]))
 
 (defn- info-field
   "A component that shows a readonly field with title and value.
