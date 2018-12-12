@@ -43,7 +43,7 @@
   [action-form-view "return"
    (text :t.actions/return)
    nil
-   [[button-wrapper {:id "return"
+   [[button-wrapper {:id "do-return"
                      :text (text :t.actions/return)
                      :on-click on-send}]]
    [:div [:div.form-group
@@ -61,7 +61,7 @@
         description (text :t.actions/return)
         state (r/atom nil)
         on-pending #(reset! state {:status :pending})
-        on-success #(reset! state {:status :saved })
+        on-success #(reset! state {:status :saved})
         on-error #(reset! state {:status :failed :error %})
         on-modal-close #(do (reset! state nil)
                             (on-finished))]

@@ -45,11 +45,11 @@
   [action-form-view "decide"
    (text :t.actions/decide)
    nil
-   [[button-wrapper {:id "decide"
+   [[button-wrapper {:id "do-decide-reject"
                      :text (text :t.actions/reject)
                      :class "btn-danger"
                      :on-click #(on-send :rejected)}]
-    [button-wrapper {:id "decide"
+    [button-wrapper {:id "do-decide-approve"
                      :text (text :t.actions/approve)
                      :class "btn-success"
                      :on-click #(on-send :approved)}]]
@@ -68,7 +68,7 @@
         description (text :t.actions/decide)
         state (r/atom nil)
         on-pending #(reset! state {:status :pending})
-        on-success #(reset! state {:status :saved })
+        on-success #(reset! state {:status :saved})
         on-error #(reset! state {:status :failed :error %})
         on-modal-close #(do (reset! state nil)
                             (on-finished))]

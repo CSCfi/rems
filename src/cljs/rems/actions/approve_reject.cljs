@@ -61,11 +61,11 @@
   [action-form-view "approve-reject"
    (text :t.actions/comment)
    nil
-   [[button-wrapper {:id "reject"
+   [[button-wrapper {:id "do-reject"
                      :text (text :t.actions/reject)
                      :class "btn-danger"
                      :on-click on-reject}]
-    [button-wrapper {:id "approve"
+    [button-wrapper {:id "do-approve"
                      :text (text :t.actions/approve)
                      :class "btn-success"
                      :on-click on-approve}]]
@@ -84,7 +84,7 @@
         description (text :t.actions/comment)
         state (r/atom nil)
         on-pending #(reset! state {:status :pending})
-        on-success #(reset! state {:status :saved })
+        on-success #(reset! state {:status :saved})
         on-error #(reset! state {:status :failed :error %})
         on-modal-close #(do (reset! state nil)
                             (on-finished))]

@@ -43,9 +43,9 @@
   [action-form-view "comment"
    (text :t.actions/comment)
    nil
-   [[button-wrapper {:id "comment"
-                    :text (text :t.actions/comment)
-                    :on-click on-send}]]
+   [[button-wrapper {:id "do-comment"
+                     :text (text :t.actions/comment)
+                     :on-click on-send}]]
    [:div [:div.form-group
           [:label {:for "comment"} (text :t.form/add-comments-not-shown-to-applicant)]
           [textarea {:id "comment"
@@ -61,7 +61,7 @@
         description (text :t.actions/comment)
         state (r/atom nil)
         on-pending #(reset! state {:status :pending})
-        on-success #(reset! state {:status :saved })
+        on-success #(reset! state {:status :saved})
         on-error #(reset! state {:status :failed :error %})
         on-modal-close #(do (reset! state nil)
                             (on-finished))]

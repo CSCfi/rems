@@ -43,7 +43,7 @@
   [action-form-view "close"
    (text :t.actions/close)
    nil
-   [[button-wrapper {:id "close"
+   [[button-wrapper {:id "do-close"
                      :text (text :t.actions/close)
                      :class "btn-danger"
                      :on-click on-send}]]
@@ -62,7 +62,7 @@
         description (text :t.actions/close)
         state (r/atom nil)
         on-pending #(reset! state {:status :pending})
-        on-success #(reset! state {:status :saved })
+        on-success #(reset! state {:status :saved})
         on-error #(reset! state {:status :failed :error %})
         on-modal-close #(do (reset! state nil)
                             (on-finished))]

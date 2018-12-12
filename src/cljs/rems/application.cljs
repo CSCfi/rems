@@ -758,15 +758,21 @@
                    :on-click #(rf/dispatch [::judge-application "review" (text :t.actions/review)])}])
 
 (defn- third-party-review-button []
-  [button-wrapper {:id "request-review"
+  [button-wrapper {:id "third-party-review"
                    :text (text :t.actions/review)
                    :class "btn-primary"
                    :on-click #(rf/dispatch [::judge-application "third-party-review" (text :t.actions/review)])}])
 
-(defn- close-button []
-  [button-wrapper {:id "close"
+(defn- close-button [id]
+  [button-wrapper {:id id
                    :text (text :t.actions/close)
                    :on-click #(rf/dispatch [::judge-application "close" (text :t.actions/close)])}])
+
+(defn- applicant-close-button []
+  [close-button "applicant-close"])
+
+(defn- approver-close-button []
+  [close-button "approver-close"])
 
 (defn- withdraw-button []
   [button-wrapper {:id "withdraw"
@@ -775,7 +781,7 @@
 
 (defn- action-button [id content on-click]
   [:button.btn.mr-3
-   {:id id
+   {:id (str id "-action-button")
     :class (if (contains? #{"approve" "approve-reject"} id) "btn-primary" "btn-secondary")
     :type "button"
     :data-toggle "collapse"
@@ -874,13 +880,13 @@
   [action-form "applicant-close"
    (text :t.actions/close)
    (text :t.form/add-comments)
-   [close-button]])
+   [applicant-close-button]])
 
 (defn- approver-close-form []
   [action-form "approver-close"
    (text :t.actions/close)
    (text :t.form/add-comments-shown-to-applicant)
-   [close-button]])
+   [approver-close-button]])
 
 (defn- withdraw-form []
   [action-form "withdraw"

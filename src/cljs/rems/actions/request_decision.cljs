@@ -96,7 +96,7 @@
   [action-form-view "request-decision"
    (text :t.actions/request-decision)
    nil
-   [[button-wrapper {:id "request-decision"
+   [[button-wrapper {:id "do-request-decision"
                      :text (text :t.actions/request-decision)
                      :on-click on-send}]]
    [:div [:div.form-group
@@ -128,7 +128,7 @@
         description (text :t.actions/request-decision)
         state (r/atom nil)
         on-pending #(reset! state {:status :pending})
-        on-success #(reset! state {:status :saved })
+        on-success #(reset! state {:status :saved})
         on-error #(reset! state {:status :failed :error %})
         on-modal-close #(do (reset! state nil)
                             (on-finished))]

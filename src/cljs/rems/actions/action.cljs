@@ -9,21 +9,23 @@
 (defn button-wrapper [{:keys [id text class on-click]}]
   [:button.btn
    {:id id
-    :name id
     :class (or class :btn-secondary)
     :on-click on-click}
    text])
 
 (defn cancel-action-button [id]
   [:button.btn.btn-secondary
-   {:id (str "cancel-" id) :data-toggle "collapse" :data-target (str "#" (action-collapse-id id))}
+   {:id (str "cancel-" id)
+    :data-toggle "collapse"
+    :data-target (str "#" (action-collapse-id id))}
    (text :t.actions/cancel)])
 
 (defn- action-comment [label-title comment on-comment]
   [:div.form-group
    [:label {:for "judge-comment"} label-title]
    [textarea {:id "judge-comment"
-              :name "judge-comment" :placeholder (text :t.actions/comment-placeholder)
+              :name "judge-comment"
+              :placeholder (text :t.actions/comment-placeholder)
               :value comment
               :on-change on-comment}]])
 
