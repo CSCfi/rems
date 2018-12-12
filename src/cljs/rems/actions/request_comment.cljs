@@ -101,7 +101,7 @@
     [action-comment {:id "request-comment"
                      :label (text :t.form/add-comments-not-shown-to-applicant)
                      :comment comment
-                     :on-comment #(on-set-comment (.. % -target -value))}]
+                     :on-comment on-set-comment}]
     [:div.form-group
      [:label (text :t.actions/request-selection)]
      [autocomplete/component

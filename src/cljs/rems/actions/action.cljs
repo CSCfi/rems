@@ -28,7 +28,7 @@
                 :name id
                 :placeholder (text :t.actions/comment-placeholder)
                 :value comment
-                :on-change on-comment}]]))
+                :on-change #(on-comment (.. % -target -value))}]]))
 
 (defn action-comment [{:keys [id label comment on-comment]}]
   (let [id (str "comment-" id)]
@@ -38,7 +38,7 @@
                 :name id
                 :placeholder (text :t.actions/comment-placeholder)
                 :value comment
-                :on-change on-comment}]]))
+                :on-change #(on-comment (.. % -target -value))}]]))
 
 (defn action-form-view [id title buttons content]
   [:div.collapse {:id (action-collapse-id id) :data-parent "#actions-forms"}

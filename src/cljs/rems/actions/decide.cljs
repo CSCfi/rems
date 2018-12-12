@@ -55,7 +55,7 @@
    [action-comment {:id "decide"
                     :label (text :t.form/add-comments-not-shown-to-applicant)
                     :comment comment
-                    :on-comment #(on-set-comment (.. % -target -value))}]])
+                    :on-comment on-set-comment}]])
 
 (defn decide-form [application-id on-finished]
   (let [comment (rf/subscribe [::comment])

@@ -847,7 +847,7 @@
       [action-judge-comment {:id id
                              :label comment-title
                              :comment @(rf/subscribe [::judge-comment])
-                             :on-comment #(rf/dispatch [::set-judge-comment (.. % -target -value)])}])]])
+                             :on-comment #(rf/dispatch [::set-judge-comment %])}])]])
 
 (defn- approve-form []
   [action-form "approve"

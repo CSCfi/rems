@@ -48,7 +48,7 @@
    [action-comment {:id "return"
                     :label (text :t.form/add-comments-shown-to-applicant)
                     :comment comment
-                    :on-comment #(on-set-comment (.. % -target -value))}]])
+                    :on-comment on-set-comment}]])
 
 (defn return-form [application-id on-finished]
   (let [comment (rf/subscribe [::comment])
