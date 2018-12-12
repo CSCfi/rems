@@ -1,7 +1,7 @@
 (ns rems.actions.close
   (:require [re-frame.core :as rf]
             [reagent.core :as r]
-            [rems.actions.action :refer [action-form-view button-wrapper]]
+            [rems.actions.action :refer [action-form-view action-comment button-wrapper]]
             [rems.atoms :refer [textarea]]
             [rems.autocomplete :as autocomplete]
             [rems.status-modal :refer [status-modal]]
@@ -47,13 +47,10 @@
                      :text (text :t.actions/close)
                      :class "btn-danger"
                      :on-click on-send}]]
-   [:div [:div.form-group
-          [:label {:for "comment-close"} (text :t.form/add-comments-not-shown-to-applicant)]
-          [textarea {:id "comment-close"
-                     :name "comment-close"
-                     :placeholder (text :t.form/comment)
-                     :value comment
-                     :on-change #(on-set-comment (.. % -target -value))}]]]
+   [action-comment {:id "close"
+                    :label (text :t.form/add-comments-not-shown-to-applicant)
+                    :comment comment
+                    :on-comment #(on-set-comment (.. % -target -value))}]
    nil
    nil])
 

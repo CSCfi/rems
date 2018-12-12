@@ -1,7 +1,7 @@
 (ns rems.actions.return-action
   (:require [re-frame.core :as rf]
             [reagent.core :as r]
-            [rems.actions.action :refer [action-form-view button-wrapper]]
+            [rems.actions.action :refer [action-form-view action-comment button-wrapper]]
             [rems.atoms :refer [textarea]]
             [rems.autocomplete :as autocomplete]
             [rems.status-modal :refer [status-modal]]
@@ -46,13 +46,10 @@
    [[button-wrapper {:id "do-return"
                      :text (text :t.actions/return)
                      :on-click on-send}]]
-   [:div [:div.form-group
-          [:label {:for "comment-return"} (text :t.form/add-comments-shown-to-applicant)]
-          [textarea {:id "comment-return"
-                     :name "comment-return"
-                     :placeholder (text :t.form/comment)
-                     :value comment
-                     :on-change #(on-set-comment (.. % -target -value))}]]]
+   [action-comment {:id "return"
+                    :label (text :t.form/add-comments-shown-to-applicant)
+                    :comment comment
+                    :on-comment #(on-set-comment (.. % -target -value))}]
    nil
    nil])
 

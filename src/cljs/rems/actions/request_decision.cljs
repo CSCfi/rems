@@ -1,7 +1,7 @@
 (ns rems.actions.request-decision
   (:require [re-frame.core :as rf]
             [reagent.core :as r]
-            [rems.actions.action :refer [action-form-view button-wrapper]]
+            [rems.actions.action :refer [action-form-view action-comment button-wrapper]]
             [rems.atoms :refer [textarea]]
             [rems.autocomplete :as autocomplete]
             [rems.status-modal :refer [status-modal]]
@@ -99,13 +99,11 @@
    [[button-wrapper {:id "do-request-decision"
                      :text (text :t.actions/request-decision)
                      :on-click on-send}]]
-   [:div [:div.form-group
-          [:label {:for "comment-request-decision"} (text :t.form/add-comments-not-shown-to-applicant)]
-          [textarea {:id "comment-request-decision"
-                     :name "comment-request-decision"
-                     :placeholder (text :t.form/comment)
-                     :value comment
-                     :on-change #(on-set-comment (.. % -target -value))}]]
+   [:div
+    [action-comment {:id "request-decision"
+                     :label (text :t.form/add-comments-not-shown-to-applicant)
+                     :comment comment
+                     :on-comment #(on-set-comment (.. % -target -value))}]
     [:div.form-group
      [:label (text :t.actions/request-selection)]
      [autocomplete/component

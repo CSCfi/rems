@@ -1,7 +1,7 @@
 (ns rems.actions.decide
   (:require [re-frame.core :as rf]
             [reagent.core :as r]
-            [rems.actions.action :refer [action-form-view button-wrapper]]
+            [rems.actions.action :refer [action-form-view action-comment button-wrapper]]
             [rems.atoms :refer [textarea]]
             [rems.autocomplete :as autocomplete]
             [rems.status-modal :refer [status-modal]]
@@ -53,13 +53,10 @@
                      :text (text :t.actions/approve)
                      :class "btn-success"
                      :on-click #(on-send :approved)}]]
-   [:div [:div.form-group
-          [:label {:for "comment-decide"} (text :t.form/add-comments-not-shown-to-applicant)]
-          [textarea {:id "comment-decide"
-                     :name "comment-decide"
-                     :placeholder (text :t.form/comment)
-                     :value comment
-                     :on-change #(on-set-comment (.. % -target -value))}]]]
+   [action-comment {:id "decide"
+                    :label (text :t.form/add-comments-not-shown-to-applicant)
+                    :comment comment
+                    :on-comment #(on-set-comment (.. % -target -value))}]
    nil
    nil])
 

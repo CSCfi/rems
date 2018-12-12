@@ -1,7 +1,7 @@
 (ns rems.actions.comment
   (:require [re-frame.core :as rf]
             [reagent.core :as r]
-            [rems.actions.action :refer [action-form-view button-wrapper]]
+            [rems.actions.action :refer [action-form-view action-comment button-wrapper]]
             [rems.atoms :refer [textarea]]
             [rems.autocomplete :as autocomplete]
             [rems.status-modal :refer [status-modal]]
@@ -46,13 +46,10 @@
    [[button-wrapper {:id "do-comment"
                      :text (text :t.actions/comment)
                      :on-click on-send}]]
-   [:div [:div.form-group
-          [:label {:for "comment-comment"} (text :t.form/add-comments-not-shown-to-applicant)]
-          [textarea {:id "comment-comment"
-                     :name "comment-comment"
-                     :placeholder (text :t.form/comment)
-                     :value comment
-                     :on-change #(on-set-comment (.. % -target -value))}]]]
+   [action-comment {:id "comment"
+                    :label (text :t.form/add-comments-not-shown-to-applicant)
+                    :comment comment
+                    :on-comment #(on-set-comment (.. % -target -value))}]
    nil
    nil])
 

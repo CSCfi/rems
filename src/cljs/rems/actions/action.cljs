@@ -30,6 +30,16 @@
                 :value comment
                 :on-change on-comment}]]))
 
+(defn action-comment [{:keys [id label comment on-comment]}]
+  (let [id (str "comment-" id)]
+    [:div.form-group
+     [:label {:for id} label]
+     [textarea {:id id
+                :name id
+                :placeholder (text :t.actions/comment-placeholder)
+                :value comment
+                :on-change on-comment}]]))
+
 (defn action-form-view [id title comment-title buttons content comment on-comment]
   [:div.collapse {:id (action-collapse-id id) :data-parent "#actions-forms"}
    [:h4.mt-5 title]

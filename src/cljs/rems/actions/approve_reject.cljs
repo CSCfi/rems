@@ -1,7 +1,7 @@
 (ns rems.actions.approve-reject
   (:require [re-frame.core :as rf]
             [reagent.core :as r]
-            [rems.actions.action :refer [action-form-view button-wrapper]]
+            [rems.actions.action :refer [action-form-view action-comment button-wrapper]]
             [rems.atoms :refer [textarea]]
             [rems.autocomplete :as autocomplete]
             [rems.status-modal :refer [status-modal]]
@@ -69,13 +69,10 @@
                      :text (text :t.actions/approve)
                      :class "btn-success"
                      :on-click on-approve}]]
-   [:div [:div.form-group
-          [:label {:for "comment-approve-reject"} (text :t.form/add-comments-shown-to-applicant)]
-          [textarea {:id "comment-approve-reject"
-                     :name "comment-approve-reject"
-                     :placeholder (text :t.form/comment)
-                     :value comment
-                     :on-change #(on-set-comment (.. % -target -value))}]]]
+   [action-comment {:id "approve-reject"
+                    :label (text :t.form/add-comments-shown-to-applicant)
+                    :comment comment
+                    :on-comment #(on-set-comment (.. % -target -value))}]
    nil
    nil])
 
