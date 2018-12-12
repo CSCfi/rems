@@ -54,9 +54,9 @@
                      :class "btn-success"
                      :on-click #(on-send :approved)}]]
    [:div [:div.form-group
-          [:label {:for "comment"} (text :t.form/add-comments-not-shown-to-applicant)]
-          [textarea {:id "comment"
-                     :name "comment"
+          [:label {:for "comment-decide"} (text :t.form/add-comments-not-shown-to-applicant)]
+          [textarea {:id "comment-decide"
+                     :name "comment-decide"
                      :placeholder (text :t.form/comment)
                      :value comment
                      :on-change #(on-set-comment (.. % -target -value))}]]]

@@ -47,9 +47,9 @@
                      :text (text :t.actions/return)
                      :on-click on-send}]]
    [:div [:div.form-group
-          [:label {:for "comment"} (text :t.form/add-comments-shown-to-applicant)]
-          [textarea {:id "comment"
-                     :name "comment"
+          [:label {:for "comment-return"} (text :t.form/add-comments-shown-to-applicant)]
+          [textarea {:id "comment-return"
+                     :name "comment-return"
                      :placeholder (text :t.form/comment)
                      :value comment
                      :on-change #(on-set-comment (.. % -target -value))}]]]

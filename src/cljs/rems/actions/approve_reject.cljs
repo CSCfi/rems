@@ -70,9 +70,9 @@
                      :class "btn-success"
                      :on-click on-approve}]]
    [:div [:div.form-group
-          [:label {:for "comment"} (text :t.form/add-comments-shown-to-applicant)]
-          [textarea {:id "comment"
-                     :name "comment"
+          [:label {:for "comment-approve-reject"} (text :t.form/add-comments-shown-to-applicant)]
+          [textarea {:id "comment-approve-reject"
+                     :name "comment-approve-reject"
                      :placeholder (text :t.form/comment)
                      :value comment
                      :on-change #(on-set-comment (.. % -target -value))}]]]

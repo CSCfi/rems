@@ -99,9 +99,9 @@
                      :text (text :t.actions/request-comment)
                      :on-click on-send}]]
    [:div [:div.form-group
-          [:label {:for "comment"} (text :t.form/add-comments-not-shown-to-applicant)]
-          [textarea {:id "comment"
-                     :name "comment"
+          [:label {:for "comment-request-comment"} (text :t.form/add-comments-not-shown-to-applicant)]
+          [textarea {:id "comment-request-comment"
+                     :name "comment-request-comment"
                      :placeholder (text :t.form/comment)
                      :value comment
                      :on-change #(on-set-comment (.. % -target -value))}]]
