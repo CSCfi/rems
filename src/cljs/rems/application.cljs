@@ -2,7 +2,7 @@
   (:require [clojure.string :as str]
             [medley.core :refer [map-vals]]
             [re-frame.core :as rf]
-            [rems.actions.action :refer [action-form-view action-judge-comment action-collapse-id button-wrapper]]
+            [rems.actions.action :refer [action-form-view action-comment action-collapse-id button-wrapper]]
             [rems.actions.approve-reject :refer [approve-reject-form]]
             [rems.actions.close :refer [close-form]]
             [rems.actions.comment :refer [comment-form]]
@@ -844,10 +844,10 @@
    [:div
     content
     (when comment-title
-      [action-judge-comment {:id id
-                             :label comment-title
-                             :comment @(rf/subscribe [::judge-comment])
-                             :on-comment #(rf/dispatch [::set-judge-comment %])}])]])
+      [action-comment {:id id
+                       :label comment-title
+                       :comment @(rf/subscribe [::judge-comment])
+                       :on-comment #(rf/dispatch [::set-judge-comment %])}])]])
 
 (defn- approve-form []
   [action-form "approve"

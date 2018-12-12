@@ -20,16 +20,6 @@
     :data-target (str "#" (action-collapse-id id))}
    (text :t.actions/cancel)])
 
-(defn action-judge-comment [{:keys [id label comment on-comment]}]
-  (let [id (str "judge-comment-" id)]
-    [:div.form-group
-     [:label {:for id} label]
-     [textarea {:id id
-                :name id
-                :placeholder (text :t.actions/comment-placeholder)
-                :value comment
-                :on-change #(on-comment (.. % -target -value))}]]))
-
 (defn action-comment [{:keys [id label comment on-comment]}]
   (let [id (str "comment-" id)]
     [:div.form-group
