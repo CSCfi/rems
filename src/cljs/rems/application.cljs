@@ -93,7 +93,7 @@
           ::application application
           ::edit-application {:items (into {} (for [item (:items application)]
                                                 [(:id item) {:value (:value item)}]))
-                              :licenses (into {} (map (juxt :id :approver) (:licenses application)))})))
+                              :licenses (into {} (map (juxt :id :approved) (:licenses application)))})))
 
 (rf/reg-event-fx
  ::enter-new-application-page
@@ -571,7 +571,7 @@
                               :name (str "license" id)
                               :disabled readonly
                               :class (when validation "is-invalid")
-                              :checked approved
+                              :checked (boolean approved)
                               :on-change (set-license-approval id)}]
     [:span.form-check-label content]]
    [field-validation-message validation title]])
@@ -980,7 +980,9 @@
       [collapsible/component
        {:id "actions"
         :title (text :t.form/actions)
-        :always (into [:div [:div.commands actions]] forms)}])))
+        :always (into [:div (into [:div.commands]
+                                  actions)]
+                      forms)}])))
 
 (defn- disabled-items-warning [catalogue-items]
   (let [language @(rf/subscribe [:language])]
