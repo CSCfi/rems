@@ -113,12 +113,13 @@
  ::set-status
  (fn [db [_ {:keys [status description validation error]}]]
    (assert (contains? #{:pending :saved :failed nil} status))
-   (-> db
-       (assoc-in [::edit-application :status] {:open? (not (nil? status))
+   (cond-> db
+       true (assoc-in [::edit-application :status] {:open? (not (nil? status))
                                                :status status
                                                :description description
                                                :error error})
-       (assoc-in [::edit-application :validation] validation))))
+       validation (assoc-in [::edit-application :validation] validation) ; NB don't clear validation results on modal close
+       )))
 
 (defn- save-application [app description application-id catalogue-items items licenses on-success]
   (post! "/api/applications/save"
