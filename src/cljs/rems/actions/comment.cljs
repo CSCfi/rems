@@ -42,16 +42,13 @@
   [{:keys [comment on-set-comment on-send]}]
   [action-form-view "comment"
    (text :t.actions/comment)
-   nil
    [[button-wrapper {:id "do-comment"
                      :text (text :t.actions/comment)
                      :on-click on-send}]]
    [action-comment {:id "comment"
                     :label (text :t.form/add-comments-not-shown-to-applicant)
                     :comment comment
-                    :on-comment #(on-set-comment (.. % -target -value))}]
-   nil
-   nil])
+                    :on-comment #(on-set-comment (.. % -target -value))}]])
 
 (defn comment-form [application-id on-finished]
   (let [comment (rf/subscribe [::comment])

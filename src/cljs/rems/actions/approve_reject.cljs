@@ -60,7 +60,6 @@
   [{:keys [comment on-set-comment on-approve on-reject]}]
   [action-form-view "approve-reject"
    (text :t.actions/comment)
-   nil
    [[button-wrapper {:id "do-reject"
                      :text (text :t.actions/reject)
                      :class "btn-danger"
@@ -72,9 +71,7 @@
    [action-comment {:id "approve-reject"
                     :label (text :t.form/add-comments-shown-to-applicant)
                     :comment comment
-                    :on-comment #(on-set-comment (.. % -target -value))}]
-   nil
-   nil])
+                    :on-comment #(on-set-comment (.. % -target -value))}]])
 
 (defn approve-reject-form [application-id on-finished]
   (let [comment (rf/subscribe [::comment])

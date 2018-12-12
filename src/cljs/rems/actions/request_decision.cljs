@@ -95,7 +95,6 @@
   [{:keys [selected-deciders potential-deciders comment on-set-comment on-add-decider on-remove-decider on-send]}]
   [action-form-view "request-decision"
    (text :t.actions/request-decision)
-   nil
    [[button-wrapper {:id "do-request-decision"
                      :text (text :t.actions/request-decision)
                      :on-click on-send}]]
@@ -115,9 +114,7 @@
        :item->value identity
        :search-fields [:name :email]
        :add-fn on-add-decider
-       :remove-fn on-remove-decider}]]]
-   nil
-   nil])
+       :remove-fn on-remove-decider}]]]])
 
 (defn request-decision-form [application-id on-finished]
   (let [selected-deciders (rf/subscribe [::selected-deciders])

@@ -44,7 +44,6 @@
   [{:keys [comment on-set-comment on-send]}]
   [action-form-view "decide"
    (text :t.actions/decide)
-   nil
    [[button-wrapper {:id "do-decide-reject"
                      :text (text :t.actions/reject)
                      :class "btn-danger"
@@ -56,9 +55,7 @@
    [action-comment {:id "decide"
                     :label (text :t.form/add-comments-not-shown-to-applicant)
                     :comment comment
-                    :on-comment #(on-set-comment (.. % -target -value))}]
-   nil
-   nil])
+                    :on-comment #(on-set-comment (.. % -target -value))}]])
 
 (defn decide-form [application-id on-finished]
   (let [comment (rf/subscribe [::comment])

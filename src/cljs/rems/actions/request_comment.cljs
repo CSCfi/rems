@@ -94,7 +94,6 @@
   [{:keys [selected-commenters potential-commenters comment on-set-comment on-add-commenter on-remove-commenter on-send]}]
   [action-form-view "request-comment"
    (text :t.actions/request-comment)
-   nil
    [[button-wrapper {:id "do-request-comment"
                      :text (text :t.actions/request-comment)
                      :on-click on-send}]]
@@ -114,9 +113,7 @@
        :item->value identity
        :search-fields [:name :email]
        :add-fn on-add-commenter
-       :remove-fn on-remove-commenter}]]]
-   nil
-   nil])
+       :remove-fn on-remove-commenter}]]]])
 
 (defn request-comment-form [application-id on-finished]
   (let [selected-commenters (rf/subscribe [::selected-commenters])

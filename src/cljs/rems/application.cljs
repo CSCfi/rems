@@ -2,7 +2,7 @@
   (:require [clojure.string :as str]
             [medley.core :refer [map-vals]]
             [re-frame.core :as rf]
-            [rems.actions.action :refer [action-form-view action-collapse-id button-wrapper]]
+            [rems.actions.action :refer [action-form-view action-judge-comment action-collapse-id button-wrapper]]
             [rems.actions.approve-reject :refer [approve-reject-form]]
             [rems.actions.close :refer [close-form]]
             [rems.actions.comment :refer [comment-form]]
@@ -840,11 +840,14 @@
 (defn action-form [id title comment-title button content]
   [action-form-view id
    title
-   comment-title
    [button]
-   content
-   @(rf/subscribe [::judge-comment])
-   #(rf/dispatch [::set-judge-comment (.. % -target -value)])])
+   [:div
+    content
+    (when comment-title
+      [action-judge-comment {:id id
+                             :label comment-title
+                             :comment @(rf/subscribe [::judge-comment])
+                             :on-comment #(rf/dispatch [::set-judge-comment (.. % -target -value)])}])]])
 
 (defn- approve-form []
   [action-form "approve"
@@ -925,17 +928,17 @@
 (defn- dynamic-actions [app]
   (distinct
    (mapcat #:rems.workflow.dynamic
-           {:submit [[save-button]
-                     [submit-button]]
-            :add-member nil ; TODO implement
-            :return [[return-action-button]]
-            :request-decision [[request-decision-action-button]]
-            :decide [[decide-action-button]]
-            :request-comment [[request-comment-action-button]]
-            :comment [[comment-action-button]]
-            :approve [[approve-reject-action-button]]
-            :reject [[approve-reject-action-button]]
-            :close [[close-action-button]]}
+               {:submit [[save-button]
+                         [submit-button]]
+                :add-member nil ; TODO implement
+                :return [[return-action-button]]
+                :request-decision [[request-decision-action-button]]
+                :decide [[decide-action-button]]
+                :request-comment [[request-comment-action-button]]
+                :comment [[comment-action-button]]
+                :approve [[approve-reject-action-button]]
+                :reject [[approve-reject-action-button]]
+                :close [[close-action-button]]}
            (:possible-commands app))))
 
 (defn- static-actions [app]
