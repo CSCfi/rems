@@ -37,18 +37,20 @@
    (on-pending)
    {}))
 
+(def ^:private action-form-id "return")
+
 (defn return-action-button []
-  [action-button "return" (text :t.actions/return) #(rf/dispatch [::open-form])])
+  [action-button action-form-id (text :t.actions/return) #(rf/dispatch [::open-form])])
 
 (defn return-view
   [{:keys [comment on-set-comment on-send]}]
-  [action-form-view "return"
+  [action-form-view action-form-id
    (text :t.actions/return)
    [[button-wrapper {:id "return"
                      :text (text :t.actions/return)
                      :class "btn-primary"
                      :on-click on-send}]]
-   [action-comment {:id "return"
+   [action-comment {:id action-form-id
                     :label (text :t.form/add-comments-shown-to-applicant)
                     :comment comment
                     :on-comment on-set-comment}]])

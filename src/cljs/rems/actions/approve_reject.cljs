@@ -55,12 +55,14 @@
    (on-pending)
    {}))
 
+(def ^:private action-form-id "approve-reject")
+
 (defn approve-reject-action-button []
-  [action-button "approve-reject" (text :t.actions/approve-reject) #(rf/dispatch [::open-form])])
+  [action-button action-form-id (text :t.actions/approve-reject) #(rf/dispatch [::open-form])])
 
 (defn approve-reject-view
   [{:keys [comment on-set-comment on-approve on-reject]}]
-  [action-form-view "approve-reject"
+  [action-form-view action-form-id
    (text :t.actions/comment)
    [[button-wrapper {:id "reject"
                      :text (text :t.actions/reject)
@@ -70,7 +72,7 @@
                      :text (text :t.actions/approve)
                      :class "btn-success"
                      :on-click on-approve}]]
-   [action-comment {:id "approve-reject"
+   [action-comment {:id action-form-id
                     :label (text :t.form/add-comments-shown-to-applicant)
                     :comment comment
                     :on-comment on-set-comment}]])

@@ -91,19 +91,21 @@
    (on-pending)
    {}))
 
+(def ^:private action-form-id "request-decision")
+
 (defn request-decision-action-button []
-  [action-button "request-decision" (text :t.actions/request-decision) #(rf/dispatch [::open-form])])
+  [action-button action-form-id (text :t.actions/request-decision) #(rf/dispatch [::open-form])])
 
 (defn request-decision-view
   [{:keys [selected-deciders potential-deciders comment on-set-comment on-add-decider on-remove-decider on-send]}]
-  [action-form-view "request-decision"
+  [action-form-view action-form-id
    (text :t.actions/request-decision)
    [[button-wrapper {:id "request-decision"
                      :text (text :t.actions/request-decision)
                      :class "btn-primary"
                      :on-click on-send}]]
    [:div
-    [action-comment {:id "request-decision"
+    [action-comment {:id action-form-id
                      :label (text :t.form/add-comments-not-shown-to-applicant)
                      :comment comment
                      :on-comment on-set-comment}]

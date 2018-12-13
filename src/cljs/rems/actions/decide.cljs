@@ -39,12 +39,14 @@
    (on-pending)
    {}))
 
+(def ^:private action-form-id "decide")
+
 (defn decide-action-button []
-  [action-button "decide" (text :t.actions/decide) #(rf/dispatch [::open-form])])
+  [action-button action-form-id (text :t.actions/decide) #(rf/dispatch [::open-form])])
 
 (defn decide-view
   [{:keys [comment on-set-comment on-send]}]
-  [action-form-view "decide"
+  [action-form-view action-form-id
    (text :t.actions/decide)
    [[button-wrapper {:id "decide-reject"
                      :text (text :t.actions/reject)
@@ -54,7 +56,7 @@
                      :text (text :t.actions/approve)
                      :class "btn-success"
                      :on-click #(on-send :approved)}]]
-   [action-comment {:id "decide"
+   [action-comment {:id action-form-id
                     :label (text :t.form/add-comments-not-shown-to-applicant)
                     :comment comment
                     :on-comment on-set-comment}]])

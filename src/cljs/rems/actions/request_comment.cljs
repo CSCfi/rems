@@ -90,19 +90,21 @@
    (on-pending)
    {}))
 
+(def ^:private action-form-id "request-comment")
+
 (defn request-comment-action-button []
-  [action-button "request-comment" (text :t.actions/request-comment) #(rf/dispatch [::open-form])])
+  [action-button action-form-id (text :t.actions/request-comment) #(rf/dispatch [::open-form])])
 
 (defn request-comment-view
   [{:keys [selected-commenters potential-commenters comment on-set-comment on-add-commenter on-remove-commenter on-send]}]
-  [action-form-view "request-comment"
+  [action-form-view action-form-id
    (text :t.actions/request-comment)
    [[button-wrapper {:id "request-comment"
                      :text (text :t.actions/request-comment)
                      :class "btn-primary"
                      :on-click on-send}]]
    [:div
-    [action-comment {:id "request-comment"
+    [action-comment {:id action-form-id
                      :label (text :t.form/add-comments-not-shown-to-applicant)
                      :comment comment
                      :on-comment on-set-comment}]

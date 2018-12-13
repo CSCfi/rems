@@ -37,18 +37,20 @@
    (on-pending)
    {}))
 
+(def ^:private action-form-id "comment")
+
 (defn comment-action-button []
-  [action-button "comment" (text :t.actions/comment) #(rf/dispatch [::open-form])])
+  [action-button action-form-id (text :t.actions/comment) #(rf/dispatch [::open-form])])
 
 (defn comment-view
   [{:keys [comment on-set-comment on-send]}]
-  [action-form-view "comment"
+  [action-form-view action-form-id
    (text :t.actions/comment)
    [[button-wrapper {:id "comment"
                      :text (text :t.actions/comment)
                      :class "btn-primary"
                      :on-click on-send}]]
-   [action-comment {:id "comment"
+   [action-comment {:id action-form-id
                     :label (text :t.form/add-comments-not-shown-to-applicant)
                     :comment comment
                     :on-comment on-set-comment}]])

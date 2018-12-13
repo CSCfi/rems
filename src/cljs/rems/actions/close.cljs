@@ -37,18 +37,20 @@
    (on-pending)
    {}))
 
+(def ^:private action-form-id "close")
+
 (defn close-action-button []
-  [action-button "close" (text :t.actions/close) #(rf/dispatch [::open-form])])
+  [action-button action-form-id (text :t.actions/close) #(rf/dispatch [::open-form])])
 
 (defn close-view
   [{:keys [comment on-set-comment on-send]}]
-  [action-form-view "close"
+  [action-form-view action-form-id
    (text :t.actions/close)
    [[button-wrapper {:id "close"
                      :text (text :t.actions/close)
                      :class "btn-danger"
                      :on-click on-send}]]
-   [action-comment {:id "close"
+   [action-comment {:id action-form-id
                     :label (text :t.form/add-comments-not-shown-to-applicant)
                     :comment comment
                     :on-comment on-set-comment}]])
