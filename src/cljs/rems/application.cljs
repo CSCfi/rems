@@ -812,7 +812,8 @@
   [action-form "approve"
    (text :t.actions/approve)
    (text :t.form/add-comments-shown-to-applicant)
-   [judge-application-button {:command "approve"
+   [judge-application-button {:id "static-approve"
+                              :command "approve"
                               :text (text :t.actions/approve)
                               :class "btn-success"}]])
 
@@ -820,7 +821,8 @@
   [action-form "reject"
    (text :t.actions/reject)
    (text :t.form/add-comments-shown-to-applicant)
-   [judge-application-button {:command "reject"
+   [judge-application-button {:id "static-reject"
+                              :command "reject"
                               :text (text :t.actions/reject)
                               :class "btn-danger"}]])
 
