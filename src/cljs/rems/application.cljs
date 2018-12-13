@@ -113,12 +113,14 @@
  ::set-status
  (fn [db [_ {:keys [status description validation error]}]]
    (assert (contains? #{:pending :saved :failed nil} status))
-   (-> db
-       (assoc-in [::edit-application :status] {:open? (not (nil? status))
-                                               :status status
-                                               :description description
-                                               :error error})
-       (assoc-in [::edit-application :validation] validation))))
+   (cond-> db
+     true (assoc-in [::edit-application :status]
+                    {:open? (not (nil? status))
+                     :status status
+                     :description description
+                     :error error})
+     validation (assoc-in [::edit-application :validation] validation) ; NB don't clear validation results on modal close
+     )))
 
 (defn- save-application [app description application-id catalogue-items items licenses on-success]
   (post! "/api/applications/save"
@@ -128,9 +130,10 @@
                        (rf/dispatch [::set-status {:status :failed
                                                    :description description
                                                    :validation (:validation resp)}])))
-          :error-handler (fn [error] (rf/dispatch [::set-status {:status :failed
-                                                                 :description description
-                                                                 :error error}]))
+          :error-handler (fn [error]
+                           (rf/dispatch [::set-status {:status :failed
+                                                       :description description
+                                                       :error error}]))
           :params (merge {:command "save"
                           :items (map-vals :value items)
                           :licenses licenses}
@@ -152,9 +155,10 @@
                          (rf/dispatch [::set-status {:status :failed
                                                      :description description
                                                      :validation (:validation resp)}])))
-            :error-handler (fn [error] (rf/dispatch [::set-status {:status :failed
-                                                                   :description description
-                                                                   :error error}]))
+            :error-handler (fn [error]
+                             (rf/dispatch [::set-status {:status :failed
+                                                         :description description
+                                                         :error error}]))
             :params {:type :rems.workflow.dynamic/submit
                      :application-id application-id}})
     (post! "/api/applications/save"
@@ -169,9 +173,10 @@
                          (rf/dispatch [::set-status {:status :failed
                                                      :description description
                                                      :validation (:validation resp)}])))
-            :error-handler (fn [error] (rf/dispatch [::set-status {:status :failed
-                                                                   :description description
-                                                                   :error error}]))
+            :error-handler (fn [error]
+                             (rf/dispatch [::set-status {:status :failed
+                                                         :description description
+                                                         :error error}]))
             :params (merge {:command "submit"
                             :items (map-vals :value items)
                             :licenses licenses}
@@ -211,7 +216,7 @@
                              ;; because if the location didn't change, secretary won't fire the event
                              (navigate-to (:id resp))
                              (rf/dispatch [::enter-application-page (:id resp)]))))))
-   {}))
+   {:db (assoc-in db [::edit-application :validation] nil)}))
 
 (defn- save-attachment [application-id field-id form-data description]
   (post! (str "/api/applications/add_attachment?application-id=" application-id "&field-id=" field-id)
