@@ -1,7 +1,7 @@
 (ns rems.actions.request-decision
   (:require [re-frame.core :as rf]
             [reagent.core :as r]
-            [rems.actions.action :refer [action-form-view action-comment button-wrapper]]
+            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper]]
             [rems.atoms :refer [textarea]]
             [rems.autocomplete :as autocomplete]
             [rems.status-modal :refer [status-modal]]
@@ -90,6 +90,9 @@
                             :on-error on-error})
    (on-pending)
    {}))
+
+(defn request-decision-action-button []
+  [action-button "request-decision" (text :t.actions/request-decision) #(rf/dispatch [::open-form])])
 
 (defn request-decision-view
   [{:keys [selected-deciders potential-deciders comment on-set-comment on-add-decider on-remove-decider on-send]}]

@@ -1,7 +1,7 @@
 (ns rems.actions.approve-reject
   (:require [re-frame.core :as rf]
             [reagent.core :as r]
-            [rems.actions.action :refer [action-form-view action-comment button-wrapper]]
+            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper]]
             [rems.atoms :refer [textarea]]
             [rems.autocomplete :as autocomplete]
             [rems.status-modal :refer [status-modal]]
@@ -55,6 +55,9 @@
                   :on-error on-error})
    (on-pending)
    {}))
+
+(defn approve-reject-action-button []
+  [action-button "approve-reject" (text :t.actions/approve-reject)])
 
 (defn approve-reject-view
   [{:keys [comment on-set-comment on-approve on-reject]}]

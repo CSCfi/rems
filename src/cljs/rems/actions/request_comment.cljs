@@ -1,7 +1,7 @@
 (ns rems.actions.request-comment
   (:require [re-frame.core :as rf]
             [reagent.core :as r]
-            [rems.actions.action :refer [action-form-view action-comment button-wrapper]]
+            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper]]
             [rems.atoms :refer [textarea]]
             [rems.autocomplete :as autocomplete]
             [rems.status-modal :refer [status-modal]]
@@ -89,6 +89,9 @@
                            :on-error on-error})
    (on-pending)
    {}))
+
+(defn request-comment-action-button []
+  [action-button "request-comment" (text :t.actions/request-comment) #(rf/dispatch [::open-form])])
 
 (defn request-comment-view
   [{:keys [selected-commenters potential-commenters comment on-set-comment on-add-commenter on-remove-commenter on-send]}]

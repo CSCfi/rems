@@ -1,9 +1,8 @@
 (ns rems.actions.decide
   (:require [re-frame.core :as rf]
             [reagent.core :as r]
-            [rems.actions.action :refer [action-form-view action-comment button-wrapper]]
+            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper]]
             [rems.atoms :refer [textarea]]
-            [rems.autocomplete :as autocomplete]
             [rems.status-modal :refer [status-modal]]
             [rems.text :refer [text]]
             [rems.util :refer [fetch post!]]))
@@ -39,6 +38,9 @@
                   :on-error on-error})
    (on-pending)
    {}))
+
+(defn decide-action-button []
+  [action-button "decide" (text :t.actions/decide) #(rf/dispatch [::open-form])])
 
 (defn decide-view
   [{:keys [comment on-set-comment on-send]}]

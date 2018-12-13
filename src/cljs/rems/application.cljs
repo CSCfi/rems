@@ -2,14 +2,14 @@
   (:require [clojure.string :as str]
             [medley.core :refer [map-vals]]
             [re-frame.core :as rf]
-            [rems.actions.action :refer [action-form-view action-comment action-collapse-id button-wrapper]]
-            [rems.actions.approve-reject :refer [approve-reject-form]]
-            [rems.actions.close :refer [close-form]]
-            [rems.actions.comment :refer [comment-form]]
-            [rems.actions.decide :refer [decide-form]]
-            [rems.actions.request-comment :refer [request-comment-form]]
-            [rems.actions.request-decision :refer [request-decision-form]]
-            [rems.actions.return-action :refer [return-form]]
+            [rems.actions.action :refer [action-button action-form-view action-comment action-collapse-id button-wrapper]]
+            [rems.actions.approve-reject :refer [approve-reject-action-button approve-reject-form]]
+            [rems.actions.close :refer [close-action-button close-form]]
+            [rems.actions.comment :refer [comment-action-button comment-form]]
+            [rems.actions.decide :refer [decide-action-button decide-form]]
+            [rems.actions.request-comment :refer [request-comment-action-button request-comment-form]]
+            [rems.actions.request-decision :refer [request-decision-action-button request-decision-form]]
+            [rems.actions.return-action :refer [return-action-button return-form]]
             [rems.atoms :refer [external-link flash-message textarea]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
@@ -733,63 +733,6 @@
                     (for [[k v] (dissoc user-attributes "commonName" "mail")]
                       [info-field k v]))}])
 
-(defn- action-button [id content on-click]
-  [:button.btn.mr-3
-   {:id (str id "-action-button")
-    :class (if (contains? #{"approve" "approve-reject"} id) "btn-primary" "btn-secondary")
-    :type "button"
-    :data-toggle "collapse"
-    :data-target (str "#" (action-collapse-id id))
-    :on-click on-click}
-   (str content " ...")])
-
-(defn- approve-action-button []
-  [action-button "approve" (text :t.actions/approve)])
-
-(defn- reject-action-button []
-  [action-button "reject" (text :t.actions/reject)])
-
-(defn- static-return-action-button []
-  [action-button "static-return" (text :t.actions/return)])
-
-(defn- review-action-button []
-  [action-button "review" (text :t.actions/review)])
-
-(defn- third-party-review-action-button []
-  [action-button "third-party-review" (text :t.actions/review)])
-
-(defn- request-comment-action-button []
-  [action-button "request-comment" (text :t.actions/request-comment) #(rf/dispatch [:rems.actions.request-comment/open-form])])
-
-(defn- request-decision-action-button []
-  [action-button "request-decision" (text :t.actions/request-decision) #(rf/dispatch [:rems.actions.request-decision/open-form])])
-
-(defn- comment-action-button []
-  [action-button "comment" (text :t.actions/comment) #(rf/dispatch [:rems.actions.comment/open-form])])
-
-(defn- close-action-button []
-  [action-button "close" (text :t.actions/close) #(rf/dispatch [:rems.actions.close/open-form])])
-
-(defn- decide-action-button []
-  [action-button "decide" (text :t.actions/decide) #(rf/dispatch [:rems.actions.decide/open-form])])
-
-(defn- return-action-button []
-  [action-button "return" (text :t.actions/return) #(rf/dispatch [:rems.actions.return/open-form])])
-
-(defn- approve-reject-action-button []
-  [action-button "approve-reject" (text :t.actions/approve-reject)])
-
-(defn- applicant-close-action-button []
-  [action-button "applicant-close" (text :t.actions/close)])
-
-(defn- approver-close-action-button []
-  [action-button "approver-close" (text :t.actions/close)])
-
-(defn- withdraw-action-button []
-  [action-button "withdraw" (text :t.actions/withdraw)])
-
-(defn- review-request-action-button []
-  [action-button "review-request" (text :t.actions/review-request)])
 
 (defn action-form [id title comment-title button content]
   [action-form-view id
@@ -808,6 +751,9 @@
                           :on-click #(rf/dispatch [::judge-application command text])}
                          (dissoc opts :command))])
 
+(defn- approve-action-button []
+  [action-button "approve" (text :t.actions/approve)])
+
 (defn- approve-form []
   [action-form "approve"
    (text :t.actions/approve)
@@ -816,6 +762,9 @@
                               :command "approve"
                               :text (text :t.actions/approve)
                               :class "btn-success"}]])
+
+(defn- reject-action-button []
+  [action-button "reject" (text :t.actions/reject)])
 
 (defn- reject-form []
   [action-form "reject"
@@ -826,6 +775,9 @@
                               :text (text :t.actions/reject)
                               :class "btn-danger"}]])
 
+(defn- static-return-action-button []
+  [action-button "static-return" (text :t.actions/return)])
+
 (defn- static-return-form []
   [action-form "static-return"
    (text :t.actions/return)
@@ -835,6 +787,9 @@
                               :text (text :t.actions/return)
                               :class "btn-primary"}]])
 
+(defn- review-action-button []
+  [action-button "review" (text :t.actions/review)])
+
 (defn- review-form []
   [action-form "review"
    (text :t.actions/review)
@@ -843,6 +798,9 @@
                               :text (text :t.actions/review)
                               :class "btn-primary"}]])
 
+(defn- third-party-review-action-button []
+  [action-button "third-party-review" (text :t.actions/review)])
+
 (defn- third-party-review-form []
   [action-form "third-party-review"
    (text :t.actions/review)
@@ -850,6 +808,9 @@
    [judge-application-button {:command "third-party-review"
                               :text (text :t.actions/review)
                               :class "btn-primary"}]])
+
+(defn- applicant-close-action-button []
+  [action-button "applicant-close" (text :t.actions/close)])
 
 (defn- applicant-close-form []
   [action-form "applicant-close"
@@ -860,6 +821,9 @@
                               :text (text :t.actions/close)
                               :class "btn-danger"}]])
 
+(defn- approver-close-action-button []
+  [action-button "approver-close" (text :t.actions/close)])
+
 (defn- approver-close-form []
   [action-form "approver-close"
    (text :t.actions/close)
@@ -869,6 +833,9 @@
                               :text (text :t.actions/close)
                               :class "btn-danger"}]])
 
+(defn- withdraw-action-button []
+  [action-button "withdraw" (text :t.actions/withdraw)])
+
 (defn- withdraw-form []
   [action-form "withdraw"
    (text :t.actions/withdraw)
@@ -877,21 +844,25 @@
                               :text (text :t.actions/withdraw)
                               :class "btn-primary"}]])
 
-(defn- request-review-form []
+(defn- review-request-action-button []
+  [action-button "review-request" (text :t.actions/review-request)])
+
+(defn- review-request-form []
   (let [selected-third-party-reviewers @(rf/subscribe [::selected-third-party-reviewers])
         potential-third-party-reviewers @(rf/subscribe [::potential-third-party-reviewers])
         review-comment @(rf/subscribe [::review-comment])]
     [action-form "review-request"
      (text :t.actions/review-request)
      nil
-     [button-wrapper {:id "request-review"
+     [button-wrapper {:id "review-request"
                       :text (text :t.actions/review-request)
                       :class "btn-primary"
                       :on-click #(rf/dispatch [::send-third-party-review-request selected-third-party-reviewers review-comment (text :t.actions/review-request)])}]
      [:div [:div.form-group
             [:label {:for "review-comment"} (text :t.form/add-comments-not-shown-to-applicant)]
             [textarea {:id "review-comment"
-                       :name "comment" :placeholder (text :t.form/comment)
+                       :name "review-comment"
+                       :placeholder (text :t.form/comment)
                        :on-change #(rf/dispatch [::set-review-comment (.. % -target -value)])}]]
       [:div.form-group
        [:label (text :t.actions/review-request-selection)]
@@ -954,7 +925,7 @@
                 [reject-form]
                 [static-return-form]
                 [review-form]
-                [request-review-form]
+                [review-request-form]
                 [request-comment-form (:id app) reload]
                 [request-decision-form (:id app) reload]
                 [comment-form (:id app) reload]
