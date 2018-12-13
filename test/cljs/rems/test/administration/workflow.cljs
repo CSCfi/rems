@@ -38,7 +38,7 @@
         (is (= {:organization "abc"
                 :title "workflow title"
                 :type :dynamic
-                :handlers [{:userid "bob"} {:userid "carl"}]}
+                :handlers ["bob" "carl"]}
                (build-request form))))
       (testing "missing handlers"
         (is (nil? (build-request (assoc-in form [:handlers] [])))))))
@@ -47,18 +47,18 @@
     (let [form {:organization "abc"
                 :title "workflow title"
                 :type :rounds
-                :rounds [{:type :review
+                :rounds {0 {:type :review
                           :actors [{:userid "alice"} {:userid "bob"}]}
-                         {:type :approval
-                          :actors [{:userid "carl"}]}]}]
+                         1 {:type :approval
+                          :actors [{:userid "carl"}]}}}]
       (testing "valid form"
         (is (= {:organization "abc"
                 :title "workflow title"
                 :type :rounds
                 :rounds [{:type :review
-                          :actors [{:userid "alice"} {:userid "bob"}]}
+                          :actors ["alice" "bob"]}
                          {:type :approval
-                          :actors [{:userid "carl"}]}]}
+                          :actors ["carl"]}]}
                (build-request form))))
       (testing "missing round type"
         (is (nil? (build-request (assoc-in form [:rounds 0 :type] nil)))))
