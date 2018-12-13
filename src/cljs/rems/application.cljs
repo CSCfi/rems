@@ -216,7 +216,7 @@
                              ;; because if the location didn't change, secretary won't fire the event
                              (navigate-to (:id resp))
                              (rf/dispatch [::enter-application-page (:id resp)]))))))
-   {}))
+   {:db (assoc-in db [::edit-application :validation] nil)}))
 
 (defn- save-attachment [application-id field-id form-data description]
   (post! (str "/api/applications/add_attachment?application-id=" application-id "&field-id=" field-id)
