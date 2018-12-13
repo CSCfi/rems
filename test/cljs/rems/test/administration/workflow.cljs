@@ -48,17 +48,17 @@
                 :title "workflow title"
                 :type :rounds
                 :rounds [{:type :review
-                          :actors ["alice" "bob"]}
+                          :actors [{:userid "alice"} {:userid "bob"}]}
                          {:type :approval
-                          :actors ["carl"]}]}]
+                          :actors [{:userid "carl"}]}]}]
       (testing "valid form"
         (is (= {:organization "abc"
                 :title "workflow title"
                 :type :rounds
                 :rounds [{:type :review
-                          :actors ["alice" "bob"]}
+                          :actors [{:userid "alice"} {:userid "bob"}]}
                          {:type :approval
-                          :actors ["carl"]}]}
+                          :actors [{:userid "carl"}]}]}
                (build-request form))))
       (testing "missing round type"
         (is (nil? (build-request (assoc-in form [:rounds 0 :type] nil)))))
