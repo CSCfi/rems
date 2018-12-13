@@ -755,7 +755,9 @@
 (def ^:private approve-form-id "approve")
 
 (defn- approve-action-button []
-  [action-button approve-form-id (text :t.actions/approve)])
+  [action-button {:id approve-form-id
+                  :text (text :t.actions/approve)
+                  :class "btn-primary"}])
 
 (defn- approve-form []
   [action-form approve-form-id
@@ -770,7 +772,8 @@
 (def ^:private reject-form-id "reject")
 
 (defn- reject-action-button []
-  [action-button reject-form-id (text :t.actions/reject)])
+  [action-button {:id reject-form-id
+                  :text (text :t.actions/reject)}])
 
 (defn- reject-form []
   [action-form reject-form-id
@@ -785,7 +788,8 @@
 (def ^:private static-return-form-id "static-return")
 
 (defn- static-return-action-button []
-  [action-button static-return-form-id (text :t.actions/return)])
+  [action-button {:id static-return-form-id
+                  :text (text :t.actions/return)}])
 
 (defn- static-return-form []
   [action-form static-return-form-id
@@ -800,7 +804,8 @@
 (def ^:private review-form-id "review")
 
 (defn- review-action-button []
-  [action-button review-form-id (text :t.actions/review)])
+  [action-button {:id review-form-id
+                  :text (text :t.actions/review)}])
 
 (defn- review-form []
   [action-form review-form-id
@@ -814,7 +819,8 @@
 (def ^:private third-party-review-form-id "third-party-review")
 
 (defn- third-party-review-action-button []
-  [action-button third-party-review-form-id (text :t.actions/review)])
+  [action-button {:id third-party-review-form-id
+                  :text (text :t.actions/review)}])
 
 (defn- third-party-review-form []
   [action-form third-party-review-form-id
@@ -828,7 +834,8 @@
 (def ^:private applicant-close-form-id "applicant-close")
 
 (defn- applicant-close-action-button []
-  [action-button applicant-close-form-id (text :t.actions/close)])
+  [action-button {:id applicant-close-form-id
+                  :text (text :t.actions/close)}])
 
 (defn- applicant-close-form []
   [action-form applicant-close-form-id
@@ -843,7 +850,8 @@
 (def ^:private approver-close-form-id "approver-close")
 
 (defn- approver-close-action-button []
-  [action-button approver-close-form-id (text :t.actions/close)])
+  [action-button {:id approver-close-form-id
+                  :text (text :t.actions/close)}])
 
 (defn- approver-close-form []
   [action-form approver-close-form-id
@@ -858,7 +866,8 @@
 (def ^:private withdraw-form-id "withdraw")
 
 (defn- withdraw-action-button []
-  [action-button withdraw-form-id (text :t.actions/withdraw)])
+  [action-button {:id withdraw-form-id
+                  :text (text :t.actions/withdraw)}])
 
 (defn- withdraw-form []
   [action-form withdraw-form-id
@@ -872,7 +881,8 @@
 (def ^:private review-request-form-id "review-request")
 
 (defn- review-request-action-button []
-  [action-button review-request-form-id (text :t.actions/review-request)])
+  [action-button {:id review-request-form-id
+                  :text (text :t.actions/review-request)}])
 
 (defn- review-request-form []
   (let [selected-third-party-reviewers @(rf/subscribe [::selected-third-party-reviewers])

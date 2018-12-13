@@ -36,13 +36,12 @@
    content
    (into [:div.col.commands.mr-3 [cancel-action-button id]] buttons)])
 
-(defn action-button [id content on-click]
+(defn action-button [{:keys [id text class on-click]}]
   [:button.btn.mr-3
    {:id (str id "-action-button")
-    ;; TODO: decouple from action names
-    :class (if (contains? #{"approve" "approve-reject"} id) "btn-primary" "btn-secondary")
+    :class (or class "btn-secondary")
     :type "button"
     :data-toggle "collapse"
     :data-target (str "#" (action-collapse-id id))
     :on-click on-click}
-   (str content " ...")])
+   (str text " ...")])

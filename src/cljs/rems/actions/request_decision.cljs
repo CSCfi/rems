@@ -94,7 +94,9 @@
 (def ^:private action-form-id "request-decision")
 
 (defn request-decision-action-button []
-  [action-button action-form-id (text :t.actions/request-decision) #(rf/dispatch [::open-form])])
+  [action-button {:id action-form-id
+                  :text (text :t.actions/request-decision)
+                  :on-click #(rf/dispatch [::open-form])}])
 
 (defn request-decision-view
   [{:keys [selected-deciders potential-deciders comment on-set-comment on-add-decider on-remove-decider on-send]}]

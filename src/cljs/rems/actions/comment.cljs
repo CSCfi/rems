@@ -40,7 +40,9 @@
 (def ^:private action-form-id "comment")
 
 (defn comment-action-button []
-  [action-button action-form-id (text :t.actions/comment) #(rf/dispatch [::open-form])])
+  [action-button {:id action-form-id
+                  :text (text :t.actions/comment)
+                  :on-click #(rf/dispatch [::open-form])}])
 
 (defn comment-view
   [{:keys [comment on-set-comment on-send]}]

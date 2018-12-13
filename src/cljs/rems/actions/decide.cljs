@@ -42,7 +42,9 @@
 (def ^:private action-form-id "decide")
 
 (defn decide-action-button []
-  [action-button action-form-id (text :t.actions/decide) #(rf/dispatch [::open-form])])
+  [action-button {:id action-form-id
+                  :text (text :t.actions/decide)
+                  :on-click #(rf/dispatch [::open-form])}])
 
 (defn decide-view
   [{:keys [comment on-set-comment on-send]}]

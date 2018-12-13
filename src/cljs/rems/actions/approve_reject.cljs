@@ -58,7 +58,10 @@
 (def ^:private action-form-id "approve-reject")
 
 (defn approve-reject-action-button []
-  [action-button action-form-id (text :t.actions/approve-reject) #(rf/dispatch [::open-form])])
+  [action-button {:id action-form-id
+                  :text (text :t.actions/approve-reject)
+                  :class "btn-primary"
+                  :on-click #(rf/dispatch [::open-form])}])
 
 (defn approve-reject-view
   [{:keys [comment on-set-comment on-approve on-reject]}]

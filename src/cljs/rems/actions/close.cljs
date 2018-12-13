@@ -40,7 +40,9 @@
 (def ^:private action-form-id "close")
 
 (defn close-action-button []
-  [action-button action-form-id (text :t.actions/close) #(rf/dispatch [::open-form])])
+  [action-button {:id action-form-id
+                  :text (text :t.actions/close)
+                  :on-click #(rf/dispatch [::open-form])}])
 
 (defn close-view
   [{:keys [comment on-set-comment on-send]}]

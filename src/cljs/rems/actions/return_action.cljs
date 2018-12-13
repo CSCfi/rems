@@ -40,7 +40,9 @@
 (def ^:private action-form-id "return")
 
 (defn return-action-button []
-  [action-button action-form-id (text :t.actions/return) #(rf/dispatch [::open-form])])
+  [action-button {:id action-form-id
+                  :text (text :t.actions/return)
+                  :on-click #(rf/dispatch [::open-form])}])
 
 (defn return-view
   [{:keys [comment on-set-comment on-send]}]
