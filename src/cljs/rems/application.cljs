@@ -746,8 +746,8 @@
                    :text (text :t.actions/reject)
                    :on-click #(rf/dispatch [::judge-application "reject" (text :t.actions/reject)])}])
 
-(defn- return-button []
-  [button-wrapper {:id "return"
+(defn- static-return-button []
+  [button-wrapper {:id "static-return"
                    :text (text :t.actions/return)
                    :on-click #(rf/dispatch [::judge-application "return" (text :t.actions/return)])}])
 
@@ -865,7 +865,7 @@
   [action-form "static-return"
    (text :t.actions/return)
    (text :t.form/add-comments-shown-to-applicant)
-   [return-button]])
+   [static-return-button]])
 
 (defn- review-form []
   [action-form "review"
