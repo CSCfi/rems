@@ -44,11 +44,11 @@
   [{:keys [comment on-set-comment on-send]}]
   [action-form-view "decide"
    (text :t.actions/decide)
-   [[button-wrapper {:id "do-decide-reject"
+   [[button-wrapper {:id "decide-reject"
                      :text (text :t.actions/reject)
                      :class "btn-danger"
                      :on-click #(on-send :rejected)}]
-    [button-wrapper {:id "do-decide-approve"
+    [button-wrapper {:id "decide-approve"
                      :text (text :t.actions/approve)
                      :class "btn-success"
                      :on-click #(on-send :approved)}]]

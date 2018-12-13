@@ -42,7 +42,7 @@
   [{:keys [comment on-set-comment on-send]}]
   [action-form-view "return"
    (text :t.actions/return)
-   [[button-wrapper {:id "do-return"
+   [[button-wrapper {:id "return"
                      :text (text :t.actions/return)
                      :on-click on-send}]]
    [action-comment {:id "return"

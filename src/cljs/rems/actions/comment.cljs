@@ -42,7 +42,7 @@
   [{:keys [comment on-set-comment on-send]}]
   [action-form-view "comment"
    (text :t.actions/comment)
-   [[button-wrapper {:id "do-comment"
+   [[button-wrapper {:id "comment"
                      :text (text :t.actions/comment)
                      :on-click on-send}]]
    [action-comment {:id "comment"

@@ -42,7 +42,7 @@
   [{:keys [comment on-set-comment on-send]}]
   [action-form-view "close"
    (text :t.actions/close)
-   [[button-wrapper {:id "do-close"
+   [[button-wrapper {:id "close"
                      :text (text :t.actions/close)
                      :class "btn-danger"
                      :on-click on-send}]]

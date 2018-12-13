@@ -60,11 +60,11 @@
   [{:keys [comment on-set-comment on-approve on-reject]}]
   [action-form-view "approve-reject"
    (text :t.actions/comment)
-   [[button-wrapper {:id "do-reject"
+   [[button-wrapper {:id "reject"
                      :text (text :t.actions/reject)
                      :class "btn-danger"
                      :on-click on-reject}]
-    [button-wrapper {:id "do-approve"
+    [button-wrapper {:id "approve"
                      :text (text :t.actions/approve)
                      :class "btn-success"
                      :on-click on-approve}]]

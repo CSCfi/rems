@@ -94,7 +94,7 @@
   [{:keys [selected-commenters potential-commenters comment on-set-comment on-add-commenter on-remove-commenter on-send]}]
   [action-form-view "request-comment"
    (text :t.actions/request-comment)
-   [[button-wrapper {:id "do-request-comment"
+   [[button-wrapper {:id "request-comment"
                      :text (text :t.actions/request-comment)
                      :on-click on-send}]]
    [:div

@@ -95,7 +95,7 @@
   [{:keys [selected-deciders potential-deciders comment on-set-comment on-add-decider on-remove-decider on-send]}]
   [action-form-view "request-decision"
    (text :t.actions/request-decision)
-   [[button-wrapper {:id "do-request-decision"
+   [[button-wrapper {:id "request-decision"
                      :text (text :t.actions/request-decision)
                      :on-click on-send}]]
    [:div
