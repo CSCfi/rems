@@ -33,7 +33,7 @@
     (let [form {:organization "abc"
                 :title "workflow title"
                 :type :dynamic
-                :handlers ["bob" "carl"]}]
+                :handlers [{:userid "bob"} {:userid "carl"}]}]
       (testing "valid form"
         (is (= {:organization "abc"
                 :title "workflow title"
@@ -47,10 +47,10 @@
     (let [form {:organization "abc"
                 :title "workflow title"
                 :type :rounds
-                :rounds [{:type :review
-                          :actors ["alice" "bob"]}
-                         {:type :approval
-                          :actors ["carl"]}]}]
+                :rounds {0 {:type :review
+                          :actors [{:userid "alice"} {:userid "bob"}]}
+                         1 {:type :approval
+                          :actors [{:userid "carl"}]}}}]
       (testing "valid form"
         (is (= {:organization "abc"
                 :title "workflow title"
