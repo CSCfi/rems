@@ -733,55 +733,6 @@
                     (for [[k v] (dissoc user-attributes "commonName" "mail")]
                       [info-field k v]))}])
 
-
-(defn- judge-application-button [{:keys [command text] :as opts}]
-  [button-wrapper (merge {:id command
-                          :on-click #(rf/dispatch [::judge-application command text])}
-                         (dissoc opts :command))])
-
-(defn- approve-button []
-  [judge-application-button {:command "approve"
-                             :text (text :t.actions/approve)
-                             :class "btn-success"}])
-
-(defn- reject-button []
-  [judge-application-button {:command "reject"
-                             :text (text :t.actions/reject)
-                             :class "btn-danger"}])
-
-(defn- static-return-button []
-  [judge-application-button {:id "static-return"
-                             :command "return"
-                             :text (text :t.actions/return)
-                             :class "btn-primary"}])
-
-(defn- review-button []
-  [judge-application-button {:command "review"
-                             :text (text :t.actions/review)
-                             :class "btn-primary"}])
-
-(defn- third-party-review-button []
-  [judge-application-button {:command "third-party-review"
-                             :text (text :t.actions/review)
-                             :class "btn-primary"}])
-
-(defn- applicant-close-button []
-  [judge-application-button {:id "applicant-close"
-                             :command "close"
-                             :text (text :t.actions/close)
-                             :class "btn-danger"}])
-
-(defn- approver-close-button []
-  [judge-application-button {:id "approver-close"
-                             :command "close"
-                             :text (text :t.actions/close)
-                             :class "btn-danger"}])
-
-(defn- withdraw-button []
-  [judge-application-button {:command "withdraw"
-                             :text (text :t.actions/withdraw)
-                             :class "btn-primary"}])
-
 (defn- action-button [id content on-click]
   [:button.btn.mr-3
    {:id (str id "-action-button")
@@ -852,53 +803,77 @@
                        :comment @(rf/subscribe [::judge-comment])
                        :on-comment #(rf/dispatch [::set-judge-comment %])}])]])
 
+(defn- judge-application-button [{:keys [command text] :as opts}]
+  [button-wrapper (merge {:id command
+                          :on-click #(rf/dispatch [::judge-application command text])}
+                         (dissoc opts :command))])
+
 (defn- approve-form []
   [action-form "approve"
    (text :t.actions/approve)
    (text :t.form/add-comments-shown-to-applicant)
-   [approve-button]])
+   [judge-application-button {:command "approve"
+                              :text (text :t.actions/approve)
+                              :class "btn-success"}]])
 
 (defn- reject-form []
   [action-form "reject"
    (text :t.actions/reject)
    (text :t.form/add-comments-shown-to-applicant)
-   [reject-button]])
+   [judge-application-button {:command "reject"
+                              :text (text :t.actions/reject)
+                              :class "btn-danger"}]])
 
 (defn- static-return-form []
   [action-form "static-return"
    (text :t.actions/return)
    (text :t.form/add-comments-shown-to-applicant)
-   [static-return-button]])
+   [judge-application-button {:id "static-return"
+                              :command "return"
+                              :text (text :t.actions/return)
+                              :class "btn-primary"}]])
 
 (defn- review-form []
   [action-form "review"
    (text :t.actions/review)
    (text :t.form/add-comments-not-shown-to-applicant)
-   [review-button]])
+   [judge-application-button {:command "review"
+                              :text (text :t.actions/review)
+                              :class "btn-primary"}]])
 
 (defn- third-party-review-form []
   [action-form "third-party-review"
    (text :t.actions/review)
    (text :t.form/add-comments-not-shown-to-applicant)
-   [third-party-review-button]])
+   [judge-application-button {:command "third-party-review"
+                              :text (text :t.actions/review)
+                              :class "btn-primary"}]])
 
 (defn- applicant-close-form []
   [action-form "applicant-close"
    (text :t.actions/close)
    (text :t.form/add-comments)
-   [applicant-close-button]])
+   [judge-application-button {:id "applicant-close"
+                              :command "close"
+                              :text (text :t.actions/close)
+                              :class "btn-danger"}]])
 
 (defn- approver-close-form []
   [action-form "approver-close"
    (text :t.actions/close)
    (text :t.form/add-comments-shown-to-applicant)
-   [approver-close-button]])
+   [judge-application-button {:id "approver-close"
+                              :command "close"
+                              :text (text :t.actions/close)
+                              :class "btn-danger"}]])
 
 (defn- withdraw-form []
   [action-form "withdraw"
    (text :t.actions/withdraw)
    (text :t.form/add-comments)
-   [withdraw-button]])
+   [judge-application-button {:command "withdraw"
+                              :text (text :t.actions/withdraw)
+                              :class "btn-primary"}]])
 
 (defn- request-review-form []
   (let [selected-third-party-reviewers @(rf/subscribe [::selected-third-party-reviewers])
