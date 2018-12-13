@@ -3,7 +3,6 @@
             [reagent.core :as r]
             [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper]]
             [rems.atoms :refer [textarea]]
-            [rems.autocomplete :as autocomplete]
             [rems.status-modal :refer [status-modal]]
             [rems.text :refer [text]]
             [rems.util :refer [fetch post!]]))
@@ -57,7 +56,7 @@
    {}))
 
 (defn approve-reject-action-button []
-  [action-button "approve-reject" (text :t.actions/approve-reject)])
+  [action-button "approve-reject" (text :t.actions/approve-reject) #(rf/dispatch [::open-form])])
 
 (defn approve-reject-view
   [{:keys [comment on-set-comment on-approve on-reject]}]
