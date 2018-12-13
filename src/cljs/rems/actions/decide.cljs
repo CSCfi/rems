@@ -1,9 +1,8 @@
 (ns rems.actions.decide
   (:require [re-frame.core :as rf]
             [reagent.core :as r]
-            [rems.actions.action :refer [action-form-view button-wrapper]]
+            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper]]
             [rems.atoms :refer [textarea]]
-            [rems.autocomplete :as autocomplete]
             [rems.status-modal :refer [status-modal]]
             [rems.text :refer [text]]
             [rems.util :refer [fetch post!]]))
@@ -40,35 +39,36 @@
    (on-pending)
    {}))
 
+(def ^:private action-form-id "decide")
+
+(defn decide-action-button []
+  [action-button {:id action-form-id
+                  :text (text :t.actions/decide)
+                  :on-click #(rf/dispatch [::open-form])}])
+
 (defn decide-view
   [{:keys [comment on-set-comment on-send]}]
-  [action-form-view "decide"
+  [action-form-view action-form-id
    (text :t.actions/decide)
-   nil
-   [[button-wrapper {:id "decide"
+   [[button-wrapper {:id "decide-reject"
                      :text (text :t.actions/reject)
                      :class "btn-danger"
                      :on-click #(on-send :rejected)}]
-    [button-wrapper {:id "decide"
+    [button-wrapper {:id "decide-approve"
                      :text (text :t.actions/approve)
                      :class "btn-success"
                      :on-click #(on-send :approved)}]]
-   [:div [:div.form-group
-          [:label {:for "comment"} (text :t.form/add-comments-not-shown-to-applicant)]
-          [textarea {:id "comment"
-                     :name "comment"
-                     :placeholder (text :t.form/comment)
-                     :value comment
-                     :on-change #(on-set-comment (.. % -target -value))}]]]
-   nil
-   nil])
+   [action-comment {:id action-form-id
+                    :label (text :t.form/add-comments-not-shown-to-applicant)
+                    :comment comment
+                    :on-comment on-set-comment}]])
 
 (defn decide-form [application-id on-finished]
   (let [comment (rf/subscribe [::comment])
         description (text :t.actions/decide)
         state (r/atom nil)
         on-pending #(reset! state {:status :pending})
-        on-success #(reset! state {:status :saved })
+        on-success #(reset! state {:status :saved})
         on-error #(reset! state {:status :failed :error %})
         on-modal-close #(do (reset! state nil)
                             (on-finished))]
