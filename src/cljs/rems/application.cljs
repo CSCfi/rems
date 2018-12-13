@@ -742,7 +742,7 @@
 (defn- approve-button []
   [judge-application-button {:command "approve"
                              :text (text :t.actions/approve)
-                             :class "btn-primary"}])
+                             :class "btn-success"}])
 
 (defn- reject-button []
   [judge-application-button {:command "reject"
@@ -752,7 +752,8 @@
 (defn- static-return-button []
   [judge-application-button {:id "static-return"
                              :command "return"
-                             :text (text :t.actions/return)}])
+                             :text (text :t.actions/return)
+                             :class "btn-primary"}])
 
 (defn- review-button []
   [judge-application-button {:command "review"
@@ -767,16 +768,19 @@
 (defn- applicant-close-button []
   [judge-application-button {:id "applicant-close"
                              :command "close"
-                             :text (text :t.actions/close)}])
+                             :text (text :t.actions/close)
+                             :class "btn-danger"}])
 
 (defn- approver-close-button []
   [judge-application-button {:id "approver-close"
                              :command "close"
-                             :text (text :t.actions/close)}])
+                             :text (text :t.actions/close)
+                             :class "btn-danger"}])
 
 (defn- withdraw-button []
   [judge-application-button {:command "withdraw"
-                             :text (text :t.actions/withdraw)}])
+                             :text (text :t.actions/withdraw)
+                             :class "btn-primary"}])
 
 (defn- action-button [id content on-click]
   [:button.btn.mr-3
@@ -905,6 +909,7 @@
      nil
      [button-wrapper {:id "request-review"
                       :text (text :t.actions/review-request)
+                      :class "btn-primary"
                       :on-click #(rf/dispatch [::send-third-party-review-request selected-third-party-reviewers review-comment (text :t.actions/review-request)])}]
      [:div [:div.form-group
             [:label {:for "review-comment"} (text :t.form/add-comments-not-shown-to-applicant)]

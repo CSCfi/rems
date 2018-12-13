@@ -97,6 +97,7 @@
    (text :t.actions/request-decision)
    [[button-wrapper {:id "request-decision"
                      :text (text :t.actions/request-decision)
+                     :class "btn-primary"
                      :on-click on-send}]]
    [:div
     [action-comment {:id "request-decision"

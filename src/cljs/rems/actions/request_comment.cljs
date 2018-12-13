@@ -96,6 +96,7 @@
    (text :t.actions/request-comment)
    [[button-wrapper {:id "request-comment"
                      :text (text :t.actions/request-comment)
+                     :class "btn-primary"
                      :on-click on-send}]]
    [:div
     [action-comment {:id "request-comment"

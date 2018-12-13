@@ -44,6 +44,7 @@
    (text :t.actions/return)
    [[button-wrapper {:id "return"
                      :text (text :t.actions/return)
+                     :class "btn-primary"
                      :on-click on-send}]]
    [action-comment {:id "return"
                     :label (text :t.form/add-comments-shown-to-applicant)

@@ -44,6 +44,7 @@
    (text :t.actions/comment)
    [[button-wrapper {:id "comment"
                      :text (text :t.actions/comment)
+                     :class "btn-primary"
                      :on-click on-send}]]
    [action-comment {:id "comment"
                     :label (text :t.form/add-comments-not-shown-to-applicant)
