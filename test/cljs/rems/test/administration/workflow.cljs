@@ -33,12 +33,12 @@
     (let [form {:organization "abc"
                 :title "workflow title"
                 :type :dynamic
-                :handlers ["bob" "carl"]}]
+                :handlers [{:userid "bob"} {:userid "carl"}]}]
       (testing "valid form"
         (is (= {:organization "abc"
                 :title "workflow title"
                 :type :dynamic
-                :handlers ["bob" "carl"]}
+                :handlers [{:userid "bob"} {:userid "carl"}]}
                (build-request form))))
       (testing "missing handlers"
         (is (nil? (build-request (assoc-in form [:handlers] [])))))))
