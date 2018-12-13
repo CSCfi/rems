@@ -41,8 +41,8 @@
     (doseq [[round-index round] (map-indexed vector rounds)]
       (doseq [actor (:actors round)]
         (case (:type round)
-          :approval (actors/add-approver! wfid (:userid actor) round-index)
-          :review (actors/add-reviewer! wfid (:userid actor) round-index))))
+          :approval (actors/add-approver! wfid actor round-index)
+          :review (actors/add-reviewer! wfid actor round-index))))
     {:id wfid}))
 
 (defn create-workflow! [command]

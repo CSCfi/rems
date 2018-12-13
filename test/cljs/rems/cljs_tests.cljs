@@ -5,6 +5,7 @@
             rems.test.administration.license
             rems.test.administration.resource
             rems.test.administration.workflow
+            rems.test.application
             rems.test.table
             rems.test.util))
 
@@ -13,5 +14,6 @@
            'rems.test.administration.license
            'rems.test.administration.resource
            'rems.test.administration.workflow
+           'rems.test.application
            'rems.test.table
            'rems.test.util)

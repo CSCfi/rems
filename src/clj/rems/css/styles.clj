@@ -341,6 +341,10 @@
                        :border "none"
                        :background-color "rgba(0,0,0,.01)"}
     [:&:empty {:height (u/rem 2.25)}]]
+   [:.toggle-diff {:float "right"}]
+   [:.diff
+    [:ins {:background-color "#acf2bd"}]
+    [:del {:background-color "#fdb8c0"}]]
    [:form.inline
     :.form-actions.inline
     {:display :inline-block}

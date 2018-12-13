@@ -1,24 +1,25 @@
 (ns rems.application
   (:require [clojure.string :as str]
+            [medley.core :refer [map-vals]]
             [re-frame.core :as rf]
-            [rems.actions.action :refer [action-form-view action-collapse-id button-wrapper]]
-            [rems.actions.approve-reject :refer [approve-reject-form]]
-            [rems.actions.comment :refer [comment-form]]
-            [rems.actions.close :refer [close-form]]
-            [rems.actions.decide :refer [decide-form]]
-            [rems.actions.request-comment :refer [request-comment-form]]
-            [rems.actions.request-decision :refer [request-decision-form]]
-            [rems.actions.return-action :refer [return-form]]
+            [rems.actions.action :refer [action-button action-form-view action-comment action-collapse-id button-wrapper]]
+            [rems.actions.approve-reject :refer [approve-reject-action-button approve-reject-form]]
+            [rems.actions.close :refer [close-action-button close-form]]
+            [rems.actions.comment :refer [comment-action-button comment-form]]
+            [rems.actions.decide :refer [decide-action-button decide-form]]
+            [rems.actions.request-comment :refer [request-comment-action-button request-comment-form]]
+            [rems.actions.request-decision :refer [request-decision-action-button request-decision-form]]
+            [rems.actions.return-action :refer [return-action-button return-form]]
             [rems.atoms :refer [external-link flash-message textarea]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
+            [rems.common-util :refer [index-by]]
             [rems.db.catalogue :refer [get-catalogue-item-title]]
             [rems.guide-utils :refer [lipsum lipsum-short lipsum-paragraphs]]
             [rems.phase :refer [phases]]
             [rems.spinner :as spinner]
             [rems.status-modal :refer [status-modal]]
             [rems.text :refer [localize-decision localize-event localize-item localize-state localize-time text text-format]]
-            [rems.common-util :refer [index-by]]
             [rems.util :refer [dispatch! fetch post!]]
             [secretary.core :as secretary])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
@@ -90,8 +91,9 @@
  (fn [db [_ application]]
    (assoc db
           ::application application
-          ::edit-application {:items (into {} (map (juxt :id :value) (:items application)))
-                              :licenses (into {} (map (juxt :id :approver) (:licenses application)))})))
+          ::edit-application {:items (into {} (for [item (:items application)]
+                                                [(:id item) {:value (:value item)}]))
+                              :licenses (into {} (map (juxt :id :approved) (:licenses application)))})))
 
 (rf/reg-event-fx
  ::enter-new-application-page
@@ -111,12 +113,14 @@
  ::set-status
  (fn [db [_ {:keys [status description validation error]}]]
    (assert (contains? #{:pending :saved :failed nil} status))
-   (-> db
-       (assoc-in [::edit-application :status] {:open? (not (nil? status))
-                                               :status status
-                                               :description description
-                                               :error error})
-       (assoc-in [::edit-application :validation] validation))))
+   (cond-> db
+     true (assoc-in [::edit-application :status]
+                    {:open? (not (nil? status))
+                     :status status
+                     :description description
+                     :error error})
+     validation (assoc-in [::edit-application :validation] validation) ; NB don't clear validation results on modal close
+     )))
 
 (defn- save-application [app description application-id catalogue-items items licenses on-success]
   (post! "/api/applications/save"
@@ -126,11 +130,12 @@
                        (rf/dispatch [::set-status {:status :failed
                                                    :description description
                                                    :validation (:validation resp)}])))
-          :error-handler (fn [error] (rf/dispatch [::set-status {:status :failed
-                                                                 :description description
-                                                                 :error error}]))
+          :error-handler (fn [error]
+                           (rf/dispatch [::set-status {:status :failed
+                                                       :description description
+                                                       :error error}]))
           :params (merge {:command "save"
-                          :items items
+                          :items (map-vals :value items)
                           :licenses licenses}
                          (if application-id
                            {:application-id application-id}
@@ -150,9 +155,10 @@
                          (rf/dispatch [::set-status {:status :failed
                                                      :description description
                                                      :validation (:validation resp)}])))
-            :error-handler (fn [error] (rf/dispatch [::set-status {:status :failed
-                                                                   :description description
-                                                                   :error error}]))
+            :error-handler (fn [error]
+                             (rf/dispatch [::set-status {:status :failed
+                                                         :description description
+                                                         :error error}]))
             :params {:type :rems.workflow.dynamic/submit
                      :application-id application-id}})
     (post! "/api/applications/save"
@@ -167,11 +173,12 @@
                          (rf/dispatch [::set-status {:status :failed
                                                      :description description
                                                      :validation (:validation resp)}])))
-            :error-handler (fn [error] (rf/dispatch [::set-status {:status :failed
-                                                                   :description description
-                                                                   :error error}]))
+            :error-handler (fn [error]
+                             (rf/dispatch [::set-status {:status :failed
+                                                         :description description
+                                                         :error error}]))
             :params (merge {:command "submit"
-                            :items items
+                            :items (map-vals :value items)
                             :licenses licenses}
                            (if application-id
                              {:application-id application-id}
@@ -209,7 +216,7 @@
                              ;; because if the location didn't change, secretary won't fire the event
                              (navigate-to (:id resp))
                              (rf/dispatch [::enter-application-page (:id resp)]))))))
-   {}))
+   {:db (assoc-in db [::edit-application :validation] nil)}))
 
 (defn- save-attachment [application-id field-id form-data description]
   (post! (str "/api/applications/add_attachment?application-id=" application-id "&field-id=" field-id)
@@ -219,7 +226,7 @@
 
 (defn- save-application-with-attachment [field-id form-data catalogue-items items licenses description]
   (let [payload {:command "save"
-                 :items items
+                 :items (map-vals :value items)
                  :licenses licenses
                  :catalogue-items catalogue-items}]
     ;; TODO this logic should be rewritten as a chain of save, save-attachment instead
@@ -271,7 +278,8 @@
 
 (rf/reg-sub ::judge-comment (fn [db _] (::judge-comment db)))
 
-(rf/reg-event-db ::set-field (fn [db [_ id value]] (assoc-in db [::edit-application :items id] value)))
+(rf/reg-event-db ::set-field (fn [db [_ id value]] (assoc-in db [::edit-application :items id :value] value)))
+(rf/reg-event-db ::toggle-diff (fn [db [_ id]] (update-in db [::edit-application :items id :diff] not)))
 (rf/reg-event-db ::set-license (fn [db [_ id value]] (assoc-in db [::edit-application :licenses id] value)))
 (rf/reg-event-db ::set-judge-comment (fn [db [_ value]] (assoc db ::judge-comment value)))
 
@@ -424,85 +432,133 @@
       (rf/dispatch [::set-field id (.-name filecontent)])
       (rf/dispatch [::save-attachment id form-data description]))))
 
+(defn- readonly-field [{:keys [id value]}]
+  [:div.form-control {:id id} (str/trim (str value))])
+
+(defn- diff [value previous-value]
+  (let [dmp (js/diff_match_patch.)
+        diff (.diff_main dmp
+                         (str/trim (str previous-value))
+                         (str/trim (str value)))]
+    (.diff_cleanupSemantic dmp diff)
+    diff))
+
+(defn- formatted-diff [value previous-value]
+  (->> (diff value previous-value)
+       (map (fn [[change text]]
+              (cond
+                (pos? change) [:ins text]
+                (neg? change) [:del text]
+                :else text)))))
+
+(defn- diff-field [{:keys [id value previous-value]}]
+  (into [:div.form-control.diff {:id id}]
+        (formatted-diff value previous-value)))
+
 (defn- field-validation-message [validation title]
   (when validation
     [:div {:class "text-danger"}
      (text-format (:key validation) title)]))
 
-(defn- basic-field [{:keys [title id optional validation]} field-component]
+(defn- toggle-diff-button [item-id diff-visible]
+  [:a.toggle-diff {:href "#"
+                   :on-click (fn [event]
+                               (.preventDefault event)
+                               (rf/dispatch [::toggle-diff item-id]))}
+   [:i.fas.fa-exclamation-circle]
+   " "
+   (if diff-visible
+     (text :t.form/diff-hide)
+     (text :t.form/diff-show))])
+
+(defn basic-field
+  "Common parts of a form field.
+
+  :title - string (required), field title to show to the user
+  :id - number (required), field id
+  :readonly - boolean, true if the field should not be editable
+  :readonly-component - HTML, custom component for a readonly field
+  :optional - boolean, true if the field is not required
+  :value - string, the current value of the field
+  :previous-value - string, the previously submitted value of the field
+  :diff - boolean, true if should show the diff between :value and :previous-value
+  :diff-component - HTML, custom component for rendering a diff
+  :validation - validation errors
+
+  editor-component - HTML, form component for editing the field"
+  [{:keys [title id readonly readonly-component optional value previous-value diff diff-component validation]} editor-component]
   [:div.form-group.field
    [:label {:for (id-to-name id)}
     title " "
     (when optional
       (text :t.form/optional))]
-   field-component
+   (when (and previous-value
+              (not= value previous-value))
+     [toggle-diff-button id diff])
+   (cond
+     diff (or diff-component
+              [diff-field {:id (id-to-name id)
+                           :value value
+                           :previous-value previous-value}])
+     readonly (or readonly-component
+                  [readonly-field {:id (id-to-name id)
+                                   :value value}])
+     :else editor-component)
    [field-validation-message validation title]])
 
-(defn- read-only-field [{:keys [id value]}]
-  [:div.form-control {:id id} (str/trim (str value))])
-
 (defn- text-field
-  [{:keys [title id inputprompt readonly optional value validation] :as opts}]
+  [{:keys [id inputprompt value validation] :as opts}]
   [basic-field opts
-   (if readonly
-     [read-only-field {:id (id-to-name id)
-                       :value value}]
-     [:input.form-control {:type "text"
-                           :id (id-to-name id)
-                           :name (id-to-name id)
-                           :placeholder inputprompt
-                           :class (when validation "is-invalid")
-                           :value value
-                           :on-change (set-field-value id)}])])
+   [:input.form-control {:type "text"
+                         :id (id-to-name id)
+                         :name (id-to-name id)
+                         :placeholder inputprompt
+                         :class (when validation "is-invalid")
+                         :value value
+                         :on-change (set-field-value id)}]])
 
 (defn- texta-field
-  [{:keys [title id inputprompt readonly optional value validation] :as opts}]
+  [{:keys [id inputprompt value validation] :as opts}]
   [basic-field opts
-   (if readonly
-     [read-only-field {:id (id-to-name id)
-                       :value value}]
-     [textarea {:id (id-to-name id)
-                :name (id-to-name id)
-                :placeholder inputprompt
-                :class (if validation "form-control is-invalid" "form-control")
-                :value value
-                :on-change (set-field-value id)}])])
+   [textarea {:id (id-to-name id)
+              :name (id-to-name id)
+              :placeholder inputprompt
+              :class (if validation "form-control is-invalid" "form-control")
+              :value value
+              :on-change (set-field-value id)}]])
 
 (defn attachment-field
-  [{:keys [title id readonly optional value validation app-id] :as opts}]
+  [{:keys [title id value validation app-id] :as opts}]
   (let [download-link (when (not-empty value)
                         [:a {:href (str "/api/applications/attachments/?application-id=" app-id "&field-id=" id)
                              :target "_blank"}
                          value])]
-    [basic-field opts
-     (if readonly
-       [:div.form-control download-link]
-       [:div
-        [:div.upload-file
-         [:input {:style {:display "none"}
-                  :type "file"
-                  :id (id-to-name id)
-                  :name (id-to-name id)
-                  :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
-                  :class (when validation "is-invalid")
-                  :on-change (set-attachment id title)}]
-         [:button.btn.btn-secondary {:on-click (fn [e] (.click (.getElementById js/document (id-to-name id))))}
-          (text :t.form/upload)]]
-        download-link])]))
+    ;; TODO: custom :diff-component, for example link to both old and new attachment
+    [basic-field (assoc opts :readonly-component [:div.form-control download-link])
+     [:div
+      [:div.upload-file
+       [:input {:style {:display "none"}
+                :type "file"
+                :id (id-to-name id)
+                :name (id-to-name id)
+                :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
+                :class (when validation "is-invalid")
+                :on-change (set-attachment id title)}]
+       [:button.btn.btn-secondary {:on-click (fn [e] (.click (.getElementById js/document (id-to-name id))))}
+        (text :t.form/upload)]]
+      download-link]]))
 
 (defn- date-field
-  [{:keys [title id readonly optional value min max validation] :as opts}]
+  [{:keys [id value min max validation] :as opts}]
+  ;; TODO: format readonly value in user locale (give basic-field a formatted :value and :previous-value in opts)
   [basic-field opts
-   (if readonly
-     [read-only-field {:id (id-to-name id)
-                       :value value}] ;; TODO: format in user locale
-     [:input.form-control {:type "date"
-                           :name (id-to-name id)
-                           :class (when validation "is-invalid")
-                           :defaultValue value
-                           :min min
-                           :max max
-                           :on-change (set-field-value id)}])])
+   [:input.form-control {:type "date"
+                         :name (id-to-name id)
+                         :class (when validation "is-invalid")
+                         :defaultValue value
+                         :min min
+                         :max max
+                         :on-change (set-field-value id)}]])
 
 (defn- label [{title :title}]
   [:div.form-group
@@ -520,7 +576,7 @@
                               :name (str "license" id)
                               :disabled readonly
                               :class (when validation "is-invalid")
-                              :checked approved
+                              :checked (boolean approved)
                               :on-change (set-license-approval id)}]
     [:span.form-check-label content]]
    [field-validation-message validation title]])
@@ -595,7 +651,10 @@
                [field (assoc (localize-item item)
                              :validation (get-in validation-by-field-id [:item (:id item)])
                              :readonly readonly?
-                             :value (get items (:id item))
+                             :value (get-in items [(:id item) :value])
+                             ;; TODO: db doesn't yet contain :previous-value so this is always nil
+                             :previous-value (get-in items [(:id item) :previous-value])
+                             :diff (get-in items [(:id item) :diff])
                              :app-id (:id application))]))
        (when-let [form-licenses (not-empty (:licenses form))]
          [:div.form-group.field
@@ -680,174 +739,172 @@
                       [info-field k v]))}])
 
 
-(defn- approve-button []
-  [button-wrapper {:id "approve"
-                   :class "btn-primary"
-                   :text (text :t.actions/approve)
-                   :on-click #(rf/dispatch [::judge-application "approve" (text :t.actions/approve)])}])
-
-(defn- reject-button []
-  [button-wrapper {:id "reject"
-                   :class "btn-danger"
-                   :text (text :t.actions/reject)
-                   :on-click #(rf/dispatch [::judge-application "reject" (text :t.actions/reject)])}])
-
-(defn- return-button []
-  [button-wrapper {:id "return"
-                   :text (text :t.actions/return)
-                   :on-click #(rf/dispatch [::judge-application "return" (text :t.actions/return)])}])
-
-(defn- review-button []
-  [button-wrapper {:id "review"
-                   :text (text :t.actions/review)
-                   :class "btn-primary"
-                   :on-click #(rf/dispatch [::judge-application "review" (text :t.actions/review)])}])
-
-(defn- third-party-review-button []
-  [button-wrapper {:id "request-review"
-                   :text (text :t.actions/review)
-                   :class "btn-primary"
-                   :on-click #(rf/dispatch [::judge-application "third-party-review" (text :t.actions/review)])}])
-
-(defn- close-button []
-  [button-wrapper {:id "close"
-                   :text (text :t.actions/close)
-                   :on-click #(rf/dispatch [::judge-application "close" (text :t.actions/close)])}])
-
-(defn- withdraw-button []
-  [button-wrapper {:id "withdraw"
-                   :text (text :t.actions/withdraw)
-                   :on-click #(rf/dispatch [::judge-application "withdraw" (text :t.actions/withdraw)])}])
-
-(defn- action-button [id content on-click]
-  [:button.btn.mr-3
-   {:id id
-    :class (if (contains? #{"approve" "approve-reject"} id) "btn-primary" "btn-secondary")
-    :type "button"
-    :data-toggle "collapse"
-    :data-target (str "#" (action-collapse-id id))
-    :on-click on-click}
-   (str content " ...")])
-
-(defn- approve-action-button []
-  [action-button "approve" (text :t.actions/approve)])
-
-(defn- reject-action-button []
-  [action-button "reject" (text :t.actions/reject)])
-
-(defn- static-return-action-button []
-  [action-button "static-return" (text :t.actions/return)])
-
-(defn- review-action-button []
-  [action-button "review" (text :t.actions/review)])
-
-(defn- third-party-review-action-button []
-  [action-button "third-party-review" (text :t.actions/review)])
-
-(defn- request-comment-action-button []
-  [action-button "request-comment" (text :t.actions/request-comment) #(rf/dispatch [:rems.actions.request-comment/open-form])])
-
-(defn- request-decision-action-button []
-  [action-button "request-decision" (text :t.actions/request-decision) #(rf/dispatch [:rems.actions.request-decision/open-form])])
-
-(defn- comment-action-button []
-  [action-button "comment" (text :t.actions/comment) #(rf/dispatch [:rems.actions.comment/open-form])])
-
-(defn- close-action-button []
-  [action-button "close" (text :t.actions/close) #(rf/dispatch [:rems.actions.close/open-form])])
-
-(defn- decide-action-button []
-  [action-button "decide" (text :t.actions/decide) #(rf/dispatch [:rems.actions.decide/open-form])])
-
-(defn- return-action-button []
-  [action-button "return" (text :t.actions/return) #(rf/dispatch [:rems.actions.return/open-form])])
-
-(defn- approve-reject-action-button []
-  [action-button "approve-reject" (text :t.actions/approve-reject)])
-
-(defn- applicant-close-action-button []
-  [action-button "applicant-close" (text :t.actions/close)])
-
-(defn- approver-close-action-button []
-  [action-button "approver-close" (text :t.actions/close)])
-
-(defn- withdraw-action-button []
-  [action-button "withdraw" (text :t.actions/withdraw)])
-
-(defn- review-request-action-button []
-  [action-button "review-request" (text :t.actions/review-request)])
-
 (defn action-form [id title comment-title button content]
   [action-form-view id
    title
-   comment-title
    [button]
-   content
-   @(rf/subscribe [::judge-comment])
-   #(rf/dispatch [::set-judge-comment (.. % -target -value)])])
+   [:div
+    content
+    (when comment-title
+      [action-comment {:id id
+                       :label comment-title
+                       :comment @(rf/subscribe [::judge-comment])
+                       :on-comment #(rf/dispatch [::set-judge-comment %])}])]])
+
+(defn- judge-application-button [{:keys [command text] :as opts}]
+  [button-wrapper (merge {:id command
+                          :on-click #(rf/dispatch [::judge-application command text])}
+                         (dissoc opts :command))])
+
+
+(def ^:private approve-form-id "approve")
+
+(defn- approve-action-button []
+  [action-button {:id approve-form-id
+                  :text (text :t.actions/approve)
+                  :class "btn-primary"}])
 
 (defn- approve-form []
-  [action-form "approve"
+  [action-form approve-form-id
    (text :t.actions/approve)
    (text :t.form/add-comments-shown-to-applicant)
-   [approve-button]])
+   [judge-application-button {:id "static-approve"
+                              :command "approve"
+                              :text (text :t.actions/approve)
+                              :class "btn-success"}]])
+
+
+(def ^:private reject-form-id "reject")
+
+(defn- reject-action-button []
+  [action-button {:id reject-form-id
+                  :text (text :t.actions/reject)}])
 
 (defn- reject-form []
-  [action-form "reject"
+  [action-form reject-form-id
    (text :t.actions/reject)
    (text :t.form/add-comments-shown-to-applicant)
-   [reject-button]])
+   [judge-application-button {:id "static-reject"
+                              :command "reject"
+                              :text (text :t.actions/reject)
+                              :class "btn-danger"}]])
+
+
+(def ^:private static-return-form-id "static-return")
+
+(defn- static-return-action-button []
+  [action-button {:id static-return-form-id
+                  :text (text :t.actions/return)}])
 
 (defn- static-return-form []
-  [action-form "static-return"
+  [action-form static-return-form-id
    (text :t.actions/return)
    (text :t.form/add-comments-shown-to-applicant)
-   [return-button]])
+   [judge-application-button {:id "static-return"
+                              :command "return"
+                              :text (text :t.actions/return)
+                              :class "btn-primary"}]])
+
+
+(def ^:private review-form-id "review")
+
+(defn- review-action-button []
+  [action-button {:id review-form-id
+                  :text (text :t.actions/review)}])
 
 (defn- review-form []
-  [action-form "review"
+  [action-form review-form-id
    (text :t.actions/review)
    (text :t.form/add-comments-not-shown-to-applicant)
-   [review-button]])
+   [judge-application-button {:command "review"
+                              :text (text :t.actions/review)
+                              :class "btn-primary"}]])
+
+
+(def ^:private third-party-review-form-id "third-party-review")
+
+(defn- third-party-review-action-button []
+  [action-button {:id third-party-review-form-id
+                  :text (text :t.actions/review)}])
 
 (defn- third-party-review-form []
-  [action-form "third-party-review"
+  [action-form third-party-review-form-id
    (text :t.actions/review)
    (text :t.form/add-comments-not-shown-to-applicant)
-   [third-party-review-button]])
+   [judge-application-button {:command "third-party-review"
+                              :text (text :t.actions/review)
+                              :class "btn-primary"}]])
+
+
+(def ^:private applicant-close-form-id "applicant-close")
+
+(defn- applicant-close-action-button []
+  [action-button {:id applicant-close-form-id
+                  :text (text :t.actions/close)}])
 
 (defn- applicant-close-form []
-  [action-form "applicant-close"
+  [action-form applicant-close-form-id
    (text :t.actions/close)
    (text :t.form/add-comments)
-   [close-button]])
+   [judge-application-button {:id "applicant-close"
+                              :command "close"
+                              :text (text :t.actions/close)
+                              :class "btn-danger"}]])
+
+
+(def ^:private approver-close-form-id "approver-close")
+
+(defn- approver-close-action-button []
+  [action-button {:id approver-close-form-id
+                  :text (text :t.actions/close)}])
 
 (defn- approver-close-form []
-  [action-form "approver-close"
+  [action-form approver-close-form-id
    (text :t.actions/close)
    (text :t.form/add-comments-shown-to-applicant)
-   [close-button]])
+   [judge-application-button {:id "approver-close"
+                              :command "close"
+                              :text (text :t.actions/close)
+                              :class "btn-danger"}]])
+
+
+(def ^:private withdraw-form-id "withdraw")
+
+(defn- withdraw-action-button []
+  [action-button {:id withdraw-form-id
+                  :text (text :t.actions/withdraw)}])
 
 (defn- withdraw-form []
-  [action-form "withdraw"
+  [action-form withdraw-form-id
    (text :t.actions/withdraw)
    (text :t.form/add-comments)
-   [withdraw-button]])
+   [judge-application-button {:command "withdraw"
+                              :text (text :t.actions/withdraw)
+                              :class "btn-primary"}]])
 
-(defn- request-review-form []
+
+(def ^:private review-request-form-id "review-request")
+
+(defn- review-request-action-button []
+  [action-button {:id review-request-form-id
+                  :text (text :t.actions/review-request)}])
+
+(defn- review-request-form []
   (let [selected-third-party-reviewers @(rf/subscribe [::selected-third-party-reviewers])
         potential-third-party-reviewers @(rf/subscribe [::potential-third-party-reviewers])
         review-comment @(rf/subscribe [::review-comment])]
-    [action-form "review-request"
+    [action-form review-request-form-id
      (text :t.actions/review-request)
      nil
-     [button-wrapper {:id "request-review"
+     [button-wrapper {:id "review-request"
                       :text (text :t.actions/review-request)
+                      :class "btn-primary"
                       :on-click #(rf/dispatch [::send-third-party-review-request selected-third-party-reviewers review-comment (text :t.actions/review-request)])}]
      [:div [:div.form-group
             [:label {:for "review-comment"} (text :t.form/add-comments-not-shown-to-applicant)]
             [textarea {:id "review-comment"
-                       :name "comment" :placeholder (text :t.form/comment)
+                       :name "review-comment"
+                       :placeholder (text :t.form/comment)
                        :on-change #(rf/dispatch [::set-review-comment (.. % -target -value)])}]]
       [:div.form-group
        [:label (text :t.actions/review-request-selection)]
@@ -862,20 +919,21 @@
          :add-fn #(rf/dispatch [::add-selected-third-party-reviewer %])
          :remove-fn #(rf/dispatch [::remove-selected-third-party-reviewer %])}]]]]))
 
+
 (defn- dynamic-actions [app]
   (distinct
    (mapcat #:rems.workflow.dynamic
-           {:submit [[save-button]
-                     [submit-button]]
-            :add-member nil ; TODO implement
-            :return [[return-action-button]]
-            :request-decision [[request-decision-action-button]]
-            :decide [[decide-action-button]]
-            :request-comment [[request-comment-action-button]]
-            :comment [[comment-action-button]]
-            :approve [[approve-reject-action-button]]
-            :reject [[approve-reject-action-button]]
-            :close [[close-action-button]]}
+               {:submit [[save-button]
+                         [submit-button]]
+                :add-member nil ; TODO implement
+                :return [[return-action-button]]
+                :request-decision [[request-decision-action-button]]
+                :decide [[decide-action-button]]
+                :request-comment [[request-comment-action-button]]
+                :comment [[comment-action-button]]
+                :approve [[approve-reject-action-button]]
+                :reject [[approve-reject-action-button]]
+                :close [[close-action-button]]}
            (:possible-commands app))))
 
 (defn- static-actions [app]
@@ -910,7 +968,7 @@
                 [reject-form]
                 [static-return-form]
                 [review-form]
-                [request-review-form]
+                [review-request-form]
                 [request-comment-form (:id app) reload]
                 [request-decision-form (:id app) reload]
                 [comment-form (:id app) reload]
@@ -926,7 +984,9 @@
       [collapsible/component
        {:id "actions"
         :title (text :t.form/actions)
-        :always (into [:div [:div.commands actions]] forms)}])))
+        :always (into [:div (into [:div.commands]
+                                  actions)]
+                      forms)}])))
 
 (defn- disabled-items-warning [catalogue-items]
   (let [language @(rf/subscribe [:language])]
@@ -960,9 +1020,8 @@
   (let [app (:application application)
         state (:state app)
         phases (:phases application)
-        events (concat
-                (:events app)
-                (map dynamic-event->event (:dynamic-events app)))
+        events (concat (:events app)
+                       (map dynamic-event->event (:dynamic-events app)))
         user-attributes (:applicant-attributes application)
         messages (remove nil?
                          [(disabled-items-warning (:catalogue-items application)) ; NB: eval this here so we get nil or a warning
@@ -1065,6 +1124,25 @@
    (example "non-editable field of type \"texta\""
             [:form
              [field {:type "texta" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-paragraphs}]])
+   (let [previous-lipsum-paragraphs (-> lipsum-paragraphs
+                                        (str/replace "ipsum primis in faucibus orci luctus" "eu mattis purus mi eu turpis")
+                                        (str/replace "per inceptos himenaeos" "justo erat hendrerit magna"))]
+     [:div
+      (example "editable field of type \"texta\" with previous value, diff hidden"
+               [:form
+                [field {:type "texta" :title "Title" :inputprompt "prompt" :value lipsum-paragraphs :previous-value previous-lipsum-paragraphs}]])
+      (example "editable field of type \"texta\" with previous value, diff shown"
+               [:form
+                [field {:type "texta" :title "Title" :inputprompt "prompt" :value lipsum-paragraphs :previous-value previous-lipsum-paragraphs :diff true}]])
+      (example "non-editable field of type \"texta\" with previous value, diff hidden"
+               [:form
+                [field {:type "texta" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-paragraphs :previous-value previous-lipsum-paragraphs}]])
+      (example "non-editable field of type \"texta\" with previous value, diff shown"
+               [:form
+                [field {:type "texta" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-paragraphs :previous-value previous-lipsum-paragraphs :diff true}]])
+      (example "non-editable field of type \"texta\" with previous value equal to current value"
+               [:form
+                [field {:type "texta" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-paragraphs :previous-value lipsum-paragraphs}]])])
    (example "field of type \"attachment\""
             [:form
              [field {:type "attachment" :title "Title"}]])

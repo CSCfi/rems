@@ -54,12 +54,9 @@
          :rounds (every? valid-round? (:rounds request))
          nil false)))
 
-(defn- build-request-user [actor]
-  {:userid (:userid actor)})
-
-(defn- build-request-round [round]
-  {:type (:type round)
-   :actors (map build-request-user (:actors round))})
+(defn- build-request-round [{:keys [type actors]}]
+  {:type type
+   :actors (map :userid actors)})
 
 (defn build-request [form]
   (let [request {:organization (:organization form)
@@ -67,8 +64,8 @@
                  :type (:type form)}
         request (case (:type form)
                   :auto-approve request
-                  :dynamic (assoc request :handlers (map build-request-user (:handlers form)))
-                  :rounds (assoc request :rounds (map build-request-round (:rounds form))))]
+                  :dynamic (assoc request :handlers (map :userid (:handlers form)))
+                  :rounds (assoc request :rounds (map build-request-round (vals (:rounds form)))))]
     (when (valid-request? request)
       request)))
 

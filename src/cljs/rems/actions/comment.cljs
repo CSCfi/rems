@@ -1,9 +1,8 @@
 (ns rems.actions.comment
   (:require [re-frame.core :as rf]
             [reagent.core :as r]
-            [rems.actions.action :refer [action-form-view button-wrapper]]
+            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper]]
             [rems.atoms :refer [textarea]]
-            [rems.autocomplete :as autocomplete]
             [rems.status-modal :refer [status-modal]]
             [rems.text :refer [text]]
             [rems.util :refer [fetch post!]]))
@@ -38,30 +37,32 @@
    (on-pending)
    {}))
 
+(def ^:private action-form-id "comment")
+
+(defn comment-action-button []
+  [action-button {:id action-form-id
+                  :text (text :t.actions/comment)
+                  :on-click #(rf/dispatch [::open-form])}])
+
 (defn comment-view
   [{:keys [comment on-set-comment on-send]}]
-  [action-form-view "comment"
+  [action-form-view action-form-id
    (text :t.actions/comment)
-   nil
    [[button-wrapper {:id "comment"
-                    :text (text :t.actions/comment)
-                    :on-click on-send}]]
-   [:div [:div.form-group
-          [:label {:for "comment"} (text :t.form/add-comments-not-shown-to-applicant)]
-          [textarea {:id "comment"
-                     :name "comment"
-                     :placeholder (text :t.form/comment)
-                     :value comment
-                     :on-change #(on-set-comment (.. % -target -value))}]]]
-   nil
-   nil])
+                     :text (text :t.actions/comment)
+                     :class "btn-primary"
+                     :on-click on-send}]]
+   [action-comment {:id action-form-id
+                    :label (text :t.form/add-comments-not-shown-to-applicant)
+                    :comment comment
+                    :on-comment on-set-comment}]])
 
 (defn comment-form [application-id on-finished]
   (let [comment (rf/subscribe [::comment])
         description (text :t.actions/comment)
         state (r/atom nil)
         on-pending #(reset! state {:status :pending})
-        on-success #(reset! state {:status :saved })
+        on-success #(reset! state {:status :saved})
         on-error #(reset! state {:status :failed :error %})
         on-modal-close #(do (reset! state nil)
                             (on-finished))]

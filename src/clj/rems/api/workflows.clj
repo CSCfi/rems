@@ -8,16 +8,18 @@
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
 
+(def UserId s/Str)
+
 (s/defschema Actor
-  {:actoruserid s/Str
+  {:actoruserid UserId
    :round s/Num
    :role (s/enum "approver" "reviewer")})
 
 (s/defschema Workflow
   {:id s/Num
    :organization s/Str
-   :owneruserid s/Str
-   :modifieruserid s/Str
+   :owneruserid UserId
+   :modifieruserid UserId
    :title s/Str
    :final-round s/Num
    :workflow s/Any
@@ -46,9 +48,9 @@
   {:organization s/Str
    :title s/Str
    :type s/Keyword
-   (s/optional-key :handlers) [{:userid s/Str}]
+   (s/optional-key :handlers) [UserId]
    (s/optional-key :rounds) [{:type (s/enum :approval :review)
-                              :actors [{:userid s/Str}]}]})
+                              :actors [UserId]}]})
 
 (s/defschema CreateWorkflowResponse
   {:id s/Num})
@@ -62,6 +64,7 @@
   (doall
    (for [wf (workflow/get-workflows filters)]
      (assoc (format-workflow wf)
+            ;; TODO should this be in db.workflow?
             :actors (db/get-workflow-actors {:wfid (:id wf)})))))
 
 (def workflows-api

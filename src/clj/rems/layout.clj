@@ -40,6 +40,7 @@ window.rems = {
            (include-js "/assets/better-dateinput-polyfill/dist/better-dateinput-polyfill.js")
            (include-js "/assets/jquery/jquery.min.js")
            (include-js "/assets/popper.js/dist/umd/popper.min.js")
+           (include-js "/assets/diff-match-patch/index.js")
            (include-js "/assets/tether/dist/js/tether.min.js")
            (include-js "/assets/bootstrap/js/bootstrap.min.js")
            (initialize-hooks)

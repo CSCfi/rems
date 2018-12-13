@@ -1,7 +1,7 @@
 (ns rems.actions.request-decision
   (:require [re-frame.core :as rf]
             [reagent.core :as r]
-            [rems.actions.action :refer [action-form-view button-wrapper]]
+            [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper]]
             [rems.atoms :refer [textarea]]
             [rems.autocomplete :as autocomplete]
             [rems.status-modal :refer [status-modal]]
@@ -91,21 +91,26 @@
    (on-pending)
    {}))
 
+(def ^:private action-form-id "request-decision")
+
+(defn request-decision-action-button []
+  [action-button {:id action-form-id
+                  :text (text :t.actions/request-decision)
+                  :on-click #(rf/dispatch [::open-form])}])
+
 (defn request-decision-view
   [{:keys [selected-deciders potential-deciders comment on-set-comment on-add-decider on-remove-decider on-send]}]
-  [action-form-view "request-decision"
+  [action-form-view action-form-id
    (text :t.actions/request-decision)
-   nil
    [[button-wrapper {:id "request-decision"
                      :text (text :t.actions/request-decision)
+                     :class "btn-primary"
                      :on-click on-send}]]
-   [:div [:div.form-group
-          [:label {:for "comment"} (text :t.form/add-comments-not-shown-to-applicant)]
-          [textarea {:id "comment"
-                     :name "comment"
-                     :placeholder (text :t.form/comment)
-                     :value comment
-                     :on-change #(on-set-comment (.. % -target -value))}]]
+   [:div
+    [action-comment {:id action-form-id
+                     :label (text :t.form/add-comments-not-shown-to-applicant)
+                     :comment comment
+                     :on-comment on-set-comment}]
     [:div.form-group
      [:label (text :t.actions/request-selection)]
      [autocomplete/component
@@ -117,9 +122,7 @@
        :item->value identity
        :search-fields [:name :email]
        :add-fn on-add-decider
-       :remove-fn on-remove-decider}]]]
-   nil
-   nil])
+       :remove-fn on-remove-decider}]]]])
 
 (defn request-decision-form [application-id on-finished]
   (let [selected-deciders (rf/subscribe [::selected-deciders])
@@ -128,7 +131,7 @@
         description (text :t.actions/request-decision)
         state (r/atom nil)
         on-pending #(reset! state {:status :pending})
-        on-success #(reset! state {:status :saved })
+        on-success #(reset! state {:status :saved})
         on-error #(reset! state {:status :failed :error %})
         on-modal-close #(do (reset! state nil)
                             (on-finished))]
