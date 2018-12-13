@@ -734,50 +734,49 @@
                       [info-field k v]))}])
 
 
+(defn- judge-application-button [{:keys [command text] :as opts}]
+  [button-wrapper (merge {:id command
+                          :on-click #(rf/dispatch [::judge-application command text])}
+                         (dissoc opts :command))])
+
 (defn- approve-button []
-  [button-wrapper {:id "approve"
-                   :class "btn-primary"
-                   :text (text :t.actions/approve)
-                   :on-click #(rf/dispatch [::judge-application "approve" (text :t.actions/approve)])}])
+  [judge-application-button {:command "approve"
+                             :text (text :t.actions/approve)
+                             :class "btn-primary"}])
 
 (defn- reject-button []
-  [button-wrapper {:id "reject"
-                   :class "btn-danger"
-                   :text (text :t.actions/reject)
-                   :on-click #(rf/dispatch [::judge-application "reject" (text :t.actions/reject)])}])
+  [judge-application-button {:command "reject"
+                             :text (text :t.actions/reject)
+                             :class "btn-danger"}])
 
 (defn- static-return-button []
-  [button-wrapper {:id "static-return"
-                   :text (text :t.actions/return)
-                   :on-click #(rf/dispatch [::judge-application "return" (text :t.actions/return)])}])
+  [judge-application-button {:id "static-return"
+                             :command "return"
+                             :text (text :t.actions/return)}])
 
 (defn- review-button []
-  [button-wrapper {:id "review"
-                   :text (text :t.actions/review)
-                   :class "btn-primary"
-                   :on-click #(rf/dispatch [::judge-application "review" (text :t.actions/review)])}])
+  [judge-application-button {:command "review"
+                             :text (text :t.actions/review)
+                             :class "btn-primary"}])
 
 (defn- third-party-review-button []
-  [button-wrapper {:id "third-party-review"
-                   :text (text :t.actions/review)
-                   :class "btn-primary"
-                   :on-click #(rf/dispatch [::judge-application "third-party-review" (text :t.actions/review)])}])
-
-(defn- close-button [id]
-  [button-wrapper {:id id
-                   :text (text :t.actions/close)
-                   :on-click #(rf/dispatch [::judge-application "close" (text :t.actions/close)])}])
+  [judge-application-button {:command "third-party-review"
+                             :text (text :t.actions/review)
+                             :class "btn-primary"}])
 
 (defn- applicant-close-button []
-  [close-button "applicant-close"])
+  [judge-application-button {:id "applicant-close"
+                             :command "close"
+                             :text (text :t.actions/close)}])
 
 (defn- approver-close-button []
-  [close-button "approver-close"])
+  [judge-application-button {:id "approver-close"
+                             :command "close"
+                             :text (text :t.actions/close)}])
 
 (defn- withdraw-button []
-  [button-wrapper {:id "withdraw"
-                   :text (text :t.actions/withdraw)
-                   :on-click #(rf/dispatch [::judge-application "withdraw" (text :t.actions/withdraw)])}])
+  [judge-application-button {:command "withdraw"
+                             :text (text :t.actions/withdraw)}])
 
 (defn- action-button [id content on-click]
   [:button.btn.mr-3
