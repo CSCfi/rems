@@ -114,12 +114,13 @@
  (fn [db [_ {:keys [status description validation error]}]]
    (assert (contains? #{:pending :saved :failed nil} status))
    (cond-> db
-       true (assoc-in [::edit-application :status] {:open? (not (nil? status))
-                                               :status status
-                                               :description description
-                                               :error error})
-       validation (assoc-in [::edit-application :validation] validation) ; NB don't clear validation results on modal close
-       )))
+     true (assoc-in [::edit-application :status]
+                    {:open? (not (nil? status))
+                     :status status
+                     :description description
+                     :error error})
+     validation (assoc-in [::edit-application :validation] validation) ; NB don't clear validation results on modal close
+     )))
 
 (defn- save-application [app description application-id catalogue-items items licenses on-success]
   (post! "/api/applications/save"
@@ -129,9 +130,10 @@
                        (rf/dispatch [::set-status {:status :failed
                                                    :description description
                                                    :validation (:validation resp)}])))
-          :error-handler (fn [error] (rf/dispatch [::set-status {:status :failed
-                                                                 :description description
-                                                                 :error error}]))
+          :error-handler (fn [error]
+                           (rf/dispatch [::set-status {:status :failed
+                                                       :description description
+                                                       :error error}]))
           :params (merge {:command "save"
                           :items (map-vals :value items)
                           :licenses licenses}
@@ -153,9 +155,10 @@
                          (rf/dispatch [::set-status {:status :failed
                                                      :description description
                                                      :validation (:validation resp)}])))
-            :error-handler (fn [error] (rf/dispatch [::set-status {:status :failed
-                                                                   :description description
-                                                                   :error error}]))
+            :error-handler (fn [error]
+                             (rf/dispatch [::set-status {:status :failed
+                                                         :description description
+                                                         :error error}]))
             :params {:type :rems.workflow.dynamic/submit
                      :application-id application-id}})
     (post! "/api/applications/save"
@@ -170,9 +173,10 @@
                          (rf/dispatch [::set-status {:status :failed
                                                      :description description
                                                      :validation (:validation resp)}])))
-            :error-handler (fn [error] (rf/dispatch [::set-status {:status :failed
-                                                                   :description description
-                                                                   :error error}]))
+            :error-handler (fn [error]
+                             (rf/dispatch [::set-status {:status :failed
+                                                         :description description
+                                                         :error error}]))
             :params (merge {:command "submit"
                             :items (map-vals :value items)
                             :licenses licenses}
