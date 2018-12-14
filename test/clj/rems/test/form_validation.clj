@@ -1,9 +1,7 @@
-(ns rems.test.form
+(ns rems.test.form-validation
   (:require [clojure.test :refer :all]
-            [rems.form :as form]
+            [rems.form-validation :refer [validate]]
             [rems.test.tempura :refer [with-fake-tempura]]))
-
-(def validate #'form/validate)
 
 (deftest test-validate
   (with-fake-tempura

@@ -7,48 +7,11 @@
                                           submit-application]]
             [rems.db.catalogue :refer [disabled-catalogue-item?]]
             [rems.db.core :as db]
+            [rems.form-validation :as form-validation]
             [rems.InvalidRequestException]
-            [rems.text :refer :all]
             [rems.util :refer [get-user-id getx]]))
 
-(defn- title-localizations [item]
-  (into {} (for [[lang {title :title}] (:localizations item)
-                 :when title]
-             [lang title])))
 
-;; TODO: in the validation :text, we always use the english title for
-;; items since they don't have a non-localized title like licenses.
-;; Should probably get rid of non-localize title for licenses as well?
-
-(defn- validate-item
-  [item]
-  (when-not (:optional item)
-    (when (empty? (:value item))
-      {:type :item
-       :id (:id item)
-       :title (title-localizations item)
-       :key :t.form.validation/required
-       :text (text-format :t.form.validation/required (get-in item [:localizations :en :title]))})))
-
-(defn- validate-license
-  [license]
-  (when-not (:approved license)
-    {:type :license
-     :id (:id license)
-     :title (title-localizations license)
-     :key :t.form.validation/required
-     :text (text-format :t.form.validation/required (:title license))}))
-
-(defn- validate
-  "Validates a filled in form from (get-form-for application).
-
-   Returns either :valid or a sequence of validation errors."
-  [form]
-  (let [messages (vec (concat (filterv identity (mapv validate-item (sort-by :id (:items form))))
-                              (filterv identity (mapv validate-license (sort-by :id (:licenses form))))))]
-    (if (empty? messages)
-      :valid
-      messages)))
 
 (defn save-application-items [application-id catalogue-item-ids]
   (assert application-id)
@@ -89,7 +52,7 @@
   (save-fields application-id items)
   (save-licenses application-id licenses)
   (let [form (get-form-for application-id)
-        validation (validate form)
+        validation (form-validation/validate form)
         valid? (= :valid validation)
         perform-submit? (and submit? valid?)
         success? (or (not submit?) perform-submit?)]
