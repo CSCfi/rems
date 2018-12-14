@@ -257,8 +257,7 @@
 
 (defn- create-dynamic-application! [catid wfid applicant]
   (binding [context/*user* {"eppn" applicant}]
-    (let [app-id (applications/create-new-draft wfid)]
-      (db/add-application-item! {:application app-id :item catid})
+    (let [app-id (create-draft! [catid] wfid "dynamic application")]
       (applications/dynamic-command! {:type :rems.workflow.dynamic/submit
                                       :actor applicant
                                       :application-id app-id})
