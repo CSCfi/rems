@@ -1,14 +1,5 @@
 (ns rems.form-validation
-  (:require [rems.text :refer [text-format]]))
-
-(defn- title-localizations [item]
-  (into {} (for [[lang {title :title}] (:localizations item)
-                 :when title]
-             [lang title])))
-
-;; TODO: in the validation :text, we always use the english title for
-;; items since they don't have a non-localized title like licenses.
-;; Should probably get rid of non-localize title for licenses as well?
+  "Pure functions for form validation logic")
 
 (defn- validate-item
   [item]
@@ -16,18 +7,14 @@
     (when (empty? (:value item))
       {:type :item
        :id (:id item)
-       :title (title-localizations item)
-       :key :t.form.validation/required
-       :text (text-format :t.form.validation/required (get-in item [:localizations :en :title]))})))
+       :key :t.form.validation/required})))
 
 (defn- validate-license
   [license]
   (when-not (:approved license)
     {:type :license
      :id (:id license)
-     :title (title-localizations license)
-     :key :t.form.validation/required
-     :text (text-format :t.form.validation/required (:title license))}))
+     :key :t.form.validation/required}))
 
 (defn validate
   "Validates a filled in form from (get-form-for application).

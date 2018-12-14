@@ -406,6 +406,7 @@
   [msgs language]
   (into [:ul]
         (for [m msgs]
+          ;; TODO this is broken, :title is no longer provided
           [:li (text-format (:key m) (get-in m [:title language]))])))
 
 (defn- pdf-button [id]

@@ -53,19 +53,13 @@
         (is (not (:valid cmd-response)))
         (is (= [{:type "item"
                  :id 2
-                 :title {:en "Purpose of the project" :fi "Projektin tarkoitus"}
-                 :key "t.form.validation/required"
-                 :text "Field \"Purpose of the project\" is required."}
+                 :key "t.form.validation/required"}
                 {:type "license"
                  :id 1
-                 :title {:en "CC Attribution 4.0" :fi "CC Nimeä 4.0"}
-                 :key "t.form.validation/required"
-                 :text "Field \"non-localized link license\" is required."}
+                 :key "t.form.validation/required"}
                 {:type "license"
                  :id 2
-                 :title {:en "General Terms of Use", :fi "Yleiset käyttöehdot"}
-                 :key "t.form.validation/required"
-                 :text "Field \"non-localized text license\" is required."}]
+                 :key "t.form.validation/required"}]
                (:validation cmd-response))))
       (testing "retrieving"
         (let [response (-> (request :get (str "/api/applications/" application-id))
@@ -141,11 +135,11 @@
       (testing "empty draft"
         (is (:success cmd-response))
         ;; 2 fields, 2 licenses
-        (is (= 4 (count validations)))
-        (is (some #(.contains (:text %) "Project name") validations))
-        (is (some #(.contains (:text %) "Purpose of the project") validations))
-        (is (some #(.contains (:text %) "non-localized link license") validations))
-        (is (some #(.contains (:text %) "non-localized text license") validations)))
+        (is (= [{:id 1, :key "t.form.validation/required", :type "item"}
+                {:id 2, :key "t.form.validation/required", :type "item"}
+                {:id 1, :key "t.form.validation/required", :type "license"}
+                {:id 2, :key "t.form.validation/required", :type "license"}]
+               validations)))
       (testing "add one field"
         (let [response (-> (request :post (str "/api/applications/save"))
                            (authenticate api-key user-id)
