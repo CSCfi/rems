@@ -923,7 +923,8 @@
 
 (defn dynamic-command! [cmd]
   (let [app (get-dynamic-application-state (:application-id cmd))
-        injections {:valid-user? valid-user?}
+        injections {:valid-user? valid-user?
+                    :valid-form-inputs? (constantly true)} ;; TODO implement
         result (dynamic/handle-command cmd app injections)]
     (if (:success result)
       (add-dynamic-event! (:result result))
