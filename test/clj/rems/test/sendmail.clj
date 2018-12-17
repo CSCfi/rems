@@ -46,8 +46,7 @@
   (let [common-name "Test User"
         applicant-attrs {"eppn" "test-user" "mail" "invalid-addr" "commonName" common-name}]
     (with-redefs [catalogue/cached {:localizations (catalogue/load-catalogue-item-localizations!)}]
-      (binding [context/*user* applicant-attrs
-                context/*root-path* "localhost:3000"]
+      (binding [context/*root-path* "localhost:3000"]
         (let [uid "approver"
               uid2 "reviewer"
               wfid1 (:id (db/create-workflow! {:organization "abc" :owneruserid "workflow-owner" :modifieruserid "workflow-owner" :title "" :fnlround 1}))
@@ -88,7 +87,7 @@
               approver (db/add-user! {:user uid :userattrs (generate-string approver-attrs)})
               reviewer-attrs {"eppn" "reviewer" "mail" "rev-invalid" "commonName" "Rev Iwer"}
               reviewer (db/add-user! {:user uid2 :userattrs (generate-string reviewer-attrs)})
-              _ (db/add-user! {:user "test-user" :userattrs (generate-string context/*user*)})
+              _ (db/add-user! {:user "test-user" :userattrs (generate-string applicant-attrs)})
               outside-attrs {"eppn" "outside-reviewer" "mail" "out-invalid" "commonName" "Out Sider"}
               _ (db/add-user! {:user "outside-reviewer" :userattrs (generate-string outside-attrs)})]
           (testing "Applicant and reviewer should receive an email about the new application"
@@ -105,13 +104,12 @@
                                                                    items1)))
           (testing "Approver gets notified after review round"
             (conjure/mocking [email/approval-request]
-                             (binding [context/*user* {"eppn" "reviewer"}]
-                               (applications/review-application app1 0 "")
-                               (conjure/verify-called-once-with-args email/approval-request
-                                                                     approver-attrs
-                                                                     common-name
-                                                                     app1
-                                                                     items1))))
+                             (applications/review-application "reviewer" app1 0 "")
+                             (conjure/verify-called-once-with-args email/approval-request
+                                                                   approver-attrs
+                                                                   common-name
+                                                                   app1
+                                                                   items1)))
           (testing "Applicant gets notified when application is approved"
             (conjure/mocking [email/status-change-alert]
                              (applications/approve-application "approver" app1 1 "")
@@ -123,38 +121,37 @@
           (conjure/mocking [email/send-mail]
                            (applications/submit-application "test-user" app2)
                            (applications/submit-application "test-user" app3))
-          (binding [context/*user* {"eppn" "approver"}]
-            (testing "Applicant gets notified when application is rejected"
-              (conjure/mocking [email/status-change-alert]
-                               (applications/reject-application app2 0 "")
-                               (conjure/verify-called-once-with-args email/status-change-alert
-                                                                     applicant-attrs
-                                                                     app2
-                                                                     items2
-                                                                     "rejected")))
-            (testing "Applicant gets notified when application is returned to him/her"
-              (conjure/mocking [email/status-change-alert]
-                               (applications/return-application app3 0 "")
-                               (conjure/verify-called-once-with-args email/status-change-alert
-                                                                     applicant-attrs
-                                                                     app3
-                                                                     items3
-                                                                     "returned")))
-            (testing "Emails should not be sent when actions fail"
-              (conjure/mocking [email/send-mail]
-                               (is (thrown? NotAuthorizedException (applications/approve-application "test-user" app4 1 ""))
-                                   "Approval should fail")
-                               (is (thrown? NotAuthorizedException (applications/reject-application app4 1 ""))
-                                   "Rejection should fail")
-                               (is (thrown? NotAuthorizedException (applications/review-application app4 1 ""))
-                                   "Review should fail")
-                               (is (thrown? NotAuthorizedException (applications/return-application app4 1 ""))
-                                   "Return should fail")
-                               (is (thrown? NotAuthorizedException (applications/close-application "test-user" app4 2 ""))
-                                   "closing should fail")
-                               (is (thrown? NotAuthorizedException (applications/withdraw-application "test-user" app1 2 ""))
-                                   "withdraw should fail")
-                               (conjure/verify-call-times-for email/send-mail 0))))
+          (testing "Applicant gets notified when application is rejected"
+            (conjure/mocking [email/status-change-alert]
+                             (applications/reject-application "approver" app2 0 "")
+                             (conjure/verify-called-once-with-args email/status-change-alert
+                                                                   applicant-attrs
+                                                                   app2
+                                                                   items2
+                                                                   "rejected")))
+          (testing "Applicant gets notified when application is returned to him/her"
+            (conjure/mocking [email/status-change-alert]
+                             (applications/return-application "approver" app3 0 "")
+                             (conjure/verify-called-once-with-args email/status-change-alert
+                                                                   applicant-attrs
+                                                                   app3
+                                                                   items3
+                                                                   "returned")))
+          (testing "Emails should not be sent when actions fail"
+            (conjure/mocking [email/send-mail]
+                             (is (thrown? NotAuthorizedException (applications/approve-application "test-user" app4 1 ""))
+                                 "Approval should fail")
+                             (is (thrown? NotAuthorizedException (applications/reject-application "test-user" app4 1 ""))
+                                 "Rejection should fail")
+                             (is (thrown? NotAuthorizedException (applications/review-application "test-user" app4 1 ""))
+                                 "Review should fail")
+                             (is (thrown? NotAuthorizedException (applications/return-application "test-user" app4 1 ""))
+                                 "Return should fail")
+                             (is (thrown? NotAuthorizedException (applications/close-application "test-user" app4 2 ""))
+                                 "closing should fail")
+                             (is (thrown? NotAuthorizedException (applications/withdraw-application "test-user" app1 2 ""))
+                                 "withdraw should fail")
+                             (conjure/verify-call-times-for email/send-mail 0)))
           (testing "Applicant is notified of closed application"
             (conjure/mocking [email/status-change-alert]
                              (applications/close-application "approver" app1 1 "")
@@ -176,17 +173,15 @@
             (conjure/mocking [email/review-request
                               email/status-change-alert]
                              (applications/submit-application "test-user" app4)
-                             (binding [context/*user* {"eppn" "approver"}]
-                               (applications/send-review-request app4 0 "" uid2)
-                               (applications/send-review-request app4 0 "" uid2))
+                             (applications/send-review-request "approver" app4 0 "" uid2)
+                             (applications/send-review-request "approver" app4 0 "" uid2)
                              (conjure/verify-called-once-with-args email/review-request
                                                                    reviewer-attrs
                                                                    common-name
                                                                    app4
                                                                    items4)
                              (conjure/verify-call-times-for email/review-request 1)
-                             (binding [context/*user* {"eppn" "reviewer"}]
-                               (applications/perform-third-party-review app4 0 ""))))
+                             (applications/perform-third-party-review "reviewer" app4 0 "")))
           (testing "Actors are notified when their attention is no longer required"
             (conjure/mocking [email/action-not-needed]
                              (applications/submit-application "test-user" app5)
@@ -197,8 +192,7 @@
                                                                    common-name
                                                                    app5))
             (conjure/mocking [email/action-not-needed]
-                             (binding [context/*user* {"eppn" "approver"}]
-                               (applications/send-review-request app5 1 "" uid2))
+                             (applications/send-review-request "approver" app5 1 "" uid2)
                              (applications/approve-application "approver" app5 1 "")
                              (conjure/verify-called-once-with-args email/action-not-needed
                                                                    reviewer-attrs
@@ -207,8 +201,7 @@
           (testing "Multiple rounds with lazy actors"
             (conjure/mocking [email/action-not-needed]
                              (applications/submit-application "test-user" app6)
-                             (binding [context/*user* {"eppn" "approver"}]
-                               (applications/send-review-request app6 0 "" "outside-reviewer"))
+                             (applications/send-review-request "approver" app6 0 "" "outside-reviewer")
                              (applications/approve-application "approver" app6 0 "")
                              (conjure/verify-call-times-for email/action-not-needed 2)
                              (conjure/verify-nth-call-args-for 1
@@ -222,10 +215,8 @@
                                                                common-name
                                                                app6))
             (conjure/mocking [email/action-not-needed]
-                             (binding [context/*user* {"eppn" "approver"}]
-                               (applications/send-review-request app6 1 "" "outside-reviewer"))
-                             (binding [context/*user* {"eppn" "outside-reviewer"}]
-                               (applications/perform-third-party-review app6 1 ""))
+                             (applications/send-review-request "approver" app6 1 "" "outside-reviewer")
+                             (applications/perform-third-party-review "outside-reviewer" app6 1 "")
                              (applications/approve-application "approver" app6 1 "")
                              (conjure/verify-called-once-with-args email/action-not-needed
                                                                    reviewer-attrs

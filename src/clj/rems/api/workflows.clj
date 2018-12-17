@@ -4,6 +4,7 @@
             [rems.api.util]
             [rems.db.core :as db]
             [rems.db.workflow :as workflow]
+            [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
@@ -83,7 +84,7 @@
       :roles #{:owner}
       :body [command CreateWorkflowCommand]
       :return CreateWorkflowResponse
-      (ok (workflow/create-workflow! command)))
+      (ok (workflow/create-workflow! (assoc command :user-id (getx-user-id)))))
 
     (GET "/actors" []
       :summary "List of available actors"
