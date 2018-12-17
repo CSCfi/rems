@@ -373,6 +373,15 @@
                           read-body)]
         (is (= ["alice" "bob" "carl" "developer" "owner"] (sort (map :userid reviewers))))
         (is (not (contains? (set (map :userid reviewers)) "invalid")))))
+    (testing "reviews is not open without authentication"
+      (let [response (-> (request :get (str "/api/applications/reviewers"))
+                         app)]
+        (is (= 401 (:status response)))))
+    (testing "reviews is not open with applicant"
+      (let [response (-> (request :get (str "/api/applications/reviewers"))
+                          (authenticate api-key applicant)
+                          app)]
+        (is (= 401 (:status response))))) ; TODO should be 403?
     (testing "send review request"
       (is (response-is-ok? (-> (request :post (str "/api/applications/review_request"))
                                (authenticate api-key approver)
