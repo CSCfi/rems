@@ -7,7 +7,7 @@
             [ring.mock.request :refer :all]))
 
 (use-fixtures
- :once
+  :once
   api-fixture)
 
 (deftest service-translations-test
@@ -42,7 +42,7 @@
                            (authenticate api-key "alice")
                            app)
               body (read-body response)]
-          (is (response-is-ok? response))
+          (assert-response-is-ok response)
           (is (coll-is-not-empty? body))
           (is (every? #(= (:mail %) "a@li.ce") body))))
 
@@ -53,5 +53,5 @@
                            (authenticate api-key "allison")
                            app)
               body (read-body response)]
-          (is (response-is-ok? response))
+          (assert-response-is-ok response)
           (is (coll-is-empty? body)))))))
