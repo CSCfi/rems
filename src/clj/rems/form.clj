@@ -111,7 +111,7 @@
   (let [draft (make-draft-application user-id catalogue-item-ids)]
     (check-for-disabled-items! (getx draft :catalogue-items))
     (let [wfid (getx draft :wfid)
-          id (create-new-draft wfid user-id)]
+          id (create-new-draft user-id wfid)]
       (save-application-items id catalogue-item-ids)
       id)))
 

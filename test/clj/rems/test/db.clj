@@ -74,7 +74,7 @@
                   {:type "text" :user uid :value 0})
           item-b (db/create-form-item!
                   {:type "text" :user uid :value 0})
-          app-id (applications/create-new-draft wf-id uid)]
+          app-id (applications/create-new-draft uid wf-id)]
       (db/add-application-item! {:application app-id :item item-id})
       (db/link-form-item! {:form form-id :itemorder 2 :item (:id item-b) :user uid :optional false})
       (db/link-form-item! {:form form-id :itemorder 1 :item (:id item-a) :user uid :optional false})
@@ -185,7 +185,7 @@
         wf (:id (db/create-workflow! {:organization "abc" :owneruserid uid :modifieruserid uid :title "" :fnlround 0}))
         item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
         _ (is (empty? (applications/get-user-applications uid)))
-        app (applications/create-new-draft wf uid)]
+        app (applications/create-new-draft uid wf)]
     (db/add-application-item! {:application app :item item})
     (actors/add-approver! wf uid 0)
 
@@ -216,7 +216,7 @@
         res2 (:id (db/create-resource! {:resid "resid222" :organization "abc" :owneruserid uid :modifieruserid uid}))
         item1 (:id (db/create-catalogue-item! {:title "item" :form nil :resid res1 :wfid wf}))
         item2 (:id (db/create-catalogue-item! {:title "item" :form nil :resid res2 :wfid wf}))
-        app (applications/create-new-draft wf uid)]
+        app (applications/create-new-draft uid wf)]
     ;; apply for two items at the same time
     (db/add-application-item! {:application app :item item1})
     (db/add-application-item! {:application app :item item2})
@@ -249,7 +249,7 @@
   (testing "approval flow"
     (let [wf (:id (db/create-workflow! {:organization "abc" :owneruserid "owner" :modifieruserid "owner" :title "" :fnlround 1}))
           item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
-          app (applications/create-new-draft wf "applicant")
+          app (applications/create-new-draft "applicant" wf)
           get-phases (fn [] (applications/get-application-phases (:state (applications/get-application-state app))))]
       (db/add-application-item! {:application app :item item})
       (actors/add-approver! wf "approver1" 0)
@@ -288,7 +288,7 @@
   (testing "return flow"
     (let [wf (:id (db/create-workflow! {:organization "abc" :owneruserid "owner" :modifieruserid "owner" :title "" :fnlround 1}))
           item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
-          app (applications/create-new-draft wf "applicant")
+          app (applications/create-new-draft "applicant" wf)
           get-phases (fn [] (applications/get-application-phases (:state (applications/get-application-state app))))]
       (db/add-application-item! {:application app :item item})
       (actors/add-approver! wf "approver1" 0)
@@ -319,7 +319,7 @@
   (testing "rejection flow"
     (let [wf (:id (db/create-workflow! {:organization "abc" :owneruserid "owner" :modifieruserid "owner" :title "" :fnlround 1}))
           item (:id (db/create-catalogue-item! {:title "item" :form nil :resid nil :wfid wf}))
-          app (applications/create-new-draft wf "applicant")
+          app (applications/create-new-draft "applicant" wf)
           get-phases (fn [] (applications/get-application-phases (:state (applications/get-application-state app))))]
       (db/add-application-item! {:application app :item item})
       (actors/add-approver! wf "approver1" 0)
@@ -367,10 +367,10 @@
         item2 (:id (db/create-catalogue-item! {:title "item2" :form nil :resid nil :wfid wfid2}))
         item3 (:id (db/create-catalogue-item! {:title "item3" :form nil :resid nil :wfid wfid1}))
         item4 (:id (db/create-catalogue-item! {:title "item4" :form nil :resid nil :wfid wfid2}))
-        app1 (applications/create-new-draft wfid1 uid) ; should see as approver for round 0
-        app2 (applications/create-new-draft wfid2 uid) ; should see as approver for round 1
-        app3 (applications/create-new-draft wfid1 uid) ; should not see draft
-        app4 (applications/create-new-draft wfid2 uid) ; should not see approved
+        app1 (applications/create-new-draft uid wfid1) ; should see as approver for round 0
+        app2 (applications/create-new-draft uid wfid2) ; should see as approver for round 1
+        app3 (applications/create-new-draft uid wfid1) ; should not see draft
+        app4 (applications/create-new-draft uid wfid2) ; should not see approved
 
         can-approve? #(#'applications/can-approve? %1 (applications/get-application-state %2))]
 
@@ -451,10 +451,10 @@
         item2 (:id (db/create-catalogue-item! {:title "item2" :form nil :resid nil :wfid wfid2}))
         item3 (:id (db/create-catalogue-item! {:title "item3" :form nil :resid nil :wfid wfid1}))
         item4 (:id (db/create-catalogue-item! {:title "item4" :form nil :resid nil :wfid wfid2}))
-        app1 (applications/create-new-draft wfid1 uid) ; should see as reviewer for round 0
-        app2 (applications/create-new-draft wfid2 uid) ; should see as reviewer for round 1
-        app3 (applications/create-new-draft wfid1 uid) ; should not see draft
-        app4 (applications/create-new-draft wfid2 uid)
+        app1 (applications/create-new-draft uid wfid1) ; should see as reviewer for round 0
+        app2 (applications/create-new-draft uid wfid2) ; should see as reviewer for round 1
+        app3 (applications/create-new-draft uid wfid1) ; should not see draft
+        app4 (applications/create-new-draft uid wfid2)
 
         can-review? #(#'applications/can-review? %1 (applications/get-application-state %2))]
     (db/add-application-item! {:application app1 :item item1})
@@ -560,7 +560,7 @@
     (actors/add-approver! wf "event-test-approver" 1)
 
     (testing "submitting, approving"
-      (let [app (applications/create-new-draft wf uid)]
+      (let [app (applications/create-new-draft uid wf)]
         (db/add-application-item! {:application app :item item})
 
         (is (= {:curround 0 :state "draft"} (fetch app)))
@@ -627,7 +627,7 @@
                     (map #(select-keys % [:round :event :comment])))))))
 
     (testing "rejecting"
-      (let [app (applications/create-new-draft wf uid)]
+      (let [app (applications/create-new-draft uid wf)]
         (db/add-application-item! {:application app :item item})
 
         (is (= {:curround 0 :state "draft"} (fetch app)))
@@ -637,7 +637,7 @@
         (is (= {:curround 0 :state "rejected"} (fetch app)))))
 
     (testing "returning, resubmitting"
-      (let [app (applications/create-new-draft wf uid)]
+      (let [app (applications/create-new-draft uid wf)]
         (db/add-application-item! {:application app :item item})
 
         (is (thrown? NotAuthorizedException (applications/return-application uid app 0 "comment"))
@@ -663,7 +663,7 @@
     (testing "review"
       (let [rev-wf (:id (db/create-workflow! {:organization "abc" :owneruserid uid :modifieruserid uid :title "Review workflow" :fnlround 1}))
             rev-item (:id (db/create-catalogue-item! {:title "Review item" :resid nil :wfid rev-wf :form nil}))
-            rev-app (applications/create-new-draft rev-wf uid)]
+            rev-app (applications/create-new-draft uid rev-wf)]
         (db/add-application-item! {:application rev-app :item rev-item})
         (actors/add-reviewer! rev-wf "event-test-reviewer" 0)
         (actors/add-approver! rev-wf uid 1)
@@ -692,12 +692,12 @@
 
     (testing "closing"
       (testing "a draft as the applicant"
-        (let [app (applications/create-new-draft wf uid)]
+        (let [app (applications/create-new-draft uid wf)]
           (db/add-application-item! {:application app :item item})
           (applications/close-application uid app 0 "closing draft")
           (is (= {:curround 0 :state "closed"} (fetch app)))))
       (testing "an applied application as the applicant"
-        (let [app (applications/create-new-draft wf uid)]
+        (let [app (applications/create-new-draft uid wf)]
           (db/add-application-item! {:application app :item item})
           (applications/submit-application uid app)
           (testing "as approver fails"
@@ -705,7 +705,7 @@
           (applications/close-application uid app 0 "closing applied")
           (is (= {:curround 0 :state "closed"} (fetch app)))))
       (testing "an approved application as the applicant"
-        (let [app (applications/create-new-draft wf uid)]
+        (let [app (applications/create-new-draft uid wf)]
           (db/add-application-item! {:application app :item item})
           (applications/submit-application uid app)
           (applications/approve-application uid app 0 "c1")
@@ -713,7 +713,7 @@
           (applications/close-application uid app 1 "closing approved")
           (is (= {:curround 1 :state "closed"} (fetch app)))))
       (testing "an approved application as the approver"
-        (let [app (applications/create-new-draft wf uid)]
+        (let [app (applications/create-new-draft uid wf)]
           (db/add-application-item! {:application app :item item})
           (applications/submit-application uid app)
           (applications/approve-application uid app 0 "c1")
@@ -725,7 +725,7 @@
       (let [res-abc (:id (db/create-resource! {:resid "ABC" :organization "abc" :owneruserid uid :modifieruserid uid}))
             auto-wf (:id (db/create-workflow! {:organization "abc" :modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 1}))
             auto-item (:id (db/create-catalogue-item! {:title "A" :form nil :resid res-abc :wfid auto-wf}))
-            auto-app (applications/create-new-draft auto-wf uid)]
+            auto-app (applications/create-new-draft uid auto-wf)]
         (db/add-application-item! {:application auto-app :item auto-item})
         (is (= (fetch auto-app) {:curround 0 :state "draft"}))
         (applications/submit-application uid auto-app)
@@ -745,7 +745,7 @@
       (db/add-user! {:user "third-party-reviewer", :userattrs (cheshire/generate-string {"eppn" "third-party-reviewer" "mail" ""})})
       (db/add-user! {:user "another-reviewer", :userattrs (cheshire/generate-string {"eppn" "another-reviewer" "mail" ""})})
       (testing "3rd party review"
-        (let [new-app (applications/create-new-draft new-wf uid)]
+        (let [new-app (applications/create-new-draft uid new-wf)]
           (db/add-application-item! {:application new-app :item new-item})
           (applications/submit-application uid new-app)
           (is (= #{:applicant} (roles/get-roles "third-party-reviewer"))) ;; default role
@@ -776,10 +776,10 @@
                   {:round 0 :event "third-party-review" :comment "comment"}
                   {:round 0 :event "approve" :comment ""}]))))
       (testing "lazy 3rd party reviewer"
-        (let [app-to-close (applications/create-new-draft new-wf uid)
-              app-to-approve (applications/create-new-draft new-wf uid)
-              app-to-reject (applications/create-new-draft new-wf uid)
-              app-to-return (applications/create-new-draft new-wf uid)]
+        (let [app-to-close (applications/create-new-draft uid new-wf)
+              app-to-approve (applications/create-new-draft uid new-wf)
+              app-to-reject (applications/create-new-draft uid new-wf)
+              app-to-return (applications/create-new-draft uid new-wf)]
           (db/add-application-item! {:application app-to-close :item new-item})
           (db/add-application-item! {:application app-to-approve :item new-item})
           (db/add-application-item! {:application app-to-reject :item new-item})
@@ -841,7 +841,7 @@
   (let [uid "alice"
         wf (:id (db/create-workflow! {:organization "abc" :modifieruserid "owner" :owneruserid "owner" :title "Test workflow" :fnlround 1}))
         item (:id (db/create-catalogue-item! {:title "A" :form nil :resid nil :wfid wf}))
-        app (applications/create-new-draft wf uid)]
+        app (applications/create-new-draft uid wf)]
     (db/add-application-item! {:application app :item item})
     (testing "Adding two members"
       (applications/add-member uid app "bob")
@@ -870,8 +870,8 @@
         res2 (:id (db/create-resource! {:resid "resource2" :organization "pre" :owneruserid "owner" :modifieruserid "owner"}))
         item1 (:id (db/create-catalogue-item! {:title "item1" :form nil :resid res1 :wfid wf}))
         item2 (:id (db/create-catalogue-item! {:title "item2" :form nil :resid res2 :wfid wf}))
-        jack-app (applications/create-new-draft wf "jack")
-        jill-app (applications/create-new-draft wf "jill")]
+        jack-app (applications/create-new-draft "jack" wf)
+        jill-app (applications/create-new-draft "jill" wf)]
     (db/add-application-item! {:application jack-app :item item1})
     (db/add-application-item! {:application jill-app :item item1})
     (db/add-application-item! {:application jill-app :item item2})
@@ -917,7 +917,7 @@
             item1 (:id (db/create-catalogue-item! {:title "item1" :form nil :resid res1 :wfid wf}))
             item2 (:id (db/create-catalogue-item! {:title "item2" :form nil :resid res2 :wfid wf}))]
         (db/add-user! {:user uid :userattrs (cheshire/generate-string {"mail" "b@o.b"})})
-        (let [application (applications/create-new-draft wf uid)]
+        (let [application (applications/create-new-draft uid wf)]
           (db/add-application-item! {:application application :item item1})
           (db/add-application-item! {:application application :item item2})
           ;; should get autoapproved, which calls update-entitlements-for
@@ -947,7 +947,7 @@
   (let [workflow {:type :workflow/dynamic
                   :handlers ["handler"]}
         wfid (:id (db/create-workflow! {:organization "abc" :modifieruserid "owner" :owneruserid "owner" :title "dynamic" :fnlround -1 :workflow (cheshire/generate-string workflow)}))
-        app-id (applications/create-new-draft wfid "alice")]
+        app-id (applications/create-new-draft "alice" wfid)]
     (is (= {:applicantuserid "alice"
             :state :rems.workflow.dynamic/draft
             :workflow workflow}
