@@ -128,7 +128,7 @@
   (assert application-id)
   (assert role)
   (or (is-actor? user-id (actors/get-by-role application-id role))
-      (is-dynamic-handler? (get-application-state application-id) user-id)))
+      (is-dynamic-handler? user-id (get-application-state application-id))))
 
 (defn- can-approve? [user-id application]
   (assert user-id)
@@ -226,7 +226,7 @@
         (is-approver? user-id application-id)
         (is-reviewer? user-id application-id)
         (is-third-party-reviewer? user-id application)
-        (is-dynamic-handler? application user-id)
+        (is-dynamic-handler? user-id application)
         (is-commenter? user-id application)
         (is-decider? user-id application))))
 
@@ -946,7 +946,7 @@
       (add-dynamic-event! (:result result))
       result)))
 
-(defn is-dynamic-handler? [application user-id]
+(defn is-dynamic-handler? [user-id application]
   (contains? (set (get-in application [:workflow :handlers])) user-id))
 
 ;; TODO use also in UI side?
