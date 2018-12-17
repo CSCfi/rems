@@ -87,7 +87,7 @@
 (defn reviewed?
   "Returns true if the application, given as parameter, has already been reviewed normally or as a 3rd party actor by the current user.
    Otherwise, current hasn't yet provided feedback and false is returned."
-  ([app user-id]
+  ([user-id app]
    (let [app-state (get-application-state (:id app))]
      (if (is-dynamic-application? app)
        (or (and (is-commenter? user-id app-state)
@@ -96,11 +96,11 @@
                 (not (can-decide? user-id (:id app)))))
        (contains? (set (map :userid (concat (get-review-events app) (get-third-party-review-events app))))
                   user-id))))
-  ([app user-id round]
-   (reviewed? (update app :events (fn [events] (filter #(= round (:round %)) events))) user-id)))
+  ([user-id app round]
+   (reviewed? user-id (update app :events (fn [events] (filter #(= round (:round %)) events))))))
 
 (comment
-  (reviewed? (get-application-state 23) "bob"))
+  (reviewed? "bob" (get-application-state 23)))
 
 (declare fix-workflow-from-db)
 (declare is-dynamic-handler?)
@@ -336,7 +336,7 @@
 (defn get-handled-reviews [user-id]
   (let [actors (db/get-actors-for-applications {:role "reviewer"})]
     (->> (get-applications-impl-batch {})
-         (filterv (fn [app]  (reviewed? app user-id)))
+         (filterv (fn [app]  (reviewed? user-id app)))
          (filterv (fn [app]
                     (or (is-actor? user-id (actors/filter-by-application-id actors (:id app)))
                         (is-third-party-reviewer? user-id app)
@@ -372,7 +372,7 @@
   [user-id]
   (->> (get-applications-impl-batch {})
        (filterv
-        (fn [app] (and (not (reviewed? app user-id))
+        (fn [app] (and (not (reviewed? user-id app))
                        (or (can-review? user-id app)
                            (can-third-party-review? user-id app)
                            (can-comment? user-id (:id app))
