@@ -489,8 +489,8 @@
                          (json-body {:application-id app-id
                                      :member "nonexistant"})
                          app)]
-        ;; this is a 500 currently...
-        (is (not (response-is-ok? response)))))
+        ;; TODO: should be a bad request?
+        (is (= 500 (:status response)))))
     (testing "adding as non-applicant"
       (let [response (-> (request :post "/api/applications/add_member")
                          (authenticate api-key "developer")
