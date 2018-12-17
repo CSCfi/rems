@@ -1,5 +1,6 @@
 (ns rems.api
   (:require [cheshire.generate :as cheshire]
+            [clojure.stacktrace :refer [print-cause-trace]]
             [clojure.tools.logging :as log]
             [cognitect.transit :as transit]
             [compojure.api.exception :as ex]
@@ -33,6 +34,10 @@
 (defn invalid-handler
   [exception ex-data request]
   (bad-request (.getMessage exception)))
+
+(defn debug-handler
+  [exception ex-data request]
+  (internal-server-error (with-out-str (print-cause-trace exception))))
 
 (def cors-middleware
   #(wrap-cors
@@ -79,6 +84,7 @@
     :middleware [cors-middleware]
     :exceptions {:handlers {NotAuthorizedException unauthorized-handler
                             InvalidRequestException (ex/with-logging invalid-handler)
+                            ;; java.lang.Throwable (ex/with-logging debug-handler) ; optional Debug handler
                             ;; add logging to validation handlers
                             ::ex/request-validation (ex/with-logging ex/request-validation-handler)
                             ::ex/request-parsing (ex/with-logging ex/request-parsing-handler)
