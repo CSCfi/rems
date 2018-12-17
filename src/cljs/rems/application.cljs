@@ -922,18 +922,17 @@
 
 (defn- dynamic-actions [app]
   (distinct
-   (mapcat #:rems.workflow.dynamic
-               {:submit [[save-button]
-                         [submit-button]]
-                :add-member nil ; TODO implement
-                :return [[return-action-button]]
-                :request-decision [[request-decision-action-button]]
-                :decide [[decide-action-button]]
-                :request-comment [[request-comment-action-button]]
-                :comment [[comment-action-button]]
-                :approve [[approve-reject-action-button]]
-                :reject [[approve-reject-action-button]]
-                :close [[close-action-button]]}
+   (mapcat #:rems.workflow.dynamic{:submit [[save-button]
+                                            [submit-button]]
+                                   :add-member nil ; TODO implement
+                                   :return [[return-action-button]]
+                                   :request-decision [[request-decision-action-button]]
+                                   :decide [[decide-action-button]]
+                                   :request-comment [[request-comment-action-button]]
+                                   :comment [[comment-action-button]]
+                                   :approve [[approve-reject-action-button]]
+                                   :reject [[approve-reject-action-button]]
+                                   :close [[close-action-button]]}
            (:possible-commands app))))
 
 (defn- static-actions [app]
