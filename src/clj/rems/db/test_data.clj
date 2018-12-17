@@ -8,8 +8,7 @@
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
             [rems.db.workflow-actors :as actors]
-            [rems.locales :as locales]
-            [rems.util :refer [get-user-id]]))
+            [rems.locales :as locales]))
 
 (def +fake-users+
   {:applicant1 "alice"
