@@ -17,7 +17,7 @@
           data (read-body response)
           wfs (index-by [:title] data)
           simple (get wfs "simple")]
-      (is (response-is-ok? response))
+      (assert-response-is-ok response)
       (is (coll-is-not-empty? data))
       (is simple)
       (is (= 0 (:final-round simple)))
@@ -42,7 +42,7 @@
                        app)
           body (read-body response)
           id (:id body)]
-      (is (response-is-ok? response))
+      (assert-response-is-ok response)
       (is (< 0 id))
       (testing "and fetch"
         (let [response (-> (request :get "/api/workflows")
@@ -50,7 +50,7 @@
                            app)
               workflows (read-body response)
               workflow (first (filter #(= id (:id %)) workflows))]
-          (is (response-is-ok? response))
+          (assert-response-is-ok response)
           (is (= {:id id
                   :organization "abc"
                   :title "workflow title"
@@ -69,7 +69,7 @@
                        app)
           body (read-body response)
           id (:id body)]
-      (is (response-is-ok? response))
+      (assert-response-is-ok response)
       (is (< 0 id))
       (testing "and fetch"
         (let [response (-> (request :get "/api/workflows")
@@ -77,7 +77,7 @@
                            app)
               workflows (read-body response)
               workflow (first (filter #(= id (:id %)) workflows))]
-          (is (response-is-ok? response))
+          (assert-response-is-ok response)
           (is (= {:id id
                   :organization "abc"
                   :title "auto-approved workflow"
@@ -95,7 +95,7 @@
                        app)
           body (read-body response)
           id (:id body)]
-      (is (response-is-ok? response))
+      (assert-response-is-ok response)
       (is (< 0 id))
       (testing "and fetch"
         (let [response (-> (request :get "/api/workflows")
@@ -103,7 +103,7 @@
                            app)
               workflows (read-body response)
               workflow (first (filter #(= id (:id %)) workflows))]
-          (is (response-is-ok? response))
+          (assert-response-is-ok response)
           (is (= {:id id
                   :organization "abc"
                   :title "dynamic workflow"
@@ -120,8 +120,8 @@
                               (authenticate "42" "owner")
                               app)
         filtered-data (read-body filtered-response)]
-    (is (response-is-ok? unfiltered-response))
-    (is (response-is-ok? filtered-response))
+    (assert-response-is-ok unfiltered-response)
+    (assert-response-is-ok filtered-response)
     (is (coll-is-not-empty? unfiltered-data))
     (is (coll-is-not-empty? filtered-data))
     (is (every? #(contains? % :active) unfiltered-data))

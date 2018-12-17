@@ -17,7 +17,7 @@
                          (authenticate api-key user-id)
                          app)
             data (read-body response)]
-        (is (response-is-ok? response))
+        (assert-response-is-ok response)
         (is (coll-is-not-empty? data))
         (is (= #{:id :start :end :licensetype :title :textcontent :localizations} (set (keys (first data)))))))
 
@@ -33,7 +33,7 @@
                          (authenticate api-key user-id)
                          (json-body command)
                          app)]
-        (is (response-is-ok? response))
+        (assert-response-is-ok response)
         (testing "and fetch"
           (let [response (-> (request :get "/api/licenses")
                              (authenticate api-key user-id)
@@ -42,7 +42,7 @@
                              read-body
                              (filter #(= (:title %) (:title command)))
                              first)]
-            (is (response-is-ok? response))
+            (assert-response-is-ok response)
             (is license)
             (is (= command (select-keys license (keys command))))))))
 
@@ -58,7 +58,7 @@
                          (authenticate api-key user-id)
                          (json-body command)
                          app)]
-        (is (response-is-ok? response))
+        (assert-response-is-ok response)
         (testing "and fetch"
           (let [response (-> (request :get "/api/licenses")
                              (authenticate api-key user-id)
@@ -67,7 +67,7 @@
                              read-body
                              (filter #(= (:title %) (:title command)))
                              first)]
-            (is (response-is-ok? response))
+            (assert-response-is-ok response)
             (is license)
             (is (= command (select-keys license (keys command))))))))))
 
@@ -80,8 +80,8 @@
                               (authenticate "42" "owner")
                               app)
         filtered-data (read-body filtered-response)]
-    (is (response-is-ok? unfiltered-response))
-    (is (response-is-ok? filtered-response))
+    (assert-response-is-ok unfiltered-response)
+    (assert-response-is-ok filtered-response)
     (is (coll-is-not-empty? unfiltered-data))
     (is (coll-is-not-empty? filtered-data))
     (is (< (count filtered-data) (count unfiltered-data)))))

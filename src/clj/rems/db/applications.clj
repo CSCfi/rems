@@ -15,11 +15,7 @@
             [rems.db.users :as users]
             [rems.db.workflow-actors :as actors]
             [rems.email :as email]
-            [rems.util :refer [get-user-id
-                               get-username
-                               getx
-                               getx-user-id
-                               update-present]]
+            [rems.util :refer [getx get-username update-present]]
             [rems.workflow.dynamic :as dynamic]
             [clj-time.coerce :as time-coerce])
   (:import [java.io ByteArrayOutputStream FileInputStream]))
@@ -39,13 +35,19 @@
 
 (defn handling-event? [app e]
   (or (contains? #{"approve" "autoapprove" "reject" "return" "review"
-                   :rems.workflow.dynamic/approved :rems.workflow.dynamic/rejected :rems.workflow.dynamic/returned} (:event e)) ;; definitely not by applicant
+                   :rems.workflow.dynamic/approved
+                   :rems.workflow.dynamic/rejected
+                   :rems.workflow.dynamic/returned}
+                 (:event e)) ;; definitely not by applicant
       (and (= :event/closed (:event e)) (not= (:applicantuserid app) (:actor e))) ;; not by applicant
       (and (= "close" (:event e)) (not= (:applicantuserid app) (:userid e))))) ;; not by applicant
 
 (defn handled? [app]
   (or (contains? #{"approved" "rejected" "returned"
-                   :rems.workflow.dynamic/returned :rems.workflow.dynamic/approved :rems.workflow.dynamic/rejected} (:state app)) ;; by approver action
+                   :rems.workflow.dynamic/returned
+                   :rems.workflow.dynamic/approved
+                   :rems.workflow.dynamic/rejected}
+                 (:state app)) ;; by approver action
       (and (contains? #{"closed" "withdrawn"
                         :rems.workflow.dynamic/closed} (:state app))
            (some (partial handling-event? app) (concat (:events app) (:dynamic-events app))))))
@@ -85,62 +87,70 @@
 (defn reviewed?
   "Returns true if the application, given as parameter, has already been reviewed normally or as a 3rd party actor by the current user.
    Otherwise, current hasn't yet provided feedback and false is returned."
-  ([app]
-   (reviewed? app context/*user*))
-  ([app user]
-   (if (is-dynamic-application? app)
-     (let [app-state (get-application-state (:id app))]
-       (or (and (is-commenter? (get-user-id user) app-state)
-                (not (can-comment? (get-user-id user) (:id app))))
-           (and (is-decider? (get-user-id user) app-state)
-                (not (can-decide? (get-user-id user) (:id app))))))
-     (contains? (set (map :userid (concat (get-review-events app) (get-third-party-review-events app))))
-                (get-user-id user))))
-  ([app user round]
-   (reviewed? (update app :events (fn [events] (filter #(= round (:round %)) events))) user)))
+  ([user-id app]
+   (let [app-state (get-application-state (:id app))]
+     (if (is-dynamic-application? app)
+       (or (and (is-commenter? user-id app-state)
+                (not (can-comment? user-id (:id app))))
+           (and (is-decider? user-id app-state)
+                (not (can-decide? user-id (:id app)))))
+       (contains? (set (map :userid (concat (get-review-events app) (get-third-party-review-events app))))
+                  user-id))))
+  ([user-id app round]
+   (reviewed? user-id (update app :events (fn [events] (filter #(= round (:round %)) events))))))
 
 (comment
-  (reviewed? (get-application-state 23) "bob"))
+  (reviewed? "bob" (get-application-state 23)))
 
 (declare fix-workflow-from-db)
 (declare is-dynamic-handler?)
 
-(defn can-act-as?
-  [application role]
-  (or (and (= "applied" (:state application))
-           (contains? (set (actors/get-by-role (:id application) (:curround application) role))
-                      (getx-user-id)))
-      (and (= "approver" role)
-           (contains? (dynamic/possible-commands (getx-user-id) (get-application-state (:id application)))
-                      :rems.workflow.dynamic/approve))))
+(defn- is-actor? [user-id actors]
+  (assert user-id)
+  (assert actors)
+  (contains? (set actors) user-id))
 
-(defn- is-actor? [actors]
-  (contains? (set actors)
-             (get-user-id)))
+(defn can-act-as?
+  [user-id application role]
+  (assert user-id)
+  (assert application)
+  (assert role)
+  (or (and (= "applied" (:state application))
+           (is-actor? user-id (actors/get-by-role (:id application) (:curround application) role)))
+      (and (= "approver" role)
+           (contains? (dynamic/possible-commands user-id (get-application-state (:id application)))
+                      :rems.workflow.dynamic/approve))))
 
 (declare get-application-state)
 
-(defn- has-actor-role? [application-id role]
-  (or (is-actor? (actors/get-by-role application-id role))
-      (is-dynamic-handler? (get-application-state application-id) (getx-user-id))))
+(defn- has-actor-role? [user-id application-id role]
+  (assert user-id)
+  (assert application-id)
+  (assert role)
+  (or (is-actor? user-id (actors/get-by-role application-id role))
+      (is-dynamic-handler? user-id (get-application-state application-id))))
 
-(defn- can-approve? [application]
-  (can-act-as? application "approver"))
+(defn- can-approve? [user-id application]
+  (assert user-id)
+  (assert application)
+  (can-act-as? user-id application "approver"))
 
-(defn- is-approver? [application-id]
-  (has-actor-role? application-id "approver"))
+(defn- is-approver? [user-id application-id]
+  (assert user-id)
+  (assert application-id)
+  (has-actor-role? user-id application-id "approver"))
 
-(defn- can-review? [application]
-  (can-act-as? application "reviewer"))
+(defn- can-review? [user-id application]
+  (assert user-id)
+  (assert application)
+  (can-act-as? user-id application "reviewer"))
 
-(defn- is-reviewer? [application-id]
-  (has-actor-role? application-id "reviewer"))
+(defn- is-reviewer? [user-id application-id]
+  (has-actor-role? user-id application-id "reviewer"))
 
 (defn- is-third-party-reviewer?
-  "Checks if a given user has been requested to review the given application. If no user is provided, the function checks review requests for the current user.
+  "Checks if a given user has been requested to review the given application.
    Additionally a specific round can be provided to narrow the check to apply only to the given round."
-  ([application]
-   (is-third-party-reviewer? (get-user-id) application))
   ([user application]
    (->> (:events application)
         (filter #(and (= "review-request" (:event %)) (= user (:userid %))))
@@ -150,9 +160,9 @@
 
 (defn- can-third-party-review?
   "Checks if the current user can perform a 3rd party review action on the current round for the given application."
-  [application]
+  [user-id application]
   (and (= "applied" (:state application))
-       (is-third-party-reviewer? (get-user-id) (:curround application) application)))
+       (is-third-party-reviewer? user-id (:curround application) application)))
 
 ;; TODO add to tests
 (defn- is-commenter?
@@ -203,29 +213,36 @@
         third-party-reviewers (get-third-party-reviewers application)]
     (union approvers reviewers third-party-reviewers)))
 
-(defn is-applicant? [application]
-  (= (:applicantuserid application) (get-user-id)))
+(defn is-applicant? [user-id application]
+  (assert user-id)
+  (assert application)
+  (= user-id (:applicantuserid application)))
 
-(defn may-see-application? [application]
-  (let [application-id (:id application)
-        user-id (getx-user-id)]
-    (or (is-applicant? application)
-        (is-approver? application-id)
-        (is-reviewer? application-id)
-        (is-third-party-reviewer? application)
-        (is-dynamic-handler? application user-id)
+(defn may-see-application? [user-id application]
+  (assert user-id)
+  (assert application)
+  (let [application-id (:id application)]
+    (or (is-applicant? user-id application)
+        (is-approver? user-id application-id)
+        (is-reviewer? user-id application-id)
+        (is-third-party-reviewer? user-id application)
+        (is-dynamic-handler? user-id application)
         (is-commenter? user-id application)
         (is-decider? user-id application))))
 
-(defn- can-close? [application]
+(defn- can-close? [user-id application]
+  (assert user-id)
+  (assert application)
   (let [application-id (:id application)]
-    (or (and (is-approver? application-id)
+    (or (and (is-approver? user-id application-id)
              (= "approved" (:state application)))
-        (and (is-applicant? application)
+        (and (is-applicant? user-id  application)
              (not= "closed" (:state application))))))
 
-(defn- can-withdraw? [application]
-  (and (is-applicant? application)
+(defn- can-withdraw? [user-id application]
+  (assert user-id)
+  (assert application)
+  (and (is-applicant? user-id application)
        (= (:state application) "applied")))
 
 (defn- translate-catalogue-item [item]
@@ -261,7 +278,7 @@
   "Prefetches all possibly relevant data from the database and returns all the applications, according to the query parameters, with all the events
   and catalogue items associated with them."
   [query-params]
-  (let [events (db/get-all-application-events)
+  (let [events (db/get-application-events {})
         application-items (db/get-application-items)
         localized-items (get-localized-catalogue-items)]
     (doall
@@ -276,62 +293,59 @@
                 :catalogue-items catalogue-items))))))
 
 (comment
-  (binding [context/*user* {"eppn" "developer"}]
-    (->> (get-applications-impl-batch {})
-         (mapv :id))))
+  (->> (get-applications-impl-batch {})
+       (mapv :id)))
 
-(defn get-my-applications []
-  (filter
-   #(not= (:state %) "closed") ; don't show deleted applications
-   (get-applications-impl-batch {:applicant (getx-user-id)})))
+(defn get-user-applications [user-id]
+  (assert user-id "Must have user-id")
+  (->> (get-applications-impl-batch {:applicant user-id})
+       (remove (comp #{"closed"} :state))))
 
 (comment
   (->> (get-applications-impl-batch {:applicant "developer"})
+       (mapv :id))
+  (->> (get-applications-impl-batch {:applicant "alice"})
        (mapv :id)))
 
-(defn get-approvals []
+(defn get-approvals [user-id]
   (->> (get-applications-impl-batch {})
-       (filterv can-approve?)))
+       (filterv (partial can-approve? user-id))))
 
 (comment
-  (binding [context/*user* {"eppn" "developer"}]
-    (->> (get-approvals)
-         (mapv :id))))
+  (->> (get-approvals "developer")
+       (mapv :id)))
 
 (defn actors-of-dynamic-application [application]
   (map :actor (:dynamic-events application)))
 
-(defn get-handled-approvals []
+(defn get-handled-approvals [user-id]
   (let [actors (db/get-actors-for-applications {:role "approver"})]
     (->> (get-applications-impl-batch {})
          (filterv handled?)
          (filterv (fn [app]
                     (let [application (get-application-state (:id app))]
                       (if (is-dynamic-application? application)
-                        (contains? (set (actors-of-dynamic-application application)) (getx-user-id))
-                        (is-actor? (actors/filter-by-application-id actors (:id app))))))))))
+                        (contains? (set (actors-of-dynamic-application application)) user-id)
+                        (is-actor? user-id (actors/filter-by-application-id actors (:id app))))))))))
 
 (comment
-  (binding [context/*user* {"eppn" "developer"}]
-    (->> (get-handled-approvals)
-         (mapv :id))))
+  (->> (get-handled-approvals "developer")
+       (mapv :id)))
 
 ;; TODO: consider refactoring to finding the review events from the current user and mapping those to applications
-(defn get-handled-reviews []
+(defn get-handled-reviews [user-id]
   (let [actors (db/get-actors-for-applications {:role "reviewer"})]
     (->> (get-applications-impl-batch {})
-         (filterv reviewed?)
+         (filterv (fn [app]  (reviewed? user-id app)))
          (filterv (fn [app]
-                    (or (is-actor? (actors/filter-by-application-id actors (:id app)))
-                        (is-third-party-reviewer? (get-user-id) app)
-                        (is-commenter? (get-user-id) app)
-                        (is-decider? (get-user-id) app)))))))
+                    (or (is-actor? user-id (actors/filter-by-application-id actors (:id app)))
+                        (is-third-party-reviewer? user-id app)
+                        (is-commenter? user-id app)
+                        (is-decider? user-id app)))))))
 
 (comment
-  (binding [context/*user* {"eppn" "bob"}]
-    (get-handled-reviews))
-  (binding [context/*user* {"eppn" "carl"}]
-    (get-handled-reviews)))
+  (get-handled-reviews "bob")
+  (get-handled-reviews "carl"))
 
 (defn- check-for-unneeded-actions
   "Checks whether the current event will advance into the next workflow round and notifies to all actors, who didn't react, by email that their attention is no longer needed."
@@ -349,21 +363,21 @@
       (doseq [user (union approvers reviewers requestees)] (let [user-attrs (users/get-user-attributes user)]
                                                              (email/action-not-needed user-attrs applicant-name application-id))))))
 
-(defn assoc-review-type-to-app [app]
-  (assoc app :review-type (if (is-reviewer? (:id app)) :normal :third-party)))
+(defn assoc-review-type-to-app [user-id app]
+  (assoc app :review-type (if (is-reviewer? user-id (:id app)) :normal :third-party)))
 
 (defn get-applications-to-review
   "Returns applications that are waiting for a normal or 3rd party review. Type of the review, with key :review and values :normal or :third-party,
   are added to each application's attributes"
-  []
+  [user-id]
   (->> (get-applications-impl-batch {})
        (filterv
-        (fn [app] (and (not (reviewed? app))
-                       (or (can-review? app)
-                           (can-third-party-review? app)
-                           (can-comment? (getx-user-id) (:id app))
-                           (can-decide? (getx-user-id) (:id app))))))
-       (mapv assoc-review-type-to-app)))
+        (fn [app] (and (not (reviewed? user-id app))
+                       (or (can-review? user-id app)
+                           (can-third-party-review? user-id app)
+                           (can-comment? user-id (:id app))
+                           (can-decide? user-id (:id app))))))
+       (mapv (partial assoc-review-type-to-app user-id))))
 
 (defn check-review-timeout
   "Checks for and times out reviews that are past the associated end time."
@@ -372,13 +386,13 @@
 
 (defn make-draft-application
   "Make a draft application with an initial set of catalogue items."
-  [catalogue-item-ids]
+  [user-id catalogue-item-ids]
   (let [items (get-catalogue-items catalogue-item-ids)]
     (assert (= 1 (count (distinct (mapv :wfid items)))))
     (assert (= 1 (count (distinct (mapv :formid items)))))
     {:id nil
      :state "draft"
-     :applicantuserid (get-user-id)
+     :applicantuserid user-id
      :wfid (:wfid (first items))
      :formid (:formid (first items))
      :catalogue-items items
@@ -506,12 +520,12 @@
      :phases [{:phase :apply :active? true :text :t.phases/apply}
               {:phase :approve :text :t.phases/approve}
               {:phase :result :text :t.phases/approved}]}"
-  ([application-id]
+  ([user-id application-id]
    (let [form (db/get-form-for-application {:application application-id})
          _ (assert form)
          application (get-application-state application-id)
          application (if (is-dynamic-application? application)
-                       (dynamic/assoc-possible-commands (getx-user-id) application) ; TODO move even higher?
+                       (dynamic/assoc-possible-commands user-id application) ; TODO move even higher?
                        application)
          _ (assert application)
          form-id (:formid form)
@@ -525,11 +539,11 @@
                          :value)
          licenses (get-application-licenses application catalogue-item-ids)
          review-type (cond
-                       (can-review? application) :normal
-                       (can-third-party-review? application) :third-party
+                       (can-review? user-id application) :normal
+                       (can-third-party-review? user-id application) :third-party
                        :else nil)]
      (when application-id
-       (when-not (may-see-application? application)
+       (when-not (may-see-application? user-id application)
          (throw-unauthorized)))
      {:id form-id
       :title (:formtitle form)
@@ -537,11 +551,11 @@
       :application (assoc application
                           :formid form-id
                           :catalogue-items catalogue-items ;; TODO decide if catalogue-items are part of "form" or "application"
-                          :can-approve? (can-approve? application)
-                          :can-close? (can-close? application)
-                          :can-withdraw? (can-withdraw? application)
-                          :can-third-party-review? (can-third-party-review? application)
-                          :is-applicant? (is-applicant? application)
+                          :can-approve? (can-approve? user-id application)
+                          :can-close? (can-close? user-id application)
+                          :can-withdraw? (can-withdraw? user-id application)
+                          :can-third-party-review? (can-third-party-review? user-id application)
+                          :is-applicant? (is-applicant? user-id application)
                           :review-type review-type
                           :description description)
       :applicant-attributes (users/get-user-attributes (:applicantuserid application))
@@ -550,8 +564,8 @@
       :phases (get-application-phases (:state application))})))
 
 (defn save-attachment!
-  [{:keys [tempfile filename content-type]} application-id item-id]
-  (let [form (get-form-for application-id)
+  [{:keys [tempfile filename content-type]} user-id application-id item-id]
+  (let [form (get-form-for user-id application-id)
         byte-array (with-open [input (FileInputStream. tempfile)
                                buffer (ByteArrayOutputStream.)]
                      (clojure.java.io/copy input buffer)
@@ -561,7 +575,7 @@
     (db/save-attachment! {:application application-id
                           :form (:id form)
                           :item item-id
-                          :user (get-user-id)
+                          :user user-id
                           :filename filename
                           :type content-type
                           :data byte-array})))
@@ -591,15 +605,13 @@
       :licenses licenses
       :phases (get-application-phases (:state application))})))
 
-(defn create-new-draft [wfid]
-  (let [uid (get-user-id)
-        id (:id (db/create-application! {:user uid :wfid wfid}))]
-    id))
+(defn create-new-draft [user-id wfid]
+  (assert user-id)
+  (assert wfid)
+  (:id (db/create-application! {:user user-id :wfid wfid})))
 
-(defn create-new-draft-at-time [wfid time]
-  (let [uid (get-user-id)
-        id (:id (db/create-application! {:user uid :wfid wfid :start time}))]
-    id))
+(defn create-new-draft-at-time [user-id wfid time]
+  (:id (db/create-application! {:user user-id :wfid wfid :start time})))
 
 ;;; Applying events
 
@@ -735,7 +747,7 @@
 (defn try-autoapprove-application
   "If application can be autoapproved (round has no approvers), add an
    autoapprove event. Otherwise do nothing."
-  [application]
+  [user-id application]
   (let [application-id (:id application)
         round (:curround application)
         fnlround (:fnlround application)
@@ -746,7 +758,7 @@
         (when (and (empty? approvers)
                    (empty? reviewers)
                    (<= round fnlround))
-          (db/add-application-event! {:application application-id :user (get-user-id)
+          (db/add-application-event! {:application application-id :user user-id
                                       :round round :event "autoapprove" :comment nil})
           true)))))
 
@@ -769,66 +781,72 @@
                                  items
                                  state))))
 
-(defn handle-state-change [application-id]
+(defn handle-state-change [user-id application-id]
   (let [application (get-application-state application-id)]
     (send-emails-for application)
     (entitlements/update-entitlements-for application)
-    (when (try-autoapprove-application application)
-      (recur application-id))))
+    (when (try-autoapprove-application user-id application)
+      (recur user-id application-id))))
 
-(defn submit-application [application-id]
-  (let [application (get-application-state application-id)
-        uid (get-user-id)]
-    (when-not (= uid (:applicantuserid application))
+(defn submit-application [applicant-id application-id]
+  (assert applicant-id)
+  (assert application-id)
+  (let [application (get-application-state application-id)]
+    (when-not (= applicant-id (:applicantuserid application))
       (throw-unauthorized))
     (when-not (#{"draft" "returned" "withdrawn"} (:state application))
       (throw-unauthorized))
-    (db/add-application-event! {:application application-id :user uid
+    (db/add-application-event! {:application application-id :user applicant-id
                                 :round 0 :event "apply" :comment nil})
     (email/confirm-application-creation application-id (get-catalogue-items-by-application-id application-id))
-    (handle-state-change application-id)))
+    (handle-state-change applicant-id application-id)))
 
-(defn- judge-application [application-id event round msg]
+(defn- judge-application [approver-id application-id event round msg]
+  (assert approver-id)
+  (assert application-id)
+  (assert event)
+  (assert round)
+  (assert msg)
   (let [state (get-application-state application-id)]
     (when-not (= round (:curround state))
       (throw-unauthorized))
-    (db/add-application-event! {:application application-id :user (get-user-id)
+    (db/add-application-event! {:application application-id :user approver-id
                                 :round round :event event :comment msg})
     (check-for-unneeded-actions application-id round event)
-    (handle-state-change application-id)))
+    (handle-state-change approver-id application-id)))
 
-(defn approve-application [application-id round msg]
-  (when-not (can-approve? (get-application-state application-id))
+(defn approve-application [approver-id application-id round msg]
+  (when-not (can-approve? approver-id (get-application-state application-id))
     (throw-unauthorized))
-  (judge-application application-id "approve" round msg))
+  (judge-application approver-id application-id "approve" round msg))
 
-(defn reject-application [application-id round msg]
-  (when-not (can-approve? (get-application-state application-id))
+(defn reject-application [user-id application-id round msg]
+  (when-not (can-approve? user-id (get-application-state application-id))
     (throw-unauthorized))
-  (judge-application application-id "reject" round msg))
+  (judge-application user-id application-id "reject" round msg))
 
-(defn return-application [application-id round msg]
-  (when-not (can-approve? (get-application-state application-id))
+(defn return-application [user-id application-id round msg]
+  (when-not (can-approve? user-id (get-application-state application-id))
     (throw-unauthorized))
-  (judge-application application-id "return" round msg))
+  (judge-application user-id application-id "return" round msg))
 
-(defn review-application [application-id round msg]
-  (when-not (can-review? (get-application-state application-id))
+(defn review-application [user-id application-id round msg]
+  (when-not (can-review? user-id (get-application-state application-id))
     (throw-unauthorized))
-  (judge-application application-id "review" round msg))
+  (judge-application user-id  application-id "review" round msg))
 
-(defn perform-third-party-review [application-id round msg]
+(defn perform-third-party-review [user-id application-id round msg]
   (let [application (get-application-state application-id)]
-    (when-not (can-third-party-review? application)
+    (when-not (can-third-party-review? user-id application)
       (throw-unauthorized))
     (when-not (= round (:curround application))
       (throw-unauthorized))
-    (db/add-application-event! {:application application-id :user (get-user-id)
+    (db/add-application-event! {:application application-id :user user-id
                                 :round round :event "third-party-review" :comment msg})))
 
-(defn send-review-request [application-id round msg recipients]
+(defn send-review-request [user-id application-id round msg recipients]
   (let [application (get-application-state application-id)]
-    (when-not (can-approve? application)
+    (when-not (can-approve? user-id application)
       (throw-unauthorized))
     (when-not (= round (:curround application))
       (throw-unauthorized))
@@ -851,35 +869,34 @@
 ;; TODO consider refactoring together with judge
 (defn- unjudge-application
   "Action handling for both approver and applicant."
-  [application event round msg]
+  [user-id application event round msg]
   (let [application-id (:id application)]
     (when-not (= round (:curround application))
       (throw-unauthorized))
-    (db/add-application-event! {:application application-id :user (get-user-id)
+    (db/add-application-event! {:application application-id :user user-id
                                 :round round :event event :comment msg})
-    (handle-state-change application-id)))
+    (handle-state-change user-id application-id)))
 
-(defn withdraw-application [application-id round msg]
+(defn withdraw-application [applicant-id application-id round msg]
   (let [application (get-application-state application-id)]
-    (when-not (can-withdraw? application)
+    (when-not (can-withdraw? applicant-id application)
       (throw-unauthorized))
-    (unjudge-application application "withdraw" round msg)))
+    (unjudge-application applicant-id application "withdraw" round msg)))
 
-(defn close-application [application-id round msg]
+(defn close-application [user-id application-id round msg]
   (let [application (get-application-state application-id)]
-    (when-not (can-close? application)
+    (when-not (can-close? user-id application)
       (throw-unauthorized))
-    (unjudge-application application "close" round msg)))
+    (unjudge-application user-id application "close" round msg)))
 
-(defn add-member [application-id member]
-  (let [application (get-application-state application-id)
-        uid (get-user-id)]
-    (when-not (= uid (:applicantuserid application))
+(defn add-member [user-id application-id member]
+  (let [application (get-application-state application-id)]
+    (when-not (= user-id (:applicantuserid application))
       (throw-unauthorized))
     (when-not (#{"draft" "returned" "withdrawn"} (:state application))
       (throw-unauthorized))
     (assert (users/get-user-attributes member) (str "User '" member "' must exist"))
-    (db/add-application-event! {:application application-id :user uid :round 0
+    (db/add-application-event! {:application application-id :user user-id :round 0
                                 :comment nil
                                 :event "add-member" :eventdata (cheshire/generate-string {"uid" member})})))
 
@@ -929,7 +946,7 @@
       (add-dynamic-event! (:result result))
       result)))
 
-(defn is-dynamic-handler? [application user-id]
+(defn is-dynamic-handler? [user-id application]
   (contains? (set (get-in application [:workflow :handlers])) user-id))
 
 ;; TODO use also in UI side?

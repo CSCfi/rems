@@ -17,7 +17,7 @@
                          (authenticate api-key user-id)
                          app)
             data (read-body response)]
-        (is (response-is-ok? response))
+        (assert-response-is-ok response)
         (is (coll-is-not-empty? data))
         (is (= #{:id :owneruserid :modifieruserid :organization :resid :start :end :active :licenses} (set (keys (first data)))))))
     (testing "create"
@@ -29,14 +29,14 @@
                                        :organization "TEST-ORGANIZATION"
                                        :licenses [licid]})
                            app)]
-          (is (response-is-ok? response)))
+          (assert-response-is-ok response))
         (testing "and fetch"
           (let [response (-> (request :get "/api/resources")
                              (authenticate api-key user-id)
                              app)
                 data (read-body response)
                 resource (some #(when (= resid (:resid %)) %) data)]
-            (is (response-is-ok? response))
+            (assert-response-is-ok response)
             (is resource)
             (is (= [licid] (map :id (:licenses resource))))))))))
 
@@ -49,8 +49,8 @@
                               (authenticate "42" "owner")
                               app)
         filtered-data (read-body filtered-response)]
-    (is (response-is-ok? unfiltered-response))
-    (is (response-is-ok? filtered-response))
+    (assert-response-is-ok unfiltered-response)
+    (assert-response-is-ok filtered-response)
     (is (coll-is-not-empty? unfiltered-data))
     (is (coll-is-not-empty? filtered-data))
     (is (every? #(contains? % :active) unfiltered-data))

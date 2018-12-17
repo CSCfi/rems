@@ -9,7 +9,7 @@
             [rems.db.core :as db]
             [rems.roles :refer [has-roles?]]
             [rems.text :as text]
-            [rems.util :refer [get-user-id]]))
+            [rems.util :refer [getx-user-id]]))
 
 ;; TODO move Entitlement schema here from rems.api?
 
@@ -23,7 +23,7 @@
   (if (has-roles? :approver)
     (mapv entitlement-to-api (db/get-entitlements {:user user-or-nil
                                                    :resource resource-or-nil}))
-    (mapv entitlement-to-api (db/get-entitlements {:user (get-user-id)
+    (mapv entitlement-to-api (db/get-entitlements {:user (getx-user-id)
                                                    :resource resource-or-nil}))))
 
 (defn get-entitlements-for-export

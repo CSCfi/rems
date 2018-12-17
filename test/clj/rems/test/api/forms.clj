@@ -6,7 +6,7 @@
   (:import (java.util UUID)))
 
 (use-fixtures
- :once
+  :once
   api-fixture)
 
 (defn- get-draft-form [form-id]
@@ -24,8 +24,8 @@
                            (authenticate api-key "alice")
                            app)
         draft (read-body draft-response)]
-    (assert (response-is-ok? catalogue-item-response))
-    (assert (response-is-ok? draft-response))
+    (assert-response-is-ok catalogue-item-response)
+    (assert-response-is-ok draft-response)
     draft))
 
 (deftest forms-api-test
@@ -36,7 +36,7 @@
                          (authenticate api-key user-id)
                          app)
             data (read-body response)]
-        (is (response-is-ok? response))
+        (assert-response-is-ok response)
         (is (coll-is-not-empty? data))
         (is (= #{:id :organization :title :start :end :active}
                (set (keys (first data)))))))
@@ -54,7 +54,7 @@
                          (authenticate api-key user-id)
                          (json-body command)
                          app)]
-        (is (response-is-ok? response))
+        (assert-response-is-ok response)
 
         (testing "and fetch"
           (let [response (-> (request :get "/api/forms")
@@ -64,7 +64,7 @@
                           read-body
                           (filter #(= (:title %) (:title command)))
                           first)]
-            (is (response-is-ok? response))
+            (assert-response-is-ok response)
             ;; TODO: create an API for reading full forms (will be needed latest for editing forms)
             (is (= (select-keys command [:title :organization])
                    (select-keys form [:title :organization])))
@@ -87,8 +87,8 @@
                               (authenticate "42" "owner")
                               app)
         filtered-data (read-body filtered-response)]
-    (is (response-is-ok? unfiltered-response))
-    (is (response-is-ok? filtered-response))
+    (assert-response-is-ok unfiltered-response)
+    (assert-response-is-ok filtered-response)
     (is (coll-is-not-empty? unfiltered-data))
     (is (coll-is-not-empty? filtered-data))
     (is (every? #(contains? % :active) unfiltered-data))
