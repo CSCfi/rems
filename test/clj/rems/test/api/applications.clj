@@ -876,10 +876,10 @@
 (deftest dynamic-application-create-test
   (let [api-key "42"
         user-id "alice"
-        catid 9] ;; catalogue item with dynamic workflow in test-data
+        catid 9 ;; catalogue item with dynamic workflow in test-data
+        draft (create-application-draft-for-catalogue-item 9)]
     (testing "get draft"
-      (let [draft (create-application-draft-for-catalogue-item catid)]
-        (is (= "alice" (get-in draft [:application :applicantuserid])))))
+      (is (= 4 (count (:items draft)))))
     (let [response (-> (request :post (str "/api/applications/save"))
                        (authenticate api-key user-id)
                        (json-body {:command "save"
@@ -894,7 +894,10 @@
           (is (= "workflow/dynamic" (get-in saved [:application :workflow :type])))
           (is (= "rems.workflow.dynamic/draft" (get-in saved [:application :state])))
           (is (= "dynamic test" (get-in saved [:items 0 :value])))))
-      (testing "change fields"
+      (testing "can't submit with missing required fields"
+        (is (= {:success false, :errors ["form-not-valid"]} (send-dynamic-command user-id {:type :rems.workflow.dynamic/submit
+                                                                                           :application-id application-id}))))
+      (testing "add missing fields"
         (let [save-again (-> (request :post (str "/api/applications/save"))
                              (authenticate api-key user-id)
                              (json-body {:command "save"
