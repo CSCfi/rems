@@ -86,6 +86,7 @@
                                       :licid licid
                                       :actoruserid user-id})))))
 
+;; TODO think a better name
 (defn- save-form-inputs [applicant-id application-id submit? items licenses]
   (save-fields applicant-id application-id items)
   (save-licenses applicant-id  application-id licenses)
