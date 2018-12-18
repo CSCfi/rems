@@ -21,14 +21,9 @@
     (mount/stop)))
 
 (deftest can-act-as?-test
-  (binding [context/*user* {"eppn" "developer"}]
-    (is (can-act-as? (get-application-state 12)
-        "approver"))
-    (is (not (can-act-as? (get-application-state 12)
-                          "reviewer"))))
-  (binding [context/*user* {"eppn" "alice"}]
-    (is (not (can-act-as? (get-application-state 12)
-                          "approver")))))
+  (is (can-act-as? "developer" (get-application-state 12) "approver"))
+  (is (not (can-act-as? "developer" (get-application-state 12) "reviewer")))
+  (is (not (can-act-as? "alice" (get-application-state 12) "approver"))))
 
 (deftest test-handling-event?
   (are [en] (handling-event? nil {:event en})

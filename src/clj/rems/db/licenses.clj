@@ -3,7 +3,7 @@
   (:require [clj-time.core :as time]
             [rems.db.core :as db]
             [rems.common-util :refer [distinct-by]]
-            [rems.util :refer [get-user-id]]))
+            [rems.util :refer [getx-user-id]]))
 
 (defn- format-licenses [licenses]
   (doall
@@ -65,8 +65,8 @@
        (distinct-by :id)))
 
 (defn create-license! [{:keys [title licensetype textcontent localizations]}]
-  (let [license (db/create-license! {:owneruserid (get-user-id)
-                                     :modifieruserid (get-user-id)
+  (let [license (db/create-license! {:owneruserid (getx-user-id)
+                                     :modifieruserid (getx-user-id)
                                      :type licensetype
                                      :title title
                                      :textcontent textcontent})

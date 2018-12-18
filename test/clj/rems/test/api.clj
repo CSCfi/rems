@@ -26,8 +26,11 @@
       (assoc-in [:headers "x-rems-api-key"] api-key)
       (assoc-in [:headers "x-rems-user-id"] user-id)))
 
-(defn response-is-ok? [response]
-  (= 200 (:status response)))
+(defn assert-response-is-ok [response]
+  (assert (= 200 (:status response))
+          (pr-str {:status (:status response)
+                   :body (slurp (:body response))}))
+  true)
 
 (defn response-is-unauthorized? [response]
   (= 401 (:status response)))
@@ -49,6 +52,5 @@
     true (parse-stream (clojure.java.io/reader body) true)))
 
 (defn read-ok-body [response]
-  (assert (response-is-ok? response)
-          (str "response status was " (:status response)))
+  (assert-response-is-ok response)
   (read-body response))

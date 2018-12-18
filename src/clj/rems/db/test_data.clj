@@ -8,8 +8,7 @@
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
             [rems.db.workflow-actors :as actors]
-            [rems.locales :as locales]
-            [rems.util :refer [get-user-id]]))
+            [rems.locales :as locales]))
 
 (def +fake-users+
   {:applicant1 "alice"
@@ -129,9 +128,11 @@
         two-round (:id (db/create-workflow! {:organization "nbn" :owneruserid owner :modifieruserid owner :title "two rounds" :fnlround 1}))
         different (:id (db/create-workflow! {:organization "nbn" :owneruserid owner :modifieruserid owner :title "two rounds, different approvers" :fnlround 1}))
         expired (:id (db/create-workflow! {:organization "nbn" :owneruserid owner :modifieruserid owner :title "workflow has already expired, should not be seen" :fnlround 0 :endt (time/minus (time/now) (time/years 1))}))
-        dynamic (binding [context/*user* {"eppn" "owner"}]
-                  (:id (workflow/create-workflow! {:organization "nbn" :title "dynamic workflow"
-                                                   :type :dynamic :handlers [approver1]})))]
+        dynamic (:id (workflow/create-workflow! {:user-id owner
+                                                 :organization "nbn"
+                                                 :title "dynamic workflow"
+                                                 :type :dynamic
+                                                 :handlers [approver1]}))]
     ;; either approver1 or approver2 can approve
     (actors/add-approver! simple approver1 0)
     (actors/add-approver! simple approver2 0)
@@ -200,81 +201,70 @@
       (db/create-catalogue-item-localization! {:id id :langcode lang :title title}))
     id))
 
-(defn- create-draft! [catids wfid field-value & [now]]
-  (let [app-id (applications/create-new-draft-at-time wfid (or now (time/now)))
+(defn- create-draft! [user-id catids wfid field-value & [now]]
+  (let [app-id (applications/create-new-draft-at-time user-id wfid (or now (time/now)))
         _ (if (vector? catids)
             (doseq [catid catids]
               (db/add-application-item! {:application app-id :item catid}))
             (db/add-application-item! {:application app-id :item catids}))
         form (binding [context/*lang* :en]
-               (applications/get-form-for app-id))]
+               (applications/get-form-for user-id app-id))]
     (doseq [{item-id :id} (:items form)]
       (db/save-field-value! {:application app-id :form (:id form)
-                             :item item-id :user (get-user-id) :value field-value}))
+                             :item item-id :user user-id :value field-value}))
     (doseq [{license-id :id} (:licenses form)]
       (db/save-license-approval! {:catappid app-id
                                   :round 0
                                   :licid license-id
-                                  :actoruserid (get-user-id)
+                                  :actoruserid user-id
                                   :state "approved"}))
     app-id))
 
 (defn- create-applications! [catid wfid applicant approver]
-  (binding [context/*tempura* (locales/tempura-config)
-            context/*user* {"eppn" applicant}]
-    (create-draft! catid wfid "draft application")
-    (applications/submit-application (create-draft! catid wfid "applied application"))
-    (let [application (create-draft! catid wfid "rejected application")]
-      (applications/submit-application application)
-      (binding [context/*user* {"eppn" approver}]
-        (applications/reject-application application 0 "comment for rejection")))
-    (let [application (create-draft! catid wfid "accepted application")]
-      (applications/submit-application application)
-      (binding [context/*user* {"eppn" approver}]
-        (applications/approve-application application 0 "comment for approval")))
-    (let [application (create-draft! catid wfid "returned application")]
-      (applications/submit-application application)
-      (binding [context/*user* {"eppn" approver}]
-        (applications/return-application application 0 "comment for return")))))
+  (binding [context/*tempura* (locales/tempura-config)]
+    (create-draft! applicant catid wfid "draft application")
+    (let [application (create-draft! applicant catid wfid "applied application")]
+      (applications/submit-application applicant application))
+    (let [application (create-draft! applicant catid wfid "rejected application")]
+      (applications/submit-application applicant application)
+      (applications/reject-application approver application 0 "comment for rejection"))
+    (let [application (create-draft! applicant catid wfid "accepted application")]
+      (applications/submit-application applicant application)
+      (applications/approve-application approver application 0 "comment for approval"))
+    (let [application (create-draft! applicant catid wfid "returned application")]
+      (applications/submit-application applicant application)
+      (applications/return-application approver application 0 "comment for return"))))
 
 (defn- create-disabled-applications! [catid wfid applicant approver]
-  (binding [context/*tempura* (locales/tempura-config)
-            context/*user* {"eppn" applicant}]
-    (create-draft! catid wfid "draft with disabled item")
-    (let [application (create-draft! catid wfid "approved application with disabled item")]
-      (applications/submit-application application)
-      (binding [context/*user* {"eppn" approver}]
-        (applications/approve-application application 0 "comment for approval")))))
+  (binding [context/*tempura* (locales/tempura-config)]
+    (create-draft! applicant catid wfid "draft with disabled item")
+    (let [application (create-draft! applicant catid wfid "approved application with disabled item")]
+      (applications/submit-application applicant application)
+      (applications/approve-application approver application 0 "comment for approval"))))
 
 (defn- create-bundled-application! [catid catid2 wfid applicant approver]
-  (binding [context/*tempura* (locales/tempura-config)
-            context/*user* {"eppn" applicant}]
-    (let [app-id (create-draft! [catid catid2] wfid "bundled application")]
-      (applications/submit-application app-id)
-      (binding [context/*user* {"eppn" approver}]
-        (applications/return-application app-id 0 "comment for return"))
-      (applications/submit-application app-id))))
+  (binding [context/*tempura* (locales/tempura-config)]
+    (let [app-id (create-draft! applicant [catid catid2] wfid "bundled application")]
+      (applications/submit-application applicant app-id)
+      (applications/return-application approver app-id 0 "comment for return")
+      (applications/submit-application applicant app-id))))
 
 (defn- create-dynamic-application! [catid wfid applicant]
-  (binding [context/*user* {"eppn" applicant}]
-    (let [app-id (create-draft! [catid] wfid "dynamic application")]
-      (applications/dynamic-command! {:type :rems.workflow.dynamic/submit
-                                      :actor applicant
-                                      :application-id app-id})
-      app-id)))
+  (let [app-id (create-draft! applicant [catid] wfid "dynamic application")]
+    (applications/dynamic-command! {:type :rems.workflow.dynamic/submit
+                                    :actor applicant
+                                    :application-id app-id})
+    app-id))
 
 (defn- create-review-application! [catid wfid users]
   (let [applicant (users :applicant1)
         approver (users :approver1)
         reviewer (users :reviewer)]
-    (binding [context/*tempura* (locales/tempura-config)
-              context/*user* {"eppn" applicant}]
-      (let [app-id (create-draft! catid wfid "application with review")]
-        (applications/submit-application app-id)
-        (binding [context/*user* {"eppn" reviewer}]
-          (applications/review-application app-id 0 "comment for review"))
-        (binding [context/*user* {"eppn" approver}]
-          (applications/approve-application app-id 1 "comment for approval"))))))
+    (binding [context/*tempura* (locales/tempura-config)]
+      (let [app-id (create-draft! applicant catid wfid "application with review")]
+        (applications/submit-application applicant app-id)
+        (applications/review-application reviewer app-id 0 "comment for review")
+        (applications/approve-application approver app-id 1 "comment for approval")))))
 
 (defn- create-application-with-expired-resource-license! [wfid form users]
   (let [applicant (users :applicant1)
@@ -286,9 +276,9 @@
         _ (db/set-resource-license-validity! {:licid licid-expired :start year-ago :end yesterday})
         item-with-expired-license (create-catalogue-item! resource-id wfid form {"en" "Resource with expired resource license"
                                                                                  "fi" "Resurssi jolla on vanhentunut resurssilisenssi"})]
-    (binding [context/*tempura* (locales/tempura-config)
-              context/*user* {"eppn" applicant}]
-      (applications/submit-application (create-draft! item-with-expired-license wfid "applied when license was valid that has since expired" (time/minus (time/now) (time/days 2)))))))
+    (binding [context/*tempura* (locales/tempura-config)]
+      (let [application (create-draft! applicant item-with-expired-license wfid "applied when license was valid that has since expired" (time/minus (time/now) (time/days 2)))]
+        (applications/submit-application applicant application)))))
 
 (defn- create-application-before-new-resource-license! [wfid form users]
   (let [applicant (users :applicant1)
@@ -298,9 +288,9 @@
         _ (db/set-resource-license-validity! {:licid licid-new :start (time/now) :end nil})
         item-without-new-license (create-catalogue-item! resource-id wfid form {"en" "Resource with just created new resource license"
                                                                                 "fi" "Resurssi jolla on uusi resurssilisenssi"})]
-    (binding [context/*tempura* (locales/tempura-config)
-              context/*user* {"eppn" applicant}]
-      (applications/submit-application (create-draft! item-without-new-license wfid "applied before license was valid" (time/minus (time/now) (time/days 2)))))))
+    (binding [context/*tempura* (locales/tempura-config)]
+      (let [application (create-draft! applicant item-without-new-license wfid "applied before license was valid" (time/minus (time/now) (time/days 2)))]
+        (applications/submit-application applicant application)))))
 
 (defn create-test-data! []
   (db/add-api-key! {:apikey 42 :comment "test data"})
@@ -317,9 +307,9 @@
         simple (create-catalogue-item! res1 (:simple workflows) form
                                        {"en" "ELFA Corpus, one approval"
                                         "fi" "ELFA-korpus, yksi hyväksyntä"})
-        bundable (create-catalogue-item! res2 (:simple workflows) form
-                                         {"en" "ELFA Corpus, one approval (extra data)"
-                                          "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti)"})
+        bundlable (create-catalogue-item! res2 (:simple workflows) form
+                                          {"en" "ELFA Corpus, one approval (extra data)"
+                                           "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti)"})
         with-review (create-catalogue-item! res1 (:with-review workflows) form
                                             {"en" "ELFA Corpus, with review"
                                              "fi" "ELFA-korpus, katselmoinnilla"})
@@ -333,7 +323,7 @@
     (db/set-catalogue-item-state! {:item disabled :state "disabled" :user (+fake-users+ :approver1)})
     (create-applications! simple (:simple workflows) (+fake-users+ :approver1) (+fake-users+ :approver1))
     (create-disabled-applications! disabled (:simple workflows) (+fake-users+ :approver1) (+fake-users+ :approver1))
-    (create-bundled-application! simple bundable (:simple workflows) (+fake-users+ :applicant1) (+fake-users+ :approver1))
+    (create-bundled-application! simple bundlable (:simple workflows) (+fake-users+ :applicant1) (+fake-users+ :approver1))
     (create-review-application! with-review (:with-review workflows) +fake-users+)
     (create-application-with-expired-resource-license! (:simple workflows) form +fake-users+)
     (create-application-before-new-resource-license!  (:simple workflows) form +fake-users+)
@@ -349,20 +339,20 @@
         form (create-basic-form! +demo-users+)
         workflows (create-workflows! +demo-users+)
         _ (create-catalogue-item! res1 (:minimal workflows) form
-                                        {"en" "ELFA Corpus, direct approval"
-                                         "fi" "ELFA-korpus, suora hyväksyntä"})
+                                  {"en" "ELFA Corpus, direct approval"
+                                   "fi" "ELFA-korpus, suora hyväksyntä"})
         simple (create-catalogue-item! res1 (:simple workflows) form
                                        {"en" "ELFA Corpus, one approval"
                                         "fi" "ELFA-korpus, yksi hyväksyntä"})
-        bundable (create-catalogue-item! res2 (:simple workflows) form
-                                         {"en" "ELFA Corpus, one approval (extra data)"
-                                          "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti)"})
+        bundlable (create-catalogue-item! res2 (:simple workflows) form
+                                          {"en" "ELFA Corpus, one approval (extra data)"
+                                           "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti)"})
         with-review (create-catalogue-item! res1 (:with-review workflows) form
                                             {"en" "ELFA Corpus, with review"
                                              "fi" "ELFA-korpus, katselmoinnilla"})
         _ (create-catalogue-item! res1 (:different workflows) form
-                                          {"en" "ELFA Corpus, two rounds of approval by different approvers"
-                                           "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})
+                                  {"en" "ELFA Corpus, two rounds of approval by different approvers"
+                                   "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})
         disabled (create-catalogue-item! res1 (:simple workflows) form
                                          {"en" "ELFA Corpus, one approval (extra data, disabled)"
                                           "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti, pois käytöstä)"})]
@@ -370,7 +360,7 @@
     (db/set-catalogue-item-state! {:item disabled :state "disabled" :user (+demo-users+ :owner)})
     (create-applications! simple (:simple workflows) (+demo-users+ :applicant1) (+demo-users+ :approver1))
     (create-disabled-applications! disabled (:simple workflows) (+demo-users+ :applicant1) (+demo-users+ :approver1))
-    (create-bundled-application! simple bundable (:simple workflows) (+demo-users+ :applicant2) (+demo-users+ :approver1))
+    (create-bundled-application! simple bundlable (:simple workflows) (+demo-users+ :applicant2) (+demo-users+ :approver1))
     (create-review-application! with-review (:with-review workflows) +demo-users+)
     (create-application-with-expired-resource-license! (:simple workflows) form +demo-users+)
     (create-application-before-new-resource-license!  (:simple workflows) form +demo-users+)

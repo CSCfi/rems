@@ -8,6 +8,8 @@
             [ring.util.response :refer [redirect]]))
 
 ;; TODO handle closing when no draft or anything saved yet
+;; TODO untested routes
+;; TODO does not support dynamic workflows
 (defroutes events-routes
   (POST "/event/:id/:round" [id round :as request]
         (let [id (Long/parseLong id)
@@ -25,14 +27,14 @@
               comment (get input "comment")
               comment (when-not (empty? comment) comment)]
           (case action
-            :approve (applications/approve-application id round comment)
-            :reject (applications/reject-application id round comment)
-            :return (applications/return-application id round comment)
-            :review (applications/review-application id round comment)
-            :review-request (applications/send-review-request id round comment (get input "recipients"))
-            :withdraw (applications/withdraw-application id round comment)
-            :close (applications/close-application id round comment)
-            :third-party-review (applications/perform-third-party-review id round comment))
+            :approve (applications/approve-application (getx-user-id) id round comment)
+            :reject (applications/reject-application (getx-user-id) id round comment)
+            :return (applications/return-application (getx-user-id) id round comment)
+            :review (applications/review-application (getx-user-id) id round comment)
+            :review-request (applications/send-review-request (getx-user-id) id round comment (get input "recipients"))
+            :withdraw (applications/withdraw-application (getx-user-id) id round comment)
+            :close (applications/close-application (getx-user-id) id round comment)
+            :third-party-review (applications/perform-third-party-review (getx-user-id) id round comment))
           (assoc (redirect (if (or (has-roles? :approver) (has-roles? :reviewer)) "/actions" "/applications") :see-other)
                  :flash [{:status :success
                           :contents (case action

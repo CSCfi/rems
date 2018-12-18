@@ -20,7 +20,7 @@
                        (json-body new-user)
                        (authenticate "42" "owner")
                        app)]
-      (is (response-is-ok? response))
+      (assert-response-is-ok response)
       (is (= {"eppn" "david" "mail" "d@av.id" "commonName" "David Newuser"} (users/get-user-attributes "david"))))))
 
 (deftest workflows-api-security-test

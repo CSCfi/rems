@@ -480,16 +480,15 @@ WHERE userId = :user
 
 -- :name get-application-events :? :*
 SELECT
+/*~ (when-not (:application params) */
+  appId,
+/*~ ) ~*/
   userId, round, event, comment, eventData::TEXT, time
 FROM application_event
-WHERE appId = :application
-ORDER BY id ASC
-
--- TODO: consider refactoring this into get-application-events
--- :name get-all-application-events :? :*
-SELECT
-  appId, userId, round, event, comment, eventData::TEXT, time
-FROM application_event
+WHERE 1=1
+/*~ (when (:application params) */
+  AND appId = :application
+/*~ ) ~*/
 ORDER BY id ASC
 
 -- :name add-application-event! :insert

@@ -76,8 +76,7 @@
 
 (comment
   (def form
-    (binding [rems.context/*user* {"eppn" "developer"}]
-      (applications/get-form-for 9)))
+    (applications/get-form-for "developer" 9))
   (with-language :en
     #(clojure.pprint/pprint (render-form form)))
   (with-language :en

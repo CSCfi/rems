@@ -8,7 +8,7 @@
             [rems.db.users :as users]
             [rems.form :as form]
             [rems.pdf :as pdf]
-            [rems.util :refer [get-user-id update-present]]
+            [rems.util :refer [getx-user-id update-present]]
             [ring.util.http-response :refer :all]
             [ring.swagger.upload :as upload]
             [schema.core :as s]
@@ -106,15 +106,15 @@
 
 ;; Api implementation
 
-(defn- api-judge [{:keys [command application-id round comment]}]
+(defn- api-judge [{:keys [command application-id round comment actor]}]
   (case command
-    "approve" (applications/approve-application application-id round comment)
-    "close" (applications/close-application application-id round comment)
-    "reject" (applications/reject-application application-id round comment)
-    "return" (applications/return-application application-id round comment)
-    "review" (applications/review-application application-id round comment)
-    "third-party-review" (applications/perform-third-party-review application-id round comment)
-    "withdraw" (applications/withdraw-application application-id round comment))
+    "approve" (applications/approve-application actor application-id round comment)
+    "close" (applications/close-application actor application-id round comment)
+    "reject" (applications/reject-application actor application-id round comment)
+    "return" (applications/return-application actor application-id round comment)
+    "review" (applications/review-application actor application-id round comment)
+    "third-party-review" (applications/perform-third-party-review actor application-id round comment)
+    "withdraw" (applications/withdraw-application actor application-id round comment))
   ;; failure communicated via an exception
   {:success true})
 
@@ -142,10 +142,10 @@
           (update-in [:application :events] hide-sensitive-events)
           (update-in [:application :events] hide-users)))))
 
-(defn api-get-application [application-id]
+(defn api-get-application [user-id application-id]
   (when (not (empty? (db/get-applications {:id application-id})))
-    (-> (applications/get-form-for application-id)
-        (hide-sensitive-information (get-user-id)))))
+    (-> (applications/get-form-for user-id application-id)
+        (hide-sensitive-information user-id))))
 
 ;; TODO lots of duplication in invalid-reviewer? invalid-commenter? etc. fns
 (defn invalid-reviewer? [u]
@@ -214,14 +214,14 @@
       :summary "Get current user's all applications"
       :roles #{:applicant}
       :return GetApplicationsResponse
-      (ok (applications/get-my-applications)))
+      (ok (applications/get-user-applications (getx-user-id))))
 
     (GET "/draft" []
       :summary "Get application (draft) for `catalogue-items`"
       :roles #{:applicant}
       :query-params [catalogue-items :- (describe [s/Num] "catalogue item ids")]
       :return GetApplicationResponse
-      (let [app (applications/make-draft-application catalogue-items)]
+      (let [app (applications/make-draft-application (getx-user-id) catalogue-items)]
         (ok (applications/get-draft-form-for app))))
 
     (GET "/reviewers" []
@@ -247,7 +247,7 @@
       :roles #{:applicant :approver :reviewer}
       :query-params [application-id :- (describe s/Int "application id")
                      field-id :- (describe s/Int "application form field id the attachment is related to")]
-      (let [form (applications/get-form-for application-id)]
+      (let [form (applications/get-form-for (getx-user-id) application-id)]
         (if-let [attachment (db/get-attachment {:item field-id
                                                 :form (:id form)
                                                 :application application-id})]
@@ -264,7 +264,7 @@
       :path-params [application-id :- (describe s/Num "application id")]
       :responses {200 {:schema GetApplicationResponse}
                   404 {:schema s/Str :description "Not found"}}
-      (if-let [app (api-get-application application-id)]
+      (if-let [app (api-get-application (getx-user-id) application-id)]
         (ok app)
         (not-found! "not found")))
 
@@ -273,7 +273,7 @@
       :roles #{:applicant :approver :reviewer}
       :path-params [application-id :- (describe s/Num "application id")]
       :produces ["application/pdf"]
-      (if-let [app (api-get-application application-id)]
+      (if-let [app (api-get-application (getx-user-id) application-id)]
         (-> app
             (pdf/application-to-pdf-bytes)
             (java.io.ByteArrayInputStream.)
@@ -286,21 +286,22 @@
       :roles #{:applicant}
       :body [request SaveApplicationCommand]
       :return SaveApplicationResponse
-      (ok (form/api-save (fix-keys request))))
+      (ok (form/api-save (assoc (fix-keys request) :actor (getx-user-id)))))
 
     (POST "/judge" []
       :summary "Judge an application"
       :roles #{:applicant :approver :reviewer}
       :body [request JudgeApplicationCommand]
       :return SuccessResponse
-      (ok (api-judge request)))
+      (ok (api-judge (assoc request :actor (getx-user-id)))))
 
     (POST "/review_request" []
       :summary "Request a review"
       :roles #{:approver}
       :body [request ReviewRequestCommand]
       :return SuccessResponse
-      (applications/send-review-request (:application-id request)
+      (applications/send-review-request (getx-user-id)
+                                        (:application-id request)
                                         (:round request)
                                         (:comment request)
                                         (:recipients request))
@@ -312,7 +313,8 @@
       :body [request AddMemberCommand]
       :return SuccessResponse
       ;; TODO: provide a nicer error message when user doesn't exist?
-      (applications/add-member (:application-id request)
+      (applications/add-member (getx-user-id)
+                               (:application-id request)
                                (:member request))
       (ok {:success true}))
 
@@ -326,7 +328,7 @@
       :middleware [upload/wrap-multipart-params]
       :return SuccessResponse
       (check-attachment-content-type (:content-type file))
-      (applications/save-attachment! file application-id field-id)
+      (applications/save-attachment! file (getx-user-id) application-id field-id)
       (ok {:success true}))
 
     (POST "/command" []
@@ -334,7 +336,7 @@
       :roles #{:applicant :approver :reviewer}
       :body [request DynamicCommand]
       :return SuccessResponse
-      (let [cmd (assoc request :actor (get-user-id))
+      (let [cmd (assoc request :actor (getx-user-id))
             fixed (fix-command-from-api cmd)
             fixed (assoc fixed :time (time/now))
             errors (applications/dynamic-command! fixed)]
