@@ -207,7 +207,6 @@
                                  :description description}])
      (save-application app description app-id catalogue-ids items licenses
                        (fn [resp]
-                         (prn :RESP resp)
                          (if (= command "submit")
                            (fetch-application (:id resp)
                                               (fn [app]
@@ -411,14 +410,13 @@
   [application msgs]
   (let [titles-by-id (into {}
                            (concat
-                            (for [f (:items application)]
-                              [[:item (:id f)] (:title (localize-item f))])
-                            (for [f (:licenses application)]
-                              [[:license (:id f)] (:title (localize-item f))])))]
+                            (for [item (:items application)]
+                              [[:item (:id item)] (:title (localize-item item))])
+                            (for [license (:licenses application)]
+                              [[:license (:id license)] (:title (localize-item license))])))]
     (into [:ul]
           (for [m msgs]
-            (do (prn :MSG m)
-                [:li (text-format (:key m) (get titles-by-id [(:type m) (:id m)]))])))))
+            [:li (text-format (:key m) (get titles-by-id [(:type m) (:id m)]))]))))
 
 (defn- pdf-button [id]
   (when id
