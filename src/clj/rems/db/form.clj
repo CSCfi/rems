@@ -9,7 +9,6 @@
 
 (defn- create-form-item! [form item-index {:keys [title optional type input-prompt]}]
   (let [item (db/create-form-item! {:type type
-                                    :optional optional
                                     :user (getx-user-id)
                                     :value 0})]
     (db/link-form-item! {:form (:id form)
