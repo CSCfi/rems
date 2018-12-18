@@ -23,13 +23,20 @@
 
 (defn- validate-item
   [item]
-  (when-not (:optional item)
-    (when (empty? (:value item))
+  (if (empty? (:value item))
+    (when-not (:optional item)
       {:type :item
        :id (:id item)
        :title (title-localizations item)
        :key :t.form.validation/required
-       :text (text-format :t.form.validation/required (get-in item [:localizations :en :title]))})))
+       :text (text-format :t.form.validation/required (get-in item [:localizations :en :title]))})
+    (when (and (:maxlength item)
+               (> (count (:value item)) (:maxlength item)))
+      {:type :item
+       :id (:id item)
+       :title (title-localizations item)
+       :key :t.form.validation/toolong
+       :text (text-format :t.form.validation/toolong (get-in item [:localizations :en :title]))})))
 
 (defn- validate-license
   [license]

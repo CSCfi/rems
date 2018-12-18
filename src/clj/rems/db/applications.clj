@@ -427,7 +427,8 @@
    :value (or
            (when-not (draft? application-id)
              (get-item-value item form-id application-id))
-           "")})
+           "")
+   :maxlength (:maxlength item)})
 
 (defn- process-license
   [application license]
