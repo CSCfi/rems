@@ -141,7 +141,7 @@
                            {:application-id application-id}
                            {:catalogue-items catalogue-items}))}))
 
-(defn- submit-application [app description application-id catalogue-items items licenses]
+(defn- submit-application [app description application-id catalogue-items items licenses prev-validation]
   (if (= :workflow/dynamic (get-in app [:workflow :type]))
     (post! "/api/applications/command"
            {:handler (fn [resp]
@@ -154,7 +154,9 @@
                              (rf/dispatch [::enter-application-page application-id]))
                          (rf/dispatch [::set-status {:status :failed
                                                      :description description
-                                                     :validation (:validation resp)}])))
+                                                     :validation prev-validation
+                                                     ;; this error is only shown if prev-validation was nil
+                                                     :error {:status-text (pr-str (:errors resp))}}])))
             :error-handler (fn [error]
                              (rf/dispatch [::set-status {:status :failed
                                                          :description description
@@ -205,10 +207,13 @@
                                  :description description}])
      (save-application app description app-id catalogue-ids items licenses
                        (fn [resp]
+                         (prn :RESP resp)
                          (if (= command "submit")
                            (fetch-application (:id resp)
                                               (fn [app]
-                                                (submit-application (:application app) description (:id resp) catalogue-ids items licenses)))
+                                                (submit-application (:application app) description (:id resp) catalogue-ids items licenses
+                                                                    ;; propagate validation errors from save so that they can be shown if dynamic submit fails
+                                                                    (:validation resp))))
                            (do
                              (rf/dispatch [::set-status {:status :saved
                                                          :description description}])
@@ -403,11 +408,17 @@
 ;;;; UI components
 
 (defn- format-validation-messages
-  [msgs language]
-  (into [:ul]
-        (for [m msgs]
-          ;; TODO this is broken, :title is no longer provided
-          [:li (text-format (:key m) (get-in m [:title language]))])))
+  [application msgs]
+  (let [titles-by-id (into {}
+                           (concat
+                            (for [f (:items application)]
+                              [[:item (:id f)] (:title (localize-item f))])
+                            (for [f (:licenses application)]
+                              [[:license (:id f)] (:title (localize-item f))])))]
+    (into [:ul]
+          (for [m msgs]
+            (do (prn :MSG m)
+                [:li (text-format (:key m) (get titles-by-id [(:type m) (:id m)]))])))))
 
 (defn- pdf-button [id]
   (when id
@@ -1033,7 +1044,7 @@
                             [flash-message
                              {:status :danger
                               :contents [:div (text :t.form/validation.errors)
-                                         [format-validation-messages (:validation edit-application) language]]}])])]
+                                         [format-validation-messages application (:validation edit-application)]]}])])]
     [:div
      [:div {:class "float-right"} [pdf-button (:id app)]]
      [:h2 (text :t.applications/application)]
