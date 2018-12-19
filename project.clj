@@ -22,6 +22,7 @@
                  [luminus-migrations "0.5.2"]
                  [luminus-nrepl "0.1.4"]
                  [luminus/ring-ttl-session "0.3.2"]
+                 [macroz/hiccup-find "0.6.1"]
                  [markdown-clj "1.0.2"]
                  [metosin/compojure-api "2.0.0-alpha18" :exclusions [cheshire com.fasterxml.jackson.core/jackson-core]]
                  [metosin/komponentit "0.3.5"]
