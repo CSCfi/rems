@@ -79,6 +79,9 @@
   ([app round]
    (get-events-of-type app round "third-party-review")))
 
+(defn get-applicant-of-application [application-id]
+  (:applicantuserid (first (db/get-applications {:id application-id}))))
+
 (declare is-commenter?)
 (declare can-comment?)
 (declare is-decider?)
@@ -940,8 +943,7 @@
   (not (nil? (users/get-user-attributes userid))))
 
 (defn- valid-form-inputs? [application-id]
-  ;; TODO a bit ugly:
-  (let [user-id (:applicantuserid (first (db/get-applications {:id application-id})))]
+  (let [user-id (get-applicant-of-application application-id)]
     (= :valid (form-validation/validate (get-form-for user-id application-id)))))
 
 (def ^:private db-injections
