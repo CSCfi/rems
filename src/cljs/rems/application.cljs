@@ -141,7 +141,7 @@
                            {:application-id application-id}
                            {:catalogue-items catalogue-items}))}))
 
-(defn- submit-application [app description application-id catalogue-items items licenses prev-validation]
+(defn- submit-application [app description application-id catalogue-items items licenses]
   (if (= :workflow/dynamic (get-in app [:workflow :type]))
     (post! "/api/applications/command"
            {:handler (fn [resp]
@@ -154,8 +154,7 @@
                              (rf/dispatch [::enter-application-page application-id]))
                          (rf/dispatch [::set-status {:status :failed
                                                      :description description
-                                                     :validation prev-validation
-                                                     ;; this error is only shown if prev-validation was nil
+                                                     ;; TODO errors from command api not localized yet
                                                      :error {:status-text (pr-str (:errors resp))}}])))
             :error-handler (fn [error]
                              (rf/dispatch [::set-status {:status :failed
@@ -210,9 +209,9 @@
                          (if (= command "submit")
                            (fetch-application (:id resp)
                                               (fn [app]
-                                                (submit-application (:application app) description (:id resp) catalogue-ids items licenses
-                                                                    ;; propagate validation errors from save so that they can be shown if dynamic submit fails
-                                                                    (:validation resp))))
+                                                ;; fetch-application zeroes validation so we put it back here
+                                                (rf/dispatch [::set-status {:validation (:validation resp)}])
+                                                (submit-application (:application app) description (:id resp) catalogue-ids items licenses)))
                            (do
                              (rf/dispatch [::set-status {:status :saved
                                                          :description description}])
