@@ -14,18 +14,22 @@
      :pending [spinner/big]
      :saved [:div [:i {:class ["fa fa-check-circle text-success"]}] (text :t.form/success)]
      :failed [:div [:i {:class "fa fa-times-circle text-danger"}]
-              (str (text :t.form/failed) ": " (:status-text error) " (" (:status error) ")")])])
+              (str (text :t.form/failed)
+                   (when-let [text (:status-text error)]
+                     (str ": " text))
+                   (when-let [text (:status error)]
+                     (str " (" text ")")))])])
 
 (defn status-modal
   "Modal component showing the status of an action.
 
   `:status` - Show spinner while `:pending`. Either `:saved` or `:failed` status is shown with the internal status-widget that may show the `:error` contents.
   `:description` - the title of the modal.
-  `:content` - alternative content can be given instead of the internal status widget.
+  `:content` - additional content to show after the status widget.
   `:on-close` - callback is called when the modal wants to close itself"
   [{:keys [description status error content on-close]}]
   [modal/notification {:title description
-                       :content (or content [status-widget status error])
+                       :content [:div [status-widget status error] content]
                        :on-close on-close
                        :shade? true}])
 

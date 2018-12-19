@@ -154,7 +154,8 @@
                              (rf/dispatch [::enter-application-page application-id]))
                          (rf/dispatch [::set-status {:status :failed
                                                      :description description
-                                                     :validation (:validation resp)}])))
+                                                     ;; #798 errors from command api not localized yet
+                                                     :error {:status-text (pr-str (:errors resp))}}])))
             :error-handler (fn [error]
                              (rf/dispatch [::set-status {:status :failed
                                                          :description description
@@ -208,6 +209,8 @@
                          (if (= command "submit")
                            (fetch-application (:id resp)
                                               (fn [app]
+                                                ;; fetch-application zeroes validation so we put it back here
+                                                (rf/dispatch [::set-status {:validation (:validation resp)}])
                                                 (submit-application (:application app) description (:id resp) catalogue-ids items licenses)))
                            (do
                              (rf/dispatch [::set-status {:status :saved
@@ -403,10 +406,16 @@
 ;;;; UI components
 
 (defn- format-validation-messages
-  [msgs language]
-  (into [:ul]
-        (for [m msgs]
-          [:li (text-format (:key m) (get-in m [:title language]))])))
+  [application msgs]
+  (let [titles-by-id (into {}
+                           (concat
+                            (for [item (:items application)]
+                              [[:item (:id item)] (:title (localize-item item))])
+                            (for [license (:licenses application)]
+                              [[:license (:id license)] (:title (localize-item license))])))]
+    (into [:ul]
+          (for [m msgs]
+            [:li (text-format (:key m) (get titles-by-id [(:type m) (:id m)]))]))))
 
 (defn- pdf-button [id]
   (when id
@@ -1032,7 +1041,7 @@
                             [flash-message
                              {:status :danger
                               :contents [:div (text :t.form/validation.errors)
-                                         [format-validation-messages (:validation edit-application) language]]}])])]
+                                         [format-validation-messages application (:validation edit-application)]]}])])]
     [:div
      [:div {:class "float-right"} [pdf-button (:id app)]]
      [:h2 (text :t.applications/application)]

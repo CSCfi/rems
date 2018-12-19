@@ -947,7 +947,14 @@
   (let [workflow {:type :workflow/dynamic
                   :handlers ["handler"]}
         wfid (:id (db/create-workflow! {:organization "abc" :modifieruserid "owner" :owneruserid "owner" :title "dynamic" :fnlround -1 :workflow (cheshire/generate-string workflow)}))
+        form (:id (db/create-form! {:organization "abc" :title "internal-title" :user "owner"}))
+        form-item (:id (db/create-form-item! {:type "text" :user "owner" :value 0}))
+        _ (db/link-form-item! {:form form :itemorder 1 :item form-item :user "owner" :optional false})
+        ci (:id (db/create-catalogue-item! {:title "dynamic" :resid nil :wfid wfid :form form}))
         app-id (applications/create-new-draft "alice" wfid)]
+    (db/add-application-item! {:application app-id :item ci})
+    (db/save-field-value! {:application app-id :form form :item form-item :user "alice" :value "X"})
+
     (is (= {:applicantuserid "alice"
             :state :rems.workflow.dynamic/draft
             :workflow workflow}
