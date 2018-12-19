@@ -163,6 +163,7 @@
                                :fi "fi title"}
                        :optional true
                        :type "text"
+                       :maxlength "12"
                        :input-prompt {:en "en prompt"
                                       :fi "fi prompt"}}]}
         languages [:en :fi]]
@@ -173,6 +174,7 @@
                                :fi "fi title"}
                        :optional true
                        :type "text"
+                       :maxlength 12
                        :input-prompt {:en "en prompt"
                                       :fi "fi prompt"}}]}
              (build-request form languages))))
@@ -202,6 +204,7 @@
                                :fi "fi title"}
                        :optional false
                        :type "text"
+                       :maxlength 12
                        :input-prompt {:en "en prompt"
                                       :fi "fi prompt"}}]}
              (build-request (assoc-in form [:items 0 :optional] nil) languages))))
@@ -216,11 +219,25 @@
                                :fi "fi title"}
                        :optional true
                        :type "text"
+                       :maxlength 12
                        :input-prompt {:en ""
                                       :fi ""}}]}
              (build-request (assoc-in form [:items 0 :input-prompt] nil) languages)
              (build-request (assoc-in form [:items 0 :input-prompt] {:en ""}) languages)
              (build-request (assoc-in form [:items 0 :input-prompt] {:en "", :fi ""}) languages))))
+
+    (testing "maxlength is optional"
+      (is (= {:organization "abc"
+              :title "the title"
+              :items [{:title {:en "en title"
+                               :fi "fi title"}
+                       :optional true
+                       :type "text"
+                       :maxlength nil
+                       :input-prompt {:en "en prompt"
+                                      :fi "fi prompt"}}]}
+             (build-request (assoc-in form [:items 0 :maxlength] "") languages)
+             (build-request (assoc-in form [:items 0 :maxlength] nil) languages))))
 
     (testing "if you use input prompt, you must fill in all the languages"
       (is (= nil
