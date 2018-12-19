@@ -2,7 +2,7 @@
   (:require [clojure.string :as str]
             [goog.string :refer [parseInt]]
             [re-frame.core :as rf]
-            [rems.administration.components :refer [checkbox localized-text-field radio-button-group text-field]]
+            [rems.administration.components :refer [checkbox localized-text-field number-field radio-button-group text-field]]
             [rems.application :refer [enrich-user]]
             [rems.collapsible :as collapsible]
             [rems.text :refer [text text-format localize-item]]
@@ -164,8 +164,8 @@
                                  :label (text :t.create-form/input-prompt)}])
 
 (defn- form-item-maxlength-field [item]
-  [text-field context {:keys [:items item :maxlength]
-                                 :label (text :t.create-form/maxlength)}])
+  [number-field context {:keys [:items item :maxlength]
+                       :label (text :t.create-form/maxlength)}])
 
 (defn- form-item-type-radio-group [item]
   [radio-button-group context {:keys [:items item :type]
