@@ -245,7 +245,7 @@
          :events "Events"
          :failed "Failed"
          :licenses "Terms of Use"
-         :max-length "(max %1 characters)"
+         :maxlength "(max %1 characters)"
          :optional "(optional)"
          :resources "Resources"
          :save "Save as draft"

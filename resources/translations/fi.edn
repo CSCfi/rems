@@ -245,7 +245,7 @@
          :events "Tapahtumat"
          :failed "Epäonnistui"
          :licenses "Käyttöehdot"
-         :max-length "(enintään %1 merkkiä)"
+         :maxlength "(enintään %1 merkkiä)"
          :optional "(ei pakollinen)"
          :resources "Resurssit"
          :save "Tallenna luonnos"
