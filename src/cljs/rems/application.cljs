@@ -493,6 +493,7 @@
     title " "
     (when maxlength
       (text-format :t.form/maxlength (str maxlength)))
+    " "
     (when optional
       (text :t.form/optional))]
    (when (and previous-value
