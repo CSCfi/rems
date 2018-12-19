@@ -63,7 +63,7 @@
   :resource-paths ["resources" "target/cljsbuild"]
   :target-path "target/%s/"
   :main rems.standalone
-  :migratus {:store :database :db ~(get (System/getenv) "DATABASE_URL")}
+  :migratus {:store :database :db ~(get (System/getenv) "DATABASE_URL" "postgresql://localhost/rems?user=rems")}
 
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-cprop "1.0.3"]
