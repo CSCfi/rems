@@ -77,8 +77,12 @@
        ;; partial translations are not allowed
        (or (every? #(not (str/blank? %))
                    (vals lstr))
-           (every? #(str/blank? %)
+           (every? str/blank?
                    (vals lstr)))))
+
+(defn- valid-option? [option languages]
+  (and (not (str/blank? (:key option)))
+       (valid-required-localized-string? (:label option) languages)))
 
 (defn- valid-request-item? [item languages]
   (and (valid-required-localized-string? (:title item) languages)
@@ -86,7 +90,10 @@
        (not (str/blank? (:type item)))
        (if (uses-input-prompt? item)
          (valid-optional-localized-string? (:input-prompt item) languages)
-         (nil? (:input-prompt item)))))
+         (nil? (:input-prompt item)))
+       (if (= "option" (:type item))
+         (every? #(valid-option? % languages) (:options item))
+         (nil? (:options item)))))
 
 (defn- valid-request? [request languages]
   (and (not (str/blank? (:organization request)))
@@ -98,11 +105,15 @@
              [language (get lstr language "")])))
 
 (defn- build-request-item [item languages]
-  {:title (build-localized-string (:title item) languages)
-   :optional (boolean (:optional item))
-   :type (:type item)
-   :input-prompt (when (uses-input-prompt? item)
-                   (build-localized-string (:input-prompt item) languages))})
+  (merge {:title (build-localized-string (:title item) languages)
+          :optional (boolean (:optional item))
+          :type (:type item)}
+         (when (uses-input-prompt? item)
+           {:input-prompt (build-localized-string (:input-prompt item) languages)})
+         (when (= "option" (:type item))
+           {:options (for [{:keys [key label]} (:options item)]
+                       {:key key
+                        :label (build-localized-string label languages)})})))
 
 (defn build-request [form languages]
   (let [request {:organization (:organization form)

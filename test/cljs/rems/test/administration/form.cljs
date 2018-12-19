@@ -227,15 +227,52 @@
              (build-request (assoc-in form [:items 0 :input-prompt] {:en "en prompt", :fi ""}) languages)
              (build-request (assoc-in form [:items 0 :input-prompt] {:en "en prompt"}) languages))))
 
-    (testing "date fields won't have an input prompt"
-      (is (= {:organization "abc"
-              :title "the title"
-              :items [{:title {:en "en title"
-                               :fi "fi title"}
-                       :optional true
-                       :type "date"
-                       :input-prompt nil}]}
-             (build-request (assoc-in form [:items 0 :type] "date") languages))))))
+    (testing "date fields"
+      (let [form (assoc-in form [:items 0 :type] "date")]
+
+        (testing "valid form"
+          (is (= {:organization "abc"
+                  :title "the title"
+                  :items [{:title {:en "en title"
+                                   :fi "fi title"}
+                           :optional true
+                           :type "date"}]}
+                 (build-request form languages))))))
+
+    (testing "option fields"
+      (let [form (-> form
+                     (assoc-in [:items 0 :type] "option")
+                     (assoc-in [:items 0 :options] [{:key "yes"
+                                                     :label {:en "en yes"
+                                                             :fi "fi yes"}}
+                                                    {:key "no"
+                                                     :label {:en "en no"
+                                                             :fi "fi no"}}]))]
+
+        (testing "valid form"
+          (is (= {:organization "abc"
+                  :title "the title"
+                  :items [{:title {:en "en title"
+                                   :fi "fi title"}
+                           :optional true
+                           :type "option"
+                           :options [{:key "yes"
+                                      :label {:en "en yes"
+                                              :fi "fi yes"}}
+                                     {:key "no"
+                                      :label {:en "en no"
+                                              :fi "fi no"}}]}]}
+                 (build-request form languages))))
+
+        (testing "missing option key"
+          (is (= nil
+                 (build-request (assoc-in form [:items 0 :options 0 :key] "") languages)
+                 (build-request (assoc-in form [:items 0 :options 0 :key] nil) languages))))
+
+        (testing "missing option label"
+          (is (= nil
+                 (build-request (assoc-in form [:items 0 :options 0 :label] {:en "" :fi ""}) languages)
+                 (build-request (assoc-in form [:items 0 :options 0 :label] nil) languages))))))))
 
 (deftest build-localized-string-test
   (let [languages [:en :fi]]

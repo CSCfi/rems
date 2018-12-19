@@ -37,7 +37,7 @@
    :items [{:title {s/Keyword s/Str}
             :optional s/Bool
             :type (s/enum "attachment" "date" "description" "label" "text" "texta")
-            :input-prompt (s/maybe {s/Keyword s/Str})}]})
+            (s/optional-key :input-prompt) {s/Keyword s/Str}}]})
 
 (s/defschema CreateFormResponse
   {:id s/Num})
