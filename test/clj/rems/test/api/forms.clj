@@ -49,13 +49,21 @@
                               :optional true
                               :type "text"
                               :input-prompt {:en "en prompt"
-                                             :fi "fi prompt"}}]}
-            response (-> (request :post "/api/forms/create")
-                         (authenticate api-key user-id)
-                         (json-body command)
-                         app)]
-        (assert-response-is-ok response)
-
+                                             :fi "fi prompt"}}]}]
+        (testing "invalid create"
+          (let [command-with-invalid-maxlength (assoc-in command [:items 0 :maxlength] -1)
+                response (-> (request :post "/api/forms/create")
+                             (authenticate api-key user-id)
+                             (json-body command-with-invalid-maxlength)
+                             app)]
+            (is (= 400 (:status response))
+                "can't send negative maxlength")))
+        (testing "valid create"
+          (let [response (-> (request :post "/api/forms/create")
+                             (authenticate api-key user-id)
+                             (json-body command)
+                             app)]
+            (assert-response-is-ok response)))
         (testing "and fetch"
           (let [response (-> (request :get "/api/forms")
                              (authenticate api-key user-id)
