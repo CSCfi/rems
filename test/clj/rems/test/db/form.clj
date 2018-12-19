@@ -1,4 +1,4 @@
-(ns rems.test.db.form
+(ns ^:integration rems.test.db.form
   (:require [clojure.test :refer :all]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
