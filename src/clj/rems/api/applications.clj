@@ -50,9 +50,7 @@
 (s/defschema ValidationMessage
   {:type (s/enum :item :license)
    :id s/Num
-   :title {s/Keyword s/Str}
-   :key s/Keyword
-   :text s/Str})
+   :key s/Keyword})
 
 (s/defschema SaveApplicationResponse
   {:success s/Bool

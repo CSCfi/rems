@@ -154,12 +154,16 @@
     (not (:valid-user? injections)) {:errors [[:missing-injection :valid-user?]]}
     (not ((:valid-user? injections) user)) {:errors [[:invalid-user user]]}))
 
+(defn- validation-error
+  [injections application-id]
+  (when (not ((:valid-form-inputs? injections) application-id))
+    {:errors [:form-not-valid]}))
+
 (defmethod handle-command ::submit
-  [cmd application _injections]
-  ;; TODO injections should include form validation info so that we
-  ;; can fail when trying to submit an incomplete form
+  [cmd application injections]
   (or (applicant-error application cmd)
       (state-error application ::draft ::returned)
+      (validation-error injections (:application-id cmd))
       {:success true
        :result {:event :event/submitted
                 :actor (:actor cmd)
@@ -332,7 +336,8 @@
     :member "member"}])
 
 (def ^:private injections-for-possible-commands
-  {:valid-user? (constantly true)})
+  {:valid-user? (constantly true)
+   :valid-form-inputs? (constantly true)})
 
 (defn possible-commands [actor application-state]
   (set
@@ -347,31 +352,48 @@
 ;;; Tests
 
 (deftest test-submit-approve-or-reject
-  (let [application {:state ::draft
+  (let [injections {:valid-form-inputs? (constantly true)}
+        fail-injections {:valid-form-inputs? (constantly false)}
+        application {:state ::draft
                      :applicantuserid "applicant"
                      :workflow {:type :workflow/dynamic
-                                :handlers ["assistant"]}}
-        submitted (apply-command application {:actor "applicant" :type ::submit})]
-    (testing "submitter is member"
-      (is (= ["applicant"] (:members submitted))))
-    (testing "approving"
-      (is (= ::approved (:state (apply-command submitted
-                                               {:actor "assistant" :type ::approve})))))
-    (testing "rejecting"
-      (is (= ::rejected (:state (apply-command submitted
-                                               {:actor "assistant" :type ::reject})))))))
+                                :handlers ["assistant"]}}]
+    (testing "only applicant can submit"
+      (is (= {:errors [:unauthorized]}
+             (handle-command {:actor "not-applicant" :type ::submit} application injections))))
+    (testing "can only submit valid form"
+      (is (= {:errors [:form-not-valid]}
+             (handle-command {:actor "applicant" :type ::submit} application fail-injections))))
+    (let [submitted (apply-command application {:actor "applicant" :type ::submit} injections)]
+      (testing "cannot submit twice"
+        (is (= {:errors [[:invalid-state ::submitted]]}
+               (handle-command {:actor "applicant" :type ::submit} submitted injections))))
+      (testing "submitter is member"
+        (is (= ["applicant"] (:members submitted))))
+      (testing "approving"
+        (is (= ::approved (:state (apply-command submitted
+                                                 {:actor "assistant" :type ::approve}
+                                                 injections)))))
+      (testing "rejecting"
+        (is (= ::rejected (:state (apply-command submitted
+                                                 {:actor "assistant" :type ::reject}
+                                                 injections))))))))
 
 (deftest test-submit-return-submit-approve-close
-  (let [application {:state ::draft
+  (let [injections {:valid-form-inputs? (constantly true)}
+        application {:state ::draft
                      :applicantuserid "applicant"
                      :workflow {:type :workflow/dynamic
                                 :handlers ["assistant"]}}
         returned-application (apply-commands application
                                              [{:actor "applicant" :type ::submit}
-                                              {:actor "assistant" :type ::return}])
+                                              {:actor "assistant" :type ::return}]
+                                             injections)
         approved-application (apply-commands returned-application [{:actor "applicant" :type ::submit}
-                                                                   {:actor "assistant" :type ::approve}])
-        closed-application (apply-command approved-application {:actor "assistant" :type ::close})]
+                                                                   {:actor "assistant" :type ::approve}]
+                                             injections)
+        closed-application (apply-command approved-application {:actor "assistant" :type ::close}
+                                          injections)]
     (is (= ::returned (:state returned-application)))
     (is (= ::approved (:state approved-application)))
     (is (= ::closed (:state closed-application)))))

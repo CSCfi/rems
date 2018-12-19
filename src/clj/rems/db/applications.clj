@@ -15,6 +15,7 @@
             [rems.db.users :as users]
             [rems.db.workflow-actors :as actors]
             [rems.email :as email]
+            [rems.form-validation :as form-validation]
             [rems.util :refer [getx get-username update-present]]
             [rems.workflow.dynamic :as dynamic]
             [clj-time.coerce :as time-coerce])
@@ -77,6 +78,9 @@
    (get-events-of-type app "third-party-review"))
   ([app round]
    (get-events-of-type app round "third-party-review")))
+
+(defn get-applicant-of-application [application-id]
+  (:applicantuserid (first (db/get-applications {:id application-id}))))
 
 (declare is-commenter?)
 (declare can-comment?)
@@ -902,7 +906,7 @@
                                 :event "add-member" :eventdata (cheshire/generate-string {"uid" member})})))
 
 ;;; Dynamic workflows
-
+;; TODO these should be in their own namespace probably
 
 ;; TODO could use schemas for these coercions
 (defn- fix-workflow-from-db [wf]
@@ -939,10 +943,17 @@
 (defn- valid-user? [userid]
   (not (nil? (users/get-user-attributes userid))))
 
+(defn- valid-form-inputs? [application-id]
+  (let [user-id (get-applicant-of-application application-id)]
+    (= :valid (form-validation/validate (get-form-for user-id application-id)))))
+
+(def ^:private db-injections
+  {:valid-user? valid-user?
+   :valid-form-inputs? valid-form-inputs?})
+
 (defn dynamic-command! [cmd]
   (let [app (get-dynamic-application-state (:application-id cmd))
-        injections {:valid-user? valid-user?}
-        result (dynamic/handle-command cmd app injections)]
+        result (dynamic/handle-command cmd app db-injections)]
     (if (:success result)
       (add-dynamic-event! (:result result))
       result)))
