@@ -91,11 +91,11 @@
         form (db/create-form! {:organization "nbn" :title "Yksinkertainen lomake" :user owner})
         name (db/create-form-item! {:type "text" :optional false :user owner :value 0})
         purpose (db/create-form-item! {:type "texta" :optional false :user owner :value 0})
-        maxlength-text (db/create-form-item! {:type "text" :optional false :user owner :value 0})
-        maxlength-texta (db/create-form-item! {:type "texta" :optional false :user owner :value 0})
         start-date (db/create-form-item! {:type "date" :optional true :user owner :value 0})
         expired (db/create-form-item! {:type "text" :optional true :user owner :value 0})
-        plan (db/create-form-item! {:type "attachment" :optional true :user owner :value 0})]
+        plan (db/create-form-item! {:type "attachment" :optional true :user owner :value 0})
+        maxlength-text (db/create-form-item! {:type "text" :optional false :user owner :value 0})
+        maxlength-texta (db/create-form-item! {:type "texta" :optional false :user owner :value 0})]
     (db/end-form-item! {:id (:id expired)})
     ;; link out of order for less predictable row ids
     (db/link-form-item! {:form (:id form) :itemorder 1 :optional false :item (:id name) :user owner})
