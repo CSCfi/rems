@@ -125,7 +125,7 @@
 (defn build-request [form languages]
   (let [request {:organization (:organization form)
                  :title (:title form)
-                 :items (map #(build-request-item % languages) (:items form))}]
+                 :items (mapv #(build-request-item % languages) (:items form))}]
     (when (valid-request? request languages)
       request)))
 

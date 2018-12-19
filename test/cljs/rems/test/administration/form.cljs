@@ -2,7 +2,8 @@
   (:require [cljs.test :refer-macros [deftest is testing use-fixtures]]
             [re-frame.core :as rf]
             [rems.administration.form :as f :refer [build-request build-localized-string]]
-            [rems.test.testing :refer [isolate-re-frame-state stub-re-frame-effect]]))
+            [rems.test.testing :refer [isolate-re-frame-state stub-re-frame-effect]]
+            [rems.util :refer [getx-in]]))
 
 (use-fixtures :each isolate-re-frame-state)
 
@@ -198,50 +199,30 @@
              (build-request (assoc-in form [:items 0 :title] nil) languages))))
 
     (testing "missing optional implies false"
-      (is (= {:organization "abc"
-              :title "the title"
-              :items [{:title {:en "en title"
-                               :fi "fi title"}
-                       :optional false
-                       :type "text"
-                       :maxlength 12
-                       :input-prompt {:en "en prompt"
-                                      :fi "fi prompt"}}]}
-             (build-request (assoc-in form [:items 0 :optional] nil) languages))))
+      (is (false? (getx-in (build-request (assoc-in form [:items 0 :optional] nil) languages)
+                           [:items 0 :optional]))))
 
     (testing "missing item type"
       (is (nil? (build-request (assoc-in form [:items 0 :type] nil) languages))))
 
     (testing "input prompt is optional"
-      (is (= {:organization "abc"
-              :title "the title"
-              :items [{:title {:en "en title"
-                               :fi "fi title"}
-                       :optional true
-                       :type "text"
-                       :maxlength 12
-                       :input-prompt {:en ""
-                                      :fi ""}}]}
-             (build-request (assoc-in form [:items 0 :input-prompt] nil) languages)
-             (build-request (assoc-in form [:items 0 :input-prompt] {:en ""}) languages)
-             (build-request (assoc-in form [:items 0 :input-prompt] {:en "", :fi ""}) languages))))
+      (is (= {:en "" :fi ""}
+             (getx-in (build-request (assoc-in form [:items 0 :input-prompt] nil) languages)
+                     [:items 0 :input-prompt])
+             (getx-in (build-request (assoc-in form [:items 0 :input-prompt] {:en ""}) languages)
+                     [:items 0 :input-prompt])
+             (getx-in (build-request (assoc-in form [:items 0 :input-prompt] {:en "" :fi ""}) languages)
+                     [:items 0 :input-prompt]))))
 
     (testing "maxlength is optional"
-      (is (= {:organization "abc"
-              :title "the title"
-              :items [{:title {:en "en title"
-                               :fi "fi title"}
-                       :optional true
-                       :type "text"
-                       :maxlength nil
-                       :input-prompt {:en "en prompt"
-                                      :fi "fi prompt"}}]}
-             (build-request (assoc-in form [:items 0 :maxlength] "") languages)
-             (build-request (assoc-in form [:items 0 :maxlength] nil) languages))))
+      (is (nil? (getx-in (build-request (assoc-in form [:items 0 :maxlength] "") languages)
+                        [:items 0 :maxlength])))
+      (is (nil? (getx-in (build-request (assoc-in form [:items 0 :maxlength] nil) languages)
+                        [:items 0 :maxlength]))))
 
     (testing "if you use input prompt, you must fill in all the languages"
       (is (= nil
-             (build-request (assoc-in form [:items 0 :input-prompt] {:en "en prompt", :fi ""}) languages)
+             (build-request (assoc-in form [:items 0 :input-prompt] {:en "en prompt" :fi ""}) languages)
              (build-request (assoc-in form [:items 0 :input-prompt] {:en "en prompt"}) languages))))
 
     (testing "date fields"
