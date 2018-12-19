@@ -154,7 +154,7 @@
                              (rf/dispatch [::enter-application-page application-id]))
                          (rf/dispatch [::set-status {:status :failed
                                                      :description description
-                                                     ;; TODO errors from command api not localized yet
+                                                     ;; #798 errors from command api not localized yet
                                                      :error {:status-text (pr-str (:errors resp))}}])))
             :error-handler (fn [error]
                              (rf/dispatch [::set-status {:status :failed
