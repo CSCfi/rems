@@ -258,10 +258,11 @@
       (applications/submit-application applicant app-id))))
 
 (defn- create-dynamic-application! [catid wfid applicant]
-  (let [app-id (create-draft! applicant [catid] wfid "dynamic application")]
-    (applications/dynamic-command! {:type :rems.workflow.dynamic/submit
-                                    :actor applicant
-                                    :application-id app-id})
+  (let [app-id (create-draft! applicant [catid] wfid "dynamic application")
+        result (applications/dynamic-command! {:type :rems.workflow.dynamic/submit
+                                               :actor applicant
+                                               :application-id app-id})]
+    (assert (nil? result) {:result result})
     app-id))
 
 (defn- create-review-application! [catid wfid users]
