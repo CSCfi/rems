@@ -943,13 +943,15 @@
 (defn- valid-user? [userid]
   (not (nil? (users/get-user-attributes userid))))
 
-(defn- valid-form-inputs? [application-id]
-  (let [user-id (get-applicant-of-application application-id)]
-    (= :valid (form-validation/validate (get-form-for user-id application-id)))))
+(defn- validate-form [application-id]
+  (let [user-id (get-applicant-of-application application-id)
+        validation (form-validation/validate (get-form-for user-id application-id))]
+    (when-not (= :valid validation)
+      validation)))
 
 (def ^:private db-injections
   {:valid-user? valid-user?
-   :valid-form-inputs? valid-form-inputs?})
+   :validate-form validate-form})
 
 (defn dynamic-command! [cmd]
   (let [app (get-dynamic-application-state (:application-id cmd))
