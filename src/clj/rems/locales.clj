@@ -1,4 +1,5 @@
 (ns rems.locales
+  {:ns-tracker/resource-deps ["translations/en.edn" "translations/fi.edn"]}
   (:require [clojure.java.io :as io]
             [mount.core :refer [defstate]]
             [rems.config :refer [env]])
