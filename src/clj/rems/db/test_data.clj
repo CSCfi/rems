@@ -217,9 +217,12 @@
             (db/add-application-item! {:application app-id :item catids}))
         form (binding [context/*lang* :en]
                (applications/get-form-for user-id app-id))]
-    (doseq [{item-id :id} (:items form)]
+    (doseq [{item-id :id maxlength :maxlength} (:items form)
+            :let [trimmed-value (if (and maxlength (> (count field-value) maxlength))
+                                  (subs field-value 0 maxlength)
+                                  field-value)]]
       (db/save-field-value! {:application app-id :form (:id form)
-                             :item item-id :user user-id :value field-value}))
+                             :item item-id :user user-id :value trimmed-value}))
     (doseq [{license-id :id} (:licenses form)]
       (db/save-license-approval! {:catappid app-id
                                   :round 0
