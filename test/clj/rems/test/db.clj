@@ -23,24 +23,24 @@
             [stub-http.core :as stub])
   (:import rems.auth.NotAuthorizedException))
 
-(use-fixtures
-  :once
-  fake-tempura-fixture
-  (fn [f]
-    (mount/start
-     #'rems.config/env
-     #'rems.db.core/*db*)
-    (db/assert-test-database!)
-    (migrations/migrate ["reset"] (select-keys env [:database-url]))
-    (f)
-    (mount/stop)))
+(defn db-once-fixture [f]
+  (fake-tempura-fixture
+   (fn []
+     (mount/start
+      #'rems.config/env
+      #'rems.db.core/*db*)
+     (db/assert-test-database!)
+     (migrations/migrate ["reset"] (select-keys env [:database-url]))
+     (f)
+     (mount/stop))))
 
-(use-fixtures
-  :each
-  (fn [f]
-    (conman/with-transaction [rems.db.core/*db* {:isolation :serializable}]
-      (jdbc/db-set-rollback-only! rems.db.core/*db*)
-      (f))))
+(defn db-each-fixture [f]
+  (conman/with-transaction [rems.db.core/*db* {:isolation :serializable}]
+    (jdbc/db-set-rollback-only! rems.db.core/*db*)
+    (f)))
+
+(use-fixtures :once db-once-fixture)
+(use-fixtures :each db-each-fixture)
 
 (deftest test-get-catalogue-items
   (testing "without catalogue items"

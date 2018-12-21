@@ -2,6 +2,20 @@
   (:require  [ajax.core :refer [GET PUT POST]]
              [re-frame.core :as rf]))
 
+;; TODO move to cljc
+(defn getx
+  "Like `get` but throws an exception if the key is not found."
+  [m k]
+  (let [e (get m k ::sentinel)]
+    (if-not (= e ::sentinel)
+      e
+      (throw (ex-info "Missing required key" {:map m :key k})))))
+
+(defn getx-in
+  "Like `get-in` but throws an exception if the key is not found."
+  [m ks]
+  (reduce getx m ks))
+
 (defn dispatch!
   "Dispatches to the given url."
   [url]

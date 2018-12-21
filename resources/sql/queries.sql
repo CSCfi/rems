@@ -100,7 +100,8 @@ SELECT
   type,
   value,
   itemorder,
-  item.visibility
+  item.visibility,
+  itemmap.maxlength
 FROM application_form form
 LEFT OUTER JOIN application_form_item_map itemmap ON form.id = itemmap.formId
 LEFT OUTER JOIN application_form_item item ON item.id = itemmap.formItemId
@@ -142,9 +143,15 @@ VALUES
 
 -- :name link-form-item! :insert
 INSERT INTO application_form_item_map
-(formId, formItemId, modifierUserId, itemOrder, formItemOptional)
+(formId, formItemId, modifierUserId, itemOrder, formItemOptional, maxlength)
 VALUES
-(:form, :item, :user, :itemorder, :optional)
+(:form, :item, :user, :itemorder, :optional,
+/*~ (if (:maxlength params) */
+:maxlength
+/*~*/
+NULL
+/*~ ) ~*/
+)
 
 -- :name localize-form-item! :insert
 INSERT INTO application_form_item_localization

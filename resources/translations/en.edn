@@ -245,6 +245,7 @@
          :events "Events"
          :failed "Failed"
          :licenses "Terms of Use"
+         :maxlength "(max %1 characters)"
          :optional "(optional)"
          :resources "Resources"
          :save "Save as draft"
@@ -255,7 +256,8 @@
          :upload "Upload an attachment"
          :user "User"
          :validation {:errors "There were problems. Check the following fields."
-                      :required "Field \"%1\" is required."}}
+                      :required "Field \"%1\" is required."
+                      :toolong "Answer to field \"%1\" is too long."}}
   :header {:title "Welcome to REMS"}
   :ldap {:failed "Login failed"
          :login "Login"

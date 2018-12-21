@@ -245,6 +245,7 @@
          :events "Tapahtumat"
          :failed "Epäonnistui"
          :licenses "Käyttöehdot"
+         :maxlength "(enintään %1 merkkiä)"
          :optional "(ei pakollinen)"
          :resources "Resurssit"
          :save "Tallenna luonnos"
@@ -255,7 +256,8 @@
          :upload "Lisää liitetiedosto"
          :user "Käyttäjä"
          :validation {:errors "Lähetys epäonnistui. Tarkista seuraavat kentät."
-                      :required "Kenttä \"%1\" on pakollinen."}}
+                      :required "Kenttä \"%1\" on pakollinen."
+                      :toolong "Kentän \"%1\" vastaus on liian pitkä."}}
   :header {:title "Tervetuloa REMSiin"}
   :ldap {:failed "Kirjautuminen epäonnistui"
          :login "Kirjaudu"

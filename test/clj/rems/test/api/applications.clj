@@ -70,7 +70,7 @@
           (is (= application-id (:id (:application application))))
           (is (= "draft" (:state (:application application))))
           (is (= 2 (count (:licenses application))))
-          (is (= 4 (count (:items application))))))
+          (is (= 6 (count (:items application))))))
       (testing "retrieving as other user"
         (let [response (-> (request :get (str "/api/applications/" application-id))
                            (authenticate api-key another-user)
@@ -879,7 +879,7 @@
         catid 9 ;; catalogue item with dynamic workflow in test-data
         draft (create-application-draft-for-catalogue-item 9)]
     (testing "get draft"
-      (is (= 4 (count (:items draft)))))
+      (is (= 6 (count (:items draft)))))
     (let [response (-> (request :post (str "/api/applications/save"))
                        (authenticate api-key user-id)
                        (json-body {:command "save"
@@ -895,8 +895,9 @@
           (is (= "rems.workflow.dynamic/draft" (get-in saved [:application :state])))
           (is (= "dynamic test" (get-in saved [:items 0 :value])))))
       (testing "can't submit with missing required fields"
-        (is (= {:success false, :errors ["form-not-valid"]} (send-dynamic-command user-id {:type :rems.workflow.dynamic/submit
-                                                                                           :application-id application-id}))))
+        (is (= {:success false :errors [{:type "item" :id 2 :key "t.form.validation/required"}]}
+               (send-dynamic-command user-id {:type :rems.workflow.dynamic/submit
+                                              :application-id application-id}))))
       (testing "add missing fields"
         (let [save-again (-> (request :post (str "/api/applications/save"))
                              (authenticate api-key user-id)

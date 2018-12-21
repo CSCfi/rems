@@ -3,11 +3,16 @@
 
 (defn- validate-item
   [item]
-  (when-not (:optional item)
-    (when (empty? (:value item))
+  (if (empty? (:value item))
+    (when-not (:optional item)
       {:type :item
        :id (:id item)
-       :key :t.form.validation/required})))
+       :key :t.form.validation/required})
+    (when (and (:maxlength item)
+               (> (count (:value item)) (:maxlength item)))
+      {:type :item
+       :id (:id item)
+       :key :t.form.validation/toolong})))
 
 (defn- validate-license
   [license]

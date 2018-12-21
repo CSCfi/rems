@@ -1,7 +1,8 @@
 (ns rems.administration.form
   (:require [clojure.string :as str]
+            [goog.string :refer [parseInt]]
             [re-frame.core :as rf]
-            [rems.administration.components :refer [checkbox localized-text-field radio-button-group text-field]]
+            [rems.administration.components :refer [checkbox localized-text-field number-field radio-button-group text-field]]
             [rems.application :refer [enrich-user]]
             [rems.collapsible :as collapsible]
             [rems.text :refer [text text-format localize-item]]
@@ -59,8 +60,11 @@
 
 ;;;; form submit
 
-(defn- uses-input-prompt? [item]
+(defn- supports-input-prompt? [item]
   (contains? #{"text" "texta" "description"} (:type item)))
+
+(defn- supports-maxlength? [item]
+  (contains? #{"text" "texta"} (:type item)))
 
 (defn- localized-string? [lstr languages]
   (and (= (set (keys lstr))
@@ -88,7 +92,7 @@
   (and (valid-required-localized-string? (:title item) languages)
        (boolean? (:optional item))
        (not (str/blank? (:type item)))
-       (if (uses-input-prompt? item)
+       (if (supports-input-prompt? item)
          (valid-optional-localized-string? (:input-prompt item) languages)
          (nil? (:input-prompt item)))
        (if (= "option" (:type item))
@@ -108,8 +112,11 @@
   (merge {:title (build-localized-string (:title item) languages)
           :optional (boolean (:optional item))
           :type (:type item)}
-         (when (uses-input-prompt? item)
+         (when (supports-input-prompt? item)
            {:input-prompt (build-localized-string (:input-prompt item) languages)})
+         (when (supports-maxlength? item)
+           {:maxlength (when-not (str/blank? (:maxlength item))
+                         (parseInt (:maxlength item)))})
          (when (= "option" (:type item))
            {:options (for [{:keys [key label]} (:options item)]
                        {:key key
@@ -118,7 +125,7 @@
 (defn build-request [form languages]
   (let [request {:organization (:organization form)
                  :title (:title form)
-                 :items (map #(build-request-item % languages) (:items form))}]
+                 :items (mapv #(build-request-item % languages) (:items form))}]
     (when (valid-request? request languages)
       request)))
 
@@ -155,6 +162,10 @@
 (defn- form-item-input-prompt-field [item]
   [localized-text-field context {:keys [:items item :input-prompt]
                                  :label (text :t.create-form/input-prompt)}])
+
+(defn- form-item-maxlength-field [item]
+  [number-field context {:keys [:items item :maxlength]
+                       :label (text :t.create-form/maxlength)}])
 
 (defn- form-item-type-radio-group [item]
   [radio-button-group context {:keys [:items item :type]
@@ -245,8 +256,10 @@
                          [form-item-title-field item]
                          [form-item-optional-checkbox item]
                          [form-item-type-radio-group item]
-                         (when (uses-input-prompt? (get-in form [:items item]))
-                           [form-item-input-prompt-field item])]))
+                         (when (supports-input-prompt? (get-in form [:items item]))
+                           [form-item-input-prompt-field item])
+                         (when (supports-maxlength? (get-in form [:items item]))
+                           [form-item-maxlength-field item])]))
 
                [:div.form-item.new-form-item
                 [add-form-item-button]]

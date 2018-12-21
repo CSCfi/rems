@@ -487,6 +487,7 @@
   :id - number (required), field id
   :readonly - boolean, true if the field should not be editable
   :readonly-component - HTML, custom component for a readonly field
+  :maxlength - maximum number of characters (optional)
   :optional - boolean, true if the field is not required
   :value - string, the current value of the field
   :previous-value - string, the previously submitted value of the field
@@ -495,10 +496,13 @@
   :validation - validation errors
 
   editor-component - HTML, form component for editing the field"
-  [{:keys [title id readonly readonly-component optional value previous-value diff diff-component validation]} editor-component]
+  [{:keys [title id readonly readonly-component optional value previous-value diff diff-component validation maxlength]} editor-component]
   [:div.form-group.field
    [:label {:for (id-to-name id)}
     title " "
+    (when maxlength
+      (text-format :t.form/maxlength (str maxlength)))
+    " "
     (when optional
       (text :t.form/optional))]
    (when (and previous-value
@@ -516,22 +520,24 @@
    [field-validation-message validation title]])
 
 (defn- text-field
-  [{:keys [id inputprompt value validation] :as opts}]
+  [{:keys [id inputprompt value validation maxlength] :as opts}]
   [basic-field opts
    [:input.form-control {:type "text"
                          :id (id-to-name id)
                          :name (id-to-name id)
                          :placeholder inputprompt
+                         :maxlength maxlength
                          :class (when validation "is-invalid")
                          :value value
                          :on-change (set-field-value id)}]])
 
 (defn- texta-field
-  [{:keys [id inputprompt value validation] :as opts}]
+  [{:keys [id inputprompt value validation maxlength] :as opts}]
   [basic-field opts
    [textarea {:id (id-to-name id)
               :name (id-to-name id)
               :placeholder inputprompt
+              :maxlength maxlength
               :class (if validation "form-control is-invalid" "form-control")
               :value value
               :on-change (set-field-value id)}]])
@@ -1112,6 +1118,9 @@
    (example "field of type \"text\""
             [:form
              [field {:type "text" :title "Title" :inputprompt "prompt"}]])
+   (example "field of type \"text\" with maximum length"
+            [:form
+             [field {:type "text" :title "Title" :inputprompt "prompt" :maxlength 10}]])
    (example "field of type \"text\" with validation error"
             [:form
              [field {:type "text" :title "Title" :inputprompt "prompt"
@@ -1125,6 +1134,9 @@
    (example "field of type \"texta\""
             [:form
              [field {:type "texta" :title "Title" :inputprompt "prompt"}]])
+   (example "field of type \"texta\" with maximum length"
+            [:form
+             [field {:type "texta" :title "Title" :inputprompt "prompt" :maxlength 10}]])
    (example "field of type \"texta\" with validation error"
             [:form
              [field {:type "texta" :title "Title" :inputprompt "prompt"

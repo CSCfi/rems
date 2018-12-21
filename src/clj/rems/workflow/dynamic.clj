@@ -156,8 +156,8 @@
 
 (defn- validation-error
   [injections application-id]
-  (when (not ((:valid-form-inputs? injections) application-id))
-    {:errors [:form-not-valid]}))
+  (when-let [errors ((:validate-form injections) application-id)]
+    {:errors errors}))
 
 (defmethod handle-command ::submit
   [cmd application injections]
@@ -337,7 +337,7 @@
 
 (def ^:private injections-for-possible-commands
   {:valid-user? (constantly true)
-   :valid-form-inputs? (constantly true)})
+   :validate-form (constantly nil)})
 
 (defn possible-commands [actor application-state]
   (set
@@ -352,8 +352,9 @@
 ;;; Tests
 
 (deftest test-submit-approve-or-reject
-  (let [injections {:valid-form-inputs? (constantly true)}
-        fail-injections {:valid-form-inputs? (constantly false)}
+  (let [injections {:validate-form (constantly nil)}
+        expected-errors [{:key :t.form.validation/required}]
+        fail-injections {:validate-form (constantly expected-errors)}
         application {:state ::draft
                      :applicantuserid "applicant"
                      :workflow {:type :workflow/dynamic
@@ -362,7 +363,7 @@
       (is (= {:errors [:unauthorized]}
              (handle-command {:actor "not-applicant" :type ::submit} application injections))))
     (testing "can only submit valid form"
-      (is (= {:errors [:form-not-valid]}
+      (is (= {:errors expected-errors}
              (handle-command {:actor "applicant" :type ::submit} application fail-injections))))
     (let [submitted (apply-command application {:actor "applicant" :type ::submit} injections)]
       (testing "cannot submit twice"
@@ -380,7 +381,7 @@
                                                  injections))))))))
 
 (deftest test-submit-return-submit-approve-close
-  (let [injections {:valid-form-inputs? (constantly true)}
+  (let [injections {:validate-form (constantly nil)}
         application {:state ::draft
                      :applicantuserid "applicant"
                      :workflow {:type :workflow/dynamic
