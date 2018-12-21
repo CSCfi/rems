@@ -36,9 +36,9 @@
                                      :command "submit"
                                      :actor uid})
             form (applications/get-form-for uid app-id)]
-        (is (= [[(:id text-with-limit) :t.form.validation/toolong]
-                [(:id texta-with-limit) :t.form.validation/toolong]]
-               (map (juxt :id :key) (:validation response)))
+        (is (= [{:type :t.form.validation/toolong :field-id (:id text-with-limit)}
+                {:type :t.form.validation/toolong :field-id (:id texta-with-limit)}]
+               (:validation response))
             "fields with maxlength are reported too long")
         (is (= [long-value long-value long-value]
                (map :value (:items form)))

@@ -153,9 +153,7 @@
                              (navigate-to application-id)
                              (rf/dispatch [::enter-application-page application-id]))
                          (rf/dispatch [::set-status {:status :failed
-                                                     :description description
-                                                     ;; #798 errors from command api not localized yet
-                                                     :error {:status-text (pr-str (:errors resp))}}])))
+                                                     :description description}])))
             :error-handler (fn [error]
                              (rf/dispatch [::set-status {:status :failed
                                                          :description description
@@ -407,15 +405,14 @@
 
 (defn- format-validation-messages
   [application msgs]
-  (let [titles-by-id (into {}
-                           (concat
-                            (for [item (:items application)]
-                              [[:item (:id item)] (:title (localize-item item))])
-                            (for [license (:licenses application)]
-                              [[:license (:id license)] (:title (localize-item license))])))]
+  (let [fields-by-id (index-by [:id] (map localize-item (:items application)))
+        licenses-by-id (index-by [:id] (map localize-item (:licenses application)))]
     (into [:ul]
-          (for [m msgs]
-            [:li (text-format (:key m) (get titles-by-id [(:type m) (:id m)]))]))))
+          (concat
+           (for [{:keys [type field-id]} (filter :field-id msgs)]
+             [:li (text-format type (:title (fields-by-id field-id)))])
+           (for [{:keys [type license-id]} (filter :license-id msgs)]
+             [:li (text-format type (:title (licenses-by-id license-id)))])))))
 
 (defn- pdf-button [id]
   (when id
@@ -467,7 +464,7 @@
 (defn- field-validation-message [validation title]
   (when validation
     [:div {:class "text-danger"}
-     (text-format (:key validation) title)]))
+     (text-format (:type validation) title)]))
 
 (defn- toggle-diff-button [item-id diff-visible]
   [:a.toggle-diff {:href "#"
@@ -526,7 +523,7 @@
                          :id (id-to-name id)
                          :name (id-to-name id)
                          :placeholder inputprompt
-                         :maxlength maxlength
+                         :max-length maxlength
                          :class (when validation "is-invalid")
                          :value value
                          :on-change (set-field-value id)}]])
@@ -537,7 +534,7 @@
    [textarea {:id (id-to-name id)
               :name (id-to-name id)
               :placeholder inputprompt
-              :maxlength maxlength
+              :max-length maxlength
               :class (if validation "form-control is-invalid" "form-control")
               :value value
               :on-change (set-field-value id)}]])
@@ -652,7 +649,8 @@
 (defn- fields [form edit-application]
   (let [application (:application form)
         {:keys [items licenses validation]} edit-application
-        validation-by-field-id (index-by [:type :id] validation)
+        field-validations (index-by [:field-id] validation)
+        license-validations (index-by [:license-id] validation)
         state (:state application)
         editable? (editable-state? state)
         readonly? (not editable?)]
@@ -664,7 +662,7 @@
        (into [:div]
              (for [item (:items form)]
                [field (assoc (localize-item item)
-                             :validation (get-in validation-by-field-id [:item (:id item)])
+                             :validation (field-validations (:id item))
                              :readonly readonly?
                              :value (get-in items [(:id item) :value])
                              ;; TODO: db doesn't yet contain :previous-value so this is always nil
@@ -677,7 +675,7 @@
           (into [:div#licenses]
                 (for [license form-licenses]
                   [field (assoc (localize-item license)
-                                :validation (get-in validation-by-field-id [:license (:id license)])
+                                :validation (license-validations (:id license))
                                 :readonly readonly?
                                 :approved (get licenses (:id license)))]))])]}]))
 
@@ -815,7 +813,7 @@
   [action-form static-return-form-id
    (text :t.actions/return)
    (text :t.form/add-comments-shown-to-applicant)
-   [judge-application-button {:id "static-return"
+   [judge-application-button {:id static-return-form-id
                               :command "return"
                               :text (text :t.actions/return)
                               :class "btn-primary"}]])
@@ -1124,7 +1122,7 @@
    (example "field of type \"text\" with validation error"
             [:form
              [field {:type "text" :title "Title" :inputprompt "prompt"
-                     :validation {:key :t.form.validation.required}}]])
+                     :validation {:type :t.form.validation.required}}]])
    (example "non-editable field of type \"text\" without text"
             [:form
              [field {:type "text" :title "Title" :inputprompt "prompt" :readonly true}]])
@@ -1140,7 +1138,7 @@
    (example "field of type \"texta\" with validation error"
             [:form
              [field {:type "texta" :title "Title" :inputprompt "prompt"
-                     :validation {:key :t.form.validation.required}}]])
+                     :validation {:type :t.form.validation.required}}]])
    (example "non-editable field of type \"texta\""
             [:form
              [field {:type "texta" :title "Title" :inputprompt "prompt" :readonly true :value lipsum-paragraphs}]])
@@ -1202,7 +1200,7 @@
    (example "link license with validation error"
             [:form
              [field {:type "license" :title "Link to license" :licensetype "link" :textcontent "/guide"
-                     :validation {:field {:title "Link to license"} :key :t.form.validation.required}}]])
+                     :validation {:type :t.form.validation.required}}]])
    (example "text license"
             [:form
              [field {:type "license" :id 1 :title "A Text License" :licensetype "text"
@@ -1210,7 +1208,7 @@
    (example "text license with validation error"
             [:form
              [field {:type "license" :id 1 :title "A Text License" :licensetype "text" :textcontent lipsum-paragraphs
-                     :validation {:field {:title "A Text License"} :key :t.form.validation.required}}]])
+                     :validation {:type :t.form.validation.required}}]])
 
    (component-info render-application)
    (example "application, partially filled"
