@@ -454,6 +454,7 @@
                                :catalogue-items [catid]
                                :items {1 "REST-Test"}})
                    app
+                   assert-response-is-ok
                    read-body
                    :id)]
     (testing "happy path"
@@ -461,12 +462,12 @@
                          (authenticate api-key user-id)
                          (json-body {:application-id app-id
                                      :member another-user})
-                         app
-                         read-body)]
-        (is (:success response))
+                         app)]
+        (assert-response-is-ok response)
         (let [members (-> (request :get (str "/api/applications/" app-id))
                           (authenticate api-key user-id)
                           app
+                          assert-response-is-ok
                           read-body
                           :application
                           :members)]
