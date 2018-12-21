@@ -38,6 +38,18 @@
    [:div.alert.alert-warning "Warning level message"]
    [:div.alert.alert-danger "Danger level message"]])
 
+(defn buttons []
+  [:div
+   [:div.row
+    [:div.btn.btn-primary "Primary button"]
+    [:div.btn.btn-secondary "Secondary button"]
+    [:div.btn.btn-success "Success button"]
+    [:div.btn.btn-info "Info button"]
+    [:div.btn.btn-light "Light button"]
+    [:div.btn.btn-dark "Dark button"]
+    [:div.btn.btn-warning "Warning button"]
+    [:div.btn.btn-danger "Danger button"]]])
+
 (defn guide-page []
   [:div.container
    [:div.example-page
@@ -46,6 +58,9 @@
     [:h2 "Colors"]
     (example "Brand colors" [color-boxes])
     (example "Alerts" [alerts])
+
+    [:h2 "Buttons"]
+    (example "Button" [buttons])
 
     [:h2 "Navigation"]
     [nav/guide]
