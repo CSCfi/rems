@@ -71,10 +71,11 @@
 ;;; catalogue page
 
 (defn add-to-cart [resource-name]
-  (click-visible *driver* [{:css "table.catalogue"}
-                           {:fn/text resource-name}
-                           {:xpath "./ancestor::tr"}
-                           {:css "button.add-to-cart"}]))
+  (with-wait 30
+    (click-visible *driver* [{:css "table.catalogue"}
+                             {:fn/text resource-name}
+                             {:xpath "./ancestor::tr"}
+                             {:css "button.add-to-cart"}])))
 
 (defn apply-for-resource [resource-name]
   (click-visible *driver* [{:css "table.cart"}
