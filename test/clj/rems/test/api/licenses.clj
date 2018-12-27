@@ -109,8 +109,8 @@
       (let [response (-> (request :get "/api/licenses")
                          (authenticate "42" "alice")
                          app)]
-        (is (response-is-unauthorized? response))
-        (is (= "unauthorized" (read-body response)))))
+        (is (response-is-forbidden? response))
+        (is (= "forbidden" (read-body response)))))
     (testing "create"
       (let [response (-> (request :post "/api/licenses/create")
                          (authenticate "42" "alice")
@@ -120,5 +120,5 @@
                                      :localizations {:en {:title "t"
                                                           :textcontent "t"}}})
                          app)]
-        (is (response-is-unauthorized? response))
-        (is (= "unauthorized" (read-body response)))))))
+        (is (response-is-forbidden? response))
+        (is (= "forbidden" (read-body response)))))))

@@ -151,8 +151,8 @@
       (let [response (-> (request :get (str "/api/workflows"))
                          (authenticate "42" "alice")
                          app)]
-        (is (response-is-unauthorized? response))
-        (is (= "unauthorized" (read-body response)))))
+        (is (response-is-forbidden? response))
+        (is (= "forbidden" (read-body response)))))
     (testing "create"
       (let [response (-> (request :post (str "/api/workflows/create"))
                          (json-body {:organization "abc"
@@ -162,5 +162,5 @@
                                                :actors ["bob"]}]})
                          (authenticate "42" "alice")
                          app)]
-        (is (response-is-unauthorized? response))
-        (is (= "unauthorized" (read-body response)))))))
+        (is (response-is-forbidden? response))
+        (is (= "forbidden" (read-body response)))))))

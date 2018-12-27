@@ -141,17 +141,17 @@
                                                                    "returned")))
           (testing "Emails should not be sent when actions fail"
             (conjure/mocking [email/send-mail]
-                             (is (thrown? NotAuthorizedException (applications/approve-application applicant app4 1 ""))
+                             (is (thrown? ForbiddenException (applications/approve-application applicant app4 1 ""))
                                  "Approval should fail")
-                             (is (thrown? NotAuthorizedException (applications/reject-application applicant app4 1 ""))
+                             (is (thrown? ForbiddenException (applications/reject-application applicant app4 1 ""))
                                  "Rejection should fail")
-                             (is (thrown? NotAuthorizedException (applications/review-application applicant app4 1 ""))
+                             (is (thrown? ForbiddenException (applications/review-application applicant app4 1 ""))
                                  "Review should fail")
-                             (is (thrown? NotAuthorizedException (applications/return-application applicant app4 1 ""))
+                             (is (thrown? ForbiddenException (applications/return-application applicant app4 1 ""))
                                  "Return should fail")
-                             (is (thrown? NotAuthorizedException (applications/close-application applicant app4 2 ""))
+                             (is (thrown? ForbiddenException (applications/close-application applicant app4 2 ""))
                                  "closing should fail")
-                             (is (thrown? NotAuthorizedException (applications/withdraw-application applicant app1 2 ""))
+                             (is (thrown? ForbiddenException (applications/withdraw-application applicant app1 2 ""))
                                  "withdraw should fail")
                              (conjure/verify-call-times-for email/send-mail 0)))
           (testing "Applicant is notified of closed application"

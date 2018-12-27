@@ -118,8 +118,8 @@
                          (authenticate "42" "alice")
                          app)
             body (read-body response)]
-        (is (response-is-unauthorized? response))
-        (is (= "unauthorized" body))))
+        (is (response-is-forbidden? response))
+        (is (= "forbidden" body))))
     (testing "create"
       (let [response (-> (request :post "/api/forms/create")
                          (authenticate "42" "alice")
@@ -127,5 +127,5 @@
                                      :title "the title"
                                      :items []})
                          app)]
-        (is (response-is-unauthorized? response))
-        (is (= "unauthorized" (read-body response)))))))
+        (is (response-is-forbidden? response))
+        (is (= "forbidden" (read-body response)))))))

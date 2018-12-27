@@ -75,7 +75,7 @@
         (let [response (-> (request :get (str "/api/applications/" application-id))
                            (authenticate api-key another-user)
                            app)]
-          (is (response-is-unauthorized? response))))
+          (is (response-is-forbidden? response))))
       (testing "saving as other user"
         (let [response (-> (request :post (str "/api/applications/save"))
                            (authenticate api-key another-user)
@@ -83,7 +83,7 @@
                                        :application-id application-id
                                        :items {1 "REST-Test"}})
                            app)]
-          (is (response-is-unauthorized? response))))
+          (is (response-is-forbidden? response))))
       (testing "submitting"
         (let [response (-> (request :post (str "/api/applications/save"))
                            (authenticate api-key user-id)
@@ -491,7 +491,7 @@
                          (json-body {:application-id app-id
                                      :member "developer"})
                          app)]
-        (is (response-is-unauthorized? response))))))
+        (is (response-is-forbidden? response))))))
 
 (defn- strip-cookie-attributes [cookie]
   (re-find #"[^;]*" cookie))
@@ -603,12 +603,12 @@
                          (assoc :multipart-params {"file" filecontent})
                          (authenticate api-key "carl")
                          app)]
-        (is (response-is-unauthorized? response))))
+        (is (response-is-forbidden? response))))
     (testing "retrieving attachment as non-applicant"
       (let [response (-> (request :get (str "/api/applications/attachments/") {:application-id app-id :field-id field-id})
                          (authenticate api-key "carl")
                          app)]
-        (is (response-is-unauthorized? response))))
+        (is (response-is-forbidden? response))))
     (testing "uploading attachment for a submitted application"
       (let [body (-> (request :post (str "/api/applications/save"))
                      (authenticate api-key user-id)
@@ -625,7 +625,7 @@
                            (assoc :multipart-params {"file" filecontent})
                            (authenticate api-key user-id)
                            app)]
-          (is (response-is-unauthorized? response)))))))
+          (is (response-is-forbidden? response)))))))
 
 (deftest applications-api-security-test
   (testing "listing without authentication"
@@ -702,11 +702,11 @@
                        (authenticate "42" "developer")
                        app)]
       (is (= 404 (:status response)))))
-  (testing "not authorized"
+  (testing "forbidden"
     (let [response (-> (request :get (str "/api/applications/2/pdf"))
                        (authenticate "42" "alice")
                        app)]
-      (is (response-is-unauthorized? response))))
+      (is (response-is-forbidden? response))))
   (testing "success"
     (let [response (-> (request :get (str "/api/applications/2/pdf"))
                        (authenticate "42" "developer")

@@ -38,5 +38,5 @@
                          (json-body new-user)
                          (authenticate "42" "alice")
                          app)]
-        (is (response-is-unauthorized? response))
-        (is (= "unauthorized" (read-body response)))))))
+        (is (response-is-forbidden? response))
+        (is (= "forbidden" (read-body response)))))))

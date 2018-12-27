@@ -99,8 +99,8 @@
         (let [response (-> (request :get "/api/resources")
                            (authenticate api-key user-id)
                            app)]
-          (is (response-is-unauthorized? response))
-          (is (= "unauthorized" (read-body response)))))
+          (is (response-is-forbidden? response))
+          (is (= "forbidden" (read-body response)))))
       (testing "create"
         (let [response (-> (request :post "/api/resources/create")
                            (authenticate api-key user-id)
@@ -108,5 +108,5 @@
                                        :organization "o"
                                        :licenses []})
                            app)]
-          (is (response-is-unauthorized? response))
-          (is (= "unauthorized" (read-body response))))))))
+          (is (response-is-forbidden? response))
+          (is (= "forbidden" (read-body response))))))))
