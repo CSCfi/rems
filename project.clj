@@ -149,7 +149,7 @@
                            [lein-doo "0.1.10"]
                            [lein-eftest "0.5.2"]
                            [lein-figwheel "0.5.16"]]
-                 :aot [rems.InvalidRequestException rems.auth.NotAuthorizedException]
+                 :aot [rems.InvalidRequestException rems.auth.NotAuthorizedException rems.auth.ForbiddenException]
 
                  :jvm-opts ["-Dconf=dev-config.edn"]
                  :source-paths ["env/dev/clj"]

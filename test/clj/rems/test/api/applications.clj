@@ -375,7 +375,7 @@
       (let [response (-> (request :get (str "/api/applications/reviewers"))
                          (authenticate api-key applicant)
                          app)]
-        (is (= 401 (:status response))))) ; TODO should be 403?
+        (is (= 403 (:status response))))) ; TODO should be 403?
     (testing "send review request"
       (assert-response-is-ok (-> (request :post (str "/api/applications/review_request"))
                                  (authenticate api-key approver)
