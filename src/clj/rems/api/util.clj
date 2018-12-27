@@ -1,7 +1,7 @@
 (ns rems.api.util
   (:require [clojure.string :as str]
             [compojure.api.meta :refer [restructure-param]]
-            [rems.auth.util :refer [throw-unauthorized]]
+            [rems.auth.util :refer [throw-unauthorized throw-forbidden]]
             [rems.roles :refer [has-roles?]]
             [rems.util :refer [get-user-id]]))
 
@@ -11,7 +11,7 @@
 
 (defn check-roles [& roles]
   (when-not (apply has-roles? roles)
-    (throw-unauthorized)))
+    (throw-forbidden)))
 
 (defn longify-keys [m]
   (into {} (for [[k v] m]

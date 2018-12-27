@@ -8,6 +8,7 @@
             [luminus-migrations.core :as migrations]
             [mount.core :as mount]
             [rems.auth.NotAuthorizedException]
+            [rems.auth.ForbiddenException]
             [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.applications :as applications]
@@ -16,7 +17,7 @@
             [rems.db.workflow-actors :as actors]
             [rems.email :as email]
             [rems.test.tempura :refer [fake-tempura-fixture]])
-  (:import rems.auth.NotAuthorizedException))
+  (:import (rems.auth ForbiddenException NotAuthorizedException)))
 
 (use-fixtures
   :once

@@ -2,9 +2,11 @@
   (:require [clojure.test :refer :all]
             [compojure.api.sweet :refer :all]
             [rems.api.util :refer :all]
+            [rems.auth.ForbiddenException]
+            [rems.auth.NotAuthorizedException]
             [rems.context :as context]
             [ring.util.http-response :refer :all])
-  (:import (rems.auth NotAuthorizedException)))
+  (:import (rems.auth ForbiddenException NotAuthorizedException)))
 
 (deftest longify-keys-test
   (is (= {} (longify-keys nil)))
@@ -40,7 +42,7 @@
       (testing "but user doesn't have it"
         (binding [context/*roles* #{}
                   context/*user* {"eppn" "user1"}]
-          (is (thrown? NotAuthorizedException
+          (is (thrown? ForbiddenException
                        (route {:request-method :get
                                :uri "/foo"})))))
 

@@ -5,7 +5,7 @@
             [clj-time.coerce :as time-coerce]
             [clojure.set :refer [difference
                                  union]]
-            [rems.auth.util :refer [throw-unauthorized]]
+            [rems.auth.util :refer [throw-forbidden]]
             [rems.context :as context]
             [rems.db.catalogue :refer [get-localized-catalogue-items]]
             [rems.db.core :as db]
@@ -548,7 +548,7 @@
                        :else nil)]
      (when application-id
        (when-not (may-see-application? user-id application)
-         (throw-unauthorized)))
+         (throw-forbidden)))
      {:id form-id
       :title (:formtitle form)
       :catalogue-items catalogue-items
@@ -575,7 +575,7 @@
                      (clojure.java.io/copy input buffer)
                      (.toByteArray buffer))]
     (when-not (#{"draft" "returned" "withdrawn"} (:state (:application form)))
-      (throw-unauthorized))
+      (throw-forbidden))
     (db/save-attachment! {:application application-id
                           :form (:id form)
                           :item item-id
@@ -797,9 +797,9 @@
   (assert application-id)
   (let [application (get-application-state application-id)]
     (when-not (= applicant-id (:applicantuserid application))
-      (throw-unauthorized))
+      (throw-forbidden))
     (when-not (#{"draft" "returned" "withdrawn"} (:state application))
-      (throw-unauthorized))
+      (throw-forbidden))
     (db/add-application-event! {:application application-id :user applicant-id
                                 :round 0 :event "apply" :comment nil})
     (email/confirm-application-creation application-id (get-catalogue-items-by-application-id application-id))
@@ -813,7 +813,7 @@
   (assert msg)
   (let [state (get-application-state application-id)]
     (when-not (= round (:curround state))
-      (throw-unauthorized))
+      (throw-forbidden))
     (db/add-application-event! {:application application-id :user approver-id
                                 :round round :event event :comment msg})
     (check-for-unneeded-actions application-id round event)
@@ -821,39 +821,39 @@
 
 (defn approve-application [approver-id application-id round msg]
   (when-not (can-approve? approver-id (get-application-state application-id))
-    (throw-unauthorized))
+    (throw-forbidden))
   (judge-application approver-id application-id "approve" round msg))
 
 (defn reject-application [user-id application-id round msg]
   (when-not (can-approve? user-id (get-application-state application-id))
-    (throw-unauthorized))
+    (throw-forbidden))
   (judge-application user-id application-id "reject" round msg))
 
 (defn return-application [user-id application-id round msg]
   (when-not (can-approve? user-id (get-application-state application-id))
-    (throw-unauthorized))
+    (throw-forbidden))
   (judge-application user-id application-id "return" round msg))
 
 (defn review-application [user-id application-id round msg]
   (when-not (can-review? user-id (get-application-state application-id))
-    (throw-unauthorized))
+    (throw-forbidden))
   (judge-application user-id  application-id "review" round msg))
 
 (defn perform-third-party-review [user-id application-id round msg]
   (let [application (get-application-state application-id)]
     (when-not (can-third-party-review? user-id application)
-      (throw-unauthorized))
+      (throw-forbidden))
     (when-not (= round (:curround application))
-      (throw-unauthorized))
+      (throw-forbidden))
     (db/add-application-event! {:application application-id :user user-id
                                 :round round :event "third-party-review" :comment msg})))
 
 (defn send-review-request [user-id application-id round msg recipients]
   (let [application (get-application-state application-id)]
     (when-not (can-approve? user-id application)
-      (throw-unauthorized))
+      (throw-forbidden))
     (when-not (= round (:curround application))
-      (throw-unauthorized))
+      (throw-forbidden))
     (assert (not-empty? recipients)
             (str "Can't send a review request without recipients."))
     (let [send-to (if (vector? recipients)
@@ -876,7 +876,7 @@
   [user-id application event round msg]
   (let [application-id (:id application)]
     (when-not (= round (:curround application))
-      (throw-unauthorized))
+      (throw-forbidden))
     (db/add-application-event! {:application application-id :user user-id
                                 :round round :event event :comment msg})
     (handle-state-change user-id application-id)))
@@ -884,21 +884,21 @@
 (defn withdraw-application [applicant-id application-id round msg]
   (let [application (get-application-state application-id)]
     (when-not (can-withdraw? applicant-id application)
-      (throw-unauthorized))
+      (throw-forbidden))
     (unjudge-application applicant-id application "withdraw" round msg)))
 
 (defn close-application [user-id application-id round msg]
   (let [application (get-application-state application-id)]
     (when-not (can-close? user-id application)
-      (throw-unauthorized))
+      (throw-forbidden))
     (unjudge-application user-id application "close" round msg)))
 
 (defn add-member [user-id application-id member]
   (let [application (get-application-state application-id)]
     (when-not (= user-id (:applicantuserid application))
-      (throw-unauthorized))
+      (throw-forbidden))
     (when-not (#{"draft" "returned" "withdrawn"} (:state application))
-      (throw-unauthorized))
+      (throw-forbidden))
     (assert (users/get-user-attributes member) (str "User '" member "' must exist"))
     (db/add-application-event! {:application application-id :user user-id :round 0
                                 :comment nil

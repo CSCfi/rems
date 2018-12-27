@@ -25,7 +25,7 @@
 (defn- markdown-page [filename]
   (if-let [allowed-file (find-allowed-markdown-file filename)]
     (layout/render filename (md/md-to-html-string (slurp (:file allowed-file))))
-    (auth-util/throw-unauthorized)))
+    (auth-util/throw-unauthorized)))  ;;TODO Add throw-forbidden
 
 (defroutes home-routes
   (GET "/" [] (layout/home-page))
