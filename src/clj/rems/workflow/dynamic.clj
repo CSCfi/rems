@@ -132,7 +132,7 @@
 (defn- applicant-error
   [application cmd]
   (when-not (= (:actor cmd) (:applicantuserid application))
-    {:errors [:unauthorized]}))
+    {:errors [:forbidden]}))
 
 (defn- handler?
   [application user]
@@ -141,7 +141,7 @@
 (defn- actor-is-not-handler-error
   [application cmd]
   (when-not (handler? application (:actor cmd))
-    {:errors [:unauthorized]}))
+    {:errors [:unauthorized]})) ;;TODO: Something weird here, changing this to forbidden makes test with unauthorized user fail
 
 (defn- state-error
   [application & expected-states]
@@ -230,7 +230,7 @@
 (defmethod handle-command ::decide
   [cmd application _injections]
   (or (when-not (= (:actor cmd) (:decider application))
-        {:errors [:unauthorized]})
+        {:errors [:forbidden]})
       (state-error application ::submitted)
       (when-not (contains? #{:approved :rejected} (:decision cmd))
         {:errors [[:invalid-decision (:decision cmd)]]})
@@ -262,7 +262,7 @@
 
 (defn- actor-is-not-commenter-error [application cmd]
   (when-not (contains? (:commenters application) (:actor cmd))
-    {:errors [:unauthorized]}))
+    {:errors [:forbidden]}))
 
 (defmethod handle-command ::comment
   [cmd application _injections]
@@ -359,7 +359,7 @@
                      :workflow {:type :workflow/dynamic
                                 :handlers ["assistant"]}}]
     (testing "only applicant can submit"
-      (is (= {:errors [:unauthorized]}
+      (is (= {:errors [:forbidden]}
              (handle-command {:actor "not-applicant" :type ::submit} application injections))))
     (testing "can only submit valid form"
       (is (= {:errors [:form-not-valid]}
@@ -415,7 +415,7 @@
                              application
                              injections))))
     (testing "deciding before ::request-decision should fail"
-      (is (= {:errors [:unauthorized]}
+      (is (= {:errors [:forbidden]}
              (handle-command {:actor "deity" :decision :approved :type ::decide}
                              application
                              injections))))
@@ -423,7 +423,7 @@
       (testing "request decision succesfully"
         (is (= {:decider "deity"} (select-keys requested [:decider :decision]))))
       (testing "only the requested user can decide"
-        (is (= {:errors [:unauthorized]}
+        (is (= {:errors [:forbidden]}
                (handle-command {:actor "deity2" :decision :approved :type ::decide}
                                requested
                                injections))))
@@ -431,7 +431,7 @@
         (testing "succesfully approved"
           (is (= {:decision :approved} (select-keys approved [:decider :decision]))))
         (testing "cannot approve twice"
-          (is (= {:errors [:unauthorized]}
+          (is (= {:errors [:forbidden]}
                  (handle-command {:actor "deity" :decision :approved :type ::decide}
                                  approved
                                  injections)))))
@@ -439,7 +439,7 @@
         (testing "successfully rejected"
           (is (= {:decision :rejected} (select-keys rejected [:decider :decision]))))
         (testing "can not reject twice"
-          (is (= {:errors [:unauthorized]}
+          (is (= {:errors [:forbidden]}
                  (handle-command {:actor "deity" :decision :rejected :type ::decide}
                                  rejected
                                  injections)))))
@@ -463,7 +463,7 @@
                                {:type ::add-member :actor "applicant" :member "member2"}]
                               injections)))))
     (testing "only applicant can add members"
-      (is (= {:errors [:unauthorized]}
+      (is (= {:errors [:forbidden]}
              (handle-command {:type ::add-member :actor "member1" :member "member1"}
                              application
                              injections))))
@@ -496,7 +496,7 @@
                              application
                              injections))))
     (testing "commenting before ::request-comment should fail"
-      (is (= {:errors [:unauthorized]}
+      (is (= {:errors [:forbidden]}
              (handle-command {:actor "commenter" :decision :approved :type ::comment}
                              application
                              injections))))
@@ -507,7 +507,7 @@
       (testing "request comment succesfully"
         (is (= #{"commenter2" "commenter"} (:commenters requested))))
       (testing "only the requested commenter can comment"
-        (is (= {:errors [:unauthorized]}
+        (is (= {:errors [:forbidden]}
                (handle-command {:actor "commenter3" :comment "..." :type ::comment}
                                requested
                                injections))))
@@ -515,7 +515,7 @@
         (testing "succesfully commented"
           (is (= #{"commenter2"} (:commenters commented))))
         (testing "cannot comment twice"
-          (is (= {:errors [:unauthorized]}
+          (is (= {:errors [:forbidden]}
                  (handle-command {:actor "commenter" :comment "..." :type ::comment}
                                  commented
                                  injections))))

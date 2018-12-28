@@ -285,4 +285,5 @@
            :rejected "Rejected"
            :review "Review"}
   :unauthorized-page {:unauthorized "Unauthorized"
+                      :forbidden "Forbidden"
                       :you-are-unauthorized "You are unauthorized to use this page."}}}
