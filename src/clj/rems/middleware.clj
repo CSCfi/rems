@@ -131,7 +131,7 @@
     {:status 403
      :title (str "Access to " (:uri request) " is forbidden")}))
 
-(defn wrap-unauthorized
+(defn wrap-unauthorized-and-forbidden
   "Handles unauthorized exceptions by showing an error page."
   [handler]
   (fn [req]
@@ -168,7 +168,7 @@
 
 (defn wrap-base [handler]
   (-> ((:middleware +defaults+) handler)
-      wrap-unauthorized
+      wrap-unauthorized-and-forbidden
       wrap-logging
       wrap-i18n
       wrap-context
