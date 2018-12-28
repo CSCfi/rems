@@ -385,9 +385,18 @@
 
    ;; form editor
    [:.form-item dashed-form-group]
+   [:.form-item-header {:margin-bottom (u/rem 0.5)}
+    [:h4 {:display "inline"
+          :font-weight "bold"
+          :font-size (u/rem 1.1)}]]
    [:.form-item-controls {:float "right"}
     [:* {:margin-left (u/em 0.25)}]]
    [:.new-form-item {:text-align "center"}]
+
+   [:.form-item-option (assoc dashed-form-group
+                              :margin-left 0
+                              :margin-right 0)]
+   [:.new-form-item-option {:text-align "center"}]
 
    [:.full {:width "100%"}]
    [:.rectangle {:width (u/px 50)
