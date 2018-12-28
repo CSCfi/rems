@@ -30,7 +30,3 @@
    Order of sequence is not preserved in any way."
   [key-fn sequence]
   (map first (vals (group-by key-fn sequence))))
-
-(defn vec-dissoc [coll index]
-  (vec (concat (subvec coll 0 index)
-               (subvec coll (inc index)))))

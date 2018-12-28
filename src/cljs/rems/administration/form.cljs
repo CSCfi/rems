@@ -3,10 +3,10 @@
             [goog.string :refer [parseInt]]
             [re-frame.core :as rf]
             [rems.administration.components :refer [checkbox localized-text-field number-field radio-button-group text-field]]
+            [rems.administration.items :as items]
             [rems.application :refer [enrich-user]]
             [rems.collapsible :as collapsible]
             [rems.text :refer [text text-format localize-item]]
-            [rems.common-util :refer [vec-dissoc]]
             [rems.util :refer [dispatch! fetch post!]]))
 
 (defn- reset-form [db]
@@ -33,37 +33,27 @@
 (rf/reg-event-db
  ::add-form-item
  (fn [db [_]]
-   (assoc-in db [::form :items (count (:items (::form db)))] {})))
+   (update-in db [::form :items] items/add {})))
 
 (rf/reg-event-db
  ::remove-form-item
  (fn [db [_ index]]
-   (assoc-in db [::form :items] (vec-dissoc (:items (::form db)) index))))
+   (update-in db [::form :items] items/remove index)))
 
 (rf/reg-event-db
  ::move-form-item-up
  (fn [db [_ index]]
-   (let [other (max 0 (dec index))]
-     (-> db
-         (assoc-in [::form :items index] (get-in db [::form :items other]))
-         (assoc-in [::form :items other] (get-in db [::form :items index]))))))
+   (update-in db [::form :items] items/move-up index)))
 
 (rf/reg-event-db
  ::move-form-item-down
  (fn [db [_ index]]
-   (let [last-index (dec (count (get-in db [::form :items])))
-         other (min last-index (inc index))]
-     (-> db
-         (assoc-in [::form :items index] (get-in db [::form :items other]))
-         (assoc-in [::form :items other] (get-in db [::form :items index]))))))
+   (update-in db [::form :items] items/move-down index)))
 
-;; TODO: dedupe with above; extract common operations to add/remove/up/down items in a vector
 (rf/reg-event-db
  ::add-form-item-option
  (fn [db [_ item-index]]
-   (let [next-option-index (count (get-in db [::form :items item-index :options]))]
-     (prn item-index next-option-index)
-     (assoc-in db [::form :items item-index :options next-option-index] {}))))
+   (update-in db [::form :items item-index :options] items/add {})))
 
 
 ;;;; form submit
