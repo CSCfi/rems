@@ -55,6 +55,21 @@
  (fn [db [_ item-index]]
    (update-in db [::form :items item-index :options] items/add {})))
 
+(rf/reg-event-db
+ ::remove-form-item-option
+ (fn [db [_ item-index option-index]]
+   (update-in db [::form :items item-index :options] items/remove option-index)))
+
+(rf/reg-event-db
+ ::move-form-item-option-up
+ (fn [db [_ item-index option-index]]
+   (update-in db [::form :items item-index :options] items/move-up option-index)))
+
+(rf/reg-event-db
+ ::move-form-item-option-down
+ (fn [db [_ item-index option-index]]
+   (update-in db [::form :items item-index :options] items/move-down option-index)))
+
 
 ;;;; form submit
 
@@ -181,29 +196,29 @@
    {:href "#"
     :on-click (fn [event]
                 (.preventDefault event)
-                (rf/dispatch [::remove-form-item-option item-index option-index])) ; TODO: implement handler
+                (rf/dispatch [::remove-form-item-option item-index option-index]))
     :aria-label "Remove option" ; TODO: translation, extract common translation
     :title "Remove option"} ; TODO: translation, extract common translation
    [:i.icon-link.fas.fa-times
     {:aria-hidden true}]])
 
-(defn- move-form-item-option-up-button [index]
+(defn- move-form-item-option-up-button [item-index option-index]
   [:a
    {:href "#"
     :on-click (fn [event]
                 (.preventDefault event)
-                (rf/dispatch [::move-form-item-option-up index])) ; TODO: implement handler
+                (rf/dispatch [::move-form-item-option-up item-index option-index]))
     :aria-label (text :t.create-form/move-form-item-up) ; TODO: extract common translation
     :title (text :t.create-form/move-form-item-up)} ; TODO: extract common translation
    [:i.icon-link.fas.fa-chevron-up
     {:aria-hidden true}]])
 
-(defn- move-form-item-option-down-button [index]
+(defn- move-form-item-option-down-button [item-index option-index]
   [:a
    {:href "#"
     :on-click (fn [event]
                 (.preventDefault event)
-                (rf/dispatch [::move-form-item-option-down index])) ; TODO: implement handler
+                (rf/dispatch [::move-form-item-option-down item-index option-index]))
     :aria-label (text :t.create-form/move-form-item-down) ; TODO: extract common translation
     :title (text :t.create-form/move-form-item-down)} ; TODO: extract common translation
    [:i.icon-link.fas.fa-chevron-down
@@ -212,7 +227,7 @@
 (defn- form-item-option-field [item option-index]
   [:div.form-item-option
    [:div.form-item-header
-    [:h4 (str "Option #" (inc option-index))] ; TODO: translation
+    [:h4 (str "Option " (inc option-index))] ; TODO: translation
     [:div.form-item-controls
      [move-form-item-option-up-button item option-index]
      [move-form-item-option-down-button item option-index]
@@ -314,7 +329,7 @@
                         [:div.form-item
                          {:key item}
                          [:div.form-item-header
-                          [:h4 (str "Field #" (inc item))] ; TODO: translation
+                          [:h4 (str "Field " (inc item))] ; TODO: translation
                           [:div.form-item-controls
                            [move-form-item-up-button item]
                            [move-form-item-down-button item]
