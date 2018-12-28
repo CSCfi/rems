@@ -6,6 +6,7 @@
             [rems.administration.items :as items]
             [rems.application :refer [enrich-user]]
             [rems.collapsible :as collapsible]
+            [rems.config :refer [dev-environment?]]
             [rems.text :refer [text text-format localize-item]]
             [rems.util :refer [dispatch! fetch post!]]))
 
@@ -248,13 +249,14 @@
 (defn- form-item-type-radio-group [item-index]
   [radio-button-group context {:keys [:items item-index :type]
                                :orientation :vertical
-                               :options [{:value "text", :label (text :t.create-form/type-text)}
-                                         {:value "texta", :label (text :t.create-form/type-texta)}
-                                         {:value "description", :label (text :t.create-form/type-description)}
-                                         {:value "option", :label (text :t.create-form/type-option)}
-                                         {:value "date", :label (text :t.create-form/type-date)}
-                                         {:value "attachment", :label (text :t.create-form/type-attachment)}
-                                         {:value "label", :label (text :t.create-form/type-label)}]}])
+                               :options (concat [{:value "text", :label (text :t.create-form/type-text)}
+                                                 {:value "texta", :label (text :t.create-form/type-texta)}
+                                                 {:value "description", :label (text :t.create-form/type-description)}]
+                                                (when (dev-environment?) ; TODO: remove feature flag
+                                                  [{:value "option", :label (text :t.create-form/type-option)}])
+                                                [{:value "date", :label (text :t.create-form/type-date)}
+                                                 {:value "attachment", :label (text :t.create-form/type-attachment)}
+                                                 {:value "label", :label (text :t.create-form/type-label)}])}])
 
 (defn- form-item-optional-checkbox [item-index]
   [checkbox context {:keys [:items item-index :optional]

@@ -6,7 +6,6 @@
             [rems.application :refer [enrich-user]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
-            [rems.config :refer [dev-environment?]]
             [rems.spinner :as spinner]
             [rems.text :refer [text text-format localize-item]]
             [rems.util :refer [dispatch! fetch post!]]))
