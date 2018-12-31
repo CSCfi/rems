@@ -119,8 +119,7 @@
                      :status status
                      :description description
                      :error error})
-     validation (assoc-in [::edit-application :validation] validation) ; NB don't clear validation results on modal close
-     )))
+     validation (assoc-in [::edit-application :validation] validation)))) ; NB don't clear validation results on modal close
 
 (defn- save-application [app description application-id catalogue-items items licenses on-success]
   (post! "/api/applications/save"

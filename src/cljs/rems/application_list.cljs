@@ -1,5 +1,6 @@
 (ns rems.application-list
   (:require [clojure.string :as str]
+            [rems.guide-functions]
             [rems.table :as table]
             [rems.text :refer [localize-state localize-time text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
