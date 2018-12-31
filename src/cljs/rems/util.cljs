@@ -7,14 +7,18 @@
   [url]
   (set! (.-location js/window) url))
 
-(defn redirect-when-unauthorized [{:keys [status status-text]}]
-  (when (= 401 status)
-    (let [current-url (.. js/window -location -href)]
+(defn redirect-when-unauthorized-or-forbidden [{:keys [status status-text]}]
+  (if (= 401 status)
+    (doall
+      (let [current-url (.. js/window -location -href)]
       (rf/dispatch [:unauthorized! current-url]))))
+  (doall
+    (let [current-url (.. js/window -location -href)]
+        (rf/dispatch [:forbidden! current-url]))))
 
 (defn- wrap-default-error-handler [handler]
   (fn [err]
-    (redirect-when-unauthorized err)
+    (redirect-when-unauthorized-or-forbidden err)
     (when handler (handler err))))
 
 (defn fetch
