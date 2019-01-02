@@ -16,12 +16,14 @@
 (deftest users-api-test
   (testing "create"
     (is (= nil (users/get-user-attributes "david")))
-    (let [response (-> (request :post (str "/api/users/create"))
-                       (json-body new-user)
-                       (authenticate "42" "owner")
-                       app)]
-      (assert-response-is-ok response)
-      (is (= {"eppn" "david" "mail" "d@av.id" "commonName" "David Newuser"} (users/get-user-attributes "david"))))))
+    (-> (request :post (str "/api/users/create"))
+        (json-body new-user)
+        (authenticate "42" "owner")
+        app
+        assert-response-is-ok)
+    (is (= {"eppn" "david"
+            "mail" "d@av.id"
+            "commonName" "David Newuser"} (users/get-user-attributes "david")))))
 
 (deftest workflows-api-security-test
   (testing "without authentication"
