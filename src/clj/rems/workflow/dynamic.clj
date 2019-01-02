@@ -141,7 +141,7 @@
 (defn- actor-is-not-handler-error
   [application cmd]
   (when-not (handler? application (:actor cmd))
-    {:errors [:unauthorized]})) ;;TODO: Something weird here, changing this to forbidden makes test with unauthorized user fail
+    {:errors [:forbidden]}))
 
 (defn- state-error
   [application & expected-states]
