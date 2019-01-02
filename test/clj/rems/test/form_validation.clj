@@ -27,8 +27,8 @@
                   :licenses [{:title "LGPL"
                               :approved true}]})))
 
-  (is (= [{:type :item, :id 2, :key :t.form.validation/required}
-          {:type :item, :id 3, :key :t.form.validation/required}]
+  (is (= [{:type :t.form.validation/required :field-id 2}
+          {:type :t.form.validation/required :field-id 3}]
          (validate
           {:items [{:id 1
                     :localizations {:en {:title "A"}}

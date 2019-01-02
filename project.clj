@@ -104,6 +104,7 @@
         :alias {:default [:chrome-headless]}}
 
   :aliases {"browsertests" ["do" ["cljsbuild" "once"] ["eftest" ":browser"]]
+            "alltests" ["do" ["cljsbuild" "once"] ["eftest" ":all"] ["doo" "once"]]
             "run-cloverage" ["do" ["cljsbuild" "once"] ["with-profile" "test" "cloverage"]]}
 
   :profiles
