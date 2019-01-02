@@ -1,4 +1,5 @@
 (ns rems.administration.items
+  (:require [rems.text :refer [text]])
   (:refer-clojure :exclude [remove]))
 
 (defn add [items new-item]
@@ -22,3 +23,36 @@
   (let [last-index (dec (count items))
         other (min last-index (inc index))]
     (swap items index other)))
+
+(defn remove-button [on-click]
+  [:a
+   {:href "#"
+    :on-click (fn [event]
+                (.preventDefault event)
+                (on-click))
+    :aria-label (text :t.item-lists/remove)
+    :title (text :t.item-lists/remove)}
+   [:i.icon-link.fas.fa-times
+    {:aria-hidden true}]])
+
+(defn move-up-button [on-click]
+  [:a
+   {:href "#"
+    :on-click (fn [event]
+                (.preventDefault event)
+                (on-click))
+    :aria-label (text :t.item-lists/move-up)
+    :title (text :t.item-lists/move-up)}
+   [:i.icon-link.fas.fa-chevron-up
+    {:aria-hidden true}]])
+
+(defn move-down-button [on-click]
+  [:a
+   {:href "#"
+    :on-click (fn [event]
+                (.preventDefault event)
+                (on-click))
+    :aria-label (text :t.item-lists/move-down)
+    :title (text :t.item-lists/move-down)}
+   [:i.icon-link.fas.fa-chevron-down
+    {:aria-hidden true}]])
