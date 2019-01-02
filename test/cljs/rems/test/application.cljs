@@ -29,12 +29,12 @@
       (is (not (contains-hiccup? toggle-diff-button (basic-field {:value "foo", :previous-value "foo"} "<editor-component>")))))))
 
 (deftest maxlength-field-test
-  (is (not (empty? (hiccup-find [:input {:maxlength 10}]
+  (is (not (empty? (hiccup-find [:input {:max-length 10}]
                                 (text-field {:id "id"
                                              :inputprompt "placeholder"
                                              :value "hello"
                                              :maxlength 10})))))
-  (is (not (empty? (hiccup-find [textarea {:maxlength 10}]
+  (is (not (empty? (hiccup-find [textarea {:max-length 10}]
                                 (texta-field {:id "id"
                                              :inputprompt "placeholder"
                                              :value "hello"
