@@ -290,4 +290,6 @@
            :rejected "Hylätty"
            :review "Katselmointi"}
   :unauthorized-page {:unauthorized "Ei käyttöoikeuksia"
-                      :you-are-unauthorized "Sinulla ei ole käyttöoikeuksia tähän sivuun."}}}
+                      :you-are-unauthorized "Sinulla ei ole käyttöoikeuksia tähän sivuun."}
+  :forbidden-page {:forbidden "Kielletty"
+                   :you-are-forbidden "Sinulla ei ole pääsyä tähän sivuun."}}}

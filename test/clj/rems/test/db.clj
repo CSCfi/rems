@@ -9,6 +9,7 @@
             [luminus-migrations.core :as migrations]
             [mount.core :as mount]
             [rems.auth.NotAuthorizedException]
+            [rems.auth.ForbiddenException]
             [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.applications :as applications]
@@ -21,7 +22,7 @@
             [rems.test.tempura :refer [fake-tempura-fixture]]
             [rems.util :refer [get-user-id]]
             [stub-http.core :as stub])
-  (:import rems.auth.NotAuthorizedException))
+  (:import (rems.auth ForbiddenException NotAuthorizedException)))
 
 (defn db-once-fixture [f]
   (fake-tempura-fixture
@@ -565,13 +566,13 @@
 
         (is (= {:curround 0 :state "draft"} (fetch app)))
 
-        (is (thrown? NotAuthorizedException (applications/approve-application uid app 0 ""))
+        (is (thrown? ForbiddenException (applications/approve-application uid app 0 ""))
             "Should not be able to approve draft")
 
-        (is (thrown? NotAuthorizedException (applications/withdraw-application uid app 0 ""))
+        (is (thrown? ForbiddenException (applications/withdraw-application uid app 0 ""))
             "Should not be able to withdraw draft")
 
-        (is (thrown? NotAuthorizedException (applications/submit-application "event-test-approver" app))
+        (is (thrown? ForbiddenException (applications/submit-application "event-test-approver" app))
             "Should not be able to submit when not applicant")
 
         (applications/submit-application uid app)
@@ -581,10 +582,10 @@
         (is (= {:curround 0 :state "applied"} (fetch app))
             "Autoapprove should do nothing")
 
-        (is (thrown? NotAuthorizedException (applications/submit-application uid app)) ; TODO Wrong exception?
+        (is (thrown? ForbiddenException (applications/submit-application uid app)) ; TODO Wrong exception?
             "Should not be able to submit twice")
 
-        (is (thrown? NotAuthorizedException (applications/approve-application uid app 1 "")) ; TODO Wrong exception?
+        (is (thrown? ForbiddenException (applications/approve-application uid app 1 "")) ; TODO Wrong exception?
             "Should not be able to approve wrong round")
 
         (testing "withdrawing and resubmitting"
@@ -594,15 +595,15 @@
           (applications/submit-application uid app)
           (is (= {:curround 0 :state "applied"} (fetch app))))
 
-        (is (thrown? NotAuthorizedException (applications/review-application uid app 0 ""))
+        (is (thrown? ForbiddenException (applications/review-application uid app 0 ""))
             "Should not be able to review as an approver")
         (applications/approve-application uid app 0 "c1")
         (is (= {:curround 1 :state "applied"} (fetch app)))
 
-        (is (thrown? NotAuthorizedException (applications/approve-application uid app 1 ""))
+        (is (thrown? ForbiddenException (applications/approve-application uid app 1 ""))
             "Should not be able to approve if not approver")
 
-        (is (thrown? NotAuthorizedException (applications/withdraw-application "event-test-approver" app 1 ""))
+        (is (thrown? ForbiddenException (applications/withdraw-application "event-test-approver" app 1 ""))
             "Should not be able to withdraw as approver")
 
         (is (empty? (db/get-entitlements)))
@@ -640,21 +641,21 @@
       (let [app (applications/create-new-draft uid wf)]
         (db/add-application-item! {:application app :item item})
 
-        (is (thrown? NotAuthorizedException (applications/return-application uid app 0 "comment"))
+        (is (thrown? ForbiddenException (applications/return-application uid app 0 "comment"))
             "Should not be able to return before submitting")
 
         (applications/submit-application uid app)
 
-        (is (thrown? NotAuthorizedException (applications/return-application "event-test-approver" app 0 "comment"))
+        (is (thrown? ForbiddenException (applications/return-application "event-test-approver" app 0 "comment"))
             "Should not be able to return when not approver")
 
         (applications/return-application uid app 0 "comment")
         (is (= {:curround 0 :state "returned"} (fetch app)))
 
-        (is (thrown? NotAuthorizedException (applications/return-application uid app 0 "comment"))
+        (is (thrown? ForbiddenException (applications/return-application uid app 0 "comment"))
             "Should not be able to return twice")
 
-        (is (thrown? NotAuthorizedException (applications/submit-application "event-test-approver" app)) ; TODO wrong exception?
+        (is (thrown? ForbiddenException (applications/submit-application "event-test-approver" app)) ; TODO wrong exception?
             "Should not be able to resubmit when not approver")
 
         (applications/submit-application uid app)
@@ -668,26 +669,26 @@
         (actors/add-reviewer! rev-wf "event-test-reviewer" 0)
         (actors/add-approver! rev-wf uid 1)
         (is (= {:curround 0 :state "draft"} (fetch rev-app)))
-        (is (thrown? NotAuthorizedException (applications/review-application "event-test-reviewer" rev-app 0 ""))
+        (is (thrown? ForbiddenException (applications/review-application "event-test-reviewer" rev-app 0 ""))
             "Should not be able to review a draft")
-        (is (thrown? NotAuthorizedException (applications/review-application uid rev-app 0 ""))
+        (is (thrown? ForbiddenException (applications/review-application uid rev-app 0 ""))
             "Should not be able to review if not reviewer")
         (applications/submit-application uid rev-app)
         (is (= {:curround 0 :state "applied"} (fetch rev-app)))
-        (is (thrown? NotAuthorizedException (applications/review-application "event-test-reviewer" rev-app 1 ""))
+        (is (thrown? ForbiddenException (applications/review-application "event-test-reviewer" rev-app 1 ""))
             "Should not be able to review wrong round")
-        (is (thrown? NotAuthorizedException (applications/approve-application "event-test-reviewer" rev-app 0 ""))
+        (is (thrown? ForbiddenException (applications/approve-application "event-test-reviewer" rev-app 0 ""))
             "Should not be able to approve as reviewer")
         (applications/review-application "event-test-reviewer" rev-app 0 "looks good to me")
         (is (= {:curround 1 :state "applied"} (fetch rev-app)))
         (applications/return-application uid rev-app 1 "comment")
         (is (= {:curround 0 :state "returned"} (fetch rev-app)))
-        (is (thrown? NotAuthorizedException (applications/review-application "event-test-reviewer" rev-app 0 ""))
+        (is (thrown? ForbiddenException (applications/review-application "event-test-reviewer" rev-app 0 ""))
             "Should not be able to review when returned")
         (applications/submit-application uid rev-app)
         (applications/withdraw-application uid rev-app 0 "test withdraw")
         (is (= {:curround 0 :state "withdrawn"} (fetch rev-app)))
-        (is (thrown? NotAuthorizedException (applications/review-application "event-test-reviewer" rev-app 0 ""))
+        (is (thrown? ForbiddenException (applications/review-application "event-test-reviewer" rev-app 0 ""))
             "Should not be able to review when withdrawn")))
 
     (testing "closing"
@@ -701,7 +702,7 @@
           (db/add-application-item! {:application app :item item})
           (applications/submit-application uid app)
           (testing "as approver fails"
-            (is (thrown? NotAuthorizedException (applications/close-application "event-test-approver" app 0 "closing applied"))))
+            (is (thrown? ForbiddenException (applications/close-application "event-test-approver" app 0 "closing applied"))))
           (applications/close-application uid app 0 "closing applied")
           (is (= {:curround 0 :state "closed"} (fetch app)))))
       (testing "an approved application as the applicant"
@@ -758,14 +759,14 @@
           (is (= #{:reviewer} (roles/get-roles "another-reviewer")))
           (is (= (fetch new-app) {:curround 0 :state "applied"}))
           (applications/perform-third-party-review "third-party-reviewer" new-app 0 "comment")
-          (is (thrown? NotAuthorizedException (applications/review-application "third-party-reviewer" new-app 0 "another comment")
+          (is (thrown? ForbiddenException (applications/review-application "third-party-reviewer" new-app 0 "another comment")
                        "Should not be able to do normal review"))
           (is (= (fetch new-app) {:curround 0 :state "applied"}))
           (applications/approve-application uid new-app 0 "")
           (is (= (fetch new-app) {:curround 0 :state "approved"}))
-          (is (thrown? NotAuthorizedException (applications/perform-third-party-review "third-party-reviewer" new-app 0 "another comment")
+          (is (thrown? ForbiddenException (applications/perform-third-party-review "third-party-reviewer" new-app 0 "another comment")
                        "Should not be able to review when approved"))
-          (is (thrown? NotAuthorizedException (applications/perform-third-party-review "other-reviewer" new-app 0 "too late comment"))
+          (is (thrown? ForbiddenException (applications/perform-third-party-review "other-reviewer" new-app 0 "too late comment"))
               "Should not be able to review when approved")
           (is (= (->> (applications/get-application-state new-app)
                       :events
@@ -800,13 +801,13 @@
           (is (= (fetch app-to-reject) {:curround 0 :state "rejected"}) "should be able to reject application even without review")
           (applications/return-application uid app-to-return 0 "returning")
           (is (= (fetch app-to-return) {:curround 0 :state "returned"}) "should be able to return application even without review")
-          (is (thrown? NotAuthorizedException (applications/perform-third-party-review "third-party-reviewer" app-to-close 0 "comment"))
+          (is (thrown? ForbiddenException (applications/perform-third-party-review "third-party-reviewer" app-to-close 0 "comment"))
               "Should not be able to review when closed")
-          (is (thrown? NotAuthorizedException (applications/perform-third-party-review "third-party-reviewer" app-to-approve 0 "comment"))
+          (is (thrown? ForbiddenException (applications/perform-third-party-review "third-party-reviewer" app-to-approve 0 "comment"))
               "Should not be able to review when approved")
-          (is (thrown? NotAuthorizedException (applications/perform-third-party-review "third-party-reviewer" app-to-reject 0 "comment"))
+          (is (thrown? ForbiddenException (applications/perform-third-party-review "third-party-reviewer" app-to-reject 0 "comment"))
               "Should not be able to review when rejected")
-          (is (thrown? NotAuthorizedException (applications/perform-third-party-review "third-party-reviewer" app-to-return 0 "another comment"))
+          (is (thrown? ForbiddenException (applications/perform-third-party-review "third-party-reviewer" app-to-return 0 "another comment"))
               "Should not be able to review when returned")
           (is (= (->> (applications/get-application-state app-to-close)
                       :events
@@ -851,11 +852,11 @@
       (is (thrown? AssertionError
                    (applications/add-member uid app "non-existent"))))
     (testing "Non-applicant can't add members"
-      (is (thrown? NotAuthorizedException
+      (is (thrown? ForbiddenException
                    (applications/add-member "other-user" app "david"))))
     (applications/submit-application uid app)
     (testing "Can't add members to submitted application"
-      (is (thrown? NotAuthorizedException
+      (is (thrown? ForbiddenException
                    (applications/add-member uid app "david"))))
     (testing "Members persist after autoapprove"
       (let [state (applications/get-application-state app)]
@@ -894,7 +895,7 @@
                         (.contains % (str jack-app)))
                   lines))))
     (binding [context/*roles* #{:applicant :reviewer}]
-      (is (thrown? NotAuthorizedException
+      (is (thrown? ForbiddenException
                    (entitlements/get-entitlements-for-export))))))
 
 (deftest test-entitlements-post

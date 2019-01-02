@@ -123,17 +123,24 @@
 
 (defn on-unauthorized-error [request]
   (error-page
-   {:status 403
+   {:status 401
     :title (str "Access to " (:uri request) " is not authorized")}))
 
-(defn wrap-unauthorized
+(defn on-forbidden-error [request]
+  (error-page
+    {:status 403
+     :title (str "Access to " (:uri request) " is forbidden")}))
+
+(defn wrap-unauthorized-and-forbidden
   "Handles unauthorized exceptions by showing an error page."
   [handler]
   (fn [req]
     (try
       (handler req)
       (catch rems.auth.NotAuthorizedException e
-        (on-unauthorized-error req)))))
+        (on-unauthorized-error req))
+      (catch rems.auth.ForbiddenException e
+        (on-forbidden-error req)))))
 
 (defn wrap-logging
   [handler]
@@ -161,7 +168,7 @@
 
 (defn wrap-base [handler]
   (-> ((:middleware +defaults+) handler)
-      wrap-unauthorized
+      wrap-unauthorized-and-forbidden
       wrap-logging
       wrap-i18n
       wrap-context

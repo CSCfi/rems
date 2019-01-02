@@ -4,7 +4,7 @@
             [clj-http.client :as http]
             [clojure.string :refer [join]]
             [clojure.tools.logging :as log]
-            [rems.auth.util :refer [throw-unauthorized]]
+            [rems.auth.util :refer [throw-forbidden]]
             [rems.config :refer [env]]
             [rems.db.core :as db]
             [rems.roles :refer [has-roles?]]
@@ -30,7 +30,7 @@
   "Returns a CSV string representing entitlements"
   []
   (when-not (has-roles? :approver)
-    (throw-unauthorized))
+    (throw-forbidden))
   (let [ents (db/get-entitlements)
         separator (:csv-separator env)]
     (with-out-str

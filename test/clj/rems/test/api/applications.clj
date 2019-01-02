@@ -69,7 +69,7 @@
         (let [response (-> (request :get (str "/api/applications/" application-id))
                            (authenticate api-key another-user)
                            app)]
-          (is (response-is-unauthorized? response))))
+          (is (response-is-forbidden? response))))
       (testing "saving as other user"
         (let [response (-> (request :post (str "/api/applications/save"))
                            (authenticate api-key another-user)
@@ -77,7 +77,7 @@
                                        :application-id application-id
                                        :items {1 "REST-Test"}})
                            app)]
-          (is (response-is-unauthorized? response))))
+          (is (response-is-forbidden? response))))
       (testing "submitting"
         (let [response (-> (request :post (str "/api/applications/save"))
                            (authenticate api-key user-id)
@@ -369,7 +369,7 @@
       (let [response (-> (request :get (str "/api/applications/reviewers"))
                          (authenticate api-key applicant)
                          app)]
-        (is (= 401 (:status response))))) ; TODO should be 403?
+        (is (= 403 (:status response)))))
     (testing "send review request"
       (assert-response-is-ok (-> (request :post (str "/api/applications/review_request"))
                                  (authenticate api-key approver)
@@ -486,7 +486,7 @@
                          (json-body {:application-id app-id
                                      :member "developer"})
                          app)]
-        (is (response-is-unauthorized? response))))))
+        (is (response-is-forbidden? response))))))
 
 (defn- strip-cookie-attributes [cookie]
   (re-find #"[^;]*" cookie))
@@ -598,12 +598,12 @@
                          (assoc :multipart-params {"file" filecontent})
                          (authenticate api-key "carl")
                          app)]
-        (is (response-is-unauthorized? response))))
+        (is (response-is-forbidden? response))))
     (testing "retrieving attachment as non-applicant"
       (let [response (-> (request :get (str "/api/applications/attachments/") {:application-id app-id :field-id field-id})
                          (authenticate api-key "carl")
                          app)]
-        (is (response-is-unauthorized? response))))
+        (is (response-is-forbidden? response))))
     (testing "uploading attachment for a submitted application"
       (let [body (-> (request :post (str "/api/applications/save"))
                      (authenticate api-key user-id)
@@ -620,7 +620,7 @@
                            (assoc :multipart-params {"file" filecontent})
                            (authenticate api-key user-id)
                            app)]
-          (is (response-is-unauthorized? response)))))))
+          (is (response-is-forbidden? response)))))))
 
 (deftest applications-api-security-test
   (testing "listing without authentication"
@@ -697,11 +697,11 @@
                        (authenticate "42" "developer")
                        app)]
       (is (= 404 (:status response)))))
-  (testing "not authorized"
+  (testing "forbidden"
     (let [response (-> (request :get (str "/api/applications/2/pdf"))
                        (authenticate "42" "alice")
                        app)]
-      (is (response-is-unauthorized? response))))
+      (is (response-is-forbidden? response))))
   (testing "success"
     (let [response (-> (request :get (str "/api/applications/2/pdf"))
                        (authenticate "42" "developer")
@@ -828,13 +828,21 @@
                  "rems.workflow.dynamic/return"}
                (set (get-in data [:application :possible-commands]))))))
 
-    (testing "send command with non-authorized user"
+    (testing "send command without user"
       (is (= {:success false
-              :errors ["unauthorized"]}
-             (send-dynamic-command user-id {:type :rems.workflow.dynamic/approve
-                                            :application-id application-id}))))
+              :errors ["forbidden"]}
+             (send-dynamic-command "" {:type :rems.workflow.dynamic/approve
+                                        :application-id application-id}))
+          "user should be forbidden to send command"))
 
-    (testing "send commands with authorized user:"
+    (testing "send command with a user that is not a handler"
+      (is (= {:success false
+              :errors ["forbidden"]}
+             (send-dynamic-command user-id {:type :rems.workflow.dynamic/approve
+                                            :application-id application-id}))
+          "user should be forbidden to send command"))
+
+    (testing "send commands with authorized user"
       (testing "request-decision"
         (is (= {:success true} (send-dynamic-command handler-id
                                                      {:type :rems.workflow.dynamic/request-decision

@@ -131,15 +131,16 @@
 
 (reg-event-fx
  :unauthorized!
- (fn [{:keys [db]} [_ current-url]]
+ (fn [_ [_ current-url]]
    (println "Received unauthorized from" current-url)
-   (if (get-in db [:identity :roles])
-     (do (println "User is logged-in")
-         (.removeItem js/sessionStorage "rems-redirect-url")
-         {:dispatch [:set-active-page :unauthorized]})
-     (do (println "User is not logged-in")
-         (.setItem js/sessionStorage "rems-redirect-url" current-url)
-         (dispatch! "/")))))
+   (.setItem js/sessionStorage "rems-redirect-url" current-url)
+   (dispatch! "/")))
+
+(reg-event-fx
+ :forbidden!
+ (fn [_ [_ current-url]]
+   (println "Received forbidden from" current-url)
+   {:dispatch [:set-active-page :forbidden]}))
 
 (reg-event-fx
  :landing-page-redirect!
@@ -184,6 +185,11 @@
    [:h2 (text :t.unauthorized-page/unauthorized)]
    [:p (text :t.unauthorized-page/you-are-unauthorized)]])
 
+(defn forbidden-page []
+  [:div
+   [:h2 (text :t.forbidden-page/forbidden)]
+   [:p (text :t.forbidden-page/you-are-forbidden)]])
+
 (defn not-found-page []
   [:div
    [:h2 (text :t.not-found-page/not-found)]
@@ -204,6 +210,7 @@
    :create-resource create-resource-page
    :create-workflow create-workflow-page
    :unauthorized unauthorized-page
+   :forbidden forbidden-page
    :not-found not-found-page})
 
 (defn footer []
@@ -287,6 +294,9 @@
 
 (secretary/defroute "/unauthorized" []
   (rf/dispatch [:set-active-page :unauthorized]))
+
+(secretary/defroute "/forbidden" []
+  (rf/dispatch [:set-active-page :forbidden]))
 
 (secretary/defroute "/redirect" []
   ;; user is logged in so redirect to a more specific page
