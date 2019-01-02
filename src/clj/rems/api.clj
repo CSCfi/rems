@@ -19,17 +19,24 @@
             [rems.api.resources :refer [resources-api]]
             [rems.api.users :refer [users-api]]
             [rems.api.workflows :refer [workflows-api]]
+            [rems.auth.NotAuthorizedException]
+            [rems.auth.ForbiddenException]
             [ring.middleware.cors :refer [wrap-cors]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
   (:import (org.joda.time DateTime ReadableInstant)
            (rems InvalidRequestException)
-           (rems.auth NotAuthorizedException)))
+           (rems.auth NotAuthorizedException ForbiddenException)))
 
 (defn unauthorized-handler
   [exception ex-data request]
   (log/info "User is unauthorized")
   (unauthorized "unauthorized"))
+
+(defn forbidden-handler
+  [exception ex-data request]
+  (log/info "Forbidden from user")
+  (forbidden "forbidden"))
 
 (defn invalid-handler
   [exception ex-data request]
@@ -79,23 +86,24 @@
 
 (def api-routes
   (api
-   {;; TODO: should this be in rems.middleware?
-    :formats muuntaja
-    :middleware [cors-middleware]
-    :exceptions {:handlers {NotAuthorizedException unauthorized-handler
-                            InvalidRequestException (ex/with-logging invalid-handler)
-                            ;; java.lang.Throwable (ex/with-logging debug-handler) ; optional Debug handler
-                            ;; add logging to validation handlers
-                            ::ex/request-validation (ex/with-logging ex/request-validation-handler)
-                            ::ex/request-parsing (ex/with-logging ex/request-parsing-handler)
-                            ::ex/response-validation (ex/with-logging ex/response-validation-handler)}}
-    :swagger {:ui "/swagger-ui"
-              :spec "/swagger.json"
-              :data {:info {:version "1.0.0"
-                            :title "REMS API"
-                            :description "REMS API Services"}}}}
+    {;; TODO: should this be in rems.middleware?
+     :formats    muuntaja
+     :middleware [cors-middleware]
+     :exceptions {:handlers {NotAuthorizedException   unauthorized-handler
+                             ForbiddenException       forbidden-handler
+                             InvalidRequestException  (ex/with-logging invalid-handler)
+                             ;; java.lang.Throwable (ex/with-logging debug-handler) ; optional Debug handler
+                             ;; add logging to validation handlers
+                             ::ex/request-validation  (ex/with-logging ex/request-validation-handler)
+                             ::ex/request-parsing     (ex/with-logging ex/request-parsing-handler)
+                             ::ex/response-validation (ex/with-logging ex/response-validation-handler)}}
+     :swagger    {:ui   "/swagger-ui"
+                  :spec "/swagger.json"
+                  :data {:info {:version     "1.0.0"
+                                :title       "REMS API"
+                                :description "REMS API Services"}}}}
 
-   (context "/api" []
+    (context "/api" []
      ;; :middleware [slow-middleware]
      :header-params [{x-rems-api-key :- (describe s/Str "REMS API-Key (optional for UI, required for API)") nil}
                      {x-rems-user-id :- (describe s/Str "user id (optional for UI, required for API)") nil}]
