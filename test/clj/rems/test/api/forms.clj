@@ -86,6 +86,53 @@
                         :items
                         (map #(select-keys % [:optional :type :localizations])))))))))))
 
+(deftest option-form-item-test
+  (let [api-key "42"
+        user-id "owner"]
+    (testing "create"
+      (let [command {:organization "abc"
+                     :title (str "form title " (UUID/randomUUID))
+                     :items [{:title {:en "en title"
+                                      :fi "fi title"}
+                              :optional true
+                              :type "option"
+                              :options [{:key "yes"
+                                         :label {:en "Yes"
+                                                 :fi "Kyllä"}}
+                                        {:key "no"
+                                         :label {:en "No"
+                                                 :fi "Ei"}}]}]}
+            response (-> (request :post "/api/forms/create")
+                         (authenticate api-key user-id)
+                         (json-body command)
+                         app)]
+        (assert-response-is-ok response)
+
+        (testing "and fetch"
+          (let [response (-> (request :get "/api/forms")
+                             (authenticate api-key user-id)
+                             app)
+                form (->> response
+                          read-body
+                          (filter #(= (:title %) (:title command)))
+                          first)]
+            (assert-response-is-ok response)
+            (is (= [{:optional true
+                     :type "option"
+                     :localizations {:en {:title "en title"
+                                          :inputprompt nil}
+                                     :fi {:title "fi title"
+                                          :inputprompt nil}}
+                     :options [{:key "yes"
+                                :label {:en "Yes"
+                                        :fi "Kyllä"}}
+                               {:key "no"
+                                :label {:en "No"
+                                        :fi "Ei"}}]}]
+                   (->> (get-draft-form (:id form))
+                        :items
+                        (map #(select-keys % [:optional :type :localizations :options])))))))))))
+
 (deftest forms-api-filtering-test
   (let [unfiltered-response (-> (request :get "/api/forms")
                                 (authenticate "42" "owner")

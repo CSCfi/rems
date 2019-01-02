@@ -233,7 +233,7 @@
      [move-form-item-option-up-button item-index option-index]
      [move-form-item-option-down-button item-index option-index]
      [remove-form-item-option-button item-index option-index]]]
-   [text-field context {:keys [:items item-index :options option-index :code]
+   [text-field context {:keys [:items item-index :options option-index :key]
                         :label "ID code"}] ; TODO: translation
    [localized-text-field context {:keys [:items item-index :options option-index :label]
                                   :label "Label"}]]) ; TODO: translation

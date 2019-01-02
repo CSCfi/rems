@@ -1,10 +1,11 @@
 (ns rems.db.applications
   "Query functions for forms and applications."
   (:require [cheshire.core :as cheshire]
-            [clj-time.core :as time]
             [clj-time.coerce :as time-coerce]
-            [clojure.set :refer [difference
-                                 union]]
+            [clj-time.core :as time]
+            [clojure.set :refer [difference union]]
+            [clojure.test :refer [deftest is]]
+            [cprop.tools :refer [merge-maps]]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.context :as context]
             [rems.db.catalogue :refer [get-localized-catalogue-items]]
@@ -17,8 +18,7 @@
             [rems.email :as email]
             [rems.form-validation :as form-validation]
             [rems.util :refer [getx get-username update-present]]
-            [rems.workflow.dynamic :as dynamic]
-            [clj-time.coerce :as time-coerce])
+            [rems.workflow.dynamic :as dynamic])
   (:import [java.io ByteArrayOutputStream FileInputStream]))
 
 (defn draft?
@@ -240,7 +240,7 @@
   (let [application-id (:id application)]
     (or (and (is-approver? user-id application-id)
              (= "approved" (:state application)))
-        (and (is-applicant? user-id  application)
+        (and (is-applicant? user-id application)
              (not= "closed" (:state application))))))
 
 (defn- can-withdraw? [user-id application]
@@ -340,7 +340,7 @@
 (defn get-handled-reviews [user-id]
   (let [actors (db/get-actors-for-applications {:role "reviewer"})]
     (->> (get-applications-impl-batch {})
-         (filterv (fn [app]  (reviewed? user-id app)))
+         (filterv (fn [app] (reviewed? user-id app)))
          (filterv (fn [app]
                     (or (is-actor? user-id (actors/filter-by-application-id actors (:id app)))
                         (is-third-party-reviewer? user-id app)
@@ -410,6 +410,26 @@
       (:filename (db/get-attachment query-params))
       (:value (db/get-field-value query-params)))))
 
+(defn- process-item-options [options]
+  (->> options
+       (map (fn [{:keys [key langcode label displayorder]}]
+              {:key key
+               :label {(keyword langcode) label}
+               :displayorder displayorder}))
+       (group-by :key)
+       (map (fn [[_key options]] (apply merge-maps options))) ; merge label translations
+       (sort-by :displayorder)
+       (mapv #(select-keys % [:key :label]))))
+
+(deftest process-item-options-test
+  (is (= [{:key "yes" :label {:en "Yes" :fi "Kyllä"}}
+          {:key "no" :label {:en "No" :fi "Ei"}}]
+         (process-item-options
+          [{:itemid 9, :key "no", :langcode "en", :label "No", :displayorder 1}
+           {:itemid 9, :key "no", :langcode "fi", :label "Ei", :displayorder 1}
+           {:itemid 9, :key "yes", :langcode "en", :label "Yes", :displayorder 0}
+           {:itemid 9, :key "yes", :langcode "fi", :label "Kyllä", :displayorder 0}]))))
+
 (defn- process-item
   "Returns an item structure like this:
 
@@ -428,6 +448,7 @@
    :localizations (into {} (for [{:keys [langcode title inputprompt]}
                                  (db/get-form-item-localizations {:item (:id item)})]
                              [(keyword langcode) {:title title :inputprompt inputprompt}]))
+   :options (process-item-options (db/get-form-item-options {:item (:id item)}))
    :value (or
            (when-not (draft? application-id)
              (get-item-value item form-id application-id))
@@ -838,7 +859,7 @@
 (defn review-application [user-id application-id round msg]
   (when-not (can-review? user-id (get-application-state application-id))
     (throw-forbidden))
-  (judge-application user-id  application-id "review" round msg))
+  (judge-application user-id application-id "review" round msg))
 
 (defn perform-third-party-review [user-id application-id round msg]
   (let [application (get-application-state application-id)]
