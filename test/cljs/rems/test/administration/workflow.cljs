@@ -47,10 +47,10 @@
     (let [form {:organization "abc"
                 :title "workflow title"
                 :type :rounds
-                :rounds {0 {:type :review
-                            :actors [{:userid "alice"} {:userid "bob"}]}
-                         1 {:type :approval
-                            :actors [{:userid "carl"}]}}}]
+                :rounds [{:type :review
+                          :actors [{:userid "alice"} {:userid "bob"}]}
+                         {:type :approval
+                          :actors [{:userid "carl"}]}]}]
       (testing "valid form"
         (is (= {:organization "abc"
                 :title "workflow title"

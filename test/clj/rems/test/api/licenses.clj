@@ -13,11 +13,11 @@
   (let [api-key "42"
         user-id "owner"]
     (testing "get"
-      (let [response (-> (request :get "/api/licenses")
-                         (authenticate api-key user-id)
-                         app)
-            data (read-body response)]
-        (assert-response-is-ok response)
+      (let [data (-> (request :get "/api/licenses")
+                     (authenticate api-key user-id)
+                     app
+                     assert-response-is-ok
+                     read-body)]
         (is (coll-is-not-empty? data))
         (is (= #{:id :start :end :licensetype :title :textcontent :localizations} (set (keys (first data)))))))
 
@@ -28,21 +28,21 @@
                      :localizations {:en {:title "en title"
                                           :textcontent "http://example.com/license/en"}
                                      :fi {:title "fi title"
-                                          :textcontent "http://example.com/license/fi"}}}
-            response (-> (request :post "/api/licenses/create")
-                         (authenticate api-key user-id)
-                         (json-body command)
-                         app)]
-        (assert-response-is-ok response)
+                                          :textcontent "http://example.com/license/fi"}}}]
+        (-> (request :post "/api/licenses/create")
+            (authenticate api-key user-id)
+            (json-body command)
+            app
+            assert-response-is-ok)
         (testing "and fetch"
-          (let [response (-> (request :get "/api/licenses")
-                             (authenticate api-key user-id)
-                             app)
-                license (->> response
-                             read-body
+          (let [body (-> (request :get "/api/licenses")
+                         (authenticate api-key user-id)
+                         app
+                         assert-response-is-ok
+                         read-body)
+                license (->> body
                              (filter #(= (:title %) (:title command)))
                              first)]
-            (assert-response-is-ok response)
             (is license)
             (is (= command (select-keys license (keys command))))))))
 
@@ -53,38 +53,38 @@
                      :localizations {:en {:title "en title"
                                           :textcontent "en text"}
                                      :fi {:title "fi title"
-                                          :textcontent "fi text"}}}
-            response (-> (request :post "/api/licenses/create")
-                         (authenticate api-key user-id)
-                         (json-body command)
-                         app)]
-        (assert-response-is-ok response)
+                                          :textcontent "fi text"}}}]
+        (-> (request :post "/api/licenses/create")
+            (authenticate api-key user-id)
+            (json-body command)
+            app
+            assert-response-is-ok)
         (testing "and fetch"
-          (let [response (-> (request :get "/api/licenses")
-                             (authenticate api-key user-id)
-                             app)
-                license (->> response
-                             read-body
+          (let [body (-> (request :get "/api/licenses")
+                         (authenticate api-key user-id)
+                         app
+                         assert-response-is-ok
+                         read-body)
+                license (->> body
                              (filter #(= (:title %) (:title command)))
                              first)]
-            (assert-response-is-ok response)
             (is license)
             (is (= command (select-keys license (keys command))))))))))
 
 (deftest licenses-api-filtering-test
-  (let [unfiltered-response (-> (request :get "/api/licenses")
-                                (authenticate "42" "owner")
-                                app)
-        unfiltered-data (read-body unfiltered-response)
-        filtered-response (-> (request :get "/api/licenses" {:active true})
-                              (authenticate "42" "owner")
-                              app)
-        filtered-data (read-body filtered-response)]
-    (assert-response-is-ok unfiltered-response)
-    (assert-response-is-ok filtered-response)
-    (is (coll-is-not-empty? unfiltered-data))
-    (is (coll-is-not-empty? filtered-data))
-    (is (< (count filtered-data) (count unfiltered-data)))))
+  (let [unfiltered (-> (request :get "/api/licenses")
+                       (authenticate "42" "owner")
+                       app
+                       assert-response-is-ok
+                       read-body)
+        filtered (-> (request :get "/api/licenses" {:active true})
+                     (authenticate "42" "owner")
+                     app
+                     assert-response-is-ok
+                     read-body)]
+    (is (coll-is-not-empty? unfiltered))
+    (is (coll-is-not-empty? filtered))
+    (is (< (count filtered) (count unfiltered)))))
 
 (deftest licenses-api-security-test
   (testing "without authentication"

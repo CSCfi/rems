@@ -38,20 +38,20 @@
 
     (testing "listing as applicant"
       (testing "with entitlements"
-        (let [response (-> (request :get (str "/api/entitlements"))
-                           (authenticate api-key "alice")
-                           app)
-              body (read-body response)]
-          (assert-response-is-ok response)
+        (let [body (-> (request :get (str "/api/entitlements"))
+                       (authenticate api-key "alice")
+                       app
+                       assert-response-is-ok
+                       read-body)]
           (is (coll-is-not-empty? body))
           (is (every? #(= (:mail %) "a@li.ce") body))))
 
       (testing "without entitlements"
         (users/add-user! "allison" {})
         (roles/add-role! "allison" :applicant)
-        (let [response (-> (request :get (str "/api/entitlements"))
-                           (authenticate api-key "allison")
-                           app)
-              body (read-body response)]
-          (assert-response-is-ok response)
+        (let [body (-> (request :get (str "/api/entitlements"))
+                       (authenticate api-key "allison")
+                       app
+                       assert-response-is-ok
+                       read-body)]
           (is (coll-is-empty? body)))))))

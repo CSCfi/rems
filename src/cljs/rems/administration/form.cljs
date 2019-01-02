@@ -3,10 +3,11 @@
             [goog.string :refer [parseInt]]
             [re-frame.core :as rf]
             [rems.administration.components :refer [checkbox localized-text-field number-field radio-button-group text-field]]
+            [rems.administration.items :as items]
             [rems.application :refer [enrich-user]]
             [rems.collapsible :as collapsible]
+            [rems.config :refer [dev-environment?]]
             [rems.text :refer [text text-format localize-item]]
-            [rems.common-util :refer [vec-dissoc]]
             [rems.util :refer [dispatch! fetch post!]]))
 
 (defn- reset-form [db]
@@ -33,29 +34,42 @@
 (rf/reg-event-db
  ::add-form-item
  (fn [db [_]]
-   (assoc-in db [::form :items (count (:items (::form db)))] {})))
+   (update-in db [::form :items] items/add {})))
 
 (rf/reg-event-db
  ::remove-form-item
- (fn [db [_ index]]
-   (assoc-in db [::form :items] (vec-dissoc (:items (::form db)) index))))
+ (fn [db [_ item-index]]
+   (update-in db [::form :items] items/remove item-index)))
 
 (rf/reg-event-db
  ::move-form-item-up
- (fn [db [_ index]]
-   (let [other (max 0 (dec index))]
-     (-> db
-         (assoc-in [::form :items index] (get-in db [::form :items other]))
-         (assoc-in [::form :items other] (get-in db [::form :items index]))))))
+ (fn [db [_ item-index]]
+   (update-in db [::form :items] items/move-up item-index)))
 
 (rf/reg-event-db
  ::move-form-item-down
- (fn [db [_ index]]
-   (let [last-index (dec (count (get-in db [::form :items])))
-         other (min last-index (inc index))]
-     (-> db
-         (assoc-in [::form :items index] (get-in db [::form :items other]))
-         (assoc-in [::form :items other] (get-in db [::form :items index]))))))
+ (fn [db [_ item-index]]
+   (update-in db [::form :items] items/move-down item-index)))
+
+(rf/reg-event-db
+ ::add-form-item-option
+ (fn [db [_ item-index]]
+   (update-in db [::form :items item-index :options] items/add {})))
+
+(rf/reg-event-db
+ ::remove-form-item-option
+ (fn [db [_ item-index option-index]]
+   (update-in db [::form :items item-index :options] items/remove option-index)))
+
+(rf/reg-event-db
+ ::move-form-item-option-up
+ (fn [db [_ item-index option-index]]
+   (update-in db [::form :items item-index :options] items/move-up option-index)))
+
+(rf/reg-event-db
+ ::move-form-item-option-down
+ (fn [db [_ item-index option-index]]
+   (update-in db [::form :items item-index :options] items/move-down option-index)))
 
 
 ;;;; form submit
@@ -65,6 +79,9 @@
 
 (defn- supports-maxlength? [item]
   (contains? #{"text" "texta"} (:type item)))
+
+(defn- supports-options? [item]
+  (= "option" (:type item)))
 
 (defn- localized-string? [lstr languages]
   (and (= (set (keys lstr))
@@ -155,30 +172,70 @@
   [text-field context {:keys [:title]
                        :label (text :t.create-form/title)}])
 
-(defn- form-item-title-field [item]
-  [localized-text-field context {:keys [:items item :title]
+(defn- form-item-title-field [item-index]
+  [localized-text-field context {:keys [:items item-index :title]
                                  :label (text :t.create-form/item-title)}])
 
-(defn- form-item-input-prompt-field [item]
-  [localized-text-field context {:keys [:items item :input-prompt]
+(defn- form-item-input-prompt-field [item-index]
+  [localized-text-field context {:keys [:items item-index :input-prompt]
                                  :label (text :t.create-form/input-prompt)}])
 
-(defn- form-item-maxlength-field [item]
-  [number-field context {:keys [:items item :maxlength]
-                       :label (text :t.create-form/maxlength)}])
+(defn- form-item-maxlength-field [item-index]
+  [number-field context {:keys [:items item-index :maxlength]
+                         :label (text :t.create-form/maxlength)}])
 
-(defn- form-item-type-radio-group [item]
-  [radio-button-group context {:keys [:items item :type]
+(defn- add-form-item-option-button [item-index]
+  [:a
+   {:href "#"
+    :on-click (fn [event]
+                (.preventDefault event)
+                (rf/dispatch [::add-form-item-option item-index]))}
+   (text :t.create-form/add-option)])
+
+(defn- remove-form-item-option-button [item-index option-index]
+  [items/remove-button #(rf/dispatch [::remove-form-item-option item-index option-index])])
+
+(defn- move-form-item-option-up-button [item-index option-index]
+  [items/move-up-button #(rf/dispatch [::move-form-item-option-up item-index option-index])])
+
+(defn- move-form-item-option-down-button [item-index option-index]
+  [items/move-down-button #(rf/dispatch [::move-form-item-option-down item-index option-index])])
+
+(defn- form-item-option-field [item-index option-index]
+  [:div.form-item-option
+   [:div.form-item-header
+    [:h4 (text-format :t.create-form/option-n (inc option-index))]
+    [:div.form-item-controls
+     [move-form-item-option-up-button item-index option-index]
+     [move-form-item-option-down-button item-index option-index]
+     [remove-form-item-option-button item-index option-index]]]
+   [text-field context {:keys [:items item-index :options option-index :key]
+                        :label (text :t.create-form/option-key)}]
+   [localized-text-field context {:keys [:items item-index :options option-index :label]
+                                  :label (text :t.create-form/option-label)}]])
+
+(defn- form-item-option-fields [item-index]
+  (let [form @(rf/subscribe [::form])]
+    (into (into [:div]
+                (for [option-index (range (count (get-in form [:items item-index :options])))]
+                  [form-item-option-field item-index option-index]))
+          [[:div.form-item-option.new-form-item-option
+            [add-form-item-option-button item-index]]])))
+
+(defn- form-item-type-radio-group [item-index]
+  [radio-button-group context {:keys [:items item-index :type]
                                :orientation :vertical
-                               :options [{:value "attachment", :label (text :t.create-form/type-attachment)}
-                                         {:value "date", :label (text :t.create-form/type-date)}
-                                         {:value "description", :label (text :t.create-form/type-description)}
-                                         {:value "label", :label (text :t.create-form/type-label)}
-                                         {:value "text", :label (text :t.create-form/type-text)}
-                                         {:value "texta", :label (text :t.create-form/type-texta)}]}])
+                               :options (concat [{:value "text", :label (text :t.create-form/type-text)}
+                                                 {:value "texta", :label (text :t.create-form/type-texta)}
+                                                 {:value "description", :label (text :t.create-form/type-description)}]
+                                                (when (dev-environment?) ; TODO: remove feature flag
+                                                  [{:value "option", :label (text :t.create-form/type-option)}])
+                                                [{:value "date", :label (text :t.create-form/type-date)}
+                                                 {:value "attachment", :label (text :t.create-form/type-attachment)}
+                                                 {:value "label", :label (text :t.create-form/type-label)}])}])
 
-(defn- form-item-optional-checkbox [item]
-  [checkbox context {:keys [:items item :optional]
+(defn- form-item-optional-checkbox [item-index]
+  [checkbox context {:keys [:items item-index :optional]
                      :label (text :t.create-form/optional)}])
 
 (defn- add-form-item-button []
@@ -189,38 +246,14 @@
                 (rf/dispatch [::add-form-item]))}
    (text :t.create-form/add-form-item)])
 
-(defn- remove-form-item-button [index]
-  [:a
-   {:href "#"
-    :on-click (fn [event]
-                (.preventDefault event)
-                (rf/dispatch [::remove-form-item index]))
-    :aria-label (text :t.create-form/remove-form-item)
-    :title (text :t.create-form/remove-form-item)}
-   [:i.icon-link.fas.fa-times
-    {:aria-hidden true}]])
+(defn- remove-form-item-button [item-index]
+  [items/remove-button #(rf/dispatch [::remove-form-item item-index])])
 
-(defn- move-form-item-up-button [index]
-  [:a
-   {:href "#"
-    :on-click (fn [event]
-                (.preventDefault event)
-                (rf/dispatch [::move-form-item-up index]))
-    :aria-label (text :t.create-form/move-form-item-up)
-    :title (text :t.create-form/move-form-item-up)}
-   [:i.icon-link.fas.fa-chevron-up
-    {:aria-hidden true}]])
+(defn- move-form-item-up-button [item-index]
+  [items/move-up-button #(rf/dispatch [::move-form-item-up item-index])])
 
-(defn- move-form-item-down-button [index]
-  [:a
-   {:href "#"
-    :on-click (fn [event]
-                (.preventDefault event)
-                (rf/dispatch [::move-form-item-down index]))
-    :aria-label (text :t.create-form/move-form-item-down)
-    :title (text :t.create-form/move-form-item-down)}
-   [:i.icon-link.fas.fa-chevron-down
-    {:aria-hidden true}]])
+(defn- move-form-item-down-button [item-index]
+  [items/move-down-button #(rf/dispatch [::move-form-item-down item-index])])
 
 (defn- save-form-button []
   (let [form @(rf/subscribe [::form])
@@ -245,21 +278,25 @@
                [form-organization-field]
                [form-title-field]
 
-               (doall (for [item (range (count (:items form)))]
+               (doall (for [item-index (range (count (:items form)))]
                         [:div.form-item
-                         {:key item}
-                         [:div.form-item-controls
-                          [move-form-item-up-button item]
-                          [move-form-item-down-button item]
-                          [remove-form-item-button item]]
+                         {:key item-index}
+                         [:div.form-item-header
+                          [:h4 (text-format :t.create-form/item-n (inc item-index))]
+                          [:div.form-item-controls
+                           [move-form-item-up-button item-index]
+                           [move-form-item-down-button item-index]
+                           [remove-form-item-button item-index]]]
 
-                         [form-item-title-field item]
-                         [form-item-optional-checkbox item]
-                         [form-item-type-radio-group item]
-                         (when (supports-input-prompt? (get-in form [:items item]))
-                           [form-item-input-prompt-field item])
-                         (when (supports-maxlength? (get-in form [:items item]))
-                           [form-item-maxlength-field item])]))
+                         [form-item-title-field item-index]
+                         [form-item-optional-checkbox item-index]
+                         [form-item-type-radio-group item-index]
+                         (when (supports-input-prompt? (get-in form [:items item-index]))
+                           [form-item-input-prompt-field item-index])
+                         (when (supports-maxlength? (get-in form [:items item-index]))
+                           [form-item-maxlength-field item-index])
+                         (when (supports-options? (get-in form [:items item-index]))
+                           [form-item-option-fields item-index])]))
 
                [:div.form-item.new-form-item
                 [add-form-item-button]]

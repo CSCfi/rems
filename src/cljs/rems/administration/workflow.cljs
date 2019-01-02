@@ -2,11 +2,10 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.administration.components :refer [radio-button-group text-field]]
+            [rems.administration.items :as items]
             [rems.application :refer [enrich-user]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
-            [rems.common-util :refer [vec-dissoc]]
-            [rems.config :refer [dev-environment?]]
             [rems.spinner :as spinner]
             [rems.text :refer [text text-format localize-item]]
             [rems.util :refer [dispatch! fetch post!]]))
@@ -39,6 +38,17 @@
  (fn [db [_ keys value]]
    (assoc-in db (concat [::form] keys) value)))
 
+(rf/reg-event-db
+ ::add-round
+ (fn [db [_]]
+   (update-in db [::form :rounds] items/add {})))
+
+(rf/reg-event-db
+ ::remove-round
+ (fn [db [_ index]]
+   (update-in db [::form :rounds] items/remove index)))
+
+
 ;;; form submit
 
 (defn- valid-round? [round]
@@ -65,13 +75,13 @@
         request (case (:type form)
                   :auto-approve request
                   :dynamic (assoc request :handlers (map :userid (:handlers form)))
-                  :rounds (assoc request :rounds (map build-request-round (vals (:rounds form)))))]
+                  :rounds (assoc request :rounds (map build-request-round (:rounds form))))]
     (when (valid-request? request)
       request)))
 
 (defn- create-workflow [request]
   (post! "/api/workflows/create" {:params request
-                                        ; TODO: error handling
+                                  ;; TODO: error handling
                                   :handler (fn [resp] (dispatch! "#/administration"))}))
 
 (rf/reg-event-fx
@@ -198,27 +208,23 @@
    {:aria-hidden true}])
 
 (defn- add-round-button []
-  (let [form @(rf/subscribe [::form])]
-    [:a
-     {:href "#"
-      :on-click (fn [event]
-                  (.preventDefault event)
-                                        ; TODO: refactor to re-frame events
-                  (rf/dispatch [::set-form-field [:rounds (count (:rounds form))] {}]))}
-     (text :t.create-workflow/add-round)]))
+  [:a
+   {:href "#"
+    :on-click (fn [event]
+                (.preventDefault event)
+                (rf/dispatch [::add-round]))}
+   (text :t.create-workflow/add-round)])
 
 (defn- remove-round-button [round]
-  (let [form @(rf/subscribe [::form])]
-    [:a.remove-workflow-round
-     {:href "#"
-      :on-click (fn [event]
-                  (.preventDefault event)
-                                        ; TODO: refactor to re-frame events
-                  (rf/dispatch [::set-form-field [:rounds] (vec-dissoc (:rounds form) round)]))
-      :aria-label (text :t.create-workflow/remove-round)
-      :title (text :t.create-workflow/remove-round)}
-     [:i.icon-link.fas.fa-times
-      {:aria-hidden true}]]))
+  [:a.remove-workflow-round
+   {:href "#"
+    :on-click (fn [event]
+                (.preventDefault event)
+                (rf/dispatch [::remove-round round]))
+    :aria-label (text :t.create-workflow/remove-round)
+    :title (text :t.create-workflow/remove-round)}
+   [:i.icon-link.fas.fa-times
+    {:aria-hidden true}]])
 
 (defn- save-workflow-button []
   (let [form @(rf/subscribe [::form])

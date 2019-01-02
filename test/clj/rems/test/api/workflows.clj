@@ -11,13 +11,13 @@
 
 (deftest workflows-api-test
   (testing "list"
-    (let [response (-> (request :get "/api/workflows")
-                       (authenticate "42" "owner")
-                       app)
-          data (read-body response)
+    (let [data (-> (request :get "/api/workflows")
+                   (authenticate "42" "owner")
+                   app
+                   assert-response-is-ok
+                   read-body)
           wfs (index-by [:title] data)
           simple (get wfs "simple")]
-      (assert-response-is-ok response)
       (is (coll-is-not-empty? data))
       (is simple)
       (is (= 0 (:final-round simple)))
@@ -30,27 +30,27 @@
              (:actors simple)))))
 
   (testing "create"
-    (let [response (-> (request :post (str "/api/workflows/create"))
-                       (json-body {:organization "abc"
-                                   :title "workflow title"
-                                   :type :rounds
-                                   :rounds [{:type :review
-                                             :actors ["alice" "bob"]}
-                                            {:type :approval
-                                             :actors ["carl"]}]})
-                       (authenticate "42" "owner")
-                       app)
-          body (read-body response)
+    (let [body (-> (request :post (str "/api/workflows/create"))
+                   (json-body {:organization "abc"
+                               :title "workflow title"
+                               :type :rounds
+                               :rounds [{:type :review
+                                         :actors ["alice" "bob"]}
+                                        {:type :approval
+                                         :actors ["carl"]}]})
+                   (authenticate "42" "owner")
+                   app
+                   assert-response-is-ok
+                   read-body)
           id (:id body)]
-      (assert-response-is-ok response)
       (is (< 0 id))
       (testing "and fetch"
-        (let [response (-> (request :get "/api/workflows")
-                           (authenticate "42" "owner")
-                           app)
-              workflows (read-body response)
+        (let [workflows (-> (request :get "/api/workflows")
+                            (authenticate "42" "owner")
+                            app
+                            assert-response-is-ok
+                            read-body)
               workflow (first (filter #(= id (:id %)) workflows))]
-          (assert-response-is-ok response)
           (is (= {:id id
                   :organization "abc"
                   :title "workflow title"
@@ -61,23 +61,23 @@
                  (select-keys workflow [:id :organization :title :final-round :actors])))))))
 
   (testing "create auto-approved workflow"
-    (let [response (-> (request :post (str "/api/workflows/create"))
-                       (json-body {:organization "abc"
-                                   :title "auto-approved workflow"
-                                   :type :auto-approve})
-                       (authenticate "42" "owner")
-                       app)
-          body (read-body response)
+    (let [body (-> (request :post (str "/api/workflows/create"))
+                   (json-body {:organization "abc"
+                               :title "auto-approved workflow"
+                               :type :auto-approve})
+                   (authenticate "42" "owner")
+                   app
+                   assert-response-is-ok
+                   read-body)
           id (:id body)]
-      (assert-response-is-ok response)
       (is (< 0 id))
       (testing "and fetch"
-        (let [response (-> (request :get "/api/workflows")
-                           (authenticate "42" "owner")
-                           app)
-              workflows (read-body response)
+        (let [workflows (-> (request :get "/api/workflows")
+                            (authenticate "42" "owner")
+                            app
+                            assert-response-is-ok
+                            read-body)
               workflow (first (filter #(= id (:id %)) workflows))]
-          (assert-response-is-ok response)
           (is (= {:id id
                   :organization "abc"
                   :title "auto-approved workflow"
@@ -86,24 +86,24 @@
                  (select-keys workflow [:id :organization :title :final-round :actors])))))))
 
   (testing "create dynamic workflow"
-    (let [response (-> (request :post (str "/api/workflows/create"))
-                       (json-body {:organization "abc"
-                                   :title "dynamic workflow"
-                                   :type :dynamic
-                                   :handlers ["bob" "carl"]})
-                       (authenticate "42" "owner")
-                       app)
-          body (read-body response)
+    (let [body (-> (request :post (str "/api/workflows/create"))
+                   (json-body {:organization "abc"
+                               :title "dynamic workflow"
+                               :type :dynamic
+                               :handlers ["bob" "carl"]})
+                   (authenticate "42" "owner")
+                   app
+                   assert-response-is-ok
+                   read-body)
           id (:id body)]
-      (assert-response-is-ok response)
       (is (< 0 id))
       (testing "and fetch"
-        (let [response (-> (request :get "/api/workflows")
-                           (authenticate "42" "owner")
-                           app)
-              workflows (read-body response)
+        (let [workflows (-> (request :get "/api/workflows")
+                            (authenticate "42" "owner")
+                            app
+                            assert-response-is-ok
+                            read-body)
               workflow (first (filter #(= id (:id %)) workflows))]
-          (assert-response-is-ok response)
           (is (= {:id id
                   :organization "abc"
                   :title "dynamic workflow"
@@ -112,21 +112,21 @@
                  (select-keys workflow [:id :organization :title :workflow]))))))))
 
 (deftest workflows-api-filtering-test
-  (let [unfiltered-response (-> (request :get "/api/workflows")
-                                (authenticate "42" "owner")
-                                app)
-        unfiltered-data (read-body unfiltered-response)
-        filtered-response (-> (request :get "/api/workflows" {:active true})
-                              (authenticate "42" "owner")
-                              app)
-        filtered-data (read-body filtered-response)]
-    (assert-response-is-ok unfiltered-response)
-    (assert-response-is-ok filtered-response)
-    (is (coll-is-not-empty? unfiltered-data))
-    (is (coll-is-not-empty? filtered-data))
-    (is (every? #(contains? % :active) unfiltered-data))
-    (is (every? :active filtered-data))
-    (is (< (count filtered-data) (count unfiltered-data)))))
+  (let [unfiltered (-> (request :get "/api/workflows")
+                       (authenticate "42" "owner")
+                       app
+                       assert-response-is-ok
+                       read-body)
+        filtered (-> (request :get "/api/workflows" {:active true})
+                     (authenticate "42" "owner")
+                     app
+                     assert-response-is-ok
+                     read-body)]
+    (is (coll-is-not-empty? unfiltered))
+    (is (coll-is-not-empty? filtered))
+    (is (every? #(contains? % :active) unfiltered))
+    (is (every? :active filtered))
+    (is (< (count filtered) (count unfiltered)))))
 
 (deftest workflows-api-security-test
   (testing "without authentication"

@@ -12,31 +12,31 @@
 (defn- get-draft-form [form-id]
   ;; XXX: there is no simple API for reading the form items
   (let [api-key "42"
-        catalogue-item-response (-> (request :post "/api/catalogue-items/create")
-                                    (authenticate api-key "owner")
-                                    (json-body {:title "tmp"
-                                                :form form-id
-                                                :resid 1
-                                                :wfid 1})
-                                    app)
-        catalogue-item (read-body catalogue-item-response)
-        draft-response (-> (request :get "/api/applications/draft" {:catalogue-items (:id catalogue-item)})
-                           (authenticate api-key "alice")
-                           app)
-        draft (read-body draft-response)]
-    (assert-response-is-ok catalogue-item-response)
-    (assert-response-is-ok draft-response)
+        catalogue-item (-> (request :post "/api/catalogue-items/create")
+                           (authenticate api-key "owner")
+                           (json-body {:title "tmp"
+                                       :form form-id
+                                       :resid 1
+                                       :wfid 1})
+                           app
+                           assert-response-is-ok
+                           read-body)
+        draft (-> (request :get "/api/applications/draft" {:catalogue-items (:id catalogue-item)})
+                  (authenticate api-key "alice")
+                  app
+                  assert-response-is-ok
+                  read-body)]
     draft))
 
 (deftest forms-api-test
   (let [api-key "42"
         user-id "owner"]
     (testing "get"
-      (let [response (-> (request :get "/api/forms")
-                         (authenticate api-key user-id)
-                         app)
-            data (read-body response)]
-        (assert-response-is-ok response)
+      (let [data (-> (request :get "/api/forms")
+                     (authenticate api-key user-id)
+                     app
+                     assert-response-is-ok
+                     read-body)]
         (is (coll-is-not-empty? data))
         (is (= #{:id :organization :title :start :end :active}
                (set (keys (first data)))))))
@@ -59,20 +59,20 @@
             (is (= 400 (:status response))
                 "can't send negative maxlength")))
         (testing "valid create"
-          (let [response (-> (request :post "/api/forms/create")
-                             (authenticate api-key user-id)
-                             (json-body command)
-                             app)]
-            (assert-response-is-ok response)))
+          (-> (request :post "/api/forms/create")
+              (authenticate api-key user-id)
+              (json-body command)
+              app
+              assert-response-is-ok))
         (testing "and fetch"
-          (let [response (-> (request :get "/api/forms")
-                             (authenticate api-key user-id)
-                             app)
-                form (->> response
-                          read-body
+          (let [body (-> (request :get "/api/forms")
+                         (authenticate api-key user-id)
+                         app
+                         assert-response-is-ok
+                         read-body)
+                form (->> body
                           (filter #(= (:title %) (:title command)))
                           first)]
-            (assert-response-is-ok response)
             ;; TODO: create an API for reading full forms (will be needed latest for editing forms)
             (is (= (select-keys command [:title :organization])
                    (select-keys form [:title :organization])))
@@ -86,22 +86,69 @@
                         :items
                         (map #(select-keys % [:optional :type :localizations])))))))))))
 
+(deftest option-form-item-test
+  (let [api-key "42"
+        user-id "owner"]
+    (testing "create"
+      (let [command {:organization "abc"
+                     :title (str "form title " (UUID/randomUUID))
+                     :items [{:title {:en "en title"
+                                      :fi "fi title"}
+                              :optional true
+                              :type "option"
+                              :options [{:key "yes"
+                                         :label {:en "Yes"
+                                                 :fi "Kyllä"}}
+                                        {:key "no"
+                                         :label {:en "No"
+                                                 :fi "Ei"}}]}]}]
+        (-> (request :post "/api/forms/create")
+            (authenticate api-key user-id)
+            (json-body command)
+            app
+            assert-response-is-ok)
+
+        (testing "and fetch"
+          (let [body (-> (request :get "/api/forms")
+                         (authenticate api-key user-id)
+                         app
+                         assert-response-is-ok
+                         read-body)
+                form (->> body
+                          (filter #(= (:title %) (:title command)))
+                          first)]
+            (is (= [{:optional true
+                     :type "option"
+                     :localizations {:en {:title "en title"
+                                          :inputprompt nil}
+                                     :fi {:title "fi title"
+                                          :inputprompt nil}}
+                     :options [{:key "yes"
+                                :label {:en "Yes"
+                                        :fi "Kyllä"}}
+                               {:key "no"
+                                :label {:en "No"
+                                        :fi "Ei"}}]}]
+                   (->> (get-draft-form (:id form))
+                        :items
+                        (map #(select-keys % [:optional :type :localizations :options])))))))))))
+
 (deftest forms-api-filtering-test
-  (let [unfiltered-response (-> (request :get "/api/forms")
-                                (authenticate "42" "owner")
-                                app)
-        unfiltered-data (read-body unfiltered-response)
-        filtered-response (-> (request :get "/api/forms" {:active true})
-                              (authenticate "42" "owner")
-                              app)
-        filtered-data (read-body filtered-response)]
-    (assert-response-is-ok unfiltered-response)
-    (assert-response-is-ok filtered-response)
-    (is (coll-is-not-empty? unfiltered-data))
-    (is (coll-is-not-empty? filtered-data))
-    (is (every? #(contains? % :active) unfiltered-data))
-    (is (every? :active filtered-data))
-    (is (< (count filtered-data) (count unfiltered-data)))))
+  (let [unfiltered (-> (request :get "/api/forms")
+                       (authenticate "42" "owner")
+                       app
+                       assert-response-is-ok
+                       read-body)
+        filtered (-> (request :get "/api/forms" {:active true})
+                     (authenticate "42" "owner")
+                     app
+                     assert-response-is-ok
+                     read-body)]
+    (is (coll-is-not-empty? unfiltered))
+    (is (coll-is-not-empty? filtered))
+    (is (every? #(contains? % :active) unfiltered))
+    (is (every? :active filtered))
+    (is (< (count filtered) (count unfiltered)))))
 
 (deftest forms-api-security-test
   (testing "without authentication"

@@ -1,5 +1,6 @@
 (ns rems.atoms
-  (:require [komponentit.autosize :as autosize])
+  (:require [komponentit.autosize :as autosize]
+            [rems.guide-functions])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn external-link []

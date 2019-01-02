@@ -1,4 +1,3 @@
-
 {:t
  {:about {:text [[:div.document
                   [:h2 "REMS-Demo"]
@@ -167,17 +166,21 @@
                           :title-placeholder "Name"
                           :workflow-selection "Workflow"}
   :create-form {:add-form-item "Add field"
+                :add-option "Add option"
                 :input-prompt "Placeholder text"
+                :item-n "Field %1"
                 :item-title "Field title"
-                :move-form-item-down "Move down"
-                :move-form-item-up "Move up"
+                :option-key "ID code"
+                :option-label "Label"
+                :option-n "Option %1"
                 :optional "Optional"
-                :remove-form-item "Remove field"
+                :options "Options"
                 :title "Form name"
                 :type-attachment "Attachment"
                 :type-date "Date field"
                 :type-description "Description"
                 :type-label "Label"
+                :type-option "Option list"
                 :type-text "Text field"
                 :type-texta "Text area"}
   :create-license {:external-link "External link"
@@ -260,6 +263,9 @@
                       :required "Field \"%1\" is required."
                       :toolong "Answer to field \"%1\" is too long."}}
   :header {:title "Welcome to REMS"}
+  :item-lists {:move-down "Move down"
+               :move-up "Move up"
+               :remove "Remove"}
   :ldap {:failed "Login failed"
          :login "Login"
          :password "Password"

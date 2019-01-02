@@ -166,17 +166,21 @@
                           :title-placeholder "Nimi"
                           :workflow-selection "Työvuo"}
   :create-form {:add-form-item "Lisää kenttä"
+                :add-option "Add option"
                 :input-prompt "Esimerkkiteksti"
+                :item-n "Kenttä %1"
                 :item-title "Kentän otsikko"
-                :move-form-item-down "Siirrä alaspäin"
-                :move-form-item-up "Siirrä ylöspäin"
+                :option-key "Tunnuskoodi"
+                :option-label "Otsikko"
+                :option-n "Vaihtoehto %1"
                 :optional "Ei pakollinen"
-                :remove-form-item "Poista kenttä"
+                :options "Valinnat"
                 :title "Lomakkeen nimi"
                 :type-attachment "Liitetiedosto"
                 :type-date "Päivämäärä"
                 :type-description "Kuvaus"
                 :type-label "Infokenttä"
+                :type-option "Valintalista"
                 :type-text "Tekstikenttä"
                 :type-texta "Tekstialue"}
   :create-license {:external-link "Linkki"
@@ -260,6 +264,9 @@
                       :required "Kenttä \"%1\" on pakollinen."
                       :toolong "Kentän \"%1\" vastaus on liian pitkä."}}
   :header {:title "Tervetuloa REMSiin"}
+  :item-lists {:move-down "Siirrä alaspäin"
+               :move-up "Siirrä ylöspäin"
+               :remove "Poista"}
   :ldap {:failed "Kirjautuminen epäonnistui"
          :login "Kirjaudu"
          :password "Salasana"

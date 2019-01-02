@@ -13,49 +13,49 @@
         user-id "owner"]
     (testing "get"
       ;; just a basic smoke test for now
-      (let [response (-> (request :get "/api/resources")
-                         (authenticate api-key user-id)
-                         app)
-            data (read-body response)]
-        (assert-response-is-ok response)
+      (let [data (-> (request :get "/api/resources")
+                     (authenticate api-key user-id)
+                     app
+                     assert-response-is-ok
+                     read-body)]
         (is (coll-is-not-empty? data))
         (is (= #{:id :owneruserid :modifieruserid :organization :resid :start :end :active :licenses} (set (keys (first data)))))))
     (testing "create"
       (let [licid 1
             resid "RESOURCE-API-TEST"]
-        (let [response (-> (request :post "/api/resources/create")
-                           (authenticate api-key user-id)
-                           (json-body {:resid resid
-                                       :organization "TEST-ORGANIZATION"
-                                       :licenses [licid]})
-                           app)]
-          (assert-response-is-ok response))
+        (-> (request :post "/api/resources/create")
+            (authenticate api-key user-id)
+            (json-body {:resid resid
+                        :organization "TEST-ORGANIZATION"
+                        :licenses [licid]})
+            app
+            assert-response-is-ok)
         (testing "and fetch"
-          (let [response (-> (request :get "/api/resources")
-                             (authenticate api-key user-id)
-                             app)
-                data (read-body response)
+          (let [data (-> (request :get "/api/resources")
+                         (authenticate api-key user-id)
+                         app
+                         assert-response-is-ok
+                         read-body)
                 resource (some #(when (= resid (:resid %)) %) data)]
-            (assert-response-is-ok response)
             (is resource)
             (is (= [licid] (map :id (:licenses resource))))))))))
 
 (deftest resources-api-filtering-test
-  (let [unfiltered-response (-> (request :get "/api/resources")
-                                (authenticate "42" "owner")
-                                app)
-        unfiltered-data (read-body unfiltered-response)
-        filtered-response (-> (request :get "/api/resources" {:active true})
-                              (authenticate "42" "owner")
-                              app)
-        filtered-data (read-body filtered-response)]
-    (assert-response-is-ok unfiltered-response)
-    (assert-response-is-ok filtered-response)
-    (is (coll-is-not-empty? unfiltered-data))
-    (is (coll-is-not-empty? filtered-data))
-    (is (every? #(contains? % :active) unfiltered-data))
-    (is (every? :active filtered-data))
-    (is (< (count filtered-data) (count unfiltered-data)))))
+  (let [unfiltered (-> (request :get "/api/resources")
+                       (authenticate "42" "owner")
+                       app
+                       assert-response-is-ok
+                       read-body)
+        filtered (-> (request :get "/api/resources" {:active true})
+                     (authenticate "42" "owner")
+                     app
+                     assert-response-is-ok
+                     read-body)]
+    (is (coll-is-not-empty? unfiltered))
+    (is (coll-is-not-empty? filtered))
+    (is (every? #(contains? % :active) unfiltered))
+    (is (every? :active filtered))
+    (is (< (count filtered) (count unfiltered)))))
 
 (deftest resources-api-security-test
   (testing "without authentication"

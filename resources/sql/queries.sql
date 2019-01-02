@@ -159,6 +159,16 @@ INSERT INTO application_form_item_localization
 VALUES
 (:item, :langcode, :title, :inputprompt)
 
+-- :name create-form-item-option! :insert
+INSERT INTO application_form_item_options
+  (itemId, key, langCode, label, displayOrder)
+VALUES (:itemId, :key, :langCode, :label, :displayOrder);
+
+-- :name get-form-item-options :? :*
+SELECT itemId, key, langCode, label, displayOrder
+FROM application_form_item_options
+WHERE itemId = :item;
+
 -- :name end-form-item! :!
 UPDATE application_form_item
 SET endt = current_timestamp
