@@ -152,12 +152,12 @@
   [injections user]
   (cond
     (not (:valid-user? injections)) {:errors [[:missing-injection :valid-user?]]}
-    (not ((:valid-user? injections) user)) {:errors [[:invalid-user user]]}))
+    (not ((:valid-user? injections) user)) {:errors [[:t.form.validation/invalid-user user]]}))
 
 (defn- validation-error
   [injections application-id]
-  (when (not ((:valid-form-inputs? injections) application-id))
-    {:errors [:form-not-valid]}))
+  (when-let [errors ((:validate-form injections) application-id)]
+    {:errors errors}))
 
 (defmethod handle-command ::submit
   [cmd application injections]
@@ -335,11 +335,19 @@
     :actor actor
     :member "member"}])
 
-(def ^:private injections-for-possible-commands
+(def ^:private
+  injections-for-possible-commands
+  "`possible-commands` are calculated with the expectations that
+  - the user is always valid and
+  - the validation returns no errors."
   {:valid-user? (constantly true)
-   :valid-form-inputs? (constantly true)})
+   :validate-form (constantly nil)})
 
-(defn possible-commands [actor application-state]
+(defn possible-commands
+  "Calculates which commands should be possible for use in e.g. UI.
+
+  Not every condition is checked exactly so it is in fact a potential set of possible commands only."
+  [actor application-state]
   (set
    (map :type
         (remove #(impossible-command? % application-state injections-for-possible-commands)
@@ -352,8 +360,9 @@
 ;;; Tests
 
 (deftest test-submit-approve-or-reject
-  (let [injections {:valid-form-inputs? (constantly true)}
-        fail-injections {:valid-form-inputs? (constantly false)}
+  (let [injections {:validate-form (constantly nil)}
+        expected-errors [{:key :t.form.validation/required}]
+        fail-injections {:validate-form (constantly expected-errors)}
         application {:state ::draft
                      :applicantuserid "applicant"
                      :workflow {:type :workflow/dynamic
@@ -362,7 +371,7 @@
       (is (= {:errors [:unauthorized]}
              (handle-command {:actor "not-applicant" :type ::submit} application injections))))
     (testing "can only submit valid form"
-      (is (= {:errors [:form-not-valid]}
+      (is (= {:errors expected-errors}
              (handle-command {:actor "applicant" :type ::submit} application fail-injections))))
     (let [submitted (apply-command application {:actor "applicant" :type ::submit} injections)]
       (testing "cannot submit twice"
@@ -380,7 +389,7 @@
                                                  injections))))))))
 
 (deftest test-submit-return-submit-approve-close
-  (let [injections {:valid-form-inputs? (constantly true)}
+  (let [injections {:validate-form (constantly nil)}
         application {:state ::draft
                      :applicantuserid "applicant"
                      :workflow {:type :workflow/dynamic
@@ -410,7 +419,7 @@
                              application
                              {}))))
     (testing "decider must be a valid user"
-      (is (= {:errors [[:invalid-user "deity2"]]}
+      (is (= {:errors [[:t.form.validation/invalid-user "deity2"]]}
              (handle-command {:actor "assistant" :decider "deity2" :type ::request-decision}
                              application
                              injections))))
@@ -468,7 +477,7 @@
                              application
                              injections))))
     (testing "only valid users can be added"
-      (is (= {:errors [[:invalid-user "member3"]]}
+      (is (= {:errors [[:t.form.validation/invalid-user "member3"]]}
              (handle-command {:type ::add-member :actor "applicant" :member "member3"}
                              application
                              injections))))
@@ -491,7 +500,7 @@
                              application
                              {}))))
     (testing "commenters must be a valid users"
-      (is (= {:errors [[:invalid-user "invaliduser"] [:invalid-user "invaliduser2"]]}
+      (is (= {:errors [[:t.form.validation/invalid-user "invaliduser"] [:t.form.validation/invalid-user "invaliduser2"]]}
              (handle-command {:actor "assistant" :commenters ["invaliduser" "commenter" "invaliduser2"] :type ::request-comment}
                              application
                              injections))))

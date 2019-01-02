@@ -36,6 +36,7 @@
   {:id s/Num
    :localizations {s/Keyword {:title s/Str :inputprompt (s/maybe s/Str)}}
    :optional s/Bool
+   :maxlength (s/maybe s/Int)
    :type s/Str
    :value (s/maybe s/Str)})
 

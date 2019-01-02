@@ -93,13 +93,17 @@
         purpose (db/create-form-item! {:type "texta" :optional false :user owner :value 0})
         start-date (db/create-form-item! {:type "date" :optional true :user owner :value 0})
         expired (db/create-form-item! {:type "text" :optional true :user owner :value 0})
-        plan (db/create-form-item! {:type "attachment" :optional true :user owner :value 0})]
+        plan (db/create-form-item! {:type "attachment" :optional true :user owner :value 0})
+        maxlength-text (db/create-form-item! {:type "text" :optional false :user owner :value 0})
+        maxlength-texta (db/create-form-item! {:type "texta" :optional false :user owner :value 0})]
     (db/end-form-item! {:id (:id expired)})
     ;; link out of order for less predictable row ids
     (db/link-form-item! {:form (:id form) :itemorder 1 :optional false :item (:id name) :user owner})
     (db/link-form-item! {:form (:id form) :itemorder 3 :optional false :item (:id purpose) :user owner})
     (db/link-form-item! {:form (:id form) :itemorder 2 :optional true :item (:id start-date) :user owner})
     (db/link-form-item! {:form (:id form) :itemorder 4 :optional true :item (:id plan) :user owner})
+    (db/link-form-item! {:form (:id form) :itemorder 5 :optional true :item (:id maxlength-text) :user owner :maxlength 10})
+    (db/link-form-item! {:form (:id form) :itemorder 6 :optional true :item (:id maxlength-texta) :user owner :maxlength 100})
     ;; localize
     (db/localize-form-item! {:item (:id name) :langcode "fi" :title "Projektin nimi" :inputprompt "Projekti"})
     (db/localize-form-item! {:item (:id name) :langcode "en" :title "Project name" :inputprompt "Project"})
@@ -114,6 +118,10 @@
     (db/localize-form-item! {:item (:id expired) :langcode "en" :title "Expired form item" :inputprompt ""})
     (db/localize-form-item! {:item (:id plan) :langcode "fi" :title "Projektisuunnitelma" :inputprompt ""})
     (db/localize-form-item! {:item (:id plan) :langcode "en" :title "Project plan" :inputprompt ""})
+    (db/localize-form-item! {:item (:id maxlength-text) :langcode "fi" :title "Projektin lyhenne" :inputprompt ""})
+    (db/localize-form-item! {:item (:id maxlength-text) :langcode "en" :title "Project acronym" :inputprompt ""})
+    (db/localize-form-item! {:item (:id maxlength-texta) :langcode "fi" :title "Tutkimussuunnitelma" :inputprompt ""})
+    (db/localize-form-item! {:item (:id maxlength-texta) :langcode "en" :title "Research plan" :inputprompt ""})
 
     (:id form)))
 
@@ -201,6 +209,11 @@
       (db/create-catalogue-item-localization! {:id id :langcode lang :title title}))
     id))
 
+(defn trim-value-if-longer-than-fields-maxlength [value maxlength]
+  (if (and maxlength (> (count value) maxlength))
+    (subs value 0 maxlength)
+    value))
+
 (defn- create-draft! [user-id catids wfid field-value & [now]]
   (let [app-id (applications/create-new-draft-at-time user-id wfid (or now (time/now)))
         _ (if (vector? catids)
@@ -209,9 +222,10 @@
             (db/add-application-item! {:application app-id :item catids}))
         form (binding [context/*lang* :en]
                (applications/get-form-for user-id app-id))]
-    (doseq [{item-id :id} (:items form)]
+    (doseq [{item-id :id maxlength :maxlength} (:items form)
+            :let [trimmed-value (trim-value-if-longer-than-fields-maxlength field-value maxlength)]]
       (db/save-field-value! {:application app-id :form (:id form)
-                             :item item-id :user user-id :value field-value}))
+                             :item item-id :user user-id :value trimmed-value}))
     (doseq [{license-id :id} (:licenses form)]
       (db/save-license-approval! {:catappid app-id
                                   :round 0
@@ -250,10 +264,11 @@
       (applications/submit-application applicant app-id))))
 
 (defn- create-dynamic-application! [catid wfid applicant]
-  (let [app-id (create-draft! applicant [catid] wfid "dynamic application")]
-    (applications/dynamic-command! {:type :rems.workflow.dynamic/submit
-                                    :actor applicant
-                                    :application-id app-id})
+  (let [app-id (create-draft! applicant [catid] wfid "dynamic application")
+        result (applications/dynamic-command! {:type :rems.workflow.dynamic/submit
+                                               :actor applicant
+                                               :application-id app-id})]
+    (assert (nil? result) {:result result})
     app-id))
 
 (defn- create-review-application! [catid wfid users]

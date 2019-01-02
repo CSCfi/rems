@@ -48,9 +48,9 @@
    (s/optional-key :licenses) {s/Any s/Str}})
 
 (s/defschema ValidationMessage
-  {:type (s/enum :item :license)
-   :id s/Num
-   :key s/Keyword})
+  {:type s/Keyword
+   (s/optional-key :field-id) s/Num
+   (s/optional-key :license-id) s/Num})
 
 (s/defschema SaveApplicationResponse
   {:success s/Bool

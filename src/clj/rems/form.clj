@@ -13,7 +13,6 @@
             [rems.context :as context]))
 
 
-
 (defn save-application-items [application-id catalogue-item-ids]
   (assert application-id)
   (assert (empty? (filter nil? catalogue-item-ids)) "nils sent in catalogue-item-ids")
@@ -49,6 +48,7 @@
                                       :licid licid
                                       :actoruserid user-id})))))
 
+;; TODO think a better name
 (defn- save-form-inputs [applicant-id application-id submit? items licenses]
   (save-fields applicant-id application-id items)
   (save-licenses applicant-id  application-id licenses)

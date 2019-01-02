@@ -51,15 +51,9 @@
         (is (not (:errors cmd-response)))
         (is (= "draft" (:state cmd-response)))
         (is (not (:valid cmd-response)))
-        (is (= [{:type "item"
-                 :id 2
-                 :key "t.form.validation/required"}
-                {:type "license"
-                 :id 1
-                 :key "t.form.validation/required"}
-                {:type "license"
-                 :id 2
-                 :key "t.form.validation/required"}]
+        (is (= [{:type "t.form.validation/required" :field-id 2}
+                {:type "t.form.validation/required" :license-id 1}
+                {:type "t.form.validation/required" :license-id 2}]
                (:validation cmd-response))))
       (testing "retrieving"
         (let [response (-> (request :get (str "/api/applications/" application-id))
@@ -70,7 +64,7 @@
           (is (= application-id (:id (:application application))))
           (is (= "draft" (:state (:application application))))
           (is (= 2 (count (:licenses application))))
-          (is (= 4 (count (:items application))))))
+          (is (= 6 (count (:items application))))))
       (testing "retrieving as other user"
         (let [response (-> (request :get (str "/api/applications/" application-id))
                            (authenticate api-key another-user)
@@ -135,10 +129,10 @@
       (testing "empty draft"
         (is (:success cmd-response))
         ;; 2 fields, 2 licenses
-        (is (= [{:id 1, :key "t.form.validation/required", :type "item"}
-                {:id 2, :key "t.form.validation/required", :type "item"}
-                {:id 1, :key "t.form.validation/required", :type "license"}
-                {:id 2, :key "t.form.validation/required", :type "license"}]
+        (is (= [{:type "t.form.validation/required" :field-id 1}
+                {:type "t.form.validation/required" :field-id 2}
+                {:type "t.form.validation/required" :license-id 1}
+                {:type "t.form.validation/required" :license-id 2}]
                validations)))
       (testing "add one field"
         (let [response (-> (request :post (str "/api/applications/save"))
@@ -460,6 +454,7 @@
                                :catalogue-items [catid]
                                :items {1 "REST-Test"}})
                    app
+                   assert-response-is-ok
                    read-body
                    :id)]
     (testing "happy path"
@@ -467,12 +462,12 @@
                          (authenticate api-key user-id)
                          (json-body {:application-id app-id
                                      :member another-user})
-                         app
-                         read-body)]
-        (is (:success response))
+                         app)]
+        (assert-response-is-ok response)
         (let [members (-> (request :get (str "/api/applications/" app-id))
                           (authenticate api-key user-id)
                           app
+                          assert-response-is-ok
                           read-body
                           :application
                           :members)]
@@ -879,7 +874,7 @@
         catid 9 ;; catalogue item with dynamic workflow in test-data
         draft (create-application-draft-for-catalogue-item 9)]
     (testing "get draft"
-      (is (= 4 (count (:items draft)))))
+      (is (= 6 (count (:items draft)))))
     (let [response (-> (request :post (str "/api/applications/save"))
                        (authenticate api-key user-id)
                        (json-body {:command "save"
@@ -895,8 +890,9 @@
           (is (= "rems.workflow.dynamic/draft" (get-in saved [:application :state])))
           (is (= "dynamic test" (get-in saved [:items 0 :value])))))
       (testing "can't submit with missing required fields"
-        (is (= {:success false, :errors ["form-not-valid"]} (send-dynamic-command user-id {:type :rems.workflow.dynamic/submit
-                                                                                           :application-id application-id}))))
+        (is (= {:success false :errors [{:type "t.form.validation/required" :field-id 2}]}
+               (send-dynamic-command user-id {:type :rems.workflow.dynamic/submit
+                                              :application-id application-id}))))
       (testing "add missing fields"
         (let [save-again (-> (request :post (str "/api/applications/save"))
                              (authenticate api-key user-id)

@@ -22,6 +22,7 @@
                  [luminus-migrations "0.5.2"]
                  [luminus-nrepl "0.1.4"]
                  [luminus/ring-ttl-session "0.3.2"]
+                 [macroz/hiccup-find "0.6.1"]
                  [markdown-clj "1.0.2"]
                  [metosin/compojure-api "2.0.0-alpha18" :exclusions [cheshire com.fasterxml.jackson.core/jackson-core]]
                  [metosin/komponentit "0.3.5"]
@@ -62,7 +63,7 @@
   :resource-paths ["resources" "target/cljsbuild"]
   :target-path "target/%s/"
   :main rems.standalone
-  :migratus {:store :database :db ~(get (System/getenv) "DATABASE_URL")}
+  :migratus {:store :database :db ~(get (System/getenv) "DATABASE_URL" "postgresql://localhost/rems?user=rems")}
 
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-cprop "1.0.3"]
@@ -103,6 +104,7 @@
         :alias {:default [:chrome-headless]}}
 
   :aliases {"browsertests" ["do" ["cljsbuild" "once"] ["eftest" ":browser"]]
+            "alltests" ["do" ["cljsbuild" "once"] ["eftest" ":all"] ["doo" "once"]]
             "run-cloverage" ["do" ["cljsbuild" "once"] ["with-profile" "test" "cloverage"]]}
 
   :profiles

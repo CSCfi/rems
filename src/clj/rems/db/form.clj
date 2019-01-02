@@ -7,14 +7,14 @@
        (map db/assoc-active)
        (db/apply-filters filters)))
 
-(defn- create-form-item! [form item-index {:keys [title optional type input-prompt]}]
+(defn- create-form-item! [form item-index {:keys [title optional type input-prompt maxlength]}]
   (let [item (db/create-form-item! {:type type
-                                    :optional optional
                                     :user (getx-user-id)
                                     :value 0})]
     (db/link-form-item! {:form (:id form)
                          :itemorder item-index
                          :optional optional
+                         :maxlength maxlength
                          :item (:id item)
                          :user (getx-user-id)})
     (doseq [lang (keys title)]

@@ -27,10 +27,12 @@
       (assoc-in [:headers "x-rems-user-id"] user-id)))
 
 (defn assert-response-is-ok [response]
+  (assert response)
   (assert (= 200 (:status response))
           (pr-str {:status (:status response)
-                   :body (slurp (:body response))}))
-  true)
+                   :body (when (:body response)
+                           (slurp (:body response)))}))
+  response)
 
 (defn response-is-unauthorized? [response]
   (= 401 (:status response)))

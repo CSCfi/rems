@@ -41,6 +41,21 @@
                                                      keys
                                                      (.. % -target -value)])}]]))
 
+(defn number-field
+  "A basic number field, full page width."
+  [context {:keys [keys label]}]
+  (let [form @(rf/subscribe [(:get-form context)])
+        id (keys-to-id keys)]
+    [:div.form-group.field
+     [:label {:for id} label]
+     [:input.form-control {:type "number"
+                           :id id
+                           :min 0
+                           :value (get-in form keys)
+                           :on-change #(rf/dispatch [(:update-form context)
+                                                     keys
+                                                     (.. % -target -value)])}]]))
+
 (defn- localized-text-field-lang [context {:keys [keys-prefix lang]}]
   (let [form @(rf/subscribe [(:get-form context)])
         keys (conj keys-prefix lang)
