@@ -833,6 +833,13 @@
                  "rems.workflow.dynamic/return"}
                (set (get-in data [:application :possible-commands]))))))
 
+    (testing "send command without user"
+      (is (= {:success false
+              :errors ["forbidden"]}
+             (send-dynamic-command "" {:type :rems.workflow.dynamic/approve
+                                        :application-id application-id}))
+          "user should be forbidden to send command"))
+
     (testing "send command with a user that is not a handler"
       (is (= {:success false
               :errors ["forbidden"]}
