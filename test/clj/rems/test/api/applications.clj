@@ -839,7 +839,7 @@
              (send-dynamic-command user-id {:type :rems.workflow.dynamic/approve
                                             :application-id application-id}))))
 
-    (testing "send commands with authorized user:"
+    (testing "send commands with authorized user"
       (testing "request-decision"
         (is (= {:success true} (send-dynamic-command handler-id
                                                      {:type :rems.workflow.dynamic/request-decision
