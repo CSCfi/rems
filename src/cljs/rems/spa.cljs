@@ -131,24 +131,16 @@
 
 (reg-event-fx
  :unauthorized!
- (fn [{:keys [db]} [_ current-url]]
+ (fn [_ [_ current-url]]
    (println "Received unauthorized from" current-url)
-   (if (get-in db [:identity :roles])
-     (do (println "User is logged-in")
-         (.removeItem js/sessionStorage "rems-redirect-url")
-         {:dispatch [:set-active-page :unauthorized]})
-     (do (println "User is not logged-in")
-         (.setItem js/sessionStorage "rems-redirect-url" current-url)
-         (dispatch! "/")))))
+   (.setItem js/sessionStorage "rems-redirect-url" current-url)
+   (dispatch! "/")))
 
 (reg-event-fx
-  :forbidden!
-  (fn [{:keys [db]} [_ current-url]]
-    (println "Received forbidden from" current-url)
-    (if (get-in db [:identity :roles])
-      (do (println "User is logged-in but forbidden")
-          (.removeItem js/sessionStorage "rems-redirect-url")
-          {:dispatch [:set-active-page :forbidden]}))))
+ :forbidden!
+ (fn [_ [_ current-url]]
+   (println "Received forbidden from" current-url)
+   {:dispatch [:set-active-page :forbidden]}))
 
 (reg-event-fx
  :landing-page-redirect!
@@ -304,7 +296,7 @@
   (rf/dispatch [:set-active-page :unauthorized]))
 
 (secretary/defroute "/forbidden" []
-                    (rf/dispatch [:set-active-page :forbidden]))
+  (rf/dispatch [:set-active-page :forbidden]))
 
 (secretary/defroute "/redirect" []
   ;; user is logged in so redirect to a more specific page
