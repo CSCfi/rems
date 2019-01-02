@@ -209,6 +209,11 @@
       (db/create-catalogue-item-localization! {:id id :langcode lang :title title}))
     id))
 
+(defn trim-value-if-longer-than-fields-maxlength [value maxlength]
+  (if (and maxlength (> (count value) maxlength))
+    (subs value 0 maxlength)
+    value))
+
 (defn- create-draft! [user-id catids wfid field-value & [now]]
   (let [app-id (applications/create-new-draft-at-time user-id wfid (or now (time/now)))
         _ (if (vector? catids)
@@ -218,9 +223,7 @@
         form (binding [context/*lang* :en]
                (applications/get-form-for user-id app-id))]
     (doseq [{item-id :id maxlength :maxlength} (:items form)
-            :let [trimmed-value (if (and maxlength (> (count field-value) maxlength))
-                                  (subs field-value 0 maxlength)
-                                  field-value)]]
+            :let [trimmed-value (trim-value-if-longer-than-fields-maxlength field-value maxlength)]]
       (db/save-field-value! {:application app-id :form (:id form)
                              :item item-id :user user-id :value trimmed-value}))
     (doseq [{license-id :id} (:licenses form)]
