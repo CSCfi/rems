@@ -335,11 +335,19 @@
     :actor actor
     :member "member"}])
 
-(def ^:private injections-for-possible-commands
+(def ^:private
+  injections-for-possible-commands
+  "`possible-commands` are calculated with the expectations that
+  - the user is always valid and
+  - the validation returns no errors."
   {:valid-user? (constantly true)
    :validate-form (constantly nil)})
 
-(defn possible-commands [actor application-state]
+(defn possible-commands
+  "Calculates which commands should be possible for use in e.g. UI.
+
+  Not every condition is checked exactly so it is in fact a potential set of possible commands only."
+  [actor application-state]
   (set
    (map :type
         (remove #(impossible-command? % application-state injections-for-possible-commands)
