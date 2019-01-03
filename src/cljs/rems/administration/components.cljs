@@ -28,9 +28,10 @@
 
 (defn text-field
   "A basic text field, full page width."
-  [context {:keys [keys label placeholder]}]
+  [context {:keys [keys label placeholder normalizer]}]
   (let [form @(rf/subscribe [(:get-form context)])
-        id (keys-to-id keys)]
+        id (keys-to-id keys)
+        normalizer (or normalizer identity)]
     [:div.form-group.field
      [:label {:for id} label]
      [:input.form-control {:type "text"
@@ -39,7 +40,7 @@
                            :value (get-in form keys)
                            :on-change #(rf/dispatch [(:update-form context)
                                                      keys
-                                                     (.. % -target -value)])}]]))
+                                                     (normalizer (.. % -target -value))])}]]))
 
 (defn number-field
   "A basic number field, full page width."

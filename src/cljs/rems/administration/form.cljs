@@ -210,7 +210,8 @@
      [move-form-item-option-down-button item-index option-index]
      [remove-form-item-option-button item-index option-index]]]
    [text-field context {:keys [:items item-index :options option-index :key]
-                        :label (text :t.create-form/option-key)}]
+                        :label (text :t.create-form/option-key)
+                        :normalizer #(str/replace % #"\s+" "")}]
    [localized-text-field context {:keys [:items item-index :options option-index :label]
                                   :label (text :t.create-form/option-label)}]])
 
