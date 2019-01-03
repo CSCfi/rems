@@ -615,18 +615,21 @@
   [f]
   [:p.alert.alert-warning "Unsupported field " (pr-str f)])
 
+(defn license-field [f]
+  (case (:licensetype f)
+    "link" [link-license f]
+    "text" [text-license f]
+    [unsupported-field f]))
+
 (defn- field [f]
   (case (:type f)
     "attachment" [attachment-field f]
     "date" [date-field f]
     "description" [text-field f]
+    "label" [label f]
+    "license" [license-field f]
     "text" [text-field f]
     "texta" [texta-field f]
-    "label" [label f]
-    "license" (case (:licensetype f)
-                "link" [link-license f]
-                "text" [text-license f]
-                [unsupported-field f])
     [unsupported-field f]))
 
 (defn- save-button []
