@@ -594,6 +594,47 @@
              [:option {:value key}
               (get label language key)]))]))
 
+(defn- encode-multiple-values [values]
+  (->> values
+       sort
+       (str/join " ")))
+
+(defn- decode-multiple-values [value]
+  (-> value
+      (str/split #"\s+")
+      set
+      (disj "")))
+
+(defn multiselect-field [{:keys [id value options validation] :as opts}]
+  (let [values (decode-multiple-values value)
+        language @(rf/subscribe [:language])]
+    ;; TODO: for accessibility these checkboxes would be best wrapped in a fieldset
+    [basic-field
+     (assoc opts :readonly-component [readonly-field {:id (id-to-name id)
+                                                      :value (->> options
+                                                                  (filter #(contains? values (:key %)))
+                                                                  (map #(get (:label %) language (:key %)))
+                                                                  (str/join ", "))}])
+     (into [:div]
+           (for [{:keys [key label]} options]
+             (let [option-id (str (id-to-name id) "-" key)
+                   on-change (fn [event]
+                               (let [checked (.. event -target -checked)
+                                     values (if checked
+                                              (conj values key)
+                                              (disj values key))]
+                                 (rf/dispatch [::set-field id (encode-multiple-values values)])))]
+               [:div.form-check
+                [:input.form-check-input {:type "checkbox"
+                                          :id option-id
+                                          :name option-id
+                                          :class (when validation "is-invalid")
+                                          :value key
+                                          :checked (contains? values key)
+                                          :on-change on-change}]
+                [:label.form-check-label {:for option-id}
+                 (get label language key)]])))]))
+
 (defn- label [{title :title}]
   [:div.form-group
    [:label title]])
@@ -651,6 +692,7 @@
     "description" [text-field f]
     "label" [label f]
     "license" [license-field f]
+    "multiselect" [multiselect-field f]
     "option" [option-field f]
     "text" [text-field f]
     "texta" [texta-field f]
@@ -1221,6 +1263,18 @@
              [field {:type "option" :title "Title" :value "y" :readonly true
                      :options [{:key "y" :label {:en "Yes" :fi "Kyllä"}}
                                {:key "n" :label {:en "No" :fi "Ei"}}]}]])
+   (example "field of type \"multiselect\""
+            [:form
+             [field {:type "multiselect" :title "Title" :value "egg bacon"
+                     :options [{:key "egg" :label {:en "Egg" :fi "Munaa"}}
+                               {:key "bacon" :label {:en "Bacon" :fi "Pekonia"}}
+                               {:key "spam" :label {:en "Spam" :fi "Lihasäilykettä"}}]}]])
+   (example "non-editable field of type \"multiselect\""
+            [:form
+             [field {:type "multiselect" :title "Title" :value "egg bacon" :readonly true
+                     :options [{:key "egg" :label {:en "Egg" :fi "Munaa"}}
+                               {:key "bacon" :label {:en "Bacon" :fi "Pekonia"}}
+                               {:key "spam" :label {:en "Spam" :fi "Lihasäilykettä"}}]}]])
    (example "optional field"
             [:form
              [field {:type "texta" :optional "true" :title "Title" :inputprompt "prompt"}]])
