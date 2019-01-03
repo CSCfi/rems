@@ -564,12 +564,35 @@
   ;; TODO: format readonly value in user locale (give basic-field a formatted :value and :previous-value in opts)
   [basic-field opts
    [:input.form-control {:type "date"
+                         :id (id-to-name id)
                          :name (id-to-name id)
                          :class (when validation "is-invalid")
                          :defaultValue value
                          :min min
                          :max max
                          :on-change (set-field-value id)}]])
+
+(defn- option-label [value language options]
+  (let [label (->> options
+                   (filter #(= value (:key %)))
+                   first
+                   :label)]
+    (get label language value)))
+
+(defn option-field [{:keys [id value options validation] :as opts}]
+  (let [language @(rf/subscribe [:language])]
+    [basic-field
+     (assoc opts :readonly-component [readonly-field {:id (id-to-name id)
+                                                      :value (option-label value language options)}])
+     (into [:select.form-control {:id (id-to-name id)
+                                  :name (id-to-name id)
+                                  :class (when validation "is-invalid")
+                                  :on-change (set-field-value id)}
+            [:option {:value ""}]]
+           (for [{:keys [key label]} options]
+             [:option {:value key
+                       :selected (= key value)}
+              (get label language key)]))]))
 
 (defn- label [{title :title}]
   [:div.form-group
@@ -628,6 +651,7 @@
     "description" [text-field f]
     "label" [label f]
     "license" [license-field f]
+    "option" [option-field f]
     "text" [text-field f]
     "texta" [texta-field f]
     [unsupported-field f]))
@@ -1187,6 +1211,16 @@
    (example "non-editable field of type \"date\" with value"
             [:form
              [field {:type "date" :title "Title" :readonly true :value "2000-12-31"}]])
+   (example "field of type \"option\""
+            [:form
+             [field {:type "option" :title "Title" :value "y"
+                     :options [{:key "y" :label {:en "Yes" :fi "Kyllä"}}
+                               {:key "n" :label {:en "No" :fi "Ei"}}]}]])
+   (example "non-editable field of type \"option\""
+            [:form
+             [field {:type "option" :title "Title" :value "y" :readonly true
+                     :options [{:key "y" :label {:en "Yes" :fi "Kyllä"}}
+                               {:key "n" :label {:en "No" :fi "Ei"}}]}]])
    (example "optional field"
             [:form
              [field {:type "texta" :optional "true" :title "Title" :inputprompt "prompt"}]])
