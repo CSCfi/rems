@@ -587,11 +587,11 @@
      (into [:select.form-control {:id (id-to-name id)
                                   :name (id-to-name id)
                                   :class (when validation "is-invalid")
+                                  :defaultValue value
                                   :on-change (set-field-value id)}
             [:option {:value ""}]]
            (for [{:keys [key label]} options]
-             [:option {:value key
-                       :selected (= key value)}
+             [:option {:value key}
               (get label language key)]))]))
 
 (defn- label [{title :title}]
