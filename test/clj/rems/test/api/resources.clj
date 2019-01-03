@@ -38,7 +38,24 @@
                          read-body)
                 resource (some #(when (= resid (:resid %)) %) data)]
             (is resource)
-            (is (= [licid] (map :id (:licenses resource))))))))))
+            (is (= [licid] (map :id (:licenses resource))))))
+        (testing "duplicate resource ID is not allowed within one organization"
+          (let [response (-> (request :post "/api/resources/create")
+                             (authenticate api-key user-id)
+                             (json-body {:resid resid
+                                         :organization "TEST-ORGANIZATION"
+                                         :licenses [licid]})
+                             app)]
+            (is (= 400 (:status response)))
+            (is (= "Duplicate resource ID" (read-body response)))))
+        (testing "duplicate resource ID is allowed between organizations"
+          (-> (request :post "/api/resources/create")
+              (authenticate api-key user-id)
+              (json-body {:resid resid
+                          :organization "TEST-ORGANIZATION2"
+                          :licenses [licid]})
+              app
+              assert-response-is-ok))))))
 
 (deftest resources-api-filtering-test
   (let [unfiltered (-> (request :get "/api/resources")
