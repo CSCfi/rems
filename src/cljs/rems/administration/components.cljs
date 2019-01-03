@@ -15,7 +15,8 @@
     :label  - String, shown to the user as-is."
   (:require [clojure.string :as str]
             [komponentit.autosize :as autosize]
-            [re-frame.core :as rf]))
+            [re-frame.core :as rf]
+            [rems.atoms :refer [textarea]]))
 
 (defn- key-to-id [key]
   (if (number? key)
@@ -42,20 +43,19 @@
                                                      keys
                                                      (.. % -target -value)])}]]))
 
-(defn texta-field
+(defn textarea-autosize
   "A basic textarea, full page width."
   [context {:keys [keys label placeholder]}]
   (let [form @(rf/subscribe [(:get-form context)])
         id (keys-to-id keys)]
     [:div.form-group.field
      [:label {:for id} label]
-     [:input.form-control {:type "texta"
-                           :id id
-                           :placeholder placeholder
-                           :value (get-in form keys)
-                           :on-change #(rf/dispatch [(:update-form context)
-                                                     keys
-                                                     (.. % -target -value)])}]]))
+     [textarea {:id          id
+                :placeholder placeholder
+                :value       (get-in form keys)
+                :on-change   #(rf/dispatch [(:update-form context)
+                                            keys
+                                            (.. % -target -value)])}]]))
 
 (defn number-field
   "A basic number field, full page width."
