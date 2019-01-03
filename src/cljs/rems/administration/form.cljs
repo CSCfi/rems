@@ -81,7 +81,7 @@
   (contains? #{"text" "texta"} (:type item)))
 
 (defn- supports-options? [item]
-  (= "option" (:type item)))
+  (contains? #{"option" "multiselect"} (:type item)))
 
 (defn- localized-string? [lstr languages]
   (and (= (set (keys lstr))
@@ -112,7 +112,7 @@
        (if (supports-input-prompt? item)
          (valid-optional-localized-string? (:input-prompt item) languages)
          (nil? (:input-prompt item)))
-       (if (= "option" (:type item))
+       (if (supports-options? item)
          (every? #(valid-option? % languages) (:options item))
          (nil? (:options item)))))
 
@@ -134,7 +134,7 @@
          (when (supports-maxlength? item)
            {:maxlength (when-not (str/blank? (:maxlength item))
                          (parseInt (:maxlength item)))})
-         (when (= "option" (:type item))
+         (when (supports-options? item)
            {:options (for [{:keys [key label]} (:options item)]
                        {:key key
                         :label (build-localized-string label languages)})})))
@@ -229,6 +229,7 @@
                                          {:value "texta", :label (text :t.create-form/type-texta)}
                                          {:value "description", :label (text :t.create-form/type-description)}
                                          {:value "option", :label (text :t.create-form/type-option)}
+                                         {:value "multiselect", :label (text :t.create-form/type-multiselect)}
                                          {:value "date", :label (text :t.create-form/type-date)}
                                          {:value "attachment", :label (text :t.create-form/type-attachment)}
                                          {:value "label", :label (text :t.create-form/type-label)}]}])
