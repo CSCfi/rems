@@ -14,6 +14,7 @@
               analogous to the `get-in` and `assoc-in` parameters.
     :label  - String, shown to the user as-is."
   (:require [clojure.string :as str]
+            [komponentit.autosize :as autosize]
             [re-frame.core :as rf]))
 
 (defn- key-to-id [key]
@@ -34,6 +35,21 @@
     [:div.form-group.field
      [:label {:for id} label]
      [:input.form-control {:type "text"
+                           :id id
+                           :placeholder placeholder
+                           :value (get-in form keys)
+                           :on-change #(rf/dispatch [(:update-form context)
+                                                     keys
+                                                     (.. % -target -value)])}]]))
+
+(defn texta-field
+  "A basic textarea, full page width."
+  [context {:keys [keys label placeholder]}]
+  (let [form @(rf/subscribe [(:get-form context)])
+        id (keys-to-id keys)]
+    [:div.form-group.field
+     [:label {:for id} label]
+     [:input.form-control {:type "texta"
                            :id id
                            :placeholder placeholder
                            :value (get-in form keys)

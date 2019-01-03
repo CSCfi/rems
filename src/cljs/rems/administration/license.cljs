@@ -1,7 +1,7 @@
 (ns rems.administration.license
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
-            [rems.administration.components :refer [radio-button-group text-field]]
+            [rems.administration.components :refer [radio-button-group text-field texta-field]]
             [rems.collapsible :as collapsible]
             [rems.text :refer [text localize-item]]
             [rems.util :refer [dispatch! fetch post!]]))
@@ -106,7 +106,7 @@
 
 (defn- license-text-field [language]
   (when (= license-type-text (current-licence-type))
-    [text-field context {:keys [:localizations language :text]
+    [texta-field context {:keys [:localizations language :text]
                          :label (text :t.create-license/license-text)}]))
 
 (defn- save-license-button []
