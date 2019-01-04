@@ -67,7 +67,8 @@
 
 (defn- create-resource [request]
   (post! "/api/resources/create" {:params request
-                                  ; TODO: error handling
+                                  ;; TODO: show error "duplicate resource ID" (HTTP body)
+                                  ;; TODO: error handling
                                   :handler (fn [resp] (dispatch! "#/administration"))}))
 
 (rf/reg-event-fx

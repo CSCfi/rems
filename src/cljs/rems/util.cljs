@@ -1,6 +1,6 @@
 (ns rems.util
-  (:require  [ajax.core :refer [GET PUT POST]]
-             [re-frame.core :as rf]))
+  (:require [ajax.core :refer [GET PUT POST]]
+            [re-frame.core :as rf]))
 
 ;; TODO move to cljc
 (defn getx
@@ -25,7 +25,8 @@
   (let [current-url (.. js/window -location -href)]
     (case status
       401 (rf/dispatch [:unauthorized! current-url])
-      403 (rf/dispatch [:forbidden! current-url]))))
+      403 (rf/dispatch [:forbidden! current-url])
+      nil)))
 
 (defn- wrap-default-error-handler [handler]
   (fn [err]
