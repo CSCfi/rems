@@ -604,9 +604,8 @@
       set
       (disj "")))
 
-(defn multiselect-field [{:keys [id value options validation] :as opts}]
-  (let [values (decode-multiple-values value)
-        language @(rf/subscribe [:language])]
+(defn multiselect-field [{:keys [id value options validation language] :as opts}]
+  (let [values (decode-multiple-values value)]
     ;; TODO: for accessibility these checkboxes would be best wrapped in a fieldset
     [basic-field
      (assoc opts :readonly-component [readonly-field {:id (id-to-name id)
@@ -1265,13 +1264,13 @@
                                {:key "n" :label {:en "No" :fi "Ei"}}]}]])
    (example "field of type \"multiselect\""
             [:form
-             [field {:type "multiselect" :title "Title" :value "egg bacon"
+             [field {:type "multiselect" :title "Title" :value "egg bacon" :language :en
                      :options [{:key "egg" :label {:en "Egg" :fi "Munaa"}}
                                {:key "bacon" :label {:en "Bacon" :fi "Pekonia"}}
                                {:key "spam" :label {:en "Spam" :fi "Lihasäilykettä"}}]}]])
    (example "non-editable field of type \"multiselect\""
             [:form
-             [field {:type "multiselect" :title "Title" :value "egg bacon" :readonly true
+             [field {:type "multiselect" :title "Title" :value "egg bacon" :language :en :readonly true
                      :options [{:key "egg" :label {:en "Egg" :fi "Munaa"}}
                                {:key "bacon" :label {:en "Bacon" :fi "Pekonia"}}
                                {:key "spam" :label {:en "Spam" :fi "Lihasäilykettä"}}]}]])
