@@ -131,6 +131,20 @@
                                :label {:en "over 20 persons"
                                        :fi "yli 20 henkilöä"}}]}
 
+                   {:title {:en "Where will the data be used?"
+                            :fi "Missä dataa tullaan käyttämään?"}
+                    :optional true
+                    :type "multiselect"
+                    :options [{:key "EU"
+                               :label {:en "Inside EU"
+                                       :fi "EU:n sisällä"}}
+                              {:key "USA"
+                               :label {:en "Inside USA"
+                                       :fi "Yhdysvalloissa"}}
+                              {:key "Other"
+                               :label {:en "Elsewhere"
+                                       :fi "Muualla"}}]}
+
                    ;; fields which support maxlength
                    {:title {:en "Project acronym"
                             :fi "Projektin lyhenne"}
