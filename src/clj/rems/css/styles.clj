@@ -173,10 +173,8 @@
 
 (def ^:private dashed-form-group {:position "relative"
                                   :border "2px dashed #ccc"
-                                  :border-radius (u/px 15)
+                                  :border-radius (u/rem 0.4)
                                   :padding (u/px 10)
-                                  :margin-left (u/px -10)
-                                  :margin-right (u/px -10)
                                   :margin-top 0
                                   :margin-bottom (u/px 16)})
 
