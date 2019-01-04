@@ -4,7 +4,7 @@
             [re-frame.core :as rf]
             [rems.administration.components :refer [checkbox localized-text-field number-field radio-button-group text-field]]
             [rems.administration.items :as items]
-            [rems.application :refer [enrich-user]]
+            [rems.application :refer [enrich-user normalize-option-key]]
             [rems.collapsible :as collapsible]
             [rems.config :refer [dev-environment?]]
             [rems.text :refer [text text-format localize-item]]
@@ -211,7 +211,7 @@
      [remove-form-item-option-button item-index option-index]]]
    [text-field context {:keys [:items item-index :options option-index :key]
                         :label (text :t.create-form/option-key)
-                        :normalizer #(str/replace % #"\s+" "")}]
+                        :normalizer normalize-option-key}]
    [localized-text-field context {:keys [:items item-index :options option-index :label]
                                   :label (text :t.create-form/option-label)}]])
 

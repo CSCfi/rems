@@ -593,24 +593,33 @@
            [:option {:value key}
             (get label language key)]))])
 
-(defn- encode-multiple-values [values]
-  (->> values
+(defn normalize-option-key
+  "Strips disallowed characters from an option key"
+  [key]
+  (str/replace key #"\s+" ""))
+
+(defn encode-option-keys
+  "Encodes a set of option keys to a string"
+  [keys]
+  (->> keys
        sort
        (str/join " ")))
 
-(defn- decode-multiple-values [value]
+(defn decode-option-keys
+  "Decodes a set of option keys from a string"
+  [value]
   (-> value
       (str/split #"\s+")
       set
       (disj "")))
 
 (defn multiselect-field [{:keys [id value options validation language] :as opts}]
-  (let [values (decode-multiple-values value)]
+  (let [selected-keys (decode-option-keys value)]
     ;; TODO: for accessibility these checkboxes would be best wrapped in a fieldset
     [basic-field
      (assoc opts :readonly-component [readonly-field {:id (id-to-name id)
                                                       :value (->> options
-                                                                  (filter #(contains? values (:key %)))
+                                                                  (filter #(contains? selected-keys (:key %)))
                                                                   (map #(get (:label %) language (:key %)))
                                                                   (str/join ", "))}])
      (into [:div]
@@ -618,17 +627,17 @@
              (let [option-id (str (id-to-name id) "-" key)
                    on-change (fn [event]
                                (let [checked (.. event -target -checked)
-                                     values (if checked
-                                              (conj values key)
-                                              (disj values key))]
-                                 (rf/dispatch [::set-field id (encode-multiple-values values)])))]
+                                     selected-keys (if checked
+                                                     (conj selected-keys key)
+                                                     (disj selected-keys key))]
+                                 (rf/dispatch [::set-field id (encode-option-keys selected-keys)])))]
                [:div.form-check
                 [:input.form-check-input {:type "checkbox"
                                           :id option-id
                                           :name option-id
                                           :class (when validation "is-invalid")
                                           :value key
-                                          :checked (contains? values key)
+                                          :checked (contains? selected-keys key)
                                           :on-change on-change}]
                 [:label.form-check-label {:for option-id}
                  (get label language key)]])))]))
