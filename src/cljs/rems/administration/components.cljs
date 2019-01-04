@@ -27,7 +27,7 @@
        (map key-to-id)
        (str/join "-")))
 
-(defn input-field [type context {:keys [keys label placeholder]}]
+(defn input-field [{:keys [keys label placeholder context type]}]
   (let [form @(rf/subscribe [(:get-form context)])
         id (keys-to-id keys)]
     [:div.form-group.field
@@ -43,12 +43,12 @@
 (defn text-field
   "A basic text field, full page width."
   [context keys]
-  (input-field "text" context keys))
+  (input-field (merge keys {:context context :type "text"})))
 
 (defn number-field
   "A basic number field, full page width."
   [context keys]
-  (input-field "number" context keys))
+  (input-field (merge keys {:context context :type "number"})))
 
 (defn textarea-autosize
   "A basic textarea, full page width."
