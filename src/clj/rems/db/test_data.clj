@@ -117,6 +117,20 @@
                     :optional true
                     :type "attachment"}
 
+                   {:title {:en "Project team size"
+                            :fi "Projektitiimin koko"}
+                    :optional true
+                    :type "option"
+                    :options [{:key "1-5"
+                               :label {:en "1-5 persons"
+                                       :fi "1-5 henkilöä"}}
+                              {:key "6-20"
+                               :label {:en "6-20 persons"
+                                       :fi "6-20 henkilöä"}}
+                              {:key "20+"
+                               :label {:en "over 20 persons"
+                                       :fi "yli 20 henkilöä"}}]}
+
                    ;; fields which support maxlength
                    {:title {:en "Project acronym"
                             :fi "Projektin lyhenne"}
