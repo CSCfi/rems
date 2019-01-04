@@ -35,10 +35,10 @@
      [:input.form-control {:type type
                            :id id
                            :placeholder placeholder
-                           :value     (get-in form keys)
+                           :value (get-in form keys)
                            :on-change #(rf/dispatch [(:update-form context)
-                                 keys
-                                 (.. % -target -value)])}]]))
+                                                     keys
+                                                     (.. % -target -value)])}]]))
 
 (defn text-field
   "A basic text field, full page width."
@@ -57,12 +57,12 @@
         id (keys-to-id keys)]
     [:div.form-group.field
      [:label {:for id} label]
-     [textarea {:id          id
+     [textarea {:id id
                 :placeholder placeholder
-                :value       (get-in form keys)
-                :on-change   #(rf/dispatch [(:update-form context)
-                                            keys
-                                            (.. % -target -value)])}]]))
+                :value (get-in form keys)
+                :on-change #(rf/dispatch [(:update-form context)
+                                          keys
+                                          (.. % -target -value)])}]]))
 
 (defn- localized-text-field-lang [context {:keys [keys-prefix lang]}]
   (let [form @(rf/subscribe [(:get-form context)])
