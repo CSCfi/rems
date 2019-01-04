@@ -14,7 +14,6 @@
               analogous to the `get-in` and `assoc-in` parameters.
     :label  - String, shown to the user as-is."
   (:require [clojure.string :as str]
-            [komponentit.autosize :as autosize]
             [re-frame.core :as rf]
             [rems.atoms :refer [textarea]]))
 
