@@ -28,20 +28,28 @@
        (map key-to-id)
        (str/join "-")))
 
-(defn text-field
-  "A basic text field, full page width."
-  [context {:keys [keys label placeholder]}]
+(defn input-field [type context {:keys [keys label placeholder]}]
   (let [form @(rf/subscribe [(:get-form context)])
         id (keys-to-id keys)]
     [:div.form-group.field
      [:label {:for id} label]
-     [:input.form-control {:type "text"
+     [:input.form-control {:type type
                            :id id
                            :placeholder placeholder
-                           :value (get-in form keys)
+                           :value     (get-in form keys)
                            :on-change #(rf/dispatch [(:update-form context)
-                                                     keys
-                                                     (.. % -target -value)])}]]))
+                                 keys
+                                 (.. % -target -value)])}]]))
+
+(defn text-field
+  "A basic text field, full page width."
+  [context keys]
+  (input-field "text" context keys))
+
+(defn number-field
+  "A basic number field, full page width."
+  [context keys]
+  (input-field "number" context keys))
 
 (defn textarea-autosize
   "A basic textarea, full page width."
@@ -56,21 +64,6 @@
                 :on-change   #(rf/dispatch [(:update-form context)
                                             keys
                                             (.. % -target -value)])}]]))
-
-(defn number-field
-  "A basic number field, full page width."
-  [context {:keys [keys label]}]
-  (let [form @(rf/subscribe [(:get-form context)])
-        id (keys-to-id keys)]
-    [:div.form-group.field
-     [:label {:for id} label]
-     [:input.form-control {:type "number"
-                           :id id
-                           :min 0
-                           :value (get-in form keys)
-                           :on-change #(rf/dispatch [(:update-form context)
-                                                     keys
-                                                     (.. % -target -value)])}]]))
 
 (defn- localized-text-field-lang [context {:keys [keys-prefix lang]}]
   (let [form @(rf/subscribe [(:get-form context)])
