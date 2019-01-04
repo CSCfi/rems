@@ -170,6 +170,7 @@
                 :input-prompt "Placeholder text"
                 :item-n "Field %1"
                 :item-title "Field title"
+                :maxlength "Maximum length (optional)"
                 :option-key "ID code"
                 :option-label "Label"
                 :option-n "Option %1"

@@ -170,6 +170,7 @@
                 :input-prompt "Esimerkkiteksti"
                 :item-n "Kenttä %1"
                 :item-title "Kentän otsikko"
+                :maxlength "Maksimipituus (ei pakollinen)"
                 :option-key "Tunnuskoodi"
                 :option-label "Otsikko"
                 :option-n "Vaihtoehto %1"
