@@ -64,7 +64,7 @@
           (is (= application-id (:id (:application application))))
           (is (= "draft" (:state (:application application))))
           (is (= 2 (count (:licenses application))))
-          (is (= 6 (count (:items application))))))
+          (is (< 6 (count (:items application))))))
       (testing "retrieving as other user"
         (let [response (-> (request :get (str "/api/applications/" application-id))
                            (authenticate api-key another-user)
@@ -888,7 +888,7 @@
         catid 9 ;; catalogue item with dynamic workflow in test-data
         draft (create-application-draft-for-catalogue-item 9)]
     (testing "get draft"
-      (is (= 6 (count (:items draft)))))
+      (is (< 6 (count (:items draft)))))
     (let [response (-> (request :post (str "/api/applications/save"))
                        (authenticate api-key user-id)
                        (json-body {:command "save"
