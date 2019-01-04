@@ -14,7 +14,8 @@
               analogous to the `get-in` and `assoc-in` parameters.
     :label  - String, shown to the user as-is."
   (:require [clojure.string :as str]
-            [re-frame.core :as rf]))
+            [re-frame.core :as rf]
+            [rems.atoms :refer [textarea]]))
 
 (defn- key-to-id [key]
   (if (number? key)
@@ -26,15 +27,13 @@
        (map key-to-id)
        (str/join "-")))
 
-(defn text-field
-  "A basic text field, full page width."
-  [context {:keys [keys label placeholder normalizer]}]
+(defn input-field [{:keys [keys label placeholder context type normalizer]}]
   (let [form @(rf/subscribe [(:get-form context)])
         id (keys-to-id keys)
         normalizer (or normalizer identity)]
     [:div.form-group.field
      [:label {:for id} label]
-     [:input.form-control {:type "text"
+     [:input.form-control {:type type
                            :id id
                            :placeholder placeholder
                            :value (get-in form keys)
@@ -42,20 +41,29 @@
                                                      keys
                                                      (normalizer (.. % -target -value))])}]]))
 
+(defn text-field
+  "A basic text field, full page width."
+  [context keys]
+  (input-field (merge keys {:context context :type "text"})))
+
 (defn number-field
   "A basic number field, full page width."
-  [context {:keys [keys label]}]
+  [context keys]
+  (input-field (merge keys {:context context :type "number"})))
+
+(defn textarea-autosize
+  "A basic textarea, full page width."
+  [context {:keys [keys label placeholder]}]
   (let [form @(rf/subscribe [(:get-form context)])
         id (keys-to-id keys)]
     [:div.form-group.field
      [:label {:for id} label]
-     [:input.form-control {:type "number"
-                           :id id
-                           :min 0
-                           :value (get-in form keys)
-                           :on-change #(rf/dispatch [(:update-form context)
-                                                     keys
-                                                     (.. % -target -value)])}]]))
+     [textarea {:id id
+                :placeholder placeholder
+                :value (get-in form keys)
+                :on-change #(rf/dispatch [(:update-form context)
+                                          keys
+                                          (.. % -target -value)])}]]))
 
 (defn- localized-text-field-lang [context {:keys [keys-prefix lang]}]
   (let [form @(rf/subscribe [(:get-form context)])
