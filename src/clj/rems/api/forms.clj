@@ -2,6 +2,7 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.api.util]
             [rems.db.form :as form]
+            [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
@@ -61,4 +62,4 @@
       :roles #{:owner}
       :body [command CreateFormCommand]
       :return CreateFormResponse
-      (ok (form/create-form! command)))))
+      (ok (form/create-form! (getx-user-id) command)))))
