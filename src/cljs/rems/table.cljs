@@ -30,9 +30,9 @@
 (defn- row [column-definitions columns item]
   (into [:tr.action]
         (for [col columns]
-            (into [:td {:class (column-class-customized item column-definitions col)
-                        :data-th (column-header column-definitions col)}]
-                  (column-values column-definitions col item)))))
+          (into [:td {:class (column-class-customized item column-definitions col)
+                      :data-th (column-header column-definitions col)}]
+                (column-values column-definitions col item)))))
 
 (defn- flip [order]
   (case order
