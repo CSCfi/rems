@@ -12,4 +12,3 @@ CREATE TABLE application_form_item_options
   PRIMARY KEY (itemId, key, langCode),
   FOREIGN KEY (itemId) REFERENCES application_form_item (id)
 );
---;;

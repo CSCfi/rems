@@ -115,4 +115,3 @@ ALTER COLUMN time TYPE timestamp with time zone;
 --;;
 ALTER TABLE entitlement_post_log
 ALTER COLUMN time TYPE timestamp with time zone;
---;;

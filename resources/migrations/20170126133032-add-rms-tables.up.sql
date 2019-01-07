@@ -377,7 +377,7 @@ CREATE TABLE roles (
   role varchar(255),
   PRIMARY KEY (userId, role),
   FOREIGN KEY (userId) REFERENCES users
-)
+);
 --;;
 CREATE TABLE application_event (
   id serial NOT NULL PRIMARY KEY, -- for ordering events
@@ -387,5 +387,4 @@ CREATE TABLE application_event (
   event application_event_type NOT NULL,
   comment varchar(4096) DEFAULT NULL,
   time timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
-)
---;;
+);

@@ -3,4 +3,3 @@ CREATE TABLE entitlement_post_log (
   payload jsonb,
   status varchar(32)
 );
---;;

@@ -3,4 +3,3 @@ alter table application_form
 --;;
 alter table application_form
   alter column prefix drop default;
---;;

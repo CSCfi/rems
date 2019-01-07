@@ -3,4 +3,3 @@ alter table workflow
 --;;
 alter table workflow
   alter column prefix drop default;
---;;
