@@ -25,9 +25,11 @@
 (defn- row [column-definitions columns item]
   (into [:tr.action]
         (for [col columns]
-          (into [:td {:class (column-class column-definitions col)
-                      :data-th (column-header column-definitions col)}]
-                (column-values column-definitions col item)))))
+            (into [:td {:class (if (= "draft" (:state item))
+                                 "text-warning"
+                                 (column-class column-definitions col))
+                        :data-th (column-header column-definitions col)}]
+                  (column-values column-definitions col item)))))
 
 (defn- flip [order]
   (case order
