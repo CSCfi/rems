@@ -88,61 +88,75 @@
 (defn- create-basic-form!
   "Creates a bilingual form with all supported field types. Returns id of the form meta."
   [users]
-  (binding [context/*user* {"eppn" (users :owner)}]
-    (:id (form/create-form!
-          {:organization "nbn"
-           :title "Basic form"
-           :items [;; all form item types
-                   {:title {:en "Project name"
-                            :fi "Projektin nimi"}
-                    :optional false
-                    :type "text"
-                    :input-prompt {:en "Project"
-                                   :fi "Projekti"}}
+  (:id (form/create-form!
+        (users :owner)
+        {:organization "nbn"
+         :title "Basic form"
+         :items [;; all form item types
+                 {:title {:en "Project name"
+                          :fi "Projektin nimi"}
+                  :optional false
+                  :type "text"
+                  :input-prompt {:en "Project"
+                                 :fi "Projekti"}}
 
-                   {:title {:en "Purpose of the project"
-                            :fi "Projektin tarkoitus"}
-                    :optional false
-                    :type "texta"
-                    :input-prompt {:en "The purpose of the project is to..."
-                                   :fi "Projektin tarkoitus on..."}}
+                 {:title {:en "Purpose of the project"
+                          :fi "Projektin tarkoitus"}
+                  :optional false
+                  :type "texta"
+                  :input-prompt {:en "The purpose of the project is to..."
+                                 :fi "Projektin tarkoitus on..."}}
 
-                   {:title {:en "Start date of the project"
-                            :fi "Projektin aloituspäivä"}
-                    :optional true
-                    :type "date"}
+                 {:title {:en "Start date of the project"
+                          :fi "Projektin aloituspäivä"}
+                  :optional true
+                  :type "date"}
 
-                   {:title {:en "Project plan"
-                            :fi "Projektisuunnitelma"}
-                    :optional true
-                    :type "attachment"}
+                 {:title {:en "Project plan"
+                          :fi "Projektisuunnitelma"}
+                  :optional true
+                  :type "attachment"}
 
-                   {:title {:en "Project team size"
-                            :fi "Projektitiimin koko"}
-                    :optional true
-                    :type "option"
-                    :options [{:key "1-5"
-                               :label {:en "1-5 persons"
-                                       :fi "1-5 henkilöä"}}
-                              {:key "6-20"
-                               :label {:en "6-20 persons"
-                                       :fi "6-20 henkilöä"}}
-                              {:key "20+"
-                               :label {:en "over 20 persons"
-                                       :fi "yli 20 henkilöä"}}]}
+                 {:title {:en "Project team size"
+                          :fi "Projektitiimin koko"}
+                  :optional true
+                  :type "option"
+                  :options [{:key "1-5"
+                             :label {:en "1-5 persons"
+                                     :fi "1-5 henkilöä"}}
+                            {:key "6-20"
+                             :label {:en "6-20 persons"
+                                     :fi "6-20 henkilöä"}}
+                            {:key "20+"
+                             :label {:en "over 20 persons"
+                                     :fi "yli 20 henkilöä"}}]}
 
-                   ;; fields which support maxlength
-                   {:title {:en "Project acronym"
-                            :fi "Projektin lyhenne"}
-                    :optional true
-                    :type "text"
-                    :maxlength 10}
+                 {:title {:en "Where will the data be used?"
+                          :fi "Missä dataa tullaan käyttämään?"}
+                  :optional true
+                  :type "multiselect"
+                  :options [{:key "EU"
+                             :label {:en "Inside EU"
+                                     :fi "EU:n sisällä"}}
+                            {:key "USA"
+                             :label {:en "Inside USA"
+                                     :fi "Yhdysvalloissa"}}
+                            {:key "Other"
+                             :label {:en "Elsewhere"
+                                     :fi "Muualla"}}]}
 
-                   {:title {:en "Research plan"
-                            :fi "Tutkimussuunnitelma"}
-                    :optional true
-                    :type "texta"
-                    :maxlength 100}]}))))
+                 ;; fields which support maxlength
+                 {:title {:en "Project acronym"
+                          :fi "Projektin lyhenne"}
+                  :optional true
+                  :type "text"
+                  :maxlength 10}
+
+                 {:title {:en "Research plan"
+                          :fi "Tutkimussuunnitelma"}
+                  :optional true
+                  :type "texta"
+                  :maxlength 100}]})))
 
 (defn- create-workflows! [users]
   (let [approver1 (users :approver1)

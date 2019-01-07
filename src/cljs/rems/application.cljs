@@ -586,12 +586,61 @@
    (into [:select.form-control {:id (id-to-name id)
                                 :name (id-to-name id)
                                 :class (when validation "is-invalid")
+                                :defaultValue value
                                 :on-change (set-field-value id)}
           [:option {:value ""}]]
          (for [{:keys [key label]} options]
-           [:option {:value key
-                     :selected (= key value)}
+           [:option {:value key}
             (get label language key)]))])
+
+(defn normalize-option-key
+  "Strips disallowed characters from an option key"
+  [key]
+  (str/replace key #"\s+" ""))
+
+(defn encode-option-keys
+  "Encodes a set of option keys to a string"
+  [keys]
+  (->> keys
+       sort
+       (str/join " ")))
+
+(defn decode-option-keys
+  "Decodes a set of option keys from a string"
+  [value]
+  (-> value
+      (str/split #"\s+")
+      set
+      (disj "")))
+
+(defn multiselect-field [{:keys [id value options validation language] :as opts}]
+  (let [selected-keys (decode-option-keys value)]
+    ;; TODO: for accessibility these checkboxes would be best wrapped in a fieldset
+    [basic-field
+     (assoc opts :readonly-component [readonly-field {:id (id-to-name id)
+                                                      :value (->> options
+                                                                  (filter #(contains? selected-keys (:key %)))
+                                                                  (map #(get (:label %) language (:key %)))
+                                                                  (str/join ", "))}])
+     (into [:div]
+           (for [{:keys [key label]} options]
+             (let [option-id (str (id-to-name id) "-" key)
+                   on-change (fn [event]
+                               (let [checked (.. event -target -checked)
+                                     selected-keys (if checked
+                                                     (conj selected-keys key)
+                                                     (disj selected-keys key))]
+                                 (rf/dispatch [::set-field id (encode-option-keys selected-keys)])))]
+               [:div.form-check
+                [:input.form-check-input {:type "checkbox"
+                                          :id option-id
+                                          :name option-id
+                                          :class (when validation "is-invalid")
+                                          :value key
+                                          :checked (contains? selected-keys key)
+                                          :on-change on-change}]
+                [:label.form-check-label {:for option-id}
+                 (get label language key)]])))]))
 
 (defn- label [{title :title}]
   [:div.form-group
@@ -650,6 +699,7 @@
     "description" [text-field f]
     "label" [label f]
     "license" [license-field f]
+    "multiselect" [multiselect-field f]
     "option" [option-field f]
     "text" [text-field f]
     "texta" [texta-field f]
@@ -1221,6 +1271,18 @@
              [field {:type "option" :title "Title" :value "y" :language :en :readonly true
                      :options [{:key "y" :label {:en "Yes" :fi "Kyllä"}}
                                {:key "n" :label {:en "No" :fi "Ei"}}]}]])
+   (example "field of type \"multiselect\""
+            [:form
+             [field {:type "multiselect" :title "Title" :value "egg bacon" :language :en
+                     :options [{:key "egg" :label {:en "Egg" :fi "Munaa"}}
+                               {:key "bacon" :label {:en "Bacon" :fi "Pekonia"}}
+                               {:key "spam" :label {:en "Spam" :fi "Lihasäilykettä"}}]}]])
+   (example "non-editable field of type \"multiselect\""
+            [:form
+             [field {:type "multiselect" :title "Title" :value "egg bacon" :language :en :readonly true
+                     :options [{:key "egg" :label {:en "Egg" :fi "Munaa"}}
+                               {:key "bacon" :label {:en "Bacon" :fi "Pekonia"}}
+                               {:key "spam" :label {:en "Spam" :fi "Lihasäilykettä"}}]}]])
    (example "optional field"
             [:form
              [field {:type "texta" :optional "true" :title "Title" :inputprompt "prompt"}]])

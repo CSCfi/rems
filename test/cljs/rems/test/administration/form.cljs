@@ -208,17 +208,17 @@
     (testing "input prompt is optional"
       (is (= {:en "" :fi ""}
              (getx-in (build-request (assoc-in form [:items 0 :input-prompt] nil) languages)
-                     [:items 0 :input-prompt])
+                      [:items 0 :input-prompt])
              (getx-in (build-request (assoc-in form [:items 0 :input-prompt] {:en ""}) languages)
-                     [:items 0 :input-prompt])
+                      [:items 0 :input-prompt])
              (getx-in (build-request (assoc-in form [:items 0 :input-prompt] {:en "" :fi ""}) languages)
-                     [:items 0 :input-prompt]))))
+                      [:items 0 :input-prompt]))))
 
     (testing "maxlength is optional"
       (is (nil? (getx-in (build-request (assoc-in form [:items 0 :maxlength] "") languages)
-                        [:items 0 :maxlength])))
+                         [:items 0 :maxlength])))
       (is (nil? (getx-in (build-request (assoc-in form [:items 0 :maxlength] nil) languages)
-                        [:items 0 :maxlength]))))
+                         [:items 0 :maxlength]))))
 
     (testing "if you use input prompt, you must fill in all the languages"
       (is (= nil
@@ -260,6 +260,41 @@
                                      {:key "no"
                                       :label {:en "en no"
                                               :fi "fi no"}}]}]}
+                 (build-request form languages))))
+
+        (testing "missing option key"
+          (is (= nil
+                 (build-request (assoc-in form [:items 0 :options 0 :key] "") languages)
+                 (build-request (assoc-in form [:items 0 :options 0 :key] nil) languages))))
+
+        (testing "missing option label"
+          (is (= nil
+                 (build-request (assoc-in form [:items 0 :options 0 :label] {:en "" :fi ""}) languages)
+                 (build-request (assoc-in form [:items 0 :options 0 :label] nil) languages))))))
+
+    (testing "multiselect fields"
+      (let [form (-> form
+                     (assoc-in [:items 0 :type] "multiselect")
+                     (assoc-in [:items 0 :options] [{:key "egg"
+                                                     :label {:en "Egg"
+                                                             :fi "Munaa"}}
+                                                    {:key "bacon"
+                                                     :label {:en "Bacon"
+                                                             :fi "Pekonia"}}]))]
+
+        (testing "valid form"
+          (is (= {:organization "abc"
+                  :title "the title"
+                  :items [{:title {:en "en title"
+                                   :fi "fi title"}
+                           :optional true
+                           :type "multiselect"
+                           :options [{:key "egg"
+                                      :label {:en "Egg"
+                                              :fi "Munaa"}}
+                                     {:key "bacon"
+                                      :label {:en "Bacon"
+                                              :fi "Pekonia"}}]}]}
                  (build-request form languages))))
 
         (testing "missing option key"

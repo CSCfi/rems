@@ -27,9 +27,10 @@
        (map key-to-id)
        (str/join "-")))
 
-(defn input-field [{:keys [keys label placeholder context type]}]
+(defn input-field [{:keys [keys label placeholder context type normalizer]}]
   (let [form @(rf/subscribe [(:get-form context)])
-        id (keys-to-id keys)]
+        id (keys-to-id keys)
+        normalizer (or normalizer identity)]
     [:div.form-group.field
      [:label {:for id} label]
      [:input.form-control {:type type
@@ -38,7 +39,7 @@
                            :value (get-in form keys)
                            :on-change #(rf/dispatch [(:update-form context)
                                                      keys
-                                                     (.. % -target -value)])}]]))
+                                                     (normalizer (.. % -target -value))])}]]))
 
 (defn text-field
   "A basic text field, full page width."
