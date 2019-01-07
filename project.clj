@@ -105,6 +105,7 @@
 
   :aliases {"browsertests" ["do" ["cljsbuild" "once"] ["eftest" ":browser"]]
             "alltests" ["do" ["cljsbuild" "once"] ["eftest" ":all"] ["doo" "once"]]
+            "test-ancient" ["do" ["cljsbuild" "once"] ["eftest" ":all"] ["doo" "once"]] ; for lein ancient to work and run all tests
             "run-cloverage" ["do" ["cljsbuild" "once"] ["with-profile" "test" "cloverage"]]}
 
   :profiles
