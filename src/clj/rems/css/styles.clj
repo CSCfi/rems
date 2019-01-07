@@ -169,7 +169,8 @@
    [:.cart-title {:margin-left (u/em 1)
                   :font-weight "bold"}]
    [:.cart-item {:padding-right (u/em 1)}
-    [:>span {:display :inline-block :vertical-align :middle}]]))
+    [:>span {:display :inline-block :vertical-align :middle}]]
+   [:.text-highlight {:color "#465286"}]))
 
 (def ^:private dashed-form-group {:position "relative"
                                   :border "2px dashed #ccc"

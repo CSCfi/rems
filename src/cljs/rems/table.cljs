@@ -20,7 +20,7 @@
 
 (defn column-class-customized [item column-definitions col]
   (if (= "draft" (:state item))
-    "text-warning"
+    "text-highlight"
     (column-class column-definitions col)))
 
 (defn column-sort-value [column-definitions col item]
