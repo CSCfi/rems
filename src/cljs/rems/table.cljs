@@ -18,6 +18,11 @@
 (defn column-class [column-definitions col]
   (get-in column-definitions [col :class] (name col)))
 
+(defn column-class-customized [item column-definitions col]
+  (if (= "draft" (:state item))
+    "text-warning"
+    (column-class column-definitions col)))
+
 (defn column-sort-value [column-definitions col item]
   ((or (get-in column-definitions [col :sort-value])
        (get-in column-definitions [col :value])) item))
@@ -25,9 +30,7 @@
 (defn- row [column-definitions columns item]
   (into [:tr.action]
         (for [col columns]
-            (into [:td {:class (if (= "draft" (:state item))
-                                 "text-warning"
-                                 (column-class column-definitions col))
+            (into [:td {:class (column-class-customized item column-definitions col)
                         :data-th (column-header column-definitions col)}]
                   (column-values column-definitions col item)))))
 
