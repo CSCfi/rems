@@ -42,6 +42,10 @@
           :sortable? false
           :filterable? false}})
 
+(defn highlight-draft [item]
+  (when (= "draft" (:state item))
+    "text-highlight"))
+
 (defn component
   "A table of applications.
 
@@ -53,7 +57,7 @@
 
    set-sorting is a callback that is called with a new sorting when it changes"
   [columns sorting set-sorting apps]
-  [table/component +columns+ columns sorting set-sorting :id apps {:class "applications"}])
+  [table/component +columns+ columns sorting set-sorting :id apps {:class "applications" :row-class highlight-draft}])
 
 (def ^:private +example-applications+
   [{:id 1 :catalogue-items [{:title "Item 5"}] :state "draft" :applicantuserid "alice"
