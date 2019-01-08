@@ -15,8 +15,10 @@
       (values item)
       [(column-value column-definitions col item)])))
 
-(defn column-class [column-definitions col]
-  (get-in column-definitions [col :class] (name col)))
+(defn column-class [column-definitions col item]
+  (let [class (get-in column-definitions [col :class] (name col))]
+    (cond (string? class) class
+          (fn? class) (class item))))
 
 (defn column-sort-value [column-definitions col item]
   ((or (get-in column-definitions [col :sort-value])
@@ -26,7 +28,7 @@
   (into [:tr {:class (cond (string? row-class) row-class
                            (fn? row-class) (row-class item))}]
         (for [col columns]
-          (into [:td {:class (column-class column-definitions col)
+          (into [:td {:class (column-class column-definitions col item)
                       :data-th (column-header column-definitions col)}]
                 (column-values column-definitions col item)))))
 

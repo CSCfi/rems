@@ -19,6 +19,10 @@
 (def +default-columns+
   [:id :description :resource :applicant :state :created :view])
 
+(defn highlight-draft [item]
+  (when (= "draft" (:state item))
+    "text-highlight"))
+
 (def ^:private +columns+
   {:id {:value :id
         :header #(text :t.actions/application)}
@@ -29,7 +33,8 @@
    :applicant {:value :applicantuserid
                :header #(text :t.actions/applicant)}
    :state {:value #(localize-state (:state %))
-           :header #(text :t.actions/state)}
+           :header #(text :t.actions/state)
+           :class highlight-draft}
    :created {:value #(localize-time (:start %))
              :sort-value :start
              :header #(text :t.actions/created)
@@ -42,10 +47,6 @@
           :sortable? false
           :filterable? false}})
 
-(defn highlight-draft [item]
-  (when (= "draft" (:state item))
-    "text-highlight"))
-
 (defn component
   "A table of applications.
 
@@ -57,7 +58,7 @@
 
    set-sorting is a callback that is called with a new sorting when it changes"
   [columns sorting set-sorting apps]
-  [table/component +columns+ columns sorting set-sorting :id apps {:class "applications" :row-class highlight-draft}])
+  [table/component +columns+ columns sorting set-sorting :id apps {:class "applications"}])
 
 (def ^:private +example-applications+
   [{:id 1 :catalogue-items [{:title "Item 5"}] :state "draft" :applicantuserid "alice"
