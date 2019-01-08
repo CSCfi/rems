@@ -80,12 +80,13 @@
    opts: possibly options with {:class classes for the table}"
   [column-definitions visible-columns {:keys [sort-column sort-order filters show-filters] :as sorting} set-sorting id-function items & [opts]]
   [:div
-   [:div.rems-table-search-toggle.d-flex.flex-row-reverse
-    [:div.btn
-     {:class (if show-filters "btn-secondary" "btn-primary")
-      :on-click (fn [] (set-sorting
-                        (assoc sorting :show-filters (not show-filters))))}
-     (search-symbol)]]
+   (when filters
+     [:div.rems-table-search-toggle.d-flex.flex-row-reverse
+      [:div.btn
+       {:class (if show-filters "btn-secondary" "btn-primary")
+        :on-click (fn [] (when set-sorting
+                           (set-sorting (assoc sorting :show-filters (not show-filters)))))}
+       (search-symbol)]])
    [:table.rems-table (when (:class opts) (select-keys opts [:class]))
     [:thead
      (into [:tr]
@@ -93,7 +94,7 @@
              (let [sortable? (get-in column-definitions [column :sortable?] true)]
                [:th
                 [:div.column-header
-                 {:on-click (when sortable?
+                 {:on-click (when (and sortable? set-sorting)
                               (fn [] (set-sorting (-> sorting
                                                       (assoc :sort-column column)
                                                       (assoc :sort-order (change-sort-order sort-column sort-order column))))))}
@@ -121,6 +122,6 @@
                        :aria-hidden true}])])])))]
     (into [:tbody]
           (map (fn [item] ^{:key (id-function item)} [row (select-keys opts [:row-class]) column-definitions visible-columns item])
-               (->> items
-                    (apply-filtering column-definitions filters)
-                    (apply-sorting column-definitions sort-column sort-order))))]])
+               (cond->> items
+                        filters (apply-filtering column-definitions filters)
+                        sorting (apply-sorting column-definitions sort-column sort-order))))]])
