@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.atoms :refer [external-link]]
+            [rems.application-list :as application]
             [rems.cart :as cart]
             [rems.db.catalogue :refer [disabled-catalogue-item?
                                        get-catalogue-item-title
@@ -112,11 +113,6 @@
 (defn- format-catalogue-items [app]
   (str/join ", " (map :title (:catalogue-items app))))
 
-(defn- view-button [app]
-  [:a.btn.btn-primary
-   {:href (str "#/application/" (:id app))}
-   (text :t.applications/view)])
-
 (defn draft-list [drafts]
   (when (seq drafts)
     [:div.drafts
@@ -127,7 +123,7 @@
                                   :header #(text :t.actions/resource)}
                        :modified {:value #(localize-time (or (:last-modified %) (:start %)))
                                   :header #(text :t.actions/last-modified)}
-                       :view {:value view-button}}
+                       :view {:value application/view-button}}
       [:id :resource :modified :view] nil nil :id drafts]]))
 
 (defn catalogue-page []

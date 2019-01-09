@@ -5,7 +5,7 @@
             [rems.text :refer [localize-state localize-time text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
-(defn- view-button [app]
+(defn view-button [app]
   [:a.btn.btn-primary
    {:href (str "#/application/" (:id app))}
    (text :t.applications/view)])
