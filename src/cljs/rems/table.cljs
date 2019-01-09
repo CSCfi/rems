@@ -77,7 +77,7 @@
    set-sorting: a callback that is called with a new sorting and filtering when it changes
    id-function: function for setting react key for row, should return unique values
    items: sequence of items to render
-   opts: possibly options with {:class classes for the table}"
+   opts: possibly options with {:class classes for the table :row-class classes for the whole row}"
   [column-definitions visible-columns {:keys [sort-column sort-order filters show-filters] :as sorting} set-sorting id-function items & [opts]]
   [:div
    (when filters
