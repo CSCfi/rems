@@ -6,4 +6,3 @@ RENAME COLUMN organization to prefix;
 --;;
 ALTER TABLE resource
 RENAME COLUMN organization to prefix;
---;;
