@@ -117,7 +117,7 @@
    {:href (str "#/application/" (:id app))}
    (text :t.applications/view)])
 
-(defn draft-list [drafts language]
+(defn draft-list [drafts]
   (when (seq drafts)
     [:div.drafts
      [:h4 (text :t.catalogue/continue-existing-application)]
