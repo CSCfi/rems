@@ -20,8 +20,9 @@
   [:id :description :resource :applicant :state :created :view])
 
 (defn highlight-draft [item]
-  (when (= "draft" (:state item))
-    "text-highlight"))
+  (if (= "draft" (:state item))
+    "text-highlight"
+    "state"))
 
 (def ^:private +columns+
   {:id {:value :id
