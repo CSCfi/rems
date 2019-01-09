@@ -180,6 +180,7 @@
                 :type-date "Päivämäärä"
                 :type-description "Kuvaus"
                 :type-label "Infokenttä"
+                :type-multiselect "Monivalintalista"
                 :type-option "Valintalista"
                 :type-text "Tekstikenttä"
                 :type-texta "Tekstialue"}

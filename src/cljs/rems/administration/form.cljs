@@ -4,7 +4,7 @@
             [re-frame.core :as rf]
             [rems.administration.components :refer [checkbox localized-text-field number-field radio-button-group text-field]]
             [rems.administration.items :as items]
-            [rems.application :refer [enrich-user]]
+            [rems.application :refer [enrich-user normalize-option-key]]
             [rems.collapsible :as collapsible]
             [rems.config :refer [dev-environment?]]
             [rems.text :refer [text text-format localize-item]]
@@ -81,7 +81,7 @@
   (contains? #{"text" "texta"} (:type item)))
 
 (defn- supports-options? [item]
-  (= "option" (:type item)))
+  (contains? #{"option" "multiselect"} (:type item)))
 
 (defn- localized-string? [lstr languages]
   (and (= (set (keys lstr))
@@ -112,7 +112,7 @@
        (if (supports-input-prompt? item)
          (valid-optional-localized-string? (:input-prompt item) languages)
          (nil? (:input-prompt item)))
-       (if (= "option" (:type item))
+       (if (supports-options? item)
          (every? #(valid-option? % languages) (:options item))
          (nil? (:options item)))))
 
@@ -134,7 +134,7 @@
          (when (supports-maxlength? item)
            {:maxlength (when-not (str/blank? (:maxlength item))
                          (parseInt (:maxlength item)))})
-         (when (= "option" (:type item))
+         (when (supports-options? item)
            {:options (for [{:keys [key label]} (:options item)]
                        {:key key
                         :label (build-localized-string label languages)})})))
@@ -210,7 +210,8 @@
      [move-form-item-option-down-button item-index option-index]
      [remove-form-item-option-button item-index option-index]]]
    [text-field context {:keys [:items item-index :options option-index :key]
-                        :label (text :t.create-form/option-key)}]
+                        :label (text :t.create-form/option-key)
+                        :normalizer normalize-option-key}]
    [localized-text-field context {:keys [:items item-index :options option-index :label]
                                   :label (text :t.create-form/option-label)}]])
 
@@ -225,14 +226,14 @@
 (defn- form-item-type-radio-group [item-index]
   [radio-button-group context {:keys [:items item-index :type]
                                :orientation :vertical
-                               :options (concat [{:value "text", :label (text :t.create-form/type-text)}
-                                                 {:value "texta", :label (text :t.create-form/type-texta)}
-                                                 {:value "description", :label (text :t.create-form/type-description)}]
-                                                (when (dev-environment?) ; TODO: remove feature flag
-                                                  [{:value "option", :label (text :t.create-form/type-option)}])
-                                                [{:value "date", :label (text :t.create-form/type-date)}
-                                                 {:value "attachment", :label (text :t.create-form/type-attachment)}
-                                                 {:value "label", :label (text :t.create-form/type-label)}])}])
+                               :options [{:value "text", :label (text :t.create-form/type-text)}
+                                         {:value "texta", :label (text :t.create-form/type-texta)}
+                                         {:value "description", :label (text :t.create-form/type-description)}
+                                         {:value "option", :label (text :t.create-form/type-option)}
+                                         {:value "multiselect", :label (text :t.create-form/type-multiselect)}
+                                         {:value "date", :label (text :t.create-form/type-date)}
+                                         {:value "attachment", :label (text :t.create-form/type-attachment)}
+                                         {:value "label", :label (text :t.create-form/type-label)}]}])
 
 (defn- form-item-optional-checkbox [item-index]
   [checkbox context {:keys [:items item-index :optional]

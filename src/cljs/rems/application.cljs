@@ -564,12 +564,83 @@
   ;; TODO: format readonly value in user locale (give basic-field a formatted :value and :previous-value in opts)
   [basic-field opts
    [:input.form-control {:type "date"
+                         :id (id-to-name id)
                          :name (id-to-name id)
                          :class (when validation "is-invalid")
                          :defaultValue value
                          :min min
                          :max max
                          :on-change (set-field-value id)}]])
+
+(defn- option-label [value language options]
+  (let [label (->> options
+                   (filter #(= value (:key %)))
+                   first
+                   :label)]
+    (get label language value)))
+
+(defn option-field [{:keys [id value options validation language] :as opts}]
+  [basic-field
+   (assoc opts :readonly-component [readonly-field {:id (id-to-name id)
+                                                    :value (option-label value language options)}])
+   (into [:select.form-control {:id (id-to-name id)
+                                :name (id-to-name id)
+                                :class (when validation "is-invalid")
+                                :defaultValue value
+                                :on-change (set-field-value id)}
+          [:option {:value ""}]]
+         (for [{:keys [key label]} options]
+           [:option {:value key}
+            (get label language key)]))])
+
+(defn normalize-option-key
+  "Strips disallowed characters from an option key"
+  [key]
+  (str/replace key #"\s+" ""))
+
+(defn encode-option-keys
+  "Encodes a set of option keys to a string"
+  [keys]
+  (->> keys
+       sort
+       (str/join " ")))
+
+(defn decode-option-keys
+  "Decodes a set of option keys from a string"
+  [value]
+  (-> value
+      (str/split #"\s+")
+      set
+      (disj "")))
+
+(defn multiselect-field [{:keys [id value options validation language] :as opts}]
+  (let [selected-keys (decode-option-keys value)]
+    ;; TODO: for accessibility these checkboxes would be best wrapped in a fieldset
+    [basic-field
+     (assoc opts :readonly-component [readonly-field {:id (id-to-name id)
+                                                      :value (->> options
+                                                                  (filter #(contains? selected-keys (:key %)))
+                                                                  (map #(get (:label %) language (:key %)))
+                                                                  (str/join ", "))}])
+     (into [:div]
+           (for [{:keys [key label]} options]
+             (let [option-id (str (id-to-name id) "-" key)
+                   on-change (fn [event]
+                               (let [checked (.. event -target -checked)
+                                     selected-keys (if checked
+                                                     (conj selected-keys key)
+                                                     (disj selected-keys key))]
+                                 (rf/dispatch [::set-field id (encode-option-keys selected-keys)])))]
+               [:div.form-check
+                [:input.form-check-input {:type "checkbox"
+                                          :id option-id
+                                          :name option-id
+                                          :class (when validation "is-invalid")
+                                          :value key
+                                          :checked (contains? selected-keys key)
+                                          :on-change on-change}]
+                [:label.form-check-label {:for option-id}
+                 (get label language key)]])))]))
 
 (defn- label [{title :title}]
   [:div.form-group
@@ -615,18 +686,23 @@
   [f]
   [:p.alert.alert-warning "Unsupported field " (pr-str f)])
 
+(defn license-field [f]
+  (case (:licensetype f)
+    "link" [link-license f]
+    "text" [text-license f]
+    [unsupported-field f]))
+
 (defn- field [f]
   (case (:type f)
     "attachment" [attachment-field f]
     "date" [date-field f]
     "description" [text-field f]
+    "label" [label f]
+    "license" [license-field f]
+    "multiselect" [multiselect-field f]
+    "option" [option-field f]
     "text" [text-field f]
     "texta" [texta-field f]
-    "label" [label f]
-    "license" (case (:licensetype f)
-                "link" [link-license f]
-                "text" [text-license f]
-                [unsupported-field f])
     [unsupported-field f]))
 
 (defn- save-button []
@@ -645,7 +721,7 @@
                :rems.workflow.dynamic/draft :rems.workflow.dynamic/returned}
              state))
 
-(defn- fields [form edit-application]
+(defn- fields [form edit-application language]
   (let [application (:application form)
         {:keys [items licenses validation]} edit-application
         field-validations (index-by [:field-id] validation)
@@ -663,6 +739,7 @@
                [field (assoc (localize-item item)
                              :validation (field-validations (:id item))
                              :readonly readonly?
+                             :language language
                              :value (get-in items [(:id item) :value])
                              ;; TODO: db doesn't yet contain :previous-value so this is always nil
                              :previous-value (get-in items [(:id item) :previous-value])
@@ -1053,7 +1130,7 @@
      (when user-attributes
        [:div.mt-3 [applicant-info "applicant-info" user-attributes]])
      [:div.mt-3 [applied-resources (:catalogue-items application)]]
-     [:div.my-3 [fields application edit-application]]
+     [:div.my-3 [fields application edit-application language]]
      [:div.mb-3 [actions-form app]]
      (when (:open? status)
        [status-modal (assoc status
@@ -1184,6 +1261,28 @@
    (example "non-editable field of type \"date\" with value"
             [:form
              [field {:type "date" :title "Title" :readonly true :value "2000-12-31"}]])
+   (example "field of type \"option\""
+            [:form
+             [field {:type "option" :title "Title" :value "y" :language :en
+                     :options [{:key "y" :label {:en "Yes" :fi "Kyllä"}}
+                               {:key "n" :label {:en "No" :fi "Ei"}}]}]])
+   (example "non-editable field of type \"option\""
+            [:form
+             [field {:type "option" :title "Title" :value "y" :language :en :readonly true
+                     :options [{:key "y" :label {:en "Yes" :fi "Kyllä"}}
+                               {:key "n" :label {:en "No" :fi "Ei"}}]}]])
+   (example "field of type \"multiselect\""
+            [:form
+             [field {:type "multiselect" :title "Title" :value "egg bacon" :language :en
+                     :options [{:key "egg" :label {:en "Egg" :fi "Munaa"}}
+                               {:key "bacon" :label {:en "Bacon" :fi "Pekonia"}}
+                               {:key "spam" :label {:en "Spam" :fi "Lihasäilykettä"}}]}]])
+   (example "non-editable field of type \"multiselect\""
+            [:form
+             [field {:type "multiselect" :title "Title" :value "egg bacon" :language :en :readonly true
+                     :options [{:key "egg" :label {:en "Egg" :fi "Munaa"}}
+                               {:key "bacon" :label {:en "Bacon" :fi "Pekonia"}}
+                               {:key "spam" :label {:en "Spam" :fi "Lihasäilykettä"}}]}]])
    (example "optional field"
             [:form
              [field {:type "texta" :optional "true" :title "Title" :inputprompt "prompt"}]])

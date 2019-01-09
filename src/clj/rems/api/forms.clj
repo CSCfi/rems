@@ -2,6 +2,7 @@
   (:require [compojure.api.sweet :refer :all]
             [rems.api.util]
             [rems.db.form :as form]
+            [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
@@ -36,7 +37,7 @@
    :title s/Str
    :items [{:title {s/Keyword s/Str}
             :optional s/Bool
-            :type (s/enum "attachment" "date" "description" "label" "option" "text" "texta")
+            :type (s/enum "attachment" "date" "description" "label" "multiselect" "option" "text" "texta")
             (s/optional-key :maxlength) (s/maybe (s/constrained s/Int (comp not neg?)))
             (s/optional-key :options) [{:key s/Str
                                         :label {s/Keyword s/Str}}]
@@ -61,4 +62,4 @@
       :roles #{:owner}
       :body [command CreateFormCommand]
       :return CreateFormResponse
-      (ok (form/create-form! command)))))
+      (ok (form/create-form! (getx-user-id) command)))))

@@ -4,6 +4,7 @@
             [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
+            [rems.db.form :as form]
             [rems.db.roles :as roles]
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
@@ -87,43 +88,75 @@
 (defn- create-basic-form!
   "Creates a bilingual form with all supported field types. Returns id of the form meta."
   [users]
-  (let [owner (users :owner)
-        form (db/create-form! {:organization "nbn" :title "Yksinkertainen lomake" :user owner})
-        name (db/create-form-item! {:type "text" :optional false :user owner :value 0})
-        purpose (db/create-form-item! {:type "texta" :optional false :user owner :value 0})
-        start-date (db/create-form-item! {:type "date" :optional true :user owner :value 0})
-        expired (db/create-form-item! {:type "text" :optional true :user owner :value 0})
-        plan (db/create-form-item! {:type "attachment" :optional true :user owner :value 0})
-        maxlength-text (db/create-form-item! {:type "text" :optional false :user owner :value 0})
-        maxlength-texta (db/create-form-item! {:type "texta" :optional false :user owner :value 0})]
-    (db/end-form-item! {:id (:id expired)})
-    ;; link out of order for less predictable row ids
-    (db/link-form-item! {:form (:id form) :itemorder 1 :optional false :item (:id name) :user owner})
-    (db/link-form-item! {:form (:id form) :itemorder 3 :optional false :item (:id purpose) :user owner})
-    (db/link-form-item! {:form (:id form) :itemorder 2 :optional true :item (:id start-date) :user owner})
-    (db/link-form-item! {:form (:id form) :itemorder 4 :optional true :item (:id plan) :user owner})
-    (db/link-form-item! {:form (:id form) :itemorder 5 :optional true :item (:id maxlength-text) :user owner :maxlength 10})
-    (db/link-form-item! {:form (:id form) :itemorder 6 :optional true :item (:id maxlength-texta) :user owner :maxlength 100})
-    ;; localize
-    (db/localize-form-item! {:item (:id name) :langcode "fi" :title "Projektin nimi" :inputprompt "Projekti"})
-    (db/localize-form-item! {:item (:id name) :langcode "en" :title "Project name" :inputprompt "Project"})
-    (db/localize-form-item! {:item (:id purpose) :langcode "fi"
-                             :title "Projektin tarkoitus"
-                             :inputprompt "Projektin tarkoitus on ..."})
-    (db/localize-form-item! {:item (:id purpose) :langcode "en"
-                             :title "Purpose of the project"
-                             :inputprompt "The purpose of the project is to ..."})
-    (db/localize-form-item! {:item (:id start-date) :langcode "fi" :title "Projektin aloituspäivä" :inputprompt ""})
-    (db/localize-form-item! {:item (:id start-date) :langcode "en" :title "Start date of the project" :inputprompt ""})
-    (db/localize-form-item! {:item (:id expired) :langcode "en" :title "Expired form item" :inputprompt ""})
-    (db/localize-form-item! {:item (:id plan) :langcode "fi" :title "Projektisuunnitelma" :inputprompt ""})
-    (db/localize-form-item! {:item (:id plan) :langcode "en" :title "Project plan" :inputprompt ""})
-    (db/localize-form-item! {:item (:id maxlength-text) :langcode "fi" :title "Projektin lyhenne" :inputprompt ""})
-    (db/localize-form-item! {:item (:id maxlength-text) :langcode "en" :title "Project acronym" :inputprompt ""})
-    (db/localize-form-item! {:item (:id maxlength-texta) :langcode "fi" :title "Tutkimussuunnitelma" :inputprompt ""})
-    (db/localize-form-item! {:item (:id maxlength-texta) :langcode "en" :title "Research plan" :inputprompt ""})
+  (:id (form/create-form!
+        (users :owner)
+        {:organization "nbn"
+         :title "Basic form"
+         :items [;; all form item types
+                 {:title {:en "Project name"
+                          :fi "Projektin nimi"}
+                  :optional false
+                  :type "text"
+                  :input-prompt {:en "Project"
+                                 :fi "Projekti"}}
 
-    (:id form)))
+                 {:title {:en "Purpose of the project"
+                          :fi "Projektin tarkoitus"}
+                  :optional false
+                  :type "texta"
+                  :input-prompt {:en "The purpose of the project is to..."
+                                 :fi "Projektin tarkoitus on..."}}
+
+                 {:title {:en "Start date of the project"
+                          :fi "Projektin aloituspäivä"}
+                  :optional true
+                  :type "date"}
+
+                 {:title {:en "Project plan"
+                          :fi "Projektisuunnitelma"}
+                  :optional true
+                  :type "attachment"}
+
+                 {:title {:en "Project team size"
+                          :fi "Projektitiimin koko"}
+                  :optional true
+                  :type "option"
+                  :options [{:key "1-5"
+                             :label {:en "1-5 persons"
+                                     :fi "1-5 henkilöä"}}
+                            {:key "6-20"
+                             :label {:en "6-20 persons"
+                                     :fi "6-20 henkilöä"}}
+                            {:key "20+"
+                             :label {:en "over 20 persons"
+                                     :fi "yli 20 henkilöä"}}]}
+
+                 {:title {:en "Where will the data be used?"
+                          :fi "Missä dataa tullaan käyttämään?"}
+                  :optional true
+                  :type "multiselect"
+                  :options [{:key "EU"
+                             :label {:en "Inside EU"
+                                     :fi "EU:n sisällä"}}
+                            {:key "USA"
+                             :label {:en "Inside USA"
+                                     :fi "Yhdysvalloissa"}}
+                            {:key "Other"
+                             :label {:en "Elsewhere"
+                                     :fi "Muualla"}}]}
+
+                 ;; fields which support maxlength
+                 {:title {:en "Project acronym"
+                          :fi "Projektin lyhenne"}
+                  :optional true
+                  :type "text"
+                  :maxlength 10}
+
+                 {:title {:en "Research plan"
+                          :fi "Tutkimussuunnitelma"}
+                  :optional true
+                  :type "texta"
+                  :maxlength 100}]})))
 
 (defn- create-workflows! [users]
   (let [approver1 (users :approver1)
@@ -341,7 +374,7 @@
     (create-bundled-application! simple bundlable (:simple workflows) (+fake-users+ :applicant1) (+fake-users+ :approver1))
     (create-review-application! with-review (:with-review workflows) +fake-users+)
     (create-application-with-expired-resource-license! (:simple workflows) form +fake-users+)
-    (create-application-before-new-resource-license!  (:simple workflows) form +fake-users+)
+    (create-application-before-new-resource-license! (:simple workflows) form +fake-users+)
     (create-expired-license!)
     (let [dynamic (create-catalogue-item! res1 (:dynamic workflows) form
                                           {"en" "Dynamic workflow" "fi" "Dynaaminen työvuo"})]
@@ -378,7 +411,7 @@
     (create-bundled-application! simple bundlable (:simple workflows) (+demo-users+ :applicant2) (+demo-users+ :approver1))
     (create-review-application! with-review (:with-review workflows) +demo-users+)
     (create-application-with-expired-resource-license! (:simple workflows) form +demo-users+)
-    (create-application-before-new-resource-license!  (:simple workflows) form +demo-users+)
+    (create-application-before-new-resource-license! (:simple workflows) form +demo-users+)
     (create-expired-license!)
     (let [dynamic (create-catalogue-item! res1 (:dynamic workflows) form
                                           {"en" "Dynamic workflow" "fi" "Dynaaminen työvuo"})]
