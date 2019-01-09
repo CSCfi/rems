@@ -19,7 +19,7 @@ DROP TABLE IF EXISTS application_form_meta_map CASCADE;
 DROP TABLE IF EXISTS application_license_approval_values CASCADE;
 --;;
 DROP TABLE IF EXISTS application_referee_invite_values CASCADE;
---;
+--;;
 DROP TABLE IF EXISTS application_referee_values CASCADE;
 --;;
 DROP TABLE IF EXISTS application_text_values CASCADE;

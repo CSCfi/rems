@@ -11,4 +11,3 @@ CREATE TABLE application_attachments (
     CONSTRAINT application_attachments_ibfk_2 FOREIGN KEY (formMapId) REFERENCES application_form_item_map (id),
     UNIQUE (catAppId, formMapId)
 );
---;;

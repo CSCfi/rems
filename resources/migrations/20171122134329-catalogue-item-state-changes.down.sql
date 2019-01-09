@@ -9,4 +9,3 @@ CREATE TABLE catalogue_item_state (
 );
 --;;
 ALTER TABLE catalogue_item DROP COLUMN state;
---;;
