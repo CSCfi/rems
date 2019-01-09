@@ -73,8 +73,8 @@
                     :class defaults-to-name-of-column-name-kw}
       ...}
    visible-columns: a sequence of keys that occur in column-definitions
-   sorting: sorting and filtering options, for example {:sort-column :name, :sort-order :asc}
-   set-sorting: a callback that is called with a new sorting and filtering when it changes
+   sorting: sorting and filtering options, for example {:sort-column :name, :sort-order :asc}, filters can be nil
+   set-sorting: a callback that is called with a new sorting and filtering when it changes, can be nil
    id-function: function for setting react key for row, should return unique values
    items: sequence of items to render
    opts: possibly options with {:class classes for the table :row-class classes for the whole row}"
