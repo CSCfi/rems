@@ -63,6 +63,9 @@
  (fn [db _]
    (::catalogue db)))
 
+
+;;;; draft applications
+
 (rf/reg-event-db
   ::fetch-drafts-result
   (fn [db [_ applications]]
@@ -113,7 +116,7 @@
 (defn- format-catalogue-items [app]
   (str/join ", " (map :title (:catalogue-items app))))
 
-(defn draft-list [drafts]
+(defn draft-application-list [drafts]
   (when (seq drafts)
     [:div.drafts
      [:h4 (text :t.catalogue/continue-existing-application)]
@@ -139,7 +142,7 @@
        (if @loading?
          [spinner/big]
          [:div
-          [draft-list @drafts @language]
+          [draft-application-list @drafts @language]
           [:h4 (text :t.catalogue/apply-resources)]
           [cart/cart-list-container @language]
           [catalogue-list @catalogue @language @sorting @config]])])))
@@ -170,11 +173,11 @@
                                        :localizations {:fi {:title "Suomenkielinen title"}
                                                        :en {:title "English title"}}} :fi]]]]])
 
-   (component-info draft-list)
+   (component-info draft-application-list)
    (example "draft-list empty"
-            [draft-list [] nil])
+            [draft-application-list [] nil])
    (example "draft-list with two drafts"
-            [draft-list [{:id 1 :catalogue-items [{:title "Item 5"}] :state "draft" :applicantuserid "alice"
+            [draft-application-list [{:id 1 :catalogue-items [{:title "Item 5"}] :state "draft" :applicantuserid "alice"
                           :start "1980-01-02T13:45:00.000Z" :last-modified "2017-01-01T01:01:01:001Z"}
                          {:id 2 :catalogue-items [{:title "Item 3"}] :state "draft" :applicantuserid "bob"
                           :start "1971-02-03T23:59:00.000Z" :last-modified "2017-01-01T01:01:01:001Z"}] nil])
