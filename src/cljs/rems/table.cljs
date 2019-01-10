@@ -15,8 +15,10 @@
       (values item)
       [(column-value column-definitions col item)])))
 
-(defn column-class [column-definitions col]
-  (get-in column-definitions [col :class] (name col)))
+(defn column-class [column-definitions col item]
+  (let [class (get-in column-definitions [col :class] (name col))]
+    (cond (string? class) class
+          (fn? class) (class item))))
 
 (defn column-sort-value [column-definitions col item]
   ((or (get-in column-definitions [col :sort-value])
@@ -24,10 +26,10 @@
 
 (defn- row [column-definitions columns item]
   (into [:tr.action]
-        (for [col columns]
-          (into [:td {:class (column-class column-definitions col)
-                      :data-th (column-header column-definitions col)}]
-                (column-values column-definitions col item)))))
+    (for [col columns]
+      (into [:td {:class (column-class column-definitions col item)
+                  :data-th (column-header column-definitions col)}]
+            (column-values column-definitions col item)))))
 
 (defn- flip [order]
   (case order
@@ -70,19 +72,20 @@
                     :class defaults-to-name-of-column-name-kw}
       ...}
    visible-columns: a sequence of keys that occur in column-definitions
-   sorting: sorting and filtering options, for example {:sort-column :name, :sort-order :asc}
-   set-sorting: a callback that is called with a new sorting and filtering when it changes
+   sorting: sorting and filtering options, for example {:sort-column :name, :sort-order :asc}, filters can be nil
+   set-sorting: a callback that is called with a new sorting and filtering when it changes, can be nil
    id-function: function for setting react key for row, should return unique values
    items: sequence of items to render
    opts: possibly options with {:class classes for the table}"
   [column-definitions visible-columns {:keys [sort-column sort-order filters show-filters] :as sorting} set-sorting id-function items & [opts]]
   [:div
-   [:div.rems-table-search-toggle.d-flex.flex-row-reverse
-    [:div.btn
-     {:class (if show-filters "btn-secondary" "btn-primary")
-      :on-click (fn [] (set-sorting
-                        (assoc sorting :show-filters (not show-filters))))}
-     (search-symbol)]]
+   (when filters
+     [:div.rems-table-search-toggle.d-flex.flex-row-reverse
+      [:div.btn
+       {:class (if show-filters "btn-secondary" "btn-primary")
+        :on-click (fn [] (when set-sorting
+                           (set-sorting (assoc sorting :show-filters (not show-filters)))))}
+       (search-symbol)]])
    [:table.rems-table (when (:class opts) (select-keys opts [:class]))
     [:thead
      (into [:tr]
@@ -90,7 +93,7 @@
              (let [sortable? (get-in column-definitions [column :sortable?] true)]
                [:th
                 [:div.column-header
-                 {:on-click (when sortable?
+                 {:on-click (when (and sortable? set-sorting)
                               (fn [] (set-sorting (-> sorting
                                                       (assoc :sort-column column)
                                                       (assoc :sort-order (change-sort-order sort-column sort-order column))))))}
@@ -118,6 +121,6 @@
                        :aria-hidden true}])])])))]
     (into [:tbody]
           (map (fn [item] ^{:key (id-function item)} [row column-definitions visible-columns item])
-               (->> items
-                    (apply-filtering column-definitions filters)
-                    (apply-sorting column-definitions sort-column sort-order))))]])
+               (cond->> items
+                        filters (apply-filtering column-definitions filters)
+                        sorting (apply-sorting column-definitions sort-column sort-order))))]])

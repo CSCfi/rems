@@ -151,7 +151,7 @@
                            [lein-cloverage "1.0.10"]
                            [lein-doo "0.1.10"]
                            [lein-eftest "0.5.2"]
-                           [lein-figwheel "0.5.16"]]
+                           [lein-figwheel "0.5.18"]]
                  :aot [rems.InvalidRequestException rems.auth.NotAuthorizedException rems.auth.ForbiddenException]
 
                  :jvm-opts ["-Dconf=dev-config.edn"]

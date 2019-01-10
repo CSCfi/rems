@@ -7,6 +7,7 @@
             [garden.selectors :as s]
             [garden.stylesheet :as stylesheet]
             [garden.units :as u]
+            [garden.color :as c]
             [mount.core :refer [defstate]]
             [rems.util :as util]))
 
@@ -169,7 +170,8 @@
    [:.cart-title {:margin-left (u/em 1)
                   :font-weight "bold"}]
    [:.cart-item {:padding-right (u/em 1)}
-    [:>span {:display :inline-block :vertical-align :middle}]]))
+    [:>span {:display :inline-block :vertical-align :middle}]]
+   [:.text-highlight {:color (c/lighten (util/get-theme-attribute :color4) 20)}]))
 
 (def ^:private dashed-form-group {:position "relative"
                                   :border "2px dashed #ccc"

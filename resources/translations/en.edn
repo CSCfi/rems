@@ -157,7 +157,9 @@
          :remove "Remove"}
   :catalogue {:catalogue "Catalogue"
               :header "Resource"
-              :more-info "More info"}
+              :more-info "More info"
+              :continue-existing-application "Continue Existing Application"
+              :apply-resources "Apply for Resources"}
   :collapse {:show-less "Show less"
              :show-more "Show more"}
   :create-catalogue-item {:form-selection "Form"
