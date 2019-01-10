@@ -45,9 +45,11 @@
                              (json-body {:resid resid
                                          :organization "TEST-ORGANIZATION"
                                          :licenses [licid]})
-                             app)]
-            (is (= 400 (:status response)))
-            (is (= "Duplicate resource ID" (read-body response)))))
+                             app)
+                body (read-body response)]
+            (is (= 200 (:status response)))
+            (is (= false (:success body)))
+            (is (= [{:key "t.administration.errors/duplicate-resid" :resid resid}] (:errors body)))))
         (testing "duplicate resource ID is allowed between organizations"
           (-> (request :post "/api/resources/create")
               (authenticate api-key user-id)

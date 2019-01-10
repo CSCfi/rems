@@ -25,8 +25,10 @@
       (doseq [licid licenses]
         (db/create-resource-license! {:resid id
                                       :licid licid}))
-      {:id id})
+      {:success true
+       :id id})
     (catch Exception e
-      (when (duplicate-resid? e)
-        (throw (InvalidRequestException. (str "Duplicate resource ID"))))
-      (throw e))))
+      (if (duplicate-resid? e)
+        {:success false
+         :errors [{:key :t.administration.errors/duplicate-resid :resid resid}]}
+        (throw e)))))
