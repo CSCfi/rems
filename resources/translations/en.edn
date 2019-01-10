@@ -96,6 +96,7 @@
                    :create-workflow "Create workflow"
                    :disable "Disable"
                    :enable "Enable"
+                   :errors {:duplicate-resid "Duplicate resource for organization."}
                    :organization "Organization"
                    :organization-placeholder "testorganization.org"
                    :save "Save"}

@@ -96,6 +96,7 @@
                    :create-workflow "Uusi työvuo"
                    :disable "Poista käytöstä"
                    :enable "Ota käyttöön"
+                   :errors {:duplicate-resid "Resurssi on jo olemassa organisaatiossa."}
                    :organization "Organisaatio"
                    :organization-placeholder "testorganization.org"
                    :save "Tallenna"}
