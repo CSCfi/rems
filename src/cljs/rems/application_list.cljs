@@ -19,9 +19,9 @@
 (def +default-columns+
   [:id :description :resource :applicant :state :created :view])
 
-(defn highlight-draft [item]
+(defn state-class [item]
   (if (= "draft" (:state item))
-    "text-highlight"
+    "state text-highlight"
     "state"))
 
 (def ^:private +columns+
@@ -35,7 +35,7 @@
                :header #(text :t.actions/applicant)}
    :state {:value #(localize-state (:state %))
            :header #(text :t.actions/state)
-           :class highlight-draft}
+           :class state-class}
    :created {:value #(localize-time (:start %))
              :sort-value :start
              :header #(text :t.actions/created)
