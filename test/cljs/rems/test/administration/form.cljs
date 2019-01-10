@@ -8,7 +8,6 @@
 (use-fixtures :each isolate-re-frame-state)
 
 (defn reset-form []
-  (stub-re-frame-effect ::f/fetch-form-items)
   (rf/dispatch-sync [::f/enter-page]))
 
 (deftest add-form-item-test
