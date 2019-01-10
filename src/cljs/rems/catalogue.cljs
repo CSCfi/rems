@@ -18,9 +18,10 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} _]
-   {:db (assoc db ::loading-catalogue? true)
-    ::fetch-catalogue nil
-    ::fetch-drafts nil}))
+   (when (contains? (get-in db [:identity :roles]) :applicant)
+     {:db (assoc db ::loading-catalogue? true)
+      ::fetch-catalogue nil
+      ::fetch-drafts nil})))
 
 ;;;; table sorting
 
