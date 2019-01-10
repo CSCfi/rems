@@ -24,7 +24,7 @@
  (fn [db _]
    (::loading? db)))
 
-; form state
+;; form state
 
 (rf/reg-sub
  ::form
@@ -52,7 +52,7 @@
    (update-in db [::form :licenses] disj license)))
 
 
-; form submit
+;; form submit
 
 (defn- valid-request? [request]
   (and (not (str/blank? (:organization request)))
@@ -76,9 +76,8 @@
  (fn [_ [_ request]]
    (create-resource request)
    {}))
-
-
-; available licenses
+                                        ;
+;; available licenses
 
 (defn- fetch-licenses []
   (fetch "/api/licenses?active=true"
