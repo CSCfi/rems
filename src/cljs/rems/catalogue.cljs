@@ -68,22 +68,22 @@
 ;;;; draft applications
 
 (rf/reg-event-db
-  ::fetch-drafts-result
-  (fn [db [_ applications]]
-    (assoc db ::draft-applications (filter #(= "draft" (:state %)) applications))))
+ ::fetch-drafts-result
+ (fn [db [_ applications]]
+   (assoc db ::draft-applications (filter #(= "draft" (:state %)) applications))))
 
 (defn- fetch-drafts []
   (fetch "/api/applications/" {:handler #(rf/dispatch [::fetch-drafts-result %])}))
 
 (rf/reg-fx
-  ::fetch-drafts
-  (fn [_]
-    (fetch-drafts)))
+ ::fetch-drafts
+ (fn [_]
+   (fetch-drafts)))
 
 (rf/reg-sub
-  ::draft-applications
-  (fn [db _]
-    (::draft-applications db)))
+ ::draft-applications
+ (fn [db _]
+   (::draft-applications db)))
 
 ;;;; UI
 
@@ -179,9 +179,9 @@
             [draft-application-list [] nil])
    (example "draft-list with two drafts"
             [draft-application-list [{:id 1 :catalogue-items [{:title "Item 5"}] :state "draft" :applicantuserid "alice"
-                          :start "1980-01-02T13:45:00.000Z" :last-modified "2017-01-01T01:01:01:001Z"}
-                         {:id 2 :catalogue-items [{:title "Item 3"}] :state "draft" :applicantuserid "bob"
-                          :start "1971-02-03T23:59:00.000Z" :last-modified "2017-01-01T01:01:01:001Z"}] nil])
+                                      :start "1980-01-02T13:45:00.000Z" :last-modified "2017-01-01T01:01:01:001Z"}
+                                     {:id 2 :catalogue-items [{:title "Item 3"}] :state "draft" :applicantuserid "bob"
+                                      :start "1971-02-03T23:59:00.000Z" :last-modified "2017-01-01T01:01:01:001Z"}] nil])
 
    (component-info catalogue-list)
    (example "catalogue-list empty"
