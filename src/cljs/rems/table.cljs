@@ -24,13 +24,12 @@
   ((or (get-in column-definitions [col :sort-value])
        (get-in column-definitions [col :value])) item))
 
-(defn- row [{:keys [row-class]} column-definitions columns item]
-  (into [:tr {:class (cond (string? row-class) row-class
-                           (fn? row-class) (row-class item))}]
-        (for [col columns]
-          (into [:td {:class (column-class column-definitions col item)
-                      :data-th (column-header column-definitions col)}]
-                (column-values column-definitions col item)))))
+(defn- row [column-definitions columns item]
+  (into [:tr.action]
+    (for [col columns]
+      (into [:td {:class (column-class column-definitions col item)
+                  :data-th (column-header column-definitions col)}]
+            (column-values column-definitions col item)))))
 
 (defn- flip [order]
   (case order
@@ -77,7 +76,7 @@
    set-sorting: a callback that is called with a new sorting and filtering when it changes, can be nil
    id-function: function for setting react key for row, should return unique values
    items: sequence of items to render
-   opts: possibly options with {:class classes for the table :row-class classes for the whole row}"
+   opts: possibly options with {:class classes for the table}"
   [column-definitions visible-columns {:keys [sort-column sort-order filters show-filters] :as sorting} set-sorting id-function items & [opts]]
   [:div
    (when filters
@@ -121,7 +120,7 @@
                                          (assoc-in sorting [:filters column] "")))
                        :aria-hidden true}])])])))]
     (into [:tbody]
-          (map (fn [item] ^{:key (id-function item)} [row (select-keys opts [:row-class]) column-definitions visible-columns item])
+          (map (fn [item] ^{:key (id-function item)} [row column-definitions visible-columns item])
                (cond->> items
                         filters (apply-filtering column-definitions filters)
                         sorting (apply-sorting column-definitions sort-column sort-order))))]])
