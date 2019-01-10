@@ -157,7 +157,9 @@
          :remove "Poista"}
   :catalogue {:catalogue "Kielivarat"
               :header "Kielivarat"
-              :more-info "Lisätietoja"}
+              :more-info "Lisätietoja"
+              :continue-existing-application "Jatka hakemusta"
+              :apply-resources "Hae uusia kielivaroja"}
   :collapse {:show-less "Näytä vähemmän"
              :show-more "Näytä lisää"}
   :create-catalogue-item {:form-selection "Lomake"

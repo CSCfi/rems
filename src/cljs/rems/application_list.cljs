@@ -5,7 +5,7 @@
             [rems.text :refer [localize-state localize-time text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
-(defn- view-button [app]
+(defn view-button [app]
   [:a.btn.btn-primary
    {:href (str "#/application/" (:id app))}
    (text :t.applications/view)])
@@ -19,6 +19,11 @@
 (def +default-columns+
   [:id :description :resource :applicant :state :created :view])
 
+(defn state-class [item]
+  (if (= "draft" (:state item))
+    "state text-highlight"
+    "state"))
+
 (def ^:private +columns+
   {:id {:value :id
         :header #(text :t.actions/application)}
@@ -29,7 +34,8 @@
    :applicant {:value :applicantuserid
                :header #(text :t.actions/applicant)}
    :state {:value #(localize-state (:state %))
-           :header #(text :t.actions/state)}
+           :header #(text :t.actions/state)
+           :class state-class}
    :created {:value #(localize-time (:start %))
              :sort-value :start
              :header #(text :t.actions/created)

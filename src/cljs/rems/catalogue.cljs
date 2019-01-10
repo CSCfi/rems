@@ -1,6 +1,8 @@
 (ns rems.catalogue
-  (:require [re-frame.core :as rf]
+  (:require [clojure.string :as str]
+            [re-frame.core :as rf]
             [rems.atoms :refer [external-link]]
+            [rems.application-list :as application]
             [rems.cart :as cart]
             [rems.db.catalogue :refer [disabled-catalogue-item?
                                        get-catalogue-item-title
@@ -9,7 +11,7 @@
             [rems.guide-functions]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [text]]
+            [rems.text :refer [localize-time text]]
             [rems.util :refer [fetch]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
@@ -17,7 +19,8 @@
  ::enter-page
  (fn [{:keys [db]} _]
    {:db (assoc db ::loading-catalogue? true)
-    ::fetch-catalogue nil}))
+    ::fetch-catalogue nil
+    ::fetch-drafts nil}))
 
 ;;;; table sorting
 
@@ -60,6 +63,27 @@
  (fn [db _]
    (::catalogue db)))
 
+
+;;;; draft applications
+
+(rf/reg-event-db
+  ::fetch-drafts-result
+  (fn [db [_ applications]]
+    (assoc db ::draft-applications (filter #(= "draft" (:state %)) applications))))
+
+(defn- fetch-drafts []
+  (fetch "/api/applications/" {:handler #(rf/dispatch [::fetch-drafts-result %])}))
+
+(rf/reg-fx
+  ::fetch-drafts
+  (fn [_]
+    (fetch-drafts)))
+
+(rf/reg-sub
+  ::draft-applications
+  (fn [db _]
+    (::draft-applications db)))
+
 ;;;; UI
 
 (defn- catalogue-item-title [item language]
@@ -89,8 +113,25 @@
    (filter (complement disabled-catalogue-item?) items)
    {:class "catalogue"}])
 
+(defn- format-catalogue-items [app]
+  (str/join ", " (map :title (:catalogue-items app))))
+
+(defn draft-application-list [drafts]
+  (when (seq drafts)
+    [:div.drafts
+     [:h4 (text :t.catalogue/continue-existing-application)]
+     [table/component {:id {:value :id
+                            :header #(text :t.actions/application)}
+                       :resource {:value format-catalogue-items
+                                  :header #(text :t.actions/resource)}
+                       :modified {:value #(localize-time (or (:last-modified %) (:start %)))
+                                  :header #(text :t.actions/last-modified)}
+                       :view {:value application/view-button}}
+      [:id :resource :modified :view] nil nil :id drafts]]))
+
 (defn catalogue-page []
   (let [catalogue (rf/subscribe [::catalogue])
+        drafts (rf/subscribe [::draft-applications])
         loading? (rf/subscribe [::loading-catalogue?])
         language (rf/subscribe [:language])
         sorting (rf/subscribe [::sorting])
@@ -101,6 +142,8 @@
        (if @loading?
          [spinner/big]
          [:div
+          [draft-application-list @drafts @language]
+          [:h4 (text :t.catalogue/apply-resources)]
           [cart/cart-list-container @language]
           [catalogue-list @catalogue @language @sorting @config]])])))
 
@@ -129,6 +172,15 @@
                 [catalogue-item-title {:title "Not used when there are localizations"
                                        :localizations {:fi {:title "Suomenkielinen title"}
                                                        :en {:title "English title"}}} :fi]]]]])
+
+   (component-info draft-application-list)
+   (example "draft-list empty"
+            [draft-application-list [] nil])
+   (example "draft-list with two drafts"
+            [draft-application-list [{:id 1 :catalogue-items [{:title "Item 5"}] :state "draft" :applicantuserid "alice"
+                          :start "1980-01-02T13:45:00.000Z" :last-modified "2017-01-01T01:01:01:001Z"}
+                         {:id 2 :catalogue-items [{:title "Item 3"}] :state "draft" :applicantuserid "bob"
+                          :start "1971-02-03T23:59:00.000Z" :last-modified "2017-01-01T01:01:01:001Z"}] nil])
 
    (component-info catalogue-list)
    (example "catalogue-list empty"
