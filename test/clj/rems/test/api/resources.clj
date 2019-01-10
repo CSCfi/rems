@@ -87,8 +87,8 @@
                                      :organization "o"
                                      :licenses []})
                          app)]
-        (is (response-is-forbidden? response))
-        (is (= "<h1>Invalid anti-forgery token</h1>" (read-body response))))))
+        (is (response-is-unauthorized? response))
+        (is (= "Invalid anti-forgery token" (read-body response))))))
 
   (testing "with wrong api key"
     (let [api-key "1"
