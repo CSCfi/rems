@@ -134,8 +134,8 @@
 
 (defn on-forbidden-error [request]
   (error-page
-    {:status 403
-     :title (str "Access to " (:uri request) " is forbidden")}))
+   {:status 403
+    :title (str "Access to " (:uri request) " is forbidden")}))
 
 (defn wrap-unauthorized-and-forbidden
   "Handles unauthorized exceptions by showing an error page."
