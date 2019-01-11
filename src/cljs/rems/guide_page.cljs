@@ -39,16 +39,15 @@
    [:div.alert.alert-danger "Danger level message"]])
 
 (defn buttons []
-  [:div
-   [:div.row
-    [:div.btn.btn-primary "Primary button"]
-    [:div.btn.btn-secondary "Secondary button"]
-    [:div.btn.btn-success "Success button"]
-    [:div.btn.btn-info "Info button"]
-    [:div.btn.btn-light "Light button"]
-    [:div.btn.btn-dark "Dark button"]
-    [:div.btn.btn-warning "Warning button"]
-    [:div.btn.btn-danger "Danger button"]]])
+  [:div {:style {:display :flex :flex-direction :row :flex-wrap :wrap}}
+   [:div.btn.btn-primary "Primary button"]
+   [:div.btn.btn-secondary "Secondary button"]
+   [:div.btn.btn-success "Success button"]
+   [:div.btn.btn-info "Info button"]
+   [:div.btn.btn-light "Light button"]
+   [:div.btn.btn-dark "Dark button"]
+   [:div.btn.btn-warning "Warning button"]
+   [:div.btn.btn-danger "Danger button"]])
 
 (defn guide-page []
   [:div.container
