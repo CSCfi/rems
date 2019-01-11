@@ -79,7 +79,7 @@
   :figwheel {:http-server-root "public"
              :nrepl-port 7002
              :css-dirs ["resources/public/css"]
-             :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
+             :nrepl-middleware [cider.piggieback/wrap-cljs-repl]}
 
   :uberwar {:handler rems.handler/app
             :init rems.handler/init
@@ -135,7 +135,7 @@
    :test [:project/dev :project/test :profiles/test]
 
    :project/dev {:dependencies [[binaryage/devtools "0.9.10"]
-                                [com.cemerick/piggieback "0.2.2"]
+                                [cider/piggieback "0.3.10"]
                                 [macroz/core.rrb-vector "0.0.14.1"]
                                 [doo "0.1.11" :exclusions [rrb-vector]]
                                 [eftest "0.5.4"]
