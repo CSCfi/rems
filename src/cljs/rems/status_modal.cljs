@@ -15,6 +15,8 @@
      :saved [:div [:i {:class ["fa fa-check-circle text-success"]}] (text :t.form/success)]
      :failed [:div [:i {:class "fa fa-times-circle text-danger"}]
               (str (text :t.form/failed)
+                   (when (:key error)
+                     (str ": " (text (:key error))))
                    (when-let [text (:status-text error)]
                      (str ": " text))
                    (when-let [text (:status error)]

@@ -1,10 +1,12 @@
 (ns rems.administration.resource
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
+            [reagent.core :as r]
             [rems.administration.components :refer [text-field]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
+            [rems.status-modal :refer [status-modal]]
             [rems.text :refer [text localize-item]]
             [rems.util :refer [dispatch! fetch post!]]))
 
@@ -24,7 +26,7 @@
  (fn [db _]
    (::loading? db)))
 
-; form state
+;; form state
 
 (rf/reg-sub
  ::form
@@ -52,7 +54,7 @@
    (update-in db [::form :licenses] disj license)))
 
 
-; form submit
+;; form submit
 
 (defn- valid-request? [request]
   (and (not (str/blank? (:organization request)))
@@ -65,19 +67,23 @@
     (when (valid-request? request)
       request)))
 
-(defn- create-resource [request]
-  (post! "/api/resources/create" {:params request
-                                  ; TODO: error handling
-                                  :handler (fn [resp] (dispatch! "#/administration"))}))
+(defn- create-resource [request on-success on-error]
+  (post! "/api/resources/create"
+         {:params request
+          :handler (fn [response]
+                     (if (:success response)
+                       (on-success response)
+                       (on-error (first (:errors response)))))
+          :error-handler on-error}))
 
 (rf/reg-event-fx
  ::create-resource
- (fn [_ [_ request]]
-   (create-resource request)
+ (fn [_ [_ {:keys [request on-pending on-success on-error]}]]
+   (create-resource request on-success on-error)
+   (on-pending)
    {}))
-
-
-; available licenses
+                                        ;
+;; available licenses
 
 (defn- fetch-licenses []
   (fetch "/api/licenses?active=true"
@@ -134,11 +140,13 @@
        :add-fn #(rf/dispatch [::select-license %])
        :remove-fn #(rf/dispatch [::deselect-license %])}]]))
 
-(defn- save-resource-button []
-  (let [form @(rf/subscribe [::form])
-        request (build-request form)]
+(defn- save-resource-button [{:keys [form on-success on-pending on-error]}]
+  (let [request (build-request form)]
     [:button.btn.btn-primary
-     {:on-click #(rf/dispatch [::create-resource request])
+     {:on-click #(rf/dispatch [::create-resource {:request request
+                                                  :on-success on-success
+                                                  :on-pending on-pending
+                                                  :on-error on-error}])
       :disabled (nil? request)}
      (text :t.administration/save)]))
 
@@ -148,18 +156,34 @@
    (text :t.administration/cancel)])
 
 (defn create-resource-page []
-  (let [loading? (rf/subscribe [::loading?])]
-    [collapsible/component
-     {:id "create-resource"
-      :title (text :t.navigation/create-resource)
-      :always [:div
-               (if @loading?
-                 [:div#resource-loader [spinner/big]]
-                 [:div#resource-editor
-                  [resource-organization-field]
-                  [resource-id-field]
-                  [resource-licenses-field]
+  (let [loading? (rf/subscribe [::loading?])
+        form (rf/subscribe [::form])
+        state (r/atom nil)
+        on-success #(reset! state {:status :saved})
+        on-pending #(reset! state {:status :pending})
+        on-error #(reset! state {:status :failed :error %})
+        on-modal-close #(do (when (= :saved (:status @state))
+                              (dispatch! "#/administration"))
+                            (reset! state nil))]
+    (fn []
+      [collapsible/component
+       {:id "create-resource"
+        :title (text :t.navigation/create-resource)
+        :always [:div
+                 (when (:status @state)
+                   [status-modal (assoc @state
+                                        :description (text :t.administration/save)
+                                        :on-close on-modal-close)])
+                 (if @loading?
+                   [:div#resource-loader [spinner/big]]
+                   [:div#resource-editor
+                    [resource-organization-field]
+                    [resource-id-field]
+                    [resource-licenses-field]
 
-                  [:div.col.commands
-                   [cancel-button]
-                   [save-resource-button]]])]}]))
+                    [:div.col.commands
+                     [cancel-button]
+                     [save-resource-button {:form @form
+                                            :on-success on-success
+                                            :on-pending on-pending
+                                            :on-error on-error}]]])]}])))

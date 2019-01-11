@@ -10,8 +10,8 @@
     :or {item->key :key item->value :value item->text :value value->text get search-fields [:value]}}]
   [autocomplete/multiple-autocomplete
    {:value value
-    :cb add-fn
-    :remove-cb remove-fn
+    :on-change add-fn
+    :on-remove remove-fn
     :item->key item->key
     :item->text item->text
     :item->value item->value

@@ -28,7 +28,9 @@
    :licenses [s/Num]})
 
 (s/defschema CreateResourceResponse
-  {:id s/Num})
+  {:success s/Bool
+   (s/optional-key :id) s/Num
+   (s/optional-key :errors) [{:key s/Keyword :resid s/Str}]})
 
 (defn- format-resource
   [{:keys [id owneruserid modifieruserid organization resid start endt active?]}]

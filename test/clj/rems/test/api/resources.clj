@@ -38,7 +38,26 @@
                          read-body)
                 resource (some #(when (= resid (:resid %)) %) data)]
             (is resource)
-            (is (= [licid] (map :id (:licenses resource))))))))))
+            (is (= [licid] (map :id (:licenses resource))))))
+        (testing "duplicate resource ID is not allowed within one organization"
+          (let [response (-> (request :post "/api/resources/create")
+                             (authenticate api-key user-id)
+                             (json-body {:resid resid
+                                         :organization "TEST-ORGANIZATION"
+                                         :licenses [licid]})
+                             app)
+                body (read-body response)]
+            (is (= 200 (:status response)))
+            (is (= false (:success body)))
+            (is (= [{:key "t.administration.errors/duplicate-resid" :resid resid}] (:errors body)))))
+        (testing "duplicate resource ID is allowed between organizations"
+          (-> (request :post "/api/resources/create")
+              (authenticate api-key user-id)
+              (json-body {:resid resid
+                          :organization "TEST-ORGANIZATION2"
+                          :licenses [licid]})
+              app
+              assert-response-is-ok))))))
 
 (deftest resources-api-filtering-test
   (let [unfiltered (-> (request :get "/api/resources")
@@ -70,8 +89,8 @@
                                      :organization "o"
                                      :licenses []})
                          app)]
-        (is (response-is-forbidden? response))
-        (is (= "<h1>Invalid anti-forgery token</h1>" (read-body response))))))
+        (is (response-is-unauthorized? response))
+        (is (= "Invalid anti-forgery token" (read-body response))))))
 
   (testing "with wrong api key"
     (let [api-key "1"

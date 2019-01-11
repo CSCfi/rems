@@ -21,7 +21,7 @@
 
 (defn add-roles-documentation [summary roles]
   (when (nil? summary)
-    (throw (IllegalArgumentException. "Route must have a :summary when using :roles")))
+    (throw (IllegalArgumentException. "Route must have a :summary when using :roles and it must be specified before :roles")))
   (str summary
        " (roles: "
        (->> roles
