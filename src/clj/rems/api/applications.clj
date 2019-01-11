@@ -331,6 +331,15 @@
       (applications/save-attachment! file (getx-user-id) application-id field-id)
       (ok {:success true}))
 
+    (POST "/remove_attachment" []
+      :summary "Remove an attachment file related to an application field"
+      :roles #{:applicant}
+      :query-params [application-id :- (describe s/Int "application id")
+                     field-id :- (describe s/Int "application form field id the attachment is related to")]
+      :return SuccessResponse
+      (applications/remove-attachment! (getx-user-id) application-id field-id)
+      (ok {:success true}))
+
     (POST "/command" []
       :summary "Submit a command for a dynamic application"
       :roles #{:applicant :approver :reviewer}

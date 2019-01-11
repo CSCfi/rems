@@ -241,6 +241,7 @@
          :add-comments-shown-to-applicant "Add comment (shown to applicant)"
          :alert-disabled-items "The following resources can't be applied anymore. Consider closing this draft and creating a new application."
          :application "Application"
+         :attachment-remove "Remove"
          :back "Back to catalogue"
          :back-actions "Back to actions"
          :back-reviews "Back to reviews"

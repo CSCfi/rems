@@ -222,7 +222,13 @@
   (post! (str "/api/applications/add_attachment?application-id=" application-id "&field-id=" field-id)
          {:body form-data
           :error-handler (fn [_] (rf/dispatch [::set-status {:status :failed
-                                                             :description description}]))}))
+                                                             :description description}]))})) ; TODO show error in modal
+
+(defn- remove-attachment [application-id field-id description]
+  (post! (str "/api/applications/remove_attachment?application-id=" application-id "&field-id=" field-id)
+         {:body {}
+          :error-handler (fn [_] (rf/dispatch [::set-status {:status :failed
+                                                             :description description}]))})) ; TODO show error in modal
 
 (defn- save-application-with-attachment [field-id form-data catalogue-items items licenses description]
   (let [payload {:command "save"
@@ -261,7 +267,15 @@
                             (for [[id checked?] (get-in db [::edit-application :licenses])
                                   :when checked?]
                               [id "approved"]))]
-         (save-application-with-attachment field-id file catalogue-ids items licenses description))))))
+         (save-application-with-attachment field-id file catalogue-ids items licenses description))))
+   {}))
+
+(rf/reg-event-fx
+ ::remove-attachment
+ (fn [{:keys [db]} [_ application-id field-id description]]
+   (when application-id
+     (remove-attachment application-id field-id description))
+   {}))
 
 
 
@@ -437,6 +451,12 @@
       (rf/dispatch [::set-field id (.-name filecontent)])
       (rf/dispatch [::save-attachment id form-data description]))))
 
+(defn- remove-attachment-action
+  [app-id id description]
+  (fn [event]
+    (rf/dispatch [::set-field id nil])
+    (rf/dispatch [::remove-attachment app-id id description])))
+
 (defn- readonly-field [{:keys [id value]}]
   [:div.form-control {:id id} (str/trim (str value))])
 
@@ -555,12 +575,16 @@
                                :class (when validation "is-invalid")
                                :on-change (set-attachment id title)}]
                       [:button.btn.btn-secondary {:on-click click-upload}
-                       (text :t.form/upload)]]]
+                       (text :t.form/upload)]]
+        remove-button [:button.btn.btn-secondary.mr-2
+                       {:on-click (remove-attachment-action app-id id (text :t.form/attachment-remove))}
+                       (text :t.form/attachment-remove)]]
     [basic-field (assoc opts :readonly-component filename-field)
      (if (empty? value)
        upload-field
        [:div {:style {:display :flex :justify-content :flex-start}}
-        filename-field])]))
+        filename-field
+        remove-button])]))
 
 (defn- date-field
   [{:keys [id value min max validation] :as opts}]

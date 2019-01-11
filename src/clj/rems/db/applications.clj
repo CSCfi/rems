@@ -610,6 +610,19 @@
                           :type content-type
                           :data byte-array})))
 
+(defn remove-attachment!
+  [user-id application-id item-id]
+  (let [form (get-form-for user-id application-id)]
+    (when-not (contains? #{"draft" "returned" "withdrawn"
+                           :rems.workflow.dynamic/draft
+                           ;; TODO dynamic applications that are returned or withdrawn
+                           }
+                         (:state (:application form)))
+      (throw-forbidden))
+    (db/remove-attachment! {:application application-id
+                            :form (:id form)
+                            :item item-id})))
+
 (defn get-draft-form-for
   "Returns a draft form structure like `get-form-for` used when a new application is created."
   ([application]
