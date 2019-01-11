@@ -596,7 +596,11 @@
                                buffer (ByteArrayOutputStream.)]
                      (clojure.java.io/copy input buffer)
                      (.toByteArray buffer))]
-    (when-not (#{"draft" "returned" "withdrawn"} (:state (:application form)))
+    (when-not (contains? #{"draft" "returned" "withdrawn"
+                           :rems.workflow.dynamic/draft
+                           ;; TODO dynamic applications that are returned or withdrawn
+                           }
+                         (:state (:application form)))
       (throw-forbidden))
     (db/save-attachment! {:application application-id
                           :form (:id form)
