@@ -538,26 +538,29 @@
               :value value
               :on-change (set-field-value id)}]])
 
+;; TODO: custom :diff-component, for example link to both old and new attachment
 (defn attachment-field
   [{:keys [title id value validation app-id] :as opts}]
-  (let [download-link (when (not-empty value)
-                        [:a {:href (str "/api/applications/attachments/?application-id=" app-id "&field-id=" id)
-                             :target "_blank"}
-                         value])]
-    ;; TODO: custom :diff-component, for example link to both old and new attachment
-    [basic-field (assoc opts :readonly-component [:div.form-control download-link])
-     [:div
-      [:div.upload-file
-       [:input {:style {:display "none"}
-                :type "file"
-                :id (id-to-name id)
-                :name (id-to-name id)
-                :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
-                :class (when validation "is-invalid")
-                :on-change (set-attachment id title)}]
-       [:button.btn.btn-secondary {:on-click (fn [e] (.click (.getElementById js/document (id-to-name id))))}
-        (text :t.form/upload)]]
-      download-link]]))
+  (let [click-upload (fn [e] (when-not (:readonly opts) (.click (.getElementById js/document (id-to-name id)))))
+        filename-field [:a.btn.btn-secondary.mr-2
+                        {:href (str "/api/applications/attachments/?application-id=" app-id "&field-id=" id)
+                         :target :_new}
+                        value " " (external-link)]
+        upload-field [:div.upload-file.mr-2
+                      [:input {:style {:display "none"}
+                               :type "file"
+                               :id (id-to-name id)
+                               :name (id-to-name id)
+                               :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
+                               :class (when validation "is-invalid")
+                               :on-change (set-attachment id title)}]
+                      [:button.btn.btn-secondary {:on-click click-upload}
+                       (text :t.form/upload)]]]
+    [basic-field (assoc opts :readonly-component filename-field)
+     (if (empty? value)
+       upload-field
+       [:div {:style {:display :flex :justify-content :flex-start}}
+        filename-field])]))
 
 (defn- date-field
   [{:keys [id value min max validation] :as opts}]
