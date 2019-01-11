@@ -54,7 +54,7 @@
                  [ring/ring-defaults "0.3.2"]
                  [ring/ring-devel "1.7.1" :exclusions [ns-tracker]]
                  [ring/ring-servlet "1.7.1"]
-                 [secretary "1.2.3"]]
+                 [clj-commons/secretary "1.2.4"]]
 
   :min-lein-version "2.0.0"
 
