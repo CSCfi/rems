@@ -216,7 +216,7 @@
     [:&:hover
      :&:focus
      :&:active:hover
-     {:background-color "#d84f0e"
+     {:background-color (util/get-theme-attribute :color4)
       :border-color (util/get-theme-attribute :color4)
       :outline-color :transparent}]
     {:background-color (util/get-theme-attribute :color4)
