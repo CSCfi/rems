@@ -17,6 +17,6 @@
  :phase-color "#eee"
  :phase-color-active "#cad2e6"
  :phase-color-completed "#519b2f"
- :table-bgcolor "#94d576"
- :table-stripe-color "#94d576"
+ :table-bgcolor "#d1edc4"
+ :table-stripe-color "#d1edc4"
  :table-text-color "#303030"}
