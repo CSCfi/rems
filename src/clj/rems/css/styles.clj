@@ -61,7 +61,8 @@
                          [(s/descendant :.rems-table :td:before)
                           {:display "none"}]
                          [:.rems-table-search-toggle
-                          {:display "flex !important"}]
+                          {:display "flex !important"
+                           :margin-top (u/px 20)}]
                          [:.rems-table
                           [:th
                            :td
