@@ -1,7 +1,7 @@
 {:color1 "#519b2f"
  :color2 "#29a0c1"
  :color3 "#0060a6"
- :color4 "#29a0c1"
+ :color4 "#519b2f"
  :info-bgcolor "#ffffff"
  :danger-bgcolor "#e28b83"
  :success-bgcolor "#cee798"
@@ -17,5 +17,6 @@
  :phase-color "#eee"
  :phase-color-active "#cad2e6"
  :phase-color-completed "#519b2f"
- :table-bgcolor "#519b2f"
- :table-stripe-color "#94d576"}
+ :table-bgcolor "#94d576"
+ :table-stripe-color "#94d576"
+ :table-text-color "#303030"}

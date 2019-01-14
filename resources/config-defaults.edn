@@ -59,7 +59,8 @@
          :phase-color-active "#7eadba"
          :phase-color-completed "#007887"
          :table-bgcolor "#a4acb5"
-         :table-stripe-color "#cbd0d5"}
+         :table-stripe-color "#cbd0d5"
+         :table-text-color "#fff"}
 
  ;; Optional extra static resources directory.
  :extra-static-resources nil

@@ -143,7 +143,7 @@
    [:.rems-table {:margin "1em 0"
                   :min-width "100%"
                   :background-color (util/get-theme-attribute :table-bgcolor)
-                  :color "#fff"
+                  :color (util/get-theme-attribute :table-text-color)
                   :border-radius (u/rem 0.4)
                   :overflow "hidden"}
     [:th {:display "none"}]
@@ -159,7 +159,7 @@
       :padding "0.5em 1em"}]
     [:th
      :td:before
-     {:color "#fff"}]
+     {:color (util/get-theme-attribute :table-text-color)}]
     [:tr {:margin "0 1rem"}
      [(s/& (s/nth-child "2n")) {:background-color (util/get-theme-attribute :table-stripe-color)}]]
     [:td.commands:last-child {:text-align "right"
