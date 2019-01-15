@@ -20,7 +20,11 @@
   [:id :description :resource :applicant :state :created :view])
 
 (defn state-class [item]
-  (if (= "draft" (:state item))
+  (if #(contains? #{"draft" "returned" "withdrawn"
+                    :rems.workflow.dynamic/draft :rems.workflow.dynamic/returned
+                    ;; TODO add dynamic withdrawn state
+                    }
+                  (:state item))
     "state text-highlight"
     "state"))
 

@@ -70,7 +70,12 @@
 (rf/reg-event-db
  ::fetch-drafts-result
  (fn [db [_ applications]]
-   (assoc db ::draft-applications (filter #(= "draft" (:state %)) applications))))
+   (assoc db ::draft-applications (filter #(contains? #{"draft" "returned" "withdrawn"
+                                                        :rems.workflow.dynamic/draft :rems.workflow.dynamic/returned
+                                                        ;; TODO add dynamic withdrawn state
+                                                        }
+                                                      (:state %))
+                                          applications))))
 
 (defn- fetch-drafts []
   (fetch "/api/applications/" {:handler #(rf/dispatch [::fetch-drafts-result %])}))
