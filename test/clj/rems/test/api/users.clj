@@ -31,8 +31,8 @@
       (let [response (-> (request :post (str "/api/users/create"))
                          (json-body new-user)
                          app)]
-        (is (response-is-forbidden? response))
-        (is (= "<h1>Invalid anti-forgery token</h1>" (read-body response))))))
+        (is (response-is-unauthorized? response))
+        (is (= "Invalid anti-forgery token" (read-body response))))))
 
   (testing "without owner role"
     (testing "create"

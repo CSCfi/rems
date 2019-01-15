@@ -8,7 +8,7 @@
             [rems.collapsible :as collapsible]
             [rems.config :refer [dev-environment?]]
             [rems.text :refer [text text-format localize-item]]
-            [rems.util :refer [dispatch! fetch post!]]))
+            [rems.util :refer [dispatch! post!]]))
 
 (defn- reset-form [db]
   (assoc db ::form {:items []}))

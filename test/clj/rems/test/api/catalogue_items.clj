@@ -50,6 +50,7 @@
     (let [response (-> (request :post (str "/api/catalogue-items/create"))
                        app)
           body (read-body response)]
+      (is (response-is-unauthorized? response))
       (is (str/includes? body "Invalid anti-forgery token"))))
   (testing "create with wrong API-Key"
     (is (= "invalid api key"
@@ -68,6 +69,7 @@
                                    :title "malicious localization"})
                        app)
           body (read-body response)]
+      (is (response-is-unauthorized? response))
       (is (str/includes? body "Invalid anti-forgery token"))))
   (testing "create-localization with wrong API-Key"
     (is (= "invalid api key"

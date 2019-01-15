@@ -50,6 +50,7 @@
 
 (defn read-body [{body :body}]
   (cond
+    (nil? body) body
     (string? body) body
     true (parse-stream (clojure.java.io/reader body) true)))
 

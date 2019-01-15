@@ -1,6 +1,6 @@
 (ns rems.util
-  (:require  [ajax.core :refer [GET PUT POST]]
-             [re-frame.core :as rf]))
+  (:require [ajax.core :refer [GET PUT POST]]
+            [re-frame.core :as rf]))
 
 ;; TODO move to cljc
 (defn getx
@@ -25,7 +25,8 @@
   (let [current-url (.. js/window -location -href)]
     (case status
       401 (rf/dispatch [:unauthorized! current-url])
-      403 (rf/dispatch [:forbidden! current-url]))))
+      403 (rf/dispatch [:forbidden! current-url])
+      nil)))
 
 (defn- wrap-default-error-handler [handler]
   (fn [err]
@@ -40,9 +41,9 @@
   Additionally calls event hooks."
   [url opts]
   (js/window.rems.hooks.get url (clj->js opts))
-  (GET url (merge {:error-handler (wrap-default-error-handler (:error-handler opts))
-                   :response-format :transit}
-                  opts)))
+  (GET url (merge {:response-format :transit}
+                  opts
+                  {:error-handler (wrap-default-error-handler (:error-handler opts))})))
 
 (defn put!
   "Dispatches a command to the given url with optional map of options like #'ajax.core/PUT.
@@ -52,10 +53,10 @@
   Additionally calls event hooks."
   [url opts]
   (js/window.rems.hooks.put url (clj->js opts))
-  (PUT url (merge {:error-handler (wrap-default-error-handler (:error-handler opts))
-                   :format :transit
+  (PUT url (merge {:format :transit
                    :response-format :transit}
-                  opts)))
+                  opts
+                  {:error-handler (wrap-default-error-handler (:error-handler opts))})))
 
 (defn post!
   "Dispatches a command to the given url with optional map of options like #'ajax.core/POST.
@@ -65,7 +66,7 @@
   Additionally calls event hooks."
   [url opts]
   (js/window.rems.hooks.put url (clj->js opts))
-  (POST url (merge {:error-handler (wrap-default-error-handler (:error-handler opts))
-                    :format :transit
+  (POST url (merge {:format :transit
                     :response-format :transit}
-                   opts)))
+                   opts
+                   {:error-handler (wrap-default-error-handler (:error-handler opts))})))

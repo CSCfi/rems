@@ -6,7 +6,7 @@
 
 (def test-time #inst "1980-01-02T13:45:00.000Z")
 
-(defn expected-time 
+(defn expected-time
   "Return a given time as a local DateTime instance formatted by rems.text/time-format.
    Note that exact time checking would make the tests break when run from a different timezone."
   [time]

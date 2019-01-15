@@ -536,7 +536,7 @@
                                      :items {1 "x" 2 "y" 3 "z"}
                                      :licenses {1 "approved" 2 "approved"}})
                          app)]
-        (is (response-is-forbidden? response))))
+        (is (response-is-unauthorized? response))))
     (testing "submit with session and csrf and wrong api-key"
       (let [response (-> (request :post (str "/api/applications/save"))
                          (header "Cookie" cookie)

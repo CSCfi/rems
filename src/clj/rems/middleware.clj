@@ -41,10 +41,16 @@
   (when-let [key (get-api-key request)]
     (api-key/valid? key)))
 
+(defn- csrf-error-handler
+  "CSRF error is typical when the user session is timed out
+  and we wish to redirect to login in that case."
+  [error]
+  (unauthorized "Invalid anti-forgery token"))
+
 (defn wrap-api-key-or-csrf-token
   "Custom wrapper for CSRF so that the API requests with valid `x-rems-api-key` don't need to provide CSRF token."
   [handler]
-  (let [csrf-handler (wrap-anti-forgery handler)]
+  (let [csrf-handler (wrap-anti-forgery handler {:error-handler csrf-error-handler})]
     (fn [request]
       (cond
         (valid-api-key? request) (handler request)
@@ -128,8 +134,8 @@
 
 (defn on-forbidden-error [request]
   (error-page
-    {:status 403
-     :title (str "Access to " (:uri request) " is forbidden")}))
+   {:status 403
+    :title (str "Access to " (:uri request) " is forbidden")}))
 
 (defn wrap-unauthorized-and-forbidden
   "Handles unauthorized exceptions by showing an error page."

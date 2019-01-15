@@ -30,16 +30,17 @@
 
 (defn unauthorized-handler
   [exception ex-data request]
-  (log/info "User is unauthorized")
+  (log/info "unauthorized" (.getMessage exception))
   (unauthorized "unauthorized"))
 
 (defn forbidden-handler
   [exception ex-data request]
-  (log/info "Forbidden from user")
+  (log/info "forbidden" (.getMessage exception))
   (forbidden "forbidden"))
 
 (defn invalid-handler
   [exception ex-data request]
+  (log/info "bad-request" (.getMessage exception))
   (bad-request (.getMessage exception)))
 
 (defn debug-handler
@@ -91,7 +92,7 @@
      :middleware [cors-middleware]
      :exceptions {:handlers {NotAuthorizedException   unauthorized-handler
                              ForbiddenException       forbidden-handler
-                             InvalidRequestException  (ex/with-logging invalid-handler)
+                             InvalidRequestException  invalid-handler
                              ;; java.lang.Throwable (ex/with-logging debug-handler) ; optional Debug handler
                              ;; add logging to validation handlers
                              ::ex/request-validation  (ex/with-logging ex/request-validation-handler)
