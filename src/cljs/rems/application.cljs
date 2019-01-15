@@ -14,6 +14,7 @@
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [index-by]]
+            [rems.db.application :refer [draft?]]
             [rems.db.catalogue :refer [get-catalogue-item-title]]
             [rems.guide-utils :refer [lipsum lipsum-short lipsum-paragraphs]]
             [rems.phase :refer [phases]]
@@ -692,11 +693,7 @@
                    :on-click #(rf/dispatch [::save-application "submit" (text :t.form/submit)])}])
 
 (defn- editable-state? [state]
-  (contains? #{"draft" "returned" "withdrawn"
-               :rems.workflow.dynamic/draft :rems.workflow.dynamic/returned
-               ;; TODO add dynamic withdrawn state
-               }
-             state))
+  (draft? state))
 
 (defn- fields [form edit-application language]
   (let [application (:application form)

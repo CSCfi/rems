@@ -8,6 +8,7 @@
                                        get-catalogue-item-title
                                        urn-catalogue-item-link
                                        urn-catalogue-item?]]
+            [rems.db.application :refer [draft?]]
             [rems.guide-functions]
             [rems.spinner :as spinner]
             [rems.table :as table]
@@ -72,11 +73,7 @@
 (rf/reg-event-db
  ::fetch-drafts-result
  (fn [db [_ applications]]
-   (assoc db ::draft-applications (filter #(contains? #{"draft" "returned" "withdrawn"
-                                                        :rems.workflow.dynamic/draft :rems.workflow.dynamic/returned
-                                                        ;; TODO add dynamic withdrawn state
-                                                        }
-                                                      (:state %))
+   (assoc db ::draft-applications (filter (comp draft? :state)
                                           applications))))
 
 (defn- fetch-drafts []

@@ -1,5 +1,6 @@
 (ns rems.application-list
   (:require [clojure.string :as str]
+            [rems.db.application :refer [draft?]]
             [rems.guide-functions]
             [rems.table :as table]
             [rems.text :refer [localize-state localize-time text]])
@@ -20,11 +21,7 @@
   [:id :description :resource :applicant :state :created :view])
 
 (defn state-class [item]
-  (if #(contains? #{"draft" "returned" "withdrawn"
-                    :rems.workflow.dynamic/draft :rems.workflow.dynamic/returned
-                    ;; TODO add dynamic withdrawn state
-                    }
-                  (:state item))
+  (if (draft? (:state item))
     "state text-highlight"
     "state"))
 
