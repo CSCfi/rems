@@ -185,6 +185,10 @@
                              {:application-id application-id}
                              {:catalogue-items catalogue-items}))})))
 
+(defn remove-catalogue-items-from-cart! [cataologue-items]
+  (doseq [i catalogue-items]
+    (rf/dispatch [:rems.cart/remove-item i])))
+
 (rf/reg-event-fx
  ::save-application
  (fn [{:keys [db]} [_ command description]]
@@ -199,8 +203,7 @@
                               :when checked?]
                           [id "approved"]))]
      (when-not app-id ;; fresh application
-       (doseq [i catalogue-items]
-         (rf/dispatch [:rems.cart/remove-item i])))
+       (remove-catalogue-items-from-cart! catalogue-items))
      ;; TODO disable form while saving?
      (rf/dispatch [::set-status {:status :pending
                                  :description description}])
