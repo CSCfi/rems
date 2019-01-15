@@ -12,12 +12,14 @@
             [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.text :refer [localize-time text]]
-            [rems.util :refer [fetch]])
+            [rems.util :refer [fetch unauthorized!]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} _]
+   (when (empty? (get-in db [:identity :roles]))
+     (unauthorized!))
    (when (contains? (get-in db [:identity :roles]) :applicant)
      {:db (assoc db ::loading-catalogue? true)
       ::fetch-catalogue nil

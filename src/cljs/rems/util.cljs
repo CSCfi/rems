@@ -33,6 +33,9 @@
        (secretary/dispatch! url))
      (set! (.-location js/window) url))))
 
+(defn unauthorized! []
+  (rf/dispatch [:unauthorized! (.. js/window -location -href)]))
+
 (defn redirect-when-unauthorized-or-forbidden [{:keys [status status-text]}]
   (let [current-url (.. js/window -location -href)]
     (case status
