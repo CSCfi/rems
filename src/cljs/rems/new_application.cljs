@@ -44,7 +44,7 @@
                           catalogue-item-ids
                           (fn [response]
                             (remove-catalogue-items-from-cart! catalogue-item-ids)
-                            (navigate-to (:id response)))]})))
+                            (navigate-to (:id response) true))]})))
 
 (rf/reg-event-fx
  ::enter-new-application-page

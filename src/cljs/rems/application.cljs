@@ -20,8 +20,7 @@
             [rems.spinner :as spinner]
             [rems.status-modal :refer [status-modal]]
             [rems.text :refer [localize-decision localize-event localize-item localize-state localize-time text text-format]]
-            [rems.util :refer [dispatch! fetch post!]]
-            [secretary.core :as secretary])
+            [rems.util :refer [dispatch! fetch post!]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 ;;;; Helpers
@@ -36,9 +35,8 @@
   (let [url (str "#/application?items=" (str/join "," (sort (map :id items))))]
     (dispatch! url)))
 
-(defn navigate-to [id]
-  (dispatch! (str "#/application/" id)))
-
+(defn navigate-to [id & [replace?]]
+  (dispatch! (str "#/application/" id) replace?))
 
 
 
