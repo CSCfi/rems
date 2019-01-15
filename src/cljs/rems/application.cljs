@@ -86,31 +86,14 @@
  (fn [id]
    (fetch-application id #(rf/dispatch [::fetch-application-result %]))))
 
-(rf/reg-event-fx
+(rf/reg-event-db
  ::fetch-application-result
- (fn [{:keys [db]} [_ application]]
-   (merge {:db (assoc db
-                      ::application application
-                      ::edit-application {:items (into {} (for [item (:items application)]
-                                                            [(:id item) {:value (:value item)}]))
-                                          :licenses (into {} (map (juxt :id :approved) (:licenses application)))})}
-          (when-not (get-in application [:application :id])
-            {:dispatch [::save-application ["save" (text :t.form/save)] ; immediately dispatch save of draft on entry
-                        ]}))))
-
-(rf/reg-event-fx
- ::enter-new-application-page
- (fn [{:keys [db]} [_ items]]
-   {:db (reset-state db)
-    ::fetch-draft-application items}))
-
-(rf/reg-fx
- ::fetch-draft-application
- (fn [items]
-   (fetch (str "/api/applications/draft")
-          {:handler #(rf/dispatch [::fetch-application-result %])
-           :params {:catalogue-items items}})))
-
+ (fn [db [_ application]]
+   (assoc db
+          ::application application
+          ::edit-application {:items (into {} (for [item (:items application)]
+                                                [(:id item) {:value (:value item)}]))
+                              :licenses (into {} (map (juxt :id :approved) (:licenses application)))})))
 
 (rf/reg-event-db
  ::set-status
@@ -152,7 +135,6 @@
                                                          :description description}])
                              ;; HACK: we both set the location, and fire a fetch-application event
                              ;; because if the location didn't change, secretary won't fire the event
-                             (navigate-to application-id)
                              (rf/dispatch [::enter-application-page application-id]))
                          (rf/dispatch [::set-status {:status :failed
                                                      :description description}])))
@@ -185,10 +167,6 @@
                              {:application-id application-id}
                              {:catalogue-items catalogue-items}))})))
 
-(defn remove-catalogue-items-from-cart! [cataologue-items]
-  (doseq [i catalogue-items]
-    (rf/dispatch [:rems.cart/remove-item i])))
-
 (rf/reg-event-fx
  ::save-application
  (fn [{:keys [db]} [_ command description]]
@@ -202,8 +180,6 @@
                         (for [[id checked?] (get-in db [::edit-application :licenses])
                               :when checked?]
                           [id "approved"]))]
-     (when-not app-id ;; fresh application
-       (remove-catalogue-items-from-cart! catalogue-items))
      ;; TODO disable form while saving?
      (rf/dispatch [::set-status {:status :pending
                                  :description description}])
@@ -727,7 +703,9 @@
 
 (defn- editable-state? [state]
   (contains? #{"draft" "returned" "withdrawn"
-               :rems.workflow.dynamic/draft :rems.workflow.dynamic/returned}
+               :rems.workflow.dynamic/draft :rems.workflow.dynamic/returned
+               ;; TODO add dynamic withdrawn state
+               }
              state))
 
 (defn- fields [form edit-application language]
