@@ -236,44 +236,20 @@
           :error-handler (fn [_] (rf/dispatch [::set-status {:status :failed
                                                              :description description}]))})) ; TODO show error in modal
 
-(defn- save-application-with-attachment [field-id form-data catalogue-items items licenses description]
-  (let [payload {:command "save"
-                 :items (map-vals :value items)
-                 :licenses licenses
-                 :catalogue-items catalogue-items}]
-    ;; TODO this logic should be rewritten as a chain of save, save-attachment instead
-    (post! "/api/applications/save"
-           {:handler (fn [resp]
-                       (if (:success resp)
-                         (do (save-attachment (:id resp) field-id form-data description)
-                             (rf/dispatch [::set-status {:status :saved
-                                                         :description description}]) ; TODO here should be saving?
-                             ;; HACK: we both set the location, and fire a fetch-application event
-                             ;; because if the location didn't change, secretary won't fire the event
-                             (navigate-to (:id resp))
-                             (rf/dispatch [::enter-application-page (:id resp)]))
-                         (rf/dispatch [::set-status {:status :failed
-                                                     :description description ; TODO here should be saving?
-                                                     :validation (:validation resp)}])))
-            :error-handler (fn [_] (rf/dispatch [::set-status {:status :failed
-                                                               :description description}])) ; TODO here should be saving?
-            :params payload})))
-
 (rf/reg-event-fx
  ::save-attachment
  (fn [{:keys [db]} [_ field-id file description]]
    (let [application-id (get-in db [::application :application :id])]
-     (if application-id
-       (save-attachment application-id field-id file description)
-       (let [catalogue-items (get-in db [::application :catalogue-items])
-             catalogue-ids (mapv :id catalogue-items)
-             items (get-in db [::edit-application :items])
-             ;; TODO change api to booleans
-             licenses (into {}
-                            (for [[id checked?] (get-in db [::edit-application :licenses])
-                                  :when checked?]
-                              [id "approved"]))]
-         (save-application-with-attachment field-id file catalogue-ids items licenses description))))
+     (save-attachment application-id field-id file description)
+     (let [catalogue-items (get-in db [::application :catalogue-items])
+           catalogue-ids (mapv :id catalogue-items)
+           items (get-in db [::edit-application :items])
+           ;; TODO change api to booleans
+           licenses (into {}
+                          (for [[id checked?] (get-in db [::edit-application :licenses])
+                                :when checked?]
+                            [id "approved"]))]
+       ))
    {}))
 
 (rf/reg-event-fx
