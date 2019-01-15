@@ -86,14 +86,17 @@
  (fn [id]
    (fetch-application id #(rf/dispatch [::fetch-application-result %]))))
 
-(rf/reg-event-db
+(rf/reg-event-fx
  ::fetch-application-result
- (fn [db [_ application]]
-   (assoc db
-          ::application application
-          ::edit-application {:items (into {} (for [item (:items application)]
-                                                [(:id item) {:value (:value item)}]))
-                              :licenses (into {} (map (juxt :id :approved) (:licenses application)))})))
+ (fn [{:keys [db]} [_ application]]
+   (merge {:db (assoc db
+                      ::application application
+                      ::edit-application {:items (into {} (for [item (:items application)]
+                                                            [(:id item) {:value (:value item)}]))
+                                          :licenses (into {} (map (juxt :id :approved) (:licenses application)))})}
+          (when-not (get-in application [:application :id])
+            {:dispatch [::save-application ["save" (text :t.form/save)] ; immediately dispatch save of draft on entry
+                        ]}))))
 
 (rf/reg-event-fx
  ::enter-new-application-page
