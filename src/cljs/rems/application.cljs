@@ -131,8 +131,6 @@
                        (if (:success resp)
                          (do (rf/dispatch [::set-status {:status :saved
                                                          :description description}])
-                             ;; HACK: we both set the location, and fire a fetch-application event
-                             ;; because if the location didn't change, secretary won't fire the event
                              (rf/dispatch [::enter-application-page application-id]))
                          (rf/dispatch [::set-status {:status :failed
                                                      :description description}])))
@@ -147,9 +145,6 @@
                        (if (:success resp)
                          (do (rf/dispatch [::set-status {:status :saved
                                                          :description description}])
-                             ;; HACK: we both set the location, and fire a fetch-application event
-                             ;; because if the location didn't change, secretary won't fire the event
-                             (navigate-to application-id)
                              (rf/dispatch [::enter-application-page application-id]))
                          (rf/dispatch [::set-status {:status :failed
                                                      :description description
@@ -192,9 +187,6 @@
                            (do
                              (rf/dispatch [::set-status {:status :saved
                                                          :description description}])
-                             ;; HACK: we both set the location, and fire a fetch-application event
-                             ;; because if the location didn't change, secretary won't fire the event
-                             (navigate-to (:id resp))
                              (rf/dispatch [::enter-application-page (:id resp)]))))))
    {:db (assoc-in db [::edit-application :validation] nil)}))
 
