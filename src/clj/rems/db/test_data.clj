@@ -158,6 +158,217 @@
                   :type "texta"
                   :maxlength 100}]})))
 
+(defn create-thl-demo-form!
+  [users]
+  (:id (form/create-form!
+        (users :owner)
+        {:organization "nbn"
+         :title "Basic form"
+         :items [{:title {:en "Application title"
+                          :fi "Hakemuksen otsikko"}
+                  :optional true
+                  :type "text"
+                  :input-prompt {:en "Study of.."
+                                 :fi "Tutkimus aiheesta.."}}
+                 {:title {:en "1. Research project full title"
+                          :fi "1. Tutkimusprojektin täysi nimi"}
+                  :optional false
+                  :type "texta"
+                  :maxlength 100}
+                 {:title {:en "2. This is an amendment of a previous approved application"
+                          :fi "2. Hakemus täydentää edellistä hakemusta"}
+                  :optional false
+                  :type "option"
+                  :options [{:key false
+                             :label {:en "no"
+                                     :fi "ei"}}
+                            {:key true
+                             :label {:en "yes"
+                                     :fi "kyllä"}}]}
+                 {:title {:en "If yes, what were the previous project permit code/s?"
+                          :fi "Jos kyllä, mitkä olivat edelliset projektin lupakoodit?"}
+                  :optional true
+                  :type "text"}
+                 {:title {:en "3. Study PIs (name, titile, affiliation, email)"
+                          :fi "3. Henkilöstö (nimi, titteli, yhteys projektiin, sähköposti)"}
+                  :optional false
+                  :type "texta"
+                  :maxlength 100}
+                 {:title {:en "4. Contact person for application if different than applicant (name, email)"
+                          :fi "4. Yhteyshenkilö, jos ei sama kuin hakija (nimi, sähköposti)"}
+                  :optional true
+                  :type "texta"
+                  :maxlength 100}
+                 {:title {:en "5. Research project start date"
+                          :fi "5. Projektin aloituspäivä"}
+                  :optional false
+                  :type "date"}
+                 {:title {:en "6. Research project end date"
+                          :fi "6. Projektin lopetuspäivä"}
+                  :optional false
+                  :type "date"}
+                 {:title {:en "7. Describe in detail the aims of the study and analysis plan"
+                          :fi "7. Kuvaile yksityiskohtaisesti tutkimussuunnitelma"}
+                  :optional false
+                  :type "texta"
+                  :maxlength 100}
+                 {:title {:en "8. If this is an amendment, please describe briefly what is new"
+                          :fi "8. Jos tämä on täydennys edelliseen hakemukseen, kuvaile tiiviisti, mikä on muuttunut."}
+                  :optional true
+                  :type "texta"
+                  :maxlength 100}
+                 {:title {:en "9. Public description of the project (in Finnish, when possible), to be published in THL Biobank."
+                          :fi "9. Kuvaile yksityiskohtaisesti tutkimussuunnitelma"}
+                  :input-prompt {:en "Meant for sample donors and for anyone interested in the research done
+                  using THL Biobank's sample collections. This summary and the name of the Study PI will be published in THL Biobank's web pages."
+                                 :fi "Tarkoitettu aineistojen lahjoittajille ja kaikille, joita kiinnostaa THL:n Biopankkia
+                                 käyttävät tutkimusprojektit. Tämä kuvaus sekä tutkijan nimi julkaistaan THL:n nettisivuilla, kun sopimus on allekirjoitettu."}
+                  :optional false
+                  :type "texta"
+                  :maxlength 100}
+                 {:title {:en "10. Place/plces of research, including place of sample and/or data analysis."
+                          :fi "10. Tutkimuksen yysinen sijainti, mukaanlukien paikka, missä data-analyysi toteutetaan."}
+                  :input-prompt {:en "List all research center involved in this study, and each center's role. Specify which centers will analyze which data and/or samples.."
+                                 :fi "Listaa kaikki tutkimuskeskukset, jotka osallistuvat tähän tutkimukseen, ml. niiden roolit tutkimuksessa.
+                                 Erittele, missä analysoidaan mikäkin näyte."}
+                  :optional false
+                  :type "texta"
+                  :maxlength 100}
+                 {:title {:en "11. Description of other research group members and their role in the applied project."
+                          :fi "11. Kuvaus muista tutkimukseen osallistuvista henkilöistä, ja heidän roolistaan projektissa."}
+                  :input-prompt {:en "For every group member: name, title, affiliation, contact information. In addition describe earch member's role
+                  in the project (e.g. cohor representative, data analyst, etc.)"
+                                 :fi "Anna jokaisesta jäsenestä: nimi, titteli, yhteys projektiin, yhteystiedot. Kuvaile lisäki jokaisen henkilön
+                                 rooli projektissa."}
+                  :optional false
+                  :type "texta"
+                  :maxlength 100}
+                 {:title {:en "12. Description of other research group members and their role in the applied project."
+                          :fi "12. Kuvaus muista tutkimukseen osallistuvista henkilöistä, ja heidän roolistaan projektissa."}
+                  :input-prompt {:en "For every group member: name, title, affiliation, contact information. In addition describe earch member's role
+                  in the project (e.g. cohor representative, data analyst, etc.)"
+                                 :fi "Anna jokaisesta jäsenestä: nimi, titteli, yhteys projektiin, yhteystiedot. Kuvaile lisäki jokaisen henkilön
+                                 rooli projektissa."}
+                  :optional false
+                  :type "texta"
+                  :maxlength 100}
+                 {:title {:en "13. Specify requested phenotype data (information on variables is found at https://kite.fimm.fi)"
+                          :fi "13. Tarkenna pyydetty fenotyyppidatta (tietoa muuttujista on saatavilla osoitteesta https://kite.fimm.fi)"}
+                  :input-prompt {:en "Desrcibe in detail the phenotype data needed for the study. Lists of variables are to be attached to the application (below)."
+                                 :fi "Kuvaile yksityiskohtaisesti tutkimukseen tarvittava fenotyyppidata. Lista muuttujista lisätään hakemukseen liitteenä."}
+                  :optional false
+                  :type "texta"
+                  :maxlength 100}
+                 {:title {:en "14. Specify requested genomics or other omics data (if applicable)"
+                          :fi "14. Kuvaile tarvittava genomiikkadata."}
+                  :input-prompt {:en "Specify in detail the requested data format for different genomics or other omics data types. Information
+                  of available omics data is found at THL Biobank web page (www.thl.fi/biobank/researchers)"
+                                 :fi "Kuvaile tarvitsemasi genomiikkadata. Lisätietoa saatavilla osoitteesta www.thl.fi/biobank/researchers"}
+                  :optional true
+                  :type "texta"
+                  :maxlength 100}
+                 {:title {:en "16. Are biological samples requested?"
+                          :fi "16. Pyydetäänkö biologisia näytteitä?"}
+                  :optional false
+                  :type "option"
+                  :options [{:key false
+                             :label {:en "no"
+                                     :fi "ei"}}
+                            {:key true
+                             :label {:en "yes"
+                                     :fi "kyllä"}}]}
+                 {:title {:en "The type and amount of biological samples requested"
+                          :fi "Biologisten näytteiden tyypit ja määrät."}
+                  :input-prompt {:en "Type and amount of samples and any additional specific criteria."
+                                 :fi "Biologisten näytteiden määrät, tyypit, ja mahdolliset muut kriteerit."}
+                  :optional true
+                  :type "texta"
+                  :maxlength 100}
+                 {:title {:en "17. What study results will be returned to THL Biobank (if any)?"
+                          :fi "17. Mitä tutkimustuloksia tullaan palauttamaan THL Biopankkiin?"}
+                  :input-prompt {:en "Study results such as new laboratory measurements, produced omics data and other analysis data (\"raw data\")"
+                                 :fi "Tutkimustuloksia kuten mittaustuloksia, uutta biologista dataa, tai muita analyysien tuloksia (\"raaka-dataa\")"}
+                  :optional false
+                  :type "texta"
+                  :maxlength 100}
+                 {:title {:en "Expected date for return of study results"
+                          :fi "Odotettu tutkimustuloksien palautuspäivämäärä"}
+                  :optional true
+                  :type "date"}
+                 {:title {:en "18. Ethical aspects of the project"
+                          :fi "18. Tutkimuksen eettiset puolet"}
+                  :input-prompt {:en "If you have any documents from an ethical board, please provide them as an attachment."
+                                 :fi "Liitä mahdolliset eettisen toimikunnan lausunnot hakemuksen loppuun."}
+                  :optional false
+                  :type "texta"
+                  :maxlength 100}
+                 {:title {:en "19. Project keywords (max 5)"
+                          :fi "19. Projektin avainsanat (maks. 5)"}
+                  :input-prompt {:en "List a few keywords that are related to this research project (please separate with comma)"
+                                 :fi "Listaa muutama projektiin liittyvä avainsana, pilkuilla erotettuina."}
+                  :optional false
+                  :type "texta"
+                  :maxlength 100}
+                 {:title {:en "20. Planned publications (max 3)"
+                          :fi "20. Suunnitellut julkaisut (maks. 3)"}
+                  :input-prompt {:en "Planned publication titles / research topics"
+                                 :fi "Suunniteltujen julkaisujen otsikot / tutkimusaiheet"}
+                  :optional false
+                  :type "texta"
+                  :maxlength 100}
+                 {:title {:en "21. Funding information"
+                          :fi "21. Rahoitus"}
+                  :input-prompt {:en "List all funding sources which will be used for this research project."
+                                 :fi "Listaa kaikki rahoituslähteet joita tullaan käyttämään tähän tutkimusprojektiin"}
+                  :optional false
+                  :type "texta"
+                  :maxlength 100}
+                 {:title {:en "22. Invoice address (Service prices: www.thl.fi/biobank/researchers)"
+                          :fi "22. Laskutusosoite (Palveluhinnasto: www.thl.fi/biobank/researchers)"}
+                  :input-prompt {:en "Electronic invoice address when possible + invoicing reference"
+                                 :fi "Sähköinen laskutus, kun mahdollista. Lisäksi viitenumero."}
+                  :optional false
+                  :type "texta"
+                  :maxlength 100}
+                 {:title {:en "23. Other information"
+                          :fi "23. Muuta"}
+                  :input-prompt {:en "Any other relevant information for the application"
+                                 :fi "Muuta hakemukseen liittyvää oleellista tietoa"}
+                  :optional true
+                  :type "texta"
+                  :maxlength 100}
+                 {:title {:en "THL Biobank's registered area/s of operation to which the research project complies:"
+                          :fi "THL Biobankin toimialueet, joihin tutkimusprojekti liittyy:"}
+                  :optional false
+                  :type "multiselect"
+                  :options [{:key "population_health"
+                             :label {:en "Promoting the population's health"
+                                     :fi "Edistää kansanterveytttä"}}
+                            {:key "disease_mechanisms"
+                             :label {:en "Identifying factors involved in disease mechanisms"
+                                     :fi "Tunnistaa tautien mekanismeja"}}
+                            {:key "disease_prevention"
+                             :label {:en "Disease prevention"
+                                     :fi "Estää tautien leviämistä"}}
+                            {:key "health_product_development"
+                             :label {:en "Developing products that promote the welfare and health of the population"
+                                     :fi "Kehittää tuotteita, jotka edistävät kansanterveyttä."}}
+                            {:key "treatment_development"
+                             :label {:en "Developing products and treatments for diseases"
+                                     :fi "Kehittää tuotteita ja parannuskeinoja tautien varalle"}}
+                            {:key "other"
+                             :label {:en "Other"
+                                     :fi "Muuta"}}]}
+                 {:title {:en "Other, specify"
+                          :fi "Muuta, tarkenna"}
+                  :optional true
+                  :type "texta"
+                  :maxlength 100}
+                 {:title {:en "Data management plan (pdf)"
+                          :fi "Datanhallintasuunnitelma (pdf)"}
+                  :optional true
+                  :type "attachment"}]})))
+
 (defn- create-workflows! [users]
   (let [approver1 (users :approver1)
         approver2 (users :approver2)
