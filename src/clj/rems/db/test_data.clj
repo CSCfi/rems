@@ -389,9 +389,7 @@
                                    "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})
         disabled (create-catalogue-item! res1 (:simple workflows) form
                                          {"en" "ELFA Corpus, one approval (extra data, disabled)"
-                                          "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti, pois käytöstä)"})
-        dynamic-with-review (create-catalogue-item! res1 (:dynamic-with-review workflows) form
-                                                    {"en" "Dynamic workflow" "fi" "Dynaaminen työvuo"})]
+                                          "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti, pois käytöstä)"})]
     (create-resource-license! res2 "Some test license" (+fake-users+ :owner))
     (db/set-catalogue-item-state! {:item disabled :state "disabled" :user (+fake-users+ :approver1)})
     (create-applications! simple (:simple workflows) (+fake-users+ :approver1) (+fake-users+ :approver1))

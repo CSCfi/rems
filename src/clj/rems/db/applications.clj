@@ -329,6 +329,7 @@
 (defn actors-of-dynamic-application [application]
   (map :actor (:dynamic-events application)))
 
+;; TODO combine handled approvals and reviews as just handled applications
 (defn get-handled-approvals [user-id]
   (let [actors (db/get-actors-for-applications {:role "approver"})]
     (->> (get-applications-impl-batch {})
