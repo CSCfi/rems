@@ -79,13 +79,12 @@
    opts: possibly options with {:class classes for the table}"
   [column-definitions visible-columns {:keys [sort-column sort-order filters show-filters] :as sorting} set-sorting id-function items & [opts]]
   [:div
-   (when filters
-     [:div.rems-table-search-toggle.d-flex.flex-row-reverse
-      [:div.btn
-       {:class (if show-filters "btn-secondary" "btn-primary")
-        :on-click (fn [] (when set-sorting
-                           (set-sorting (assoc sorting :show-filters (not show-filters)))))}
-       (search-symbol)]])
+   [:div.rems-table-search-toggle.d-flex.flex-row-reverse
+    [:div.btn
+     {:class (if show-filters "btn-secondary" "btn-primary")
+      :on-click (fn [] (when set-sorting
+                         (set-sorting (assoc sorting :show-filters (not show-filters)))))}
+     (search-symbol)]]
    [:table.rems-table (when (:class opts) (select-keys opts [:class]))
     [:thead
      (into [:tr]
