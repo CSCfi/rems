@@ -148,7 +148,7 @@
                   :border-radius (u/rem 0.4)
                   :overflow "hidden"}
     [:th {:color (util/get-theme-attribute :table-heading-color "#fff")
-          :background-color (util/get-theme-attribute :table-heading-bgcolor :color1)}]
+          :background-color (util/get-theme-attribute :table-heading-bgcolor :color2)}]
     [:td {:display "block"}
      [:&:before {:content "attr(data-th)\":\""
                  :font-weight "bold"
