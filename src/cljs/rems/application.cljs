@@ -532,7 +532,9 @@
         remove-button [:button.btn.btn-secondary.mr-2
                        {:on-click (remove-attachment-action app-id id (text :t.form/attachment-remove))}
                        (text :t.form/attachment-remove)]]
-    [basic-field (assoc opts :readonly-component filename-field)
+    [basic-field (assoc opts :readonly-component (if (empty? value)
+                                                   [:span]
+                                                   filename-field))
      (if (empty? value)
        upload-field
        [:div {:style {:display :flex :justify-content :flex-start}}
