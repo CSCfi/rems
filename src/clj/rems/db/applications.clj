@@ -991,6 +991,7 @@
    :validate-form validate-form})
 
 (defn dynamic-command! [cmd]
+  (assert (:application-id cmd))
   (let [app (get-dynamic-application-state (:application-id cmd))
         result (dynamic/handle-command cmd app db-injections)]
     (if (:success result)
