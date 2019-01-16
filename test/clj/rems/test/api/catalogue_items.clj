@@ -26,7 +26,7 @@
                                :wfid 1})
                    app
                    read-body)]
-      (is (= 10 (:id data))))
+      (is (= 11 (:id data))))
     (let [data (-> (request :get "/api/catalogue-items/7")
                    (authenticate api-key user-id)
                    app

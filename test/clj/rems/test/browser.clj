@@ -132,8 +132,8 @@
     (login-as "developer")
 
     (go-to-catalogue)
-    (add-to-cart "ELFA Corpus, direct approval")
-    (apply-for-resource "ELFA Corpus, direct approval")
+    (add-to-cart "THL catalogue item")
+    (apply-for-resource "THL catalogue item")
 
     (fill-form-field "Application title" "Test name")
     (fill-form-field "1. Research project full title" "Test")
@@ -159,15 +159,15 @@
     (accept-license "General Terms of Use")
 
     (send-application)
-    (is (= "State: Approved" (get-element-text *driver* :application-state)))
+    (is (= "State: Submitted" (get-element-text *driver* :application-state)))
 
     (let [application-id (get-application-id)]
       (go-to-applications)
       (is (= {:id application-id
               :description "Test name"
-              :resource "ELFA Corpus, direct approval"
+              :resource "THL catalogue item"
               :applicant "developer"
-              :state "Approved"}
+              :state "Submitted"}
              (get-application-summary application-id))))))
 
 (deftest test-guide-page

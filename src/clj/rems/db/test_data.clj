@@ -569,7 +569,7 @@
   (let [res1 (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner)}))
         res2 (:id (db/create-resource! {:resid "Extra Data" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner)}))
         _ (:id (db/create-resource! {:resid "Expired Resource, should not be seen" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner) :endt (time/minus (time/now) (time/years 1))}))
-        form (create-thl-demo-form! +fake-users+)
+        form (create-basic-form! +fake-users+)
         _ (create-expired-form!)
         workflows (create-workflows! +fake-users+)
         _ (create-catalogue-item! res1 (:minimal workflows) form
@@ -590,6 +590,8 @@
         disabled (create-catalogue-item! res1 (:simple workflows) form
                                          {"en" "ELFA Corpus, one approval (extra data, disabled)"
                                           "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti, pois käytöstä)"})]
+    (let [thlform (create-thl-demo-form! +fake-users+)]
+      (create-catalogue-item! res1 (:dynamic workflows) thlform {"en" "THL catalogue item" "fi" "THL katalogi-itemi"}))
     (create-resource-license! res2 "Some test license" (+fake-users+ :owner))
     (db/set-catalogue-item-state! {:item disabled :state "disabled" :user (+fake-users+ :approver1)})
     (create-applications! simple (:simple workflows) (+fake-users+ :approver1) (+fake-users+ :approver1))
@@ -607,7 +609,7 @@
   (create-demo-users-and-roles!)
   (let [res1 (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :organization "nbn" :owneruserid (+demo-users+ :owner) :modifieruserid (+demo-users+ :owner)}))
         res2 (:id (db/create-resource! {:resid "Extra Data" :organization "nbn" :owneruserid (+demo-users+ :owner) :modifieruserid (+demo-users+ :owner)}))
-        form (create-thl-demo-form! +demo-users+)
+        form (create-basic-form! +demo-users+)
         workflows (create-workflows! +demo-users+)
         _ (create-catalogue-item! res1 (:minimal workflows) form
                                   {"en" "ELFA Corpus, direct approval"
@@ -638,4 +640,6 @@
     (create-expired-license!)
     (let [dynamic (create-catalogue-item! res1 (:dynamic workflows) form
                                           {"en" "Dynamic workflow" "fi" "Dynaaminen työvuo"})]
-      (create-dynamic-applications! dynamic (:dynamic workflows) +demo-users+))))
+      (create-dynamic-applications! dynamic (:dynamic workflows) +demo-users+))
+    (let [thlform (create-thl-demo-form! +demo-users+)]
+      (create-catalogue-item! res1 (:dynamic workflows) thlform {"en" "THL catalogue item" "fi" "THL katalogi-itemi"}))))
