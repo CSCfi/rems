@@ -238,11 +238,10 @@
                   :optional false
                   :type "texta"
                   :maxlength 100}
-                 {:title {:en "12. Description of other research group members and their role in the applied project."
-                          :fi "12. Kuvaus muista tutkimukseen osallistuvista henkilöistä, ja heidän roolistaan projektissa."}
-                  :input-prompt {:en "For every group member: name, title, affiliation, contact information. In addition describe earch member's role
-                  in the project (e.g. cohor representative, data analyst, etc.)"
-                                 :fi "Anna jokaisesta jäsenestä: nimi, titteli, yhteys projektiin, yhteystiedot. Kuvaile lisäki jokaisen henkilön rooli projektissa."}
+                 {:title {:en "12. Specify selection criteria of study participants (if applicable)"
+                          :fi "12. Erottele tukimuksen osallistujien valintakriteerit (jos käytetty)"}
+                  :input-prompt {:en "Describe any specific criteria by which study participans will be selected. For example, selection for specific age group, gender, area/locality, disease status etc."
+                                 :fi "Kuvaa tarkat valintakriteerit, joilla tutkimuksen osallistujat valitaan. Esimerkiksi ikäryhmä, sukupuoli, alue, taudin tila jne."}
                   :optional false
                   :type "texta"
                   :maxlength 100}
