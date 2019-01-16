@@ -216,6 +216,7 @@
     {:minimal minimal
      :simple simple
      :with-review with-review
+     :dynamic-with-review dynamic
      :two-round two-round
      :different different
      :expired expired
@@ -304,7 +305,7 @@
     (assert (nil? result) {:result result})
     app-id))
 
-(defn- create-review-application! [catid wfid users]
+(defn- create-review-applications! [catid wfid users]
   (let [applicant (users :applicant1)
         approver (users :approver1)
         reviewer (users :reviewer)]
@@ -312,7 +313,29 @@
       (let [app-id (create-draft! applicant catid wfid "application with review")]
         (applications/submit-application applicant app-id)
         (applications/review-application reviewer app-id 0 "comment for review")
-        (applications/approve-application approver app-id 1 "comment for approval")))))
+        (applications/approve-application approver app-id 1 "comment for approval")) ; already reviewed and approved
+      (let [app-id (create-draft! applicant catid wfid "application with review (in review)")]
+        (applications/submit-application applicant app-id))))) ; still in review
+
+(defn- run-and-check-dynamic-command! [& args]
+  (let [result (apply applications/dynamic-command! args)]
+    (assert (nil? result) {:actual result})
+    result))
+
+(defn- create-dynamic-review-applications! [catid wfid users]
+  (let [applicant (users :applicant1)
+        approver (users :approver1)
+        reviewer (users :reviewer)]
+    (binding [context/*tempura* (locales/tempura-config)]
+      (let [app-id (create-draft! applicant catid wfid "application with review")] ; approved with review
+        (run-and-check-dynamic-command! {:application-id app-id :actor applicant :type :rems.workflow.dynamic/submit}) ; submit
+        (run-and-check-dynamic-command! {:application-id app-id :actor approver :type :rems.workflow.dynamic/request-comment :commenters [reviewer]}) ; request comment
+        (run-and-check-dynamic-command! {:application-id app-id :actor reviewer :type :rems.workflow.dynamic/comment :comment "looking good"}) ; comment
+        (run-and-check-dynamic-command! {:application-id app-id :actor approver :type :rems.workflow.dynamic/approve :comment "Thank you! Approved!"})) ; approve
+
+      (let [app-id (create-draft! applicant catid wfid "application with review (in review)")] ; still in review
+        (run-and-check-dynamic-command! {:application-id app-id :actor applicant :type :rems.workflow.dynamic/submit})
+        (run-and-check-dynamic-command! {:application-id app-id :actor approver :type :rems.workflow.dynamic/request-comment :commenters [reviewer]})))))
 
 (defn- create-application-with-expired-resource-license! [wfid form users]
   (let [applicant (users :applicant1)
@@ -366,19 +389,22 @@
                                    "fi" "ELFA-korpus, kaksi hyväksyntäkierrosta eri hyväksyjillä"})
         disabled (create-catalogue-item! res1 (:simple workflows) form
                                          {"en" "ELFA Corpus, one approval (extra data, disabled)"
-                                          "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti, pois käytöstä)"})]
+                                          "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti, pois käytöstä)"})
+        dynamic-with-review (create-catalogue-item! res1 (:dynamic-with-review workflows) form
+                                                    {"en" "Dynamic workflow" "fi" "Dynaaminen työvuo"})]
     (create-resource-license! res2 "Some test license" (+fake-users+ :owner))
     (db/set-catalogue-item-state! {:item disabled :state "disabled" :user (+fake-users+ :approver1)})
     (create-applications! simple (:simple workflows) (+fake-users+ :approver1) (+fake-users+ :approver1))
     (create-disabled-applications! disabled (:simple workflows) (+fake-users+ :approver1) (+fake-users+ :approver1))
     (create-bundled-application! simple bundlable (:simple workflows) (+fake-users+ :applicant1) (+fake-users+ :approver1))
-    (create-review-application! with-review (:with-review workflows) +fake-users+)
+    (create-review-applications! with-review (:with-review workflows) +fake-users+)
     (create-application-with-expired-resource-license! (:simple workflows) form +fake-users+)
     (create-application-before-new-resource-license! (:simple workflows) form +fake-users+)
     (create-expired-license!)
     (let [dynamic (create-catalogue-item! res1 (:dynamic workflows) form
                                           {"en" "Dynamic workflow" "fi" "Dynaaminen työvuo"})]
-      (create-dynamic-application! dynamic (:dynamic workflows) (+fake-users+ :applicant1)))))
+      (create-dynamic-application! dynamic (:dynamic workflows) (+fake-users+ :applicant1))
+      (create-dynamic-review-applications! dynamic (:dynamic workflows) +fake-users+))))
 
 (defn create-demo-data! []
   (create-demo-users-and-roles!)
@@ -409,10 +435,11 @@
     (create-applications! simple (:simple workflows) (+demo-users+ :applicant1) (+demo-users+ :approver1))
     (create-disabled-applications! disabled (:simple workflows) (+demo-users+ :applicant1) (+demo-users+ :approver1))
     (create-bundled-application! simple bundlable (:simple workflows) (+demo-users+ :applicant2) (+demo-users+ :approver1))
-    (create-review-application! with-review (:with-review workflows) +demo-users+)
+    (create-review-applications! with-review (:with-review workflows) +demo-users+)
     (create-application-with-expired-resource-license! (:simple workflows) form +demo-users+)
     (create-application-before-new-resource-license! (:simple workflows) form +demo-users+)
     (create-expired-license!)
     (let [dynamic (create-catalogue-item! res1 (:dynamic workflows) form
                                           {"en" "Dynamic workflow" "fi" "Dynaaminen työvuo"})]
-      (create-dynamic-application! dynamic (:dynamic workflows) (+demo-users+ :applicant1)))))
+      (create-dynamic-application! dynamic (:dynamic workflows) (+demo-users+ :applicant1))
+      (create-dynamic-review-applications! dynamic (:dynamic workflows) +demo-users+))))
