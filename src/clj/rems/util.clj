@@ -9,9 +9,16 @@
   (throw (RuntimeException. (apply format fmt-args))))
 
 (defn get-theme-attribute
-  "Fetch the attribute value from the current theme."
-  [attr-name]
-  (get (:theme env) attr-name))
+  "Fetch the attribute value from the current theme with fallbacks.
+
+  Keywords denote attribute lookups while strings are interpreted as fallback constant value."
+  [& attr-names]
+  (when (seq attr-names)
+    (let [attr-name (first attr-names)
+          attr-value (if (keyword? attr-name)
+                       (get (:theme env) attr-name)
+                       attr-name)]
+      (or attr-value (recur (rest attr-names))))))
 
 (defn getx
   "Like `get` but throws an exception if the key is not found."
