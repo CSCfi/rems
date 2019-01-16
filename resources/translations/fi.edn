@@ -243,6 +243,7 @@
          :add-comments-shown-to-applicant "Lisää kommentti (näkyy hakijalle)"
          :alert-disabled-items "Seuraavia resursseja ei voi enää hakea. Harkitse tämän luonnoksen sulkemista ja tee sitten uusi hakemus."
          :application "Tiedot"
+         :attachment-remove "Poista"
          :back "Takaisin kielivaroihin"
          :back-actions "Takaisin hyväksyntiin"
          :back-reviews "Takaisin katselmointeihin"

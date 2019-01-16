@@ -24,9 +24,9 @@
             [ring.middleware.cors :refer [wrap-cors]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
-  (:import (org.joda.time DateTime ReadableInstant)
-           (rems InvalidRequestException)
-           (rems.auth NotAuthorizedException ForbiddenException)))
+  (:import [org.joda.time DateTime ReadableInstant]
+           [rems.auth ForbiddenException NotAuthorizedException]
+           rems.InvalidRequestException))
 
 (defn unauthorized-handler
   [exception ex-data request]

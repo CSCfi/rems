@@ -22,6 +22,7 @@
             [rems.config :as config]
             [rems.guide-page :refer [guide-page]]
             [rems.navbar :as nav]
+            [rems.new-application :refer [new-application-page]]
             [rems.text :refer [text]]
             [rems.util :refer [dispatch! fetch]])
   (:require-macros [rems.read-gitlog :refer [read-current-version]])
@@ -202,6 +203,7 @@
    :about about-page
    :actions actions-page
    :application application-page
+   :new-application new-application-page
    :applications applications-page
    :administration administration-page
    :create-catalogue-item create-catalogue-item-page
@@ -261,8 +263,8 @@
   (rf/dispatch [:set-active-page :application]))
 
 (secretary/defroute "/application" {{items :items} :query-params}
-  (rf/dispatch [:rems.application/enter-new-application-page (cart/parse-items items)])
-  (rf/dispatch [:set-active-page :application]))
+  (rf/dispatch [:rems.new-application/enter-new-application-page (cart/parse-items items)])
+  (rf/dispatch [:set-active-page :new-application]))
 
 (secretary/defroute "/applications" []
   (rf/dispatch [:rems.applications/enter-page])

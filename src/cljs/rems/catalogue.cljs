@@ -8,16 +8,19 @@
                                        get-catalogue-item-title
                                        urn-catalogue-item-link
                                        urn-catalogue-item?]]
+            [rems.db.application :refer [draft?]]
             [rems.guide-functions]
             [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.text :refer [localize-time text]]
-            [rems.util :refer [fetch]])
+            [rems.util :refer [fetch unauthorized!]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} _]
+   (when (empty? (get-in db [:identity :roles]))
+     (unauthorized!))
    (when (contains? (get-in db [:identity :roles]) :applicant)
      {:db (assoc db ::loading-catalogue? true)
       ::fetch-catalogue nil
@@ -70,7 +73,8 @@
 (rf/reg-event-db
  ::fetch-drafts-result
  (fn [db [_ applications]]
-   (assoc db ::draft-applications (filter #(= "draft" (:state %)) applications))))
+   (assoc db ::draft-applications (filter (comp draft? :state)
+                                          applications))))
 
 (defn- fetch-drafts []
   (fetch "/api/applications/" {:handler #(rf/dispatch [::fetch-drafts-result %])}))

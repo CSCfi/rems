@@ -14,14 +14,14 @@
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [index-by]]
+            [rems.db.application :refer [draft?]]
             [rems.db.catalogue :refer [get-catalogue-item-title]]
             [rems.guide-utils :refer [lipsum lipsum-short lipsum-paragraphs]]
             [rems.phase :refer [phases]]
             [rems.spinner :as spinner]
             [rems.status-modal :refer [status-modal]]
             [rems.text :refer [localize-decision localize-event localize-item localize-state localize-time text text-format]]
-            [rems.util :refer [dispatch! fetch post!]]
-            [secretary.core :as secretary])
+            [rems.util :refer [dispatch! fetch post!]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 ;;;; Helpers
@@ -36,9 +36,12 @@
   (let [url (str "#/application?items=" (str/join "," (sort (map :id items))))]
     (dispatch! url)))
 
-(defn navigate-to [id]
-  (dispatch! (str "#/application/" id)))
+(defn navigate-to
+  "Navigates to the application with the given id.
 
+  `replace?` parameter can be given to replace history state instead of push."
+  [id & [replace?]]
+  (dispatch! (str "#/application/" id) replace?))
 
 
 
@@ -95,20 +98,6 @@
                                                 [(:id item) {:value (:value item)}]))
                               :licenses (into {} (map (juxt :id :approved) (:licenses application)))})))
 
-(rf/reg-event-fx
- ::enter-new-application-page
- (fn [{:keys [db]} [_ items]]
-   {:db (reset-state db)
-    ::fetch-draft-application items}))
-
-(rf/reg-fx
- ::fetch-draft-application
- (fn [items]
-   (fetch (str "/api/applications/draft")
-          {:handler #(rf/dispatch [::fetch-application-result %])
-           :params {:catalogue-items items}})))
-
-
 (rf/reg-event-db
  ::set-status
  (fn [db [_ {:keys [status description validation error]}]]
@@ -147,9 +136,6 @@
                        (if (:success resp)
                          (do (rf/dispatch [::set-status {:status :saved
                                                          :description description}])
-                             ;; HACK: we both set the location, and fire a fetch-application event
-                             ;; because if the location didn't change, secretary won't fire the event
-                             (navigate-to application-id)
                              (rf/dispatch [::enter-application-page application-id]))
                          (rf/dispatch [::set-status {:status :failed
                                                      :description description}])))
@@ -164,9 +150,6 @@
                        (if (:success resp)
                          (do (rf/dispatch [::set-status {:status :saved
                                                          :description description}])
-                             ;; HACK: we both set the location, and fire a fetch-application event
-                             ;; because if the location didn't change, secretary won't fire the event
-                             (navigate-to application-id)
                              (rf/dispatch [::enter-application-page application-id]))
                          (rf/dispatch [::set-status {:status :failed
                                                      :description description
@@ -195,9 +178,6 @@
                         (for [[id checked?] (get-in db [::edit-application :licenses])
                               :when checked?]
                           [id "approved"]))]
-     (when-not app-id ;; fresh application
-       (doseq [i catalogue-items]
-         (rf/dispatch [:rems.cart/remove-item i])))
      ;; TODO disable form while saving?
      (rf/dispatch [::set-status {:status :pending
                                  :description description}])
@@ -212,9 +192,6 @@
                            (do
                              (rf/dispatch [::set-status {:status :saved
                                                          :description description}])
-                             ;; HACK: we both set the location, and fire a fetch-application event
-                             ;; because if the location didn't change, secretary won't fire the event
-                             (navigate-to (:id resp))
                              (rf/dispatch [::enter-application-page (:id resp)]))))))
    {:db (assoc-in db [::edit-application :validation] nil)}))
 
@@ -222,46 +199,36 @@
   (post! (str "/api/applications/add_attachment?application-id=" application-id "&field-id=" field-id)
          {:body form-data
           :error-handler (fn [_] (rf/dispatch [::set-status {:status :failed
-                                                             :description description}]))}))
+                                                             :description description}]))})) ; TODO show error in modal
 
-(defn- save-application-with-attachment [field-id form-data catalogue-items items licenses description]
-  (let [payload {:command "save"
-                 :items (map-vals :value items)
-                 :licenses licenses
-                 :catalogue-items catalogue-items}]
-    ;; TODO this logic should be rewritten as a chain of save, save-attachment instead
-    (post! "/api/applications/save"
-           {:handler (fn [resp]
-                       (if (:success resp)
-                         (do (save-attachment (:id resp) field-id form-data description)
-                             (rf/dispatch [::set-status {:status :saved
-                                                         :description description}]) ; TODO here should be saving?
-                             ;; HACK: we both set the location, and fire a fetch-application event
-                             ;; because if the location didn't change, secretary won't fire the event
-                             (navigate-to (:id resp))
-                             (rf/dispatch [::enter-application-page (:id resp)]))
-                         (rf/dispatch [::set-status {:status :failed
-                                                     :description description ; TODO here should be saving?
-                                                     :validation (:validation resp)}])))
-            :error-handler (fn [_] (rf/dispatch [::set-status {:status :failed
-                                                               :description description}])) ; TODO here should be saving?
-            :params payload})))
+(defn- remove-attachment [application-id field-id description]
+  (post! (str "/api/applications/remove_attachment?application-id=" application-id "&field-id=" field-id)
+         {:body {}
+          :error-handler (fn [_] (rf/dispatch [::set-status {:status :failed
+                                                             :description description}]))})) ; TODO show error in modal
 
 (rf/reg-event-fx
  ::save-attachment
  (fn [{:keys [db]} [_ field-id file description]]
    (let [application-id (get-in db [::application :application :id])]
-     (if application-id
-       (save-attachment application-id field-id file description)
-       (let [catalogue-items (get-in db [::application :catalogue-items])
-             catalogue-ids (mapv :id catalogue-items)
-             items (get-in db [::edit-application :items])
-             ;; TODO change api to booleans
-             licenses (into {}
-                            (for [[id checked?] (get-in db [::edit-application :licenses])
-                                  :when checked?]
-                              [id "approved"]))]
-         (save-application-with-attachment field-id file catalogue-ids items licenses description))))))
+     (save-attachment application-id field-id file description)
+     (let [catalogue-items (get-in db [::application :catalogue-items])
+           catalogue-ids (mapv :id catalogue-items)
+           items (get-in db [::edit-application :items])
+           ;; TODO change api to booleans
+           licenses (into {}
+                          (for [[id checked?] (get-in db [::edit-application :licenses])
+                                :when checked?]
+                            [id "approved"]))]
+       ))
+   {}))
+
+(rf/reg-event-fx
+ ::remove-attachment
+ (fn [{:keys [db]} [_ application-id field-id description]]
+   (when application-id
+     (remove-attachment application-id field-id description))
+   {}))
 
 
 
@@ -437,6 +404,12 @@
       (rf/dispatch [::set-field id (.-name filecontent)])
       (rf/dispatch [::save-attachment id form-data description]))))
 
+(defn- remove-attachment-action
+  [app-id id description]
+  (fn [event]
+    (rf/dispatch [::set-field id nil])
+    (rf/dispatch [::remove-attachment app-id id description])))
+
 (defn- readonly-field [{:keys [id value]}]
   [:div.form-control {:id id} (str/trim (str value))])
 
@@ -538,26 +511,33 @@
               :value value
               :on-change (set-field-value id)}]])
 
+;; TODO: custom :diff-component, for example link to both old and new attachment
 (defn attachment-field
   [{:keys [title id value validation app-id] :as opts}]
-  (let [download-link (when (not-empty value)
-                        [:a {:href (str "/api/applications/attachments/?application-id=" app-id "&field-id=" id)
-                             :target "_blank"}
-                         value])]
-    ;; TODO: custom :diff-component, for example link to both old and new attachment
-    [basic-field (assoc opts :readonly-component [:div.form-control download-link])
-     [:div
-      [:div.upload-file
-       [:input {:style {:display "none"}
-                :type "file"
-                :id (id-to-name id)
-                :name (id-to-name id)
-                :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
-                :class (when validation "is-invalid")
-                :on-change (set-attachment id title)}]
-       [:button.btn.btn-secondary {:on-click (fn [e] (.click (.getElementById js/document (id-to-name id))))}
-        (text :t.form/upload)]]
-      download-link]]))
+  (let [click-upload (fn [e] (when-not (:readonly opts) (.click (.getElementById js/document (id-to-name id)))))
+        filename-field [:a.btn.btn-secondary.mr-2
+                        {:href (str "/api/applications/attachments/?application-id=" app-id "&field-id=" id)
+                         :target :_new}
+                        value " " (external-link)]
+        upload-field [:div.upload-file.mr-2
+                      [:input {:style {:display "none"}
+                               :type "file"
+                               :id (id-to-name id)
+                               :name (id-to-name id)
+                               :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
+                               :class (when validation "is-invalid")
+                               :on-change (set-attachment id title)}]
+                      [:button.btn.btn-secondary {:on-click click-upload}
+                       (text :t.form/upload)]]
+        remove-button [:button.btn.btn-secondary.mr-2
+                       {:on-click (remove-attachment-action app-id id (text :t.form/attachment-remove))}
+                       (text :t.form/attachment-remove)]]
+    [basic-field (assoc opts :readonly-component filename-field)
+     (if (empty? value)
+       upload-field
+       [:div {:style {:display :flex :justify-content :flex-start}}
+        filename-field
+        remove-button])]))
 
 (defn- date-field
   [{:keys [id value min max validation] :as opts}]
@@ -717,9 +697,7 @@
                    :on-click #(rf/dispatch [::save-application "submit" (text :t.form/submit)])}])
 
 (defn- editable-state? [state]
-  (contains? #{"draft" "returned" "withdrawn"
-               :rems.workflow.dynamic/draft :rems.workflow.dynamic/returned}
-             state))
+  (draft? state))
 
 (defn- fields [form edit-application language]
   (let [application (:application form)

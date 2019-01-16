@@ -25,9 +25,13 @@
 (defn status-modal
   "Modal component showing the status of an action.
 
-  `:status` - Show spinner while `:pending`. Either `:saved` or `:failed` status is shown with the internal status-widget that may show the `:error` contents.
+  `:status` - Show spinner while `:pending`. Either `:saved` or `:failed`
+            status is shown with the internal status-widget that
+            may show the `:error` contents.
   `:description` - the title of the modal.
   `:content` - additional content to show after the status widget.
+  `:error` - error that may contain :key, :status and :status-text
+           like translated errors or http errors
   `:on-close` - callback is called when the modal wants to close itself"
   [{:keys [description status error content on-close]}]
   [modal/notification {:title description

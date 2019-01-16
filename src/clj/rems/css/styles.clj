@@ -333,13 +333,11 @@
    [(s/descendant :.example-page :.example) {:margin-bottom (u/rem 4)}]
    [:.example-content {:border "1px dashed black"}]
    [:.example-content-end {:clear "both"}]
-   [:.upload-file {:display "inline-block"
-                   :margin-right (u/px 10)}]
    [:textarea.form-control {:overflow "hidden"}]
    [:div.form-control {:height :auto
                        :white-space "pre-wrap"
-                       :border "none"
-                       :background-color "rgba(0,0,0,.01)"}
+                       :border-color "rgba(206, 212, 218, 0.2)" ; "#ced4da"
+                       :background-color "rgba(0, 0, 0, 0.01)"}
     [:&:empty {:height (u/rem 2.25)}]]
    [:.toggle-diff {:float "right"}]
    [:.diff

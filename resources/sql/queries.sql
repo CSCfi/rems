@@ -282,6 +282,12 @@ ON CONFLICT (catAppId, formMapId)
 DO UPDATE
 SET (modifierUserId, filename, type, data) = (:user, :filename, :type, :data)
 
+-- :name remove-attachment! :!
+DELETE FROM application_attachments
+WHERE catAppId = :application
+AND formmapid = (SELECT id FROM application_form_item_map
+                 WHERE formId = :form AND formItemId = :item)
+
 -- :name get-attachment :? :1
 SELECT filename, type, data FROM application_attachments attachments
 LEFT OUTER JOIN application_form_item_map itemmap ON attachments.formMapId = itemmap.id

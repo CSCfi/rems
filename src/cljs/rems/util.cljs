@@ -1,6 +1,7 @@
 (ns rems.util
   (:require [ajax.core :refer [GET PUT POST]]
-            [re-frame.core :as rf]))
+            [re-frame.core :as rf]
+            [secretary.core :as secretary]))
 
 ;; TODO move to cljc
 (defn getx
@@ -17,9 +18,23 @@
   (reduce getx m ks))
 
 (defn dispatch!
-  "Dispatches to the given url."
-  [url]
-  (set! (.-location js/window) url))
+  "Dispatches to the given url.
+
+  If `replace?` is given, then browser history is replaced and not pushed."
+  ([url]
+   (dispatch! url false))
+  ([url replace?]
+   (if replace?
+     (do
+       ;; when manipulating history,
+       ;;secretary won't catch the changes automatically
+       (.replaceState (.-history js/window) nil url url)
+       (js/window.rems.hooks.navigate url)
+       (secretary/dispatch! url))
+     (set! (.-location js/window) url))))
+
+(defn unauthorized! []
+  (rf/dispatch [:unauthorized! (.. js/window -location -href)]))
 
 (defn redirect-when-unauthorized-or-forbidden [{:keys [status status-text]}]
   (let [current-url (.. js/window -location -href)]
