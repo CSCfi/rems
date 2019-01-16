@@ -111,23 +111,39 @@
      validation (assoc-in [::edit-application :validation] validation)))) ; NB don't clear validation results on modal close
 
 (defn- save-application [app description application-id catalogue-items items licenses on-success]
-  (post! "/api/applications/save"
-         {:handler (fn [resp]
-                     (if (:success resp)
-                       (on-success resp)
-                       (rf/dispatch [::set-status {:status :failed
-                                                   :description description
-                                                   :validation (:validation resp)}])))
-          :error-handler (fn [error]
-                           (rf/dispatch [::set-status {:status :failed
-                                                       :description description
-                                                       :error error}]))
-          :params (merge {:command "save"
-                          :items (map-vals :value items)
-                          :licenses licenses}
-                         (if application-id
-                           {:application-id application-id}
-                           {:catalogue-items catalogue-items}))}))
+  (if (= :workflow/dynamic (get-in app [:workflow :type]))
+    (post! "/api/applications/command"
+           {:handler (fn [resp]
+                       (if (:success resp)
+                         (on-success resp)
+                         (rf/dispatch [::set-status {:status :failed
+                                                     :description description
+                                                     :validation (:validation resp)}])))
+            :error-handler (fn [error]
+                             (rf/dispatch [::set-status {:status :failed
+                                                         :description description
+                                                         :error error}]))
+            :params {:type :rems.workflow.dynamic/save-draft
+                     :application-id application-id
+                     :items (map-vals :value items)
+                     :licenses licenses}})
+    (post! "/api/applications/save"
+           {:handler (fn [resp]
+                       (if (:success resp)
+                         (on-success resp)
+                         (rf/dispatch [::set-status {:status :failed
+                                                     :description description
+                                                     :validation (:validation resp)}])))
+            :error-handler (fn [error]
+                             (rf/dispatch [::set-status {:status :failed
+                                                         :description description
+                                                         :error error}]))
+            :params (merge {:command "save"
+                            :items (map-vals :value items)
+                            :licenses licenses}
+                           (if application-id
+                             {:application-id application-id}
+                             {:catalogue-items catalogue-items}))})))
 
 (defn- submit-application [app description application-id catalogue-items items licenses]
   (if (= :workflow/dynamic (get-in app [:workflow :type]))
@@ -219,8 +235,7 @@
            licenses (into {}
                           (for [[id checked?] (get-in db [::edit-application :licenses])
                                 :when checked?]
-                            [id "approved"]))]
-       ))
+                            [id "approved"]))]))
    {}))
 
 (rf/reg-event-fx

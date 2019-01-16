@@ -36,8 +36,8 @@
    :handlers [UserId]})
 
 (def States #{::draft ::submitted ::approved ::rejected ::closed})
-(def CommandTypes #{::submit ::return #_::accept-license #_::require-license ::request-decision ::decide ::request-comment ::comment ::approve ::reject ::close ::add-member})
-(def EventTypes #{:event/submitted :event/returned #_:event/license-required #_:event/license-accepted :event/comment-requested :event/commented :event/decision-requested :event/decided :event/approved :event/rejected :event/closed :event/member-added})
+(def CommandTypes #{::save-draft ::submit ::return #_::accept-license #_::require-license ::request-decision ::decide ::request-comment ::comment ::approve ::reject ::close ::add-member})
+(def EventTypes #{:event/draft-saved :event/submitted :event/returned #_:event/license-required #_:event/license-accepted :event/comment-requested :event/commented :event/decision-requested :event/decided :event/approved :event/rejected :event/closed :event/member-added})
 
 
 
@@ -57,6 +57,11 @@
 
 (deftest test-all-event-types-handled
   (is (= EventTypes (set (get-event-types)))))
+
+(defmethod apply-event [:event/draft-saved :workflow/dynamic]
+  [application _workflow event]
+  ;; TODO
+  application)
 
 (defmethod apply-event [:event/submitted :workflow/dynamic]
   [application _workflow event]
@@ -158,6 +163,17 @@
   [injections application-id]
   (when-let [errors ((:validate-form injections) application-id)]
     {:errors errors}))
+
+(defmethod handle-command ::save-draft
+  [cmd application _injections]
+  (or (applicant-error application cmd)
+      {:success true
+       :result {:event :event/draft-saved
+                :actor (:actor cmd)
+                :application-id (:application-id cmd)
+                :time (:time cmd)
+                :items (:items cmd)
+                :licenses (:licenses cmd)}}))
 
 (defmethod handle-command ::submit
   [cmd application injections]
@@ -357,6 +373,47 @@
          :possible-commands (possible-commands actor application-state)))
 
 ;;; Tests
+
+(deftest test-save-draft
+  (let [injections {}
+        application {:state ::draft
+                     :applicantuserid "applicant"
+                     :workflow {:type :workflow/dynamic
+                                :handlers ["assistant"]}}]
+    (testing "saves a draft"
+      (is (= {:success true
+              :result {:event :event/draft-saved
+                       :actor "applicant"
+                       :application-id 123
+                       :time 456
+                       :items {1 "foo" 2 "bar"}
+                       :licenses {1 "approved" 2 "approved"}}}
+             (handle-command {:type ::save-draft
+                              :actor "applicant"
+                              :application-id 123
+                              :time 456
+                              :items {1 "foo" 2 "bar"}
+                              :licenses {1 "approved" 2 "approved"}}
+                             application
+                             injections))))
+    (testing "only the applicant can save a draft"
+      (is (= {:errors [:forbidden]}
+             (handle-command {:type ::save-draft
+                              :actor "non-applicant"
+                              :application-id 123
+                              :time 456
+                              :items {1 "foo" 2 "bar"}
+                              :licenses {1 "approved" 2 "approved"}}
+                             application
+                             injections)
+             (handle-command {:type ::save-draft
+                              :actor "assistant"
+                              :application-id 123
+                              :time 456
+                              :items {1 "foo" 2 "bar"}
+                              :licenses {1 "approved" 2 "approved"}}
+                             application
+                             injections))))))
 
 (deftest test-submit-approve-or-reject
   (let [injections {:validate-form (constantly nil)}
