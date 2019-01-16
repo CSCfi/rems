@@ -26,6 +26,13 @@
   [application-id]
   (nil? application-id))
 
+(defn editable? [state]
+  (contains? #{"draft" "returned" "withdrawn"
+               :rems.workflow.dynamic/draft
+               ;; TODO dynamic applications that are returned or withdrawn
+               }
+             state))
+
 ;; TODO cache application state in db instead of always computing it from events
 (declare get-application-state)
 
@@ -596,11 +603,7 @@
                                buffer (ByteArrayOutputStream.)]
                      (clojure.java.io/copy input buffer)
                      (.toByteArray buffer))]
-    (when-not (contains? #{"draft" "returned" "withdrawn"
-                           :rems.workflow.dynamic/draft
-                           ;; TODO dynamic applications that are returned or withdrawn
-                           }
-                         (:state (:application form)))
+    (when-not (editable? (:state (:application form)))
       (throw-forbidden))
     (db/save-attachment! {:application application-id
                           :form (:id form)
@@ -613,11 +616,7 @@
 (defn remove-attachment!
   [user-id application-id item-id]
   (let [form (get-form-for user-id application-id)]
-    (when-not (contains? #{"draft" "returned" "withdrawn"
-                           :rems.workflow.dynamic/draft
-                           ;; TODO dynamic applications that are returned or withdrawn
-                           }
-                         (:state (:application form)))
+    (when-not (editable? (:state (:application form)))
       (throw-forbidden))
     (db/remove-attachment! {:application application-id
                             :form (:id form)
