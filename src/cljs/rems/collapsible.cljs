@@ -5,7 +5,7 @@
 
 (defn- header
   [title]
-  [:div.card-header
+  [:div.card-header.rems-card-header
    [:span.card-title title]])
 
 (defn- show-more-button

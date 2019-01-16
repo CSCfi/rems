@@ -61,7 +61,8 @@
                          [(s/descendant :.rems-table :td:before)
                           {:display "none"}]
                          [:.rems-table-search-toggle
-                          {:display "flex !important"}]
+                          {:display "flex !important"
+                           :margin-top (u/px 20)}]
                          [:.rems-table
                           [:th
                            :td
@@ -143,10 +144,11 @@
    [:.rems-table {:margin "1em 0"
                   :min-width "100%"
                   :background-color (util/get-theme-attribute :table-bgcolor)
-                  :color "#fff"
+                  :color (util/get-theme-attribute :table-text-color)
                   :border-radius (u/rem 0.4)
                   :overflow "hidden"}
-    [:th {:display "none"}]
+    [:th {:color (util/get-theme-attribute :table-heading-color "#fff")
+          :background-color (util/get-theme-attribute :table-heading-bgcolor :color2)}]
     [:td {:display "block"}
      [:&:before {:content "attr(data-th)\":\""
                  :font-weight "bold"
@@ -157,11 +159,13 @@
      :td
      {:text-align "left"
       :padding "0.5em 1em"}]
-    [:th
-     :td:before
-     {:color "#fff"}]
+    [:td:before
+     {:color (util/get-theme-attribute :table-text-color)}]
     [:tr {:margin "0 1rem"}
-     [(s/& (s/nth-child "2n")) {:background-color (util/get-theme-attribute :table-stripe-color)}]]
+     [(s/& (s/nth-child "2n"))
+      {:background-color (util/get-theme-attribute :table-stripe-color)}]
+     [:&:hover {:color (util/get-theme-attribute :table-hover-color)
+                :background-color (util/get-theme-attribute :table-hover-bgcolor)}]]
     [:td.commands:last-child {:text-align "right"
                               :padding-right (u/rem 1)}]]
    [:.inner-cart {:margin (u/em 1)}]
@@ -216,7 +220,7 @@
     [:&:hover
      :&:focus
      :&:active:hover
-     {:background-color "#d84f0e"
+     {:background-color (util/get-theme-attribute :color4)
       :border-color (util/get-theme-attribute :color4)
       :outline-color :transparent}]
     {:background-color (util/get-theme-attribute :color4)
@@ -412,7 +416,11 @@
    [:.license-panel {:display :inline-block
                      :width "inherit"}]
    [:.card-header.clickable {:cursor "pointer"}]
-   [(s/descendant :.card-header :a) {:color "inherit"}]
+   [:.rems-card-header {:color (util/get-theme-attribute :table-heading-color)
+                        :background-color (util/get-theme-attribute :table-heading-bgcolor)
+                        :margin (u/px -1) ; make sure header overlaps container border
+                        }]
+   [(s/descendant :.card-header :a) {:color :inherit}]
    ;; hax for opening misalignment
    [:.license-title {:margin-top (u/px 3)}]
    [:.license-block {:color "#000"

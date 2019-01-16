@@ -30,13 +30,13 @@ div.users {
 div.user {
   flex-grow: 1;
   text-align: center;
-  background-color: #99135e;
+  background-color: #777;
   margin: 0.25em;
   padding: 0.5em;
   border-radius: 0.2em;
 }
 div.user:hover {
-  background-color: #77125e;
+  background-color: #333;
   cursor: pointer;
 }
 a { text-decoration: none; color: #fff; }

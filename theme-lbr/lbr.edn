@@ -18,4 +18,5 @@
  :phase-color-active "#cad2e6"
  :phase-color-completed "#7a90c3"
  :table-bgcolor "#7a90c3"
- :table-stripe-color "#8a9dca"}
+ :table-stripe-color "#8a9dca"
+ :table-text-color "#fff"}
