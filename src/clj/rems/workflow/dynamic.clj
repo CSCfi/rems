@@ -335,8 +335,7 @@
     :actor actor
     :member "member"}])
 
-(def ^:private
-  injections-for-possible-commands
+(def ^:private injections-for-possible-commands
   "`possible-commands` are calculated with the expectations that
   - the user is always valid and
   - the validation returns no errors."
