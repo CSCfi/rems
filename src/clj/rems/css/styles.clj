@@ -268,7 +268,8 @@
      :border 0}] ;for button links
    [:.navbar
     [:.nav-link :.btn-link
-     {:text-transform "uppercase"}]]
+     {:text-transform "uppercase"
+      :background-color :inherit}]]
    [:.navbar-toggler {:border-color (util/get-theme-attribute :color1)}]
    [:.nav-link
     :.btn-link
