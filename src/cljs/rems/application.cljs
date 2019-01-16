@@ -36,7 +36,11 @@
   (let [url (str "#/application?items=" (str/join "," (sort (map :id items))))]
     (dispatch! url)))
 
-(defn navigate-to [id & [replace?]]
+(defn navigate-to
+  "Navigates to the application with the given id.
+
+  `replace?` parameter can be given to replace history state instead of push."
+  [id & [replace?]]
   (dispatch! (str "#/application/" id) replace?))
 
 
