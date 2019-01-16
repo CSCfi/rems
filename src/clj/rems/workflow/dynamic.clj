@@ -60,15 +60,17 @@
 
 (defmethod apply-event [:event/draft-saved :workflow/dynamic]
   [application _workflow event]
-  ;; TODO
-  application)
+  (assoc application :draft-application {:items (:items event)
+                                         :licenses (:licenses event)}))
 
 (defmethod apply-event [:event/submitted :workflow/dynamic]
   [application _workflow event]
   (assoc application
          :state ::submitted
          :commenters #{}
-         :members [(:actor event)]))
+         :members [(:actor event)]
+         :previous-application (:submitted-application application)
+         :submitted-application (:draft-application application)))
 
 (defmethod apply-event [:event/approved :workflow/dynamic]
   [application _workflow _event]
@@ -167,6 +169,7 @@
 (defmethod handle-command ::save-draft
   [cmd application _injections]
   (or (applicant-error application cmd)
+      (state-error application ::draft ::returned)
       {:success true
        :result {:event :event/draft-saved
                 :actor (:actor cmd)
@@ -375,11 +378,12 @@
 ;;; Tests
 
 (deftest test-save-draft
-  (let [injections {}
+  (let [injections {:validate-form (constantly nil)}
         application {:state ::draft
                      :applicantuserid "applicant"
                      :workflow {:type :workflow/dynamic
-                                :handlers ["assistant"]}}]
+                                :handlers ["assistant"]}}
+        relevant-application-keys [:state :draft-application :submitted-application :previous-application]]
     (testing "saves a draft"
       (is (= {:success true
               :result {:event :event/draft-saved
@@ -413,7 +417,57 @@
                               :items {1 "foo" 2 "bar"}
                               :licenses {1 "approved" 2 "approved"}}
                              application
-                             injections))))))
+                             injections))))
+    (testing "draft can be updated multiple times"
+      (is (= {:state :rems.workflow.dynamic/draft
+              :draft-application {:items {1 "updated"}
+                                  :licenses {2 "updated"}}}
+             (-> (apply-commands application
+                                 [{:actor "applicant" :type ::save-draft :items {1 "original"} :licenses {2 "original"}}
+                                  {:actor "applicant" :type ::save-draft :items {1 "updated"} :licenses {2 "updated"}}]
+                                 injections)
+                 (select-keys relevant-application-keys)))))
+    (testing "draft cannot be updated after submitting"
+      (let [application (apply-commands application
+                                        [{:actor "applicant" :type ::save-draft :items {1 "original"} :licenses {2 "original"}}
+                                         {:actor "applicant" :type ::submit}]
+                                        injections)]
+        (is (= {:errors [[:invalid-state ::submitted]]}
+               (handle-command {:type ::save-draft
+                                :actor "applicant"
+                                :items {1 "updated"} :licenses {2 "updated"}}
+                               application
+                               injections)))))
+    (testing "draft can be updated after returning it to applicant"
+      (is (= {:state ::returned
+              :draft-application {:items {1 "updated"}
+                                  :licenses {2 "updated"}}
+              :submitted-application {:items {1 "original"}
+                                      :licenses {2 "original"}}
+              :previous-application nil}
+             (-> (apply-commands application
+                                 [{:actor "applicant" :type ::save-draft :items {1 "original"} :licenses {2 "original"}}
+                                  {:actor "applicant" :type ::submit}
+                                  {:actor "assistant" :type ::return}
+                                  {:actor "applicant" :type ::save-draft :items {1 "updated"} :licenses {2 "updated"}}]
+                                 injections)
+                 (select-keys relevant-application-keys)))))
+    (testing "resubmitting remembers the previous and current application"
+      (is (= {:state ::submitted
+              :draft-application {:items {1 "updated"}
+                                  :licenses {2 "updated"}}
+              :submitted-application {:items {1 "updated"}
+                                      :licenses {2 "updated"}}
+              :previous-application {:items {1 "original"}
+                                     :licenses {2 "original"}}}
+             (-> (apply-commands application
+                                 [{:actor "applicant" :type ::save-draft :items {1 "original"} :licenses {2 "original"}}
+                                  {:actor "applicant" :type ::submit}
+                                  {:actor "assistant" :type ::return}
+                                  {:actor "applicant" :type ::save-draft :items {1 "updated"} :licenses {2 "updated"}}
+                                  {:actor "applicant" :type ::submit}]
+                                 injections)
+                 (select-keys relevant-application-keys)))))))
 
 (deftest test-submit-approve-or-reject
   (let [injections {:validate-form (constantly nil)}
