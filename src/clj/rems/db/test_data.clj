@@ -577,7 +577,7 @@
   (let [res1 (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner)}))
         res2 (:id (db/create-resource! {:resid "Extra Data" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner)}))
         _ (:id (db/create-resource! {:resid "Expired Resource, should not be seen" :organization "nbn" :owneruserid (+fake-users+ :owner) :modifieruserid (+fake-users+ :owner) :endt (time/minus (time/now) (time/years 1))}))
-        form (create-basic-form! +fake-users+)
+        form (create-thl-demo-form! +fake-users+)
         _ (create-expired-form!)
         workflows (create-workflows! +fake-users+)
         _ (create-catalogue-item! res1 (:minimal workflows) form
@@ -615,7 +615,7 @@
   (create-demo-users-and-roles!)
   (let [res1 (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :organization "nbn" :owneruserid (+demo-users+ :owner) :modifieruserid (+demo-users+ :owner)}))
         res2 (:id (db/create-resource! {:resid "Extra Data" :organization "nbn" :owneruserid (+demo-users+ :owner) :modifieruserid (+demo-users+ :owner)}))
-        form (create-basic-form! +demo-users+)
+        form (create-thl-demo-form! +demo-users+)
         workflows (create-workflows! +demo-users+)
         _ (create-catalogue-item! res1 (:minimal workflows) form
                                   {"en" "ELFA Corpus, direct approval"
