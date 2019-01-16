@@ -219,27 +219,22 @@
                   :maxlength 100}
                  {:title {:en "9. Public description of the project (in Finnish, when possible), to be published in THL Biobank."
                           :fi "9. Kuvaile yksityiskohtaisesti tutkimussuunnitelma"}
-                  :input-prompt {:en "Meant for sample donors and for anyone interested in the research done
-                  using THL Biobank's sample collections. This summary and the name of the Study PI will be published in THL Biobank's web pages."
-                                 :fi "Tarkoitettu aineistojen lahjoittajille ja kaikille, joita kiinnostaa THL:n Biopankkia
-                                 käyttävät tutkimusprojektit. Tämä kuvaus sekä tutkijan nimi julkaistaan THL:n nettisivuilla, kun sopimus on allekirjoitettu."}
+                  :input-prompt {:en "Meant for sample donors and for anyone interested in the research done using THL Biobank's sample collections. This summary and the name of the Study PI will be published in THL Biobank's web pages."
+                                 :fi "Tarkoitettu aineistojen lahjoittajille ja kaikille, joita kiinnostaa THL:n Biopankkia käyttävät tutkimusprojektit. Tämä kuvaus sekä tutkijan nimi julkaistaan THL:n nettisivuilla, kun sopimus on allekirjoitettu."}
                   :optional false
                   :type "texta"
                   :maxlength 100}
                  {:title {:en "10. Place/plces of research, including place of sample and/or data analysis."
                           :fi "10. Tutkimuksen yysinen sijainti, mukaanlukien paikka, missä data-analyysi toteutetaan."}
                   :input-prompt {:en "List all research center involved in this study, and each center's role. Specify which centers will analyze which data and/or samples.."
-                                 :fi "Listaa kaikki tutkimuskeskukset, jotka osallistuvat tähän tutkimukseen, ml. niiden roolit tutkimuksessa.
-                                 Erittele, missä analysoidaan mikäkin näyte."}
+                                 :fi "Listaa kaikki tutkimuskeskukset, jotka osallistuvat tähän tutkimukseen, ml. niiden roolit tutkimuksessa. Erittele, missä analysoidaan mikäkin näyte."}
                   :optional false
                   :type "texta"
                   :maxlength 100}
                  {:title {:en "11. Description of other research group members and their role in the applied project."
                           :fi "11. Kuvaus muista tutkimukseen osallistuvista henkilöistä, ja heidän roolistaan projektissa."}
-                  :input-prompt {:en "For every group member: name, title, affiliation, contact information. In addition describe earch member's role
-                  in the project (e.g. cohor representative, data analyst, etc.)"
-                                 :fi "Anna jokaisesta jäsenestä: nimi, titteli, yhteys projektiin, yhteystiedot. Kuvaile lisäki jokaisen henkilön
-                                 rooli projektissa."}
+                  :input-prompt {:en "For every group member: name, title, affiliation, contact information. In addition describe earch member's role in the project (e.g. cohor representative, data analyst, etc.)"
+                                 :fi "Anna jokaisesta jäsenestä: nimi, titteli, yhteys projektiin, yhteystiedot. Kuvaile lisäki jokaisen henkilön rooli projektissa."}
                   :optional false
                   :type "texta"
                   :maxlength 100}
@@ -247,8 +242,7 @@
                           :fi "12. Kuvaus muista tutkimukseen osallistuvista henkilöistä, ja heidän roolistaan projektissa."}
                   :input-prompt {:en "For every group member: name, title, affiliation, contact information. In addition describe earch member's role
                   in the project (e.g. cohor representative, data analyst, etc.)"
-                                 :fi "Anna jokaisesta jäsenestä: nimi, titteli, yhteys projektiin, yhteystiedot. Kuvaile lisäki jokaisen henkilön
-                                 rooli projektissa."}
+                                 :fi "Anna jokaisesta jäsenestä: nimi, titteli, yhteys projektiin, yhteystiedot. Kuvaile lisäki jokaisen henkilön rooli projektissa."}
                   :optional false
                   :type "texta"
                   :maxlength 100}
@@ -261,8 +255,7 @@
                   :maxlength 100}
                  {:title {:en "14. Specify requested genomics or other omics data (if applicable)"
                           :fi "14. Kuvaile tarvittava genomiikkadata."}
-                  :input-prompt {:en "Specify in detail the requested data format for different genomics or other omics data types. Information
-                  of available omics data is found at THL Biobank web page (www.thl.fi/biobank/researchers)"
+                  :input-prompt {:en "Specify in detail the requested data format for different genomics or other omics data types. Information of available omics data is found at THL Biobank web page (www.thl.fi/biobank/researchers)"
                                  :fi "Kuvaile tarvitsemasi genomiikkadata. Lisätietoa saatavilla osoitteesta www.thl.fi/biobank/researchers"}
                   :optional true
                   :type "texta"
