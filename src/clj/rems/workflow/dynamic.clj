@@ -247,10 +247,15 @@
   [user-ids injections]
   (apply merge-with into (keep (partial valid-user-error injections) user-ids)))
 
+(defn- must-not-be-empty [cmd key]
+  (when-not (seq (get cmd key))
+    {:errors [[:must-not-be-empty key]]}))
+
 (defmethod handle-command ::request-comment
   [cmd application injections]
   (or (actor-is-not-handler-error application cmd)
       (state-error application ::submitted)
+      (must-not-be-empty cmd :commenters)
       (invalid-users-errors (:commenters cmd) injections)
       {:success true
        :result {:event :event/comment-requested
@@ -497,6 +502,11 @@
     (testing "required :valid-user? injection"
       (is (= {:errors [[:missing-injection :valid-user?]]}
              (handle-command {:actor "assistant" :commenters ["commenter"] :type ::request-comment}
+                             application
+                             {}))))
+    (testing "commenters must not be empty"
+      (is (= {:errors [[:must-not-be-empty :commenters]]}
+             (handle-command {:actor "assistant" :commenters [] :type ::request-comment}
                              application
                              {}))))
     (testing "commenters must be a valid users"
