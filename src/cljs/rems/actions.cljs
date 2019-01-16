@@ -123,20 +123,14 @@
    [show-throughput-times-button]])
 
 (defn- open-applications
-  [key apps]
+  [apps]
   (if (empty? apps)
     [:div.actions.alert.alert-success (text :t.actions/empty)]
     [application-list/component
      application-list/+all-columns+
-     @(rf/subscribe [::sorting key])
-     #(rf/dispatch [::set-sorting key %])
+     @(rf/subscribe [::sorting ::open-applications])
+     #(rf/dispatch [::set-sorting ::open-applications %])
      apps]))
-
-(defn- open-reviews [apps]
-  [open-applications ::open-applications apps])
-
-(defn- open-approvals [apps]
-  [open-applications ::open-approvals apps])
 
 (defn- handled-applications
   "Creates a table containing a list of handled applications.
@@ -145,7 +139,7 @@
   key:         key to use for table ordering in re-frame
   apps:        collection of apps to be shown
   top-buttons: a set of extra buttons that will be shown on top of the table. This could include f.ex 'export as pdf' button."
-  [key apps top-buttons loading?]
+  [apps top-buttons loading?]
   (if loading?
     [spinner/big]
     (if (empty? apps)
@@ -154,16 +148,9 @@
        top-buttons
        [application-list/component
         [:id :description :resource :applicant :state :last-modified :view]
-        @(rf/subscribe [::sorting key])
-        #(rf/dispatch [::set-sorting key %])
+        @(rf/subscribe [::sorting ::handled-applications])
+        #(rf/dispatch [::set-sorting ::handled-applications %])
         apps]])))
-
-(defn- handled-approvals [apps loading?]
-  [handled-applications ::handled-approvals apps [report-buttons] loading?])
-
-(defn- handled-reviews
-  [apps loading?]
-  [handled-applications ::handled-reviews apps nil loading?])
 
 (defn actions-page [reviews]
   (let [actions (rf/subscribe [::actions])
@@ -174,27 +161,20 @@
       (if @loading-actions?
         [spinner/big]
         [:div.spaced-sections
-         (when (:reviewer? @actions)
-           [collapsible/component
-            {:id "open-reviews"
-             :open? true
-             :title (text :t.actions/open-reviews)
-             :collapse [open-reviews (:reviews @actions)]}])
-         (when (:reviewer? @actions)
-           [collapsible/component
-            {:id "handled-reviews"
-             :on-open #(rf/dispatch [:rems.actions/start-fetch-handled-actions])
-             :title (text :t.actions/handled-reviews)
-             :collapse [handled-reviews (:handled-reviews @handled-actions) @loading-handled-actions?]}])
-         (when (:approver? @actions)
+         (when (or (:reviewer? @actions) (:approver? @actions))
            [collapsible/component
             {:id "open-approvals"
              :open? true
              :title (text :t.actions/open-approvals)
-             :collapse [open-approvals (:approvals @actions)]}])
-         (when (:approver? @actions)
+             :collapse [open-applications
+                        (concat (:reviews @actions)
+                                (:approvals @actions))]}])
+         (when (or (:reviewer? @actions) (:approver? @actions))
            [collapsible/component
             {:id "handled-approvals"
              :on-open #(rf/dispatch [:rems.actions/start-fetch-handled-actions])
              :title (text :t.actions/handled-approvals)
-             :collapse [handled-approvals (:handled-approvals @handled-actions) @loading-handled-actions?]}])]))))
+             :collapse [handled-applications
+                        (concat (:handled-reviews @handled-actions)
+                                (:handled-approvals @handled-actions))
+                        @loading-handled-actions?]}])]))))
