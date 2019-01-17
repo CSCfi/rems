@@ -298,13 +298,29 @@
       (applications/return-application approver app-id 0 "comment for return")
       (applications/submit-application applicant app-id))))
 
-(defn- create-dynamic-application! [catid wfid applicant]
-  (let [app-id (create-draft! applicant [catid] wfid "dynamic application")
-        result (applications/dynamic-command! {:type :rems.workflow.dynamic/submit
-                                               :actor applicant
-                                               :application-id app-id})]
-    (assert (nil? result) {:result result})
-    app-id))
+(defn- run-and-check-dynamic-command! [& args]
+  (let [result (apply applications/dynamic-command! args)]
+    (assert (nil? result) {:actual result})
+    result))
+
+(defn- create-dynamic-applications! [catid wfid users]
+  (let [applicant (users :applicant1)
+        approver (users :approver1)
+        reviewer (users :reviewer)]
+    (let [app-id (create-draft! applicant [catid] wfid "dynamic application")]
+      (run-and-check-dynamic-command! {:type :rems.workflow.dynamic/submit :actor applicant :application-id app-id}))
+    (let [app-id (create-draft! applicant catid wfid "application with comment")] ; approved with comment
+      (run-and-check-dynamic-command! {:application-id app-id :actor applicant :type :rems.workflow.dynamic/submit}) ; submit
+      (run-and-check-dynamic-command! {:application-id app-id :actor approver :type :rems.workflow.dynamic/request-comment :commenters [reviewer]}) ; request comment
+      (run-and-check-dynamic-command! {:application-id app-id :actor reviewer :type :rems.workflow.dynamic/comment :comment "looking good"}) ; comment
+      (run-and-check-dynamic-command! {:application-id app-id :actor approver :type :rems.workflow.dynamic/approve :comment "Thank you! Approved!"})) ; approve
+
+    (let [app-id (create-draft! applicant catid wfid "application in commenting")] ; still in commenting
+      (run-and-check-dynamic-command! {:application-id app-id :actor applicant :type :rems.workflow.dynamic/submit})
+      (run-and-check-dynamic-command! {:application-id app-id :actor approver :type :rems.workflow.dynamic/request-comment :commenters [reviewer]}))
+    (let [app-id (create-draft! applicant catid wfid "application in deciding")] ; still in deciding
+      (run-and-check-dynamic-command! {:application-id app-id :actor applicant :type :rems.workflow.dynamic/submit})
+      (run-and-check-dynamic-command! {:application-id app-id :actor approver :type :rems.workflow.dynamic/request-decision :decider reviewer}))))
 
 (defn- create-review-applications! [catid wfid users]
   (let [applicant (users :applicant1)
@@ -317,29 +333,6 @@
         (applications/approve-application approver app-id 1 "comment for approval")) ; already reviewed and approved
       (let [app-id (create-draft! applicant catid wfid "application in review")]
         (applications/submit-application applicant app-id))))) ; still in review
-
-(defn- run-and-check-dynamic-command! [& args]
-  (let [result (apply applications/dynamic-command! args)]
-    (assert (nil? result) {:actual result})
-    result))
-
-(defn- create-dynamic-request-applications! [catid wfid users]
-  (let [applicant (users :applicant1)
-        approver (users :approver1)
-        reviewer (users :reviewer)]
-    (binding [context/*tempura* (locales/tempura-config)]
-      (let [app-id (create-draft! applicant catid wfid "application with comment")] ; approved with comment
-        (run-and-check-dynamic-command! {:application-id app-id :actor applicant :type :rems.workflow.dynamic/submit}) ; submit
-        (run-and-check-dynamic-command! {:application-id app-id :actor approver :type :rems.workflow.dynamic/request-comment :commenters [reviewer]}) ; request comment
-        (run-and-check-dynamic-command! {:application-id app-id :actor reviewer :type :rems.workflow.dynamic/comment :comment "looking good"}) ; comment
-        (run-and-check-dynamic-command! {:application-id app-id :actor approver :type :rems.workflow.dynamic/approve :comment "Thank you! Approved!"})) ; approve
-
-      (let [app-id (create-draft! applicant catid wfid "application in commenting")] ; still in commenting
-        (run-and-check-dynamic-command! {:application-id app-id :actor applicant :type :rems.workflow.dynamic/submit})
-        (run-and-check-dynamic-command! {:application-id app-id :actor approver :type :rems.workflow.dynamic/request-comment :commenters [reviewer]}))
-      (let [app-id (create-draft! applicant catid wfid "application in deciding")] ; still in deciding
-        (run-and-check-dynamic-command! {:application-id app-id :actor applicant :type :rems.workflow.dynamic/submit})
-        (run-and-check-dynamic-command! {:application-id app-id :actor approver :type :rems.workflow.dynamic/request-decision :decider reviewer})))))
 
 (defn- create-application-with-expired-resource-license! [wfid form users]
   (let [applicant (users :applicant1)
@@ -405,8 +398,7 @@
     (create-expired-license!)
     (let [dynamic (create-catalogue-item! res1 (:dynamic workflows) form
                                           {"en" "Dynamic workflow" "fi" "Dynaaminen työvuo"})]
-      (create-dynamic-application! dynamic (:dynamic workflows) (+fake-users+ :applicant1))
-      (create-dynamic-request-applications! dynamic (:dynamic workflows) +fake-users+))))
+      (create-dynamic-applications! dynamic (:dynamic workflows) +fake-users+))))
 
 (defn create-demo-data! []
   (create-demo-users-and-roles!)
@@ -443,5 +435,4 @@
     (create-expired-license!)
     (let [dynamic (create-catalogue-item! res1 (:dynamic workflows) form
                                           {"en" "Dynamic workflow" "fi" "Dynaaminen työvuo"})]
-      (create-dynamic-application! dynamic (:dynamic workflows) (+demo-users+ :applicant1))
-      (create-dynamic-request-applications! dynamic (:dynamic workflows) +demo-users+))))
+      (create-dynamic-applications! dynamic (:dynamic workflows) +demo-users+))))
