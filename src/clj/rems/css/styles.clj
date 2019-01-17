@@ -268,7 +268,8 @@
      :border 0}] ;for button links
    [:.navbar
     [:.nav-link :.btn-link
-     {:text-transform "uppercase"}]]
+     {:text-transform "uppercase"
+      :background-color :inherit}]]
    [:.navbar-toggler {:border-color (util/get-theme-attribute :color1)}]
    [:.nav-link
     :.btn-link
@@ -294,7 +295,8 @@
                                  :padding-right (u/px 20)}]
    [:footer {:width "100%"
              :height (u/px 53.6)
-             :background-color (util/get-theme-attribute :color1)
+             :color (util/get-theme-attribute :table-heading-color "#fff")
+             :background-color (util/get-theme-attribute :table-heading-bgcolor :color1)
              :text-align "center"
              :margin-top (u/em 1)}]
    [:.jumbotron
@@ -470,14 +472,17 @@
     [:.autocomplete__selected-item:last-of-type {:margin-bottom (u/rem 0.5)}]
     [:.autocomplete__selected-item {:height (u/px 40)
                                     :line-height (u/px 40)
-                                    :background-color (util/get-theme-attribute :color1)
+                                    :color (util/get-theme-attribute :table-heading-color "inherit")
+                                    :background-color (util/get-theme-attribute :table-heading-bgcolor :color1)
                                     :border-radius (u/rem 0.25)
                                     :border [[(u/px 1) :solid "#111"]]}]
     [:.autocomplete__dropdown {:padding (u/px 10)}]
     [:.autocomplete__control [:input {:display :inline-block}]]
     [:.autocomplete__item {:padding (u/px 10)}]
-    [:.autocomplete__item--selected {:background-color (util/get-theme-attribute :color1)}]
-    [:.autocomplete__item:hover {:background-color (util/get-theme-attribute :color1)
+    [:.autocomplete__item--selected {:color (util/get-theme-attribute :table-heading-color "inherit")
+                                     :background-color (util/get-theme-attribute :table-heading-bgcolor :color1)}]
+    [:.autocomplete__item:hover {:color (util/get-theme-attribute :table-heading-color "inherit")
+                                 :background-color (util/get-theme-attribute :table-heading-bgcolor :color1)
                                  :cursor :pointer}]
     [:.autocomplete__selected-item {:display :inline-block
                                     :padding [[0 (u/rem 0.5)]]
@@ -485,7 +490,7 @@
      [:a.autocomplete__remove-item-button {:margin-left (u/px 5)
                                            :padding (u/rem 0.5)
                                            :padding-right 0
-                                           :color (util/get-theme-attribute :danger-color)
+                                           :color (util/get-theme-attribute :table-heading-color :danger-color)
                                            :font-weight :bold}]
      [:input {:width (u/percent 100)}]]]
 

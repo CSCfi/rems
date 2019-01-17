@@ -323,6 +323,7 @@
 (defn actors-of-dynamic-application [application]
   (map :actor (:dynamic-events application)))
 
+;; TODO combine handled approvals and reviews as just handled applications
 (defn get-handled-approvals [user-id]
   (let [actors (db/get-actors-for-applications {:role "approver"})]
     (->> (get-applications-impl-batch {})
@@ -980,6 +981,7 @@
    :validate-form validate-form})
 
 (defn dynamic-command! [cmd]
+  (assert (:application-id cmd))
   (let [app (get-dynamic-application-state (:application-id cmd))
         result (dynamic/handle-command cmd app db-injections)]
     (if (:success result)

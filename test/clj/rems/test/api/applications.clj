@@ -812,7 +812,7 @@
         user-id "alice"
         handler-id "developer"
         decider-id "bob"
-        application-id 12] ;; submitted dynamic application from test data
+        application-id 13] ;; submitted dynamic application from test data
 
     (testing "getting dynamic application as applicant"
       (let [data (get-application user-id application-id)]

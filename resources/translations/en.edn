@@ -57,6 +57,7 @@
             :comment "Comment"
             :comment-placeholder "Comment"
             :created "Created"
+            :decide "Decide"
             :description "Description"
             :empty "You don't have any applications to process."
             :export-entitlements "Export entitlements as csv"
