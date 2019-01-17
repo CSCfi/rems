@@ -141,7 +141,7 @@
     (let [application-id (get-application-id)]
       (go-to-applications)
       (is (= {:id application-id
-              :description ""
+              :description "Test name"
               :resource "ELFA Corpus, direct approval"
               :applicant "developer"
               :state "Approved"}

@@ -96,7 +96,7 @@
                  {:title {:en "Project name"
                           :fi "Projektin nimi"}
                   :optional false
-                  :type "text"
+                  :type "description"
                   :input-prompt {:en "Project"
                                  :fi "Projekti"}}
 
@@ -260,6 +260,7 @@
             :let [trimmed-value (trim-value-if-longer-than-fields-maxlength field-value maxlength)]]
       (db/save-field-value! {:application app-id :form (:id form)
                              :item item-id :user user-id :value trimmed-value}))
+    (db/update-application-description! {:id app-id :description field-value})
     (doseq [{license-id :id} (:licenses form)]
       (db/save-license-approval! {:catappid app-id
                                   :round 0
