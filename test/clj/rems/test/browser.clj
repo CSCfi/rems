@@ -95,6 +95,12 @@
     ;; XXX: need to use `fill-human`, because `fill` is so quick that the form drops characters here and there
     (fill-human *driver* {:id id} text)))
 
+(defn select-option [label option]
+  (let [id (get-element-attr *driver* [:form
+                                       {:tag :label, :fn/text label}]
+                             :for)]
+    (fill *driver* {:id id} option)))
+
 (defn check-box [value]
   ;; XXX: assumes that the checkbox is unchecked
   (click-visible *driver* [{:css (str "input[value='" value "']")}]))
@@ -137,7 +143,7 @@
 
     (fill-form-field "Application title" "Test name")
     (fill-form-field "1. Research project full title" "Test")
-    (fill-form-field "2. This is an amendment of a previous approved application" "y")
+    (select-option "2. This is an amendment of a previous approved application" "y")
     (fill-form-field "3. Study PIs (name, titile, affiliation, email)" "Test")
     (fill-form-field "5. Research project start date" "01/01/2050")
     (fill-form-field "6. Research project end date" "01/01/2050")
@@ -147,7 +153,7 @@
     (fill-form-field "11. Description of other research group members and their role in the applied project." "Test")
     (fill-form-field "12. Specify selection criteria of study participants (if applicable)" "Test")
     (fill-form-field "13. Specify requested phenotype data (information on variables is found at https://kite.fimm.fi)" "Test")
-    (fill-form-field "16. Are biological samples requested?" "n")
+    (select-option "16. Are biological samples requested?" "n")
     (fill-form-field "17. What study results will be returned to THL Biobank (if any)?" "Test")
     (fill-form-field "18. Ethical aspects of the project" "Test")
     (fill-form-field "19. Project keywords (max 5)" "Test")
