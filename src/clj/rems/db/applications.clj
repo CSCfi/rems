@@ -961,14 +961,19 @@
         (update :licenses #(map-keys keyword-to-number %)))
     event))
 
+(defn- fix-decided-event-from-db [event]
+  (if (= :event/decided (:event event))
+    (update-present event :decision keyword)
+    event))
+
 (defn- fix-event-from-db [event]
   (-> event
       :eventdata
       (cheshire/parse-string keyword)
       (update :event keyword)
       (update :time #(when % (time-coerce/from-long (Long/parseLong %))))
-      (update-present :decision keyword)
-      fix-draft-saved-event-from-db))
+      fix-draft-saved-event-from-db
+      fix-decided-event-from-db))
 
 (defn get-dynamic-application-state [application-id]
   (let [application (first (db/get-applications {:id application-id}))
