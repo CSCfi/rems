@@ -3,10 +3,9 @@
             [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.application :as application]
-            [rems.db.catalogue :refer [get-catalogue-item-title]]
-            [rems.text :refer [text text-format]]
+            [rems.catalogue-util :refer [get-catalogue-item-title]]
             [rems.common-util :refer [select-vals]]
-            [secretary.core :as secretary])
+            [rems.text :refer [text text-format]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (rf/reg-sub

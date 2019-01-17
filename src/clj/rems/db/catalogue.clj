@@ -35,9 +35,6 @@
   (when-let [item (db/get-catalogue-item {:item id})]
     (localize-catalogue-item item)))
 
-(defn disabled-catalogue-item? [item]
-  (= (:state item) "disabled"))
-
 (defn create-catalogue-item! [command]
   (let [id (:id (db/create-catalogue-item! (select-keys command [:title :form :resid :wfid])))]
     (get-localized-catalogue-item id)))

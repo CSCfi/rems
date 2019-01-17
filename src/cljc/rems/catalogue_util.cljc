@@ -1,4 +1,4 @@
-(ns rems.db.catalogue
+(ns rems.catalogue-util
   (:require [clojure.string :as str]))
 
 (defn urn-catalogue-item? [{:keys [resid]}]
