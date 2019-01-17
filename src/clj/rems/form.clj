@@ -1,16 +1,13 @@
 (ns rems.form
-  (:require [rems.db.applications :refer [create-new-draft
-                                          get-application-state
-                                          get-catalogue-items-by-application-id
-                                          get-form-for
-                                          make-draft-application
-                                          submit-application]]
+  (:require [clj-time.core :as time]
+            [rems.context :as context]
+            [rems.db.applications :as applications]
+            [rems.db.applications :refer [create-new-draft get-application-state get-catalogue-items-by-application-id get-form-for make-draft-application submit-application]]
             [rems.db.catalogue :refer [disabled-catalogue-item?]]
             [rems.db.core :as db]
             [rems.form-validation :as form-validation]
             [rems.InvalidRequestException]
-            [rems.util :refer [getx]]
-            [rems.context :as context]))
+            [rems.util :refer [getx]]))
 
 
 (defn save-application-items [application-id catalogue-item-ids]
@@ -51,7 +48,7 @@
 ;; TODO think a better name
 (defn- save-form-inputs [applicant-id application-id submit? items licenses]
   (save-fields applicant-id application-id items)
-  (save-licenses applicant-id  application-id licenses)
+  (save-licenses applicant-id application-id licenses)
   (let [form (get-form-for applicant-id application-id)
         validation (form-validation/validate form)
         valid? (= :valid validation)
@@ -87,12 +84,22 @@
                            (create-new-draft-for-items actor catalogue-items))
         _ (check-for-disabled-items! (get-catalogue-items-by-application-id application-id))
         submit? (= command "submit")
-        {:keys [success? valid? validation]} (save-form-inputs actor application-id submit? items licenses)]
+        {:keys [success? valid? validation]} (save-form-inputs actor application-id submit? items licenses)
+        application (get-application-state application-id)]
+    ;; XXX: workaround to make dynamic workflows work with the old API - save to both old and new models
+    (when (applications/is-dynamic-application? application)
+      (if-let [error (applications/dynamic-command! {:type :rems.workflow.dynamic/save-draft
+                                                     :actor actor
+                                                     :application-id application-id
+                                                     :time (time/now)
+                                                     :items items
+                                                     :licenses licenses})]
+        (throw (RuntimeException. (str "error in save-draft command: " error)))))
     (cond-> {:success success?
              :valid valid?}
       (not valid?) (assoc :validation validation)
       success? (assoc :id application-id
-                      :state (:state (get-application-state application-id))))))
+                      :state (:state application)))))
 
 (comment
   (binding [context/*tempura* (fn [& args] (pr-str args))]
