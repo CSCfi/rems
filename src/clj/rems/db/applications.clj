@@ -451,6 +451,23 @@
            "")
    :maxlength (:maxlength item)})
 
+(defn- keyword-keys-to-numbers [[k v]]
+  [(if (keyword? k)
+     (Integer/parseInt (name k))
+     k)
+   v])
+
+(defn- assoc-item-previous-values [application items]
+  (let [previous-values (->> (if (editable? (:state application))
+                               (:submitted-form-contents application)
+                               (:previous-submitted-form-contents application))
+                             :items
+                             ;; XXX: due to event deserialization, the keys are no more numbers after reading from database
+                             (map keyword-keys-to-numbers)
+                             (into {}))]
+    (for [item items]
+      (assoc item :previous-value (get previous-values (:id item))))))
+
 (defn- process-license
   [application license]
   (let [app-id (:id application)
@@ -554,8 +571,9 @@
          _ (assert form-id)
          catalogue-item-ids (mapv :item (db/get-application-items {:application application-id}))
          catalogue-items (get-catalogue-items catalogue-item-ids)
-         items (mapv #(process-item application-id form-id %)
-                     (db/get-form-items {:id form-id}))
+         items (->> (db/get-form-items {:id form-id})
+                    (mapv #(process-item application-id form-id %))
+                    (assoc-item-previous-values application))
          description (-> (filter #(= "description" (:type %)) items)
                          first
                          :value)
@@ -620,8 +638,9 @@
          form (db/get-form-for-item {:item item-id})
          form-id (:formid form)
          catalogue-items (:catalogue-items application)
-         items (mapv #(process-item application-id form-id %)
-                     (db/get-form-items {:id form-id}))
+         items (->> (db/get-form-items {:id form-id})
+                    (mapv #(process-item application-id form-id %))
+                    (assoc-item-previous-values application))
          licenses (get-application-licenses application catalogue-item-ids)]
      {:id application-id
       :title (:formtitle form)

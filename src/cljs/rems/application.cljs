@@ -95,7 +95,8 @@
    (assoc db
           ::application application
           ::edit-application {:items (into {} (for [item (:items application)]
-                                                [(:id item) {:value (:value item)}]))
+                                                [(:id item) {:value (:value item)
+                                                             :previous-value (:previous-value item)}]))
                               :licenses (into {} (map (juxt :id :approved) (:licenses application)))})))
 
 (rf/reg-event-db
@@ -715,7 +716,6 @@
                              :readonly readonly?
                              :language language
                              :value (get-in items [(:id item) :value])
-                             ;; TODO: db doesn't yet contain :previous-value so this is always nil
                              :previous-value (get-in items [(:id item) :previous-value])
                              :diff (get-in items [(:id item) :diff])
                              :app-id (:id application))]))
