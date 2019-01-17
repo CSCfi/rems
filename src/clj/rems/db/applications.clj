@@ -6,6 +6,7 @@
             [clojure.set :refer [difference union]]
             [clojure.test :refer [deftest is]]
             [cprop.tools :refer [merge-maps]]
+            [rems.application-util :refer [editable?]]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.context :as context]
             [rems.db.catalogue :refer [get-localized-catalogue-items]]
@@ -25,13 +26,6 @@
   "Is the given `application-id` for an unsaved draft application?"
   [application-id]
   (nil? application-id))
-
-(defn editable? [state]
-  (contains? #{"draft" "returned" "withdrawn"
-               :rems.workflow.dynamic/draft
-               ;; TODO dynamic applications that are returned or withdrawn
-               }
-             state))
 
 ;; TODO cache application state in db instead of always computing it from events
 (declare get-application-state)
@@ -389,11 +383,6 @@
                            (can-comment? user-id (:id app))
                            (can-decide? user-id (:id app))))))
        (mapv (partial assoc-review-type-to-app user-id))))
-
-(defn check-review-timeout
-  "Checks for and times out reviews that are past the associated end time."
-  [t]
-  (let [reviews (get-applications-to-review)])) ;; TODO implement review timeout later
 
 (defn make-draft-application
   "Make a draft application with an initial set of catalogue items."

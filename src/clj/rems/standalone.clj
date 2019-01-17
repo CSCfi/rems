@@ -2,7 +2,6 @@
   "Run the REMS app in an embedded http server."
   (:require [clojure.tools.cli :refer [parse-opts]]
             [clojure.tools.logging :as log]
-            [hara.io.scheduler :as scheduler]
             [luminus-migrations.core :as migrations]
             [luminus.http-server :as http]
             [luminus.repl-server :as repl]
@@ -10,7 +9,6 @@
             [rems.config :refer [env]]
             [rems.db.test-data :as test-data]
             [rems.handler :as handler]
-            [rems.tasks :as tasks]
             [rems.validate :as validate])
   (:refer-clojure :exclude [parse-opts])
   (:gen-class))
@@ -18,13 +16,6 @@
 (def cli-options
   [["-p" "--port PORT" "Port number"
     :parse-fn #(Integer/parseInt %)]])
-
-(mount/defstate ^{:on-reload :noop}
-  scheduler
-  :start (-> tasks/standalone
-             scheduler/scheduler
-             scheduler/start!)
-  :stop (scheduler/stop! scheduler))
 
 (mount/defstate ^{:on-reload :noop}
   http-server

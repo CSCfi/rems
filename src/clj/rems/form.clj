@@ -1,8 +1,8 @@
 (ns rems.form
   (:require [clj-time.core :as time]
+            [rems.catalogue-util :refer [disabled-catalogue-item?]]
             [rems.context :as context]
             [rems.db.applications :as applications]
-            [rems.db.catalogue :refer [disabled-catalogue-item?]]
             [rems.db.core :as db]
             [rems.form-validation :as form-validation]
             [rems.InvalidRequestException]

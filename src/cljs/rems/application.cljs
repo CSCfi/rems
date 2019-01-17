@@ -10,12 +10,12 @@
             [rems.actions.request-comment :refer [request-comment-action-button request-comment-form]]
             [rems.actions.request-decision :refer [request-decision-action-button request-decision-form]]
             [rems.actions.return-action :refer [return-action-button return-form]]
+            [rems.application-util :refer [editable?]]
             [rems.atoms :refer [external-link flash-message textarea]]
             [rems.autocomplete :as autocomplete]
+            [rems.catalogue-util :refer [get-catalogue-item-title]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [index-by]]
-            [rems.db.application :refer [draft?]]
-            [rems.db.catalogue :refer [get-catalogue-item-title]]
             [rems.guide-utils :refer [lipsum lipsum-short lipsum-paragraphs]]
             [rems.phase :refer [phases]]
             [rems.spinner :as spinner]
@@ -695,16 +695,13 @@
                    :class :btn-primary
                    :on-click #(rf/dispatch [::save-application "submit" (text :t.form/submit)])}])
 
-(defn- editable-state? [state]
-  (draft? state))
-
 (defn- fields [form edit-application language]
   (let [application (:application form)
         {:keys [items licenses validation]} edit-application
         field-validations (index-by [:field-id] validation)
         license-validations (index-by [:license-id] validation)
         state (:state application)
-        editable? (editable-state? state)
+        editable? (editable? state)
         readonly? (not editable?)]
     [collapsible/component
      {:id "form"
@@ -1003,7 +1000,7 @@
 
 (defn- static-actions [app]
   (let [state (:state app)
-        editable? (editable-state? state)]
+        editable? (editable? state)]
     (concat (when (:can-close? app)
               [(if (:is-applicant? app)
                  [applicant-close-action-button]

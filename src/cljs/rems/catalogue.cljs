@@ -1,14 +1,11 @@
 (ns rems.catalogue
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
-            [rems.atoms :refer [external-link]]
             [rems.application-list :as application]
+            [rems.application-util :refer [editable?]]
+            [rems.atoms :refer [external-link]]
             [rems.cart :as cart]
-            [rems.db.catalogue :refer [disabled-catalogue-item?
-                                       get-catalogue-item-title
-                                       urn-catalogue-item-link
-                                       urn-catalogue-item?]]
-            [rems.db.application :refer [draft?]]
+            [rems.catalogue-util :refer [disabled-catalogue-item? get-catalogue-item-title urn-catalogue-item-link urn-catalogue-item?]]
             [rems.guide-functions]
             [rems.spinner :as spinner]
             [rems.table :as table]
@@ -73,7 +70,7 @@
 (rf/reg-event-db
  ::fetch-drafts-result
  (fn [db [_ applications]]
-   (assoc db ::draft-applications (filter (comp draft? :state)
+   (assoc db ::draft-applications (filter (comp editable? :state)
                                           applications))))
 
 (defn- fetch-drafts []

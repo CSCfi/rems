@@ -1,7 +1,7 @@
 (ns rems.administration
   (:require [re-frame.core :as rf]
             [rems.atoms :refer [external-link]]
-            [rems.db.catalogue :refer [urn-catalogue-item? get-catalogue-item-title disabled-catalogue-item?]]
+            [rems.catalogue-util :refer [get-catalogue-item-title disabled-catalogue-item?]]
             [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.text :refer [text]]

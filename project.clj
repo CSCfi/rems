@@ -17,7 +17,6 @@
                  [garden "1.3.6"]
                  [haka-buddy "0.2.3" :exclusions [cheshire]]
                  [hiccup "1.0.5"]
-                 [im.chit/hara.io.scheduler "2.5.10"]
                  [luminus-jetty "0.1.7"]
                  [luminus-migrations "0.6.3"]
                  [luminus-nrepl "0.1.5"]
