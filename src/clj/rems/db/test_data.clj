@@ -4,6 +4,7 @@
             [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
+            [rems.db.catalogue :as catalogue]
             [rems.db.form :as form]
             [rems.db.roles :as roles]
             [rems.db.users :as users]
@@ -443,7 +444,7 @@
   (let [id (:id (db/create-catalogue-item!
                  {:title "non-localized title" :resid resource :wfid workflow :form form}))]
     (doseq [[lang title] localizations]
-      (db/create-catalogue-item-localization! {:id id :langcode lang :title title}))
+      (catalogue/create-catalogue-item-localization! {:id id :langcode lang :title title}))
     id))
 
 (defn trim-value-if-longer-than-fields-maxlength [value maxlength]
@@ -590,8 +591,6 @@
         disabled (create-catalogue-item! res1 (:simple workflows) form
                                          {"en" "ELFA Corpus, one approval (extra data, disabled)"
                                           "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti, pois käytöstä)"})]
-    (let [thlform (create-thl-demo-form! +fake-users+)]
-      (create-catalogue-item! res1 (:dynamic workflows) thlform {"en" "THL catalogue item" "fi" "THL katalogi-itemi"}))
     (create-resource-license! res2 "Some test license" (+fake-users+ :owner))
     (db/set-catalogue-item-state! {:item disabled :state "disabled" :user (+fake-users+ :approver1)})
     (create-applications! simple (:simple workflows) (+fake-users+ :approver1) (+fake-users+ :approver1))
@@ -603,7 +602,9 @@
     (create-expired-license!)
     (let [dynamic (create-catalogue-item! res1 (:dynamic workflows) form
                                           {"en" "Dynamic workflow" "fi" "Dynaaminen työvuo"})]
-      (create-dynamic-applications! dynamic (:dynamic workflows) +fake-users+))))
+      (create-dynamic-applications! dynamic (:dynamic workflows) +fake-users+))
+    (let [thlform (create-thl-demo-form! +fake-users+)]
+      (create-catalogue-item! res1 (:dynamic workflows) thlform {"en" "THL catalogue item" "fi" "THL katalogi-itemi"}))))
 
 (defn create-demo-data! []
   (create-demo-users-and-roles!)
