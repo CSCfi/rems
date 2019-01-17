@@ -60,8 +60,8 @@
 
 (defmethod apply-event [:event/draft-saved :workflow/dynamic]
   [application _workflow event]
-  (assoc application :draft-application {:items (:items event)
-                                         :licenses (:licenses event)}))
+  (assoc application :form-contents {:items (:items event)
+                                     :licenses (:licenses event)}))
 
 (defmethod apply-event [:event/submitted :workflow/dynamic]
   [application _workflow event]
@@ -69,8 +69,8 @@
          :state ::submitted
          :commenters #{}
          :members [(:actor event)]
-         :previous-application (:submitted-application application)
-         :submitted-application (:draft-application application)))
+         :previous-submitted-form-contents (:submitted-form-contents application)
+         :submitted-form-contents (:form-contents application)))
 
 (defmethod apply-event [:event/approved :workflow/dynamic]
   [application _workflow _event]
@@ -383,7 +383,7 @@
                      :applicantuserid "applicant"
                      :workflow {:type :workflow/dynamic
                                 :handlers ["assistant"]}}
-        relevant-application-keys [:state :draft-application :submitted-application :previous-application]]
+        relevant-application-keys [:state :form-contents :submitted-form-contents :previous-submitted-form-contents]]
     (testing "saves a draft"
       (is (= {:success true
               :result {:event :event/draft-saved
@@ -420,8 +420,8 @@
                              injections))))
     (testing "draft can be updated multiple times"
       (is (= {:state :rems.workflow.dynamic/draft
-              :draft-application {:items {1 "updated"}
-                                  :licenses {2 "updated"}}}
+              :form-contents {:items {1 "updated"}
+                              :licenses {2 "updated"}}}
              (-> (apply-commands application
                                  [{:actor "applicant" :type ::save-draft :items {1 "original"} :licenses {2 "original"}}
                                   {:actor "applicant" :type ::save-draft :items {1 "updated"} :licenses {2 "updated"}}]
@@ -440,11 +440,11 @@
                                injections)))))
     (testing "draft can be updated after returning it to applicant"
       (is (= {:state ::returned
-              :draft-application {:items {1 "updated"}
-                                  :licenses {2 "updated"}}
-              :submitted-application {:items {1 "original"}
-                                      :licenses {2 "original"}}
-              :previous-application nil}
+              :form-contents {:items {1 "updated"}
+                              :licenses {2 "updated"}}
+              :submitted-form-contents {:items {1 "original"}
+                                        :licenses {2 "original"}}
+              :previous-submitted-form-contents nil}
              (-> (apply-commands application
                                  [{:actor "applicant" :type ::save-draft :items {1 "original"} :licenses {2 "original"}}
                                   {:actor "applicant" :type ::submit}
@@ -454,12 +454,12 @@
                  (select-keys relevant-application-keys)))))
     (testing "resubmitting remembers the previous and current application"
       (is (= {:state ::submitted
-              :draft-application {:items {1 "updated"}
-                                  :licenses {2 "updated"}}
-              :submitted-application {:items {1 "updated"}
-                                      :licenses {2 "updated"}}
-              :previous-application {:items {1 "original"}
-                                     :licenses {2 "original"}}}
+              :form-contents {:items {1 "updated"}
+                              :licenses {2 "updated"}}
+              :submitted-form-contents {:items {1 "updated"}
+                                        :licenses {2 "updated"}}
+              :previous-submitted-form-contents {:items {1 "original"}
+                                                 :licenses {2 "original"}}}
              (-> (apply-commands application
                                  [{:actor "applicant" :type ::save-draft :items {1 "original"} :licenses {2 "original"}}
                                   {:actor "applicant" :type ::submit}
