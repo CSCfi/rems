@@ -39,7 +39,8 @@
    :options [{:key s/Str :label {s/Keyword s/Str}}]
    :maxlength (s/maybe s/Int)
    :type s/Str
-   :value (s/maybe s/Str)})
+   :value (s/maybe s/Str)
+   :previous-value (s/maybe s/Str)})
 
 (s/defschema Event
   {:userid (s/maybe s/Str)

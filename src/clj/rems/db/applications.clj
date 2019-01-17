@@ -6,6 +6,7 @@
             [clojure.set :refer [difference union]]
             [clojure.test :refer [deftest is]]
             [cprop.tools :refer [merge-maps]]
+            [medley.core :refer [map-keys]]
             [rems.application-util :refer [editable?]]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.context :as context]
@@ -452,6 +453,13 @@
            "")
    :maxlength (:maxlength item)})
 
+(defn- assoc-item-previous-values [application items]
+  (let [previous-values (:items (if (editable? (:state application))
+                                  (:submitted-form-contents application)
+                                  (:previous-submitted-form-contents application)))]
+    (for [item items]
+      (assoc item :previous-value (get previous-values (:id item))))))
+
 (defn- process-license
   [application license]
   (let [app-id (:id application)
@@ -555,8 +563,9 @@
          _ (assert form-id)
          catalogue-item-ids (mapv :item (db/get-application-items {:application application-id}))
          catalogue-items (get-catalogue-items catalogue-item-ids)
-         items (mapv #(process-item application-id form-id %)
-                     (db/get-form-items {:id form-id}))
+         items (->> (db/get-form-items {:id form-id})
+                    (mapv #(process-item application-id form-id %))
+                    (assoc-item-previous-values application))
          description (-> (filter #(= "description" (:type %)) items)
                          first
                          :value)
@@ -621,8 +630,9 @@
          form (db/get-form-for-item {:item item-id})
          form-id (:formid form)
          catalogue-items (:catalogue-items application)
-         items (mapv #(process-item application-id form-id %)
-                     (db/get-form-items {:id form-id}))
+         items (->> (db/get-form-items {:id form-id})
+                    (mapv #(process-item application-id form-id %))
+                    (assoc-item-previous-values application))
          licenses (get-application-licenses application catalogue-item-ids)]
      {:id application-id
       :title (:formtitle form)
@@ -940,13 +950,31 @@
   (update (cheshire/parse-string wf keyword)
           :type keyword))
 
+(defn- keyword-to-number [k]
+  (if (keyword? k)
+    (Integer/parseInt (name k))
+    k))
+
+(defn- fix-draft-saved-event-from-db [event]
+  (if (= :event/draft-saved (:event event))
+    (-> event
+        (update :items #(map-keys keyword-to-number %))
+        (update :licenses #(map-keys keyword-to-number %)))
+    event))
+
+(defn- fix-decided-event-from-db [event]
+  (if (= :event/decided (:event event))
+    (update-present event :decision keyword)
+    event))
+
 (defn- fix-event-from-db [event]
   (-> event
       :eventdata
       (cheshire/parse-string keyword)
       (update :event keyword)
       (update :time #(when % (time-coerce/from-long (Long/parseLong %))))
-      (update-present :decision keyword)))
+      fix-draft-saved-event-from-db
+      fix-decided-event-from-db))
 
 (defn get-dynamic-application-state [application-id]
   (let [application (first (db/get-applications {:id application-id}))
