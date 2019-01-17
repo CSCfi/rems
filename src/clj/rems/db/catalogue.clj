@@ -1,6 +1,5 @@
 (ns rems.db.catalogue
   (:require [clojure.core.memoize :as memo]
-            [clojure.core.cache :as cache]
             [rems.common-util :refer [index-by]]
             [rems.db.core :as db]))
 
@@ -40,8 +39,7 @@
     (get-localized-catalogue-item id)))
 
 (defn create-catalogue-item-localization! [command]
-  ;; Reset cache so that next call to get localizations will get this one.
-  ;; Slight chance of race condition, if something warms the cache after evicting,
-  ;; before the create-catalogue-item-localization! fires.
-  (cache/evict cached :localizations)
-  {:success (not (nil? (:id (db/create-catalogue-item-localization! (select-keys command [:id :langcode :title])))))})
+  (let [return {:success (not (nil? (:id (db/create-catalogue-item-localization! (select-keys command [:id :langcode :title])))))}]
+    ;; Reset cache so that next call to get localizations will get this one.
+    (memo/memo-clear! cached)
+    return))
