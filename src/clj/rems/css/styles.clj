@@ -295,7 +295,8 @@
                                  :padding-right (u/px 20)}]
    [:footer {:width "100%"
              :height (u/px 53.6)
-             :background-color (util/get-theme-attribute :color1)
+             :color (util/get-theme-attribute :table-heading-color "#fff")
+             :background-color (util/get-theme-attribute :table-heading-bgcolor :color1)
              :text-align "center"
              :margin-top (u/em 1)}]
    [:.jumbotron
