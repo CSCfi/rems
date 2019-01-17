@@ -2,7 +2,6 @@
   (:require [clj-time.core :as time]
             [rems.context :as context]
             [rems.db.applications :as applications]
-            [rems.db.applications :refer [create-new-draft get-application-state get-catalogue-items-by-application-id get-form-for make-draft-application submit-application]]
             [rems.db.catalogue :refer [disabled-catalogue-item?]]
             [rems.db.core :as db]
             [rems.form-validation :as form-validation]
@@ -19,7 +18,7 @@
 
 (defn- save-fields
   [user-id application-id input]
-  (let [form (get-form-for user-id application-id)]
+  (let [form (applications/get-form-for user-id application-id)]
     (doseq [{item-id :id :as item} (:items form)]
       (when-let [value (get input item-id)]
         (db/save-field-value! {:application application-id
@@ -33,7 +32,7 @@
 
 (defn save-licenses
   [user-id application-id input]
-  (let [form (get-form-for user-id application-id)]
+  (let [form (applications/get-form-for user-id application-id)]
     (doseq [{licid :id :as license} (sort-by :id (:licenses form))]
       (if-let [state (get input licid (get input (str "license" licid)))]
         (db/save-license-approval! {:catappid application-id
@@ -49,7 +48,7 @@
 (defn- save-form-inputs [applicant-id application-id submit? items licenses]
   (save-fields applicant-id application-id items)
   (save-licenses applicant-id application-id licenses)
-  (let [form (get-form-for applicant-id application-id)
+  (let [form (applications/get-form-for applicant-id application-id)
         validation (form-validation/validate form)
         valid? (= :valid validation)
         perform-submit? (and submit? valid?)
@@ -57,7 +56,7 @@
     (when perform-submit?
       (when (get-in form [:application :workflow :type])
         (throw (rems.InvalidRequestException. (str "Can not submit dynamic application via /save"))))
-      (submit-application applicant-id application-id))
+      (applications/submit-application applicant-id application-id))
     (merge {:valid? valid?
             :success? success?}
            (when-not valid? {:validation validation}))))
@@ -68,10 +67,10 @@
       (throw (rems.InvalidRequestException. (str "Disabled catalogue items " (pr-str disabled-items)))))))
 
 (defn- create-new-draft-for-items [user-id catalogue-item-ids]
-  (let [draft (make-draft-application user-id catalogue-item-ids)]
+  (let [draft (applications/make-draft-application user-id catalogue-item-ids)]
     (check-for-disabled-items! (getx draft :catalogue-items))
     (let [wfid (getx draft :wfid)
-          id (create-new-draft user-id wfid)]
+          id (applications/create-new-draft user-id wfid)]
       (save-application-items id catalogue-item-ids)
       id)))
 
@@ -82,10 +81,10 @@
   (let [;; if no application-id given, create a new application
         application-id (or application-id
                            (create-new-draft-for-items actor catalogue-items))
-        _ (check-for-disabled-items! (get-catalogue-items-by-application-id application-id))
+        _ (check-for-disabled-items! (applications/get-catalogue-items-by-application-id application-id))
         submit? (= command "submit")
         {:keys [success? valid? validation]} (save-form-inputs actor application-id submit? items licenses)
-        application (get-application-state application-id)]
+        application (applications/get-application-state application-id)]
     ;; XXX: workaround to make dynamic workflows work with the old API - save to both old and new models
     (when (applications/is-dynamic-application? application)
       (if-let [error (applications/dynamic-command! {:type :rems.workflow.dynamic/save-draft
