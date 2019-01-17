@@ -452,19 +452,10 @@
            "")
    :maxlength (:maxlength item)})
 
-(defn- keyword-to-number [k]
-  (if (keyword? k)
-    (Integer/parseInt (name k))
-    k))
-
 (defn- assoc-item-previous-values [application items]
-  (let [previous-values (->> (if (editable? (:state application))
-                               (:submitted-form-contents application)
-                               (:previous-submitted-form-contents application))
-                             :items
-                             ;; XXX: due to event deserialization, the keys are no more numbers after reading from database
-                             (map-keys keyword-to-number)
-                             (into {}))]
+  (let [previous-values (:items (if (editable? (:state application))
+                                  (:submitted-form-contents application)
+                                  (:previous-submitted-form-contents application)))]
     (for [item items]
       (assoc item :previous-value (get previous-values (:id item))))))
 
@@ -958,13 +949,26 @@
   (update (cheshire/parse-string wf keyword)
           :type keyword))
 
+(defn- keyword-to-number [k]
+  (if (keyword? k)
+    (Integer/parseInt (name k))
+    k))
+
+(defn- fix-draft-saved-event-from-db [event]
+  (if (= :event/draft-saved (:event event))
+    (-> event
+        (update :items #(map-keys keyword-to-number %))
+        (update :licenses #(map-keys keyword-to-number %)))
+    event))
+
 (defn- fix-event-from-db [event]
   (-> event
       :eventdata
       (cheshire/parse-string keyword)
       (update :event keyword)
       (update :time #(when % (time-coerce/from-long (Long/parseLong %))))
-      (update-present :decision keyword)))
+      (update-present :decision keyword)
+      fix-draft-saved-event-from-db))
 
 (defn get-dynamic-application-state [application-id]
   (let [application (first (db/get-applications {:id application-id}))
