@@ -620,8 +620,7 @@
                                  :licenses {1 "approved" 2 "approved"}})
                      app
                      read-body)]
-        (is (= "applied" (:state body))
-            body)
+        (is (= "applied" (:state body)))
         (let [response (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
                            (assoc :params {"file" filecontent})
                            (assoc :multipart-params {"file" filecontent})
