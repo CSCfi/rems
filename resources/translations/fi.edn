@@ -57,6 +57,7 @@
             :comment "Kommentoi"
             :comment-placeholder "Kommentti"
             :created "Luotu"
+            :decide "Päätä"
             :description "Kuvaus"
             :empty "Sinulla ei ole hakemuksia käsiteltäväksi."
             :export-entitlements "Lataa käyttöoikeudet csv-tiedostona"
