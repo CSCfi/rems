@@ -219,8 +219,7 @@
            licenses (into {}
                           (for [[id checked?] (get-in db [::edit-application :licenses])
                                 :when checked?]
-                            [id "approved"]))]
-       ))
+                            [id "approved"]))]))
    {}))
 
 (rf/reg-event-fx
