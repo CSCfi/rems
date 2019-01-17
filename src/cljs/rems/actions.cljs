@@ -1,6 +1,7 @@
 (ns rems.actions
   "The /actions page that shows a list of applications you can act on."
   (:require [clojure.string :as str]
+            [medley.core :refer [distinct-by]]
             [re-frame.core :as rf]
             [rems.application-list :as application-list]
             [rems.collapsible :as collapsible]
@@ -167,14 +168,14 @@
              :open? true
              :title (text :t.actions/open-approvals)
              :collapse [open-applications
-                        (concat (:reviews @actions)
-                                (:approvals @actions))]}])
+                        (distinct-by :id (concat (:reviews @actions)
+                                                 (:approvals @actions)))]}])
          (when (or (:reviewer? @actions) (:approver? @actions))
            [collapsible/component
             {:id "handled-approvals"
              :on-open #(rf/dispatch [:rems.actions/start-fetch-handled-actions])
              :title (text :t.actions/handled-approvals)
              :collapse [handled-applications
-                        (concat (:handled-reviews @handled-actions)
-                                (:handled-approvals @handled-actions))
+                        (distinct-by :id (concat (:handled-reviews @handled-actions)
+                                                 (:handled-approvals @handled-actions)))
                         @loading-handled-actions?]}])]))))
