@@ -6,6 +6,7 @@
             [clojure.set :refer [difference union]]
             [clojure.test :refer [deftest is]]
             [cprop.tools :refer [merge-maps]]
+            [medley.core :refer [map-keys]]
             [rems.application-util :refer [editable?]]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.context :as context]
@@ -451,11 +452,10 @@
            "")
    :maxlength (:maxlength item)})
 
-(defn- keyword-keys-to-numbers [[k v]]
-  [(if (keyword? k)
-     (Integer/parseInt (name k))
-     k)
-   v])
+(defn- keyword-to-number [k]
+  (if (keyword? k)
+    (Integer/parseInt (name k))
+    k))
 
 (defn- assoc-item-previous-values [application items]
   (let [previous-values (->> (if (editable? (:state application))
@@ -463,7 +463,7 @@
                                (:previous-submitted-form-contents application))
                              :items
                              ;; XXX: due to event deserialization, the keys are no more numbers after reading from database
-                             (map keyword-keys-to-numbers)
+                             (map-keys keyword-to-number)
                              (into {}))]
     (for [item items]
       (assoc item :previous-value (get previous-values (:id item))))))
