@@ -32,7 +32,7 @@
  ;; Path to an external theme file to override variables in :theme.
  ;; Will automatically set :theme-static-resources to a 'public' directory
  ;; next to the theme file.
- :theme-path "theme-thl/thl.edn"
+ :theme-path nil
 
  ;; Optional static resources directory for theme files.
  :theme-static-resources nil
