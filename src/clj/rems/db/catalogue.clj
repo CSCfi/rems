@@ -16,8 +16,7 @@
   (case cache-key
     :localizations (load-catalogue-item-localizations!)))
 
-(def cached
-  (memo/ttl get-cache :ttl/threshold +localizations-cache-time-ms+))
+(def cached (memo/ttl get-cache :ttl/threshold +localizations-cache-time-ms+))
 
 (defn localize-catalogue-item
   "Associates localisations into a catalogue item from
@@ -40,4 +39,7 @@
     (get-localized-catalogue-item id)))
 
 (defn create-catalogue-item-localization! [command]
-  {:success (not (nil? (:id (db/create-catalogue-item-localization! (select-keys command [:id :langcode :title])))))})
+  (let [return {:success (not (nil? (:id (db/create-catalogue-item-localization! (select-keys command [:id :langcode :title])))))}]
+    ;; Reset cache so that next call to get localizations will get this one.
+    (memo/memo-clear! cached)
+    return))

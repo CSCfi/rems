@@ -904,7 +904,9 @@
           (is (= "rems.workflow.dynamic/draft" (get-in saved [:application :state])))
           (is (= "dynamic test" (get-in saved [:items 0 :value])))))
       (testing "can't submit with missing required fields"
-        (is (= {:success false :errors [{:type "t.form.validation/required" :field-id 2}]}
+        (is (= {:success false :errors [{:type "t.form.validation/required" :field-id 2}
+                                        {:type "t.form.validation/required" :license-id 1}
+                                        {:type "t.form.validation/required" :license-id 2}]}
                (send-dynamic-command user-id {:type :rems.workflow.dynamic/submit
                                               :application-id application-id}))))
       (testing "add missing fields"
@@ -913,7 +915,8 @@
                              (json-body {:command "save"
                                          :application-id application-id
                                          :items {1 "dynamic test2"
-                                                 2 "purpose"}})
+                                                 2 "purpose"}
+                                         :licenses {1 "approved" 2 "approved"}})
                              app
                              read-body)
               saved (get-application user-id application-id)]
@@ -925,7 +928,8 @@
                              (authenticate api-key user-id)
                              (json-body {:command "submit"
                                          :application-id application-id
-                                         :items {}})
+                                         :items {}
+                                         :licenses {1 "approved" 2 "approved"}})
                              app)]
           (is (= 400 (:status try-submit)))
           (is (= "Can not submit dynamic application via /save" (read-body try-submit)))))

@@ -95,6 +95,16 @@
     ;; XXX: need to use `fill-human`, because `fill` is so quick that the form drops characters here and there
     (fill-human *driver* {:id id} text)))
 
+(defn select-option [label option]
+  (let [id (get-element-attr *driver* [:form
+                                       {:tag :label, :fn/text label}]
+                             :for)]
+    (fill *driver* {:id id} option)))
+
+(defn check-box [value]
+  ;; XXX: assumes that the checkbox is unchecked
+  (click-visible *driver* [{:css (str "input[value='" value "']")}]))
+
 (defn accept-license [label]
   ;; XXX: assumes that the checkbox is unchecked
   (click-visible *driver* [:licenses
@@ -128,23 +138,42 @@
     (login-as "developer")
 
     (go-to-catalogue)
-    (add-to-cart "ELFA Corpus, direct approval")
-    (apply-for-resource "ELFA Corpus, direct approval")
+    (add-to-cart "THL catalogue item")
+    (apply-for-resource "THL catalogue item")
 
-    (fill-form-field "Project name" "Test name")
-    (fill-form-field "Purpose of the project" "Test purpose")
+    (fill-form-field "Application title" "Test name")
+    (fill-form-field "1. Research project full title" "Test")
+    (select-option "2. This is an amendment of a previous approved application" "y")
+    (fill-form-field "3. Study PIs (name, titile, affiliation, email)" "Test")
+    (fill-form-field "5. Research project start date" "01/01/2050")
+    (fill-form-field "6. Research project end date" "01/01/2050")
+    (fill-form-field "7. Describe in detail the aims of the study and analysis plan" "Test")
+    (fill-form-field "9. Public description of the project (in Finnish, when possible), to be published in THL Biobank." "Test")
+    (fill-form-field "10. Place/plces of research, including place of sample and/or data analysis." "Test")
+    (fill-form-field "11. Description of other research group members and their role in the applied project." "Test")
+    (fill-form-field "12. Specify selection criteria of study participants (if applicable)" "Test")
+    (fill-form-field "13. Specify requested phenotype data (information on variables is found at https://kite.fimm.fi)" "Test")
+    (select-option "16. Are biological samples requested?" "n")
+    (fill-form-field "17. What study results will be returned to THL Biobank (if any)?" "Test")
+    (fill-form-field "18. Ethical aspects of the project" "Test")
+    (fill-form-field "19. Project keywords (max 5)" "Test")
+    (fill-form-field "20. Planned publications (max 3)" "Test")
+    (fill-form-field "21. Funding information" "Test")
+    (fill-form-field "22. Invoice address (Service prices: www.thl.fi/biobank/researchers)" "Test")
+    (check-box "disease_prevention")
     (accept-license "CC Attribution 4.0")
     (accept-license "General Terms of Use")
+
     (send-application)
-    (is (= "State: Approved" (get-element-text *driver* :application-state)))
+    (is (= "State: Submitted" (get-element-text *driver* :application-state)))
 
     (let [application-id (get-application-id)]
       (go-to-applications)
       (is (= {:id application-id
               :description "Test name"
-              :resource "ELFA Corpus, direct approval"
+              :resource "THL catalogue item"
               :applicant "developer"
-              :state "Approved"}
+              :state "Submitted"}
              (get-application-summary application-id))))))
 
 (deftest test-guide-page
