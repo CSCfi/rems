@@ -108,3 +108,17 @@
       {:id application-id
        :view (build-application-view events)
        :events events})))
+
+(defn- transform-v2-to-v1 [application]
+  {:id nil ; TODO
+   :catalogue-items [] ; TODO
+   :applicant-attributes {} ; TODO
+   :application {} ; TODO
+   :licenses [] ; TODO
+   :phases [] ; TODO
+   :title "" ; TODO
+   :items []}) ; TODO
+
+(defn api-get-application-v1 [user-id application-id]
+  (let [v2 (api-get-application-v2 user-id application-id)]
+    (transform-v2-to-v1 (:view v2))))

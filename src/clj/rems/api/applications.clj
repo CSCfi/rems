@@ -2,7 +2,7 @@
   (:require [clj-time.core :as time]
             [clojure.string :as str]
             [compojure.api.sweet :refer :all]
-            [rems.api.applications-v2 :refer [api-get-application-v2]]
+            [rems.api.applications-v2 :refer [api-get-application-v2 api-get-application-v1]]
             [rems.api.schema :refer :all]
             [rems.api.util :refer [longify-keys]]
             [rems.config :refer [env]]
@@ -278,6 +278,17 @@
                   404 {:schema s/Str :description "Not found"}}
       (when (:dev env) ; TODO: remove feature toggle
         (if-let [app (api-get-application-v2 (getx-user-id) application-id)]
+          (ok app)
+          (not-found! "not found"))))
+
+    (GET "/v2-to-v1-wip/:application-id" []
+      :summary "Get application by `application-id`"
+      :roles #{:applicant :approver :reviewer}
+      :path-params [application-id :- (describe s/Num "application id")]
+      :responses {200 {:schema s/Any} ; TODO: use GetApplicationResponse schema
+                  404 {:schema s/Str :description "Not found"}}
+      (when (:dev env) ; TODO: remove feature toggle
+        (if-let [app (api-get-application-v1 (getx-user-id) application-id)]
           (ok app)
           (not-found! "not found"))))
 
