@@ -126,7 +126,7 @@
                             :header #(text :t.actions/application)}
                        :resource {:value format-catalogue-items
                                   :header #(text :t.actions/resource)}
-                       :modified {:value #(localize-time (or (:last-modified %) (:start %)))
+                       :modified {:value #(localize-time (:last-modified %))
                                   :header #(text :t.actions/last-modified)}
                        :view {:value application/view-button}}
       [:id :resource :modified :view] nil nil :id drafts]]))
