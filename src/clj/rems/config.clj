@@ -24,9 +24,8 @@
     config))
 
 (defstate env :start (-> (load-config :resource "config-defaults.edn"
-                                      ;; Precedence:
-                                      ;; 1. Use `rems.config` system property if defined
-                                      ;; 2. Use `conf` system property if defined (hard-coded in cprop)
-                                      ;; 3. Ignore `:file`
+                                      ;; If the "rems.config" system property is not defined, the :file parameter will
+                                      ;; fall back to using the "conf" system property (hard-coded in cprop).
+                                      ;; If neither system property is defined, the :file parameter is silently ignored.
                                       :file (System/getProperty "rems.config"))
                          (load-external-theme)))
