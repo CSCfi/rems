@@ -9,6 +9,5 @@ pages:
     - Architecture: architecture.md
     - Configuration: configuration.md
     - Hooks: hooks.md
-    - Migrating From REMS1: migrations.md
 theme:
   name: readthedocs
