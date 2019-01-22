@@ -153,7 +153,7 @@
                            [lein-figwheel "0.5.18"]]
                  :aot [rems.InvalidRequestException rems.auth.NotAuthorizedException rems.auth.ForbiddenException]
 
-                 :jvm-opts ["-Dconf=dev-config.edn"]
+                 :jvm-opts ["-Drems.config=dev-config.edn"]
                  :source-paths ["env/dev/clj"]
                  :resource-paths ["env/dev/resources"]
                  :repl-options {:init-ns rems.standalone
@@ -176,7 +176,7 @@
                                                         :output-dir "target/cljsbuild/test/out"
                                                         :main rems.cljs-tests
                                                         :optimizations :none}}}}}
-   :project/test {:jvm-opts ["-Dconf=test-config.edn"]
+   :project/test {:jvm-opts ["-Drems.config=test-config.edn"]
                   :resource-paths ["env/test/resources"]}
    :profiles/dev {}
    :profiles/test {}})
