@@ -168,7 +168,7 @@
          :items [{:title {:en "Application title"
                           :fi "Hakemuksen otsikko"}
                   :optional true
-                  :type "text"
+                  :type "description"
                   :input-prompt {:en "Study of.."
                                  :fi "Tutkimus aiheesta.."}}
                  {:title {:en "1. Research project full title"
