@@ -18,6 +18,11 @@
         :search-root "dc=Suivohtor,dc=local"}
  :alternative-login-url nil
 
+ ;; Sending email.
+ :smtp-host nil
+ :smtp-port 25
+ :mail-from nil
+
  ;; URLs to notify about granted and revoked entitlements.
  :entitlements-target {:add nil
                        :remove nil}
