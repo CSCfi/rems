@@ -133,6 +133,7 @@
                           :return "Muutoksia pyydetty"
                           :review "Katselmoitu"
                           :review-request "Lähetetty katselmoitavaksi"
+                          :save "Muokattu"
                           :third-party-review "Katselmoitu ulkoisen toimijan toimesta"
                           :unknown "Unknown"
                           :withdraw "Palautettu muokattavaksi"}

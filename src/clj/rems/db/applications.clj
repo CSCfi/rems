@@ -667,6 +667,10 @@
   []
   (keys (methods apply-event)))
 
+(defmethod apply-event "save"
+  [application _event]
+  application)
+
 (defmethod apply-event "apply"
   [application event]
   (assert (#{"draft" "returned" "withdrawn"} (:state application))

@@ -70,8 +70,9 @@
           "return" :t.applications.events/return
           "review" :t.applications.events/review
           "review-request" :t.applications.events/review-request
-          "withdraw" :t.applications.events/withdraw
+          "save" :t.applications.events/save
           "third-party-review" :t.applications.events/third-party-review
+          "withdraw" :t.applications.events/withdraw
 
           ;; dynamic
           "submitted" :t.applications.dynamic-events/submitted

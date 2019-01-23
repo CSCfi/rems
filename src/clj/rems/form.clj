@@ -86,14 +86,19 @@
         {:keys [success? valid? validation]} (save-form-inputs actor application-id submit? items licenses)
         application (applications/get-application-state application-id)]
     ;; XXX: workaround to make dynamic workflows work with the old API - save to both old and new models
-    (when (applications/is-dynamic-application? application)
+    (if (applications/is-dynamic-application? application)
       (if-let [error (applications/dynamic-command! {:type :rems.workflow.dynamic/save-draft
                                                      :actor actor
                                                      :application-id application-id
                                                      :time (time/now)
                                                      :items items
                                                      :licenses licenses})]
-        (throw (RuntimeException. (str "error in save-draft command: " error)))))
+        (throw (RuntimeException. (str "error in save-draft command: " error))))
+      (db/add-application-event! {:application application-id
+                                  :user actor
+                                  :round 0
+                                  :event "save"
+                                  :comment nil}))
     (cond-> {:success success?
              :valid valid?}
       (not valid?) (assoc :validation validation)
