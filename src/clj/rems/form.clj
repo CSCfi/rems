@@ -94,11 +94,12 @@
                                                      :items items
                                                      :licenses licenses})]
         (throw (RuntimeException. (str "error in save-draft command: " error))))
-      (db/add-application-event! {:application application-id
-                                  :user actor
-                                  :round 0
-                                  :event "save"
-                                  :comment nil}))
+      (when (= "save" command)
+        (db/add-application-event! {:application application-id
+                                    :user actor
+                                    :round 0
+                                    :event "save"
+                                    :comment nil})))
     (cond-> {:success success?
              :valid valid?}
       (not valid?) (assoc :validation validation)
