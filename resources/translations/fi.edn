@@ -90,6 +90,7 @@
             :withdraw "Palauta muokattavaksi"
             :withdraw-success "Hakemus palautettu muokattavaksi"}
   :administration {:cancel "Peruuta"
+                   :catalogue-items "Kielivarat"
                    :create-catalogue-item "Uusi kielivara"
                    :create-form "Uusi lomake"
                    :create-license "Uusi lisenssi"
@@ -98,9 +99,13 @@
                    :disable "Poista käytöstä"
                    :enable "Ota käyttöön"
                    :errors {:duplicate-resid "Resurssi on jo olemassa organisaatiossa."}
+                   :forms "Lomakkeet"
+                   :licenses "Lisenssit"
                    :organization "Organisaatio"
                    :organization-placeholder "testorganization.org"
-                   :save "Tallenna"}
+                   :resources "Resurssit"
+                   :save "Tallenna"
+                   :workflows "Työvuot"}
   :applicant-info {:applicant "Hakija"
                    :email "Sähköposti"
                    :username "Nimi"}

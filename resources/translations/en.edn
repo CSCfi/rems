@@ -90,6 +90,7 @@
             :withdraw "Withdraw"
             :withdraw-success "Application withdrawn"}
   :administration {:cancel "Cancel"
+                   :catalogue-items "Catalogue items"
                    :create-catalogue-item "Create catalogue item"
                    :create-form "Create form"
                    :create-license "Create license"
@@ -98,9 +99,13 @@
                    :disable "Disable"
                    :enable "Enable"
                    :errors {:duplicate-resid "Duplicate resource for organization."}
+                   :forms "Forms"
+                   :licenses "Licenses"
                    :organization "Organization"
                    :organization-placeholder "testorganization.org"
-                   :save "Save"}
+                   :resources "Resources"
+                   :save "Save"
+                   :workflows "Workflows"}
   :applicant-info {:applicant "Applicant"
                    :email "Email"
                    :username "Name"}
