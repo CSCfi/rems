@@ -28,37 +28,40 @@
   {:type :workflow/dynamic
    :handlers [UserId]})
 
-(def States #{::approved
-              ::closed
-              ::draft
-              ::rejected
-              ::submitted})
-(def CommandTypes #{#_::accept-license
-                    #_::require-license
-                    ::add-member
-                    ::approve
-                    ::close
-                    ::comment
-                    ::decide
-                    ::reject
-                    ::request-comment
-                    ::request-decision
-                    ::return
-                    ::save-draft
-                    ::submit})
-(def EventTypes #{#_:event/license-accepted
-                  #_:event/license-required
-                  :event/approved
-                  :event/closed
-                  :event/comment-requested
-                  :event/commented
-                  :event/decided
-                  :event/decision-requested
-                  :event/draft-saved
-                  :event/member-added
-                  :event/rejected
-                  :event/returned
-                  :event/submitted})
+(def States
+  #{::approved
+    ::closed
+    ::draft
+    ::rejected
+    ::submitted})
+(def CommandTypes
+  #{#_::accept-license
+    #_::require-license
+    ::add-member
+    ::approve
+    ::close
+    ::comment
+    ::decide
+    ::reject
+    ::request-comment
+    ::request-decision
+    ::return
+    ::save-draft
+    ::submit})
+(def EventTypes
+  #{#_:event/license-accepted
+    #_:event/license-required
+    :event/approved
+    :event/closed
+    :event/comment-requested
+    :event/commented
+    :event/decided
+    :event/decision-requested
+    :event/draft-saved
+    :event/member-added
+    :event/rejected
+    :event/returned
+    :event/submitted})
 
 ;; TODO: namespaced keys e.g. :event/type, :event/time, :event/actor, :application/id
 ;; TODO: add version number to events
