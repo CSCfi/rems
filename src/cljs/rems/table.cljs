@@ -21,8 +21,11 @@
           (fn? class) (class item))))
 
 (defn column-sort-value [column-definitions col item]
-  ((or (get-in column-definitions [col :sort-value])
-       (get-in column-definitions [col :value])) item))
+  (let [sort-value-fn (or (get-in column-definitions [col :sort-value])
+                          (get-in column-definitions [col :value]))]
+    (if sort-value-fn
+      (sort-value-fn item)
+      (throw (js/Error. (str "No `:sort-value` or `:value` defined for column " col) )))))
 
 (defn- row [column-definitions columns item]
   (into [:tr.action]
