@@ -29,10 +29,10 @@
 
 (defn- row [column-definitions columns item]
   (into [:tr.action]
-    (for [col columns]
-      (into [:td {:class (column-class column-definitions col item)
-                  :data-th (column-header column-definitions col)}]
-            (column-values column-definitions col item)))))
+        (for [col columns]
+          (into [:td {:class (column-class column-definitions col item)
+                      :data-th (column-header column-definitions col)}]
+                (column-values column-definitions col item)))))
 
 (defn- flip [order]
   (case order
@@ -124,5 +124,5 @@
     (into [:tbody]
           (map (fn [item] ^{:key (id-function item)} [row column-definitions visible-columns item])
                (cond->> items
-                        filters (apply-filtering column-definitions filters)
-                        sorting (apply-sorting column-definitions sort-column sort-order))))]])
+                 filters (apply-filtering column-definitions filters)
+                 sorting (apply-sorting column-definitions sort-column sort-order))))]])
