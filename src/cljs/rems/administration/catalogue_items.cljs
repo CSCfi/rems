@@ -53,6 +53,11 @@
        {:sort-column :name
         :sort-order :asc})))
 
+(defn- to-create-catalogue-item []
+  [:a.btn.btn-primary
+   {:href "/#/create-catalogue-item"}
+   (text :t.administration/create-catalogue-item)])
+
 (defn- disable-button [item]
   [:button.btn.btn-secondary
    {:type "submit"
@@ -65,12 +70,7 @@
     :on-click #(rf/dispatch [::update-catalogue-item (:id item) "enabled"])}
    (text :t.administration/enable)])
 
-(defn- to-create-catalogue-item []
-  [:a.btn.btn-primary
-   {:href "/#/create-catalogue-item"}
-   (text :t.administration/create-catalogue-item)])
-
-(defn- catalogue-item-button [item]
+(defn- toggle-state-button [item]
   (if (disabled-catalogue-item? item)
     [enable-button item]
     [disable-button item]))
@@ -78,14 +78,16 @@
 (defn- catalogue-columns [language]
   {:name {:header #(text :t.catalogue/header)
           :value #(get-catalogue-item-title % language)}
-   :commands {:value catalogue-item-button
+   :commands {:value toggle-state-button
               :sortable? false
               :filterable? false}})
 
 (defn- catalogue-list
   "List of catalogue items"
   [items language sorting]
-  [table/component (catalogue-columns language) [:name :commands]
+  [table/component
+   (catalogue-columns language)
+   [:name :commands]
    sorting
    #(rf/dispatch [::set-sorting %])
    :id
