@@ -977,15 +977,20 @@
       fix-draft-saved-event-from-db
       fix-decided-event-from-db))
 
+(defn get-dynamic-application-events [application-id]
+  (map fix-event-from-db (db/get-application-events {:application application-id})))
+
 (defn get-dynamic-application-state [application-id]
   (let [application (first (db/get-applications {:id application-id}))
-        events (map fix-event-from-db (db/get-application-events {:application application-id}))
-        fixed-application (assoc application
-                                 :state ::dynamic/draft
-                                 :dynamic-events events
-                                 :workflow (fix-workflow-from-db (:workflow application)))]
-    (assert (is-dynamic-application? fixed-application))
-    (dynamic/apply-events fixed-application events)))
+        events (get-dynamic-application-events application-id)
+        application (assoc application
+                           :state ::dynamic/draft
+                           :dynamic-events events
+                           :workflow (fix-workflow-from-db (:workflow application))
+                           :last-modified (or (:time (last events))
+                                              (:start application)))]
+    (assert (is-dynamic-application? application))
+    (dynamic/apply-events application events)))
 
 (defn- add-dynamic-event! [event]
   (s/validate dynamic/Event event)
