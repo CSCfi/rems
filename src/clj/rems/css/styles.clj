@@ -362,6 +362,8 @@
     {:margin-left (u/rem 0.5)}]
    [:.commands {:text-align "right"
                 :padding "0 1rem"}]
+   [".spaced-horizontally > *:not(:first-child)" {:margin-left (u/rem 0.5)}]
+   [".children-inline-blocks > *" {:display :inline-block}]
    [:.form-group {:text-align "initial"}]
    [:.navbar-flex {:display "flex"
                    :flex-direction "row"

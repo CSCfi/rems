@@ -1,5 +1,6 @@
 (ns rems.administration.catalogue-items
   (:require [re-frame.core :as rf]
+            [rems.administration.administration :refer [administration-navigator-container]]
             [rems.atoms :refer [external-link]]
             [rems.catalogue-util :refer [get-catalogue-item-title disabled-catalogue-item?]]
             [rems.spinner :as spinner]
@@ -97,8 +98,9 @@
         loading? (rf/subscribe [::loading?])]
     (fn []
       (into [:div
+             [administration-navigator-container]
              [:h2 (text :t.administration/catalogue-items)]]
             (if @loading?
               [[spinner/big]]
-              [ [to-create-catalogue-item]
+              [[to-create-catalogue-item]
                [catalogue-list @catalogue @language @sorting]])))))
