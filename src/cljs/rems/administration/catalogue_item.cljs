@@ -94,7 +94,7 @@
 (defn- create-catalogue-item [request]
   (post! "/api/catalogue-items/create" {:params request
                                         ;; TODO error handling
-                                        :handler (fn [resp] (dispatch! "#/administration"))}))
+                                        :handler (fn [resp] (dispatch! "#/administration/catalogue-items"))}))
 
 (rf/reg-event-fx
  ::create-catalogue-item
