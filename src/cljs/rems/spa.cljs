@@ -6,7 +6,7 @@
             [goog.history.EventType :as HistoryEventType]
             [markdown.core :refer [md->html]]
             [rems.actions :refer [actions-page fetch-actions]]
-            [rems.administration :refer [administration-page]]
+            [rems.administration.administration :refer [administration-page]]
             [rems.administration.catalogue-item :refer [create-catalogue-item-page]]
             [rems.administration.form :refer [create-form-page]]
             [rems.administration.license :refer [create-license-page]]
@@ -271,7 +271,7 @@
   (rf/dispatch [:set-active-page :applications]))
 
 (secretary/defroute "/administration" []
-  (rf/dispatch [:rems.administration/enter-page])
+  (rf/dispatch [:rems.administration.administration/enter-page])
   (rf/dispatch [:set-active-page :administration]))
 
 (secretary/defroute "/create-catalogue-item" []
