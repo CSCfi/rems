@@ -512,19 +512,19 @@
         approver (users :approver1)
         reviewer (users :reviewer)]
     (let [app-id (create-draft! applicant [catid] wfid "dynamic application")]
-      (run-and-check-dynamic-command! {:type :rems.workflow.dynamic/submit :actor applicant :application-id app-id}))
+      (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :rems.workflow.dynamic/submit}))
     (let [app-id (create-draft! applicant catid wfid "application with comment")] ; approved with comment
-      (run-and-check-dynamic-command! {:application-id app-id :actor applicant :type :rems.workflow.dynamic/submit}) ; submit
-      (run-and-check-dynamic-command! {:application-id app-id :actor approver :type :rems.workflow.dynamic/request-comment :commenters [reviewer]}) ; request comment
-      (run-and-check-dynamic-command! {:application-id app-id :actor reviewer :type :rems.workflow.dynamic/comment :comment "looking good"}) ; comment
-      (run-and-check-dynamic-command! {:application-id app-id :actor approver :type :rems.workflow.dynamic/approve :comment "Thank you! Approved!"})) ; approve
+      (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :rems.workflow.dynamic/submit}) ; submit
+      (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :rems.workflow.dynamic/request-comment :commenters [reviewer] :comment "please have a look"})
+      (run-and-check-dynamic-command! {:application-id app-id :actor reviewer :time (time/now) :type :rems.workflow.dynamic/comment :comment "looking good"})
+      (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :rems.workflow.dynamic/approve :comment "Thank you! Approved!"}))
 
     (let [app-id (create-draft! applicant catid wfid "application in commenting")] ; still in commenting
-      (run-and-check-dynamic-command! {:application-id app-id :actor applicant :type :rems.workflow.dynamic/submit})
-      (run-and-check-dynamic-command! {:application-id app-id :actor approver :type :rems.workflow.dynamic/request-comment :commenters [reviewer]}))
+      (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :rems.workflow.dynamic/submit})
+      (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :rems.workflow.dynamic/request-comment :commenters [reviewer] :comment ""}))
     (let [app-id (create-draft! applicant catid wfid "application in deciding")] ; still in deciding
-      (run-and-check-dynamic-command! {:application-id app-id :actor applicant :type :rems.workflow.dynamic/submit})
-      (run-and-check-dynamic-command! {:application-id app-id :actor approver :type :rems.workflow.dynamic/request-decision :decider reviewer}))))
+      (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :rems.workflow.dynamic/submit})
+      (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :rems.workflow.dynamic/request-decision :decider reviewer :comment ""}))))
 
 (defn- create-review-applications! [catid wfid users]
   (let [applicant (users :applicant1)

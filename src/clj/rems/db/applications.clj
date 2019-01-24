@@ -20,7 +20,8 @@
             [rems.email :as email]
             [rems.form-validation :as form-validation]
             [rems.util :refer [getx get-username update-present]]
-            [rems.workflow.dynamic :as dynamic])
+            [rems.workflow.dynamic :as dynamic]
+            [schema.core :as s])
   (:import [java.io ByteArrayOutputStream FileInputStream]))
 
 (defn draft?
@@ -987,6 +988,7 @@
     (dynamic/apply-events fixed-application events)))
 
 (defn- add-dynamic-event! [event]
+  (s/validate dynamic/Event event)
   (db/add-application-event! {:application (:application-id event)
                               :user (:actor event)
                               :comment nil

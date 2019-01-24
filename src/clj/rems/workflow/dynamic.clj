@@ -64,7 +64,7 @@
 ;; TODO: add version number to events
 (def ^:private EventBase
   {:event (apply s/enum EventTypes)
-   :application-id Long
+   :application-id s/Int
    :actor UserId
    :time DateTime})
 
