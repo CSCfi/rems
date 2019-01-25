@@ -1,5 +1,5 @@
 {:dev true
  :nrepl-port 7000
- :database-url "postgresql://localhost/lbr_rems2?user=lbr_rems2_user"
+ :database-url "postgresql://localhost/rems?user=rems"
  :authentication :fake-shibboleth
  :theme-path "theme-thl/thl.edn"}
