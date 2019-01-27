@@ -9,6 +9,7 @@
             [rems.administration.administration :refer [administration-page]]
             [rems.administration.catalogue-item :refer [create-catalogue-item-page]]
             [rems.administration.catalogue-items :refer [catalogue-items-page]]
+            [rems.administration.forms :refer [forms-page]]
             [rems.administration.form :refer [create-form-page]]
             [rems.administration.license :refer [create-license-page]]
             [rems.administration.resource :refer [create-resource-page]]
@@ -208,6 +209,7 @@
    :applications applications-page
    :administration administration-page
    :rems.administration/catalogue-items catalogue-items-page
+   :rems.administration/forms forms-page
    :create-catalogue-item create-catalogue-item-page
    :create-form create-form-page
    :create-license create-license-page
@@ -279,6 +281,10 @@
 (secretary/defroute "/administration/catalogue-items" []
   (rf/dispatch [:rems.administration.catalogue-items/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/catalogue-items]))
+
+(secretary/defroute "/administration/forms" []
+  (rf/dispatch [:rems.administration.forms/enter-page])
+  (rf/dispatch [:set-active-page :rems.administration/forms]))
 
 (secretary/defroute "/create-catalogue-item" []
   (rf/dispatch [:rems.administration.catalogue-item/enter-page])
