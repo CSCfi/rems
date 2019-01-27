@@ -1,7 +1,7 @@
 (ns rems.administration.forms
   (:require [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
-            [rems.atoms :refer [external-link]]
+            [rems.atoms :refer [external-link readonly-checkbox]]
             [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.text :refer [text localize-time]]
@@ -55,9 +55,7 @@
    :end {:header #(text :t.administration/end)
          :value (comp localize-time :end)}
    :active {:header #(text :t.administration/active)
-            :value #(if (:active %)
-                      [:i.fa.fa-lg.fa-check-square.color1]
-                      [:i.fa.fa-lg.fa-square.color1-faint])}
+            :value (comp readonly-checkbox :active)}
    :commands {:value :no-value
               :sortable? false
               :filterable? false}})
