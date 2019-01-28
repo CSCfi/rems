@@ -1000,6 +1000,12 @@
       coerce-dynamic-event-commons
       coerce-dynamic-event-specifics))
 
+(defn json-to-event [json]
+  (coerce-dynamic-event (cheshire/parse-string json)))
+
+(defn event-to-json [event]
+  (cheshire/generate-string event))
+
 (defn- fix-event-from-db [event]
   ;; TODO: remove the old implementation
   (let [old (-> event
@@ -1011,8 +1017,7 @@
                 fix-decided-event-from-db)
         new (-> event
                 :eventdata
-                (cheshire/parse-string)
-                coerce-dynamic-event)]
+                json-to-event)]
     (when (not= old new)
       (prn "old" old)
       (prn "new" new)
@@ -1041,7 +1046,7 @@
                               :comment nil
                               :round -1
                               :event (str (:event event))
-                              :eventdata (cheshire/generate-string event)})
+                              :eventdata (event-to-json event)})
   nil)
 
 (defn- valid-user? [userid]
