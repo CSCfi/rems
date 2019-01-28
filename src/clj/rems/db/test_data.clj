@@ -164,7 +164,7 @@
   (:id (form/create-form!
         (users :owner)
         {:organization "nbn"
-         :title "Basic form"
+         :title "THL form"
          :items [{:title {:en "Application title"
                           :fi "Hakemuksen otsikko"}
                   :optional true

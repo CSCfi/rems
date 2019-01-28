@@ -19,7 +19,10 @@
   "Executes a test running a driver.
    Bounds a driver with the global *driver* variable."
   [f]
-  (with-chrome-headless {} driver
+  ;; TODO: these args don't affect the date format of <input type="date"> elements; figure out a reliable way to set it
+  (with-chrome-headless {:args ["--lang=en-US"]
+                         :prefs {"intl.accept_languages" "en-US"}}
+                        driver
     (binding [*driver* driver]
       (f))))
 
@@ -44,7 +47,7 @@
 
 (defn login-as [username]
   (doto *driver*
-    (set-window-size 1400 2000) ;; big enough to show the whole page without scrolling
+    (set-window-size 1400 7000) ;; big enough to show the whole page without scrolling
     (go +test-url+)
     (screenshot (io/file reporting-dir "landing-page.png"))
     (click-visible {:class "login-btn"})
@@ -94,6 +97,35 @@
                              :for)]
     ;; XXX: need to use `fill-human`, because `fill` is so quick that the form drops characters here and there
     (fill-human *driver* {:id id} text)))
+
+(defn set-date [label date]
+  (let [id (get-element-attr *driver* [:form
+                                       {:tag :label, :fn/text label}]
+                             :for)]
+    ;; XXX: The date format depends on operating system settings and is unaffected by browser locale,
+    ;;      so we cannot reliably know the date format to type into the date field and anyways WebDriver
+    ;;      support for date fields seems buggy. Changing the field with JavaScript is more reliable.
+    (js-execute *driver*
+                ;; XXX: React workaround for dispatchEvent, see https://github.com/facebook/react/issues/10135
+                "
+                function setNativeValue(element, value) {
+                    const { set: valueSetter } = Object.getOwnPropertyDescriptor(element, 'value') || {}
+                    const prototype = Object.getPrototypeOf(element)
+                    const { set: prototypeValueSetter } = Object.getOwnPropertyDescriptor(prototype, 'value') || {}
+
+                    if (prototypeValueSetter && valueSetter !== prototypeValueSetter) {
+                        prototypeValueSetter.call(element, value)
+                    } else if (valueSetter) {
+                        valueSetter.call(element, value)
+                    } else {
+                        throw new Error('The given element does not have a value setter')
+                    }
+                }
+                var field = document.getElementById(arguments[0])
+                setNativeValue(field, arguments[1])
+                field.dispatchEvent(new Event('change', {bubbles: true}))
+                "
+                id date)))
 
 (defn select-option [label option]
   (let [id (get-element-attr *driver* [:form
@@ -145,8 +177,8 @@
     (fill-form-field "1. Research project full title" "Test")
     (select-option "2. This is an amendment of a previous approved application" "y")
     (fill-form-field "3. Study PIs (name, titile, affiliation, email)" "Test")
-    (fill-form-field "5. Research project start date" "01/01/2050")
-    (fill-form-field "6. Research project end date" "01/01/2050")
+    (set-date "5. Research project start date" "2050-01-01")
+    (set-date "6. Research project end date" "2050-12-31")
     (fill-form-field "7. Describe in detail the aims of the study and analysis plan" "Test")
     (fill-form-field "9. Public description of the project (in Finnish, when possible), to be published in THL Biobank." "Test")
     (fill-form-field "10. Place/plces of research, including place of sample and/or data analysis." "Test")

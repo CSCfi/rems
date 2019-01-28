@@ -110,7 +110,7 @@
               application (:application (read-body application-response))]
           (is (:success cmd-response))
           (is (= "approved" (:state application)))
-          (is (= [nil "msg"] (map :comment (:events application)))))))))
+          (is (= [nil nil "msg"] (map :comment (:events application)))))))))
 
 (deftest application-validation-test
   (let [api-key "42"
@@ -333,7 +333,8 @@
                      read-body
                      :application
                      :events)]
-      (is (= [["apply" nil]
+      (is (= [["save" nil]
+              ["apply" nil]
               ["return" "returned"]
               ["apply" nil]
               ["withdraw" "withdrawn"]

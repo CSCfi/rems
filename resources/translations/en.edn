@@ -111,8 +111,9 @@
                                   :closed "Deleted"
                                   :comment-requested "Comment requested"
                                   :commented "Commented"
-                                  :decision-requested "Decision requested"
                                   :decided "Decided"
+                                  :decision-requested "Decision requested"
+                                  :draft-saved "Modified"
                                   :member-added "Member added"
                                   :rejected "Rejected"
                                   :returned "Changes requested"
@@ -133,6 +134,7 @@
                           :return "Changes requested"
                           :review "Reviewed"
                           :review-request "Review requested"
+                          :save "Modified"
                           :third-party-review "Reviewed by a third party"
                           :unknown "Unknown"
                           :withdraw "Withdrawn for modifying"}

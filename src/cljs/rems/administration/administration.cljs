@@ -1,4 +1,4 @@
-(ns rems.administration
+(ns rems.administration.administration
   (:require [re-frame.core :as rf]
             [rems.atoms :refer [external-link]]
             [rems.catalogue-util :refer [get-catalogue-item-title disabled-catalogue-item?]]
