@@ -66,7 +66,7 @@
   (let [loading? (rf/subscribe [::loading?])]
     (fn []
       [:div
-       [administration-navigator]
+       [administration-navigator-container]
        [:h2 (text :t.navigation/administration)]
        (if @loading?
          [spinner/big]
