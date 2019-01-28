@@ -758,7 +758,7 @@
               [:th (text :t.form/comment)]
               [:th (text :t.form/date)]]]
             (into [:tbody]
-                  (for [e (sort-by :time > events)]
+                  (for [e (reverse events)]
                     [:tr
                      (when has-users?
                        [:td (:userid e)])

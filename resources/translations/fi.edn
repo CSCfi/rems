@@ -111,12 +111,13 @@
                                   :closed "Poistettu"
                                   :comment-requested "Pyydetty kommenttia"
                                   :commented "Kommentoitu"
-                                  :decision-requested "Pyydetty päätöstä"
                                   :decided "Päätetty"
+                                  :decision-requested "Pyydetty päätöstä"
+                                  :draft-saved "Muokattu"
+                                  :member-added "Lisätty jäsen"
                                   :rejected "Hylätty"
                                   :returned "Palautettu muokattavaksi"
-                                  :submitted "Lähtetetty hyväksyttäväksi"
-                                  :member-added "Lisätty jäsen"}
+                                  :submitted "Lähtetetty hyväksyttäväksi"}
                  :dynamic-states {:approved "Hyväksytty"
                                   :closed "Poistettu"
                                   :draft "Luonnos"
@@ -133,6 +134,7 @@
                           :return "Muutoksia pyydetty"
                           :review "Katselmoitu"
                           :review-request "Lähetetty katselmoitavaksi"
+                          :save "Muokattu"
                           :third-party-review "Katselmoitu ulkoisen toimijan toimesta"
                           :unknown "Unknown"
                           :withdraw "Palautettu muokattavaksi"}

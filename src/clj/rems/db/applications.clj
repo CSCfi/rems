@@ -667,6 +667,10 @@
   []
   (keys (methods apply-event)))
 
+(defmethod apply-event "save"
+  [application _event]
+  application)
+
 (defmethod apply-event "apply"
   [application event]
   (assert (#{"draft" "returned" "withdrawn"} (:state application))
@@ -979,12 +983,14 @@
 (defn get-dynamic-application-state [application-id]
   (let [application (first (db/get-applications {:id application-id}))
         events (map fix-event-from-db (db/get-application-events {:application application-id}))
-        fixed-application (assoc application
-                                 :state ::dynamic/draft
-                                 :dynamic-events events
-                                 :workflow (fix-workflow-from-db (:workflow application)))]
-    (assert (is-dynamic-application? fixed-application))
-    (dynamic/apply-events fixed-application events)))
+        application (assoc application
+                           :state ::dynamic/draft
+                           :dynamic-events events
+                           :workflow (fix-workflow-from-db (:workflow application))
+                           :last-modified (or (:time (last events))
+                                              (:start application)))]
+    (assert (is-dynamic-application? application))
+    (dynamic/apply-events application events)))
 
 (defn- add-dynamic-event! [event]
   (db/add-application-event! {:application (:application-id event)
