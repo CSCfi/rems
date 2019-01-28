@@ -90,7 +90,7 @@
    :end {:header #(text :t.administration/end)
          :value (comp localize-time :end)}
    :active {:header #(text :t.administration/active)
-            :value (comp readonly-checkbox :active)}
+            :value (comp readonly-checkbox not disabled-catalogue-item?)}
    :commands {:value toggle-state-button
               :sortable? false
               :filterable? false}})
