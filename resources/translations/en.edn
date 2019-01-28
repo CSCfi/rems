@@ -208,7 +208,7 @@
                    :license-text "License text"
                    :link-to-license "Link to the license"
                    :title "License name"}
-  :create-resource {:licenses-selection "Terms of Use"
+  :create-resource {:licenses-selection "Licenses"
                     :resid "Resource identifier"
                     :resid-placeholder "urn:test:fi:some-uuid"}
   :create-workflow {:add-round "Add round"

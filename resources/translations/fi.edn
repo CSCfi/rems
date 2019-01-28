@@ -208,7 +208,7 @@
                    :license-text "Lisenssin teksti"
                    :link-to-license "Linkki lisenssiin"
                    :title "Lisenssin nimi"}
-  :create-resource {:licenses-selection "Käyttöehdot"
+  :create-resource {:licenses-selection "Lisenssit"
                     :resid "Resurssin tunniste"
                     :resid-placeholder "urn:test:fi:some-uuid"}
   :create-workflow {:add-round "Lisää kierros"
