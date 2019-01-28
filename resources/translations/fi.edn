@@ -112,7 +112,7 @@
                    :save "Tallenna"
                    :start "Alku"
                    :title "Nimi"
-                   :type "Type"
+                   :type "Tyyppi"
                    :workflow "Työvuo"
                    :workflows "Työvuot"}
   :applicant-info {:applicant "Hakija"
