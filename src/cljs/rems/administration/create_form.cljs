@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [goog.string :refer [parseInt]]
             [re-frame.core :as rf]
+            [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [checkbox localized-text-field number-field radio-button-group text-field]]
             [rems.administration.items :as items]
             [rems.application :refer [enrich-user normalize-option-key]]
@@ -272,36 +273,39 @@
 
 (defn create-form-page []
   (let [form @(rf/subscribe [::form])]
-    [collapsible/component
-     {:id "create-form"
-      :title (text :t.administration/create-form)
-      :always [:div
-               [form-organization-field]
-               [form-title-field]
+    [:div
+     [administration-navigator-container]
+     [:h2 (text :t.administration/create-form)]
+     [collapsible/component
+      {:id "create-form"
+       :title (text :t.administration/create-form)
+       :always [:div
+                [form-organization-field]
+                [form-title-field]
 
-               (doall (for [item-index (range (count (:items form)))]
-                        [:div.form-item
-                         {:key item-index}
-                         [:div.form-item-header
-                          [:h4 (text-format :t.create-form/item-n (inc item-index))]
-                          [:div.form-item-controls
-                           [move-form-item-up-button item-index]
-                           [move-form-item-down-button item-index]
-                           [remove-form-item-button item-index]]]
+                (doall (for [item-index (range (count (:items form)))]
+                         [:div.form-item
+                          {:key item-index}
+                          [:div.form-item-header
+                           [:h4 (text-format :t.create-form/item-n (inc item-index))]
+                           [:div.form-item-controls
+                            [move-form-item-up-button item-index]
+                            [move-form-item-down-button item-index]
+                            [remove-form-item-button item-index]]]
 
-                         [form-item-title-field item-index]
-                         [form-item-optional-checkbox item-index]
-                         [form-item-type-radio-group item-index]
-                         (when (supports-input-prompt? (get-in form [:items item-index]))
-                           [form-item-input-prompt-field item-index])
-                         (when (supports-maxlength? (get-in form [:items item-index]))
-                           [form-item-maxlength-field item-index])
-                         (when (supports-options? (get-in form [:items item-index]))
-                           [form-item-option-fields item-index])]))
+                          [form-item-title-field item-index]
+                          [form-item-optional-checkbox item-index]
+                          [form-item-type-radio-group item-index]
+                          (when (supports-input-prompt? (get-in form [:items item-index]))
+                            [form-item-input-prompt-field item-index])
+                          (when (supports-maxlength? (get-in form [:items item-index]))
+                            [form-item-maxlength-field item-index])
+                          (when (supports-options? (get-in form [:items item-index]))
+                            [form-item-option-fields item-index])]))
 
-               [:div.form-item.new-form-item
-                [add-form-item-button]]
+                [:div.form-item.new-form-item
+                 [add-form-item-button]]
 
-               [:div.col.commands
-                [cancel-button]
-                [save-form-button]]]}]))
+                [:div.col.commands
+                 [cancel-button]
+                 [save-form-button]]]}]]))

@@ -1,6 +1,7 @@
 (ns rems.administration.create-catalogue-item
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
+            [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [text-field]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
@@ -242,18 +243,21 @@
 
 (defn create-catalogue-item-page []
   (let [loading? (rf/subscribe [::loading?])]
-    [collapsible/component
-     {:id "create-catalogue-item"
-      :title (text :t.navigation/create-catalogue-item)
-      :always [:div
-               (if @loading?
-                 [:div#catalogue-item-loader [spinner/big]]
-                 [:div#catalogue-item-editor
-                  [catalogue-item-title-field]
-                  [catalogue-item-workflow-field]
-                  [catalogue-item-resource-field]
-                  [catalogue-item-form-field]
+    [:div
+     [administration-navigator-container]
+     [:h2 (text :t.administration/create-catalogue-item)]
+     [collapsible/component
+      {:id "create-catalogue-item"
+       :title (text :t.administration/create-catalogue-item)
+       :always [:div
+                (if @loading?
+                  [:div#catalogue-item-loader [spinner/big]]
+                  [:div#catalogue-item-editor
+                   [catalogue-item-title-field]
+                   [catalogue-item-workflow-field]
+                   [catalogue-item-resource-field]
+                   [catalogue-item-form-field]
 
-                  [:div.col.commands
-                   [cancel-button]
-                   [save-catalogue-item-button]]])]}]))
+                   [:div.col.commands
+                    [cancel-button]
+                    [save-catalogue-item-button]]])]}]]))
