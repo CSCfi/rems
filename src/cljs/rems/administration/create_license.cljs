@@ -16,8 +16,6 @@
    (reset-form db)))
 
 
-; form state
-
 (rf/reg-sub
  ::form
  (fn [db _]
@@ -28,8 +26,6 @@
  (fn [db [_ keys value]]
    (assoc-in db (concat [::form] keys) value)))
 
-
-; form submit
 
 (def license-type-link "link")
 (def license-type-text "text")
@@ -65,7 +61,7 @@
 
 (defn- create-license [request]
   (post! "/api/licenses/create" {:params request
-                                 ; TODO: error handling
+                                 ;; TODO: error handling
                                  :handler (fn [resp] (dispatch! "#/administration/licenses"))}))
 
 (rf/reg-event-fx
@@ -108,7 +104,7 @@
 (defn- license-text-field [language]
   (when (= license-type-text (current-licence-type))
     [textarea-autosize context {:keys [:localizations language :text]
-                         :label (text :t.create-license/license-text)}]))
+                                :label (text :t.create-license/license-text)}]))
 
 (defn- save-license-button []
   (let [form @(rf/subscribe [::form])

@@ -149,7 +149,7 @@
 
 (defn- create-form [request]
   (post! "/api/forms/create" {:params request
-                              ; TODO: error handling
+                              ;; TODO: error handling
                               :handler (fn [resp] (dispatch! "#/administration/forms"))}))
 
 (rf/reg-event-fx

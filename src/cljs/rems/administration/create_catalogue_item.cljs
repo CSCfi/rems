@@ -75,9 +75,6 @@
  (fn [db [_ form]]
    (assoc-in db [::form :form] form)))
 
-
-; form submit
-
 (defn- valid-request? [request]
   (and (not (str/blank? (:title request)))
        (number? (:wfid request))
@@ -104,8 +101,6 @@
    {}))
 
 
-; available workflows
-
 (defn- fetch-workflows []
   (fetch "/api/workflows/?active=true" {:handler #(rf/dispatch [::fetch-workflows-result %])}))
 
@@ -124,9 +119,6 @@
  ::workflows
  (fn [db _]
    (::workflows db)))
-
-
-; available resources
 
 (defn- fetch-resources []
   (fetch "/api/resources/?active=true" {:handler #(rf/dispatch [::fetch-resources-result %])}))
@@ -147,8 +139,6 @@
  (fn [db _]
    (::resources db)))
 
-
-; available forms
 
 (defn- fetch-forms []
   (fetch "/api/forms/?active=true" {:handler #(rf/dispatch [::fetch-forms-result %])}))
