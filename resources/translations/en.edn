@@ -111,6 +111,7 @@
                    :resources "Resources"
                    :save "Save"
                    :start "Start"
+                   :title "Title"
                    :type "Type"
                    :workflow "Workflow"
                    :workflows "Workflows"}

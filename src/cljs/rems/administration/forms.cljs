@@ -48,7 +48,7 @@
 (defn- forms-columns [language]
   {:organization {:header #(text :t.administration/organization)
                   :value :organization}
-   :title {:header #(text :t.create-form/title)
+   :title {:header #(text :t.administration/title)
            :value :title}
    :start {:header #(text :t.administration/created)
            :value (comp localize-time :start)}
