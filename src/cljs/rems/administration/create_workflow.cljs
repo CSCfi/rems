@@ -82,7 +82,7 @@
 (defn- create-workflow [request]
   (post! "/api/workflows/create" {:params request
                                   ;; TODO: error handling
-                                  :handler (fn [resp] (dispatch! "#/administration"))}))
+                                  :handler (fn [resp] (dispatch! "#/administration/workflows"))}))
 
 (rf/reg-event-fx
  ::create-workflow
@@ -236,7 +236,7 @@
 
 (defn- cancel-button []
   [:button.btn.btn-secondary
-   {:on-click #(dispatch! "/#/administration")}
+   {:on-click #(dispatch! "/#/administration/workflows")}
    (text :t.administration/cancel)])
 
 (defn workflow-type-description [description]

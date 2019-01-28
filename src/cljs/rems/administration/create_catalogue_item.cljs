@@ -229,7 +229,7 @@
 
 (defn- cancel-button []
   [:button.btn.btn-secondary
-   {:on-click #(dispatch! "/#/administration")}
+   {:on-click #(dispatch! "/#/administration/catalogue-items")}
    (text :t.administration/cancel)])
 
 (defn- save-catalogue-item-button []

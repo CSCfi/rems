@@ -152,7 +152,7 @@
 
 (defn- cancel-button []
   [:button.btn.btn-secondary
-   {:on-click #(dispatch! "/#/administration")}
+   {:on-click #(dispatch! "/#/administration/resources")}
    (text :t.administration/cancel)])
 
 (defn create-resource-page []
@@ -163,7 +163,7 @@
         on-pending #(reset! state {:status :pending})
         on-error #(reset! state {:status :failed :error %})
         on-modal-close #(do (when (= :saved (:status @state))
-                              (dispatch! "#/administration"))
+                              (dispatch! "#/administration/resources"))
                             (reset! state nil))]
     (fn []
       [collapsible/component
