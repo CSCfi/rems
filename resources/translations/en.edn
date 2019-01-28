@@ -102,13 +102,16 @@
                    :enable "Enable"
                    :end "End"
                    :errors {:duplicate-resid "Duplicate resource for organization."}
+                   :form "Form"
                    :forms "Forms"
                    :licenses "Licenses"
                    :organization "Organization"
                    :organization-placeholder "testorganization.org"
+                   :resource "Resource"
                    :resources "Resources"
                    :save "Save"
                    :start "Start"
+                   :workflow "Workflow"
                    :workflows "Workflows"}
   :applicant-info {:applicant "Applicant"
                    :email "Email"

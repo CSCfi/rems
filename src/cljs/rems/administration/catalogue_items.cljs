@@ -1,11 +1,11 @@
 (ns rems.administration.catalogue-items
   (:require [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
-            [rems.atoms :refer [external-link]]
+            [rems.atoms :refer [external-link readonly-checkbox]]
             [rems.catalogue-util :refer [get-catalogue-item-title disabled-catalogue-item?]]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [text]]
+            [rems.text :refer [localize-time text]]
             [rems.util :refer [dispatch! fetch put!]]))
 
 (rf/reg-event-fx
@@ -15,7 +15,8 @@
     ::fetch-catalogue nil}))
 
 (defn- fetch-catalogue []
-  (fetch "/api/catalogue-items/" {:handler #(rf/dispatch [::fetch-catalogue-result %])}))
+  (fetch "/api/catalogue-items/" {:url-params {:expand :names}
+                                  :handler #(rf/dispatch [::fetch-catalogue-result %])}))
 
 (rf/reg-fx ::fetch-catalogue (fn [_] (fetch-catalogue)))
 
@@ -78,6 +79,18 @@
 (defn- catalogue-columns [language]
   {:name {:header #(text :t.catalogue/header)
           :value #(get-catalogue-item-title % language)}
+   :resource {:header #(text :t.administration/resource)
+              :value :resource-name}
+   :form {:header #(text :t.administration/form)
+          :value :form-name}
+   :workflow {:header #(text :t.administration/workflow)
+              :value :workflow-name}
+   :created {:header #(text :t.administration/created)
+             :value (comp localize-time :start)}
+   :end {:header #(text :t.administration/end)
+         :value (comp localize-time :end)}
+   :active {:header #(text :t.administration/active)
+            :value (comp readonly-checkbox :active)}
    :commands {:value toggle-state-button
               :sortable? false
               :filterable? false}})
@@ -87,7 +100,7 @@
   [items language sorting]
   [table/component
    (catalogue-columns language)
-   [:name :commands]
+   [:name :resource :form :workflow :created :active :commands]
    sorting
    #(rf/dispatch [::set-sorting %])
    :id

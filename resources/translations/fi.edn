@@ -102,13 +102,16 @@
                    :enable "Ota käyttöön"
                    :end "Loppu"
                    :errors {:duplicate-resid "Resurssi on jo olemassa organisaatiossa."}
+                   :form "Lomake"
                    :forms "Lomakkeet"
                    :licenses "Lisenssit"
                    :organization "Organisaatio"
                    :organization-placeholder "testorganization.org"
+                   :resource "Resurssi"
                    :resources "Resurssit"
                    :save "Tallenna"
                    :start "Alku"
+                   :workflow "Työvuo"
                    :workflows "Työvuot"}
   :applicant-info {:applicant "Hakija"
                    :email "Sähköposti"
