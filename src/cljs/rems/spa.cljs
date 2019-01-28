@@ -210,7 +210,7 @@
    :application application-page
    :new-application new-application-page
    :applications applications-page
-   :administration administration-page
+   :rems.administration/administration administration-page
    :rems.administration/catalogue-items catalogue-items-page
    :rems.administration/forms forms-page
    :rems.administration/licenses licenses-page
@@ -282,7 +282,7 @@
 
 (secretary/defroute "/administration" []
   (rf/dispatch [:rems.administration.administration/enter-page])
-  (rf/dispatch [:set-active-page :administration]))
+  (rf/dispatch [:set-active-page :rems.administration/administration]))
 
 (secretary/defroute "/administration/catalogue-items" []
   (rf/dispatch [:rems.administration.catalogue-items/enter-page])
