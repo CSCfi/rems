@@ -142,15 +142,15 @@
                                            (= event-type (:event event)))
                                          schema])))
                                (apply concat))]
-    (apply s/conditional (concat preds-and-schemas ['event-type]))))
+    (apply s/conditional (concat preds-and-schemas ['unknown-event-type]))))
 
 (deftest test-event-schema
-  (testing "one event schema"
+  (testing "check specific event schema"
     (is (nil? (s/check SubmittedEvent {:event :event/submitted
                                        :actor "foo"
                                        :application-id 123
                                        :time (DateTime.)}))))
-  (testing "all possible event schemas"
+  (testing "check generic event schema"
     (is (nil? (s/check Event
                        {:event :event/submitted
                         :actor "foo"
@@ -171,7 +171,7 @@
                      :time (DateTime.)}))))
   (testing "unknown event type"
     ;; TODO: improve error message to show the actual and expected event types
-    (is (= "(not (event-type a-clojure.lang.PersistentArrayMap))"
+    (is (= "(not (unknown-event-type a-clojure.lang.PersistentArrayMap))"
            (pr-str (s/check Event
                             {:event :foo
                              :actor "foo"

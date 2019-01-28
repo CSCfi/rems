@@ -953,27 +953,10 @@
 ;;; Dynamic workflows
 ;; TODO these should be in their own namespace probably
 
-;; TODO could use schemas for these coercions
 (defn- fix-workflow-from-db [wf]
+  ;; TODO could use a schema for this coercion
   (update (cheshire/parse-string wf keyword)
           :type keyword))
-
-(defn- keyword-to-number [k]
-  (if (keyword? k)
-    (Integer/parseInt (name k))
-    k))
-
-(defn- fix-draft-saved-event-from-db [event]
-  (if (= :event/draft-saved (:event event))
-    (-> event
-        (update :items #(map-keys keyword-to-number %))
-        (update :licenses #(map-keys keyword-to-number %)))
-    event))
-
-(defn- fix-decided-event-from-db [event]
-  (if (= :event/decided (:event event))
-    (update-present event :decision keyword)
-    event))
 
 (defn string->datetime [s]
   (if (string? s)
@@ -1004,25 +987,11 @@
   (coerce-dynamic-event (cheshire/parse-string json)))
 
 (defn event-to-json [event]
+  (s/validate dynamic/Event event)
   (cheshire/generate-string event))
 
 (defn- fix-event-from-db [event]
-  ;; TODO: remove the old implementation
-  (let [old (-> event
-                :eventdata
-                (cheshire/parse-string keyword)
-                (update :event keyword)
-                (update :time #(when % (time-coerce/from-long (Long/parseLong %))))
-                fix-draft-saved-event-from-db
-                fix-decided-event-from-db)
-        new (-> event
-                :eventdata
-                json-to-event)]
-    (when (not= old new)
-      (prn "old" old)
-      (prn "new" new)
-      (assert false "old and new coercion did not match"))
-    new))
+  (-> event :eventdata json-to-event))
 
 (defn get-dynamic-application-events [application-id]
   (map fix-event-from-db (db/get-application-events {:application application-id})))
@@ -1040,7 +1009,6 @@
     (dynamic/apply-events application events)))
 
 (defn- add-dynamic-event! [event]
-  (s/validate dynamic/Event event)
   (db/add-application-event! {:application (:application-id event)
                               :user (:actor event)
                               :comment nil
