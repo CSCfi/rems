@@ -3,8 +3,7 @@
             [rems.auth.util :refer [throw-unauthorized]]
             [rems.util :refer [getx]]
             [schema.core :as s])
-  (:import (org.joda.time DateTime)
-           (schema.core EqSchema)))
+  (:import (org.joda.time DateTime)))
 
 ;;; Schemas
 
@@ -136,8 +135,9 @@
 (s/defschema Event
   (let [preds-and-schemas (->> event-schemas
                                (map (fn [schema]
-                                      (assert (instance? EqSchema (:event schema)))
                                       (let [event-type (:v (:event schema))]
+                                        (assert (keyword? event-type)
+                                                (str "couldn't get the event type from schema " schema))
                                         [(fn [event]
                                            (= event-type (:event event)))
                                          schema])))
