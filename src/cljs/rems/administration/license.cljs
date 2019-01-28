@@ -32,11 +32,13 @@
 
 (def license-type-link "link")
 (def license-type-text "text")
+(def license-type-attachment "attachment")
 
 (defn parse-textcontent [form license-type]
   (case license-type
-    "link" (:link form)
-    "text" (:text form)
+    license-type-link (:link form)
+    license-type-text (:text form)
+    license-type-attachment (:attachment form)
     nil))
 
 (defn- build-localization [data license-type]
@@ -92,7 +94,9 @@
                                :options [{:value license-type-link
                                           :label (text :t.create-license/external-link)}
                                          {:value license-type-text
-                                          :label (text :t.create-license/inline-text)}]}])
+                                          :label (text :t.create-license/inline-text)}
+                                         {:value license-type-attachment
+                                          :label (text :t.create-license/license-attachment)}]}])
 
 (defn- current-licence-type []
   (let [form @(rf/subscribe [::form])]
@@ -108,6 +112,11 @@
   (when (= license-type-text (current-licence-type))
     [textarea-autosize context {:keys [:localizations language :text]
                          :label (text :t.create-license/license-text)}]))
+
+(defn- license-attachment-field [language]
+  (when (= license-type-attachment (current-licence-type))
+    [textarea-autosize context {:keys [:localizations language :attachment]
+                                :label (text :t.create-license/attached-license)}]))
 
 (defn- save-license-button []
   (let [form @(rf/subscribe [::form])
@@ -136,6 +145,7 @@
                [license-type-radio-group]
                [license-link-field default-language]
                [license-text-field default-language]
+               [license-attachment-field default-language]
 
                (doall (for [language (remove #(= % default-language) languages)]
                         [:div {:key language}
