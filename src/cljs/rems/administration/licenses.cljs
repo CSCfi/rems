@@ -45,7 +45,7 @@
    {:href "/#/administration/create-license"}
    (text :t.administration/create-license)])
 
-(defn- licenses-columns [language]
+(defn- licenses-columns []
   {:title {:header #(text :t.administration/licenses)
            :value :title}
    :type {:header #(text :t.administration/type)
@@ -62,9 +62,9 @@
 
 (defn- licenses-list
   "List of licenses"
-  [licenses language sorting]
+  [licenses sorting]
   [table/component
-   (licenses-columns language)
+   (licenses-columns)
    [:title :type :start :end :active :commands]
    sorting
    #(rf/dispatch [::set-sorting %])
@@ -73,7 +73,6 @@
 
 (defn licenses-page []
   (let [licenses (rf/subscribe [::licenses])
-        language (rf/subscribe [:language])
         sorting (rf/subscribe [::sorting])
         loading? (rf/subscribe [::loading?])]
     (fn []
@@ -83,4 +82,4 @@
             (if @loading?
               [[spinner/big]]
               [[to-create-licenses]
-               [licenses-list @licenses @language @sorting]])))))
+               [licenses-list @licenses @sorting]])))))

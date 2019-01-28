@@ -45,7 +45,7 @@
    {:href "/#/administration/create-workflow"}
    (text :t.administration/create-workflow)])
 
-(defn- workflows-columns [language]
+(defn- workflows-columns []
   {:organization {:header #(text :t.administration/organization)
                   :value :organization}
    :title {:header #(text :t.administration/workflow)
@@ -62,9 +62,9 @@
 
 (defn- workflows-list
   "List of workflows"
-  [workflows language sorting]
+  [workflows sorting]
   [table/component
-   (workflows-columns language)
+   (workflows-columns)
    [:organization :title :start :end :active :commands]
    sorting
    #(rf/dispatch [::set-sorting %])
@@ -73,7 +73,6 @@
 
 (defn workflows-page []
   (let [workflows (rf/subscribe [::workflows])
-        language (rf/subscribe [:language])
         sorting (rf/subscribe [::sorting])
         loading? (rf/subscribe [::loading?])]
     (fn []
@@ -83,4 +82,4 @@
             (if @loading?
               [[spinner/big]]
               [[to-create-workflow]
-               [workflows-list @workflows @language @sorting]])))))
+               [workflows-list @workflows @sorting]])))))

@@ -45,7 +45,7 @@
    {:href "/#/administration/create-resource"}
    (text :t.administration/create-resource)])
 
-(defn- resources-columns [language]
+(defn- resources-columns []
   {:organization {:header #(text :t.administration/organization)
                   :value :organization}
    :title {:header #(text :t.administration/resource)
@@ -62,9 +62,9 @@
 
 (defn- resources-list
   "List of resources"
-  [resources language sorting]
+  [resources sorting]
   [table/component
-   (resources-columns language)
+   (resources-columns)
    [:organization :title :start :end :active :commands]
    sorting
    #(rf/dispatch [::set-sorting %])
@@ -73,7 +73,6 @@
 
 (defn resources-page []
   (let [resources (rf/subscribe [::resources])
-        language (rf/subscribe [:language])
         sorting (rf/subscribe [::sorting])
         loading? (rf/subscribe [::loading?])]
     (fn []
@@ -83,4 +82,4 @@
             (if @loading?
               [[spinner/big]]
               [[to-create-resource]
-               [resources-list @resources @language @sorting]])))))
+               [resources-list @resources @sorting]])))))

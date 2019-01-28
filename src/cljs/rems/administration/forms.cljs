@@ -45,7 +45,7 @@
    {:href "/#/administration/create-form"}
    (text :t.administration/create-form)])
 
-(defn- forms-columns [language]
+(defn- forms-columns []
   {:organization {:header #(text :t.administration/organization)
                   :value :organization}
    :title {:header #(text :t.administration/title)
@@ -62,9 +62,9 @@
 
 (defn- forms-list
   "List of forms"
-  [forms language sorting]
+  [forms sorting]
   [table/component
-   (forms-columns language)
+   (forms-columns)
    [:organization :title :start :end :active :commands]
    sorting
    #(rf/dispatch [::set-sorting %])
@@ -73,7 +73,6 @@
 
 (defn forms-page []
   (let [forms (rf/subscribe [::forms])
-        language (rf/subscribe [:language])
         sorting (rf/subscribe [::sorting])
         loading? (rf/subscribe [::loading?])]
     (fn []
@@ -83,4 +82,4 @@
             (if @loading?
               [[spinner/big]]
               [[to-create-form]
-               [forms-list @forms @language @sorting]])))))
+               [forms-list @forms @sorting]])))))
