@@ -451,6 +451,7 @@
    [:.color1-faint {:color (-> (util/get-theme-attribute :color1)
                                (c/saturate -50)
                                (c/lighten 33))}]
+   [:h2 {:margin [[(u/rem 1) 0]]}]
 
    ;; autocomplete, duplicates some Bootstrap styling
    ;; because the component classes are hard-coded
