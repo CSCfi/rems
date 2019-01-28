@@ -4,7 +4,7 @@
             [rems.atoms :refer [external-link readonly-checkbox]]
             [rems.spinner :as spinner]
             [rems.table :as table]
-            [rems.text :refer [text localize-time]]
+            [rems.text :refer [localize-time text]]
             [rems.util :refer [dispatch! fetch put!]]))
 
 (rf/reg-event-fx
