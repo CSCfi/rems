@@ -14,6 +14,7 @@
             [rems.administration.license :refer [create-license-page]]
             [rems.administration.resource :refer [create-resource-page]]
             [rems.administration.workflow :refer [create-workflow-page]]
+            [rems.administration.workflows :refer [workflows-page]]
             [rems.ajax :refer [load-interceptors!]]
             [rems.application :refer [application-page]]
             [rems.applications :refer [applications-page]]
@@ -210,6 +211,7 @@
    :administration administration-page
    :rems.administration/catalogue-items catalogue-items-page
    :rems.administration/forms forms-page
+   :rems.administration/workflows workflows-page
    :create-catalogue-item create-catalogue-item-page
    :create-form create-form-page
    :create-license create-license-page
@@ -285,6 +287,10 @@
 (secretary/defroute "/administration/forms" []
   (rf/dispatch [:rems.administration.forms/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/forms]))
+
+(secretary/defroute "/administration/workflows" []
+  (rf/dispatch [:rems.administration.workflows/enter-page])
+  (rf/dispatch [:set-active-page :rems.administration/workflows]))
 
 (secretary/defroute "/create-catalogue-item" []
   (rf/dispatch [:rems.administration.catalogue-item/enter-page])
