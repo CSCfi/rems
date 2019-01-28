@@ -448,7 +448,9 @@
                    :transition "height 0.25s linear"}]]
 
    [:.color1 {:color (util/get-theme-attribute :color1)}]
-   [:.color1-faint {:color (c/lighten (c/saturate (util/get-theme-attribute :color1) -50) 33)}]
+   [:.color1-faint {:color (-> (util/get-theme-attribute :color1)
+                               (c/saturate -50)
+                               (c/lighten 33))}]
 
    ;; autocomplete, duplicates some Bootstrap styling
    ;; because the component classes are hard-coded
