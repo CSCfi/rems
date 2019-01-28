@@ -12,6 +12,7 @@
             [rems.administration.forms :refer [forms-page]]
             [rems.administration.form :refer [create-form-page]]
             [rems.administration.license :refer [create-license-page]]
+            [rems.administration.licenses :refer [licenses-page]]
             [rems.administration.resource :refer [create-resource-page]]
             [rems.administration.resources :refer [resources-page]]
             [rems.administration.workflow :refer [create-workflow-page]]
@@ -212,6 +213,7 @@
    :administration administration-page
    :rems.administration/catalogue-items catalogue-items-page
    :rems.administration/forms forms-page
+   :rems.administration/licenses licenses-page
    :rems.administration/resources resources-page
    :rems.administration/workflows workflows-page
    :create-catalogue-item create-catalogue-item-page
@@ -298,16 +300,16 @@
   (rf/dispatch [:rems.administration.resources/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/resources]))
 
-(secretary/defroute "/administration/workflows" []
-  (rf/dispatch [:rems.administration.workflows/enter-page])
-  (rf/dispatch [:set-active-page :rems.administration/workflows]))
+(secretary/defroute "/administration/licenses" []
+  (rf/dispatch [:rems.administration.licenses/enter-page])
+  (rf/dispatch [:set-active-page :rems.administration/licenses]))
 
 (secretary/defroute "/create-catalogue-item" []
   (rf/dispatch [:rems.administration.catalogue-item/enter-page])
   (rf/dispatch [:set-active-page :create-catalogue-item]))
 
-(secretary/defroute "/create-form" []
-  (rf/dispatch [:rems.administration.form/enter-page])
+(secretary/defroute "/create-form" [w]
+  (rf/dispatch [:rems.administrationw.sform/enter-page])
   (rf/dispatch [:set-active-page :create-form]))
 
 (secretary/defroute "/create-license" []

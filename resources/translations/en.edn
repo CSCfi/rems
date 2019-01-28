@@ -111,6 +111,7 @@
                    :resources "Resources"
                    :save "Save"
                    :start "Start"
+                   :type "Type"
                    :workflow "Workflow"
                    :workflows "Workflows"}
   :applicant-info {:applicant "Applicant"

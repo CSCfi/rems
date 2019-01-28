@@ -111,6 +111,7 @@
                    :resources "Resurssit"
                    :save "Tallenna"
                    :start "Alku"
+                   :type "Type"
                    :workflow "Työvuo"
                    :workflows "Työvuot"}
   :applicant-info {:applicant "Hakija"
