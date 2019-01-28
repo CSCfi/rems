@@ -57,6 +57,13 @@
       :return Forms
       (ok (get-forms (when-not (nil? active) {:active? active}))))
 
+    (GET "/:form-id" []
+      :summary "Get form by id"
+      :roles #{:owner}
+      :path-params [form-id :- (describe s/Num "form-id")]
+      :return Form
+      (ok (first (get-forms {:id form-id}))))
+
     (POST "/create" []
       :summary "Create form"
       :roles #{:owner}

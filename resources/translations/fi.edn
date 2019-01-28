@@ -90,6 +90,7 @@
             :withdraw "Palauta muokattavaksi"
             :withdraw-success "Hakemus palautettu muokattavaksi"}
   :administration {:active "Aktiivinen"
+                   :back "Takaisin"
                    :cancel "Peruuta"
                    :catalogue-items "Kielivarat"
                    :create-catalogue-item "Uusi kielivara"
@@ -104,6 +105,7 @@
                    :errors {:duplicate-resid "Resurssi on jo olemassa organisaatiossa."}
                    :form "Lomake"
                    :forms "Lomakkeet"
+                   :id "Id"
                    :licenses "Lisenssit"
                    :organization "Organisaatio"
                    :organization-placeholder "testorganization.org"
@@ -113,6 +115,7 @@
                    :start "Alku"
                    :title "Nimi"
                    :type "Tyyppi"
+                   :view "Avaa"
                    :workflow "Työvuo"
                    :workflows "Työvuot"}
   :applicant-info {:applicant "Hakija"

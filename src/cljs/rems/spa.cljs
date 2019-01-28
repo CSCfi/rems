@@ -13,6 +13,7 @@
             [rems.administration.create-license :refer [create-license-page]]
             [rems.administration.create-resource :refer [create-resource-page]]
             [rems.administration.create-workflow :refer [create-workflow-page]]
+            [rems.administration.form :refer [form-page]]
             [rems.administration.forms :refer [forms-page]]
             [rems.administration.licenses :refer [licenses-page]]
             [rems.administration.resources :refer [resources-page]]
@@ -212,6 +213,7 @@
    :applications applications-page
    :rems.administration/administration administration-page
    :rems.administration/catalogue-items catalogue-items-page
+   :rems.administration/form form-page
    :rems.administration/forms forms-page
    :rems.administration/licenses licenses-page
    :rems.administration/resources resources-page
@@ -287,6 +289,10 @@
 (secretary/defroute "/administration/catalogue-items" []
   (rf/dispatch [:rems.administration.catalogue-items/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/catalogue-items]))
+
+(secretary/defroute "/administration/forms/:form-id" [form-id]
+  (rf/dispatch [:rems.administration.form/enter-page form-id])
+  (rf/dispatch [:set-active-page :rems.administration/form]))
 
 (secretary/defroute "/administration/forms" []
   (rf/dispatch [:rems.administration.forms/enter-page])
