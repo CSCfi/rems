@@ -77,7 +77,7 @@
    [to-resources [:nav-item :nav-link (when (= selected :rems.administration/resources) :active)]]
    [to-forms [:nav-item :nav-link (when (= selected :rems.administration/forms) :active)]]
    [to-workflows [:nav-item :nav-link (when (= selected :rems.administration/workflows) :active)]]
-   [to-licenses [:nav-item :nav-link]] (when (= selected :rems.administration/licenses) :active)])
+   [to-licenses [:nav-item :nav-link (when (= selected :rems.administration/licenses) :active)]]])
 
 (defn administration-navigator-container
   "Component for showing a navigator in the administration pages.
