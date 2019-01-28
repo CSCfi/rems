@@ -3,7 +3,8 @@
             [rems.auth.util :refer [throw-unauthorized]]
             [rems.util :refer [getx]]
             [schema.core :as s])
-  (:import (org.joda.time DateTime)))
+  (:import (org.joda.time DateTime)
+           (schema.core EqSchema)))
 
 ;;; Schemas
 
@@ -65,7 +66,7 @@
 
 ;; TODO: namespaced keys e.g. :event/type, :event/time, :event/actor, :application/id
 ;; TODO: add version number to events
-(def ^:private EventBase
+(s/defschema EventBase
   {:event (apply s/enum EventTypes)
    :application-id s/Int
    :actor UserId
@@ -135,9 +136,11 @@
 (s/defschema Event
   (let [preds-and-schemas (->> event-schemas
                                (map (fn [schema]
-                                      [(fn [event]
-                                         (not (s/check (:event schema) (:event event))))
-                                       schema]))
+                                      (assert (instance? EqSchema (:event schema)))
+                                      (let [event-type (:v (:event schema))]
+                                        [(fn [event]
+                                           (= event-type (:event event)))
+                                         schema])))
                                (apply concat))]
     (apply s/conditional (concat preds-and-schemas ['event-type]))))
 
@@ -167,7 +170,7 @@
                      :application-id 123
                      :time (DateTime.)}))))
   (testing "unknown event type"
-    ;; TODO: improve error message, maybe constrained helps?
+    ;; TODO: improve error message to show the actual and expected event types
     (is (= "(not (event-type a-clojure.lang.PersistentArrayMap))"
            (pr-str (s/check Event
                             {:event :foo
