@@ -39,6 +39,15 @@
     [:i.fa.fa-lg.fa-check-square.color1]
     [:i.fa.fa-lg.fa-square.color1-faint]))
 
+(defn info-field
+  "A component that shows a readonly field with title and value.
+
+  Used for e.g. displaying applicant attributes."
+  [title value]
+  [:div.form-group
+   [:label title]
+   [:div.form-control value]])
+
 (defn guide []
   [:div
    (component-info flash-message)
@@ -53,4 +62,7 @@
    (example "readonly-checkbox unchecked"
             [readonly-checkbox false])
    (example "readonly-checkbox checked"
-            [readonly-checkbox true])])
+            [readonly-checkbox true])
+   (component-info info-field)
+   (example "info-field with data"
+            [info-field "Name" "Bob Tester"])])
