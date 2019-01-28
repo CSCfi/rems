@@ -17,27 +17,27 @@
 
 (defn- to-create-catalogue-item []
   [:a.btn.btn-secondary
-   {:href "/#/create-catalogue-item"}
+   {:href "/#/administration/create-catalogue-item"}
    (text :t.administration/create-catalogue-item)])
 
 (defn- to-create-form []
   [:a.btn.btn-secondary
-   {:href "/#/create-form"}
+   {:href "/#/administration/create-form"}
    (text :t.administration/create-form)])
 
 (defn- to-create-license []
   [:a.btn.btn-secondary
-   {:href "/#/create-license"}
+   {:href "/#/administration/create-license"}
    (text :t.administration/create-license)])
 
 (defn- to-create-resource []
   [:a.btn.btn-secondary
-   {:href "/#/create-resource"}
+   {:href "/#/administration/create-resource"}
    (text :t.administration/create-resource)])
 
 (defn- to-create-workflow []
   [:a.btn.btn-secondary
-   {:href "/#/create-workflow"}
+   {:href "/#/administration/create-workflow"}
    (text :t.administration/create-workflow)])
 
 (defn- to-administration [class]

@@ -1,4 +1,4 @@
-(ns rems.administration.license
+(ns rems.administration.create-license
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.administration.components :refer [radio-button-group text-field textarea-autosize]]

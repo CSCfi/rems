@@ -42,7 +42,7 @@
 
 (defn- to-create-workflow []
   [:a.btn.btn-primary
-   {:href "/#/create-workflow"}
+   {:href "/#/administration/create-workflow"}
    (text :t.administration/create-workflow)])
 
 (defn- workflows-columns [language]

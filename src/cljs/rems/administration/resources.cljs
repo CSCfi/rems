@@ -42,7 +42,7 @@
 
 (defn- to-create-resource []
   [:a.btn.btn-primary
-   {:href "/#/create-resource"}
+   {:href "/#/administration/create-resource"}
    (text :t.administration/create-resource)])
 
 (defn- resources-columns [language]

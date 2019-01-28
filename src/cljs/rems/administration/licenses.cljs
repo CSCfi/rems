@@ -42,14 +42,14 @@
 
 (defn- to-create-licenses []
   [:a.btn.btn-primary
-   {:href "/#/create-license"}
+   {:href "/#/administration/create-license"}
    (text :t.administration/create-license)])
 
 (defn- licenses-columns [language]
   {:title {:header #(text :t.administration/licenses)
            :value :title}
    :type {:header #(text :t.administration/type)
-           :value :licensetype}
+          :value :licensetype}
    :start {:header #(text :t.administration/created)
            :value (comp localize-time :start)}
    :end {:header #(text :t.administration/end)

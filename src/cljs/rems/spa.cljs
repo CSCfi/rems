@@ -7,15 +7,15 @@
             [markdown.core :refer [md->html]]
             [rems.actions :refer [actions-page fetch-actions]]
             [rems.administration.administration :refer [administration-page]]
-            [rems.administration.catalogue-item :refer [create-catalogue-item-page]]
             [rems.administration.catalogue-items :refer [catalogue-items-page]]
+            [rems.administration.create-catalogue-item :refer [create-catalogue-item-page]]
+            [rems.administration.create-form :refer [create-form-page]]
+            [rems.administration.create-license :refer [create-license-page]]
+            [rems.administration.create-resource :refer [create-resource-page]]
+            [rems.administration.create-workflow :refer [create-workflow-page]]
             [rems.administration.forms :refer [forms-page]]
-            [rems.administration.form :refer [create-form-page]]
-            [rems.administration.license :refer [create-license-page]]
             [rems.administration.licenses :refer [licenses-page]]
-            [rems.administration.resource :refer [create-resource-page]]
             [rems.administration.resources :refer [resources-page]]
-            [rems.administration.workflow :refer [create-workflow-page]]
             [rems.administration.workflows :refer [workflows-page]]
             [rems.ajax :refer [load-interceptors!]]
             [rems.application :refer [application-page]]
@@ -216,11 +216,11 @@
    :rems.administration/licenses licenses-page
    :rems.administration/resources resources-page
    :rems.administration/workflows workflows-page
-   :create-catalogue-item create-catalogue-item-page
-   :create-form create-form-page
-   :create-license create-license-page
-   :create-resource create-resource-page
-   :create-workflow create-workflow-page
+   :rems.administration/create-catalogue-item create-catalogue-item-page
+   :rems.administration/create-form create-form-page
+   :rems.administration/create-license create-license-page
+   :rems.administration/create-resource create-resource-page
+   :rems.administration/create-workflow create-workflow-page
    :unauthorized unauthorized-page
    :forbidden forbidden-page
    :not-found not-found-page})
@@ -296,33 +296,33 @@
   (rf/dispatch [:rems.administration.resources/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/resources]))
 
-(secretary/defroute "/administration/resources" []
-  (rf/dispatch [:rems.administration.resources/enter-page])
-  (rf/dispatch [:set-active-page :rems.administration/resources]))
+(secretary/defroute "/administration/workflows" []
+  (rf/dispatch [:rems.administration.workflows/enter-page])
+  (rf/dispatch [:set-active-page :rems.administration/workflows]))
 
 (secretary/defroute "/administration/licenses" []
   (rf/dispatch [:rems.administration.licenses/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/licenses]))
 
-(secretary/defroute "/create-catalogue-item" []
-  (rf/dispatch [:rems.administration.catalogue-item/enter-page])
-  (rf/dispatch [:set-active-page :create-catalogue-item]))
+(secretary/defroute "/administration/create-catalogue-item" []
+  (rf/dispatch [:rems.administration.create-catalogue-item/enter-page])
+  (rf/dispatch [:set-active-page :rems.administration/create-catalogue-item]))
 
-(secretary/defroute "/create-form" [w]
-  (rf/dispatch [:rems.administrationw.sform/enter-page])
-  (rf/dispatch [:set-active-page :create-form]))
+(secretary/defroute "/administration/create-form" []
+  (rf/dispatch [:rems.administration.create-form/enter-page])
+  (rf/dispatch [:set-active-page :rems.administration/create-form]))
 
-(secretary/defroute "/create-license" []
-  (rf/dispatch [:rems.administration.license/enter-page])
-  (rf/dispatch [:set-active-page :create-license]))
+(secretary/defroute "/administration/create-license" []
+  (rf/dispatch [:rems.administration.create-license/enter-page])
+  (rf/dispatch [:set-active-page :rems.administration/create-license]))
 
-(secretary/defroute "/create-resource" []
-  (rf/dispatch [:rems.administration.resource/enter-page])
-  (rf/dispatch [:set-active-page :create-resource]))
+(secretary/defroute "/administration/create-resource" []
+  (rf/dispatch [:rems.administration.create-resource/enter-page])
+  (rf/dispatch [:set-active-page :rems.administration/create-resource]))
 
-(secretary/defroute "/create-workflow" []
-  (rf/dispatch [:rems.administration.workflow/enter-page])
-  (rf/dispatch [:set-active-page :create-workflow]))
+(secretary/defroute "/administration/create-workflow" []
+  (rf/dispatch [:rems.administration.create-workflow/enter-page])
+  (rf/dispatch [:set-active-page :rems.administration/create-workflow]))
 
 (secretary/defroute "/unauthorized" []
   (rf/dispatch [:set-active-page :unauthorized]))

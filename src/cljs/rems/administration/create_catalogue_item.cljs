@@ -1,4 +1,4 @@
-(ns rems.administration.catalogue-item
+(ns rems.administration.create-catalogue-item
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.administration.components :refer [text-field]]

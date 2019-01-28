@@ -56,7 +56,7 @@
 
 (defn- to-create-catalogue-item []
   [:a.btn.btn-primary
-   {:href "/#/create-catalogue-item"}
+   {:href "/#/administration/create-catalogue-item"}
    (text :t.administration/create-catalogue-item)])
 
 (defn- disable-button [item]

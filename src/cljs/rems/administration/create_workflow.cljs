@@ -1,4 +1,4 @@
-(ns rems.administration.workflow
+(ns rems.administration.create-workflow
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.administration.components :refer [radio-button-group text-field]]

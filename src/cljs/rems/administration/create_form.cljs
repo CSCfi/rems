@@ -1,4 +1,4 @@
-(ns rems.administration.form
+(ns rems.administration.create-form
   (:require [clojure.string :as str]
             [goog.string :refer [parseInt]]
             [re-frame.core :as rf]

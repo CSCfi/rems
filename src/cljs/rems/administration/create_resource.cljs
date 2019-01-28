@@ -1,4 +1,4 @@
-(ns rems.administration.resource
+(ns rems.administration.create-resource
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [reagent.core :as r]

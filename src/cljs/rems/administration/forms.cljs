@@ -42,7 +42,7 @@
 
 (defn- to-create-form []
   [:a.btn.btn-primary
-   {:href "/#/create-form"}
+   {:href "/#/administration/create-form"}
    (text :t.administration/create-form)])
 
 (defn- forms-columns [language]
