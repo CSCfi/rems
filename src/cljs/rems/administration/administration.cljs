@@ -47,7 +47,7 @@
 
 (defn administration-navigator [selected]
   [:div.navbar.mb-4
-   [to-administration [:nav-item :nav-link (when (= selected :administration) :active)]]
+   [to-administration [:nav-item :nav-link (when (= selected :rems.administration/administration) :active)]]
    [to-catalogue-items [:nav-item :nav-link (when (= selected :rems.administration/catalogue-items) :active)]]
    [to-resources [:nav-item :nav-link (when (= selected :rems.administration/resources) :active)]]
    [to-forms [:nav-item :nav-link (when (= selected :rems.administration/forms) :active)]]
