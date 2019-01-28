@@ -15,31 +15,6 @@
  (fn [db _]
    (::loading? db)))
 
-(defn- to-create-catalogue-item []
-  [:a.btn.btn-secondary
-   {:href "/#/administration/create-catalogue-item"}
-   (text :t.administration/create-catalogue-item)])
-
-(defn- to-create-form []
-  [:a.btn.btn-secondary
-   {:href "/#/administration/create-form"}
-   (text :t.administration/create-form)])
-
-(defn- to-create-license []
-  [:a.btn.btn-secondary
-   {:href "/#/administration/create-license"}
-   (text :t.administration/create-license)])
-
-(defn- to-create-resource []
-  [:a.btn.btn-secondary
-   {:href "/#/administration/create-resource"}
-   (text :t.administration/create-resource)])
-
-(defn- to-create-workflow []
-  [:a.btn.btn-secondary
-   {:href "/#/administration/create-workflow"}
-   (text :t.administration/create-workflow)])
-
 (defn- to-administration [class]
   [:a {:class class
        :href "/#/administration "}
