@@ -2,7 +2,7 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
-            [rems.atoms :refer [info-field]]
+            [rems.atoms :refer [info-field readonly-checkbox]]
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-time text text-format]]
@@ -57,7 +57,7 @@
                                    (str/upper-case (name (:langcode localization)))) (:title localization)])
          [[inline-info-field (text :t.create-form/type) (text (keyword (str "t.create-form/type-" (:type field))))]
           [inline-info-field (text :t.create-form/input-prompt) (get-localized-value field :inputprompt language)]
-          [inline-info-field (text :t.create-form/optional) (str (:formitemoptional field))]
+          [inline-info-field (text :t.create-form/optional) [readonly-checkbox (:formitemoptional field)]]
           [inline-info-field (text :t.create-form/maxlength) (:maxlength field)]])))
 
 (defn form-fields [fields language]
