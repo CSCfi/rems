@@ -1,6 +1,7 @@
 (ns ^:focused rems.api.applications-v2
   (:require [clojure.test :refer [deftest is testing]]
-            [rems.db.applications :as applications]))
+            [rems.db.applications :as applications])
+  (:import (org.joda.time DateTime)))
 
 (defmulti ^:private application-view
   (fn [_application event] (:event event)))
@@ -54,12 +55,17 @@
           {}
           events))
 
+(defn- valid-events [events]
+  (doseq [event events]
+    (applications/validate-dynamic-event event))
+  events)
+
 (deftest test-application-view
   (testing "new application"
     ;; TODO: catalogue items
     (is (= {:application-id 42
-            :created 1000
-            :modified 1000
+            :created (DateTime. 1000)
+            :modified (DateTime. 1000)
             :applicant "applicant"
             :form-fields [{:field-id 5
                            :value ""}
@@ -69,15 +75,17 @@
                         :accepted false}
                        {:license-id 8
                         :accepted false}]}
-           (build-application-view [{:event :event/created
-                                     :application-id 42
-                                     :time 1000
-                                     :actor "applicant"
-                                     :catalogue-items [3 4]}]))))
+           (build-application-view
+            (valid-events
+             [{:event :event/created
+               :application-id 42
+               :time (DateTime. 1000)
+               :actor "applicant"
+               :catalogue-items [3 4]}])))))
   (testing "saved draft"
     (is (= {:application-id 42
-            :created 1000
-            :modified 2000
+            :created (DateTime. 1000)
+            :modified (DateTime. 2000)
             :applicant "applicant"
             :form-fields [{:field-id 5
                            :value "foo"}
@@ -87,19 +95,22 @@
                         :accepted true}
                        {:license-id 8
                         :accepted true}]}
-           (build-application-view [{:event :event/created
-                                     :application-id 42
-                                     :time 1000
-                                     :actor "applicant"}
-                                    {:event :event/draft-saved
-                                     :application-id 42
-                                     :time 2000
-                                     :actor "applicant"
-                                     ;; TODO: rename to :fields
-                                     :items {5 "foo"
-                                             6 "bar"}
-                                     :licenses {7 "accepted"
-                                                8 "accepted"}}])))))
+           (build-application-view
+            (valid-events
+             [{:event :event/created
+               :application-id 42
+               :time (DateTime. 1000)
+               :actor "applicant"
+               :catalogue-items [3 4]}
+              {:event :event/draft-saved
+               :application-id 42
+               :time (DateTime. 2000)
+               :actor "applicant"
+               ;; TODO: rename to :fields
+               :items {5 "foo"
+                       6 "bar"}
+               :licenses {7 "accepted"
+                          8 "accepted"}}]))))))
 
 (defn api-get-application-v2 [user-id application-id]
   (let [events (applications/get-dynamic-application-events application-id)]

@@ -75,6 +75,10 @@
          :event (s/eq :event/comment-requested)
          :commenters [s/Str]
          :comment s/Str))
+(s/defschema CreatedEvent
+  (assoc EventBase
+         :event (s/eq :event/created)
+         :catalogue-items [s/Int]))
 (s/defschema DecidedEvent
   (assoc EventBase
          :event (s/eq :event/decided)
@@ -112,6 +116,7 @@
    :event/closed ClosedEvent
    :event/commented CommentedEvent
    :event/comment-requested CommentRequestedEvent
+   :event/created CreatedEvent
    :event/decided DecidedEvent
    :event/decision-requested DecisionRequestedEvent
    :event/draft-saved DraftSavedEvent
@@ -173,6 +178,11 @@
 (deftest test-all-event-types-handled
   (is (= (set (keys event-schemas))
          (set (get-event-types)))))
+
+(defmethod apply-event [:event/created :workflow/dynamic]
+  [application _workflow event]
+  ;; TODO
+  application)
 
 (defmethod apply-event [:event/draft-saved :workflow/dynamic]
   [application _workflow event]
