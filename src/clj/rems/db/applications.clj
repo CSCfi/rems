@@ -20,8 +20,12 @@
             [rems.email :as email]
             [rems.form-validation :as form-validation]
             [rems.util :refer [getx get-username update-present]]
-            [rems.workflow.dynamic :as dynamic])
-  (:import [java.io ByteArrayOutputStream FileInputStream]))
+            [rems.workflow.dynamic :as dynamic]
+            [schema-tools.core :as st]
+            [schema.coerce :as coerce]
+            [schema.core :as s])
+  (:import [java.io ByteArrayOutputStream FileInputStream]
+           [org.joda.time DateTime]))
 
 (defn draft?
   "Is the given `application-id` for an unsaved draft application?"
@@ -949,40 +953,52 @@
 ;;; Dynamic workflows
 ;; TODO these should be in their own namespace probably
 
-;; TODO could use schemas for these coercions
 (defn- fix-workflow-from-db [wf]
+  ;; TODO could use a schema for this coercion
   (update (cheshire/parse-string wf keyword)
           :type keyword))
 
-(defn- keyword-to-number [k]
-  (if (keyword? k)
-    (Integer/parseInt (name k))
-    k))
+(defn string->datetime [s]
+  (if (string? s)
+    (time-coerce/from-long (Long/parseLong s))
+    s))
 
-(defn- fix-draft-saved-event-from-db [event]
-  (if (= :event/draft-saved (:event event))
-    (-> event
-        (update :items #(map-keys keyword-to-number %))
-        (update :licenses #(map-keys keyword-to-number %)))
-    event))
+(def datetime-coercion-matcher
+  {DateTime string->datetime})
 
-(defn- fix-decided-event-from-db [event]
-  (if (= :event/decided (:event event))
-    (update-present event :decision keyword)
-    event))
+(defn coercion-matcher [schema]
+  (or (datetime-coercion-matcher schema)
+      (coerce/string-coercion-matcher schema)))
+
+(def coerce-dynamic-event-commons
+  (coerce/coercer (st/open-schema dynamic/EventBase) coercion-matcher))
+
+(def coerce-dynamic-event-specifics
+  (coerce/coercer dynamic/Event coercion-matcher))
+
+(defn coerce-dynamic-event [event]
+  ;; convert only the top-level string keys to keywords (some events use numeric keys in maps)
+  (-> (map-keys keyword event)
+      ;; must coerce the common fields first, so that dynamic/Event can choose the right event schema based on the event type
+      coerce-dynamic-event-commons
+      coerce-dynamic-event-specifics))
+
+(defn json->event [json]
+  (coerce-dynamic-event (cheshire/parse-string json)))
+
+(defn event->json [event]
+  (s/validate dynamic/Event event)
+  (cheshire/generate-string event))
 
 (defn- fix-event-from-db [event]
-  (-> event
-      :eventdata
-      (cheshire/parse-string keyword)
-      (update :event keyword)
-      (update :time #(when % (time-coerce/from-long (Long/parseLong %))))
-      fix-draft-saved-event-from-db
-      fix-decided-event-from-db))
+  (-> event :eventdata json->event))
+
+(defn get-dynamic-application-events [application-id]
+  (map fix-event-from-db (db/get-application-events {:application application-id})))
 
 (defn get-dynamic-application-state [application-id]
   (let [application (first (db/get-applications {:id application-id}))
-        events (map fix-event-from-db (db/get-application-events {:application application-id}))
+        events (get-dynamic-application-events application-id)
         application (assoc application
                            :state ::dynamic/draft
                            :dynamic-events events
@@ -998,7 +1014,7 @@
                               :comment nil
                               :round -1
                               :event (str (:event event))
-                              :eventdata (cheshire/generate-string event)})
+                              :eventdata (event->json event)})
   nil)
 
 (defn- valid-user? [userid]

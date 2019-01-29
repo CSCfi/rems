@@ -1,6 +1,7 @@
 (ns ^:integration rems.test.api.applications
   (:require [clojure.string :as str]
             [clojure.test :refer :all]
+            [rems.db.test-data :as test-data]
             [rems.handler :refer [app]]
             [rems.test.api :refer :all]
             [ring.mock.request :refer :all]))
@@ -821,7 +822,7 @@
         (is (= [{:actor user-id
                  :application-id application-id
                  :event "event/submitted"
-                 :time nil}]
+                 :time (str (.getMillis test-data/creation-time))}]
                (get-in data [:application :dynamic-events])))
         (is (= ["rems.workflow.dynamic/add-member"] (get-in data [:application :possible-commands])))))
 
@@ -846,7 +847,8 @@
       (is (= {:success false
               :errors ["forbidden"]}
              (send-dynamic-command user-id {:type :rems.workflow.dynamic/approve
-                                            :application-id application-id}))
+                                            :application-id application-id
+                                            :comment ""}))
           "user should be forbidden to send command"))
 
     (testing "send commands with authorized user"
@@ -854,7 +856,8 @@
         (is (= {:success true} (send-dynamic-command handler-id
                                                      {:type :rems.workflow.dynamic/request-decision
                                                       :application-id application-id
-                                                      :decider decider-id})))
+                                                      :decider decider-id
+                                                      :comment ""})))
         (let [data (get-application handler-id application-id)]
           (is (= {:id application-id
                   :decider decider-id
@@ -864,7 +867,8 @@
         (is (= {:success true} (send-dynamic-command decider-id
                                                      {:type :rems.workflow.dynamic/decide
                                                       :application-id application-id
-                                                      :decision :approved})))
+                                                      :decision :approved
+                                                      :comment ""})))
         (let [data (get-application handler-id application-id)]
           (is (= {:id application-id
                   :decision "approved"
@@ -872,7 +876,8 @@
                  (select-keys (:application data) [:id :decider :decision :state])))))
       (testing "approve"
         (is (= {:success true} (send-dynamic-command handler-id {:type :rems.workflow.dynamic/approve
-                                                                 :application-id application-id})))
+                                                                 :application-id application-id
+                                                                 :comment ""})))
         (let [data (get-application handler-id application-id)]
           (is (= {:id application-id
                   :state "rems.workflow.dynamic/approved"}
