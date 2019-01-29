@@ -1,6 +1,7 @@
 (ns ^:integration rems.test.api.applications
   (:require [clojure.string :as str]
             [clojure.test :refer :all]
+            [rems.db.test-data :as test-data]
             [rems.handler :refer [app]]
             [rems.test.api :refer :all]
             [ring.mock.request :refer :all]))
@@ -820,9 +821,9 @@
         (is (= "workflow/dynamic" (get-in data [:application :workflow :type])))
         (is (= [{:actor user-id
                  :application-id application-id
-                 :event "event/submitted"}]
-               (->> (get-in data [:application :dynamic-events])
-                    (map #(dissoc % :time)))))
+                 :event "event/submitted"
+                 :time (str (.getMillis test-data/creation-time))}]
+               (get-in data [:application :dynamic-events])))
         (is (= ["rems.workflow.dynamic/add-member"] (get-in data [:application :possible-commands])))))
 
     (testing "getting dynamic application as handler"
