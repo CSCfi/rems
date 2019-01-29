@@ -132,15 +132,19 @@
    ReturnedEvent
    SubmittedEvent])
 
+(defn- get-event-type [event-schema]
+  (let [event-type (:v (:event event-schema))]
+    (assert (keyword? event-type)
+            (str "couldn't get the event type from schema " event-schema))
+    event-type))
+
 (s/defschema Event
   (let [preds-and-schemas (->> event-schemas
                                (map (fn [schema]
-                                      (let [event-type (:v (:event schema))]
-                                        (assert (keyword? event-type)
-                                                (str "couldn't get the event type from schema " schema))
-                                        [(fn [event]
-                                           (= event-type (:event event)))
-                                         schema])))
+                                      (let [event-type (get-event-type schema)
+                                            pred (fn [event]
+                                                   (= event-type (:event event)))]
+                                        [pred schema])))
                                (apply concat))]
     (apply s/conditional (concat preds-and-schemas ['unknown-event-type]))))
 
