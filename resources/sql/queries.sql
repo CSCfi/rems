@@ -117,6 +117,27 @@ LEFT OUTER JOIN application_form_item item ON item.id = itemmap.formItemId
 WHERE form.id = :id AND item.id IS NOT NULL
 ORDER BY itemorder
 
+-- :name get-form :? :1
+SELECT
+  form.id as id,
+  form.organization as organization,
+  form.title as title,
+  form.start as start,
+  form.endt as "end",
+  TRUE as "active", -- TODO implement
+  (SELECT json_agg(joined)
+   FROM (SELECT *,
+                (SELECT json_agg(formitemlocalization)
+                 FROM application_form_item_localization formitemlocalization
+                 WHERE (formitemmap.formitemid = formitemlocalization.itemid)
+                 GROUP BY formitemlocalization.itemid)  AS localizations
+         FROM application_form_item_map formitemmap
+         JOIN application_form_item formitem ON (formitemmap.formitemid = formitem.id)
+         WHERE formitemmap.formid = form.id) joined)::TEXT
+         AS fields
+FROM application_form form
+WHERE form.id = :id
+
 -- :name get-all-form-items :? :*
 SELECT id, type, value, visibility, start, endt, owneruserid, modifieruserid
 FROM application_form_item;
