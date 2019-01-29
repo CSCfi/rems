@@ -42,11 +42,18 @@
 (defn info-field
   "A component that shows a readonly field with title and value.
 
-  Used for e.g. displaying applicant attributes."
-  [title value]
-  [:div.form-group
-   [:label title]
-   [:div.form-control value]])
+  Used for e.g. displaying applicant attributes.
+
+  Additional options:
+  `:inline?` - puts the label and value on the same row"
+  [title value & [{:keys [inline? half?] :as opts}]]
+  (if inline?
+    [:div.form-group.row
+     [:label.col-sm-2.col-form-label title]
+     [:div.col-sm-10.form-control value]]
+    [:div.form-group
+     [:label title]
+     [:div.form-control value]]))
 
 (defn guide []
   [:div
@@ -65,4 +72,6 @@
             [readonly-checkbox true])
    (component-info info-field)
    (example "info-field with data"
-            [info-field "Name" "Bob Tester"])])
+            [info-field "Name" "Bob Tester"])
+   (example "info-field inline"
+            [info-field "Name" "Bob Tester" {:inline? true}])])
