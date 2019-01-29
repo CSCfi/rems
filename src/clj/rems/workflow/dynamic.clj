@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [rems.auth.util :refer [throw-unauthorized]]
             [rems.util :refer [getx]]
+            [schema-refined.core :as r]
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
 
@@ -119,34 +120,19 @@
   (assoc EventBase
          :event (s/eq :event/submitted)))
 
-(def event-schemas
-  [ApprovedEvent
-   ClosedEvent
-   CommentedEvent
-   CommentRequestedEvent
-   DecidedEvent
-   DecisionRequestedEvent
-   DraftSavedEvent
-   MemberAddedEvent
-   RejectedEvent
-   ReturnedEvent
-   SubmittedEvent])
-
-(defn- get-event-type [event-schema]
-  (let [event-type (:v (:event event-schema))]
-    (assert (keyword? event-type)
-            (str "couldn't get the event type from schema " event-schema))
-    event-type))
-
 (s/defschema Event
-  (let [preds-and-schemas (->> event-schemas
-                               (map (fn [schema]
-                                      (let [event-type (get-event-type schema)
-                                            pred (fn [event]
-                                                   (= event-type (:event event)))]
-                                        [pred schema])))
-                               (apply concat))]
-    (apply s/conditional (concat preds-and-schemas ['unknown-event-type]))))
+  (r/dispatch-on :event
+                 :event/approved ApprovedEvent
+                 :event/closed ClosedEvent
+                 :event/commented CommentedEvent
+                 :event/comment-requested CommentRequestedEvent
+                 :event/decided DecidedEvent
+                 :event/decision-requested DecisionRequestedEvent
+                 :event/draft-saved DraftSavedEvent
+                 :event/member-added MemberAddedEvent
+                 :event/rejected RejectedEvent
+                 :event/returned ReturnedEvent
+                 :event/submitted SubmittedEvent))
 
 (deftest test-event-schema
   (testing "check specific event schema"
@@ -175,7 +161,7 @@
                      :time (DateTime.)}))))
   (testing "unknown event type"
     ;; TODO: improve error message to show the actual and expected event types
-    (is (= "(not (unknown-event-type a-clojure.lang.PersistentArrayMap))"
+    (is (= "(not (some-matching-condition? a-clojure.lang.PersistentArrayMap))"
            (pr-str (s/check Event
                             {:event :foo
                              :actor "foo"

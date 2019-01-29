@@ -10,6 +10,7 @@
                  [clj-time "0.15.1"]
                  [cljs-ajax "0.8.0"]
                  [com.andrewmcveigh/cljs-time "0.5.2"]
+                 [com.attendify/schema-refined "0.3.0-alpha4"]
                  [com.draines/postal "2.0.3"]
                  [com.taoensso/tempura "1.2.1"]
                  [compojure "1.6.1"]
