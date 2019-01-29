@@ -49,25 +49,11 @@
     ::return
     ::save-draft
     ::submit})
-(def EventTypes
-  #{#_:event/license-accepted
-    #_:event/license-required
-    :event/approved
-    :event/closed
-    :event/comment-requested
-    :event/commented
-    :event/decided
-    :event/decision-requested
-    :event/draft-saved
-    :event/member-added
-    :event/rejected
-    :event/returned
-    :event/submitted})
 
 ;; TODO: namespaced keys e.g. :event/type, :event/time, :event/actor, :application/id
 ;; TODO: add version number to events
 (s/defschema EventBase
-  {:event (apply s/enum EventTypes)
+  {:event s/Keyword
    :application-id s/Int
    :actor UserId
    :time DateTime})
@@ -120,6 +106,7 @@
   (assoc EventBase
          :event (s/eq :event/submitted)))
 
+;; TODO: :event/license-accepted, :event/license-required
 (def event-schemas
   {:event/approved ApprovedEvent
    :event/closed ClosedEvent
@@ -184,7 +171,8 @@
   (map first (keys (methods apply-event))))
 
 (deftest test-all-event-types-handled
-  (is (= EventTypes (set (get-event-types)))))
+  (is (= (set (keys event-schemas))
+         (set (get-event-types)))))
 
 (defmethod apply-event [:event/draft-saved :workflow/dynamic]
   [application _workflow event]
