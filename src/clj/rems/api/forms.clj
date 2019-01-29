@@ -20,7 +20,7 @@
   {:title {s/Keyword s/Str}
    :optional s/Bool
    :type (s/enum "attachment" "date" "description" "label" "multiselect" "option" "text" "texta")
-   (s/optional-key :maxlength) (s/maybe (s/constrained s/Int (comp not neg?)))
+   (s/optional-key :maxlength) (s/maybe (s/constrained s/Int (complement neg?)))
    (s/optional-key :options) [{:key s/Str
                                :label {s/Keyword s/Str}}]
    (s/optional-key :input-prompt) {s/Keyword s/Str}})
