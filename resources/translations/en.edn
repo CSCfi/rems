@@ -89,18 +89,32 @@
             :view "View"
             :withdraw "Withdraw"
             :withdraw-success "Application withdrawn"}
-  :administration {:cancel "Cancel"
+  :administration {:active "Active"
+                   :cancel "Cancel"
+                   :catalogue-items "Catalogue items"
                    :create-catalogue-item "Create catalogue item"
                    :create-form "Create form"
                    :create-license "Create license"
                    :create-resource "Create resource"
                    :create-workflow "Create workflow"
+                   :created "Created"
                    :disable "Disable"
                    :enable "Enable"
+                   :end "End"
                    :errors {:duplicate-resid "Duplicate resource for organization."}
+                   :form "Form"
+                   :forms "Forms"
+                   :licenses "Licenses"
                    :organization "Organization"
                    :organization-placeholder "testorganization.org"
-                   :save "Save"}
+                   :resource "Resource"
+                   :resources "Resources"
+                   :save "Save"
+                   :start "Start"
+                   :title "Title"
+                   :type "Type"
+                   :workflow "Workflow"
+                   :workflows "Workflows"}
   :applicant-info {:applicant "Applicant"
                    :email "Email"
                    :username "Name"}
@@ -196,7 +210,7 @@
                    :license-text "License text"
                    :link-to-license "Link to the license"
                    :title "License name"}
-  :create-resource {:licenses-selection "Terms of Use"
+  :create-resource {:licenses-selection "Licenses"
                     :resid "Resource identifier"
                     :resid-placeholder "urn:test:fi:some-uuid"}
   :create-workflow {:add-round "Add round"

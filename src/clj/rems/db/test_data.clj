@@ -79,7 +79,7 @@
 (defn- create-expired-form! []
   (let [yesterday (time/minus (time/now) (time/days 1))]
     ;; only used from create-test-data!
-    (db/create-form! {:organization "nbn" :title "Expired form, should not be seen" :user (+fake-users+ :owner) :endt yesterday})))
+    (db/create-form! {:organization "nbn" :title "Expired form, should not be seen by applicants" :user (+fake-users+ :owner) :endt yesterday})))
 
 (defn- create-expired-license! []
   (let [owner (+fake-users+ :owner) ; only used from create-test-data!

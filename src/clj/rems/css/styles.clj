@@ -362,6 +362,8 @@
     {:margin-left (u/rem 0.5)}]
    [:.commands {:text-align "right"
                 :padding "0 1rem"}]
+   [".spaced-horizontally > *:not(:first-child)" {:margin-left (u/rem 0.5)}]
+   [".children-inline-blocks > *" {:display :inline-block}]
    [:.form-group {:text-align "initial"}]
    [:.navbar-flex {:display "flex"
                    :flex-direction "row"
@@ -444,6 +446,11 @@
     [:.collapsing {:-webkit-transition "height 0.25s linear"
                    :-o-transition "height 0.25s linear"
                    :transition "height 0.25s linear"}]]
+
+   [:.color1 {:color (util/get-theme-attribute :color1)}]
+   [:.color1-faint {:color (-> (util/get-theme-attribute :color1)
+                               (c/saturate -50)
+                               (c/lighten 33))}]
 
    ;; autocomplete, duplicates some Bootstrap styling
    ;; because the component classes are hard-coded

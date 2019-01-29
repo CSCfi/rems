@@ -1,4 +1,4 @@
-(ns rems.administration.form
+(ns rems.administration.create-form
   (:require [clojure.string :as str]
             [goog.string :refer [parseInt]]
             [re-frame.core :as rf]
@@ -149,7 +149,7 @@
 (defn- create-form [request]
   (post! "/api/forms/create" {:params request
                               ; TODO: error handling
-                              :handler (fn [resp] (dispatch! "#/administration"))}))
+                              :handler (fn [resp] (dispatch! "#/administration/forms"))}))
 
 (rf/reg-event-fx
  ::create-form
@@ -267,7 +267,7 @@
 
 (defn- cancel-button []
   [:button.btn.btn-secondary
-   {:on-click #(dispatch! "/#/administration")}
+   {:on-click #(dispatch! "/#/administration/forms")}
    (text :t.administration/cancel)])
 
 (defn create-form-page []

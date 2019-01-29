@@ -89,18 +89,32 @@
             :view "Näytä"
             :withdraw "Palauta muokattavaksi"
             :withdraw-success "Hakemus palautettu muokattavaksi"}
-  :administration {:cancel "Peruuta"
+  :administration {:active "Aktiivinen"
+                   :cancel "Peruuta"
+                   :catalogue-items "Kielivarat"
                    :create-catalogue-item "Uusi kielivara"
                    :create-form "Uusi lomake"
                    :create-license "Uusi lisenssi"
                    :create-resource "Uusi resurssi"
                    :create-workflow "Uusi työvuo"
+                   :created "Luotu"
                    :disable "Poista käytöstä"
                    :enable "Ota käyttöön"
+                   :end "Loppu"
                    :errors {:duplicate-resid "Resurssi on jo olemassa organisaatiossa."}
+                   :form "Lomake"
+                   :forms "Lomakkeet"
+                   :licenses "Lisenssit"
                    :organization "Organisaatio"
                    :organization-placeholder "testorganization.org"
-                   :save "Tallenna"}
+                   :resource "Resurssi"
+                   :resources "Resurssit"
+                   :save "Tallenna"
+                   :start "Alku"
+                   :title "Nimi"
+                   :type "Tyyppi"
+                   :workflow "Työvuo"
+                   :workflows "Työvuot"}
   :applicant-info {:applicant "Hakija"
                    :email "Sähköposti"
                    :username "Nimi"}
@@ -196,7 +210,7 @@
                    :license-text "Lisenssin teksti"
                    :link-to-license "Linkki lisenssiin"
                    :title "Lisenssin nimi"}
-  :create-resource {:licenses-selection "Käyttöehdot"
+  :create-resource {:licenses-selection "Lisenssit"
                     :resid "Resurssin tunniste"
                     :resid-placeholder "urn:test:fi:some-uuid"}
   :create-workflow {:add-round "Lisää kierros"

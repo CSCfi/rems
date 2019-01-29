@@ -3,9 +3,18 @@
 -- - Get catalogue items
 -- - :items vector of item ids
 -- - :resource resource id to fetch items for
-SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.state
+SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.state, ci.start
+/*~ (when (:expand-names? params) */
+, wf.title AS "workflow-name"
+, res.resid AS "resource-name"
+, form.title AS "form-name"
+/*~ ) ~*/
 FROM catalogue_item ci
 LEFT OUTER JOIN resource res ON (ci.resid = res.id)
+/*~ (when (:expand-names? params) */
+LEFT OUTER JOIN workflow wf ON (ci.wfid = wf.id)
+LEFT OUTER JOIN application_form form ON (ci.formid = form.id)
+/*~ ) ~*/
 WHERE 1=1
 /*~ (when (:items params) */
   AND ci.id IN (:v*:items)
@@ -16,7 +25,7 @@ WHERE 1=1
 
 
 -- :name get-catalogue-item :? :1
-SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.state
+SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.state, ci.start
 FROM catalogue_item ci
 LEFT OUTER JOIN resource res ON (ci.resid = res.id)
 WHERE ci.id = :item

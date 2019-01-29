@@ -1,4 +1,4 @@
-(ns rems.administration.catalogue-item
+(ns rems.administration.create-catalogue-item
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.administration.components :refer [text-field]]
@@ -94,7 +94,7 @@
 (defn- create-catalogue-item [request]
   (post! "/api/catalogue-items/create" {:params request
                                         ;; TODO error handling
-                                        :handler (fn [resp] (dispatch! "#/administration"))}))
+                                        :handler (fn [resp] (dispatch! "#/administration/catalogue-items"))}))
 
 (rf/reg-event-fx
  ::create-catalogue-item
@@ -229,7 +229,7 @@
 
 (defn- cancel-button []
   [:button.btn.btn-secondary
-   {:on-click #(dispatch! "/#/administration")}
+   {:on-click #(dispatch! "/#/administration/catalogue-items")}
    (text :t.administration/cancel)])
 
 (defn- save-catalogue-item-button []

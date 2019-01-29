@@ -102,7 +102,8 @@
         :paths {:karma "node_modules/karma/bin/karma"}
         :alias {:default [:chrome-headless]}}
 
-  :aliases {"browsertests" ["do" ["cljsbuild" "once"] ["eftest" ":browser"]]
+  :aliases {"dev-db" ["do" ["shell" "./dev_db.sh"] ["run" "test-data"]]
+            "browsertests" ["do" ["cljsbuild" "once"] ["eftest" ":browser"]]
             "alltests" ["do" ["cljsbuild" "once"] ["eftest" ":all"] ["doo" "once"]]
             "test-ancient" ["do" ["cljsbuild" "once"] ["eftest" ":all"] ["doo" "once"]] ; for lein ancient to work and run all tests
             "run-cloverage" ["do" ["cljsbuild" "once"] ["with-profile" "test" "cloverage"]]}

@@ -1,149 +1,88 @@
 (ns rems.administration.administration
   (:require [re-frame.core :as rf]
-            [rems.atoms :refer [external-link]]
-            [rems.catalogue-util :refer [get-catalogue-item-title disabled-catalogue-item?]]
             [rems.spinner :as spinner]
-            [rems.table :as table]
             [rems.text :refer [text]]
-            [rems.util :refer [dispatch! fetch put!]]))
+            [rems.util :refer [dispatch!]])
+  (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (assoc db ::loading? true)
-    ::fetch-catalogue nil}))
-
-
-; catalogue items
-
-;; TODO copypaste from rems.catalogue, move to rems.db.catalogue?
-(defn- fetch-catalogue []
-  (fetch "/api/catalogue-items/" {:handler #(rf/dispatch [::fetch-catalogue-result %])}))
-
-(rf/reg-fx
- ::fetch-catalogue
- (fn [_]
-   (fetch-catalogue)))
-
-(rf/reg-event-db
- ::fetch-catalogue-result
- (fn [db [_ catalogue]]
-   (-> db
-       (assoc ::catalogue catalogue)
-       (dissoc ::loading?))))
-
-(rf/reg-sub
- ::catalogue
- (fn [db _]
-   (::catalogue db)))
+   {:db (assoc db ::loading? false)}))
 
 (rf/reg-sub
  ::loading?
  (fn [db _]
    (::loading? db)))
 
-(defn- update-catalogue-item [id state]
-  (put! "/api/catalogue-items/update" {:params {:id id :state state}
-                                       :handler #(rf/dispatch [::enter-page])}))
+(defn- to-administration [class]
+  [:a {:class class
+       :href "/#/administration "}
+   (text :t.navigation/administration)])
 
-(rf/reg-event-fx
- ::update-catalogue-item
- (fn [_ [_ id state]]
-   (update-catalogue-item id state)
-   {}))
+(defn- to-catalogue-items [class]
+  [:a {:class class
+       :href "/#/administration/catalogue-items"}
+   (text :t.administration/catalogue-items)])
 
-(rf/reg-event-db
- ::set-sorting
- (fn [db [_ sorting]]
-   (assoc db ::sorting sorting)))
+(defn- to-resources [class]
+  [:a {:class class
+       :href "/#/administration/resources"}
+   (text :t.administration/resources)])
 
-(rf/reg-sub
- ::sorting
- (fn [db _]
-   (or (::sorting db)
-       {:sort-column :name
-        :sort-order :asc})))
+(defn- to-forms [class]
+  [:a {:class class
+       :href "/#/administration/forms"}
+   (text :t.administration/forms)])
 
-;;;; UI
+(defn- to-workflows [class]
+  [:a {:class class
+       :href "/#/administration/workflows"}
+   (text :t.administration/workflows)])
 
-(defn- disable-button [item]
-  [:button.btn.btn-secondary
-   {:type "submit"
-    :on-click #(rf/dispatch [::update-catalogue-item (:id item) "disabled"])}
-   (text :t.administration/disable)])
+(defn- to-licenses [class]
+  [:a {:class class
+       :href "/#/administration/licenses"}
+   (text :t.administration/licenses)])
 
-(defn- enable-button [item]
-  [:button.btn.btn-primary
-   {:type "submit"
-    :on-click #(rf/dispatch [::update-catalogue-item (:id item) "enabled"])}
-   (text :t.administration/enable)])
+(defn administration-navigator [selected]
+  [:div.navbar.mb-4
+   [to-administration [:nav-item :nav-link (when (= selected :rems.administration/administration) :active)]]
+   [to-catalogue-items [:nav-item :nav-link (when (= selected :rems.administration/catalogue-items) :active)]]
+   [to-resources [:nav-item :nav-link (when (= selected :rems.administration/resources) :active)]]
+   [to-forms [:nav-item :nav-link (when (= selected :rems.administration/forms) :active)]]
+   [to-workflows [:nav-item :nav-link (when (= selected :rems.administration/workflows) :active)]]
+   [to-licenses [:nav-item :nav-link (when (= selected :rems.administration/licenses) :active)]]])
 
-(defn- to-create-catalogue-item-button []
-  [:button.btn.btn-primary
-   {:type "submit"
-    :on-click #(dispatch! "/#/create-catalogue-item")}
-   (text :t.administration/create-catalogue-item)])
+(defn administration-navigator-container
+  "Component for showing a navigator in the administration pages.
 
-(defn- to-create-form-button []
-  [:button.btn.btn-primary
-   {:type "submit"
-    :on-click #(dispatch! "/#/create-form")}
-   (text :t.administration/create-form)])
-
-(defn- to-create-license-button []
-  [:button.btn.btn-primary
-   {:type "submit"
-    :on-click #(dispatch! "/#/create-license")}
-   (text :t.administration/create-license)])
-
-(defn- to-create-resource-button []
-  [:button.btn.btn-primary
-   {:type "submit"
-    :on-click #(dispatch! "/#/create-resource")}
-   (text :t.administration/create-resource)])
-
-(defn- to-create-workflow-button []
-  [:button.btn.btn-primary
-   {:type "submit"
-    :on-click #(dispatch! "/#/create-workflow")}
-   (text :t.administration/create-workflow)])
-
-(defn- catalogue-item-button [item]
-  (if (disabled-catalogue-item? item)
-    [enable-button item]
-    [disable-button item]))
-
-(defn- catalogue-columns [language]
-  {:name {:header #(text :t.catalogue/header)
-          :value #(get-catalogue-item-title % language)}
-   :commands {:value catalogue-item-button
-              :sortable? false
-              :filterable? false}})
-
-(defn- catalogue-list
-  "List of catalogue items"
-  [items language sorting]
-  [table/component (catalogue-columns language) [:name :commands]
-   sorting
-   #(rf/dispatch [::set-sorting %])
-   :id
-   items])
+  Subscribes to current page to show the link as selected. The pure functional version is `administration-navigator`"
+  []
+  (let [page (rf/subscribe [:page])]
+    [administration-navigator @page]))
 
 (defn administration-page []
-  (let [catalogue (rf/subscribe [::catalogue])
-        language (rf/subscribe [:language])
-        sorting (rf/subscribe [::sorting])
-        loading? (rf/subscribe [::loading?])]
+  (let [loading? (rf/subscribe [::loading?])]
     (fn []
-      (into [:div
-             [:h2 (text :t.navigation/administration)]]
-            (if @loading?
-              [[spinner/big]]
-              [[:div
-                [:div.col.commands
-                 [to-create-workflow-button]
-                 [to-create-form-button]
-                 [to-create-license-button]
-                 [to-create-resource-button]
-                 [to-create-catalogue-item-button]]
-                [catalogue-list @catalogue @language @sorting]]])))))
+      [:div
+       [administration-navigator-container]
+       [:h2 (text :t.navigation/administration)]
+       (if @loading?
+         [spinner/big]
+         [:div.spaced-sections
+          {:style {:display :flex
+                   :flex-direction :column
+                   :max-width "15rem"}}
+          [to-catalogue-items [:btn :btn-primary]]
+          [to-resources [:btn :btn-primary]]
+          [to-forms [:btn :btn-primary]]
+          [to-workflows [:btn :btn-primary]]
+          [to-licenses [:btn :btn-primary]]])])))
+
+
+(defn guide []
+  [:div
+   (component-info administration-navigator)
+   (example "administration-navigator with resources selected"
+            [administration-navigator :rems.administration/resources])])

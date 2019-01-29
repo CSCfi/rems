@@ -32,6 +32,13 @@
   (when status
     [:div.alert {:class (str "alert-" (name status))} contents]))
 
+(defn readonly-checkbox
+  "Displays a checkbox."
+  [checked?]
+  (if checked?
+    [:i.fa.fa-lg.fa-check-square.color1]
+    [:i.fa.fa-lg.fa-square.color1-faint]))
+
 (defn guide []
   [:div
    (component-info flash-message)
@@ -41,4 +48,9 @@
 
    (example "flash-message with error"
             [flash-message {:status :danger
-                            :contents "You fail"}])])
+                            :contents "You fail"}])
+   (component-info readonly-checkbox)
+   (example "readonly-checkbox unchecked"
+            [readonly-checkbox false])
+   (example "readonly-checkbox checked"
+            [readonly-checkbox true])])

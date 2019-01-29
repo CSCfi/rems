@@ -1,6 +1,6 @@
 (ns rems.test.administration.resource
   (:require [cljs.test :refer-macros [deftest is testing]]
-            [rems.administration.resource :refer [build-request]]))
+            [rems.administration.create-resource :refer [build-request]]))
 
 (deftest build-request-test
   (let [form {:organization "abc"
