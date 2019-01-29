@@ -121,28 +121,20 @@
          :event (s/eq :event/submitted)))
 
 (def event-schemas
-  [ApprovedEvent
-   ClosedEvent
-   CommentedEvent
-   CommentRequestedEvent
-   DecidedEvent
-   DecisionRequestedEvent
-   DraftSavedEvent
-   MemberAddedEvent
-   RejectedEvent
-   ReturnedEvent
-   SubmittedEvent])
-
-(defn- get-event-type [event-schema]
-  (let [event-type (:v (:event event-schema))]
-    (assert (keyword? event-type)
-            (str "couldn't get the event type from schema " event-schema))
-    event-type))
+  {:event/approved ApprovedEvent
+   :event/closed ClosedEvent
+   :event/commented CommentedEvent
+   :event/comment-requested CommentRequestedEvent
+   :event/decided DecidedEvent
+   :event/decision-requested DecisionRequestedEvent
+   :event/draft-saved DraftSavedEvent
+   :event/member-added MemberAddedEvent
+   :event/rejected RejectedEvent
+   :event/returned ReturnedEvent
+   :event/submitted SubmittedEvent})
 
 (s/defschema Event
-  (apply r/dispatch-on (flatten [:event
-                                 (for [schema event-schemas]
-                                   [(get-event-type schema) schema])])))
+  (apply r/dispatch-on (flatten [:event (seq event-schemas)])))
 
 (deftest test-event-schema
   (testing "check specific event schema"
