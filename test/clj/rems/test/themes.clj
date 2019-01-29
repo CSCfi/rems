@@ -17,19 +17,19 @@
                             (config/load-external-theme config)))))
 
   (testing "custom theme overrides values from the default theme"
-    (let [config {:theme-path "theme-lbr/lbr.edn"
+    (let [config {:theme-path "example-theme/theme.edn"
                   :theme {:color1 "should be overridden"
                           :color42 "not overridden"}}]
-      (is (= {:color1 "#CAD2E6"
+      (is (= {:color1 "#aa0000"
               :color42 "not overridden"}
              (-> (config/load-external-theme config)
                  :theme
                  (select-keys [:color1 :color42]))))))
 
   (testing "static resources can be placed in a 'public' directory next to the theme file"
-    (let [config {:theme-path "theme-lbr/lbr.edn"
+    (let [config {:theme-path "example-theme/theme.edn"
                   :theme {:default "foo"}}]
-      (is (= "theme-lbr/public"
+      (is (= "example-theme/public"
              (:theme-static-resources (config/load-external-theme config)))))))
 
 (deftest get-theme-attribute-test
