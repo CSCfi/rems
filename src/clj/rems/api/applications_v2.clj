@@ -1,6 +1,7 @@
 (ns ^:focused rems.api.applications-v2
   (:require [clojure.test :refer [deftest is testing]]
-            [rems.db.applications :as applications])
+            [rems.db.applications :as applications]
+            [rems.workflow.dynamic :as dynamic])
   (:import (org.joda.time DateTime)))
 
 (defmulti ^:private application-view
@@ -40,6 +41,51 @@
   (-> application
       (update :form-fields set-form-field-values (:items event))
       (update :licenses set-accepted-licences (:licenses event))))
+
+
+(defmethod application-view :event/member-added
+  [application event]
+  application)
+
+(defmethod application-view :event/submitted
+  [application event]
+  application)
+
+(defmethod application-view :event/returned
+  [application event]
+  application)
+
+(defmethod application-view :event/comment-requested
+  [application event]
+  application)
+
+(defmethod application-view :event/commented
+  [application event]
+  application)
+
+(defmethod application-view :event/decision-requested
+  [application event]
+  application)
+
+(defmethod application-view :event/decided
+  [application event]
+  application)
+
+(defmethod application-view :event/approved
+  [application event]
+  application)
+
+(defmethod application-view :event/rejected
+  [application event]
+  application)
+
+(defmethod application-view :event/closed
+  [application event]
+  application)
+
+(deftest test-application-view-handles-all-events
+  (is (= (set (keys dynamic/event-schemas))
+         (set (keys (methods application-view))))))
 
 
 (defn- application-view-common
