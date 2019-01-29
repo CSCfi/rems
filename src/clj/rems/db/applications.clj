@@ -983,15 +983,15 @@
       coerce-dynamic-event-commons
       coerce-dynamic-event-specifics))
 
-(defn json-to-event [json]
+(defn json->event [json]
   (coerce-dynamic-event (cheshire/parse-string json)))
 
-(defn event-to-json [event]
+(defn event->json [event]
   (s/validate dynamic/Event event)
   (cheshire/generate-string event))
 
 (defn- fix-event-from-db [event]
-  (-> event :eventdata json-to-event))
+  (-> event :eventdata json->event))
 
 (defn get-dynamic-application-events [application-id]
   (map fix-event-from-db (db/get-application-events {:application application-id})))
@@ -1014,7 +1014,7 @@
                               :comment nil
                               :round -1
                               :event (str (:event event))
-                              :eventdata (event-to-json event)})
+                              :eventdata (event->json event)})
   nil)
 
 (defn- valid-user? [userid]

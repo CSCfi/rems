@@ -74,4 +74,4 @@
   (let [generators {DateTime (generators/fmap #(DateTime. ^long % DateTimeZone/UTC)
                                               (generators/large-integer* {:min 0}))}]
     (doseq [event (sg/sample 100 dynamic/Event generators)]
-      (is (= event (-> event event-to-json json-to-event))))))
+      (is (= event (-> event event->json json->event))))))
