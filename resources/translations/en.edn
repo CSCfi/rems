@@ -103,6 +103,8 @@
                    :enable "Enable"
                    :end "End"
                    :errors {:duplicate-resid "Duplicate resource for organization."}
+                   :field "Field \"%1\""
+                   :fields "Fields"
                    :form "Form"
                    :forms "Forms"
                    :id "Id"
@@ -198,6 +200,7 @@
                 :optional "Optional"
                 :options "Options"
                 :title "Form name"
+                :type "Type"
                 :type-attachment "Attachment"
                 :type-date "Date field"
                 :type-description "Description"

@@ -363,6 +363,8 @@
    [:.commands {:text-align "right"
                 :padding "0 1rem"}]
    [".spaced-horizontally > *:not(:first-child)" {:margin-left (u/rem 0.5)}]
+   [".spaced-vertically > *:not(:first-child)" {:margin-top (u/rem 0.5)}]
+   [".spaced-vertically-3 > *:not(:first-child)" {:margin-top (u/rem 1.5)}]
    [".children-inline-blocks > *" {:display :inline-block}]
    [:.form-group {:text-align "initial"}]
    [:.navbar-flex {:display "flex"

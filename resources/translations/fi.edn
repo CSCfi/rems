@@ -103,6 +103,8 @@
                    :enable "Ota käyttöön"
                    :end "Loppu"
                    :errors {:duplicate-resid "Resurssi on jo olemassa organisaatiossa."}
+                   :field "Kenttä \"%1\""
+                   :fields "Kentät"
                    :form "Lomake"
                    :forms "Lomakkeet"
                    :id "Id"
@@ -198,6 +200,7 @@
                 :optional "Ei pakollinen"
                 :options "Valinnat"
                 :title "Lomakkeen nimi"
+                :type "Tyyppi"
                 :type-attachment "Liitetiedosto"
                 :type-date "Päivämäärä"
                 :type-description "Kuvaus"

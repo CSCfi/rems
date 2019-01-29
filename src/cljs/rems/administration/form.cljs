@@ -1,10 +1,11 @@
 (ns rems.administration.form
-  (:require [re-frame.core :as rf]
+  (:require [clojure.string :as str]
+            [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.atoms :refer [info-field]]
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
-            [rems.text :refer [localize-time text]]
+            [rems.text :refer [localize-time text text-format]]
             [rems.util :refer [dispatch! fetch put!]]))
 
 (rf/reg-event-fx
@@ -39,22 +40,54 @@
    {:href "/#/administration/create-form"}
    (text :t.administration/create-form)])
 
-(defn form-view [form]
-  [collapsible/component
-   {:id "form"
-    :title (text :t.administration/form)
-    :always [:div
-             [info-field (text :t.administration/id) (:id form)]
-             [info-field (text :t.administration/organization) (:organization form)]
-             [info-field (text :t.administration/title) (:title form)]
-             [info-field (text :t.administration/start) (localize-time (:start form))]
-             [info-field (text :t.administration/end) (localize-time (:end form))]
-             [info-field (text :t.administration/active) (str (:active form))]
-             [:div.col.commands
-              [back-button]]]}])
+(defn inline-info-field [text value]
+  [info-field text value {:inline? true}])
+
+(defn get-localized-value [field key language]
+  (key (first (filter (comp #{(name language)} :langcode)
+                      (:localizations field)))))
+
+(defn form-field [field language]
+  (into [:div.form-item
+         [:h4 (text-format :t.administration/field (get-localized-value field :title language))]]
+        (concat
+         (for [localization (:localizations field)]
+           [inline-info-field (str (text :t.administration/title)
+                                   " "
+                                   (str/upper-case (name (:langcode localization)))) (:title localization)])
+         [[inline-info-field (text :t.create-form/type) (text (keyword (str "t.create-form/type-" (:type field))))]
+          [inline-info-field (text :t.create-form/input-prompt) (get-localized-value field :inputprompt language)]
+          [inline-info-field (text :t.create-form/optional) (str (:formitemoptional field))]
+          [inline-info-field (text :t.create-form/maxlength) (:maxlength field)]])))
+
+(defn form-fields [fields language]
+  (into [:div]
+        (for [field (sort-by :itemorder fields)]
+          [form-field field language])))
+
+(defn form-view [form language]
+  [:div.spaced-vertically-3
+   [collapsible/component
+    {:id "form"
+     :title [:span (:organization form) "/" (:title form)]
+     :always [:div
+              [inline-info-field (text :t.administration/organization) (:organization form)]
+              [inline-info-field (text :t.administration/title) (:title form)]
+              [inline-info-field (text :t.administration/start) (localize-time (:start form))]
+              [inline-info-field (text :t.administration/end) (localize-time (:end form))]
+              [inline-info-field (text :t.administration/active) (str (:active form))]
+              [:div.col.commands
+               [back-button]]]}]
+   [collapsible/component
+    {:id "fields"
+     :title [:span (text :t.administration/fields)]
+     :collapse [form-fields (:fields form) language]}]
+   ;; TODO Do we support form licenses?
+   ])
 
 (defn form-page []
   (let [form (rf/subscribe [::form])
+        language (rf/subscribe [:language])
         loading? (rf/subscribe [::loading?])]
     (fn []
       [:div
@@ -62,4 +95,4 @@
        [:h2 (text :t.administration/form)]
        (if @loading?
          [spinner/big]
-         [form-view @form])])))
+         [form-view @form @language])])))
