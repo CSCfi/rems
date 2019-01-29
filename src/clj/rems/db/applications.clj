@@ -983,11 +983,14 @@
       coerce-dynamic-event-commons
       coerce-dynamic-event-specifics))
 
+(defn validate-dynamic-event [event]
+  (s/validate dynamic/Event event))
+
 (defn json->event [json]
   (coerce-dynamic-event (cheshire/parse-string json)))
 
 (defn event->json [event]
-  (s/validate dynamic/Event event)
+  (validate-dynamic-event event)
   (cheshire/generate-string event))
 
 (defn- fix-event-from-db [event]
