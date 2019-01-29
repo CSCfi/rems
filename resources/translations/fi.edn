@@ -89,18 +89,32 @@
             :view "Näytä"
             :withdraw "Palauta muokattavaksi"
             :withdraw-success "Hakemus palautettu muokattavaksi"}
-  :administration {:cancel "Peruuta"
+  :administration {:active "Aktiivinen"
+                   :cancel "Peruuta"
+                   :catalogue-items "Kielivarat"
                    :create-catalogue-item "Uusi kielivara"
                    :create-form "Uusi lomake"
                    :create-license "Uusi lisenssi"
                    :create-resource "Uusi resurssi"
                    :create-workflow "Uusi työvuo"
+                   :created "Luotu"
                    :disable "Poista käytöstä"
                    :enable "Ota käyttöön"
+                   :end "Loppu"
                    :errors {:duplicate-resid "Resurssi on jo olemassa organisaatiossa."}
+                   :form "Lomake"
+                   :forms "Lomakkeet"
+                   :licenses "Lisenssit"
                    :organization "Organisaatio"
                    :organization-placeholder "testorganization.org"
-                   :save "Tallenna"}
+                   :resource "Resurssi"
+                   :resources "Resurssit"
+                   :save "Tallenna"
+                   :start "Alku"
+                   :title "Nimi"
+                   :type "Tyyppi"
+                   :workflow "Työvuo"
+                   :workflows "Työvuot"}
   :applicant-info {:applicant "Hakija"
                    :email "Sähköposti"
                    :username "Nimi"}
@@ -111,12 +125,13 @@
                                   :closed "Poistettu"
                                   :comment-requested "Pyydetty kommenttia"
                                   :commented "Kommentoitu"
-                                  :decision-requested "Pyydetty päätöstä"
                                   :decided "Päätetty"
+                                  :decision-requested "Pyydetty päätöstä"
+                                  :draft-saved "Muokattu"
+                                  :member-added "Lisätty jäsen"
                                   :rejected "Hylätty"
                                   :returned "Palautettu muokattavaksi"
-                                  :submitted "Lähtetetty hyväksyttäväksi"
-                                  :member-added "Lisätty jäsen"}
+                                  :submitted "Lähtetetty hyväksyttäväksi"}
                  :dynamic-states {:approved "Hyväksytty"
                                   :closed "Poistettu"
                                   :draft "Luonnos"
@@ -133,6 +148,7 @@
                           :return "Muutoksia pyydetty"
                           :review "Katselmoitu"
                           :review-request "Lähetetty katselmoitavaksi"
+                          :save "Muokattu"
                           :third-party-review "Katselmoitu ulkoisen toimijan toimesta"
                           :unknown "Unknown"
                           :withdraw "Palautettu muokattavaksi"}
@@ -194,7 +210,7 @@
                    :license-text "Lisenssin teksti"
                    :link-to-license "Linkki lisenssiin"
                    :title "Lisenssin nimi"}
-  :create-resource {:licenses-selection "Käyttöehdot"
+  :create-resource {:licenses-selection "Lisenssit"
                     :resid "Resurssin tunniste"
                     :resid-placeholder "urn:test:fi:some-uuid"}
   :create-workflow {:add-round "Lisää kierros"

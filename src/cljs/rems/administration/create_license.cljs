@@ -1,4 +1,4 @@
-(ns rems.administration.license
+(ns rems.administration.create-license
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.administration.components :refer [radio-button-group text-field textarea-autosize]]
@@ -65,7 +65,7 @@
 (defn- create-license [request]
   (post! "/api/licenses/create" {:params request
                                  ; TODO: error handling
-                                 :handler (fn [resp] (dispatch! "#/administration"))}))
+                                 :handler (fn [resp] (dispatch! "#/administration/licenses"))}))
 
 (rf/reg-event-fx
  ::create-license
@@ -121,7 +121,7 @@
 
 (defn- cancel-button []
   [:button.btn.btn-secondary
-   {:on-click #(dispatch! "/#/administration")}
+   {:on-click #(dispatch! "/#/administration/licenses")}
    (text :t.administration/cancel)])
 
 (defn create-license-page []
