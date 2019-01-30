@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [reagent.core :as r]
+            [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [text-field]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
@@ -166,24 +167,27 @@
                               (dispatch! "#/administration/resources"))
                             (reset! state nil))]
     (fn []
-      [collapsible/component
-       {:id "create-resource"
-        :title (text :t.navigation/create-resource)
-        :always [:div
-                 (when (:status @state)
-                   [status-modal (assoc @state
-                                        :description (text :t.administration/save)
-                                        :on-close on-modal-close)])
-                 (if @loading?
-                   [:div#resource-loader [spinner/big]]
-                   [:div#resource-editor
-                    [resource-organization-field]
-                    [resource-id-field]
-                    [resource-licenses-field]
+      [:div
+       [administration-navigator-container]
+       [:h2 (text :t.administration/create-resource)]
+       [collapsible/component
+        {:id "create-resource"
+         :title (text :t.administration/create-resource)
+         :always [:div
+                  (when (:status @state)
+                    [status-modal (assoc @state
+                                         :description (text :t.administration/save)
+                                         :on-close on-modal-close)])
+                  (if @loading?
+                    [:div#resource-loader [spinner/big]]
+                    [:div#resource-editor
+                     [resource-organization-field]
+                     [resource-id-field]
+                     [resource-licenses-field]
 
-                    [:div.col.commands
-                     [cancel-button]
-                     [save-resource-button {:form @form
-                                            :on-success on-success
-                                            :on-pending on-pending
-                                            :on-error on-error}]]])]}])))
+                     [:div.col.commands
+                      [cancel-button]
+                      [save-resource-button {:form @form
+                                             :on-success on-success
+                                             :on-pending on-pending
+                                             :on-error on-error}]]])]}]])))

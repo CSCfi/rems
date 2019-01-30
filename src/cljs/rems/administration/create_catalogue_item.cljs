@@ -1,6 +1,7 @@
 (ns rems.administration.create-catalogue-item
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
+            [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [text-field]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
@@ -74,9 +75,6 @@
  (fn [db [_ form]]
    (assoc-in db [::form :form] form)))
 
-
-; form submit
-
 (defn- valid-request? [request]
   (and (not (str/blank? (:title request)))
        (number? (:wfid request))
@@ -103,8 +101,6 @@
    {}))
 
 
-; available workflows
-
 (defn- fetch-workflows []
   (fetch "/api/workflows/?active=true" {:handler #(rf/dispatch [::fetch-workflows-result %])}))
 
@@ -123,9 +119,6 @@
  ::workflows
  (fn [db _]
    (::workflows db)))
-
-
-; available resources
 
 (defn- fetch-resources []
   (fetch "/api/resources/?active=true" {:handler #(rf/dispatch [::fetch-resources-result %])}))
@@ -146,8 +139,6 @@
  (fn [db _]
    (::resources db)))
 
-
-; available forms
 
 (defn- fetch-forms []
   (fetch "/api/forms/?active=true" {:handler #(rf/dispatch [::fetch-forms-result %])}))
@@ -242,18 +233,21 @@
 
 (defn create-catalogue-item-page []
   (let [loading? (rf/subscribe [::loading?])]
-    [collapsible/component
-     {:id "create-catalogue-item"
-      :title (text :t.navigation/create-catalogue-item)
-      :always [:div
-               (if @loading?
-                 [:div#catalogue-item-loader [spinner/big]]
-                 [:div#catalogue-item-editor
-                  [catalogue-item-title-field]
-                  [catalogue-item-workflow-field]
-                  [catalogue-item-resource-field]
-                  [catalogue-item-form-field]
+    [:div
+     [administration-navigator-container]
+     [:h2 (text :t.administration/create-catalogue-item)]
+     [collapsible/component
+      {:id "create-catalogue-item"
+       :title (text :t.administration/create-catalogue-item)
+       :always [:div
+                (if @loading?
+                  [:div#catalogue-item-loader [spinner/big]]
+                  [:div#catalogue-item-editor
+                   [catalogue-item-title-field]
+                   [catalogue-item-workflow-field]
+                   [catalogue-item-resource-field]
+                   [catalogue-item-form-field]
 
-                  [:div.col.commands
-                   [cancel-button]
-                   [save-catalogue-item-button]]])]}]))
+                   [:div.col.commands
+                    [cancel-button]
+                    [save-catalogue-item-button]]])]}]]))

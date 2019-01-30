@@ -47,12 +47,34 @@
 
 (defn administration-navigator [selected]
   [:div.navbar.mb-4
-   [to-administration [:nav-item :nav-link (when (= selected :rems.administration/administration) :active)]]
-   [to-catalogue-items [:nav-item :nav-link (when (= selected :rems.administration/catalogue-items) :active)]]
-   [to-resources [:nav-item :nav-link (when (= selected :rems.administration/resources) :active)]]
-   [to-forms [:nav-item :nav-link (when (= selected :rems.administration/forms) :active)]]
-   [to-workflows [:nav-item :nav-link (when (= selected :rems.administration/workflows) :active)]]
-   [to-licenses [:nav-item :nav-link (when (= selected :rems.administration/licenses) :active)]]])
+   [to-administration [:nav-item :nav-link (when (contains? #{:rems.administration/administration}
+                                                            selected)
+                                             :active)]]
+   [to-catalogue-items [:nav-item :nav-link (when (contains? #{:rems.administration/catalogue-items
+                                                               :rems.administration/catalogue-item
+                                                               :rems.administration/create-catalogue-item}
+                                                             selected)
+                                              :active)]]
+   [to-resources [:nav-item :nav-link (when (contains? #{:rems.administration/resources
+                                                         :rems.administration/resource
+                                                         :rems.administration/create-resource}
+                                                       selected)
+                                        :active)]]
+   [to-forms [:nav-item :nav-link (when (contains? #{:rems.administration/forms
+                                                     :rems.administration/form
+                                                     :rems.administration/create-form}
+                                                   selected)
+                                    :active)]]
+   [to-workflows [:nav-item :nav-link (when (contains? #{:rems.administration/workflows
+                                                         :rems.administration/workflow
+                                                         :rems.administration/create-workflow}
+                                                       selected)
+                                        :active)]]
+   [to-licenses [:nav-item :nav-link (when (contains? #{:rems.administration/licenses
+                                                        :rems.administration/license
+                                                        :rems.administration/create-license}
+                                                      selected)
+                                       :active)]]])
 
 (defn administration-navigator-container
   "Component for showing a navigator in the administration pages.
