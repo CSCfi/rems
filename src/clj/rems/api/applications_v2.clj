@@ -93,6 +93,44 @@
   (assoc application
          :modified (:time event)))
 
+(defn- merge-lists-by [key list1 list2]
+  (let [match? (fn [item1 item2]
+                 (= (get item1 key)
+                    (get item2 key)))
+        merged (map (fn [item1]
+                      (let [item2 (first (filter (partial match? item1) list2))]
+                        (merge item1 item2)))
+                    list1)
+        unmatched (filter (fn [item2]
+                            (not-any? (partial match? item2) list1))
+                          list2)]
+    (concat merged unmatched)))
+
+(deftest test-merge-lists-by
+  (testing "merges objects with the same key"
+    (is (= [{:id 1 :foo "foo1" :bar "bar1"}
+            {:id 2 :foo "foo2" :bar "bar2"}]
+           (merge-lists-by :id
+                           [{:id 1 :foo "foo1"}
+                            {:id 2 :foo "foo2"}]
+                           [{:id 1 :bar "bar1"}
+                            {:id 2 :bar "bar2"}]))))
+  (testing "last list overwrites values"
+    (is (= [{:id 1 :foo "B"}]
+           (merge-lists-by :id
+                           [{:id 1 :foo "A"}]
+                           [{:id 1 :foo "B"}]))))
+  (testing "first list determines the order"
+    (is (= [{:id 1} {:id 2}]
+           (merge-lists-by :id
+                           [{:id 1} {:id 2}]
+                           [{:id 2} {:id 1}]))))
+  (testing "unmatching items are added to the end"
+    (is (= [{:id 1} {:id 2} {:id 3} {:id 4}]
+           (merge-lists-by :id
+                           [{:id 1} {:id 2}]
+                           [{:id 3} {:id 4}])))))
+
 (defn- build-application-view [events]
   (reduce (fn [application event]
             (-> application
