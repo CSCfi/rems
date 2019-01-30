@@ -108,6 +108,7 @@
                    :form "Lomake"
                    :forms "Lomakkeet"
                    :id "Id"
+                   :license "Lisenssi"
                    :licenses "Lisenssit"
                    :organization "Organisaatio"
                    :organization-placeholder "testorganization.org"

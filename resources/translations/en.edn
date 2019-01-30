@@ -108,6 +108,7 @@
                    :form "Form"
                    :forms "Forms"
                    :id "Id"
+                   :license "License"
                    :licenses "Licenses"
                    :organization "Organization"
                    :organization-placeholder "testorganization.org"

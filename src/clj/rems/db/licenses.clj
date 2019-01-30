@@ -36,6 +36,13 @@
        (format-licenses)
        (localize-licenses)))
 
+(defn get-license
+  "Get a single license by id"
+  [id]
+  (->> (db/get-license {:id id})
+       (format-license)
+       (localize-license (get-license-localizations))))
+
 ;; NB! There are three different "license activity" concepts:
 ;; - start and end in resource_licenses table
 ;; - start and end in workflow_licenses table
