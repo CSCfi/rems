@@ -185,107 +185,76 @@
                                         :optional false
                                         :options []
                                         :maxlength 100
-                                        :type "text"}]}}}]
+                                        :type "text"}]}}}
+
+        ;; expected values
+        new-application {:application-id 1
+                         :created (DateTime. 1000)
+                         :modified (DateTime. 1000)
+                         :applicant "applicant"
+                         ;; TODO: resource details
+                         :resources [{:resource-id 11
+                                      :catalogue-item-id 10}
+                                     {:resource-id 21
+                                      :catalogue-item-id 20}]
+                         ;; TODO: license details
+                         :licenses [{:license-id 30
+                                     :accepted false}
+                                    {:license-id 31
+                                     :accepted false}]
+                         :form-id 40
+                         :form-fields [{:field-id 41
+                                        :value ""
+                                        :type :text,
+                                        :title {:en "en title", :fi "fi title"},
+                                        :input-prompt {:en "en inputprompt", :fi "fi inputprompt"}
+                                        :optional false
+                                        :options []
+                                        :max-length 100}
+                                       {:field-id 42
+                                        :value ""
+                                        :type :text,
+                                        :title {:en "en title", :fi "fi title"},
+                                        :input-prompt {:en "en inputprompt", :fi "fi inputprompt"}
+                                        :optional false
+                                        :options []
+                                        :max-length 100}]
+                         ;; TODO: workflow details (e.g. allowed commands)
+                         :workflow-id 50
+                         :workflow-type :dynamic}
+
+        ;; test double events
+        created-event {:event :event/created
+                       :application-id 1
+                       :time (DateTime. 1000)
+                       :actor "applicant"
+                       :resources [{:resource-id 11
+                                    :catalogue-item-id 10}
+                                   {:resource-id 21
+                                    :catalogue-item-id 20}]
+                       :licenses [{:license-id 30}
+                                  {:license-id 31}]
+                       :form-id 40
+                       :workflow-id 50
+                       :workflow-type :dynamic}]
+
     (testing "new application"
-      (is (= {:application-id 1
-              :created (DateTime. 1000)
-              :modified (DateTime. 1000)
-              :applicant "applicant"
-              ;; TODO: resource details
-              :resources [{:resource-id 11
-                           :catalogue-item-id 10}
-                          {:resource-id 21
-                           :catalogue-item-id 20}]
-              ;; TODO: license details
-              :licenses [{:license-id 30
-                          :accepted false}
-                         {:license-id 31
-                          :accepted false}]
-              :form-id 40
-              :form-fields [{:field-id 41
-                             :value ""
-                             :type :text,
-                             :title {:en "en title", :fi "fi title"},
-                             :input-prompt {:en "en inputprompt", :fi "fi inputprompt"}
-                             :optional false
-                             :options []
-                             :max-length 100}
-                            {:field-id 42
-                             :value ""
-                             :type :text,
-                             :title {:en "en title", :fi "fi title"},
-                             :input-prompt {:en "en inputprompt", :fi "fi inputprompt"}
-                             :optional false
-                             :options []
-                             :max-length 100}]
-              ;; TODO: workflow details (e.g. allowed commands)
-              :workflow-id 50
-              :workflow-type :dynamic}
+      (is (= new-application
              (build-application-view
               (valid-events
-               [{:event :event/created
-                 :application-id 1
-                 :time (DateTime. 1000)
-                 :actor "applicant"
-                 :resources [{:resource-id 11
-                              :catalogue-item-id 10}
-                             {:resource-id 21
-                              :catalogue-item-id 20}]
-                 :licenses [{:license-id 30}
-                            {:license-id 31}]
-                 :form-id 40
-                 :workflow-id 50
-                 :workflow-type :dynamic}])
+               [created-event])
               externals))))
 
-    (testing "saved draft"
-      ;; TODO: assert only the interesting parts, i.e. those that have changed
-      (is (= {:application-id 1
-              :created (DateTime. 1000)
-              :modified (DateTime. 2000) ; changed!
-              :applicant "applicant"
-              :resources [{:resource-id 11
-                           :catalogue-item-id 10}
-                          {:resource-id 21
-                           :catalogue-item-id 20}]
-              :licenses [{:license-id 30
-                          :accepted true} ; changed!
-                         {:license-id 31
-                          :accepted true}] ; changed!
-              :form-id 40
-              :form-fields [{:field-id 41
-                             :value "foo" ; changed!
-                             :type :text,
-                             :title {:en "en title", :fi "fi title"},
-                             :input-prompt {:en "en inputprompt", :fi "fi inputprompt"}
-                             :optional false
-                             :options []
-                             :max-length 100}
-                            {:field-id 42
-                             :value "bar" ; changed!
-                             :type :text,
-                             :title {:en "en title", :fi "fi title"},
-                             :input-prompt {:en "en inputprompt", :fi "fi inputprompt"}
-                             :optional false
-                             :options []
-                             :max-length 100}]
-              :workflow-id 50
-              :workflow-type :dynamic}
+    (testing "draft saved"
+      (is (= (-> new-application
+                 (assoc-in [:modified] (DateTime. 2000))
+                 (assoc-in [:licenses 0 :accepted] true)
+                 (assoc-in [:licenses 1 :accepted] true)
+                 (assoc-in [:form-fields 0 :value] "foo")
+                 (assoc-in [:form-fields 1 :value] "bar"))
              (build-application-view
               (valid-events
-               [{:event :event/created
-                 :application-id 1
-                 :time (DateTime. 1000)
-                 :actor "applicant"
-                 :resources [{:resource-id 11
-                              :catalogue-item-id 10}
-                             {:resource-id 21
-                              :catalogue-item-id 20}]
-                 :licenses [{:license-id 30}
-                            {:license-id 31}]
-                 :form-id 40
-                 :workflow-id 50
-                 :workflow-type :dynamic}
+               [created-event
                 {:event :event/draft-saved
                  :application-id 42
                  :time (DateTime. 2000)
