@@ -90,6 +90,7 @@
             :withdraw "Palauta muokattavaksi"
             :withdraw-success "Hakemus palautettu muokattavaksi"}
   :administration {:active "Aktiivinen"
+                   :back "Takaisin"
                    :cancel "Peruuta"
                    :catalogue-items "Kielivarat"
                    :create-catalogue-item "Uusi kielivara"
@@ -102,8 +103,11 @@
                    :enable "Ota käyttöön"
                    :end "Loppu"
                    :errors {:duplicate-resid "Resurssi on jo olemassa organisaatiossa."}
+                   :field "Kenttä \"%1\""
+                   :fields "Kentät"
                    :form "Lomake"
                    :forms "Lomakkeet"
+                   :id "Id"
                    :licenses "Lisenssit"
                    :organization "Organisaatio"
                    :organization-placeholder "testorganization.org"
@@ -113,6 +117,7 @@
                    :start "Alku"
                    :title "Nimi"
                    :type "Tyyppi"
+                   :view "Avaa"
                    :workflow "Työvuo"
                    :workflows "Työvuot"}
   :applicant-info {:applicant "Hakija"
@@ -197,6 +202,7 @@
                 :optional "Ei pakollinen"
                 :options "Valinnat"
                 :title "Lomakkeen nimi"
+                :type "Tyyppi"
                 :type-attachment "Liitetiedosto"
                 :type-date "Päivämäärä"
                 :type-description "Kuvaus"

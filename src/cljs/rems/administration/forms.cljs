@@ -45,6 +45,11 @@
    {:href "/#/administration/create-form"}
    (text :t.administration/create-form)])
 
+(defn- to-view-form [form]
+  [:a.btn.btn-primary
+   {:href (str "/#/administration/forms/" (:id form))}
+   (text :t.administration/view)])
+
 (defn- forms-columns []
   {:organization {:header #(text :t.administration/organization)
                   :value :organization}
@@ -56,7 +61,7 @@
          :value (comp localize-time :end)}
    :active {:header #(text :t.administration/active)
             :value (comp readonly-checkbox :active)}
-   :commands {:value :no-value
+   :commands {:value (fn [form] [to-view-form form])
               :sortable? false
               :filterable? false}})
 

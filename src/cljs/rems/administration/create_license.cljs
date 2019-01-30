@@ -1,6 +1,7 @@
 (ns rems.administration.create-license
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
+            [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [radio-button-group text-field textarea-autosize]]
             [rems.collapsible :as collapsible]
             [rems.text :refer [text localize-item]]
@@ -15,8 +16,6 @@
    (reset-form db)))
 
 
-; form state
-
 (rf/reg-sub
  ::form
  (fn [db _]
@@ -27,8 +26,6 @@
  (fn [db [_ keys value]]
    (assoc-in db (concat [::form] keys) value)))
 
-
-; form submit
 
 (def license-type-link "link")
 (def license-type-text "text")
@@ -64,7 +61,7 @@
 
 (defn- create-license [request]
   (post! "/api/licenses/create" {:params request
-                                 ; TODO: error handling
+                                 ;; TODO: error handling
                                  :handler (fn [resp] (dispatch! "#/administration/licenses"))}))
 
 (rf/reg-event-fx
@@ -107,7 +104,7 @@
 (defn- license-text-field [language]
   (when (= license-type-text (current-licence-type))
     [textarea-autosize context {:keys [:localizations language :text]
-                         :label (text :t.create-license/license-text)}]))
+                                :label (text :t.create-license/license-text)}]))
 
 (defn- save-license-button []
   (let [form @(rf/subscribe [::form])
@@ -127,23 +124,26 @@
 (defn create-license-page []
   (let [default-language @(rf/subscribe [:default-language])
         languages @(rf/subscribe [:languages])]
-    [collapsible/component
-     {:id "create-license"
-      :title (text :t.navigation/create-license)
-      :always [:div
-               [language-heading default-language]
-               [license-title-field default-language]
-               [license-type-radio-group]
-               [license-link-field default-language]
-               [license-text-field default-language]
+    [:div
+     [administration-navigator-container]
+     [:h2 (text :t.administration/create-license)]
+     [collapsible/component
+      {:id "create-license"
+       :title (text :t.administration/create-license)
+       :always [:div
+                [language-heading default-language]
+                [license-title-field default-language]
+                [license-type-radio-group]
+                [license-link-field default-language]
+                [license-text-field default-language]
 
-               (doall (for [language (remove #(= % default-language) languages)]
-                        [:div {:key language}
-                         [language-heading language]
-                         [license-title-field language]
-                         [license-link-field language]
-                         [license-text-field language]]))
+                (doall (for [language (remove #(= % default-language) languages)]
+                         [:div {:key language}
+                          [language-heading language]
+                          [license-title-field language]
+                          [license-link-field language]
+                          [license-text-field language]]))
 
-               [:div.col.commands
-                [cancel-button]
-                [save-license-button]]]}]))
+                [:div.col.commands
+                 [cancel-button]
+                 [save-license-button]]]}]]))
