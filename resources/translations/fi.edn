@@ -110,6 +110,8 @@
                    :id "Id"
                    :license "Lisenssi"
                    :licenses "Lisenssit"
+                   :license-field "License \"%1\""
+                   :no-licenses "Ei lisenssejä"
                    :organization "Organisaatio"
                    :organization-placeholder "testorganization.org"
                    :resource "Resurssi"
