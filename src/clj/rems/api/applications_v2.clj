@@ -93,18 +93,20 @@
   (assoc application
          :modified (:time event)))
 
-(defn- merge-lists-by [key list1 list2]
-  (let [match? (fn [item1 item2]
-                 (= (get item1 key)
-                    (get item2 key)))
-        merged (map (fn [item1]
-                      (let [item2 (first (filter (partial match? item1) list2))]
-                        (merge item1 item2)))
-                    list1)
-        unmatched (filter (fn [item2]
-                            (not-any? (partial match? item2) list1))
-                          list2)]
-    (concat merged unmatched)))
+(defn- merge-lists-by
+  "Returns a list of merged elements from list1 and list2
+   where f returned the same value for both elements."
+  [f list1 list2]
+  (let [groups (group-by f (concat list1 list2))
+        merged-groups (map-vals #(apply merge %) groups)
+        merged-in-order (map (fn [item1]
+                               (get merged-groups (f item1)))
+                             list1)
+        list1-keys (set (map f list1))
+        orphans-in-order (filter (fn [item2]
+                                   (not (contains? list1-keys (f item2))))
+                                 list2)]
+    (concat merged-in-order orphans-in-order)))
 
 (deftest test-merge-lists-by
   (testing "merges objects with the same key"
@@ -124,12 +126,20 @@
     (is (= [{:id 1} {:id 2}]
            (merge-lists-by :id
                            [{:id 1} {:id 2}]
-                           [{:id 2} {:id 1}]))))
-  (testing "unmatching items are added to the end"
+                           [{:id 2} {:id 1}])))
+    (is (= [{:id 2} {:id 1}]
+           (merge-lists-by :id
+                           [{:id 2} {:id 1}]
+                           [{:id 1} {:id 2}]))))
+  (testing "unmatching items are added to the end in order"
     (is (= [{:id 1} {:id 2} {:id 3} {:id 4}]
            (merge-lists-by :id
                            [{:id 1} {:id 2}]
-                           [{:id 3} {:id 4}])))))
+                           [{:id 3} {:id 4}])))
+    (is (= [{:id 4} {:id 3} {:id 2} {:id 1}]
+           (merge-lists-by :id
+                           [{:id 4} {:id 3}]
+                           [{:id 2} {:id 1}])))))
 
 (defn- build-application-view [events]
   (reduce (fn [application event]
