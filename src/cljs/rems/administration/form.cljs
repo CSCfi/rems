@@ -75,13 +75,12 @@
               [inline-info-field (text :t.administration/title) (:title form)]
               [inline-info-field (text :t.administration/start) (localize-time (:start form))]
               [inline-info-field (text :t.administration/end) (localize-time (:end form))]
-              [inline-info-field (text :t.administration/active) (str (:active form))]
-              [:div.col.commands
-               [back-button]]]}]
+              [inline-info-field (text :t.administration/active) (str (:active form))]]}]
    [collapsible/component
     {:id "fields"
      :title [:span (text :t.administration/fields)]
      :collapse [form-fields (:fields form) language]}]
+   [:div.col.commands [back-button]]
    ;; TODO Do we support form licenses?
    ])
 
