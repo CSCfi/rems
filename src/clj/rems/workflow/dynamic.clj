@@ -78,7 +78,12 @@
 (s/defschema CreatedEvent
   (assoc EventBase
          :event (s/eq :event/created)
-         :catalogue-items [s/Int]))
+         :resources [{:resource-id s/Int
+                      :catalogue-item-id s/Int}]
+         :licenses [{:license-id s/Int}]
+         :form-id s/Int
+         :workflow-id s/Int
+         :workflow-type s/Keyword))
 (s/defschema DecidedEvent
   (assoc EventBase
          :event (s/eq :event/decided)

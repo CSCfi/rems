@@ -1,6 +1,8 @@
 (ns ^:focused rems.api.applications-v2
   (:require [clojure.test :refer [deftest is testing]]
+            [medley.core :refer [map-vals]]
             [rems.db.applications :as applications]
+            [rems.db.core :as db]
             [rems.workflow.dynamic :as dynamic])
   (:import (org.joda.time DateTime)))
 
@@ -14,22 +16,14 @@
          :application-id (:application-id event)
          :created (:time event)
          :applicant (:actor event)
-         ;; TODO: hard-coded form
-         :form-fields [{:field-id 5
-                        :value ""}
-                       {:field-id 6
-                        :value ""}]
-         ;; TODO: hard-coded licenses
-         :licenses [{:license-id 7
-                     :accepted false}
-                    {:license-id 8
-                     :accepted false}]))
-
-
-(defn- set-form-field-values [fields new-values]
-  (map (fn [field]
-         (assoc field :value (get new-values (:field-id field))))
-       fields))
+         :resources (:resources event)
+         :licenses (map (fn [license]
+                          (assoc license :accepted false))
+                        (:licenses event))
+         :form-id (:form-id event)
+         :form-fields []
+         :workflow-id (:workflow-id event)
+         :workflow-type (:workflow-type event)))
 
 (defn- set-accepted-licences [licenses acceptance]
   (map (fn [license]
@@ -39,7 +33,10 @@
 (defmethod application-view :event/draft-saved
   [application event]
   (-> application
-      (update :form-fields set-form-field-values (:items event))
+      (assoc :form-fields (map (fn [[field-id value]]
+                                 {:field-id field-id
+                                  :value value})
+                               (:items event)))
       (update :licenses set-accepted-licences (:licenses event))))
 
 
@@ -141,13 +138,29 @@
                            [{:id 4} {:id 3}]
                            [{:id 2} {:id 1}])))))
 
-(defn- build-application-view [events]
-  (reduce (fn [application event]
-            (-> application
-                (application-view event)
-                (application-view-common event)))
-          {}
-          events))
+(defn- assoc-form [application form]
+  (let [form-fields (map (fn [item]
+                           {:field-id (:id item)
+                            :value "" ; default for new forms
+                            :type (keyword (:type item))
+                            :title {:en (get-in item [:localizations :en :title])
+                                    :fi (get-in item [:localizations :fi :title])}
+                            :input-prompt {:en (get-in item [:localizations :en :inputprompt])
+                                           :fi (get-in item [:localizations :fi :inputprompt])}
+                            :optional (:optional item)
+                            :options (:options item)
+                            :max-length (:maxlength item)})
+                         (:items form))]
+    (assoc application :form-fields (merge-lists-by :field-id form-fields (:form-fields application)))))
+
+(defn- build-application-view [events {:keys [forms]}]
+  (let [application (reduce (fn [application event]
+                              (-> application
+                                  (application-view event)
+                                  (application-view-common event)))
+                            {}
+                            events)]
+    (assoc-form application (forms (:form-id application)))))
 
 (defn- valid-events [events]
   (doseq [event events]
@@ -155,63 +168,147 @@
   events)
 
 (deftest test-application-view
-  (testing "new application"
-    ;; TODO: catalogue items
-    (is (= {:application-id 42
-            :created (DateTime. 1000)
-            :modified (DateTime. 1000)
-            :applicant "applicant"
-            :form-fields [{:field-id 5
-                           :value ""}
-                          {:field-id 6
-                           :value ""}]
-            :licenses [{:license-id 7
-                        :accepted false}
-                       {:license-id 8
-                        :accepted false}]}
-           (build-application-view
-            (valid-events
-             [{:event :event/created
-               :application-id 42
-               :time (DateTime. 1000)
-               :actor "applicant"
-               :catalogue-items [3 4]}])))))
-  (testing "saved draft"
-    (is (= {:application-id 42
-            :created (DateTime. 1000)
-            :modified (DateTime. 2000)
-            :applicant "applicant"
-            :form-fields [{:field-id 5
-                           :value "foo"}
-                          {:field-id 6
-                           :value "bar"}]
-            :licenses [{:license-id 7
-                        :accepted true}
-                       {:license-id 8
-                        :accepted true}]}
-           (build-application-view
-            (valid-events
-             [{:event :event/created
-               :application-id 42
-               :time (DateTime. 1000)
-               :actor "applicant"
-               :catalogue-items [3 4]}
-              {:event :event/draft-saved
-               :application-id 42
-               :time (DateTime. 2000)
-               :actor "applicant"
-               ;; TODO: rename to :fields
-               :items {5 "foo"
-                       6 "bar"}
-               :licenses {7 "accepted"
-                          8 "accepted"}}]))))))
+  (let [externals {:forms {40 {:items [{:id 41
+                                        :localizations {:en {:title "en title"
+                                                             :inputprompt "en inputprompt"}
+                                                        :fi {:title "fi title"
+                                                             :inputprompt "fi inputprompt"}}
+                                        :optional false
+                                        :options []
+                                        :maxlength 100
+                                        :type "text"}
+                                       {:id 42
+                                        :localizations {:en {:title "en title"
+                                                             :inputprompt "en inputprompt"}
+                                                        :fi {:title "fi title"
+                                                             :inputprompt "fi inputprompt"}}
+                                        :optional false
+                                        :options []
+                                        :maxlength 100
+                                        :type "text"}]}}}]
+    (testing "new application"
+      (is (= {:application-id 1
+              :created (DateTime. 1000)
+              :modified (DateTime. 1000)
+              :applicant "applicant"
+              ;; TODO: resource details
+              :resources [{:resource-id 11
+                           :catalogue-item-id 10}
+                          {:resource-id 21
+                           :catalogue-item-id 20}]
+              ;; TODO: license details
+              :licenses [{:license-id 30
+                          :accepted false}
+                         {:license-id 31
+                          :accepted false}]
+              :form-id 40
+              :form-fields [{:field-id 41
+                             :value ""
+                             :type :text,
+                             :title {:en "en title", :fi "fi title"},
+                             :input-prompt {:en "en inputprompt", :fi "fi inputprompt"}
+                             :optional false
+                             :options []
+                             :max-length 100}
+                            {:field-id 42
+                             :value ""
+                             :type :text,
+                             :title {:en "en title", :fi "fi title"},
+                             :input-prompt {:en "en inputprompt", :fi "fi inputprompt"}
+                             :optional false
+                             :options []
+                             :max-length 100}]
+              ;; TODO: workflow details (e.g. allowed commands)
+              :workflow-id 50
+              :workflow-type :dynamic}
+             (build-application-view
+              (valid-events
+               [{:event :event/created
+                 :application-id 1
+                 :time (DateTime. 1000)
+                 :actor "applicant"
+                 :resources [{:resource-id 11
+                              :catalogue-item-id 10}
+                             {:resource-id 21
+                              :catalogue-item-id 20}]
+                 :licenses [{:license-id 30}
+                            {:license-id 31}]
+                 :form-id 40
+                 :workflow-id 50
+                 :workflow-type :dynamic}])
+              externals))))
+
+    (testing "saved draft"
+      ;; TODO: assert only the interesting parts, i.e. those that have changed
+      (is (= {:application-id 1
+              :created (DateTime. 1000)
+              :modified (DateTime. 2000) ; changed!
+              :applicant "applicant"
+              :resources [{:resource-id 11
+                           :catalogue-item-id 10}
+                          {:resource-id 21
+                           :catalogue-item-id 20}]
+              :licenses [{:license-id 30
+                          :accepted true} ; changed!
+                         {:license-id 31
+                          :accepted true}] ; changed!
+              :form-id 40
+              :form-fields [{:field-id 41
+                             :value "foo" ; changed!
+                             :type :text,
+                             :title {:en "en title", :fi "fi title"},
+                             :input-prompt {:en "en inputprompt", :fi "fi inputprompt"}
+                             :optional false
+                             :options []
+                             :max-length 100}
+                            {:field-id 42
+                             :value "bar" ; changed!
+                             :type :text,
+                             :title {:en "en title", :fi "fi title"},
+                             :input-prompt {:en "en inputprompt", :fi "fi inputprompt"}
+                             :optional false
+                             :options []
+                             :max-length 100}]
+              :workflow-id 50
+              :workflow-type :dynamic}
+             (build-application-view
+              (valid-events
+               [{:event :event/created
+                 :application-id 1
+                 :time (DateTime. 1000)
+                 :actor "applicant"
+                 :resources [{:resource-id 11
+                              :catalogue-item-id 10}
+                             {:resource-id 21
+                              :catalogue-item-id 20}]
+                 :licenses [{:license-id 30}
+                            {:license-id 31}]
+                 :form-id 40
+                 :workflow-id 50
+                 :workflow-type :dynamic}
+                {:event :event/draft-saved
+                 :application-id 42
+                 :time (DateTime. 2000)
+                 :actor "applicant"
+                 ;; TODO: rename to :field-values
+                 :items {41 "foo"
+                         42 "bar"}
+                 ;; TODO: change to `:accepted-licenses [30 31]` or separate to a license-accepted event
+                 :licenses {30 "accepted"
+                            31 "accepted"}}])
+              externals))))))
+
+(defn- get-form [form-id]
+  ;; TODO: produce :event/created so that we can use the form id
+  {:items (->> (db/get-form-items {:id form-id})
+               (mapv #(applications/process-item nil form-id %)))})
 
 (defn api-get-application-v2 [user-id application-id]
   (let [events (applications/get-dynamic-application-events application-id)]
     (when (not (empty? events))
       ;; TODO: return just the view
       {:id application-id
-       :view (build-application-view events)
+       :view (build-application-view events {:forms get-form})
        :events events})))
 
 (defn- transform-v2-to-v1 [application]
