@@ -15,6 +15,7 @@
    ;; TODO why do licenses have a non-localized title & content while items don't?
    :title (:title license)
    :textcontent (:textcontent license)})
+
 (defn- format-licenses [licenses]
   (mapv format-license licenses))
 
@@ -25,8 +26,10 @@
 
 (defn- localize-license [localizations license]
   (assoc license :localizations
-         (into {} (for [{:keys [langcode title textcontent]} (get localizations (:id license))]
-                    [langcode {:title title :textcontent textcontent}]))))
+         (into {} (for [{:keys [langcode title textcontent attachmentId]} (get localizations (:id license))]
+                    [langcode {:title title
+                               :textcontent textcontent
+                               :attachment-id attachmentId}]))))
 
 (defn- localize-licenses [licenses]
   (mapv (partial localize-license (get-license-localizations)) licenses))
@@ -83,12 +86,12 @@
                                      :title title
                                      :textcontent textcontent})
         licid (:id license)]
-    (doseq [[langcode localization attachment-id] localizations]
+    (doseq [[langcode localization] localizations]
       (db/create-license-localization! {:licid licid
                                         :langcode (name langcode)
                                         :title (:title localization)
                                         :textcontent (:textcontent localization)
-                                        :attachmentId attachment-id}))
+                                        :attachmentId (:attachment-id localization)}))
     {:id licid}))
 
 (defn create-license-attachment! [{:keys [tempfile filename content-type]} user-id]
