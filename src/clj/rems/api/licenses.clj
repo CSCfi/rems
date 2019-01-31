@@ -1,12 +1,13 @@
 (ns rems.api.licenses
-  (:require [compojure.api.sweet :refer :all]
-            [rems.api.schema :refer :all]
+  (:require [rems.api.schema :refer :all]
             [rems.api.util]
             [rems.db.licenses :as licenses]
+            [rems.util :as util]
+            [rems.db.core :as db]
+            [compojure.api.sweet :refer :all]
             [ring.util.http-response :refer :all]
             [schema.core :as s]
-            [ring.swagger.upload :as upload]
-            [rems.util :as util]))
+            [ring.swagger.upload :as upload]))
 
 (s/defschema CreateLicenseCommand
   {:licensetype (s/enum "link" "text" "attachment")
@@ -78,4 +79,16 @@
       :return SuccessResponse
       (if (some? (licenses/remove-license-attachment! attachment-id))
         (ok {:success true})
-        (ok {:success false})))))
+        (ok {:success false})))
+
+    (GET "/attachments/:attachment-id" []
+      :summary "Get a license's attachment"
+      :roles #{:owner}
+      :path-params [attachment-id :- (describe s/Int "attachment id")]
+      (if-let [attachment (db/get-license-attachment {:attachmentId attachment-id})]
+        (do (check-attachment-content-type (:type attachment))
+            (-> (:data attachment)
+                (java.io.ByteArrayInputStream.)
+                (ok)
+                (content-type (:type attachment))))
+        (not-found! "not found")))))

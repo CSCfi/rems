@@ -5,7 +5,8 @@
             [rems.administration.components :refer [radio-button-group text-field textarea-autosize]]
             [rems.collapsible :as collapsible]
             [rems.text :refer [text localize-item]]
-            [rems.util :refer [dispatch! fetch post!]]))
+            [rems.util :refer [dispatch! fetch post!]]
+            [rems.atoms :as atoms]))
 
 (defn- reset-form [db]
   (dissoc db ::form))
@@ -159,8 +160,9 @@
           filename (get-in form [:localizations language :attachment-filename])
           attachment-id (get-in form [:localizations language :attachment-id])
           filename-field [:a.btn.btn-secondary.mr-2
-                          {:disabled true}
-                          filename]
+                          {:href (str "api/licenses/attachments/"attachment-id)
+                           :target :_new}
+                          filename " " (atoms/external-link)]
           upload-field [:div.upload-file.mr-2
                         [:input {:style {:display "none"}
                                  :type "file"

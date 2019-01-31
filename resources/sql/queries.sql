@@ -361,6 +361,10 @@ VALUES
 -- :name remove-license-attachment! :!
 DELETE FROM license_attachment WHERE id = :id;
 
+-- :name get-license-attachment :? :1
+SELECT filename, type, data FROM license_attachment
+WHERE id = :attachmentId;
+
 -- :name create-license-localization! :insert
 INSERT INTO license_localization
 (licid, langcode, title, textcontent, attachmentId)
