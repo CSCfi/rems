@@ -173,9 +173,9 @@
      {:id "create-license"
       :title (text :t.navigation/create-license)
       :always [:div
+               [license-type-radio-group]
                [language-heading default-language]
                [license-title-field default-language]
-               [license-type-radio-group]
                [license-link-field default-language]
                [license-text-field default-language]
                [license-attachment-field default-language]
