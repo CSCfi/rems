@@ -41,7 +41,7 @@
 (defn- build-localization [data license-type]
   {:title (:title data)
    :textcontent (parse-textcontent data license-type)
-   :attachment (:attachment data)})
+   :attachment-id (:attachment-id data)})
 
 (defn- valid-localization? [data]
   (and (not (str/blank? (:title data)))
@@ -63,7 +63,7 @@
       (localize-item request default-language))))
 
 (defn- create-license [request]
-  (post! "/api/licenses/create" {:body request
+  (post! "/api/licenses/create" {:params request
                                  ;; TODO: error handling
                                  :handler (fn [resp] (dispatch! "#/administration/licenses"))}))
 
