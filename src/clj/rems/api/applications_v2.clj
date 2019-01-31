@@ -1,4 +1,4 @@
-(ns ^:focused rems.api.applications-v2
+(ns rems.api.applications-v2
   (:require [clojure.test :refer [deftest is testing]]
             [medley.core :refer [map-vals]]
             [rems.db.applications :as applications]
@@ -145,8 +145,8 @@
                             :type (keyword (:type item))
                             :title {:en (get-in item [:localizations :en :title])
                                     :fi (get-in item [:localizations :fi :title])}
-                            :input-prompt {:en (get-in item [:localizations :en :inputprompt])
-                                           :fi (get-in item [:localizations :fi :inputprompt])}
+                            :placeholder {:en (get-in item [:localizations :en :inputprompt])
+                                          :fi (get-in item [:localizations :fi :inputprompt])}
                             :optional (:optional item)
                             :options (:options item)
                             :max-length (:maxlength item)})
@@ -170,18 +170,18 @@
 (deftest test-application-view
   (let [externals {:forms {40 {:items [{:id 41
                                         :localizations {:en {:title "en title"
-                                                             :inputprompt "en inputprompt"}
+                                                             :inputprompt "en placeholder"}
                                                         :fi {:title "fi title"
-                                                             :inputprompt "fi inputprompt"}}
+                                                             :inputprompt "fi placeholder"}}
                                         :optional false
                                         :options []
                                         :maxlength 100
                                         :type "text"}
                                        {:id 42
                                         :localizations {:en {:title "en title"
-                                                             :inputprompt "en inputprompt"}
+                                                             :inputprompt "en placeholder"}
                                                         :fi {:title "fi title"
-                                                             :inputprompt "fi inputprompt"}}
+                                                             :inputprompt "fi placeholder"}}
                                         :optional false
                                         :options []
                                         :maxlength 100
@@ -205,17 +205,17 @@
                          :form-id 40
                          :form-fields [{:field-id 41
                                         :value ""
-                                        :type :text,
-                                        :title {:en "en title", :fi "fi title"},
-                                        :input-prompt {:en "en inputprompt", :fi "fi inputprompt"}
+                                        :type :text
+                                        :title {:en "en title" :fi "fi title"}
+                                        :placeholder {:en "en placeholder" :fi "fi placeholder"}
                                         :optional false
                                         :options []
                                         :max-length 100}
                                        {:field-id 42
                                         :value ""
-                                        :type :text,
-                                        :title {:en "en title", :fi "fi title"},
-                                        :input-prompt {:en "en inputprompt", :fi "fi inputprompt"}
+                                        :type :text
+                                        :title {:en "en title" :fi "fi title"}
+                                        :placeholder {:en "en placeholder" :fi "fi placeholder"}
                                         :optional false
                                         :options []
                                         :max-length 100}]
