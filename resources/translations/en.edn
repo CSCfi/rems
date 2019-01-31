@@ -116,6 +116,7 @@
                    :organization-placeholder "testorganization.org"
                    :resource "Resource"
                    :resources "Resources"
+                   :rounds "Rounds"
                    :save "Save"
                    :start "Start"
                    :title "Title"

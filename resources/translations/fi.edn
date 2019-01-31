@@ -116,6 +116,7 @@
                    :organization-placeholder "testorganization.org"
                    :resource "Resurssi"
                    :resources "Resurssit"
+                   :rounds "Rounds"
                    :save "Tallenna"
                    :start "Alku"
                    :title "Nimi"

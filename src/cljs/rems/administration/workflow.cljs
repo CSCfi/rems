@@ -71,6 +71,29 @@
                  [inline-info-field (text :t.administration/end) (localize-time (:end license))]])
         ))
 
+(defn round-view [actors]
+  [:div.form-item
+   [:h4 (text-format :t.create-workflow/round-n (inc (:round (first actors))))]
+   (let [{approvers "approver" reviewers "reviewer"} (group-by :role actors)]
+     [:div
+      (when (seq approvers)
+        [inline-info-field (text :t.create-workflow/approvers) (str/join ", " (map :actoruserid approvers))])
+      (when (seq reviewers)
+        [inline-info-field (text :t.create-workflow/reviewers) (str/join ", " (map :actoruserid reviewers))])])])
+
+(defn rounds-view [actors language]
+  (let [rounds (vals (group-by :round actors))]
+    (when (seq rounds)
+      [collapsible/component
+       {:id "rounds"
+        :title (text :t.administration/rounds)
+        :top-less-button? (> (count rounds) 5)
+        :open? (<= (count rounds 3))
+        :collapse
+        (into [:div]
+              (for [round rounds]
+                [round-view round]))}])))
+
 (defn licenses-view [licenses language]
   [collapsible/component
    {:id "licenses"
@@ -97,6 +120,7 @@
               [inline-info-field (text :t.administration/start) (localize-time (:start workflow))]
               [inline-info-field (text :t.administration/end) (localize-time (:end workflow))]
               [inline-info-field (text :t.administration/active) [readonly-checkbox (:active workflow)]]]}]
+   [rounds-view (:actors workflow) language]
    [licenses-view (:licenses workflow) language]
    [:div.col.commands [back-button]]])
 
