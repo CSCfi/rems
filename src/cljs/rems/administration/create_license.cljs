@@ -112,36 +112,36 @@
     [textarea-autosize context {:keys [:localizations language :text]
                                 :label (text :t.create-license/license-text)}]))
 
-(defn- set-attachment []
+(defn- set-attachment [language]
   (fn [event]
     (let [filecontent (aget (.. event -target -files) 0)
           form-data (doto (js/FormData.)
                       (.append "file" filecontent))]
-      (rf/dispatch [::set-form-field [:attachment-filename] (.-name filecontent)])
-      (rf/dispatch [::set-form-field [:attachment] form-data]))))
+      (rf/dispatch [::set-form-field [:localizations language :attachment-filename] (.-name filecontent)])
+      (rf/dispatch [::set-form-field [:localizations language :attachment] form-data]))))
 
-(defn- remove-attachment [_]
-  (rf/dispatch [::set-form-field [:attachment-filename] nil]))
+(defn- remove-attachment [language]
+  (fn [_]
+    (rf/dispatch [::set-form-field [:localizations language :attachment-filename] nil])
+    (rf/dispatch [::set-form-field [:localizations language :attachment] nil])))
 
 (defn- license-attachment-field [language]
   (when (= license-type-attachment (current-licence-type))
     (let [form @(rf/subscribe [::form])
-          title (get-in form [:localizations language :title])
-          filename (get form :attachment-filename)
+          filename (get-in form [:localizations language :attachment-filename])
           filename-field [:a.btn.btn-secondary.mr-2
-                          {:href (str "/api/licenses/license/?license-title=" title "&locale="language)
-                           :target :_new}
-                          filename " " (atoms/external-link)]
+                          {:disabled true}
+                          filename]
           upload-field [:div.upload-file.mr-2
                         [:input {:style {:display "none"}
                                  :type "file"
                                  :id "upload-license-button"
                                  :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
-                                 :on-change set-attachment}]
+                                 :on-change (set-attachment language)}]
                         [:button.btn.btn-secondary {:on-click #(.click (.getElementById js/document "upload-license-button"))}
                          (text :t.form/upload)]]
           remove-button [:button.btn.btn-secondary.mr-2
-                         {:on-click remove-attachment}
+                         {:on-click (remove-attachment language)}
                          (text :t.form/attachment-remove)]]
       (if (empty? filename)
         upload-field
