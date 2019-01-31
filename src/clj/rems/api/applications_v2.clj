@@ -25,6 +25,7 @@
          :workflow-id (:workflow-id event)
          :workflow-type (:workflow-type event)))
 
+
 (defn- set-accepted-licences [licenses acceptance]
   (map (fn [license]
          (assoc license :accepted (= "accepted" (get acceptance (:license-id license)))))
@@ -128,6 +129,7 @@
            (merge-lists-by :id
                            [{:id 2} {:id 1}]
                            [{:id 1} {:id 2}]))))
+  ;; TODO: or should the unmatched items be discarded? that would happen if some fields are removed from a form
   (testing "unmatching items are added to the end in order"
     (is (= [{:id 1} {:id 2} {:id 3} {:id 4}]
            (merge-lists-by :id
@@ -295,14 +297,71 @@
        :events events})))
 
 (defn- transform-v2-to-v1 [application]
-  {:id nil ; TODO
-   :catalogue-items [] ; TODO
-   :applicant-attributes {} ; TODO
-   :application {} ; TODO
-   :licenses [] ; TODO
-   :phases [] ; TODO
-   :title "" ; TODO
-   :items []}) ; TODO
+  (let [catalogue-items (map (fn [resource]
+                               {:id (:catalogue-item-id resource)
+                                :resid (:resource-ext-id resource)
+                                :wfid (:workflow-id application)
+                                :formid (:form-id application)
+                                :start nil ; TODO
+                                :state nil ; TODO
+                                :title nil ; TODO
+                                :langcode nil ; TODO
+                                :localizations nil}) ; TODO
+                             (:resources application))]
+    {:id (:form-id application)
+     :catalogue-items catalogue-items
+     :applicant-attributes {:eppn (:applicant application)
+                            :mail nil ; TODO
+                            :commonName nil} ; TODO
+     :application {:id (:application-id application)
+                   :formid (:form-id application)
+                   :wfid (:workflow-id application)
+                   :applicantuserid (:applicant application)
+                   :start (:created application)
+                   :last-modified (:modified application)
+                   :state nil ; TODO
+                   :description nil ; TODO
+                   :catalogue-items catalogue-items
+                   :form-contents {:items {} ; TODO
+                                   :licenses {}} ; TODO
+                   :events [] ; TODO
+                   :dynamic-events [] ; TODO
+                   :workflow {:type (:workflow-type application)
+                              :handlers []} ; TODO
+                   :possible-commands [] ; TODO
+                   :fnlround nil ; TODO
+                   :review-type nil ; TODO
+                   :is-applicant? nil ; TODO
+                   :can-approve? nil ; TODO
+                   :can-third-party-review? nil ; TODO
+                   :can-withdraw? nil ; TODO
+                   :can-close? nil} ; TODO
+     :licenses (map (fn [license]
+                      {:id (:license-id license)
+                       :type "license"
+                       :licensetype nil ; TODO
+                       :title nil ; TODO
+                       :start nil ; TODO
+                       :end nil ; TODO
+                       :approved (:accepted license)
+                       :textcontent nil ; TODO
+                       :localizations nil}) ; TODO
+                    (:licenses application))
+     :phases [] ; TODO
+     :title "" ; TODO
+     :items (map (fn [field]
+                   {:id (:field-id field)
+                    :type (:type field)
+                    :optional (:optional field)
+                    :options (:options field)
+                    :maxlength (:maxlength field)
+                    :value (:value field)
+                    :previous-value nil ; TODO
+                    :localizations (into {} (for [lang (distinct (concat (keys (:title field))
+                                                                         (keys (:placeholder field))))]
+                                              [lang {:title (get-in field [:title lang])
+                                                     :inputprompt (get-in field [:placeholder lang])}]))})
+                 (:form-fields application))}))
 
 (defn api-get-application-v1 [user-id application-id]
   (let [v2 (api-get-application-v2 user-id application-id)]
