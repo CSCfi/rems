@@ -45,6 +45,11 @@
    {:href "/#/administration/create-resource"}
    (text :t.administration/create-resource)])
 
+(defn- to-view-resource [resource-id]
+  [:a.btn.btn-primary
+   {:href (str "/#/administration/resources/" resource-id)}
+   (text :t.administration/view)])
+
 (defn- resources-columns []
   {:organization {:header #(text :t.administration/organization)
                   :value :organization}
@@ -56,7 +61,7 @@
          :value (comp localize-time :end)}
    :active {:header #(text :t.administration/active)
             :value (comp readonly-checkbox :active)}
-   :commands {:value :no-value
+   :commands {:value (fn [resource] [to-view-resource (:id resource)])
               :sortable? false
               :filterable? false}})
 

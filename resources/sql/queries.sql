@@ -53,6 +53,18 @@ SELECT
   endt
 FROM resource
 
+-- :name get-resource :? :1
+SELECT
+  id,
+  owneruserid,
+  modifieruserid,
+  organization,
+  resid,
+  start,
+  endt
+FROM resource
+WHERE id = :id
+
 -- :name create-resource! :insert
 -- :doc Create a single resource
 INSERT INTO resource

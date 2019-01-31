@@ -5,6 +5,11 @@
   (:import (org.postgresql.util PSQLException)
            (rems InvalidRequestException)))
 
+(defn get-resource [id]
+  (-> {:id id}
+      db/get-resource
+      db/assoc-active))
+
 (defn get-resources [filters]
   (->> (db/get-resources)
        (map db/assoc-active)
