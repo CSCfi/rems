@@ -63,7 +63,7 @@
       (localize-item request default-language))))
 
 (defn- create-license [request]
-  (post! "/api/licenses/create" {:params request
+  (post! "/api/licenses/create" {:body request
                                  ;; TODO: error handling
                                  :handler (fn [resp] (dispatch! "#/administration/licenses"))}))
 
@@ -72,6 +72,35 @@
  (fn [_ [_ request]]
    (create-license request)
    {}))
+
+(defn- save-attachment [language form-data]
+  (post! (str "api/licenses/add_attachment")
+         {:body form-data
+          :handler (fn [{:keys [id] :as response}]
+                     (js/console.log (pr-str response))
+                     (rf/dispatch [::attachment-saved language id]))}))
+
+(rf/reg-event-db
+ ::attachment-saved
+ (fn [db [_ language attachment-id]]
+   (assoc-in db [::form :localizations language :attachment-id] attachment-id)))
+
+(defn- remove-attachment [attachment-id]
+  (post! (str "api/licenses/remove_attachment?attachment-id="attachment-id)
+         {:body {}}))
+
+(rf/reg-event-fx
+ ::save-attachment
+ (fn [_ [_ language file]]
+   (save-attachment language file)
+   {}))
+
+(rf/reg-event-db
+ ::remove-attachment
+ (fn [db [_ language attachment-id]]
+   (when attachment-id
+     (remove-attachment attachment-id))
+   (assoc-in db [::form :localizations language :attachment-id] nil)))
 
 
 ;;;; UI
@@ -111,23 +140,24 @@
     [textarea-autosize context {:keys [:localizations language :text]
                                 :label (text :t.create-license/license-text)}]))
 
-(defn- set-attachment [language]
+(defn- set-attachment-event [language]
   (fn [event]
     (let [filecontent (aget (.. event -target -files) 0)
           form-data (doto (js/FormData.)
                       (.append "file" filecontent))]
       (rf/dispatch [::set-form-field [:localizations language :attachment-filename] (.-name filecontent)])
-      (rf/dispatch [::set-form-field [:localizations language :attachment] form-data]))))
+      (rf/dispatch [::save-attachment language form-data]))))
 
-(defn- remove-attachment [language]
+(defn- remove-attachment-event [language attachment-id]
   (fn [_]
     (rf/dispatch [::set-form-field [:localizations language :attachment-filename] nil])
-    (rf/dispatch [::set-form-field [:localizations language :attachment] nil])))
+    (rf/dispatch [::remove-attachment language attachment-id])))
 
 (defn- license-attachment-field [language]
   (when (= license-type-attachment (current-licence-type))
     (let [form @(rf/subscribe [::form])
           filename (get-in form [:localizations language :attachment-filename])
+          attachment-id (get-in form [:localizations language :attachment-id])
           filename-field [:a.btn.btn-secondary.mr-2
                           {:disabled true}
                           filename]
@@ -136,11 +166,11 @@
                                  :type "file"
                                  :id "upload-license-button"
                                  :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
-                                 :on-change (set-attachment language)}]
+                                 :on-change (set-attachment-event language)}]
                         [:button.btn.btn-secondary {:on-click #(.click (.getElementById js/document "upload-license-button"))}
                          (text :t.form/upload)]]
           remove-button [:button.btn.btn-secondary.mr-2
-                         {:on-click (remove-attachment language)}
+                         {:on-click (remove-attachment-event language attachment-id)}
                          (text :t.form/attachment-remove)]]
       (if (empty? filename)
         upload-field
