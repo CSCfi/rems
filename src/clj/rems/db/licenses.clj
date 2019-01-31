@@ -17,6 +17,7 @@
    :textcontent (:textcontent license)})
 
 (defn- format-licenses [licenses]
+
   (mapv format-license licenses))
 
 (defn- get-license-localizations []
@@ -26,10 +27,10 @@
 
 (defn- localize-license [localizations license]
   (assoc license :localizations
-         (into {} (for [{:keys [langcode title textcontent attachmentId]} (get localizations (:id license))]
+         (into {} (for [{:keys [langcode title textcontent attachmentid]} (get localizations (:id license))]
                     [langcode {:title title
                                :textcontent textcontent
-                               :attachment-id attachmentId}]))))
+                               :attachment-id attachmentid}]))))
 
 (defn- localize-licenses [licenses]
   (mapv (partial localize-license (get-license-localizations)) licenses))

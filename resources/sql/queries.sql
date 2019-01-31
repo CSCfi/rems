@@ -521,7 +521,7 @@ FROM license lic
 WHERE lic.id = :id
 
 -- :name get-license-localizations :? :*
-SELECT licid, langcode, title, textcontent
+SELECT licid, langcode, title, textcontent, attachmentId
 FROM license_localization
 
 -- :name get-roles :? :*

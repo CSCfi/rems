@@ -6,7 +6,8 @@
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-time text text-format]]
-            [rems.util :refer [dispatch! fetch put!]]))
+            [rems.util :refer [dispatch! fetch put!]]
+            [rems.atoms :as atoms]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -43,6 +44,12 @@
 (defn inline-info-field [text value]
   [info-field text value {:inline? true}])
 
+(defn attachment-field [id title]
+  [:a.btn.btn-secondary.mr-2
+   {:href (str "api/licenses/attachments/" id)
+    :target :_new}
+   title " " (atoms/external-link)])
+
 (defn license-view [license language]
   [:div.spaced-vertically-3
    [collapsible/component
@@ -54,7 +61,10 @@
                     (for [[langcode localization] (:localizations license)]
                       [inline-info-field (str (text :t.administration/title)
                                               " "
-                                              (str/upper-case (name langcode))) (:title localization)])
+                                              (str/upper-case (name langcode)))
+                       (if (:attachment-id localization)
+                         [attachment-field (:attachment-id localization) (:title localization)]
+                         (:title localization))])
                     [[inline-info-field (text :t.administration/type) (:licensetype license)]
                      [inline-info-field (text :t.administration/start) (localize-time (:start license))]
                      [inline-info-field (text :t.administration/end) (localize-time (:end license))]

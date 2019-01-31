@@ -13,10 +13,10 @@
   {:licensetype (s/enum "link" "text" "attachment")
    :title s/Str
    :textcontent s/Str
-   (s/optional-key :attachment-id) s/Num
+   :attachment-id (s/maybe s/Num)
    :localizations {s/Keyword {:title s/Str
                               :textcontent s/Str
-                              (s/optional-key :attachment-id) s/Num}}})
+                              :attachment-id (s/maybe s/Num)}}})
 
 (s/defschema AttachmentMetadata
   {:id s/Num})
