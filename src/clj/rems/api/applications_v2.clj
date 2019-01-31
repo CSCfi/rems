@@ -207,10 +207,10 @@
                          :modified (DateTime. 1000)
                          :applicant "applicant"
                          ;; TODO: resource details
-                         :resources [{:resource-id 11
-                                      :catalogue-item-id 10}
-                                     {:resource-id 21
-                                      :catalogue-item-id 20}]
+                         :resources [{:catalogue-item-id 10
+                                      :resource-ext-id "urn:11"}
+                                     {:catalogue-item-id 20
+                                      :resource-ext-id "urn:21"}]
                          ;; TODO: license details
                          :licenses [{:license-id 30
                                      :accepted false}
@@ -242,15 +242,16 @@
                        :application-id 1
                        :time (DateTime. 1000)
                        :actor "applicant"
-                       :resources [{:resource-id 11
-                                    :catalogue-item-id 10}
-                                   {:resource-id 21
-                                    :catalogue-item-id 20}]
+                       :resources [{:catalogue-item-id 10
+                                    :resource-ext-id "urn:11"}
+                                   {:catalogue-item-id 20
+                                    :resource-ext-id "urn:21"}]
                        :licenses [{:license-id 30}
                                   {:license-id 31}]
                        :form-id 40
                        :workflow-id 50
-                       :workflow-type :dynamic}]
+                       :workflow-type :dynamic
+                       :workflow-handlers ["handler"]}]
 
     (testing "new application"
       (is (= new-application
@@ -282,7 +283,6 @@
               externals))))))
 
 (defn- get-form [form-id]
-  ;; TODO: produce :event/created so that we can use the form id
   {:items (->> (db/get-form-items {:id form-id})
                (mapv #(applications/process-item nil form-id %)))})
 

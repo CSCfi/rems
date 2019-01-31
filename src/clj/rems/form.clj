@@ -79,6 +79,7 @@
               (not (empty? catalogue-items))))
   (assert actor)
   (let [;; if no application-id given, create a new application
+        new? (nil? application-id)
         application-id (or application-id
                            (create-new-draft-for-items actor catalogue-items))
         _ (check-for-disabled-items! (applications/get-catalogue-items-by-application-id application-id))
@@ -87,13 +88,34 @@
         application (applications/get-application-state application-id)]
     ;; XXX: workaround to make dynamic workflows work with the old API - save to both old and new models
     (if (applications/is-dynamic-application? application)
-      (if-let [error (applications/dynamic-command! {:type :rems.workflow.dynamic/save-draft
-                                                     :actor actor
-                                                     :application-id application-id
-                                                     :time (time/now)
-                                                     :items items
-                                                     :licenses licenses})]
-        (throw (RuntimeException. (str "error in save-draft command: " error))))
+      (do
+        (when new?
+          (let [items (applications/get-catalogue-items catalogue-items)
+                licenses (applications/get-application-licenses application catalogue-items)]
+            (assert (= 1 (count (distinct (mapv :wfid items)))))
+            (assert (= 1 (count (distinct (mapv :formid items)))))
+            (applications/add-dynamic-event! {:event :event/created
+                                              :actor actor
+                                              :application-id application-id
+                                              :time (time/now)
+                                              :resources (map (fn [item]
+                                                                {:resource-ext-id (:resid item)
+                                                                 :catalogue-item-id (:id item)})
+                                                              items)
+                                              :licenses (map (fn [license]
+                                                               {:license-id (:id license)})
+                                                             licenses)
+                                              :form-id (:formid (first items))
+                                              :workflow-id (:wfid (first items))
+                                              :workflow-type (get-in application [:workflow :type])
+                                              :workflow-handlers (get-in application [:workflow :handlers])})))
+        (if-let [error (applications/dynamic-command! {:type :rems.workflow.dynamic/save-draft
+                                                       :actor actor
+                                                       :application-id application-id
+                                                       :time (time/now)
+                                                       :items items
+                                                       :licenses licenses})]
+          (throw (RuntimeException. (str "error in save-draft command: " error)))))
       (when (= "save" command)
         (db/add-application-event! {:application application-id
                                     :user actor

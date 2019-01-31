@@ -944,5 +944,5 @@
                                                               :application-id application-id})))
         (let [submitted (get-application user-id application-id)]
           (is (= "rems.workflow.dynamic/submitted" (get-in submitted [:application :state])))
-          (is (= ["event/draft-saved" "event/draft-saved" "event/submitted"]
+          (is (= ["event/created" "event/draft-saved" "event/draft-saved" "event/submitted"]
                  (map :event (get-in submitted [:application :dynamic-events])))))))))

@@ -260,7 +260,7 @@
   (merge item
          (get-in item [:localizations context/*lang*])))
 
-(defn- get-catalogue-items
+(defn get-catalogue-items
   "Function that returns localized catalogue-items for the given application items, `ids`. Prefetched localized catalogue items, `localized-items`,
   can be given as a parameter to avoid excessive database calls."
   ([ids]
@@ -479,7 +479,7 @@
                                                                      :licid license-id
                                                                      :actoruserid app-user}))))))))
 
-(defn- get-application-licenses [application catalogue-item-ids]
+(defn get-application-licenses [application catalogue-item-ids]
   (mapv #(process-license application %)
         (licenses/get-active-licenses
          (or (:start application) (time/now))
@@ -1017,7 +1017,7 @@
     (assert (is-dynamic-application? application))
     (dynamic/apply-events application events)))
 
-(defn- add-dynamic-event! [event]
+(defn add-dynamic-event! [event]
   (db/add-application-event! {:application (:application-id event)
                               :user (:actor event)
                               :comment nil

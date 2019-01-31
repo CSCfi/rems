@@ -78,12 +78,14 @@
 (s/defschema CreatedEvent
   (assoc EventBase
          :event (s/eq :event/created)
-         :resources [{:resource-id s/Int
-                      :catalogue-item-id s/Int}]
+         :resources [{:catalogue-item-id s/Int
+                      :resource-ext-id s/Str}]
          :licenses [{:license-id s/Int}]
          :form-id s/Int
          :workflow-id s/Int
-         :workflow-type s/Keyword))
+         ;; TODO: separate workflow specific data to a new event or make this an open schema?
+         :workflow-type s/Keyword
+         :workflow-handlers [s/Str]))
 (s/defschema DecidedEvent
   (assoc EventBase
          :event (s/eq :event/decided)
