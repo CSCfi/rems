@@ -4,9 +4,10 @@
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.atoms :refer [info-field readonly-checkbox]]
             [rems.collapsible :as collapsible]
+            [rems.common-util :refer [andstr]]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-time text text-format]]
-            [rems.util :refer [andstr dispatch! fetch put!]]))
+            [rems.util :refer [dispatch! fetch put!]]))
 
 (rf/reg-event-fx
  ::enter-page

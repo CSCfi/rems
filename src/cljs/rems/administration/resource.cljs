@@ -4,9 +4,10 @@
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.atoms :refer [external-link info-field readonly-checkbox]]
             [rems.collapsible :as collapsible]
+            [rems.common-util :refer [andstr]]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-time text text-format]]
-            [rems.util :refer [andstr dispatch! fetch put!]]))
+            [rems.util :refer [dispatch! fetch put!]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -69,12 +70,15 @@
   [collapsible/component
    {:id "licenses"
     :title (text :t.administration/licenses)
-    :top-less-button? true
-    :collapse (if (seq licenses)
-                (into [:div]
-                      (for [license licenses]
-                        [license-view license language]))
-                [:p (text :t.administration/no-licenses)])}])
+    :top-less-button? (> (count licenses) 5)
+    (if (seq licenses)
+      :collapse
+      :always)
+    (if (seq licenses)
+      (into [:div]
+            (for [license licenses]
+              [license-view license language]))
+      [:p (text :t.administration/no-licenses)])}])
 
 (defn resource-view [resource language]
   [:div.spaced-vertically-3
