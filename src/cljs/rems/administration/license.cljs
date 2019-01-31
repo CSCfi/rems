@@ -4,7 +4,8 @@
             [rems.administration.components :refer [radio-button-group text-field textarea-autosize]]
             [rems.collapsible :as collapsible]
             [rems.text :refer [text localize-item]]
-            [rems.util :refer [dispatch! fetch post!]]))
+            [rems.util :refer [dispatch! fetch post!]]
+            [rems.atoms :as atoms]))
 
 (defn- reset-form [db]
   (dissoc db ::form))
@@ -26,6 +27,29 @@
  ::set-form-field
  (fn [db [_ keys value]]
    (assoc-in db (concat [::form] keys) value)))
+
+(defn- save-attachment [title form-data]
+  (post! (str "/api/licenses/save_license/?license-title=" title)
+         {:body form-data
+          :error-handler (fn [_])}))
+
+(defn- remove-attachment [title]
+  (post! (str "/api/licenses/remove_license/?license-title=" title)
+         {:body {}
+          :error-handler (fn [_])}))
+
+(rf/reg-event-fx
+ ::save-attachment
+ (fn [_ [_ title file]]
+   (save-attachment title file)
+   {}))
+
+(rf/reg-event-fx
+ ::remove-attachment
+ (fn [_ [_ title]]
+   (when title
+     (remove-attachment title))
+   {}))
 
 
 ; form submit
@@ -108,15 +132,48 @@
                          :label (text :t.create-license/link-to-license)
                          :placeholder "https://example.com/license"}]))
 
+(defn- set-attachment [title]
+  (fn [event]
+    (let [filecontent (aget (.. event -target -files) 0)
+          form-data (doto (js/FormData.)
+                      (.append "file" filecontent))]
+      (rf/dispatch [::set-form-field [:attachment-filename] (.-name filecontent)])
+      (rf/dispatch [::save-attachment title form-data]))))
+
+(defn- remove-attachment-action [_]
+  (rf/dispatch [::set-form-field [:attachment-filename] nil])
+  (rf/dispatch [::remove-attachment]))
+
 (defn- license-text-field [language]
   (when (= license-type-text (current-licence-type))
     [textarea-autosize context {:keys [:localizations language :text]
-                         :label (text :t.create-license/license-text)}]))
+                                :label (text :t.create-license/license-text)}]))
 
 (defn- license-attachment-field [language]
   (when (= license-type-attachment (current-licence-type))
-    [textarea-autosize context {:keys [:localizations language :attachment]
-                                :label (text :t.create-license/attached-license)}]))
+    (let [form @(rf/subscribe [::form])
+          title (get-in form [:localizations language :title])
+          filename (get form :attachment-filename)
+          filename-field [:a.btn.btn-secondary.mr-2
+                          {:href (str "/api/licenses/license/?license-title=" title)
+                           :target :_new}
+                          filename " " (atoms/external-link)]
+          upload-field [:div.upload-file.mr-2
+                        [:input {:style {:display "none"}
+                                 :type "file"
+                                 :id "upload-license-button"
+                                 :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
+                                 :on-change (set-attachment title)}]
+                        [:button.btn.btn-secondary {:on-click #(.click (.getElementById js/document "upload-license-button"))}
+                         (text :t.form/upload)]]
+          remove-button [:button.btn.btn-secondary.mr-2
+                         {:on-click remove-attachment-action}
+                         (text :t.form/attachment-remove)]]
+      (if (empty? filename)
+        upload-field
+        [:div {:style {:display :flex :justify-content :flex-start}}
+         filename-field
+         remove-button]))))
 
 (defn- save-license-button []
   (let [form @(rf/subscribe [::form])
