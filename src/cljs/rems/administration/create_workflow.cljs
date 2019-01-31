@@ -1,6 +1,7 @@
-(ns rems.administration.workflow
+(ns rems.administration.create-workflow
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
+            [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [radio-button-group text-field]]
             [rems.administration.items :as items]
             [rems.application :refer [enrich-user]]
@@ -82,7 +83,7 @@
 (defn- create-workflow [request]
   (post! "/api/workflows/create" {:params request
                                   ;; TODO: error handling
-                                  :handler (fn [resp] (dispatch! "#/administration"))}))
+                                  :handler (fn [resp] (dispatch! "#/administration/workflows"))}))
 
 (rf/reg-event-fx
  ::create-workflow
@@ -236,7 +237,7 @@
 
 (defn- cancel-button []
   [:button.btn.btn-secondary
-   {:on-click #(dispatch! "/#/administration")}
+   {:on-click #(dispatch! "/#/administration/workflows")}
    (text :t.administration/cancel)])
 
 (defn workflow-type-description [description]
@@ -292,22 +293,25 @@
   (let [form @(rf/subscribe [::form])
         workflow-type (:type form)
         loading? (rf/subscribe [::loading?])]
-    [collapsible/component
-     {:id "create-workflow"
-      :title (text :t.administration/create-workflow)
-      :always [:div
-               (if @loading?
-                 [:div#workflow-loader [spinner/big]]
-                 [:div#workflow-editor
-                  [workflow-organization-field]
-                  [workflow-title-field]
-                  [workflow-type-field]
+    [:div
+     [administration-navigator-container]
+     [:h2 (text :t.administration/create-workflow)]
+     [collapsible/component
+      {:id "create-workflow"
+       :title (text :t.administration/create-workflow)
+       :always [:div
+                (if @loading?
+                  [:div#workflow-loader [spinner/big]]
+                  [:div#workflow-editor
+                   [workflow-organization-field]
+                   [workflow-title-field]
+                   [workflow-type-field]
 
-                  (case workflow-type
-                    :auto-approve [auto-approve-workflow-form]
-                    :dynamic [dynamic-workflow-form]
-                    :rounds [round-workflow-form])
+                   (case workflow-type
+                     :auto-approve [auto-approve-workflow-form]
+                     :dynamic [dynamic-workflow-form]
+                     :rounds [round-workflow-form])
 
-                  [:div.col.commands
-                   [cancel-button]
-                   [save-workflow-button]]])]}]))
+                   [:div.col.commands
+                    [cancel-button]
+                    [save-workflow-button]]])]}]]))

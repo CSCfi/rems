@@ -70,20 +70,22 @@
           "return" :t.applications.events/return
           "review" :t.applications.events/review
           "review-request" :t.applications.events/review-request
-          "withdraw" :t.applications.events/withdraw
+          "save" :t.applications.events/save
           "third-party-review" :t.applications.events/third-party-review
+          "withdraw" :t.applications.events/withdraw
 
           ;; dynamic
-          "submitted" :t.applications.dynamic-events/submitted
-          "returned" :t.applications.dynamic-events/returned
+          "approved" :t.applications.dynamic-events/approved
+          "closed" :t.applications.dynamic-events/closed
           "comment-requested" :t.applications.dynamic-events/comment-requested
           "commented" :t.applications.dynamic-events/commented
-          "decision-requested" :t.applications.dynamic-events/decision-requested
           "decided" :t.applications.dynamic-events/decided
-          "approved" :t.applications.dynamic-events/approved
-          "rejected" :t.applications.dynamic-events/rejected
-          "closed" :t.applications.dynamic-events/closed
+          "decision-requested" :t.applications.dynamic-events/decision-requested
+          "draft-saved" :t.applications.dynamic-events/draft-saved
           "member-added" :t.applications.dynamic-events/member-added
+          "rejected" :t.applications.dynamic-events/rejected
+          "returned" :t.applications.dynamic-events/returned
+          "submitted" :t.applications.dynamic-events/submitted
 
           :t.applications.events/unknown)))
 

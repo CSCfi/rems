@@ -11,7 +11,7 @@
             [rems.actions.request-decision :refer [request-decision-action-button request-decision-form]]
             [rems.actions.return-action :refer [return-action-button return-form]]
             [rems.application-util :refer [editable?]]
-            [rems.atoms :refer [external-link flash-message textarea]]
+            [rems.atoms :refer [external-link flash-message info-field textarea]]
             [rems.autocomplete :as autocomplete]
             [rems.catalogue-util :refer [get-catalogue-item-title]]
             [rems.collapsible :as collapsible]
@@ -730,15 +730,6 @@
                                 :readonly readonly?
                                 :approved (get licenses (:id license)))]))])]}]))
 
-(defn- info-field
-  "A component that shows a readonly field with title and value.
-
-  Used for e.g. displaying applicant attributes."
-  [title value]
-  [:div.form-group
-   [:label title]
-   [:div.form-control value]])
-
 (defn- format-event [event]
   {:userid (:userid event)
    :event (localize-event (:event event))
@@ -758,7 +749,7 @@
               [:th (text :t.form/comment)]
               [:th (text :t.form/date)]]]
             (into [:tbody]
-                  (for [e (sort-by :time > events)]
+                  (for [e (reverse events)]
                     [:tr
                      (when has-users?
                        [:td (:userid e)])
@@ -1135,9 +1126,6 @@
 
 (defn guide []
   [:div
-   (component-info info-field)
-   (example "info-field with data"
-            [info-field "Name" "Bob Tester"])
    (component-info applicant-info)
    (example "applicant-info"
             [applicant-info "info1" {"eppn" "developer@uu.id"

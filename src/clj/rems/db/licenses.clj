@@ -5,26 +5,29 @@
             [rems.common-util :refer [distinct-by]]
             [rems.util :refer [getx-user-id]]))
 
+(defn- format-license [license]
+  {:id (:id license)
+   :licensetype (:type license)
+   :start (:start license)
+   :end (:endt license)
+   ;; TODO why do licenses have a non-localized title & content while items don't?
+   :title (:title license)
+   :textcontent (:textcontent license)})
 (defn- format-licenses [licenses]
-  (doall
-   (for [license licenses]
-     {:id (:id license)
-      :licensetype (:type license)
-      :start (:start license)
-      :end (:endt license)
-      ;; TODO why do licenses have a non-localized title & content while items don't?
-      :title (:title license)
-      :textcontent (:textcontent license)})))
+  (mapv format-license licenses))
+
+(defn- get-license-localizations []
+  (->> (db/get-license-localizations)
+       (map #(update-in % [:langcode] keyword))
+       (group-by :licid)))
+
+(defn- localize-license [localizations license]
+  (assoc license :localizations
+         (into {} (for [{:keys [langcode title textcontent]} (get localizations (:id license))]
+                    [langcode {:title title :textcontent textcontent}]))))
 
 (defn- localize-licenses [licenses]
-  (let [localizations (->> (db/get-license-localizations)
-                           (map #(update-in % [:langcode] keyword))
-                           (group-by :licid))]
-    (doall
-     (for [lic licenses]
-       (assoc lic :localizations
-              (into {} (for [{:keys [langcode title textcontent]} (get localizations (:id lic))]
-                         [langcode {:title title :textcontent textcontent}])))))))
+  (mapv (partial localize-license (get-license-localizations)) licenses))
 
 (defn get-resource-licenses
   "Get resource licenses for given resource id"
@@ -32,6 +35,13 @@
   (->> (db/get-resource-licenses {:id id})
        (format-licenses)
        (localize-licenses)))
+
+(defn get-license
+  "Get a single license by id"
+  [id]
+  (->> (db/get-license {:id id})
+       (format-license)
+       (localize-license (get-license-localizations))))
 
 ;; NB! There are three different "license activity" concepts:
 ;; - start and end in resource_licenses table

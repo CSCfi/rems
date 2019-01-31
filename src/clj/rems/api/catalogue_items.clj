@@ -1,5 +1,6 @@
 (ns rems.api.catalogue-items
-  (:require [compojure.api.sweet :refer :all]
+  (:require [clojure.string :as str]
+            [compojure.api.sweet :refer :all]
             [rems.api.schema :refer :all]
             [rems.api.util :refer [check-user]]
             [rems.db.catalogue :as catalogue]
@@ -30,16 +31,19 @@
   {:id s/Num
    :state (s/enum "disabled" "enabled")})
 
+;; TODO use declarative roles everywhere
 (def catalogue-items-api
   (context "/catalogue-items" []
     :tags ["catalogue items"]
 
     (GET "/" []
       :summary "Get catalogue items"
-      :query-params [{resource :- (describe s/Str "resource id (optional)") nil}]
+      :roles #{:applicant :approver :owner} ;; TODO everyone logged in should have applicant role
+      :query-params [{resource :- (describe s/Str "resource id (optional)") nil}
+                     {expand :- (describe s/Str "expanded additional attributes (optional), can be \"names\"") nil}]
       :return GetCatalogueItemsResponse
-      (check-user)
-      (ok (catalogue/get-localized-catalogue-items {:resource resource})))
+      (ok (catalogue/get-localized-catalogue-items {:resource resource
+                                                    :expand-names? (str/includes? (or expand "") "names")})))
 
     (GET "/:item-id" []
       :summary "Get a single catalogue item"

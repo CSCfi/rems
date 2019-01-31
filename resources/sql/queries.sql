@@ -3,9 +3,18 @@
 -- - Get catalogue items
 -- - :items vector of item ids
 -- - :resource resource id to fetch items for
-SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.state
+SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.state, ci.start
+/*~ (when (:expand-names? params) */
+, wf.title AS "workflow-name"
+, res.resid AS "resource-name"
+, form.title AS "form-name"
+/*~ ) ~*/
 FROM catalogue_item ci
 LEFT OUTER JOIN resource res ON (ci.resid = res.id)
+/*~ (when (:expand-names? params) */
+LEFT OUTER JOIN workflow wf ON (ci.wfid = wf.id)
+LEFT OUTER JOIN application_form form ON (ci.formid = form.id)
+/*~ ) ~*/
 WHERE 1=1
 /*~ (when (:items params) */
   AND ci.id IN (:v*:items)
@@ -16,7 +25,7 @@ WHERE 1=1
 
 
 -- :name get-catalogue-item :? :1
-SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.state
+SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.state, ci.start
 FROM catalogue_item ci
 LEFT OUTER JOIN resource res ON (ci.resid = res.id)
 WHERE ci.id = :item
@@ -107,6 +116,27 @@ LEFT OUTER JOIN application_form_item_map itemmap ON form.id = itemmap.formId
 LEFT OUTER JOIN application_form_item item ON item.id = itemmap.formItemId
 WHERE form.id = :id AND item.id IS NOT NULL
 ORDER BY itemorder
+
+-- :name get-form :? :1
+SELECT
+  form.id as id,
+  form.organization as organization,
+  form.title as title,
+  form.start as start,
+  form.endt as "end",
+  TRUE as "active", -- TODO implement
+  (SELECT json_agg(joined)
+   FROM (SELECT *,
+                (SELECT json_agg(formitemlocalization)
+                 FROM application_form_item_localization formitemlocalization
+                 WHERE (formitemmap.formitemid = formitemlocalization.itemid)
+                 GROUP BY formitemlocalization.itemid)  AS localizations
+         FROM application_form_item_map formitemmap
+         JOIN application_form_item formitem ON (formitemmap.formitemid = formitem.id)
+         WHERE formitemmap.formid = form.id) joined)::TEXT
+         AS fields
+FROM application_form form
+WHERE form.id = :id
 
 -- :name get-all-form-items :? :*
 SELECT id, type, value, visibility, start, endt, owneruserid, modifieruserid
@@ -476,6 +506,12 @@ WHERE rl.resid = :id
 -- :name get-all-licenses :? :*
 SELECT lic.id, lic.title, lic.type, lic.textcontent, lic.start, lic.endt
 FROM license lic
+
+-- :name get-license :? :1
+SELECT lic.id, lic.title, lic.type, lic.textcontent, lic.start, lic.endt
+, TRUE AS active -- TODO implement active and archiving
+FROM license lic
+WHERE lic.id = :id
 
 -- :name get-license-localizations :? :*
 SELECT licid, langcode, title, textcontent

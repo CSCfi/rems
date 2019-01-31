@@ -7,10 +7,14 @@
   {:id s/Num
    :title s/Str
    :wfid s/Num
+   (s/optional-key :workflow-name) s/Str
    :formid s/Num
+   (s/optional-key :form-name) s/Str
    :resid s/Str
+   (s/optional-key :resource-name) s/Str
    :state (s/enum "enabled" "disabled")
    (s/optional-key :langcode) s/Keyword
+   :start DateTime
    :localizations (s/maybe {s/Any s/Any})})
 
 (s/defschema License

@@ -1,193 +1,74 @@
 (ns rems.administration.license
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
-            [rems.administration.components :refer [radio-button-group text-field textarea-autosize]]
+            [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.atoms :refer [info-field readonly-checkbox]]
             [rems.collapsible :as collapsible]
-            [rems.text :refer [text localize-item]]
-            [rems.util :refer [dispatch! fetch post!]]
-            [rems.atoms :as atoms]))
-
-(defn- reset-form [db]
-  (dissoc db ::form))
-
-(rf/reg-event-db
- ::enter-page
- (fn [db _]
-   (reset-form db)))
-
-
-; form state
-
-(rf/reg-sub
- ::form
- (fn [db _]
-   (::form db)))
-
-(rf/reg-event-db
- ::set-form-field
- (fn [db [_ keys value]]
-   (assoc-in db (concat [::form] keys) value)))
-
-; form submit
-
-(def license-type-link "link")
-(def license-type-text "text")
-(def license-type-attachment "attachment")
-
-(defn parse-textcontent [form license-type]
-  (case license-type
-    license-type-link (:link form)
-    license-type-text (:text form)
-    license-type-attachment (:attachment-filename form)
-    nil))
-
-(defn- build-localization [data license-type]
-  {:title (:title data)
-   :textcontent (parse-textcontent data license-type)
-   :attachment (:attachment data)})
-
-(defn- valid-localization? [data]
-  (and (not (str/blank? (:title data)))
-       (not (str/blank? (:textcontent data)))))
-
-(defn- valid-request? [request languages]
-  (and (not (str/blank? (:licensetype request)))
-       (= (set languages)
-          (set (keys (:localizations request))))
-       (every? valid-localization? (vals (:localizations request)))))
-
-(defn build-request [form default-language languages]
-  (let [license-type (:licensetype form)
-        request {:licensetype license-type
-                 :localizations (into {} (map (fn [[lang data]]
-                                                [lang (build-localization data license-type)])
-                                              (:localizations form)))}]
-    (when (valid-request? request languages)
-      (localize-item request default-language))))
-
-(defn- create-license [request]
-  (post! "/api/licenses/create" {:params request
-                                 ; TODO: error handling
-                                 :handler (fn [resp] (dispatch! "#/administration"))}))
+            [rems.spinner :as spinner]
+            [rems.text :refer [localize-time text text-format]]
+            [rems.util :refer [dispatch! fetch put!]]))
 
 (rf/reg-event-fx
- ::create-license
- (fn [_ [_ request]]
-   (create-license request)
-   {}))
+ ::enter-page
+ (fn [{:keys [db]} [_ license-id]]
+   {:db (assoc db ::loading? true)
+    ::fetch-license [license-id]}))
 
+(defn- fetch-license [license-id]
+  (fetch (str "/api/licenses/" license-id)
+         {:handler #(rf/dispatch [::fetch-license-result %])}))
 
-;;;; UI
+(rf/reg-fx ::fetch-license (fn [[license-id]] (fetch-license license-id)))
 
-(def ^:private context {:get-form ::form
-                        :update-form ::set-form-field})
+(rf/reg-event-db
+ ::fetch-license-result
+ (fn [db [_ license]]
+   (-> db
+       (assoc ::license license)
+       (dissoc ::loading?))))
 
-(defn- language-heading [language]
-  [:h2 (str/upper-case (name language))])
+(rf/reg-sub ::license (fn [db _] (::license db)))
+(rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
-(defn- license-title-field [language]
-  [text-field context {:keys [:localizations language :title]
-                       :label (text :t.create-license/title)}])
-
-(defn- license-type-radio-group []
-  [radio-button-group context {:keys [:licensetype]
-                               :orientation :horizontal
-                               :options [{:value license-type-link
-                                          :label (text :t.create-license/external-link)}
-                                         {:value license-type-text
-                                          :label (text :t.create-license/inline-text)}
-                                         {:value license-type-attachment
-                                          :label (text :t.create-license/license-attachment)}]}])
-
-(defn- current-licence-type []
-  (let [form @(rf/subscribe [::form])]
-    (:licensetype form)))
-
-(defn- license-link-field [language]
-  (when (= license-type-link (current-licence-type))
-    [text-field context {:keys [:localizations language :link]
-                         :label (text :t.create-license/link-to-license)
-                         :placeholder "https://example.com/license"}]))
-
-(defn- set-attachment []
-  (fn [event]
-    (let [filecontent (aget (.. event -target -files) 0)
-          form-data (doto (js/FormData.)
-                      (.append "file" filecontent))]
-      (rf/dispatch [::set-form-field [:attachment-filename] (.-name filecontent)])
-      (rf/dispatch [::set-form-field [:attachment] form-data]))))
-
-(defn- remove-attachment-action [_]
-  (rf/dispatch [::set-form-field [:attachment-filename] nil]))
-
-(defn- license-text-field [language]
-  (when (= license-type-text (current-licence-type))
-    [textarea-autosize context {:keys [:localizations language :text]
-                                :label (text :t.create-license/license-text)}]))
-
-(defn- license-attachment-field [language]
-  (when (= license-type-attachment (current-licence-type))
-    (let [form @(rf/subscribe [::form])
-          title (get-in form [:localizations language :title])
-          filename (get form :attachment-filename)
-          filename-field [:a.btn.btn-secondary.mr-2
-                          {:href (str "/api/licenses/license/?license-title=" title "&locale="language)
-                           :target :_new}
-                          filename " " (atoms/external-link)]
-          upload-field [:div.upload-file.mr-2
-                        [:input {:style {:display "none"}
-                                 :type "file"
-                                 :id "upload-license-button"
-                                 :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
-                                 :on-change set-attachment}]
-                        [:button.btn.btn-secondary {:on-click #(.click (.getElementById js/document "upload-license-button"))}
-                         (text :t.form/upload)]]
-          remove-button [:button.btn.btn-secondary.mr-2
-                         {:on-click remove-attachment-action}
-                         (text :t.form/attachment-remove)]]
-      (if (empty? filename)
-        upload-field
-        [:div {:style {:display :flex :justify-content :flex-start}}
-         filename-field
-         remove-button]))))
-
-(defn- save-license-button []
-  (let [form @(rf/subscribe [::form])
-        default-language @(rf/subscribe [:default-language])
-        languages @(rf/subscribe [:languages])
-        request (build-request form default-language languages)]
-    [:button.btn.btn-primary
-     {:on-click #(rf/dispatch [::create-license request])
-      :disabled (nil? request)}
-     (text :t.administration/save)]))
-
-(defn- cancel-button []
+(defn- back-button []
   [:button.btn.btn-secondary
-   {:on-click #(dispatch! "/#/administration")}
-   (text :t.administration/cancel)])
+   {:on-click #(dispatch! "/#/administration/licenses")}
+   (text :t.administration/back)])
 
-(defn create-license-page []
-  (let [default-language @(rf/subscribe [:default-language])
-        languages @(rf/subscribe [:languages])]
-    [collapsible/component
-     {:id "create-license"
-      :title (text :t.navigation/create-license)
-      :always [:div
-               [license-type-radio-group]
-               [language-heading default-language]
-               [license-title-field default-language]
-               [license-link-field default-language]
-               [license-text-field default-language]
-               [license-attachment-field default-language]
+(defn- to-create-license []
+  [:a.btn.btn-primary
+   {:href "/#/administration/create-license"}
+   (text :t.administration/create-license)])
 
-               (doall (for [language (remove #(= % default-language) languages)]
-                        [:div {:key language}
-                         [language-heading language]
-                         [license-title-field language]
-                         [license-link-field language]
-                         [license-text-field language]
-                         [license-attachment-field default-language]]))
+(defn inline-info-field [text value]
+  [info-field text value {:inline? true}])
 
-               [:div.col.commands
-                [cancel-button]
-                [save-license-button]]]}]))
+(defn license-view [license language]
+  [:div.spaced-vertically-3
+   [collapsible/component
+    {:id "license"
+     :title [:span (get-in license [:localizations language :title] (:title license))]
+     :always (into [:div]
+                   (concat
+                    [[inline-info-field (text :t.administration/title) (:title license)]]
+                    (for [[langcode localization] (:localizations license)]
+                      [inline-info-field (str (text :t.administration/title)
+                                              " "
+                                              (str/upper-case (name langcode))) (:title localization)])
+                    [[inline-info-field (text :t.administration/type) (:licensetype license)]
+                     [inline-info-field (text :t.administration/start) (localize-time (:start license))]
+                     [inline-info-field (text :t.administration/end) (localize-time (:end license))]
+                     [inline-info-field (text :t.administration/active) [readonly-checkbox (:active license)]]]))}]
+   [:div.col.commands [back-button]]])
+
+(defn license-page []
+  (let [license (rf/subscribe [::license])
+        language (rf/subscribe [:language])
+        loading? (rf/subscribe [::loading?])]
+    (fn []
+      [:div
+       [administration-navigator-container]
+       [:h2 (text :t.administration/license)]
+       (if @loading?
+         [spinner/big]
+         [license-view @license @language])])))

@@ -2,7 +2,8 @@
   (:require [re-frame.core :as rf]
             [rems.atoms :as atoms]
             [rems.language-switcher :refer [language-switcher]]
-            [rems.text :refer [text]])
+            [rems.text :refer [text]]
+            [clojure.string :as str])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 ;; TODO fetch as a subscription?
@@ -43,13 +44,9 @@
         (when-roles #{:approver :reviewer} current-roles
                     [nav-link "#/actions" (text :t.navigation/actions) (= page-id :actions)])
         (when-role :owner current-roles
-                   [nav-link "#/administration" (text :t.navigation/administration) (contains? #{:administration
-                                                                                                 :create-catalogue-item
-                                                                                                 :create-form
-                                                                                                 :create-license
-                                                                                                 :create-resource
-                                                                                                 :create-workflow}
-                                                                                               page-id)])
+                   [nav-link "#/administration"
+                    (text :t.navigation/administration)
+                    (and page-id (namespace page-id) (str/starts-with? (namespace page-id) "rems.administration"))])
         (when-not (:user identity) [nav-link "#/" (text :t.navigation/home) (= page-id :home)])
         [nav-link "#/about" (text :t.navigation/about) (= page-id :about)]]
      [language-switcher]]))

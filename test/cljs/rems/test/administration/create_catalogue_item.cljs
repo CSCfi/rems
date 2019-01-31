@@ -1,6 +1,6 @@
 (ns rems.test.administration.catalogue-item
   (:require [cljs.test :refer-macros [deftest is testing]]
-            [rems.administration.catalogue-item :refer [build-request]]))
+            [rems.administration.create-catalogue-item :refer [build-request]]))
 
 (deftest build-request-test
   (let [form {:title "the title"

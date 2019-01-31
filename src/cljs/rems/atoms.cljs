@@ -32,6 +32,29 @@
   (when status
     [:div.alert {:class (str "alert-" (name status))} contents]))
 
+(defn readonly-checkbox
+  "Displays a checkbox."
+  [checked?]
+  (if checked?
+    [:i.fa.fa-lg.fa-check-square.color1]
+    [:i.fa.fa-lg.fa-square.color1-faint]))
+
+(defn info-field
+  "A component that shows a readonly field with title and value.
+
+  Used for e.g. displaying applicant attributes.
+
+  Additional options:
+  `:inline?` - puts the label and value on the same row"
+  [title value & [{:keys [inline?] :as opts}]]
+  (if inline?
+    [:div.form-group.row
+     [:label.col-sm-2.col-form-label title]
+     [:div.col-sm-10.form-control value]]
+    [:div.form-group
+     [:label title]
+     [:div.form-control value]]))
+
 (defn guide []
   [:div
    (component-info flash-message)
@@ -41,4 +64,14 @@
 
    (example "flash-message with error"
             [flash-message {:status :danger
-                            :contents "You fail"}])])
+                            :contents "You fail"}])
+   (component-info readonly-checkbox)
+   (example "readonly-checkbox unchecked"
+            [readonly-checkbox false])
+   (example "readonly-checkbox checked"
+            [readonly-checkbox true])
+   (component-info info-field)
+   (example "info-field with data"
+            [info-field "Name" "Bob Tester"])
+   (example "info-field inline"
+            [info-field "Name" "Bob Tester" {:inline? true}])])

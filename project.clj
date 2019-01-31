@@ -4,11 +4,13 @@
   :url "https://github.com/CSCfi/rems"
 
   :dependencies [[ch.qos.logback/logback-classic "1.2.3"]
+                 [clj-commons/secretary "1.2.4"]
                  [clj-http "3.9.1"]
                  [clj-pdf "2.3.1"]
                  [clj-time "0.15.1"]
                  [cljs-ajax "0.8.0"]
                  [com.andrewmcveigh/cljs-time "0.5.2"]
+                 [com.attendify/schema-refined "0.3.0-alpha4"]
                  [com.draines/postal "2.0.3"]
                  [com.taoensso/tempura "1.2.1"]
                  [compojure "1.6.1"]
@@ -43,6 +45,7 @@
                  [org.webjars/bootstrap "4.2.1"]
                  [org.webjars/font-awesome "5.6.3"]
                  [org.webjars/jquery "3.3.1-1"]
+                 [prismatic/schema-generators "0.1.2"]
                  [re-frame "0.10.6"]
                  [reagent "0.8.1"]
                  [reagent-utils "0.3.2"]
@@ -52,8 +55,7 @@
                  [ring/ring-core "1.7.1"]
                  [ring/ring-defaults "0.3.2"]
                  [ring/ring-devel "1.7.1" :exclusions [ns-tracker]]
-                 [ring/ring-servlet "1.7.1"]
-                 [clj-commons/secretary "1.2.4"]]
+                 [ring/ring-servlet "1.7.1"]]
 
   :min-lein-version "2.0.0"
 
@@ -102,7 +104,8 @@
         :paths {:karma "node_modules/karma/bin/karma"}
         :alias {:default [:chrome-headless]}}
 
-  :aliases {"browsertests" ["do" ["cljsbuild" "once"] ["eftest" ":browser"]]
+  :aliases {"dev-db" ["do" ["shell" "./dev_db.sh"] ["run" "test-data"]]
+            "browsertests" ["do" ["cljsbuild" "once"] ["eftest" ":browser"]]
             "alltests" ["do" ["cljsbuild" "once"] ["eftest" ":all"] ["doo" "once"]]
             "test-ancient" ["do" ["cljsbuild" "once"] ["eftest" ":all"] ["doo" "once"]] ; for lein ancient to work and run all tests
             "run-cloverage" ["do" ["cljsbuild" "once"] ["with-profile" "test" "cloverage"]]}

@@ -10,30 +10,31 @@
 
 (defn- show-more-button
   [id expanded callback]
-  [:div.collapse.collapse-toggle {:id (str id "more") :class (when-not expanded "show")}
+  [:div.mb-3.collapse.collapse-toggle {:class (str (str id "more ") (when-not expanded "show"))}
    [:a.text-primary {:on-click #(do (.collapse (js/$ (str "#" id "collapse")) "show")
-                                    (.collapse (js/$ (str "#" id "more")) "hide")
+                                    (.collapse (js/$ (str "." id "more")) "hide")
                                     (when callback
                                       (callback))
-                                    (.collapse (js/$ (str "#" id "less")) "show"))}
+                                    (.collapse (js/$ (str "." id "less")) "show"))}
     (text :t.collapse/show-more)]])
 
 (defn- show-less-button
   [id expanded]
-  [:div.collapse.collapse-toggle {:id (str id "less") :class (when expanded "show")}
+  [:div.mb-3.collapse.collapse-toggle {:class (str (str id "less ") (when expanded "show"))}
    [:a.text-primary {:on-click #(do (.collapse (js/$ (str "#" id "collapse")) "hide")
-                                    (.collapse (js/$ (str "#" id "more")) "show")
-                                    (.collapse (js/$ (str "#" id "less")) "hide"))}
+                                    (.collapse (js/$ (str "." id "more")) "show")
+                                    (.collapse (js/$ (str "." id "less")) "hide"))}
     (text :t.collapse/show-less)]])
 
-(defn- block [id expanded callback content-always content-hideable]
+(defn- block [id expanded callback content-always content-hideable top-less-button? bottom-less-button?]
   [:div.collapse-content
    [:div content-always]
    (when-not (empty? content-hideable)
      [:div
+      (when top-less-button? [show-less-button id expanded])
       [:div.collapse {:id (str id "collapse") :class (when expanded "show")} content-hideable]
       [show-more-button id expanded callback]
-      [show-less-button id expanded]])])
+      (when-not (false? bottom-less-button?) [show-less-button id expanded])])])
 
 (defn component
   "Displays a collapsible block of content.
@@ -42,16 +43,18 @@
   `:id` unique id required
   `:class` optional class for wrapper div
   `:open?` should the collapsible be open? Default false
+  `:top-less-button?` should top show less button be shown? Default false
+  `:bottom-less-button?` should bottom show less button be shown? Default true
   `:on-open` triggers the function callback given as an argument when load-more is clicked
   `:title` component displayed in title area
   `:always` component displayed always before collapsible area
   `:collapse` component that is toggled displayed or not"
-  [{:keys [id class open? on-open title always collapse]}]
+  [{:keys [id class open? on-open title always collapse top-less-button? bottom-less-button?]}]
   [:div.collapse-wrapper {:id id
                           :class class}
    (when title [header title])
    (when (or always collapse)
-     [block id open? on-open always collapse])])
+     [block id open? on-open always collapse top-less-button? bottom-less-button?])])
 
 (defn guide
   []
@@ -82,4 +85,11 @@
                         :class "slow"
                         :title "Collapse expanded"
                         :always [:p "I am content that is always visible"]
-                        :collapse (into [:div] (repeat 5 [:p "I am content that you can hide"]))}])])
+                        :collapse (into [:div] (repeat 5 [:p "I am content that you can hide"]))}])
+   (example "collapsible with two show less buttons"
+            [component {:id "hello5"
+                        :class "slow"
+                        :title "Collapse expanded"
+                        :always [:p "I am content that is always visible"]
+                        :top-less-button? true
+                        :collapse (into [:div] (repeat 15 [:p "I am long content that you can hide"]))}])])
