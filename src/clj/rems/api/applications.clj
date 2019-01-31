@@ -1,6 +1,7 @@
 (ns rems.api.applications
   (:require [clj-time.core :as time]
             [clojure.string :as str]
+            [clojure.test :refer [deftest is]]
             [compojure.api.sweet :refer :all]
             [rems.api.applications-v2 :refer [api-get-application-v2 api-get-application-v1]]
             [rems.api.schema :refer :all]
@@ -377,3 +378,10 @@
           (ok {:success false
                :errors (:errors errors)})
           (ok {:success true}))))))
+
+(comment
+  (let [user-id "developer"]
+    (doseq [app (applications/get-user-applications user-id)]
+      (when (applications/is-dynamic-application? app)
+        (is (= (api-get-application user-id (:id app))
+               (api-get-application-v1 user-id (:id app))))))))

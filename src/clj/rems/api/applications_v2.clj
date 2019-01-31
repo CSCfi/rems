@@ -28,7 +28,7 @@
 
 (defn- set-accepted-licences [licenses acceptance]
   (map (fn [license]
-         (assoc license :accepted (= "accepted" (get acceptance (:license-id license)))))
+         (assoc license :accepted (= "approved" (get acceptance (:license-id license)))))
        licenses))
 
 (defmethod application-view :event/draft-saved
@@ -280,8 +280,8 @@
                  :items {41 "foo"
                          42 "bar"}
                  ;; TODO: change to `:accepted-licenses [30 31]` or separate to a license-accepted event
-                 :licenses {30 "accepted"
-                            31 "accepted"}}])
+                 :licenses {30 "approved"
+                            31 "approved"}}])
               externals))))))
 
 (defn- get-form [form-id]
@@ -296,7 +296,7 @@
        :view (build-application-view events {:forms get-form})
        :events events})))
 
-(defn- transform-v2-to-v1 [application]
+(defn- transform-v2-to-v1 [application events]
   (let [catalogue-items (map (fn [resource]
                                {:id (:catalogue-item-id resource)
                                 :resid (:resource-ext-id resource)
@@ -310,9 +310,9 @@
                              (:resources application))]
     {:id (:form-id application)
      :catalogue-items catalogue-items
-     :applicant-attributes {:eppn (:applicant application)
-                            :mail nil ; TODO
-                            :commonName nil} ; TODO
+     :applicant-attributes {"eppn" (:applicant application)
+                            "mail" nil ; TODO
+                            "commonName" nil} ; TODO
      :application {:id (:application-id application)
                    :formid (:form-id application)
                    :wfid (:workflow-id application)
@@ -322,10 +322,13 @@
                    :state nil ; TODO
                    :description nil ; TODO
                    :catalogue-items catalogue-items
-                   :form-contents {:items {} ; TODO
-                                   :licenses {}} ; TODO
+                   :form-contents {:items (into {} (for [field (:form-fields application)]
+                                                     [(:field-id field) (:value field)]))
+                                   :licenses (into {} (for [license (:licenses application)]
+                                                        (when (:accepted license)
+                                                          [(:license-id license) "approved"])))}
                    :events [] ; TODO
-                   :dynamic-events [] ; TODO
+                   :dynamic-events events ; TODO: remove this, it exposes too much information
                    :workflow {:type (:workflow-type application)
                               :handlers []} ; TODO
                    :possible-commands [] ; TODO
@@ -351,10 +354,10 @@
      :title "" ; TODO
      :items (map (fn [field]
                    {:id (:field-id field)
-                    :type (:type field)
+                    :type (name (:type field))
                     :optional (:optional field)
                     :options (:options field)
-                    :maxlength (:maxlength field)
+                    :maxlength (:max-length field)
                     :value (:value field)
                     :previous-value nil ; TODO
                     :localizations (into {} (for [lang (distinct (concat (keys (:title field))
@@ -365,4 +368,4 @@
 
 (defn api-get-application-v1 [user-id application-id]
   (let [v2 (api-get-application-v2 user-id application-id)]
-    (transform-v2-to-v1 (:view v2))))
+    (transform-v2-to-v1 (:view v2) (:events v2))))
