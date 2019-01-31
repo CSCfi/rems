@@ -19,6 +19,7 @@
             [rems.administration.licenses :refer [licenses-page]]
             [rems.administration.resource :refer [resource-page]]
             [rems.administration.resources :refer [resources-page]]
+            [rems.administration.workflow :refer [workflow-page]]
             [rems.administration.workflows :refer [workflows-page]]
             [rems.ajax :refer [load-interceptors!]]
             [rems.application :refer [application-page]]
@@ -215,18 +216,19 @@
    :applications applications-page
    :rems.administration/administration administration-page
    :rems.administration/catalogue-items catalogue-items-page
+   :rems.administration/create-catalogue-item create-catalogue-item-page
+   :rems.administration/create-form create-form-page
+   :rems.administration/create-license create-license-page
+   :rems.administration/create-resource create-resource-page
+   :rems.administration/create-workflow create-workflow-page
    :rems.administration/form form-page
    :rems.administration/forms forms-page
    :rems.administration/license license-page
    :rems.administration/licenses licenses-page
    :rems.administration/resource resource-page
    :rems.administration/resources resources-page
+   :rems.administration/workflow workflow-page
    :rems.administration/workflows workflows-page
-   :rems.administration/create-catalogue-item create-catalogue-item-page
-   :rems.administration/create-form create-form-page
-   :rems.administration/create-license create-license-page
-   :rems.administration/create-resource create-resource-page
-   :rems.administration/create-workflow create-workflow-page
    :unauthorized unauthorized-page
    :forbidden forbidden-page
    :not-found not-found-page})
@@ -309,6 +311,10 @@
 (secretary/defroute "/administration/resources" []
   (rf/dispatch [:rems.administration.resources/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/resources]))
+
+(secretary/defroute "/administration/workflows/:workflow-id" [workflow-id]
+  (rf/dispatch [:rems.administration.workflow/enter-page workflow-id])
+  (rf/dispatch [:set-active-page :rems.administration/workflow]))
 
 (secretary/defroute "/administration/workflows" []
   (rf/dispatch [:rems.administration.workflows/enter-page])

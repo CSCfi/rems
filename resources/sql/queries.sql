@@ -453,7 +453,14 @@ WHERE wfid = :wfid
 
 -- :name get-workflow :? :1
 SELECT
-  wf.id, wf.owneruserid, wf.modifieruserid, wf.title, wf.fnlround, wf.visibility, wf.start, wf.endt
+  wf.id, wf.organization, wf.owneruserid, wf.modifieruserid, wf.title, wf.fnlround, wf.visibility, wf.start, wf.endt AS "end",
+  (SELECT json_agg(joined)
+   FROM (SELECT *, (SELECT json_agg(licloc)
+                    FROM license_localization licloc
+                    WHERE licloc.licid = lic.id) AS localizations
+         FROM workflow_licenses wflic
+         JOIN license lic ON (wflic.licid = lic.id)
+         WHERE wf.id = wflic.wfid) joined)::TEXT AS licenses
 FROM workflow wf
 /*~ (when (:catid params) */
 JOIN catalogue_item ci ON (wf.id = ci.wfid)

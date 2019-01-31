@@ -6,6 +6,16 @@
 (defn- parse-workflow-body [json]
   (cheshire/parse-string json true))
 
+(defn- parse-licenses [json]
+  (cheshire/parse-string json true))
+
+(defn get-workflow [id]
+  (-> {:id id}
+       db/get-workflow
+       (update :workflow parse-workflow-body)
+       (update :licenses parse-licenses)
+       db/assoc-active))
+
 (defn get-workflows [filters]
   (->> (db/get-workflows)
        (map #(update % :workflow parse-workflow-body))
