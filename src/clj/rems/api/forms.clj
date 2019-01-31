@@ -1,6 +1,7 @@
 (ns rems.api.forms
   (:require [compojure.api.sweet :refer :all]
             [rems.api.util]
+            [rems.db.core :as db]
             [rems.db.form :as form]
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
@@ -14,6 +15,19 @@
    :start DateTime
    :end (s/maybe DateTime)
    :active s/Bool})
+
+(s/defschema FormField
+  {:title {s/Keyword s/Str}
+   :optional s/Bool
+   :type (s/enum "attachment" "date" "description" "label" "multiselect" "option" "text" "texta")
+   (s/optional-key :maxlength) (s/maybe (s/constrained s/Int (partial <= 0)))
+   (s/optional-key :options) [{:key s/Str
+                               :label {s/Keyword s/Str}}]
+   (s/optional-key :input-prompt) {s/Keyword s/Str}})
+
+(s/defschema FullForm
+  (merge Form
+         {:fields [s/Any]}))
 
 (s/defschema Forms
   [Form])
@@ -35,13 +49,7 @@
 (s/defschema CreateFormCommand
   {:organization s/Str
    :title s/Str
-   :items [{:title {s/Keyword s/Str}
-            :optional s/Bool
-            :type (s/enum "attachment" "date" "description" "label" "multiselect" "option" "text" "texta")
-            (s/optional-key :maxlength) (s/maybe (s/constrained s/Int (comp not neg?)))
-            (s/optional-key :options) [{:key s/Str
-                                        :label {s/Keyword s/Str}}]
-            (s/optional-key :input-prompt) {s/Keyword s/Str}}]})
+   :items [FormField]})
 
 (s/defschema CreateFormResponse
   {:id s/Num})
@@ -56,6 +64,13 @@
       :query-params [{active :- (describe s/Bool "filter active or inactive forms") nil}]
       :return Forms
       (ok (get-forms (when-not (nil? active) {:active? active}))))
+
+    (GET "/:form-id" []
+      :summary "Get form by id"
+      :roles #{:owner}
+      :path-params [form-id :- (describe s/Num "form-id")]
+      :return FullForm
+      (ok (form/get-form form-id)))
 
     (POST "/create" []
       :summary "Create form"

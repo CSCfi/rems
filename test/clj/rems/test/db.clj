@@ -962,17 +962,21 @@
            (select-keys (applications/get-dynamic-application-state app-id) [:applicantuserid :state :workflow])))
     (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/submit
                                               :actor "alice"
-                                              :application-id app-id})))
+                                              :application-id app-id
+                                              :time (time/now)})))
     (is (= :rems.workflow.dynamic/submitted
            (:state (applications/get-dynamic-application-state app-id))))
     (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/add-member
                                               :actor "alice"
                                               :member "bob"
-                                              :application-id app-id})))
+                                              :application-id app-id
+                                              :time (time/now)})))
     (is (= ["alice" "bob"]
            (:members (applications/get-dynamic-application-state app-id))))
     (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/approve
                                               :actor "handler"
-                                              :application-id app-id})))
+                                              :application-id app-id
+                                              :time (time/now)
+                                              :comment ""})))
     (is (= :rems.workflow.dynamic/approved
            (:state (applications/get-dynamic-application-state app-id))))))

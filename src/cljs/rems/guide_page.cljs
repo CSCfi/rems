@@ -1,6 +1,7 @@
 (ns rems.guide-page
   (:require [re-frame.core :as rf]
             [rems.actions :as actions]
+            [rems.administration.administration :as administration]
             [rems.application :as application]
             [rems.application-list :as application-list]
             [rems.atoms :as atoms]
@@ -91,6 +92,9 @@
 
     [:h2 "Applications"]
     [application/guide]
+
+    [:h2 "Administration"]
+    [administration/guide]
 
     [:h2 "Misc components"]
     [autocomplete/guide]

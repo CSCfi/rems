@@ -4,9 +4,15 @@
 
 ## Getting started
 
-### Getting a database
+### Development database
 
-Run the official postgres docker image and initialize the database:
+Run the official postgres docker image and initialize the database by the way of a lein alias
+
+```
+lein dev-db
+```
+
+You can also start an empty development database by running the script
 
 ```
 ./dev_db.sh
@@ -26,7 +32,7 @@ docker stop rems_test
 
 ### Populating the database
 
-- You can get some nice fake data with `lein run test-data`
+- You can get some test data with `lein run test-data`
 
 ### Running the application
 
@@ -96,6 +102,14 @@ lein doo
 ```
 
 to run tests in Headless Chrome via Karma.
+
+#### Running all the tests
+
+To conveniently run all the tests you can run the lein alias
+
+```
+lein alltests
+```
 
 ## Component Guide
 

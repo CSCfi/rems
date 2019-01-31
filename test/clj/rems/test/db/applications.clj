@@ -1,12 +1,15 @@
 (ns ^:integration rems.test.db.applications
   (:require [clojure.test :refer :all]
+            [clojure.test.check.generators :as generators]
             [luminus-migrations.core :as migrations]
             [mount.core :as mount]
             [rems.config :refer [env]]
-            [rems.context :as context]
             [rems.db.applications :refer :all]
             [rems.db.core :as db]
-            [rems.db.test-data :as test-data]))
+            [rems.db.test-data :as test-data]
+            [rems.workflow.dynamic :as dynamic]
+            [schema-generators.generators :as sg])
+  (:import (org.joda.time DateTime DateTimeZone)))
 
 (use-fixtures
   :once
@@ -66,3 +69,9 @@
                                {:event "withdraw" :userid 123}
                                {:event "close" :userid 123}]}))
       "actions only by applicant"))
+
+(deftest test-event-serialization
+  (let [generators {DateTime (generators/fmap #(DateTime. ^long % DateTimeZone/UTC)
+                                              (generators/large-integer* {:min 0}))}]
+    (doseq [event (sg/sample 100 dynamic/Event generators)]
+      (is (= event (-> event event->json json->event))))))

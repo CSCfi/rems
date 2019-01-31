@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [rems.auth.util :refer [throw-unauthorized]]
             [rems.util :refer [getx]]
+            [schema-refined.core :as r]
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
 
@@ -9,13 +10,6 @@
 
 ;; can't use defschema for this alias since s/Str is just String, which doesn't have metadata
 (def UserId s/Str)
-
-(s/defschema Event
-  {:actor UserId
-   :application-id Long
-   :event s/Keyword
-   :comment (s/maybe s/Str)
-   :time DateTime})
 
 (s/defschema Command
   {:type s/Keyword
@@ -35,12 +29,133 @@
   {:type :workflow/dynamic
    :handlers [UserId]})
 
-(def States #{::draft ::submitted ::approved ::rejected ::closed})
-(def CommandTypes #{::save-draft ::submit ::return #_::accept-license #_::require-license ::request-decision ::decide ::request-comment ::comment ::approve ::reject ::close ::add-member})
-(def EventTypes #{:event/draft-saved :event/submitted :event/returned #_:event/license-required #_:event/license-accepted :event/comment-requested :event/commented :event/decision-requested :event/decided :event/approved :event/rejected :event/closed :event/member-added})
+(def States
+  #{::approved
+    ::closed
+    ::draft
+    ::rejected
+    ::submitted})
+(def CommandTypes
+  #{#_::accept-license
+    #_::require-license
+    ::add-member
+    ::approve
+    ::close
+    ::comment
+    ::decide
+    ::reject
+    ::request-comment
+    ::request-decision
+    ::return
+    ::save-draft
+    ::submit})
 
+;; TODO: namespaced keys e.g. :event/type, :event/time, :event/actor, :application/id
+;; TODO: add version number to events
+(s/defschema EventBase
+  {:event s/Keyword
+   :application-id s/Int
+   :actor UserId
+   :time DateTime})
 
+(s/defschema ApprovedEvent
+  (assoc EventBase
+         :event (s/eq :event/approved)
+         :comment s/Str))
+(s/defschema ClosedEvent
+  (assoc EventBase
+         :event (s/eq :event/closed)
+         :comment s/Str))
+(s/defschema CommentedEvent
+  (assoc EventBase
+         :event (s/eq :event/commented)
+         :comment s/Str))
+(s/defschema CommentRequestedEvent
+  (assoc EventBase
+         :event (s/eq :event/comment-requested)
+         :commenters [s/Str]
+         :comment s/Str))
+(s/defschema DecidedEvent
+  (assoc EventBase
+         :event (s/eq :event/decided)
+         :decision (s/enum :approved :rejected)
+         :comment s/Str))
+(s/defschema DecisionRequestedEvent
+  (assoc EventBase
+         :event (s/eq :event/decision-requested)
+         :decider s/Str
+         :comment s/Str))
+(s/defschema DraftSavedEvent
+  (assoc EventBase
+         :event (s/eq :event/draft-saved)
+         :items {Long s/Str}
+         :licenses {Long s/Str}))
+(s/defschema MemberAddedEvent
+  (assoc EventBase
+         :event (s/eq :event/member-added)
+         :member s/Str))
+(s/defschema RejectedEvent
+  (assoc EventBase
+         :event (s/eq :event/rejected)
+         :comment s/Str))
+(s/defschema ReturnedEvent
+  (assoc EventBase
+         :event (s/eq :event/returned)
+         :comment s/Str))
+(s/defschema SubmittedEvent
+  (assoc EventBase
+         :event (s/eq :event/submitted)))
 
+;; TODO: :event/license-accepted, :event/license-required
+(def event-schemas
+  {:event/approved ApprovedEvent
+   :event/closed ClosedEvent
+   :event/commented CommentedEvent
+   :event/comment-requested CommentRequestedEvent
+   :event/decided DecidedEvent
+   :event/decision-requested DecisionRequestedEvent
+   :event/draft-saved DraftSavedEvent
+   :event/member-added MemberAddedEvent
+   :event/rejected RejectedEvent
+   :event/returned ReturnedEvent
+   :event/submitted SubmittedEvent})
+
+(s/defschema Event
+  (apply r/dispatch-on (flatten [:event (seq event-schemas)])))
+
+(deftest test-event-schema
+  (testing "check specific event schema"
+    (is (nil? (s/check SubmittedEvent {:event :event/submitted
+                                       :actor "foo"
+                                       :application-id 123
+                                       :time (DateTime.)}))))
+  (testing "check generic event schema"
+    (is (nil? (s/check Event
+                       {:event :event/submitted
+                        :actor "foo"
+                        :application-id 123
+                        :time (DateTime.)})))
+    (is (nil? (s/check Event
+                       {:event :event/approved
+                        :actor "foo"
+                        :application-id 123
+                        :time (DateTime.)
+                        :comment "foo"}))))
+  (testing "missing event specific key"
+    (is (= {:comment 'missing-required-key}
+           (s/check Event
+                    {:event :event/approved
+                     :actor "foo"
+                     :application-id 123
+                     :time (DateTime.)}))))
+  (testing "unknown event type"
+    ;; TODO: improve error message to show the actual and expected event types
+    (is (= "(not (some-matching-condition? a-clojure.lang.PersistentArrayMap))"
+           (pr-str (s/check Event
+                            {:event :foo
+                             :actor "foo"
+                             :application-id 123
+                             :time (DateTime.)}))))))
 
 
 ;;; Events
@@ -56,7 +171,8 @@
   (map first (keys (methods apply-event))))
 
 (deftest test-all-event-types-handled
-  (is (= EventTypes (set (get-event-types)))))
+  (is (= (set (keys event-schemas))
+         (set (get-event-types)))))
 
 (defmethod apply-event [:event/draft-saved :workflow/dynamic]
   [application _workflow event]
