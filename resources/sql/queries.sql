@@ -501,6 +501,12 @@ WHERE rl.resid = :id
 SELECT lic.id, lic.title, lic.type, lic.textcontent, lic.start, lic.endt
 FROM license lic
 
+-- :name get-license :? :1
+SELECT lic.id, lic.title, lic.type, lic.textcontent, lic.start, lic.endt
+, TRUE AS active -- TODO implement active and archiving
+FROM license lic
+WHERE lic.id = :id
+
 -- :name get-license-localizations :? :*
 SELECT licid, langcode, title, textcontent
 FROM license_localization

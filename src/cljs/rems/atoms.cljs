@@ -46,7 +46,7 @@
 
   Additional options:
   `:inline?` - puts the label and value on the same row"
-  [title value & [{:keys [inline? half?] :as opts}]]
+  [title value & [{:keys [inline?] :as opts}]]
   (if inline?
     [:div.form-group.row
      [:label.col-sm-2.col-form-label title]

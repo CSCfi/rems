@@ -27,6 +27,13 @@
       :return Licenses
       (ok (licenses/get-all-licenses (when-not (nil? active) {:active? active}))))
 
+    (GET "/:license-id" []
+      :summary "Get license"
+      :roles #{:owner}
+      :path-params [license-id :- (describe s/Num "license id")]
+      :return License
+      (ok (licenses/get-license license-id)))
+
     (POST "/create" []
       :summary "Create license"
       :roles #{:owner}
