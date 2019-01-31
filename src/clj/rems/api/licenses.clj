@@ -7,11 +7,13 @@
             [schema.core :as s]))
 
 (s/defschema CreateLicenseCommand
-  {:licensetype (s/enum "link" "text")
+  {:licensetype (s/enum "link" "text" "attachment")
    :title s/Str
    :textcontent s/Str
+   (s/->OptionalKey :attachment) s/Any
    :localizations {s/Keyword {:title s/Str
-                              :textcontent s/Str}}})
+                              :textcontent s/Str
+                              (s/->OptionalKey :attachment) s/Any}}})
 
 (s/defschema CreateLicenseResponse
   {:id s/Num})

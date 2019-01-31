@@ -72,8 +72,11 @@
                                      :textcontent textcontent})
         licid (:id license)]
     (doseq [[langcode localization] localizations]
-      (db/create-license-localization! {:licid licid
-                                        :langcode (name langcode)
-                                        :title (:title localization)
-                                        :textcontent (:textcontent localization)}))
+      (let [attachment-id (db/create-license-attachment! {:filename (:textcontent localization)
+                                                          :data (:attachment localization)})]
+        (db/create-license-localization! {:licid licid
+                                          :langcode (name langcode)
+                                          :title (:title localization)
+                                          :textcontent (:textcontent localization)
+                                          :attachment attachment-id})))
     {:id licid}))

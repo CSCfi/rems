@@ -322,11 +322,17 @@ VALUES
 /*~ (if (:endt params) */ :endt /*~*/ NULL /*~ ) ~*/
 )
 
+-- :name create-license-attachment! :insert
+INSERT INTO license_attachment
+(filename, data)
+VALUES
+(:filename, :data);
+
 -- :name create-license-localization! :insert
 INSERT INTO license_localization
-(licid, langcode, title, textcontent)
+(licid, langcode, title, textcontent, attachmentId)
 VALUES
-(:licid, :langcode, :title, :textcontent)
+(:licid, :langcode, :title, :textcontent, :attachment)
 
 -- :name create-workflow! :insert
 INSERT INTO workflow
