@@ -5,8 +5,7 @@
             [rems.administration.components :refer [radio-button-group text-field textarea-autosize]]
             [rems.collapsible :as collapsible]
             [rems.text :refer [text localize-item]]
-            [rems.util :refer [dispatch! fetch post!]]
-            [rems.atoms :as atoms]))
+            [rems.util :refer [dispatch! fetch post!]]))
 
 (defn- reset-form [db]
   (dissoc db ::form))
@@ -33,7 +32,7 @@
 (def license-type-attachment "attachment")
 
 (defn parse-textcontent [form license-type]
-  (case license-type
+  (condp = license-type
     license-type-link (:link form)
     license-type-text (:text form)
     license-type-attachment (:attachment-filename form)
