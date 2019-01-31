@@ -403,16 +403,20 @@
                       :type "text" :textcontent "non-localized content"}))]
       (db/create-license-localization!
        {:licid link :langcode "en" :title "CC Attribution 4.0"
-        :textcontent "https://creativecommons.org/licenses/by/4.0/legalcode"})
+        :textcontent "https://creativecommons.org/licenses/by/4.0/legalcode"
+        :attachmentId nil})
       (db/create-license-localization!
        {:licid link :langcode "fi" :title "CC Nimeä 4.0"
-        :textcontent "https://creativecommons.org/licenses/by/4.0/legalcode.fi"})
+        :textcontent "https://creativecommons.org/licenses/by/4.0/legalcode.fi"
+        :attachmentId nil})
       (db/create-license-localization!
        {:licid text :langcode "fi" :title "Yleiset käyttöehdot"
-        :textcontent (apply str (repeat 10 "Suomenkielinen lisenssiteksti. "))})
+        :textcontent (apply str (repeat 10 "Suomenkielinen lisenssiteksti. "))
+        :attachmentId nil})
       (db/create-license-localization!
        {:licid text :langcode "en" :title "General Terms of Use"
-        :textcontent (apply str (repeat 10 "License text in English. "))})
+        :textcontent (apply str (repeat 10 "License text in English. "))
+        :attachmentId nil})
 
       (doseq [wfid [minimal simple with-review two-round different dynamic]]
         (db/create-workflow-license! {:wfid wfid :licid link :round 0})
@@ -435,10 +439,12 @@
                      :type "link" :textcontent "http://invalid"}))]
     (db/create-license-localization!
      {:licid licid :langcode "en" :title (str text " (en)")
-      :textcontent "https://www.apache.org/licenses/LICENSE-2.0"})
+      :textcontent "https://www.apache.org/licenses/LICENSE-2.0"
+      :attachmentId nil})
     (db/create-license-localization!
      {:licid licid :langcode "fi" :title (str text " (fi)")
-      :textcontent "https://www.apache.org/licenses/LICENSE-2.0"})
+      :textcontent "https://www.apache.org/licenses/LICENSE-2.0"
+      :attachmentId nil})
     (db/create-resource-license! {:resid resid :licid licid})
     (db/set-resource-license-validity! {:licid licid :start (time/minus (time/now) (time/years 1)) :end nil})
     licid))

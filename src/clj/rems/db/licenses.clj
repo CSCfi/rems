@@ -3,7 +3,9 @@
   (:require [clj-time.core :as time]
             [rems.db.core :as db]
             [rems.common-util :refer [distinct-by]]
-            [rems.util :refer [getx-user-id]]))
+            [rems.util :refer [getx-user-id]]
+            [clojure.tools.logging :as log])
+  (:import (java.io FileInputStream ByteArrayOutputStream)))
 
 (defn- format-license [license]
   {:id (:id license)
@@ -81,12 +83,26 @@
                                      :title title
                                      :textcontent textcontent})
         licid (:id license)]
-    (doseq [[langcode localization] localizations]
-      (let [attachment-id (db/create-license-attachment! {:filename (:textcontent localization)
-                                                          :data (:attachment localization)})]
-        (db/create-license-localization! {:licid licid
-                                          :langcode (name langcode)
-                                          :title (:title localization)
-                                          :textcontent (:textcontent localization)
-                                          :attachment attachment-id})))
+    (doseq [[langcode localization attachment-id] localizations]
+      (db/create-license-localization! {:licid licid
+                                        :langcode (name langcode)
+                                        :title (:title localization)
+                                        :textcontent (:textcontent localization)
+                                        :attachmentId attachment-id}))
     {:id licid}))
+
+(defn create-license-attachment! [{:keys [tempfile filename content-type]} user-id]
+  (let [byte-array (with-open [input (FileInputStream. tempfile)
+                               buffer (ByteArrayOutputStream.)]
+                     (clojure.java.io/copy input buffer)
+                     (.toByteArray buffer))]
+    (select-keys
+     (db/create-license-attachment! {:user user-id
+                                     :filename filename
+                                     :type content-type
+                                     :data byte-array})
+     [:id])))
+
+(defn remove-license-attachment!
+  [attachment-id]
+  (db/remove-license-attachment! {:id attachment-id}))
