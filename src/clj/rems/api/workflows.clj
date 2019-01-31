@@ -113,13 +113,6 @@
       :return Workflows
       (ok (get-workflows (when-not (nil? active) {:active? active}))))
 
-    (GET "/:workflow-id" []
-      :summary "Get workflow by id"
-      :roles #{:owner}
-      :path-params [workflow-id :- (describe s/Num "workflow-id")]
-      :return Workflow
-      (ok (get-workflow workflow-id)))
-
     (POST "/create" []
       :summary "Create workflow"
       :roles #{:owner}
@@ -131,4 +124,11 @@
       :summary "List of available actors"
       :roles #{:owner}
       :return AvailableActors
-      (ok (get-available-actors)))))
+      (ok (get-available-actors)))
+
+    (GET "/:workflow-id" []
+      :summary "Get workflow by id"
+      :roles #{:owner}
+      :path-params [workflow-id :- (describe s/Num "workflow-id")]
+      :return Workflow
+      (ok (get-workflow workflow-id)))))
