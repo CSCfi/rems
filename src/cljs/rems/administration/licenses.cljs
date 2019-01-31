@@ -45,6 +45,11 @@
    {:href "/#/administration/create-license"}
    (text :t.administration/create-license)])
 
+(defn- to-view-license [license-id]
+  [:a.btn.btn-primary
+   {:href (str "/#/administration/licenses/" license-id)}
+   (text :t.administration/view)])
+
 (defn- licenses-columns []
   {:title {:header #(text :t.administration/licenses)
            :value :title}
@@ -56,7 +61,7 @@
          :value (comp localize-time :end)}
    :active {:header #(text :t.administration/active)
             :value (comp readonly-checkbox :active)}
-   :commands {:value :no-value
+   :commands {:value (fn [license] [to-view-license (:id license)])
               :sortable? false
               :filterable? false}})
 

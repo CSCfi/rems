@@ -53,6 +53,18 @@ SELECT
   endt
 FROM resource
 
+-- :name get-resource :? :1
+SELECT
+  id,
+  owneruserid,
+  modifieruserid,
+  organization,
+  resid,
+  start,
+  endt
+FROM resource
+WHERE id = :id
+
 -- :name create-resource! :insert
 -- :doc Create a single resource
 INSERT INTO resource
@@ -500,6 +512,12 @@ WHERE rl.resid = :id
 -- :name get-all-licenses :? :*
 SELECT lic.id, lic.title, lic.type, lic.textcontent, lic.start, lic.endt
 FROM license lic
+
+-- :name get-license :? :1
+SELECT lic.id, lic.title, lic.type, lic.textcontent, lic.start, lic.endt
+, TRUE AS active -- TODO implement active and archiving
+FROM license lic
+WHERE lic.id = :id
 
 -- :name get-license-localizations :? :*
 SELECT licid, langcode, title, textcontent

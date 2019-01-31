@@ -6,7 +6,7 @@
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-time text text-format]]
-            [rems.util :refer [dispatch! fetch put!]]))
+            [rems.util :refer [andstr dispatch! fetch put!]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -69,7 +69,7 @@
   [:div.spaced-vertically-3
    [collapsible/component
     {:id "form"
-     :title [:span (:organization form) "/" (:title form)]
+     :title [:span (andstr (:organization form) "/") (:title form)]
      :always [:div
               [inline-info-field (text :t.administration/organization) (:organization form)]
               [inline-info-field (text :t.administration/title) (:title form)]

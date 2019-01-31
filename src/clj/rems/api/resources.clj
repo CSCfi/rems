@@ -49,6 +49,12 @@
      (assoc (format-resource res)
             :licenses (licenses/get-resource-licenses (:id res))))))
 
+(defn- get-resource [id]
+  (-> id
+      resource/get-resource
+      format-resource
+      (assoc :licenses (licenses/get-resource-licenses id))))
+
 (def resources-api
   (context "/resources" []
     :tags ["resources"]
@@ -59,6 +65,13 @@
       :query-params [{active :- (describe s/Bool "filter active or inactive resources") nil}]
       :return Resources
       (ok (get-resources (when-not (nil? active) {:active? active}))))
+
+    (GET "/:resource-id" []
+      :summary "Get resource by id"
+      :roles #{:owner}
+      :path-params [resource-id :- (describe s/Num "resource id")]
+      :return Resource
+      (ok (get-resource resource-id)))
 
     (POST "/create" []
       :summary "Create resource"

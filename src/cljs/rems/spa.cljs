@@ -15,7 +15,9 @@
             [rems.administration.create-workflow :refer [create-workflow-page]]
             [rems.administration.form :refer [form-page]]
             [rems.administration.forms :refer [forms-page]]
+            [rems.administration.license :refer [license-page]]
             [rems.administration.licenses :refer [licenses-page]]
+            [rems.administration.resource :refer [resource-page]]
             [rems.administration.resources :refer [resources-page]]
             [rems.administration.workflows :refer [workflows-page]]
             [rems.ajax :refer [load-interceptors!]]
@@ -215,7 +217,9 @@
    :rems.administration/catalogue-items catalogue-items-page
    :rems.administration/form form-page
    :rems.administration/forms forms-page
+   :rems.administration/license license-page
    :rems.administration/licenses licenses-page
+   :rems.administration/resource resource-page
    :rems.administration/resources resources-page
    :rems.administration/workflows workflows-page
    :rems.administration/create-catalogue-item create-catalogue-item-page
@@ -298,6 +302,10 @@
   (rf/dispatch [:rems.administration.forms/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/forms]))
 
+(secretary/defroute "/administration/resources/:resource-id" [resource-id]
+  (rf/dispatch [:rems.administration.resource/enter-page resource-id])
+  (rf/dispatch [:set-active-page :rems.administration/resource]))
+
 (secretary/defroute "/administration/resources" []
   (rf/dispatch [:rems.administration.resources/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/resources]))
@@ -305,6 +313,10 @@
 (secretary/defroute "/administration/workflows" []
   (rf/dispatch [:rems.administration.workflows/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/workflows]))
+
+(secretary/defroute "/administration/licenses/:license-id" [license-id]
+  (rf/dispatch [:rems.administration.license/enter-page license-id])
+  (rf/dispatch [:set-active-page :rems.administration/license]))
 
 (secretary/defroute "/administration/licenses" []
   (rf/dispatch [:rems.administration.licenses/enter-page])
