@@ -1,3 +1,3 @@
-ALTER TABLE license_localization DROP COLUMN attachment_id;
+ALTER TABLE license_localization DROP COLUMN attachmentId;
 
 DROP TABLE license_attachment;

@@ -354,15 +354,18 @@ VALUES
 
 -- :name create-license-attachment! :insert
 INSERT INTO license_attachment
-(filename, data)
+(modifierUserId, filename, type, data)
 VALUES
-(:filename, :data);
+(:user, :filename, :type, :data);
+
+-- :name remove-license-attachment! :!
+DELETE FROM license_attachment WHERE id = :id;
 
 -- :name create-license-localization! :insert
 INSERT INTO license_localization
 (licid, langcode, title, textcontent, attachmentId)
 VALUES
-(:licid, :langcode, :title, :textcontent, :attachment)
+(:licid, :langcode, :title, :textcontent, :attachmentId)
 
 -- :name create-workflow! :insert
 INSERT INTO workflow
