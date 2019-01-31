@@ -28,30 +28,6 @@
  (fn [db [_ keys value]]
    (assoc-in db (concat [::form] keys) value)))
 
-(defn- save-attachment [title form-data]
-  (post! (str "/api/licenses/save_license/?license-title=" title)
-         {:body form-data
-          :error-handler (fn [_])}))
-
-(defn- remove-attachment [title]
-  (post! (str "/api/licenses/remove_license/?license-title=" title)
-         {:body {}
-          :error-handler (fn [_])}))
-
-(rf/reg-event-fx
- ::save-attachment
- (fn [_ [_ title file]]
-   (save-attachment title file)
-   {}))
-
-(rf/reg-event-fx
- ::remove-attachment
- (fn [_ [_ title]]
-   (when title
-     (remove-attachment title))
-   {}))
-
-
 ; form submit
 
 (def license-type-link "link")
@@ -62,12 +38,13 @@
   (case license-type
     license-type-link (:link form)
     license-type-text (:text form)
-    license-type-attachment (:attachment form)
+    license-type-attachment (:attachment-filename form)
     nil))
 
 (defn- build-localization [data license-type]
   {:title (:title data)
-   :textcontent (parse-textcontent data license-type)})
+   :textcontent (parse-textcontent data license-type)
+   :attachment (:attachment data)})
 
 (defn- valid-localization? [data]
   (and (not (str/blank? (:title data)))
@@ -132,17 +109,16 @@
                          :label (text :t.create-license/link-to-license)
                          :placeholder "https://example.com/license"}]))
 
-(defn- set-attachment [title]
+(defn- set-attachment []
   (fn [event]
     (let [filecontent (aget (.. event -target -files) 0)
           form-data (doto (js/FormData.)
                       (.append "file" filecontent))]
       (rf/dispatch [::set-form-field [:attachment-filename] (.-name filecontent)])
-      (rf/dispatch [::save-attachment title form-data]))))
+      (rf/dispatch [::set-form-field [:attachment] form-data]))))
 
 (defn- remove-attachment-action [_]
-  (rf/dispatch [::set-form-field [:attachment-filename] nil])
-  (rf/dispatch [::remove-attachment]))
+  (rf/dispatch [::set-form-field [:attachment-filename] nil]))
 
 (defn- license-text-field [language]
   (when (= license-type-text (current-licence-type))
@@ -155,7 +131,7 @@
           title (get-in form [:localizations language :title])
           filename (get form :attachment-filename)
           filename-field [:a.btn.btn-secondary.mr-2
-                          {:href (str "/api/licenses/license/?license-title=" title)
+                          {:href (str "/api/licenses/license/?license-title=" title "&locale="language)
                            :target :_new}
                           filename " " (atoms/external-link)]
           upload-field [:div.upload-file.mr-2
@@ -163,7 +139,7 @@
                                  :type "file"
                                  :id "upload-license-button"
                                  :accept ".pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
-                                 :on-change (set-attachment title)}]
+                                 :on-change set-attachment}]
                         [:button.btn.btn-secondary {:on-click #(.click (.getElementById js/document "upload-license-button"))}
                          (text :t.form/upload)]]
           remove-button [:button.btn.btn-secondary.mr-2
@@ -209,7 +185,8 @@
                          [language-heading language]
                          [license-title-field language]
                          [license-link-field language]
-                         [license-text-field language]]))
+                         [license-text-field language]
+                         [license-attachment-field default-language]]))
 
                [:div.col.commands
                 [cancel-button]
