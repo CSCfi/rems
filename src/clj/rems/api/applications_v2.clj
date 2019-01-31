@@ -138,15 +138,29 @@
                            [{:id 4} {:id 3}]
                            [{:id 2} {:id 1}])))))
 
+(defn- localization-for [key item]
+  (into {} (for [lang (keys (:localizations item))]
+             (when-let [text (get-in item [:localizations lang key])]
+               [lang text]))))
+
+(deftest test-localization-for
+  (is (= {:en "en title" :fi "fi title"}
+         (localization-for :title {:localizations {:en {:title "en title"}
+                                                   :fi {:title "fi title"}}})))
+  (is (= {:en "en title"}
+         (localization-for :title {:localizations {:en {:title "en title"}
+                                                   :fi {}}})))
+  (is (= {}
+         (localization-for :title {:localizations {:en {}
+                                                   :fi {}}}))))
+
 (defn- assoc-form [application form]
   (let [form-fields (map (fn [item]
                            {:field-id (:id item)
                             :value "" ; default for new forms
                             :type (keyword (:type item))
-                            :title {:en (get-in item [:localizations :en :title])
-                                    :fi (get-in item [:localizations :fi :title])}
-                            :placeholder {:en (get-in item [:localizations :en :inputprompt])
-                                          :fi (get-in item [:localizations :fi :inputprompt])}
+                            :title (localization-for :title item)
+                            :placeholder (localization-for :inputprompt item)
                             :optional (:optional item)
                             :options (:options item)
                             :max-length (:maxlength item)})
