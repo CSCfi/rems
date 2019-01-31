@@ -10,7 +10,7 @@
   (cheshire/parse-string json true))
 
 (defn get-workflow [id]
-  (-> {:id id}
+  (-> {:wfid id}
        db/get-workflow
        (update :workflow parse-workflow-body)
        (update :licenses parse-licenses)
