@@ -97,7 +97,7 @@
             (applications/add-dynamic-event! {:event :event/created
                                               :actor actor
                                               :application-id application-id
-                                              :time (time/now)
+                                              :time (:start application)
                                               :resources (map (fn [item]
                                                                 {:resource-ext-id (:resid item)
                                                                  :catalogue-item-id (:id item)})
