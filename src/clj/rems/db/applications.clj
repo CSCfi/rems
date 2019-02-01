@@ -992,8 +992,11 @@
   ;; most keys are keywords, but some events use numeric keys in maps
   (coerce-dynamic-event (cheshire/parse-string json str->keyword-or-number)))
 
+(defn validate-dynamic-event [event]
+  (s/validate dynamic/Event event))
+
 (defn event->json [event]
-  (s/validate dynamic/Event event)
+  (validate-dynamic-event event)
   (cheshire/generate-string event))
 
 (defn- fix-event-from-db [event]
