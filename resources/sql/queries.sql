@@ -523,17 +523,17 @@ INNER JOIN resource_licenses rl ON lic.id = rl.licid
 WHERE rl.resid = :id
 
 -- :name get-all-licenses :? :*
-SELECT lic.id, lic.title, lic.type, lic.textcontent, lic.start, lic.endt
+SELECT lic.id, lic.title, lic.type, lic.textcontent, lic.start, lic.endt, lic.attachmentid
 FROM license lic
 
 -- :name get-license :? :1
-SELECT lic.id, lic.title, lic.type, lic.textcontent, lic.start, lic.endt
+SELECT lic.id, lic.title, lic.type, lic.textcontent, lic.start, lic.endt, lic.attachmentid
 , TRUE AS active -- TODO implement active and archiving
 FROM license lic
 WHERE lic.id = :id
 
 -- :name get-license-localizations :? :*
-SELECT licid, langcode, title, textcontent, attachmentId
+SELECT licid, langcode, title, textcontent, attachmentid
 FROM license_localization
 
 -- :name get-roles :? :*

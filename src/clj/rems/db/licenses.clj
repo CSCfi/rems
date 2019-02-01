@@ -15,7 +15,7 @@
    ;; TODO why do licenses have a non-localized title & content while items don't?
    :title (:title license)
    :textcontent (:textcontent license)
-   :attachment-id (:attachmentId license)})
+   :attachment-id (:attachmentid license)})
 
 (defn- format-licenses [licenses]
   (mapv format-license licenses))
