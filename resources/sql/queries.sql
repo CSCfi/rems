@@ -454,6 +454,7 @@ WHERE wfid = :wfid
 -- :name get-workflow :? :1
 SELECT
   wf.id, wf.organization, wf.owneruserid, wf.modifieruserid, wf.title, wf.fnlround, wf.visibility, wf.start, wf.endt AS "end",
+  wf.workflowBody::TEXT as workflow,
   (SELECT json_agg(joined)
    FROM (SELECT *, (SELECT json_agg(licloc)
                     FROM license_localization licloc

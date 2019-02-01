@@ -117,6 +117,12 @@
      :always [:div
               [inline-info-field (text :t.administration/organization) (:organization workflow)]
               [inline-info-field (text :t.administration/title) (:title workflow)]
+              [inline-info-field (text :t.administration/type)
+               (cond (:workflow workflow) (text :t.create-workflow/dynamic-workflow)
+                     (seq (:actors workflow)) (text :t.create-workflow/rounds-workflow)
+                     :else (text :t.create-workflow/auto-approve-workflow))]
+              (when (:workflow workflow)
+                [inline-info-field (text :t.create-workflow/handlers) (str/join ", " (get-in workflow [:workflow :handlers]))])
               [inline-info-field (text :t.administration/start) (localize-time (:start workflow))]
               [inline-info-field (text :t.administration/end) (localize-time (:end workflow))]
               [inline-info-field (text :t.administration/active) [readonly-checkbox (:active workflow)]]]}]
