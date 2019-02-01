@@ -63,9 +63,9 @@
     (let [uid "test-user"
           form-id (:id (db/create-form! {:organization "abc" :title "internal-title" :user uid}))
           wf-id (:id (db/create-workflow! {:organization "abc" :modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 0}))
-          license-id (:id (db/create-license! {:modifieruserid uid :owneruserid uid :title "non-localized license" :type "link" :textcontent "http://test.org" :attachmentId nil}))
-          _ (db/create-license-localization! {:licid license-id :langcode "fi" :title "Testi lisenssi" :textcontent "http://testi.fi" :attachmentId nil})
-          _ (db/create-license-localization! {:licid license-id :langcode "en" :title "Test license" :textcontent "http://test.com" :attachmentId nil})
+          license-id (:id (db/create-license! {:modifieruserid uid :owneruserid uid :title "non-localized license" :type "link" :textcontent "http://test.org"}))
+          _ (db/create-license-localization! {:licid license-id :langcode "fi" :title "Testi lisenssi" :textcontent "http://testi.fi"})
+          _ (db/create-license-localization! {:licid license-id :langcode "en" :title "Test license" :textcontent "http://test.com"})
           _ (db/create-workflow-license! {:wfid wf-id :licid license-id :round 0})
           _ (db/set-workflow-license-validity! {:licid license-id :start (time/minus (time/now) (time/years 1)) :end nil})
           item-id (:id (db/create-catalogue-item! {:title "item" :form form-id :resid nil :wfid wf-id}))

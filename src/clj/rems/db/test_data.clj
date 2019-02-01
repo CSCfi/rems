@@ -87,7 +87,7 @@
 (defn- create-expired-license! []
   (let [owner (+fake-users+ :owner) ; only used from create-test-data!
         yesterday (time/minus (time/now) (time/days 1))]
-    (db/create-license! {:modifieruserid owner :owneruserid owner :title "expired license" :type "link" :textcontent "http://expired" :endt yesterday :attachmentId nil})))
+    (db/create-license! {:modifieruserid owner :owneruserid owner :title "expired license" :type "link" :textcontent "http://expired" :endt yesterday})))
 
 (defn- create-basic-form!
   "Creates a bilingual form with all supported field types. Returns id of the form meta."
@@ -397,26 +397,22 @@
     ;; attach both kinds of licenses to all workflows
     (let [link (:id (db/create-license!
                      {:modifieruserid owner :owneruserid owner :title "non-localized link license"
-                      :type "link" :textcontent "http://invalid" :attachmentId nil}))
+                      :type "link" :textcontent "http://invalid"}))
           text (:id (db/create-license!
                      {:modifieruserid owner :owneruserid owner :title "non-localized text license"
-                      :type "text" :textcontent "non-localized content" :attachmentId nil}))]
+                      :type "text" :textcontent "non-localized content"}))]
       (db/create-license-localization!
        {:licid link :langcode "en" :title "CC Attribution 4.0"
-        :textcontent "https://creativecommons.org/licenses/by/4.0/legalcode"
-        :attachmentId nil})
+        :textcontent "https://creativecommons.org/licenses/by/4.0/legalcode"})
       (db/create-license-localization!
        {:licid link :langcode "fi" :title "CC Nimeä 4.0"
-        :textcontent "https://creativecommons.org/licenses/by/4.0/legalcode.fi"
-        :attachmentId nil})
+        :textcontent "https://creativecommons.org/licenses/by/4.0/legalcode.fi"})
       (db/create-license-localization!
        {:licid text :langcode "fi" :title "Yleiset käyttöehdot"
-        :textcontent (apply str (repeat 10 "Suomenkielinen lisenssiteksti. "))
-        :attachmentId nil})
+        :textcontent (apply str (repeat 10 "Suomenkielinen lisenssiteksti. "))})
       (db/create-license-localization!
        {:licid text :langcode "en" :title "General Terms of Use"
-        :textcontent (apply str (repeat 10 "License text in English. "))
-        :attachmentId nil})
+        :textcontent (apply str (repeat 10 "License text in English. "))})
 
       (doseq [wfid [minimal simple with-review two-round different dynamic]]
         (db/create-workflow-license! {:wfid wfid :licid link :round 0})
@@ -436,15 +432,13 @@
 (defn- create-resource-license! [resid text owner]
   (let [licid (:id (db/create-license!
                     {:modifieruserid owner :owneruserid owner :title "resource license"
-                     :type "link" :textcontent "http://invalid" :attachmentId nil}))]
+                     :type "link" :textcontent "http://invalid"}))]
     (db/create-license-localization!
      {:licid licid :langcode "en" :title (str text " (en)")
-      :textcontent "https://www.apache.org/licenses/LICENSE-2.0"
-      :attachmentId nil})
+      :textcontent "https://www.apache.org/licenses/LICENSE-2.0"})
     (db/create-license-localization!
      {:licid licid :langcode "fi" :title (str text " (fi)")
-      :textcontent "https://www.apache.org/licenses/LICENSE-2.0"
-      :attachmentId nil})
+      :textcontent "https://www.apache.org/licenses/LICENSE-2.0"})
     (db/create-resource-license! {:resid resid :licid licid})
     (db/set-resource-license-validity! {:licid licid :start (time/minus (time/now) (time/years 1)) :end nil})
     licid))

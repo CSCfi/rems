@@ -24,10 +24,10 @@
    :end (s/maybe DateTime)
    :title s/Str
    :textcontent s/Str
-   :attachment-id (s/maybe s/Num)
+   (s/optional-key :attachment-id) (s/maybe s/Num)
    :localizations {s/Keyword {:title s/Str
                               :textcontent s/Str
-                              :attachment-id (s/maybe s/Num)}}})
+                              (s/optional-key :attachment-id) (s/maybe s/Num)}}})
 
 (s/defschema Licenses
   [License])

@@ -360,7 +360,8 @@ WHERE catappid = :catappid AND licid = :licid AND modifieruserid = :actoruserid
 INSERT INTO license
 (ownerUserId, modifierUserId, title, type, textcontent, attachmentId, endt)
 VALUES
-(:owneruserid, :modifieruserid, :title, :type::license_type, :textcontent, :attachmentId,
+(:owneruserid, :modifieruserid, :title, :type::license_type, :textcontent,
+/*~ (if (:attachmentId params) */ :attachmentId, /*~*/ NULL, /*~ ) ~*/
 /*~ (if (:endt params) */ :endt /*~*/ NULL /*~ ) ~*/
 )
 
@@ -381,7 +382,8 @@ WHERE id = :attachmentId;
 INSERT INTO license_localization
 (licid, langcode, title, textcontent, attachmentId)
 VALUES
-(:licid, :langcode, :title, :textcontent, :attachmentId)
+(:licid, :langcode, :title, :textcontent,
+/*~ (if (:attachmentId params) */ :attachmentId /*~*/ NULL /*~ ) ~*/)
 
 -- :name create-workflow! :insert
 INSERT INTO workflow
