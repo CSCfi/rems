@@ -19,16 +19,19 @@
                      assert-response-is-ok
                      read-body)]
         (is (coll-is-not-empty? data))
-        (is (= #{:id :start :end :licensetype :title :textcontent :localizations} (set (keys (first data)))))))
+        (is (= #{:id :start :end :licensetype :title :textcontent :localizations :attachment-id} (set (keys (first data)))))))
 
     (testing "create linked license"
       (let [command {:title (str "license title " (UUID/randomUUID))
                      :licensetype "link"
                      :textcontent "http://example.com/license"
+                     :attachment-id nil
                      :localizations {:en {:title "en title"
-                                          :textcontent "http://example.com/license/en"}
+                                          :textcontent "http://example.com/license/en"
+                                          :attachment-id nil}
                                      :fi {:title "fi title"
-                                          :textcontent "http://example.com/license/fi"}}}]
+                                          :textcontent "http://example.com/license/fi"
+                                          :attachment-id nil}}}]
         (-> (request :post "/api/licenses/create")
             (authenticate api-key user-id)
             (json-body command)
@@ -50,10 +53,13 @@
       (let [command {:title (str "license title " (UUID/randomUUID))
                      :licensetype "text"
                      :textcontent "license text"
+                     :attachment-id nil
                      :localizations {:en {:title "en title"
-                                          :textcontent "en text"}
+                                          :textcontent "en text"
+                                          :attachment-id nil}
                                      :fi {:title "fi title"
-                                          :textcontent "fi text"}}}]
+                                          :textcontent "fi text"
+                                          :attachment-id nil}}}]
         (-> (request :post "/api/licenses/create")
             (authenticate api-key user-id)
             (json-body command)

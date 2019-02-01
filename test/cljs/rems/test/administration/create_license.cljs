@@ -30,10 +30,13 @@
       (is (= {:title "en title"
               :licensetype "link"
               :textcontent "en link"
+              :attachment-id nil
               :localizations {:en {:title "en title"
-                                   :textcontent "en link"}
+                                   :textcontent "en link"
+                                   :attachment-id nil}
                               :fi {:title "fi title"
-                                   :textcontent "fi link"}}}
+                                   :textcontent "fi link"
+                                   :attachment-id nil}}}
              (build-request (assoc-in form [:licensetype] "link")
                             default-language
                             languages))))
@@ -41,10 +44,13 @@
       (is (= {:title "en title"
               :licensetype "text"
               :textcontent "en text"
+              :attachment-id nil
               :localizations {:en {:title "en title"
-                                   :textcontent "en text"}
+                                   :textcontent "en text"
+                                   :attachment-id nil}
                               :fi {:title "fi title"
-                                   :textcontent "fi text"}}}
+                                   :textcontent "fi text"
+                                   :attachment-id nil}}}
              (build-request (assoc-in form [:licensetype] "text")
                             default-language
                             languages))))

@@ -63,7 +63,7 @@
     (let [uid "test-user"
           form-id (:id (db/create-form! {:organization "abc" :title "internal-title" :user uid}))
           wf-id (:id (db/create-workflow! {:organization "abc" :modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 0}))
-          license-id (:id (db/create-license! {:modifieruserid uid :owneruserid uid :title "non-localized license" :type "link" :textcontent "http://test.org"}))
+          license-id (:id (db/create-license! {:modifieruserid uid :owneruserid uid :title "non-localized license" :type "link" :textcontent "http://test.org" :attachmentId nil}))
           _ (db/create-license-localization! {:licid license-id :langcode "fi" :title "Testi lisenssi" :textcontent "http://testi.fi" :attachmentId nil})
           _ (db/create-license-localization! {:licid license-id :langcode "en" :title "Test license" :textcontent "http://test.com" :attachmentId nil})
           _ (db/create-workflow-license! {:wfid wf-id :licid license-id :round 0})
@@ -105,8 +105,8 @@
             (is (= 1 (count (:licenses form))))
             (is (= {:title "non-localized license"
                     :textcontent "http://test.org"
-                    :localizations {:fi {:title "Testi lisenssi" :textcontent "http://testi.fi"}
-                                    :en {:title "Test license" :textcontent "http://test.com"}}}
+                    :localizations {:fi {:title "Testi lisenssi" :textcontent "http://testi.fi" :attachment-id nil}
+                                    :en {:title "Test license" :textcontent "http://test.com" :attachment-id nil}}}
                    (select-keys (first (:licenses form)) [:title :textcontent :localizations]))))))
 
       (testing "get partially filled form"
