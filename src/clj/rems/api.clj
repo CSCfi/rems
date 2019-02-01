@@ -5,6 +5,7 @@
             [cognitect.transit :as transit]
             [compojure.api.exception :as ex]
             [compojure.api.sweet :refer :all]
+            [conman.core :as conman]
             [muuntaja.core :as muuntaja]
             [muuntaja.format.json :refer [json-format]]
             [muuntaja.format.transit :as transit-format]
@@ -53,6 +54,16 @@
     :access-control-allow-origin #".*"
     :access-control-allow-methods [:get :put :post :delete]))
 
+(defn- should-wrap-transaction? [request]
+  (contains? #{:put :post} (:request-method request)))
+
+(defn transaction-middleware [handler]
+  (fn [request]
+    (if (should-wrap-transaction? request)
+      (conman/with-transaction [rems.db.core/*db* {:isolation :serializable}]
+        (handler request))
+      (handler request))))
+
 (def joda-time-writer
   (transit/write-handler
    "m"
@@ -89,7 +100,8 @@
   (api
     {;; TODO: should this be in rems.middleware?
      :formats    muuntaja
-     :middleware [cors-middleware]
+     :middleware [cors-middleware
+                  transaction-middleware]
      :exceptions {:handlers {NotAuthorizedException   unauthorized-handler
                              ForbiddenException       forbidden-handler
                              InvalidRequestException  invalid-handler

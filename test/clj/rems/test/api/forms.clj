@@ -58,6 +58,14 @@
                              app)]
             (is (= 400 (:status response))
                 "can't send negative maxlength")))
+        (testing "invalid create: field too long"
+          (let [command-with-long-prompt (assoc-in command [:items 0 :input-prompt :en]
+                                                   (apply str (repeat 10000 "x")))
+                response (-> (request :post "/api/forms/create")
+                             (authenticate api-key user-id)
+                             (json-body command-with-long-prompt)
+                             app)]
+            (is (= 500 (:status response)))))
         (testing "valid create"
           (-> (request :post "/api/forms/create")
               (authenticate api-key user-id)
@@ -70,9 +78,11 @@
                          app
                          assert-response-is-ok
                          read-body)
-                form (->> body
-                          (filter #(= (:title %) (:title command)))
-                          first)]
+                forms (->> body
+                           (filter #(= (:title %) (:title command))))
+                form (first forms)]
+            (is (= 1 (count forms))
+                "only one form got created")
             ;; TODO: create an API for reading full forms (will be needed latest for editing forms)
             (is (= (select-keys command [:title :organization])
                    (select-keys form [:title :organization])))
