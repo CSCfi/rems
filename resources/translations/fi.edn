@@ -218,7 +218,9 @@
                    :inline-text "Teksti"
                    :license-text "Lisenssin teksti"
                    :link-to-license "Linkki lisenssiin"
-                   :title "Lisenssin nimi"}
+                   :title "Lisenssin nimi"
+                   :license-attachment "Lisenssin liite"
+                   :attached-license "Lisää liite"}
   :create-resource {:licenses-selection "Lisenssit"
                     :resid "Resurssin tunniste"
                     :resid-placeholder "urn:test:fi:some-uuid"}
