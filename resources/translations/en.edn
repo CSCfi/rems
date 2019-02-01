@@ -110,6 +110,8 @@
                    :id "Id"
                    :license "License"
                    :licenses "Licenses"
+                   :license-field "License \"%1\""
+                   :no-licenses "No licenses"
                    :organization "Organization"
                    :organization-placeholder "testorganization.org"
                    :resource "Resource"
