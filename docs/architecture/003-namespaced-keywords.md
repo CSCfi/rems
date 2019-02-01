@@ -12,23 +12,30 @@ There are various ways of using namespaced keywords in clojure:
 There are various places we use keywords:
 - data keys (in events, api responses, etc.)
 - "keyword argument" names
+- translation keys
 - re-frame event and subscription names
+
+# Current status
+
+Our data keys are short and often confusing normal keywords, like
+`:id`. This is what we want to fix.
+
+We use fully qualified keywords for translation keys. This is nice.
+
+We use private keywords for re-frame events and subscriptions. This is nice.
 
 # The decision
 
 Let's try out _fully qualified_ namespaced keywords in _data keys_.
 This means keys of (application) events and API responses in
-particular.
+particular. Let's use short, non-hierarchic namespaces like
+`:application/id` or `:event/time`.
 
-Let's use short, non-hierarchic namespaces like `:application/id` or
-`:event/time`.
-
-Other structures can also hinder greppability, like namespaced maps:
+Let's avoid structures that hinder greppability, like namespaced maps
+and namespaced destructuring:
 ```clojure
 #:event{:time 1 :id 2}
-```
-or namespaced destructuring:
-```clojure
+
 (let [{:event/keys [time id]} event]
   ...)
 ```
