@@ -34,6 +34,9 @@
                            (slurp (:body response)))}))
   response)
 
+(defn assert-response-is-failure? [response]
+  (assert (= 500 (:status response))))
+
 (defn response-is-unauthorized? [response]
   (= 401 (:status response)))
 
