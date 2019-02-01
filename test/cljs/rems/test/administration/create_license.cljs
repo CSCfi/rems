@@ -20,23 +20,27 @@
   (let [form {:licensetype "link"
               :localizations {:en {:title "en title"
                                    :link "en link"
-                                   :text "en text"}
+                                   :text "en text"
+                                   :attachment-filename "something.pdf"
+                                   :attachment-id 1}
                               :fi {:title "fi title"
                                    :link "fi link"
-                                   :text "fi text"}}}
+                                   :text "fi text"
+                                   :attachment-filename "something_fi.pdf"
+                                   :attachment-id 2}}}
         default-language :en
         languages [:en :fi]]
     (testing "linked license"
       (is (= {:title "en title"
               :licensetype "link"
               :textcontent "en link"
-              :attachment-id nil
+              :attachment-id 1
               :localizations {:en {:title "en title"
                                    :textcontent "en link"
-                                   :attachment-id nil}
+                                   :attachment-id 1}
                               :fi {:title "fi title"
                                    :textcontent "fi link"
-                                   :attachment-id nil}}}
+                                   :attachment-id 2}}}
              (build-request (assoc-in form [:licensetype] "link")
                             default-language
                             languages))))
@@ -44,14 +48,29 @@
       (is (= {:title "en title"
               :licensetype "text"
               :textcontent "en text"
-              :attachment-id nil
+              :attachment-id 1
               :localizations {:en {:title "en title"
                                    :textcontent "en text"
-                                   :attachment-id nil}
+                                   :attachment-id 1}
                               :fi {:title "fi title"
                                    :textcontent "fi text"
-                                   :attachment-id nil}}}
+                                   :attachment-id 2}}}
              (build-request (assoc-in form [:licensetype] "text")
+                            default-language
+                            languages))))
+
+    (testing "attachment license"
+      (is (= {:title "en title"
+              :licensetype "attachment"
+              :textcontent "something.pdf"
+              :attachment-id 1
+              :localizations {:en {:title "en title"
+                                   :textcontent "something.pdf"
+                                   :attachment-id 1}
+                              :fi {:title "fi title"
+                                   :textcontent "something_fi.pdf"
+                                   :attachment-id 2}}}
+             (build-request (assoc-in form [:licensetype] "attachment")
                             default-language
                             languages))))
     (testing "missing license type"
