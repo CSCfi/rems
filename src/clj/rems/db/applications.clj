@@ -959,25 +959,25 @@
   (update (cheshire/parse-string wf keyword)
           :type keyword))
 
-(defn string->datetime [s]
+(defn- string->datetime [s]
   (if (string? s)
     (time-coerce/from-long (Long/parseLong s))
     s))
 
-(def datetime-coercion-matcher
+(def ^:private datetime-coercion-matcher
   {DateTime string->datetime})
 
-(defn coercion-matcher [schema]
+(defn- coercion-matcher [schema]
   (or (datetime-coercion-matcher schema)
       (coerce/string-coercion-matcher schema)))
 
-(def coerce-dynamic-event-commons
+(def ^:private coerce-dynamic-event-commons
   (coerce/coercer (st/open-schema dynamic/EventBase) coercion-matcher))
 
-(def coerce-dynamic-event-specifics
+(def ^:private coerce-dynamic-event-specifics
   (coerce/coercer dynamic/Event coercion-matcher))
 
-(defn coerce-dynamic-event [event]
+(defn- coerce-dynamic-event [event]
   ;; must coerce the common fields first, so that dynamic/Event can choose the right event schema based on the event type
   (-> event
       coerce-dynamic-event-commons
