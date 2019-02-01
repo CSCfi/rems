@@ -63,22 +63,19 @@
                                             " "
                                             (str/upper-case (name langcode))) [:a {:target :_blank :href (:textcontent localization)} (:textcontent localization) " " [external-link]]]))
                 [[inline-info-field (text :t.administration/start) (localize-time (:start license))]
-                 [inline-info-field (text :t.administration/end) (localize-time (:end license))]])
-        ))
+                 [inline-info-field (text :t.administration/end) (localize-time (:end license))]])))
 
 (defn licenses-view [licenses language]
   [collapsible/component
    {:id "licenses"
     :title (text :t.administration/licenses)
     :top-less-button? (> (count licenses) 5)
-    (if (seq licenses)
-      :collapse
-      :always)
-    (if (seq licenses)
-      (into [:div]
-            (for [license licenses]
-              [license-view license language]))
-      [:p (text :t.administration/no-licenses)])}])
+    :open? (<= (count licenses) 5)
+    :collapse (if (seq licenses)
+                (into [:div]
+                      (for [license licenses]
+                        [license-view license language]))
+                [:p (text :t.administration/no-licenses)])}])
 
 (defn resource-view [resource language]
   [:div.spaced-vertically-3

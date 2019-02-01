@@ -88,21 +88,18 @@
        {:id "rounds"
         :title (text :t.administration/rounds)
         :top-less-button? (> (count rounds) 5)
-        :open? (<= (count rounds 3))
-        :collapse
-        (into [:div]
-              (for [round rounds]
-                [round-view round]))}])))
+        :open? (<= (count rounds 5))
+        :collapse (into [:div]
+                        (for [round rounds]
+                          [round-view round]))}])))
 
 (defn licenses-view [licenses language]
   [collapsible/component
    {:id "licenses"
     :title (text :t.administration/licenses)
     :top-less-button? (> (count licenses) 5)
-    :open? (<= (count licenses 3))
-    (if (seq licenses)
-      :collapse
-      :always)
+    :open? (<= (count licenses 5))
+    :collapse
     (if (seq licenses)
       (into [:div]
             (for [license licenses]
