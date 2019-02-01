@@ -2,9 +2,26 @@
 
 Authors: @opqdonut @Macroz @luontola @cscwooller
 
-Let's try out namespaced keywords in events & the API. In particular,
-let's use short, non-hierarchic namespaces like `:application/id` or
-`:event/time`, and avoid using ns aliases.
+# Background
+
+There are various ways of using namespaced keywords in clojure:
+- fully qualified: `:name.space/key`
+- private: `::key` means `:name.space/key` when in ns `name.space`
+- with an alias: `(require '[name.space :as space]) ... ::space/key`
+
+There are various places we use keywords:
+- data keys (in events, api responses, etc.)
+- "keyword argument" names
+- re-frame event and subscription names
+
+# The decision
+
+Let's try out _fully qualified_ namespaced keywords in _data keys_.
+This means keys of (application) events and API responses in
+particular.
+
+Let's use short, non-hierarchic namespaces like `:application/id` or
+`:event/time`.
 
 Other structures can also hinder greppability, like namespaced maps:
 ```clojure
