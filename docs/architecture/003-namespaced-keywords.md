@@ -6,6 +6,8 @@ Authors: @opqdonut @Macroz @luontola @cscwooller
 
 There are various ways of using namespaced keywords in clojure:
 - fully qualified: `:name.space/key`
+  - note that `name.space` can either be an actual namespace that contains code,
+  - ... or a namespace that's used _just_ in keyword names
 - private: `::key` means `:name.space/key` when in ns `name.space`
 - with an alias: `(require '[name.space :as space]) ... ::space/key`
 
@@ -28,8 +30,9 @@ We use private keywords for re-frame events and subscriptions. This is nice.
 
 Let's try out _fully qualified_ namespaced keywords in _data keys_.
 This means keys of (application) events and API responses in
-particular. Let's use short, non-hierarchic namespaces like
-`:application/id` or `:event/time`.
+particular. Let's use short namespaces like `:application/id` or
+`:event/time`. Note that namespaces `application` and `event` don't
+need to contain any code.
 
 Let's avoid structures that hinder greppability, like namespaced maps
 and namespaced destructuring:
