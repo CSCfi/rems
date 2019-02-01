@@ -4,6 +4,7 @@
 -- - :items vector of item ids
 -- - :resource resource id to fetch items for
 SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.state, ci.start
+, res.id AS "resource-id"
 /*~ (when (:expand-names? params) */
 , wf.title AS "workflow-name"
 , res.resid AS "resource-name"

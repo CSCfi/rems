@@ -80,11 +80,17 @@
   {:name {:header #(text :t.catalogue/header)
           :value #(get-catalogue-item-title % language)}
    :resource {:header #(text :t.administration/resource)
-              :value :resource-name}
+              :value (fn [row]
+                       [:a {:href (str "#/administration/resources/" (:resource-id row))}
+                        (:resource-name row)])}
    :form {:header #(text :t.administration/form)
-          :value :form-name}
+          :value (fn [row]
+                   [:a {:href (str "#/administration/forms/" (:formid row))}
+                    (:form-name row)])}
    :workflow {:header #(text :t.administration/workflow)
-              :value :workflow-name}
+              :value (fn [row]
+                       [:a {:href (str "#/administration/workflows/" (:wfid row))}
+                        (:workflow-name row)])}
    :created {:header #(text :t.administration/created)
              :value (comp localize-time :start)}
    :end {:header #(text :t.administration/end)
