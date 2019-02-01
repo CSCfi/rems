@@ -153,12 +153,11 @@
             (is (= command (select-keys license (keys command))))))
 
         (testing "and fail when trying to remove the attachment of the created license"
-          (testing "and delete it"
-            (-> (request :post (str "/api/licenses/remove_attachment?attachment-id=" attachment-id))
-                (json-body {:attachment-id attachment-id})
-                (authenticate api-key user-id)
-                app
-                assert-response-is-failure?)))))))
+          (-> (request :post (str "/api/licenses/remove_attachment?attachment-id=" attachment-id))
+              (json-body {:attachment-id attachment-id})
+              (authenticate api-key user-id)
+              app
+              assert-response-is-server-error?))))))
 
 (deftest licenses-api-filtering-test
   (let [unfiltered (-> (request :get "/api/licenses")
