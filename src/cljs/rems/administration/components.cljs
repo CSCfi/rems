@@ -73,12 +73,12 @@
      [:label.col-sm-1.col-form-label {:for id}
       (str/upper-case (name lang))]
      [:div.col-sm-11
-      [:input.form-control {:type "text"
-                            :id id
-                            :value (get-in form keys)
-                            :on-change #(rf/dispatch [(:update-form context)
-                                                      keys
-                                                      (.. % -target -value)])}]]]))
+      [textarea {:id id
+                 :min-rows 1
+                 :value (get-in form keys)
+                 :on-change #(rf/dispatch [(:update-form context)
+                                           keys
+                                           (.. % -target -value)])}]]]))
 
 (defn localized-text-field
   "A text field for inputting text in all supported languages.
