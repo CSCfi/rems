@@ -73,7 +73,7 @@
       (ok (licenses/create-license-attachment! file (util/getx-user-id))))
 
     (POST "/remove_attachment" []
-      :summary "Remove an attachment file related to an application field"
+      :summary "Remove an attachment that could have been used in a license."
       :roles #{:owner}
       :query-params [attachment-id :- (describe s/Int "attachment id")]
       :return SuccessResponse
