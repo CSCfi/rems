@@ -13,32 +13,36 @@
 (defmethod application-view :event/created
   [application event]
   (assoc application
-         :application-id (:application-id event)
-         :created (:time event)
-         :applicant (:actor event)
-         :resources (:resources event)
-         :licenses (map (fn [license]
-                          (assoc license :accepted false))
-                        (:licenses event))
-         :form-id (:form-id event)
-         :form-fields []
-         :workflow-id (:workflow-id event)
-         :workflow-type (:workflow-type event)))
+         :application/id (:application-id event)
+         :application/created (:time event)
+         :application/applicant (:actor event)
+         :application/resources (map (fn [resource]
+                                       {:catalogue-item/id (:catalogue-item-id resource)
+                                        :resource/ext-id (:resource-ext-id resource)})
+                                     (:resources event))
+         :application/licenses (map (fn [license]
+                                      {:license/id (:license-id license)
+                                       :license/accepted false})
+                                    (:licenses event))
+         :form/id (:form-id event)
+         :form/fields []
+         :workflow/id (:workflow-id event)
+         :workflow/type (:workflow-type event)))
 
 
 (defn- set-accepted-licences [licenses acceptance]
   (map (fn [license]
-         (assoc license :accepted (= "approved" (get acceptance (:license-id license)))))
+         (assoc license :license/accepted (= "approved" (get acceptance (:license/id license)))))
        licenses))
 
 (defmethod application-view :event/draft-saved
   [application event]
   (-> application
-      (assoc :form-fields (map (fn [[field-id value]]
-                                 {:field-id field-id
-                                  :value value})
+      (assoc :form/fields (map (fn [[field-id value]]
+                                 {:field/id field-id
+                                  :field/value value})
                                (:items event)))
-      (update :licenses set-accepted-licences (:licenses event))))
+      (update :application/licenses set-accepted-licences (:licenses event))))
 
 
 (defmethod application-view :event/member-added
@@ -89,7 +93,7 @@
 (defn- application-view-common
   [application event]
   (assoc application
-         :modified (:time event)))
+         :application/modified (:time event)))
 
 (defn- merge-lists-by
   "Returns a list of merged elements from list1 and list2
@@ -158,16 +162,16 @@
 
 (defn- assoc-form [application form]
   (let [form-fields (map (fn [item]
-                           {:field-id (:id item)
-                            :value "" ; default for new forms
-                            :type (keyword (:type item))
-                            :title (localization-for :title item)
-                            :placeholder (localization-for :inputprompt item)
-                            :optional (:optional item)
-                            :options (:options item)
-                            :max-length (:maxlength item)})
+                           {:field/id (:id item)
+                            :field/value "" ; default for new forms
+                            :field/type (keyword (:type item))
+                            :field/title (localization-for :title item)
+                            :field/placeholder (localization-for :inputprompt item)
+                            :field/optional (:optional item)
+                            :field/options (:options item)
+                            :field/max-length (:maxlength item)})
                          (:items form))]
-    (assoc application :form-fields (merge-lists-by :field-id form-fields (:form-fields application)))))
+    (assoc application :form/fields (merge-lists-by :field/id form-fields (:form/fields application)))))
 
 (defn- build-application-view [events {:keys [forms]}]
   (let [application (reduce (fn [application event]
@@ -176,7 +180,7 @@
                                   (application-view-common event)))
                             {}
                             events)]
-    (assoc-form application (forms (:form-id application)))))
+    (assoc-form application (forms (:form/id application)))))
 
 (defn- valid-events [events]
   (doseq [event events]
@@ -204,40 +208,40 @@
                                         :type "text"}]}}}
 
         ;; expected values
-        new-application {:application-id 1
-                         :created (DateTime. 1000)
-                         :modified (DateTime. 1000)
-                         :applicant "applicant"
+        new-application {:application/id 1
+                         :application/created (DateTime. 1000)
+                         :application/modified (DateTime. 1000)
+                         :application/applicant "applicant"
                          ;; TODO: resource details
-                         :resources [{:catalogue-item-id 10
-                                      :resource-ext-id "urn:11"}
-                                     {:catalogue-item-id 20
-                                      :resource-ext-id "urn:21"}]
+                         :application/resources [{:catalogue-item/id 10
+                                                  :resource/ext-id "urn:11"}
+                                                 {:catalogue-item/id 20
+                                                  :resource/ext-id "urn:21"}]
                          ;; TODO: license details
-                         :licenses [{:license-id 30
-                                     :accepted false}
-                                    {:license-id 31
-                                     :accepted false}]
-                         :form-id 40
-                         :form-fields [{:field-id 41
-                                        :value ""
-                                        :type :text
-                                        :title {:en "en title" :fi "fi title"}
-                                        :placeholder {:en "en placeholder" :fi "fi placeholder"}
-                                        :optional false
-                                        :options []
-                                        :max-length 100}
-                                       {:field-id 42
-                                        :value ""
-                                        :type :text
-                                        :title {:en "en title" :fi "fi title"}
-                                        :placeholder {:en "en placeholder" :fi "fi placeholder"}
-                                        :optional false
-                                        :options []
-                                        :max-length 100}]
+                         :application/licenses [{:license/id 30
+                                                 :license/accepted false}
+                                                {:license/id 31
+                                                 :license/accepted false}]
+                         :form/id 40
+                         :form/fields [{:field/id 41
+                                        :field/value ""
+                                        :field/type :text
+                                        :field/title {:en "en title" :fi "fi title"}
+                                        :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
+                                        :field/optional false
+                                        :field/options []
+                                        :field/max-length 100}
+                                       {:field/id 42
+                                        :field/value ""
+                                        :field/type :text
+                                        :field/title {:en "en title" :fi "fi title"}
+                                        :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
+                                        :field/optional false
+                                        :field/options []
+                                        :field/max-length 100}]
                          ;; TODO: workflow details (e.g. allowed commands)
-                         :workflow-id 50
-                         :workflow-type :dynamic}
+                         :workflow/id 50
+                         :workflow/type :dynamic}
 
         ;; test double events
         created-event {:event :event/created
@@ -264,11 +268,11 @@
 
     (testing "draft saved"
       (is (= (-> new-application
-                 (assoc-in [:modified] (DateTime. 2000))
-                 (assoc-in [:licenses 0 :accepted] true)
-                 (assoc-in [:licenses 1 :accepted] true)
-                 (assoc-in [:form-fields 0 :value] "foo")
-                 (assoc-in [:form-fields 1 :value] "bar"))
+                 (assoc-in [:application/modified] (DateTime. 2000))
+                 (assoc-in [:application/licenses 0 :license/accepted] true)
+                 (assoc-in [:application/licenses 1 :license/accepted] true)
+                 (assoc-in [:form/fields 0 :field/value] "foo")
+                 (assoc-in [:form/fields 1 :field/value] "bar"))
              (build-application-view
               (valid-events
                [created-event
@@ -298,38 +302,38 @@
 
 (defn- transform-v2-to-v1 [application events]
   (let [catalogue-items (map (fn [resource]
-                               {:id (:catalogue-item-id resource)
-                                :resid (:resource-ext-id resource)
-                                :wfid (:workflow-id application)
-                                :formid (:form-id application)
+                               {:id (:catalogue-item/id resource)
+                                :resid (:resource/ext-id resource)
+                                :wfid (:workflow/id application)
+                                :formid (:form/id application)
                                 :start nil ; TODO
                                 :state nil ; TODO
                                 :title nil ; TODO
                                 :langcode nil ; TODO
                                 :localizations nil}) ; TODO
-                             (:resources application))]
-    {:id (:form-id application)
+                             (:application/resources application))]
+    {:id (:form/id application)
      :catalogue-items catalogue-items
-     :applicant-attributes {"eppn" (:applicant application)
+     :applicant-attributes {"eppn" (:application/applicant application)
                             "mail" nil ; TODO
                             "commonName" nil} ; TODO
-     :application {:id (:application-id application)
-                   :formid (:form-id application)
-                   :wfid (:workflow-id application)
-                   :applicantuserid (:applicant application)
-                   :start (:created application)
-                   :last-modified (:modified application)
+     :application {:id (:application/id application)
+                   :formid (:form/id application)
+                   :wfid (:workflow/id application)
+                   :applicantuserid (:application/applicant application)
+                   :start (:application/created application)
+                   :last-modified (:application/modified application)
                    :state nil ; TODO
                    :description nil ; TODO
                    :catalogue-items catalogue-items
-                   :form-contents {:items (into {} (for [field (:form-fields application)]
-                                                     [(:field-id field) (:value field)]))
-                                   :licenses (into {} (for [license (:licenses application)]
-                                                        (when (:accepted license)
-                                                          [(:license-id license) "approved"])))}
+                   :form-contents {:items (into {} (for [field (:form/fields application)]
+                                                     [(:field/id field) (:field/value field)]))
+                                   :licenses (into {} (for [license (:application/licenses application)]
+                                                        (when (:license/accepted license)
+                                                          [(:license/id license) "approved"])))}
                    :events [] ; TODO
                    :dynamic-events events ; TODO: remove this, it exposes too much information
-                   :workflow {:type (:workflow-type application)
+                   :workflow {:type (:workflow/type application)
                               :handlers []} ; TODO
                    :possible-commands [] ; TODO
                    :fnlround nil ; TODO
@@ -340,31 +344,31 @@
                    :can-withdraw? nil ; TODO
                    :can-close? nil} ; TODO
      :licenses (map (fn [license]
-                      {:id (:license-id license)
+                      {:id (:license/id license)
                        :type "license"
                        :licensetype nil ; TODO
                        :title nil ; TODO
                        :start nil ; TODO
                        :end nil ; TODO
-                       :approved (:accepted license)
+                       :approved (:license/accepted license)
                        :textcontent nil ; TODO
                        :localizations nil}) ; TODO
-                    (:licenses application))
+                    (:application/licenses application))
      :phases [] ; TODO
      :title "" ; TODO
      :items (map (fn [field]
-                   {:id (:field-id field)
-                    :type (name (:type field))
-                    :optional (:optional field)
-                    :options (:options field)
-                    :maxlength (:max-length field)
-                    :value (:value field)
+                   {:id (:field/id field)
+                    :type (name (:field/type field))
+                    :optional (:field/optional field)
+                    :options (:field/options field)
+                    :maxlength (:field/max-length field)
+                    :value (:field/value field)
                     :previous-value nil ; TODO
-                    :localizations (into {} (for [lang (distinct (concat (keys (:title field))
-                                                                         (keys (:placeholder field))))]
-                                              [lang {:title (get-in field [:title lang])
-                                                     :inputprompt (get-in field [:placeholder lang])}]))})
-                 (:form-fields application))}))
+                    :localizations (into {} (for [lang (distinct (concat (keys (:field/title field))
+                                                                         (keys (:field/placeholder field))))]
+                                              [lang {:title (get-in field [:field/title lang])
+                                                     :inputprompt (get-in field [:field/placeholder lang])}]))})
+                 (:form/fields application))}))
 
 (defn api-get-application-v1 [user-id application-id]
   (let [v2 (api-get-application-v2 user-id application-id)]
