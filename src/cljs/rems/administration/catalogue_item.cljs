@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.components :refer [inline-info-field]]
             [rems.atoms :refer [info-field readonly-checkbox]]
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
@@ -39,9 +40,6 @@
   [:a.btn.btn-primary
    {:href "/#/administration/create-catalogue-item"}
    (text :t.administration/create-catalogue-item)])
-
-(defn inline-info-field [text value]
-  [info-field text value {:inline? true}])
 
 (defn catalogue-item-view [catalogue-item language]
   [:div.spaced-vertically-3

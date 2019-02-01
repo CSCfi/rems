@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.components :refer [inline-info-field]]
             [rems.atoms :refer [external-link info-field readonly-checkbox]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [andstr]]
@@ -40,9 +41,6 @@
   [:a.btn.btn-primary
    {:href "/#/administration/create-resource"}
    (text :t.administration/create-resource)])
-
-(defn inline-info-field [text value]
-  [info-field text value {:inline? true}])
 
 (defn license-view [license language]
   (into [:div.form-item
