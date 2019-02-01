@@ -59,14 +59,19 @@
    {:href "/#/administration/create-catalogue-item"}
    (text :t.administration/create-catalogue-item)])
 
+(defn- to-catalogue-item [catalogue-item-id]
+  [:a.btn.btn-primary
+   {:href (str "/#/administration/catalogue-items/" catalogue-item-id)}
+   (text :t.administration/view)])
+
 (defn- disable-button [item]
-  [:button.btn.btn-secondary
+  [:button.btn.btn-secondary.button-min-width
    {:type "submit"
     :on-click #(rf/dispatch [::update-catalogue-item (:id item) "disabled"])}
    (text :t.administration/disable)])
 
 (defn- enable-button [item]
-  [:button.btn.btn-primary
+  [:button.btn.btn-primary.button-min-width
    {:type "submit"
     :on-click #(rf/dispatch [::update-catalogue-item (:id item) "enabled"])}
    (text :t.administration/enable)])
@@ -97,7 +102,9 @@
          :value (comp localize-time :end)}
    :active {:header #(text :t.administration/active)
             :value (comp readonly-checkbox not disabled-catalogue-item?)}
-   :commands {:value toggle-state-button
+   :commands {:values (fn [item]
+                        [[to-catalogue-item (:id item)]
+                         [toggle-state-button item]])
               :sortable? false
               :filterable? false}})
 

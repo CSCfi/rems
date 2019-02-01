@@ -92,6 +92,7 @@
   :administration {:active "Aktiivinen"
                    :back "Takaisin"
                    :cancel "Peruuta"
+                   :catalogue-item "Kielivara"
                    :catalogue-items "Kielivarat"
                    :create-catalogue-item "Uusi kielivara"
                    :create-form "Uusi lomake"

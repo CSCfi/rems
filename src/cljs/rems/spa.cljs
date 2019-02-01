@@ -7,6 +7,7 @@
             [markdown.core :refer [md->html]]
             [rems.actions :refer [actions-page fetch-actions]]
             [rems.administration.administration :refer [administration-page]]
+            [rems.administration.catalogue-item :refer [catalogue-item-page]]
             [rems.administration.catalogue-items :refer [catalogue-items-page]]
             [rems.administration.create-catalogue-item :refer [create-catalogue-item-page]]
             [rems.administration.create-form :refer [create-form-page]]
@@ -215,6 +216,7 @@
    :new-application new-application-page
    :applications applications-page
    :rems.administration/administration administration-page
+   :rems.administration/catalogue-item catalogue-item-page
    :rems.administration/catalogue-items catalogue-items-page
    :rems.administration/create-catalogue-item create-catalogue-item-page
    :rems.administration/create-form create-form-page
@@ -291,6 +293,10 @@
 (secretary/defroute "/administration" []
   (rf/dispatch [:rems.administration.administration/enter-page])
   (rf/dispatch [:set-active-page :rems.administration/administration]))
+
+(secretary/defroute "/administration/catalogue-items/:catalogue-item-id" [catalogue-item-id]
+  (rf/dispatch [:rems.administration.catalogue-item/enter-page catalogue-item-id])
+  (rf/dispatch [:set-active-page :rems.administration/catalogue-item]))
 
 (secretary/defroute "/administration/catalogue-items" []
   (rf/dispatch [:rems.administration.catalogue-items/enter-page])
