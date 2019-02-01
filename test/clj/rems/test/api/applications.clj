@@ -819,10 +819,10 @@
     (testing "getting dynamic application as applicant"
       (let [data (get-application user-id application-id)]
         (is (= "workflow/dynamic" (get-in data [:application :workflow :type])))
-        (is (= [{:actor user-id
-                 :application-id application-id
-                 :event/type "event/submitted"
-                 :time (str (.getMillis test-data/creation-time))}]
+        (is (= [{:event/type "event/submitted"
+                 :event/time (str (.getMillis test-data/creation-time))
+                 :actor user-id
+                 :application-id application-id}]
                (get-in data [:application :dynamic-events])))
         (is (= ["rems.workflow.dynamic/add-member"] (get-in data [:application :possible-commands])))))
 

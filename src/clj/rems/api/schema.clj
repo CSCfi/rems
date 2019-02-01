@@ -56,8 +56,8 @@
 
 (s/defschema DynamicEvent
   {:event/type s/Keyword
+   :event/time DateTime
    :actor s/Str
-   :time (s/maybe DateTime) ; TODO should always have time
    (s/optional-key :comment) (s/maybe s/Str)
    s/Any s/Any})
 

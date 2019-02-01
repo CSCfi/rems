@@ -1013,7 +1013,7 @@
                            :state ::dynamic/draft
                            :dynamic-events events
                            :workflow (fix-workflow-from-db (:workflow application))
-                           :last-modified (or (:time (last events))
+                           :last-modified (or (:event/time (last events))
                                               (:start application)))]
     (assert (is-dynamic-application? application))
     (dynamic/apply-events application events)))

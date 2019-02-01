@@ -54,9 +54,9 @@
 ;; TODO: add version number to events
 (s/defschema EventBase
   {:event/type s/Keyword
-   :application-id s/Int
+   :event/time DateTime
    :actor UserId
-   :time DateTime})
+   :application-id s/Int})
 
 (s/defschema ApprovedEvent
   (assoc EventBase
@@ -126,36 +126,36 @@
 (deftest test-event-schema
   (testing "check specific event schema"
     (is (nil? (s/check SubmittedEvent {:event/type :event/submitted
+                                       :event/time (DateTime.)
                                        :actor "foo"
-                                       :application-id 123
-                                       :time (DateTime.)}))))
+                                       :application-id 123}))))
   (testing "check generic event schema"
     (is (nil? (s/check Event
                        {:event/type :event/submitted
+                        :event/time (DateTime.)
                         :actor "foo"
-                        :application-id 123
-                        :time (DateTime.)})))
+                        :application-id 123})))
     (is (nil? (s/check Event
                        {:event/type :event/approved
+                        :event/time (DateTime.)
                         :actor "foo"
                         :application-id 123
-                        :time (DateTime.)
                         :comment "foo"}))))
   (testing "missing event specific key"
     (is (= {:comment 'missing-required-key}
            (s/check Event
                     {:event/type :event/approved
+                     :event/time (DateTime.)
                      :actor "foo"
-                     :application-id 123
-                     :time (DateTime.)}))))
+                     :application-id 123}))))
   (testing "unknown event type"
     ;; TODO: improve error message to show the actual and expected event types
     (is (= "(not (some-matching-condition? a-clojure.lang.PersistentArrayMap))"
            (pr-str (s/check Event
                             {:event/type :foo
+                             :event/time (DateTime.)
                              :actor "foo"
-                             :application-id 123
-                             :time (DateTime.)}))))))
+                             :application-id 123}))))))
 
 
 ;;; Events
@@ -288,9 +288,9 @@
       (state-error application ::draft ::returned)
       {:success true
        :result {:event/type :event/draft-saved
+                :event/time (:time cmd)
                 :actor (:actor cmd)
                 :application-id (:application-id cmd)
-                :time (:time cmd)
                 :items (:items cmd)
                 :licenses (:licenses cmd)}}))
 
@@ -301,9 +301,9 @@
       (validation-error injections (:application-id cmd))
       {:success true
        :result {:event/type :event/submitted
+                :event/time (:time cmd)
                 :actor (:actor cmd)
-                :application-id (:application-id cmd)
-                :time (:time cmd)}}))
+                :application-id (:application-id cmd)}}))
 
 (defmethod handle-command ::approve
   [cmd application _injections]
@@ -311,10 +311,10 @@
       (state-error application ::submitted)
       {:success true
        :result {:event/type :event/approved
+                :event/time (:time cmd)
                 :actor (:actor cmd)
                 :application-id (:application-id cmd)
-                :comment (:comment cmd)
-                :time (:time cmd)}}))
+                :comment (:comment cmd)}}))
 
 (defmethod handle-command ::reject
   [cmd application _injections]
@@ -322,10 +322,10 @@
       (state-error application ::submitted)
       {:success true
        :result {:event/type :event/rejected
+                :event/time (:time cmd)
                 :actor (:actor cmd)
                 :application-id (:application-id cmd)
-                :comment (:comment cmd)
-                :time (:time cmd)}}))
+                :comment (:comment cmd)}}))
 
 (defmethod handle-command ::return
   [cmd application _injections]
@@ -333,10 +333,10 @@
       (state-error application ::submitted)
       {:success true
        :result {:event/type :event/returned
+                :event/time (:time cmd)
                 :actor (:actor cmd)
                 :application-id (:application-id cmd)
-                :comment (:comment cmd)
-                :time (:time cmd)}}))
+                :comment (:comment cmd)}}))
 
 (defmethod handle-command ::close
   [cmd application _injections]
@@ -344,10 +344,10 @@
       (state-error application ::approved)
       {:success true
        :result {:event/type :event/closed
+                :event/time (:time cmd)
                 :actor (:actor cmd)
                 :application-id (:application-id cmd)
-                :comment (:comment cmd)
-                :time (:time cmd)}}))
+                :comment (:comment cmd)}}))
 
 (defmethod handle-command ::request-decision
   [cmd application injections]
@@ -356,11 +356,11 @@
       (valid-user-error injections (:decider cmd))
       {:success true
        :result {:event/type :event/decision-requested
+                :event/time (:time cmd)
                 :actor (:actor cmd)
                 :decider (:decider cmd)
                 :application-id (:application-id cmd)
-                :comment (:comment cmd)
-                :time (:time cmd)}}))
+                :comment (:comment cmd)}}))
 
 (defmethod handle-command ::decide
   [cmd application _injections]
@@ -371,11 +371,11 @@
         {:errors [[:invalid-decision (:decision cmd)]]})
       {:success true
        :result {:event/type :event/decided
+                :event/time (:time cmd)
                 :actor (:actor cmd)
                 :decision (:decision cmd)
                 :application-id (:application-id cmd)
-                :comment (:comment cmd)
-                :time (:time cmd)}}))
+                :comment (:comment cmd)}}))
 
 (defn- invalid-users-errors
   "Checks the given users for validity and merges the errors"
@@ -394,11 +394,11 @@
       (invalid-users-errors (:commenters cmd) injections)
       {:success true
        :result {:event/type :event/comment-requested
+                :event/time (:time cmd)
                 :actor (:actor cmd)
                 :commenters (:commenters cmd)
                 :application-id (:application-id cmd)
-                :comment (:comment cmd)
-                :time (:time cmd)}}))
+                :comment (:comment cmd)}}))
 
 (defn- actor-is-not-commenter-error [application cmd]
   (when-not (contains? (:commenters application) (:actor cmd))
@@ -410,10 +410,10 @@
       (state-error application ::submitted)
       {:success true
        :result {:event/type :event/commented
+                :event/time (:time cmd)
                 :actor (:actor cmd)
                 :comment (:comment cmd)
-                :application-id (:application-id cmd)
-                :time (:time cmd)}}))
+                :application-id (:application-id cmd)}}))
 
 (defmethod handle-command ::add-member
   [cmd application injections]
@@ -423,10 +423,10 @@
       (valid-user-error injections (:member cmd))
       {:success true
        :result {:event/type :event/member-added
+                :event/time (:time cmd)
                 :actor (:actor cmd)
                 :member (:member cmd)
-                :application-id (:application-id cmd)
-                :time (:time cmd)}}))
+                :application-id (:application-id cmd)}}))
 
 (defn- apply-command
   ([application cmd]
@@ -508,15 +508,15 @@
     (testing "saves a draft"
       (is (= {:success true
               :result {:event/type :event/draft-saved
+                       :event/time 456
                        :actor "applicant"
                        :application-id 123
-                       :time 456
                        :items {1 "foo" 2 "bar"}
                        :licenses {1 "approved" 2 "approved"}}}
              (handle-command {:type ::save-draft
+                              :time 456
                               :actor "applicant"
                               :application-id 123
-                              :time 456
                               :items {1 "foo" 2 "bar"}
                               :licenses {1 "approved" 2 "approved"}}
                              application
@@ -524,17 +524,17 @@
     (testing "only the applicant can save a draft"
       (is (= {:errors [:forbidden]}
              (handle-command {:type ::save-draft
+                              :time 456
                               :actor "non-applicant"
                               :application-id 123
-                              :time 456
                               :items {1 "foo" 2 "bar"}
                               :licenses {1 "approved" 2 "approved"}}
                              application
                              injections)
              (handle-command {:type ::save-draft
+                              :time 456
                               :actor "assistant"
                               :application-id 123
-                              :time 456
                               :items {1 "foo" 2 "bar"}
                               :licenses {1 "approved" 2 "approved"}}
                              application

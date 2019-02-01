@@ -1063,10 +1063,10 @@
                        [:li (get-catalogue-item-title item language)]))]}]))
 
 (defn- dynamic-event->event [event]
-  (let [{:keys [time actor comment decision]} event]
-    {:userid actor
-     :time time
-     :event (name (:event/type event))
+  (let [{:keys [actor comment decision]} event]
+    {:event (name (:event/type event))
+     :time (:event/time event)
+     :userid actor
      :comment (if (= :event/decided (:event/type event))
                 (str (localize-decision decision) ": " comment)
                 comment)}))
