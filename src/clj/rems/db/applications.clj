@@ -6,6 +6,7 @@
             [clojure.set :refer [difference union]]
             [clojure.test :refer [deftest is]]
             [cprop.tools :refer [merge-maps]]
+            [cuerdas.core :refer [numeric? parse-number]]
             [medley.core :refer [map-keys]]
             [rems.application-util :refer [editable?]]
             [rems.auth.util :refer [throw-forbidden]]
@@ -977,14 +978,19 @@
   (coerce/coercer dynamic/Event coercion-matcher))
 
 (defn coerce-dynamic-event [event]
-  ;; convert only the top-level string keys to keywords (some events use numeric keys in maps)
-  (-> (map-keys keyword event)
-      ;; must coerce the common fields first, so that dynamic/Event can choose the right event schema based on the event type
+  ;; must coerce the common fields first, so that dynamic/Event can choose the right event schema based on the event type
+  (-> event
       coerce-dynamic-event-commons
       coerce-dynamic-event-specifics))
 
+(defn- str->keyword-or-number [str]
+  (if (numeric? str)
+    (parse-number str)
+    (keyword str)))
+
 (defn json->event [json]
-  (coerce-dynamic-event (cheshire/parse-string json)))
+  ;; most keys are keywords, but some events use numeric keys in maps
+  (coerce-dynamic-event (cheshire/parse-string json str->keyword-or-number)))
 
 (defn event->json [event]
   (s/validate dynamic/Event event)
