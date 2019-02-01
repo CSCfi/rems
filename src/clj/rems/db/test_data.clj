@@ -87,7 +87,7 @@
 (defn- create-expired-license! []
   (let [owner (+fake-users+ :owner) ; only used from create-test-data!
         yesterday (time/minus (time/now) (time/days 1))]
-    (db/create-license! {:modifieruserid owner :owneruserid owner :title "expired license" :type "link" :textcontent "http://expired" :endt yesterday})))
+    (db/create-license! {:modifieruserid owner :owneruserid owner :title "expired license" :type "link" :textcontent "http://expired" :endt yesterday :attachmentId nil})))
 
 (defn- create-basic-form!
   "Creates a bilingual form with all supported field types. Returns id of the form meta."
@@ -397,10 +397,10 @@
     ;; attach both kinds of licenses to all workflows
     (let [link (:id (db/create-license!
                      {:modifieruserid owner :owneruserid owner :title "non-localized link license"
-                      :type "link" :textcontent "http://invalid"}))
+                      :type "link" :textcontent "http://invalid" :attachmentId nil}))
           text (:id (db/create-license!
                      {:modifieruserid owner :owneruserid owner :title "non-localized text license"
-                      :type "text" :textcontent "non-localized content"}))]
+                      :type "text" :textcontent "non-localized content" :attachmentId nil}))]
       (db/create-license-localization!
        {:licid link :langcode "en" :title "CC Attribution 4.0"
         :textcontent "https://creativecommons.org/licenses/by/4.0/legalcode"
@@ -436,7 +436,7 @@
 (defn- create-resource-license! [resid text owner]
   (let [licid (:id (db/create-license!
                     {:modifieruserid owner :owneruserid owner :title "resource license"
-                     :type "link" :textcontent "http://invalid"}))]
+                     :type "link" :textcontent "http://invalid" :attachmentId nil}))]
     (db/create-license-localization!
      {:licid licid :langcode "en" :title (str text " (en)")
       :textcontent "https://www.apache.org/licenses/LICENSE-2.0"

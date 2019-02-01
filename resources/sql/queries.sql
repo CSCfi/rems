@@ -358,9 +358,9 @@ WHERE catappid = :catappid AND licid = :licid AND modifieruserid = :actoruserid
 
 -- :name create-license! :insert
 INSERT INTO license
-(ownerUserId, modifierUserId, title, type, textcontent, endt)
+(ownerUserId, modifierUserId, title, type, textcontent, attachmentId, endt)
 VALUES
-(:owneruserid, :modifieruserid, :title, :type::license_type, :textcontent,
+(:owneruserid, :modifieruserid, :title, :type::license_type, :textcontent, :attachmentId,
 /*~ (if (:endt params) */ :endt /*~*/ NULL /*~ ) ~*/
 )
 

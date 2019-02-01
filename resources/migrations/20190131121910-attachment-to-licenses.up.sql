@@ -8,3 +8,5 @@ CREATE TABLE license_attachment (
 );
 --;;
 ALTER TABLE license_localization ADD COLUMN attachmentId INTEGER REFERENCES license_attachment;
+--;;
+ALTER TABLE license ADD COLUMN attachmentId INTEGER REFERENCES license_attachment;
