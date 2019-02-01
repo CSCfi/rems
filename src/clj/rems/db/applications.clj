@@ -48,7 +48,7 @@
                    :rems.workflow.dynamic/returned}
                  (or (:event/type e)
                      (:event e))) ;; definitely not by applicant
-      (and (= :event/closed (:event/type e)) (not= (:applicantuserid app) (:actor e))) ;; not by applicant
+      (and (= :event/closed (:event/type e)) (not= (:applicantuserid app) (:event/actor e))) ;; not by applicant
       (and (= "close" (:event e)) (not= (:applicantuserid app) (:userid e))))) ;; not by applicant
 
 (defn handled? [app]
@@ -328,7 +328,7 @@
        (mapv :id)))
 
 (defn actors-of-dynamic-application [application]
-  (map :actor (:dynamic-events application)))
+  (map :event/actor (:dynamic-events application)))
 
 ;; TODO combine handled approvals and reviews as just handled applications
 (defn get-handled-approvals [user-id]
@@ -1020,7 +1020,7 @@
 
 (defn- add-dynamic-event! [event]
   (db/add-application-event! {:application (:application-id event)
-                              :user (:actor event)
+                              :user (:event/actor event)
                               :comment nil
                               :round -1
                               :event (str (:event/type event))

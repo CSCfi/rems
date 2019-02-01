@@ -55,7 +55,7 @@
 (s/defschema EventBase
   {:event/type s/Keyword
    :event/time DateTime
-   :actor UserId
+   :event/actor UserId
    :application-id s/Int})
 
 (s/defschema ApprovedEvent
@@ -127,18 +127,18 @@
   (testing "check specific event schema"
     (is (nil? (s/check SubmittedEvent {:event/type :event/submitted
                                        :event/time (DateTime.)
-                                       :actor "foo"
+                                       :event/actor "foo"
                                        :application-id 123}))))
   (testing "check generic event schema"
     (is (nil? (s/check Event
                        {:event/type :event/submitted
                         :event/time (DateTime.)
-                        :actor "foo"
+                        :event/actor "foo"
                         :application-id 123})))
     (is (nil? (s/check Event
                        {:event/type :event/approved
                         :event/time (DateTime.)
-                        :actor "foo"
+                        :event/actor "foo"
                         :application-id 123
                         :comment "foo"}))))
   (testing "missing event specific key"
@@ -146,7 +146,7 @@
            (s/check Event
                     {:event/type :event/approved
                      :event/time (DateTime.)
-                     :actor "foo"
+                     :event/actor "foo"
                      :application-id 123}))))
   (testing "unknown event type"
     ;; TODO: improve error message to show the actual and expected event types
@@ -154,7 +154,7 @@
            (pr-str (s/check Event
                             {:event/type :foo
                              :event/time (DateTime.)
-                             :actor "foo"
+                             :event/actor "foo"
                              :application-id 123}))))))
 
 
@@ -184,7 +184,7 @@
   (assoc application
          :state ::submitted
          :commenters #{}
-         :members [(:actor event)]
+         :members [(:event/actor event)]
          :previous-submitted-form-contents (:submitted-form-contents application)
          :submitted-form-contents (:form-contents application)))
 
@@ -222,7 +222,7 @@
   [application _workflow event]
   ;; we don't store the comments in the state, they're available via
   ;; the event list
-  (update application :commenters disj (:actor event)))
+  (update application :commenters disj (:event/actor event)))
 
 (defmethod apply-event [:event/member-added :workflow/dynamic]
   [application _workflow event]
@@ -289,7 +289,7 @@
       {:success true
        :result {:event/type :event/draft-saved
                 :event/time (:time cmd)
-                :actor (:actor cmd)
+                :event/actor (:actor cmd)
                 :application-id (:application-id cmd)
                 :items (:items cmd)
                 :licenses (:licenses cmd)}}))
@@ -302,7 +302,7 @@
       {:success true
        :result {:event/type :event/submitted
                 :event/time (:time cmd)
-                :actor (:actor cmd)
+                :event/actor (:actor cmd)
                 :application-id (:application-id cmd)}}))
 
 (defmethod handle-command ::approve
@@ -312,7 +312,7 @@
       {:success true
        :result {:event/type :event/approved
                 :event/time (:time cmd)
-                :actor (:actor cmd)
+                :event/actor (:actor cmd)
                 :application-id (:application-id cmd)
                 :comment (:comment cmd)}}))
 
@@ -323,7 +323,7 @@
       {:success true
        :result {:event/type :event/rejected
                 :event/time (:time cmd)
-                :actor (:actor cmd)
+                :event/actor (:actor cmd)
                 :application-id (:application-id cmd)
                 :comment (:comment cmd)}}))
 
@@ -334,7 +334,7 @@
       {:success true
        :result {:event/type :event/returned
                 :event/time (:time cmd)
-                :actor (:actor cmd)
+                :event/actor (:actor cmd)
                 :application-id (:application-id cmd)
                 :comment (:comment cmd)}}))
 
@@ -345,7 +345,7 @@
       {:success true
        :result {:event/type :event/closed
                 :event/time (:time cmd)
-                :actor (:actor cmd)
+                :event/actor (:actor cmd)
                 :application-id (:application-id cmd)
                 :comment (:comment cmd)}}))
 
@@ -357,7 +357,7 @@
       {:success true
        :result {:event/type :event/decision-requested
                 :event/time (:time cmd)
-                :actor (:actor cmd)
+                :event/actor (:actor cmd)
                 :decider (:decider cmd)
                 :application-id (:application-id cmd)
                 :comment (:comment cmd)}}))
@@ -372,7 +372,7 @@
       {:success true
        :result {:event/type :event/decided
                 :event/time (:time cmd)
-                :actor (:actor cmd)
+                :event/actor (:actor cmd)
                 :decision (:decision cmd)
                 :application-id (:application-id cmd)
                 :comment (:comment cmd)}}))
@@ -395,7 +395,7 @@
       {:success true
        :result {:event/type :event/comment-requested
                 :event/time (:time cmd)
-                :actor (:actor cmd)
+                :event/actor (:actor cmd)
                 :commenters (:commenters cmd)
                 :application-id (:application-id cmd)
                 :comment (:comment cmd)}}))
@@ -411,7 +411,7 @@
       {:success true
        :result {:event/type :event/commented
                 :event/time (:time cmd)
-                :actor (:actor cmd)
+                :event/actor (:actor cmd)
                 :comment (:comment cmd)
                 :application-id (:application-id cmd)}}))
 
@@ -424,7 +424,7 @@
       {:success true
        :result {:event/type :event/member-added
                 :event/time (:time cmd)
-                :actor (:actor cmd)
+                :event/actor (:actor cmd)
                 :member (:member cmd)
                 :application-id (:application-id cmd)}}))
 
@@ -509,7 +509,7 @@
       (is (= {:success true
               :result {:event/type :event/draft-saved
                        :event/time 456
-                       :actor "applicant"
+                       :event/actor "applicant"
                        :application-id 123
                        :items {1 "foo" 2 "bar"}
                        :licenses {1 "approved" 2 "approved"}}}
@@ -782,7 +782,7 @@
       (is (= #{}
              (possible-commands "somebody else" draft))))
     (let [submitted (apply-events draft [{:event/type :event/submitted
-                                          :actor "applicant"}])]
+                                          :event/actor "applicant"}])]
       (testing "submitted"
         (is (= #{::add-member}
                (possible-commands "applicant" submitted)))
@@ -791,7 +791,7 @@
         (is (= #{}
                (possible-commands "somebody else" submitted))))
       (let [requested (apply-events submitted [{:event/type :event/comment-requested
-                                                :actor "assistant"
+                                                :event/actor "assistant"
                                                 :commenters ["commenter"]}])]
         (testing "comment requested"
           (is (= #{::add-member}
@@ -801,7 +801,7 @@
           (is (= #{::comment}
                  (possible-commands "commenter" requested))))
         (let [commented (apply-events requested [{:event/type :event/commented
-                                                  :actor "commenter"
+                                                  :event/actor "commenter"
                                                   :comment "..."}])]
           (testing "comment given"
             (is (= #{::approve ::reject ::return ::request-decision ::request-comment}
@@ -809,7 +809,7 @@
             (is (= #{}
                    (possible-commands "commenter" commented))))))
       (let [requested (apply-events submitted [{:event/type :event/decision-requested
-                                                :actor "assistant"
+                                                :event/actor "assistant"
                                                 :decider "decider"}])]
         (testing "decision requested"
           (is (= #{::add-member}
@@ -819,7 +819,7 @@
           (is (= #{::decide}
                  (possible-commands "decider" requested)))))
       (let [rejected (apply-events submitted [{:event/type :event/rejected
-                                               :actor "assistant"}])]
+                                               :event/actor "assistant"}])]
         (testing "rejected"
           (is (= #{}
                  (possible-commands "applicant" rejected)))
@@ -828,7 +828,7 @@
           (is (= #{}
                  (possible-commands "somebody else" rejected)))))
       (let [approved (apply-events submitted [{:event/type :event/approved
-                                               :actor "assistant"}])]
+                                               :event/actor "assistant"}])]
         (testing "approved"
           (is (= #{}
                  (possible-commands "applicant" approved)))
@@ -838,7 +838,7 @@
                  (possible-commands "somebody else" approved))))
         (testing "closed"
           (let [closed (apply-events approved [{:event/type :event/closed
-                                                :actor "assistant"}])]
+                                                :event/actor "assistant"}])]
             (is (= #{}
                    (possible-commands "applicant" closed)))
             (is (= #{}

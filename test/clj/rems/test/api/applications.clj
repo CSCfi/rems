@@ -821,7 +821,7 @@
         (is (= "workflow/dynamic" (get-in data [:application :workflow :type])))
         (is (= [{:event/type "event/submitted"
                  :event/time (str (.getMillis test-data/creation-time))
-                 :actor user-id
+                 :event/actor user-id
                  :application-id application-id}]
                (get-in data [:application :dynamic-events])))
         (is (= ["rems.workflow.dynamic/add-member"] (get-in data [:application :possible-commands])))))

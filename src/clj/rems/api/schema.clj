@@ -57,7 +57,7 @@
 (s/defschema DynamicEvent
   {:event/type s/Keyword
    :event/time DateTime
-   :actor s/Str
+   :event/actor s/Str
    (s/optional-key :comment) (s/maybe s/Str)
    s/Any s/Any})
 
