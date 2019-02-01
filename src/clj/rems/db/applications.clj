@@ -46,8 +46,9 @@
                    :rems.workflow.dynamic/approved
                    :rems.workflow.dynamic/rejected
                    :rems.workflow.dynamic/returned}
-                 (:event e)) ;; definitely not by applicant
-      (and (= :event/closed (:event e)) (not= (:applicantuserid app) (:actor e))) ;; not by applicant
+                 (or (:event/type e)
+                     (:event e))) ;; definitely not by applicant
+      (and (= :event/closed (:event/type e)) (not= (:applicantuserid app) (:actor e))) ;; not by applicant
       (and (= "close" (:event e)) (not= (:applicantuserid app) (:userid e))))) ;; not by applicant
 
 (defn handled? [app]
@@ -1022,7 +1023,7 @@
                               :user (:actor event)
                               :comment nil
                               :round -1
-                              :event (str (:event event))
+                              :event (str (:event/type event))
                               :eventdata (event->json event)})
   nil)
 

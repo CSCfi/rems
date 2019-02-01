@@ -821,7 +821,7 @@
         (is (= "workflow/dynamic" (get-in data [:application :workflow :type])))
         (is (= [{:actor user-id
                  :application-id application-id
-                 :event "event/submitted"
+                 :event/type "event/submitted"
                  :time (str (.getMillis test-data/creation-time))}]
                (get-in data [:application :dynamic-events])))
         (is (= ["rems.workflow.dynamic/add-member"] (get-in data [:application :possible-commands])))))
@@ -886,7 +886,7 @@
                   "event/decision-requested"
                   "event/decided"
                   "event/approved"]
-                 (map :event (get-in data [:application :dynamic-events])))))))))
+                 (map :event/type (get-in data [:application :dynamic-events])))))))))
 
 (deftest dynamic-application-create-test
   (let [api-key "42"
@@ -945,4 +945,4 @@
         (let [submitted (get-application user-id application-id)]
           (is (= "rems.workflow.dynamic/submitted" (get-in submitted [:application :state])))
           (is (= ["event/draft-saved" "event/draft-saved" "event/submitted"]
-                 (map :event (get-in submitted [:application :dynamic-events])))))))))
+                 (map :event/type (get-in submitted [:application :dynamic-events])))))))))

@@ -53,58 +53,58 @@
 ;; TODO: namespaced keys e.g. :event/type, :event/time, :event/actor, :application/id
 ;; TODO: add version number to events
 (s/defschema EventBase
-  {:event s/Keyword
+  {:event/type s/Keyword
    :application-id s/Int
    :actor UserId
    :time DateTime})
 
 (s/defschema ApprovedEvent
   (assoc EventBase
-         :event (s/eq :event/approved)
+         :event/type (s/eq :event/approved)
          :comment s/Str))
 (s/defschema ClosedEvent
   (assoc EventBase
-         :event (s/eq :event/closed)
+         :event/type (s/eq :event/closed)
          :comment s/Str))
 (s/defschema CommentedEvent
   (assoc EventBase
-         :event (s/eq :event/commented)
+         :event/type (s/eq :event/commented)
          :comment s/Str))
 (s/defschema CommentRequestedEvent
   (assoc EventBase
-         :event (s/eq :event/comment-requested)
+         :event/type (s/eq :event/comment-requested)
          :commenters [s/Str]
          :comment s/Str))
 (s/defschema DecidedEvent
   (assoc EventBase
-         :event (s/eq :event/decided)
+         :event/type (s/eq :event/decided)
          :decision (s/enum :approved :rejected)
          :comment s/Str))
 (s/defschema DecisionRequestedEvent
   (assoc EventBase
-         :event (s/eq :event/decision-requested)
+         :event/type (s/eq :event/decision-requested)
          :decider s/Str
          :comment s/Str))
 (s/defschema DraftSavedEvent
   (assoc EventBase
-         :event (s/eq :event/draft-saved)
+         :event/type (s/eq :event/draft-saved)
          :items {Long s/Str}
          :licenses {Long s/Str}))
 (s/defschema MemberAddedEvent
   (assoc EventBase
-         :event (s/eq :event/member-added)
+         :event/type (s/eq :event/member-added)
          :member s/Str))
 (s/defschema RejectedEvent
   (assoc EventBase
-         :event (s/eq :event/rejected)
+         :event/type (s/eq :event/rejected)
          :comment s/Str))
 (s/defschema ReturnedEvent
   (assoc EventBase
-         :event (s/eq :event/returned)
+         :event/type (s/eq :event/returned)
          :comment s/Str))
 (s/defschema SubmittedEvent
   (assoc EventBase
-         :event (s/eq :event/submitted)))
+         :event/type (s/eq :event/submitted)))
 
 ;; TODO: :event/license-accepted, :event/license-required
 (def event-schemas
@@ -121,22 +121,22 @@
    :event/submitted SubmittedEvent})
 
 (s/defschema Event
-  (apply r/dispatch-on (flatten [:event (seq event-schemas)])))
+  (apply r/dispatch-on (flatten [:event/type (seq event-schemas)])))
 
 (deftest test-event-schema
   (testing "check specific event schema"
-    (is (nil? (s/check SubmittedEvent {:event :event/submitted
+    (is (nil? (s/check SubmittedEvent {:event/type :event/submitted
                                        :actor "foo"
                                        :application-id 123
                                        :time (DateTime.)}))))
   (testing "check generic event schema"
     (is (nil? (s/check Event
-                       {:event :event/submitted
+                       {:event/type :event/submitted
                         :actor "foo"
                         :application-id 123
                         :time (DateTime.)})))
     (is (nil? (s/check Event
-                       {:event :event/approved
+                       {:event/type :event/approved
                         :actor "foo"
                         :application-id 123
                         :time (DateTime.)
@@ -144,7 +144,7 @@
   (testing "missing event specific key"
     (is (= {:comment 'missing-required-key}
            (s/check Event
-                    {:event :event/approved
+                    {:event/type :event/approved
                      :actor "foo"
                      :application-id 123
                      :time (DateTime.)}))))
@@ -152,7 +152,7 @@
     ;; TODO: improve error message to show the actual and expected event types
     (is (= "(not (some-matching-condition? a-clojure.lang.PersistentArrayMap))"
            (pr-str (s/check Event
-                            {:event :foo
+                            {:event/type :foo
                              :actor "foo"
                              :application-id 123
                              :time (DateTime.)}))))))
@@ -163,7 +163,7 @@
 (defmulti ^:private apply-event
   "Applies an event to an application state."
   ;; dispatch by event type
-  (fn [_application workflow event] [(:event event) (:type workflow)]))
+  (fn [_application workflow event] [(:event/type event) (:type workflow)]))
 
 (defn get-event-types
   "Fetch sequence of supported event names."
@@ -287,7 +287,7 @@
   (or (applicant-error application cmd)
       (state-error application ::draft ::returned)
       {:success true
-       :result {:event :event/draft-saved
+       :result {:event/type :event/draft-saved
                 :actor (:actor cmd)
                 :application-id (:application-id cmd)
                 :time (:time cmd)
@@ -300,7 +300,7 @@
       (state-error application ::draft ::returned)
       (validation-error injections (:application-id cmd))
       {:success true
-       :result {:event :event/submitted
+       :result {:event/type :event/submitted
                 :actor (:actor cmd)
                 :application-id (:application-id cmd)
                 :time (:time cmd)}}))
@@ -310,7 +310,7 @@
   (or (actor-is-not-handler-error application cmd)
       (state-error application ::submitted)
       {:success true
-       :result {:event :event/approved
+       :result {:event/type :event/approved
                 :actor (:actor cmd)
                 :application-id (:application-id cmd)
                 :comment (:comment cmd)
@@ -321,7 +321,7 @@
   (or (actor-is-not-handler-error application cmd)
       (state-error application ::submitted)
       {:success true
-       :result {:event :event/rejected
+       :result {:event/type :event/rejected
                 :actor (:actor cmd)
                 :application-id (:application-id cmd)
                 :comment (:comment cmd)
@@ -332,7 +332,7 @@
   (or (actor-is-not-handler-error application cmd)
       (state-error application ::submitted)
       {:success true
-       :result {:event :event/returned
+       :result {:event/type :event/returned
                 :actor (:actor cmd)
                 :application-id (:application-id cmd)
                 :comment (:comment cmd)
@@ -343,7 +343,7 @@
   (or (actor-is-not-handler-error application cmd)
       (state-error application ::approved)
       {:success true
-       :result {:event :event/closed
+       :result {:event/type :event/closed
                 :actor (:actor cmd)
                 :application-id (:application-id cmd)
                 :comment (:comment cmd)
@@ -355,7 +355,7 @@
       (state-error application ::submitted)
       (valid-user-error injections (:decider cmd))
       {:success true
-       :result {:event :event/decision-requested
+       :result {:event/type :event/decision-requested
                 :actor (:actor cmd)
                 :decider (:decider cmd)
                 :application-id (:application-id cmd)
@@ -370,7 +370,7 @@
       (when-not (contains? #{:approved :rejected} (:decision cmd))
         {:errors [[:invalid-decision (:decision cmd)]]})
       {:success true
-       :result {:event :event/decided
+       :result {:event/type :event/decided
                 :actor (:actor cmd)
                 :decision (:decision cmd)
                 :application-id (:application-id cmd)
@@ -393,7 +393,7 @@
       (must-not-be-empty cmd :commenters)
       (invalid-users-errors (:commenters cmd) injections)
       {:success true
-       :result {:event :event/comment-requested
+       :result {:event/type :event/comment-requested
                 :actor (:actor cmd)
                 :commenters (:commenters cmd)
                 :application-id (:application-id cmd)
@@ -409,7 +409,7 @@
   (or (actor-is-not-commenter-error application cmd)
       (state-error application ::submitted)
       {:success true
-       :result {:event :event/commented
+       :result {:event/type :event/commented
                 :actor (:actor cmd)
                 :comment (:comment cmd)
                 :application-id (:application-id cmd)
@@ -422,7 +422,7 @@
       (state-error application ::draft ::submitted) ;; TODO which states?
       (valid-user-error injections (:member cmd))
       {:success true
-       :result {:event :event/member-added
+       :result {:event/type :event/member-added
                 :actor (:actor cmd)
                 :member (:member cmd)
                 :application-id (:application-id cmd)
@@ -507,7 +507,7 @@
         relevant-application-keys [:state :form-contents :submitted-form-contents :previous-submitted-form-contents]]
     (testing "saves a draft"
       (is (= {:success true
-              :result {:event :event/draft-saved
+              :result {:event/type :event/draft-saved
                        :actor "applicant"
                        :application-id 123
                        :time 456
@@ -781,7 +781,7 @@
              (possible-commands "assistant" draft)))
       (is (= #{}
              (possible-commands "somebody else" draft))))
-    (let [submitted (apply-events draft [{:event :event/submitted
+    (let [submitted (apply-events draft [{:event/type :event/submitted
                                           :actor "applicant"}])]
       (testing "submitted"
         (is (= #{::add-member}
@@ -790,7 +790,7 @@
                (possible-commands "assistant" submitted)))
         (is (= #{}
                (possible-commands "somebody else" submitted))))
-      (let [requested (apply-events submitted [{:event :event/comment-requested
+      (let [requested (apply-events submitted [{:event/type :event/comment-requested
                                                 :actor "assistant"
                                                 :commenters ["commenter"]}])]
         (testing "comment requested"
@@ -800,7 +800,7 @@
                  (possible-commands "assistant" requested)))
           (is (= #{::comment}
                  (possible-commands "commenter" requested))))
-        (let [commented (apply-events requested [{:event :event/commented
+        (let [commented (apply-events requested [{:event/type :event/commented
                                                   :actor "commenter"
                                                   :comment "..."}])]
           (testing "comment given"
@@ -808,7 +808,7 @@
                    (possible-commands "assistant" commented)))
             (is (= #{}
                    (possible-commands "commenter" commented))))))
-      (let [requested (apply-events submitted [{:event :event/decision-requested
+      (let [requested (apply-events submitted [{:event/type :event/decision-requested
                                                 :actor "assistant"
                                                 :decider "decider"}])]
         (testing "decision requested"
@@ -818,7 +818,7 @@
                  (possible-commands "assistant" requested)))
           (is (= #{::decide}
                  (possible-commands "decider" requested)))))
-      (let [rejected (apply-events submitted [{:event :event/rejected
+      (let [rejected (apply-events submitted [{:event/type :event/rejected
                                                :actor "assistant"}])]
         (testing "rejected"
           (is (= #{}
@@ -827,7 +827,7 @@
                  (possible-commands "assistant" rejected)))
           (is (= #{}
                  (possible-commands "somebody else" rejected)))))
-      (let [approved (apply-events submitted [{:event :event/approved
+      (let [approved (apply-events submitted [{:event/type :event/approved
                                                :actor "assistant"}])]
         (testing "approved"
           (is (= #{}
@@ -837,7 +837,7 @@
           (is (= #{}
                  (possible-commands "somebody else" approved))))
         (testing "closed"
-          (let [closed (apply-events approved [{:event :event/closed
+          (let [closed (apply-events approved [{:event/type :event/closed
                                                 :actor "assistant"}])]
             (is (= #{}
                    (possible-commands "applicant" closed)))

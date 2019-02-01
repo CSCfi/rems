@@ -1062,13 +1062,14 @@
                        ^{:key (:id item)}
                        [:li (get-catalogue-item-title item language)]))]}]))
 
-(defn- dynamic-event->event [{:keys [time actor event comment decision]}]
-  {:userid actor
-   :time time
-   :event (name event)
-   :comment (if (= :event/decided event)
-              (str (localize-decision decision) ": " comment)
-              comment)})
+(defn- dynamic-event->event [event]
+  (let [{:keys [time actor comment decision]} event]
+    {:userid actor
+     :time time
+     :event (name (:event/type event))
+     :comment (if (= :event/decided (:event/type event))
+                (str (localize-decision decision) ": " comment)
+                comment)}))
 
 (defn- render-application [application edit-application language status]
   (let [app (:application application)
