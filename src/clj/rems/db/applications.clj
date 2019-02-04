@@ -199,7 +199,7 @@
   ([user application]
    ;; TODO calculate in backend?
    (->> (:dynamic-events application)
-        (map :decider)
+        (map :application/decider)
         (some #{user}))))
 
 (defn- can-decide?

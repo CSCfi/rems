@@ -83,7 +83,7 @@
 (s/defschema DecisionRequestedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/decision-requested)
-         :decider s/Str
+         :application/decider s/Str
          :application/comment s/Str))
 (s/defschema DraftSavedEvent
   (assoc EventBase
@@ -206,7 +206,7 @@
 
 (defmethod apply-event [:application.event/decision-requested :workflow/dynamic]
   [application _workflow event]
-  (assoc application :decider (:decider event)))
+  (assoc application :decider (:application/decider event)))
 
 (defmethod apply-event [:application.event/decided :workflow/dynamic]
   [application _workflow event]
@@ -358,8 +358,8 @@
        :result {:event/type :application.event/decision-requested
                 :event/time (:time cmd)
                 :event/actor (:actor cmd)
-                :decider (:decider cmd)
                 :application/id (:application-id cmd)
+                :application/decider (:decider cmd)
                 :application/comment (:comment cmd)}}))
 
 (defmethod handle-command ::decide
@@ -802,7 +802,7 @@
                  (possible-commands "commenter" requested))))
         (let [commented (apply-events requested [{:event/type :application.event/commented
                                                   :event/actor "commenter"
-                                                  :comment "..."}])]
+                                                  :application/comment "..."}])]
           (testing "comment given"
             (is (= #{::approve ::reject ::return ::request-decision ::request-comment}
                    (possible-commands "assistant" commented)))
@@ -810,7 +810,7 @@
                    (possible-commands "commenter" commented))))))
       (let [requested (apply-events submitted [{:event/type :application.event/decision-requested
                                                 :event/actor "assistant"
-                                                :decider "decider"}])]
+                                                :application/decider "decider"}])]
         (testing "decision requested"
           (is (= #{::add-member}
                  (possible-commands "applicant" requested)))
