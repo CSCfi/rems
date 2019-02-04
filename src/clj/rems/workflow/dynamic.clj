@@ -78,7 +78,7 @@
 (s/defschema DecidedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/decided)
-         :decision (s/enum :approved :rejected)
+         :application/decision (s/enum :approved :rejected)
          :application/comment s/Str))
 (s/defschema DecisionRequestedEvent
   (assoc EventBase
@@ -211,7 +211,7 @@
 (defmethod apply-event [:application.event/decided :workflow/dynamic]
   [application _workflow event]
   (-> application
-      (assoc :decision (:decision event))
+      (assoc :decision (:application/decision event))
       (dissoc :decider)))
 
 (defmethod apply-event [:application.event/comment-requested :workflow/dynamic]
@@ -373,8 +373,8 @@
        :result {:event/type :application.event/decided
                 :event/time (:time cmd)
                 :event/actor (:actor cmd)
-                :decision (:decision cmd)
                 :application/id (:application-id cmd)
+                :application/decision (:decision cmd)
                 :application/comment (:comment cmd)}}))
 
 (defn- invalid-users-errors

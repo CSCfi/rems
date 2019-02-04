@@ -1067,7 +1067,7 @@
    :time (:event/time event)
    :userid (:event/actor event)
    :comment (if (= :application.event/decided (:event/type event))
-              (str (localize-decision (:decision event)) ": " (:application/comment event))
+              (str (localize-decision (:application/decision event)) ": " (:application/comment event))
               (:application/comment event))})
 
 (defn- render-application [application edit-application language status]
