@@ -59,14 +59,19 @@
    {:href "/#/administration/create-catalogue-item"}
    (text :t.administration/create-catalogue-item)])
 
+(defn- to-catalogue-item [catalogue-item-id]
+  [:a.btn.btn-primary
+   {:href (str "/#/administration/catalogue-items/" catalogue-item-id)}
+   (text :t.administration/view)])
+
 (defn- disable-button [item]
-  [:button.btn.btn-secondary
+  [:button.btn.btn-secondary.button-min-width
    {:type "submit"
     :on-click #(rf/dispatch [::update-catalogue-item (:id item) "disabled"])}
    (text :t.administration/disable)])
 
 (defn- enable-button [item]
-  [:button.btn.btn-primary
+  [:button.btn.btn-primary.button-min-width
    {:type "submit"
     :on-click #(rf/dispatch [::update-catalogue-item (:id item) "enabled"])}
    (text :t.administration/enable)])
@@ -80,18 +85,26 @@
   {:name {:header #(text :t.catalogue/header)
           :value #(get-catalogue-item-title % language)}
    :resource {:header #(text :t.administration/resource)
-              :value :resource-name}
+              :value (fn [row]
+                       [:a {:href (str "#/administration/resources/" (:resource-id row))}
+                        (:resource-name row)])}
    :form {:header #(text :t.administration/form)
-          :value :form-name}
+          :value (fn [row]
+                   [:a {:href (str "#/administration/forms/" (:formid row))}
+                    (:form-name row)])}
    :workflow {:header #(text :t.administration/workflow)
-              :value :workflow-name}
+              :value (fn [row]
+                       [:a {:href (str "#/administration/workflows/" (:wfid row))}
+                        (:workflow-name row)])}
    :created {:header #(text :t.administration/created)
              :value (comp localize-time :start)}
    :end {:header #(text :t.administration/end)
          :value (comp localize-time :end)}
    :active {:header #(text :t.administration/active)
             :value (comp readonly-checkbox not disabled-catalogue-item?)}
-   :commands {:value toggle-state-button
+   :commands {:values (fn [item]
+                        [[to-catalogue-item (:id item)]
+                         [toggle-state-button item]])
               :sortable? false
               :filterable? false}})
 

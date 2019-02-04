@@ -3,16 +3,6 @@
             [re-frame.core :as rf]
             [secretary.core :as secretary]))
 
-(defn andstr
-  "Like `apply str` but only produces something if all values are truthy like `and`.
-
-  (andstr nil 1 2 3) => nil
-  (andstr true 1 false 3) => nil
-  (andstr (:foo {:foo 2}) \"/\") => \"2/\""
-  [& coll]
-  (when (every? identity coll)
-    (apply str coll)))
-
 ;; TODO move to cljc
 (defn getx
   "Like `get` but throws an exception if the key is not found."

@@ -137,3 +137,6 @@
                                       :label label
                                       :orientation orientation}])
              options)))
+
+(defn inline-info-field [text value]
+  [info-field text value {:inline? true}])
