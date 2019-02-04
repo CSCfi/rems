@@ -48,8 +48,10 @@
                    :rems.workflow.dynamic/returned}
                  (or (:event/type e)
                      (:event e))) ;; definitely not by applicant
-      (and (= :event/closed (:event/type e)) (not= (:applicantuserid app) (:event/actor e))) ;; not by applicant
-      (and (= "close" (:event e)) (not= (:applicantuserid app) (:userid e))))) ;; not by applicant
+      (and (= :application.event/closed (:event/type e))
+           (not= (:applicantuserid app) (:event/actor e))) ;; not by applicant
+      (and (= "close" (:event e))
+           (not= (:applicantuserid app) (:userid e))))) ;; not by applicant
 
 (defn handled? [app]
   (or (contains? #{"approved" "rejected" "returned"

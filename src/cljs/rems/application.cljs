@@ -1067,7 +1067,7 @@
     {:event (name (:event/type event))
      :time (:event/time event)
      :userid (:event/actor event)
-     :comment (if (= :event/decided (:event/type event))
+     :comment (if (= :application.event/decided (:event/type event))
                 (str (localize-decision decision) ": " comment)
                 comment)}))
 
