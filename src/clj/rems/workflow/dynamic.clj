@@ -56,7 +56,7 @@
   {:event/type s/Keyword
    :event/time DateTime
    :event/actor UserId
-   :application-id s/Int})
+   :application/id s/Int})
 
 (s/defschema ApprovedEvent
   (assoc EventBase
@@ -128,18 +128,18 @@
     (is (nil? (s/check SubmittedEvent {:event/type :event/submitted
                                        :event/time (DateTime.)
                                        :event/actor "foo"
-                                       :application-id 123}))))
+                                       :application/id 123}))))
   (testing "check generic event schema"
     (is (nil? (s/check Event
                        {:event/type :event/submitted
                         :event/time (DateTime.)
                         :event/actor "foo"
-                        :application-id 123})))
+                        :application/id 123})))
     (is (nil? (s/check Event
                        {:event/type :event/approved
                         :event/time (DateTime.)
                         :event/actor "foo"
-                        :application-id 123
+                        :application/id 123
                         :comment "foo"}))))
   (testing "missing event specific key"
     (is (= {:comment 'missing-required-key}
@@ -147,7 +147,7 @@
                     {:event/type :event/approved
                      :event/time (DateTime.)
                      :event/actor "foo"
-                     :application-id 123}))))
+                     :application/id 123}))))
   (testing "unknown event type"
     ;; TODO: improve error message to show the actual and expected event types
     (is (= "(not (some-matching-condition? a-clojure.lang.PersistentArrayMap))"
@@ -155,7 +155,7 @@
                             {:event/type :foo
                              :event/time (DateTime.)
                              :event/actor "foo"
-                             :application-id 123}))))))
+                             :application/id 123}))))))
 
 
 ;;; Events
@@ -290,7 +290,7 @@
        :result {:event/type :event/draft-saved
                 :event/time (:time cmd)
                 :event/actor (:actor cmd)
-                :application-id (:application-id cmd)
+                :application/id (:application-id cmd)
                 :items (:items cmd)
                 :licenses (:licenses cmd)}}))
 
@@ -303,7 +303,7 @@
        :result {:event/type :event/submitted
                 :event/time (:time cmd)
                 :event/actor (:actor cmd)
-                :application-id (:application-id cmd)}}))
+                :application/id (:application-id cmd)}}))
 
 (defmethod handle-command ::approve
   [cmd application _injections]
@@ -313,7 +313,7 @@
        :result {:event/type :event/approved
                 :event/time (:time cmd)
                 :event/actor (:actor cmd)
-                :application-id (:application-id cmd)
+                :application/id (:application-id cmd)
                 :comment (:comment cmd)}}))
 
 (defmethod handle-command ::reject
@@ -324,7 +324,7 @@
        :result {:event/type :event/rejected
                 :event/time (:time cmd)
                 :event/actor (:actor cmd)
-                :application-id (:application-id cmd)
+                :application/id (:application-id cmd)
                 :comment (:comment cmd)}}))
 
 (defmethod handle-command ::return
@@ -335,7 +335,7 @@
        :result {:event/type :event/returned
                 :event/time (:time cmd)
                 :event/actor (:actor cmd)
-                :application-id (:application-id cmd)
+                :application/id (:application-id cmd)
                 :comment (:comment cmd)}}))
 
 (defmethod handle-command ::close
@@ -346,7 +346,7 @@
        :result {:event/type :event/closed
                 :event/time (:time cmd)
                 :event/actor (:actor cmd)
-                :application-id (:application-id cmd)
+                :application/id (:application-id cmd)
                 :comment (:comment cmd)}}))
 
 (defmethod handle-command ::request-decision
@@ -359,7 +359,7 @@
                 :event/time (:time cmd)
                 :event/actor (:actor cmd)
                 :decider (:decider cmd)
-                :application-id (:application-id cmd)
+                :application/id (:application-id cmd)
                 :comment (:comment cmd)}}))
 
 (defmethod handle-command ::decide
@@ -374,7 +374,7 @@
                 :event/time (:time cmd)
                 :event/actor (:actor cmd)
                 :decision (:decision cmd)
-                :application-id (:application-id cmd)
+                :application/id (:application-id cmd)
                 :comment (:comment cmd)}}))
 
 (defn- invalid-users-errors
@@ -397,7 +397,7 @@
                 :event/time (:time cmd)
                 :event/actor (:actor cmd)
                 :commenters (:commenters cmd)
-                :application-id (:application-id cmd)
+                :application/id (:application-id cmd)
                 :comment (:comment cmd)}}))
 
 (defn- actor-is-not-commenter-error [application cmd]
@@ -413,7 +413,7 @@
                 :event/time (:time cmd)
                 :event/actor (:actor cmd)
                 :comment (:comment cmd)
-                :application-id (:application-id cmd)}}))
+                :application/id (:application-id cmd)}}))
 
 (defmethod handle-command ::add-member
   [cmd application injections]
@@ -426,7 +426,7 @@
                 :event/time (:time cmd)
                 :event/actor (:actor cmd)
                 :member (:member cmd)
-                :application-id (:application-id cmd)}}))
+                :application/id (:application-id cmd)}}))
 
 (defn- apply-command
   ([application cmd]
@@ -510,7 +510,7 @@
               :result {:event/type :event/draft-saved
                        :event/time 456
                        :event/actor "applicant"
-                       :application-id 123
+                       :application/id 123
                        :items {1 "foo" 2 "bar"}
                        :licenses {1 "approved" 2 "approved"}}}
              (handle-command {:type ::save-draft

@@ -1019,7 +1019,7 @@
     (dynamic/apply-events application events)))
 
 (defn- add-dynamic-event! [event]
-  (db/add-application-event! {:application (:application-id event)
+  (db/add-application-event! {:application (:application/id event)
                               :user (:event/actor event)
                               :comment nil
                               :round -1
