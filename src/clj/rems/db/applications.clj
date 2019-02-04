@@ -24,7 +24,8 @@
             [rems.workflow.dynamic :as dynamic]
             [schema-tools.core :as st]
             [schema.coerce :as coerce]
-            [schema.core :as s])
+            [schema.core :as s]
+            [schema.utils])
   (:import [java.io ByteArrayOutputStream FileInputStream]
            [org.joda.time DateTime]))
 
@@ -993,7 +994,12 @@
 
 (defn json->event [json]
   ;; most keys are keywords, but some events use numeric keys in maps
-  (coerce-dynamic-event (cheshire/parse-string json str->keyword-or-number)))
+  (let [result (coerce-dynamic-event (cheshire/parse-string json str->keyword-or-number))]
+    (when (schema.utils/error? result)
+      ;; similar exception as what schema.core/validate throws
+      (throw (ex-info (str "Value does not match schema: " (pr-str result))
+                      {:schema dynamic/Event :value json :error result})))
+    result))
 
 (defn validate-dynamic-event [event]
   (s/validate dynamic/Event event))
