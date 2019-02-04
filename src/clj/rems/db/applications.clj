@@ -184,7 +184,7 @@
   ([user application]
    ;; TODO calculate in backend?
    (->> (:dynamic-events application)
-        (mapcat :commenters)
+        (mapcat :application/commenters)
         (some #{user}))))
 
 (defn- can-comment?

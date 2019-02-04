@@ -73,7 +73,7 @@
 (s/defschema CommentRequestedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/comment-requested)
-         :commenters [s/Str]
+         :application/commenters [s/Str]
          :application/comment s/Str))
 (s/defschema DecidedEvent
   (assoc EventBase
@@ -216,7 +216,7 @@
 
 (defmethod apply-event [:application.event/comment-requested :workflow/dynamic]
   [application _workflow event]
-  (update application :commenters into (:commenters event)))
+  (update application :commenters into (:application/commenters event)))
 
 (defmethod apply-event [:application.event/commented :workflow/dynamic]
   [application _workflow event]
@@ -396,8 +396,8 @@
        :result {:event/type :application.event/comment-requested
                 :event/time (:time cmd)
                 :event/actor (:actor cmd)
-                :commenters (:commenters cmd)
                 :application/id (:application-id cmd)
+                :application/commenters (:commenters cmd)
                 :application/comment (:comment cmd)}}))
 
 (defn- actor-is-not-commenter-error [application cmd]
@@ -792,7 +792,7 @@
                (possible-commands "somebody else" submitted))))
       (let [requested (apply-events submitted [{:event/type :application.event/comment-requested
                                                 :event/actor "assistant"
-                                                :commenters ["commenter"]}])]
+                                                :application/commenters ["commenter"]}])]
         (testing "comment requested"
           (is (= #{::add-member}
                  (possible-commands "applicant" requested)))
