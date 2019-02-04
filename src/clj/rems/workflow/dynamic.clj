@@ -88,8 +88,8 @@
 (s/defschema DraftSavedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/draft-saved)
-         :application/field-values {Long s/Str}
-         :application/accepted-licenses {Long s/Str}))
+         :application/field-values {s/Int s/Str}
+         :application/accepted-licenses #{s/Int}))
 (s/defschema MemberAddedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/member-added)
@@ -177,7 +177,9 @@
 (defmethod apply-event [:application.event/draft-saved :workflow/dynamic]
   [application _workflow event]
   (assoc application :form-contents {:items (:application/field-values event)
-                                     :licenses (:application/accepted-licenses event)}))
+                                     :licenses (->> (:application/accepted-licenses event)
+                                                    (map (fn [id] [id "approved"]))
+                                                    (into {}))}))
 
 (defmethod apply-event [:application.event/submitted :workflow/dynamic]
   [application _workflow event]
@@ -292,7 +294,10 @@
                 :event/actor (:actor cmd)
                 :application/id (:application-id cmd)
                 :application/field-values (:items cmd)
-                :application/accepted-licenses (:licenses cmd)}}))
+                :application/accepted-licenses (->> (:licenses cmd)
+                                                    (filter #(= "approved" (second %)))
+                                                    (map first)
+                                                    set)}}))
 
 (defmethod handle-command ::submit
   [cmd application injections]
@@ -512,7 +517,7 @@
                        :event/actor "applicant"
                        :application/id 123
                        :application/field-values {1 "foo" 2 "bar"}
-                       :application/accepted-licenses {1 "approved" 2 "approved"}}}
+                       :application/accepted-licenses #{1 2}}}
              (handle-command {:type ::save-draft
                               :time 456
                               :actor "applicant"
@@ -542,10 +547,10 @@
     (testing "draft can be updated multiple times"
       (is (= {:state :rems.workflow.dynamic/draft
               :form-contents {:items {1 "updated"}
-                              :licenses {2 "updated"}}}
+                              :licenses {3 "approved"}}}
              (-> (apply-commands application
-                                 [{:actor "applicant" :type ::save-draft :items {1 "original"} :licenses {2 "original"}}
-                                  {:actor "applicant" :type ::save-draft :items {1 "updated"} :licenses {2 "updated"}}]
+                                 [{:actor "applicant" :type ::save-draft :items {1 "original"} :licenses {2 "approved"}}
+                                  {:actor "applicant" :type ::save-draft :items {1 "updated"} :licenses {3 "approved"}}]
                                  injections)
                  (select-keys relevant-application-keys)))))
     (testing "draft cannot be updated after submitting"
@@ -562,30 +567,30 @@
     (testing "draft can be updated after returning it to applicant"
       (is (= {:state ::returned
               :form-contents {:items {1 "updated"}
-                              :licenses {2 "updated"}}
+                              :licenses {3 "approved"}}
               :submitted-form-contents {:items {1 "original"}
-                                        :licenses {2 "original"}}
+                                        :licenses {2 "approved"}}
               :previous-submitted-form-contents nil}
              (-> (apply-commands application
-                                 [{:actor "applicant" :type ::save-draft :items {1 "original"} :licenses {2 "original"}}
+                                 [{:actor "applicant" :type ::save-draft :items {1 "original"} :licenses {2 "approved"}}
                                   {:actor "applicant" :type ::submit}
                                   {:actor "assistant" :type ::return}
-                                  {:actor "applicant" :type ::save-draft :items {1 "updated"} :licenses {2 "updated"}}]
+                                  {:actor "applicant" :type ::save-draft :items {1 "updated"} :licenses {3 "approved"}}]
                                  injections)
                  (select-keys relevant-application-keys)))))
     (testing "resubmitting remembers the previous and current application"
       (is (= {:state ::submitted
               :form-contents {:items {1 "updated"}
-                              :licenses {2 "updated"}}
+                              :licenses {3 "approved"}}
               :submitted-form-contents {:items {1 "updated"}
-                                        :licenses {2 "updated"}}
+                                        :licenses {3 "approved"}}
               :previous-submitted-form-contents {:items {1 "original"}
-                                                 :licenses {2 "original"}}}
+                                                 :licenses {2 "approved"}}}
              (-> (apply-commands application
-                                 [{:actor "applicant" :type ::save-draft :items {1 "original"} :licenses {2 "original"}}
+                                 [{:actor "applicant" :type ::save-draft :items {1 "original"} :licenses {2 "approved"}}
                                   {:actor "applicant" :type ::submit}
                                   {:actor "assistant" :type ::return}
-                                  {:actor "applicant" :type ::save-draft :items {1 "updated"} :licenses {2 "updated"}}
+                                  {:actor "applicant" :type ::save-draft :items {1 "updated"} :licenses {3 "approved"}}
                                   {:actor "applicant" :type ::submit}]
                                  injections)
                  (select-keys relevant-application-keys)))))))
