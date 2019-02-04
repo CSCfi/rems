@@ -61,30 +61,30 @@
 (s/defschema ApprovedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/approved)
-         :comment s/Str))
+         :application/comment s/Str))
 (s/defschema ClosedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/closed)
-         :comment s/Str))
+         :application/comment s/Str))
 (s/defschema CommentedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/commented)
-         :comment s/Str))
+         :application/comment s/Str))
 (s/defschema CommentRequestedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/comment-requested)
          :commenters [s/Str]
-         :comment s/Str))
+         :application/comment s/Str))
 (s/defschema DecidedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/decided)
          :decision (s/enum :approved :rejected)
-         :comment s/Str))
+         :application/comment s/Str))
 (s/defschema DecisionRequestedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/decision-requested)
          :decider s/Str
-         :comment s/Str))
+         :application/comment s/Str))
 (s/defschema DraftSavedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/draft-saved)
@@ -97,11 +97,11 @@
 (s/defschema RejectedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/rejected)
-         :comment s/Str))
+         :application/comment s/Str))
 (s/defschema ReturnedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/returned)
-         :comment s/Str))
+         :application/comment s/Str))
 (s/defschema SubmittedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/submitted)))
@@ -140,9 +140,9 @@
                         :event/time (DateTime.)
                         :event/actor "foo"
                         :application/id 123
-                        :comment "foo"}))))
+                        :application/comment "foo"}))))
   (testing "missing event specific key"
-    (is (= {:comment 'missing-required-key}
+    (is (= {:application/comment 'missing-required-key}
            (s/check Event
                     {:event/type :application.event/approved
                      :event/time (DateTime.)
@@ -314,7 +314,7 @@
                 :event/time (:time cmd)
                 :event/actor (:actor cmd)
                 :application/id (:application-id cmd)
-                :comment (:comment cmd)}}))
+                :application/comment (:comment cmd)}}))
 
 (defmethod handle-command ::reject
   [cmd application _injections]
@@ -325,7 +325,7 @@
                 :event/time (:time cmd)
                 :event/actor (:actor cmd)
                 :application/id (:application-id cmd)
-                :comment (:comment cmd)}}))
+                :application/comment (:comment cmd)}}))
 
 (defmethod handle-command ::return
   [cmd application _injections]
@@ -336,7 +336,7 @@
                 :event/time (:time cmd)
                 :event/actor (:actor cmd)
                 :application/id (:application-id cmd)
-                :comment (:comment cmd)}}))
+                :application/comment (:comment cmd)}}))
 
 (defmethod handle-command ::close
   [cmd application _injections]
@@ -347,7 +347,7 @@
                 :event/time (:time cmd)
                 :event/actor (:actor cmd)
                 :application/id (:application-id cmd)
-                :comment (:comment cmd)}}))
+                :application/comment (:comment cmd)}}))
 
 (defmethod handle-command ::request-decision
   [cmd application injections]
@@ -360,7 +360,7 @@
                 :event/actor (:actor cmd)
                 :decider (:decider cmd)
                 :application/id (:application-id cmd)
-                :comment (:comment cmd)}}))
+                :application/comment (:comment cmd)}}))
 
 (defmethod handle-command ::decide
   [cmd application _injections]
@@ -375,7 +375,7 @@
                 :event/actor (:actor cmd)
                 :decision (:decision cmd)
                 :application/id (:application-id cmd)
-                :comment (:comment cmd)}}))
+                :application/comment (:comment cmd)}}))
 
 (defn- invalid-users-errors
   "Checks the given users for validity and merges the errors"
@@ -398,7 +398,7 @@
                 :event/actor (:actor cmd)
                 :commenters (:commenters cmd)
                 :application/id (:application-id cmd)
-                :comment (:comment cmd)}}))
+                :application/comment (:comment cmd)}}))
 
 (defn- actor-is-not-commenter-error [application cmd]
   (when-not (contains? (:commenters application) (:actor cmd))
@@ -412,8 +412,8 @@
        :result {:event/type :application.event/commented
                 :event/time (:time cmd)
                 :event/actor (:actor cmd)
-                :comment (:comment cmd)
-                :application/id (:application-id cmd)}}))
+                :application/id (:application-id cmd)
+                :application/comment (:comment cmd)}}))
 
 (defmethod handle-command ::add-member
   [cmd application injections]
