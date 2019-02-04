@@ -89,7 +89,7 @@
   (assoc EventBase
          :event/type (s/eq :application.event/draft-saved)
          :application/field-values {Long s/Str}
-         :licenses {Long s/Str}))
+         :application/accepted-licenses {Long s/Str}))
 (s/defschema MemberAddedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/member-added)
@@ -177,7 +177,7 @@
 (defmethod apply-event [:application.event/draft-saved :workflow/dynamic]
   [application _workflow event]
   (assoc application :form-contents {:items (:application/field-values event)
-                                     :licenses (:licenses event)}))
+                                     :licenses (:application/accepted-licenses event)}))
 
 (defmethod apply-event [:application.event/submitted :workflow/dynamic]
   [application _workflow event]
@@ -292,7 +292,7 @@
                 :event/actor (:actor cmd)
                 :application/id (:application-id cmd)
                 :application/field-values (:items cmd)
-                :licenses (:licenses cmd)}}))
+                :application/accepted-licenses (:licenses cmd)}}))
 
 (defmethod handle-command ::submit
   [cmd application injections]
@@ -512,7 +512,7 @@
                        :event/actor "applicant"
                        :application/id 123
                        :application/field-values {1 "foo" 2 "bar"}
-                       :licenses {1 "approved" 2 "approved"}}}
+                       :application/accepted-licenses {1 "approved" 2 "approved"}}}
              (handle-command {:type ::save-draft
                               :time 456
                               :actor "applicant"
