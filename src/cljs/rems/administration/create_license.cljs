@@ -116,7 +116,9 @@
                        :label (text :t.create-license/title)}])
 
 (defn- license-type-radio-group []
-  [radio-button-group context {:keys [:licensetype]
+  [radio-button-group context {:id :license-type
+                               :keys [:licensetype]
+                               :label (text :t.create-license/license-type)
                                :orientation :horizontal
                                :options [{:value license-type-link
                                           :label (text :t.create-license/external-link)}

@@ -220,6 +220,7 @@
                    :inline-text "Inline text"
                    :license-attachment "License attachment"
                    :license-text "License text"
+                   :license-type "License type"
                    :link-to-license "Link to the license"
                    :title "License name"}
   :create-resource {:licenses-selection "Licenses"

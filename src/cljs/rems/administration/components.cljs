@@ -127,16 +127,21 @@
 
 (defn radio-button-group
   "A list of radio buttons.
+  `id`           - the id of the group
   `orientation`  - `:horizontal` or `:vertical`
+  `keys`         - keys for options
+  `label`        - optional label text for group
   `options`      - list of `{:value \"...\", :label \"...\"}`"
-  [context {:keys [keys orientation options]}]
-  (into [:div.form-group.field]
-        (map (fn [{:keys [value label]}]
-               [radio-button context {:keys keys
-                                      :value value
-                                      :label label
-                                      :orientation orientation}])
-             options)))
+  [context {:keys [id keys label orientation options]}]
+  [:div.form-group.field {:id id}
+   (when label [:label {:for id} label])
+   (into [:div.form-control]
+         (map (fn [{:keys [value label]}]
+                [radio-button context {:keys keys
+                                       :value value
+                                       :label label
+                                       :orientation orientation}])
+              options))])
 
-(defn inline-info-field [text value]
-  [info-field text value {:inline? true}])
+(defn inline-info-field [text value & [opts]]
+  [info-field text value (merge {:inline? true} opts)])

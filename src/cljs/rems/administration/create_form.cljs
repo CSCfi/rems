@@ -225,7 +225,8 @@
             [add-form-item-option-button item-index]]])))
 
 (defn- form-item-type-radio-group [item-index]
-  [radio-button-group context {:keys [:items item-index :type]
+  [radio-button-group context {:id (str "radio-group-" item-index)
+                               :keys [:items item-index :type]
                                :orientation :vertical
                                :options [{:value "text", :label (text :t.create-form/type-text)}
                                          {:value "texta", :label (text :t.create-form/type-texta)}

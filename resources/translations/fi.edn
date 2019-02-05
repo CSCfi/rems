@@ -220,6 +220,7 @@
                    :inline-text "Teksti"
                    :license-attachment "Lisenssin liite"
                    :license-text "Lisenssin teksti"
+                   :license-type "Lisenssin tyyppi"
                    :link-to-license "Linkki lisenssiin"
                    :title "Lisenssin nimi"}
   :create-resource {:licenses-selection "Lisenssit"
