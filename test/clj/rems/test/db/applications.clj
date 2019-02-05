@@ -72,7 +72,7 @@
       "actions only by applicant"))
 
 (deftest test-event-serialization
-  (testing "roundtrip"
+  (testing "round trip serialization"
     (let [generators {DateTime (generators/fmap #(DateTime. ^long % DateTimeZone/UTC)
                                                 (generators/large-integer* {:min 0}))}]
       (doseq [event (sg/sample 100 dynamic/Event generators)]
@@ -81,5 +81,5 @@
   (testing "event->json validates events"
     (is (thrown-with-msg? ExceptionInfo #"Value does not match schema" (event->json {}))))
 
-  (testing "read validates events"
+  (testing "json->event validates events"
     (is (thrown-with-msg? ExceptionInfo #"Value does not match schema" (json->event "{}")))))
