@@ -784,19 +784,30 @@
    {:id id
     :title (text :t.applicant-info/applicants)
     :always
-    [collapsible/minimal
-     {:id (str id "-applicant")
-      :class (when (> (count members) 0) "form-item")
-      :always
-      [:div.row
-       [:div.col-md-6
-        [info-field (text :t.applicant-info/username) (or (get applicant-attributes "commonName")
-                                                          (get applicant-attributes "eppn"))]]
-       [:div.col-md-6
-        [info-field (text :t.applicant-info/email) (get applicant-attributes "mail")]]]
-      :collapse (into [:div]
-                      (for [[k v] (dissoc applicant-attributes "commonName" "mail")]
-                        [info-field k v]))}]}])
+    (into [:div
+           [collapsible/minimal
+            {:id (str id "-applicant")
+             :class (when (> (count members) 0) "form-item")
+             :always
+             [:div.row
+              [:div.col-md-6
+               [info-field (text :t.applicant-info/username) (or (get applicant-attributes "commonName")
+                                                                 (get applicant-attributes "eppn"))]]
+              [:div.col-md-6
+               [info-field (text :t.applicant-info/email) (get applicant-attributes "mail")]]]
+             :collapse (into [:div]
+                             (for [[k v] (dissoc applicant-attributes "commonName" "mail")]
+                               [info-field k v]))}]]
+          (for [member members]
+            [collapsible/minimal
+             {:id (str "member-" member)
+              :class "form-item"
+              :always
+              [:div.row
+               [:div.col-md-6
+                [info-field (text :t.applicant-info/username) member]]
+               [:div.col-md-6
+                [info-field (text :t.applicant-info/email) (get member "mail")]]]}]))}])
 
 
 (defn action-form [id title comment-title button content]
@@ -1081,7 +1092,8 @@
         phases (:phases application)
         events (concat (:events app)
                        (map dynamic-event->event (:dynamic-events app)))
-        user-attributes (:applicant-attributes application)
+        applicant-attributes (:applicant-attributes application)
+        members (:members app)
         messages (remove nil?
                          [(disabled-items-warning (:catalogue-items application)) ; NB: eval this here so we get nil or a warning
                           (when @(rf/subscribe [::send-third-party-review-request-message])
@@ -1098,8 +1110,8 @@
      [:h2 (text :t.applications/application)]
      (into [:div] messages)
      [application-header state phases events]
-     (when user-attributes
-       [:div.mt-3 [applicant-info "applicant-info" user-attributes]])
+     (when applicant-attributes
+       [:div.mt-3 [applicant-info "applicant-info" applicant-attributes members]])
      [:div.mt-3 [applied-resources (:catalogue-items application)]]
      [:div.my-3 [fields application edit-application language]]
      [:div.mb-3 [actions-form app]]
