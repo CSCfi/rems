@@ -819,10 +819,10 @@
     (testing "getting dynamic application as applicant"
       (let [data (get-application user-id application-id)]
         (is (= "workflow/dynamic" (get-in data [:application :workflow :type])))
-        (is (= [{:actor user-id
-                 :application-id application-id
-                 :event "event/submitted"
-                 :time (str (.getMillis test-data/creation-time))}]
+        (is (= [{:event/type "application.event/submitted"
+                 :event/time (str (.getMillis test-data/creation-time))
+                 :event/actor user-id
+                 :application/id application-id}]
                (get-in data [:application :dynamic-events])))
         (is (= ["rems.workflow.dynamic/add-member"] (get-in data [:application :possible-commands])))))
 
@@ -882,11 +882,11 @@
           (is (= {:id application-id
                   :state "rems.workflow.dynamic/approved"}
                  (select-keys (:application data) [:id :state])))
-          (is (= ["event/submitted"
-                  "event/decision-requested"
-                  "event/decided"
-                  "event/approved"]
-                 (map :event (get-in data [:application :dynamic-events])))))))))
+          (is (= ["application.event/submitted"
+                  "application.event/decision-requested"
+                  "application.event/decided"
+                  "application.event/approved"]
+                 (map :event/type (get-in data [:application :dynamic-events])))))))))
 
 (deftest dynamic-application-create-test
   (let [api-key "42"
@@ -944,5 +944,7 @@
                                                               :application-id application-id})))
         (let [submitted (get-application user-id application-id)]
           (is (= "rems.workflow.dynamic/submitted" (get-in submitted [:application :state])))
-          (is (= ["event/draft-saved" "event/draft-saved" "event/submitted"]
-                 (map :event (get-in submitted [:application :dynamic-events])))))))))
+          (is (= ["application.event/draft-saved"
+                  "application.event/draft-saved"
+                  "application.event/submitted"]
+                 (map :event/type (get-in submitted [:application :dynamic-events])))))))))

@@ -1,0 +1,2 @@
+-- cannot shorten the column; it will crash tests on tear down
+-- when the column contains too long values
