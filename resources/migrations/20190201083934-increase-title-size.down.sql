@@ -1,0 +1,3 @@
+-- intentionally left blank:
+--  - we can't safely decrease the size of a varchar
+--  - a longer limit doesn't break anything

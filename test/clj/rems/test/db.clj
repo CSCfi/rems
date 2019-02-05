@@ -55,7 +55,10 @@
           "should find the two items")
       (let [item-from-list (second (db/get-catalogue-items))
             item-by-id (db/get-catalogue-item {:item (:id item-from-list)})]
-        (is (= item-from-list item-by-id)
+        (is (= item-from-list (dissoc item-by-id
+                                      :resource-name
+                                      :form-name
+                                      :workflow-name))
             "should find same catalogue item by id")))))
 
 (deftest test-form
