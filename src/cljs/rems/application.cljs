@@ -782,7 +782,7 @@
 (defn applicant-info [id user-attributes]
   [collapsible/component
    {:id id
-    :title (str (text :t.applicant-info/applicant))
+    :title (str (text :t.applicant-info/applicants))
     :always [:div.row
              [:div.col-md-6
               [info-field (text :t.applicant-info/username) (or (get user-attributes "commonName")

@@ -125,7 +125,7 @@
                    :view "Avaa"
                    :workflow "Työvuo"
                    :workflows "Työvuot"}
-  :applicant-info {:applicant "Hakija"
+  :applicant-info {:applicants "Hakijat"
                    :email "Sähköposti"
                    :username "Nimi"}
   :applications {:application "Hakemus"

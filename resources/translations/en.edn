@@ -125,7 +125,7 @@
                    :view "View"
                    :workflow "Workflow"
                    :workflows "Workflows"}
-  :applicant-info {:applicant "Applicant"
+  :applicant-info {:applicants "Applicants"
                    :email "Email"
                    :username "Name"}
   :applications {:application "Application"
