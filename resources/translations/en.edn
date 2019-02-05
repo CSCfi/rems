@@ -216,10 +216,10 @@
                 :type-texta "Text area"}
   :create-license {:external-link "External link"
                    :inline-text "Inline text"
+                   :license-attachment "License attachment"
                    :license-text "License text"
                    :link-to-license "Link to the license"
-                   :title "License name"
-                   :license-attachment "License attachment"}
+                   :title "License name"}
   :create-resource {:licenses-selection "Licenses"
                     :resid "Resource identifier"
                     :resid-placeholder "urn:test:fi:some-uuid"}
