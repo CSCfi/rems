@@ -24,7 +24,8 @@
             [rems.workflow.dynamic :as dynamic]
             [schema-tools.core :as st]
             [schema.coerce :as coerce]
-            [schema.core :as s])
+            [schema.core :as s]
+            [schema.utils])
   (:import [java.io ByteArrayOutputStream FileInputStream]
            [org.joda.time DateTime]))
 
@@ -46,9 +47,12 @@
                    :rems.workflow.dynamic/approved
                    :rems.workflow.dynamic/rejected
                    :rems.workflow.dynamic/returned}
-                 (:event e)) ;; definitely not by applicant
-      (and (= :event/closed (:event e)) (not= (:applicantuserid app) (:actor e))) ;; not by applicant
-      (and (= "close" (:event e)) (not= (:applicantuserid app) (:userid e))))) ;; not by applicant
+                 (or (:event/type e)
+                     (:event e))) ;; definitely not by applicant
+      (and (= :application.event/closed (:event/type e))
+           (not= (:applicantuserid app) (:event/actor e))) ;; not by applicant
+      (and (= "close" (:event e))
+           (not= (:applicantuserid app) (:userid e))))) ;; not by applicant
 
 (defn handled? [app]
   (or (contains? #{"approved" "rejected" "returned"
@@ -181,7 +185,7 @@
   ([user application]
    ;; TODO calculate in backend?
    (->> (:dynamic-events application)
-        (mapcat :commenters)
+        (mapcat :application/commenters)
         (some #{user}))))
 
 (defn- can-comment?
@@ -196,7 +200,7 @@
   ([user application]
    ;; TODO calculate in backend?
    (->> (:dynamic-events application)
-        (map :decider)
+        (map :application/decider)
         (some #{user}))))
 
 (defn- can-decide?
@@ -327,7 +331,7 @@
        (mapv :id)))
 
 (defn actors-of-dynamic-application [application]
-  (map :actor (:dynamic-events application)))
+  (map :event/actor (:dynamic-events application)))
 
 ;; TODO combine handled approvals and reviews as just handled applications
 (defn get-handled-approvals [user-id]
@@ -990,7 +994,12 @@
 
 (defn json->event [json]
   ;; most keys are keywords, but some events use numeric keys in maps
-  (coerce-dynamic-event (cheshire/parse-string json str->keyword-or-number)))
+  (let [result (coerce-dynamic-event (cheshire/parse-string json str->keyword-or-number))]
+    (when (schema.utils/error? result)
+      ;; similar exception as what schema.core/validate throws
+      (throw (ex-info (str "Value does not match schema: " (pr-str result))
+                      {:schema dynamic/Event :value json :error result})))
+    result))
 
 (defn validate-dynamic-event [event]
   (s/validate dynamic/Event event))
@@ -1012,17 +1021,17 @@
                            :state ::dynamic/draft
                            :dynamic-events events
                            :workflow (fix-workflow-from-db (:workflow application))
-                           :last-modified (or (:time (last events))
+                           :last-modified (or (:event/time (last events))
                                               (:start application)))]
     (assert (is-dynamic-application? application))
     (dynamic/apply-events application events)))
 
 (defn add-dynamic-event! [event]
-  (db/add-application-event! {:application (:application-id event)
-                              :user (:actor event)
+  (db/add-application-event! {:application (:application/id event)
+                              :user (:event/actor event)
                               :comment nil
                               :round -1
-                              :event (str (:event event))
+                              :event (str (:event/type event))
                               :eventdata (event->json event)})
   nil)
 

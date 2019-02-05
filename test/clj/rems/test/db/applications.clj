@@ -9,7 +9,8 @@
             [rems.db.test-data :as test-data]
             [rems.workflow.dynamic :as dynamic]
             [schema-generators.generators :as sg])
-  (:import (org.joda.time DateTime DateTimeZone)))
+  (:import (org.joda.time DateTime DateTimeZone)
+           (clojure.lang ExceptionInfo)))
 
 (use-fixtures
   :once
@@ -71,7 +72,14 @@
       "actions only by applicant"))
 
 (deftest test-event-serialization
-  (let [generators {DateTime (generators/fmap #(DateTime. ^long % DateTimeZone/UTC)
-                                              (generators/large-integer* {:min 0}))}]
-    (doseq [event (sg/sample 100 dynamic/Event generators)]
-      (is (= event (-> event event->json json->event))))))
+  (testing "round trip serialization"
+    (let [generators {DateTime (generators/fmap #(DateTime. ^long % DateTimeZone/UTC)
+                                                (generators/large-integer* {:min 0}))}]
+      (doseq [event (sg/sample 100 dynamic/Event generators)]
+        (is (= event (-> event event->json json->event))))))
+
+  (testing "event->json validates events"
+    (is (thrown-with-msg? ExceptionInfo #"Value does not match schema" (event->json {}))))
+
+  (testing "json->event validates events"
+    (is (thrown-with-msg? ExceptionInfo #"Value does not match schema" (json->event "{}")))))

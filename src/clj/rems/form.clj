@@ -94,21 +94,21 @@
                 licenses (applications/get-application-licenses application catalogue-items)]
             (assert (= 1 (count (distinct (mapv :wfid items)))))
             (assert (= 1 (count (distinct (mapv :formid items)))))
-            (applications/add-dynamic-event! {:event :event/created
-                                              :actor actor
-                                              :application-id application-id
-                                              :time (:start application)
-                                              :resources (map (fn [item]
-                                                                {:resource-ext-id (:resid item)
-                                                                 :catalogue-item-id (:id item)})
-                                                              items)
-                                              :licenses (map (fn [license]
-                                                               {:license-id (:id license)})
-                                                             licenses)
-                                              :form-id (:formid (first items))
-                                              :workflow-id (:wfid (first items))
-                                              :workflow-type (get-in application [:workflow :type])
-                                              :workflow-handlers (get-in application [:workflow :handlers])})))
+            (applications/add-dynamic-event! {:event/type :application.event/created
+                                              :event/time (:start application)
+                                              :event/actor actor
+                                              :application/id application-id
+                                              :application/resources (map (fn [item]
+                                                                            {:catalogue-item/id (:id item)
+                                                                             :resource/ext-id (:resid item)})
+                                                                          items)
+                                              :application/licenses (map (fn [license]
+                                                                           {:license/id (:id license)})
+                                                                         licenses)
+                                              :form/id (:formid (first items))
+                                              :workflow/id (:wfid (first items))
+                                              :workflow/type (get-in application [:workflow :type])
+                                              :workflow.dynamic/handlers (get-in application [:workflow :handlers])})))
         (if-let [error (applications/dynamic-command! {:type :rems.workflow.dynamic/save-draft
                                                        :actor actor
                                                        :application-id application-id

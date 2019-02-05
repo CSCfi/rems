@@ -53,121 +53,121 @@
 ;; TODO: namespaced keys e.g. :event/type, :event/time, :event/actor, :application/id
 ;; TODO: add version number to events
 (s/defschema EventBase
-  {:event s/Keyword
-   :application-id s/Int
-   :actor UserId
-   :time DateTime})
+  {:event/type s/Keyword
+   :event/time DateTime
+   :event/actor UserId
+   :application/id s/Int})
 
 (s/defschema ApprovedEvent
   (assoc EventBase
-         :event (s/eq :event/approved)
-         :comment s/Str))
+         :event/type (s/eq :application.event/approved)
+         :application/comment s/Str))
 (s/defschema ClosedEvent
   (assoc EventBase
-         :event (s/eq :event/closed)
-         :comment s/Str))
+         :event/type (s/eq :application.event/closed)
+         :application/comment s/Str))
 (s/defschema CommentedEvent
   (assoc EventBase
-         :event (s/eq :event/commented)
-         :comment s/Str))
+         :event/type (s/eq :application.event/commented)
+         :application/comment s/Str))
 (s/defschema CommentRequestedEvent
   (assoc EventBase
-         :event (s/eq :event/comment-requested)
-         :commenters [s/Str]
-         :comment s/Str))
+         :event/type (s/eq :application.event/comment-requested)
+         :application/commenters [s/Str]
+         :application/comment s/Str))
 (s/defschema CreatedEvent
   (assoc EventBase
-         :event (s/eq :event/created)
-         :resources [{:catalogue-item-id s/Int
-                      :resource-ext-id s/Str}]
-         :licenses [{:license-id s/Int}]
-         :form-id s/Int
-         :workflow-id s/Int
+         :event/type (s/eq :application.event/created)
+         :application/resources [{:catalogue-item/id s/Int
+                                  :resource/ext-id s/Str}]
+         :application/licenses [{:license/id s/Int}]
+         :form/id s/Int
+         :workflow/id s/Int
          ;; TODO: separate workflow specific data to a new event or make this an open schema?
-         :workflow-type s/Keyword
-         :workflow-handlers [s/Str]))
+         :workflow/type s/Keyword
+         :workflow.dynamic/handlers [s/Str]))
 (s/defschema DecidedEvent
   (assoc EventBase
-         :event (s/eq :event/decided)
-         :decision (s/enum :approved :rejected)
-         :comment s/Str))
+         :event/type (s/eq :application.event/decided)
+         :application/decision (s/enum :approved :rejected)
+         :application/comment s/Str))
 (s/defschema DecisionRequestedEvent
   (assoc EventBase
-         :event (s/eq :event/decision-requested)
-         :decider s/Str
-         :comment s/Str))
+         :event/type (s/eq :application.event/decision-requested)
+         :application/decider s/Str
+         :application/comment s/Str))
 (s/defschema DraftSavedEvent
   (assoc EventBase
-         :event (s/eq :event/draft-saved)
-         :items {Long s/Str}
-         :licenses {Long s/Str}))
+         :event/type (s/eq :application.event/draft-saved)
+         :application/field-values {s/Int s/Str}
+         :application/accepted-licenses #{s/Int}))
 (s/defschema MemberAddedEvent
   (assoc EventBase
-         :event (s/eq :event/member-added)
-         :member s/Str))
+         :event/type (s/eq :application.event/member-added)
+         :application/member s/Str))
 (s/defschema RejectedEvent
   (assoc EventBase
-         :event (s/eq :event/rejected)
-         :comment s/Str))
+         :event/type (s/eq :application.event/rejected)
+         :application/comment s/Str))
 (s/defschema ReturnedEvent
   (assoc EventBase
-         :event (s/eq :event/returned)
-         :comment s/Str))
+         :event/type (s/eq :application.event/returned)
+         :application/comment s/Str))
 (s/defschema SubmittedEvent
   (assoc EventBase
-         :event (s/eq :event/submitted)))
+         :event/type (s/eq :application.event/submitted)))
 
-;; TODO: :event/license-accepted, :event/license-required
+;; TODO: license-accepted & license-required events
 (def event-schemas
-  {:event/approved ApprovedEvent
-   :event/closed ClosedEvent
-   :event/commented CommentedEvent
-   :event/comment-requested CommentRequestedEvent
-   :event/created CreatedEvent
-   :event/decided DecidedEvent
-   :event/decision-requested DecisionRequestedEvent
-   :event/draft-saved DraftSavedEvent
-   :event/member-added MemberAddedEvent
-   :event/rejected RejectedEvent
-   :event/returned ReturnedEvent
-   :event/submitted SubmittedEvent})
+  {:application.event/approved ApprovedEvent
+   :application.event/closed ClosedEvent
+   :application.event/commented CommentedEvent
+   :application.event/comment-requested CommentRequestedEvent
+   :application.event/created CreatedEvent
+   :application.event/decided DecidedEvent
+   :application.event/decision-requested DecisionRequestedEvent
+   :application.event/draft-saved DraftSavedEvent
+   :application.event/member-added MemberAddedEvent
+   :application.event/rejected RejectedEvent
+   :application.event/returned ReturnedEvent
+   :application.event/submitted SubmittedEvent})
 
 (s/defschema Event
-  (apply r/dispatch-on (flatten [:event (seq event-schemas)])))
+  (apply r/dispatch-on (flatten [:event/type (seq event-schemas)])))
 
 (deftest test-event-schema
   (testing "check specific event schema"
-    (is (nil? (s/check SubmittedEvent {:event :event/submitted
-                                       :actor "foo"
-                                       :application-id 123
-                                       :time (DateTime.)}))))
+    (is (nil? (s/check SubmittedEvent {:event/type :application.event/submitted
+                                       :event/time (DateTime.)
+                                       :event/actor "foo"
+                                       :application/id 123}))))
   (testing "check generic event schema"
     (is (nil? (s/check Event
-                       {:event :event/submitted
-                        :actor "foo"
-                        :application-id 123
-                        :time (DateTime.)})))
+                       {:event/type :application.event/submitted
+                        :event/time (DateTime.)
+                        :event/actor "foo"
+                        :application/id 123})))
     (is (nil? (s/check Event
-                       {:event :event/approved
-                        :actor "foo"
-                        :application-id 123
-                        :time (DateTime.)
-                        :comment "foo"}))))
+                       {:event/type :application.event/approved
+                        :event/time (DateTime.)
+                        :event/actor "foo"
+                        :application/id 123
+                        :application/comment "foo"}))))
   (testing "missing event specific key"
-    (is (= {:comment 'missing-required-key}
+    (is (= {:application/comment 'missing-required-key}
            (s/check Event
-                    {:event :event/approved
-                     :actor "foo"
-                     :application-id 123
-                     :time (DateTime.)}))))
+                    {:event/type :application.event/approved
+                     :event/time (DateTime.)
+                     :event/actor "foo"
+                     :application/id 123}))))
   (testing "unknown event type"
     ;; TODO: improve error message to show the actual and expected event types
     (is (= "(not (some-matching-condition? a-clojure.lang.PersistentArrayMap))"
            (pr-str (s/check Event
-                            {:event :foo
-                             :actor "foo"
-                             :application-id 123
-                             :time (DateTime.)}))))))
+                            {:event/type :foo
+                             :event/time (DateTime.)
+                             :event/actor "foo"
+                             :application/id 123}))))))
 
 
 ;;; Events
@@ -175,7 +175,7 @@
 (defmulti ^:private apply-event
   "Applies an event to an application state."
   ;; dispatch by event type
-  (fn [_application workflow event] [(:event event) (:type workflow)]))
+  (fn [_application workflow event] [(:event/type event) (:type workflow)]))
 
 (defn get-event-types
   "Fetch sequence of supported event names."
@@ -186,64 +186,66 @@
   (is (= (set (keys event-schemas))
          (set (get-event-types)))))
 
-(defmethod apply-event [:event/created :workflow/dynamic]
+(defmethod apply-event [:application.event/created :workflow/dynamic]
   [application _workflow event]
   ;; TODO
   application)
 
-(defmethod apply-event [:event/draft-saved :workflow/dynamic]
+(defmethod apply-event [:application.event/draft-saved :workflow/dynamic]
   [application _workflow event]
-  (assoc application :form-contents {:items (:items event)
-                                     :licenses (:licenses event)}))
+  (assoc application :form-contents {:items (:application/field-values event)
+                                     :licenses (->> (:application/accepted-licenses event)
+                                                    (map (fn [id] [id "approved"]))
+                                                    (into {}))}))
 
-(defmethod apply-event [:event/submitted :workflow/dynamic]
+(defmethod apply-event [:application.event/submitted :workflow/dynamic]
   [application _workflow event]
   (assoc application
          :state ::submitted
          :commenters #{}
-         :members [(:actor event)]
+         :members [(:event/actor event)]
          :previous-submitted-form-contents (:submitted-form-contents application)
          :submitted-form-contents (:form-contents application)))
 
-(defmethod apply-event [:event/approved :workflow/dynamic]
+(defmethod apply-event [:application.event/approved :workflow/dynamic]
   [application _workflow _event]
   (assoc application :state ::approved))
 
-(defmethod apply-event [:event/rejected :workflow/dynamic]
+(defmethod apply-event [:application.event/rejected :workflow/dynamic]
   [application _workflow _event]
   (assoc application :state ::rejected))
 
-(defmethod apply-event [:event/returned :workflow/dynamic]
+(defmethod apply-event [:application.event/returned :workflow/dynamic]
   [application _workflow _event]
   (assoc application :state ::returned))
 
-(defmethod apply-event [:event/closed :workflow/dynamic]
+(defmethod apply-event [:application.event/closed :workflow/dynamic]
   [application _workflow _event]
   (assoc application :state ::closed))
 
-(defmethod apply-event [:event/decision-requested :workflow/dynamic]
+(defmethod apply-event [:application.event/decision-requested :workflow/dynamic]
   [application _workflow event]
-  (assoc application :decider (:decider event)))
+  (assoc application :decider (:application/decider event)))
 
-(defmethod apply-event [:event/decided :workflow/dynamic]
+(defmethod apply-event [:application.event/decided :workflow/dynamic]
   [application _workflow event]
   (-> application
-      (assoc :decision (:decision event))
+      (assoc :decision (:application/decision event))
       (dissoc :decider)))
 
-(defmethod apply-event [:event/comment-requested :workflow/dynamic]
+(defmethod apply-event [:application.event/comment-requested :workflow/dynamic]
   [application _workflow event]
-  (update application :commenters into (:commenters event)))
+  (update application :commenters into (:application/commenters event)))
 
-(defmethod apply-event [:event/commented :workflow/dynamic]
+(defmethod apply-event [:application.event/commented :workflow/dynamic]
   [application _workflow event]
   ;; we don't store the comments in the state, they're available via
   ;; the event list
-  (update application :commenters disj (:actor event)))
+  (update application :commenters disj (:event/actor event)))
 
-(defmethod apply-event [:event/member-added :workflow/dynamic]
+(defmethod apply-event [:application.event/member-added :workflow/dynamic]
   [application _workflow event]
-  (update application :members #(vec (conj % (:member event)))))
+  (update application :members #(vec (conj % (:application/member event)))))
 
 (defn apply-events [application events]
   (reduce (fn [application event] (apply-event application (:workflow application) event))
@@ -304,12 +306,15 @@
   (or (applicant-error application cmd)
       (state-error application ::draft ::returned)
       {:success true
-       :result {:event :event/draft-saved
-                :actor (:actor cmd)
-                :application-id (:application-id cmd)
-                :time (:time cmd)
-                :items (:items cmd)
-                :licenses (:licenses cmd)}}))
+       :result {:event/type :application.event/draft-saved
+                :event/time (:time cmd)
+                :event/actor (:actor cmd)
+                :application/id (:application-id cmd)
+                :application/field-values (:items cmd)
+                :application/accepted-licenses (->> (:licenses cmd)
+                                                    (filter #(= "approved" (second %)))
+                                                    (map first)
+                                                    set)}}))
 
 (defmethod handle-command ::submit
   [cmd application injections]
@@ -317,54 +322,54 @@
       (state-error application ::draft ::returned)
       (validation-error injections (:application-id cmd))
       {:success true
-       :result {:event :event/submitted
-                :actor (:actor cmd)
-                :application-id (:application-id cmd)
-                :time (:time cmd)}}))
+       :result {:event/type :application.event/submitted
+                :event/time (:time cmd)
+                :event/actor (:actor cmd)
+                :application/id (:application-id cmd)}}))
 
 (defmethod handle-command ::approve
   [cmd application _injections]
   (or (actor-is-not-handler-error application cmd)
       (state-error application ::submitted)
       {:success true
-       :result {:event :event/approved
-                :actor (:actor cmd)
-                :application-id (:application-id cmd)
-                :comment (:comment cmd)
-                :time (:time cmd)}}))
+       :result {:event/type :application.event/approved
+                :event/time (:time cmd)
+                :event/actor (:actor cmd)
+                :application/id (:application-id cmd)
+                :application/comment (:comment cmd)}}))
 
 (defmethod handle-command ::reject
   [cmd application _injections]
   (or (actor-is-not-handler-error application cmd)
       (state-error application ::submitted)
       {:success true
-       :result {:event :event/rejected
-                :actor (:actor cmd)
-                :application-id (:application-id cmd)
-                :comment (:comment cmd)
-                :time (:time cmd)}}))
+       :result {:event/type :application.event/rejected
+                :event/time (:time cmd)
+                :event/actor (:actor cmd)
+                :application/id (:application-id cmd)
+                :application/comment (:comment cmd)}}))
 
 (defmethod handle-command ::return
   [cmd application _injections]
   (or (actor-is-not-handler-error application cmd)
       (state-error application ::submitted)
       {:success true
-       :result {:event :event/returned
-                :actor (:actor cmd)
-                :application-id (:application-id cmd)
-                :comment (:comment cmd)
-                :time (:time cmd)}}))
+       :result {:event/type :application.event/returned
+                :event/time (:time cmd)
+                :event/actor (:actor cmd)
+                :application/id (:application-id cmd)
+                :application/comment (:comment cmd)}}))
 
 (defmethod handle-command ::close
   [cmd application _injections]
   (or (actor-is-not-handler-error application cmd)
       (state-error application ::approved)
       {:success true
-       :result {:event :event/closed
-                :actor (:actor cmd)
-                :application-id (:application-id cmd)
-                :comment (:comment cmd)
-                :time (:time cmd)}}))
+       :result {:event/type :application.event/closed
+                :event/time (:time cmd)
+                :event/actor (:actor cmd)
+                :application/id (:application-id cmd)
+                :application/comment (:comment cmd)}}))
 
 (defmethod handle-command ::request-decision
   [cmd application injections]
@@ -372,12 +377,12 @@
       (state-error application ::submitted)
       (valid-user-error injections (:decider cmd))
       {:success true
-       :result {:event :event/decision-requested
-                :actor (:actor cmd)
-                :decider (:decider cmd)
-                :application-id (:application-id cmd)
-                :comment (:comment cmd)
-                :time (:time cmd)}}))
+       :result {:event/type :application.event/decision-requested
+                :event/time (:time cmd)
+                :event/actor (:actor cmd)
+                :application/id (:application-id cmd)
+                :application/decider (:decider cmd)
+                :application/comment (:comment cmd)}}))
 
 (defmethod handle-command ::decide
   [cmd application _injections]
@@ -387,12 +392,12 @@
       (when-not (contains? #{:approved :rejected} (:decision cmd))
         {:errors [[:invalid-decision (:decision cmd)]]})
       {:success true
-       :result {:event :event/decided
-                :actor (:actor cmd)
-                :decision (:decision cmd)
-                :application-id (:application-id cmd)
-                :comment (:comment cmd)
-                :time (:time cmd)}}))
+       :result {:event/type :application.event/decided
+                :event/time (:time cmd)
+                :event/actor (:actor cmd)
+                :application/id (:application-id cmd)
+                :application/decision (:decision cmd)
+                :application/comment (:comment cmd)}}))
 
 (defn- invalid-users-errors
   "Checks the given users for validity and merges the errors"
@@ -410,12 +415,12 @@
       (must-not-be-empty cmd :commenters)
       (invalid-users-errors (:commenters cmd) injections)
       {:success true
-       :result {:event :event/comment-requested
-                :actor (:actor cmd)
-                :commenters (:commenters cmd)
-                :application-id (:application-id cmd)
-                :comment (:comment cmd)
-                :time (:time cmd)}}))
+       :result {:event/type :application.event/comment-requested
+                :event/time (:time cmd)
+                :event/actor (:actor cmd)
+                :application/id (:application-id cmd)
+                :application/commenters (:commenters cmd)
+                :application/comment (:comment cmd)}}))
 
 (defn- actor-is-not-commenter-error [application cmd]
   (when-not (contains? (:commenters application) (:actor cmd))
@@ -426,11 +431,11 @@
   (or (actor-is-not-commenter-error application cmd)
       (state-error application ::submitted)
       {:success true
-       :result {:event :event/commented
-                :actor (:actor cmd)
-                :comment (:comment cmd)
-                :application-id (:application-id cmd)
-                :time (:time cmd)}}))
+       :result {:event/type :application.event/commented
+                :event/time (:time cmd)
+                :event/actor (:actor cmd)
+                :application/id (:application-id cmd)
+                :application/comment (:comment cmd)}}))
 
 (defmethod handle-command ::add-member
   [cmd application injections]
@@ -439,11 +444,11 @@
       (state-error application ::draft ::submitted) ;; TODO which states?
       (valid-user-error injections (:member cmd))
       {:success true
-       :result {:event :event/member-added
-                :actor (:actor cmd)
-                :member (:member cmd)
-                :application-id (:application-id cmd)
-                :time (:time cmd)}}))
+       :result {:event/type :application.event/member-added
+                :event/time (:time cmd)
+                :event/actor (:actor cmd)
+                :application/member (:member cmd)
+                :application/id (:application-id cmd)}}))
 
 (defn- apply-command
   ([application cmd]
@@ -524,16 +529,16 @@
         relevant-application-keys [:state :form-contents :submitted-form-contents :previous-submitted-form-contents]]
     (testing "saves a draft"
       (is (= {:success true
-              :result {:event :event/draft-saved
-                       :actor "applicant"
-                       :application-id 123
-                       :time 456
-                       :items {1 "foo" 2 "bar"}
-                       :licenses {1 "approved" 2 "approved"}}}
+              :result {:event/type :application.event/draft-saved
+                       :event/time 456
+                       :event/actor "applicant"
+                       :application/id 123
+                       :application/field-values {1 "foo" 2 "bar"}
+                       :application/accepted-licenses #{1 2}}}
              (handle-command {:type ::save-draft
+                              :time 456
                               :actor "applicant"
                               :application-id 123
-                              :time 456
                               :items {1 "foo" 2 "bar"}
                               :licenses {1 "approved" 2 "approved"}}
                              application
@@ -541,17 +546,17 @@
     (testing "only the applicant can save a draft"
       (is (= {:errors [:forbidden]}
              (handle-command {:type ::save-draft
+                              :time 456
                               :actor "non-applicant"
                               :application-id 123
-                              :time 456
                               :items {1 "foo" 2 "bar"}
                               :licenses {1 "approved" 2 "approved"}}
                              application
                              injections)
              (handle-command {:type ::save-draft
+                              :time 456
                               :actor "assistant"
                               :application-id 123
-                              :time 456
                               :items {1 "foo" 2 "bar"}
                               :licenses {1 "approved" 2 "approved"}}
                              application
@@ -559,10 +564,10 @@
     (testing "draft can be updated multiple times"
       (is (= {:state :rems.workflow.dynamic/draft
               :form-contents {:items {1 "updated"}
-                              :licenses {2 "updated"}}}
+                              :licenses {3 "approved"}}}
              (-> (apply-commands application
-                                 [{:actor "applicant" :type ::save-draft :items {1 "original"} :licenses {2 "original"}}
-                                  {:actor "applicant" :type ::save-draft :items {1 "updated"} :licenses {2 "updated"}}]
+                                 [{:actor "applicant" :type ::save-draft :items {1 "original"} :licenses {2 "approved"}}
+                                  {:actor "applicant" :type ::save-draft :items {1 "updated"} :licenses {3 "approved"}}]
                                  injections)
                  (select-keys relevant-application-keys)))))
     (testing "draft cannot be updated after submitting"
@@ -579,30 +584,30 @@
     (testing "draft can be updated after returning it to applicant"
       (is (= {:state ::returned
               :form-contents {:items {1 "updated"}
-                              :licenses {2 "updated"}}
+                              :licenses {3 "approved"}}
               :submitted-form-contents {:items {1 "original"}
-                                        :licenses {2 "original"}}
+                                        :licenses {2 "approved"}}
               :previous-submitted-form-contents nil}
              (-> (apply-commands application
-                                 [{:actor "applicant" :type ::save-draft :items {1 "original"} :licenses {2 "original"}}
+                                 [{:actor "applicant" :type ::save-draft :items {1 "original"} :licenses {2 "approved"}}
                                   {:actor "applicant" :type ::submit}
                                   {:actor "assistant" :type ::return}
-                                  {:actor "applicant" :type ::save-draft :items {1 "updated"} :licenses {2 "updated"}}]
+                                  {:actor "applicant" :type ::save-draft :items {1 "updated"} :licenses {3 "approved"}}]
                                  injections)
                  (select-keys relevant-application-keys)))))
     (testing "resubmitting remembers the previous and current application"
       (is (= {:state ::submitted
               :form-contents {:items {1 "updated"}
-                              :licenses {2 "updated"}}
+                              :licenses {3 "approved"}}
               :submitted-form-contents {:items {1 "updated"}
-                                        :licenses {2 "updated"}}
+                                        :licenses {3 "approved"}}
               :previous-submitted-form-contents {:items {1 "original"}
-                                                 :licenses {2 "original"}}}
+                                                 :licenses {2 "approved"}}}
              (-> (apply-commands application
-                                 [{:actor "applicant" :type ::save-draft :items {1 "original"} :licenses {2 "original"}}
+                                 [{:actor "applicant" :type ::save-draft :items {1 "original"} :licenses {2 "approved"}}
                                   {:actor "applicant" :type ::submit}
                                   {:actor "assistant" :type ::return}
-                                  {:actor "applicant" :type ::save-draft :items {1 "updated"} :licenses {2 "updated"}}
+                                  {:actor "applicant" :type ::save-draft :items {1 "updated"} :licenses {3 "approved"}}
                                   {:actor "applicant" :type ::submit}]
                                  injections)
                  (select-keys relevant-application-keys)))))))
@@ -798,8 +803,8 @@
              (possible-commands "assistant" draft)))
       (is (= #{}
              (possible-commands "somebody else" draft))))
-    (let [submitted (apply-events draft [{:event :event/submitted
-                                          :actor "applicant"}])]
+    (let [submitted (apply-events draft [{:event/type :application.event/submitted
+                                          :event/actor "applicant"}])]
       (testing "submitted"
         (is (= #{::add-member}
                (possible-commands "applicant" submitted)))
@@ -807,9 +812,9 @@
                (possible-commands "assistant" submitted)))
         (is (= #{}
                (possible-commands "somebody else" submitted))))
-      (let [requested (apply-events submitted [{:event :event/comment-requested
-                                                :actor "assistant"
-                                                :commenters ["commenter"]}])]
+      (let [requested (apply-events submitted [{:event/type :application.event/comment-requested
+                                                :event/actor "assistant"
+                                                :application/commenters ["commenter"]}])]
         (testing "comment requested"
           (is (= #{::add-member}
                  (possible-commands "applicant" requested)))
@@ -817,17 +822,17 @@
                  (possible-commands "assistant" requested)))
           (is (= #{::comment}
                  (possible-commands "commenter" requested))))
-        (let [commented (apply-events requested [{:event :event/commented
-                                                  :actor "commenter"
-                                                  :comment "..."}])]
+        (let [commented (apply-events requested [{:event/type :application.event/commented
+                                                  :event/actor "commenter"
+                                                  :application/comment "..."}])]
           (testing "comment given"
             (is (= #{::approve ::reject ::return ::request-decision ::request-comment}
                    (possible-commands "assistant" commented)))
             (is (= #{}
                    (possible-commands "commenter" commented))))))
-      (let [requested (apply-events submitted [{:event :event/decision-requested
-                                                :actor "assistant"
-                                                :decider "decider"}])]
+      (let [requested (apply-events submitted [{:event/type :application.event/decision-requested
+                                                :event/actor "assistant"
+                                                :application/decider "decider"}])]
         (testing "decision requested"
           (is (= #{::add-member}
                  (possible-commands "applicant" requested)))
@@ -835,8 +840,8 @@
                  (possible-commands "assistant" requested)))
           (is (= #{::decide}
                  (possible-commands "decider" requested)))))
-      (let [rejected (apply-events submitted [{:event :event/rejected
-                                               :actor "assistant"}])]
+      (let [rejected (apply-events submitted [{:event/type :application.event/rejected
+                                               :event/actor "assistant"}])]
         (testing "rejected"
           (is (= #{}
                  (possible-commands "applicant" rejected)))
@@ -844,8 +849,8 @@
                  (possible-commands "assistant" rejected)))
           (is (= #{}
                  (possible-commands "somebody else" rejected)))))
-      (let [approved (apply-events submitted [{:event :event/approved
-                                               :actor "assistant"}])]
+      (let [approved (apply-events submitted [{:event/type :application.event/approved
+                                               :event/actor "assistant"}])]
         (testing "approved"
           (is (= #{}
                  (possible-commands "applicant" approved)))
@@ -854,8 +859,8 @@
           (is (= #{}
                  (possible-commands "somebody else" approved))))
         (testing "closed"
-          (let [closed (apply-events approved [{:event :event/closed
-                                                :actor "assistant"}])]
+          (let [closed (apply-events approved [{:event/type :application.event/closed
+                                                :event/actor "assistant"}])]
             (is (= #{}
                    (possible-commands "applicant" closed)))
             (is (= #{}

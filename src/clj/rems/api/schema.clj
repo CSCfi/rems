@@ -1,6 +1,7 @@
 (ns rems.api.schema
   "Shared schema definitions for the API"
-  (:require [schema.core :as s])
+  (:require [rems.workflow.dynamic :as dynamic]
+            [schema.core :as s])
   (:import (org.joda.time DateTime)))
 
 (s/defschema CatalogueItem
@@ -55,10 +56,15 @@
    :eventdata s/Any})
 
 (s/defschema DynamicEvent
-  {:actor s/Str
-   :time (s/maybe DateTime) ; TODO should always have time
-   (s/optional-key :comment) (s/maybe s/Str)
-   s/Any s/Any})
+  (let [common-keys (set (keys dynamic/EventBase))]
+    (into (assoc dynamic/EventBase
+                 :event/type (apply s/enum (keys dynamic/event-schemas)))
+          (mapcat (fn [schema]
+                    (mapcat (fn [[key val]]
+                              (when (not (contains? common-keys key))
+                                [[(s/optional-key key) val]]))
+                            schema))
+                  (vals dynamic/event-schemas)))))
 
 (s/defschema Application
   {:id (s/maybe s/Num) ;; does not exist for unsaved draft

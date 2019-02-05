@@ -7,81 +7,81 @@
   (:import (org.joda.time DateTime)))
 
 (defmulti ^:private application-view
-  (fn [_application event] (:event event)))
+  (fn [_application event] (:event/type event)))
 
 
-(defmethod application-view :event/created
+(defmethod application-view :application.event/created
   [application event]
   (assoc application
-         :application/id (:application-id event)
-         :application/created (:time event)
-         :application/applicant (:actor event)
+         :application/id (:application/id event)
+         :application/created (:event/time event)
+         :application/applicant (:event/actor event)
          :application/resources (map (fn [resource]
-                                       {:catalogue-item/id (:catalogue-item-id resource)
-                                        :resource/ext-id (:resource-ext-id resource)})
-                                     (:resources event))
+                                       {:catalogue-item/id (:catalogue-item/id resource)
+                                        :resource/ext-id (:resource/ext-id resource)})
+                                     (:application/resources event))
          :application/licenses (map (fn [license]
-                                      {:license/id (:license-id license)
+                                      {:license/id (:license/id license)
                                        :license/accepted false})
-                                    (:licenses event))
-         :form/id (:form-id event)
+                                    (:application/licenses event))
+         :form/id (:form/id event)
          :form/fields []
-         :workflow/id (:workflow-id event)
-         :workflow/type (:workflow-type event)))
+         :workflow/id (:workflow/id event)
+         :workflow/type (:workflow/type event)))
 
 
-(defn- set-accepted-licences [licenses acceptance]
+(defn- set-accepted-licences [licenses accepted-licenses]
   (map (fn [license]
-         (assoc license :license/accepted (= "approved" (get acceptance (:license/id license)))))
+         (assoc license :license/accepted (contains? accepted-licenses (:license/id license))))
        licenses))
 
-(defmethod application-view :event/draft-saved
+(defmethod application-view :application.event/draft-saved
   [application event]
   (-> application
       (assoc :form/fields (map (fn [[field-id value]]
                                  {:field/id field-id
                                   :field/value value})
-                               (:items event)))
-      (update :application/licenses set-accepted-licences (:licenses event))))
+                               (:application/field-values event)))
+      (update :application/licenses set-accepted-licences (:application/accepted-licenses event))))
 
 
-(defmethod application-view :event/member-added
+(defmethod application-view :application.event/member-added
   [application event]
   application)
 
-(defmethod application-view :event/submitted
+(defmethod application-view :application.event/submitted
   [application event]
   application)
 
-(defmethod application-view :event/returned
+(defmethod application-view :application.event/returned
   [application event]
   application)
 
-(defmethod application-view :event/comment-requested
+(defmethod application-view :application.event/comment-requested
   [application event]
   application)
 
-(defmethod application-view :event/commented
+(defmethod application-view :application.event/commented
   [application event]
   application)
 
-(defmethod application-view :event/decision-requested
+(defmethod application-view :application.event/decision-requested
   [application event]
   application)
 
-(defmethod application-view :event/decided
+(defmethod application-view :application.event/decided
   [application event]
   application)
 
-(defmethod application-view :event/approved
+(defmethod application-view :application.event/approved
   [application event]
   application)
 
-(defmethod application-view :event/rejected
+(defmethod application-view :application.event/rejected
   [application event]
   application)
 
-(defmethod application-view :event/closed
+(defmethod application-view :application.event/closed
   [application event]
   application)
 
@@ -93,7 +93,7 @@
 (defn- application-view-common
   [application event]
   (assoc application
-         :application/modified (:time event)))
+         :application/modified (:event/time event)))
 
 (defn- merge-lists-by
   "Returns a list of merged elements from list1 and list2
@@ -244,20 +244,20 @@
                          :workflow/type :dynamic}
 
         ;; test double events
-        created-event {:event :event/created
-                       :application-id 1
-                       :time (DateTime. 1000)
-                       :actor "applicant"
-                       :resources [{:catalogue-item-id 10
-                                    :resource-ext-id "urn:11"}
-                                   {:catalogue-item-id 20
-                                    :resource-ext-id "urn:21"}]
-                       :licenses [{:license-id 30}
-                                  {:license-id 31}]
-                       :form-id 40
-                       :workflow-id 50
-                       :workflow-type :dynamic
-                       :workflow-handlers ["handler"]}]
+        created-event {:event/type :application.event/created
+                       :event/time (DateTime. 1000)
+                       :event/actor "applicant"
+                       :application/id 1
+                       :application/resources [{:catalogue-item/id 10
+                                                :resource/ext-id "urn:11"}
+                                               {:catalogue-item/id 20
+                                                :resource/ext-id "urn:21"}]
+                       :application/licenses [{:license/id 30}
+                                              {:license/id 31}]
+                       :form/id 40
+                       :workflow/id 50
+                       :workflow/type :dynamic
+                       :workflow.dynamic/handlers ["handler"]}]
 
     (testing "new application"
       (is (= new-application
@@ -276,16 +276,13 @@
              (build-application-view
               (valid-events
                [created-event
-                {:event :event/draft-saved
-                 :application-id 42
-                 :time (DateTime. 2000)
-                 :actor "applicant"
-                 ;; TODO: rename to :field-values
-                 :items {41 "foo"
-                         42 "bar"}
-                 ;; TODO: change to `:accepted-licenses [30 31]` or separate to a license-accepted event
-                 :licenses {30 "approved"
-                            31 "approved"}}])
+                {:event/type :application.event/draft-saved
+                 :event/time (DateTime. 2000)
+                 :event/actor "applicant"
+                 :application/id 42
+                 :application/field-values {41 "foo"
+                                            42 "bar"}
+                 :application/accepted-licenses #{30 31}}])
               externals))))))
 
 (defn- get-form [form-id]
