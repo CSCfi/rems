@@ -93,7 +93,7 @@
 (s/defschema MemberAddedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/member-added)
-         :member s/Str))
+         :application/member s/Str))
 (s/defschema RejectedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/rejected)
@@ -228,7 +228,7 @@
 
 (defmethod apply-event [:application.event/member-added :workflow/dynamic]
   [application _workflow event]
-  (update application :members #(vec (conj % (:member event)))))
+  (update application :members #(vec (conj % (:application/member event)))))
 
 (defn apply-events [application events]
   (reduce (fn [application event] (apply-event application (:workflow application) event))
@@ -430,7 +430,7 @@
        :result {:event/type :application.event/member-added
                 :event/time (:time cmd)
                 :event/actor (:actor cmd)
-                :member (:member cmd)
+                :application/member (:member cmd)
                 :application/id (:application-id cmd)}}))
 
 (defn- apply-command
