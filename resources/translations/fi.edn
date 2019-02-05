@@ -218,7 +218,7 @@
                 :type-texta "Tekstialue"}
   :create-license {:external-link "Linkki"
                    :inline-text "Teksti"
-                   :license-attachment "Lisenssin liite"
+                   :license-attachment "Liite"
                    :license-text "Lisenssin teksti"
                    :license-type "Lisenssin tyyppi"
                    :link-to-license "Linkki lisenssiin"

@@ -135,7 +135,7 @@
   [context {:keys [id keys label orientation options]}]
   [:div.form-group.field {:id id}
    (when label [:label {:for id} label])
-   (into [:div.form-control]
+   (into [:input.form-control]
          (map (fn [{:keys [value label]}]
                 [radio-button context {:keys keys
                                        :value value
