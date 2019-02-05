@@ -787,27 +787,23 @@
     (into [:div
            [collapsible/minimal
             {:id (str id "-applicant")
-             :class (when (> (count members) 0) "form-item")
+             :class (when (> (count members) 0) "group")
              :always
-             [:div.row
-              [:div.col-md-6
-               [info-field (text :t.applicant-info/username) (or (get applicant-attributes "commonName")
-                                                                 (get applicant-attributes "eppn"))]]
-              [:div.col-md-6
-               [info-field (text :t.applicant-info/email) (get applicant-attributes "mail")]]]
+             [:div
+              [info-field (text :t.applicant-info/username) (or (get applicant-attributes "commonName")
+                                                                (get applicant-attributes "eppn")) {:inline? true}]
+              [info-field (text :t.applicant-info/email) (get applicant-attributes "mail") {:inline? true}]]
              :collapse (into [:div]
                              (for [[k v] (dissoc applicant-attributes "commonName" "mail")]
-                               [info-field k v]))}]]
+                               [info-field k v {:inline? true}]))}]]
           (for [member members]
             [collapsible/minimal
              {:id (str "member-" member)
-              :class "form-item"
+              :class "group"
               :always
-              [:div.row
-               [:div.col-md-6
-                [info-field (text :t.applicant-info/username) member]]
-               [:div.col-md-6
-                [info-field (text :t.applicant-info/email) (get member "mail")]]]}]))}])
+              [:div
+               [info-field (text :t.applicant-info/username) member {:inline? true}]
+               [info-field (text :t.applicant-info/email) (get member "mail") {:inline? true}]]}]))}])
 
 
 (defn action-form [id title comment-title button content]
