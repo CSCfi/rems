@@ -3,10 +3,10 @@
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [radio-button-group text-field textarea-autosize]]
+            [rems.atoms :refer [external-link]]
             [rems.collapsible :as collapsible]
             [rems.text :refer [text localize-item]]
-            [rems.util :refer [dispatch! fetch post!]]
-            [rems.atoms :as atoms]))
+            [rems.util :refer [dispatch! fetch post!]]))
 
 (defn- reset-form [db]
   (dissoc db ::form))
@@ -163,7 +163,7 @@
           filename-field [:a.btn.btn-secondary.mr-2
                           {:href (str "api/licenses/attachments/"attachment-id)
                            :target :_new}
-                          filename " " (atoms/external-link)]
+                          filename " " [external-link]]
           upload-field [:div.upload-file.mr-2
                         [:input {:style {:display "none"}
                                  :type "file"
