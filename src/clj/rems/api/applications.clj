@@ -15,7 +15,8 @@
             [rems.util :refer [getx-user-id update-present]]
             [ring.swagger.upload :as upload]
             [ring.util.http-response :refer :all]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [rems.context :as context]))
 
 ;; Response models
 
@@ -381,7 +382,8 @@
 
 (comment
   (let [user-id "developer"]
-    (doseq [app (applications/get-user-applications user-id)]
-      (when (applications/is-dynamic-application? app)
-        (is (= (api-get-application user-id (:id app))
-               (api-get-application-v1 user-id (:id app))))))))
+    (binding [context/*lang* :en]
+      (doseq [app (applications/get-user-applications user-id)]
+        (when (applications/is-dynamic-application? app)
+          (is (= (api-get-application user-id (:id app))
+                 (api-get-application-v1 user-id (:id app)))))))))

@@ -262,7 +262,7 @@
   (and (is-applicant? user-id application)
        (= (:state application) "applied")))
 
-(defn- translate-catalogue-item [item]
+(defn translate-catalogue-item [item]
   (merge item
          (get-in item [:localizations context/*lang*])))
 

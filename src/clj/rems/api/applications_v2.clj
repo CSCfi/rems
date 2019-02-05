@@ -133,7 +133,7 @@
            (merge-lists-by :id
                            [{:id 2} {:id 1}]
                            [{:id 1} {:id 2}]))))
-  ;; TODO: or should the unmatched items be discarded? that would happen if some fields are removed from a form
+  ;; TODO: or should the unmatched items be discarded? the primary use case is that some fields are removed from a form (unless forms are immutable)
   (testing "unmatching items are added to the end in order"
     (is (= [{:id 1} {:id 2} {:id 3} {:id 4}]
            (merge-lists-by :id
@@ -171,16 +171,35 @@
                             :field/options (:options item)
                             :field/max-length (:maxlength item)})
                          (:items form))]
-    (assoc application :form/fields (merge-lists-by :field/id form-fields (:form/fields application)))))
+    (assoc application :form/fields (merge-lists-by :field/id
+                                                    form-fields
+                                                    (:form/fields application)))))
 
-(defn- build-application-view [events {:keys [forms]}]
+(defn assoc-resources [application catalogue-items]
+  (let [resources (->> catalogue-items
+                       (map (fn [item]
+                              {:catalogue-item/id (:id item)
+                               :resource/id (:resource-id item)
+                               :resource/ext-id (:resid item)
+                               :catalogue-item/title (assoc (localization-for :title item)
+                                                            :default (:title item))
+                               :catalogue-item/start (:start item)
+                               :catalogue-item/state (keyword (:state item))}))
+                       (sort-by :catalogue-item/id))]
+    (assoc application :application/resources resources)))
+
+(defn- build-application-view [events {:keys [forms catalogue-items]}]
   (let [application (reduce (fn [application event]
                               (-> application
                                   (application-view event)
                                   (application-view-common event)))
                             {}
                             events)]
-    (assoc-form application (forms (:form/id application)))))
+    (-> application
+        (assoc-form (forms (:form/id application)))
+        (assoc-resources (->> (:application/resources application)
+                              (map :catalogue-item/id)
+                              (map catalogue-items))))))
 
 (defn- valid-events [events]
   (doseq [event events]
@@ -205,18 +224,57 @@
                                         :optional false
                                         :options []
                                         :maxlength 100
-                                        :type "text"}]}}}
+                                        :type "text"}]}}
+                   :catalogue-items {10 {:id 10
+                                         :resource-id 11
+                                         :resid "urn:11"
+                                         :wfid 50
+                                         :formid 40
+                                         :title "non-localized title"
+                                         :localizations {:en {:id 10
+                                                              :langcode :en
+                                                              :title "en title"}
+                                                         :fi {:id 10
+                                                              :langcode :fi
+                                                              :title "fi title"}}
+                                         :start (DateTime. 100)
+                                         :state "enabled"}
+                                     20 {:id 20
+                                         :resource-id 21
+                                         :resid "urn:21"
+                                         :wfid 50
+                                         :formid 40
+                                         :title "non-localized title"
+                                         :localizations {:en {:id 20
+                                                              :langcode :en
+                                                              :title "en title"}
+                                                         :fi {:id 20
+                                                              :langcode :fi
+                                                              :title "fi title"}}
+                                         :start (DateTime. 100)
+                                         :state "enabled"}}}
 
         ;; expected values
         new-application {:application/id 1
                          :application/created (DateTime. 1000)
                          :application/modified (DateTime. 1000)
                          :application/applicant "applicant"
-                         ;; TODO: resource details
                          :application/resources [{:catalogue-item/id 10
-                                                  :resource/ext-id "urn:11"}
+                                                  :resource/id 11
+                                                  :resource/ext-id "urn:11"
+                                                  :catalogue-item/title {:en "en title"
+                                                                         :fi "fi title"
+                                                                         :default "non-localized title"}
+                                                  :catalogue-item/start (DateTime. 100)
+                                                  :catalogue-item/state :enabled}
                                                  {:catalogue-item/id 20
-                                                  :resource/ext-id "urn:21"}]
+                                                  :resource/id 21
+                                                  :resource/ext-id "urn:21"
+                                                  :catalogue-item/title {:en "en title"
+                                                                         :fi "fi title"
+                                                                         :default "non-localized title"}
+                                                  :catalogue-item/start (DateTime. 100)
+                                                  :catalogue-item/state :enabled}]
                          ;; TODO: license details
                          :application/licenses [{:license/id 30
                                                  :license/accepted false}
@@ -289,25 +347,37 @@
   {:items (->> (db/get-form-items {:id form-id})
                (mapv #(applications/process-item nil form-id %)))})
 
+(defn- get-catalogue-item [catalogue-item-id]
+  (assert (int? catalogue-item-id)
+          (pr-str catalogue-item-id))
+  (first (applications/get-catalogue-items [catalogue-item-id])))
+
 (defn api-get-application-v2 [user-id application-id]
+  ;; TODO: check user permissions, hide sensitive information
   (let [events (applications/get-dynamic-application-events application-id)]
     (when (not (empty? events))
       ;; TODO: return just the view
       {:id application-id
-       :view (build-application-view events {:forms get-form})
+       :view (build-application-view events {:forms get-form
+                                             :catalogue-items get-catalogue-item})
        :events events})))
 
 (defn- transform-v2-to-v1 [application events]
   (let [catalogue-items (map (fn [resource]
-                               {:id (:catalogue-item/id resource)
-                                :resid (:resource/ext-id resource)
-                                :wfid (:workflow/id application)
-                                :formid (:form/id application)
-                                :start nil ; TODO
-                                :state nil ; TODO
-                                :title nil ; TODO
-                                :langcode nil ; TODO
-                                :localizations nil}) ; TODO
+                               (applications/translate-catalogue-item
+                                {:id (:catalogue-item/id resource)
+                                 :resource-id (:resource/id resource)
+                                 :resid (:resource/ext-id resource)
+                                 :wfid (:workflow/id application)
+                                 :formid (:form/id application)
+                                 :start (:catalogue-item/start resource)
+                                 :state (name (:catalogue-item/state resource))
+                                 :title (:default (:catalogue-item/title resource))
+                                 :localizations (into {} (for [lang (-> (set (keys (:catalogue-item/title resource)))
+                                                                        (disj :default))]
+                                                           [lang {:title (get-in resource [:catalogue-item/title lang])
+                                                                  :langcode lang
+                                                                  :id (:catalogue-item/id resource)}]))}))
                              (:application/resources application))]
     {:id (:form/id application)
      :catalogue-items catalogue-items
