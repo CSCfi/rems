@@ -1,5 +1,6 @@
 (ns ^:browser rems.test.browser
-  (:require [clojure.java.io :as io]
+  (:require [clj-http.client :as http]
+            [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :refer :all]
             [clojure.tools.logging :as log]
@@ -11,8 +12,9 @@
             [rems.standalone])
   (:import (java.net SocketException)))
 
-(def ^:dynamic *driver*
-  "Current driver")
+(def ^:private +test-url+ "http://localhost:3001/")
+
+(def ^:dynamic *driver*)
 
 (def reporting-dir (doto (io/file "browsertest-errors")
                      (.mkdirs)))
@@ -40,17 +42,22 @@
   (f)
   (mount/stop))
 
+(defn smoke-test [f]
+  (let [response (http/get (str +test-url+ "js/app.js"))]
+    (assert (= 200 (:status response))
+            (str "Failed to load app.js: " response))
+    (f)))
+
 (use-fixtures
   :each ;; start and stop driver for each test
   fixture-driver)
 
 (use-fixtures
   :once
-  fixture-standalone)
+  fixture-standalone
+  smoke-test)
 
 ;;; basic navigation
-
-(def ^:private +test-url+ "http://localhost:3001/")
 
 (defn login-as [username]
   (doto *driver*
