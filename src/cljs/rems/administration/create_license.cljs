@@ -78,7 +78,6 @@
   (post! (str "api/licenses/add_attachment")
          {:body form-data
           :handler (fn [{:keys [id] :as response}]
-                     (js/console.log (pr-str response))
                      (rf/dispatch [::attachment-saved language id]))}))
 
 (rf/reg-event-db
