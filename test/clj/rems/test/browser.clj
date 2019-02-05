@@ -1,16 +1,20 @@
 (ns ^:browser rems.test.browser
-  (:require [clojure.java.io :as io]
+  (:require [clj-http.client :as http]
+            [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :refer :all]
+            [clojure.tools.logging :as log]
             [etaoin.api :refer :all]
             [luminus-migrations.core :as migrations]
             [mount.core :as mount]
             [rems.config]
             [rems.db.test-data :as test-data]
-            [rems.standalone]))
+            [rems.standalone])
+  (:import (java.net SocketException)))
 
-(def ^:dynamic *driver*
-  "Current driver")
+(def ^:private +test-url+ "http://localhost:3001/")
+
+(def ^:dynamic *driver*)
 
 (def reporting-dir (doto (io/file "browsertest-errors")
                      (.mkdirs)))
@@ -20,11 +24,16 @@
    Bounds a driver with the global *driver* variable."
   [f]
   ;; TODO: these args don't affect the date format of <input type="date"> elements; figure out a reliable way to set it
-  (with-chrome-headless {:args ["--lang=en-US"]
-                         :prefs {"intl.accept_languages" "en-US"}}
-                        driver
-    (binding [*driver* driver]
-      (f))))
+  (let [run #(with-chrome-headless {:args ["--lang=en-US"]
+                                    :prefs {"intl.accept_languages" "en-US"}}
+                                   driver
+               (binding [*driver* driver]
+                 (f)))]
+    (try
+      (run)
+      (catch SocketException e
+        (log/warn e "WebDriver failed to start, retrying...")
+        (run)))))
 
 (defn fixture-standalone [f]
   (mount/start)
@@ -33,17 +42,22 @@
   (f)
   (mount/stop))
 
+(defn smoke-test [f]
+  (let [response (http/get (str +test-url+ "js/app.js"))]
+    (assert (= 200 (:status response))
+            (str "Failed to load app.js: " response))
+    (f)))
+
 (use-fixtures
   :each ;; start and stop driver for each test
   fixture-driver)
 
 (use-fixtures
   :once
-  fixture-standalone)
+  fixture-standalone
+  smoke-test)
 
 ;;; basic navigation
-
-(def ^:private +test-url+ "http://localhost:3001/")
 
 (defn login-as [username]
   (doto *driver*
