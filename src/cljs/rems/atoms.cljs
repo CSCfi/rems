@@ -56,6 +56,14 @@
      [:label title]
      [:div (if no-box? {:style {:padding-left 0}} {:class "form-control"}) value]]))
 
+(defn attachment-link
+  "Renders link to the attachment with `id` and name `title`."
+  [id title]
+  [:a.btn.btn-secondary.mr-2
+   {:href (str "api/licenses/attachments/" id)
+    :target :_new}
+   title " " [external-link]])
+
 (defn guide []
   [:div
    (component-info flash-message)
@@ -75,4 +83,7 @@
    (example "info-field with data"
             [info-field "Name" "Bob Tester"])
    (example "info-field inline"
-            [info-field "Name" "Bob Tester" {:inline? true}])])
+            [info-field "Name" "Bob Tester" {:inline? true}])
+   (component-info attachment-link)
+   (example "attachment-link"
+            [attachment-link 1 "my-attachment.pdf"])])

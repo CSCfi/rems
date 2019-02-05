@@ -3,12 +3,11 @@
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [inline-info-field]]
-            [rems.atoms :refer [external-link info-field readonly-checkbox]]
+            [rems.atoms :refer [attachment-link external-link readonly-checkbox]]
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-time text text-format]]
-            [rems.util :refer [dispatch! fetch put!]]
-            [rems.atoms :as atoms]))
+            [rems.util :refer [dispatch! fetch put!]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -41,12 +40,6 @@
   [:a.btn.btn-primary
    {:href "/#/administration/create-license"}
    (text :t.administration/create-license)])
-
-(defn attachment-link [id title]
-  [:a.btn.btn-secondary.mr-2
-   {:href (str "api/licenses/attachments/" id)
-    :target :_new}
-   title " " (atoms/external-link)])
 
 (defn license-view [license language]
   [:div.spaced-vertically-3

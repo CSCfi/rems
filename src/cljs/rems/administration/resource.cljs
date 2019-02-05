@@ -3,7 +3,7 @@
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [inline-info-field]]
-            [rems.atoms :refer [external-link readonly-checkbox]]
+            [rems.atoms :refer [attachment-link external-link readonly-checkbox]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [andstr]]
             [rems.spinner :as spinner]
@@ -41,12 +41,6 @@
   [:a.btn.btn-primary
    {:href "/#/administration/create-resource"}
    (text :t.administration/create-resource)])
-
-(defn attachment-link [id title]
-  [:a.btn.btn-secondary.mr-2
-   {:href (str "api/licenses/attachments/" id)
-    :target :_new}
-   title " " [external-link]])
 
 (defn license-view [license language]
   (into [:div.form-item
