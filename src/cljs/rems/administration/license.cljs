@@ -3,7 +3,7 @@
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [inline-info-field]]
-            [rems.atoms :refer [info-field readonly-checkbox]]
+            [rems.atoms :refer [external-link info-field readonly-checkbox]]
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-time text text-format]]
@@ -62,13 +62,30 @@
                                               (str/upper-case (name langcode)))
                        (:title localization)])
                     [[inline-info-field (text :t.administration/type) (:licensetype license)]]
+                    (when (= "link" (:licensetype license))
+                      (for [[langcode localization] (:localizations license)]
+                        (when (:textcontent localization)
+                          [inline-info-field
+                           (str (text :t.create-license/external-link)
+                                " "
+                                (str/upper-case (name langcode)))
+                           [:a {:target :_blank :href (:textcontent localization)} (:textcontent localization) " " [external-link]]])))
+                    (when (= "text" (:licensetype license))
+                      (for [[langcode localization] (:localizations license)]
+                        (when (:textcontent localization)
+                          [inline-info-field (str (text :t.create-license/license-text)
+                                                  " "
+                                                  (str/upper-case (name langcode)))
+                           (:textcontent localization)])))
                     (when (= "attachment" (:licensetype license))
                       (for [[langcode localization] (:localizations license)]
                         (when (:attachment-id localization)
-                          [inline-info-field (str (text :t.create-license/license-attachment)
-                                                  " "
-                                                  (str/upper-case (name langcode)))
-                           [attachment-link (:attachment-id localization)(:title localization)] {:no-box? true}])))
+                          [inline-info-field
+                           (str (text :t.create-license/license-attachment)
+                                " "
+                                (str/upper-case (name langcode)))
+                           [attachment-link (:attachment-id localization)(:title localization)]
+                           {:no-box? true}])))
                     [[inline-info-field (text :t.administration/start) (localize-time (:start license))]
                      [inline-info-field (text :t.administration/end) (localize-time (:end license))]
                      [inline-info-field (text :t.administration/active) [readonly-checkbox (:active license)]]]))}]
