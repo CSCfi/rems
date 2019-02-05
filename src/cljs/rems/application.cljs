@@ -778,32 +778,46 @@
       :collapse (when (seq events)
                   [events-view events])}]))
 
+(defn applicant-info
+  "Renders the (main) applicant of an application
 
-(defn applicant-info [id applicant-attributes members]
+  `group?` - specifies if a group border is rendered"
+  [id attributes group?]
+  [collapsible/minimal
+   {:id (str id "-applicant")
+    :class (when group? "group")
+    :always
+    [:div
+     [info-field (text :t.applicant-info/username) (or (get attributes "commonName")
+                                                       (get attributes "eppn")) {:inline? true}]
+     [info-field (text :t.applicant-info/email) (get attributes "mail") {:inline? true}]]
+    :collapse (into [:div]
+                    (for [[k v] (dissoc attributes "commonName" "mail")]
+                      [info-field k v {:inline? true}]))}])
+
+(defn members-info
+  "Renders the members of an application"
+  [id members]
+  [:div.members
+   (for [member members]
+     [collapsible/minimal
+      {:id (str id "-members-" member)
+       :class "group"
+       :always
+       [:div
+        [info-field (text :t.applicant-info/username) member {:inline? true}]
+        [info-field (text :t.applicant-info/email) (get member "mail") {:inline? true}]]}])])
+
+(defn applicants-info
+  "Renders the applicants, i.e. applicant and members."
+  [id applicant-attributes members]
   [collapsible/component
    {:id id
     :title (text :t.applicant-info/applicants)
     :always
-    (into [:div
-           [collapsible/minimal
-            {:id (str id "-applicant")
-             :class (when (> (count members) 0) "group")
-             :always
-             [:div
-              [info-field (text :t.applicant-info/username) (or (get applicant-attributes "commonName")
-                                                                (get applicant-attributes "eppn")) {:inline? true}]
-              [info-field (text :t.applicant-info/email) (get applicant-attributes "mail") {:inline? true}]]
-             :collapse (into [:div]
-                             (for [[k v] (dissoc applicant-attributes "commonName" "mail")]
-                               [info-field k v {:inline? true}]))}]]
-          (for [member members]
-            [collapsible/minimal
-             {:id (str "member-" member)
-              :class "group"
-              :always
-              [:div
-               [info-field (text :t.applicant-info/username) member {:inline? true}]
-               [info-field (text :t.applicant-info/email) (get member "mail") {:inline? true}]]}]))}])
+    [:div
+     [applicant-info id applicant-attributes (> (count members) 0)]
+     [members-info id members]]}])
 
 
 (defn action-form [id title comment-title button content]
@@ -1107,7 +1121,7 @@
      (into [:div] messages)
      [application-header state phases events]
      (when applicant-attributes
-       [:div.mt-3 [applicant-info "applicant-info" applicant-attributes members]])
+       [:div.mt-3 [applicants-info "applicants-info" applicant-attributes members]])
      [:div.mt-3 [applied-resources (:catalogue-items application)]]
      [:div.my-3 [fields application edit-application language]]
      [:div.mb-3 [actions-form app]]
@@ -1151,6 +1165,18 @@
                                      "mail" "developer@uu.id"
                                      "organization" "Testers"
                                      "address" "Testikatu 1, 00100 Helsinki"}])
+
+   (component-info members-info)
+   (example "members-info"
+            [members-info "members1" ["alice" "bob"]])
+
+   (component-info applicants-info)
+   (example "applicants-info"
+            [applicants-info "applicants" {"eppn" "developer@uu.id"
+                                           "mail" "developer@uu.id"
+                                           "commonName" "Deve Loper"
+                                           "organization" "Testers"
+                                           "address" "Testikatu 1, 00100 Helsinki"} ["alice" "bob"]])
 
    (component-info disabled-items-warning)
    (example "no disabled items"
