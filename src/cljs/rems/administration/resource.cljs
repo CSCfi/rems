@@ -2,11 +2,13 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.components :refer [inline-info-field]]
             [rems.atoms :refer [external-link info-field readonly-checkbox]]
             [rems.collapsible :as collapsible]
+            [rems.common-util :refer [andstr]]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-time text text-format]]
-            [rems.util :refer [andstr dispatch! fetch put!]]))
+            [rems.util :refer [dispatch! fetch put!]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -40,9 +42,6 @@
    {:href "/#/administration/create-resource"}
    (text :t.administration/create-resource)])
 
-(defn inline-info-field [text value]
-  [info-field text value {:inline? true}])
-
 (defn license-view [license language]
   (into [:div.form-item
          [:h4 (text-format :t.administration/license-field (get-in license [:localizations language :title]))]
@@ -62,14 +61,14 @@
                                             " "
                                             (str/upper-case (name langcode))) [:a {:target :_blank :href (:textcontent localization)} (:textcontent localization) " " [external-link]]]))
                 [[inline-info-field (text :t.administration/start) (localize-time (:start license))]
-                 [inline-info-field (text :t.administration/end) (localize-time (:end license))]])
-        ))
+                 [inline-info-field (text :t.administration/end) (localize-time (:end license))]])))
 
 (defn licenses-view [licenses language]
   [collapsible/component
    {:id "licenses"
     :title (text :t.administration/licenses)
-    :top-less-button? true
+    :top-less-button? (> (count licenses) 5)
+    :open? (<= (count licenses) 5)
     :collapse (if (seq licenses)
                 (into [:div]
                       (for [license licenses]

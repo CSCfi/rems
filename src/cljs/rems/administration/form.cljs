@@ -2,11 +2,13 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.components :refer [inline-info-field]]
             [rems.atoms :refer [info-field readonly-checkbox]]
             [rems.collapsible :as collapsible]
+            [rems.common-util :refer [andstr]]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-time text text-format]]
-            [rems.util :refer [andstr dispatch! fetch put!]]))
+            [rems.util :refer [dispatch! fetch put!]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -40,9 +42,6 @@
    {:href "/#/administration/create-form"}
    (text :t.administration/create-form)])
 
-(defn inline-info-field [text value]
-  [info-field text value {:inline? true}])
-
 (defn get-localized-value [field key language]
   (key (first (filter (comp #{(name language)} :langcode)
                       (:localizations field)))))
@@ -61,9 +60,14 @@
           [inline-info-field (text :t.create-form/maxlength) (:maxlength field)]])))
 
 (defn form-fields [fields language]
-  (into [:div]
-        (for [field (sort-by :itemorder fields)]
-          [form-field field language])))
+  [collapsible/component
+   {:id "fields"
+    :title [:span (text :t.administration/fields)]
+    :top-less-button? (> (count fields) 5)
+    :open? (<= (count fields) 5)
+    :collapse (into [:div]
+                    (for [field (sort-by :itemorder fields)]
+                      [form-field field language]))}])
 
 (defn form-view [form language]
   [:div.spaced-vertically-3
@@ -76,10 +80,7 @@
               [inline-info-field (text :t.administration/start) (localize-time (:start form))]
               [inline-info-field (text :t.administration/end) (localize-time (:end form))]
               [inline-info-field (text :t.administration/active) (str (:active form))]]}]
-   [collapsible/component
-    {:id "fields"
-     :title [:span (text :t.administration/fields)]
-     :collapse [form-fields (:fields form) language]}]
+   [form-fields (:fields form) language]
    [:div.col.commands [back-button]]
    ;; TODO Do we support form licenses?
    ])

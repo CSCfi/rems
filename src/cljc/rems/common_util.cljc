@@ -1,4 +1,5 @@
-(ns rems.common-util)
+(ns rems.common-util
+  (:require [clojure.test :refer [deftest is testing]]))
 
 (defn select-vals
   "Select values in map `m` specified by given keys `ks`.
@@ -30,3 +31,25 @@
    Order of sequence is not preserved in any way."
   [key-fn sequence]
   (map first (vals (group-by key-fn sequence))))
+
+(defn andstr
+  "Like `apply str coll` but only produces something if all the
+  values are truthy like with `and`.
+
+  Useful for statements like
+  ```clj
+  (str (andstr (:foo x) \"/\") (:bar y))
+  ```
+  See also `test-andstr` for examples."
+  [& coll]
+  (when (every? identity coll)
+    (apply str coll)))
+
+(deftest test-andstr
+  (testing "when any argument is falsey the result is nil"
+    (is (= nil (andstr nil 1 2 3)))
+    (is (= nil (andstr 1 2 false 3))))
+  (testing "when all arguments are truthy the results are concatenated"
+    (let [x {:foo 2}]
+      (is (= "2/" (andstr (:foo x) "/")))
+      (is (= "(2)" (andstr "(" (:foo x) ")"))))))

@@ -4,6 +4,7 @@
 -- - :items vector of item ids
 -- - :resource resource id to fetch items for
 SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.state, ci.start
+, res.id AS "resource-id"
 /*~ (when (:expand-names? params) */
 , wf.title AS "workflow-name"
 , res.resid AS "resource-name"
@@ -25,9 +26,14 @@ WHERE 1=1
 
 
 -- :name get-catalogue-item :? :1
-SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.state, ci.start
+SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.state, ci.start, res.id AS "resource-id"
+, wf.title AS "workflow-name"
+, res.resid AS "resource-name"
+, form.title AS "form-name"
 FROM catalogue_item ci
 LEFT OUTER JOIN resource res ON (ci.resid = res.id)
+LEFT OUTER JOIN workflow wf ON (ci.wfid = wf.id)
+LEFT OUTER JOIN application_form form ON (ci.formid = form.id)
 WHERE ci.id = :item
 
 -- :name set-catalogue-item-state! :insert
@@ -468,7 +474,15 @@ WHERE wfid = :wfid
 
 -- :name get-workflow :? :1
 SELECT
-  wf.id, wf.owneruserid, wf.modifieruserid, wf.title, wf.fnlround, wf.visibility, wf.start, wf.endt
+  wf.id, wf.organization, wf.owneruserid, wf.modifieruserid, wf.title, wf.fnlround, wf.visibility, wf.start, wf.endt AS "end",
+  wf.workflowBody::TEXT as workflow,
+  (SELECT json_agg(joined)
+   FROM (SELECT *, (SELECT json_agg(licloc)
+                    FROM license_localization licloc
+                    WHERE licloc.licid = lic.id) AS localizations
+         FROM workflow_licenses wflic
+         JOIN license lic ON (wflic.licid = lic.id)
+         WHERE wf.id = wflic.wfid) joined)::TEXT AS licenses
 FROM workflow wf
 /*~ (when (:catid params) */
 JOIN catalogue_item ci ON (wf.id = ci.wfid)

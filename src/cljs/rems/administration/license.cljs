@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.components :refer [inline-info-field]]
             [rems.atoms :refer [info-field readonly-checkbox]]
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
@@ -40,9 +41,6 @@
   [:a.btn.btn-primary
    {:href "/#/administration/create-license"}
    (text :t.administration/create-license)])
-
-(defn inline-info-field [text value]
-  [info-field text value {:inline? true}])
 
 (defn attachment-field [id title]
   [:a.btn.btn-secondary.mr-2

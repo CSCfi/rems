@@ -236,6 +236,7 @@
     {:color "#fff"
      :background-color "#aaa"
      :border-color "#aaa"}]
+   [:.button-min-width {:min-width (u/rem 5)}]
    [:.icon-link {:color "#6c757d" ; same colors as .btn-secondary
                  :cursor "pointer"}
     [:&:hover {:color "#5a6268"}]]

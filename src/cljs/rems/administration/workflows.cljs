@@ -45,6 +45,11 @@
    {:href "/#/administration/create-workflow"}
    (text :t.administration/create-workflow)])
 
+(defn- to-view-workflow [workflow-id]
+  [:a.btn.btn-primary
+   {:href (str "/#/administration/workflows/" workflow-id)}
+   (text :t.administration/view)])
+
 (defn- workflows-columns []
   {:organization {:header #(text :t.administration/organization)
                   :value :organization}
@@ -56,7 +61,7 @@
          :value (comp localize-time :end)}
    :active {:header #(text :t.administration/active)
             :value (comp readonly-checkbox :active)}
-   :commands {:value :no-value
+   :commands {:value (fn [workflow] [to-view-workflow (:id workflow)])
               :sortable? false
               :filterable? false}})
 
