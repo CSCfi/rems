@@ -45,15 +45,16 @@
   Used for e.g. displaying applicant attributes.
 
   Additional options:
-  `:inline?` - puts the label and value on the same row"
-  [title value & [{:keys [inline?] :as opts}]]
+  `:inline?`  - puts the label and value on the same row
+  `:no-box?` - don't wrap the value into a field value box"
+  [title value & [{:keys [inline? no-box?] :as opts}]]
   (if inline?
     [:div.form-group.row
      [:label.col-sm-2.col-form-label title]
-     [:div.col-sm-10.form-control value]]
+     [:div.col-sm-10 (if no-box? {:style {:padding-left 0}} {:class "form-control"}) value]]
     [:div.form-group
      [:label title]
-     [:div.form-control value]]))
+     [:div (if no-box? {:style {:padding-left 0}} {:class "form-control"}) value]]))
 
 (defn guide []
   [:div

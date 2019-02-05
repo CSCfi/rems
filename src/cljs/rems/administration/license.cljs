@@ -42,7 +42,7 @@
    {:href "/#/administration/create-license"}
    (text :t.administration/create-license)])
 
-(defn attachment-field [id title]
+(defn attachment-link [id title]
   [:a.btn.btn-secondary.mr-2
    {:href (str "api/licenses/attachments/" id)
     :target :_new}
@@ -60,11 +60,16 @@
                       [inline-info-field (str (text :t.administration/title)
                                               " "
                                               (str/upper-case (name langcode)))
-                       (if (:attachment-id localization)
-                         [attachment-field (:attachment-id localization) (:title localization)]
-                         (:title localization))])
-                    [[inline-info-field (text :t.administration/type) (:licensetype license)]
-                     [inline-info-field (text :t.administration/start) (localize-time (:start license))]
+                       (:title localization)])
+                    [[inline-info-field (text :t.administration/type) (:licensetype license)]]
+                    (when (= "attachment" (:licensetype license))
+                      (for [[langcode localization] (:localizations license)]
+                        (when (:attachment-id localization)
+                          [inline-info-field (str (text :t.create-license/license-attachment)
+                                                  " "
+                                                  (str/upper-case (name langcode)))
+                           [attachment-link (:attachment-id localization)(:title localization)] {:no-box? true}])))
+                    [[inline-info-field (text :t.administration/start) (localize-time (:start license))]
                      [inline-info-field (text :t.administration/end) (localize-time (:end license))]
                      [inline-info-field (text :t.administration/active) [readonly-checkbox (:active license)]]]))}]
    [:div.col.commands [back-button]]])
