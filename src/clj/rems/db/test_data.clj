@@ -17,6 +17,7 @@
 
 (def +fake-users+
   {:applicant1 "alice"
+   :applicant2 "malice"
    :approver1 "developer"
    :approver2 "bob"
    :owner "owner"
@@ -25,6 +26,7 @@
 (def +fake-user-data+
   {"developer" {"eppn" "developer" "mail" "deve@lo.per" "commonName" "Deve Loper"}
    "alice" {"eppn" "alice" "mail" "a@li.ce" "commonName" "Alice Applicant"}
+   "malice" {"eppn" "malice" "mail" "ma@li.ce" "commonName" "Malice Applicant"}
    "bob" {"eppn" "bob" "mail" "b@o.b" "commonName" "Bob Approver"}
    "carl" {"eppn" "carl" "mail" "c@a.rl" "commonName" "Carl Reviewer"}
    "owner" {"eppn" "owner" "mail" "ow@n.er" "commonName" "Own Er"}})
@@ -51,6 +53,7 @@
   (roles/add-role! (+fake-users+ :approver1) :applicant)
   (roles/add-role! (+fake-users+ :approver1) :approver)
   (users/add-user! (+fake-users+ :applicant1) (+fake-user-data+ (+fake-users+ :applicant1)))
+  (users/add-user! (+fake-users+ :applicant2) (+fake-user-data+ (+fake-users+ :applicant2)))
   (roles/add-role! (+fake-users+ :applicant1) :applicant)
   (users/add-user! (+fake-users+ :approver2) (+fake-user-data+ (+fake-users+ :approver2)))
   (roles/add-role! (+fake-users+ :approver2) :approver)
@@ -505,6 +508,11 @@
       (applications/return-application approver app-id 0 "comment for return")
       (applications/submit-application applicant app-id))))
 
+(defn- create-member-application! [catid wfid applicant approver members]
+  (let [appid (create-draft! applicant catid wfid "draft application")]
+    (doseq [member members]
+      (applications/add-member applicant appid member))))
+
 (defn- run-and-check-dynamic-command! [& args]
   (let [result (apply applications/dynamic-command! args)]
     (assert (nil? result) {:actual result})
@@ -609,7 +617,8 @@
                                             {"en" "Dynamic workflow" "fi" "Dynaaminen työvuo"})]
         (create-dynamic-applications! dynamic (:dynamic workflows) +fake-users+))
       (let [thlform (create-thl-demo-form! +fake-users+)]
-        (create-catalogue-item! res1 (:dynamic workflows) thlform {"en" "THL catalogue item" "fi" "THL katalogi-itemi"})))
+        (create-catalogue-item! res1 (:dynamic workflows) thlform {"en" "THL catalogue item" "fi" "THL katalogi-itemi"}))
+      (create-member-application! simple (:simple workflows) (+fake-users+ :applicant1) (+fake-users+ :approver1) [(+fake-users+ :applicant2)]))
     (finally
       (DateTimeUtils/setCurrentMillisSystem))))
 
@@ -650,4 +659,5 @@
                                           {"en" "Dynamic workflow" "fi" "Dynaaminen työvuo"})]
       (create-dynamic-applications! dynamic (:dynamic workflows) +demo-users+))
     (let [thlform (create-thl-demo-form! +demo-users+)]
-      (create-catalogue-item! res1 (:dynamic workflows) thlform {"en" "THL catalogue item" "fi" "THL katalogi-itemi"}))))
+      (create-catalogue-item! res1 (:dynamic workflows) thlform {"en" "THL catalogue item" "fi" "THL katalogi-itemi"}))
+    (create-member-application! simple (:simple workflows) (+demo-users+ :applicant1) (+demo-users+ :approver1) [(+demo-users+ :applicant2)])))
