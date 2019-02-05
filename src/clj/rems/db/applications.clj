@@ -43,16 +43,18 @@
 ;;; Query functions
 
 (defn handling-event? [app e]
-  (or (contains? #{"approve" "autoapprove" "reject" "return" "review"
-                   :rems.workflow.dynamic/approved
+  ;; event types which are definitely not by applicant
+  (or (contains? #{:rems.workflow.dynamic/approved
                    :rems.workflow.dynamic/rejected
                    :rems.workflow.dynamic/returned}
-                 (or (:event/type e)
-                     (:event e))) ;; definitely not by applicant
+                 (:event/type e)) ; new style events
+      (contains? #{"approve" "autoapprove" "reject" "return" "review"}
+                 (:event e)) ; old style events
+      ;; close events are sometimes not by applicant
       (and (= :application.event/closed (:event/type e))
-           (not= (:applicantuserid app) (:event/actor e))) ;; not by applicant
+           (not= (:applicantuserid app) (:event/actor e)))
       (and (= "close" (:event e))
-           (not= (:applicantuserid app) (:userid e))))) ;; not by applicant
+           (not= (:applicantuserid app) (:userid e)))))
 
 (defn handled? [app]
   (or (contains? #{"approved" "rejected" "returned"
