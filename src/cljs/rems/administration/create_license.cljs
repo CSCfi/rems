@@ -126,18 +126,18 @@
                                          {:value license-type-attachment
                                           :label (text :t.create-license/license-attachment)}]}])
 
-(defn- current-licence-type []
+(defn- current-license-type []
   (let [form @(rf/subscribe [::form])]
     (:licensetype form)))
 
 (defn- license-link-field [language]
-  (when (= license-type-link (current-licence-type))
+  (when (= license-type-link (current-license-type))
     [text-field context {:keys [:localizations language :link]
                          :label (text :t.create-license/link-to-license)
                          :placeholder "https://example.com/license"}]))
 
 (defn- license-text-field [language]
-  (when (= license-type-text (current-licence-type))
+  (when (= license-type-text (current-license-type))
     [textarea-autosize context {:keys [:localizations language :text]
                                 :label (text :t.create-license/license-text)}]))
 
@@ -155,7 +155,7 @@
     (rf/dispatch [::remove-attachment language attachment-id])))
 
 (defn- license-attachment-field [language]
-  (when (= license-type-attachment (current-licence-type))
+  (when (= license-type-attachment (current-license-type))
     (let [form @(rf/subscribe [::form])
           filename (get-in form [:localizations language :attachment-filename])
           attachment-id (get-in form [:localizations language :attachment-id])
