@@ -15,7 +15,7 @@
     :label  - String, shown to the user as-is."
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
-            [rems.atoms :refer [textarea]]))
+            [rems.atoms :refer [info-field textarea]]))
 
 (defn- key-to-id [key]
   (if (number? key)
