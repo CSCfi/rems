@@ -36,6 +36,27 @@
       [show-more-button id expanded callback]
       (when-not (false? bottom-less-button?) [show-less-button id expanded])])])
 
+(defn minimal
+  "Displays a minimal collapsible block of content.
+
+  The difference to `component` is that there are no borders around the content.
+
+  Pass a map of options with the following keys:
+  `:id` unique id required
+  `:class` optional class for wrapper div
+  `:open?` should the collapsible be open? Default false
+  `:top-less-button?` should top show less button be shown? Default false
+  `:bottom-less-button?` should bottom show less button be shown? Default true
+  `:on-open` triggers the function callback given as an argument when load-more is clicked
+  `:title` component displayed in title area
+  `:always` component displayed always before collapsible area
+  `:collapse` component that is toggled displayed or not"
+  [{:keys [id class open? on-open title always collapse top-less-button? bottom-less-button?]}]
+  [:div {:id id :class class}
+   (when title [header title])
+   (when (or always collapse)
+     [block id open? on-open always collapse top-less-button? bottom-less-button?])])
+
 (defn component
   "Displays a collapsible block of content.
 
@@ -92,4 +113,20 @@
                         :title "Collapse expanded"
                         :always [:p "I am content that is always visible"]
                         :top-less-button? true
-                        :collapse (into [:div] (repeat 15 [:p "I am long content that you can hide"]))}])])
+                        :collapse (into [:div] (repeat 15 [:p "I am long content that you can hide"]))}])
+   (component-info minimal)
+   (example "minimal collapsible without title"
+            [component {:id "minimal1"
+                        :always [:p "I am content that is always visible"]
+                        :collapse (into [:div] (repeat 5 [:p "I am long content that you can hide"]))}])
+   (example "minimal collapsible with custom border"
+            [component {:id "minimal2"
+                        :class "form-item"
+                        :always [:p "I am content that is always visible"]
+                        :collapse (into [:div] (repeat 5 [:p "I am long content that you can hide"]))}])
+   (example "minimal collapsible"
+            [component {:id "minimal3"
+                        :class "slow"
+                        :title "Minimal expanded"
+                        :always [:p "I am content that is always visible"]
+                        :collapse (into [:div] (repeat 5 [:p "I am long content that you can hide"]))}])])

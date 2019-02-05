@@ -779,19 +779,24 @@
                   [events-view events])}]))
 
 
-(defn applicant-info [id user-attributes]
+(defn applicant-info [id applicant-attributes members]
   [collapsible/component
    {:id id
-    :title (str (text :t.applicant-info/applicants))
-    :always [:div.row
-             [:div.col-md-6
-              [info-field (text :t.applicant-info/username) (or (get user-attributes "commonName")
-                                                                (get user-attributes "eppn"))]]
-             [:div.col-md-6
-              [info-field (text :t.applicant-info/email) (get user-attributes "mail")]]]
-    :collapse (into [:form]
-                    (for [[k v] (dissoc user-attributes "commonName" "mail")]
-                      [info-field k v]))}])
+    :title (text :t.applicant-info/applicants)
+    :always
+    [collapsible/minimal
+     {:id (str id "-applicant")
+      :class (when (> (count members) 0) "form-item")
+      :always
+      [:div.row
+       [:div.col-md-6
+        [info-field (text :t.applicant-info/username) (or (get applicant-attributes "commonName")
+                                                          (get applicant-attributes "eppn"))]]
+       [:div.col-md-6
+        [info-field (text :t.applicant-info/email) (get applicant-attributes "mail")]]]
+      :collapse (into [:div]
+                      (for [[k v] (dissoc applicant-attributes "commonName" "mail")]
+                        [info-field k v]))}]}])
 
 
 (defn action-form [id title comment-title button content]
