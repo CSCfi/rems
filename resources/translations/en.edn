@@ -219,8 +219,7 @@
                    :license-text "License text"
                    :link-to-license "Link to the license"
                    :title "License name"
-                   :license-attachment "License attachment"
-                   :attached-license "Attach the license"}
+                   :license-attachment "License attachment"}
   :create-resource {:licenses-selection "Licenses"
                     :resid "Resource identifier"
                     :resid-placeholder "urn:test:fi:some-uuid"}
