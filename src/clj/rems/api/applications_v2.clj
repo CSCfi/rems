@@ -3,6 +3,7 @@
             [medley.core :refer [map-vals]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
+            [rems.db.form :as form]
             [rems.db.licenses :as licenses]
             [rems.db.users :as users]
             [rems.workflow.dynamic :as dynamic])
@@ -164,19 +165,21 @@
                                                    :fi {}}}))))
 
 (defn- assoc-form [application form]
-  (let [form-fields (map (fn [item]
-                           {:field/id (:id item)
-                            :field/value "" ; default for new forms
-                            :field/type (keyword (:type item))
-                            :field/title (localization-for :title item)
-                            :field/placeholder (localization-for :inputprompt item)
-                            :field/optional (:optional item)
-                            :field/options (:options item)
-                            :field/max-length (:maxlength item)})
-                         (:items form))]
-    (assoc application :form/fields (merge-lists-by :field/id
-                                                    form-fields
-                                                    (:form/fields application)))))
+  (let [fields (map (fn [item]
+                      {:field/id (:id item)
+                       :field/value "" ; default for new forms
+                       :field/type (keyword (:type item))
+                       :field/title (localization-for :title item)
+                       :field/placeholder (localization-for :inputprompt item)
+                       :field/optional (:optional item)
+                       :field/options (:options item)
+                       :field/max-length (:maxlength item)})
+                    (:items form))]
+    (assoc application
+           :form/title (:title form)
+           :form/fields (merge-lists-by :field/id
+                                        fields
+                                        (:form/fields application)))))
 
 (defn- assoc-resources [application catalogue-items]
   (let [resources (->> catalogue-items
@@ -234,7 +237,12 @@
   events)
 
 (deftest test-application-view
-  (let [externals {:forms {40 {:items [{:id 41
+  (let [externals {:forms {40 {:id 40
+                               :organization "org"
+                               :title "form title"
+                               :start (DateTime. 100)
+                               :end nil
+                               :items [{:id 41
                                         :localizations {:en {:title "en title"
                                                              :inputprompt "en placeholder"}
                                                         :fi {:title "fi title"
@@ -351,6 +359,7 @@
                                                                 :fi "fi license text"
                                                                 :default "non-localized license text"}}]
                          :form/id 40
+                         :form/title "form title"
                          :form/fields [{:field/id 41
                                         :field/value ""
                                         :field/type :text
@@ -415,8 +424,10 @@
               externals))))))
 
 (defn- get-form [form-id]
-  {:items (->> (db/get-form-items {:id form-id})
-               (mapv #(applications/process-item nil form-id %)))})
+  (-> (form/get-form form-id)
+      (select-keys [:id :organization :title :start :end])
+      (assoc :items (->> (db/get-form-items {:id form-id})
+                         (mapv #(applications/process-item nil form-id %))))))
 
 (defn- get-catalogue-item [catalogue-item-id]
   (assert (int? catalogue-item-id)
@@ -459,6 +470,7 @@
                                                                   :id (:catalogue-item/id resource)}]))}))
                              (:application/resources application))]
     {:id (:form/id application)
+     :title (:form/title application)
      :catalogue-items catalogue-items
      :applicant-attributes (:application/applicant-attributes application)
      :application {:id (:application/id application)
@@ -511,7 +523,6 @@
                                                                          (get-in license [:license/text lang]))}]))})
                     (:application/licenses application))
      :phases [] ; TODO
-     :title "" ; TODO
      :items (map (fn [field]
                    {:id (:field/id field)
                     :type (name (:field/type field))
