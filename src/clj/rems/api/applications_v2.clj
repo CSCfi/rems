@@ -28,7 +28,8 @@
          :form/id (:form/id event)
          :form/fields []
          :workflow/id (:workflow/id event)
-         :workflow/type (:workflow/type event)))
+         :workflow/type (:workflow/type event)
+         :workflow.dynamic/handlers (:workflow.dynamic/handlers event)))
 
 
 (defn- set-accepted-licences [licenses accepted-licenses]
@@ -360,7 +361,8 @@
                                         :field/max-length 100}]
                          ;; TODO: workflow details (e.g. allowed commands)
                          :workflow/id 50
-                         :workflow/type :dynamic}
+                         :workflow/type :dynamic
+                         :workflow.dynamic/handlers ["handler"]}
 
         ;; test double events
         created-event {:event/type :application.event/created
@@ -466,7 +468,8 @@
                    :events [] ; TODO
                    :dynamic-events events ; TODO: remove this, it exposes too much information
                    :workflow {:type (:workflow/type application)
-                              :handlers []} ; TODO
+                              ;; TODO: add :handlers only when it exists? https://stackoverflow.com/a/16375390
+                              :handlers (:workflow.dynamic/handlers application)}
                    :possible-commands [] ; TODO
                    :fnlround nil ; TODO
                    :review-type nil ; TODO
