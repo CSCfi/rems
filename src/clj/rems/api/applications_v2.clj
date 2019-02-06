@@ -4,6 +4,7 @@
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.licenses :as licenses]
+            [rems.db.users :as users]
             [rems.workflow.dynamic :as dynamic])
   (:import (org.joda.time DateTime)))
 
@@ -210,7 +211,7 @@
                                                              licenses
                                                              (:application/licenses application)))))
 
-(defn- build-application-view [events {:keys [forms catalogue-items licenses]}]
+(defn- build-application-view [events {:keys [forms catalogue-items licenses users]}]
   (let [application (reduce (fn [application event]
                               (-> application
                                   (application-view event)
@@ -224,7 +225,8 @@
                               (map catalogue-items)))
         (assoc-licenses (->> (:application/licenses application)
                              (map :license/id)
-                             (map licenses))))))
+                             (map licenses)))
+        (assoc :application/applicant-attributes (users (:application/applicant application))))))
 
 (defn- valid-events [events]
   (doseq [event events]
@@ -297,13 +299,19 @@
                                   :localizations {:en {:title "en title"
                                                        :textcontent "en license text"}
                                                   :fi {:title "fi title"
-                                                       :textcontent "fi license text"}}}}}
+                                                       :textcontent "fi license text"}}}}
+                   :users {"applicant" {"eppn" "applicant"
+                                        "mail" "applicant@example.com"
+                                        "commonName" "Applicant"}}}
 
         ;; expected values
         new-application {:application/id 1
                          :application/created (DateTime. 1000)
                          :application/modified (DateTime. 1000)
                          :application/applicant "applicant"
+                         :application/applicant-attributes {"eppn" "applicant"
+                                                            "mail" "applicant@example.com"
+                                                            "commonName" "Applicant"}
                          :application/resources [{:catalogue-item/id 10
                                                   :resource/id 11
                                                   :resource/ext-id "urn:11"
@@ -418,6 +426,9 @@
 (defn- get-license [license-id]
   (licenses/get-license license-id))
 
+(defn- get-user [user-id]
+  (users/get-user-attributes user-id))
+
 (defn api-get-application-v2 [user-id application-id]
   ;; TODO: check user permissions, hide sensitive information
   (let [events (applications/get-dynamic-application-events application-id)]
@@ -426,7 +437,8 @@
       {:id application-id
        :view (build-application-view events {:forms get-form
                                              :catalogue-items get-catalogue-item
-                                             :licenses get-license})
+                                             :licenses get-license
+                                             :users get-user})
        :events events})))
 
 (defn- transform-v2-to-v1 [application events]
@@ -448,9 +460,7 @@
                              (:application/resources application))]
     {:id (:form/id application)
      :catalogue-items catalogue-items
-     :applicant-attributes {"eppn" (:application/applicant application)
-                            "mail" nil ; TODO
-                            "commonName" nil} ; TODO
+     :applicant-attributes (:application/applicant-attributes application)
      :application {:id (:application/id application)
                    :formid (:form/id application)
                    :wfid (:workflow/id application)
