@@ -461,7 +461,9 @@
          :can-close? (applications/can-close? user-id application)
          :can-withdraw? (applications/can-withdraw? user-id application)
          :can-third-party-review? (applications/can-third-party-review? user-id application)
-         :is-applicant? (applications/is-applicant? user-id application)))
+         :is-applicant? (applications/is-applicant? user-id application)
+         ;; TODO: calculate possible commands purely from the events, to avoid couping to v1 API
+         :possible-commands (dynamic/possible-commands user-id application)))
 
 (defn- transform-v2-to-v1 [application events user-id]
   (let [catalogue-items (map (fn [resource]
@@ -505,9 +507,8 @@
                     :workflow {:type (:workflow/type application)
                                ;; TODO: add :handlers only when it exists? https://stackoverflow.com/a/16375390
                                :handlers (:workflow.dynamic/handlers application)}
-                    :possible-commands [] ; TODO: (:workflow.dynamic/possible-commands application)
                     :fnlround 0 ; TODO: round-based workflows
-                    :review-type nil}) ; TODO
+                    :review-type nil}) ; TODO: round-based workflows
      :phases (applications/get-application-phases (:workflow/state application))
      :licenses (map (fn [license]
                       {:id (:license/id license)
