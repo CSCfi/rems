@@ -3,6 +3,7 @@
             [medley.core :refer [map-vals]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
+            [rems.db.licenses :as licenses]
             [rems.workflow.dynamic :as dynamic])
   (:import (org.joda.time DateTime)))
 
@@ -175,7 +176,7 @@
                                                     form-fields
                                                     (:form/fields application)))))
 
-(defn assoc-resources [application catalogue-items]
+(defn- assoc-resources [application catalogue-items]
   (let [resources (->> catalogue-items
                        (map (fn [item]
                               {:catalogue-item/id (:id item)
@@ -188,7 +189,27 @@
                        (sort-by :catalogue-item/id))]
     (assoc application :application/resources resources)))
 
-(defn- build-application-view [events {:keys [forms catalogue-items]}]
+(defn- assoc-licenses [application licenses]
+  (let [licenses (->> licenses
+                      (map (fn [license]
+                             (let [type (keyword (:licensetype license))
+                                   content-key (case type
+                                                 :link :license/link
+                                                 :text :license/text)]
+                               {:license/id (:id license)
+                                :license/type type
+                                :license/start (:start license)
+                                :license/end (:end license)
+                                :license/title (assoc (localization-for :title license)
+                                                      :default (:title license))
+                                content-key (assoc (localization-for :textcontent license)
+                                                   :default (:textcontent license))})))
+                      (sort-by :license/id))]
+    (assoc application :application/licenses (merge-lists-by :license/id
+                                                             licenses
+                                                             (:application/licenses application)))))
+
+(defn- build-application-view [events {:keys [forms catalogue-items licenses]}]
   (let [application (reduce (fn [application event]
                               (-> application
                                   (application-view event)
@@ -199,7 +220,10 @@
         (assoc-form (forms (:form/id application)))
         (assoc-resources (->> (:application/resources application)
                               (map :catalogue-item/id)
-                              (map catalogue-items))))))
+                              (map catalogue-items)))
+        (assoc-licenses (->> (:application/licenses application)
+                             (map :license/id)
+                             (map licenses))))))
 
 (defn- valid-events [events]
   (doseq [event events]
@@ -252,7 +276,27 @@
                                                               :langcode :fi
                                                               :title "fi title"}}
                                          :start (DateTime. 100)
-                                         :state "enabled"}}}
+                                         :state "enabled"}}
+                   :licenses {30 {:id 30
+                                  :licensetype "link"
+                                  :start (DateTime. 100)
+                                  :end nil
+                                  :title "non-localized title"
+                                  :textcontent "http://non-localized-license-link"
+                                  :localizations {:en {:title "en title"
+                                                       :textcontent "http://en-license-link"}
+                                                  :fi {:title "fi title"
+                                                       :textcontent "http://fi-license-link"}}}
+                              31 {:id 31
+                                  :licensetype "text"
+                                  :start (DateTime. 100)
+                                  :end nil
+                                  :title "non-localized title"
+                                  :textcontent "non-localized license text"
+                                  :localizations {:en {:title "en title"
+                                                       :textcontent "en license text"}
+                                                  :fi {:title "fi title"
+                                                       :textcontent "fi license text"}}}}}
 
         ;; expected values
         new-application {:application/id 1
@@ -275,11 +319,28 @@
                                                                          :default "non-localized title"}
                                                   :catalogue-item/start (DateTime. 100)
                                                   :catalogue-item/state :enabled}]
-                         ;; TODO: license details
                          :application/licenses [{:license/id 30
-                                                 :license/accepted false}
+                                                 :license/accepted false
+                                                 :license/type :link
+                                                 :license/start (DateTime. 100)
+                                                 :license/end nil
+                                                 :license/title {:en "en title"
+                                                                 :fi "fi title"
+                                                                 :default "non-localized title"}
+                                                 :license/link {:en "http://en-license-link"
+                                                                :fi "http://fi-license-link"
+                                                                :default "http://non-localized-license-link"}}
                                                 {:license/id 31
-                                                 :license/accepted false}]
+                                                 :license/accepted false
+                                                 :license/type :text
+                                                 :license/start (DateTime. 100)
+                                                 :license/end nil
+                                                 :license/title {:en "en title"
+                                                                 :fi "fi title"
+                                                                 :default "non-localized title"}
+                                                 :license/text {:en "en license text"
+                                                                :fi "fi license text"
+                                                                :default "non-localized license text"}}]
                          :form/id 40
                          :form/fields [{:field/id 41
                                         :field/value ""
@@ -352,6 +413,9 @@
           (pr-str catalogue-item-id))
   (first (applications/get-catalogue-items [catalogue-item-id])))
 
+(defn- get-license [license-id]
+  (licenses/get-license license-id))
+
 (defn api-get-application-v2 [user-id application-id]
   ;; TODO: check user permissions, hide sensitive information
   (let [events (applications/get-dynamic-application-events application-id)]
@@ -359,7 +423,8 @@
       ;; TODO: return just the view
       {:id application-id
        :view (build-application-view events {:forms get-form
-                                             :catalogue-items get-catalogue-item})
+                                             :catalogue-items get-catalogue-item
+                                             :licenses get-license})
        :events events})))
 
 (defn- transform-v2-to-v1 [application events]
@@ -413,13 +478,24 @@
      :licenses (map (fn [license]
                       {:id (:license/id license)
                        :type "license"
-                       :licensetype nil ; TODO
-                       :title nil ; TODO
-                       :start nil ; TODO
-                       :end nil ; TODO
+                       :licensetype (name (:license/type license))
+                       ;; TODO: Licenses have three different start times: license.start, workflow_licenses.start, resource_licenses.start
+                       ;;       (also catalogue_item_application_licenses.start but that table looks unused)
+                       ;;       The old API returns either workflow_licenses.start or resource_licenses.start,
+                       ;;       the new one returns license.start for now. Should we keep all three or simplify?
+                       :start (:license/start license)
+                       :end (:license/end license)
                        :approved (:license/accepted license)
-                       :textcontent nil ; TODO
-                       :localizations nil}) ; TODO
+                       :title (:default (:license/title license))
+                       :textcontent (:default (or (:license/link license)
+                                                  (:license/text license)))
+                       :localizations (into {} (for [lang (-> (set (concat (keys (:license/title license))
+                                                                           (keys (:license/link license))
+                                                                           (keys (:license/text license))))
+                                                              (disj :default))]
+                                                 [lang {:title (get-in license [:license/title lang])
+                                                        :textcontent (or (get-in license [:license/link lang])
+                                                                         (get-in license [:license/text lang]))}]))})
                     (:application/licenses application))
      :phases [] ; TODO
      :title "" ; TODO
@@ -431,8 +507,8 @@
                     :maxlength (:field/max-length field)
                     :value (:field/value field)
                     :previous-value nil ; TODO
-                    :localizations (into {} (for [lang (distinct (concat (keys (:field/title field))
-                                                                         (keys (:field/placeholder field))))]
+                    :localizations (into {} (for [lang (set (concat (keys (:field/title field))
+                                                                    (keys (:field/placeholder field))))]
                                               [lang {:title (get-in field [:field/title lang])
                                                      :inputprompt (get-in field [:field/placeholder lang])}]))})
                  (:form/fields application))}))
