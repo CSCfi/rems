@@ -176,12 +176,18 @@
                        :field/optional (:optional item)
                        :field/options (:options item)
                        :field/max-length (:maxlength item)})
-                    (:items form))]
+                    (:items form))
+        fields (merge-lists-by :field/id
+                               fields
+                               (:form/fields application))
+        description (->> fields
+                         (filter #(= :description (:field/type %)))
+                         first
+                         :field/value)]
     (assoc application
            :form/title (:title form)
-           :form/fields (merge-lists-by :field/id
-                                        fields
-                                        (:form/fields application)))))
+           :form/fields fields
+           :application/description description)))
 
 (defn- assoc-resources [application catalogue-items]
   (let [resources (->> catalogue-items
@@ -252,7 +258,7 @@
                                         :optional false
                                         :options []
                                         :maxlength 100
-                                        :type "text"}
+                                        :type "description"}
                                        {:id 42
                                         :localizations {:en {:title "en title"
                                                              :inputprompt "en placeholder"}
@@ -360,11 +366,12 @@
                                                  :license/text {:en "en license text"
                                                                 :fi "fi license text"
                                                                 :default "non-localized license text"}}]
+                         :application/description ""
                          :form/id 40
                          :form/title "form title"
                          :form/fields [{:field/id 41
                                         :field/value ""
-                                        :field/type :text
+                                        :field/type :description
                                         :field/title {:en "en title" :fi "fi title"}
                                         :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
                                         :field/optional false
@@ -412,6 +419,7 @@
                  (assoc-in [:application/modified] (DateTime. 2000))
                  (assoc-in [:application/licenses 0 :license/accepted] true)
                  (assoc-in [:application/licenses 1 :license/accepted] true)
+                 (assoc-in [:application/description] "foo")
                  (assoc-in [:form/fields 0 :field/value] "foo")
                  (assoc-in [:form/fields 1 :field/value] "bar"))
              (build-application-view
@@ -495,7 +503,7 @@
                     :start (:application/created application)
                     :last-modified (:application/modified application)
                     :state (:workflow/state application) ; TODO: round-based workflows
-                    :description nil ; TODO
+                    :description (:application/description application)
                     :catalogue-items catalogue-items
                     :form-contents {:items (into {} (for [field (:form/fields application)]
                                                       [(:field/id field) (:field/value field)]))
