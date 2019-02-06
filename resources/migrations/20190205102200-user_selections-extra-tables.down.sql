@@ -1,4 +1,4 @@
-CREATE TABLE public.user_selections (
+CREATE TABLE user_selections (
 	id serial NOT NULL,
 	actionid int8 NOT NULL,
 	groupid int4 NOT NULL,
@@ -8,7 +8,7 @@ CREATE TABLE public.user_selections (
 	CONSTRAINT user_selections_pkey PRIMARY KEY (id)
 );
 --;;
-CREATE TABLE public.user_selection_names (
+CREATE TABLE user_selection_names (
 	id serial NOT NULL,
 	actionid int8 NOT NULL,
 	groupid int4 NOT NULL,

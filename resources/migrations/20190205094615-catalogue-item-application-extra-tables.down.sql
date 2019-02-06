@@ -1,4 +1,4 @@
-CREATE TABLE public.catalogue_item_application_free_comment_values (
+CREATE TABLE catalogue_item_application_free_comment_values (
 	id serial NOT NULL,
 	userid varchar(255) NOT NULL,
 	catappid int4 NULL,
@@ -10,7 +10,7 @@ CREATE TABLE public.catalogue_item_application_free_comment_values (
 	CONSTRAINT catalogue_item_application_free_comment_values_ibfk_1 FOREIGN KEY (catappid) REFERENCES catalogue_item_application(id)
 );
 --;;
-CREATE TABLE public.catalogue_item_application_members (
+CREATE TABLE catalogue_item_application_members (
 	id serial NOT NULL,
 	catappid int4 NULL,
 	memberuserid varchar(255) NOT NULL,
@@ -21,7 +21,7 @@ CREATE TABLE public.catalogue_item_application_members (
 	CONSTRAINT catalogue_item_application_members_ibfk_1 FOREIGN KEY (catappid) REFERENCES catalogue_item_application(id)
 );
 --;;
-CREATE TABLE public.catalogue_item_application_metadata (
+CREATE TABLE catalogue_item_application_metadata (
 	id serial NOT NULL,
 	userid varchar(255) NOT NULL,
 	catappid int4 NULL,
@@ -33,7 +33,7 @@ CREATE TABLE public.catalogue_item_application_metadata (
 	CONSTRAINT catalogue_item_application_metadata_ibfk_1 FOREIGN KEY (catappid) REFERENCES catalogue_item_application(id)
 );
 --;;
-CREATE TABLE public.catalogue_item_application_predecessor (
+CREATE TABLE catalogue_item_application_predecessor (
 	id serial NOT NULL,
 	pre_catappid int4 NULL,
 	suc_catappid int4 NULL,
