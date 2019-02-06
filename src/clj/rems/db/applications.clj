@@ -147,7 +147,7 @@
   (or (is-actor? user-id (actors/get-by-role application-id role))
       (is-dynamic-handler? user-id (get-application-state application-id))))
 
-(defn- can-approve? [user-id application]
+(defn can-approve? [user-id application]
   (assert user-id)
   (assert application)
   (can-act-as? user-id application "approver"))
@@ -175,7 +175,7 @@
   ([user round application]
    (is-third-party-reviewer? user (update application :events (fn [events] (filter #(= round (:round %)) events))))))
 
-(defn- can-third-party-review?
+(defn can-third-party-review?
   "Checks if the current user can perform a 3rd party review action on the current round for the given application."
   [user-id application]
   (and (= "applied" (:state application))
@@ -247,7 +247,7 @@
         (is-commenter? user-id application)
         (is-decider? user-id application))))
 
-(defn- can-close? [user-id application]
+(defn can-close? [user-id application]
   (assert user-id)
   (assert application)
   (let [application-id (:id application)]
@@ -256,7 +256,7 @@
         (and (is-applicant? user-id application)
              (not= "closed" (:state application))))))
 
-(defn- can-withdraw? [user-id application]
+(defn can-withdraw? [user-id application]
   (assert user-id)
   (assert application)
   (and (is-applicant? user-id application)

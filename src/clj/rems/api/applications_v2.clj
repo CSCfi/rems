@@ -31,6 +31,8 @@
          :form/fields []
          :workflow/id (:workflow/id event)
          :workflow/type (:workflow/type event)
+         ;; TODO: or would :workflow.dynamic/state be more appropriate?
+         :workflow/state :rems.workflow.dynamic/draft ; TODO
          :workflow.dynamic/handlers (:workflow.dynamic/handlers event)))
 
 
@@ -379,6 +381,7 @@
                          ;; TODO: workflow details (e.g. allowed commands)
                          :workflow/id 50
                          :workflow/type :dynamic
+                         :workflow/state :rems.workflow.dynamic/draft
                          :workflow.dynamic/handlers ["handler"]}
 
         ;; test double events
@@ -452,7 +455,15 @@
                                              :users get-user})
        :events events})))
 
-(defn- transform-v2-to-v1 [application events]
+(defn- assoc-derived-data [user-id application]
+  (assoc application
+         :can-approve? (applications/can-approve? user-id application)
+         :can-close? (applications/can-close? user-id application)
+         :can-withdraw? (applications/can-withdraw? user-id application)
+         :can-third-party-review? (applications/can-third-party-review? user-id application)
+         :is-applicant? (applications/is-applicant? user-id application)))
+
+(defn- transform-v2-to-v1 [application events user-id]
   (let [catalogue-items (map (fn [resource]
                                (applications/translate-catalogue-item
                                 {:id (:catalogue-item/id resource)
@@ -473,33 +484,31 @@
      :title (:form/title application)
      :catalogue-items catalogue-items
      :applicant-attributes (:application/applicant-attributes application)
-     :application {:id (:application/id application)
-                   :formid (:form/id application)
-                   :wfid (:workflow/id application)
-                   :applicantuserid (:application/applicant application)
-                   :start (:application/created application)
-                   :last-modified (:application/modified application)
-                   :state nil ; TODO
-                   :description nil ; TODO
-                   :catalogue-items catalogue-items
-                   :form-contents {:items (into {} (for [field (:form/fields application)]
-                                                     [(:field/id field) (:field/value field)]))
-                                   :licenses (into {} (for [license (:application/licenses application)]
-                                                        (when (:license/accepted license)
-                                                          [(:license/id license) "approved"])))}
-                   :events [] ; TODO
-                   :dynamic-events events ; TODO: remove this, it exposes too much information
-                   :workflow {:type (:workflow/type application)
-                              ;; TODO: add :handlers only when it exists? https://stackoverflow.com/a/16375390
-                              :handlers (:workflow.dynamic/handlers application)}
-                   :possible-commands [] ; TODO
-                   :fnlround nil ; TODO
-                   :review-type nil ; TODO
-                   :is-applicant? nil ; TODO
-                   :can-approve? nil ; TODO
-                   :can-third-party-review? nil ; TODO
-                   :can-withdraw? nil ; TODO
-                   :can-close? nil} ; TODO
+     :application (assoc-derived-data
+                   user-id
+                   {:id (:application/id application)
+                    :formid (:form/id application)
+                    :wfid (:workflow/id application)
+                    :applicantuserid (:application/applicant application)
+                    :start (:application/created application)
+                    :last-modified (:application/modified application)
+                    :state (:workflow/state application) ; TODO: round-based workflows
+                    :description nil ; TODO
+                    :catalogue-items catalogue-items
+                    :form-contents {:items (into {} (for [field (:form/fields application)]
+                                                      [(:field/id field) (:field/value field)]))
+                                    :licenses (into {} (for [license (:application/licenses application)]
+                                                         (when (:license/accepted license)
+                                                           [(:license/id license) "approved"])))}
+                    :events [] ; TODO
+                    :dynamic-events events ; TODO: remove this, it exposes too much information
+                    :workflow {:type (:workflow/type application)
+                               ;; TODO: add :handlers only when it exists? https://stackoverflow.com/a/16375390
+                               :handlers (:workflow.dynamic/handlers application)}
+                    :possible-commands [] ; TODO: (:workflow.dynamic/possible-commands application)
+                    :fnlround 0 ; TODO: round-based workflows
+                    :review-type nil}) ; TODO
+     :phases (applications/get-application-phases (:workflow/state application))
      :licenses (map (fn [license]
                       {:id (:license/id license)
                        :type "license"
@@ -522,7 +531,6 @@
                                                         :textcontent (or (get-in license [:license/link lang])
                                                                          (get-in license [:license/text lang]))}]))})
                     (:application/licenses application))
-     :phases [] ; TODO
      :items (map (fn [field]
                    {:id (:field/id field)
                     :type (name (:field/type field))
@@ -539,4 +547,4 @@
 
 (defn api-get-application-v1 [user-id application-id]
   (let [v2 (api-get-application-v2 user-id application-id)]
-    (transform-v2-to-v1 (:view v2) (:events v2))))
+    (transform-v2-to-v1 (:view v2) (:events v2) user-id)))
