@@ -1,5 +1,8 @@
 (ns rems.api.applications-v2
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clj-time.core :as time]
+            [clojure.set :as set]
+            [clojure.test :refer [deftest is testing]]
+            [clojure.tools.logging :as log]
             [medley.core :refer [map-vals]]
             [mount.core :refer [defstate]]
             [rems.db.applications :as applications]
@@ -7,9 +10,7 @@
             [rems.db.form :as form]
             [rems.db.licenses :as licenses]
             [rems.db.users :as users]
-            [rems.workflow.dynamic :as dynamic]
-            [clojure.tools.logging :as log]
-            [clj-time.core :as time])
+            [rems.workflow.dynamic :as dynamic])
   (:import (org.joda.time DateTime)))
 
 ;;; user permissions
@@ -79,6 +80,53 @@
              (-> {}
                  (update-grants {"user" [:foo :bar]})
                  (update-grants {"user" nil})))))))
+
+(defn user-permissions [application user-id]
+  (let [applicant? (= user-id (:application/applicant application))
+        handler? (contains? (:workflow.dynamic/handlers application) user-id)
+        permissions (remove nil?
+                            [(get-in application [:permissions/by-user user-id])
+                             (when applicant?
+                               (get-in application [:permissions/by-role :applicant]))
+                             (when handler?
+                               (get-in application [:permissions/by-role :handler]))])]
+    (if (empty? permissions)
+      nil
+      (apply set/union permissions))))
+
+(deftest test-user-permissions
+  (testing "not authorized"
+    (is (= nil
+           (user-permissions {}
+                             "user"))))
+  (testing "read-only access"
+    (is (= #{}
+           (user-permissions {:permissions/by-user {"user" #{}}}
+                             "user"))))
+  (testing "user permissions"
+    (is (= #{:foo}
+           (user-permissions {:permissions/by-user {"user" #{:foo}}}
+                             "user"))))
+  (testing "applicant permissions"
+    (is (= #{:foo}
+           (user-permissions {:application/applicant "user"
+                              :permissions/by-role {:applicant #{:foo}}}
+                             "user"))))
+  (testing "handler permissions"
+    (is (= #{:foo}
+           (user-permissions {:workflow.dynamic/handlers #{"user"}
+                              :permissions/by-role {:handler #{:foo}}}
+                             "user"))))
+  (testing "combined permissions from multiple roles"
+    (let [application {:application/applicant "user"
+                       :workflow.dynamic/handlers #{"user"}
+                       :permissions/by-user {"user" #{:foo}}
+                       :permissions/by-role {:applicant #{:bar}
+                                             :handler #{:gazonk}}}]
+      (is (= #{:foo :bar :gazonk}
+             (user-permissions application "user")))
+      (is (= nil
+             (user-permissions application "wrong user"))))))
 
 ;;;; v2 API, pure application data
 
@@ -493,11 +541,10 @@
                                         :field/optional false
                                         :field/options []
                                         :field/max-length 100}]
-                         ;; TODO: workflow details (e.g. allowed commands)
                          :workflow/id 50
                          :workflow/type :dynamic
                          :workflow/state :rems.workflow.dynamic/draft
-                         :workflow.dynamic/handlers ["handler"]
+                         :workflow.dynamic/handlers #{"handler"}
                          :permissions/by-role {:applicant #{::dynamic/add-member
                                                             ::dynamic/save-draft
                                                             ::dynamic/submit}}}
@@ -517,7 +564,7 @@
                        :form/id 40
                        :workflow/id 50
                        :workflow/type :dynamic
-                       :workflow.dynamic/handlers ["handler"]}]
+                       :workflow.dynamic/handlers #{"handler"}}]
 
     (testing "new application"
       (is (= new-application
@@ -591,12 +638,14 @@
                 :get-user get-user})
 
 (defn api-get-application-v2 [user-id application-id]
-  ;; TODO: check user permissions, hide sensitive information
   (let [events (applications/get-dynamic-application-events application-id)]
     (when (not (empty? events))
-      ;; TODO: return just the application (events are for now needed for v1 transformation)
-      {:application (build-application-view events externals)
-       :events events})))
+      (let [application (build-application-view events externals)]
+        (when (user-permissions application user-id)
+          ;; TODO: hide sensitive information from applicant
+          ;; TODO: return just the application (events are for now needed for v1 transformation)
+          {:application application
+           :events events})))))
 
 ;;; v1 API compatibility layer
 
@@ -606,10 +655,7 @@
          :can-close? (applications/can-close? user-id application)
          :can-withdraw? (applications/can-withdraw? user-id application)
          :can-third-party-review? (applications/can-third-party-review? user-id application)
-         :is-applicant? (applications/is-applicant? user-id application)
-         ;; TODO: calculate possible commands purely from the events, to avoid couping to v1 API
-         ;; TODO: replicate rems.workflow.dynamic/test-possible-commands, make the projection create a mapping from users to possible commands
-         :possible-commands (dynamic/possible-commands user-id application)))
+         :is-applicant? (applications/is-applicant? user-id application)))
 
 (defn- transform-v2-to-v1 [application events user-id]
   (let [catalogue-items (map (fn [resource]
@@ -652,7 +698,8 @@
                     :dynamic-events (:application/events application)
                     :workflow {:type (:workflow/type application)
                                ;; TODO: add :handlers only when it exists? https://stackoverflow.com/a/16375390
-                               :handlers (:workflow.dynamic/handlers application)}
+                               :handlers (vec (:workflow.dynamic/handlers application))}
+                    :possible-commands (user-permissions application user-id)
                     :fnlround 0 ; TODO: round-based workflows
                     :review-type nil}) ; TODO: round-based workflows
      :phases (applications/get-application-phases (:workflow/state application))
@@ -693,7 +740,7 @@
                  (:form/fields application))}))
 
 (defn api-get-application-v1 [user-id application-id]
-  (let [v2 (api-get-application-v2 user-id application-id)]
+  (when-let [v2 (api-get-application-v2 user-id application-id)]
     (transform-v2-to-v1 (:application v2) (:events v2) user-id)))
 
 ;;; v2 API, listing all applications
@@ -736,10 +783,10 @@
   :stop (future-cancel projection-updater))
 
 (defn get-user-applications-v2 [user-id]
-  ;; TODO: filter by user
   (->> (vals (:applications @projection-state))
        ;; TODO: not all events in test data have the created event, so they must be filtered out
        (filter :application/id)
+       (filter #(user-permissions % user-id))
        ;; TODO: do this eagerly for caching? would need to make assoc-externals idempotent
        (map #(assoc-externals % externals))
        ;; remove unnecessary data from summmary

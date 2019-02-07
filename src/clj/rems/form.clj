@@ -108,7 +108,7 @@
                                               :form/id (:formid (first items))
                                               :workflow/id (:wfid (first items))
                                               :workflow/type (get-in application [:workflow :type])
-                                              :workflow.dynamic/handlers (get-in application [:workflow :handlers])})))
+                                              :workflow.dynamic/handlers (set (get-in application [:workflow :handlers]))})))
         (if-let [error (applications/dynamic-command! {:type :rems.workflow.dynamic/save-draft
                                                        :actor actor
                                                        :application-id application-id

@@ -86,7 +86,7 @@
          :workflow/id s/Int
          ;; TODO: separate workflow specific data to a new event or make this an open schema?
          :workflow/type s/Keyword
-         :workflow.dynamic/handlers [s/Str]))
+         :workflow.dynamic/handlers #{s/Str}))
 (s/defschema DecidedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/decided)
