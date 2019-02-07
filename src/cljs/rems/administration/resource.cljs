@@ -3,7 +3,7 @@
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [inline-info-field]]
-            [rems.atoms :refer [external-link info-field readonly-checkbox]]
+            [rems.atoms :refer [attachment-link external-link readonly-checkbox]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [andstr]]
             [rems.spinner :as spinner]
@@ -60,6 +60,15 @@
                     [inline-info-field (str (text :t.create-license/external-link)
                                             " "
                                             (str/upper-case (name langcode))) [:a {:target :_blank :href (:textcontent localization)} (:textcontent localization) " " [external-link]]]))
+                (when (= "attachment" (:licensetype license))
+                  (for [[langcode localization] (:localizations license)]
+                    (when (:attachment-id localization)
+                      [inline-info-field
+                       (str (text :t.create-license/license-attachment)
+                            " "
+                            (str/upper-case (name langcode)))
+                       [attachment-link (:attachment-id localization) (:title localization)]
+                       {:no-box? true}])))
                 [[inline-info-field (text :t.administration/start) (localize-time (:start license))]
                  [inline-info-field (text :t.administration/end) (localize-time (:end license))]])))
 

@@ -3,7 +3,9 @@
   (:require [clj-time.core :as time]
             [rems.db.core :as db]
             [rems.common-util :refer [distinct-by]]
-            [rems.util :refer [getx-user-id]]))
+            [rems.util :refer [getx-user-id]]
+            [clojure.tools.logging :as log])
+  (:import (java.io FileInputStream ByteArrayOutputStream)))
 
 (defn- format-license [license]
   {:id (:id license)
@@ -12,7 +14,9 @@
    :end (:endt license)
    ;; TODO why do licenses have a non-localized title & content while items don't?
    :title (:title license)
-   :textcontent (:textcontent license)})
+   :textcontent (:textcontent license)
+   :attachment-id (:attachmentid license)})
+
 (defn- format-licenses [licenses]
   (mapv format-license licenses))
 
@@ -23,8 +27,10 @@
 
 (defn- localize-license [localizations license]
   (assoc license :localizations
-         (into {} (for [{:keys [langcode title textcontent]} (get localizations (:id license))]
-                    [langcode {:title title :textcontent textcontent}]))))
+         (into {} (for [{:keys [langcode title textcontent attachmentid]} (get localizations (:id license))]
+                    [langcode {:title title
+                               :textcontent textcontent
+                               :attachment-id attachmentid}]))))
 
 (defn- localize-licenses [licenses]
   (mapv (partial localize-license (get-license-localizations)) licenses))
@@ -74,16 +80,34 @@
        (filter (fn [license] (db/now-active? now (:start license) (:end license))))
        (distinct-by :id)))
 
-(defn create-license! [{:keys [title licensetype textcontent localizations]}]
+(defn create-license! [{:keys [title licensetype textcontent localizations attachment-id]}]
   (let [license (db/create-license! {:owneruserid (getx-user-id)
                                      :modifieruserid (getx-user-id)
                                      :type licensetype
                                      :title title
-                                     :textcontent textcontent})
+                                     :textcontent textcontent
+                                     :attachmentId attachment-id})
         licid (:id license)]
     (doseq [[langcode localization] localizations]
       (db/create-license-localization! {:licid licid
                                         :langcode (name langcode)
                                         :title (:title localization)
-                                        :textcontent (:textcontent localization)}))
+                                        :textcontent (:textcontent localization)
+                                        :attachmentId (:attachment-id localization)}))
     {:id licid}))
+
+(defn create-license-attachment! [{:keys [tempfile filename content-type]} user-id]
+  (let [byte-array (with-open [input (FileInputStream. tempfile)
+                               buffer (ByteArrayOutputStream.)]
+                     (clojure.java.io/copy input buffer)
+                     (.toByteArray buffer))]
+    (select-keys
+     (db/create-license-attachment! {:user user-id
+                                     :filename filename
+                                     :type content-type
+                                     :data byte-array})
+     [:id])))
+
+(defn remove-license-attachment!
+  [attachment-id]
+  (db/remove-license-attachment! {:id attachment-id}))

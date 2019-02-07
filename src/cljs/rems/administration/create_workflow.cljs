@@ -166,7 +166,8 @@
                        :label (text :t.create-workflow/title)}])
 
 (defn- workflow-type-field []
-  [radio-button-group context {:keys [:type]
+  [radio-button-group context {:id :workflow-type
+                               :keys [:type]
                                :orientation :horizontal
                                :options (concat [{:value :auto-approve
                                                   :label (text :t.create-workflow/auto-approve-workflow)}]
@@ -176,7 +177,8 @@
                                                   :label (text :t.create-workflow/rounds-workflow)}])}])
 
 (defn- round-type-radio-group [round]
-  [radio-button-group context {:keys [:rounds round :type]
+  [radio-button-group context {:id :round-type
+                               :keys [:rounds round :type]
                                :orientation :horizontal
                                :options [{:value :approval
                                           :label (text :t.create-workflow/approval-round)}

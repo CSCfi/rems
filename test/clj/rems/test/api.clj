@@ -34,11 +34,17 @@
                            (slurp (:body response)))}))
   response)
 
+(defn assert-response-is-server-error? [response]
+  (assert (= 500 (:status response))))
+
 (defn response-is-unauthorized? [response]
   (= 401 (:status response)))
 
 (defn response-is-forbidden? [response]
   (= 403 (:status response)))
+
+(defn response-is-not-found? [response]
+  (= 404 (:status response)))
 
 (defn coll-is-not-empty? [data]
   (and (coll? data)
