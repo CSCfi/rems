@@ -139,6 +139,7 @@
   (-> application
       (assoc :application/id (:application/id event)
              :application/created (:event/time event)
+             :application/modified (:event/time event)
              :application/applicant (:event/actor event)
              :application/resources (map (fn [resource]
                                            {:catalogue-item/id (:catalogue-item/id resource)
@@ -168,7 +169,8 @@
 (defmethod application-view :application.event/draft-saved
   [application event]
   (-> application
-      (assoc :form/fields (map (fn [[field-id value]]
+      (assoc :application/modified (:event/time event)
+             :form/fields (map (fn [[field-id value]]
                                  {:field/id field-id
                                   :field/value value})
                                (:application/field-values event)))
@@ -245,7 +247,7 @@
 (defn- application-view-common
   [application event]
   (-> application
-      (assoc :application/modified (:event/time event))
+      (assoc :application/last-activity (:event/time event))
       (update :application/events log-event event)))
 
 (defn- update-application-view [application event]
@@ -479,6 +481,7 @@
         new-application {:application/id 1
                          :application/created (DateTime. 1000)
                          :application/modified (DateTime. 1000)
+                         :application/last-activity (DateTime. 1000)
                          :application/applicant "applicant"
                          :application/applicant-attributes {"eppn" "applicant"
                                                             "mail" "applicant@example.com"
@@ -576,6 +579,7 @@
     (testing "draft saved"
       (is (= (-> new-application
                  (assoc-in [:application/modified] (DateTime. 2000))
+                 (assoc-in [:application/last-activity] (DateTime. 2000))
                  (assoc-in [:application/licenses 0 :license/accepted] true)
                  (assoc-in [:application/licenses 1 :license/accepted] true)
                  (assoc-in [:application/description] "foo")
@@ -595,7 +599,7 @@
 
     (testing "submitted"
       (is (= (-> new-application
-                 (assoc-in [:application/modified] (DateTime. 2000))
+                 (assoc-in [:application/last-activity] (DateTime. 2000))
                  (assoc-in [:application/events] [{:event/type :application.event/submitted
                                                    :event/time (DateTime. 2000)
                                                    :event/actor "applicant"}])
@@ -689,7 +693,7 @@
                     :wfid (:workflow/id application)
                     :applicantuserid (:application/applicant application)
                     :start (:application/created application)
-                    :last-modified (:application/modified application)
+                    :last-modified (:application/last-activity application)
                     :state (:workflow/state application) ; TODO: round-based workflows
                     :description (:application/description application)
                     :catalogue-items catalogue-items
