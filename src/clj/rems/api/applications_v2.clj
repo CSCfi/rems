@@ -234,20 +234,20 @@
                                                              licenses
                                                              (:application/licenses application)))))
 
-(defn- enrich-application-view [application {:keys [forms catalogue-items licenses users]}]
+(defn- assoc-externals [application {:keys [get-form get-catalogue-item get-license get-user]}]
   (-> application
-      (assoc-form (forms (:form/id application)))
+      (assoc-form (get-form (:form/id application)))
       (assoc-resources (->> (:application/resources application)
                             (map :catalogue-item/id)
-                            (map catalogue-items)))
+                            (map get-catalogue-item)))
       (assoc-licenses (->> (:application/licenses application)
                            (map :license/id)
-                           (map licenses)))
-      (assoc :application/applicant-attributes (users (:application/applicant application)))))
+                           (map get-license)))
+      (assoc :application/applicant-attributes (get-user (:application/applicant application)))))
 
 (defn- build-application-view [events externals]
   (-> (reduce update-application-view nil events)
-      (enrich-application-view externals)))
+      (assoc-externals externals)))
 
 (defn- valid-events [events]
   (doseq [event events]
@@ -255,80 +255,83 @@
   events)
 
 (deftest test-application-view
-  (let [externals {:forms {40 {:id 40
-                               :organization "org"
-                               :title "form title"
-                               :start (DateTime. 100)
-                               :end nil
-                               :items [{:id 41
-                                        :localizations {:en {:title "en title"
-                                                             :inputprompt "en placeholder"}
-                                                        :fi {:title "fi title"
-                                                             :inputprompt "fi placeholder"}}
-                                        :optional false
-                                        :options []
-                                        :maxlength 100
-                                        :type "description"}
-                                       {:id 42
-                                        :localizations {:en {:title "en title"
-                                                             :inputprompt "en placeholder"}
-                                                        :fi {:title "fi title"
-                                                             :inputprompt "fi placeholder"}}
-                                        :optional false
-                                        :options []
-                                        :maxlength 100
-                                        :type "text"}]}}
-                   :catalogue-items {10 {:id 10
-                                         :resource-id 11
-                                         :resid "urn:11"
-                                         :wfid 50
-                                         :formid 40
-                                         :title "non-localized title"
-                                         :localizations {:en {:id 10
-                                                              :langcode :en
-                                                              :title "en title"}
-                                                         :fi {:id 10
-                                                              :langcode :fi
-                                                              :title "fi title"}}
-                                         :start (DateTime. 100)
-                                         :state "enabled"}
-                                     20 {:id 20
-                                         :resource-id 21
-                                         :resid "urn:21"
-                                         :wfid 50
-                                         :formid 40
-                                         :title "non-localized title"
-                                         :localizations {:en {:id 20
-                                                              :langcode :en
-                                                              :title "en title"}
-                                                         :fi {:id 20
-                                                              :langcode :fi
-                                                              :title "fi title"}}
-                                         :start (DateTime. 100)
-                                         :state "enabled"}}
-                   :licenses {30 {:id 30
-                                  :licensetype "link"
+  (let [externals {:get-form {40 {:id 40
+                                  :organization "org"
+                                  :title "form title"
                                   :start (DateTime. 100)
                                   :end nil
-                                  :title "non-localized title"
-                                  :textcontent "http://non-localized-license-link"
-                                  :localizations {:en {:title "en title"
-                                                       :textcontent "http://en-license-link"}
-                                                  :fi {:title "fi title"
-                                                       :textcontent "http://fi-license-link"}}}
-                              31 {:id 31
-                                  :licensetype "text"
-                                  :start (DateTime. 100)
-                                  :end nil
-                                  :title "non-localized title"
-                                  :textcontent "non-localized license text"
-                                  :localizations {:en {:title "en title"
-                                                       :textcontent "en license text"}
-                                                  :fi {:title "fi title"
-                                                       :textcontent "fi license text"}}}}
-                   :users {"applicant" {"eppn" "applicant"
-                                        "mail" "applicant@example.com"
-                                        "commonName" "Applicant"}}}
+                                  :items [{:id 41
+                                           :localizations {:en {:title "en title"
+                                                                :inputprompt "en placeholder"}
+                                                           :fi {:title "fi title"
+                                                                :inputprompt "fi placeholder"}}
+                                           :optional false
+                                           :options []
+                                           :maxlength 100
+                                           :type "description"}
+                                          {:id 42
+                                           :localizations {:en {:title "en title"
+                                                                :inputprompt "en placeholder"}
+                                                           :fi {:title "fi title"
+                                                                :inputprompt "fi placeholder"}}
+                                           :optional false
+                                           :options []
+                                           :maxlength 100
+                                           :type "text"}]}}
+
+                   :get-catalogue-item {10 {:id 10
+                                            :resource-id 11
+                                            :resid "urn:11"
+                                            :wfid 50
+                                            :formid 40
+                                            :title "non-localized title"
+                                            :localizations {:en {:id 10
+                                                                 :langcode :en
+                                                                 :title "en title"}
+                                                            :fi {:id 10
+                                                                 :langcode :fi
+                                                                 :title "fi title"}}
+                                            :start (DateTime. 100)
+                                            :state "enabled"}
+                                        20 {:id 20
+                                            :resource-id 21
+                                            :resid "urn:21"
+                                            :wfid 50
+                                            :formid 40
+                                            :title "non-localized title"
+                                            :localizations {:en {:id 20
+                                                                 :langcode :en
+                                                                 :title "en title"}
+                                                            :fi {:id 20
+                                                                 :langcode :fi
+                                                                 :title "fi title"}}
+                                            :start (DateTime. 100)
+                                            :state "enabled"}}
+
+                   :get-license {30 {:id 30
+                                     :licensetype "link"
+                                     :start (DateTime. 100)
+                                     :end nil
+                                     :title "non-localized title"
+                                     :textcontent "http://non-localized-license-link"
+                                     :localizations {:en {:title "en title"
+                                                          :textcontent "http://en-license-link"}
+                                                     :fi {:title "fi title"
+                                                          :textcontent "http://fi-license-link"}}}
+                                 31 {:id 31
+                                     :licensetype "text"
+                                     :start (DateTime. 100)
+                                     :end nil
+                                     :title "non-localized title"
+                                     :textcontent "non-localized license text"
+                                     :localizations {:en {:title "en title"
+                                                          :textcontent "en license text"}
+                                                     :fi {:title "fi title"
+                                                          :textcontent "fi license text"}}}}
+
+                   :get-user {"applicant" {"eppn" "applicant"
+                                           "mail" "applicant@example.com"
+                                           "commonName" "Applicant"}}}
 
         ;; expected values
         new-application {:application/id 1
@@ -461,10 +464,10 @@
 (defn- get-user [user-id]
   (users/get-user-attributes user-id))
 
-(def externals {:forms get-form
-                :catalogue-items get-catalogue-item
-                :licenses get-license
-                :users get-user})
+(def externals {:get-form get-form
+                :get-catalogue-item get-catalogue-item
+                :get-license get-license
+                :get-user get-user})
 
 (defn api-get-application-v2 [user-id application-id]
   ;; TODO: check user permissions, hide sensitive information
@@ -617,7 +620,7 @@
   (->> (vals (:applications @projection-state))
        ;; TODO: not all events in test data have the created event, so they must be filtered out
        (filter :application/id)
-       ;; TODO: do this eagerly for caching? would need to make enrich-application-view idempotent
-       (map #(enrich-application-view % externals))
+       ;; TODO: do this eagerly for caching? would need to make assoc-externals idempotent
+       (map #(assoc-externals % externals))
        ;; remove unnecessary data from summmary
        (map #(dissoc % :form/fields :application/licenses))))
