@@ -1,8 +1,7 @@
 (ns rems.db.catalogue
   (:require [clojure.core.memoize :as memo]
             [rems.common-util :refer [index-by]]
-            [rems.db.core :as db])
-  (:import (org.postgresql.util PGobject)))
+            [rems.db.core :as db]))
 
 (def +localizations-cache-time-ms+ (* 5 60 1000))
 
@@ -36,9 +35,7 @@
     (localize-catalogue-item item)))
 
 (defn create-catalogue-item! [command]
-  (let [id (:id (db/create-catalogue-item! (merge {:state (doto (PGobject.)
-                                                            (.setType "item_state")
-                                                            (.setValue "disabled"))}
+  (let [id (:id (db/create-catalogue-item! (merge {:state "disabled"}
                                                   (select-keys command [:title :form :resid :wfid]))))]
     (get-localized-catalogue-item id)))
 
