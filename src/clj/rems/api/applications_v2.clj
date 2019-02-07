@@ -770,12 +770,16 @@
 
 (defn update-projection [state]
   (let [from-id (:last-processed-event-id state)
-        events (applications/get-dynamic-application-events-since from-id 100)
+        batch-size 1000
+        events (applications/get-dynamic-application-events-since from-id batch-size)
         until-id (:event/id (last events))]
     (if (empty? events)
       state
       (do
         (log/info "Updating projection from" from-id "until" until-id)
+        (when (= batch-size (count events))
+          ;; there may be more events, so handle the next batch immediately after the current one
+          (send-off projection-state update-projection))
         (assoc state
                :last-processed-event-id until-id
                :applications (apply-events (:applications state) events))))))
