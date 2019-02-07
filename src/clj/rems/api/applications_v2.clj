@@ -643,9 +643,7 @@
       (let [application (build-application-view events externals)]
         (when (user-permissions application user-id)
           ;; TODO: hide sensitive information from applicant
-          ;; TODO: return just the application (events are for now needed for v1 transformation)
-          {:application application
-           :events events})))))
+          application)))))
 
 ;;; v1 API compatibility layer
 
@@ -657,7 +655,7 @@
          :can-third-party-review? (applications/can-third-party-review? user-id application)
          :is-applicant? (applications/is-applicant? user-id application)))
 
-(defn- transform-v2-to-v1 [application events user-id]
+(defn- transform-v2-to-v1 [application user-id]
   (let [catalogue-items (map (fn [resource]
                                (applications/translate-catalogue-item
                                 {:id (:catalogue-item/id resource)
@@ -741,7 +739,7 @@
 
 (defn api-get-application-v1 [user-id application-id]
   (when-let [v2 (api-get-application-v2 user-id application-id)]
-    (transform-v2-to-v1 (:application v2) (:events v2) user-id)))
+    (transform-v2-to-v1 v2 user-id)))
 
 ;;; v2 API, listing all applications
 

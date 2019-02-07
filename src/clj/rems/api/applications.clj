@@ -286,7 +286,7 @@
       :responses {200 {:schema s/Any} ; TODO: add schema once the API has stabilized
                   404 {:schema s/Str :description "Not found"}}
       (when (:dev env) ; TODO: remove feature toggle
-        (if-let [app (:application (api-get-application-v2 (getx-user-id) application-id))]
+        (if-let [app (api-get-application-v2 (getx-user-id) application-id)]
           (ok app)
           (not-found! "not found"))))
 
