@@ -637,13 +637,19 @@
                 :get-license get-license
                 :get-user get-user})
 
+(defn apply-user-permissions [application user-id]
+  (when-let [permissions (user-permissions application user-id)]
+    ;; TODO: hide sensitive information from applicant (most event comments, maybe some events also)
+    (-> application
+        (assoc :permissions/current-user permissions)
+        (dissoc :permissions/by-user
+                :permissions/by-role))))
+
 (defn api-get-application-v2 [user-id application-id]
   (let [events (applications/get-dynamic-application-events application-id)]
     (when (not (empty? events))
-      (let [application (build-application-view events externals)]
-        (when (user-permissions application user-id)
-          ;; TODO: hide sensitive information from applicant
-          application)))))
+      (-> (build-application-view events externals)
+          (apply-user-permissions user-id)))))
 
 ;;; v1 API compatibility layer
 
@@ -697,7 +703,7 @@
                     :workflow {:type (:workflow/type application)
                                ;; TODO: add :handlers only when it exists? https://stackoverflow.com/a/16375390
                                :handlers (vec (:workflow.dynamic/handlers application))}
-                    :possible-commands (user-permissions application user-id)
+                    :possible-commands (:permissions/current-user application)
                     :fnlround 0 ; TODO: round-based workflows
                     :review-type nil}) ; TODO: round-based workflows
      :phases (applications/get-application-phases (:workflow/state application))
@@ -784,7 +790,8 @@
   (->> (vals (:applications @projection-state))
        ;; TODO: not all events in test data have the created event, so they must be filtered out
        (filter :application/id)
-       (filter #(user-permissions % user-id))
+       (map #(apply-user-permissions % user-id))
+       (remove nil?)
        ;; TODO: do this eagerly for caching? would need to make assoc-externals idempotent
        (map #(assoc-externals % externals))
        ;; remove unnecessary data from summmary
