@@ -473,9 +473,8 @@
   ;; TODO: check user permissions, hide sensitive information
   (let [events (applications/get-dynamic-application-events application-id)]
     (when (not (empty? events))
-      ;; TODO: return just the view
-      {:id application-id
-       :view (build-application-view events externals)
+      ;; TODO: return just the application (events are for now needed for v1 transformation)
+      {:application (build-application-view events externals)
        :events events})))
 
 ;;; v1 API compatibility layer
@@ -574,7 +573,7 @@
 
 (defn api-get-application-v1 [user-id application-id]
   (let [v2 (api-get-application-v2 user-id application-id)]
-    (transform-v2-to-v1 (:view v2) (:events v2) user-id)))
+    (transform-v2-to-v1 (:application v2) (:events v2) user-id)))
 
 ;;; v2 API, listing all applications
 
