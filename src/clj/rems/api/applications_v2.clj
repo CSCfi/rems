@@ -12,6 +12,74 @@
             [clj-time.core :as time])
   (:import (org.joda.time DateTime)))
 
+;;; user permissions
+
+(defn update-grants [application grants]
+  (reduce (fn [application [subject permissions]]
+            (let [category (cond
+                             (keyword? subject) :permissions/by-role
+                             (string? subject) :permissions/by-user)]
+              (if (nil? permissions)
+                (update application category dissoc subject)
+                (assoc-in application [category subject] (set permissions)))))
+          application
+          grants))
+
+(deftest test-update-grants
+  (testing "role-specific permissions"
+    (is (= {:permissions/by-role {:role #{:foo :bar}}}
+           (-> {}
+               (update-grants {:role [:foo :bar]}))))
+    (testing "updating"
+      (is (= {:permissions/by-role {:role #{:gazonk}}}
+             (-> {}
+                 (update-grants {:role [:foo :bar]})
+                 (update-grants {:role [:gazonk]})))))
+    (testing "removing"
+      (is (= {:permissions/by-role {:role #{}}}
+             (-> {}
+                 (update-grants {:role [:foo :bar]})
+                 (update-grants {:role []}))))
+      (is (= {:permissions/by-role {}}
+             (-> {}
+                 (update-grants {:role [:foo :bar]})
+                 (update-grants {:role nil}))))))
+
+  (testing "multiple roles"
+    (is (= {:permissions/by-role {:role-1 #{:foo}
+                                  :role-2 #{:bar}}}
+           (-> {}
+               (update-grants {:role-1 [:foo]
+                               :role-2 [:bar]}))))
+    (testing "updating"
+      (is (= {:permissions/by-role {:role-1 #{:foo}
+                                    :role-2 #{:xyz}}}
+             (-> {}
+                 (update-grants {:role-1 [:foo]
+                                 :role-2 [:bar]})
+                 (update-grants {:role-2 [:xyz]})))))
+    (testing "removing"
+      (is (= {:permissions/by-role {:role-1 #{:foo}}}
+             (-> {}
+                 (update-grants {:role-1 [:foo]
+                                 :role-2 [:bar]})
+                 (update-grants {:role-2 nil}))))))
+
+  (testing "user-specific permissions"
+    (is (= {:permissions/by-user {"user" #{:foo :bar}}}
+           (-> {}
+               (update-grants {"user" [:foo :bar]}))))
+    (testing "updating"
+      (is (= {:permissions/by-user {"user" #{:gazonk}}}
+             (-> {}
+                 (update-grants {"user" [:foo :bar]})
+                 (update-grants {"user" [:gazonk]})))))
+    (testing "removing"
+      (is (= {:permissions/by-user {}}
+             (-> {}
+                 (update-grants {"user" [:foo :bar]})
+                 (update-grants {"user" nil})))))))
+
 ;;;; v2 API, pure application data
 
 (defmulti ^:private application-view
@@ -20,27 +88,29 @@
 
 (defmethod application-view :application.event/created
   [application event]
-  (assoc application
-         :application/id (:application/id event)
-         :application/created (:event/time event)
-         :application/applicant (:event/actor event)
-         :application/resources (map (fn [resource]
-                                       {:catalogue-item/id (:catalogue-item/id resource)
-                                        :resource/ext-id (:resource/ext-id resource)})
-                                     (:application/resources event))
-         :application/licenses (map (fn [license]
-                                      {:license/id (:license/id license)
-                                       :license/accepted false})
-                                    (:application/licenses event))
-         :application/events []
-         :form/id (:form/id event)
-         :form/fields []
-         :workflow/id (:workflow/id event)
-         :workflow/type (:workflow/type event)
-         ;; TODO: or would :workflow.dynamic/state be more appropriate?
-         :workflow/state :rems.workflow.dynamic/draft ; TODO
-         :workflow.dynamic/handlers (:workflow.dynamic/handlers event)))
-
+  (-> application
+      (assoc :application/id (:application/id event)
+             :application/created (:event/time event)
+             :application/applicant (:event/actor event)
+             :application/resources (map (fn [resource]
+                                           {:catalogue-item/id (:catalogue-item/id resource)
+                                            :resource/ext-id (:resource/ext-id resource)})
+                                         (:application/resources event))
+             :application/licenses (map (fn [license]
+                                          {:license/id (:license/id license)
+                                           :license/accepted false})
+                                        (:application/licenses event))
+             :application/events []
+             :form/id (:form/id event)
+             :form/fields []
+             :workflow/id (:workflow/id event)
+             :workflow/type (:workflow/type event)
+             ;; TODO: or would :workflow.dynamic/state be more appropriate?
+             :workflow/state :rems.workflow.dynamic/draft ; TODO
+             :workflow.dynamic/handlers (:workflow.dynamic/handlers event))
+      (update-grants {:applicant #{::dynamic/add-member
+                                   ::dynamic/save-draft
+                                   ::dynamic/submit}})))
 
 (defn- set-accepted-licences [licenses accepted-licenses]
   (map (fn [license]
@@ -63,7 +133,14 @@
 
 (defmethod application-view :application.event/submitted
   [application event]
-  application)
+  (-> application
+      (assoc :workflow/state ::dynamic/submitted)
+      (update-grants {:applicant #{::dynamic/add-member}
+                      :handler #{::dynamic/approve
+                                 ::dynamic/reject
+                                 ::dynamic/return
+                                 ::dynamic/request-decision
+                                 ::dynamic/request-comment}})))
 
 (defmethod application-view :application.event/returned
   [application event]
@@ -420,7 +497,11 @@
                          :workflow/id 50
                          :workflow/type :dynamic
                          :workflow/state :rems.workflow.dynamic/draft
-                         :workflow.dynamic/handlers ["handler"]}
+                         :workflow.dynamic/handlers ["handler"]
+                         :permissions/by-role {:applicant #{::dynamic/add-member
+                                                            ::dynamic/save-draft
+                                                            ::dynamic/submit}}}
+
 
         ;; test double events
         created-event {:event/type :application.event/created
@@ -463,6 +544,28 @@
                  :application/field-values {41 "foo"
                                             42 "bar"}
                  :application/accepted-licenses #{30 31}}])
+              externals))))
+
+    (testing "submitted"
+      (is (= (-> new-application
+                 (assoc-in [:application/modified] (DateTime. 2000))
+                 (assoc-in [:application/events] [{:event/type :application.event/submitted
+                                                   :event/time (DateTime. 2000)
+                                                   :event/actor "applicant"}])
+                 (assoc-in [:workflow/state] ::dynamic/submitted)
+                 (assoc-in [:permissions/by-role :applicant] #{::dynamic/add-member})
+                 (assoc-in [:permissions/by-role :handler] #{::dynamic/approve
+                                                             ::dynamic/reject
+                                                             ::dynamic/return
+                                                             ::dynamic/request-decision
+                                                             ::dynamic/request-comment}))
+             (build-application-view
+              (valid-events
+               [created-event
+                {:event/type :application.event/submitted
+                 :event/time (DateTime. 2000)
+                 :event/actor "applicant"
+                 :application/id 42}])
               externals))))))
 
 (defn- get-form [form-id]
