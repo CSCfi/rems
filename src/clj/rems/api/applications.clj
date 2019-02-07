@@ -3,7 +3,7 @@
             [clojure.string :as str]
             [clojure.test :refer [deftest is]]
             [compojure.api.sweet :refer :all]
-            [rems.api.applications-v2 :refer [api-get-application-v2 api-get-application-v1]]
+            [rems.api.applications-v2 :refer [get-user-applications-v2 api-get-application-v2 api-get-application-v1]]
             [rems.api.schema :refer :all]
             [rems.api.util :refer [longify-keys]]
             [rems.config :refer [env]]
@@ -271,6 +271,13 @@
       (if-let [app (api-get-application (getx-user-id) application-id)]
         (ok app)
         (not-found! "not found")))
+
+    (GET "/v2-wip/" []
+      :summary "Get current user's all applications"
+      :roles #{:applicant}
+      :return [s/Any] ; TODO: add schema once the API has stabilized
+      (when (:dev env) ; TODO: remove feature toggle
+        (ok (get-user-applications-v2 (getx-user-id)))))
 
     (GET "/v2-wip/:application-id" []
       :summary "Get application by `application-id`"

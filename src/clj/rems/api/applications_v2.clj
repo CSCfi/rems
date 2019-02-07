@@ -1,13 +1,18 @@
 (ns rems.api.applications-v2
   (:require [clojure.test :refer [deftest is testing]]
             [medley.core :refer [map-vals]]
+            [mount.core :refer [defstate]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.form :as form]
             [rems.db.licenses :as licenses]
             [rems.db.users :as users]
-            [rems.workflow.dynamic :as dynamic])
+            [rems.workflow.dynamic :as dynamic]
+            [clojure.tools.logging :as log]
+            [clj-time.core :as time])
   (:import (org.joda.time DateTime)))
+
+;;;; v2 API, pure application data
 
 (defmulti ^:private application-view
   (fn [_application event] (:event/type event)))
@@ -100,6 +105,13 @@
   [application event]
   (assoc application
          :application/modified (:event/time event)))
+
+(defn- update-application-view [application event]
+  (-> application
+      (application-view event)
+      (application-view-common event)))
+
+;;; v2 API, external entities (form, resources, licenses etc.)
 
 (defn- merge-lists-by
   "Returns a list of merged elements from list1 and list2
@@ -222,22 +234,20 @@
                                                              licenses
                                                              (:application/licenses application)))))
 
-(defn- build-application-view [events {:keys [forms catalogue-items licenses users]}]
-  (let [application (reduce (fn [application event]
-                              (-> application
-                                  (application-view event)
-                                  (application-view-common event)))
-                            {}
-                            events)]
-    (-> application
-        (assoc-form (forms (:form/id application)))
-        (assoc-resources (->> (:application/resources application)
-                              (map :catalogue-item/id)
-                              (map catalogue-items)))
-        (assoc-licenses (->> (:application/licenses application)
-                             (map :license/id)
-                             (map licenses)))
-        (assoc :application/applicant-attributes (users (:application/applicant application))))))
+(defn- enrich-application-view [application {:keys [forms catalogue-items licenses users]}]
+  (-> application
+      (assoc-form (forms (:form/id application)))
+      (assoc-resources (->> (:application/resources application)
+                            (map :catalogue-item/id)
+                            (map catalogue-items)))
+      (assoc-licenses (->> (:application/licenses application)
+                           (map :license/id)
+                           (map licenses)))
+      (assoc :application/applicant-attributes (users (:application/applicant application)))))
+
+(defn- build-application-view [events externals]
+  (-> (reduce update-application-view nil events)
+      (enrich-application-view externals)))
 
 (defn- valid-events [events]
   (doseq [event events]
@@ -451,17 +461,21 @@
 (defn- get-user [user-id]
   (users/get-user-attributes user-id))
 
+(def externals {:forms get-form
+                :catalogue-items get-catalogue-item
+                :licenses get-license
+                :users get-user})
+
 (defn api-get-application-v2 [user-id application-id]
   ;; TODO: check user permissions, hide sensitive information
   (let [events (applications/get-dynamic-application-events application-id)]
     (when (not (empty? events))
       ;; TODO: return just the view
       {:id application-id
-       :view (build-application-view events {:forms get-form
-                                             :catalogue-items get-catalogue-item
-                                             :licenses get-license
-                                             :users get-user})
+       :view (build-application-view events externals)
        :events events})))
+
+;;; v1 API compatibility layer
 
 (defn- assoc-derived-data [user-id application]
   (assoc application
@@ -471,6 +485,7 @@
          :can-third-party-review? (applications/can-third-party-review? user-id application)
          :is-applicant? (applications/is-applicant? user-id application)
          ;; TODO: calculate possible commands purely from the events, to avoid couping to v1 API
+         ;; TODO: replicate rems.workflow.dynamic/test-possible-commands, make the projection create a mapping from users to possible commands
          :possible-commands (dynamic/possible-commands user-id application)))
 
 (defn- transform-v2-to-v1 [application events user-id]
@@ -557,3 +572,52 @@
 (defn api-get-application-v1 [user-id application-id]
   (let [v2 (api-get-application-v2 user-id application-id)]
     (transform-v2-to-v1 (:view v2) (:events v2) user-id)))
+
+;;; v2 API, listing all applications
+
+(defn- apply-event [applications event]
+  (if-let [app-id (:application/id event)] ; old style events don't have :application/id
+    (update applications app-id update-application-view event)
+    applications))
+
+(defn- apply-events [applications events]
+  (reduce apply-event applications events))
+
+(defn- reset-state [_]
+  {:last-processed-event-id 0
+   :applications {}})
+
+(def projection-state (agent (reset-state nil)
+                             :error-handler (fn [_agent exception]
+                                              (log/error exception "Updating projection failed"))))
+(comment
+  @projection-state
+  (send projection-state reset-state))
+
+(defn update-projection [state]
+  (let [from-id (:last-processed-event-id state)
+        events (applications/get-dynamic-application-events-since from-id 100)
+        until-id (:event/id (last events))]
+    (if (empty? events)
+      state
+      (do
+        (log/info "Updating projection from" from-id "until" until-id)
+        (assoc state
+               :last-processed-event-id until-id
+               :applications (apply-events (:applications state) events))))))
+
+(defstate projection-updater
+  :start (future (while (not (Thread/interrupted))
+                   (send-off projection-state update-projection)
+                   (Thread/sleep (-> 60 time/seconds time/in-millis))))
+  :stop (future-cancel projection-updater))
+
+(defn get-user-applications-v2 [user-id]
+  ;; TODO: filter by user
+  (->> (vals (:applications @projection-state))
+       ;; TODO: not all events in test data have the created event, so they must be filtered out
+       (filter :application/id)
+       ;; TODO: do this eagerly for caching? would need to make enrich-application-view idempotent
+       (map #(enrich-application-view % externals))
+       ;; remove unnecessary data from summmary
+       (map #(dissoc % :form/fields :application/licenses))))
