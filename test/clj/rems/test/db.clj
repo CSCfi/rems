@@ -108,8 +108,8 @@
             (is (= 1 (count (:licenses form))))
             (is (= {:title "non-localized license"
                     :textcontent "http://test.org"
-                    :localizations {:fi {:title "Testi lisenssi" :textcontent "http://testi.fi"}
-                                    :en {:title "Test license" :textcontent "http://test.com"}}}
+                    :localizations {:fi {:title "Testi lisenssi" :textcontent "http://testi.fi" :attachment-id nil}
+                                    :en {:title "Test license" :textcontent "http://test.com" :attachment-id nil}}}
                    (select-keys (first (:licenses form)) [:title :textcontent :localizations]))))))
 
       (testing "get partially filled form"

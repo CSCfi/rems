@@ -147,7 +147,7 @@
                                   :draft "Draft"
                                   :rejected "Rejected"
                                   :returned "Returned"
-                                  :submitted "Submitted"}
+                                  :submitted "Applied"}
                  :empty "You don't have any applications."
                  :events {:add-member "Added member"
                           :apply "Applied"
@@ -218,7 +218,9 @@
                 :type-texta "Text area"}
   :create-license {:external-link "External link"
                    :inline-text "Inline text"
+                   :license-attachment "Attachment"
                    :license-text "License text"
+                   :license-type "License type"
                    :link-to-license "Link to the license"
                    :title "License name"}
   :create-resource {:licenses-selection "Licenses"

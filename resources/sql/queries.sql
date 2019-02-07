@@ -364,17 +364,32 @@ WHERE catappid = :catappid AND licid = :licid AND modifieruserid = :actoruserid
 
 -- :name create-license! :insert
 INSERT INTO license
-(ownerUserId, modifierUserId, title, type, textcontent, endt)
+(ownerUserId, modifierUserId, title, type, textcontent, attachmentId, endt)
 VALUES
 (:owneruserid, :modifieruserid, :title, :type::license_type, :textcontent,
+/*~ (if (:attachmentId params) */ :attachmentId, /*~*/ NULL, /*~ ) ~*/
 /*~ (if (:endt params) */ :endt /*~*/ NULL /*~ ) ~*/
 )
 
+-- :name create-license-attachment! :insert
+INSERT INTO license_attachment
+(modifierUserId, filename, type, data)
+VALUES
+(:user, :filename, :type, :data);
+
+-- :name remove-license-attachment! :!
+DELETE FROM license_attachment WHERE id = :id;
+
+-- :name get-license-attachment :? :1
+SELECT filename, type, data FROM license_attachment
+WHERE id = :attachmentId;
+
 -- :name create-license-localization! :insert
 INSERT INTO license_localization
-(licid, langcode, title, textcontent)
+(licid, langcode, title, textcontent, attachmentId)
 VALUES
-(:licid, :langcode, :title, :textcontent)
+(:licid, :langcode, :title, :textcontent,
+/*~ (if (:attachmentId params) */ :attachmentId /*~*/ NULL /*~ ) ~*/)
 
 -- :name create-workflow! :insert
 INSERT INTO workflow
@@ -524,17 +539,17 @@ INNER JOIN resource_licenses rl ON lic.id = rl.licid
 WHERE rl.resid = :id
 
 -- :name get-all-licenses :? :*
-SELECT lic.id, lic.title, lic.type, lic.textcontent, lic.start, lic.endt
+SELECT lic.id, lic.title, lic.type, lic.textcontent, lic.start, lic.endt, lic.attachmentid
 FROM license lic
 
 -- :name get-license :? :1
-SELECT lic.id, lic.title, lic.type, lic.textcontent, lic.start, lic.endt
+SELECT lic.id, lic.title, lic.type, lic.textcontent, lic.start, lic.endt, lic.attachmentid
 , TRUE AS active -- TODO implement active and archiving
 FROM license lic
 WHERE lic.id = :id
 
 -- :name get-license-localizations :? :*
-SELECT licid, langcode, title, textcontent
+SELECT licid, langcode, title, textcontent, attachmentid
 FROM license_localization
 
 -- :name get-roles :? :*

@@ -45,15 +45,24 @@
   Used for e.g. displaying applicant attributes.
 
   Additional options:
-  `:inline?` - puts the label and value on the same row"
-  [title value & [{:keys [inline?] :as opts}]]
+  `:inline?`  - puts the label and value on the same row
+  `:no-box?` - don't wrap the value into a field value box"
+  [title value & [{:keys [inline? no-box?] :as opts}]]
   (if inline?
     [:div.form-group.row
      [:label.col-sm-2.col-form-label title]
-     [:div.col-sm-10.form-control value]]
+     [:div.col-sm-10 (if no-box? {:style {:padding-left 0}} {:class "form-control"}) value]]
     [:div.form-group
      [:label title]
-     [:div.form-control value]]))
+     [:div (if no-box? {:style {:padding-left 0}} {:class "form-control"}) value]]))
+
+(defn attachment-link
+  "Renders link to the attachment with `id` and name `title`."
+  [id title]
+  [:a.btn.btn-secondary.mr-2
+   {:href (str "api/licenses/attachments/" id)
+    :target :_new}
+   title " " [external-link]])
 
 (defn guide []
   [:div
@@ -74,4 +83,7 @@
    (example "info-field with data"
             [info-field "Name" "Bob Tester"])
    (example "info-field inline"
-            [info-field "Name" "Bob Tester" {:inline? true}])])
+            [info-field "Name" "Bob Tester" {:inline? true}])
+   (component-info attachment-link)
+   (example "attachment-link"
+            [attachment-link 1 "my-attachment.pdf"])])

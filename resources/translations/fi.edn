@@ -141,7 +141,7 @@
                                   :member-added "Lisätty jäsen"
                                   :rejected "Hylätty"
                                   :returned "Palautettu muokattavaksi"
-                                  :submitted "Lähtetetty hyväksyttäväksi"}
+                                  :submitted "Haettu"}
                  :dynamic-states {:approved "Hyväksytty"
                                   :closed "Poistettu"
                                   :draft "Luonnos"
@@ -218,7 +218,9 @@
                 :type-texta "Tekstialue"}
   :create-license {:external-link "Linkki"
                    :inline-text "Teksti"
+                   :license-attachment "Liite"
                    :license-text "Lisenssin teksti"
+                   :license-type "Lisenssin tyyppi"
                    :link-to-license "Linkki lisenssiin"
                    :title "Lisenssin nimi"}
   :create-resource {:licenses-selection "Lisenssit"
