@@ -564,17 +564,20 @@ FROM users
 WHERE userId = :user
 
 -- :name get-application-events :? :*
-SELECT
-/*~ (when-not (:application params) */
-  appId,
-/*~ ) ~*/
-  userId, round, event, comment, eventData::TEXT, time
+SELECT id, appId, userId, round, event, comment, eventData::TEXT, time
 FROM application_event
 WHERE 1=1
 /*~ (when (:application params) */
   AND appId = :application
 /*~ ) ~*/
 ORDER BY id ASC
+
+-- :name get-application-events-since :? :*
+SELECT id, eventdata::TEXT
+FROM application_event
+WHERE id > :id
+ORDER BY id ASC
+LIMIT :limit
 
 -- :name add-application-event! :insert
 INSERT INTO application_event (appId, userId, round, event, comment, eventData)

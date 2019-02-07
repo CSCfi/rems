@@ -53,7 +53,8 @@
 ;; TODO: namespaced keys e.g. :event/type, :event/time, :event/actor, :application/id
 ;; TODO: add version number to events
 (s/defschema EventBase
-  {:event/type s/Keyword
+  {(s/optional-key :event/id) s/Int
+   :event/type s/Keyword
    :event/time DateTime
    :event/actor UserId
    :application/id s/Int})

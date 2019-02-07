@@ -304,7 +304,7 @@
              app-events (for [e events
                               :when (= (:id app) (:appid e))]
                           ;; :appid needed only for batching
-                          (dissoc e :appid))]
+                          (dissoc e :appid :id))]
          (assoc (get-application-state app app-events)
                 :formid (:formid (first catalogue-items))
                 :catalogue-items catalogue-items))))))
@@ -784,7 +784,8 @@
 (defn get-application-state
   ([application-id]
    (get-application-state (first (db/get-applications {:id application-id}))
-                          (db/get-application-events {:application application-id})))
+                          (map #(dissoc % :id :appid) ; remove keys not in v1 API
+                               (db/get-application-events {:application application-id}))))
   ([application events]
    (if (not (nil? (:workflow application)))
      (get-dynamic-application-state (:id application))
@@ -995,13 +996,14 @@
     (keyword str)))
 
 (defn json->event [json]
-  ;; most keys are keywords, but some events use numeric keys in maps
-  (let [result (coerce-dynamic-event (cheshire/parse-string json str->keyword-or-number))]
-    (when (schema.utils/error? result)
-      ;; similar exception as what schema.core/validate throws
-      (throw (ex-info (str "Value does not match schema: " (pr-str result))
-                      {:schema dynamic/Event :value json :error result})))
-    result))
+  (when json
+    ;; most keys are keywords, but some events use numeric keys in maps
+    (let [result (coerce-dynamic-event (cheshire/parse-string json str->keyword-or-number))]
+      (when (schema.utils/error? result)
+        ;; similar exception as what schema.core/validate throws
+        (throw (ex-info (str "Value does not match schema: " (pr-str result))
+                        {:schema dynamic/Event :value json :error result})))
+      result)))
 
 (defn validate-dynamic-event [event]
   (s/validate dynamic/Event event))
@@ -1011,10 +1013,14 @@
   (cheshire/generate-string event))
 
 (defn- fix-event-from-db [event]
-  (-> event :eventdata json->event))
+  (assoc (-> event :eventdata json->event)
+         :event/id (:id event)))
 
 (defn get-dynamic-application-events [application-id]
   (map fix-event-from-db (db/get-application-events {:application application-id})))
+
+(defn get-dynamic-application-events-since [event-id limit]
+  (map fix-event-from-db (db/get-application-events-since {:id event-id :limit limit})))
 
 (defn get-dynamic-application-state [application-id]
   (let [application (first (db/get-applications {:id application-id}))

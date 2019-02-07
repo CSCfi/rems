@@ -819,7 +819,8 @@
     (testing "getting dynamic application as applicant"
       (let [data (get-application user-id application-id)]
         (is (= "workflow/dynamic" (get-in data [:application :workflow :type])))
-        (is (= [{:event/type "application.event/submitted"
+        (is (= [{:event/id 19 ; XXX: update if test data changes
+                 :event/type "application.event/submitted"
                  :event/time (str (.getMillis test-data/creation-time))
                  :event/actor user-id
                  :application/id application-id}]
