@@ -286,7 +286,7 @@
       :responses {200 {:schema s/Any} ; TODO: add schema once the API has stabilized
                   404 {:schema s/Str :description "Not found"}}
       (when (:dev env) ; TODO: remove feature toggle
-        (if-let [app (api-get-application-v2 (getx-user-id) application-id)]
+        (if-let [app (:application (api-get-application-v2 (getx-user-id) application-id))]
           (ok app)
           (not-found! "not found"))))
 
@@ -392,5 +392,7 @@
     (binding [context/*lang* :en]
       (doseq [app (applications/get-user-applications user-id)]
         (when (applications/is-dynamic-application? app)
-          (is (= (api-get-application user-id (:id app))
-                 (api-get-application-v1 user-id (:id app)))))))))
+          (is (= (assoc-in (api-get-application user-id (:id app))
+                           [:application :dynamic-events] nil)
+                 (assoc-in (api-get-application-v1 user-id (:id app))
+                           [:application :dynamic-events] nil))))))))

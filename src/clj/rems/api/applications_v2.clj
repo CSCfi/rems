@@ -32,6 +32,7 @@
                                       {:license/id (:license/id license)
                                        :license/accepted false})
                                     (:application/licenses event))
+         :application/events []
          :form/id (:form/id event)
          :form/fields []
          :workflow/id (:workflow/id event)
@@ -101,10 +102,26 @@
          (set (keys (methods application-view))))))
 
 
+(defn- log-event [events event]
+  ;; only include events which are about processing the application
+  (if (contains? #{:application.event/created
+                   :application.event/draft-saved}
+                 (:event/type event))
+    events
+    ;; choose only keys which will be shown in the UI's event log
+    (conj events (select-keys event [:event/type
+                                     :event/time
+                                     :event/actor
+                                     :application/comment
+                                     :application/commenters
+                                     :application/decider
+                                     :application/decision]))))
+
 (defn- application-view-common
   [application event]
-  (assoc application
-         :application/modified (:event/time event)))
+  (-> application
+      (assoc :application/modified (:event/time event))
+      (update :application/events log-event event)))
 
 (defn- update-application-view [application event]
   (-> application
@@ -379,6 +396,7 @@
                                                  :license/text {:en "en license text"
                                                                 :fi "fi license text"
                                                                 :default "non-localized license text"}}]
+                         :application/events []
                          :application/description ""
                          :form/id 40
                          :form/title "form title"
@@ -527,8 +545,8 @@
                                     :licenses (into {} (for [license (:application/licenses application)]
                                                          (when (:license/accepted license)
                                                            [(:license/id license) "approved"])))}
-                    :events [] ; TODO
-                    :dynamic-events events ; TODO: remove this, it exposes too much information
+                    :events [] ; TODO: round-based workflows
+                    :dynamic-events (:application/events application)
                     :workflow {:type (:workflow/type application)
                                ;; TODO: add :handlers only when it exists? https://stackoverflow.com/a/16375390
                                :handlers (:workflow.dynamic/handlers application)}
