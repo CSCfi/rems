@@ -211,7 +211,7 @@
     (accept-license "General Terms of Use")
 
     (send-application)
-    (is (= "State: Submitted" (get-element-text *driver* :application-state)))
+    (is (= "State: Applied" (get-element-text *driver* :application-state)))
 
     (let [application-id (get-application-id)]
       (go-to-applications)
@@ -219,7 +219,7 @@
               :description "Test name"
               :resource "THL catalogue item"
               :applicant "developer"
-              :state "Submitted"}
+              :state "Applied"}
              (get-application-summary application-id))))))
 
 (deftest test-guide-page

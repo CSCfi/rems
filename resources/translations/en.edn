@@ -147,7 +147,7 @@
                                   :draft "Draft"
                                   :rejected "Rejected"
                                   :returned "Returned"
-                                  :submitted "Submitted"}
+                                  :submitted "Applied"}
                  :empty "You don't have any applications."
                  :events {:add-member "Added member"
                           :apply "Applied"

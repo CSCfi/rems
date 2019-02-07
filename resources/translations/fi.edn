@@ -141,7 +141,7 @@
                                   :member-added "Lisätty jäsen"
                                   :rejected "Hylätty"
                                   :returned "Palautettu muokattavaksi"
-                                  :submitted "Lähtetetty hyväksyttäväksi"}
+                                  :submitted "Haettu"}
                  :dynamic-states {:approved "Hyväksytty"
                                   :closed "Poistettu"
                                   :draft "Luonnos"
