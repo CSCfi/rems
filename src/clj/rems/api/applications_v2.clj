@@ -15,7 +15,7 @@
 
 ;;; user permissions
 
-(defn update-grants [application grants]
+(defn- set-permissions [application permission-map]
   (reduce (fn [application [subject permissions]]
             (let [category (cond
                              (keyword? subject) :permissions/by-role
@@ -24,62 +24,62 @@
                 (update application category dissoc subject)
                 (assoc-in application [category subject] (set permissions)))))
           application
-          grants))
+          permission-map))
 
-(deftest test-update-grants
+(deftest test-set-permissions
   (testing "role-specific permissions"
     (is (= {:permissions/by-role {:role #{:foo :bar}}}
            (-> {}
-               (update-grants {:role [:foo :bar]}))))
+               (set-permissions {:role [:foo :bar]}))))
     (testing "updating"
       (is (= {:permissions/by-role {:role #{:gazonk}}}
              (-> {}
-                 (update-grants {:role [:foo :bar]})
-                 (update-grants {:role [:gazonk]})))))
+                 (set-permissions {:role [:foo :bar]})
+                 (set-permissions {:role [:gazonk]})))))
     (testing "removing"
       (is (= {:permissions/by-role {:role #{}}}
              (-> {}
-                 (update-grants {:role [:foo :bar]})
-                 (update-grants {:role []}))))
+                 (set-permissions {:role [:foo :bar]})
+                 (set-permissions {:role []}))))
       (is (= {:permissions/by-role {}}
              (-> {}
-                 (update-grants {:role [:foo :bar]})
-                 (update-grants {:role nil}))))))
+                 (set-permissions {:role [:foo :bar]})
+                 (set-permissions {:role nil}))))))
 
   (testing "multiple roles"
     (is (= {:permissions/by-role {:role-1 #{:foo}
                                   :role-2 #{:bar}}}
            (-> {}
-               (update-grants {:role-1 [:foo]
-                               :role-2 [:bar]}))))
+               (set-permissions {:role-1 [:foo]
+                                 :role-2 [:bar]}))))
     (testing "updating"
       (is (= {:permissions/by-role {:role-1 #{:foo}
                                     :role-2 #{:xyz}}}
              (-> {}
-                 (update-grants {:role-1 [:foo]
-                                 :role-2 [:bar]})
-                 (update-grants {:role-2 [:xyz]})))))
+                 (set-permissions {:role-1 [:foo]
+                                   :role-2 [:bar]})
+                 (set-permissions {:role-2 [:xyz]})))))
     (testing "removing"
       (is (= {:permissions/by-role {:role-1 #{:foo}}}
              (-> {}
-                 (update-grants {:role-1 [:foo]
-                                 :role-2 [:bar]})
-                 (update-grants {:role-2 nil}))))))
+                 (set-permissions {:role-1 [:foo]
+                                   :role-2 [:bar]})
+                 (set-permissions {:role-2 nil}))))))
 
   (testing "user-specific permissions"
     (is (= {:permissions/by-user {"user" #{:foo :bar}}}
            (-> {}
-               (update-grants {"user" [:foo :bar]}))))
+               (set-permissions {"user" [:foo :bar]}))))
     (testing "updating"
       (is (= {:permissions/by-user {"user" #{:gazonk}}}
              (-> {}
-                 (update-grants {"user" [:foo :bar]})
-                 (update-grants {"user" [:gazonk]})))))
+                 (set-permissions {"user" [:foo :bar]})
+                 (set-permissions {"user" [:gazonk]})))))
     (testing "removing"
       (is (= {:permissions/by-user {}}
              (-> {}
-                 (update-grants {"user" [:foo :bar]})
-                 (update-grants {"user" nil})))))))
+                 (set-permissions {"user" [:foo :bar]})
+                 (set-permissions {"user" nil})))))))
 
 (defn user-permissions [application user-id]
   (let [applicant? (= user-id (:application/applicant application))
@@ -157,9 +157,9 @@
              ;; TODO: or would :workflow.dynamic/state be more appropriate?
              :workflow/state :rems.workflow.dynamic/draft ; TODO
              :workflow.dynamic/handlers (:workflow.dynamic/handlers event))
-      (update-grants {:applicant #{::dynamic/add-member
-                                   ::dynamic/save-draft
-                                   ::dynamic/submit}})))
+      (set-permissions {:applicant #{::dynamic/add-member
+                                     ::dynamic/save-draft
+                                     ::dynamic/submit}})))
 
 (defn- set-accepted-licences [licenses accepted-licenses]
   (map (fn [license]
@@ -185,12 +185,12 @@
   [application event]
   (-> application
       (assoc :workflow/state ::dynamic/submitted)
-      (update-grants {:applicant #{::dynamic/add-member}
-                      :handler #{::dynamic/approve
-                                 ::dynamic/reject
-                                 ::dynamic/return
-                                 ::dynamic/request-decision
-                                 ::dynamic/request-comment}})))
+      (set-permissions {:applicant #{::dynamic/add-member}
+                        :handler #{::dynamic/approve
+                                   ::dynamic/reject
+                                   ::dynamic/return
+                                   ::dynamic/request-decision
+                                   ::dynamic/request-comment}})))
 
 (defmethod application-view :application.event/returned
   [application event]
