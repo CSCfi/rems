@@ -90,25 +90,10 @@
     (if (applications/is-dynamic-application? application)
       (do
         (when new?
-          (let [items (applications/get-catalogue-items catalogue-items)
-                licenses (applications/get-application-licenses application catalogue-items)]
-            (assert (= 1 (count (distinct (mapv :wfid items)))))
-            (assert (= 1 (count (distinct (mapv :formid items)))))
-            (applications/add-dynamic-event! {:event/type :application.event/created
-                                              :event/time (:start application)
-                                              :event/actor actor
-                                              :application/id application-id
-                                              :application/resources (map (fn [item]
-                                                                            {:catalogue-item/id (:id item)
-                                                                             :resource/ext-id (:resid item)})
-                                                                          items)
-                                              :application/licenses (map (fn [license]
-                                                                           {:license/id (:id license)})
-                                                                         licenses)
-                                              :form/id (:formid (first items))
-                                              :workflow/id (:wfid (first items))
-                                              :workflow/type (get-in application [:workflow :type])
-                                              :workflow.dynamic/handlers (set (get-in application [:workflow :handlers]))})))
+          (applications/add-application-created-event! {:application-id application-id
+                                                        :catalogue-item-ids catalogue-items
+                                                        :time (:start application)
+                                                        :actor actor}))
         (if-let [error (applications/dynamic-command! {:type :rems.workflow.dynamic/save-draft
                                                        :actor actor
                                                        :application-id application-id
