@@ -508,15 +508,34 @@
       (applications/return-application approver app-id 0 "comment for return")
       (applications/submit-application applicant app-id))))
 
-(defn- create-member-application! [catid wfid applicant approver members]
-  (let [appid (create-draft! applicant catid wfid "draft application")]
-    (doseq [member members]
-      (applications/add-member applicant appid member))))
-
 (defn- run-and-check-dynamic-command! [& args]
   (let [result (apply applications/dynamic-command! args)]
     (assert (nil? result) {:actual result})
     result))
+
+(defn- create-member-applications! [catid wfid applicant approver members]
+  (let [appid1 (create-draft! applicant catid wfid "draft with invited members")]
+    (run-and-check-dynamic-command! {:application-id appid1
+                                     :actor applicant
+                                     :time (time/now)
+                                     :type :rems.workflow.dynamic/invite-member
+                                     :member {:name "John Smith" :email "john.smith@example.org"}}))
+  (let [appid2 (create-draft! applicant catid wfid "submitted with members")]
+    (run-and-check-dynamic-command! {:application-id appid2
+                                     :actor applicant
+                                     :time (time/now)
+                                     :type :rems.workflow.dynamic/invite-member
+                                     :member {:name "John Smith" :email "john.smith@example.org"}})
+    (run-and-check-dynamic-command! {:application-id appid2
+                                     :actor applicant
+                                     :time (time/now)
+                                     :type :rems.workflow.dynamic/submit})
+    (doseq [member members]
+      (run-and-check-dynamic-command! {:application-id appid2
+                                       :actor approver
+                                       :time (time/now)
+                                       :type :rems.workflow.dynamic/add-member
+                                       :member member}))))
 
 (defn- create-dynamic-applications! [catid wfid users]
   (let [applicant (users :applicant1)
@@ -618,7 +637,7 @@
         (create-dynamic-applications! dynamic (:dynamic workflows) +fake-users+))
       (let [thlform (create-thl-demo-form! +fake-users+)]
         (create-catalogue-item! res1 (:dynamic workflows) thlform {"en" "THL catalogue item" "fi" "THL katalogi-itemi"}))
-      (create-member-application! simple (:simple workflows) (+fake-users+ :applicant1) (+fake-users+ :approver1) [(+fake-users+ :applicant2)]))
+      (create-member-applications! simple (:dynamic workflows) (+fake-users+ :applicant1) (+fake-users+ :approver1) [{:userid (+fake-users+ :applicant2)}]))
     (finally
       (DateTimeUtils/setCurrentMillisSystem))))
 
@@ -660,4 +679,4 @@
       (create-dynamic-applications! dynamic (:dynamic workflows) +demo-users+))
     (let [thlform (create-thl-demo-form! +demo-users+)]
       (create-catalogue-item! res1 (:dynamic workflows) thlform {"en" "THL catalogue item" "fi" "THL katalogi-itemi"}))
-    (create-member-application! simple (:simple workflows) (+demo-users+ :applicant1) (+demo-users+ :approver1) [(+demo-users+ :applicant2)])))
+    (create-member-applications! simple (:dynamic workflows) (+demo-users+ :applicant1) (+demo-users+ :approver1) [{:userid (+demo-users+ :applicant2)}])))

@@ -125,9 +125,13 @@
                    :view "View"
                    :workflow "Workflow"
                    :workflows "Workflows"}
-  :applicant-info {:applicants "Applicants"
+  :applicant-info {:applicant "Applicant"
+                   :applicants "Applicants"
                    :email "Email"
-                   :username "Name"}
+                   :invited-member "Invited member"
+                   :member "Member"
+                   :name "Name"
+                   :username "Username"}
   :applications {:application "Application"
                  :applications "Applications"
                  :created "Created"

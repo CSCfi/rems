@@ -125,9 +125,13 @@
                    :view "Avaa"
                    :workflow "Työvuo"
                    :workflows "Työvuot"}
-  :applicant-info {:applicants "Hakijat"
+  :applicant-info {:applicant "Hakija"
+                   :applicants "Hakijat"
                    :email "Sähköposti"
-                   :username "Nimi"}
+                   :invited-member "Kutsuttu jäsen"
+                   :member "Jäsen"
+                   :name "Nimi"
+                   :username "Käyttäjätunnus"}
   :applications {:application "Hakemus"
                  :applications "Hakemukset"
                  :created "Luotu"

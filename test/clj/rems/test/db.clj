@@ -941,11 +941,11 @@
     (is (= :rems.workflow.dynamic/submitted
            (:state (applications/get-dynamic-application-state app-id))))
     (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/add-member
-                                              :actor "alice"
-                                              :member "bob"
+                                              :actor "handler"
+                                              :member {:userid "bob"}
                                               :application-id app-id
                                               :time (time/now)})))
-    (is (= ["alice" "bob"]
+    (is (= [{:userid "alice"} {:userid "bob"}]
            (:members (applications/get-dynamic-application-state app-id))))
     (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/approve
                                               :actor "handler"

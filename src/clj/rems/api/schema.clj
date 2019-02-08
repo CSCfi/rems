@@ -56,14 +56,15 @@
    :time DateTime
    :eventdata s/Any})
 
+(s/defschema InvitedMember
+  {:name s/Str
+   :email s/Str})
+
+(s/defschema AddedMember
+  {:userid s/Str})
+
 (s/defschema DynamicEvent
-  (let [common-keys (set (keys dynamic/EventBase))]
-    (into (assoc dynamic/EventBase
-                 :event/type (apply s/enum (keys dynamic/event-schemas)))
-          (for [schema (vals dynamic/event-schemas)
-                [key val] schema
-                :when (not (contains? common-keys key))]
-            [(s/optional-key key) val]))))
+  {s/Keyword s/Any})
 
 (s/defschema Application
   {:id (s/maybe s/Num) ;; does not exist for unsaved draft
@@ -85,7 +86,8 @@
    :catalogue-items [CatalogueItem]
    (s/optional-key :review-type) (s/maybe (s/enum :normal :third-party))
    (s/optional-key :last-modified) DateTime
-   (s/optional-key :members) [s/Str]
+   (s/optional-key :invited-members) [InvitedMember]
+   (s/optional-key :members) [AddedMember]
    (s/optional-key :description) (s/maybe s/Str)
    (s/optional-key :workflow) s/Any
    (s/optional-key :possible-commands) #{s/Keyword}

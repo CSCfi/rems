@@ -779,7 +779,7 @@
                  :event/actor user-id
                  :application/id application-id}]
                (get-in data [:application :dynamic-events])))
-        (is (= ["rems.workflow.dynamic/add-member"] (get-in data [:application :possible-commands])))))
+        (is (= [] (get-in data [:application :possible-commands])))))
 
     (testing "getting dynamic application as handler"
       (let [data (get-application handler-id application-id)]
@@ -788,7 +788,9 @@
                  "rems.workflow.dynamic/request-decision"
                  "rems.workflow.dynamic/reject"
                  "rems.workflow.dynamic/approve"
-                 "rems.workflow.dynamic/return"}
+                 "rems.workflow.dynamic/return"
+                 "rems.workflow.dynamic/add-member"
+                 "rems.workflow.dynamic/invite-member"}
                (set (get-in data [:application :possible-commands]))))))
 
     (testing "send command without user"
