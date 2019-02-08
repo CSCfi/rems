@@ -649,6 +649,8 @@
 (defn apply-user-permissions [application user-id]
   (when-let [permissions (user-permissions application user-id)]
     ;; TODO: hide sensitive information from applicant (most event comments, maybe some events also)
+    ;;       - could add :see-everything permission to the appropriate roles and check for it here
+    ;;       https://github.com/CSCfi/rems/issues/859
     (-> application
         (assoc :permissions/current-user permissions)
         (dissoc :permissions/by-user
