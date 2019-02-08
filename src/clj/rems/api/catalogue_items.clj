@@ -17,7 +17,8 @@
   {:title s/Str
    :form s/Num
    :resid s/Num
-   :wfid s/Num})
+   :wfid s/Num
+   :state s/Str})
 
 (s/defschema CreateCatalogueItemResponse
   CatalogueItem)

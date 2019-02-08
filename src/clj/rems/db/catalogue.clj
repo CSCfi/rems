@@ -35,8 +35,7 @@
     (localize-catalogue-item item)))
 
 (defn create-catalogue-item! [command]
-  (let [id (:id (db/create-catalogue-item! (merge {:state "disabled"}
-                                                  (select-keys command [:title :form :resid :wfid]))))]
+  (let [id (:id (db/create-catalogue-item! (select-keys command [:title :form :resid :wfid :state])))]
     (get-localized-catalogue-item id)))
 
 (defn create-catalogue-item-localization! [command]
