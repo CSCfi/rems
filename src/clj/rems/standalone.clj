@@ -43,7 +43,8 @@
                         mount/start-with-args
                         :started)]
     (log/info component "started"))
-  (.addShutdownHook (Runtime/getRuntime) (Thread. stop-app)))
+  (.addShutdownHook (Runtime/getRuntime) (Thread. stop-app))
+  (validate/validate))
 
 (defn repl-help []
   (println "Welcome to REMS!")
@@ -58,7 +59,8 @@
      \"migrate\" -- migrate database
      \"rollback\" -- roll back database migration
      \"test-data\" -- insert test data into database
-     \"demo-data\" -- insert data for demoing purposes into database"
+     \"demo-data\" -- insert data for demoing purposes into database
+     \"validate\" -- validate data in db"
   [& args]
   (cond
     (#{"migrate" "rollback"} (first args))

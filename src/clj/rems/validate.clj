@@ -4,26 +4,24 @@
             [rems.db.applications :as applications]
             [rems.db.core :as db]))
 
-(defn- validate-application
-  [id]
+(defn- validate-application [id]
   (try
     (applications/get-application-state id)
+    nil
     (catch Throwable e
       (log/errorf "Application %s failed" id)
       (log/error e)
-      false)))
+      [{:invalid-application id}])))
 
-(defn- validate-applications
-  []
+(defn- validate-applications []
   (let [applications (db/get-applications {})]
     (log/infof "Validating %s applications" (count applications))
-    (every? validate-application (map :id applications))))
+    (mapcat validate-application (map :id applications))))
 
-(defn validate
-  []
+(defn validate []
   (log/info "Validating data")
-  (let [ret (validate-applications)]
-    (if ret
+  (let [application-errors (validate-applications)]
+    (if (empty? application-errors)
       (log/infof "Validations passed")
       (log/errorf "Validations failed"))
-    ret))
+    application-errors))
