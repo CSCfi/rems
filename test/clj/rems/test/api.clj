@@ -30,8 +30,10 @@
   (assert response)
   (assert (= 200 (:status response))
           (pr-str {:status (:status response)
-                   :body (when (:body response)
-                           (slurp (:body response)))}))
+                   :body (when-let [body (:body response)]
+                           (if (string? body)
+                             body
+                             (slurp body)))}))
   response)
 
 (defn response-is-unauthorized? [response]
