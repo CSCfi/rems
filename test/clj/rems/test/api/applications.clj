@@ -451,51 +451,6 @@
 
 ;; TODO test for event filtering when it gets implemented
 
-(deftest application-api-add-member-test
-  (let [api-key "42"
-        user-id "alice"
-        another-user "bob"
-        catid 2
-        app-id (-> (request :post (str "/api/applications/save"))
-                   (authenticate api-key user-id)
-                   (json-body {:command "save"
-                               :catalogue-items [catid]
-                               :items {1 "REST-Test"}})
-                   app
-                   assert-response-is-ok
-                   read-body
-                   :id)]
-    (testing "happy path"
-      (-> (request :post "/api/applications/add_member")
-          (authenticate api-key user-id)
-          (json-body {:application-id app-id
-                      :member another-user})
-          app
-          assert-response-is-ok)
-      (let [members (-> (request :get (str "/api/applications/" app-id))
-                        (authenticate api-key user-id)
-                        app
-                        assert-response-is-ok
-                        read-body
-                        :application
-                        :members)]
-        (is (= ["bob"] members))))
-    (testing "adding nonexistant user"
-      (let [response (-> (request :post "/api/applications/add_member")
-                         (authenticate api-key user-id)
-                         (json-body {:application-id app-id
-                                     :member "nonexistant"})
-                         app)]
-        ;; TODO: should be a bad request?
-        (is (= 500 (:status response)))))
-    (testing "adding as non-applicant"
-      (let [response (-> (request :post "/api/applications/add_member")
-                         (authenticate api-key "developer")
-                         (json-body {:application-id app-id
-                                     :member "developer"})
-                         app)]
-        (is (response-is-forbidden? response))))))
-
 (defn- strip-cookie-attributes [cookie]
   (re-find #"[^;]*" cookie))
 
