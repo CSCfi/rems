@@ -12,7 +12,7 @@
   (let [uid "test-user"
         form-id (:id (db/create-form! {:organization "org" :title "form with max lengths" :user uid}))
         wf-id (:id (db/create-workflow! {:organization "org" :modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 0}))
-        item-id (:id (db/create-catalogue-item! {:title "item" :form form-id :resid nil :wfid wf-id}))
+        item-id (:id (db/create-catalogue-item! {:title "item" :form form-id :resid nil :wfid wf-id :state "enabled"}))
         text-without-limit (db/create-form-item! {:type "text" :user uid :value 0})
         text-with-limit (db/create-form-item! {:type "text" :user uid :value 0})
         texta-with-limit (db/create-form-item! {:type "texta" :user uid :value 0})
