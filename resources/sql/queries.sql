@@ -531,6 +531,7 @@ FROM license lic
 INNER JOIN resource_licenses rl ON lic.id = rl.licid
 INNER JOIN catalogue_item item ON (item.resid = rl.resid)
 WHERE item.id IN (:v*:items)
+ORDER BY id
 
 -- :name get-resource-licenses :? :*
 SELECT lic.id, lic.title, lic.type, lic.textcontent, rl.start, rl.endt
