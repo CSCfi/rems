@@ -247,9 +247,8 @@
 (defn- application-view-generic
   "See `application-view`"
   [application event]
-  (assert (or (nil? (:application/id application))
-              (= (:application/id application)
-                 (:application/id event)))
+  (assert (= (:application/id application)
+             (:application/id event))
           (str "event for wrong application "
                "(not= " (:application/id application) " " (:application/id event) ")"))
   (-> application
