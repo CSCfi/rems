@@ -18,7 +18,7 @@
    :form s/Num
    :resid s/Num
    :wfid s/Num
-   :state s/Str})
+   (s/optional-key :state) (s/maybe s/Str)})
 
 (s/defschema CreateCatalogueItemResponse
   CatalogueItem)

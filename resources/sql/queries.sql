@@ -46,7 +46,13 @@ WHERE ci.id = :item
 -- :doc Create a single catalogue item
 INSERT INTO catalogue_item
 (title, formid, resid, wfid, state)
-VALUES (:title, :form, :resid, :wfid, CAST (:state as item_state))
+VALUES (:title, :form, :resid, :wfid,
+/*~ (if (:state params) */
+CAST(:state as item_state)
+/*~*/
+CAST('enabled' as item_state)
+/*~ ) ~*/
+)
 
 -- :name get-resources :? :*
 SELECT
