@@ -25,8 +25,7 @@
     (:id (catalogue/create-catalogue-item! {:title ""
                                             :form 1
                                             :resid resid
-                                            :wfid 1
-                                            :state "enabled"}))))
+                                            :wfid 1}))))
 
 (defn disable-catalogue-item [catid]
   (db/set-catalogue-item-state! {:item catid :state "disabled"}))
