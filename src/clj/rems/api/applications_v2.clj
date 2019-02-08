@@ -246,6 +246,11 @@
 
 (defn- application-view-common
   [application event]
+  (assert (or (nil? (:application/id application))
+              (= (:application/id application)
+                 (:application/id event)))
+          (str "event for wrong application "
+               "(not= " (:application/id application) " " (:application/id event) ")"))
   (-> application
       (assoc :application/last-activity (:event/time event))
       (update :application/events log-event event)))
@@ -591,7 +596,7 @@
                 {:event/type :application.event/draft-saved
                  :event/time (DateTime. 2000)
                  :event/actor "applicant"
-                 :application/id 42
+                 :application/id 1
                  :application/field-values {41 "foo"
                                             42 "bar"}
                  :application/accepted-licenses #{30 31}}])
@@ -616,7 +621,7 @@
                 {:event/type :application.event/submitted
                  :event/time (DateTime. 2000)
                  :event/actor "applicant"
-                 :application/id 42}])
+                 :application/id 1}])
               externals))))))
 
 (defn- get-form [form-id]
