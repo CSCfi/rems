@@ -23,7 +23,8 @@
                    (json-body {:title "test-item-title"
                                :form 1
                                :resid 1
-                               :wfid 1})
+                               :wfid 1
+                               :state "enabled"})
                    app
                    read-body)]
       (is (= 11 (:id data))))

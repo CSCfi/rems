@@ -734,7 +734,8 @@
       (json-body {:title ""
                   :form form-id
                   :resid 1
-                  :wfid 1})
+                  :wfid 1
+                  :state "enabled"})
       app
       read-ok-body
       :id))

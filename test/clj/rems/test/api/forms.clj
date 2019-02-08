@@ -17,7 +17,8 @@
                            (json-body {:title "tmp"
                                        :form form-id
                                        :resid 1
-                                       :wfid 1})
+                                       :wfid 1
+                                       :state "enabled"})
                            app
                            assert-response-is-ok
                            read-body)
