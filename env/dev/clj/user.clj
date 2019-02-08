@@ -6,7 +6,8 @@
 (defn reload []
   ((resolve 'rems.standalone/stop-app))
   (repl/refresh-all)
-  ((resolve 'rems.standalone/start-app)))
+  ((resolve 'rems.standalone/start-app))
+  ((resolve 'rems.validate/validate)))
 
 (defn run-tests [& namespaces]
   (repl/refresh)
