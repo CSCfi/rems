@@ -81,7 +81,7 @@
                  (set-permissions {"user" [:foo :bar]})
                  (set-permissions {"user" nil})))))))
 
-(defn user-permissions [application user-id]
+(defn- user-permissions [application user-id]
   (let [applicant? (= user-id (:application/applicant application))
         handler? (contains? (:workflow.dynamic/handlers application) user-id)
         permissions (remove nil?
@@ -128,13 +128,13 @@
       (is (= nil
              (user-permissions application "wrong user"))))))
 
-;;;; v2 API, pure application data
+;;;; v2 API, pure application state based on application events
 
-(defmulti ^:private application-view
+(defmulti ^:private application-view-specific
+  "See `application-view`"
   (fn [_application event] (:event/type event)))
 
-
-(defmethod application-view :application.event/created
+(defmethod application-view-specific :application.event/created
   [application event]
   (-> application
       (assoc :application/id (:application/id event)
@@ -166,7 +166,7 @@
          (assoc license :license/accepted (contains? accepted-licenses (:license/id license))))
        licenses))
 
-(defmethod application-view :application.event/draft-saved
+(defmethod application-view-specific :application.event/draft-saved
   [application event]
   (-> application
       (assoc :application/modified (:event/time event)
@@ -176,12 +176,11 @@
                                (:application/field-values event)))
       (update :application/licenses set-accepted-licences (:application/accepted-licenses event))))
 
-
-(defmethod application-view :application.event/member-added
+(defmethod application-view-specific :application.event/member-added
   [application event]
   application)
 
-(defmethod application-view :application.event/submitted
+(defmethod application-view-specific :application.event/submitted
   [application event]
   (-> application
       (assoc :workflow/state ::dynamic/submitted)
@@ -192,41 +191,42 @@
                                    ::dynamic/request-decision
                                    ::dynamic/request-comment}})))
 
-(defmethod application-view :application.event/returned
+(defmethod application-view-specific :application.event/returned
   [application event]
   application)
 
-(defmethod application-view :application.event/comment-requested
+(defmethod application-view-specific :application.event/comment-requested
   [application event]
   application)
 
-(defmethod application-view :application.event/commented
+(defmethod application-view-specific :application.event/commented
   [application event]
   application)
 
-(defmethod application-view :application.event/decision-requested
+(defmethod application-view-specific :application.event/decision-requested
   [application event]
   application)
 
-(defmethod application-view :application.event/decided
+(defmethod application-view-specific :application.event/decided
   [application event]
   application)
 
-(defmethod application-view :application.event/approved
+(defmethod application-view-specific :application.event/approved
   [application event]
   application)
 
-(defmethod application-view :application.event/rejected
+(defmethod application-view-specific :application.event/rejected
   [application event]
   application)
 
-(defmethod application-view :application.event/closed
+(defmethod application-view-specific :application.event/closed
   [application event]
   application)
 
-(deftest test-application-view-handles-all-events
-  (is (= (set (keys dynamic/event-schemas))
-         (set (keys (methods application-view))))))
+(deftest test-application-view-specific
+  (testing "supports all event types"
+    (is (= (set (keys dynamic/event-schemas))
+           (set (keys (methods application-view-specific)))))))
 
 
 (defn- log-event [events event]
@@ -244,7 +244,8 @@
                                      :application/decider
                                      :application/decision]))))
 
-(defn- application-view-common
+(defn- application-view-generic
+  "See `application-view`"
   [application event]
   (assert (or (nil? (:application/id application))
               (= (:application/id application)
@@ -255,10 +256,17 @@
       (assoc :application/last-activity (:event/time event))
       (update :application/events log-event event)))
 
-(defn- update-application-view [application event]
+;; TODO: replace rems.workflow.dynamic/apply-event with this
+;;       (it will couple the write and read models, but it's probably okay
+;;        because they both are about a single application and are logically coupled)
+(defn- application-view
+  "Projection for the current state of a single application.
+  Pure function; must use `assoc-externals` to enrich the model with
+  data from other entities."
+  [application event]
   (-> application
-      (application-view event)
-      (application-view-common event)))
+      (application-view-specific event)
+      (application-view-generic event)))
 
 ;;; v2 API, external entities (form, resources, licenses etc.)
 
@@ -395,7 +403,7 @@
       (assoc :application/applicant-attributes (get-user (:application/applicant application)))))
 
 (defn- build-application-view [events externals]
-  (-> (reduce update-application-view nil events)
+  (-> (reduce application-view nil events)
       (assoc-externals externals)))
 
 (defn- valid-events [events]
@@ -641,12 +649,12 @@
 (defn- get-user [user-id]
   (users/get-user-attributes user-id))
 
-(def externals {:get-form get-form
-                :get-catalogue-item get-catalogue-item
-                :get-license get-license
-                :get-user get-user})
+(def ^:private externals {:get-form get-form
+                          :get-catalogue-item get-catalogue-item
+                          :get-license get-license
+                          :get-user get-user})
 
-(defn apply-user-permissions [application user-id]
+(defn- apply-user-permissions [application user-id]
   (when-let [permissions (user-permissions application user-id)]
     ;; TODO: hide sensitive information from applicant (most event comments, maybe some events also)
     ;;       - could add :see-everything permission to the appropriate roles and check for it here
@@ -760,26 +768,29 @@
 
 ;;; v2 API, listing all applications
 
-(defn- apply-event [applications event]
+(defn- applications-view
+  "Projection for the current state of all applications."
+  [applications event]
   (if-let [app-id (:application/id event)] ; old style events don't have :application/id
-    (update applications app-id update-application-view event)
+    (update applications app-id application-view event)
     applications))
 
-(defn- apply-events [applications events]
-  (reduce apply-event applications events))
-
-(defn- reset-state [_]
+(defn- reset-applications-state [_]
   {:last-processed-event-id 0
    :applications {}})
 
-(def projection-state (agent (reset-state nil)
-                             :error-handler (fn [_agent exception]
-                                              (log/error exception "Updating projection failed"))))
-(comment
-  @projection-state
-  (send projection-state reset-state))
+(def ^:private applications-state
+  "Stateful projection tracking the current state of all applications.
+  Will be updated periodically by `applications-update-scheduler`,
+  but an update may also be triggered with `trigger-applications-update!`
+  e.g. after committing some new events."
+  (agent (reset-applications-state nil)
+         :error-handler (fn [_agent exception]
+                          (log/error exception "Updating projection failed"))))
 
-(defn update-projection [state]
+(declare trigger-applications-update!)
+
+(defn- update-applications! [state]
   (let [from-id (:last-processed-event-id state)
         batch-size 1000
         events (applications/get-dynamic-application-events-since from-id batch-size)
@@ -790,22 +801,30 @@
         (log/info "Updating projection from" from-id "until" until-id)
         (when (= batch-size (count events))
           ;; there may be more events, so handle the next batch immediately after the current one
-          (send-off projection-state update-projection))
+          (trigger-applications-update!))
         (assoc state
                :last-processed-event-id until-id
-               :applications (apply-events (:applications state) events))))))
+               :applications (reduce applications-view (:applications state) events))))))
 
-(defstate projection-updater
+(defn trigger-applications-update! []
+  (send-off applications-state update-applications!))
+
+(comment
+  (send applications-state reset-applications-state)
+  (trigger-applications-update!)
+  @applications-state)
+
+(defstate applications-update-scheduler
   :start (future (while (not (Thread/interrupted))
-                   (send-off projection-state update-projection)
+                   (trigger-applications-update!)
                    (Thread/sleep (-> 60 time/seconds time/in-millis))))
-  :stop (future-cancel projection-updater))
+  :stop (future-cancel applications-update-scheduler))
 
 (defn get-user-applications-v2 [user-id]
-  (->> (vals (:applications @projection-state))
+  (->> (vals (:applications @applications-state))
        (map #(apply-user-permissions % user-id))
        (remove nil?)
-       ;; TODO: do this eagerly for caching? would need to make assoc-externals idempotent
+       ;; TODO: do this eagerly for caching? would need to make assoc-externals idempotent and add cache eviction
        (map #(assoc-externals % externals))
        ;; remove unnecessary data from summmary
        (map #(dissoc % :form/fields :application/licenses))))
