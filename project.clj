@@ -138,8 +138,8 @@
 
    :project/dev {:dependencies [[binaryage/devtools "0.9.10"]
                                 [cider/piggieback "0.3.10"]
-                                [macroz/core.rrb-vector "0.0.14.1"]
-                                [doo "0.1.11" :exclusions [rrb-vector]]
+                                [org.clojure/core.rrb-vector "0.0.14"] ;; the version doo pulls in is broken on fresh cljs
+                                [doo "0.1.11"]
                                 [eftest "0.5.4"]
                                 [figwheel-sidecar "0.5.18" :exclusions [org.clojure/tools.nrepl org.clojure/core.async com.fasterxml.jackson.core/jackson-core]]
                                 [pjstadig/humane-test-output "0.9.0"]
@@ -151,7 +151,7 @@
                  :plugins [[com.jakemccrary/lein-test-refresh "0.21.1"]
                            [lein-ancient "0.6.15"]
                            [lein-cloverage "1.0.10"]
-                           [lein-doo "0.1.10"]
+                           [lein-doo "0.1.11"]
                            [lein-eftest "0.5.2"]
                            [lein-figwheel "0.5.18"]]
                  :aot [rems.InvalidRequestException rems.auth.NotAuthorizedException rems.auth.ForbiddenException]
