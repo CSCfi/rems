@@ -15,7 +15,25 @@
 
 ;;; user permissions
 
-(defn- set-permissions [application permission-map]
+(defn- set-permissions
+  "Updates user and role specific permissions for the application.
+   In `permission-map` the key is the user or role, and the value is
+   a list of permissions to set for that user or role.
+
+   Roles are keywords and user IDs are strings. See `user-permissions` for
+   the supported roles. User specific permissions can be used e.g. to give
+   specific users commenting access or to give non-applicant members read-only
+   access to the application.
+
+   There is a difference between an empty list of permissions and nil.
+   Empty list of permissions means that the user has read-only access to
+   the application, whereas nil means that the user cannot even see the
+   application.
+
+   The permissions can be keywords signifying the commands that the user
+   is allowed to run, but they could also be used to signify whether the user
+   can see all events and comments from the reviewers (e.g. `:see-everything`)."
+  [application permission-map]
   (reduce (fn [application [subject permissions]]
             (let [category (cond
                              (keyword? subject) :permissions/by-role
@@ -36,35 +54,16 @@
              (-> {}
                  (set-permissions {:role [:foo :bar]})
                  (set-permissions {:role [:gazonk]})))))
-    (testing "removing"
+    (testing "removing (read-only access)"
       (is (= {:permissions/by-role {:role #{}}}
              (-> {}
                  (set-permissions {:role [:foo :bar]})
-                 (set-permissions {:role []}))))
+                 (set-permissions {:role []})))))
+    (testing "removing (no access)"
       (is (= {:permissions/by-role {}}
              (-> {}
                  (set-permissions {:role [:foo :bar]})
                  (set-permissions {:role nil}))))))
-
-  (testing "multiple roles"
-    (is (= {:permissions/by-role {:role-1 #{:foo}
-                                  :role-2 #{:bar}}}
-           (-> {}
-               (set-permissions {:role-1 [:foo]
-                                 :role-2 [:bar]}))))
-    (testing "updating"
-      (is (= {:permissions/by-role {:role-1 #{:foo}
-                                    :role-2 #{:xyz}}}
-             (-> {}
-                 (set-permissions {:role-1 [:foo]
-                                   :role-2 [:bar]})
-                 (set-permissions {:role-2 [:xyz]})))))
-    (testing "removing"
-      (is (= {:permissions/by-role {:role-1 #{:foo}}}
-             (-> {}
-                 (set-permissions {:role-1 [:foo]
-                                   :role-2 [:bar]})
-                 (set-permissions {:role-2 nil}))))))
 
   (testing "user-specific permissions"
     (is (= {:permissions/by-user {"user" #{:foo :bar}}}
@@ -75,13 +74,36 @@
              (-> {}
                  (set-permissions {"user" [:foo :bar]})
                  (set-permissions {"user" [:gazonk]})))))
-    (testing "removing"
+    (testing "removing (read-only access)"
+      (is (= {:permissions/by-user {"user" #{}}}
+             (-> {}
+                 (set-permissions {"user" [:foo :bar]})
+                 (set-permissions {"user" []})))))
+    (testing "removing (no access)"
       (is (= {:permissions/by-user {}}
              (-> {}
                  (set-permissions {"user" [:foo :bar]})
-                 (set-permissions {"user" nil})))))))
+                 (set-permissions {"user" nil}))))))
 
-(defn- user-permissions [application user-id]
+  (testing "can set permissions for multiple roles/users"
+    (is (= {:permissions/by-role {:role-1 #{:foo}
+                                  :role-2 #{:bar}}}
+           (-> {}
+               (set-permissions {:role-1 [:foo]
+                                 :role-2 [:bar]})))))
+  (testing "does not alter unrelated roles/users"
+    (is (= {:permissions/by-role {:unrelated #{:foo}
+                                  :role #{:gazonk}}}
+           (-> {}
+               (set-permissions {:unrelated [:foo]
+                                 :role [:bar]})
+               (set-permissions {:role [:gazonk]}))))))
+
+(defn- user-permissions
+  "Returns the specified user's permissions to this application.
+   Union of all role and user specific permissions. Read the source
+   to find out the supported roles. See also `set-permissions`."
+  [application user-id]
   (let [applicant? (= user-id (:application/applicant application))
         handler? (contains? (:workflow.dynamic/handlers application) user-id)
         permissions (remove nil?
@@ -95,7 +117,7 @@
       (apply set/union permissions))))
 
 (deftest test-user-permissions
-  (testing "not authorized"
+  (testing "no access"
     (is (= nil
            (user-permissions {}
                              "user"))))
@@ -155,7 +177,7 @@
              :workflow/id (:workflow/id event)
              :workflow/type (:workflow/type event)
              ;; TODO: or would :workflow.dynamic/state be more appropriate?
-             :workflow/state :rems.workflow.dynamic/draft ; TODO
+             :workflow/state :rems.workflow.dynamic/draft ; TODO: other workflows
              :workflow.dynamic/handlers (:workflow.dynamic/handlers event))
       (set-permissions {:applicant #{::dynamic/add-member
                                      ::dynamic/save-draft
