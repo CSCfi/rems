@@ -819,12 +819,10 @@
     (testing "getting dynamic application as applicant"
       (let [data (get-application user-id application-id)]
         (is (= "workflow/dynamic" (get-in data [:application :workflow :type])))
-        (is (= [{:event/id 19 ; XXX: update if test data changes
-                 :event/type "application.event/submitted"
-                 :event/time (str (.getMillis test-data/creation-time))
-                 :event/actor user-id
-                 :application/id application-id}]
-               (get-in data [:application :dynamic-events])))
+        (is (= ["application.event/created"
+                "application.event/draft-saved"
+                "application.event/submitted"]
+               (map :event/type (get-in data [:application :dynamic-events]))))
         (is (= ["rems.workflow.dynamic/add-member"] (get-in data [:application :possible-commands])))))
 
     (testing "getting dynamic application as handler"
@@ -883,7 +881,9 @@
           (is (= {:id application-id
                   :state "rems.workflow.dynamic/approved"}
                  (select-keys (:application data) [:id :state])))
-          (is (= ["application.event/submitted"
+          (is (= ["application.event/created"
+                  "application.event/draft-saved"
+                  "application.event/submitted"
                   "application.event/decision-requested"
                   "application.event/decided"
                   "application.event/approved"]

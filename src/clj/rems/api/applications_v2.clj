@@ -803,8 +803,6 @@
 
 (defn get-user-applications-v2 [user-id]
   (->> (vals (:applications @projection-state))
-       ;; TODO: not all events in test data have the created event, so they must be filtered out
-       (filter :application/id)
        (map #(apply-user-permissions % user-id))
        (remove nil?)
        ;; TODO: do this eagerly for caching? would need to make assoc-externals idempotent
