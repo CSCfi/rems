@@ -934,6 +934,11 @@
             :state :rems.workflow.dynamic/draft
             :workflow workflow}
            (select-keys (applications/get-dynamic-application-state app-id) [:applicantuserid :state :workflow])))
+    (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/invite-member
+                                              :actor "alice"
+                                              :member {:name "Jane Doe" :email "jane.doe@members.com"}
+                                              :application-id app-id
+                                              :time (time/now)})))
     (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/submit
                                               :actor "alice"
                                               :application-id app-id
@@ -943,6 +948,11 @@
     (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/add-member
                                               :actor "handler"
                                               :member {:userid "bob"}
+                                              :application-id app-id
+                                              :time (time/now)})))
+    (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/invite-member
+                                              :actor "handler"
+                                              :member {:name "John Doe" :email "john.doe@members.com"}
                                               :application-id app-id
                                               :time (time/now)})))
     (is (= [{:userid "alice"} {:userid "bob"}]

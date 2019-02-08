@@ -143,6 +143,7 @@
                                   :decision-requested "Pyydetty päätöstä"
                                   :draft-saved "Muokattu"
                                   :member-added "Lisätty jäsen"
+                                  :member-invited "Kutsuttu jäsen"
                                   :rejected "Hylätty"
                                   :returned "Palautettu muokattavaksi"
                                   :submitted "Lähtetetty hyväksyttäväksi"}
@@ -153,8 +154,7 @@
                                   :returned "Palautettu"
                                   :submitted "Haettu"}
                  :empty "Sinulla ei ole hakemuksia."
-                 :events {:add-member "Lisätty jäsen"
-                          :apply "Lähetetty hyväksyttäväksi"
+                 :events {:apply "Lähetetty hyväksyttäväksi"
                           :approve "Hyväksytty"
                           :autoapprove "Automaattisesti hyväksytty"
                           :close "Poistettu"
