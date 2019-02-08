@@ -50,7 +50,7 @@ VALUES (:title, :form, :resid, :wfid,
 /*~ (if (:state params) */
 CAST(:state as item_state)
 /*~*/
-CAST('enabled' as item_state)
+'enabled'
 /*~ ) ~*/
 )
 
