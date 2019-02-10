@@ -837,35 +837,6 @@
                   {:round 0 :event "review-request" :comment "can you please review this?"}
                   {:round 0 :event "return" :comment "returning"}])))))))
 
-(deftest test-add-member
-  (db/add-user! {:user "alice" :userattrs "{\"eppn\": \"alice\"}"})
-  (db/add-user! {:user "bob" :userattrs "{\"eppn\": \"bob\"}"})
-  (db/add-user! {:user "carl" :userattrs "{\"eppn\": \"carl\"}"})
-  (db/add-user! {:user "david" :userattrs "{\"eppn\": \"david\"}"})
-  (let [uid "alice"
-        wf (:id (db/create-workflow! {:organization "abc" :modifieruserid "owner" :owneruserid "owner" :title "Test workflow" :fnlround 1}))
-        item (:id (db/create-catalogue-item! {:title "A" :form nil :resid nil :wfid wf}))
-        app (applications/create-new-draft uid wf)]
-    (db/add-application-item! {:application app :item item})
-    (testing "Adding two members"
-      (applications/add-member uid app "bob")
-      (applications/add-member uid app "carl")
-      (is (= ["bob" "carl"] (:members (applications/get-application-state app)))))
-    (testing "Can't add non-existing members"
-      (is (thrown? AssertionError
-                   (applications/add-member uid app "non-existent"))))
-    (testing "Non-applicant can't add members"
-      (is (thrown? ForbiddenException
-                   (applications/add-member "other-user" app "david"))))
-    (applications/submit-application uid app)
-    (testing "Can't add members to submitted application"
-      (is (thrown? ForbiddenException
-                   (applications/add-member uid app "david"))))
-    (testing "Members persist after autoapprove"
-      (let [state (applications/get-application-state app)]
-        (is (= "approved" (:state state)))
-        (is (= ["bob" "carl"] (:members state)))))))
-
 (deftest test-get-entitlements-for-export
   (db/add-user! {:user "jack" :userattrs nil})
   (db/add-user! {:user "jill" :userattrs nil})
@@ -963,6 +934,11 @@
             :state :rems.workflow.dynamic/draft
             :workflow workflow}
            (select-keys (applications/get-dynamic-application-state app-id) [:applicantuserid :state :workflow])))
+    (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/invite-member
+                                              :actor "alice"
+                                              :member {:name "Jane Doe" :email "jane.doe@members.com"}
+                                              :application-id app-id
+                                              :time (time/now)})))
     (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/submit
                                               :actor "alice"
                                               :application-id app-id
@@ -970,11 +946,16 @@
     (is (= :rems.workflow.dynamic/submitted
            (:state (applications/get-dynamic-application-state app-id))))
     (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/add-member
-                                              :actor "alice"
-                                              :member "bob"
+                                              :actor "handler"
+                                              :member {:userid "bob"}
                                               :application-id app-id
                                               :time (time/now)})))
-    (is (= ["alice" "bob"]
+    (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/invite-member
+                                              :actor "handler"
+                                              :member {:name "John Doe" :email "john.doe@members.com"}
+                                              :application-id app-id
+                                              :time (time/now)})))
+    (is (= [{:userid "alice"} {:userid "bob"}]
            (:members (applications/get-dynamic-application-state app-id))))
     (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/approve
                                               :actor "handler"

@@ -95,10 +95,6 @@
 (s/defschema Deciders
   [Decider])
 
-(s/defschema AddMemberCommand
-  {:application-id s/Num
-   :member s/Str})
-
 (s/defschema DynamicCommand
   {:type s/Keyword
    :application-id s/Num
@@ -305,17 +301,6 @@
                                         (:round request)
                                         (:comment request)
                                         (:recipients request))
-      (ok {:success true}))
-
-    (POST "/add_member" []
-      :summary "Add a member to an application"
-      :roles #{:applicant}
-      :body [request AddMemberCommand]
-      :return SuccessResponse
-      ;; TODO: provide a nicer error message when user doesn't exist?
-      (applications/add-member (getx-user-id)
-                               (:application-id request)
-                               (:member request))
       (ok {:success true}))
 
     ;; TODO: think about size limit

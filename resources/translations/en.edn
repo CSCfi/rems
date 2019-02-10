@@ -126,8 +126,12 @@
                    :workflow "Workflow"
                    :workflows "Workflows"}
   :applicant-info {:applicant "Applicant"
+                   :applicants "Applicants"
                    :email "Email"
-                   :username "Name"}
+                   :invited-member "Invited member"
+                   :member "Member"
+                   :name "Name"
+                   :username "Username"}
   :applications {:application "Application"
                  :applications "Applications"
                  :created "Created"
@@ -139,6 +143,7 @@
                                   :decision-requested "Decision requested"
                                   :draft-saved "Modified"
                                   :member-added "Member added"
+                                  :member-invited "Member invited"
                                   :rejected "Rejected"
                                   :returned "Changes requested"
                                   :submitted "Applied"}
@@ -149,8 +154,7 @@
                                   :returned "Returned"
                                   :submitted "Applied"}
                  :empty "You don't have any applications."
-                 :events {:add-member "Added member"
-                          :apply "Applied"
+                 :events {:apply "Applied"
                           :approve "Approved"
                           :autoapprove "Automatically approved"
                           :close "Deleted"

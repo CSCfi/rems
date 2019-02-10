@@ -34,11 +34,15 @@
     ::closed
     ::draft
     ::rejected
-    ::submitted})
+    ::returned
+    ::submitted
+    #_::withdrawn}) ; TODO withdraw support?
+
 (def CommandTypes
   #{#_::accept-license
     #_::require-license
     ::add-member
+    ::invite-member
     ::approve
     ::close
     ::comment
@@ -48,7 +52,8 @@
     ::request-decision
     ::return
     ::save-draft
-    ::submit})
+    ::submit
+    #_::withdraw})
 
 ;; TODO: namespaced keys e.g. :event/type, :event/time, :event/actor, :application/id
 ;; TODO: add version number to events
@@ -93,7 +98,12 @@
 (s/defschema MemberAddedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/member-added)
-         :application/member s/Str))
+         :application/member {:userid s/Str}))
+(s/defschema MemberInvitedEvent
+  (assoc EventBase
+         :event/type (s/eq :application.event/member-invited)
+         :application/member {:name s/Str
+                              :email s/Str}))
 (s/defschema RejectedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/rejected)
@@ -116,6 +126,7 @@
    :application.event/decision-requested DecisionRequestedEvent
    :application.event/draft-saved DraftSavedEvent
    :application.event/member-added MemberAddedEvent
+   :application.event/member-invited MemberInvitedEvent
    :application.event/rejected RejectedEvent
    :application.event/returned ReturnedEvent
    :application.event/submitted SubmittedEvent})
@@ -186,7 +197,7 @@
   (assoc application
          :state ::submitted
          :commenters #{}
-         :members [(:event/actor event)]
+         :members [{:userid (:event/actor event)}]
          :previous-submitted-form-contents (:submitted-form-contents application)
          :submitted-form-contents (:form-contents application)))
 
@@ -229,6 +240,10 @@
 (defmethod apply-event [:application.event/member-added :workflow/dynamic]
   [application _workflow event]
   (update application :members #(vec (conj % (:application/member event)))))
+
+(defmethod apply-event [:application.event/member-invited :workflow/dynamic]
+  [application _workflow event]
+  (update application :invited-members #(vec (conj % (:application/member event)))))
 
 (defn apply-events [application events]
   (reduce (fn [application event] (apply-event application (:workflow application) event))
@@ -422,16 +437,31 @@
 
 (defmethod handle-command ::add-member
   [cmd application injections]
-  ;; TODO should handler be able to add members?
-  (or (applicant-error application cmd)
-      (state-error application ::draft ::submitted) ;; TODO which states?
-      (valid-user-error injections (:member cmd))
+  (or (actor-is-not-handler-error application cmd)
+      (state-error application ::submitted ::approved)
+      (valid-user-error injections (:userid (:member cmd)))
       {:success true
        :result {:event/type :application.event/member-added
                 :event/time (:time cmd)
                 :event/actor (:actor cmd)
                 :application/member (:member cmd)
                 :application/id (:application-id cmd)}}))
+
+(defmethod handle-command ::invite-member
+  [cmd application injections]
+  (let [success-result {:success true
+                        :result {:event/type :application.event/member-invited
+                                 :event/time (:time cmd)
+                                 :event/actor (:actor cmd)
+                                 :application/member (:member cmd)
+                                 :application/id (:application-id cmd)}}]
+    (if (= (:actor cmd) (:applicantuserid application))
+      (or (applicant-error application cmd)
+          (state-error application ::draft #_::withdrawn ::returned)
+          success-result)
+      (or (actor-is-not-handler-error application cmd)
+          (state-error application ::submitted ::approved)
+          success-result))))
 
 (defn- apply-command
   ([application cmd]
@@ -478,7 +508,11 @@
     :comment "comment"}
    {:type ::add-member
     :actor actor
-    :member "member"}])
+    :member {:userid "member"}}
+   {:type ::invite-member
+    :actor actor
+    :member {:name "Name"
+             :email "email@address.org"}}])
 
 (def ^:private injections-for-possible-commands
   "`possible-commands` are calculated with the expectations that
@@ -614,7 +648,7 @@
         (is (= {:errors [[:invalid-state ::submitted]]}
                (handle-command {:actor "applicant" :type ::submit} submitted injections))))
       (testing "submitter is member"
-        (is (= ["applicant"] (:members submitted))))
+        (is (= [{:userid "applicant"}] (:members submitted))))
       (testing "approving"
         (is (= ::approved (:state (apply-command submitted
                                                  {:actor "assistant" :type ::approve}
@@ -696,32 +730,67 @@
 
 (deftest test-add-member
   (let [application {:state ::submitted
-                     :members ["applicant" "somebody"]
+                     :members [{:userid "applicant"} {:userid "somebody"}]
                      :applicantuserid "applicant"
-                     :workflow {:type :workflow/dynamic}}
-        injections {:valid-user? #{"member1" "member2"}}]
+                     :workflow {:type :workflow/dynamic
+                                :handlers ["assistant"]}}
+        injections {:valid-user? #{"member1" "member2" "somebody" "applicant"}}]
     (testing "add two members"
-      (is (= ["applicant" "somebody" "member1" "member2"]
+      (is (= [{:userid "applicant"} {:userid "somebody"} {:userid "member1"}]
              (:members
               (apply-commands application
-                              [{:type ::add-member :actor "applicant" :member "member1"}
-                               {:type ::add-member :actor "applicant" :member "member2"}]
+                              [{:type ::add-member :actor "assistant" :member {:userid "member1"}}]
                               injections)))))
-    (testing "only applicant can add members"
+    (testing "only handler can add members"
       (is (= {:errors [:forbidden]}
              (handle-command {:type ::add-member :actor "member1" :member "member1"}
+                             application
+                             injections)
+             (handle-command {:type ::add-member :actor "applicant" :member "member1"}
                              application
                              injections))))
     (testing "only valid users can be added"
       (is (= {:errors [[:t.form.validation/invalid-user "member3"]]}
-             (handle-command {:type ::add-member :actor "applicant" :member "member3"}
+             (handle-command {:type ::add-member :actor "assistant" :member {:userid "member3"}}
+                             application
+                             injections))))))
+
+(deftest test-invite-member
+  (let [application {:state ::draft
+                     :applicantuserid "applicant"
+                     :workflow {:type :workflow/dynamic
+                                :handlers ["assistant"]}}
+        injections {:valid-user? #{"somebody" "applicant"}}]
+    (testing "invite two members by applicant"
+      (is (= [{:name "Member Applicant 1" :email "member1@applicants.com"} {:name "Member Applicant 2" :email "member2@applicants.com"}]
+             (:invited-members
+              (apply-commands application
+                              [{:type ::invite-member :actor "applicant" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
+                               {:type ::invite-member :actor "applicant" :member {:name "Member Applicant 2" :email "member2@applicants.com"}}]
+                              injections)))))
+    (testing "invite two members by handler"
+      (is (= [{:name "Member Applicant 1" :email "member1@applicants.com"} {:name "Member Applicant 2" :email "member2@applicants.com"}]
+             (:invited-members
+              (apply-commands (assoc application :state ::submitted)
+                              [{:type ::invite-member :actor "assistant" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
+                               {:type ::invite-member :actor "assistant" :member {:name "Member Applicant 2" :email "member2@applicants.com"}}]
+                              injections)))))
+    (testing "only applicant or handler can invite members"
+      (is (= {:errors [:forbidden]}
+             (handle-command {:type ::invite-member :actor "member1" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
                              application
                              injections))))
-    (testing "can't add members to approved application"
+    (testing "applicant can't invite members to approved application"
       (is (= {:errors [[:invalid-state ::approved]]}
-             (handle-command {:type ::add-member :actor "applicant" :member "member1"}
+             (handle-command {:type ::invite-member :actor "applicant" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
                              (assoc application :state ::approved)
-                             injections))))))
+                             injections))))
+    (testing "handler can invite members to approved application"
+      (is (= [{:name "Member Applicant 1" :email "member1@applicants.com"}]
+             (:invited-members
+              (apply-commands (assoc application :state ::approved)
+                              [{:type ::invite-member :actor "assistant" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}]
+                              injections)))))))
 
 (deftest test-comment
   (let [application {:state ::submitted
@@ -780,7 +849,7 @@
                :workflow {:type :workflow/dynamic
                           :handlers ["assistant"]}}]
     (testing "draft"
-      (is (= #{::submit ::add-member}
+      (is (= #{::submit ::invite-member}
              (possible-commands "applicant" draft)))
       (is (= #{}
              (possible-commands "assistant" draft)))
@@ -789,9 +858,9 @@
     (let [submitted (apply-events draft [{:event/type :application.event/submitted
                                           :event/actor "applicant"}])]
       (testing "submitted"
-        (is (= #{::add-member}
+        (is (= #{} ; TODO ::withdraw
                (possible-commands "applicant" submitted)))
-        (is (= #{::approve ::reject ::return ::request-decision ::request-comment}
+        (is (= #{::approve ::reject ::return ::request-decision ::request-comment ::add-member ::invite-member}
                (possible-commands "assistant" submitted)))
         (is (= #{}
                (possible-commands "somebody else" submitted))))
@@ -799,9 +868,9 @@
                                                 :event/actor "assistant"
                                                 :application/commenters ["commenter"]}])]
         (testing "comment requested"
-          (is (= #{::add-member}
+          (is (= #{}
                  (possible-commands "applicant" requested)))
-          (is (= #{::approve ::reject ::return ::request-decision ::request-comment}
+          (is (= #{::approve ::reject ::return ::request-decision ::request-comment ::add-member ::invite-member}
                  (possible-commands "assistant" requested)))
           (is (= #{::comment}
                  (possible-commands "commenter" requested))))
@@ -809,7 +878,7 @@
                                                   :event/actor "commenter"
                                                   :application/comment "..."}])]
           (testing "comment given"
-            (is (= #{::approve ::reject ::return ::request-decision ::request-comment}
+            (is (= #{::approve ::reject ::return ::request-decision ::request-comment ::add-member ::invite-member}
                    (possible-commands "assistant" commented)))
             (is (= #{}
                    (possible-commands "commenter" commented))))))
@@ -817,9 +886,9 @@
                                                 :event/actor "assistant"
                                                 :application/decider "decider"}])]
         (testing "decision requested"
-          (is (= #{::add-member}
+          (is (= #{}
                  (possible-commands "applicant" requested)))
-          (is (= #{::approve ::reject ::return ::request-decision ::request-comment}
+          (is (= #{::approve ::reject ::return ::request-decision ::request-comment ::add-member ::invite-member}
                  (possible-commands "assistant" requested)))
           (is (= #{::decide}
                  (possible-commands "decider" requested)))))
@@ -837,7 +906,7 @@
         (testing "approved"
           (is (= #{}
                  (possible-commands "applicant" approved)))
-          (is (= #{::close}
+          (is (= #{::close ::add-member ::invite-member}
                  (possible-commands "assistant" approved)))
           (is (= #{}
                  (possible-commands "somebody else" approved))))
