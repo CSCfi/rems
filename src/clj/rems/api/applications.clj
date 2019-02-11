@@ -119,10 +119,16 @@
       (update-in [:items] longify-keys)
       (update-in [:licenses] longify-keys)))
 
-;; TODO dynamic events hiding
 (defn- hide-sensitive-events [events]
   (filter (fn [event]
             ((complement contains?) #{"third-party-review" "review-request" "review"} (:event event)))
+          events))
+
+(defn- hide-sensitive-dynamic-events [events]
+  (filter (fn [event]
+            ((complement contains?) #{:application.event/decision-requested
+                                      :application.event/comment-requested}
+             (:event/type event)))
           events))
 
 (defn- hide-users [events]
@@ -136,6 +142,7 @@
       application
       (-> application
           (update-in [:application :events] hide-sensitive-events)
+          (update-in [:application :dynamic-events] hide-sensitive-dynamic-events)
           (update-in [:application :events] hide-users)))))
 
 (defn api-get-application [user-id application-id]
