@@ -996,7 +996,8 @@
      [button-wrapper {:id "review-request"
                       :text (text :t.actions/review-request)
                       :class "btn-primary"
-                      :on-click #(rf/dispatch [::send-third-party-review-request selected-third-party-reviewers review-comment (text :t.actions/review-request)])}]
+                      :on-click #(rf/dispatch [::send-third-party-review-request selected-third-party-reviewers review-comment (text :t.actions/review-request)])
+                      :disabled (empty? selected-third-party-reviewers)}]
      [:div [:div.form-group
             [:label {:for "review-comment"} (text :t.form/add-comments-not-shown-to-applicant)]
             [textarea {:id "review-comment"
