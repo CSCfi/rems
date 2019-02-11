@@ -26,7 +26,9 @@
          (map-structure loc-fi))))
 
 (deftest all-translation-keywords-used-in-source-defined
-  (let [grep (sh/sh "git" "grep" "-Iho" ":t\\.[-a-z.]*/[-a-z.]\\+")]
+  ;; git grep would be nice, but circleci's git grep doesn't have -o
+  ;; --include is needed to exclude editor backup files etc.
+  (let [grep (sh/sh "grep" "-Rho" "--include=*.clj[cs]" "--include=*.clj" ":t\\.[-a-z.]*/[-a-z.]\\+" "src")]
     (assert (= 0 (:exit grep))
             (pr-str grep))
     (let [all-tokens (->> grep
