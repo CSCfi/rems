@@ -197,8 +197,7 @@
              ;; TODO: or would :workflow.dynamic/state be more appropriate?
              :workflow/state :rems.workflow.dynamic/draft ; TODO: other workflows
              :workflow.dynamic/handlers (:workflow.dynamic/handlers event))
-      (set-role-permissions {:applicant #{::dynamic/add-member
-                                          ::dynamic/save-draft
+      (set-role-permissions {:applicant #{::dynamic/save-draft
                                           ::dynamic/submit}})))
 
 (defn- set-accepted-licences [licenses accepted-licenses]
@@ -224,7 +223,7 @@
   [application event]
   (-> application
       (assoc :workflow/state ::dynamic/submitted)
-      (set-role-permissions {:applicant #{::dynamic/add-member}
+      (set-role-permissions {:applicant #{}
                              :handler #{::dynamic/approve
                                         ::dynamic/reject
                                         ::dynamic/return
@@ -600,8 +599,7 @@
                          :workflow/type :dynamic
                          :workflow/state :rems.workflow.dynamic/draft
                          :workflow.dynamic/handlers #{"handler"}
-                         :permissions/by-role {:applicant #{::dynamic/add-member
-                                                            ::dynamic/save-draft
+                         :permissions/by-role {:applicant #{::dynamic/save-draft
                                                             ::dynamic/submit}}}
 
 
@@ -656,7 +654,7 @@
                                                    :event/time (DateTime. 2000)
                                                    :event/actor "applicant"}])
                  (assoc-in [:workflow/state] ::dynamic/submitted)
-                 (assoc-in [:permissions/by-role :applicant] #{::dynamic/add-member})
+                 (assoc-in [:permissions/by-role :applicant] #{})
                  (assoc-in [:permissions/by-role :handler] #{::dynamic/approve
                                                              ::dynamic/reject
                                                              ::dynamic/return
