@@ -82,7 +82,7 @@
           "decision-requested" :t.applications.dynamic-events/decision-requested
           "draft-saved" :t.applications.dynamic-events/draft-saved
           "member-added" :t.applications.dynamic-events/member-added
-          "member-invited" :t.application.dynamic-events/invite-member
+          "member-invited" :t.applications.dynamic-events/member-invited
           "rejected" :t.applications.dynamic-events/rejected
           "returned" :t.applications.dynamic-events/returned
           "submitted" :t.applications.dynamic-events/submitted
