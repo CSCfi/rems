@@ -60,13 +60,8 @@
    :eventdata s/Any})
 
 (s/defschema DynamicEvent
-  (let [common-keys (set (keys dynamic/EventBase))]
-    (into (assoc dynamic/EventBase
-                 :event/type (apply s/enum (keys dynamic/event-schemas)))
-          (for [schema (vals dynamic/event-schemas)
-                [key val] schema
-                :when (not (contains? common-keys key))]
-            [(s/optional-key key) val]))))
+  (assoc dynamic/EventBase
+         s/Keyword s/Any))
 
 (s/defschema Application
   {:id (s/maybe s/Num) ;; does not exist for unsaved draft
