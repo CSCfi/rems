@@ -6,7 +6,8 @@
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.test.locales :refer [loc-en]]
-            [rems.test.tempura :refer [with-fake-tempura]]))
+            [rems.test.tempura :refer [with-fake-tempura]]
+            [rems.workflow.dynamic :as dynamic]))
 
 (use-fixtures
   :once
@@ -40,6 +41,16 @@
          (->> (applications/get-event-types)
               (map keyword)
               (sort))))
-  (with-fake-tempura
-    (is (not (contains? (set (map rems.text/localize-event (applications/get-event-types)))
-                        :t.applications.events/unknown)))))
+  (is (= (-> (:dynamic-events (:applications (:t loc-en)))
+             (dissoc :unknown)
+             (keys)
+             (sort))
+         (->> (dynamic/get-event-types)
+              (map name)
+              (map keyword)
+              (sort))))
+  (let [event-types (concat (applications/get-event-types)
+                            (map name (dynamic/get-event-types)))]
+    (with-fake-tempura
+      (is (not (contains? (set (map rems.text/localize-event event-types))
+                          :t.applications.events/unknown))))))

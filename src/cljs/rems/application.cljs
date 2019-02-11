@@ -778,20 +778,62 @@
       :collapse (when (seq events)
                   [events-view events])}]))
 
+(defn applicant-info
+  "Renders the (main) applicant of an application
 
-(defn applicant-info [id user-attributes]
-  [collapsible/component
-   {:id id
-    :title (str (text :t.applicant-info/applicant))
-    :always [:div.row
-             [:div.col-md-6
-              [info-field (text :t.applicant-info/username) (or (get user-attributes "commonName")
-                                                                (get user-attributes "eppn"))]]
-             [:div.col-md-6
-              [info-field (text :t.applicant-info/email) (get user-attributes "mail")]]]
-    :collapse (into [:form]
-                    (for [[k v] (dissoc user-attributes "commonName" "mail")]
-                      [info-field k v]))}])
+  `group?` - specifies if a group border is rendered"
+  [id attributes group?]
+  [collapsible/minimal
+   {:id (str id "-applicant")
+    :class (when group? "group")
+    :always
+    [:div
+     [:h5 (text :t.applicant-info/applicant)]
+     (if-let [name (or (get attributes "commonName")
+                       (:commonName attributes)
+                       (get attributes "eppn")
+                       (:eppn attributes))]
+       [info-field (text :t.applicant-info/name) name  {:inline? true}]
+       [info-field (text :t.applicant-info/username) (or (get attributes "eppn") (:eppn attributes)) {:inline? true}])
+     [info-field (text :t.applicant-info/email) (or (get attributes "mail")
+                                                    (:mail attributes)) {:inline? true}]]
+    :collapse (into [:div]
+                    (for [[k v] (dissoc attributes "commonName" "mail")]
+                      [info-field k v {:inline? true}]))}])
+
+(defn members-info
+  "Renders the members of an application"
+  [id members]
+  [:div.members
+   (for [member members]
+     [collapsible/minimal
+      {:id (str id "-members-" member)
+       :class "group"
+       :always
+       (into [:div
+              [:h5 (if (:userid member)
+                     (text :t.applicant-info/member)
+                     (text :t.applicant-info/invited-member))]]
+             [(when (:userid member)
+                [info-field (text :t.applicant-info/username) (:userid member) {:inline? true}])
+              (when (:name member)
+                [info-field (text :t.applicant-info/name) (:name member) {:inline? true}])
+              (when (:email member)
+                [info-field (text :t.applicant-info/email) (:email member) {:inline? true}])])}])])
+
+(defn applicants-info
+  "Renders the applicants, i.e. applicant and members."
+  [id applicant-attributes members invited-members]
+  (let [members-but-not-applicant (remove (comp #{(get applicant-attributes "eppn")
+                                                  (:eppn applicant-attributes)} :userid)
+                                          (concat members invited-members))]
+    [collapsible/component
+     {:id id
+      :title (text :t.applicant-info/applicants)
+      :always
+      [:div
+       [applicant-info id applicant-attributes (> (count members) 0)]
+       [members-info id members-but-not-applicant]]}]))
 
 
 (defn action-form [id title comment-title button content]
@@ -954,7 +996,8 @@
      [button-wrapper {:id "review-request"
                       :text (text :t.actions/review-request)
                       :class "btn-primary"
-                      :on-click #(rf/dispatch [::send-third-party-review-request selected-third-party-reviewers review-comment (text :t.actions/review-request)])}]
+                      :on-click #(rf/dispatch [::send-third-party-review-request selected-third-party-reviewers review-comment (text :t.actions/review-request)])
+                      :disabled (empty? selected-third-party-reviewers)}]
      [:div [:div.form-group
             [:label {:for "review-comment"} (text :t.form/add-comments-not-shown-to-applicant)]
             [textarea {:id "review-comment"
@@ -1076,7 +1119,7 @@
         phases (:phases application)
         events (concat (:events app)
                        (map dynamic-event->event (:dynamic-events app)))
-        user-attributes (:applicant-attributes application)
+        applicant-attributes (:applicant-attributes application)
         messages (remove nil?
                          [(disabled-items-warning (:catalogue-items application)) ; NB: eval this here so we get nil or a warning
                           (when @(rf/subscribe [::send-third-party-review-request-message])
@@ -1093,8 +1136,8 @@
      [:h2 (text :t.applications/application)]
      (into [:div] messages)
      [application-header state phases events]
-     (when user-attributes
-       [:div.mt-3 [applicant-info "applicant-info" user-attributes]])
+     (when applicant-attributes
+       [:div.mt-3 [applicants-info "applicants-info" applicant-attributes (:members app) (:invited-members app)]])
      [:div.mt-3 [applied-resources (:catalogue-items application)]]
      [:div.my-3 [fields application edit-application language]]
      [:div.mb-3 [actions-form app]]
@@ -1138,6 +1181,20 @@
                                      "mail" "developer@uu.id"
                                      "organization" "Testers"
                                      "address" "Testikatu 1, 00100 Helsinki"}])
+
+   (component-info members-info)
+   (example "members-info"
+            [members-info "members1" [{:userid "alice"} {:name "John Smith" :email "john.smith@invited.com"}]])
+
+   (component-info applicants-info)
+   (example "applicants-info"
+            [applicants-info "applicants" {"eppn" "developer@uu.id"
+                                           "mail" "developer@uu.id"
+                                           "commonName" "Deve Loper"
+                                           "organization" "Testers"
+                                           "address" "Testikatu 1, 00100 Helsinki"}
+             [{:userid "alice"} {:userid "bob"}]
+             [{:name "John Smith" :email "john.smith@invited.com"}]])
 
    (component-info disabled-items-warning)
    (example "no disabled items"

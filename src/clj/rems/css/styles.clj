@@ -341,6 +341,12 @@
    [:.example-content {:border "1px dashed black"}]
    [:.example-content-end {:clear "both"}]
    [:textarea.form-control {:overflow "hidden"}]
+   [:.group {:position "relative"
+             :border "1px solid #ccc"
+             :border-radius (u/rem 0.4)
+             :padding (u/px 10)
+             :margin-top 0
+             :margin-bottom (u/px 16)}]
    [:div.form-control {:height :auto
                        :white-space "pre-wrap"
                        :border-color "rgba(206, 212, 218, 0.2)" ; "#ced4da"

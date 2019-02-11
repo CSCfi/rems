@@ -215,6 +215,10 @@
                                (:application/field-values event)))
       (update :application/licenses set-accepted-licences (:application/accepted-licenses event))))
 
+(defmethod application-view-specific :application.event/member-invited
+  [application event]
+  application)
+
 (defmethod application-view-specific :application.event/member-added
   [application event]
   application)

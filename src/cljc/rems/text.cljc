@@ -61,7 +61,6 @@
 (defn localize-event [event]
   (text (case event
           ;; static
-          "add-member" :t.application.events/add-member
           "apply" :t.applications.events/apply
           "approve" :t.applications.events/approve
           "autoapprove" :t.applications.events/autoapprove
@@ -83,6 +82,7 @@
           "decision-requested" :t.applications.dynamic-events/decision-requested
           "draft-saved" :t.applications.dynamic-events/draft-saved
           "member-added" :t.applications.dynamic-events/member-added
+          "member-invited" :t.applications.dynamic-events/member-invited
           "rejected" :t.applications.dynamic-events/rejected
           "returned" :t.applications.dynamic-events/returned
           "submitted" :t.applications.dynamic-events/submitted

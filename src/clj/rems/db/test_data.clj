@@ -18,6 +18,7 @@
 
 (def +fake-users+
   {:applicant1 "alice"
+   :applicant2 "malice"
    :approver1 "developer"
    :approver2 "bob"
    :owner "owner"
@@ -26,6 +27,7 @@
 (def +fake-user-data+
   {"developer" {"eppn" "developer" "mail" "deve@lo.per" "commonName" "Deve Loper"}
    "alice" {"eppn" "alice" "mail" "a@li.ce" "commonName" "Alice Applicant"}
+   "malice" {"eppn" "malice" "mail" "ma@li.ce" "commonName" "Malice Applicant"}
    "bob" {"eppn" "bob" "mail" "b@o.b" "commonName" "Bob Approver"}
    "carl" {"eppn" "carl" "mail" "c@a.rl" "commonName" "Carl Reviewer"}
    "owner" {"eppn" "owner" "mail" "ow@n.er" "commonName" "Own Er"}})
@@ -52,6 +54,7 @@
   (roles/add-role! (+fake-users+ :approver1) :applicant)
   (roles/add-role! (+fake-users+ :approver1) :approver)
   (users/add-user! (+fake-users+ :applicant1) (+fake-user-data+ (+fake-users+ :applicant1)))
+  (users/add-user! (+fake-users+ :applicant2) (+fake-user-data+ (+fake-users+ :applicant2)))
   (roles/add-role! (+fake-users+ :applicant1) :applicant)
   (users/add-user! (+fake-users+ :approver2) (+fake-user-data+ (+fake-users+ :approver2)))
   (roles/add-role! (+fake-users+ :approver2) :approver)
@@ -531,6 +534,30 @@
     (assert (nil? result) {:actual result})
     result))
 
+(defn- create-member-applications! [catid wfid applicant approver members]
+  (let [appid1 (create-draft! applicant catid wfid "draft with invited members")]
+    (run-and-check-dynamic-command! {:application-id appid1
+                                     :actor applicant
+                                     :time (time/now)
+                                     :type :rems.workflow.dynamic/invite-member
+                                     :member {:name "John Smith" :email "john.smith@example.org"}}))
+  (let [appid2 (create-draft! applicant catid wfid "submitted with members")]
+    (run-and-check-dynamic-command! {:application-id appid2
+                                     :actor applicant
+                                     :time (time/now)
+                                     :type :rems.workflow.dynamic/invite-member
+                                     :member {:name "John Smith" :email "john.smith@example.org"}})
+    (run-and-check-dynamic-command! {:application-id appid2
+                                     :actor applicant
+                                     :time (time/now)
+                                     :type :rems.workflow.dynamic/submit})
+    (doseq [member members]
+      (run-and-check-dynamic-command! {:application-id appid2
+                                       :actor approver
+                                       :time (time/now)
+                                       :type :rems.workflow.dynamic/add-member
+                                       :member member}))))
+
 (defn- create-dynamic-applications! [catid wfid users]
   (let [applicant (users :applicant1)
         approver (users :approver1)
@@ -630,7 +657,8 @@
                                             {"en" "Dynamic workflow" "fi" "Dynaaminen työvuo"})]
         (create-dynamic-applications! dynamic (:dynamic workflows) +fake-users+))
       (let [thlform (create-thl-demo-form! +fake-users+)]
-        (create-catalogue-item! res1 (:dynamic workflows) thlform {"en" "THL catalogue item" "fi" "THL katalogi-itemi"})))
+        (create-catalogue-item! res1 (:dynamic workflows) thlform {"en" "THL catalogue item" "fi" "THL katalogi-itemi"}))
+      (create-member-applications! simple (:dynamic workflows) (+fake-users+ :applicant1) (+fake-users+ :approver1) [{:userid (+fake-users+ :applicant2)}]))
     (finally
       (DateTimeUtils/setCurrentMillisSystem))))
 
@@ -671,4 +699,5 @@
                                           {"en" "Dynamic workflow" "fi" "Dynaaminen työvuo"})]
       (create-dynamic-applications! dynamic (:dynamic workflows) +demo-users+))
     (let [thlform (create-thl-demo-form! +demo-users+)]
-      (create-catalogue-item! res1 (:dynamic workflows) thlform {"en" "THL catalogue item" "fi" "THL katalogi-itemi"}))))
+      (create-catalogue-item! res1 (:dynamic workflows) thlform {"en" "THL catalogue item" "fi" "THL katalogi-itemi"}))
+    (create-member-applications! simple (:dynamic workflows) (+demo-users+ :applicant1) (+demo-users+ :approver1) [{:userid (+demo-users+ :applicant2)}])))

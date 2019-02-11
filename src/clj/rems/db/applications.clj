@@ -769,12 +769,6 @@
   [application event]
   (assoc application :state "closed"))
 
-(defmethod apply-event "add-member"
-  [application event]
-  (let [data (cheshire/parse-string (:eventdata event))
-        uid (getx data "uid")]
-    (update application :members #((fnil conj []) % uid))))
-
 (defn- apply-events [application events]
   (reduce apply-event application events))
 
@@ -947,17 +941,6 @@
     (when-not (can-close? user-id application)
       (throw-forbidden))
     (unjudge-application user-id application "close" round msg)))
-
-(defn add-member [user-id application-id member]
-  (let [application (get-application-state application-id)]
-    (when-not (= user-id (:applicantuserid application))
-      (throw-forbidden))
-    (when-not (#{"draft" "returned" "withdrawn"} (:state application))
-      (throw-forbidden))
-    (assert (users/get-user-attributes member) (str "User '" member "' must exist"))
-    (db/add-application-event! {:application application-id :user user-id :round 0
-                                :comment nil
-                                :event "add-member" :eventdata (cheshire/generate-string {"uid" member})})))
 
 ;;; Dynamic workflows
 ;; TODO these should be in their own namespace probably
