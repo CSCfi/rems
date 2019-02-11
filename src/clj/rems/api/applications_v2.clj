@@ -396,18 +396,19 @@
            :form/fields fields
            :application/description description)))
 
-(defn- assoc-resources [application catalogue-items]
-  (let [resources (->> catalogue-items
-                       (map (fn [item]
-                              {:catalogue-item/id (:id item)
-                               :resource/id (:resource-id item)
-                               :resource/ext-id (:resid item)
-                               :catalogue-item/title (assoc (localization-for :title item)
-                                                            :default (:title item))
-                               :catalogue-item/start (:start item)
-                               :catalogue-item/state (keyword (:state item))}))
-                       (sort-by :catalogue-item/id))]
-    (assoc application :application/resources resources)))
+(defn- enrich-resources [app-resources get-catalogue-item]
+  (->> app-resources
+       (map :catalogue-item/id)
+       (map get-catalogue-item)
+       (map (fn [item]
+              {:catalogue-item/id (:id item)
+               :resource/id (:resource-id item)
+               :resource/ext-id (:resid item)
+               :catalogue-item/title (assoc (localization-for :title item)
+                                            :default (:title item))
+               :catalogue-item/start (:start item)
+               :catalogue-item/state (keyword (:state item))}))
+       (sort-by :catalogue-item/id)))
 
 (defn- enrich-licenses [app-licenses get-license]
   (let [full-licenses (->> app-licenses
@@ -432,10 +433,8 @@
 (defn- assoc-injections [application {:keys [get-form get-catalogue-item get-license get-user]}]
   (-> application
       (assoc-form (get-form (:form/id application)))
-      (assoc-resources (->> (:application/resources application)
-                            (map :catalogue-item/id)
-                            (map get-catalogue-item)))
-      (assoc :application/licenses (enrich-licenses (:application/licenses application) get-license))
+      (update :application/resources enrich-resources get-catalogue-item)
+      (update :application/licenses enrich-licenses get-license)
       (assoc :application/applicant-attributes (get-user (:application/applicant application)))))
 
 (defn- build-application-view [events injections]
