@@ -71,6 +71,11 @@
    :comment s/Str
    :recipients [s/Str]})
 
+(s/defschema Applicant
+  {:userid s/Str
+   :name (s/maybe s/Str)
+   :email (s/maybe s/Str)})
+
 (s/defschema Reviewer
   {:userid s/Str
    :name (s/maybe s/Str)
@@ -170,6 +175,13 @@
      :name (get u "commonName")
      :email (get u "mail")}))
 
+(defn get-applicants []
+  (for [u (->> (users/get-all-users)
+               (remove invalid-reviewer?))] ; TODO maybe invalid-user?
+    {:userid (get u "eppn")
+     :name (get u "commonName")
+     :email (get u "mail")}))
+
 (defn invalid-decider? [u]
   (or (str/blank? (get u "eppn"))
       (str/blank? (get u "commonName"))
@@ -231,6 +243,12 @@
       :roles #{:approver}
       :return Commenters
       (ok (get-commenters)))
+
+    (GET "/members" []
+      :summary "Existing REMS users available for application membership"
+      :roles #{:approver}
+      :return [Applicant]
+      (ok (get-applicants)))
 
     (GET "/deciders" []
       :summary "Available deciders"

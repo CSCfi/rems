@@ -46,7 +46,8 @@
                   [:p "Sitoudut siihen, että et syötä REMS-demoon mitään tunnistettua tai tunnistettavissa olevaa luonnollista henkilöä koskevaa tietoa."]
                   [:h3 "Rahoittaja"]
                   [:p "CSC:n REMS-tuote on saanut rahoitusta Opetus- ja kulttuuriministeriöltä ja Suomen akatemialta (apurahat 271642 ja 263164 Biomedinfraa varten, joka on Suomen ELIXIR, BBMRI ja EATRIS-tutkimusinfrastruktuurisolmujen muodostama konsortio)."]]]}
-  :actions {:applicant "Hakija"
+  :actions {:add-member "Add member"
+            :applicant "Hakija"
             :application "Hakemus"
             :approve "Hyväksy"
             :approve-reject "Hyväksy tai hylkää"
@@ -63,8 +64,12 @@
             :export-entitlements "Lataa käyttöoikeudet csv-tiedostona"
             :handled-approvals "Käsitellyt hakemukset"
             :handled-reviews "Käsitellyt katselmoinnit"
+            :invite-member "Invite member"
             :last-modified "Muokattu"
             :load-application-states "Lataa hakemusten tilat"
+            :member "Jäsen"
+            :member-name "Nimi"
+            :member-email "Sähköposti"
             :no-handled-yet "Et ole käsitellyt hakemuksia vielä."
             :not-implemented "Ei vielä toteutettu"
             :ok "Ok"
