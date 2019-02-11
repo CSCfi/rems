@@ -189,7 +189,9 @@
 
 (defmethod apply-event [:application.event/created :workflow/dynamic]
   [application _workflow event]
-  ;; TODO
+  ;; TODO: populate the application from the event instead of relying on the legacy application model
+  ;;       - probably done as part of https://github.com/CSCfi/rems/issues/852 or maybe doesn't need to be
+  ;;         done at all before this code is removed
   application)
 
 (defmethod apply-event [:application.event/draft-saved :workflow/dynamic]
