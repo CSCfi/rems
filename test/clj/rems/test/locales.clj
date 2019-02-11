@@ -26,16 +26,19 @@
          (map-structure loc-fi))))
 
 (deftest all-translation-keywords-used-in-source-defined
-  (let [all-tokens (->> (sh/sh "git" "grep" "-Iho" ":t\\.[-a-z.]*/[-a-z.]\\+")
-                        :out
-                        clojure.string/split-lines
-                        (map read-string)
-                        set)
-        tr-config {:dict (locales/load-translations {:languages [:en]})}
-        tr (partial tempura/tr tr-config [:en])]
-    (doseq [token all-tokens]
-      (testing token
-        (is (tr [token]))))))
+  (let [grep (sh/sh "git" "grep" "-Iho" ":t\\.[-a-z.]*/[-a-z.]\\+")]
+    (assert (= 0 (:exit grep))
+            (pr-str grep))
+    (let [all-tokens (->> grep
+                          :out
+                          clojure.string/split-lines
+                          (map read-string)
+                          set)
+          tr-config {:dict (locales/load-translations {:languages [:en]})}
+          tr (partial tempura/tr tr-config [:en])]
+      (doseq [token all-tokens]
+        (testing token
+          (is (tr [token])))))))
 
 (deftest load-translations-test
   (testing "loads internal translations"
