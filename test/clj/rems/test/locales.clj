@@ -1,8 +1,14 @@
 (ns rems.test.locales
   (:require [clojure.java.io :as io]
+            [clojure.java.shell :as sh]
+            clojure.string
             [clojure.test :refer :all]
+            [mount.core :as mount]
+            [rems.context :as context]
             [rems.locales :as locales]
-            [rems.test.testing :refer [create-temp-dir delete-recursively]])
+            [rems.test.testing :refer [create-temp-dir delete-recursively]]
+            [rems.text :refer [with-language]]
+            [taoensso.tempura :as tempura])
   (:import (java.io FileNotFoundException)))
 
 (def loc-en (read-string (slurp (io/resource "translations/en.edn"))))
@@ -18,6 +24,18 @@
 (deftest test-all-languages-defined
   (is (= (map-structure loc-en)
          (map-structure loc-fi))))
+
+(deftest all-translation-keywords-used-in-source-defined
+  (let [all-tokens (->> (sh/sh "git" "grep" "-Iho" ":t\\.[-a-z.]*/[-a-z.]\\+")
+                        :out
+                        clojure.string/split-lines
+                        (map read-string)
+                        set)
+        tr-config {:dict (locales/load-translations {:languages [:en]})}
+        tr (partial tempura/tr tr-config [:en])]
+    (doseq [token all-tokens]
+      (testing token
+        (is (tr [token]))))))
 
 (deftest load-translations-test
   (testing "loads internal translations"
