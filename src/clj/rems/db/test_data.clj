@@ -445,7 +445,7 @@
 
 (defn- create-catalogue-item! [resource workflow form localizations]
   (let [id (:id (db/create-catalogue-item!
-                 {:title "non-localized title" :resid resource :wfid workflow :form form :state "enabled"}))]
+                 {:title "non-localized title" :resid resource :wfid workflow :form form}))]
     (doseq [[lang title] localizations]
       (catalogue/create-catalogue-item-localization! {:id id :langcode lang :title title}))
     id))
