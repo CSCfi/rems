@@ -268,7 +268,7 @@
            (set (keys (methods application-view-specific)))))))
 
 
-(defn- log-event [events event]
+(defn- append-to-event-log [events event]
   ;; only include events which are about processing the application
   (if (contains? #{:application.event/created
                    :application.event/draft-saved}
@@ -292,7 +292,7 @@
                "(not= " (:application/id application) " " (:application/id event) ")"))
   (-> application
       (assoc :application/last-activity (:event/time event))
-      (update :application/events log-event event)))
+      (update :application/events append-to-event-log event)))
 
 ;; TODO: replace rems.workflow.dynamic/apply-event with this
 ;;       (it will couple the write and read models, but it's probably okay
