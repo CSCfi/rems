@@ -3,14 +3,15 @@
   (:require [clj-time.core :as time]
             [rems.context :as context]
             [rems.db.applications :as applications]
-            [rems.db.core :as db]
             [rems.db.catalogue :as catalogue]
+            [rems.db.core :as db]
             [rems.db.form :as form]
             [rems.db.roles :as roles]
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
             [rems.db.workflow-actors :as actors]
-            [rems.locales :as locales])
+            [rems.locales :as locales]
+            [ring.util.http-response :refer [bad-request!]])
   (:import (org.joda.time DateTimeUtils DateTime)))
 
 (def ^DateTime creation-time (time/now)) ; TODO: no more used, remove?
@@ -492,8 +493,8 @@
              update :licenses
              conj [license-id "approved"]))
     (when dynamic-workflow?
-      (if-let [error (applications/dynamic-command! @save-draft-command)]
-        (throw (RuntimeException. (str "error in save-draft command: " error)))))
+      (let [error (applications/dynamic-command! @save-draft-command)]
+        (assert (nil? error) error)))
     app-id))
 
 (defn- create-applications! [catid wfid applicant approver]

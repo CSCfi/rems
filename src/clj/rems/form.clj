@@ -6,7 +6,8 @@
             [rems.db.core :as db]
             [rems.form-validation :as form-validation]
             [rems.InvalidRequestException]
-            [rems.util :refer [getx]]))
+            [rems.util :refer [getx]]
+            [ring.util.http-response :refer [bad-request!]]))
 
 
 (defn save-application-items [application-id catalogue-item-ids]
@@ -100,7 +101,7 @@
                                                        :time (time/now)
                                                        :items items
                                                        :licenses licenses})]
-          (throw (RuntimeException. (str "error in save-draft command: " error)))))
+          (bad-request! error)))
       (when (= "save" command)
         (db/add-application-event! {:application application-id
                                     :user actor
