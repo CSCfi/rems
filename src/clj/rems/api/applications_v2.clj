@@ -267,22 +267,6 @@
     (is (= (set (keys dynamic/event-schemas))
            (set (keys (methods application-view-specific)))))))
 
-
-(defn- append-to-event-log [events event]
-  ;; only include events which are about processing the application
-  (if (contains? #{:application.event/created
-                   :application.event/draft-saved}
-                 (:event/type event))
-    events
-    ;; choose only keys which will be shown in the UI's event log
-    (conj events (select-keys event [:event/type
-                                     :event/time
-                                     :event/actor
-                                     :application/comment
-                                     :application/commenters
-                                     :application/decider
-                                     :application/decision]))))
-
 (defn- application-view-generic
   "See `application-view`"
   [application event]
@@ -292,7 +276,7 @@
                "(not= " (:application/id application) " " (:application/id event) ")"))
   (-> application
       (assoc :application/last-activity (:event/time event))
-      (update :application/events append-to-event-log event)))
+      (update :application/events conj event)))
 
 ;; TODO: replace rems.workflow.dynamic/apply-event with this
 ;;       (it will couple the write and read models, but it's probably okay
@@ -525,6 +509,22 @@
                                             "mail" "applicant@example.com"
                                             "commonName" "Applicant"}}}
 
+        ;; test double events
+        created-event {:event/type :application.event/created
+                       :event/time (DateTime. 1000)
+                       :event/actor "applicant"
+                       :application/id 1
+                       :application/resources [{:catalogue-item/id 10
+                                                :resource/ext-id "urn:11"}
+                                               {:catalogue-item/id 20
+                                                :resource/ext-id "urn:21"}]
+                       :application/licenses [{:license/id 30}
+                                              {:license/id 31}]
+                       :form/id 40
+                       :workflow/id 50
+                       :workflow/type :dynamic
+                       :workflow.dynamic/handlers #{"handler"}}
+
         ;; expected values
         new-application {:application/id 1
                          :application/created (DateTime. 1000)
@@ -572,7 +572,7 @@
                                                  :license/text {:en "en license text"
                                                                 :fi "fi license text"
                                                                 :default "non-localized license text"}}]
-                         :application/events []
+                         :application/events [created-event]
                          :application/description ""
                          :form/id 40
                          :form/title "form title"
@@ -597,74 +597,53 @@
                          :workflow/state :rems.workflow.dynamic/draft
                          :workflow.dynamic/handlers #{"handler"}
                          :permissions/by-role {:applicant #{::dynamic/save-draft
-                                                            ::dynamic/submit}}}
-
-
-        ;; test double events
-        created-event {:event/type :application.event/created
-                       :event/time (DateTime. 1000)
-                       :event/actor "applicant"
-                       :application/id 1
-                       :application/resources [{:catalogue-item/id 10
-                                                :resource/ext-id "urn:11"}
-                                               {:catalogue-item/id 20
-                                                :resource/ext-id "urn:21"}]
-                       :application/licenses [{:license/id 30}
-                                              {:license/id 31}]
-                       :form/id 40
-                       :workflow/id 50
-                       :workflow/type :dynamic
-                       :workflow.dynamic/handlers #{"handler"}}]
+                                                            ::dynamic/submit}}}]
 
     (testing "new application"
       (is (= new-application
              (build-application-view
-              (valid-events
-               [created-event])
+              (valid-events [created-event])
               injections))))
 
     (testing "draft saved"
-      (is (= (-> new-application
-                 (assoc-in [:application/modified] (DateTime. 2000))
-                 (assoc-in [:application/last-activity] (DateTime. 2000))
-                 (assoc-in [:application/licenses 0 :license/accepted] true)
-                 (assoc-in [:application/licenses 1 :license/accepted] true)
-                 (assoc-in [:application/description] "foo")
-                 (assoc-in [:form/fields 0 :field/value] "foo")
-                 (assoc-in [:form/fields 1 :field/value] "bar"))
-             (build-application-view
-              (valid-events
-               [created-event
-                {:event/type :application.event/draft-saved
-                 :event/time (DateTime. 2000)
-                 :event/actor "applicant"
-                 :application/id 1
-                 :application/field-values {41 "foo"
-                                            42 "bar"}
-                 :application/accepted-licenses #{30 31}}])
-              injections))))
+      (let [draft-saved-event {:event/type :application.event/draft-saved
+                               :event/time (DateTime. 2000)
+                               :event/actor "applicant"
+                               :application/id 1
+                               :application/field-values {41 "foo"
+                                                          42 "bar"}
+                               :application/accepted-licenses #{30 31}}]
+        (is (= (-> new-application
+                   (assoc-in [:application/modified] (DateTime. 2000))
+                   (assoc-in [:application/last-activity] (DateTime. 2000))
+                   (assoc-in [:application/events] [created-event draft-saved-event])
+                   (assoc-in [:application/licenses 0 :license/accepted] true)
+                   (assoc-in [:application/licenses 1 :license/accepted] true)
+                   (assoc-in [:application/description] "foo")
+                   (assoc-in [:form/fields 0 :field/value] "foo")
+                   (assoc-in [:form/fields 1 :field/value] "bar"))
+               (build-application-view
+                (valid-events [created-event draft-saved-event])
+                injections)))))
 
     (testing "submitted"
-      (is (= (-> new-application
-                 (assoc-in [:application/last-activity] (DateTime. 2000))
-                 (assoc-in [:application/events] [{:event/type :application.event/submitted
-                                                   :event/time (DateTime. 2000)
-                                                   :event/actor "applicant"}])
-                 (assoc-in [:workflow/state] ::dynamic/submitted)
-                 (assoc-in [:permissions/by-role :applicant] #{})
-                 (assoc-in [:permissions/by-role :handler] #{::dynamic/approve
-                                                             ::dynamic/reject
-                                                             ::dynamic/return
-                                                             ::dynamic/request-decision
-                                                             ::dynamic/request-comment}))
-             (build-application-view
-              (valid-events
-               [created-event
-                {:event/type :application.event/submitted
-                 :event/time (DateTime. 2000)
-                 :event/actor "applicant"
-                 :application/id 1}])
-              injections))))))
+      (let [submitted-event {:event/type :application.event/submitted
+                             :event/time (DateTime. 2000)
+                             :event/actor "applicant"
+                             :application/id 1}]
+        (is (= (-> new-application
+                   (assoc-in [:application/last-activity] (DateTime. 2000))
+                   (assoc-in [:application/events] [created-event submitted-event])
+                   (assoc-in [:workflow/state] ::dynamic/submitted)
+                   (assoc-in [:permissions/by-role :applicant] #{})
+                   (assoc-in [:permissions/by-role :handler] #{::dynamic/approve
+                                                               ::dynamic/reject
+                                                               ::dynamic/return
+                                                               ::dynamic/request-decision
+                                                               ::dynamic/request-comment}))
+               (build-application-view
+                (valid-events [created-event submitted-event])
+                injections)))))))
 
 (defn- get-form [form-id]
   (-> (form/get-form form-id)
