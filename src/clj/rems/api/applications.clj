@@ -124,6 +124,15 @@
             ((complement contains?) #{"third-party-review" "review-request" "review"} (:event event)))
           events))
 
+(defn- latest-event [events]
+  (apply time/max-date (map #(or (:time %) ; Non-dynamic events
+                                 (:event/time %)) events))) ; Dynamic events
+
+(defn- update-application-last-modified [application]
+  (let [events (or (:events application)
+                   (:dynamic-events application))]
+    (assoc application :last-modified (latest-event events))))
+
 (defn- hide-sensitive-dynamic-events [events]
   (filter (fn [event]
             ((complement contains?) #{:application.event/decision-requested
@@ -141,6 +150,7 @@
     (if is-handler?
       application
       (-> application
+          (update :application update-application-last-modified)
           (update-in [:application :events] hide-sensitive-events)
           (update-in [:application :dynamic-events] hide-sensitive-dynamic-events)
           (update-in [:application :events] hide-users)))))
