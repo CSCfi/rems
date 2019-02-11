@@ -1020,8 +1020,8 @@
 (defn get-dynamic-application-events [application-id]
   (map fix-event-from-db (db/get-application-events {:application application-id})))
 
-(defn get-dynamic-application-events-since [event-id limit]
-  (map fix-event-from-db (db/get-application-events-since {:id event-id :limit limit})))
+(defn get-dynamic-application-events-since [event-id]
+  (map fix-event-from-db (db/get-application-events-since {:id event-id})))
 
 (defn get-dynamic-application-state [application-id]
   (let [application (first (db/get-applications {:id application-id}))

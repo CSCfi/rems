@@ -827,20 +827,14 @@
          :error-handler (fn [_agent exception]
                           (log/error exception "Updating projection failed"))))
 
-(declare trigger-applications-update!)
-
 (defn- update-applications! [state]
   (let [from-id (:last-processed-event-id state)
-        batch-size 1000
-        events (applications/get-dynamic-application-events-since from-id batch-size)
+        events (applications/get-dynamic-application-events-since from-id)
         until-id (:event/id (last events))]
     (if (empty? events)
       state
       (do
         (log/info "Updating projection from" from-id "until" until-id)
-        (when (= batch-size (count events))
-          ;; there may be more events, so handle the next batch immediately after the current one
-          (trigger-applications-update!))
         (assoc state
                :last-processed-event-id until-id
                :applications (reduce applications-view (:applications state) events))))))

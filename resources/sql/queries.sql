@@ -593,7 +593,6 @@ SELECT id, eventdata::TEXT
 FROM application_event
 WHERE id > :id
 ORDER BY id ASC
-LIMIT :limit
 
 -- :name add-application-event! :insert
 INSERT INTO application_event (appId, userId, round, event, comment, eventData)
