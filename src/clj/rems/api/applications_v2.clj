@@ -409,25 +409,25 @@
                        (sort-by :catalogue-item/id))]
     (assoc application :application/resources resources)))
 
-(defn- assoc-licenses [application licenses]
-  (let [licenses (->> licenses
-                      (map (fn [license]
-                             (let [type (keyword (:licensetype license))
-                                   content-key (case type
-                                                 :link :license/link
-                                                 :text :license/text)]
-                               {:license/id (:id license)
-                                :license/type type
-                                :license/start (:start license)
-                                :license/end (:end license)
-                                :license/title (assoc (localization-for :title license)
-                                                      :default (:title license))
-                                content-key (assoc (localization-for :textcontent license)
-                                                   :default (:textcontent license))})))
-                      (sort-by :license/id))]
-    (assoc application :application/licenses (merge-lists-by :license/id
-                                                             licenses
-                                                             (:application/licenses application)))))
+(defn- enrich-licenses [app-licenses get-license]
+  (let [full-licenses (->> app-licenses
+                           (map :license/id)
+                           (map get-license)
+                           (map (fn [license]
+                                  (let [type (keyword (:licensetype license))
+                                        content-key (case type
+                                                      :link :license/link
+                                                      :text :license/text)]
+                                    {:license/id (:id license)
+                                     :license/type type
+                                     :license/start (:start license)
+                                     :license/end (:end license)
+                                     :license/title (assoc (localization-for :title license)
+                                                           :default (:title license))
+                                     content-key (assoc (localization-for :textcontent license)
+                                                        :default (:textcontent license))})))
+                           (sort-by :license/id))]
+    (merge-lists-by :license/id full-licenses app-licenses)))
 
 (defn- assoc-injections [application {:keys [get-form get-catalogue-item get-license get-user]}]
   (-> application
@@ -435,9 +435,7 @@
       (assoc-resources (->> (:application/resources application)
                             (map :catalogue-item/id)
                             (map get-catalogue-item)))
-      (assoc-licenses (->> (:application/licenses application)
-                           (map :license/id)
-                           (map get-license)))
+      (assoc :application/licenses (enrich-licenses (:application/licenses application) get-license))
       (assoc :application/applicant-attributes (get-user (:application/applicant application)))))
 
 (defn- build-application-view [events injections]
