@@ -11,6 +11,7 @@
             [muuntaja.format.transit :as transit-format]
             [rems.api.actions :refer [actions-api]]
             [rems.api.applications :refer [applications-api]]
+            [rems.api.applications-v2 :refer [trigger-applications-update!]]
             [rems.api.catalogue :refer [catalogue-api]]
             [rems.api.catalogue-items :refer [catalogue-items-api]]
             [rems.api.entitlements :refer [entitlements-api]]
@@ -20,8 +21,8 @@
             [rems.api.resources :refer [resources-api]]
             [rems.api.users :refer [users-api]]
             [rems.api.workflows :refer [workflows-api]]
-            [rems.auth.NotAuthorizedException]
             [rems.auth.ForbiddenException]
+            [rems.auth.NotAuthorizedException]
             [ring.middleware.cors :refer [wrap-cors]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
@@ -60,8 +61,10 @@
 (defn transaction-middleware [handler]
   (fn [request]
     (if (should-wrap-transaction? request)
-      (conman/with-transaction [rems.db.core/*db* {:isolation :serializable}]
-        (handler request))
+      (let [response (conman/with-transaction [rems.db.core/*db* {:isolation :serializable}]
+                       (handler request))]
+        (trigger-applications-update!)
+        response)
       (handler request))))
 
 (def joda-time-writer
