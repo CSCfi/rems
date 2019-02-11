@@ -89,8 +89,13 @@
     (when (valid-request? request)
       request)))
 
+(defn- create-request-with-state [request]
+  (if (nil? (:state request))
+    (merge {:state "disabled"} request)
+    request))
+
 (defn- create-catalogue-item [request]
-  (post! "/api/catalogue-items/create" {:params request
+  (post! "/api/catalogue-items/create" {:params (create-request-with-state request)
                                         ;; TODO error handling
                                         :handler (fn [resp] (dispatch! "#/administration/catalogue-items"))}))
 
