@@ -373,20 +373,20 @@
          (localization-for :title {:localizations {:en {}
                                                    :fi {}}}))))
 
-(defn- assoc-form [application form]
-  (let [fields (map (fn [item]
-                      {:field/id (:id item)
-                       :field/value "" ; default for new forms
-                       :field/type (keyword (:type item))
-                       :field/title (localization-for :title item)
-                       :field/placeholder (localization-for :inputprompt item)
-                       :field/optional (:optional item)
-                       :field/options (:options item)
-                       :field/max-length (:maxlength item)})
-                    (:items form))
-        fields (merge-lists-by :field/id
-                               fields
-                               (:form/fields application))
+(defn- enrich-form [application get-form]
+  (let [form (get-form (:form/id application))
+        app-fields (:form/fields application)
+        rich-fields (map (fn [item]
+                           {:field/id (:id item)
+                            :field/value "" ; default for new forms
+                            :field/type (keyword (:type item))
+                            :field/title (localization-for :title item)
+                            :field/placeholder (localization-for :inputprompt item)
+                            :field/optional (:optional item)
+                            :field/options (:options item)
+                            :field/max-length (:maxlength item)})
+                         (:items form))
+        fields (merge-lists-by :field/id rich-fields app-fields)
         description (->> fields
                          (filter #(= :description (:field/type %)))
                          first
@@ -411,7 +411,7 @@
        (sort-by :catalogue-item/id)))
 
 (defn- enrich-licenses [app-licenses get-license]
-  (let [full-licenses (->> app-licenses
+  (let [rich-licenses (->> app-licenses
                            (map :license/id)
                            (map get-license)
                            (map (fn [license]
@@ -428,11 +428,11 @@
                                      content-key (assoc (localization-for :textcontent license)
                                                         :default (:textcontent license))})))
                            (sort-by :license/id))]
-    (merge-lists-by :license/id full-licenses app-licenses)))
+    (merge-lists-by :license/id rich-licenses app-licenses)))
 
 (defn- assoc-injections [application {:keys [get-form get-catalogue-item get-license get-user]}]
   (-> application
-      (assoc-form (get-form (:form/id application)))
+      (enrich-form get-form)
       (update :application/resources enrich-resources get-catalogue-item)
       (update :application/licenses enrich-licenses get-license)
       (assoc :application/applicant-attributes (get-user (:application/applicant application)))))
