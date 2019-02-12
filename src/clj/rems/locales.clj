@@ -2,13 +2,9 @@
   {:ns-tracker/resource-deps ["translations/en.edn" "translations/fi.edn"]}
   (:require [clojure.java.io :as io]
             [mount.core :refer [defstate]]
-            [rems.config :refer [env]])
+            [rems.config :refer [env]]
+            [rems.util :refer [deep-merge]])
   (:import (java.io FileNotFoundException)))
-
-(defn- deep-merge [a & maps]
-  (if (map? a)
-    (apply merge-with deep-merge a maps)
-    (apply merge-with deep-merge maps)))
 
 (defn- load-translation [language translations-directory extra-translations-directory]
   (let [file (when translations-directory
