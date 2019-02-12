@@ -796,14 +796,14 @@
 
     (testing "send command without user"
       (is (= {:success false
-              :errors ["forbidden"]}
+              :errors [{:type "forbidden"}]}
              (send-dynamic-command "" {:type :rems.workflow.dynamic/approve
                                        :application-id application-id}))
           "user should be forbidden to send command"))
 
     (testing "send command with a user that is not a handler"
       (is (= {:success false
-              :errors ["forbidden"]}
+              :errors [{:type "forbidden"}]}
              (send-dynamic-command user-id {:type :rems.workflow.dynamic/approve
                                             :application-id application-id
                                             :comment ""}))

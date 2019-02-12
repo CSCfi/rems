@@ -109,4 +109,4 @@
 
 (s/defschema SuccessResponse
   {:success s/Bool
-   (s/optional-key :errors) s/Any})
+   (s/optional-key :errors) [s/Any]})
