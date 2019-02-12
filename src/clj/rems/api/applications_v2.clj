@@ -696,13 +696,15 @@
          :is-applicant? (applications/is-applicant? user-id application)))
 
 (defn- transform-v2-to-v1 [application user-id]
-  (let [catalogue-items (map (fn [resource]
+  (let [form (:application/form application)
+        workflow (:application/workflow application)
+        catalogue-items (map (fn [resource]
                                (applications/translate-catalogue-item
                                 {:id (:catalogue-item/id resource)
                                  :resource-id (:resource/id resource)
                                  :resid (:resource/ext-id resource)
-                                 :wfid (:workflow/id application)
-                                 :formid (:form/id application)
+                                 :wfid (:workflow/id workflow)
+                                 :formid (:form/id form)
                                  :start (:catalogue-item/start resource)
                                  :state (name (:catalogue-item/state resource))
                                  :title (:default (:catalogue-item/title resource))
@@ -712,35 +714,35 @@
                                                                   :langcode lang
                                                                   :id (:catalogue-item/id resource)}]))}))
                              (:application/resources application))]
-    {:id (:form/id application)
-     :title (:form/title application)
+    {:id (:form/id form)
+     :title (:form/title form)
      :catalogue-items catalogue-items
      :applicant-attributes (:application/applicant-attributes application)
      :application (assoc-derived-data
                    user-id
                    {:id (:application/id application)
-                    :formid (:form/id application)
-                    :wfid (:workflow/id application)
+                    :formid (:form/id form)
+                    :wfid (:workflow/id workflow)
                     :applicantuserid (:application/applicant application)
                     :start (:application/created application)
                     :last-modified (:application/last-activity application)
-                    :state (:workflow/state application) ; TODO: round-based workflows
+                    :state (:workflow/state workflow) ; TODO: round-based workflows
                     :description (:application/description application)
                     :catalogue-items catalogue-items
-                    :form-contents {:items (into {} (for [field (:form/fields application)]
+                    :form-contents {:items (into {} (for [field (:form/fields form)]
                                                       [(:field/id field) (:field/value field)]))
                                     :licenses (into {} (for [license (:application/licenses application)]
                                                          (when (:license/accepted license)
                                                            [(:license/id license) "approved"])))}
                     :events [] ; TODO: round-based workflows
                     :dynamic-events (:application/events application)
-                    :workflow {:type (:workflow/type application)
+                    :workflow {:type (:workflow/type workflow)
                                ;; TODO: add :handlers only when it exists? https://stackoverflow.com/a/16375390
-                               :handlers (vec (:workflow.dynamic/handlers application))}
+                               :handlers (vec (:workflow.dynamic/handlers workflow))}
                     :possible-commands (:permissions/current-user application)
                     :fnlround 0 ; TODO: round-based workflows
                     :review-type nil}) ; TODO: round-based workflows
-     :phases (applications/get-application-phases (:workflow/state application))
+     :phases (applications/get-application-phases (:workflow/state workflow))
      :licenses (map (fn [license]
                       {:id (:license/id license)
                        :type "license"
@@ -775,7 +777,7 @@
                                                                     (keys (:field/placeholder field))))]
                                               [lang {:title (get-in field [:field/title lang])
                                                      :inputprompt (get-in field [:field/placeholder lang])}]))})
-                 (:form/fields application))}))
+                 (:form/fields form))}))
 
 (defn api-get-application-v1 [user-id application-id]
   (when-let [v2 (api-get-application-v2 user-id application-id)]
