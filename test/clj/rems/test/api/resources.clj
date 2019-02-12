@@ -49,7 +49,7 @@
                 body (read-body response)]
             (is (= 200 (:status response)))
             (is (= false (:success body)))
-            (is (= [{:key "t.administration.errors/duplicate-resid" :resid resid}] (:errors body)))))
+            (is (= [{:type "t.administration.errors/duplicate-resid" :resid resid}] (:errors body)))))
         (testing "duplicate resource ID is allowed between organizations"
           (-> (request :post "/api/resources/create")
               (authenticate api-key user-id)

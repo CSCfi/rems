@@ -272,7 +272,7 @@
 (defn- applicant-error
   [application cmd]
   (when-not (= (:actor cmd) (:applicantuserid application))
-    {:errors [{:key :forbidden}]}))
+    {:errors [{:type :forbidden}]}))
 
 (defn- handler?
   [application user]
@@ -281,18 +281,18 @@
 (defn- actor-is-not-handler-error
   [application cmd]
   (when-not (handler? application (:actor cmd))
-    {:errors [{:key :forbidden}]}))
+    {:errors [{:type :forbidden}]}))
 
 (defn- state-error
   [application & expected-states]
   (when-not (contains? (set expected-states) (:state application))
-    {:errors [{:key :invalid-state :state (:state application)}]}))
+    {:errors [{:type :invalid-state :state (:state application)}]}))
 
 (defn- valid-user-error
   [injections user]
   (cond
-    (not (:valid-user? injections)) {:errors [{:key :missing-injection :injection :valid-user?}]}
-    (not ((:valid-user? injections) user)) {:errors [{:key :t.form.validation/invalid-user :userid user}]}))
+    (not (:valid-user? injections)) {:errors [{:type :missing-injection :injection :valid-user?}]}
+    (not ((:valid-user? injections) user)) {:errors [{:type :t.form.validation/invalid-user :userid user}]}))
 
 (defn- validation-error
   [injections application-id]
@@ -385,10 +385,10 @@
 (defmethod handle-command ::decide
   [cmd application _injections]
   (or (when-not (= (:actor cmd) (:decider application))
-        {:errors [{:key :forbidden}]})
+        {:errors [{:type :forbidden}]})
       (state-error application ::submitted)
       (when-not (contains? #{:approved :rejected} (:decision cmd))
-        {:errors [{:key :invalid-decision :decision (:decision cmd)}]})
+        {:errors [{:type :invalid-decision :decision (:decision cmd)}]})
       {:success true
        :result {:event/type :application.event/decided
                 :event/time (:time cmd)
@@ -404,7 +404,7 @@
 
 (defn- must-not-be-empty [cmd key]
   (when-not (seq (get cmd key))
-    {:errors [{:key :must-not-be-empty :cmd-key key}]}))
+    {:errors [{:type :must-not-be-empty :key key}]}))
 
 (defmethod handle-command ::request-comment
   [cmd application injections]
@@ -422,7 +422,7 @@
 
 (defn- actor-is-not-commenter-error [application cmd]
   (when-not (contains? (:commenters application) (:actor cmd))
-    {:errors [{:key :forbidden}]}))
+    {:errors [{:type :forbidden}]}))
 
 (defmethod handle-command ::comment
   [cmd application _injections]
@@ -561,7 +561,7 @@
                              application
                              injections))))
     (testing "only the applicant can save a draft"
-      (is (= {:errors [{:key :forbidden}]}
+      (is (= {:errors [{:type :forbidden}]}
              (handle-command {:type ::save-draft
                               :time 456
                               :actor "non-applicant"
@@ -592,7 +592,7 @@
                                         [{:actor "applicant" :type ::save-draft :items {1 "original"} :licenses {2 "original"}}
                                          {:actor "applicant" :type ::submit}]
                                         injections)]
-        (is (= {:errors [{:key :invalid-state :state ::submitted}]}
+        (is (= {:errors [{:type :invalid-state :state ::submitted}]}
                (handle-command {:type ::save-draft
                                 :actor "applicant"
                                 :items {1 "updated"} :licenses {2 "updated"}}
@@ -631,21 +631,21 @@
 
 (deftest test-submit-approve-or-reject
   (let [injections {:validate-form (constantly nil)}
-        expected-errors [{:key :t.form.validation/required}]
+        expected-errors [{:type :t.form.validation/required}]
         fail-injections {:validate-form (constantly expected-errors)}
         application {:state ::draft
                      :applicantuserid "applicant"
                      :workflow {:type :workflow/dynamic
                                 :handlers ["assistant"]}}]
     (testing "only applicant can submit"
-      (is (= {:errors [{:key :forbidden}]}
+      (is (= {:errors [{:type :forbidden}]}
              (handle-command {:actor "not-applicant" :type ::submit} application injections))))
     (testing "can only submit valid form"
       (is (= {:errors expected-errors}
              (handle-command {:actor "applicant" :type ::submit} application fail-injections))))
     (let [submitted (apply-command application {:actor "applicant" :type ::submit} injections)]
       (testing "cannot submit twice"
-        (is (= {:errors [{:key :invalid-state :state ::submitted}]}
+        (is (= {:errors [{:type :invalid-state :state ::submitted}]}
                (handle-command {:actor "applicant" :type ::submit} submitted injections))))
       (testing "submitter is member"
         (is (= [{:userid "applicant"}] (:members submitted))))
@@ -684,17 +684,17 @@
                                 :handlers ["assistant"]}}
         injections {:valid-user? #{"deity"}}]
     (testing "required :valid-user? injection"
-      (is (= {:errors [{:key :missing-injection :injection :valid-user?}]}
+      (is (= {:errors [{:type :missing-injection :injection :valid-user?}]}
              (handle-command {:actor "assistant" :decider "deity" :type ::request-decision}
                              application
                              {}))))
     (testing "decider must be a valid user"
-      (is (= {:errors [{:key :t.form.validation/invalid-user :userid "deity2"}]}
+      (is (= {:errors [{:type :t.form.validation/invalid-user :userid "deity2"}]}
              (handle-command {:actor "assistant" :decider "deity2" :type ::request-decision}
                              application
                              injections))))
     (testing "deciding before ::request-decision should fail"
-      (is (= {:errors [{:key :forbidden}]}
+      (is (= {:errors [{:type :forbidden}]}
              (handle-command {:actor "deity" :decision :approved :type ::decide}
                              application
                              injections))))
@@ -702,7 +702,7 @@
       (testing "request decision succesfully"
         (is (= {:decider "deity"} (select-keys requested [:decider :decision]))))
       (testing "only the requested user can decide"
-        (is (= {:errors [{:key :forbidden}]}
+        (is (= {:errors [{:type :forbidden}]}
                (handle-command {:actor "deity2" :decision :approved :type ::decide}
                                requested
                                injections))))
@@ -710,7 +710,7 @@
         (testing "succesfully approved"
           (is (= {:decision :approved} (select-keys approved [:decider :decision]))))
         (testing "cannot approve twice"
-          (is (= {:errors [{:key :forbidden}]}
+          (is (= {:errors [{:type :forbidden}]}
                  (handle-command {:actor "deity" :decision :approved :type ::decide}
                                  approved
                                  injections)))))
@@ -718,12 +718,12 @@
         (testing "successfully rejected"
           (is (= {:decision :rejected} (select-keys rejected [:decider :decision]))))
         (testing "can not reject twice"
-          (is (= {:errors [{:key :forbidden}]}
+          (is (= {:errors [{:type :forbidden}]}
                  (handle-command {:actor "deity" :decision :rejected :type ::decide}
                                  rejected
                                  injections)))))
       (testing "other decisions are not possible"
-        (is (= {:errors [{:key :invalid-decision :decision :foobar}]}
+        (is (= {:errors [{:type :invalid-decision :decision :foobar}]}
                (handle-command {:actor "deity" :decision :foobar :type ::decide}
                                requested
                                injections)))))))
@@ -742,7 +742,7 @@
                               [{:type ::add-member :actor "assistant" :member {:userid "member1"}}]
                               injections)))))
     (testing "only handler can add members"
-      (is (= {:errors [{:key :forbidden}]}
+      (is (= {:errors [{:type :forbidden}]}
              (handle-command {:type ::add-member :actor "member1" :member "member1"}
                              application
                              injections)
@@ -750,7 +750,7 @@
                              application
                              injections))))
     (testing "only valid users can be added"
-      (is (= {:errors [{:key :t.form.validation/invalid-user :userid "member3"}]}
+      (is (= {:errors [{:type :t.form.validation/invalid-user :userid "member3"}]}
              (handle-command {:type ::add-member :actor "assistant" :member {:userid "member3"}}
                              application
                              injections))))))
@@ -776,12 +776,12 @@
                                {:type ::invite-member :actor "assistant" :member {:name "Member Applicant 2" :email "member2@applicants.com"}}]
                               injections)))))
     (testing "only applicant or handler can invite members"
-      (is (= {:errors [{:key :forbidden}]}
+      (is (= {:errors [{:type :forbidden}]}
              (handle-command {:type ::invite-member :actor "member1" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
                              application
                              injections))))
     (testing "applicant can't invite members to approved application"
-      (is (= {:errors [{:key :invalid-state :state ::approved}]}
+      (is (= {:errors [{:type :invalid-state :state ::approved}]}
              (handle-command {:type ::invite-member :actor "applicant" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
                              (assoc application :state ::approved)
                              injections))))
@@ -800,22 +800,22 @@
                                 :handlers ["assistant"]}}
         injections {:valid-user? #{"commenter" "commenter2" "commenter3"}}]
     (testing "required :valid-user? injection"
-      (is (= {:errors [{:key :missing-injection :injection :valid-user?}]}
+      (is (= {:errors [{:type :missing-injection :injection :valid-user?}]}
              (handle-command {:actor "assistant" :commenters ["commenter"] :type ::request-comment}
                              application
                              {}))))
     (testing "commenters must not be empty"
-      (is (= {:errors [{:key :must-not-be-empty :cmd-key :commenters}]}
+      (is (= {:errors [{:type :must-not-be-empty :key :commenters}]}
              (handle-command {:actor "assistant" :commenters [] :type ::request-comment}
                              application
                              {}))))
     (testing "commenters must be a valid users"
-      (is (= {:errors [{:key :t.form.validation/invalid-user :userid "invaliduser"} {:key :t.form.validation/invalid-user :userid "invaliduser2"}]}
+      (is (= {:errors [{:type :t.form.validation/invalid-user :userid "invaliduser"} {:type :t.form.validation/invalid-user :userid "invaliduser2"}]}
              (handle-command {:actor "assistant" :commenters ["invaliduser" "commenter" "invaliduser2"] :type ::request-comment}
                              application
                              injections))))
     (testing "commenting before ::request-comment should fail"
-      (is (= {:errors [{:key :forbidden}]}
+      (is (= {:errors [{:type :forbidden}]}
              (handle-command {:actor "commenter" :decision :approved :type ::comment}
                              application
                              injections))))
@@ -826,7 +826,7 @@
       (testing "request comment succesfully"
         (is (= #{"commenter2" "commenter"} (:commenters requested))))
       (testing "only the requested commenter can comment"
-        (is (= {:errors [{:key :forbidden}]}
+        (is (= {:errors [{:type :forbidden}]}
                (handle-command {:actor "commenter3" :comment "..." :type ::comment}
                                requested
                                injections))))
@@ -834,7 +834,7 @@
         (testing "succesfully commented"
           (is (= #{"commenter2"} (:commenters commented))))
         (testing "cannot comment twice"
-          (is (= {:errors [{:key :forbidden}]}
+          (is (= {:errors [{:type :forbidden}]}
                  (handle-command {:actor "commenter" :comment "..." :type ::comment}
                                  commented
                                  injections))))
