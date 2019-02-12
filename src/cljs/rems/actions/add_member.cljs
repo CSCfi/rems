@@ -16,9 +16,6 @@
 
 (rf/reg-fx ::fetch-potential-members fetch-potential-members)
 
-(comment
-  (fetch-potential-members [{:eppn "developer"} prn]))
-
 (defn open-form
   [{:keys [db]} _]
   (merge {:db (assoc db
@@ -28,11 +25,6 @@
                                      #(rf/dispatch [::set-potential-members %])]}))
 
 (rf/reg-event-fx ::open-form open-form)
-
-(comment
-  (open-form {:db {:identity {:roles #{:approver} :user {:eppn "developer"}}}}
-             [::open-form])
-  (rf/dispatch [::open-form]))
 
 ;; TODO together with application.cljs extract a user selection component
 (defn enrich-user [user]
@@ -49,11 +41,6 @@
 
 (rf/reg-event-db
  ::set-selected-member
- (fn [db [_ member]]
-   (assoc db ::selected-member member)))
-
-(rf/reg-event-db
- ::add-selected-member
  (fn [db [_ member]]
    (assoc db ::selected-member member)))
 
@@ -133,7 +120,7 @@
                               :on-close on-modal-close)])
        [add-member-view {:selected-member @selected-member
                          :potential-members @potential-members
-                         :on-add-member #(rf/dispatch [::add-selected-member %])
+                         :on-add-member #(rf/dispatch [::set-selected-member %])
                          :on-remove-member #(rf/dispatch [::remove-selected-member %])
                          :on-send #(rf/dispatch [::send-add-member {:application-id application-id
                                                                     :member @selected-member
