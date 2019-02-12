@@ -28,7 +28,7 @@
 
 (defn- block [id expanded callback content-always content-hideable top-less-button? bottom-less-button?]
   [:div.collapse-content
-   [:div content-always]
+   content-always
    (when-not (empty? content-hideable)
      [:div
       (when top-less-button? [show-less-button id expanded])
