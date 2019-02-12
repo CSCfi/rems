@@ -71,6 +71,11 @@
    :comment s/Str
    :recipients [s/Str]})
 
+(s/defschema Applicant
+  {:userid s/Str
+   :name (s/maybe s/Str)
+   :email (s/maybe s/Str)})
+
 (s/defschema Reviewer
   {:userid s/Str
    :name (s/maybe s/Str)
@@ -143,45 +148,29 @@
     (-> (applications/get-form-for user-id application-id)
         (hide-sensitive-information user-id))))
 
-;; TODO lots of duplication in invalid-reviewer? invalid-commenter? etc. fns
-(defn invalid-reviewer? [u]
+(defn invalid-user? [u]
   (or (str/blank? (get u "eppn"))
       (str/blank? (get u "commonName"))
       (str/blank? (get u "mail"))))
 
-;; TODO Filter applicant, requesting user
-(defn get-reviewers []
-  (for [u (->> (users/get-all-users)
-               (remove invalid-reviewer?))]
-    {:userid (get u "eppn")
-     :name (get u "commonName")
-     :email (get u "mail")}))
-
-(defn invalid-commenter? [u]
-  (or (str/blank? (get u "eppn"))
-      (str/blank? (get u "commonName"))
-      (str/blank? (get u "mail"))))
+(defn format-user [u]
+  {:userid (get u "eppn")
+   :name (get u "commonName")
+   :email (get u "mail")})
 
 ;; TODO Filter applicant, requesting user
-(defn get-commenters []
-  (for [u (->> (users/get-all-users)
-               (remove invalid-commenter?))]
-    {:userid (get u "eppn")
-     :name (get u "commonName")
-     :email (get u "mail")}))
+(defn get-users []
+  (->> (users/get-all-users)
+       (remove invalid-user?)
+       (map format-user)))
 
-(defn invalid-decider? [u]
-  (or (str/blank? (get u "eppn"))
-      (str/blank? (get u "commonName"))
-      (str/blank? (get u "mail"))))
+(def get-applicants get-users)
 
-;; TODO Filter applicant, requesting user
-(defn get-deciders []
-  (for [u (->> (users/get-all-users)
-               (remove invalid-decider?))]
-    {:userid (get u "eppn")
-     :name (get u "commonName")
-     :email (get u "mail")}))
+(def get-reviewers get-users)
+
+(def get-commenters get-users)
+
+(def get-deciders get-users)
 
 (defn- check-attachment-content-type
   "Checks that content-type matches the allowed ones listed on the UI side:
@@ -231,6 +220,12 @@
       :roles #{:approver}
       :return Commenters
       (ok (get-commenters)))
+
+    (GET "/members" []
+      :summary "Existing REMS users available for application membership"
+      :roles #{:approver}
+      :return [Applicant]
+      (ok (get-applicants)))
 
     (GET "/deciders" []
       :summary "Available deciders"
