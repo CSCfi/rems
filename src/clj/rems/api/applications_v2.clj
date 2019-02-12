@@ -170,11 +170,11 @@
 
 ;;;; v2 API, pure application state based on application events
 
-(defmulti ^:private application-view-specific
+(defmulti ^:private event-type-specific-application-view
   "See `application-view`"
   (fn [_application event] (:event/type event)))
 
-(defmethod application-view-specific :application.event/created
+(defmethod event-type-specific-application-view :application.event/created
   [application event]
   (-> application
       (assoc :application/id (:application/id event)
@@ -205,7 +205,7 @@
          (assoc license :license/accepted (contains? accepted-licenses (:license/id license))))
        licenses))
 
-(defmethod application-view-specific :application.event/draft-saved
+(defmethod event-type-specific-application-view :application.event/draft-saved
   [application event]
   (-> application
       (assoc :application/modified (:event/time event))
@@ -215,15 +215,15 @@
                                                       (:application/field-values event)))
       (update :application/licenses set-accepted-licences (:application/accepted-licenses event))))
 
-(defmethod application-view-specific :application.event/member-invited
+(defmethod event-type-specific-application-view :application.event/member-invited
   [application event]
   application)
 
-(defmethod application-view-specific :application.event/member-added
+(defmethod event-type-specific-application-view :application.event/member-added
   [application event]
   application)
 
-(defmethod application-view-specific :application.event/submitted
+(defmethod event-type-specific-application-view :application.event/submitted
   [application event]
   (-> application
       (assoc :workflow/state ::dynamic/submitted)
@@ -234,53 +234,49 @@
                                         ::dynamic/request-decision
                                         ::dynamic/request-comment}})))
 
-(defmethod application-view-specific :application.event/returned
+(defmethod event-type-specific-application-view :application.event/returned
   [application event]
   application)
 
-(defmethod application-view-specific :application.event/comment-requested
+(defmethod event-type-specific-application-view :application.event/comment-requested
   [application event]
   application)
 
-(defmethod application-view-specific :application.event/commented
+(defmethod event-type-specific-application-view :application.event/commented
   [application event]
   application)
 
-(defmethod application-view-specific :application.event/decision-requested
+(defmethod event-type-specific-application-view :application.event/decision-requested
   [application event]
   application)
 
-(defmethod application-view-specific :application.event/decided
+(defmethod event-type-specific-application-view :application.event/decided
   [application event]
   application)
 
-(defmethod application-view-specific :application.event/approved
+(defmethod event-type-specific-application-view :application.event/approved
   [application event]
   application)
 
-(defmethod application-view-specific :application.event/rejected
+(defmethod event-type-specific-application-view :application.event/rejected
   [application event]
   application)
 
-(defmethod application-view-specific :application.event/closed
+(defmethod event-type-specific-application-view :application.event/closed
   [application event]
   application)
 
-(deftest test-application-view-specific
+(deftest test-event-type-specific-application-view
   (testing "supports all event types"
     (is (= (set (keys dynamic/event-schemas))
-           (set (keys (methods application-view-specific)))))))
+           (set (keys (methods event-type-specific-application-view)))))))
 
-(defn- application-view-generic
-  "See `application-view`"
-  [application event]
+(defn- assert-same-application-id [application event]
   (assert (= (:application/id application)
              (:application/id event))
           (str "event for wrong application "
                "(not= " (:application/id application) " " (:application/id event) ")"))
-  (-> application
-      (assoc :application/last-activity (:event/time event))
-      (update :application/events conj event)))
+  application)
 
 ;; TODO: replace rems.workflow.dynamic/apply-event with this
 ;;       (it will couple the write and read models, but it's probably okay
@@ -291,8 +287,10 @@
   data from other entities."
   [application event]
   (-> application
-      (application-view-specific event)
-      (application-view-generic event)))
+      (event-type-specific-application-view event)
+      (assert-same-application-id event)
+      (assoc :application/last-activity (:event/time event))
+      (update :application/events conj event)))
 
 ;;; v2 API, external entities (form, resources, licenses etc.)
 
