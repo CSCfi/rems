@@ -783,57 +783,26 @@
 
 ;;; v2 API, listing all applications
 
-(defn- applications-view
+(defn- all-applications-view
   "Projection for the current state of all applications."
   [applications event]
   (if-let [app-id (:application/id event)] ; old style events don't have :application/id
     (update applications app-id application-view event)
     applications))
 
-(defn- reset-applications-state [_]
-  {:last-processed-event-id 0
-   :applications {}})
-
-(def ^:private applications-state
-  "Stateful projection tracking the current state of all applications.
-  Will be updated periodically by `applications-update-scheduler`,
-  but an update may also be triggered with `trigger-applications-update!`
-  e.g. after committing some new events."
-  (agent (reset-applications-state nil)
-         :error-handler (fn [_agent exception]
-                          (log/error exception "Updating projection failed"))))
-
-(defn- update-applications! [state]
-  (let [from-id (:last-processed-event-id state)
-        events (applications/get-dynamic-application-events-since from-id)
-        until-id (:event/id (last events))]
-    (if (empty? events)
-      state
-      (do
-        (log/info "Updating projection from" from-id "until" until-id)
-        (assoc state
-               :last-processed-event-id until-id
-               :applications (reduce applications-view (:applications state) events))))))
-
-(defn trigger-applications-update! []
-  (send-off applications-state update-applications!))
-
-(comment
-  (send applications-state reset-applications-state)
-  (trigger-applications-update!)
-  @applications-state)
-
-(defstate applications-update-scheduler
-  :start (future (while (not (Thread/interrupted))
-                   (trigger-applications-update!)
-                   (Thread/sleep (-> 60 time/seconds time/in-millis))))
-  :stop (future-cancel applications-update-scheduler))
+(defn- exclude-unnecessary-keys-from-summary [application]
+  (dissoc application
+          :application/events
+          :application/form
+          :application/licenses))
 
 (defn get-user-applications-v2 [user-id]
-  (->> (vals (:applications @applications-state))
-       (map #(apply-user-permissions % user-id))
-       (remove nil?)
-       ;; TODO: do this eagerly for caching? would need to make assoc-injections idempotent and add cache eviction
-       (map #(assoc-injections % injections))
-       ;; remove unnecessary data from summmary
-       (map #(dissoc % :form/fields :application/licenses))))
+  ;; TODO: cache the applications and build the projection incrementally as new events are published
+  (let [events (applications/get-dynamic-application-events-since 0)
+        applications (reduce all-applications-view nil events)]
+    (->> (vals applications)
+         (map #(apply-user-permissions % user-id))
+         (remove nil?)
+         ;; TODO: for caching it may be necessary to make assoc-injections idempotent and consider cache invalidation
+         (map #(assoc-injections % injections))
+         (map exclude-unnecessary-keys-from-summary))))

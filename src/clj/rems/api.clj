@@ -11,7 +11,6 @@
             [muuntaja.format.transit :as transit-format]
             [rems.api.actions :refer [actions-api]]
             [rems.api.applications :refer [applications-api]]
-            [rems.api.applications-v2 :refer [trigger-applications-update!]]
             [rems.api.catalogue :refer [catalogue-api]]
             [rems.api.catalogue-items :refer [catalogue-items-api]]
             [rems.api.entitlements :refer [entitlements-api]]
@@ -61,10 +60,8 @@
 (defn transaction-middleware [handler]
   (fn [request]
     (if (should-wrap-transaction? request)
-      (let [response (conman/with-transaction [rems.db.core/*db* {:isolation :serializable}]
-                       (handler request))]
-        (trigger-applications-update!)
-        response)
+      (conman/with-transaction [rems.db.core/*db* {:isolation :serializable}]
+        (handler request))
       (handler request))))
 
 (def joda-time-writer
