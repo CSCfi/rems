@@ -21,7 +21,8 @@
 
 (deftest load-translations-test
   (testing "loads internal translations"
-    (let [translations (locales/load-translations {:languages [:en :fi]})]
+    (let [translations (locales/load-translations {:languages [:en :fi]
+                                                   :translations-directory "translations/"})]
       (is (= [:en :fi] (sort (keys translations))))
       (is (not (empty? (:en translations))))
       (is (not (empty? (:fi translations))))))
@@ -39,12 +40,14 @@
           (delete-recursively translations-dir)))))
 
   (testing "loads translations only for listed languages"
-    (is (= [:en] (keys (locales/load-translations {:languages [:en]}))))
-    (is (= [:fi] (keys (locales/load-translations {:languages [:fi]})))))
+    (is (= [:en] (keys (locales/load-translations {:languages [:en] :translations-directory "translations/"}))))
+    (is (= [:fi] (keys (locales/load-translations {:languages [:fi] :translations-directory "translations/"})))))
+
+  (testing "missing translations-directory in config is an error"
+    (is (thrown-with-msg? RuntimeException #"^\Q:translations-directory was not set in config\E$"
+                          (locales/load-translations {:languages [:xx]}))))
 
   (testing "missing translations is an error"
-    (is (thrown-with-msg? FileNotFoundException #"^\Qtranslations for :xx language could not be found in some-dir/xx.edn file or translations/xx.edn resource\E$"
+    (is (thrown-with-msg? FileNotFoundException #"^\Qtranslations could not be found in some-dir/xx.edn file or some-dirxx.edn resource\E$"
                           (locales/load-translations {:translations-directory "some-dir"
-                                                      :languages [:xx]})))
-    (is (thrown-with-msg? FileNotFoundException #"^\Qtranslations for :xx language could not be found in translations/xx.edn resource and :translations-directory was not set\E$"
-                          (locales/load-translations {:languages [:xx]})))))
+                                                      :languages [:xx]})))))
