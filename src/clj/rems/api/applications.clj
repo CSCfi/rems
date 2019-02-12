@@ -158,27 +158,19 @@
    :name (get u "commonName")
    :email (get u "mail")})
 
-(defn get-reviewers []
-  (for [u (->> (users/get-all-users)
-               (remove invalid-user?))]
-    (format-user u)))
-
 ;; TODO Filter applicant, requesting user
-(defn get-commenters []
-  (for [u (->> (users/get-all-users)
-               (remove invalid-user?))]
-    (format-user u)))
+(defn get-users []
+  (->> (users/get-all-users)
+       (remove invalid-user?)
+       (map format-user)))
 
-(defn get-applicants []
-  (for [u (->> (users/get-all-users)
-               (remove invalid-user?))]
-    (format-user u)))
+(def get-applicants get-users)
 
-;; TODO Filter applicant, requesting user
-(defn get-deciders []
-  (for [u (->> (users/get-all-users)
-               (remove invalid-user?))]
-    (format-user u)))
+(def get-reviewers get-users)
+
+(def get-commenters get-users)
+
+(def get-deciders get-users)
 
 (defn- check-attachment-content-type
   "Checks that content-type matches the allowed ones listed on the UI side:
