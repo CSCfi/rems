@@ -450,8 +450,7 @@
                     :font-size (u/rem 1.5)
                     :line-height 1.1
                     :font-family "'Lato'"}]]
-   [:.collapse-content {:padding (u/rem 1.25)
-                        :padding-bottom 0}]
+   [:.collapse-content {:margin (u/rem 1.25)}]
    [:.collapse-wrapper.slow
     [:.collapsing {:-webkit-transition "height 0.25s linear"
                    :-o-transition "height 0.25s linear"
