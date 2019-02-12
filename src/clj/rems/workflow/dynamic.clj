@@ -50,9 +50,11 @@
     ::reject
     ::request-comment
     ::request-decision
+    ::remove-member
     ::return
     ::save-draft
     ::submit
+    ::uninvite-member
     #_::withdraw})
 
 ;; TODO: namespaced keys e.g. :event/type, :event/time, :event/actor, :application/id
@@ -116,6 +118,17 @@
          :event/type (s/eq :application.event/member-invited)
          :application/member {:name s/Str
                               :email s/Str}))
+(s/defschema MemberRemovedEvent
+  (assoc EventBase
+         :event/type (s/eq :application.event/member-removed)
+         :application/member {:userid s/Str}
+         :application/comment s/Str))
+(s/defschema MemberUninvitedEvent
+  (assoc EventBase
+         :event/type (s/eq :application.event/member-uninvited)
+         :application/member {:name s/Str
+                              :email s/Str}
+         :application/comment s/Str))
 (s/defschema RejectedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/rejected)
@@ -140,6 +153,8 @@
    :application.event/draft-saved DraftSavedEvent
    :application.event/member-added MemberAddedEvent
    :application.event/member-invited MemberInvitedEvent
+   :application.event/member-removed MemberRemovedEvent
+   :application.event/member-uninvited MemberUninvitedEvent
    :application.event/rejected RejectedEvent
    :application.event/returned ReturnedEvent
    :application.event/submitted SubmittedEvent})
@@ -268,6 +283,14 @@
   [application _workflow event]
   (update application :invited-members #(vec (conj % (:application/member event)))))
 
+(defmethod apply-event [:application.event/member-removed :workflow/dynamic]
+  [application _workflow event]
+  (update application :members #(vec (remove #{(:application/member event)} %))))
+
+(defmethod apply-event [:application.event/member-uninvited :workflow/dynamic]
+  [application _workflow event]
+  (update application :invited-members #(vec (remove #{(:application/member event)} %))))
+
 (defn apply-events [application events]
   (reduce (fn [application event] (apply-event application (:workflow application) event))
           application
@@ -305,6 +328,12 @@
   [application cmd]
   (when-not (handler? application (:actor cmd))
     {:errors [{:type :forbidden}]}))
+
+(defn- actor-is-not-handler-or-applicant-error
+  [application cmd]
+  (when-not (or (handler? application (:actor cmd))
+                (= (:applicantuserid application) (:actor cmd)))
+    {:errors [:forbidden]}))
 
 (defn- state-error
   [application & expected-states]
@@ -486,6 +515,41 @@
           (state-error application ::submitted ::approved)
           success-result))))
 
+(defmethod handle-command ::remove-member
+  [cmd application injections]
+  (or (actor-is-not-handler-or-applicant-error application cmd)
+      (when-not (contains? (set (map :userid (:members application)))
+                           (:userid (:member cmd)))
+        {:errors [{:type :user-not-member :user (:member cmd)}]})
+      {:success true
+       :result {:event/type :application.event/member-removed
+                :event/time (:time cmd)
+                :event/actor (:actor cmd)
+                :application/member (:member cmd)
+                :application/id (:application-id cmd)
+                :application/comment (:comment cmd)}}))
+
+(defmethod handle-command ::uninvite-member
+  [cmd application injections]
+  (or (actor-is-not-handler-or-applicant-error application cmd)
+      (when-not (contains? (set (map (juxt :name :email) (:invited-members application)))
+                           [(:name (:member cmd))
+                            (:email (:member cmd))])
+        {:errors [{:type :user-not-member :user (:member cmd)}]})
+      {:success true
+       :result {:event/type :application.event/member-uninvited
+                :event/time (:time cmd)
+                :event/actor (:actor cmd)
+                :application/member (:member cmd)
+                :application/id (:application-id cmd)
+                :application/comment (:comment cmd)}}))
+
+(defn- actor-is-not-handler-or-applicant-error
+  [application cmd]
+  (when-not (or (handler? application (:actor cmd))
+                (= (:applicantuserid application) (:actor cmd)))
+    {:errors [:forbidden]}))
+
 (defn- apply-command
   ([application cmd]
    (apply-command application cmd nil))
@@ -507,7 +571,8 @@
 (defn- command-candidates [actor application-state]
   ;; NB! not setting :time or :application-id here since we don't
   ;; validate them
-  [{:type ::submit
+  (->>
+   [{:type ::submit
     :actor actor}
    {:type ::approve
     :actor actor}
@@ -534,8 +599,23 @@
     :member {:userid "member"}}
    {:type ::invite-member
     :actor actor
-    :member {:name "Name"
-             :email "email@address.org"}}])
+    :member {:name "name"
+             :email "email@address.org"}}
+   (let [members (->> application-state
+                      :members
+                      (remove (comp #{(:applicantuserid application-state)} :userid)))]
+     (when (seq members)
+       {:type ::remove-member
+        :actor actor
+        :member (first members)
+        :comment "comment"}))
+   (let [invited-members (:invited-members application-state)]
+     (when (seq invited-members)
+       {:type ::uninvite-member
+        :actor actor
+        :member (first invited-members)
+        :comment "comment"}))]
+   (remove nil?)))
 
 (def ^:private injections-for-possible-commands
   "`possible-commands` are calculated with the expectations that
@@ -827,6 +907,56 @@
                               [{:type ::invite-member :actor "assistant" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}]
                               injections)))))))
 
+(deftest test-remove-member
+  (let [application {:state ::submitted
+                     :members [{:userid "applicant"} {:userid "somebody"}]
+                     :applicantuserid "applicant"
+                     :workflow {:type :workflow/dynamic
+                                :handlers ["assistant"]}}
+        injections {}]
+    (testing "remove member by applicant"
+      (is (= [{:userid "applicant"}]
+             (:members
+              (apply-commands application
+                              [{:type ::remove-member :actor "applicant" :member {:userid "somebody"}}]
+                              injections)))))
+    (testing "remove member by handler"
+      (is (= [{:userid "applicant"}]
+             (:members
+              (apply-commands application
+                              [{:type ::remove-member :actor "assistant" :member {:userid "somebody"}}]
+                              injections)))))
+    (testing "only members can be removed"
+      (is (= {:errors [{:type :user-not-member :user {:userid "notamember"}}]}
+             (handle-command {:type ::remove-member :actor "assistant" :member {:userid "notamember"}}
+                             application
+                             injections))))))
+
+(deftest test-uninvite-member
+  (let [application {:state ::submitted
+                     :invited-members [{:name "Some Body" :email "some@body.com"}]
+                     :applicantuserid "applicant"
+                     :workflow {:type :workflow/dynamic
+                                :handlers ["assistant"]}}
+        injections {}]
+    (testing "uninvite member by applicant"
+      (is (= []
+             (:invited-members
+              (apply-commands application
+                              [{:type ::uninvite-member :actor "applicant" :member {:name "Some Body" :email "some@body.com"}}]
+                              injections)))))
+    (testing "uninvite member by handler"
+      (is (= []
+             (:invited-members
+              (apply-commands application
+                              [{:type ::uninvite-member :actor "assistant" :member {:name "Some Body" :email "some@body.com"}}]
+                              injections)))))
+    (testing "only invited members can be uninvited"
+      (is (= {:errors [{:type :user-not-member :user {:name "Not Member" :email "not@member.com"}}]}
+             (handle-command {:type ::uninvite-member :actor "assistant" :member {:name "Not Member" :email "not@member.com"}}
+                             application
+                             injections))))))
+
 (deftest test-comment
   (let [application (apply-events nil
                                   [{:event/type :application.event/created
@@ -892,7 +1022,10 @@
       (is (= #{}
              (possible-commands "assistant" draft)))
       (is (= #{}
-             (possible-commands "somebody else" draft))))
+             (possible-commands "somebody else" draft)))
+      (testing "when there are invited members"
+        (is (= #{::submit ::invite-member ::uninvite-member}
+               (possible-commands "applicant" (assoc draft :invited-members [{:name "Some One" :email "some.one@example.org"}]))))))
     (let [submitted (apply-events draft [{:event/type :application.event/submitted
                                           :event/actor "applicant"}])]
       (testing "submitted"
@@ -901,7 +1034,15 @@
         (is (= #{::approve ::reject ::return ::request-decision ::request-comment ::add-member ::invite-member}
                (possible-commands "assistant" submitted)))
         (is (= #{}
-               (possible-commands "somebody else" submitted))))
+               (possible-commands "somebody else" submitted)))
+        (testing "when there are invited members"
+          (is (contains? (possible-commands "applicant" (assoc submitted :invited-members [{:name "Some One" :email "some.one@example.org"}]))
+                         ::uninvite-member))
+          (is (contains? (possible-commands "assistant" (assoc submitted :invited-members [{:name "Some One" :email "some.one@example.org"}]))
+                         ::uninvite-member)))
+        (testing "when there are added members"
+          (is (contains? (possible-commands "applicant" (update submitted :members conj {:userid "someone"}))
+                         ::remove-member))))
       (let [requested (apply-events submitted [{:event/type :application.event/comment-requested
                                                 :event/actor "assistant"
                                                 :application/commenters ["commenter"]}])]

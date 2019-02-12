@@ -9,6 +9,7 @@
             [rems.actions.comment :refer [comment-action-button comment-form]]
             [rems.actions.decide :refer [decide-action-button decide-form]]
             [rems.actions.invite-member :refer [invite-member-action-button invite-member-form]]
+            [rems.actions.remove-member :refer [remove-member-action-button remove-member-form]]
             [rems.actions.request-comment :refer [request-comment-action-button request-comment-form]]
             [rems.actions.request-decision :refer [request-decision-action-button request-decision-form]]
             [rems.actions.return-action :refer [return-action-button return-form]]
@@ -808,11 +809,13 @@
 
 (defn members-info
   "Renders the members of an application"
-  [id members]
+  [id application-id members can-remove-member?]
   (into [:div.members]
-        (for [member members]
+        (for [member members
+              :let [member-id (or (:userid member) (str/replace (:name member) #"[^a-zA-Z]+" ""))
+                    member-collapse-id (str id "-members-" member-id)]]
           [collapsible/minimal
-           {:id (str id "-members-" member)
+           {:id member-collapse-id
             :class "group"
             :always
             (into [:div
@@ -824,7 +827,12 @@
                    (when (:name member)
                      [info-field (text :t.applicant-info/name) (:name member) {:inline? true}])
                    (when (:email member)
-                     [info-field (text :t.applicant-info/email) (:email member) {:inline? true}])])}])))
+                     [info-field (text :t.applicant-info/email) (:email member) {:inline? true}])
+                   (when can-remove-member?
+                     [:div.commands
+                      [remove-member-action-button member-collapse-id]])
+                   (when can-remove-member?
+                     [remove-member-form application-id member-collapse-id member (partial reload! application-id)])])}])))
 
 (defn applicants-info
   "Renders the applicants, i.e. applicant and members."
@@ -833,18 +841,23 @@
         members-but-not-applicant (remove (comp #{(get applicant-attributes "eppn")
                                                   (:eppn applicant-attributes)} :userid)
                                           (concat members invited-members))
-        possible-commands (:possible-commands application)]
+        possible-commands (:possible-commands application)
+        can-add-member? (contains? possible-commands :rems.workflow.dynamic/add-member)
+        can-remove-member? (contains? possible-commands :rems.workflow.dynamic/remove-member)
+        can-invite-member? (contains? possible-commands :rems.workflow.dynamic/invite-member)
+        can-uninvite-member? (contains? possible-commands :rems.workflow.dynamic/uninvite-member)]
     [collapsible/component
      {:id id
       :title (text :t.applicant-info/applicants)
       :always
       [:div
        [applicant-info id applicant-attributes true]
-       [members-info id members-but-not-applicant]
+       [members-info id application-id members-but-not-applicant (or can-remove-member?
+                                                                     can-uninvite-member?) ]
        [:div.commands
-        (when (contains? possible-commands :rems.workflow.dynamic/invite-member)
+        (when can-invite-member?
           [invite-member-action-button])
-        (when (contains? possible-commands :rems.workflow.dynamic/add-member)
+        (when can-add-member?
           [add-member-action-button])]
        [:div#member-action-forms
         [invite-member-form application-id (partial reload! application-id)]
@@ -1198,7 +1211,7 @@
 
    (component-info members-info)
    (example "members-info"
-            [members-info "members1" [{:userid "alice"} {:name "John Smith" :email "john.smith@invited.com"}]])
+            [members-info "members1" {:id 42} [{:userid "alice"} {:name "John Smith" :email "john.smith@invited.com"}] true])
 
    (component-info applicants-info)
    (example "applicants-info"

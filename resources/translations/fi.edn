@@ -77,6 +77,7 @@
             :open-reviews "Avoimet katselmoinnit"
             :reject "Hylkää"
             :reject-success "Hakemus hylätty"
+            :remove-member "Poista jäsen"
             :request-comment "Pyydä kommenttia"
             :request-decision "Pyydä päätöstä"
             :request-selection "Lähetä pyyntö henkilölle/henkilöille:"
@@ -150,6 +151,8 @@
                                   :draft-saved "Muokattu"
                                   :member-added "Lisätty jäsen"
                                   :member-invited "Kutsuttu jäsen"
+                                  :member-removed "Poistettu jäsen"
+                                  :member-uninvinted "Poistettu jäsen"
                                   :rejected "Hylätty"
                                   :returned "Palautettu muokattavaksi"
                                   :submitted "Haettu"}
