@@ -190,13 +190,13 @@
                                            :license/accepted false})
                                         (:application/licenses event))
              :application/events []
-             :form/id (:form/id event)
-             :form/fields []
-             :workflow/id (:workflow/id event)
-             :workflow/type (:workflow/type event)
-             ;; TODO: or would :workflow.dynamic/state be more appropriate?
-             :workflow/state :rems.workflow.dynamic/draft ; TODO: other workflows
-             :workflow.dynamic/handlers (:workflow.dynamic/handlers event))
+             :application/form {:form/id (:form/id event)
+                                :form/fields []}
+             :application/workflow {:workflow/id (:workflow/id event)
+                                    :workflow/type (:workflow/type event)
+                                    ;; TODO: or would :workflow.dynamic/state be more appropriate?
+                                    :workflow/state :rems.workflow.dynamic/draft ; TODO: other workflows
+                                    :workflow.dynamic/handlers (:workflow.dynamic/handlers event)})
       (set-role-permissions {:applicant #{::dynamic/save-draft
                                           ::dynamic/submit}})))
 
@@ -208,11 +208,11 @@
 (defmethod application-view-specific :application.event/draft-saved
   [application event]
   (-> application
-      (assoc :application/modified (:event/time event)
-             :form/fields (map (fn [[field-id value]]
-                                 {:field/id field-id
-                                  :field/value value})
-                               (:application/field-values event)))
+      (assoc :application/modified (:event/time event))
+      (assoc-in [:application/form :form/fields] (map (fn [[field-id value]]
+                                                        {:field/id field-id
+                                                         :field/value value})
+                                                      (:application/field-values event)))
       (update :application/licenses set-accepted-licences (:application/accepted-licenses event))))
 
 (defmethod application-view-specific :application.event/member-invited
@@ -362,8 +362,8 @@
                                                    :fi {}}}))))
 
 (defn- enrich-form [application get-form]
-  (let [form (get-form (:form/id application))
-        app-fields (:form/fields application)
+  (let [form (get-form (get-in application [:application/form :form/id]))
+        app-fields (get-in application [:application/form :form/fields])
         rich-fields (map (fn [item]
                            {:field/id (:id item)
                             :field/value "" ; default for new forms
@@ -379,10 +379,10 @@
                          (filter #(= :description (:field/type %)))
                          first
                          :field/value)]
-    (assoc application
-           :form/title (:title form)
-           :form/fields fields
-           :application/description description)))
+    (-> application
+        (assoc-in [:application/form :form/title] (:title form))
+        (assoc-in [:application/form :form/fields] fields)
+        (assoc :application/description description))))
 
 (defn- enrich-resources [app-resources get-catalogue-item]
   (->> app-resources
@@ -578,28 +578,28 @@
                                                                 :default "non-localized license text"}}]
                          :application/events [created-event]
                          :application/description ""
-                         :form/id 40
-                         :form/title "form title"
-                         :form/fields [{:field/id 41
-                                        :field/value ""
-                                        :field/type :description
-                                        :field/title {:en "en title" :fi "fi title"}
-                                        :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
-                                        :field/optional false
-                                        :field/options []
-                                        :field/max-length 100}
-                                       {:field/id 42
-                                        :field/value ""
-                                        :field/type :text
-                                        :field/title {:en "en title" :fi "fi title"}
-                                        :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
-                                        :field/optional false
-                                        :field/options []
-                                        :field/max-length 100}]
-                         :workflow/id 50
-                         :workflow/type :dynamic
-                         :workflow/state :rems.workflow.dynamic/draft
-                         :workflow.dynamic/handlers #{"handler"}
+                         :application/form {:form/id 40
+                                            :form/title "form title"
+                                            :form/fields [{:field/id 41
+                                                           :field/value ""
+                                                           :field/type :description
+                                                           :field/title {:en "en title" :fi "fi title"}
+                                                           :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
+                                                           :field/optional false
+                                                           :field/options []
+                                                           :field/max-length 100}
+                                                          {:field/id 42
+                                                           :field/value ""
+                                                           :field/type :text
+                                                           :field/title {:en "en title" :fi "fi title"}
+                                                           :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
+                                                           :field/optional false
+                                                           :field/options []
+                                                           :field/max-length 100}]}
+                         :application/workflow {:workflow/id 50
+                                                :workflow/type :dynamic
+                                                :workflow/state :rems.workflow.dynamic/draft
+                                                :workflow.dynamic/handlers #{"handler"}}
                          :permissions/by-role {:applicant #{::dynamic/save-draft
                                                             ::dynamic/submit}}}]
 
@@ -624,8 +624,8 @@
                    (assoc-in [:application/licenses 0 :license/accepted] true)
                    (assoc-in [:application/licenses 1 :license/accepted] true)
                    (assoc-in [:application/description] "foo")
-                   (assoc-in [:form/fields 0 :field/value] "foo")
-                   (assoc-in [:form/fields 1 :field/value] "bar"))
+                   (assoc-in [:application/form :form/fields 0 :field/value] "foo")
+                   (assoc-in [:application/form :form/fields 1 :field/value] "bar"))
                (build-application-view
                 (valid-events [created-event draft-saved-event])
                 injections)))))
