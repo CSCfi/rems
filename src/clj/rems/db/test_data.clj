@@ -656,9 +656,9 @@
       (let [dynamic (create-catalogue-item! res1 (:dynamic workflows) form
                                             {"en" "Dynamic workflow" "fi" "Dynaaminen työvuo"})]
         (create-dynamic-applications! dynamic (:dynamic workflows) +fake-users+))
-      (let [thlform (create-thl-demo-form! +fake-users+)]
-        (create-catalogue-item! res1 (:dynamic workflows) thlform {"en" "THL catalogue item" "fi" "THL katalogi-itemi"}))
-      (create-member-applications! simple (:dynamic workflows) (+fake-users+ :applicant1) (+fake-users+ :approver1) [{:userid (+fake-users+ :applicant2)}]))
+      (let [thlform (create-thl-demo-form! +fake-users+)
+            thl-catid (create-catalogue-item! res1 (:dynamic workflows) thlform {"en" "THL catalogue item" "fi" "THL katalogi-itemi"})]
+        (create-member-applications! thl-catid (:dynamic workflows) (+fake-users+ :applicant1) (+fake-users+ :approver1) [{:userid (+fake-users+ :applicant2)}])))
     (finally
       (DateTimeUtils/setCurrentMillisSystem))))
 
