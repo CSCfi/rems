@@ -18,11 +18,11 @@
 
 (defn open-form
   [{:keys [db]} _]
-  (merge {:db (assoc db
-                     ::potential-members #{}
-                     ::selected-members #{})}
-         {::fetch-potential-members [(get-in db [:identity :user])
-                                     #(rf/dispatch [::set-potential-members %])]}))
+  {:db (assoc db
+              ::potential-members #{}
+              ::selected-members #{})
+   ::fetch-potential-members [(get-in db [:identity :user])
+                              #(rf/dispatch [::set-potential-members %])]})
 
 (rf/reg-event-fx ::open-form open-form)
 
