@@ -28,10 +28,13 @@
                   {language (read-string (slurp (translations-from-file filename extra-translations-directory)))})
       {language (read-string (slurp base-translations))})))
 
-(defn load-translations [{:keys [languages translations-directory extra-translations-directory]}]
-  (->> languages
-       (map #(load-translation % translations-directory extra-translations-directory))
-       (apply merge)))
+(defn load-translations [{:keys [languages translations-directory]} & {:keys [extra-translations-directory]
+                                                                       :or {extra-translations-directory nil}}]
+  (if translations-directory
+    (->> languages
+         (map #(load-translation % translations-directory extra-translations-directory))
+         (apply merge))
+    (throw (RuntimeException. ":translations-directory was not set in config"))))
 
 (defstate translations :start (load-translations env))
 
