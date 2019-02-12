@@ -6,22 +6,27 @@
             [rems.util :refer [deep-merge]])
   (:import (java.io FileNotFoundException)))
 
-(defn- load-translation [language translations-directory extra-translations-directory]
-  (let [file (when translations-directory
-               (io/file translations-directory (str (name language) ".edn")))
-        resource-path (str "translations/" (name language) ".edn")
+(defn- translations-from-file [filename dir]
+  (let [file (when dir
+               (io/file dir filename))
+        resource-path (str dir filename)
         resource (io/resource resource-path)
-        translation (cond
-                      (and file (.exists file)) file
-                      resource resource
-                      :else (throw (FileNotFoundException.
-                                     (if file
-                                       (str "translations for " language " language could not be found in " file " file or " resource-path " resource")
-                                       (str "translations for " language " language could not be found in " resource-path " resource and " :translations-directory " was not set")))))
-        result (deep-merge {language (read-string (slurp translation))}
-                           {language {:t {:administration {:catalogue-items "Kettupossu items"}}}})] ;;TODO read from extra-translations-directory
-    (clojure.pprint/pprint result)
-    result))
+        file-contents (cond
+                        (and file (.exists file)) file
+                        resource resource
+                        :else (throw (FileNotFoundException.
+                                       (if file
+                                         (str "translations could not be found in " file " file or " resource-path " resource")
+                                         (str "translations could not be found in " resource-path " resource and " :translations-directory " was not set")))))]
+    file-contents))
+
+(defn- load-translation [language translations-directory extra-translations-directory]
+  (let [filename (str (name language) ".edn")
+        base-translations (translations-from-file filename translations-directory)]
+    (if extra-translations-directory
+      (deep-merge {language (read-string (slurp base-translations))}
+                  {language (read-string (slurp (translations-from-file filename extra-translations-directory)))})
+      {language (read-string (slurp base-translations))})))
 
 (defn load-translations [{:keys [languages translations-directory extra-translations-directory]}]
   (->> languages
