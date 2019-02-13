@@ -70,41 +70,41 @@
   (assert (every? keyword? (keys permission-map)))
   (reduce (fn [application [subject permissions]]
             (if (nil? permissions)
-              (update application :permissions/by-role dissoc subject)
-              (assoc-in application [:permissions/by-role subject] (set permissions))))
+              (update application ::role-permissions dissoc subject)
+              (assoc-in application [::role-permissions subject] (set permissions))))
           application
           permission-map))
 
 (deftest test-set-role-permissions
   (testing "adding"
-    (is (= {:permissions/by-role {:role #{:foo :bar}}}
+    (is (= {::role-permissions {:role #{:foo :bar}}}
            (-> {}
                (set-role-permissions {:role [:foo :bar]})))))
   (testing "updating"
-    (is (= {:permissions/by-role {:role #{:gazonk}}}
+    (is (= {::role-permissions {:role #{:gazonk}}}
            (-> {}
                (set-role-permissions {:role [:foo :bar]})
                (set-role-permissions {:role [:gazonk]})))))
   (testing "removing (read-only access)"
-    (is (= {:permissions/by-role {:role #{}}}
+    (is (= {::role-permissions {:role #{}}}
            (-> {}
                (set-role-permissions {:role [:foo :bar]})
                (set-role-permissions {:role []})))))
   (testing "removing (no access)"
-    (is (= {:permissions/by-role {}}
+    (is (= {::role-permissions {}}
            (-> {}
                (set-role-permissions {:role [:foo :bar]})
                (set-role-permissions {:role nil})))))
 
   (testing "can set permissions for multiple roles"
-    (is (= {:permissions/by-role {:role-1 #{:foo}
-                                  :role-2 #{:bar}}}
+    (is (= {::role-permissions {:role-1 #{:foo}
+                                :role-2 #{:bar}}}
            (-> {}
                (set-role-permissions {:role-1 [:foo]
                                       :role-2 [:bar]})))))
   (testing "does not alter unrelated roles"
-    (is (= {:permissions/by-role {:unrelated #{:foo}
-                                  :role #{:gazonk}}}
+    (is (= {::role-permissions {:unrelated #{:foo}
+                                :role #{:gazonk}}}
            (-> {}
                (set-role-permissions {:unrelated [:foo]
                                       :role [:bar]})
@@ -119,9 +119,9 @@
         handler? (contains? (:workflow.dynamic/handlers application) user-id)
         permissions (remove nil?
                             [(when applicant?
-                               (get-in application [:permissions/by-role :applicant]))
+                               (get-in application [::role-permissions :applicant]))
                              (when handler?
-                               (get-in application [:permissions/by-role :handler]))])]
+                               (get-in application [::role-permissions :handler]))])]
     (if (empty? permissions)
       nil
       (apply set/union permissions))))
@@ -134,19 +134,22 @@
   (testing "applicant permissions"
     (is (= #{:foo}
            (user-permissions {:application/applicant "user"
-                              :permissions/by-role {:applicant #{:foo}}}
+                              ::role-permissions {:applicant #{:foo}}}
                              "user"))))
   (testing "handler permissions"
     (is (= #{:foo}
            (user-permissions {:workflow.dynamic/handlers #{"user"}
-                              :permissions/by-role {:handler #{:foo}}}
+                              ::role-permissions {:handler #{:foo}}}
                              "user"))))
   (testing "combined permissions from multiple roles"
     (let [application {:application/applicant "user"
                        :workflow.dynamic/handlers #{"user"}
-                       :permissions/by-role {:applicant #{:foo}
-                                             :handler #{:bar}}}]
+                       ::role-permissions {:applicant #{:foo}
+                                           :handler #{:bar}}}]
       (is (= #{:foo :bar}
              (user-permissions application "user")))
       (is (= nil
              (user-permissions application "wrong user"))))))
+
+(defn cleanup [application]
+  (dissoc application ::user-roles ::role-permissions))

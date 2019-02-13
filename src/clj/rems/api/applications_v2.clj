@@ -7,7 +7,7 @@
             [rems.db.licenses :as licenses]
             [rems.db.users :as users]
             [rems.workflow.dynamic :as dynamic]
-            [rems.workflow.permissions :refer [set-role-permissions user-permissions]])
+            [rems.workflow.permissions :as permissions :refer [set-role-permissions user-permissions]])
   (:import (org.joda.time DateTime)))
 
 ;;;; v2 API, pure application state based on application events
@@ -442,8 +442,8 @@
                                                          :workflow/type :workflow/dynamic
                                                          :workflow.dynamic/state :rems.workflow.dynamic/draft
                                                          :workflow.dynamic/handlers #{"handler"}}
-                                  :permissions/by-role {:applicant #{::dynamic/save-draft
-                                                                     ::dynamic/submit}}}]
+                                  ::permissions/role-permissions {:applicant #{::dynamic/save-draft
+                                                                               ::dynamic/submit}}}]
 
     (testing "new application"
       (is (= expected-new-application
@@ -481,12 +481,12 @@
                    (assoc-in [:application/last-activity] (DateTime. 2000))
                    (assoc-in [:application/events] [created-event submitted-event])
                    (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/submitted)
-                   (assoc-in [:permissions/by-role :applicant] #{})
-                   (assoc-in [:permissions/by-role :handler] #{::dynamic/approve
-                                                               ::dynamic/reject
-                                                               ::dynamic/return
-                                                               ::dynamic/request-decision
-                                                               ::dynamic/request-comment}))
+                   (assoc-in [::permissions/role-permissions :applicant] #{})
+                   (assoc-in [::permissions/role-permissions :handler] #{::dynamic/approve
+                                                                         ::dynamic/reject
+                                                                         ::dynamic/return
+                                                                         ::dynamic/request-decision
+                                                                         ::dynamic/request-comment}))
                (build-application-view
                 (valid-events [created-event submitted-event])
                 injections)))))))
@@ -520,7 +520,7 @@
     ;;       https://github.com/CSCfi/rems/issues/859
     (-> application
         (assoc :permissions/current-user permissions)
-        (dissoc :permissions/by-role))))
+        (permissions/cleanup))))
 
 (defn api-get-application-v2 [user-id application-id]
   (let [events (applications/get-dynamic-application-events application-id)]
