@@ -520,8 +520,7 @@
     ;;       https://github.com/CSCfi/rems/issues/859
     (-> application
         (assoc :permissions/current-user permissions)
-        (dissoc :permissions/by-user
-                :permissions/by-role))))
+        (dissoc :permissions/by-role))))
 
 (defn api-get-application-v2 [user-id application-id]
   (let [events (applications/get-dynamic-application-events application-id)]
