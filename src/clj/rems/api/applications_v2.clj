@@ -515,7 +515,6 @@
                                             "mail" "applicant@example.com"
                                             "commonName" "Applicant"}}}
 
-        ;; test double events
         created-event {:event/type :application.event/created
                        :event/time (DateTime. 1000)
                        :event/actor "applicant"
@@ -531,82 +530,81 @@
                        :workflow/type :dynamic
                        :workflow.dynamic/handlers #{"handler"}}
 
-        ;; expected values
-        new-application {:application/id 1
-                         :application/created (DateTime. 1000)
-                         :application/modified (DateTime. 1000)
-                         :application/last-activity (DateTime. 1000)
-                         :application/applicant "applicant"
-                         :application/applicant-attributes {"eppn" "applicant"
-                                                            "mail" "applicant@example.com"
-                                                            "commonName" "Applicant"}
-                         :application/resources [{:catalogue-item/id 10
-                                                  :resource/id 11
-                                                  :resource/ext-id "urn:11"
-                                                  :catalogue-item/title {:en "en title"
-                                                                         :fi "fi title"
-                                                                         :default "non-localized title"}
-                                                  :catalogue-item/start (DateTime. 100)
-                                                  :catalogue-item/state :enabled}
-                                                 {:catalogue-item/id 20
-                                                  :resource/id 21
-                                                  :resource/ext-id "urn:21"
-                                                  :catalogue-item/title {:en "en title"
-                                                                         :fi "fi title"
-                                                                         :default "non-localized title"}
-                                                  :catalogue-item/start (DateTime. 100)
-                                                  :catalogue-item/state :enabled}]
-                         :application/licenses [{:license/id 30
-                                                 :license/accepted false
-                                                 :license/type :link
-                                                 :license/start (DateTime. 100)
-                                                 :license/end nil
-                                                 :license/title {:en "en title"
-                                                                 :fi "fi title"
-                                                                 :default "non-localized title"}
-                                                 :license/link {:en "http://en-license-link"
-                                                                :fi "http://fi-license-link"
-                                                                :default "http://non-localized-license-link"}}
-                                                {:license/id 31
-                                                 :license/accepted false
-                                                 :license/type :text
-                                                 :license/start (DateTime. 100)
-                                                 :license/end nil
-                                                 :license/title {:en "en title"
-                                                                 :fi "fi title"
-                                                                 :default "non-localized title"}
-                                                 :license/text {:en "en license text"
-                                                                :fi "fi license text"
-                                                                :default "non-localized license text"}}]
-                         :application/events [created-event]
-                         :application/description ""
-                         :application/form {:form/id 40
-                                            :form/title "form title"
-                                            :form/fields [{:field/id 41
-                                                           :field/value ""
-                                                           :field/type :description
-                                                           :field/title {:en "en title" :fi "fi title"}
-                                                           :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
-                                                           :field/optional false
-                                                           :field/options []
-                                                           :field/max-length 100}
-                                                          {:field/id 42
-                                                           :field/value ""
-                                                           :field/type :text
-                                                           :field/title {:en "en title" :fi "fi title"}
-                                                           :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
-                                                           :field/optional false
-                                                           :field/options []
-                                                           :field/max-length 100}]}
-                         :application/workflow {:workflow/id 50
-                                                :workflow/type :dynamic
-                                                :workflow.dynamic/state :rems.workflow.dynamic/draft
-                                                :workflow.dynamic/handlers #{"handler"}}
-                         :permissions/by-role {:applicant #{::dynamic/save-draft
-                                                            ::dynamic/submit}}}]
+        expected-new-application {:application/id 1
+                                  :application/created (DateTime. 1000)
+                                  :application/modified (DateTime. 1000)
+                                  :application/last-activity (DateTime. 1000)
+                                  :application/applicant "applicant"
+                                  :application/applicant-attributes {"eppn" "applicant"
+                                                                     "mail" "applicant@example.com"
+                                                                     "commonName" "Applicant"}
+                                  :application/resources [{:catalogue-item/id 10
+                                                           :resource/id 11
+                                                           :resource/ext-id "urn:11"
+                                                           :catalogue-item/title {:en "en title"
+                                                                                  :fi "fi title"
+                                                                                  :default "non-localized title"}
+                                                           :catalogue-item/start (DateTime. 100)
+                                                           :catalogue-item/state :enabled}
+                                                          {:catalogue-item/id 20
+                                                           :resource/id 21
+                                                           :resource/ext-id "urn:21"
+                                                           :catalogue-item/title {:en "en title"
+                                                                                  :fi "fi title"
+                                                                                  :default "non-localized title"}
+                                                           :catalogue-item/start (DateTime. 100)
+                                                           :catalogue-item/state :enabled}]
+                                  :application/licenses [{:license/id 30
+                                                          :license/accepted false
+                                                          :license/type :link
+                                                          :license/start (DateTime. 100)
+                                                          :license/end nil
+                                                          :license/title {:en "en title"
+                                                                          :fi "fi title"
+                                                                          :default "non-localized title"}
+                                                          :license/link {:en "http://en-license-link"
+                                                                         :fi "http://fi-license-link"
+                                                                         :default "http://non-localized-license-link"}}
+                                                         {:license/id 31
+                                                          :license/accepted false
+                                                          :license/type :text
+                                                          :license/start (DateTime. 100)
+                                                          :license/end nil
+                                                          :license/title {:en "en title"
+                                                                          :fi "fi title"
+                                                                          :default "non-localized title"}
+                                                          :license/text {:en "en license text"
+                                                                         :fi "fi license text"
+                                                                         :default "non-localized license text"}}]
+                                  :application/events [created-event]
+                                  :application/description ""
+                                  :application/form {:form/id 40
+                                                     :form/title "form title"
+                                                     :form/fields [{:field/id 41
+                                                                    :field/value ""
+                                                                    :field/type :description
+                                                                    :field/title {:en "en title" :fi "fi title"}
+                                                                    :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
+                                                                    :field/optional false
+                                                                    :field/options []
+                                                                    :field/max-length 100}
+                                                                   {:field/id 42
+                                                                    :field/value ""
+                                                                    :field/type :text
+                                                                    :field/title {:en "en title" :fi "fi title"}
+                                                                    :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
+                                                                    :field/optional false
+                                                                    :field/options []
+                                                                    :field/max-length 100}]}
+                                  :application/workflow {:workflow/id 50
+                                                         :workflow/type :dynamic
+                                                         :workflow.dynamic/state :rems.workflow.dynamic/draft
+                                                         :workflow.dynamic/handlers #{"handler"}}
+                                  :permissions/by-role {:applicant #{::dynamic/save-draft
+                                                                     ::dynamic/submit}}}]
 
     (testing "new application"
-      (is (= new-application
+      (is (= expected-new-application
              (build-application-view
               (valid-events [created-event])
               injections))))
@@ -619,7 +617,7 @@
                                :application/field-values {41 "foo"
                                                           42 "bar"}
                                :application/accepted-licenses #{30 31}}]
-        (is (= (-> new-application
+        (is (= (-> expected-new-application
                    (assoc-in [:application/modified] (DateTime. 2000))
                    (assoc-in [:application/last-activity] (DateTime. 2000))
                    (assoc-in [:application/events] [created-event draft-saved-event])
@@ -637,7 +635,7 @@
                              :event/time (DateTime. 2000)
                              :event/actor "applicant"
                              :application/id 1}]
-        (is (= (-> new-application
+        (is (= (-> expected-new-application
                    (assoc-in [:application/last-activity] (DateTime. 2000))
                    (assoc-in [:application/events] [created-event submitted-event])
                    (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/submitted)
