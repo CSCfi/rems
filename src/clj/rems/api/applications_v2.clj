@@ -524,7 +524,7 @@
     ;;       https://github.com/CSCfi/rems/issues/859
     (when (not (empty? roles))
       (-> application
-          (assoc :permissions/current-user (permissions/user-permissions application user-id))
+          (assoc :application/permissions (permissions/user-permissions application user-id))
           (permissions/cleanup)))))
 
 (deftest test-apply-user-permissions
@@ -538,9 +538,9 @@
     (testing "users without a role cannot see the application"
       (is (nil? (apply-user-permissions application "user-3"))))
     (testing "lists the user's permissions"
-      (is (= {:permissions/current-user #{}}
+      (is (= {:application/permissions #{}}
              (apply-user-permissions application "user-1")))
-      (is (= {:permissions/current-user #{:foo :bar}}
+      (is (= {:application/permissions #{:foo :bar}}
              (apply-user-permissions application "user-2"))))))
 
 (defn api-get-application-v2 [user-id application-id]
@@ -603,7 +603,7 @@
                     :workflow {:type (:workflow/type workflow)
                                ;; TODO: add :handlers only when it exists? https://stackoverflow.com/a/16375390
                                :handlers (vec (:workflow.dynamic/handlers workflow))}
-                    :possible-commands (:permissions/current-user application)
+                    :possible-commands (:application/permissions application)
                     :fnlround 0 ; TODO: round-based workflows
                     :review-type nil}) ; TODO: round-based workflows
      :phases (applications/get-application-phases (:workflow.dynamic/state workflow))
