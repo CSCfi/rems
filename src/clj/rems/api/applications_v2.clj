@@ -372,15 +372,18 @@
                             :field/options (:options item)
                             :field/max-length (:maxlength item)})
                          (:items form))
-        fields (merge-lists-by :field/id rich-fields app-fields)
+        fields (merge-lists-by :field/id rich-fields app-fields)]
+    (-> application
+        (assoc-in [:application/form :form/title] (:title form))
+        (assoc-in [:application/form :form/fields] fields))))
+
+(defn- set-application-description [application]
+  (let [fields (get-in application [:application/form :form/fields])
         description (->> fields
                          (filter #(= :description (:field/type %)))
                          first
                          :field/value)]
-    (-> application
-        (assoc-in [:application/form :form/title] (:title form))
-        (assoc-in [:application/form :form/fields] fields)
-        (assoc :application/description description))))
+    (assoc application :application/description description)))
 
 (defn- enrich-resources [app-resources get-catalogue-item]
   (->> app-resources
@@ -419,6 +422,7 @@
 (defn- enrich-with-injections [application {:keys [get-form get-catalogue-item get-license get-user]}]
   (-> application
       (enrich-form get-form)
+      set-application-description
       (update :application/resources enrich-resources get-catalogue-item)
       (update :application/licenses enrich-licenses get-license)
       (assoc :application/applicant-attributes (get-user (:application/applicant application)))))
