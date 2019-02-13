@@ -283,7 +283,7 @@
 ;;        because they both are about a single application and are logically coupled)
 (defn- application-view
   "Projection for the current state of a single application.
-  Pure function; must use `assoc-injections` to enrich the model with
+  Pure function; must use `enrich-with-injections` to enrich the model with
   data from other entities."
   [application event]
   (-> application
@@ -416,7 +416,7 @@
                            (sort-by :license/id))]
     (merge-lists-by :license/id rich-licenses app-licenses)))
 
-(defn- assoc-injections [application {:keys [get-form get-catalogue-item get-license get-user]}]
+(defn- enrich-with-injections [application {:keys [get-form get-catalogue-item get-license get-user]}]
   (-> application
       (enrich-form get-form)
       (update :application/resources enrich-resources get-catalogue-item)
@@ -425,7 +425,7 @@
 
 (defn- build-application-view [events injections]
   (-> (reduce application-view nil events)
-      (assoc-injections injections)))
+      (enrich-with-injections injections)))
 
 (defn- valid-events [events]
   (doseq [event events]
@@ -806,5 +806,5 @@
          (map #(apply-user-permissions % user-id))
          (remove nil?)
          ;; TODO: for caching it may be necessary to make assoc-injections idempotent and consider cache invalidation
-         (map #(assoc-injections % injections))
+         (map #(enrich-with-injections % injections))
          (map exclude-unnecessary-keys-from-summary))))
