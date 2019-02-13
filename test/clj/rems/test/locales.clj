@@ -2,7 +2,8 @@
   (:require [clojure.java.io :as io]
             [clojure.test :refer :all]
             [rems.locales :as locales]
-            [rems.test.testing :refer [create-temp-dir delete-recursively]])
+            [rems.test.testing :refer [create-temp-dir delete-recursively]]
+            [rems.util :refer [getx-in]])
   (:import (java.io FileNotFoundException)))
 
 (def loc-en (read-string (slurp (io/resource "translations/en.edn"))))
@@ -57,3 +58,16 @@
     (is (thrown-with-msg? FileNotFoundException #"^\Qtranslations could not be found in some-dir/xx.edn file or some-dirxx.edn resource\E$"
                           (locales/load-translations {:translations-directory "some-dir"
                                                       :languages [:xx]})))))
+
+(deftest override-translations-with-extra-translations
+  (testing "extra translations override translations"
+    (let [translations (locales/load-translations {:languages [:en]
+                                                   :translations-directory "translations/"
+                                                   :extra-translations-directory "test-data/translations-test/"})]
+      (is (= "Overridden extra translation" (getx-in translations [:en :t :actions :applicant])))))
+  (testing "extra translations don't override keys that are not defined in extras"
+    (let [translations (locales/load-translations {:languages [:en]
+                                                   :translations-directory "translations/"
+                                                   :extra-translations-directory "test-data/translations-test/"})]
+      (is (= "Active" (getx-in translations [:en :t :administration :active]))))))
+
