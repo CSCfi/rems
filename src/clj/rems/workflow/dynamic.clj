@@ -629,10 +629,11 @@
 
   Not every condition is checked exactly so it is in fact a potential set of possible commands only."
   [actor application-state]
-  (set
-   (map :type
-        (remove #(impossible-command? % application-state injections-for-possible-commands)
-                (command-candidates actor application-state)))))
+  (->> application-state
+       (command-candidates actor)
+       (remove #(impossible-command? % application-state injections-for-possible-commands))
+       (map :type)
+       set))
 
 (defn assoc-possible-commands [actor application-state]
   (assoc application-state
