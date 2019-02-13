@@ -18,7 +18,7 @@
 (defn- set-permissions
   "Sets permissions for the application. Use `set-role-permissions` or
   `set-user-permissions` instead of calling this function directly.
-  
+
    In `permission-map`, the key is the subject (user or role), and the value
    is a list of permissions to set for that subject.
 
@@ -42,7 +42,7 @@
 
    Users will be mapped to roles based on application state.
    The supported roles are defined in `user-permissions`.
-   
+
    The keys in `permission-map` are the role names as keywords.
    See `set-permissions` for details on `permission-map`."
   [application permission-map]
@@ -51,7 +51,7 @@
 
 (defn- set-user-permissions
   "Sets user specific permissions for the application.
-  
+
    User specific permissions can be used e.g. to give specific users
    commenting access or to give non-applicant members read-only
    access to the application.
