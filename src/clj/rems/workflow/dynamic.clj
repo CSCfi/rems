@@ -559,10 +559,11 @@
 
 (deftest test-save-draft
   (let [injections {:validate-form (constantly nil)}
-        application {:state ::draft
-                     :applicantuserid "applicant"
-                     :workflow {:type :workflow/dynamic
-                                :handlers ["assistant"]}}
+        application (apply-events {:state ::draft
+                                   :applicantuserid "applicant"
+                                   :workflow {:type :workflow/dynamic
+                                              :handlers ["assistant"]}}
+                                  [])
         relevant-application-keys [:state :form-contents :submitted-form-contents :previous-submitted-form-contents]]
     (testing "saves a draft"
       (is (= {:success true
@@ -653,10 +654,11 @@
   (let [injections {:validate-form (constantly nil)}
         expected-errors [{:type :t.form.validation/required}]
         fail-injections {:validate-form (constantly expected-errors)}
-        application {:state ::draft
-                     :applicantuserid "applicant"
-                     :workflow {:type :workflow/dynamic
-                                :handlers ["assistant"]}}]
+        application (apply-events {:state ::draft
+                                   :applicantuserid "applicant"
+                                   :workflow {:type :workflow/dynamic
+                                              :handlers ["assistant"]}}
+                                  [])]
     (testing "only applicant can submit"
       (is (= {:errors [{:type :forbidden}]}
              (handle-command {:actor "not-applicant" :type ::submit} application injections))))
@@ -680,10 +682,11 @@
 
 (deftest test-submit-return-submit-approve-close
   (let [injections {:validate-form (constantly nil)}
-        application {:state ::draft
-                     :applicantuserid "applicant"
-                     :workflow {:type :workflow/dynamic
-                                :handlers ["assistant"]}}
+        application (apply-events {:state ::draft
+                                   :applicantuserid "applicant"
+                                   :workflow {:type :workflow/dynamic
+                                              :handlers ["assistant"]}}
+                                  [])
         returned-application (apply-commands application
                                              [{:actor "applicant" :type ::submit}
                                               {:actor "assistant" :type ::return}]
@@ -698,10 +701,11 @@
     (is (= ::closed (:state closed-application)))))
 
 (deftest test-decision
-  (let [application {:state ::submitted
-                     :applicantuserid "applicant"
-                     :workflow {:type :workflow/dynamic
-                                :handlers ["assistant"]}}
+  (let [application (apply-events {:state ::submitted
+                                   :applicantuserid "applicant"
+                                   :workflow {:type :workflow/dynamic
+                                              :handlers ["assistant"]}}
+                                  [])
         injections {:valid-user? #{"deity"}}]
     (testing "required :valid-user? injection"
       (is (= {:errors [{:type :missing-injection :injection :valid-user?}]}
@@ -749,11 +753,12 @@
                                injections)))))))
 
 (deftest test-add-member
-  (let [application {:state ::submitted
-                     :members [{:userid "applicant"} {:userid "somebody"}]
-                     :applicantuserid "applicant"
-                     :workflow {:type :workflow/dynamic
-                                :handlers ["assistant"]}}
+  (let [application (apply-events {:state ::submitted
+                                   :members [{:userid "applicant"} {:userid "somebody"}]
+                                   :applicantuserid "applicant"
+                                   :workflow {:type :workflow/dynamic
+                                              :handlers ["assistant"]}}
+                                  [])
         injections {:valid-user? #{"member1" "member2" "somebody" "applicant"}}]
     (testing "add two members"
       (is (= [{:userid "applicant"} {:userid "somebody"} {:userid "member1"}]
@@ -776,10 +781,11 @@
                              injections))))))
 
 (deftest test-invite-member
-  (let [application {:state ::draft
-                     :applicantuserid "applicant"
-                     :workflow {:type :workflow/dynamic
-                                :handlers ["assistant"]}}
+  (let [application (apply-events {:state ::draft
+                                   :applicantuserid "applicant"
+                                   :workflow {:type :workflow/dynamic
+                                              :handlers ["assistant"]}}
+                                  [])
         injections {:valid-user? #{"somebody" "applicant"}}]
     (testing "invite two members by applicant"
       (is (= [{:name "Member Applicant 1" :email "member1@applicants.com"} {:name "Member Applicant 2" :email "member2@applicants.com"}]
@@ -813,11 +819,12 @@
                               injections)))))))
 
 (deftest test-comment
-  (let [application {:state ::submitted
-                     :applicantuserid "applicant"
-                     :commenters #{}
-                     :workflow {:type :workflow/dynamic
-                                :handlers ["assistant"]}}
+  (let [application (apply-events {:state ::submitted
+                                   :applicantuserid "applicant"
+                                   :commenters #{}
+                                   :workflow {:type :workflow/dynamic
+                                              :handlers ["assistant"]}}
+                                  [])
         injections {:valid-user? #{"commenter" "commenter2" "commenter3"}}]
     (testing "required :valid-user? injection"
       (is (= {:errors [{:type :missing-injection :injection :valid-user?}]}
@@ -864,10 +871,11 @@
                                                  injections)))))))))
 
 (deftest test-possible-commands
-  (let [draft {:state ::draft
-               :applicantuserid "applicant"
-               :workflow {:type :workflow/dynamic
-                          :handlers ["assistant"]}}]
+  (let [draft (apply-events {:state ::draft
+                             :applicantuserid "applicant"
+                             :workflow {:type :workflow/dynamic
+                                        :handlers ["assistant"]}}
+                            [])]
     (testing "draft"
       (is (= #{::submit ::invite-member}
              (possible-commands "applicant" draft)))
