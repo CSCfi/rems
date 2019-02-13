@@ -7,7 +7,7 @@
             [rems.db.licenses :as licenses]
             [rems.db.users :as users]
             [rems.workflow.dynamic :as dynamic]
-            [rems.workflow.permissions :as permissions :refer [set-role-permissions user-permissions]])
+            [rems.workflow.permissions :as permissions])
   (:import (org.joda.time DateTime)))
 
 ;;;; v2 API, pure application state based on application events
@@ -39,8 +39,10 @@
                                     ;; TODO: other workflows
                                     :workflow.dynamic/state :rems.workflow.dynamic/draft
                                     :workflow.dynamic/handlers (:workflow.dynamic/handlers event)})
-      (set-role-permissions {:applicant #{::dynamic/save-draft
-                                          ::dynamic/submit}})))
+      (permissions/add-user-role (:event/actor event) :applicant)
+      (permissions/add-users-role (:workflow.dynamic/handlers event) :handler)
+      (permissions/set-role-permissions {:applicant #{::dynamic/save-draft
+                                                      ::dynamic/submit}})))
 
 (defn- set-accepted-licences [licenses accepted-licenses]
   (map (fn [license]
@@ -69,12 +71,12 @@
   [application event]
   (-> application
       (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/submitted)
-      (set-role-permissions {:applicant #{}
-                             :handler #{::dynamic/approve
-                                        ::dynamic/reject
-                                        ::dynamic/return
-                                        ::dynamic/request-decision
-                                        ::dynamic/request-comment}})))
+      (permissions/set-role-permissions {:applicant #{}
+                                         :handler #{::dynamic/approve
+                                                    ::dynamic/reject
+                                                    ::dynamic/return
+                                                    ::dynamic/request-decision
+                                                    ::dynamic/request-comment}})))
 
 (defmethod event-type-specific-application-view :application.event/returned
   [application event]
@@ -442,6 +444,8 @@
                                                          :workflow/type :workflow/dynamic
                                                          :workflow.dynamic/state :rems.workflow.dynamic/draft
                                                          :workflow.dynamic/handlers #{"handler"}}
+                                  ::permissions/user-roles {"applicant" #{:applicant}
+                                                            "handler" #{:handler}}
                                   ::permissions/role-permissions {:applicant #{::dynamic/save-draft
                                                                                ::dynamic/submit}}}]
 
@@ -481,12 +485,12 @@
                    (assoc-in [:application/last-activity] (DateTime. 2000))
                    (assoc-in [:application/events] [created-event submitted-event])
                    (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/submitted)
-                   (assoc-in [::permissions/role-permissions :applicant] #{})
-                   (assoc-in [::permissions/role-permissions :handler] #{::dynamic/approve
-                                                                         ::dynamic/reject
-                                                                         ::dynamic/return
-                                                                         ::dynamic/request-decision
-                                                                         ::dynamic/request-comment}))
+                   (assoc-in [::permissions/role-permissions] {:applicant #{}
+                                                               :handler #{::dynamic/approve
+                                                                          ::dynamic/reject
+                                                                          ::dynamic/return
+                                                                          ::dynamic/request-decision
+                                                                          ::dynamic/request-comment}}))
                (build-application-view
                 (valid-events [created-event submitted-event])
                 injections)))))))
@@ -514,13 +518,30 @@
                            :get-user get-user})
 
 (defn- apply-user-permissions [application user-id]
-  (when-let [permissions (user-permissions application user-id)]
+  (let [roles (permissions/user-roles application user-id)]
     ;; TODO: hide sensitive information from applicant (most event comments, maybe some events also)
     ;;       - could add :see-everything permission to the appropriate roles and check for it here
     ;;       https://github.com/CSCfi/rems/issues/859
-    (-> application
-        (assoc :permissions/current-user permissions)
-        (permissions/cleanup))))
+    (when (not (empty? roles))
+      (-> application
+          (assoc :permissions/current-user (permissions/user-permissions application user-id))
+          (permissions/cleanup)))))
+
+(deftest test-apply-user-permissions
+  (let [application (-> {}
+                        (permissions/add-user-role "user-1" :role-1)
+                        (permissions/add-user-role "user-2" :role-2)
+                        (permissions/set-role-permissions {:role-1 []
+                                                           :role-2 [:foo :bar]}))]
+    (testing "users with a role can see the application"
+      (is (not (nil? (apply-user-permissions application "user-1")))))
+    (testing "users without a role cannot see the application"
+      (is (nil? (apply-user-permissions application "user-3"))))
+    (testing "lists the user's permissions"
+      (is (= {:permissions/current-user #{}}
+             (apply-user-permissions application "user-1")))
+      (is (= {:permissions/current-user #{:foo :bar}}
+             (apply-user-permissions application "user-2"))))))
 
 (defn api-get-application-v2 [user-id application-id]
   (let [events (applications/get-dynamic-application-events application-id)]

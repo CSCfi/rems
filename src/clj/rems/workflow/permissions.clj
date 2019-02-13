@@ -4,10 +4,20 @@
 
 (def ^:private conj-set (fnil conj (hash-set)))
 
+;; TODO: would give-role or give-role-to-user be a better name?
 (defn add-user-role [application user role]
-  (assert (string? user))
-  (assert (keyword? role))
+  (assert (string? user)
+          (str "user must be a string: " (pr-str user)))
+  (assert (keyword? role)
+          (str "role must be a keyword: " (pr-str role)))
   (update-in application [::user-roles user] conj-set role))
+
+;; TODO: merge with add-user-role?
+(defn add-users-role [application users role]
+  (reduce (fn [app user]
+            (add-user-role app user role))
+          application
+          users))
 
 (defn- dissoc-if-empty [m k]
   (if (empty? (get m k))
@@ -23,26 +33,31 @@
   (set (get-in application [::user-roles user])))
 
 (deftest test-user-roles
-  (testing "add first"
+  (testing "add first role"
     (is (= {::user-roles {"user" #{:role-1}}}
            (-> {}
                (add-user-role "user" :role-1)))))
-  (testing "add more"
+  (testing "add more roles"
     (is (= {::user-roles {"user" #{:role-1 :role-2}}}
            (-> {}
                (add-user-role "user" :role-1)
                (add-user-role "user" :role-2)))))
-  (testing "remove some"
+  (testing "remove some roles"
     (is (= {::user-roles {"user" #{:role-1}}}
            (-> {}
                (add-user-role "user" :role-1)
                (add-user-role "user" :role-2)
                (remove-user-role "user" :role-2)))))
-  (testing "remove all"
+  (testing "remove all roles"
     (is (= {::user-roles {}}
            (-> {}
                (add-user-role "user" :role-1)
                (remove-user-role "user" :role-1)))))
+  (testing "give a role to multiple users"
+    (is (= {::user-roles {"user-1" #{:role-1}
+                          "user-2" #{:role-1}}}
+           (-> {}
+               (add-users-role ["user-1" "user-2"] :role-1)))))
   (testing "multiple users, get the roles of a single user"
     (let [app (-> {}
                   (add-user-role "user-1" :role-1)
@@ -55,23 +70,14 @@
   "Sets role specific permissions for the application.
 
    In `permission-map`, the key is the role (a keyword), and the value
-   is a list of permissions to set for that subject (also keywords).
+   is a list of permissions to set for that role (also keywords).
    The permissions may represent commands that the user is allowed to run,
    or they may be used to specify whether the user can see all events and
-   comments from the reviewers (e.g. `:see-everything`).
-
-   There is a difference between an empty list of permissions and nil.
-   Empty list means that the user has read-only access to the application,
-   whereas nil means that the user has no access to the application.
-
-   Users will be mapped to roles based on application state.
-   The supported roles are defined in `user-permissions`."
+   comments from the reviewers (e.g. `:see-everything`)."
   [application permission-map]
-  (assert (every? keyword? (keys permission-map)))
-  (reduce (fn [application [subject permissions]]
-            (if (nil? permissions)
-              (update application ::role-permissions dissoc subject)
-              (assoc-in application [::role-permissions subject] (set permissions))))
+  (reduce (fn [application [role permissions]]
+            (assert (keyword? role))
+            (assoc-in application [::role-permissions role] (set permissions)))
           application
           permission-map))
 
@@ -85,13 +91,12 @@
            (-> {}
                (set-role-permissions {:role [:foo :bar]})
                (set-role-permissions {:role [:gazonk]})))))
-  (testing "removing (read-only access)"
+  (testing "removing"
     (is (= {::role-permissions {:role #{}}}
            (-> {}
                (set-role-permissions {:role [:foo :bar]})
-               (set-role-permissions {:role []})))))
-  (testing "removing (no access)"
-    (is (= {::role-permissions {}}
+               (set-role-permissions {:role []}))))
+    (is (= {::role-permissions {:role #{}}}
            (-> {}
                (set-role-permissions {:role [:foo :bar]})
                (set-role-permissions {:role nil})))))
@@ -112,44 +117,31 @@
 
 (defn user-permissions
   "Returns the specified user's permissions to this application.
-   Union of all role specific permissions. Read the source
-   to find out the supported roles."
-  [application user-id]
-  (let [applicant? (= user-id (:application/applicant application))
-        handler? (contains? (:workflow.dynamic/handlers application) user-id)
-        permissions (remove nil?
-                            [(when applicant?
-                               (get-in application [::role-permissions :applicant]))
-                             (when handler?
-                               (get-in application [::role-permissions :handler]))])]
-    (if (empty? permissions)
-      nil
-      (apply set/union permissions))))
+   Union of all role specific permissions."
+  [application user]
+  (->> (user-roles application user)
+       (map (fn [role]
+              (set (get-in application [::role-permissions role]))))
+       (apply set/union)))
 
 (deftest test-user-permissions
-  (testing "no access"
-    (is (= nil
-           (user-permissions {}
-                             "user"))))
-  (testing "applicant permissions"
+  (testing "unknown user"
+    (is (= #{}
+           (user-permissions {} "user"))))
+  (testing "one role"
     (is (= #{:foo}
-           (user-permissions {:application/applicant "user"
-                              ::role-permissions {:applicant #{:foo}}}
-                             "user"))))
-  (testing "handler permissions"
-    (is (= #{:foo}
-           (user-permissions {:workflow.dynamic/handlers #{"user"}
-                              ::role-permissions {:handler #{:foo}}}
-                             "user"))))
-  (testing "combined permissions from multiple roles"
-    (let [application {:application/applicant "user"
-                       :workflow.dynamic/handlers #{"user"}
-                       ::role-permissions {:applicant #{:foo}
-                                           :handler #{:bar}}}]
-      (is (= #{:foo :bar}
-             (user-permissions application "user")))
-      (is (= nil
-             (user-permissions application "wrong user"))))))
+           (-> {}
+               (add-user-role "user" :role-1)
+               (set-role-permissions {:role-1 #{:foo}})
+               (user-permissions "user")))))
+  (testing "multiple roles"
+    (is (= #{:foo :bar}
+           (-> {}
+               (add-user-role "user" :role-1)
+               (add-user-role "user" :role-2)
+               (set-role-permissions {:role-1 #{:foo}
+                                      :role-2 #{:bar}})
+               (user-permissions "user"))))))
 
 (defn cleanup [application]
   (dissoc application ::user-roles ::role-permissions))
