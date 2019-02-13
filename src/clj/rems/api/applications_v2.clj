@@ -194,8 +194,8 @@
                                 :form/fields []}
              :application/workflow {:workflow/id (:workflow/id event)
                                     :workflow/type (:workflow/type event)
-                                    ;; TODO: or would :workflow.dynamic/state be more appropriate?
-                                    :workflow/state :rems.workflow.dynamic/draft ; TODO: other workflows
+                                    ;; TODO: other workflows
+                                    :workflow.dynamic/state :rems.workflow.dynamic/draft
                                     :workflow.dynamic/handlers (:workflow.dynamic/handlers event)})
       (set-role-permissions {:applicant #{::dynamic/save-draft
                                           ::dynamic/submit}})))
@@ -226,7 +226,7 @@
 (defmethod event-type-specific-application-view :application.event/submitted
   [application event]
   (-> application
-      (assoc :workflow/state ::dynamic/submitted)
+      (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/submitted)
       (set-role-permissions {:applicant #{}
                              :handler #{::dynamic/approve
                                         ::dynamic/reject
@@ -596,7 +596,7 @@
                                                            :field/max-length 100}]}
                          :application/workflow {:workflow/id 50
                                                 :workflow/type :dynamic
-                                                :workflow/state :rems.workflow.dynamic/draft
+                                                :workflow.dynamic/state :rems.workflow.dynamic/draft
                                                 :workflow.dynamic/handlers #{"handler"}}
                          :permissions/by-role {:applicant #{::dynamic/save-draft
                                                             ::dynamic/submit}}}]
@@ -636,7 +636,7 @@
         (is (= (-> new-application
                    (assoc-in [:application/last-activity] (DateTime. 2000))
                    (assoc-in [:application/events] [created-event submitted-event])
-                   (assoc-in [:workflow/state] ::dynamic/submitted)
+                   (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/submitted)
                    (assoc-in [:permissions/by-role :applicant] #{})
                    (assoc-in [:permissions/by-role :handler] #{::dynamic/approve
                                                                ::dynamic/reject
@@ -726,7 +726,7 @@
                     :applicantuserid (:application/applicant application)
                     :start (:application/created application)
                     :last-modified (:application/last-activity application)
-                    :state (:workflow/state workflow) ; TODO: round-based workflows
+                    :state (:workflow.dynamic/state workflow) ; TODO: round-based workflows
                     :description (:application/description application)
                     :catalogue-items catalogue-items
                     :form-contents {:items (into {} (for [field (:form/fields form)]
@@ -742,7 +742,7 @@
                     :possible-commands (:permissions/current-user application)
                     :fnlround 0 ; TODO: round-based workflows
                     :review-type nil}) ; TODO: round-based workflows
-     :phases (applications/get-application-phases (:workflow/state workflow))
+     :phases (applications/get-application-phases (:workflow.dynamic/state workflow))
      :licenses (map (fn [license]
                       {:id (:license/id license)
                        :type "license"
