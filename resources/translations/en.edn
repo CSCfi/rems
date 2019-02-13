@@ -144,6 +144,7 @@
                                   :closed "Deleted"
                                   :comment-requested "Comment requested"
                                   :commented "Commented"
+                                  :created "Created"
                                   :decided "Decided"
                                   :decision-requested "Decision requested"
                                   :draft-saved "Modified"

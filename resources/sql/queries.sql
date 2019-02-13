@@ -537,6 +537,7 @@ FROM license lic
 INNER JOIN resource_licenses rl ON lic.id = rl.licid
 INNER JOIN catalogue_item item ON (item.resid = rl.resid)
 WHERE item.id IN (:v*:items)
+ORDER BY id
 
 -- :name get-resource-licenses :? :*
 SELECT lic.id, lic.title, lic.type, lic.textcontent, rl.start, rl.endt
@@ -585,16 +586,18 @@ FROM users
 WHERE userId = :user
 
 -- :name get-application-events :? :*
-SELECT
-/*~ (when-not (:application params) */
-  appId,
-/*~ ) ~*/
-  userId, round, event, comment, eventData::TEXT, time
+SELECT id, appId, userId, round, event, comment, eventData::TEXT, time
 FROM application_event
 WHERE 1=1
 /*~ (when (:application params) */
   AND appId = :application
 /*~ ) ~*/
+ORDER BY id ASC
+
+-- :name get-application-events-since :? :*
+SELECT id, eventdata::TEXT
+FROM application_event
+WHERE id > :id
 ORDER BY id ASC
 
 -- :name add-application-event! :insert

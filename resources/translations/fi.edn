@@ -144,6 +144,7 @@
                                   :closed "Poistettu"
                                   :comment-requested "Pyydetty kommenttia"
                                   :commented "Kommentoitu"
+                                  :created "Luotu"
                                   :decided "Päätetty"
                                   :decision-requested "Pyydetty päätöstä"
                                   :draft-saved "Muokattu"

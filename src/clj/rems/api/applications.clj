@@ -1,18 +1,22 @@
 (ns rems.api.applications
-  (:require [clojure.string :as str]
+  (:require [clj-time.core :as time]
+            [clojure.string :as str]
+            [clojure.test :refer [deftest is]]
             [compojure.api.sweet :refer :all]
+            [rems.api.applications-v2 :refer [get-user-applications-v2 api-get-application-v2 api-get-application-v1]]
             [rems.api.schema :refer :all]
             [rems.api.util :refer [longify-keys]]
+            [rems.config :refer [env]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.users :as users]
             [rems.form :as form]
             [rems.pdf :as pdf]
             [rems.util :refer [getx-user-id update-present]]
-            [ring.util.http-response :refer :all]
             [ring.swagger.upload :as upload]
+            [ring.util.http-response :refer :all]
             [schema.core :as s]
-            [clj-time.core :as time]))
+            [rems.context :as context]))
 
 ;; Response models
 
@@ -259,6 +263,35 @@
         (ok app)
         (not-found! "not found")))
 
+    (GET "/v2-wip/" []
+      :summary "Get current user's all applications"
+      :roles #{:applicant}
+      :return [s/Any] ; TODO: add schema once the API has stabilized
+      (when (:dev env) ; TODO: remove feature toggle
+        (ok (get-user-applications-v2 (getx-user-id)))))
+
+    (GET "/v2-wip/:application-id" []
+      :summary "Get application by `application-id`"
+      :roles #{:applicant :approver :reviewer}
+      :path-params [application-id :- (describe s/Num "application id")]
+      :responses {200 {:schema s/Any} ; TODO: add schema once the API has stabilized
+                  404 {:schema s/Str :description "Not found"}}
+      (when (:dev env) ; TODO: remove feature toggle
+        (if-let [app (api-get-application-v2 (getx-user-id) application-id)]
+          (ok app)
+          (not-found! "not found"))))
+
+    (GET "/v2-to-v1-wip/:application-id" []
+      :summary "Get application by `application-id`"
+      :roles #{:applicant :approver :reviewer}
+      :path-params [application-id :- (describe s/Num "application id")]
+      :responses {200 {:schema s/Any} ; TODO: use GetApplicationResponse schema
+                  404 {:schema s/Str :description "Not found"}}
+      (when (:dev env) ; TODO: remove feature toggle
+        (if-let [app (api-get-application-v1 (getx-user-id) application-id)]
+          (ok app)
+          (not-found! "not found"))))
+
     (GET "/:application-id/pdf" []
       :summary "Get a pdf version of an application"
       :roles #{:applicant :approver :reviewer}
@@ -333,3 +366,13 @@
           (ok {:success false
                :errors (:errors errors)})
           (ok {:success true}))))))
+
+(comment
+  (let [user-id "developer"]
+    (binding [context/*lang* :en]
+      (doseq [app (applications/get-user-applications user-id)]
+        (when (applications/is-dynamic-application? app)
+          (is (= (assoc-in (api-get-application user-id (:id app))
+                           [:application :dynamic-events] nil)
+                 (assoc-in (api-get-application-v1 user-id (:id app))
+                           [:application :dynamic-events] nil))))))))

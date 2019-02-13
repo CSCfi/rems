@@ -58,7 +58,8 @@
 ;; TODO: namespaced keys e.g. :event/type, :event/time, :event/actor, :application/id
 ;; TODO: add version number to events
 (s/defschema EventBase
-  {:event/type s/Keyword
+  {(s/optional-key :event/id) s/Int
+   :event/type s/Keyword
    :event/time DateTime
    :event/actor UserId
    :application/id s/Int})
@@ -80,6 +81,17 @@
          :event/type (s/eq :application.event/comment-requested)
          :application/commenters [s/Str]
          :application/comment s/Str))
+(s/defschema CreatedEvent
+  (assoc EventBase
+         :event/type (s/eq :application.event/created)
+         :application/resources [{:catalogue-item/id s/Int
+                                  :resource/ext-id s/Str}]
+         :application/licenses [{:license/id s/Int}]
+         :form/id s/Int
+         :workflow/id s/Int
+         :workflow/type s/Keyword
+         ;; workflow-specific data
+         (s/optional-key :workflow.dynamic/handlers) #{s/Str}))
 (s/defschema DecidedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/decided)
@@ -122,6 +134,7 @@
    :application.event/closed ClosedEvent
    :application.event/commented CommentedEvent
    :application.event/comment-requested CommentRequestedEvent
+   :application.event/created CreatedEvent
    :application.event/decided DecidedEvent
    :application.event/decision-requested DecisionRequestedEvent
    :application.event/draft-saved DraftSavedEvent
@@ -184,6 +197,13 @@
 (deftest test-all-event-types-handled
   (is (= (set (keys event-schemas))
          (set (get-event-types)))))
+
+(defmethod apply-event [:application.event/created :workflow/dynamic]
+  [application _workflow event]
+  ;; TODO: populate the application from the event instead of relying on the legacy application model
+  ;;       - probably done as part of https://github.com/CSCfi/rems/issues/852 or maybe doesn't need to be
+  ;;         done at all before this code is removed
+  application)
 
 (defmethod apply-event [:application.event/draft-saved :workflow/dynamic]
   [application _workflow event]

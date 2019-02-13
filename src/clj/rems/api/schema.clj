@@ -67,7 +67,8 @@
   {:userid s/Str})
 
 (s/defschema DynamicEvent
-  {s/Keyword s/Any})
+  (assoc dynamic/EventBase
+         s/Keyword s/Any))
 
 (s/defschema Application
   {:id (s/maybe s/Num) ;; does not exist for unsaved draft

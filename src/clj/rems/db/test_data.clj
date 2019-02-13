@@ -3,17 +3,18 @@
   (:require [clj-time.core :as time]
             [rems.context :as context]
             [rems.db.applications :as applications]
-            [rems.db.core :as db]
             [rems.db.catalogue :as catalogue]
+            [rems.db.core :as db]
             [rems.db.form :as form]
             [rems.db.roles :as roles]
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
             [rems.db.workflow-actors :as actors]
-            [rems.locales :as locales])
+            [rems.locales :as locales]
+            [ring.util.http-response :refer [bad-request!]])
   (:import (org.joda.time DateTimeUtils DateTime)))
 
-(def ^DateTime creation-time (time/now))
+(def ^DateTime creation-time (time/now)) ; TODO: no more used, remove?
 
 (def +fake-users+
   {:applicant1 "alice"
@@ -460,23 +461,43 @@
 
 (defn- create-draft! [user-id catids wfid field-value & [now]]
   (let [app-id (applications/create-new-draft-at-time user-id wfid (or now (time/now)))
-        _ (if (vector? catids)
-            (doseq [catid catids]
-              (db/add-application-item! {:application app-id :item catid}))
-            (db/add-application-item! {:application app-id :item catids}))
+        catids (if (vector? catids) catids [catids])
+        _ (doseq [catid catids]
+            (db/add-application-item! {:application app-id :item catid}))
         form (binding [context/*lang* :en]
-               (applications/get-form-for user-id app-id))]
+               (applications/get-form-for user-id app-id))
+        dynamic-workflow? (= :workflow/dynamic (get-in form [:application :workflow :type]))
+        save-draft-command (atom {:type :rems.workflow.dynamic/save-draft
+                                  :actor user-id
+                                  :application-id app-id
+                                  :time (get-in form [:application :start])
+                                  :items {}
+                                  :licenses {}})]
+    (when dynamic-workflow?
+      (applications/add-application-created-event! {:application-id app-id
+                                                    :catalogue-item-ids catids
+                                                    :time (get-in form [:application :start])
+                                                    :actor user-id}))
     (doseq [{item-id :id maxlength :maxlength} (:items form)
             :let [trimmed-value (trim-value-if-longer-than-fields-maxlength field-value maxlength)]]
       (db/save-field-value! {:application app-id :form (:id form)
-                             :item item-id :user user-id :value trimmed-value}))
+                             :item item-id :user user-id :value trimmed-value})
+      (swap! save-draft-command
+             update :items
+             conj [item-id trimmed-value]))
     (db/update-application-description! {:id app-id :description field-value})
     (doseq [{license-id :id} (:licenses form)]
       (db/save-license-approval! {:catappid app-id
                                   :round 0
                                   :licid license-id
                                   :actoruserid user-id
-                                  :state "approved"}))
+                                  :state "approved"})
+      (swap! save-draft-command
+             update :licenses
+             conj [license-id "approved"]))
+    (when dynamic-workflow?
+      (let [error (applications/dynamic-command! @save-draft-command)]
+        (assert (nil? error) error)))
     app-id))
 
 (defn- create-applications! [catid wfid applicant approver]
@@ -635,9 +656,9 @@
       (let [dynamic (create-catalogue-item! res1 (:dynamic workflows) form
                                             {"en" "Dynamic workflow" "fi" "Dynaaminen työvuo"})]
         (create-dynamic-applications! dynamic (:dynamic workflows) +fake-users+))
-      (let [thlform (create-thl-demo-form! +fake-users+)]
-        (create-catalogue-item! res1 (:dynamic workflows) thlform {"en" "THL catalogue item" "fi" "THL katalogi-itemi"}))
-      (create-member-applications! simple (:dynamic workflows) (+fake-users+ :applicant1) (+fake-users+ :approver1) [{:userid (+fake-users+ :applicant2)}]))
+      (let [thlform (create-thl-demo-form! +fake-users+)
+            thl-catid (create-catalogue-item! res1 (:dynamic workflows) thlform {"en" "THL catalogue item" "fi" "THL katalogi-itemi"})]
+        (create-member-applications! thl-catid (:dynamic workflows) (+fake-users+ :applicant1) (+fake-users+ :approver1) [{:userid (+fake-users+ :applicant2)}])))
     (finally
       (DateTimeUtils/setCurrentMillisSystem))))
 
