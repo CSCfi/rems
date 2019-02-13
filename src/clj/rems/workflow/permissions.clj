@@ -2,6 +2,55 @@
   (:require [clojure.set :as set]
             [clojure.test :refer [deftest is testing]]))
 
+(def ^:private conj-set (fnil conj (hash-set)))
+
+(defn add-user-role [application user role]
+  (assert (string? user))
+  (assert (keyword? role))
+  (update-in application [::user-roles user] conj-set role))
+
+(defn- dissoc-if-empty [m k]
+  (if (empty? (get m k))
+    (dissoc m k)
+    m))
+
+(defn remove-user-role [application user role]
+  (-> application
+      (update-in [::user-roles user] disj role)
+      (update ::user-roles dissoc-if-empty user)))
+
+(defn user-roles [application user]
+  (set (get-in application [::user-roles user])))
+
+(deftest test-user-roles
+  (testing "add first"
+    (is (= {::user-roles {"user" #{:role-1}}}
+           (-> {}
+               (add-user-role "user" :role-1)))))
+  (testing "add more"
+    (is (= {::user-roles {"user" #{:role-1 :role-2}}}
+           (-> {}
+               (add-user-role "user" :role-1)
+               (add-user-role "user" :role-2)))))
+  (testing "remove some"
+    (is (= {::user-roles {"user" #{:role-1}}}
+           (-> {}
+               (add-user-role "user" :role-1)
+               (add-user-role "user" :role-2)
+               (remove-user-role "user" :role-2)))))
+  (testing "remove all"
+    (is (= {::user-roles {}}
+           (-> {}
+               (add-user-role "user" :role-1)
+               (remove-user-role "user" :role-1)))))
+  (testing "multiple users, get the roles of a single user"
+    (let [app (-> {}
+                  (add-user-role "user-1" :role-1)
+                  (add-user-role "user-2" :role-2))]
+      (is (= #{:role-1} (user-roles app "user-1")))
+      (is (= #{:role-2} (user-roles app "user-2")))
+      (is (= #{} (user-roles app "user-3"))))))
+
 (defn set-role-permissions
   "Sets role specific permissions for the application.
 
