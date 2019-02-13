@@ -359,9 +359,9 @@
          (localization-for :title {:localizations {:en {}
                                                    :fi {}}}))))
 
-(defn- enrich-form [application get-form]
-  (let [form (get-form (get-in application [:application/form :form/id]))
-        app-fields (get-in application [:application/form :form/fields])
+(defn- enrich-form [app-form get-form]
+  (let [form (get-form (:form/id app-form))
+        app-fields (:form/fields app-form)
         rich-fields (map (fn [item]
                            {:field/id (:id item)
                             :field/value "" ; default for new forms
@@ -373,9 +373,9 @@
                             :field/max-length (:maxlength item)})
                          (:items form))
         fields (merge-lists-by :field/id rich-fields app-fields)]
-    (-> application
-        (assoc-in [:application/form :form/title] (:title form))
-        (assoc-in [:application/form :form/fields] fields))))
+    (assoc app-form
+           :form/title (:title form)
+           :form/fields fields)))
 
 (defn- set-application-description [application]
   (let [fields (get-in application [:application/form :form/fields])
@@ -421,7 +421,7 @@
 
 (defn- enrich-with-injections [application {:keys [get-form get-catalogue-item get-license get-user]}]
   (-> application
-      (enrich-form get-form)
+      (update :application/form enrich-form get-form)
       set-application-description
       (update :application/resources enrich-resources get-catalogue-item)
       (update :application/licenses enrich-licenses get-license)
