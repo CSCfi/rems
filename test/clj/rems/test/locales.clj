@@ -22,7 +22,8 @@
 (deftest load-translations-test
   (testing "loads internal translations"
     (let [translations (locales/load-translations {:languages [:en :fi]
-                                                   :translations-directory "translations/"})]
+                                                   :translations-directory "translations/"
+                                                   :extra-translations-directory nil})]
       (is (= [:en :fi] (sort (keys translations))))
       (is (not (empty? (:en translations))))
       (is (not (empty? (:fi translations))))))
@@ -30,6 +31,7 @@
   (testing "loads external translations"
     (let [translations-dir (create-temp-dir)
           config {:translations-directory translations-dir
+                  :extra-translations-directory nil
                   :languages [:xx]}
           translation {:some-key "some val"}]
       (try
@@ -40,8 +42,12 @@
           (delete-recursively translations-dir)))))
 
   (testing "loads translations only for listed languages"
-    (is (= [:en] (keys (locales/load-translations {:languages [:en] :translations-directory "translations/"}))))
-    (is (= [:fi] (keys (locales/load-translations {:languages [:fi] :translations-directory "translations/"})))))
+    (is (= [:en] (keys (locales/load-translations {:languages [:en]
+                                                   :translations-directory "translations/"
+                                                   :extra-translations-directory nil}))))
+    (is (= [:fi] (keys (locales/load-translations {:languages [:fi]
+                                                   :translations-directory "translations/"
+                                                   :extra-translations-directory nil})))))
 
   (testing "missing translations-directory in config is an error"
     (is (thrown-with-msg? RuntimeException #"^\Q:translations-directory was not set in config\E$"
