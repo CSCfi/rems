@@ -223,6 +223,14 @@
   [application event]
   application)
 
+(defmethod event-type-specific-application-view :application.event/member-removed
+  [application event]
+  application)
+
+(defmethod event-type-specific-application-view :application.event/member-uninvited
+  [application event]
+  application)
+
 (defmethod event-type-specific-application-view :application.event/submitted
   [application event]
   (-> application
