@@ -187,7 +187,9 @@
 (defmulti ^:private apply-event
   "Applies an event to an application state."
   ;; dispatch by event type
-  (fn [_application workflow event] [(:event/type event) (:type workflow)]))
+  ;; TODO: the workflow parameter could be removed; this method is the only one to use it and it's included in application
+  (fn [_application workflow event] [(:event/type event) (or (:type workflow)
+                                                             (:workflow/type event))]))
 
 (defn get-event-types
   "Fetch sequence of supported event names."
@@ -200,10 +202,11 @@
 
 (defmethod apply-event [:application.event/created :workflow/dynamic]
   [application _workflow event]
-  ;; TODO: populate the application from the event instead of relying on the legacy application model
-  ;;       - probably done as part of https://github.com/CSCfi/rems/issues/852 or maybe doesn't need to be
-  ;;         done at all before this code is removed
-  application)
+  (assoc application
+         :state ::draft
+         :applicantuserid (:event/actor event)
+         :workflow {:type (:workflow/type event)
+                    :handlers (vec (:workflow.dynamic/handlers event))}))
 
 (defmethod apply-event [:application.event/draft-saved :workflow/dynamic]
   [application _workflow event]
@@ -559,10 +562,11 @@
 
 (deftest test-save-draft
   (let [injections {:validate-form (constantly nil)}
-        application {:state ::draft
-                     :applicantuserid "applicant"
-                     :workflow {:type :workflow/dynamic
-                                :handlers ["assistant"]}}
+        application (apply-events nil
+                                  [{:event/type :application.event/created
+                                    :event/actor "applicant"
+                                    :workflow/type :workflow/dynamic
+                                    :workflow.dynamic/handlers #{"assistant"}}])
         relevant-application-keys [:state :form-contents :submitted-form-contents :previous-submitted-form-contents]]
     (testing "saves a draft"
       (is (= {:success true
@@ -653,10 +657,11 @@
   (let [injections {:validate-form (constantly nil)}
         expected-errors [{:type :t.form.validation/required}]
         fail-injections {:validate-form (constantly expected-errors)}
-        application {:state ::draft
-                     :applicantuserid "applicant"
-                     :workflow {:type :workflow/dynamic
-                                :handlers ["assistant"]}}]
+        application (apply-events nil
+                                  [{:event/type :application.event/created
+                                    :event/actor "applicant"
+                                    :workflow/type :workflow/dynamic
+                                    :workflow.dynamic/handlers #{"assistant"}}])]
     (testing "only applicant can submit"
       (is (= {:errors [{:type :forbidden}]}
              (handle-command {:actor "not-applicant" :type ::submit} application injections))))
@@ -680,10 +685,11 @@
 
 (deftest test-submit-return-submit-approve-close
   (let [injections {:validate-form (constantly nil)}
-        application {:state ::draft
-                     :applicantuserid "applicant"
-                     :workflow {:type :workflow/dynamic
-                                :handlers ["assistant"]}}
+        application (apply-events nil
+                                  [{:event/type :application.event/created
+                                    :event/actor "applicant"
+                                    :workflow/type :workflow/dynamic
+                                    :workflow.dynamic/handlers #{"assistant"}}])
         returned-application (apply-commands application
                                              [{:actor "applicant" :type ::submit}
                                               {:actor "assistant" :type ::return}]
@@ -698,10 +704,13 @@
     (is (= ::closed (:state closed-application)))))
 
 (deftest test-decision
-  (let [application {:state ::submitted
-                     :applicantuserid "applicant"
-                     :workflow {:type :workflow/dynamic
-                                :handlers ["assistant"]}}
+  (let [application (apply-events nil
+                                  [{:event/type :application.event/created
+                                    :event/actor "applicant"
+                                    :workflow/type :workflow/dynamic
+                                    :workflow.dynamic/handlers #{"assistant"}}
+                                   {:event/type :application.event/submitted
+                                    :event/actor "applicant"}])
         injections {:valid-user? #{"deity"}}]
     (testing "required :valid-user? injection"
       (is (= {:errors [{:type :missing-injection :injection :valid-user?}]}
@@ -749,11 +758,16 @@
                                injections)))))))
 
 (deftest test-add-member
-  (let [application {:state ::submitted
-                     :members [{:userid "applicant"} {:userid "somebody"}]
-                     :applicantuserid "applicant"
-                     :workflow {:type :workflow/dynamic
-                                :handlers ["assistant"]}}
+  (let [application (apply-events nil
+                                  [{:event/type :application.event/created
+                                    :event/actor "applicant"
+                                    :workflow/type :workflow/dynamic
+                                    :workflow.dynamic/handlers #{"assistant"}}
+                                   {:event/type :application.event/submitted
+                                    :event/actor "applicant"}
+                                   {:event/type :application.event/member-added
+                                    :event/actor "applicant"
+                                    :application/member {:userid "somebody"}}])
         injections {:valid-user? #{"member1" "member2" "somebody" "applicant"}}]
     (testing "add two members"
       (is (= [{:userid "applicant"} {:userid "somebody"} {:userid "member1"}]
@@ -776,10 +790,11 @@
                              injections))))))
 
 (deftest test-invite-member
-  (let [application {:state ::draft
-                     :applicantuserid "applicant"
-                     :workflow {:type :workflow/dynamic
-                                :handlers ["assistant"]}}
+  (let [application (apply-events nil
+                                  [{:event/type :application.event/created
+                                    :event/actor "applicant"
+                                    :workflow/type :workflow/dynamic
+                                    :workflow.dynamic/handlers #{"assistant"}}])
         injections {:valid-user? #{"somebody" "applicant"}}]
     (testing "invite two members by applicant"
       (is (= [{:name "Member Applicant 1" :email "member1@applicants.com"} {:name "Member Applicant 2" :email "member2@applicants.com"}]
@@ -813,11 +828,13 @@
                               injections)))))))
 
 (deftest test-comment
-  (let [application {:state ::submitted
-                     :applicantuserid "applicant"
-                     :commenters #{}
-                     :workflow {:type :workflow/dynamic
-                                :handlers ["assistant"]}}
+  (let [application (apply-events nil
+                                  [{:event/type :application.event/created
+                                    :event/actor "applicant"
+                                    :workflow/type :workflow/dynamic
+                                    :workflow.dynamic/handlers #{"assistant"}}
+                                   {:event/type :application.event/submitted
+                                    :event/actor "applicant"}])
         injections {:valid-user? #{"commenter" "commenter2" "commenter3"}}]
     (testing "required :valid-user? injection"
       (is (= {:errors [{:type :missing-injection :injection :valid-user?}]}
@@ -864,10 +881,11 @@
                                                  injections)))))))))
 
 (deftest test-possible-commands
-  (let [draft {:state ::draft
-               :applicantuserid "applicant"
-               :workflow {:type :workflow/dynamic
-                          :handlers ["assistant"]}}]
+  (let [draft (apply-events nil
+                            [{:event/type :application.event/created
+                              :event/actor "applicant"
+                              :workflow/type :workflow/dynamic
+                              :workflow.dynamic/handlers #{"assistant"}}])]
     (testing "draft"
       (is (= #{::submit ::invite-member}
              (possible-commands "applicant" draft)))
