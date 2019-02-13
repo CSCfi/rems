@@ -152,7 +152,7 @@
                                   :member-added "Lisätty jäsen"
                                   :member-invited "Kutsuttu jäsen"
                                   :member-removed "Poistettu jäsen"
-                                  :member-uninvinted "Poistettu jäsen"
+                                  :member-uninvited "Poistettu jäsen"
                                   :rejected "Hylätty"
                                   :returned "Palautettu muokattavaksi"
                                   :submitted "Haettu"}
