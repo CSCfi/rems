@@ -527,7 +527,7 @@
                                               {:license/id 31}]
                        :form/id 40
                        :workflow/id 50
-                       :workflow/type :dynamic
+                       :workflow/type :workflow/dynamic
                        :workflow.dynamic/handlers #{"handler"}}
 
         expected-new-application {:application/id 1
@@ -597,7 +597,7 @@
                                                                     :field/options []
                                                                     :field/max-length 100}]}
                                   :application/workflow {:workflow/id 50
-                                                         :workflow/type :dynamic
+                                                         :workflow/type :workflow/dynamic
                                                          :workflow.dynamic/state :rems.workflow.dynamic/draft
                                                          :workflow.dynamic/handlers #{"handler"}}
                                   :permissions/by-role {:applicant #{::dynamic/save-draft
