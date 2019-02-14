@@ -194,6 +194,10 @@
 (def ^:private draft-permissions {:applicant [::invite-member
                                               ::submit]
                                   :handler []})
+(def ^:private no-permissions {:applicant []
+                               :handler []
+                               :commenter []
+                               :decider []})
 
 (defmethod calculate-permissions :application.event/created
   [application event]
@@ -244,28 +248,20 @@
 (defmethod calculate-permissions :application.event/approved
   [application _event]
   (-> application
-      (permissions/set-role-permissions {:applicant []
-                                         :handler [::add-member
-                                                   ::close
-                                                   ::invite-member]
-                                         :commenter []
-                                         :decider []})))
+      (permissions/set-role-permissions (assoc no-permissions
+                                               :handler [::add-member
+                                                         ::close
+                                                         ::invite-member]))))
 
 (defmethod calculate-permissions :application.event/rejected
   [application _event]
   (-> application
-      (permissions/set-role-permissions {:applicant []
-                                         :handler []
-                                         :commenter []
-                                         :decider []})))
+      (permissions/set-role-permissions no-permissions)))
 
 (defmethod calculate-permissions :application.event/closed
   [application _event]
   (-> application
-      (permissions/set-role-permissions {:applicant []
-                                         :handler []
-                                         :commenter []
-                                         :decider []})))
+      (permissions/set-role-permissions no-permissions)))
 
 ;;; Application model
 
