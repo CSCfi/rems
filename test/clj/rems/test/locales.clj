@@ -38,7 +38,8 @@
                           clojure.string/split-lines
                           (map read-string)
                           set)
-          tr-config {:dict (locales/load-translations {:languages [:en]})}
+          tr-config {:dict (locales/load-translations {:languages [:en]
+                                                       :translations-directory "translations/"})}
           tr (partial tempura/tr tr-config [:en])]
       (doseq [token all-tokens]
         (testing token
