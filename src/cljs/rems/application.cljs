@@ -788,7 +788,7 @@
   "Renders the (main) applicant of an application
 
   `group?` - specifies if a group border is rendered"
-  [id attributes group?]
+  [id application-id attributes group? can-remove-member?]
   [collapsible/minimal
    {:id (str id "-applicant")
     :class (when group? "group")
@@ -805,7 +805,13 @@
                                                     (:mail attributes)) {:inline? true}]]
     :collapse (into [:div]
                     (for [[k v] (dissoc attributes "commonName" "mail")]
-                      [info-field k v {:inline? true}]))}])
+                      [info-field k v {:inline? true}]))
+    :footer [:div
+             (when can-remove-member?
+               [:div.commands
+                [remove-member-action-button "applicant-collapse"]])
+             (when can-remove-member?
+               [remove-member-form application-id "applicant-collapse" (partial reload! application-id)])]}])
 
 (defn members-info
   "Renders the members of an application"
@@ -851,7 +857,7 @@
       :title (text :t.applicant-info/applicants)
       :always
       [:div
-       [applicant-info id applicant-attributes true]
+       [applicant-info id application-id applicant-attributes (seq members-but-not-applicant) can-remove-member?]
        [members-info id application-id members-but-not-applicant (or can-remove-member?
                                                                      can-uninvite-member?) ]
        [:div.commands
