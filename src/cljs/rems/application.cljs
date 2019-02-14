@@ -784,91 +784,73 @@
       :collapse (when (seq events)
                   [events-view events])}]))
 
-(defn applicant-info
-  "Renders the (main) applicant of an application
+(defn member-info
+  "Renders a applicant, member or invited member of an application
 
-  `group?` - specifies if a group border is rendered"
-  [id application-id attributes group? can-remove-member?]
-  [collapsible/minimal
-   {:id (str id "-applicant")
-    :class (when group? "group")
-    :always
-    [:div
-     [:h5 (text :t.applicant-info/applicant)]
-     (if-let [name (or (get attributes "commonName")
-                       (:commonName attributes)
-                       (get attributes "eppn")
-                       (:eppn attributes))]
-       [info-field (text :t.applicant-info/name) name  {:inline? true}]
-       [info-field (text :t.applicant-info/username) (or (get attributes "eppn") (:eppn attributes)) {:inline? true}])
-     [info-field (text :t.applicant-info/email) (or (get attributes "mail")
-                                                    (:mail attributes)) {:inline? true}]]
-    :collapse (into [:div]
-                    (for [[k v] (dissoc attributes "commonName" "mail")]
-                      [info-field k v {:inline? true}]))
-    :footer [:div#applicant-collapse
-             (when can-remove-member?
-               [:div.commands
-                [remove-member-action-button "applicant-collapse"]])
-             (when can-remove-member?
-               [remove-member-form application-id "applicant-collapse" (partial reload! application-id)])]}])
-
-(defn members-info
-  "Renders the members of an application"
-  [id application-id members can-remove-member?]
-  (into [:div.members]
-        (for [member members
-              :let [member-id (or (:userid member) (str/replace (:name member) #"[^a-zA-Z]+" ""))
-                    member-collapse-id (str id "-members-" member-id)]]
-          [collapsible/minimal
-           {:id member-collapse-id
-            :class "group"
-            :always
-            (into [:div
-                   [:h5 (if (:userid member)
-                          (text :t.applicant-info/member)
-                          (text :t.applicant-info/invited-member))]]
-                  [(when (:userid member)
-                     [info-field (text :t.applicant-info/username) (:userid member) {:inline? true}])
-                   (when (:name member)
-                     [info-field (text :t.applicant-info/name) (:name member) {:inline? true}])
-                   (when (:email member)
-                     [info-field (text :t.applicant-info/email) (:email member) {:inline? true}])
-                   (when can-remove-member?
-                     [:div.commands
-                      [remove-member-action-button member-collapse-id]])
-                   (when can-remove-member?
-                     [remove-member-form application-id member-collapse-id member (partial reload! application-id)])])}])))
+  `:element-id`  - id of the element to generate unique ids
+  `:attributes`  - user attributes to display
+  `:application` - application
+  `:group?`      - specifies if a group border is rendered
+  `:can-remove?` - can the user be removed?"
+  [{:keys [element-id attributes application group? can-remove?]}]
+  (let [application-id (:id application)
+        user-id (or (:eppn attributes) (:userid attributes))
+        other-attributes (dissoc attributes :commonName :name :eppn :userid :mail :email)]
+    [collapsible/minimal
+     {:id (str element-id "-" user-id "-info")
+      :class (when group? "group")
+      :always
+      [:div
+       (cond (= (:applicantuserid application) user-id) [:h5 (text :t.applicant-info/applicant)]
+             (:userid attributes) [:h5 (text :t.applicant-info/member)]
+             :else [:h5 (text :t.applicant-info/invited-member)])
+       (when-let [name (or (:commonName attributes) (:name attributes))]
+         [info-field (text :t.applicant-info/name) name  {:inline? true}])
+       (when user-id
+         [info-field (text :t.applicant-info/username) user-id {:inline? true}])
+       (when-let [mail (or (:mail attributes) (:email attributes))]
+         [info-field (text :t.applicant-info/email) mail {:inline? true}])]
+      :collapse (when (seq other-attributes)
+                  (into [:div]
+                        (for [[k v] other-attributes]
+                          [info-field k v {:inline? true}])))
+      :footer [:div#applicant-collapse
+               (when can-remove?
+                 [:div.commands
+                  [remove-member-action-button "applicant-collapse"]])
+               (when can-remove?
+                 [remove-member-form application-id "applicant-collapse" attributes (partial reload! application-id)])]}]))
 
 (defn applicants-info
   "Renders the applicants, i.e. applicant and members."
   [id application applicant-attributes members invited-members]
   (let [application-id (:id application)
-        members-but-not-applicant (remove (comp #{(get applicant-attributes "eppn")
-                                                  (:eppn applicant-attributes)} :userid)
-                                          (concat members invited-members))
+        applicant (first (filter (comp #{(:eppn applicant-attributes)} :userid) members))
+        members-but-not-applicant (remove #{applicant} members)
         possible-commands (:possible-commands application)
-        can-add-member? (contains? possible-commands :rems.workflow.dynamic/add-member)
-        can-remove-member? (contains? possible-commands :rems.workflow.dynamic/remove-member)
-        can-invite-member? (contains? possible-commands :rems.workflow.dynamic/invite-member)
-        can-uninvite-member? (contains? possible-commands :rems.workflow.dynamic/uninvite-member)]
+        can-add? (contains? possible-commands :rems.workflow.dynamic/add-member)
+        can-remove? (contains? possible-commands :rems.workflow.dynamic/remove-member)
+        can-invite? (contains? possible-commands :rems.workflow.dynamic/invite-member)
+        can-uninvite? (contains? possible-commands :rems.workflow.dynamic/uninvite-member)]
     [collapsible/component
      {:id id
       :title (text :t.applicant-info/applicants)
       :always
-      [:div
-       [applicant-info id application-id applicant-attributes (seq members-but-not-applicant) can-remove-member?]
-       [members-info id application-id members-but-not-applicant (or can-remove-member?
-                                                                     can-uninvite-member?) ]
-       [:div.commands
-        (when can-invite-member?
-          [invite-member-action-button])
-        (when can-add-member?
-          [add-member-action-button])]
-       [:div#member-action-forms
-        [invite-member-form application-id (partial reload! application-id)]
-        [add-member-form application-id (partial reload! application-id)]]]}]))
-
+      (into [:div
+             [member-info {:element-id id :attributes (merge applicant applicant-attributes) :application application :group? (or (seq members-but-not-applicant)
+                                                                                                                                (seq invited-members)) :can-remove? can-remove?}]]
+            (concat
+             (for [member members-but-not-applicant]
+               [member-info {:element-id id :attributes member :application application :group? true :can-remove? can-remove? }])
+             (for [invited-member invited-members]
+               [member-info {:element-id id :attributes invited-member :application application :group? true :can-remove? can-uninvite?}])))
+      :footer [:div
+               [:div.commands
+                (when can-invite? [invite-member-action-button])
+                (when can-add? [add-member-action-button])]
+               [:div#member-action-forms
+                [invite-member-form application-id (partial reload! application-id)]
+                [add-member-form application-id (partial reload! application-id)]]]}]))
 
 (defn action-form [id title comment-title button content]
   [action-form-view id
@@ -1169,8 +1151,7 @@
      [:h2 (text :t.applications/application)]
      (into [:div] messages)
      [application-header state phases events]
-     (when applicant-attributes
-       [:div.mt-3 [applicants-info "applicants-info" app applicant-attributes (:members app) (:invited-members app)]])
+     [:div.mt-3 [applicants-info "applicants-info" app applicant-attributes (:members app) (:invited-members app)]]
      [:div.mt-3 [applied-resources (:catalogue-items application)]]
      [:div.my-3 [fields application edit-application language]]
      [:div.mb-3 [actions-form app]]
@@ -1202,34 +1183,50 @@
 
 (defn guide []
   [:div
-   (component-info applicant-info)
-   (example "applicant-info"
-            [applicant-info "info1" {"eppn" "developer@uu.id"
-                                     "mail" "developer@uu.id"
-                                     "commonName" "Deve Loper"
-                                     "organization" "Testers"
-                                     "address" "Testikatu 1, 00100 Helsinki"}])
-   (example "applicant-info with name missing"
-            [applicant-info "info2" {"eppn" "developer@uu.id"
-                                     "mail" "developer@uu.id"
-                                     "organization" "Testers"
-                                     "address" "Testikatu 1, 00100 Helsinki"}])
-
-   (component-info members-info)
-   (example "members-info"
-            [members-info "members1" {:id 42} [{:userid "alice"} {:name "John Smith" :email "john.smith@invited.com"}] true])
+   (component-info member-info)
+   (example "member-info"
+            [member-info {:element-id "info1"
+                        :attributes {:eppn "developer"
+                                     :mail "developer@uu.id"
+                                     :commonName "Deve Loper"
+                                     :organization "Testers"
+                                     :address "Testikatu 1, 00100 Helsinki"}
+                        :application {:id 42
+                                      :applicantuserid "developer"}}])
+   (example "member-info with name missing"
+            [member-info {:element-id "info2"
+                        :attributes {:eppn "developer"
+                                     :mail "developer@uu.id"
+                                     :organization "Testers"
+                                     :address "Testikatu 1, 00100 Helsinki"}
+                        :application {:id 42
+                                      :applicantuserid "developer"}}])
+   (example "member-info"
+            [member-info {:element-id "info3"
+                        :attributes {:userid "alice"}
+                        :application {:id 42
+                                      :applicantuserid "developer"}
+                        :group? true
+                        :can-remove? true}])
+   (example "member-info"
+            [member-info {:element-id "info4"
+                        :attributes {:name "John Smith" :email "john.smith@invited.com"}
+                        :application {:id 42
+                                      :applicantuserid "developer"}
+                        :group? true}])
 
    (component-info applicants-info)
    (example "applicants-info"
             [applicants-info "applicants"
              {:id 42
+              :applicantuserid "developer"
               :possible-commands #{:rems.workflow.dynamic/add-member
                                    :rems.workflow.dynamic/invite-member}}
-             {"eppn" "developer@uu.id"
-              "mail" "developer@uu.id"
-              "commonName" "Deve Loper"
-              "organization" "Testers"
-              "address" "Testikatu 1, 00100 Helsinki"}
+             {:eppn "developer"
+              :mail "developer@uu.id"
+              :commonName "Deve Loper"
+              :organization "Testers"
+              :address "Testikatu 1, 00100 Helsinki"}
              [{:userid "alice"} {:userid "bob"}]
              [{:name "John Smith" :email "john.smith@invited.com"}]])
 
