@@ -7,16 +7,17 @@
             [rems.api.schema :refer :all]
             [rems.api.util :refer [longify-keys]]
             [rems.config :refer [env]]
+            [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.users :as users]
             [rems.form :as form]
             [rems.pdf :as pdf]
             [rems.util :refer [getx-user-id update-present]]
+            [rems.workflow.dynamic :as dynamic]
             [ring.swagger.upload :as upload]
             [ring.util.http-response :refer :all]
-            [schema.core :as s]
-            [rems.context :as context]))
+            [schema.core :as s]))
 
 ;; Response models
 
@@ -142,14 +143,6 @@
                    (:dynamic-events application))]
     (assoc application :last-modified (latest-event events))))
 
-;; TODO Call hiding functions from new v2 API too
-(defn- hide-sensitive-dynamic-events [events]
-  (filter (fn [event]
-            ((complement contains?) #{:application.event/decision-requested
-                                      :application.event/comment-requested}
-             (:event/type event)))
-          events))
-
 (defn- hide-users [events]
   (map (fn [event]
          (assoc event :userid nil))
@@ -163,7 +156,7 @@
       (-> application
           (update :application update-application-last-modified)
           (update-in [:application :events] hide-sensitive-events)
-          (update-in [:application :dynamic-events] hide-sensitive-dynamic-events)
+          (update-in [:application :dynamic-events] dynamic/hide-sensitive-dynamic-events)
           (update-in [:application :events] hide-users)))))
 
 (defn api-get-application [user-id application-id]

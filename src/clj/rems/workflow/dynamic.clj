@@ -184,6 +184,13 @@
 
 ;;; Roles and permissions
 
+(defn hide-sensitive-dynamic-events [events]
+  (filter (fn [event]
+            ((complement contains?) #{:application.event/decision-requested
+                                      :application.event/comment-requested}
+             (:event/type event)))
+          events))
+
 (defmulti calculate-permissions
   (fn [_application event] (:event/type event)))
 
@@ -191,6 +198,7 @@
   [application _event]
   application)
 
+;; TODO: add :see-everything permission to relevant roles
 (def ^:private draft-permissions {:applicant [::invite-member
                                               ::submit]
                                   :handler []})
