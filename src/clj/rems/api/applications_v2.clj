@@ -39,8 +39,8 @@
                                     ;; TODO: other workflows
                                     :workflow.dynamic/state :rems.workflow.dynamic/draft
                                     :workflow.dynamic/handlers (:workflow.dynamic/handlers event)})
-      (permissions/add-user-role (:event/actor event) :applicant)
-      (permissions/add-users-role (:workflow.dynamic/handlers event) :handler)
+      (permissions/give-role-to-user :applicant (:event/actor event))
+      (permissions/give-role-to-users :handler (:workflow.dynamic/handlers event))
       (permissions/set-role-permissions {:applicant #{::dynamic/save-draft
                                                       ::dynamic/submit}})))
 
@@ -529,8 +529,8 @@
 
 (deftest test-apply-user-permissions
   (let [application (-> {}
-                        (permissions/add-user-role "user-1" :role-1)
-                        (permissions/add-user-role "user-2" :role-2)
+                        (permissions/give-role-to-user :role-1 "user-1")
+                        (permissions/give-role-to-user :role-2 "user-2")
                         (permissions/set-role-permissions {:role-1 []
                                                            :role-2 [:foo :bar]}))]
     (testing "users with a role can see the application"

@@ -4,18 +4,16 @@
 
 (def ^:private conj-set (fnil conj (hash-set)))
 
-;; TODO: would give-role or give-role-to-user be a better name?
-(defn add-user-role [application user role]
-  (assert (string? user)
-          (str "user must be a string: " (pr-str user)))
+(defn give-role-to-user [application role user]
   (assert (keyword? role)
           (str "role must be a keyword: " (pr-str role)))
+  (assert (string? user)
+          (str "user must be a string: " (pr-str user)))
   (update-in application [::user-roles user] conj-set role))
 
-;; TODO: merge with add-user-role?
-(defn add-users-role [application users role]
+(defn give-role-to-users [application role users]
   (reduce (fn [app user]
-            (add-user-role app user role))
+            (give-role-to-user app role user))
           application
           users))
 
@@ -24,7 +22,7 @@
     (dissoc m k)
     m))
 
-(defn remove-user-role [application user role]
+(defn remove-role-from-user [application role user]
   (-> application
       (update-in [::user-roles user] disj role)
       (update ::user-roles dissoc-if-empty user)))
@@ -33,35 +31,35 @@
   (set (get-in application [::user-roles user])))
 
 (deftest test-user-roles
-  (testing "add first role"
+  (testing "give first role"
     (is (= {::user-roles {"user" #{:role-1}}}
            (-> {}
-               (add-user-role "user" :role-1)))))
-  (testing "add more roles"
+               (give-role-to-user :role-1 "user")))))
+  (testing "give more roles"
     (is (= {::user-roles {"user" #{:role-1 :role-2}}}
            (-> {}
-               (add-user-role "user" :role-1)
-               (add-user-role "user" :role-2)))))
+               (give-role-to-user :role-1 "user")
+               (give-role-to-user :role-2 "user")))))
   (testing "remove some roles"
     (is (= {::user-roles {"user" #{:role-1}}}
            (-> {}
-               (add-user-role "user" :role-1)
-               (add-user-role "user" :role-2)
-               (remove-user-role "user" :role-2)))))
+               (give-role-to-user :role-1 "user")
+               (give-role-to-user :role-2 "user")
+               (remove-role-from-user :role-2 "user")))))
   (testing "remove all roles"
     (is (= {::user-roles {}}
            (-> {}
-               (add-user-role "user" :role-1)
-               (remove-user-role "user" :role-1)))))
+               (give-role-to-user :role-1 "user")
+               (remove-role-from-user :role-1 "user")))))
   (testing "give a role to multiple users"
     (is (= {::user-roles {"user-1" #{:role-1}
                           "user-2" #{:role-1}}}
            (-> {}
-               (add-users-role ["user-1" "user-2"] :role-1)))))
+               (give-role-to-users :role-1 ["user-1" "user-2"])))))
   (testing "multiple users, get the roles of a single user"
     (let [app (-> {}
-                  (add-user-role "user-1" :role-1)
-                  (add-user-role "user-2" :role-2))]
+                  (give-role-to-user :role-1 "user-1")
+                  (give-role-to-user :role-2 "user-2"))]
       (is (= #{:role-1} (user-roles app "user-1")))
       (is (= #{:role-2} (user-roles app "user-2")))
       (is (= #{} (user-roles app "user-3"))))))
@@ -131,14 +129,14 @@
   (testing "one role"
     (is (= #{:foo}
            (-> {}
-               (add-user-role "user" :role-1)
+               (give-role-to-user :role-1 "user")
                (set-role-permissions {:role-1 #{:foo}})
                (user-permissions "user")))))
   (testing "multiple roles"
     (is (= #{:foo :bar}
            (-> {}
-               (add-user-role "user" :role-1)
-               (add-user-role "user" :role-2)
+               (give-role-to-user :role-1 "user")
+               (give-role-to-user :role-2 "user")
                (set-role-permissions {:role-1 #{:foo}
                                       :role-2 #{:bar}})
                (user-permissions "user"))))))
