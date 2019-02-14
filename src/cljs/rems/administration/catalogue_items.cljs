@@ -87,15 +87,21 @@
    :resource {:header #(text :t.administration/resource)
               :value (fn [row]
                        [:a {:href (str "#/administration/resources/" (:resource-id row))}
-                        (:resource-name row)])}
+                        (:resource-name row)])
+              :sort-value :resource-name
+              :filter-value :resource-name}
    :form {:header #(text :t.administration/form)
           :value (fn [row]
                    [:a {:href (str "#/administration/forms/" (:formid row))}
-                    (:form-name row)])}
+                    (:form-name row)])
+          :sort-value :form-name
+          :filter-value :form-name}
    :workflow {:header #(text :t.administration/workflow)
               :value (fn [row]
                        [:a {:href (str "#/administration/workflows/" (:wfid row))}
-                        (:workflow-name row)])}
+                        (:workflow-name row)])
+              :sort-value :workflow-name
+              :filter-value :workflow-name}
    :created {:header #(text :t.administration/created)
              :value (comp localize-time :start)}
    :end {:header #(text :t.administration/end)
