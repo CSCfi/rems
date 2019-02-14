@@ -349,6 +349,11 @@
                     :get-user {"applicant" {"eppn" "applicant"
                                             "mail" "applicant@example.com"
                                             "commonName" "Applicant"}}}
+        apply-events (fn [events]
+                       (permissions/cleanup
+                        (build-application-view
+                         (valid-events events)
+                         injections)))
 
         created-event {:event/type :application.event/created
                        :event/time (DateTime. 1000)
@@ -434,18 +439,11 @@
                                   :application/workflow {:workflow/id 50
                                                          :workflow/type :workflow/dynamic
                                                          :workflow.dynamic/state :rems.workflow.dynamic/draft
-                                                         :workflow.dynamic/handlers #{"handler"}}
-                                  ::permissions/user-roles {"applicant" #{:applicant}
-                                                            "handler" #{:handler}}
-                                  ::permissions/role-permissions {:applicant #{::dynamic/invite-member
-                                                                               ::dynamic/submit}
-                                                                  :handler #{}}}]
+                                                         :workflow.dynamic/handlers #{"handler"}}}]
 
     (testing "new application"
       (is (= expected-new-application
-             (build-application-view
-              (valid-events [created-event])
-              injections))))
+             (apply-events [created-event]))))
 
     (testing "draft saved"
       (let [draft-saved-event {:event/type :application.event/draft-saved
@@ -464,9 +462,8 @@
                    (assoc-in [:application/description] "foo")
                    (assoc-in [:application/form :form/fields 0 :field/value] "foo")
                    (assoc-in [:application/form :form/fields 1 :field/value] "bar"))
-               (build-application-view
-                (valid-events [created-event draft-saved-event])
-                injections)))))
+               (apply-events [created-event
+                              draft-saved-event])))))
 
     (testing "submitted"
       (let [submitted-event {:event/type :application.event/submitted
@@ -476,18 +473,9 @@
         (is (= (-> expected-new-application
                    (assoc-in [:application/last-activity] (DateTime. 2000))
                    (assoc-in [:application/events] [created-event submitted-event])
-                   (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/submitted)
-                   (assoc-in [::permissions/role-permissions] {:applicant #{}
-                                                               :handler #{::dynamic/add-member
-                                                                          ::dynamic/approve
-                                                                          ::dynamic/invite-member
-                                                                          ::dynamic/reject
-                                                                          ::dynamic/request-comment
-                                                                          ::dynamic/request-decision
-                                                                          ::dynamic/return}}))
-               (build-application-view
-                (valid-events [created-event submitted-event])
-                injections)))))))
+                   (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/submitted))
+               (apply-events [created-event
+                              submitted-event])))))))
 
 (defn- get-form [form-id]
   (-> (form/get-form form-id)

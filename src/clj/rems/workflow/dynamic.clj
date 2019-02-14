@@ -201,9 +201,11 @@
   application)
 
 ;; TODO: add :see-everything permission to relevant roles
-(def ^:private draft-permissions {:applicant [::invite-member
-                                              ::submit]
-                                  :handler []})
+(def ^:private initial-permissions {:applicant [::invite-member
+                                                ::submit]
+                                    :handler []
+                                    :commenter [::comment]
+                                    :decider [::decide]})
 (def ^:private no-permissions {:applicant []
                                :handler []
                                :commenter []
@@ -214,7 +216,7 @@
   (-> application
       (permissions/give-role-to-user :applicant (:event/actor event))
       (permissions/give-role-to-users :handler (:workflow.dynamic/handlers event))
-      (permissions/set-role-permissions draft-permissions)))
+      (permissions/set-role-permissions initial-permissions)))
 
 (defmethod calculate-permissions :application.event/submitted
   [application _event]
@@ -231,13 +233,12 @@
 (defmethod calculate-permissions :application.event/returned
   [application _event]
   (-> application
-      (permissions/set-role-permissions draft-permissions)))
+      (permissions/set-role-permissions initial-permissions)))
 
 (defmethod calculate-permissions :application.event/comment-requested
   [application event]
   (-> application
-      (permissions/give-role-to-users :commenter (:application/commenters event))
-      (permissions/set-role-permissions {:commenter [::comment]})))
+      (permissions/give-role-to-users :commenter (:application/commenters event))))
 
 (defmethod calculate-permissions :application.event/commented
   [application event]
@@ -248,8 +249,7 @@
 (defmethod calculate-permissions :application.event/decision-requested
   [application event]
   (-> application
-      (permissions/give-role-to-user :decider (:application/decider event))
-      (permissions/set-role-permissions {:decider [::decide]})))
+      (permissions/give-role-to-user :decider (:application/decider event))))
 
 (defmethod calculate-permissions :application.event/decided
   [application event]
