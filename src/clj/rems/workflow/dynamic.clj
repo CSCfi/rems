@@ -597,9 +597,7 @@
      :actor actor
      :member {:name "name"
               :email "email@address.org"}}
-    (let [members (->> application-state
-                       :members
-                       (remove (comp #{(:applicantuserid application-state)} :userid)))]
+    (let [members (->> application-state :members)]
       (when (seq members)
         {:type ::remove-member
          :actor actor
@@ -916,6 +914,12 @@
              (:members
               (apply-commands application
                               [{:type ::remove-member :actor "applicant" :member {:userid "somebody"}}]
+                              injections)))))
+    (testing "remove applicant by applicant"
+      (is (= [{:userid "somebody"}]
+             (:members
+              (apply-commands application
+                              [{:type ::remove-member :actor "applicant" :member {:userid "applicant"}}]
                               injections)))))
     (testing "removing last member should not be possible"
       (is (= {:errors [{:type :cannot-remove-last-member}]}
