@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [rems.auth.util :refer [throw-unauthorized]]
             [rems.util :refer [getx]]
+            [rems.workflow.permissions :as permissions]
             [schema-refined.core :as r]
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
@@ -181,8 +182,84 @@
                              :event/actor "foo"
                              :application/id 123}))))))
 
+;;; Roles and permissions
 
-;;; Events
+(defmulti calculate-permissions
+  (fn [_application event] (:event/type event)))
+
+(defmethod calculate-permissions :default
+  [application _event]
+  application)
+
+(defmethod calculate-permissions :application.event/created
+  [application event]
+  (-> application
+      (permissions/give-role-to-user :applicant (:event/actor event))
+      (permissions/give-role-to-users :handler (:workflow.dynamic/handlers event))
+      (permissions/set-role-permissions {:applicant [::invite-member
+                                                     ::submit]})))
+
+(defmethod calculate-permissions :application.event/submitted
+  [application _event]
+  (-> application
+      (permissions/set-role-permissions {:applicant []
+                                         :handler [::add-member
+                                                   ::approve
+                                                   ::invite-member
+                                                   ::reject
+                                                   ::request-comment
+                                                   ::request-decision
+                                                   ::return]})))
+
+(defmethod calculate-permissions :application.event/comment-requested
+  [application event]
+  (-> application
+      (permissions/give-role-to-users :commenter (:application/commenters event))
+      (permissions/set-role-permissions {:commenter [::comment]})))
+
+(defmethod calculate-permissions :application.event/commented
+  [application event]
+  (-> application
+      ;; TODO: is this what we want? wouldn't it be useful to be able to write more than one comment?
+      ;; allow the commenter to still see the application but not write more comments
+      (permissions/remove-role-from-user :commenter (:event/actor event))
+      (permissions/give-role-to-user :past-commenter (:event/actor event))))
+
+(defmethod calculate-permissions :application.event/decision-requested
+  [application event]
+  (-> application
+      (permissions/give-role-to-user :decider (:application/decider event))
+      (permissions/set-role-permissions {:decider [::decide]})))
+
+;; TODO: should decider be able to make a decision multiple times? remove decider role or permission after decision?
+
+(defmethod calculate-permissions :application.event/approved
+  [application _event]
+  (-> application
+      (permissions/set-role-permissions {:applicant []
+                                         :handler [::add-member
+                                                   ::close
+                                                   ::invite-member]
+                                         :commenter []
+                                         :decider []})))
+
+(defmethod calculate-permissions :application.event/rejected
+  [application _event]
+  (-> application
+      (permissions/set-role-permissions {:applicant []
+                                         :handler []
+                                         :commenter []
+                                         :decider []})))
+
+(defmethod calculate-permissions :application.event/closed
+  [application _event]
+  (-> application
+      (permissions/set-role-permissions {:applicant []
+                                         :handler []
+                                         :commenter []
+                                         :decider []})))
+
+;;; Application model
 
 (defmulti ^:private apply-event
   "Applies an event to an application state."
@@ -269,11 +346,12 @@
   (update application :invited-members #(vec (conj % (:application/member event)))))
 
 (defn apply-events [application events]
-  (reduce (fn [application event] (apply-event application (:workflow application) event))
+  (reduce (fn [application event] (-> (apply-event application (:workflow application) event)
+                                      (calculate-permissions event)))
           application
           events))
 
-;;; Commands
+;;; Command handlers
 
 (defmulti handle-command
   "Handles a command by an event."
@@ -287,7 +365,7 @@
 (deftest test-all-command-types-handled
   (is (= CommandTypes (set (get-command-types)))))
 
-(defn impossible-command? [cmd application injections]
+(defn- impossible-command? [cmd application injections] ; TODO: remove me
   (let [result (handle-command cmd application injections)]
     (when-not (:success result)
       result)))
@@ -478,21 +556,30 @@
                                  :event/actor (:actor cmd)
                                  :application/member (:member cmd)
                                  :application/id (:application-id cmd)}}]
-    (if (= (:actor cmd) (:applicantuserid application))
+    (if (and (= (:actor cmd) (:applicantuserid application))
+             (handler? application (:actor cmd)))
+      ;; when actor is both applicant and handler, combine the allowed states
       (or (applicant-error application cmd)
-          (state-error application ::draft #_::withdrawn ::returned)
+          (actor-is-not-handler-error application cmd)
+          (state-error application ::draft #_::withdrawn ::returned ::submitted ::approved)
           success-result)
-      (or (actor-is-not-handler-error application cmd)
-          (state-error application ::submitted ::approved)
-          success-result))))
+      (if (= (:actor cmd) (:applicantuserid application))
+        (or (applicant-error application cmd)
+            (state-error application ::draft #_::withdrawn ::returned)
+            success-result)
+        (or (actor-is-not-handler-error application cmd)
+            (state-error application ::submitted ::approved)
+            success-result)))))
 
 (defn- apply-command
   ([application cmd]
    (apply-command application cmd nil))
   ([application cmd injections]
-   (let [result (handle-command cmd application injections)]
-     (assert (:success result) (pr-str result))
-     (apply-event application (:workflow application) (getx result :result)))))
+   (let [result (handle-command cmd application injections)
+         _ (assert (:success result) (pr-str result))
+         event (getx result :result)]
+     (-> (apply-event application (:workflow application) event)
+         (calculate-permissions event)))))
 
 (defn- apply-commands
   ([application commands]
@@ -504,7 +591,7 @@
 
 ;;; Possible commands
 
-(defn- command-candidates [actor application-state]
+(defn- command-candidates [actor application-state] ; TODO: remove me
   ;; NB! not setting :time or :application-id here since we don't
   ;; validate them
   [{:type ::submit
@@ -537,7 +624,7 @@
     :member {:name "Name"
              :email "email@address.org"}}])
 
-(def ^:private injections-for-possible-commands
+(def ^:private injections-for-possible-commands ; TODO: remove me
   "`possible-commands` are calculated with the expectations that
   - the user is always valid and
   - the validation returns no errors."
@@ -549,10 +636,16 @@
 
   Not every condition is checked exactly so it is in fact a potential set of possible commands only."
   [actor application-state]
-  (set
-   (map :type
-        (remove #(impossible-command? % application-state injections-for-possible-commands)
-                (command-candidates actor application-state)))))
+  (let [new-result (permissions/user-permissions application-state actor)
+        ;; TODO: remove me
+        old-result (set
+                    (map :type
+                         (remove #(impossible-command? % application-state injections-for-possible-commands)
+                                 (command-candidates actor application-state))))]
+    (assert (or (empty? (:dynamic-events application-state))
+                (= new-result old-result))
+            (str "new impl gave " new-result "\nbut old impl gave " old-result "\nfor actor " actor "\nand application " application-state))
+    new-result))
 
 (defn assoc-possible-commands [actor application-state]
   (assoc application-state
@@ -880,7 +973,7 @@
                                                  {:actor "commenter2" :comment "..." :type ::comment}
                                                  injections)))))))))
 
-(deftest test-possible-commands
+(deftest test-possible-commands ; TODO: remove me (simplify)
   (let [draft (apply-events nil
                             [{:event/type :application.event/created
                               :event/actor "applicant"

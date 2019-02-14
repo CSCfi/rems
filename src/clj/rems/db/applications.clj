@@ -23,6 +23,7 @@
             [rems.form-validation :as form-validation]
             [rems.util :refer [getx get-username update-present]]
             [rems.workflow.dynamic :as dynamic]
+            [rems.workflow.permissions :as permissions]
             [schema-tools.core :as st]
             [schema.coerce :as coerce]
             [schema.core :as s]
@@ -306,9 +307,10 @@
                               :when (= (:id app) (:appid e))]
                           ;; :appid needed only for batching
                           (dissoc e :appid :id))]
-         (assoc (get-application-state app app-events)
-                :formid (:formid (first catalogue-items))
-                :catalogue-items catalogue-items))))))
+         (-> (get-application-state app app-events)
+             (assoc :formid (:formid (first catalogue-items))
+                    :catalogue-items catalogue-items)
+             (permissions/cleanup)))))))
 
 (comment
   (->> (get-applications-impl-batch {})
@@ -592,16 +594,17 @@
      {:id form-id
       :title (:formtitle form)
       :catalogue-items catalogue-items
-      :application (assoc application
-                          :formid form-id
-                          :catalogue-items catalogue-items ;; TODO decide if catalogue-items are part of "form" or "application"
-                          :can-approve? (can-approve? user-id application)
-                          :can-close? (can-close? user-id application)
-                          :can-withdraw? (can-withdraw? user-id application)
-                          :can-third-party-review? (can-third-party-review? user-id application)
-                          :is-applicant? (is-applicant? user-id application)
-                          :review-type review-type
-                          :description description)
+      :application (-> application
+                       (assoc :formid form-id
+                              :catalogue-items catalogue-items ;; TODO decide if catalogue-items are part of "form" or "application"
+                              :can-approve? (can-approve? user-id application)
+                              :can-close? (can-close? user-id application)
+                              :can-withdraw? (can-withdraw? user-id application)
+                              :can-third-party-review? (can-third-party-review? user-id application)
+                              :is-applicant? (is-applicant? user-id application)
+                              :review-type review-type
+                              :description description)
+                       (permissions/cleanup))
       :applicant-attributes (users/get-user-attributes (:applicantuserid application))
       :items items
       :licenses licenses
