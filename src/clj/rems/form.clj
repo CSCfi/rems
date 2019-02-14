@@ -6,7 +6,8 @@
             [rems.db.core :as db]
             [rems.form-validation :as form-validation]
             [rems.InvalidRequestException]
-            [rems.util :refer [getx]]))
+            [rems.util :refer [getx]]
+            [ring.util.http-response :refer [bad-request!]]))
 
 
 (defn save-application-items [application-id catalogue-item-ids]
@@ -79,6 +80,7 @@
               (not (empty? catalogue-items))))
   (assert actor)
   (let [;; if no application-id given, create a new application
+        new? (nil? application-id)
         application-id (or application-id
                            (create-new-draft-for-items actor catalogue-items))
         _ (check-for-disabled-items! (applications/get-catalogue-items-by-application-id application-id))
@@ -87,13 +89,19 @@
         application (applications/get-application-state application-id)]
     ;; XXX: workaround to make dynamic workflows work with the old API - save to both old and new models
     (if (applications/is-dynamic-application? application)
-      (if-let [error (applications/dynamic-command! {:type :rems.workflow.dynamic/save-draft
-                                                     :actor actor
-                                                     :application-id application-id
-                                                     :time (time/now)
-                                                     :items items
-                                                     :licenses licenses})]
-        (throw (RuntimeException. (str "error in save-draft command: " error))))
+      (do
+        (when new?
+          (applications/add-application-created-event! {:application-id application-id
+                                                        :catalogue-item-ids catalogue-items
+                                                        :time (:start application)
+                                                        :actor actor}))
+        (if-let [error (applications/dynamic-command! {:type :rems.workflow.dynamic/save-draft
+                                                       :actor actor
+                                                       :application-id application-id
+                                                       :time (time/now)
+                                                       :items items
+                                                       :licenses licenses})]
+          (bad-request! error)))
       (when (= "save" command)
         (db/add-application-event! {:application application-id
                                     :user actor

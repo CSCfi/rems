@@ -21,12 +21,12 @@
 
 (defn open-form
   [{:keys [db]} _]
-  (merge {:db (assoc db
-                     ::comment ""
-                     ::potential-commenters #{}
-                     ::selected-commenters #{})}
-         {::fetch-potential-commenters [(get-in db [:identity :user])
-                                        #(rf/dispatch [::set-potential-commenters %])]}))
+  {:db (assoc db
+              ::comment ""
+              ::potential-commenters #{}
+              ::selected-commenters #{})
+   ::fetch-potential-commenters [(get-in db [:identity :user])
+                                 #(rf/dispatch [::set-potential-commenters %])]})
 
 (rf/reg-event-fx ::open-form open-form)
 

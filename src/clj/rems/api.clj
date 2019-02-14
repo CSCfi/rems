@@ -20,8 +20,8 @@
             [rems.api.resources :refer [resources-api]]
             [rems.api.users :refer [users-api]]
             [rems.api.workflows :refer [workflows-api]]
-            [rems.auth.NotAuthorizedException]
             [rems.auth.ForbiddenException]
+            [rems.auth.NotAuthorizedException]
             [ring.middleware.cors :refer [wrap-cors]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])

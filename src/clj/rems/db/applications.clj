@@ -17,6 +17,7 @@
             [rems.db.licenses :as licenses]
             [rems.db.roles :as roles]
             [rems.db.users :as users]
+            [rems.db.workflow :as workflow]
             [rems.db.workflow-actors :as actors]
             [rems.email :as email]
             [rems.form-validation :as form-validation]
@@ -147,7 +148,7 @@
   (or (is-actor? user-id (actors/get-by-role application-id role))
       (is-dynamic-handler? user-id (get-application-state application-id))))
 
-(defn- can-approve? [user-id application]
+(defn can-approve? [user-id application]
   (assert user-id)
   (assert application)
   (can-act-as? user-id application "approver"))
@@ -175,7 +176,7 @@
   ([user round application]
    (is-third-party-reviewer? user (update application :events (fn [events] (filter #(= round (:round %)) events))))))
 
-(defn- can-third-party-review?
+(defn can-third-party-review?
   "Checks if the current user can perform a 3rd party review action on the current round for the given application."
   [user-id application]
   (and (= "applied" (:state application))
@@ -247,7 +248,7 @@
         (is-commenter? user-id application)
         (is-decider? user-id application))))
 
-(defn- can-close? [user-id application]
+(defn can-close? [user-id application]
   (assert user-id)
   (assert application)
   (let [application-id (:id application)]
@@ -256,17 +257,17 @@
         (and (is-applicant? user-id application)
              (not= "closed" (:state application))))))
 
-(defn- can-withdraw? [user-id application]
+(defn can-withdraw? [user-id application]
   (assert user-id)
   (assert application)
   (and (is-applicant? user-id application)
        (= (:state application) "applied")))
 
-(defn- translate-catalogue-item [item]
+(defn translate-catalogue-item [item]
   (merge item
          (get-in item [:localizations context/*lang*])))
 
-(defn- get-catalogue-items
+(defn get-catalogue-items
   "Function that returns localized catalogue-items for the given application items, `ids`. Prefetched localized catalogue items, `localized-items`,
   can be given as a parameter to avoid excessive database calls."
   ([ids]
@@ -304,7 +305,7 @@
              app-events (for [e events
                               :when (= (:id app) (:appid e))]
                           ;; :appid needed only for batching
-                          (dissoc e :appid))]
+                          (dissoc e :appid :id))]
          (assoc (get-application-state app app-events)
                 :formid (:formid (first catalogue-items))
                 :catalogue-items catalogue-items))))))
@@ -439,7 +440,7 @@
            {:itemid 9, :key "yes", :langcode "en", :label "Yes", :displayorder 0}
            {:itemid 9, :key "yes", :langcode "fi", :label "Kyllä", :displayorder 0}]))))
 
-(defn- process-item
+(defn process-item
   "Returns an item structure like this:
 
     {:id 123
@@ -485,7 +486,7 @@
                                                                      :licid license-id
                                                                      :actoruserid app-user}))))))))
 
-(defn- get-application-licenses [application catalogue-item-ids]
+(defn get-application-licenses [application catalogue-item-ids]
   (mapv #(process-license application %)
         (licenses/get-active-licenses
          (or (:start application) (time/now))
@@ -778,7 +779,8 @@
 (defn get-application-state
   ([application-id]
    (get-application-state (first (db/get-applications {:id application-id}))
-                          (db/get-application-events {:application application-id})))
+                          (map #(dissoc % :id :appid) ; remove keys not in v1 API
+                               (db/get-application-events {:application application-id}))))
   ([application events]
    (if (not (nil? (:workflow application)))
      (get-dynamic-application-state (:id application))
@@ -978,13 +980,14 @@
     (keyword str)))
 
 (defn json->event [json]
-  ;; most keys are keywords, but some events use numeric keys in maps
-  (let [result (coerce-dynamic-event (cheshire/parse-string json str->keyword-or-number))]
-    (when (schema.utils/error? result)
-      ;; similar exception as what schema.core/validate throws
-      (throw (ex-info (str "Value does not match schema: " (pr-str result))
-                      {:schema dynamic/Event :value json :error result})))
-    result))
+  (when json
+    ;; most keys are keywords, but some events use numeric keys in maps
+    (let [result (coerce-dynamic-event (cheshire/parse-string json str->keyword-or-number))]
+      (when (schema.utils/error? result)
+        ;; similar exception as what schema.core/validate throws
+        (throw (ex-info (str "Value does not match schema: " (pr-str result))
+                        {:schema dynamic/Event :value json :error result})))
+      result)))
 
 (defn validate-dynamic-event [event]
   (s/validate dynamic/Event event))
@@ -994,10 +997,14 @@
   (cheshire/generate-string event))
 
 (defn- fix-event-from-db [event]
-  (-> event :eventdata json->event))
+  (assoc (-> event :eventdata json->event)
+         :event/id (:id event)))
 
 (defn get-dynamic-application-events [application-id]
   (map fix-event-from-db (db/get-application-events {:application application-id})))
+
+(defn get-dynamic-application-events-since [event-id]
+  (map fix-event-from-db (db/get-application-events-since {:id event-id})))
 
 (defn get-dynamic-application-state [application-id]
   (let [application (first (db/get-applications {:id application-id}))
@@ -1011,7 +1018,7 @@
     (assert (is-dynamic-application? application))
     (dynamic/apply-events application events)))
 
-(defn- add-dynamic-event! [event]
+(defn add-dynamic-event! [event]
   (db/add-application-event! {:application (:application/id event)
                               :user (:event/actor event)
                               :comment nil
@@ -1019,6 +1026,37 @@
                               :event (str (:event/type event))
                               :eventdata (event->json event)})
   nil)
+
+(defn add-application-created-event! [{:keys [application-id catalogue-item-ids time actor]}]
+  (let [items (get-catalogue-items catalogue-item-ids)]
+    (assert (= 1 (count (distinct (mapv :wfid items)))) "catalogue items did not have the same workflow")
+    (assert (= 1 (count (distinct (mapv :formid items)))) "catalogue items did not have the same form")
+    (let [workflow-id (:wfid (first items))
+          form-id (:formid (first items))
+          workflow (-> (:workflow (workflow/get-workflow workflow-id))
+                       (update :type keyword))
+          licenses (get-application-licenses {:id application-id
+                                              :applicantuserid actor
+                                              :start time
+                                              :wfid workflow-id}
+                                             catalogue-item-ids)]
+      (assert (= :workflow/dynamic (:type workflow))
+              (str "workflow type was " (:type workflow))) ; TODO: support other workflows
+      (add-dynamic-event! {:event/type :application.event/created
+                           :event/time time
+                           :event/actor actor
+                           :application/id application-id
+                           :application/resources (map (fn [item]
+                                                         {:catalogue-item/id (:id item)
+                                                          :resource/ext-id (:resid item)})
+                                                       items)
+                           :application/licenses (map (fn [license]
+                                                        {:license/id (:id license)})
+                                                      licenses)
+                           :form/id form-id
+                           :workflow/id workflow-id
+                           :workflow/type (:type workflow)
+                           :workflow.dynamic/handlers (set (:handlers workflow))}))))
 
 (defn- valid-user? [userid]
   (not (nil? (users/get-user-attributes userid))))

@@ -11,10 +11,10 @@
 
 (defn get-workflow [id]
   (-> {:wfid id}
-       db/get-workflow
-       (update :workflow parse-workflow-body)
-       (update :licenses parse-licenses)
-       db/assoc-active))
+      db/get-workflow
+      (update :workflow parse-workflow-body)
+      (update :licenses parse-licenses)
+      db/assoc-active))
 
 (defn get-workflows [filters]
   (->> (db/get-workflows)

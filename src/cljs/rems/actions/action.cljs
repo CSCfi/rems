@@ -6,11 +6,11 @@
 (defn- action-collapse-id [action-id]
   (str "actions-" action-id))
 
-(defn button-wrapper [{:keys [id text class on-click]}]
+(defn button-wrapper [{:keys [id text class on-click disabled] :as props}]
   [:button.btn
-   {:id id
-    :class (or class :btn-secondary)
-    :on-click on-click}
+   (merge
+    {:class (or class :btn-secondary)}
+    (dissoc props :class :text))
    text])
 
 (defn cancel-action-button [id]
@@ -30,8 +30,16 @@
                 :value comment
                 :on-change #(on-comment (.. % -target -value))}]]))
 
-(defn action-form-view [id title buttons content]
-  [:div.collapse {:id (action-collapse-id id) :data-parent "#actions-forms"}
+(defn action-form-view
+  "Renders an action form that is collapsible.
+
+  `id` - the id of the form
+  `title` - the name of the action
+  `content` - content of the form
+  `buttons` - the actions that can be executed
+  `:collapse-id` - optionally the collapse group the action is part of"
+  [id title buttons content & [{:keys [collapse-id]}]]
+  [:div.collapse {:id (action-collapse-id id) :data-parent (if collapse-id (str "#" collapse-id) "#actions-forms")}
    [:h4.mt-5 title]
    content
    (into [:div.col.commands.mr-3 [cancel-action-button id]] buttons)])

@@ -35,5 +35,5 @@
     (catch Exception e
       (if (duplicate-resid? e)
         {:success false
-         :errors [{:key :t.administration.errors/duplicate-resid :resid resid}]}
+         :errors [{:type :t.administration.errors/duplicate-resid :resid resid}]}
         (throw e)))))

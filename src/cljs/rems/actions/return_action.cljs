@@ -9,7 +9,7 @@
 
 (defn open-form
   [{:keys [db]} _]
-  (merge {:db (assoc db ::comment "")}))
+  {:db (assoc db ::comment "")})
 
 (rf/reg-event-fx ::open-form open-form)
 
