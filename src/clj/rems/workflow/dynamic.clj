@@ -518,11 +518,11 @@
 (defmethod handle-command ::remove-member
   [cmd application injections]
   (or (actor-is-not-handler-or-applicant-error application cmd)
+      (when (= (:applicantuserid application) (:userid (:member cmd)))
+        {:errors [{:type :cannot-remove-applicant}]})
       (when-not (contains? (set (map :userid (:members application)))
                            (:userid (:member cmd)))
         {:errors [{:type :user-not-member :user (:member cmd)}]})
-      (when (<= (count (:members application)) 1)
-        {:errors [{:type :cannot-remove-last-member}]})
       {:success true
        :result {:event/type :application.event/member-removed
                 :event/time (:time cmd)
@@ -597,7 +597,7 @@
      :actor actor
      :member {:name "name"
               :email "email@address.org"}}
-    (let [members (->> application-state :members)]
+    (let [members (->> application-state :members (remove (comp #{(:applicantuserid application-state)} :userid)))]
       (when (seq members)
         {:type ::remove-member
          :actor actor
@@ -916,16 +916,10 @@
                               [{:type ::remove-member :actor "applicant" :member {:userid "somebody"}}]
                               injections)))))
     (testing "remove applicant by applicant"
-      (is (= [{:userid "somebody"}]
-             (:members
-              (apply-commands application
-                              [{:type ::remove-member :actor "applicant" :member {:userid "applicant"}}]
-                              injections)))))
-    (testing "removing last member should not be possible"
-      (is (= {:errors [{:type :cannot-remove-last-member}]}
-             (as-> application application
-               (apply-command application {:type ::remove-member :actor "applicant" :member {:userid "somebody"}} injections)
-               (handle-command {:type ::remove-member :actor "applicant" :member {:userid "applicant"}} application injections)))))
+      (is (= {:errors [{:type :cannot-remove-applicant}]}
+             (handle-command {:type ::remove-member :actor "applicant" :member {:userid "applicant"}}
+                             application
+                             injections))))
     (testing "remove member by handler"
       (is (= [{:userid "applicant"}]
              (:members
