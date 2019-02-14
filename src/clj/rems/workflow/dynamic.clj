@@ -544,12 +544,6 @@
                 :application/id (:application-id cmd)
                 :application/comment (:comment cmd)}}))
 
-(defn- actor-is-not-handler-or-applicant-error
-  [application cmd]
-  (when-not (or (handler? application (:actor cmd))
-                (= (:applicantuserid application) (:actor cmd)))
-    {:errors [:forbidden]}))
-
 (defn- apply-command
   ([application cmd]
    (apply-command application cmd nil))
