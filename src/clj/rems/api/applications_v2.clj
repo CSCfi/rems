@@ -38,11 +38,7 @@
                                     :workflow/type (:workflow/type event)
                                     ;; TODO: other workflows
                                     :workflow.dynamic/state :rems.workflow.dynamic/draft
-                                    :workflow.dynamic/handlers (:workflow.dynamic/handlers event)})
-      (permissions/give-role-to-user :applicant (:event/actor event))
-      (permissions/give-role-to-users :handler (:workflow.dynamic/handlers event))
-      (permissions/set-role-permissions {:applicant #{::dynamic/save-draft
-                                                      ::dynamic/submit}})))
+                                    :workflow.dynamic/handlers (:workflow.dynamic/handlers event)})))
 
 (defn- set-accepted-licences [licenses accepted-licenses]
   (map (fn [license]
@@ -70,13 +66,7 @@
 (defmethod event-type-specific-application-view :application.event/submitted
   [application event]
   (-> application
-      (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/submitted)
-      (permissions/set-role-permissions {:applicant #{}
-                                         :handler #{::dynamic/approve
-                                                    ::dynamic/reject
-                                                    ::dynamic/return
-                                                    ::dynamic/request-decision
-                                                    ::dynamic/request-comment}})))
+      (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/submitted)))
 
 (defmethod event-type-specific-application-view :application.event/returned
   [application event]
@@ -132,6 +122,7 @@
   [application event]
   (-> application
       (event-type-specific-application-view event)
+      (dynamic/calculate-permissions event)
       (assert-same-application-id event)
       (assoc :application/last-activity (:event/time event))
       (update :application/events conj event)))
@@ -446,8 +437,9 @@
                                                          :workflow.dynamic/handlers #{"handler"}}
                                   ::permissions/user-roles {"applicant" #{:applicant}
                                                             "handler" #{:handler}}
-                                  ::permissions/role-permissions {:applicant #{::dynamic/save-draft
-                                                                               ::dynamic/submit}}}]
+                                  ::permissions/role-permissions {:applicant #{::dynamic/invite-member
+                                                                               ::dynamic/submit}
+                                                                  :handler #{}}}]
 
     (testing "new application"
       (is (= expected-new-application
@@ -486,11 +478,13 @@
                    (assoc-in [:application/events] [created-event submitted-event])
                    (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/submitted)
                    (assoc-in [::permissions/role-permissions] {:applicant #{}
-                                                               :handler #{::dynamic/approve
+                                                               :handler #{::dynamic/add-member
+                                                                          ::dynamic/approve
+                                                                          ::dynamic/invite-member
                                                                           ::dynamic/reject
-                                                                          ::dynamic/return
+                                                                          ::dynamic/request-comment
                                                                           ::dynamic/request-decision
-                                                                          ::dynamic/request-comment}}))
+                                                                          ::dynamic/return}}))
                (build-application-view
                 (valid-events [created-event submitted-event])
                 injections)))))))
