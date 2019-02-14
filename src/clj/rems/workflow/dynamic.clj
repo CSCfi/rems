@@ -232,10 +232,8 @@
 (defmethod calculate-permissions :application.event/commented
   [application event]
   (-> application
-      ;; TODO: is this what we want? wouldn't it be useful to be able to write more than one comment?
-      ;; allow the commenter to still see the application (i.e. has a role) but not write more comments
       (permissions/remove-role-from-user :commenter (:event/actor event))
-      (permissions/give-role-to-user :past-commenter (:event/actor event))))
+      (permissions/give-role-to-user :past-commenter (:event/actor event)))) ; allow to still view the application
 
 (defmethod calculate-permissions :application.event/decision-requested
   [application event]
@@ -243,7 +241,11 @@
       (permissions/give-role-to-user :decider (:application/decider event))
       (permissions/set-role-permissions {:decider [::decide]})))
 
-;; TODO: should decider be able to make a decision multiple times? remove decider role or permission after decision?
+(defmethod calculate-permissions :application.event/decided
+  [application event]
+  (-> application
+      (permissions/remove-role-from-user :decider (:event/actor event))
+      (permissions/give-role-to-user :past-decider (:event/actor event)))) ; allow to still view the application
 
 (defmethod calculate-permissions :application.event/approved
   [application _event]
@@ -262,6 +264,42 @@
   [application _event]
   (-> application
       (permissions/set-role-permissions no-permissions)))
+
+(deftest test-calculate-permissions
+  ;; TODO: is this what we want? wouldn't it be useful to be able to write more than one comment?
+  (testing "commenter may comment only once"
+    (let [requested (reduce calculate-permissions nil [{:event/type :application.event/created
+                                                        :event/actor "applicant"
+                                                        :workflow.dynamic/handlers ["handler"]}
+                                                       {:event/type :application.event/submitted
+                                                        :event/actor "applicant"}
+                                                       {:event/type :application.event/comment-requested
+                                                        :event/actor "handler"
+                                                        :application/commenters ["commenter1" "commenter2"]}])
+          commented (reduce calculate-permissions requested [{:event/type :application.event/commented
+                                                              :event/actor "commenter1"}])]
+      (is (= #{::comment}
+             (permissions/user-permissions requested "commenter1")))
+      (is (= #{}
+             (permissions/user-permissions commented "commenter1")))
+      (is (= #{::comment}
+             (permissions/user-permissions commented "commenter2")))))
+
+  (testing "decider may decide only once"
+    (let [requested (reduce calculate-permissions nil [{:event/type :application.event/created
+                                                        :event/actor "applicant"
+                                                        :workflow.dynamic/handlers ["handler"]}
+                                                       {:event/type :application.event/submitted
+                                                        :event/actor "applicant"}
+                                                       {:event/type :application.event/decision-requested
+                                                        :event/actor "handler"
+                                                        :application/decider "decider"}])
+          decided (reduce calculate-permissions requested [{:event/type :application.event/decided
+                                                            :event/actor "decider"}])]
+      (is (= #{::decide}
+             (permissions/user-permissions requested "decider")))
+      (is (= #{}
+             (permissions/user-permissions decided "decider"))))))
 
 ;;; Application model
 
