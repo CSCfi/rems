@@ -806,7 +806,7 @@
     :collapse (into [:div]
                     (for [[k v] (dissoc attributes "commonName" "mail")]
                       [info-field k v {:inline? true}]))
-    :footer [:div
+    :footer [:div#applicant-collapse
              (when can-remove-member?
                [:div.commands
                 [remove-member-action-button "applicant-collapse"]])
