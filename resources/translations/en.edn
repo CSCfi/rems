@@ -46,7 +46,8 @@
                   [:p "You agree not to introduce to REMS any information that relates to an identified or identifiable natural person."]
                   [:h3 "Acknowledgements"]
                   [:p "CSC’s work for REMS has been supported by the Ministry of Education and Culture of Finland and by Academy of Finland grants 271642 and 263164 to construct Biomedinfra, the Finnish consortium for ELIXIR, BBMRI and EATRIS ESFRI."]]]}
-  :actions {:applicant "Applicant"
+  :actions {:add-member "Add member"
+            :applicant "Applicant"
             :application "Application"
             :approve "Approve"
             :approve-reject "Approve or reject"
@@ -63,8 +64,12 @@
             :export-entitlements "Export entitlements as csv"
             :handled-approvals "Handled applications"
             :handled-reviews "Handled reviews"
+            :invite-member "Invite member"
             :last-modified "Modified"
             :load-application-states "Load application states"
+            :member "Member"
+            :member-name "Name"
+            :member-email "Email"
             :no-handled-yet "You have not handled any applications yet."
             :not-implemented "Not implemented yet"
             :ok "Ok"
@@ -139,6 +144,7 @@
                                   :closed "Deleted"
                                   :comment-requested "Comment requested"
                                   :commented "Commented"
+                                  :created "Created"
                                   :decided "Decided"
                                   :decision-requested "Decision requested"
                                   :draft-saved "Modified"

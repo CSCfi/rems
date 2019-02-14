@@ -775,11 +775,10 @@
     (testing "getting dynamic application as applicant"
       (let [data (get-application user-id application-id)]
         (is (= "workflow/dynamic" (get-in data [:application :workflow :type])))
-        (is (= [{:event/type "application.event/submitted"
-                 :event/time (str (.getMillis test-data/creation-time))
-                 :event/actor user-id
-                 :application/id application-id}]
-               (get-in data [:application :dynamic-events])))
+        (is (= ["application.event/created"
+                "application.event/draft-saved"
+                "application.event/submitted"]
+               (map :event/type (get-in data [:application :dynamic-events]))))
         (is (= [] (get-in data [:application :possible-commands])))))
 
     (testing "getting dynamic application as handler"
@@ -796,14 +795,14 @@
 
     (testing "send command without user"
       (is (= {:success false
-              :errors ["forbidden"]}
+              :errors [{:type "forbidden"}]}
              (send-dynamic-command "" {:type :rems.workflow.dynamic/approve
                                        :application-id application-id}))
           "user should be forbidden to send command"))
 
     (testing "send command with a user that is not a handler"
       (is (= {:success false
-              :errors ["forbidden"]}
+              :errors [{:type "forbidden"}]}
              (send-dynamic-command user-id {:type :rems.workflow.dynamic/approve
                                             :application-id application-id
                                             :comment ""}))
@@ -840,7 +839,9 @@
           (is (= {:id application-id
                   :state "rems.workflow.dynamic/approved"}
                  (select-keys (:application data) [:id :state])))
-          (is (= ["application.event/submitted"
+          (is (= ["application.event/created"
+                  "application.event/draft-saved"
+                  "application.event/submitted"
                   "application.event/decision-requested"
                   "application.event/decided"
                   "application.event/approved"]
@@ -902,7 +903,8 @@
                                                               :application-id application-id})))
         (let [submitted (get-application user-id application-id)]
           (is (= "rems.workflow.dynamic/submitted" (get-in submitted [:application :state])))
-          (is (= ["application.event/draft-saved"
+          (is (= ["application.event/created"
+                  "application.event/draft-saved"
                   "application.event/draft-saved"
                   "application.event/submitted"]
                  (map :event/type (get-in submitted [:application :dynamic-events])))))))))

@@ -58,7 +58,8 @@
 ;; TODO: namespaced keys e.g. :event/type, :event/time, :event/actor, :application/id
 ;; TODO: add version number to events
 (s/defschema EventBase
-  {:event/type s/Keyword
+  {(s/optional-key :event/id) s/Int
+   :event/type s/Keyword
    :event/time DateTime
    :event/actor UserId
    :application/id s/Int})
@@ -80,6 +81,17 @@
          :event/type (s/eq :application.event/comment-requested)
          :application/commenters [s/Str]
          :application/comment s/Str))
+(s/defschema CreatedEvent
+  (assoc EventBase
+         :event/type (s/eq :application.event/created)
+         :application/resources [{:catalogue-item/id s/Int
+                                  :resource/ext-id s/Str}]
+         :application/licenses [{:license/id s/Int}]
+         :form/id s/Int
+         :workflow/id s/Int
+         :workflow/type s/Keyword
+         ;; workflow-specific data
+         (s/optional-key :workflow.dynamic/handlers) #{s/Str}))
 (s/defschema DecidedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/decided)
@@ -122,6 +134,7 @@
    :application.event/closed ClosedEvent
    :application.event/commented CommentedEvent
    :application.event/comment-requested CommentRequestedEvent
+   :application.event/created CreatedEvent
    :application.event/decided DecidedEvent
    :application.event/decision-requested DecisionRequestedEvent
    :application.event/draft-saved DraftSavedEvent
@@ -174,7 +187,9 @@
 (defmulti ^:private apply-event
   "Applies an event to an application state."
   ;; dispatch by event type
-  (fn [_application workflow event] [(:event/type event) (:type workflow)]))
+  ;; TODO: the workflow parameter could be removed; this method is the only one to use it and it's included in application
+  (fn [_application workflow event] [(:event/type event) (or (:type workflow)
+                                                             (:workflow/type event))]))
 
 (defn get-event-types
   "Fetch sequence of supported event names."
@@ -184,6 +199,14 @@
 (deftest test-all-event-types-handled
   (is (= (set (keys event-schemas))
          (set (get-event-types)))))
+
+(defmethod apply-event [:application.event/created :workflow/dynamic]
+  [application _workflow event]
+  (assoc application
+         :state ::draft
+         :applicantuserid (:event/actor event)
+         :workflow {:type (:workflow/type event)
+                    :handlers (vec (:workflow.dynamic/handlers event))}))
 
 (defmethod apply-event [:application.event/draft-saved :workflow/dynamic]
   [application _workflow event]
@@ -272,7 +295,7 @@
 (defn- applicant-error
   [application cmd]
   (when-not (= (:actor cmd) (:applicantuserid application))
-    {:errors [:forbidden]}))
+    {:errors [{:type :forbidden}]}))
 
 (defn- handler?
   [application user]
@@ -281,18 +304,18 @@
 (defn- actor-is-not-handler-error
   [application cmd]
   (when-not (handler? application (:actor cmd))
-    {:errors [:forbidden]}))
+    {:errors [{:type :forbidden}]}))
 
 (defn- state-error
   [application & expected-states]
   (when-not (contains? (set expected-states) (:state application))
-    {:errors [[:invalid-state (:state application)]]}))
+    {:errors [{:type :invalid-state :state (:state application)}]}))
 
 (defn- valid-user-error
   [injections user]
   (cond
-    (not (:valid-user? injections)) {:errors [[:missing-injection :valid-user?]]}
-    (not ((:valid-user? injections) user)) {:errors [[:t.form.validation/invalid-user user]]}))
+    (not (:valid-user? injections)) {:errors [{:type :missing-injection :injection :valid-user?}]}
+    (not ((:valid-user? injections) user)) {:errors [{:type :t.form.validation/invalid-user :userid user}]}))
 
 (defn- validation-error
   [injections application-id]
@@ -385,10 +408,10 @@
 (defmethod handle-command ::decide
   [cmd application _injections]
   (or (when-not (= (:actor cmd) (:decider application))
-        {:errors [:forbidden]})
+        {:errors [{:type :forbidden}]})
       (state-error application ::submitted)
       (when-not (contains? #{:approved :rejected} (:decision cmd))
-        {:errors [[:invalid-decision (:decision cmd)]]})
+        {:errors [{:type :invalid-decision :decision (:decision cmd)}]})
       {:success true
        :result {:event/type :application.event/decided
                 :event/time (:time cmd)
@@ -404,7 +427,7 @@
 
 (defn- must-not-be-empty [cmd key]
   (when-not (seq (get cmd key))
-    {:errors [[:must-not-be-empty key]]}))
+    {:errors [{:type :must-not-be-empty :key key}]}))
 
 (defmethod handle-command ::request-comment
   [cmd application injections]
@@ -422,7 +445,7 @@
 
 (defn- actor-is-not-commenter-error [application cmd]
   (when-not (contains? (:commenters application) (:actor cmd))
-    {:errors [:forbidden]}))
+    {:errors [{:type :forbidden}]}))
 
 (defmethod handle-command ::comment
   [cmd application _injections]
@@ -539,10 +562,11 @@
 
 (deftest test-save-draft
   (let [injections {:validate-form (constantly nil)}
-        application {:state ::draft
-                     :applicantuserid "applicant"
-                     :workflow {:type :workflow/dynamic
-                                :handlers ["assistant"]}}
+        application (apply-events nil
+                                  [{:event/type :application.event/created
+                                    :event/actor "applicant"
+                                    :workflow/type :workflow/dynamic
+                                    :workflow.dynamic/handlers #{"assistant"}}])
         relevant-application-keys [:state :form-contents :submitted-form-contents :previous-submitted-form-contents]]
     (testing "saves a draft"
       (is (= {:success true
@@ -561,7 +585,7 @@
                              application
                              injections))))
     (testing "only the applicant can save a draft"
-      (is (= {:errors [:forbidden]}
+      (is (= {:errors [{:type :forbidden}]}
              (handle-command {:type ::save-draft
                               :time 456
                               :actor "non-applicant"
@@ -592,7 +616,7 @@
                                         [{:actor "applicant" :type ::save-draft :items {1 "original"} :licenses {2 "original"}}
                                          {:actor "applicant" :type ::submit}]
                                         injections)]
-        (is (= {:errors [[:invalid-state ::submitted]]}
+        (is (= {:errors [{:type :invalid-state :state ::submitted}]}
                (handle-command {:type ::save-draft
                                 :actor "applicant"
                                 :items {1 "updated"} :licenses {2 "updated"}}
@@ -631,21 +655,22 @@
 
 (deftest test-submit-approve-or-reject
   (let [injections {:validate-form (constantly nil)}
-        expected-errors [{:key :t.form.validation/required}]
+        expected-errors [{:type :t.form.validation/required}]
         fail-injections {:validate-form (constantly expected-errors)}
-        application {:state ::draft
-                     :applicantuserid "applicant"
-                     :workflow {:type :workflow/dynamic
-                                :handlers ["assistant"]}}]
+        application (apply-events nil
+                                  [{:event/type :application.event/created
+                                    :event/actor "applicant"
+                                    :workflow/type :workflow/dynamic
+                                    :workflow.dynamic/handlers #{"assistant"}}])]
     (testing "only applicant can submit"
-      (is (= {:errors [:forbidden]}
+      (is (= {:errors [{:type :forbidden}]}
              (handle-command {:actor "not-applicant" :type ::submit} application injections))))
     (testing "can only submit valid form"
       (is (= {:errors expected-errors}
              (handle-command {:actor "applicant" :type ::submit} application fail-injections))))
     (let [submitted (apply-command application {:actor "applicant" :type ::submit} injections)]
       (testing "cannot submit twice"
-        (is (= {:errors [[:invalid-state ::submitted]]}
+        (is (= {:errors [{:type :invalid-state :state ::submitted}]}
                (handle-command {:actor "applicant" :type ::submit} submitted injections))))
       (testing "submitter is member"
         (is (= [{:userid "applicant"}] (:members submitted))))
@@ -660,10 +685,11 @@
 
 (deftest test-submit-return-submit-approve-close
   (let [injections {:validate-form (constantly nil)}
-        application {:state ::draft
-                     :applicantuserid "applicant"
-                     :workflow {:type :workflow/dynamic
-                                :handlers ["assistant"]}}
+        application (apply-events nil
+                                  [{:event/type :application.event/created
+                                    :event/actor "applicant"
+                                    :workflow/type :workflow/dynamic
+                                    :workflow.dynamic/handlers #{"assistant"}}])
         returned-application (apply-commands application
                                              [{:actor "applicant" :type ::submit}
                                               {:actor "assistant" :type ::return}]
@@ -678,23 +704,26 @@
     (is (= ::closed (:state closed-application)))))
 
 (deftest test-decision
-  (let [application {:state ::submitted
-                     :applicantuserid "applicant"
-                     :workflow {:type :workflow/dynamic
-                                :handlers ["assistant"]}}
+  (let [application (apply-events nil
+                                  [{:event/type :application.event/created
+                                    :event/actor "applicant"
+                                    :workflow/type :workflow/dynamic
+                                    :workflow.dynamic/handlers #{"assistant"}}
+                                   {:event/type :application.event/submitted
+                                    :event/actor "applicant"}])
         injections {:valid-user? #{"deity"}}]
     (testing "required :valid-user? injection"
-      (is (= {:errors [[:missing-injection :valid-user?]]}
+      (is (= {:errors [{:type :missing-injection :injection :valid-user?}]}
              (handle-command {:actor "assistant" :decider "deity" :type ::request-decision}
                              application
                              {}))))
     (testing "decider must be a valid user"
-      (is (= {:errors [[:t.form.validation/invalid-user "deity2"]]}
+      (is (= {:errors [{:type :t.form.validation/invalid-user :userid "deity2"}]}
              (handle-command {:actor "assistant" :decider "deity2" :type ::request-decision}
                              application
                              injections))))
     (testing "deciding before ::request-decision should fail"
-      (is (= {:errors [:forbidden]}
+      (is (= {:errors [{:type :forbidden}]}
              (handle-command {:actor "deity" :decision :approved :type ::decide}
                              application
                              injections))))
@@ -702,7 +731,7 @@
       (testing "request decision succesfully"
         (is (= {:decider "deity"} (select-keys requested [:decider :decision]))))
       (testing "only the requested user can decide"
-        (is (= {:errors [:forbidden]}
+        (is (= {:errors [{:type :forbidden}]}
                (handle-command {:actor "deity2" :decision :approved :type ::decide}
                                requested
                                injections))))
@@ -710,7 +739,7 @@
         (testing "succesfully approved"
           (is (= {:decision :approved} (select-keys approved [:decider :decision]))))
         (testing "cannot approve twice"
-          (is (= {:errors [:forbidden]}
+          (is (= {:errors [{:type :forbidden}]}
                  (handle-command {:actor "deity" :decision :approved :type ::decide}
                                  approved
                                  injections)))))
@@ -718,22 +747,27 @@
         (testing "successfully rejected"
           (is (= {:decision :rejected} (select-keys rejected [:decider :decision]))))
         (testing "can not reject twice"
-          (is (= {:errors [:forbidden]}
+          (is (= {:errors [{:type :forbidden}]}
                  (handle-command {:actor "deity" :decision :rejected :type ::decide}
                                  rejected
                                  injections)))))
       (testing "other decisions are not possible"
-        (is (= {:errors [[:invalid-decision :foobar]]}
+        (is (= {:errors [{:type :invalid-decision :decision :foobar}]}
                (handle-command {:actor "deity" :decision :foobar :type ::decide}
                                requested
                                injections)))))))
 
 (deftest test-add-member
-  (let [application {:state ::submitted
-                     :members [{:userid "applicant"} {:userid "somebody"}]
-                     :applicantuserid "applicant"
-                     :workflow {:type :workflow/dynamic
-                                :handlers ["assistant"]}}
+  (let [application (apply-events nil
+                                  [{:event/type :application.event/created
+                                    :event/actor "applicant"
+                                    :workflow/type :workflow/dynamic
+                                    :workflow.dynamic/handlers #{"assistant"}}
+                                   {:event/type :application.event/submitted
+                                    :event/actor "applicant"}
+                                   {:event/type :application.event/member-added
+                                    :event/actor "applicant"
+                                    :application/member {:userid "somebody"}}])
         injections {:valid-user? #{"member1" "member2" "somebody" "applicant"}}]
     (testing "add two members"
       (is (= [{:userid "applicant"} {:userid "somebody"} {:userid "member1"}]
@@ -742,7 +776,7 @@
                               [{:type ::add-member :actor "assistant" :member {:userid "member1"}}]
                               injections)))))
     (testing "only handler can add members"
-      (is (= {:errors [:forbidden]}
+      (is (= {:errors [{:type :forbidden}]}
              (handle-command {:type ::add-member :actor "member1" :member "member1"}
                              application
                              injections)
@@ -750,16 +784,17 @@
                              application
                              injections))))
     (testing "only valid users can be added"
-      (is (= {:errors [[:t.form.validation/invalid-user "member3"]]}
+      (is (= {:errors [{:type :t.form.validation/invalid-user :userid "member3"}]}
              (handle-command {:type ::add-member :actor "assistant" :member {:userid "member3"}}
                              application
                              injections))))))
 
 (deftest test-invite-member
-  (let [application {:state ::draft
-                     :applicantuserid "applicant"
-                     :workflow {:type :workflow/dynamic
-                                :handlers ["assistant"]}}
+  (let [application (apply-events nil
+                                  [{:event/type :application.event/created
+                                    :event/actor "applicant"
+                                    :workflow/type :workflow/dynamic
+                                    :workflow.dynamic/handlers #{"assistant"}}])
         injections {:valid-user? #{"somebody" "applicant"}}]
     (testing "invite two members by applicant"
       (is (= [{:name "Member Applicant 1" :email "member1@applicants.com"} {:name "Member Applicant 2" :email "member2@applicants.com"}]
@@ -776,12 +811,12 @@
                                {:type ::invite-member :actor "assistant" :member {:name "Member Applicant 2" :email "member2@applicants.com"}}]
                               injections)))))
     (testing "only applicant or handler can invite members"
-      (is (= {:errors [:forbidden]}
+      (is (= {:errors [{:type :forbidden}]}
              (handle-command {:type ::invite-member :actor "member1" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
                              application
                              injections))))
     (testing "applicant can't invite members to approved application"
-      (is (= {:errors [[:invalid-state ::approved]]}
+      (is (= {:errors [{:type :invalid-state :state ::approved}]}
              (handle-command {:type ::invite-member :actor "applicant" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
                              (assoc application :state ::approved)
                              injections))))
@@ -793,29 +828,31 @@
                               injections)))))))
 
 (deftest test-comment
-  (let [application {:state ::submitted
-                     :applicantuserid "applicant"
-                     :commenters #{}
-                     :workflow {:type :workflow/dynamic
-                                :handlers ["assistant"]}}
+  (let [application (apply-events nil
+                                  [{:event/type :application.event/created
+                                    :event/actor "applicant"
+                                    :workflow/type :workflow/dynamic
+                                    :workflow.dynamic/handlers #{"assistant"}}
+                                   {:event/type :application.event/submitted
+                                    :event/actor "applicant"}])
         injections {:valid-user? #{"commenter" "commenter2" "commenter3"}}]
     (testing "required :valid-user? injection"
-      (is (= {:errors [[:missing-injection :valid-user?]]}
+      (is (= {:errors [{:type :missing-injection :injection :valid-user?}]}
              (handle-command {:actor "assistant" :commenters ["commenter"] :type ::request-comment}
                              application
                              {}))))
     (testing "commenters must not be empty"
-      (is (= {:errors [[:must-not-be-empty :commenters]]}
+      (is (= {:errors [{:type :must-not-be-empty :key :commenters}]}
              (handle-command {:actor "assistant" :commenters [] :type ::request-comment}
                              application
                              {}))))
     (testing "commenters must be a valid users"
-      (is (= {:errors [[:t.form.validation/invalid-user "invaliduser"] [:t.form.validation/invalid-user "invaliduser2"]]}
+      (is (= {:errors [{:type :t.form.validation/invalid-user :userid "invaliduser"} {:type :t.form.validation/invalid-user :userid "invaliduser2"}]}
              (handle-command {:actor "assistant" :commenters ["invaliduser" "commenter" "invaliduser2"] :type ::request-comment}
                              application
                              injections))))
     (testing "commenting before ::request-comment should fail"
-      (is (= {:errors [:forbidden]}
+      (is (= {:errors [{:type :forbidden}]}
              (handle-command {:actor "commenter" :decision :approved :type ::comment}
                              application
                              injections))))
@@ -826,7 +863,7 @@
       (testing "request comment succesfully"
         (is (= #{"commenter2" "commenter"} (:commenters requested))))
       (testing "only the requested commenter can comment"
-        (is (= {:errors [:forbidden]}
+        (is (= {:errors [{:type :forbidden}]}
                (handle-command {:actor "commenter3" :comment "..." :type ::comment}
                                requested
                                injections))))
@@ -834,7 +871,7 @@
         (testing "succesfully commented"
           (is (= #{"commenter2"} (:commenters commented))))
         (testing "cannot comment twice"
-          (is (= {:errors [:forbidden]}
+          (is (= {:errors [{:type :forbidden}]}
                  (handle-command {:actor "commenter" :comment "..." :type ::comment}
                                  commented
                                  injections))))
@@ -844,10 +881,11 @@
                                                  injections)))))))))
 
 (deftest test-possible-commands
-  (let [draft {:state ::draft
-               :applicantuserid "applicant"
-               :workflow {:type :workflow/dynamic
-                          :handlers ["assistant"]}}]
+  (let [draft (apply-events nil
+                            [{:event/type :application.event/created
+                              :event/actor "applicant"
+                              :workflow/type :workflow/dynamic
+                              :workflow.dynamic/handlers #{"assistant"}}])]
     (testing "draft"
       (is (= #{::submit ::invite-member}
              (possible-commands "applicant" draft)))

@@ -78,6 +78,7 @@
           "closed" :t.applications.dynamic-events/closed
           "comment-requested" :t.applications.dynamic-events/comment-requested
           "commented" :t.applications.dynamic-events/commented
+          "created" :t.applications.dynamic-events/created
           "decided" :t.applications.dynamic-events/decided
           "decision-requested" :t.applications.dynamic-events/decision-requested
           "draft-saved" :t.applications.dynamic-events/draft-saved

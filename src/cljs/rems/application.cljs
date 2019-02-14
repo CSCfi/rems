@@ -3,10 +3,12 @@
             [medley.core :refer [map-vals]]
             [re-frame.core :as rf]
             [rems.actions.action :refer [action-button action-form-view action-comment action-collapse-id button-wrapper]]
+            [rems.actions.add-member :refer [add-member-action-button add-member-form]]
             [rems.actions.approve-reject :refer [approve-reject-action-button approve-reject-form]]
             [rems.actions.close :refer [close-action-button close-form]]
             [rems.actions.comment :refer [comment-action-button comment-form]]
             [rems.actions.decide :refer [decide-action-button decide-form]]
+            [rems.actions.invite-member :refer [invite-member-action-button invite-member-form]]
             [rems.actions.request-comment :refer [request-comment-action-button request-comment-form]]
             [rems.actions.request-decision :refer [request-decision-action-button request-decision-form]]
             [rems.actions.return-action :refer [return-action-button return-form]]
@@ -28,6 +30,9 @@
 
 (defn scroll-to-top! []
   (.setTimeout js/window #(.scrollTo js/window 0 0) 500)) ;; wait until faded out
+
+(defn reload! [application-id]
+  (rf/dispatch [:rems.application/enter-application-page application-id]))
 
 ;; TODO named secretary routes give us equivalent functions
 ;; TODO should the secretary route definitions be in this ns too?
@@ -804,36 +809,46 @@
 (defn members-info
   "Renders the members of an application"
   [id members]
-  [:div.members
-   (for [member members]
-     [collapsible/minimal
-      {:id (str id "-members-" member)
-       :class "group"
-       :always
-       (into [:div
-              [:h5 (if (:userid member)
-                     (text :t.applicant-info/member)
-                     (text :t.applicant-info/invited-member))]]
-             [(when (:userid member)
-                [info-field (text :t.applicant-info/username) (:userid member) {:inline? true}])
-              (when (:name member)
-                [info-field (text :t.applicant-info/name) (:name member) {:inline? true}])
-              (when (:email member)
-                [info-field (text :t.applicant-info/email) (:email member) {:inline? true}])])}])])
+  (into [:div.members]
+        (for [member members]
+          [collapsible/minimal
+           {:id (str id "-members-" member)
+            :class "group"
+            :always
+            (into [:div
+                   [:h5 (if (:userid member)
+                          (text :t.applicant-info/member)
+                          (text :t.applicant-info/invited-member))]]
+                  [(when (:userid member)
+                     [info-field (text :t.applicant-info/username) (:userid member) {:inline? true}])
+                   (when (:name member)
+                     [info-field (text :t.applicant-info/name) (:name member) {:inline? true}])
+                   (when (:email member)
+                     [info-field (text :t.applicant-info/email) (:email member) {:inline? true}])])}])))
 
 (defn applicants-info
   "Renders the applicants, i.e. applicant and members."
-  [id applicant-attributes members invited-members]
-  (let [members-but-not-applicant (remove (comp #{(get applicant-attributes "eppn")
+  [id application applicant-attributes members invited-members]
+  (let [application-id (:id application)
+        members-but-not-applicant (remove (comp #{(get applicant-attributes "eppn")
                                                   (:eppn applicant-attributes)} :userid)
-                                          (concat members invited-members))]
+                                          (concat members invited-members))
+        possible-commands (:possible-commands application)]
     [collapsible/component
      {:id id
       :title (text :t.applicant-info/applicants)
       :always
       [:div
-       [applicant-info id applicant-attributes (> (count members) 0)]
-       [members-info id members-but-not-applicant]]}]))
+       [applicant-info id applicant-attributes true]
+       [members-info id members-but-not-applicant]
+       [:div.commands
+        (when (contains? possible-commands :rems.workflow.dynamic/invite-member)
+          [invite-member-action-button])
+        (when (contains? possible-commands :rems.workflow.dynamic/add-member)
+          [add-member-action-button])]
+       [:div#member-action-forms
+        [invite-member-form application-id (partial reload! application-id)]
+        [add-member-form application-id (partial reload! application-id)]]]}]))
 
 
 (defn action-form [id title comment-title button content]
@@ -1022,7 +1037,6 @@
   (distinct
    (mapcat #:rems.workflow.dynamic{:submit [[save-button]
                                             [submit-button]]
-                                   :add-member nil ; TODO implement
                                    :return [[return-action-button]]
                                    :request-decision [[request-decision-action-button]]
                                    :decide [[decide-action-button]]
@@ -1059,7 +1073,7 @@
   (let [actions (if (= :workflow/dynamic (get-in app [:workflow :type]))
                   (dynamic-actions app)
                   (static-actions app))
-        reload #(rf/dispatch [:rems.application/enter-application-page (:id app)])
+        reload (partial reload! (:id app))
         forms [[:div#actions-forms.mt-3
                 [approve-form]
                 [reject-form]
@@ -1137,7 +1151,7 @@
      (into [:div] messages)
      [application-header state phases events]
      (when applicant-attributes
-       [:div.mt-3 [applicants-info "applicants-info" applicant-attributes (:members app) (:invited-members app)]])
+       [:div.mt-3 [applicants-info "applicants-info" app applicant-attributes (:members app) (:invited-members app)]])
      [:div.mt-3 [applied-resources (:catalogue-items application)]]
      [:div.my-3 [fields application edit-application language]]
      [:div.mb-3 [actions-form app]]
@@ -1188,11 +1202,15 @@
 
    (component-info applicants-info)
    (example "applicants-info"
-            [applicants-info "applicants" {"eppn" "developer@uu.id"
-                                           "mail" "developer@uu.id"
-                                           "commonName" "Deve Loper"
-                                           "organization" "Testers"
-                                           "address" "Testikatu 1, 00100 Helsinki"}
+            [applicants-info "applicants"
+             {:id 42
+              :possible-commands #{:rems.workflow.dynamic/add-member
+                                   :rems.workflow.dynamic/invite-member}}
+             {"eppn" "developer@uu.id"
+              "mail" "developer@uu.id"
+              "commonName" "Deve Loper"
+              "organization" "Testers"
+              "address" "Testikatu 1, 00100 Helsinki"}
              [{:userid "alice"} {:userid "bob"}]
              [{:name "John Smith" :email "john.smith@invited.com"}]])
 

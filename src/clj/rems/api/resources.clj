@@ -30,7 +30,7 @@
 (s/defschema CreateResourceResponse
   {:success s/Bool
    (s/optional-key :id) s/Num
-   (s/optional-key :errors) [{:key s/Keyword :resid s/Str}]})
+   (s/optional-key :errors) [s/Any]})
 
 (defn- format-resource
   [{:keys [id owneruserid modifieruserid organization resid start endt active?]}]
