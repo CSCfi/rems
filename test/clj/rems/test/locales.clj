@@ -55,8 +55,8 @@
                           (locales/load-translations {:languages [:xx]}))))
 
   (testing "missing translations is an error"
-    (is (thrown-with-msg? FileNotFoundException #"^\Qtranslations could not be found in some-dir/xx.edn file or some-dirxx.edn resource\E$"
-                          (locales/load-translations {:translations-directory "some-dir"
+    (is (thrown-with-msg? FileNotFoundException #"^\Qtranslations could not be found in some-dir/xx.edn file or some-dir/xx.edn resource\E$"
+                          (locales/load-translations {:translations-directory "some-dir/"
                                                       :languages [:xx]})))))
 
 (deftest override-translations-with-extra-translations
