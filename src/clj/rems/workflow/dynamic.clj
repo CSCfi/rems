@@ -521,6 +521,8 @@
       (when-not (contains? (set (map :userid (:members application)))
                            (:userid (:member cmd)))
         {:errors [{:type :user-not-member :user (:member cmd)}]})
+      (when (<= (count (:members application)) 1)
+        {:errors [{:type :cannot-remove-last-member}]})
       {:success true
        :result {:event/type :application.event/member-removed
                 :event/time (:time cmd)
@@ -915,6 +917,11 @@
               (apply-commands application
                               [{:type ::remove-member :actor "applicant" :member {:userid "somebody"}}]
                               injections)))))
+    (testing "removing last member should not be possible"
+      (is (= {:errors [{:type :cannot-remove-last-member}]}
+             (as-> application application
+               (apply-command application {:type ::remove-member :actor "applicant" :member {:userid "somebody"}} injections)
+               (handle-command {:type ::remove-member :actor "applicant" :member {:userid "applicant"}} application injections)))))
     (testing "remove member by handler"
       (is (= [{:userid "applicant"}]
              (:members
