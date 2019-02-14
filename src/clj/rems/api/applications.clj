@@ -142,6 +142,7 @@
                    (:dynamic-events application))]
     (assoc application :last-modified (latest-event events))))
 
+;; TODO Call hiding functions from new v2 API too
 (defn- hide-sensitive-dynamic-events [events]
   (filter (fn [event]
             ((complement contains?) #{:application.event/decision-requested

@@ -851,7 +851,9 @@
           (is (= {:id application-id
                   :state "rems.workflow.dynamic/approved"}
                  (select-keys (:application data) [:id :state])))
-          (is (= ["application.event/submitted"
+          (is (= ["application.event/created"
+                  "application.event/draft-saved"
+                  "application.event/submitted"
                   ; decision-requested should be missing here
                   "application.event/decided"
                   "application.event/approved"]
