@@ -567,48 +567,48 @@
   ;; validate them
   (->>
    [{:type ::submit
-    :actor actor}
-   {:type ::approve
-    :actor actor}
-   {:type ::reject
-    :actor actor}
-   {:type ::return
-    :actor actor}
-   {:type ::close
-    :actor actor}
-   {:type ::request-decision
-    :actor actor
-    :decider "decider"}
-   {:type ::decide
-    :actor actor
-    :decision :approved}
-   {:type ::request-comment
-    :actor actor
-    :commenters ["commenter"]}
-   {:type ::comment
-    :actor actor
-    :comment "comment"}
-   {:type ::add-member
-    :actor actor
-    :member {:userid "member"}}
-   {:type ::invite-member
-    :actor actor
-    :member {:name "name"
-             :email "email@address.org"}}
-   (let [members (->> application-state
-                      :members
-                      (remove (comp #{(:applicantuserid application-state)} :userid)))]
-     (when (seq members)
-       {:type ::remove-member
-        :actor actor
-        :member (first members)
-        :comment "comment"}))
-   (let [invited-members (:invited-members application-state)]
-     (when (seq invited-members)
-       {:type ::uninvite-member
-        :actor actor
-        :member (first invited-members)
-        :comment "comment"}))]
+     :actor actor}
+    {:type ::approve
+     :actor actor}
+    {:type ::reject
+     :actor actor}
+    {:type ::return
+     :actor actor}
+    {:type ::close
+     :actor actor}
+    {:type ::request-decision
+     :actor actor
+     :decider "decider"}
+    {:type ::decide
+     :actor actor
+     :decision :approved}
+    {:type ::request-comment
+     :actor actor
+     :commenters ["commenter"]}
+    {:type ::comment
+     :actor actor
+     :comment "comment"}
+    {:type ::add-member
+     :actor actor
+     :member {:userid "member"}}
+    {:type ::invite-member
+     :actor actor
+     :member {:name "name"
+              :email "email@address.org"}}
+    (let [members (->> application-state
+                       :members
+                       (remove (comp #{(:applicantuserid application-state)} :userid)))]
+      (when (seq members)
+        {:type ::remove-member
+         :actor actor
+         :member (first members)
+         :comment "comment"}))
+    (let [invited-members (:invited-members application-state)]
+      (when (seq invited-members)
+        {:type ::uninvite-member
+         :actor actor
+         :member (first invited-members)
+         :comment "comment"}))]
    (remove nil?)))
 
 (def ^:private injections-for-possible-commands
