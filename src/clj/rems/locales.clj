@@ -18,15 +18,14 @@
                                        (if file
                                          (str "translations could not be found in " file " file or " resource-path " resource")
                                          (str "translations could not be found in " resource-path " resource and " :translations-directory " was not set")))))]
-    file-contents))
+    (read-string (slurp file-contents))))
 
 (defn- load-translation [language translations-directory extra-translations-directory]
-  (let [filename (str (name language) ".edn")
-        base-translations (translations-from-file filename translations-directory)]
+  (let [filename (str (name language) ".edn")]
     (if extra-translations-directory
-      (deep-merge {language (read-string (slurp base-translations))}
-                  {language (read-string (slurp (translations-from-file filename extra-translations-directory)))})
-      {language (read-string (slurp base-translations))})))
+      (deep-merge {language (translations-from-file filename translations-directory)}
+                  {language (translations-from-file filename extra-translations-directory)})
+      {language (translations-from-file filename translations-directory)})))
 
 (defn load-translations [{:keys [languages translations-directory extra-translations-directory]}]
   (if translations-directory
