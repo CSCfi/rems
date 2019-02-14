@@ -845,6 +845,18 @@
                   "application.event/decision-requested"
                   "application.event/decided"
                   "application.event/approved"]
+                 (map :event/type (get-in data [:application :dynamic-events]))))))
+      (testing "applicant cannot see all events"
+        (let [data (get-application user-id application-id)]
+          (is (= {:id application-id
+                  :state "rems.workflow.dynamic/approved"}
+                 (select-keys (:application data) [:id :state])))
+          (is (= ["application.event/created"
+                  "application.event/draft-saved"
+                  "application.event/submitted"
+                  ; decision-requested should be missing here
+                  "application.event/decided"
+                  "application.event/approved"]
                  (map :event/type (get-in data [:application :dynamic-events])))))))))
 
 (deftest dynamic-application-create-test

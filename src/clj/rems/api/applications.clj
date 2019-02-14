@@ -128,10 +128,26 @@
       (update-in [:items] longify-keys)
       (update-in [:licenses] longify-keys)))
 
-;; TODO dynamic events hiding
 (defn- hide-sensitive-events [events]
   (filter (fn [event]
             ((complement contains?) #{"third-party-review" "review-request" "review"} (:event event)))
+          events))
+
+(defn- latest-event [events]
+  (apply time/max-date (map #(or (:time %) ; Non-dynamic events
+                                 (:event/time %)) events))) ; Dynamic events
+
+(defn- update-application-last-modified [application]
+  (let [events (or (:events application)
+                   (:dynamic-events application))]
+    (assoc application :last-modified (latest-event events))))
+
+;; TODO Call hiding functions from new v2 API too
+(defn- hide-sensitive-dynamic-events [events]
+  (filter (fn [event]
+            ((complement contains?) #{:application.event/decision-requested
+                                      :application.event/comment-requested}
+             (:event/type event)))
           events))
 
 (defn- hide-users [events]
@@ -140,11 +156,14 @@
        events))
 
 (defn hide-sensitive-information [application user]
-  (let [is-handler? (contains? (set (applications/get-handlers (:application application))) user)]
+  (let [is-handler? (or (contains? (set (applications/get-handlers (:application application))) user) ; old form
+                        (applications/is-dynamic-handler? user (:application application)))] ; dynamic
     (if is-handler?
       application
       (-> application
+          (update :application update-application-last-modified)
           (update-in [:application :events] hide-sensitive-events)
+          (update-in [:application :dynamic-events] hide-sensitive-dynamic-events)
           (update-in [:application :events] hide-users)))))
 
 (defn api-get-application [user-id application-id]
