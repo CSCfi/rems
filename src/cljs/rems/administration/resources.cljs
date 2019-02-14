@@ -28,17 +28,12 @@
 (rf/reg-sub ::resources (fn [db _] (::resources db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
-(rf/reg-event-db
- ::set-sorting
- (fn [db [_ sorting]]
-   (assoc db ::sorting sorting)))
+(rf/reg-event-db ::set-sorting (fn [db [_ sorting]] (assoc db ::sorting sorting)))
+(rf/reg-sub ::sorting (fn [db _] (::sorting db {:sort-order :asc
+                                                :sort-column :title})))
 
-(rf/reg-sub
- ::sorting
- (fn [db _]
-   (or (::sorting db)
-       {:sort-column :title
-        :sort-order :asc})))
+(rf/reg-event-db ::set-filtering (fn [db [_ filtering]] (assoc db ::filtering filtering)))
+(rf/reg-sub ::filtering (fn [db _] (or (::filtering db))))
 
 (defn- to-create-resource []
   [:a.btn.btn-primary
@@ -67,18 +62,19 @@
 
 (defn- resources-list
   "List of resources"
-  [resources sorting]
+  [resources sorting filtering]
   [table/component
-   (resources-columns)
-   [:organization :title :start :end :active :commands]
-   sorting
-   #(rf/dispatch [::set-sorting %])
-   :id
-   resources])
+   {:column-definitions (resources-columns)
+    :visible-columns [:organization :title :start :end :active :commands]
+    :sorting sorting
+    :filtering filtering
+    :id-function :id
+    :items resources}])
 
 (defn resources-page []
   (let [resources (rf/subscribe [::resources])
         sorting (rf/subscribe [::sorting])
+        filtering (rf/subscribe [::filtering])
         loading? (rf/subscribe [::loading?])]
     (fn []
       (into [:div
@@ -87,4 +83,7 @@
             (if @loading?
               [[spinner/big]]
               [[to-create-resource]
-               [resources-list @resources @sorting]])))))
+               [resources-list
+                @resources
+                (assoc @sorting :set-sorting #(rf/dispatch [::set-sorting %]))
+                (assoc @filtering :set-filtering #(rf/dispatch [::set-filtering %]))]])))))

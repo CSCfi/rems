@@ -25,27 +25,18 @@
 
 ;;;; table sorting
 
-(rf/reg-event-db
- ::set-sorting
- (fn [db [_ sorting]]
-   (assoc db ::sorting sorting)))
+(rf/reg-event-db ::set-sorting (fn [db [_ sorting]] (assoc db ::sorting sorting)))
+(rf/reg-sub ::sorting (fn [db _] (::sorting db)))
 
-(rf/reg-sub
- ::sorting
- (fn [db _]
-   (or (::sorting db)
-       {:sort-column :name
-        :sort-order :asc})))
+(rf/reg-event-db ::set-filtering (fn [db [_ filtering]] (assoc db ::filtering filtering)))
+(rf/reg-sub ::filtering (fn [db _] (::filtering db)))
 
 ;;;; catalogue
 
 (defn- fetch-catalogue []
   (fetch "/api/catalogue/" {:handler #(rf/dispatch [::fetch-catalogue-result %])}))
 
-(rf/reg-fx
- ::fetch-catalogue
- (fn [_]
-   (fetch-catalogue)))
+(rf/reg-fx ::fetch-catalogue (fn [_] (fetch-catalogue)))
 
 (rf/reg-event-db
  ::fetch-catalogue-result
@@ -54,15 +45,8 @@
        (assoc ::catalogue catalogue)
        (dissoc ::loading-catalogue?))))
 
-(rf/reg-sub
- ::loading-catalogue?
- (fn [db _]
-   (::loading-catalogue? db)))
-
-(rf/reg-sub
- ::catalogue
- (fn [db _]
-   (::catalogue db)))
+(rf/reg-sub ::loading-catalogue? (fn [db _] (::loading-catalogue? db)))
+(rf/reg-sub ::catalogue (fn [db _] (::catalogue db)))
 
 
 ;;;; draft applications
@@ -76,15 +60,9 @@
 (defn- fetch-drafts []
   (fetch "/api/applications/" {:handler #(rf/dispatch [::fetch-drafts-result %])}))
 
-(rf/reg-fx
- ::fetch-drafts
- (fn [_]
-   (fetch-drafts)))
+(rf/reg-fx ::fetch-drafts (fn [_] (fetch-drafts)))
 
-(rf/reg-sub
- ::draft-applications
- (fn [db _]
-   (::draft-applications db)))
+(rf/reg-sub ::draft-applications (fn [db _] (::draft-applications db)))
 
 ;;;; UI
 
@@ -106,14 +84,15 @@
               :filterable? false}})
 
 (defn- catalogue-list
-  [items language sorting config]
+  [items language sorting filtering config]
   [table/component
-   (catalogue-columns language config) [:name :commands]
-   sorting
-   #(rf/dispatch [::set-sorting %])
-   :id
-   (filter (complement disabled-catalogue-item?) items)
-   {:class "catalogue"}])
+   {:column-definitions (catalogue-columns language config)
+    :visible-columns [:name :commands]
+    :sorting sorting
+    :filtering filtering
+    :id-function :id
+    :items (filter (complement disabled-catalogue-item?) items)
+    :class "catalogue"}])
 
 (defn- format-catalogue-items [app]
   (str/join ", " (map :title (:catalogue-items app))))
@@ -122,14 +101,17 @@
   (when (seq drafts)
     [:div.drafts
      [:h4 (text :t.catalogue/continue-existing-application)]
-     [table/component {:id {:value :id
-                            :header #(text :t.actions/application)}
-                       :resource {:value format-catalogue-items
-                                  :header #(text :t.actions/resource)}
-                       :modified {:value #(localize-time (:last-modified %))
-                                  :header #(text :t.actions/last-modified)}
-                       :view {:value application/view-button}}
-      [:id :resource :modified :view] nil nil :id drafts]]))
+     [table/component
+      {:column-definitions {:id {:value :id
+                                 :header #(text :t.actions/application)}
+                            :resource {:value format-catalogue-items
+                                       :header #(text :t.actions/resource)}
+                            :modified {:value #(localize-time (:last-modified %))
+                                       :header #(text :t.actions/last-modified)}
+                            :view {:value application/view-button}}
+       :visible-columns [:id :resource :modified :view]
+       :id-function :id
+       :items drafts}]]))
 
 (defn catalogue-page []
   (let [catalogue (rf/subscribe [::catalogue])
@@ -137,6 +119,7 @@
         loading? (rf/subscribe [::loading-catalogue?])
         language (rf/subscribe [:language])
         sorting (rf/subscribe [::sorting])
+        filtering (rf/subscribe [::filtering])
         config (rf/subscribe [:rems.config/config])]
     (fn []
       [:div
@@ -147,7 +130,12 @@
           [draft-application-list @drafts @language]
           [:h4 (text :t.catalogue/apply-resources)]
           [cart/cart-list-container @language]
-          [catalogue-list @catalogue @language @sorting @config]])])))
+          [catalogue-list
+           @catalogue
+           @language
+           (assoc @sorting :set-sorting #(rf/dispatch [::set-sorting %]))
+           (assoc @filtering :set-filtering #(rf/dispatch [::set-filtering %]))
+           @config]])])))
 
 (defn guide []
   [:div

@@ -28,10 +28,7 @@
 (rf/reg-sub ::workflows (fn [db _] (::workflows db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
-(rf/reg-event-db
- ::set-sorting
- (fn [db [_ sorting]]
-   (assoc db ::sorting sorting)))
+(rf/reg-event-db ::set-sorting (fn [db [_ sorting]] (assoc db ::sorting sorting)))
 
 (rf/reg-sub
  ::sorting
@@ -39,6 +36,9 @@
    (or (::sorting db)
        {:sort-column :title
         :sort-order :asc})))
+
+(rf/reg-event-db ::set-filtering (fn [db [_ filtering]] (assoc db ::filtering filtering)))
+(rf/reg-sub ::filtering (fn [db _] (::filtering db)))
 
 (defn- to-create-workflow []
   [:a.btn.btn-primary
@@ -67,18 +67,19 @@
 
 (defn- workflows-list
   "List of workflows"
-  [workflows sorting]
+  [workflows sorting filtering]
   [table/component
-   (workflows-columns)
-   [:organization :title :start :end :active :commands]
-   sorting
-   #(rf/dispatch [::set-sorting %])
-   :id
-   workflows])
+   {:column-definitions (workflows-columns)
+    :visible-columns [:organization :title :start :end :active :commands]
+    :sorting sorting
+    :filtering filtering
+    :id-function :id
+    :items workflows}])
 
 (defn workflows-page []
   (let [workflows (rf/subscribe [::workflows])
         sorting (rf/subscribe [::sorting])
+        filtering (rf/subscribe [::filtering])
         loading? (rf/subscribe [::loading?])]
     (fn []
       (into [:div
@@ -87,4 +88,7 @@
             (if @loading?
               [[spinner/big]]
               [[to-create-workflow]
-               [workflows-list @workflows @sorting]])))))
+               [workflows-list
+                @workflows
+                (assoc @sorting :set-sorting  #(rf/dispatch [::set-sorting %]))
+                (assoc @filtering :set-filtering  #(rf/dispatch [::set-filtering %]))]])))))

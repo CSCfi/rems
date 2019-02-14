@@ -49,10 +49,11 @@
        {:sort-column :created
         :sort-order :desc})))
 
-(rf/reg-event-db
- ::set-sorting
- (fn [db [_ order]]
-   (assoc db ::sorting order)))
+(rf/reg-event-db ::set-sorting (fn [db [_ sorting]] (assoc db ::sorting sorting)))
+
+(rf/reg-sub ::filtering (fn [db _] (::filtering db)))
+
+(rf/reg-event-db ::set-filtering (fn [db [_ filtering]] (assoc db ::filtering filtering)))
 
 ;;;; UI
 
@@ -60,7 +61,9 @@
   (let [apps (rf/subscribe [::my-applications])
         loading? (rf/subscribe [::loading-my-applications?])
         sorting (rf/subscribe [::sorting])
-        set-sorting #(rf/dispatch [::set-sorting %])]
+        set-sorting #(rf/dispatch [::set-sorting %])
+        filtering (rf/subscribe [::filtering])
+        set-filtering #(rf/dispatch [::set-filtering %])]
     (fn []
       [:div
        [:h2 (text :t.applications/applications)]
@@ -71,4 +74,8 @@
              [:div.applications.alert.alert-success (text :t/applications.empty)]
 
              :else
-             [application-list/component application-list/+all-columns+ @sorting set-sorting @apps])])))
+             [application-list/component
+              {:visible-columns application-list/+all-columns+
+               :sorting (assoc @sorting :set-sorting set-sorting)
+               :filtering (assoc @filtering :set-filtering set-filtering)
+               :items @apps}])])))

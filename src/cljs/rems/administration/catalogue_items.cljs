@@ -42,10 +42,7 @@
  (fn [_ [_ id state]]
    {::update-catalogue-item [id state]}))
 
-(rf/reg-event-db
- ::set-sorting
- (fn [db [_ sorting]]
-   (assoc db ::sorting sorting)))
+(rf/reg-event-db ::set-sorting (fn [db [_ sorting]] (assoc db ::sorting sorting)))
 
 (rf/reg-sub
  ::sorting
@@ -53,6 +50,9 @@
    (or (::sorting db)
        {:sort-column :name
         :sort-order :asc})))
+
+(rf/reg-event-db ::set-filtering (fn [db [_ filtering]] (assoc db ::filtering filtering)))
+(rf/reg-sub ::filtering (fn [db _] (::filtering db)))
 
 (defn- to-create-catalogue-item []
   [:a.btn.btn-primary
@@ -110,19 +110,20 @@
 
 (defn- catalogue-list
   "List of catalogue items"
-  [items language sorting]
+  [items language sorting filtering]
   [table/component
-   (catalogue-columns language)
-   [:name :resource :form :workflow :created :active :commands]
-   sorting
-   #(rf/dispatch [::set-sorting %])
-   :id
-   items])
+   {:column-definitions (catalogue-columns language)
+    :visible-columns [:name :resource :form :workflow :created :active :commands]
+    :sorting sorting
+    :filtering filtering
+    :id-function :id
+    :items items}])
 
 (defn catalogue-items-page []
   (let [catalogue (rf/subscribe [::catalogue])
         language (rf/subscribe [:language])
         sorting (rf/subscribe [::sorting])
+        filtering (rf/subscribe [::filtering])
         loading? (rf/subscribe [::loading?])]
     (fn []
       (into [:div
@@ -131,4 +132,8 @@
             (if @loading?
               [[spinner/big]]
               [[to-create-catalogue-item]
-               [catalogue-list @catalogue @language @sorting]])))))
+               [catalogue-list
+                @catalogue
+                @language
+                (assoc @sorting :set-sorting #(rf/dispatch [::set-sorting %]))
+                (assoc @filtering :set-filtering #(rf/dispatch [::set-filtering %]))]])))))
