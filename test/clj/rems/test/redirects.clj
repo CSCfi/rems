@@ -12,7 +12,7 @@
   :once
   api-fixture)
 
-(def test-user {"eppn" "test-user"})
+(def test-user {:eppn "test-user"})
 
 (defn dummy-resource [resid]
   (binding [context/*user* test-user]

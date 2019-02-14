@@ -519,9 +519,9 @@
                                                       :fi {:title "fi title"
                                                            :textcontent "fi license text"}}}}
 
-                    :get-user {"applicant" {"eppn" "applicant"
-                                            "mail" "applicant@example.com"
-                                            "commonName" "Applicant"}}}
+                    :get-user {"applicant" {:eppn "applicant"
+                                            :mail "applicant@example.com"
+                                            :commonName "Applicant"}}}
 
         created-event {:event/type :application.event/created
                        :event/time (DateTime. 1000)
@@ -543,9 +543,9 @@
                                   :application/modified (DateTime. 1000)
                                   :application/last-activity (DateTime. 1000)
                                   :application/applicant "applicant"
-                                  :application/applicant-attributes {"eppn" "applicant"
-                                                                     "mail" "applicant@example.com"
-                                                                     "commonName" "Applicant"}
+                                  :application/applicant-attributes {:eppn "applicant"
+                                                                     :mail "applicant@example.com"
+                                                                     :commonName "Applicant"}
                                   :application/resources [{:catalogue-item/id 10
                                                            :resource/id 11
                                                            :resource/ext-id "urn:11"

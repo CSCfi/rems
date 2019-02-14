@@ -46,7 +46,7 @@
 (deftest test-sending-email
   (let [common-name "Test User"
         applicant "test-user"
-        applicant-attrs {"eppn" applicant "mail" "invalid-addr" "commonName" common-name}]
+        applicant-attrs {:eppn applicant :mail "invalid-addr" :commonName common-name}]
     (with-redefs [catalogue/cached {:localizations (catalogue/load-catalogue-item-localizations!)}]
       (binding [context/*root-path* "localhost:3000"]
         (let [approver "approver"
@@ -85,12 +85,12 @@
               items2 (rems.db.applications/get-catalogue-items-by-application-id app2)
               items3 (rems.db.applications/get-catalogue-items-by-application-id app3)
               items4 (rems.db.applications/get-catalogue-items-by-application-id app4)
-              approver-attrs {"eppn" approver "mail" "appr-invalid" "commonName" "App Rover"}
+              approver-attrs {:eppn approver :mail "appr-invalid" :commonName "App Rover"}
               _ (db/add-user! {:user approver :userattrs (generate-string approver-attrs)})
-              reviewer-attrs {"eppn" "reviewer" "mail" "rev-invalid" "commonName" "Rev Iwer"}
+              reviewer-attrs {:eppn "reviewer" :mail "rev-invalid" :commonName "Rev Iwer"}
               _ (db/add-user! {:user reviewer :userattrs (generate-string reviewer-attrs)})
               _ (db/add-user! {:user applicant :userattrs (generate-string applicant-attrs)})
-              outside-attrs {"eppn" "outside-reviewer" "mail" "out-invalid" "commonName" "Out Sider"}
+              outside-attrs {:eppn "outside-reviewer" :mail "out-invalid" :commonName "Out Sider"}
               _ (db/add-user! {:user "outside-reviewer" :userattrs (generate-string outside-attrs)})]
           (testing "Applicant and reviewer should receive an email about the new application"
             (conjure/mocking [email/confirm-application-creation
