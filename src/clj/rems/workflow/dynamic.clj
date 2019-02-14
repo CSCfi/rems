@@ -191,13 +191,16 @@
   [application _event]
   application)
 
+(def ^:private draft-permissions {:applicant [::invite-member
+                                              ::submit]
+                                  :handler []})
+
 (defmethod calculate-permissions :application.event/created
   [application event]
   (-> application
       (permissions/give-role-to-user :applicant (:event/actor event))
       (permissions/give-role-to-users :handler (:workflow.dynamic/handlers event))
-      (permissions/set-role-permissions {:applicant [::invite-member
-                                                     ::submit]})))
+      (permissions/set-role-permissions draft-permissions)))
 
 (defmethod calculate-permissions :application.event/submitted
   [application _event]
@@ -211,6 +214,11 @@
                                                    ::request-decision
                                                    ::return]})))
 
+(defmethod calculate-permissions :application.event/returned
+  [application _event]
+  (-> application
+      (permissions/set-role-permissions draft-permissions)))
+
 (defmethod calculate-permissions :application.event/comment-requested
   [application event]
   (-> application
@@ -221,7 +229,7 @@
   [application event]
   (-> application
       ;; TODO: is this what we want? wouldn't it be useful to be able to write more than one comment?
-      ;; allow the commenter to still see the application but not write more comments
+      ;; allow the commenter to still see the application (i.e. has a role) but not write more comments
       (permissions/remove-role-from-user :commenter (:event/actor event))
       (permissions/give-role-to-user :past-commenter (:event/actor event))))
 
