@@ -146,7 +146,8 @@
        events))
 
 (defn hide-sensitive-information [application user]
-  (let [is-handler? (contains? (set (applications/get-handlers (:application application))) user)]
+  (let [is-handler? (or (contains? (set (applications/get-handlers (:application application))) user) ; old form
+                        (applications/is-dynamic-handler? user (:application application)))] ; dynamic
     (if is-handler?
       application
       (-> application
