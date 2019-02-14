@@ -524,12 +524,7 @@
           (permissions/cleanup)))))
 
 (deftest test-apply-user-permissions
-  (let [all-events [{:event/type :application.event/created}
-                    {:event/type :application.event/submitted}
-                    {:event/type :application.event/comment-requested}]
-        restricted-events [{:event/type :application.event/created}
-                           {:event/type :application.event/submitted}]
-        application (-> {:application/events all-events}
+  (let [application (-> {}
                         (permissions/give-role-to-user :role-1 "user-1")
                         (permissions/give-role-to-user :role-2 "user-2")
                         (permissions/set-role-permissions {:role-1 []
@@ -541,13 +536,21 @@
     (testing "lists the user's permissions"
       (is (= #{} (:application/permissions (apply-user-permissions application "user-1"))))
       (is (= #{:foo :bar} (:application/permissions (apply-user-permissions application "user-2")))))
-    (let [application (permissions/set-role-permissions application {:role-1 [:see-everything]})]
-      (testing "privileged users can see all events"
-        (is (= all-events
-               (:application/events (apply-user-permissions application "user-1")))))
-      (testing "normal users cannot see all events"
-        (is (= restricted-events
-               (:application/events (apply-user-permissions application "user-2"))))))))
+    (testing "event visibility:"
+      (let [all-events [{:event/type :application.event/created}
+                        {:event/type :application.event/submitted}
+                        {:event/type :application.event/comment-requested}]
+            restricted-events [{:event/type :application.event/created}
+                               {:event/type :application.event/submitted}]
+            application (-> application
+                            (assoc :application/events all-events)
+                            (permissions/set-role-permissions {:role-1 [:see-everything]}))]
+        (testing "privileged users see all events"
+          (is (= all-events
+                 (:application/events (apply-user-permissions application "user-1")))))
+        (testing "normal users see only some events"
+          (is (= restricted-events
+                 (:application/events (apply-user-permissions application "user-2")))))))))
 
 (defn api-get-application-v2 [user-id application-id]
   (let [events (applications/get-dynamic-application-events application-id)]
