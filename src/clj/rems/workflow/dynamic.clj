@@ -202,6 +202,7 @@
 
 ;; TODO: add :see-everything permission to relevant roles
 (def ^:private initial-permissions {:applicant [::invite-member
+                                                ::save-draft
                                                 ::submit]
                                     :handler []
                                     :commenter [::comment]
@@ -405,20 +406,20 @@
 
 ;;; Command handlers
 
-(defmulti handle-command
+(defmulti command-handler
   "Handles a command by an event."
   (fn [cmd _application _injections] (:type cmd)))
 
 (defn get-command-types
   "Fetch sequence of supported command names."
   []
-  (keys (methods handle-command)))
+  (keys (methods command-handler)))
 
 (deftest test-all-command-types-handled
   (is (= CommandTypes (set (get-command-types)))))
 
 (defn- impossible-command? [cmd application injections] ; TODO: remove me
-  (let [result (handle-command cmd application injections)]
+  (let [result (command-handler cmd application injections)]
     (when-not (:success result)
       result)))
 
@@ -452,7 +453,7 @@
   (when-let [errors ((:validate-form injections) application-id)]
     {:errors errors}))
 
-(defmethod handle-command ::save-draft
+(defmethod command-handler ::save-draft
   [cmd application _injections]
   (or (applicant-error application cmd)
       (state-error application ::draft ::returned)
@@ -467,7 +468,7 @@
                                                     (map first)
                                                     set)}}))
 
-(defmethod handle-command ::submit
+(defmethod command-handler ::submit
   [cmd application injections]
   (or (applicant-error application cmd)
       (state-error application ::draft ::returned)
@@ -478,7 +479,7 @@
                 :event/actor (:actor cmd)
                 :application/id (:application-id cmd)}}))
 
-(defmethod handle-command ::approve
+(defmethod command-handler ::approve
   [cmd application _injections]
   (or (actor-is-not-handler-error application cmd)
       (state-error application ::submitted)
@@ -489,7 +490,7 @@
                 :application/id (:application-id cmd)
                 :application/comment (:comment cmd)}}))
 
-(defmethod handle-command ::reject
+(defmethod command-handler ::reject
   [cmd application _injections]
   (or (actor-is-not-handler-error application cmd)
       (state-error application ::submitted)
@@ -500,7 +501,7 @@
                 :application/id (:application-id cmd)
                 :application/comment (:comment cmd)}}))
 
-(defmethod handle-command ::return
+(defmethod command-handler ::return
   [cmd application _injections]
   (or (actor-is-not-handler-error application cmd)
       (state-error application ::submitted)
@@ -511,7 +512,7 @@
                 :application/id (:application-id cmd)
                 :application/comment (:comment cmd)}}))
 
-(defmethod handle-command ::close
+(defmethod command-handler ::close
   [cmd application _injections]
   (or (actor-is-not-handler-error application cmd)
       (state-error application ::approved)
@@ -522,7 +523,7 @@
                 :application/id (:application-id cmd)
                 :application/comment (:comment cmd)}}))
 
-(defmethod handle-command ::request-decision
+(defmethod command-handler ::request-decision
   [cmd application injections]
   (or (actor-is-not-handler-error application cmd)
       (state-error application ::submitted)
@@ -535,7 +536,7 @@
                 :application/decider (:decider cmd)
                 :application/comment (:comment cmd)}}))
 
-(defmethod handle-command ::decide
+(defmethod command-handler ::decide
   [cmd application _injections]
   (or (when-not (= (:actor cmd) (:decider application))
         {:errors [{:type :forbidden}]})
@@ -559,7 +560,7 @@
   (when-not (seq (get cmd key))
     {:errors [{:type :must-not-be-empty :key key}]}))
 
-(defmethod handle-command ::request-comment
+(defmethod command-handler ::request-comment
   [cmd application injections]
   (or (actor-is-not-handler-error application cmd)
       (state-error application ::submitted)
@@ -577,7 +578,7 @@
   (when-not (contains? (:commenters application) (:actor cmd))
     {:errors [{:type :forbidden}]}))
 
-(defmethod handle-command ::comment
+(defmethod command-handler ::comment
   [cmd application _injections]
   (or (actor-is-not-commenter-error application cmd)
       (state-error application ::submitted)
@@ -588,7 +589,7 @@
                 :application/id (:application-id cmd)
                 :application/comment (:comment cmd)}}))
 
-(defmethod handle-command ::add-member
+(defmethod command-handler ::add-member
   [cmd application injections]
   (or (actor-is-not-handler-error application cmd)
       (state-error application ::submitted ::approved)
@@ -600,7 +601,7 @@
                 :application/member (:member cmd)
                 :application/id (:application-id cmd)}}))
 
-(defmethod handle-command ::invite-member
+(defmethod command-handler ::invite-member
   [cmd application injections]
   (let [success-result {:success true
                         :result {:event/type :application.event/member-invited
@@ -623,12 +624,35 @@
             (state-error application ::submitted ::approved)
             success-result)))))
 
+(defn handle-command [cmd application injections]
+  (let [permissions (permissions/user-permissions application (:actor cmd))]
+    (if (contains? permissions (:type cmd))
+      (command-handler cmd application injections)
+      {:errors [{:type :forbidden}]})))
+
+(deftest test-handle-command
+  (let [application (apply-events nil [{:event/type :application.event/created
+                                        :event/actor "applicant"
+                                        :workflow/type :workflow/dynamic
+                                        :workflow.dynamic/handlers #{"assistant"}}])
+        command {:type ::save-draft
+                 :actor "applicant"}]
+    (testing "executes command when user is authorized"
+      (is (:success (handle-command command application {}))))
+    (testing "fails when user is not authorized"
+      ;; the permission checks should happen before executing the command handler
+      ;; and only depend on the roles and permissions
+      (let [application (permissions/remove-role-from-user application :applicant "applicant")
+            result (handle-command command application {})]
+        (is (not (:success result)))
+        (is (= [{:type :forbidden}] (:errors result)))))))
+
 (defn- apply-command
   ([application cmd]
    (apply-command application cmd nil))
   ([application cmd injections]
    (let [result (handle-command cmd application injections)
-         _ (assert (:success result) (pr-str result))
+         _ (assert (:success result) (str "command " cmd " failed with result " result))
          event (getx result :result)]
      (-> (apply-event application (:workflow application) event)
          (calculate-permissions event)))))
@@ -695,7 +719,8 @@
                          (remove #(impossible-command? % application-state injections-for-possible-commands)
                                  (command-candidates actor application-state))))]
     (assert (or (empty? (:dynamic-events application-state))
-                (= new-result old-result))
+                (= (disj new-result ::save-draft) ; only compare permissions which the old impl supports
+                   old-result))
             (str "new impl gave " new-result "\nbut old impl gave " old-result "\nfor actor " actor "\nand application " application-state))
     new-result))
 
@@ -761,7 +786,7 @@
                                         [{:actor "applicant" :type ::save-draft :items {1 "original"} :licenses {2 "original"}}
                                          {:actor "applicant" :type ::submit}]
                                         injections)]
-        (is (= {:errors [{:type :invalid-state :state ::submitted}]}
+        (is (= {:errors [{:type :forbidden}]}
                (handle-command {:type ::save-draft
                                 :actor "applicant"
                                 :items {1 "updated"} :licenses {2 "updated"}}
@@ -815,7 +840,7 @@
              (handle-command {:actor "applicant" :type ::submit} application fail-injections))))
     (let [submitted (apply-command application {:actor "applicant" :type ::submit} injections)]
       (testing "cannot submit twice"
-        (is (= {:errors [{:type :invalid-state :state ::submitted}]}
+        (is (= {:errors [{:type :forbidden}]}
                (handle-command {:actor "applicant" :type ::submit} submitted injections))))
       (testing "submitter is member"
         (is (= [{:userid "applicant"}] (:members submitted))))
@@ -967,7 +992,7 @@
                                                  {:event/type :application.event/approved
                                                   :event/actor "assistant"}])]
       (testing "applicant can't invite members to approved application"
-        (is (= {:errors [{:type :invalid-state :state ::approved}]}
+        (is (= {:errors [{:type :forbidden}]}
                (handle-command {:type ::invite-member :actor "applicant" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
                                application
                                injections))))
@@ -1038,7 +1063,7 @@
                               :workflow/type :workflow/dynamic
                               :workflow.dynamic/handlers #{"assistant"}}])]
     (testing "draft"
-      (is (= #{::submit ::invite-member}
+      (is (= #{::save-draft ::submit ::invite-member}
              (possible-commands "applicant" draft)))
       (is (= #{}
              (possible-commands "assistant" draft)))
