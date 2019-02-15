@@ -1,20 +1,21 @@
 (ns rems.middleware
   (:require [buddy.auth :refer [authenticated?]]
             [buddy.auth.accessrules :refer [restrict]]
+            [clojure.set :as set]
             [clojure.tools.logging :as log]
             [rems.auth.auth :as auth]
             [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.api-key :as api-key]
+            [rems.db.dynamic-roles :as dynamic-roles]
             [rems.db.roles :as roles]
             [rems.env :refer [+defaults+]]
             [rems.layout :refer [error-page]]
             [rems.locales :refer [tempura-config]]
-            [rems.util :refer [get-user-id]]
+            [rems.util :refer [getx-user-id]]
             [ring-ttl-session.core :refer [ttl-memory-store]]
             [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
-            [ring.middleware.defaults :refer [site-defaults
-                                              wrap-defaults]]
+            [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
             [ring.middleware.format :refer [wrap-restful-format]]
             [ring.middleware.webjars :refer [wrap-webjars]]
             [ring.util.http-response :refer [unauthorized]]
@@ -75,7 +76,8 @@
     (binding [context/*root-path* (calculate-root-path request)
               context/*flash* (:flash request)
               context/*roles* (when context/*user*
-                                (roles/get-roles (get-user-id)))]
+                                (set/union (roles/get-roles (getx-user-id))
+                                           (dynamic-roles/get-roles (getx-user-id))))]
       (handler request))))
 
 (defn wrap-internal-error [handler]
