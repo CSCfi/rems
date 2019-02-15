@@ -721,7 +721,11 @@
     (assert (or (empty? (:dynamic-events application-state))
                 (= (disj new-result ::save-draft) ; only compare permissions which the old impl supports
                    old-result))
-            (str "new impl gave " new-result "\nbut old impl gave " old-result "\nfor actor " actor "\nand application " application-state))
+            (str "possible-commands mismatch:\n"
+                 "new impl gave " (pr-str new-result) "\n"
+                 "but old impl gave " (pr-str old-result) "\n"
+                 "for actor " (pr-str actor) "\n"
+                 "and application " (pr-str application-state)))
     new-result))
 
 (defn assoc-possible-commands [actor application-state]
