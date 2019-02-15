@@ -4,6 +4,9 @@
 (defn- has-some? [expected-roles actual-roles]
   (not (empty? (set/intersection expected-roles actual-roles))))
 
+(defn is-logged-in? [roles]
+  (has-some? #{:logged-in} roles))
+
 (defn is-applicant? [roles]
   (has-some? #{:applicant} roles))
 

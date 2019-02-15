@@ -213,13 +213,13 @@
 
     (GET "/" []
       :summary "Get current user's all applications"
-      :roles #{:applicant}
+      :roles #{:logged-in}
       :return GetApplicationsResponse
       (ok (applications/get-user-applications (getx-user-id))))
 
     (GET "/draft" []
       :summary "Get application (draft) for `catalogue-items`"
-      :roles #{:applicant}
+      :roles #{:logged-in}
       :query-params [catalogue-items :- (describe [s/Num] "catalogue item ids")]
       :return GetApplicationResponse
       (let [app (applications/make-draft-application (getx-user-id) catalogue-items)]
@@ -251,7 +251,7 @@
 
     (GET "/attachments/" []
       :summary "Get an attachment for a field in an application"
-      :roles #{:applicant :approver :reviewer}
+      :roles #{:logged-in}
       :query-params [application-id :- (describe s/Int "application id")
                      field-id :- (describe s/Int "application form field id the attachment is related to")]
       (let [form (applications/get-form-for (getx-user-id) application-id)]
@@ -267,7 +267,7 @@
 
     (GET "/:application-id" []
       :summary "Get application by `application-id`"
-      :roles #{:applicant :approver :reviewer}
+      :roles #{:logged-in}
       :path-params [application-id :- (describe s/Num "application id")]
       :responses {200 {:schema GetApplicationResponse}
                   404 {:schema s/Str :description "Not found"}}
@@ -277,14 +277,14 @@
 
     (GET "/v2-wip/" []
       :summary "Get current user's all applications"
-      :roles #{:applicant}
+      :roles #{:logged-in}
       :return [s/Any] ; TODO: add schema once the API has stabilized
       (when (:dev env) ; TODO: remove feature toggle
         (ok (get-user-applications-v2 (getx-user-id)))))
 
     (GET "/v2-wip/:application-id" []
       :summary "Get application by `application-id`"
-      :roles #{:applicant :approver :reviewer}
+      :roles #{:logged-in}
       :path-params [application-id :- (describe s/Num "application id")]
       :responses {200 {:schema s/Any} ; TODO: add schema once the API has stabilized
                   404 {:schema s/Str :description "Not found"}}
@@ -295,7 +295,7 @@
 
     (GET "/v2-to-v1-wip/:application-id" []
       :summary "Get application by `application-id`"
-      :roles #{:applicant :approver :reviewer}
+      :roles #{:logged-in}
       :path-params [application-id :- (describe s/Num "application id")]
       :responses {200 {:schema s/Any} ; TODO: use GetApplicationResponse schema
                   404 {:schema s/Str :description "Not found"}}
@@ -306,7 +306,7 @@
 
     (GET "/:application-id/pdf" []
       :summary "Get a pdf version of an application"
-      :roles #{:applicant :approver :reviewer}
+      :roles #{:logged-in}
       :path-params [application-id :- (describe s/Num "application id")]
       :produces ["application/pdf"]
       (if-let [app (api-get-application (getx-user-id) application-id)]
@@ -319,7 +319,7 @@
 
     (POST "/save" []
       :summary "Create a new application, change an existing one or submit an application"
-      :roles #{:applicant}
+      :roles #{:logged-in}
       :body [request SaveApplicationCommand]
       :return SaveApplicationResponse
       (ok (form/api-save (assoc (fix-keys request) :actor (getx-user-id)))))
@@ -367,7 +367,7 @@
 
     (POST "/command" []
       :summary "Submit a command for a dynamic application"
-      :roles #{:applicant :approver :reviewer}
+      :roles #{:logged-in}
       :body [request DynamicCommand]
       :return SuccessResponse
       (let [cmd (assoc request :actor (getx-user-id))

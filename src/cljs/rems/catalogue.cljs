@@ -7,6 +7,7 @@
             [rems.cart :as cart]
             [rems.catalogue-util :refer [disabled-catalogue-item? get-catalogue-item-title urn-catalogue-item-link urn-catalogue-item?]]
             [rems.guide-functions]
+            [rems.roles :as roles]
             [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.text :refer [localize-time text]]
@@ -16,12 +17,11 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} _]
-   (when (empty? (get-in db [:identity :roles]))
-     (unauthorized!))
-   (when (contains? (get-in db [:identity :roles]) :applicant)
+   (if (roles/is-logged-in? (get-in db [:identity :roles]))
      {:db (assoc db ::loading-catalogue? true)
       ::fetch-catalogue nil
-      ::fetch-drafts nil})))
+      ::fetch-drafts nil}
+     (unauthorized!))))
 
 ;;;; table sorting
 

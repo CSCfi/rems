@@ -28,7 +28,8 @@
   ;;TODO: get navigation options from subscription
   (let [roles (:roles identity)]
     [e [:div.navbar-nav.mr-auto
-        [nav-link "#/catalogue" (text :t.navigation/catalogue) (= page-id :catalogue)]
+        (when (roles/is-logged-in? roles)
+          [nav-link "#/catalogue" (text :t.navigation/catalogue) (= page-id :catalogue)])
         (when (roles/is-applicant? roles)
           [nav-link "#/applications" (text :t.navigation/applications) (contains? #{:application
                                                                                     :applications}
