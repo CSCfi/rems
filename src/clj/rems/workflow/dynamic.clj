@@ -1,5 +1,6 @@
 (ns rems.workflow.dynamic
-  (:require [clojure.test :refer :all]
+  (:require [clojure.set :as set]
+            [clojure.test :refer :all]
             [rems.auth.util :refer [throw-unauthorized]]
             [rems.util :refer [getx]]
             [rems.workflow.permissions :as permissions]
@@ -216,40 +217,51 @@
   application)
 
 ;; TODO: add :see-everything permission to relevant roles
-(def ^:private initial-permissions {:applicant [::invite-member
-                                                ::save-draft
-                                                ::submit]
-                                    :handler []
-                                    :commenter [::comment]
-                                    :decider [::decide]})
-(def ^:private no-permissions {:applicant []
-                               :handler []
-                               :commenter []
-                               :decider []})
+(def ^:private draft-permissions {:applicant [::save-draft
+                                              ::submit
+                                              ::remove-member
+                                              ::invite-member
+                                              ::uninvite-member]
+                                  :handler [::remove-member
+                                            ::uninvite-member]
+                                  :commenter []
+                                  :decider []})
+
+(def ^:private submitted-permissions {:applicant [::remove-member
+                                                  ::uninvite-member]
+                                      :handler [::add-member
+                                                ::remove-member
+                                                ::invite-member
+                                                ::uninvite-member
+                                                ::request-comment
+                                                ::request-decision
+                                                ::return
+                                                ::approve
+                                                ::reject]
+                                      :commenter [::comment]
+                                      :decider [::decide]})
+
+(def ^:private closed-permissions {:applicant []
+                                   :handler []
+                                   :commenter []
+                                   :decider []})
 
 (defmethod calculate-permissions :application.event/created
   [application event]
   (-> application
       (permissions/give-role-to-user :applicant (:event/actor event))
       (permissions/give-role-to-users :handler (:workflow.dynamic/handlers event))
-      (permissions/set-role-permissions initial-permissions)))
+      (permissions/set-role-permissions draft-permissions)))
 
 (defmethod calculate-permissions :application.event/submitted
   [application _event]
   (-> application
-      (permissions/set-role-permissions {:applicant []
-                                         :handler [::add-member
-                                                   ::approve
-                                                   ::invite-member
-                                                   ::reject
-                                                   ::request-comment
-                                                   ::request-decision
-                                                   ::return]})))
+      (permissions/set-role-permissions submitted-permissions)))
 
 (defmethod calculate-permissions :application.event/returned
   [application _event]
   (-> application
-      (permissions/set-role-permissions initial-permissions)))
+      (permissions/set-role-permissions draft-permissions)))
 
 (defmethod calculate-permissions :application.event/comment-requested
   [application event]
@@ -276,20 +288,22 @@
 (defmethod calculate-permissions :application.event/approved
   [application _event]
   (-> application
-      (permissions/set-role-permissions (assoc no-permissions
-                                               :handler [::add-member
-                                                         ::close
-                                                         ::invite-member]))))
+      (permissions/set-role-permissions (update closed-permissions
+                                                :handler set/union #{::add-member
+                                                                     ::remove-member
+                                                                     ::invite-member
+                                                                     ::uninvite-member
+                                                                     ::close}))))
 
 (defmethod calculate-permissions :application.event/rejected
   [application _event]
   (-> application
-      (permissions/set-role-permissions no-permissions)))
+      (permissions/set-role-permissions closed-permissions)))
 
 (defmethod calculate-permissions :application.event/closed
   [application _event]
   (-> application
-      (permissions/set-role-permissions no-permissions)))
+      (permissions/set-role-permissions closed-permissions)))
 
 (deftest test-calculate-permissions
   ;; TODO: is this what we want? wouldn't it be useful to be able to write more than one comment?
@@ -781,12 +795,59 @@
   {:valid-user? (constantly true)
    :validate-form (constantly nil)})
 
+(defn- remove-impossible-permissions [application]
+  (let [removable-members (remove #(= (:userid %) (:applicantuserid application))
+                                  (:members application))
+        invited-members (:invited-members application)]
+    (cond-> application
+      (empty? removable-members) (permissions/remove-permission-from-all ::remove-member)
+      (empty? invited-members) (permissions/remove-permission-from-all ::uninvite-member))))
+
+(deftest test-remove-impossible-permissions
+  (testing "uninvite-member"
+    (testing "possible when there are invites"
+      (is (= {:role #{::uninvite-member}}
+             (-> {:invited-members [{:name "foo"
+                                     :email "foo@example.com"}]
+                  ::permissions/role-permissions {:role #{::uninvite-member}}}
+                 remove-impossible-permissions
+                 ::permissions/role-permissions))))
+    (testing "impossible when there are no invites"
+      (is (= {:role #{}}
+             (-> {:invited-members []
+                  ::permissions/role-permissions {:role #{::uninvite-member}}}
+                 remove-impossible-permissions
+                 ::permissions/role-permissions)))))
+
+  (testing "remove-member"
+    (testing "possible when there are members"
+      (is (= {:role #{::remove-member}}
+             (-> {:members [{:userid "foo"}]
+                  ::permissions/role-permissions {:role #{::remove-member}}}
+                 remove-impossible-permissions
+                 ::permissions/role-permissions))))
+    (testing "impossible when there are no members"
+      (is (= {:role #{}}
+             (-> {:members []
+                  ::permissions/role-permissions {:role #{::remove-member}}}
+                 remove-impossible-permissions
+                 ::permissions/role-permissions))))
+    (testing "impossible when the only member is the applicant"
+      (is (= {:role #{}}
+             (-> {:members [{:userid "foo"}]
+                  :applicantuserid "foo"
+                  ::permissions/role-permissions {:role #{::remove-member}}}
+                 remove-impossible-permissions
+                 ::permissions/role-permissions))))))
+
 (defn possible-commands
   "Calculates which commands should be possible for use in e.g. UI.
 
   Not every condition is checked exactly so it is in fact a potential set of possible commands only."
   [actor application-state]
-  (let [new-result (permissions/user-permissions application-state actor)
+  (let [new-result (-> application-state
+                       remove-impossible-permissions
+                       (permissions/user-permissions actor))
         ;; TODO: remove me
         old-result (->> application-state
                         (command-candidates actor)

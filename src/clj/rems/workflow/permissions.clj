@@ -113,6 +113,27 @@
                                       :role [:bar]})
                (set-role-permissions {:role [:gazonk]}))))))
 
+(defn remove-permission-from-all [application permission]
+  (let [roles (keys (::role-permissions application))]
+    (reduce (fn [application role]
+              (update-in application [::role-permissions role] disj permission))
+            application
+            roles)))
+
+(deftest test-remove-permission-from-all
+  (testing "removes the permission from all roles"
+    (is (= {::role-permissions {:role-1 #{}
+                                :role-2 #{}}}
+           (-> {}
+               (set-role-permissions {:role-1 [:foo]
+                                      :role-2 [:foo]})
+               (remove-permission-from-all :foo)))))
+  (testing "leaves unrelated permissions unchanged"
+    (is (= {::role-permissions {:role #{:bar}}}
+           (-> {}
+               (set-role-permissions {:role [:foo :bar]})
+               (remove-permission-from-all :foo))))))
+
 (defn user-permissions
   "Returns the specified user's permissions to this application.
    Union of all role specific permissions."
