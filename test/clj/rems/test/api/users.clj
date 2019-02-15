@@ -5,9 +5,10 @@
             [rems.test.api :refer :all]
             [ring.mock.request :refer :all]))
 
-(def new-user {:eppn "david"
-               :mail "d@av.id"
-               :commonName "David Newuser"})
+(def new-user
+  {:eppn "david"
+   :mail "d@av.id"
+   :commonName "David Newuser"})
 
 (use-fixtures
   :once
@@ -21,9 +22,9 @@
         (authenticate "42" "owner")
         app
         assert-response-is-ok)
-    (is (= {"eppn" "david"
-            "mail" "d@av.id"
-            "commonName" "David Newuser"} (users/get-user-attributes "david")))))
+    (is (= {:eppn "david"
+            :mail "d@av.id"
+            :commonName "David Newuser"} (users/get-user-attributes "david")))))
 
 (deftest workflows-api-security-test
   (testing "without authentication"

@@ -15,8 +15,9 @@
       (text :t.applications/state)
       (when state [:phrase ": " (localize-state state)])]
      [:heading (text :t.applicant-info/applicant)]
-     [:paragraph (get user "eppn")]
-     [:paragraph (get user "mail")]
+     [:paragraph (:eppn user)]
+     [:paragraph (:mail user)]
+     ;; TODO more members
      ;; TODO more fields?
      [:heading (text :t.form/resources)]
      (into

@@ -63,6 +63,14 @@
   [application event]
   application)
 
+(defmethod event-type-specific-application-view :application.event/member-removed
+  [application event]
+  application)
+
+(defmethod event-type-specific-application-view :application.event/member-uninvited
+  [application event]
+  application)
+
 (defmethod event-type-specific-application-view :application.event/submitted
   [application event]
   (-> application
@@ -346,9 +354,9 @@
                                                       :fi {:title "fi title"
                                                            :textcontent "fi license text"}}}}
 
-                    :get-user {"applicant" {"eppn" "applicant"
-                                            "mail" "applicant@example.com"
-                                            "commonName" "Applicant"}}}
+                    :get-user {"applicant" {:eppn "applicant"
+                                            :mail "applicant@example.com"
+                                            :commonName "Applicant"}}}
         apply-events (fn [events]
                        (permissions/cleanup
                         (build-application-view
@@ -375,9 +383,9 @@
                                   :application/modified (DateTime. 1000)
                                   :application/last-activity (DateTime. 1000)
                                   :application/applicant "applicant"
-                                  :application/applicant-attributes {"eppn" "applicant"
-                                                                     "mail" "applicant@example.com"
-                                                                     "commonName" "Applicant"}
+                                  :application/applicant-attributes {:eppn "applicant"
+                                                                     :mail "applicant@example.com"
+                                                                     :commonName "Applicant"}
                                   :application/resources [{:catalogue-item/id 10
                                                            :resource/id 11
                                                            :resource/ext-id "urn:11"

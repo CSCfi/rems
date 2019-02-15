@@ -77,6 +77,7 @@
             :open-reviews "Open reviews"
             :reject "Reject"
             :reject-success "Application rejected"
+            :remove-member "Remove member"
             :request-comment "Request comment"
             :request-decision "Request decision"
             :request-selection "Send request to user(s):"
@@ -150,6 +151,8 @@
                                   :draft-saved "Modified"
                                   :member-added "Member added"
                                   :member-invited "Member invited"
+                                  :member-removed "Member removed"
+                                  :member-uninvited "Member uninvited"
                                   :rejected "Rejected"
                                   :returned "Changes requested"
                                   :submitted "Applied"}

@@ -40,25 +40,25 @@
   ([]
    (get-user-id context/*user*))
   ([user]
-   (get user "eppn")))
+   (:eppn user)))
 
 (defn getx-user-id
   ([]
    (getx-user-id context/*user*))
   ([user]
-   (getx user "eppn")))
+   (getx user :eppn)))
 
 (defn get-username
   ([]
    (get-username context/*user*))
   ([user]
-   (get user "commonName")))
+   (:commonName user)))
 
 (defn get-user-mail
   ([]
    (get-user-mail context/*user*))
   ([user]
-   (get user "mail")))
+   (:mail user)))
 
 (defn update-present
   "Like clojure.core/update, but does nothing if the key `k` does not exist in `m`."

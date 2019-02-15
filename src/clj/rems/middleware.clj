@@ -62,7 +62,7 @@
   [handler]
   (fn [request]
     (let [header-identity (when-let [uid (get-in request [:headers "x-rems-user-id"])]
-                            {"eppn" uid})
+                            {:eppn uid})
           session-identity (:identity request)]
       (binding [context/*user* (if (and header-identity
                                         (valid-api-key? request))
