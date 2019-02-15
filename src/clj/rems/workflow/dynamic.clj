@@ -890,25 +890,33 @@
              (handle-command {:type ::invite-member :actor "member1" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
                              application
                              injections))))
-    (testing "applicant can't invite members to approved application"
-      (is (= {:errors [{:type :invalid-state :state ::approved}]}
-             (handle-command {:type ::invite-member :actor "applicant" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
-                             (assoc application :state ::approved)
-                             injections))))
-    (testing "handler can invite members to approved application"
-      (is (= [{:name "Member Applicant 1" :email "member1@applicants.com"}]
-             (:invited-members
-              (apply-commands (assoc application :state ::approved)
-                              [{:type ::invite-member :actor "assistant" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}]
-                              injections)))))))
+    (let [submitted (apply-events application
+                                  [{:event/type :application.event/submitted
+                                    :event/actor "applicant"}])]
+      (testing "applicant can't invite members to submitted application"
+        (is (= {:errors [{:type :invalid-state :state ::submitted}]}
+               (handle-command {:type ::invite-member :actor "applicant" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
+                               submitted
+                               injections))))
+      (testing "handler can invite members to submitted application"
+        (is (= [{:name "Member Applicant 1" :email "member1@applicants.com"}]
+               (:invited-members
+                (apply-commands submitted
+                                [{:type ::invite-member :actor "assistant" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}]
+                                injections))))))))
 
 (deftest test-remove-member
-  (let [application {:state ::submitted
-                     :members [{:userid "applicant"} {:userid "somebody"}]
-                     :applicantuserid "applicant"
-                     :workflow {:type :workflow/dynamic
-                                :handlers ["assistant"]}}
-        injections {}]
+  (let [application (apply-events nil
+                                  [{:event/type :application.event/created
+                                    :event/actor "applicant"
+                                    :workflow/type :workflow/dynamic
+                                    :workflow.dynamic/handlers #{"assistant"}}
+                                   {:event/type :application.event/submitted
+                                    :event/actor "applicant"}
+                                   {:event/type :application.event/member-added
+                                    :event/actor "assistant"
+                                    :application/member {:userid "somebody"}}])
+        injections {:valid-user? #{"somebody" "applicant" "assistant"}}]
     (testing "remove member by applicant"
       (is (= [{:userid "applicant"}]
              (:members
@@ -933,11 +941,16 @@
                              injections))))))
 
 (deftest test-uninvite-member
-  (let [application {:state ::submitted
-                     :invited-members [{:name "Some Body" :email "some@body.com"}]
-                     :applicantuserid "applicant"
-                     :workflow {:type :workflow/dynamic
-                                :handlers ["assistant"]}}
+  (let [application (apply-events nil
+                                  [{:event/type :application.event/created
+                                    :event/actor "applicant"
+                                    :workflow/type :workflow/dynamic
+                                    :workflow.dynamic/handlers #{"assistant"}}
+                                   {:event/type :application.event/member-invited
+                                    :event/actor "applicant"
+                                    :application/member {:name "Some Body" :email "some@body.com"}}
+                                   {:event/type :application.event/submitted
+                                    :event/actor "applicant"}])
         injections {}]
     (testing "uninvite member by applicant"
       (is (= []
@@ -1025,7 +1038,9 @@
              (possible-commands "somebody else" draft)))
       (testing "when there are invited members"
         (is (= #{::submit ::invite-member ::uninvite-member}
-               (possible-commands "applicant" (assoc draft :invited-members [{:name "Some One" :email "some.one@example.org"}]))))))
+               (possible-commands "applicant" (apply-events draft [{:event/type :application.event/member-invited
+                                                                    :event/actor "applicant"
+                                                                    :application/member {:name "Some One" :email "some.one@example.org"}}]))))))
     (let [submitted (apply-events draft [{:event/type :application.event/submitted
                                           :event/actor "applicant"}])]
       (testing "submitted"
@@ -1036,12 +1051,18 @@
         (is (= #{}
                (possible-commands "somebody else" submitted)))
         (testing "when there are invited members"
-          (is (contains? (possible-commands "applicant" (assoc submitted :invited-members [{:name "Some One" :email "some.one@example.org"}]))
+          (is (contains? (possible-commands "applicant" (apply-events submitted [{:event/type :application.event/member-invited
+                                                                                  :event/actor "applicant"
+                                                                                  :application/member {:name "Some One" :email "some.one@example.org"}}]))
                          ::uninvite-member))
-          (is (contains? (possible-commands "assistant" (assoc submitted :invited-members [{:name "Some One" :email "some.one@example.org"}]))
+          (is (contains? (possible-commands "assistant" (apply-events submitted [{:event/type :application.event/member-invited
+                                                                                  :event/actor "applicant"
+                                                                                  :application/member {:name "Some One" :email "some.one@example.org"}}]))
                          ::uninvite-member)))
         (testing "when there are added members"
-          (is (contains? (possible-commands "applicant" (update submitted :members conj {:userid "someone"}))
+          (is (contains? (possible-commands "applicant" (apply-events submitted [{:event/type :application.event/member-added
+                                                                                  :event/actor "assitant"
+                                                                                  :application/member {:userid "someone"}}]))
                          ::remove-member))))
       (let [requested (apply-events submitted [{:event/type :application.event/comment-requested
                                                 :event/actor "assistant"
