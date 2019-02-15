@@ -296,7 +296,7 @@
 (defn- get-applications-impl-batch
   "Prefetches all possibly relevant data from the database and returns all the applications, according to the query parameters, with all the events
   and catalogue items associated with them."
-  [query-params]
+  [user-id query-params]
   (let [events (db/get-application-events {})
         application-items (db/get-application-items)
         localized-items (get-localized-catalogue-items)]
@@ -310,25 +310,26 @@
          (-> (get-application-state app app-events)
              (assoc :formid (:formid (first catalogue-items))
                     :catalogue-items catalogue-items)
+             (->> (dynamic/assoc-possible-commands user-id))
              (permissions/cleanup)))))))
 
 (comment
-  (->> (get-applications-impl-batch {})
+  (->> (get-applications-impl-batch "developer" {})
        (mapv :id)))
 
 (defn get-user-applications [user-id]
   (assert user-id "Must have user-id")
-  (->> (get-applications-impl-batch {:applicant user-id})
+  (->> (get-applications-impl-batch user-id {:applicant user-id})
        (remove (comp #{"closed"} :state))))
 
 (comment
-  (->> (get-applications-impl-batch {:applicant "developer"})
+  (->> (get-applications-impl-batch "developer" {:applicant "developer"})
        (mapv :id))
-  (->> (get-applications-impl-batch {:applicant "alice"})
+  (->> (get-applications-impl-batch "alice" {:applicant "alice"})
        (mapv :id)))
 
 (defn get-approvals [user-id]
-  (->> (get-applications-impl-batch {})
+  (->> (get-applications-impl-batch user-id {})
        (filterv (partial can-approve? user-id))))
 
 (comment
@@ -341,7 +342,7 @@
 ;; TODO combine handled approvals and reviews as just handled applications
 (defn get-handled-approvals [user-id]
   (let [actors (db/get-actors-for-applications {:role "approver"})]
-    (->> (get-applications-impl-batch {})
+    (->> (get-applications-impl-batch user-id {})
          (filterv handled?)
          (filterv (fn [app]
                     (let [application (get-application-state (:id app))]
@@ -356,7 +357,7 @@
 ;; TODO: consider refactoring to finding the review events from the current user and mapping those to applications
 (defn get-handled-reviews [user-id]
   (let [actors (db/get-actors-for-applications {:role "reviewer"})]
-    (->> (get-applications-impl-batch {})
+    (->> (get-applications-impl-batch user-id {})
          (filterv (fn [app] (reviewed? user-id app)))
          (filterv (fn [app]
                     (or (is-actor? user-id (actors/filter-by-application-id actors (:id app)))
@@ -391,7 +392,7 @@
   "Returns applications that are waiting for a normal or 3rd party review. Type of the review, with key :review and values :normal or :third-party,
   are added to each application's attributes"
   [user-id]
-  (->> (get-applications-impl-batch {})
+  (->> (get-applications-impl-batch user-id {})
        (filterv
         (fn [app] (and (not (reviewed? user-id app))
                        (or (can-review? user-id app)
@@ -468,7 +469,7 @@
    :maxlength (:maxlength item)})
 
 (defn- assoc-item-previous-values [application items]
-  (let [previous-values (:items (if (editable? (:state application))
+  (let [previous-values (:items (if (editable? application)
                                   (:submitted-form-contents application)
                                   (:previous-submitted-form-contents application)))]
     (for [item items]
@@ -617,7 +618,7 @@
                                buffer (ByteArrayOutputStream.)]
                      (clojure.java.io/copy input buffer)
                      (.toByteArray buffer))]
-    (when-not (editable? (:state (:application form)))
+    (when-not (editable? (:application form))
       (throw-forbidden))
     (db/save-attachment! {:application application-id
                           :form (:id form)
@@ -630,7 +631,7 @@
 (defn remove-attachment!
   [user-id application-id item-id]
   (let [form (get-form-for user-id application-id)]
-    (when-not (editable? (:state (:application form)))
+    (when-not (editable? (:application form))
       (throw-forbidden))
     (db/remove-attachment! {:application application-id
                             :form (:id form)

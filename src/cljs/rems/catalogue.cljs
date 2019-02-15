@@ -70,8 +70,7 @@
 (rf/reg-event-db
  ::fetch-drafts-result
  (fn [db [_ applications]]
-   (assoc db ::draft-applications (filter (comp editable? :state)
-                                          applications))))
+   (assoc db ::draft-applications (filter editable? applications))))
 
 (defn- fetch-drafts []
   (fetch "/api/applications/" {:handler #(rf/dispatch [::fetch-drafts-result %])}))

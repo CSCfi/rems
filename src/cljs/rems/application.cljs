@@ -707,8 +707,7 @@
         {:keys [items licenses validation]} edit-application
         field-validations (index-by [:field-id] validation)
         license-validations (index-by [:license-id] validation)
-        state (:state application)
-        editable? (editable? state)
+        editable? (editable? application)
         readonly? (not editable?)]
     [collapsible/component
      {:id "form"
@@ -798,7 +797,7 @@
                        (:commonName attributes)
                        (get attributes "eppn")
                        (:eppn attributes))]
-       [info-field (text :t.applicant-info/name) name  {:inline? true}]
+       [info-field (text :t.applicant-info/name) name {:inline? true}]
        [info-field (text :t.applicant-info/username) (or (get attributes "eppn") (:eppn attributes)) {:inline? true}])
      [info-field (text :t.applicant-info/email) (or (get attributes "mail")
                                                     (:mail attributes)) {:inline? true}]]
@@ -1034,9 +1033,10 @@
 
 
 (defn- dynamic-actions [app]
+  ;; TODO: these are shown in random order (same order as in the possible commands set)
   (distinct
-   (mapcat #:rems.workflow.dynamic{:submit [[save-button]
-                                            [submit-button]]
+   (mapcat #:rems.workflow.dynamic{:save-draft [[save-button]]
+                                   :submit [[submit-button]]
                                    :return [[return-action-button]]
                                    :request-decision [[request-decision-action-button]]
                                    :decide [[decide-action-button]]
@@ -1048,8 +1048,7 @@
            (:possible-commands app))))
 
 (defn- static-actions [app]
-  (let [state (:state app)
-        editable? (editable? state)]
+  (let [editable? (editable? app)]
     (concat (when (:can-close? app)
               [(if (:is-applicant? app)
                  [applicant-close-action-button]

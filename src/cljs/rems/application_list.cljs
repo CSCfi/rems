@@ -21,7 +21,7 @@
   [:id :description :resource :applicant :state :created :view])
 
 (defn state-class [item]
-  (if (editable? (:state item))
+  (if (editable? item)
     "state text-highlight"
     "state"))
 
