@@ -1033,19 +1033,19 @@
 
 
 (defn- dynamic-actions [app]
-  ;; TODO: these are shown in random order (same order as in the possible commands set)
-  (distinct
-   (mapcat #:rems.workflow.dynamic{:save-draft [[save-button]]
-                                   :submit [[submit-button]]
-                                   :return [[return-action-button]]
-                                   :request-decision [[request-decision-action-button]]
-                                   :decide [[decide-action-button]]
-                                   :request-comment [[request-comment-action-button]]
-                                   :comment [[comment-action-button]]
-                                   :approve [[approve-reject-action-button]]
-                                   :reject [[approve-reject-action-button]]
-                                   :close [[close-action-button]]}
-           (:possible-commands app))))
+  (let [commands-and-actions [:rems.workflow.dynamic/save-draft [save-button]
+                              :rems.workflow.dynamic/submit [submit-button]
+                              :rems.workflow.dynamic/return [return-action-button]
+                              :rems.workflow.dynamic/request-decision [request-decision-action-button]
+                              :rems.workflow.dynamic/decide [decide-action-button]
+                              :rems.workflow.dynamic/request-comment [request-comment-action-button]
+                              :rems.workflow.dynamic/comment [comment-action-button]
+                              :rems.workflow.dynamic/approve [approve-reject-action-button]
+                              :rems.workflow.dynamic/reject [approve-reject-action-button]
+                              :rems.workflow.dynamic/close [close-action-button]]]
+    (distinct (for [[command action] (partition 2 commands-and-actions)
+                    :when (contains? (:possible-commands app) command)]
+                action))))
 
 (defn- static-actions [app]
   (let [editable? (editable? app)]
