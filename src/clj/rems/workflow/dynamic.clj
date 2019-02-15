@@ -949,28 +949,34 @@
                                {:type ::invite-member :actor "applicant" :member {:name "Member Applicant 2" :email "member2@applicants.com"}}]
                               injections)))))
     (testing "invite two members by handler"
-      (is (= [{:name "Member Applicant 1" :email "member1@applicants.com"} {:name "Member Applicant 2" :email "member2@applicants.com"}]
-             (:invited-members
-              (apply-commands (assoc application :state ::submitted)
-                              [{:type ::invite-member :actor "assistant" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
-                               {:type ::invite-member :actor "assistant" :member {:name "Member Applicant 2" :email "member2@applicants.com"}}]
-                              injections)))))
+      (let [application (apply-events application [{:event/type :application.event/submitted
+                                                    :event/actor "applicant"}])]
+        (is (= [{:name "Member Applicant 1" :email "member1@applicants.com"} {:name "Member Applicant 2" :email "member2@applicants.com"}]
+               (:invited-members
+                (apply-commands application
+                                [{:type ::invite-member :actor "assistant" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
+                                 {:type ::invite-member :actor "assistant" :member {:name "Member Applicant 2" :email "member2@applicants.com"}}]
+                                injections))))))
     (testing "only applicant or handler can invite members"
       (is (= {:errors [{:type :forbidden}]}
              (handle-command {:type ::invite-member :actor "member1" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
                              application
                              injections))))
-    (testing "applicant can't invite members to approved application"
-      (is (= {:errors [{:type :invalid-state :state ::approved}]}
-             (handle-command {:type ::invite-member :actor "applicant" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
-                             (assoc application :state ::approved)
-                             injections))))
-    (testing "handler can invite members to approved application"
-      (is (= [{:name "Member Applicant 1" :email "member1@applicants.com"}]
-             (:invited-members
-              (apply-commands (assoc application :state ::approved)
-                              [{:type ::invite-member :actor "assistant" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}]
-                              injections)))))))
+    (let [application (apply-events application [{:event/type :application.event/submitted
+                                                  :event/actor "applicant"}
+                                                 {:event/type :application.event/approved
+                                                  :event/actor "assistant"}])]
+      (testing "applicant can't invite members to approved application"
+        (is (= {:errors [{:type :invalid-state :state ::approved}]}
+               (handle-command {:type ::invite-member :actor "applicant" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
+                               application
+                               injections))))
+      (testing "handler can invite members to approved application"
+        (is (= [{:name "Member Applicant 1" :email "member1@applicants.com"}]
+               (:invited-members
+                (apply-commands application
+                                [{:type ::invite-member :actor "assistant" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}]
+                                injections))))))))
 
 (deftest test-comment
   (let [application (apply-events nil
