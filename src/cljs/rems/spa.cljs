@@ -1,10 +1,9 @@
 (ns rems.spa
-  (:require [reagent.core :as r]
-            [re-frame.core :as rf :refer [dispatch reg-event-db reg-event-fx reg-sub reg-fx]]
-            [secretary.core :as secretary]
-            [goog.events :as events]
+  (:require [goog.events :as events]
             [goog.history.EventType :as HistoryEventType]
             [markdown.core :refer [md->html]]
+            [re-frame.core :as rf :refer [dispatch reg-event-db reg-event-fx reg-sub reg-fx]]
+            [reagent.core :as r]
             [rems.actions :refer [actions-page fetch-actions]]
             [rems.administration.administration :refer [administration-page]]
             [rems.administration.catalogue-item :refer [catalogue-item-page]]
@@ -25,7 +24,6 @@
             [rems.ajax :refer [load-interceptors!]]
             [rems.application :refer [application-page]]
             [rems.applications :refer [applications-page]]
-            [rems.atoms :as atoms]
             [rems.auth.auth :as auth]
             [rems.cart :as cart]
             [rems.catalogue :refer [catalogue-page]]
@@ -33,8 +31,10 @@
             [rems.guide-page :refer [guide-page]]
             [rems.navbar :as nav]
             [rems.new-application :refer [new-application-page]]
+            [rems.roles :as roles]
             [rems.text :refer [text]]
-            [rems.util :refer [dispatch! fetch]])
+            [rems.util :refer [dispatch! fetch]]
+            [secretary.core :as secretary])
   (:require-macros [rems.read-gitlog :refer [read-current-version]])
   (:import goog.History))
 
@@ -162,9 +162,8 @@
        (println "Selecting landing page based on roles" roles)
        (.removeItem js/sessionStorage "rems-redirect-url")
        (cond
-         (contains? roles :owner) (dispatch! "/#/administration")
-         (contains? roles :approver) (dispatch! "/#/actions")
-         (contains? roles :reviewer) (dispatch! "/#/actions")
+         (roles/is-admin? roles) (dispatch! "/#/administration")
+         (roles/is-handler? roles) (dispatch! "/#/actions")
          :else (dispatch! "/#/catalogue"))
        {})
      ;;; else dispatch the same event again while waiting for set-identity (happens especially with Firefox)
