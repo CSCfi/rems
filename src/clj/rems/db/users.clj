@@ -13,13 +13,13 @@
 (defn get-user-attributes
   "Takes as user id as an input and fetches user attributes that are stored in a json blob in the users table.
    Returns a structure like this:
-   {\"eppn\" \"developer\"
-    \"email\" \"developer@e.mail\"
-    \"displayName\" \"deve\"
-    \"surname\" \"loper\"
+   {:eppn \"developer\"
+    :email \"developer@e.mail\"
+    :displayName \"deve\"
+    :surname \"loper\"
     ...etc}"
   [userid]
-  (parse-string (:userattrs (db/get-user-attributes {:user userid}))))
+  (parse-string (:userattrs (db/get-user-attributes {:user userid})) true))
 
 (defn get-all-users
   []

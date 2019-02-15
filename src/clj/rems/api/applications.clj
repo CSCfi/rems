@@ -35,7 +35,7 @@
 (s/defschema GetApplicationResponse
   {:id (s/maybe s/Num)
    :catalogue-items [CatalogueItem]
-   :applicant-attributes (s/maybe {s/Str s/Str})
+   :applicant-attributes (s/maybe {s/Keyword s/Str})
    :application (s/maybe Application)
    :licenses [ApplicationLicense]
    :phases Phases
@@ -172,14 +172,14 @@
         (hide-sensitive-information user-id))))
 
 (defn invalid-user? [u]
-  (or (str/blank? (get u "eppn"))
-      (str/blank? (get u "commonName"))
-      (str/blank? (get u "mail"))))
+  (or (str/blank? (:eppn u))
+      (str/blank? (:commonName u))
+      (str/blank? (:mail u))))
 
 (defn format-user [u]
-  {:userid (get u "eppn")
-   :name (get u "commonName")
-   :email (get u "mail")})
+  {:userid (:eppn u)
+   :name (:commonName u)
+   :email (:mail u)})
 
 ;; TODO Filter applicant, requesting user
 (defn get-users []

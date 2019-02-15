@@ -26,7 +26,7 @@
                                     (.collapse (js/$ (str "." id "less")) "hide"))}
     (text :t.collapse/show-less)]])
 
-(defn- block [id expanded callback content-always content-hideable top-less-button? bottom-less-button?]
+(defn- block [id expanded callback content-always content-hideable content-footer top-less-button? bottom-less-button?]
   [:div.collapse-content
    content-always
    (when-not (empty? content-hideable)
@@ -34,7 +34,8 @@
       (when top-less-button? [show-less-button id expanded])
       [:div.collapse {:id (str id "collapse") :class (when expanded "show")} content-hideable]
       [show-more-button id expanded callback]
-      (when-not (false? bottom-less-button?) [show-less-button id expanded])])])
+      (when-not (false? bottom-less-button?) [show-less-button id expanded])])
+   content-footer])
 
 (defn minimal
   "Displays a minimal collapsible block of content.
@@ -50,12 +51,13 @@
   `:on-open` triggers the function callback given as an argument when load-more is clicked
   `:title` component displayed in title area
   `:always` component displayed always before collapsible area
-  `:collapse` component that is toggled displayed or not"
-  [{:keys [id class open? on-open title always collapse top-less-button? bottom-less-button?]}]
+  `:collapse` component that is toggled displayed or not
+  `:footer` component displayed always after collapsible area"
+  [{:keys [id class open? on-open title always collapse footer top-less-button? bottom-less-button?]}]
   [:div {:id id :class class}
    (when title [header title])
-   (when (or always collapse)
-     [block id open? on-open always collapse top-less-button? bottom-less-button?])])
+   (when (or always collapse footer)
+     [block id open? on-open always collapse footer top-less-button? bottom-less-button?])])
 
 (defn component
   "Displays a collapsible block of content.

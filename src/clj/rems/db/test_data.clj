@@ -25,12 +25,12 @@
    :reviewer "carl"})
 
 (def +fake-user-data+
-  {"developer" {"eppn" "developer" "mail" "deve@lo.per" "commonName" "Deve Loper"}
-   "alice" {"eppn" "alice" "mail" "a@li.ce" "commonName" "Alice Applicant"}
-   "malice" {"eppn" "malice" "mail" "ma@li.ce" "commonName" "Malice Applicant"}
-   "bob" {"eppn" "bob" "mail" "b@o.b" "commonName" "Bob Approver"}
-   "carl" {"eppn" "carl" "mail" "c@a.rl" "commonName" "Carl Reviewer"}
-   "owner" {"eppn" "owner" "mail" "ow@n.er" "commonName" "Own Er"}})
+  {"developer" {:eppn "developer" :mail "deve@lo.per" :commonName "Deve Loper"}
+   "alice" {:eppn "alice" :mail "a@li.ce" :commonName "Alice Applicant"}
+   "malice" {:eppn "malice" :mail "ma@li.ce" :commonName "Malice Applicant"}
+   "bob" {:eppn "bob" :mail "b@o.b" :commonName "Bob Approver"}
+   "carl" {:eppn "carl" :mail "c@a.rl" :commonName "Carl Reviewer"}
+   "owner" {:eppn "owner" :mail "ow@n.er" :commonName "Own Er"}})
 
 (def +demo-users+
   {:applicant1 "RDapplicant1@funet.fi"
@@ -41,12 +41,12 @@
    :reviewer "RDreview@funet.fi"})
 
 (def +demo-user-data+
-  {"RDapplicant1@funet.fi" {"eppn" "RDapplicant1@funet.fi" "mail" "RDapplicant1.test@test_example.org" "commonName" "RDapplicant1 REMSDEMO1"}
-   "RDapplicant2@funet.fi" {"eppn" "RDapplicant2@funet.fi" "mail" "RDapplicant2.test@test_example.org" "commonName" "RDapplicant2 REMSDEMO"}
-   "RDapprover1@funet.fi" {"eppn" "RDapprover1@funet.fi" "mail" "RDapprover1.test@rems_example.org" "commonName" "RDapprover1 REMSDEMO"}
-   "RDapprover2@funet.fi" {"eppn" "RDapprover2@funet.fi" "mail" "RDapprover2.test@rems_example.org" "commonName" "RDapprover2 REMSDEMO"}
-   "RDreview@funet.fi" {"eppn" "RDreview@funet.fi" "mail" "RDreview.test@rems_example.org" "commonName" "RDreview REMSDEMO"}
-   "RDowner@funet.fi" {"eppn" "RDowner@funet.fi" "mail" "RDowner.test@test_example.org" "commonName" "RDowner REMSDEMO"}})
+  {"RDapplicant1@funet.fi" {:eppn "RDapplicant1@funet.fi" :mail "RDapplicant1.test@test_example.org" :commonName "RDapplicant1 REMSDEMO1"}
+   "RDapplicant2@funet.fi" {:eppn "RDapplicant2@funet.fi" :mail "RDapplicant2.test@test_example.org" :commonName "RDapplicant2 REMSDEMO"}
+   "RDapprover1@funet.fi" {:eppn "RDapprover1@funet.fi" :mail "RDapprover1.test@rems_example.org" :commonName "RDapprover1 REMSDEMO"}
+   "RDapprover2@funet.fi" {:eppn "RDapprover2@funet.fi" :mail "RDapprover2.test@rems_example.org" :commonName "RDapprover2 REMSDEMO"}
+   "RDreview@funet.fi" {:eppn "RDreview@funet.fi" :mail "RDreview.test@rems_example.org" :commonName "RDreview REMSDEMO"}
+   "RDowner@funet.fi" {:eppn "RDowner@funet.fi" :mail "RDowner.test@test_example.org" :commonName "RDowner REMSDEMO"}})
 
 (defn- create-users-and-roles! []
   ;; users provided by the fake login

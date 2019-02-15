@@ -533,10 +533,10 @@
   (db/add-user! {:user "pekka", :userattrs nil})
   (db/add-user! {:user "simo", :userattrs nil})
   (is (= 2 (count (db/get-users))))
-  (db/add-user! {:user "pekka", :userattrs (cheshire/generate-string {"key" "value"})})
+  (db/add-user! {:user "pekka", :userattrs (cheshire/generate-string {:key "value"})})
   (db/add-user! {:user "simo", :userattrs nil})
   (is (= 2 (count (db/get-users))))
-  (is (= {"key" "value"} (users/get-user-attributes "pekka"))))
+  (is (= {:key "value"} (users/get-user-attributes "pekka"))))
 
 (deftest test-roles
   (db/add-user! {:user "pekka", :userattrs nil})
@@ -746,8 +746,8 @@
     (let [new-wf (:id (db/create-workflow! {:organization "abc" :modifieruserid uid :owneruserid uid :title "3rd party review workflow" :fnlround 0}))
           new-item (:id (db/create-catalogue-item! {:title "A" :form nil :resid nil :wfid new-wf}))]
       (actors/add-approver! new-wf uid 0)
-      (db/add-user! {:user "third-party-reviewer", :userattrs (cheshire/generate-string {"eppn" "third-party-reviewer" "mail" ""})})
-      (db/add-user! {:user "another-reviewer", :userattrs (cheshire/generate-string {"eppn" "another-reviewer" "mail" ""})})
+      (db/add-user! {:user "third-party-reviewer", :userattrs (cheshire/generate-string {:eppn "third-party-reviewer" :mail ""})})
+      (db/add-user! {:user "another-reviewer", :userattrs (cheshire/generate-string {:eppn "another-reviewer" :mail ""})})
       (testing "3rd party review"
         (let [new-app (applications/create-new-draft uid new-wf)]
           (db/add-application-item! {:application new-app :item new-item})

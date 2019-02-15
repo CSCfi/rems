@@ -39,10 +39,10 @@
 (defn- convert-ldap-user
   "Converts user fetched from LDAP to a Shibboleth-like format."
   [user]
-  {"eppn" (getx user :userPrincipalName)
-   "commonName" (getx user :displayName)
-   "mail" (getx user :mail)
-   "dn" (getx user :dn)})
+  {:eppn (getx user :userPrincipalName)
+   :commonName (getx user :displayName)
+   :mail (getx user :mail)
+   :dn (getx user :dn)})
 
 (defn login-component []
   [:div.m-auto.jumbotron

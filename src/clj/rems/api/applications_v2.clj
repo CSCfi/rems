@@ -18,7 +18,7 @@
 (defn- set-permissions
   "Sets permissions for the application. Use `set-role-permissions` or
   `set-user-permissions` instead of calling this function directly.
-  
+
    In `permission-map`, the key is the subject (user or role), and the value
    is a list of permissions to set for that subject.
 
@@ -42,7 +42,7 @@
 
    Users will be mapped to roles based on application state.
    The supported roles are defined in `user-permissions`.
-   
+
    The keys in `permission-map` are the role names as keywords.
    See `set-permissions` for details on `permission-map`."
   [application permission-map]
@@ -51,7 +51,7 @@
 
 (defn- set-user-permissions
   "Sets user specific permissions for the application.
-  
+
    User specific permissions can be used e.g. to give specific users
    commenting access or to give non-applicant members read-only
    access to the application.
@@ -220,6 +220,14 @@
   application)
 
 (defmethod event-type-specific-application-view :application.event/member-added
+  [application event]
+  application)
+
+(defmethod event-type-specific-application-view :application.event/member-removed
+  [application event]
+  application)
+
+(defmethod event-type-specific-application-view :application.event/member-uninvited
   [application event]
   application)
 
@@ -511,9 +519,9 @@
                                                       :fi {:title "fi title"
                                                            :textcontent "fi license text"}}}}
 
-                    :get-user {"applicant" {"eppn" "applicant"
-                                            "mail" "applicant@example.com"
-                                            "commonName" "Applicant"}}}
+                    :get-user {"applicant" {:eppn "applicant"
+                                            :mail "applicant@example.com"
+                                            :commonName "Applicant"}}}
 
         created-event {:event/type :application.event/created
                        :event/time (DateTime. 1000)
@@ -535,9 +543,9 @@
                                   :application/modified (DateTime. 1000)
                                   :application/last-activity (DateTime. 1000)
                                   :application/applicant "applicant"
-                                  :application/applicant-attributes {"eppn" "applicant"
-                                                                     "mail" "applicant@example.com"
-                                                                     "commonName" "Applicant"}
+                                  :application/applicant-attributes {:eppn "applicant"
+                                                                     :mail "applicant@example.com"
+                                                                     :commonName "Applicant"}
                                   :application/resources [{:catalogue-item/id 10
                                                            :resource/id 11
                                                            :resource/ext-id "urn:11"
