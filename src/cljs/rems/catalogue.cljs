@@ -84,15 +84,17 @@
               :filterable? false}})
 
 (defn- catalogue-list
-  [items language sorting filtering config]
+  "Renders the catalogue using table.
+
+  See `table/component`."
+  [{:keys [items language sorting filtering config] :as params}]
   [table/component
-   {:column-definitions (catalogue-columns language config)
-    :visible-columns [:name :commands]
-    :sorting sorting
-    :filtering filtering
-    :id-function :id
-    :items (filter (complement disabled-catalogue-item?) items)
-    :class "catalogue"}])
+   (merge {:column-definitions (catalogue-columns language config)
+           :visible-columns [:name :commands]
+           :id-function :id
+           :items (filter (complement disabled-catalogue-item?) items)
+           :class "catalogue"}
+          (select-keys [:sorting :filtering] params))])
 
 (defn- format-catalogue-items [app]
   (str/join ", " (map :title (:catalogue-items app))))
@@ -131,11 +133,11 @@
           [:h4 (text :t.catalogue/apply-resources)]
           [cart/cart-list-container @language]
           [catalogue-list
-           @catalogue
-           @language
-           (assoc @sorting :set-sorting #(rf/dispatch [::set-sorting %]))
-           (assoc @filtering :set-filtering #(rf/dispatch [::set-filtering %]))
-           @config]])])))
+           {:items @catalogue
+            :language @language
+            :sorting (assoc @sorting :set-sorting #(rf/dispatch [::set-sorting %]))
+            :filtering (assoc @filtering :set-filtering #(rf/dispatch [::set-filtering %]))
+            :config @config}]])])))
 
 (defn guide []
   [:div
@@ -174,14 +176,14 @@
 
    (component-info catalogue-list)
    (example "catalogue-list empty"
-            [catalogue-list [] nil {:sort-column :name, :sort-order :asc}])
+            [catalogue-list {:items [] :sorting {:sort-column :name, :sort-order :asc}}])
    (example "catalogue-list with two items"
-            [catalogue-list [{:title "Item title"} {:title "Another title"}] nil {:sort-column :name, :sort-order :asc}])
+            [catalogue-list {:items [{:title "Item title"} {:title "Another title"}] :sorting {:sort-column :name, :sort-order :asc}  }])
    (example "catalogue-list with two items in reverse order"
-            [catalogue-list [{:title "Item title"} {:title "Another title"}] nil {:sort-column :name, :sort-order :desc}])
+            [catalogue-list {:items [{:title "Item title"} {:title "Another title"}] :sorting {:sort-column :name, :sort-order :desc}  }])
    (example "catalogue-list with three items, of which second is disabled"
-            [catalogue-list [{:title "Item 1"} {:title "Item 2 is disabled and should not be shown" :state "disabled"} {:title "Item 3"}] nil {:sort-column :name, :sort-order :asc}])
+            [catalogue-list {:items [{:title "Item 1"} {:title "Item 2 is disabled and should not be shown" :state "disabled"} {:title "Item 3"}] :sorting {:sort-column :name, :sort-order :asc}  }])
    (example "catalogue-list with item linked to urn.fi"
-            [catalogue-list [{:title "Item title" :resid "urn:nbn:fi:lb-201403262"}] nil {:sort-column :name, :sort-order :asc}])
+            [catalogue-list {:items [{:title "Item title" :resid "urn:nbn:fi:lb-201403262"}] :sorting {:sort-column :name, :sort-order :asc}  }])
    (example "catalogue-list with item linked to example.org"
-            [catalogue-list [{:title "Item title" :resid "urn:nbn:fi:lb-201403262"}] nil {:sort-column :name, :sort-order :asc} {:urn-organization "http://example.org/"}])])
+            [catalogue-list {:items [{:title "Item title" :resid "urn:nbn:fi:lb-201403262"}] :sorting {:sort-column :name, :sort-order :asc}  :config {:urn-organization "http://example.org/"}}])])
