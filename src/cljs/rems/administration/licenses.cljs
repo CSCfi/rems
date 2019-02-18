@@ -77,18 +77,13 @@
     :items licenses}])
 
 (defn licenses-page []
-  (let [licenses (rf/subscribe [::licenses])
-        sorting (rf/subscribe [::sorting])
-        filtering (rf/subscribe [::filtering])
-        loading? (rf/subscribe [::loading?])]
-    (fn []
-      (into [:div
-             [administration-navigator-container]
-             [:h2 (text :t.administration/licenses)]]
-            (if @loading?
-              [[spinner/big]]
-              [[to-create-licenses]
-               [licenses-list
-                @licenses
-                (assoc @sorting :set-sorting    #(rf/dispatch [::set-sorting %]))
-                (assoc @filtering :set-filtering    #(rf/dispatch [::set-filtering %]))]])))))
+  (into [:div
+         [administration-navigator-container]
+         [:h2 (text :t.administration/licenses)]]
+        (if @(rf/subscribe [::loading?])
+          [[spinner/big]]
+          [[to-create-licenses]
+           [licenses-list
+            @(rf/subscribe [::licenses])
+            (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))
+            (assoc @(rf/subscribe [::filtering]) :set-filtering #(rf/dispatch [::set-filtering %]))]])))

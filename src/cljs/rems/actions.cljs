@@ -126,16 +126,15 @@
 
 (defn- open-applications
   [apps]
-  (let [sorting (rf/subscribe [::sorting ::open-applications])
-        filtering (rf/subscribe [::filtering ::open-applications])]
-    (fn [apps]
-      (if (empty? apps)
-        [:div.actions.alert.alert-success (text :t.actions/empty)]
-        [application-list/component
-         {:visible-columns application-list/+all-columns+
-          :sorting (assoc @sorting :set-sorting #(rf/dispatch [::set-sorting ::open-applications %]))
-          :filtering (assoc @filtering :set-filtering #(rf/dispatch [::set-filtering ::open-applications %]))
-          :items apps}]))))
+  (if (empty? apps)
+    [:div.actions.alert.alert-success (text :t.actions/empty)]
+    [application-list/component
+     {:visible-columns application-list/+all-columns+
+      :sorting (assoc @(rf/subscribe [::sorting ::open-applications])
+                      :set-sorting #(rf/dispatch [::set-sorting ::open-applications %]))
+      :filtering (assoc @(rf/subscribe [::filtering ::open-applications])
+                        :set-filtering #(rf/dispatch [::set-filtering ::open-applications %]))
+      :items apps}]))
 
 (defn- handled-applications
   "Creates a table containing a list of handled applications.
@@ -145,44 +144,40 @@
   apps:        collection of apps to be shown
   top-buttons: a set of extra buttons that will be shown on top of the table. This could include f.ex 'export as pdf' button."
   [apps top-buttons loading?]
-  (let [sorting (rf/subscribe [::sorting ::handled-applications])
-        filtering (rf/subscribe [::filtering ::handled-applications])]
-    (fn [apps top-buttons loading?]
-      (if loading?
-        [spinner/big]
-        (if (empty? apps)
-          [:div.actions.alert.alert-success (text :t.actions/no-handled-yet)]
-          [:div
-           top-buttons
-           [application-list/component
-            {:visible-columns [:id :description :resource :applicant :state :last-modified :view]
-             :sorting (assoc @sorting :set-sorting #(rf/dispatch [::set-sorting ::handled-applications %]))
-             :filtering (assoc @filtering :set-filtering #(rf/dispatch [::set-filtering ::handled-applications %]))
-             :items apps}]])))))
+  (if loading?
+    [spinner/big]
+    (if (empty? apps)
+      [:div.actions.alert.alert-success (text :t.actions/no-handled-yet)]
+      [:div
+       top-buttons
+       [application-list/component
+        {:visible-columns [:id :description :resource :applicant :state :last-modified :view]
+         :sorting (assoc @(rf/subscribe [::sorting ::handled-applications])
+                         :set-sorting #(rf/dispatch [::set-sorting ::handled-applications %]))
+         :filtering (assoc @(rf/subscribe [::filtering ::handled-applications])
+                           :set-filtering #(rf/dispatch [::set-filtering ::handled-applications %]))
+         :items apps}]])))
 
 (defn actions-page [reviews]
   (let [actions (rf/subscribe [::actions])
-        loading-actions? (rf/subscribe [::loading-actions?])
-        handled-actions (rf/subscribe [::handled-actions])
-        loading-handled-actions? (rf/subscribe [::loading-handled-actions?])]
-    (fn [reviews]
-      (if @loading-actions?
-        [spinner/big]
-        [:div.spaced-sections
-         (when (or (:reviewer? @actions) (:approver? @actions))
-           [collapsible/component
-            {:id "open-approvals"
-             :open? true
-             :title (text :t.actions/open-approvals)
-             :collapse [open-applications
-                        (distinct-by :id (concat (:reviews @actions)
-                                                 (:approvals @actions)))]}])
-         (when (or (:reviewer? @actions) (:approver? @actions))
-           [collapsible/component
-            {:id "handled-approvals"
-             :on-open #(rf/dispatch [:rems.actions/start-fetch-handled-actions])
-             :title (text :t.actions/handled-approvals)
-             :collapse [handled-applications
-                        (distinct-by :id (concat (:handled-reviews @handled-actions)
-                                                 (:handled-approvals @handled-actions)))
-                        @loading-handled-actions?]}])]))))
+        handled-actions (rf/subscribe [::handled-actions])]
+    (if @(rf/subscribe [::loading-actions?])
+      [spinner/big]
+      [:div.spaced-sections
+       (when (or (:reviewer? @actions) (:approver? @actions))
+         [collapsible/component
+          {:id "open-approvals"
+           :open? true
+           :title (text :t.actions/open-approvals)
+           :collapse [open-applications
+                      (distinct-by :id (concat (:reviews @actions)
+                                               (:approvals @actions)))]}])
+       (when (or (:reviewer? @actions) (:approver? @actions))
+         [collapsible/component
+          {:id "handled-approvals"
+           :on-open #(rf/dispatch [:rems.actions/start-fetch-handled-actions])
+           :title (text :t.actions/handled-approvals)
+           :collapse [handled-applications
+                      (distinct-by :id (concat (:handled-reviews @handled-actions)
+                                               (:handled-approvals @handled-actions)))
+                      @(rf/subscribe [::loading-handled-actions?])]}])])))

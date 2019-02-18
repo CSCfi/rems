@@ -58,24 +58,18 @@
 ;;;; UI
 
 (defn applications-page []
-  (let [apps (rf/subscribe [::my-applications])
-        loading? (rf/subscribe [::loading-my-applications?])
-        sorting (rf/subscribe [::sorting])
-        set-sorting #(rf/dispatch [::set-sorting %])
-        filtering (rf/subscribe [::filtering])
-        set-filtering #(rf/dispatch [::set-filtering %])]
-    (fn []
-      [:div
-       [:h2 (text :t.applications/applications)]
-       (cond @loading?
-             [spinner/big]
+  (let [apps (rf/subscribe [::my-applications])]
+    [:div
+     [:h2 (text :t.applications/applications)]
+     (cond @(rf/subscribe [::loading-my-applications?])
+           [spinner/big]
 
-             (empty? @apps)
-             [:div.applications.alert.alert-success (text :t/applications.empty)]
+           (empty? @apps)
+           [:div.applications.alert.alert-success (text :t/applications.empty)]
 
-             :else
-             [application-list/component
-              {:visible-columns application-list/+all-columns+
-               :sorting (assoc @sorting :set-sorting set-sorting)
-               :filtering (assoc @filtering :set-filtering set-filtering)
-               :items @apps}])])))
+           :else
+           [application-list/component
+            {:visible-columns application-list/+all-columns+
+             :sorting (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))
+             :filtering (assoc @(rf/subscribe [::filtering]) :set-filtering #(rf/dispatch [::set-filtering %]))
+             :items @apps}])]))

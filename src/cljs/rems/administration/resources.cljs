@@ -72,18 +72,13 @@
     :items resources}])
 
 (defn resources-page []
-  (let [resources (rf/subscribe [::resources])
-        sorting (rf/subscribe [::sorting])
-        filtering (rf/subscribe [::filtering])
-        loading? (rf/subscribe [::loading?])]
-    (fn []
-      (into [:div
-             [administration-navigator-container]
-             [:h2 (text :t.administration/resources)]]
-            (if @loading?
-              [[spinner/big]]
-              [[to-create-resource]
-               [resources-list
-                @resources
-                (assoc @sorting :set-sorting #(rf/dispatch [::set-sorting %]))
-                (assoc @filtering :set-filtering #(rf/dispatch [::set-filtering %]))]])))))
+  (into [:div
+         [administration-navigator-container]
+         [:h2 (text :t.administration/resources)]]
+        (if @(rf/subscribe [::loading?])
+          [[spinner/big]]
+          [[to-create-resource]
+           [resources-list
+            @(rf/subscribe [::resources])
+            (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))
+            (assoc @(rf/subscribe [::filtering]) :set-filtering #(rf/dispatch [::set-filtering %]))]])))

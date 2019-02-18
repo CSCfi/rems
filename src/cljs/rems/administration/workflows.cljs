@@ -76,19 +76,15 @@
     :id-function :id
     :items workflows}])
 
+;; TODO Very similar components are used in here, licenses, forms, resources
 (defn workflows-page []
-  (let [workflows (rf/subscribe [::workflows])
-        sorting (rf/subscribe [::sorting])
-        filtering (rf/subscribe [::filtering])
-        loading? (rf/subscribe [::loading?])]
-    (fn []
-      (into [:div
-             [administration-navigator-container]
-             [:h2 (text :t.administration/workflows)]]
-            (if @loading?
-              [[spinner/big]]
-              [[to-create-workflow]
-               [workflows-list
-                @workflows
-                (assoc @sorting :set-sorting  #(rf/dispatch [::set-sorting %]))
-                (assoc @filtering :set-filtering  #(rf/dispatch [::set-filtering %]))]])))))
+  (into [:div
+         [administration-navigator-container]
+         [:h2 (text :t.administration/workflows)]]
+        (if @(rf/subscribe [::loading?])
+          [[spinner/big]]
+          [[to-create-workflow]
+           [workflows-list
+            @(rf/subscribe [::workflows])
+            (assoc @(rf/subscribe [::sorting]) :set-sorting  #(rf/dispatch [::set-sorting %]))
+            (assoc @(rf/subscribe [::filtering]) :set-filtering  #(rf/dispatch [::set-filtering %]))]])))

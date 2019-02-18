@@ -126,20 +126,14 @@
     :items items}])
 
 (defn catalogue-items-page []
-  (let [catalogue (rf/subscribe [::catalogue])
-        language (rf/subscribe [:language])
-        sorting (rf/subscribe [::sorting])
-        filtering (rf/subscribe [::filtering])
-        loading? (rf/subscribe [::loading?])]
-    (fn []
-      (into [:div
-             [administration-navigator-container]
-             [:h2 (text :t.administration/catalogue-items)]]
-            (if @loading?
-              [[spinner/big]]
-              [[to-create-catalogue-item]
-               [catalogue-list
-                @catalogue
-                @language
-                (assoc @sorting :set-sorting #(rf/dispatch [::set-sorting %]))
-                (assoc @filtering :set-filtering #(rf/dispatch [::set-filtering %]))]])))))
+  (into [:div
+         [administration-navigator-container]
+         [:h2 (text :t.administration/catalogue-items)]]
+        (if @(rf/subscribe [::loading?])
+          [[spinner/big]]
+          [[to-create-catalogue-item]
+           [catalogue-list
+            @(rf/subscribe [::catalogue])
+            @(rf/subscribe [:language])
+            (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))
+            (assoc @(rf/subscribe [::filtering]) :set-filtering #(rf/dispatch [::set-filtering %]))]])))

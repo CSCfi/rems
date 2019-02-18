@@ -77,18 +77,13 @@
     :items forms}])
 
 (defn forms-page []
-  (let [forms (rf/subscribe [::forms])
-        sorting (rf/subscribe [::sorting])
-        filtering (rf/subscribe [::filtering])
-        loading? (rf/subscribe [::loading?])]
-    (fn []
-      (into [:div
-             [administration-navigator-container]
-             [:h2 (text :t.administration/forms)]]
-            (if @loading?
-              [[spinner/big]]
-              [[to-create-form]
-               [forms-list
-                @forms
-                (assoc @sorting :set-sorting #(rf/dispatch [::set-sorting %]))
-                (assoc @filtering :set-filtering #(rf/dispatch [::set-filtering %]))]])))))
+  (into [:div
+         [administration-navigator-container]
+         [:h2 (text :t.administration/forms)]]
+        (if @(rf/subscribe [::loading?])
+          [[spinner/big]]
+          [[to-create-form]
+           [forms-list
+            @(rf/subscribe [::forms])
+            (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))
+            (assoc @(rf/subscribe [::filtering]) :set-filtering #(rf/dispatch [::set-filtering %]))]])))

@@ -116,28 +116,21 @@
        :items drafts}]]))
 
 (defn catalogue-page []
-  (let [catalogue (rf/subscribe [::catalogue])
-        drafts (rf/subscribe [::draft-applications])
-        loading? (rf/subscribe [::loading-catalogue?])
-        language (rf/subscribe [:language])
-        sorting (rf/subscribe [::sorting])
-        filtering (rf/subscribe [::filtering])
-        config (rf/subscribe [:rems.config/config])]
-    (fn []
-      [:div
-       [:h2 (text :t.catalogue/catalogue)]
-       (if @loading?
-         [spinner/big]
-         [:div
-          [draft-application-list @drafts @language]
-          [:h4 (text :t.catalogue/apply-resources)]
-          [cart/cart-list-container @language]
-          [catalogue-list
-           {:items @catalogue
-            :language @language
-            :sorting (assoc @sorting :set-sorting #(rf/dispatch [::set-sorting %]))
-            :filtering (assoc @filtering :set-filtering #(rf/dispatch [::set-filtering %]))
-            :config @config}]])])))
+  (let [language (rf/subscribe [:language])]
+    [:div
+     [:h2 (text :t.catalogue/catalogue)]
+     (if @(rf/subscribe [::loading-catalogue?])
+       [spinner/big]
+       [:div
+        [draft-application-list @(rf/subscribe [::draft-applications]) @language]
+        [:h4 (text :t.catalogue/apply-resources)]
+        [cart/cart-list-container @language]
+        [catalogue-list
+         {:items @(rf/subscribe [::catalogue])
+          :language @language
+          :sorting (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))
+          :filtering (assoc @(rf/subscribe [::filtering]) :set-filtering #(rf/dispatch [::set-filtering %]))
+          :config @(rf/subscribe [:rems.config/config])}]])]))
 
 (defn guide []
   [:div
