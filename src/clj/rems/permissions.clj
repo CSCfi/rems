@@ -1,7 +1,7 @@
 (ns rems.permissions
   (:require [clojure.test :refer [deftest is testing]]))
 
-(def ^:private conj-set (fnil conj (hash-set)))
+(def ^:private conj-set (fnil conj #{}))
 
 (defn give-role-to-user [application role user]
   (assert (keyword? role)
