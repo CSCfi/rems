@@ -3,8 +3,8 @@
             [rems.table :refer [matches-filter matches-filters apply-filtering]]))
 
 (deftest matches-filter-test
-  (let [column-definitions {:string-col  {:sort-value :string}
-                            :numeric-col {:sort-value :numeric}}]
+  (let [column-definitions {:string-col  {:filter-value :string}
+                            :numeric-col {:filter-value :numeric}}]
     (testing "string column"
       (testing "mismatch"
         (is (= false (matches-filter column-definitions :string-col "foo" {:string "bar"}))))
@@ -23,8 +23,8 @@
         (is (= true (matches-filter column-definitions :numeric-col "2" {:numeric 123})))))))
 
 (deftest matches-filters-test
-  (let [column-definitions {:fname-col {:sort-value :first-name}
-                            :lname-col {:sort-value :last-name}}
+  (let [column-definitions {:fname-col {:filter-value :first-name}
+                            :lname-col {:filter-value :last-name}}
         item {:first-name "Aku" :last-name "Ankka"}]
     (testing "no filters"
       (is (= true (matches-filters column-definitions {} item))))
@@ -38,8 +38,8 @@
       (is (= false (matches-filters column-definitions {:fname-col "Aku" :lname-col "x"} item))))))
 
 (deftest apply-filtering-test
-  (let [column-definitions {:fname-col {:sort-value :first-name}
-                            :lname-col {:sort-value :last-name}}
+  (let [column-definitions {:fname-col {:filter-value :first-name}
+                            :lname-col {:filter-value :last-name}}
         items [{:first-name "Aku" :last-name "Ankka"}
                {:first-name "Roope" :last-name "Ankka"}
                {:first-name "Hannu" :last-name "Hanhi"}]]

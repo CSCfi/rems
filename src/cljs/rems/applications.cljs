@@ -49,26 +49,27 @@
        {:sort-column :created
         :sort-order :desc})))
 
-(rf/reg-event-db
- ::set-sorting
- (fn [db [_ order]]
-   (assoc db ::sorting order)))
+(rf/reg-event-db ::set-sorting (fn [db [_ sorting]] (assoc db ::sorting sorting)))
+
+(rf/reg-sub ::filtering (fn [db _] (::filtering db)))
+
+(rf/reg-event-db ::set-filtering (fn [db [_ filtering]] (assoc db ::filtering filtering)))
 
 ;;;; UI
 
 (defn applications-page []
-  (let [apps (rf/subscribe [::my-applications])
-        loading? (rf/subscribe [::loading-my-applications?])
-        sorting (rf/subscribe [::sorting])
-        set-sorting #(rf/dispatch [::set-sorting %])]
-    (fn []
-      [:div
-       [:h2 (text :t.applications/applications)]
-       (cond @loading?
-             [spinner/big]
+  (let [apps (rf/subscribe [::my-applications])]
+    [:div
+     [:h2 (text :t.applications/applications)]
+     (cond @(rf/subscribe [::loading-my-applications?])
+           [spinner/big]
 
-             (empty? @apps)
-             [:div.applications.alert.alert-success (text :t/applications.empty)]
+           (empty? @apps)
+           [:div.applications.alert.alert-success (text :t/applications.empty)]
 
-             :else
-             [application-list/component application-list/+all-columns+ @sorting set-sorting @apps])])))
+           :else
+           [application-list/component
+            {:visible-columns application-list/+all-columns+
+             :sorting (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))
+             :filtering (assoc @(rf/subscribe [::filtering]) :set-filtering #(rf/dispatch [::set-filtering %]))
+             :items @apps}])]))

@@ -42,10 +42,7 @@
  (fn [_ [_ id state]]
    {::update-catalogue-item [id state]}))
 
-(rf/reg-event-db
- ::set-sorting
- (fn [db [_ sorting]]
-   (assoc db ::sorting sorting)))
+(rf/reg-event-db ::set-sorting (fn [db [_ sorting]] (assoc db ::sorting sorting)))
 
 (rf/reg-sub
  ::sorting
@@ -53,6 +50,9 @@
    (or (::sorting db)
        {:sort-column :name
         :sort-order :asc})))
+
+(rf/reg-event-db ::set-filtering (fn [db [_ filtering]] (assoc db ::filtering filtering)))
+(rf/reg-sub ::filtering (fn [db _] (::filtering db)))
 
 (defn- to-create-catalogue-item []
   [:a.btn.btn-primary
@@ -87,15 +87,21 @@
    :resource {:header #(text :t.administration/resource)
               :value (fn [row]
                        [:a {:href (str "#/administration/resources/" (:resource-id row))}
-                        (:resource-name row)])}
+                        (:resource-name row)])
+              :sort-value :resource-name
+              :filter-value :resource-name}
    :form {:header #(text :t.administration/form)
           :value (fn [row]
                    [:a {:href (str "#/administration/forms/" (:formid row))}
-                    (:form-name row)])}
+                    (:form-name row)])
+          :sort-value :form-name
+          :filter-value :form-name}
    :workflow {:header #(text :t.administration/workflow)
               :value (fn [row]
                        [:a {:href (str "#/administration/workflows/" (:wfid row))}
-                        (:workflow-name row)])}
+                        (:workflow-name row)])
+              :sort-value :workflow-name
+              :filter-value :workflow-name}
    :created {:header #(text :t.administration/created)
              :value (comp localize-time :start)}
    :end {:header #(text :t.administration/end)
@@ -110,25 +116,24 @@
 
 (defn- catalogue-list
   "List of catalogue items"
-  [items language sorting]
+  [items language sorting filtering]
   [table/component
-   (catalogue-columns language)
-   [:name :resource :form :workflow :created :active :commands]
-   sorting
-   #(rf/dispatch [::set-sorting %])
-   :id
-   items])
+   {:column-definitions (catalogue-columns language)
+    :visible-columns [:name :resource :form :workflow :created :active :commands]
+    :sorting sorting
+    :filtering filtering
+    :id-function :id
+    :items items}])
 
 (defn catalogue-items-page []
-  (let [catalogue (rf/subscribe [::catalogue])
-        language (rf/subscribe [:language])
-        sorting (rf/subscribe [::sorting])
-        loading? (rf/subscribe [::loading?])]
-    (fn []
-      (into [:div
-             [administration-navigator-container]
-             [:h2 (text :t.administration/catalogue-items)]]
-            (if @loading?
-              [[spinner/big]]
-              [[to-create-catalogue-item]
-               [catalogue-list @catalogue @language @sorting]])))))
+  (into [:div
+         [administration-navigator-container]
+         [:h2 (text :t.administration/catalogue-items)]]
+        (if @(rf/subscribe [::loading?])
+          [[spinner/big]]
+          [[to-create-catalogue-item]
+           [catalogue-list
+            @(rf/subscribe [::catalogue])
+            @(rf/subscribe [:language])
+            (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))
+            (assoc @(rf/subscribe [::filtering]) :set-filtering #(rf/dispatch [::set-filtering %]))]])))

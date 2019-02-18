@@ -52,15 +52,15 @@
 (defn component
   "A table of applications.
 
-   columns should be a subsequence of +all-columns+, for instance +default-columns+.
+  See `table/component`.
 
-   sorting should be a map {:sort-column column, :sort-order order} where
-     - order is :asc or :desc
-     - column is one of :id :applicant :resource :created :state
-
-   set-sorting is a callback that is called with a new sorting when it changes"
-  [columns sorting set-sorting apps]
-  [table/component +columns+ columns sorting set-sorting :id apps {:class "applications"}])
+  Binds the column definitions for you and the visible columns should be a subsequence."
+  [opts]
+  [table/component
+   (merge {:column-definitions +columns+
+           :id-function :id
+           :class "applications"}
+          opts)])
 
 (def ^:private +example-applications+
   [{:id 1 :catalogue-items [{:title "Item 5"}] :state "draft" :applicantuserid "alice"
@@ -79,8 +79,14 @@
   [:div
    (component-info component)
    (example "empty list"
-            [component +default-columns+ {:sort-column :id, :sort-order :asc} prn []])
+            [component {:visible-columns +default-columns+
+                        :sorting {:sort-column :id, :sort-order :asc}
+                        :items []}])
    (example "applications, default order"
-            [component +default-columns+ {:sort-column :id, :sort-order :asc} prn +example-applications+])
+            [component {:visible-columns +default-columns+
+                        :sorting {:sort-column :id, :sort-order :asc}
+                        :items +example-applications+}])
    (example "applications, descending date, all columns"
-            [component +all-columns+ {:sort-column :created, :sort-order :desc} prn +example-applications+])])
+            [component {:visible-columns +all-columns+
+                        :sorting{:sort-column :created, :sort-order :desc}
+                        :items +example-applications+}])])

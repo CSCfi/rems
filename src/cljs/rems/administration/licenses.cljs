@@ -28,10 +28,7 @@
 (rf/reg-sub ::licenses (fn [db _] (::licenses db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
-(rf/reg-event-db
- ::set-sorting
- (fn [db [_ sorting]]
-   (assoc db ::sorting sorting)))
+(rf/reg-event-db ::set-sorting (fn [db [_ sorting]] (assoc db ::sorting sorting)))
 
 (rf/reg-sub
  ::sorting
@@ -39,6 +36,9 @@
    (or (::sorting db)
        {:sort-column :title
         :sort-order :asc})))
+
+(rf/reg-event-db ::set-filtering (fn [db [_ filtering]] (assoc db ::filtering filtering)))
+(rf/reg-sub ::filtering (fn [db _] (::filtering db)))
 
 (defn- to-create-licenses []
   [:a.btn.btn-primary
@@ -67,24 +67,23 @@
 
 (defn- licenses-list
   "List of licenses"
-  [licenses sorting]
+  [licenses sorting filtering]
   [table/component
-   (licenses-columns)
-   [:title :type :start :end :active :commands]
-   sorting
-   #(rf/dispatch [::set-sorting %])
-   :id
-   licenses])
+   {:column-definitions (licenses-columns)
+    :visible-columns [:title :type :start :end :active :commands]
+    :sorting sorting
+    :filtering filtering
+    :id-function :id
+    :items licenses}])
 
 (defn licenses-page []
-  (let [licenses (rf/subscribe [::licenses])
-        sorting (rf/subscribe [::sorting])
-        loading? (rf/subscribe [::loading?])]
-    (fn []
-      (into [:div
-             [administration-navigator-container]
-             [:h2 (text :t.administration/licenses)]]
-            (if @loading?
-              [[spinner/big]]
-              [[to-create-licenses]
-               [licenses-list @licenses @sorting]])))))
+  (into [:div
+         [administration-navigator-container]
+         [:h2 (text :t.administration/licenses)]]
+        (if @(rf/subscribe [::loading?])
+          [[spinner/big]]
+          [[to-create-licenses]
+           [licenses-list
+            @(rf/subscribe [::licenses])
+            (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))
+            (assoc @(rf/subscribe [::filtering]) :set-filtering #(rf/dispatch [::set-filtering %]))]])))

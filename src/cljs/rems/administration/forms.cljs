@@ -28,10 +28,7 @@
 (rf/reg-sub ::forms (fn [db _] (::forms db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
-(rf/reg-event-db
- ::set-sorting
- (fn [db [_ sorting]]
-   (assoc db ::sorting sorting)))
+(rf/reg-event-db ::set-sorting (fn [db [_ sorting]] (assoc db ::sorting sorting)))
 
 (rf/reg-sub
  ::sorting
@@ -39,6 +36,9 @@
    (or (::sorting db)
        {:sort-column :title
         :sort-order :asc})))
+
+(rf/reg-event-db ::set-filtering (fn [db [_ filtering]] (assoc db ::filtering filtering)))
+(rf/reg-sub ::filtering (fn [db _] (::filtering db)))
 
 (defn- to-create-form []
   [:a.btn.btn-primary
@@ -67,24 +67,23 @@
 
 (defn- forms-list
   "List of forms"
-  [forms sorting]
+  [forms sorting filtering]
   [table/component
-   (forms-columns)
-   [:organization :title :start :end :active :commands]
-   sorting
-   #(rf/dispatch [::set-sorting %])
-   :id
-   forms])
+   {:column-definitions (forms-columns)
+    :visible-columns [:organization :title :start :end :active :commands]
+    :sorting sorting
+    :filtering filtering
+    :id-function :id
+    :items forms}])
 
 (defn forms-page []
-  (let [forms (rf/subscribe [::forms])
-        sorting (rf/subscribe [::sorting])
-        loading? (rf/subscribe [::loading?])]
-    (fn []
-      (into [:div
-             [administration-navigator-container]
-             [:h2 (text :t.administration/forms)]]
-            (if @loading?
-              [[spinner/big]]
-              [[to-create-form]
-               [forms-list @forms @sorting]])))))
+  (into [:div
+         [administration-navigator-container]
+         [:h2 (text :t.administration/forms)]]
+        (if @(rf/subscribe [::loading?])
+          [[spinner/big]]
+          [[to-create-form]
+           [forms-list
+            @(rf/subscribe [::forms])
+            (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))
+            (assoc @(rf/subscribe [::filtering]) :set-filtering #(rf/dispatch [::set-filtering %]))]])))

@@ -4,6 +4,7 @@
             [clojure.set :as set]
             [clojure.test :refer [deftest is testing]]
             [clojure.tools.logging :as log]
+            [clojure.walk :refer [keywordize-keys]]
             [cuerdas.core :as str]
             [rems.auth.auth :as auth]
             [rems.config :refer [env]]
@@ -66,7 +67,7 @@
   (fn [request]
     (let [header-identity (when-let [uid (get-in request [:headers "x-rems-user-id"])]
                             {:eppn uid})
-          session-identity (:identity request)]
+          session-identity (keywordize-keys (:identity request))]
       (binding [context/*user* (if (and header-identity
                                         (valid-api-key? request))
                                  header-identity
