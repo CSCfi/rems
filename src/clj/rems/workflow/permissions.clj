@@ -1,6 +1,5 @@
 (ns rems.workflow.permissions
-  (:require [clojure.set :as set]
-            [clojure.test :refer [deftest is testing]]))
+  (:require [clojure.test :refer [deftest is testing]]))
 
 (def ^:private conj-set (fnil conj (hash-set)))
 
@@ -139,9 +138,9 @@
    Union of all role specific permissions."
   [application user]
   (->> (user-roles application user)
-       (map (fn [role]
-              (set (get-in application [::role-permissions role]))))
-       (apply set/union)))
+       (mapcat (fn [role]
+                 (get-in application [::role-permissions role])))
+       set))
 
 (deftest test-user-permissions
   (testing "unknown user"
