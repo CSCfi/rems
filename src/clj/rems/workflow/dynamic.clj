@@ -2,8 +2,8 @@
   (:require [clojure.set :as set]
             [clojure.test :refer :all]
             [rems.auth.util :refer [throw-unauthorized]]
+            [rems.permissions :as permissions]
             [rems.util :refer [getx]]
-            [rems.workflow.permissions :as permissions]
             [schema-refined.core :as r]
             [schema.core :as s])
   (:import (org.joda.time DateTime)))

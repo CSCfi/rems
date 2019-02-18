@@ -6,8 +6,8 @@
             [rems.db.form :as form]
             [rems.db.licenses :as licenses]
             [rems.db.users :as users]
-            [rems.workflow.dynamic :as dynamic]
-            [rems.workflow.permissions :as permissions])
+            [rems.permissions :as permissions]
+            [rems.workflow.dynamic :as dynamic])
   (:import (org.joda.time DateTime)))
 
 ;;;; v2 API, pure application state based on application events

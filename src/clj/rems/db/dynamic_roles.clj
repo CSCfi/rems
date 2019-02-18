@@ -2,8 +2,8 @@
   (:require [clojure.set :as set]
             [clojure.test :refer [deftest is testing]]
             [rems.db.applications :as applications]
-            [rems.workflow.dynamic :as dynamic]
-            [rems.workflow.permissions :as permissions]))
+            [rems.permissions :as permissions]
+            [rems.workflow.dynamic :as dynamic]))
 
 (defn- permissions-of-all-applications [applications event]
   (if-let [app-id (:application/id event)] ; old style events don't have :application/id
