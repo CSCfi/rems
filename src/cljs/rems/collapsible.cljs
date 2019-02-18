@@ -11,19 +11,19 @@
 (defn- show-more-button
   [id expanded callback]
   [:div.mb-3.collapse.collapse-toggle {:class (str (str id "more ") (when-not expanded "show"))}
-   [:a.text-primary {:on-click #(do (.collapse (js/$ (str "#" id "collapse")) "show")
-                                    (.collapse (js/$ (str "." id "more")) "hide")
-                                    (when callback
-                                      (callback))
-                                    (.collapse (js/$ (str "." id "less")) "show"))}
+   [:a {:on-click #(do (.collapse (js/$ (str "#" id "collapse")) "show")
+                       (.collapse (js/$ (str "." id "more")) "hide")
+                       (when callback
+                         (callback))
+                       (.collapse (js/$ (str "." id "less")) "show"))}
     (text :t.collapse/show-more)]])
 
 (defn- show-less-button
   [id expanded]
   [:div.mb-3.collapse.collapse-toggle {:class (str (str id "less ") (when expanded "show"))}
-   [:a.text-primary {:on-click #(do (.collapse (js/$ (str "#" id "collapse")) "hide")
-                                    (.collapse (js/$ (str "." id "more")) "show")
-                                    (.collapse (js/$ (str "." id "less")) "hide"))}
+   [:a {:on-click #(do (.collapse (js/$ (str "#" id "collapse")) "hide")
+                       (.collapse (js/$ (str "." id "more")) "show")
+                       (.collapse (js/$ (str "." id "less")) "hide"))}
     (text :t.collapse/show-less)]])
 
 (defn- block [id expanded callback content-always content-hideable content-footer top-less-button? bottom-less-button?]

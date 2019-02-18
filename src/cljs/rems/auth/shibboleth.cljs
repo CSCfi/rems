@@ -4,7 +4,7 @@
             [rems.text :refer [text]]))
 
 (defn login-component [alternative-endpoint]
-  [:div.m-auto.jumbotron
+  [:div.jumbotron
    [:h2 (text :t.login/title)]
    [:p (text :t.login/text)]
    [:div.col-md6

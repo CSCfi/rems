@@ -21,8 +21,11 @@
                                    (when (:rejected? phase) "rejected ")
                                    (when (:completed? phase) "completed ")
                                    (when (:closed? phase) "closed "))}
-           [:span (cond (:rejected? phase) [:i.fa.fa-times]
-                        (:completed? phase) [:i.fa.fa-check])
+           [:span
+            (cond (:rejected? phase) [:i.fa.fa-times]
+                  (:completed? phase) [:i.fas.fa-check]
+                  (:active? phase) [:i.fa.fa-chevron-right])
+            "\u00a0"
             (if (:text phase)
               (text (:text phase))
               (:phase phase))]])))

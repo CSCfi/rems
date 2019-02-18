@@ -777,7 +777,7 @@
                (text :t.applications/state)
                (when state (str ": " (localize-state state))))]
       :always [:div
-               [:div.mb-3 {:class (str "state-" state)} (phases phases-data)]
+               [:div.mb-3 {:class (str "state-" (if (keyword? state) (name state) state))} (phases phases-data)]
                (when last-event
                  (info-field (text :t.applications/latest-comment)
                              (:comment last-event)))]
