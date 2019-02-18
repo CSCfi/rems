@@ -177,12 +177,15 @@
     [:td:before
      {:color (util/get-theme-attribute :table-text-color)}]
     [:tr {:margin "0 1rem"}
-     [(s/& (s/nth-child "2n"))
-      {:background-color (util/get-theme-attribute :table-stripe-color :table-bgcolor :color1)}]
      [:&:hover {:color (util/get-theme-attribute :table-hover-color :table-text-color "#fff")
-                :background-color (util/get-theme-attribute :table-hover-bgcolor :color2)}]]
+                :background-color (util/get-theme-attribute :table-hover-bgcolor :color2)}]
+     [(s/& (s/nth-child "2n"))
+      [:&:hover {:color (util/get-theme-attribute :table-hover-color :table-text-color "#fff")
+                :background-color (util/get-theme-attribute :table-hover-bgcolor :color2)}]
+      {:background-color (util/get-theme-attribute :table-stripe-color :table-bgcolor :color1)}]]
     [:td.commands:last-child {:text-align "right"
                               :padding-right (u/rem 1)}]]
+   [:.rems-table.cart {:box-shadow :none}]
    [:.inner-cart {:margin (u/em 1)}]
    [:.outer-cart {:border [[(u/px 1) :solid (util/get-theme-attribute :color1)]]
                   :border-radius (u/rem 0.4)}]
