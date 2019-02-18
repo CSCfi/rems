@@ -25,27 +25,18 @@
 
 ;;;; table sorting
 
-(rf/reg-event-db
- ::set-sorting
- (fn [db [_ sorting]]
-   (assoc db ::sorting sorting)))
+(rf/reg-event-db ::set-sorting (fn [db [_ sorting]] (assoc db ::sorting sorting)))
+(rf/reg-sub ::sorting (fn [db _] (::sorting db)))
 
-(rf/reg-sub
- ::sorting
- (fn [db _]
-   (or (::sorting db)
-       {:sort-column :name
-        :sort-order :asc})))
+(rf/reg-event-db ::set-filtering (fn [db [_ filtering]] (assoc db ::filtering filtering)))
+(rf/reg-sub ::filtering (fn [db _] (::filtering db)))
 
 ;;;; catalogue
 
 (defn- fetch-catalogue []
   (fetch "/api/catalogue/" {:handler #(rf/dispatch [::fetch-catalogue-result %])}))
 
-(rf/reg-fx
- ::fetch-catalogue
- (fn [_]
-   (fetch-catalogue)))
+(rf/reg-fx ::fetch-catalogue (fn [_] (fetch-catalogue)))
 
 (rf/reg-event-db
  ::fetch-catalogue-result
@@ -54,15 +45,8 @@
        (assoc ::catalogue catalogue)
        (dissoc ::loading-catalogue?))))
 
-(rf/reg-sub
- ::loading-catalogue?
- (fn [db _]
-   (::loading-catalogue? db)))
-
-(rf/reg-sub
- ::catalogue
- (fn [db _]
-   (::catalogue db)))
+(rf/reg-sub ::loading-catalogue? (fn [db _] (::loading-catalogue? db)))
+(rf/reg-sub ::catalogue (fn [db _] (::catalogue db)))
 
 
 ;;;; draft applications
@@ -76,15 +60,9 @@
 (defn- fetch-drafts []
   (fetch "/api/applications/" {:handler #(rf/dispatch [::fetch-drafts-result %])}))
 
-(rf/reg-fx
- ::fetch-drafts
- (fn [_]
-   (fetch-drafts)))
+(rf/reg-fx ::fetch-drafts (fn [_] (fetch-drafts)))
 
-(rf/reg-sub
- ::draft-applications
- (fn [db _]
-   (::draft-applications db)))
+(rf/reg-sub ::draft-applications (fn [db _] (::draft-applications db)))
 
 ;;;; UI
 
@@ -106,14 +84,17 @@
               :filterable? false}})
 
 (defn- catalogue-list
-  [items language sorting config]
+  "Renders the catalogue using table.
+
+  See `table/component`."
+  [{:keys [items language sorting filtering config] :as params}]
   [table/component
-   (catalogue-columns language config) [:name :commands]
-   sorting
-   #(rf/dispatch [::set-sorting %])
-   :id
-   (filter (complement disabled-catalogue-item?) items)
-   {:class "catalogue"}])
+   (merge {:column-definitions (catalogue-columns language config)
+           :visible-columns [:name :commands]
+           :id-function :id
+           :items (filter (complement disabled-catalogue-item?) items)
+           :class "catalogue"}
+          (select-keys [:sorting :filtering] params))])
 
 (defn- format-catalogue-items [app]
   (str/join ", " (map :title (:catalogue-items app))))
@@ -122,32 +103,34 @@
   (when (seq drafts)
     [:div.drafts
      [:h4 (text :t.catalogue/continue-existing-application)]
-     [table/component {:id {:value :id
-                            :header #(text :t.actions/application)}
-                       :resource {:value format-catalogue-items
-                                  :header #(text :t.actions/resource)}
-                       :modified {:value #(localize-time (:last-modified %))
-                                  :header #(text :t.actions/last-modified)}
-                       :view {:value application/view-button}}
-      [:id :resource :modified :view] nil nil :id drafts]]))
+     [table/component
+      {:column-definitions {:id {:value :id
+                                 :header #(text :t.actions/application)}
+                            :resource {:value format-catalogue-items
+                                       :header #(text :t.actions/resource)}
+                            :modified {:value #(localize-time (:last-modified %))
+                                       :header #(text :t.actions/last-modified)}
+                            :view {:value application/view-button}}
+       :visible-columns [:id :resource :modified :view]
+       :id-function :id
+       :items drafts}]]))
 
 (defn catalogue-page []
-  (let [catalogue (rf/subscribe [::catalogue])
-        drafts (rf/subscribe [::draft-applications])
-        loading? (rf/subscribe [::loading-catalogue?])
-        language (rf/subscribe [:language])
-        sorting (rf/subscribe [::sorting])
-        config (rf/subscribe [:rems.config/config])]
-    (fn []
-      [:div
-       [:h2 (text :t.catalogue/catalogue)]
-       (if @loading?
-         [spinner/big]
-         [:div
-          [draft-application-list @drafts @language]
-          [:h4 (text :t.catalogue/apply-resources)]
-          [cart/cart-list-container @language]
-          [catalogue-list @catalogue @language @sorting @config]])])))
+  (let [language (rf/subscribe [:language])]
+    [:div
+     [:h2 (text :t.catalogue/catalogue)]
+     (if @(rf/subscribe [::loading-catalogue?])
+       [spinner/big]
+       [:div
+        [draft-application-list @(rf/subscribe [::draft-applications]) @language]
+        [:h4 (text :t.catalogue/apply-resources)]
+        [cart/cart-list-container @language]
+        [catalogue-list
+         {:items @(rf/subscribe [::catalogue])
+          :language @language
+          :sorting (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))
+          :filtering (assoc @(rf/subscribe [::filtering]) :set-filtering #(rf/dispatch [::set-filtering %]))
+          :config @(rf/subscribe [:rems.config/config])}]])]))
 
 (defn guide []
   [:div
@@ -186,14 +169,14 @@
 
    (component-info catalogue-list)
    (example "catalogue-list empty"
-            [catalogue-list [] nil {:sort-column :name, :sort-order :asc}])
+            [catalogue-list {:items [] :sorting {:sort-column :name, :sort-order :asc}}])
    (example "catalogue-list with two items"
-            [catalogue-list [{:title "Item title"} {:title "Another title"}] nil {:sort-column :name, :sort-order :asc}])
+            [catalogue-list {:items [{:title "Item title"} {:title "Another title"}] :sorting {:sort-column :name, :sort-order :asc}}])
    (example "catalogue-list with two items in reverse order"
-            [catalogue-list [{:title "Item title"} {:title "Another title"}] nil {:sort-column :name, :sort-order :desc}])
+            [catalogue-list {:items [{:title "Item title"} {:title "Another title"}] :sorting {:sort-column :name, :sort-order :desc}}])
    (example "catalogue-list with three items, of which second is disabled"
-            [catalogue-list [{:title "Item 1"} {:title "Item 2 is disabled and should not be shown" :state "disabled"} {:title "Item 3"}] nil {:sort-column :name, :sort-order :asc}])
+            [catalogue-list {:items [{:title "Item 1"} {:title "Item 2 is disabled and should not be shown" :state "disabled"} {:title "Item 3"}] :sorting {:sort-column :name, :sort-order :asc}}])
    (example "catalogue-list with item linked to urn.fi"
-            [catalogue-list [{:title "Item title" :resid "urn:nbn:fi:lb-201403262"}] nil {:sort-column :name, :sort-order :asc}])
+            [catalogue-list {:items [{:title "Item title" :resid "urn:nbn:fi:lb-201403262"}] :sorting {:sort-column :name, :sort-order :asc}}])
    (example "catalogue-list with item linked to example.org"
-            [catalogue-list [{:title "Item title" :resid "urn:nbn:fi:lb-201403262"}] nil {:sort-column :name, :sort-order :asc} {:urn-organization "http://example.org/"}])])
+            [catalogue-list {:items [{:title "Item title" :resid "urn:nbn:fi:lb-201403262"}] :sorting {:sort-column :name, :sort-order :asc}  :config {:urn-organization "http://example.org/"}}])])
