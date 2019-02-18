@@ -22,15 +22,19 @@
    :approver1 "developer"
    :approver2 "bob"
    :owner "owner"
-   :reviewer "carl"})
+   :reviewer "carl"
+   :roleless1 "elsa"
+   :roleless2 "frank"})
 
 (def +fake-user-data+
-  {"developer" {:eppn "developer" :mail "deve@lo.per" :commonName "Deve Loper"}
-   "alice" {:eppn "alice" :mail "a@li.ce" :commonName "Alice Applicant"}
-   "malice" {:eppn "malice" :mail "ma@li.ce" :commonName "Malice Applicant"}
-   "bob" {:eppn "bob" :mail "b@o.b" :commonName "Bob Approver"}
-   "carl" {:eppn "carl" :mail "c@a.rl" :commonName "Carl Reviewer"}
-   "owner" {:eppn "owner" :mail "ow@n.er" :commonName "Own Er"}})
+  {"developer" {:eppn "developer" :mail "developer@example.com" :commonName "Developer"}
+   "alice" {:eppn "alice" :mail "alice@example.com" :commonName "Alice Applicant"}
+   "malice" {:eppn "malice" :mail "malice@example.com" :commonName "Malice Applicant"}
+   "bob" {:eppn "bob" :mail "bob@example.com" :commonName "Bob Approver"}
+   "carl" {:eppn "carl" :mail "carl@example.com" :commonName "Carl Reviewer"}
+   "elsa" {:eppn "elsa" :mail "elsa@example.com" :commonName "Elsa Roleless"}
+   "frank" {:eppn "frank" :mail "frank@example.com" :commonName "Frank Roleless"}
+   "owner" {:eppn "owner" :mail "owner@example.com" :commonName "Owner"}})
 
 (def +demo-users+
   {:applicant1 "RDapplicant1@funet.fi"
@@ -60,6 +64,9 @@
   (roles/add-role! (+fake-users+ :approver2) :approver)
   (users/add-user! (+fake-users+ :reviewer) (+fake-user-data+ (+fake-users+ :reviewer)))
   (roles/add-role! (+fake-users+ :reviewer) :reviewer)
+  ;; users without roles
+  (users/add-user! (+fake-users+ :roleless1) (+fake-user-data+ (+fake-users+ :roleless1)))
+  (users/add-user! (+fake-users+ :roleless2) (+fake-user-data+ (+fake-users+ :roleless2)))
   ;; a user to own things
   (users/add-user! (+fake-users+ :owner) (+fake-user-data+ (+fake-users+ :owner)))
   (roles/add-role! (+fake-users+ :owner) :owner)

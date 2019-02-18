@@ -44,7 +44,7 @@
                        assert-response-is-ok
                        read-body)]
           (is (coll-is-not-empty? body))
-          (is (every? #(= (:mail %) "a@li.ce") body))))
+          (is (every? #(= (:mail %) "alice@example.com") body))))
 
       (testing "without entitlements"
         (users/add-user! "allison" {})
