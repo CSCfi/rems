@@ -101,8 +101,8 @@
              :flex-direction "row"
              :justify-content "stretch"
              :align-items "center"}
-   [:.phase {:background-color (util/get-theme-attribute :phase-bgcolor)
-             :color (util/get-theme-attribute :phase-color)
+   [:.phase {:background-color (util/get-theme-attribute :phase-bgcolor "#eee")
+             :color (util/get-theme-attribute :phase-color "#111")
              :flex-grow 1
              :height (u/px 40)
              :display "flex"
@@ -126,15 +126,14 @@
                                           :border-left [[(u/px 10) :solid :white]]
                                           :border-bottom [[(u/px 20) :solid :transparent]]
                                           :border-right "none"}]
-    [:&.active (merge {:color (util/get-theme-attribute :phase-color-active :phase-color "#000")}
+    [:&.active (merge {:color (util/get-theme-attribute :phase-color-active :phase-color "#111")}
                       (if-let [background (util/get-theme-attribute :phase-background-active)]
                         {:background background}
-                        {:background-color (util/get-theme-attribute :phase-bgcolor-active)
-                         :border-color (util/get-theme-attribute
-                                        :phase-bgcolor-active)}))]
-    [:&.completed {:background-color (util/get-theme-attribute :phase-bgcolor-completed)
-                   :border-color (util/get-theme-attribute :phase-bgcolor-completed)
-                   :color (util/get-theme-attribute :phase-color-completed :phase-color "#fff")}]]])
+                        {:background-color (util/get-theme-attribute :phase-bgcolor-active "#ccc")
+                         :border-color (util/get-theme-attribute :phase-bgcolor-active "#ccc")}))]
+    [:&.completed {:background-color (util/get-theme-attribute :phase-bgcolor-completed "#ccc")
+                   :border-color (util/get-theme-attribute :phase-bgcolor-completed "#ccc")
+                   :color (util/get-theme-attribute :phase-color-completed :phase-color)}]]])
 
 (defn- generate-rems-table-styles []
   (list
