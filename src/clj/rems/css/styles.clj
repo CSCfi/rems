@@ -497,8 +497,8 @@
    [:.color1 {:color (util/get-theme-attribute :color1)}]
    [:.color1-faint {:color (when (util/get-theme-attribute :color1)
                              (-> (util/get-theme-attribute :color1)
-                               (c/saturate -50)
-                               (c/lighten 33)))}]
+                                 (c/saturate -50)
+                                 (c/lighten 33)))}]
    [:h2 {:margin [[(u/rem 1) 0]]}]
 
    ;; autocomplete, duplicates some Bootstrap styling
