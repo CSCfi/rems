@@ -2,6 +2,7 @@
   (:require [buddy.auth :refer [authenticated?]]
             [buddy.auth.accessrules :refer [restrict]]
             [clojure.tools.logging :as log]
+            [clojure.walk :refer [keywordize-keys]]
             [rems.auth.auth :as auth]
             [rems.config :refer [env]]
             [rems.context :as context]
@@ -63,7 +64,7 @@
   (fn [request]
     (let [header-identity (when-let [uid (get-in request [:headers "x-rems-user-id"])]
                             {:eppn uid})
-          session-identity (:identity request)]
+          session-identity (keywordize-keys (:identity request))]
       (binding [context/*user* (if (and header-identity
                                         (valid-api-key? request))
                                  header-identity
