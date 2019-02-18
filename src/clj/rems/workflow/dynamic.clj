@@ -201,12 +201,11 @@
 ;;; Roles and permissions
 
 (defn hide-sensitive-dynamic-events [events]
-  (filter (fn [event]
-            ((complement contains?) #{:application.event/comment-requested
-                                      :application.event/commented
-                                      :application.event/decided
-                                      :application.event/decision-requested}
-             (:event/type event)))
+  (remove (comp #{:application.event/comment-requested
+                  :application.event/commented
+                  :application.event/decided
+                  :application.event/decision-requested}
+                :event/type)
           events))
 
 (defmulti calculate-permissions
