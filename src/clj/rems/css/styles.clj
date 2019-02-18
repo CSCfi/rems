@@ -208,8 +208,9 @@
    [:* {:margin 0}]
    [:a
     :button
-    {:cursor :pointer
-     :color (util/get-theme-attribute :link-color :color4)}]
+    {:cursor :pointer}
+    ["&:not([href]):not([tabindex]):not(.btn)" {:color (util/get-theme-attribute :link-color "#007bff")}
+     [:&:hover {:color (util/get-theme-attribute :link-hover-color :color4)}]]]
    [:html {:position :relative
            :min-width (u/px 320)
            :height (u/percent 100)}]
