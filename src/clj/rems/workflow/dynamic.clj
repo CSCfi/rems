@@ -794,7 +794,7 @@
   {:valid-user? (constantly true)
    :validate-form (constantly nil)})
 
-(defn- remove-impossible-permissions [application]
+(defn- remove-impossible-permissions [application] ; TODO: can be removed after removing the old permission system
   (let [removable-members (remove #(= (:userid %) (:applicantuserid application))
                                   (:members application))
         invited-members (:invited-members application)]
