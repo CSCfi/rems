@@ -200,13 +200,25 @@
 
 ;;; Roles and permissions
 
+(defmulti ^:private hide-sensitive-dynamic-event-content
+  (fn [event] (:event/type event)))
+
+(defmethod hide-sensitive-dynamic-event-content :default
+  [event]
+  event)
+
+(defmethod hide-sensitive-dynamic-event-content :application.event/created
+  [event]
+  (dissoc event :workflow.dynamic/handlers))
+
 (defn hide-sensitive-dynamic-events [events]
-  (remove (comp #{:application.event/comment-requested
-                  :application.event/commented
-                  :application.event/decided
-                  :application.event/decision-requested}
-                :event/type)
-          events))
+  (->> events
+       (remove (comp #{:application.event/comment-requested
+                       :application.event/commented
+                       :application.event/decided
+                       :application.event/decision-requested}
+                     :event/type))
+       (map hide-sensitive-dynamic-event-content)))
 
 (defmulti calculate-permissions
   (fn [_application event] (:event/type event)))

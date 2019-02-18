@@ -157,7 +157,8 @@
           (update :application update-application-last-modified)
           (update-in [:application :events] hide-sensitive-events)
           (update-in [:application :dynamic-events] dynamic/hide-sensitive-dynamic-events)
-          (update-in [:application :events] hide-users)))))
+          (update-in [:application :events] hide-users)
+          (update-in [:application :workflow] dissoc :handlers)))))
 
 (defn api-get-application [user-id application-id]
   (when (not (empty? (db/get-applications {:id application-id})))
