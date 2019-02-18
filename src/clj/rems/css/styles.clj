@@ -194,7 +194,7 @@
                   :font-weight "bold"}]
    [:.cart-item {:padding-right (u/em 1)}
     [:>span {:display :inline-block :vertical-align :middle}]]
-   [:.text-highlight {:color (c/lighten (util/get-theme-attribute :color4) 20)}]))
+   [:.text-highlight {:color (when (util/get-theme-attribute :color4) (c/lighten (util/get-theme-attribute :color4) 20))}]))
 
 (def ^:private dashed-form-group {:position "relative"
                                   :border "2px dashed #ccc"
@@ -495,9 +495,10 @@
                    :transition "height 0.25s linear"}]]
 
    [:.color1 {:color (util/get-theme-attribute :color1)}]
-   [:.color1-faint {:color (-> (util/get-theme-attribute :color1)
+   [:.color1-faint {:color (when (util/get-theme-attribute :color1)
+                             (-> (util/get-theme-attribute :color1)
                                (c/saturate -50)
-                               (c/lighten 33))}]
+                               (c/lighten 33)))}]
    [:h2 {:margin [[(u/rem 1) 0]]}]
 
    ;; autocomplete, duplicates some Bootstrap styling
