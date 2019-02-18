@@ -660,7 +660,7 @@
   [{:keys [title id textcontent approved readonly validation]}]
   [license id title approved readonly validation
    [:div.license-panel
-    [:h6.license-title
+    [:span.license-title
      [:a.license-header.collapsed {:data-toggle "collapse"
                                    :href (str "#collapse" id)
                                    :aria-expanded "false"
