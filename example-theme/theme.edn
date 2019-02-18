@@ -26,7 +26,7 @@
  ;;:primary-button-color "#025b96"
  ;;:primary-button-bgcolor "#d0dced"
  ;;:primary-button-hover-bgcolor "#c9e2ae"
- :collapse-bgcolor "#f8f8f8"
+ :collapse-bgcolor "#fff"
  :collapse-heading-color "#008278"
  :table-bgcolor "#f8f8f8"
  :table-heading-color "#fff"
@@ -35,6 +35,6 @@
  :table-text-color "#111"
  :header-border "4px solid #ccc"
  :table-shadow "10px -12px 21px -14px rgba(0,0,0,0.75)"
- :link-color "#595959"
+ :link-color "#025b96"
  :footer-color "#595959"
  :footer-bgcolor "#dfe1e3"}
