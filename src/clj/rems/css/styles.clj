@@ -41,10 +41,11 @@
    [".form-control:-ms-input-placeholder" {:color "#ccc"}])) ; Internet Explorer 10-11
 
 (defn resolve-image [path]
-  (let [url (if (str/starts-with? path "http")
-              path
-              (str (util/get-theme-attribute :img-path) path))]
-    (str "url(\"" url "\")")))
+  (when path
+    (let [url (if (str/starts-with? path "http")
+                path
+                (str (util/get-theme-attribute :img-path) path))]
+      (str "url(\"" url "\")"))))
 
 (defn- generate-media-queries []
   (list
@@ -181,7 +182,7 @@
                 :background-color (util/get-theme-attribute :table-hover-bgcolor :color2)}]
      [(s/& (s/nth-child "2n"))
       [:&:hover {:color (util/get-theme-attribute :table-hover-color :table-text-color "#fff")
-                :background-color (util/get-theme-attribute :table-hover-bgcolor :color2)}]
+                 :background-color (util/get-theme-attribute :table-hover-bgcolor :color2)}]
       {:background-color (util/get-theme-attribute :table-stripe-color :table-bgcolor :color1)}]]
     [:td.commands:last-child {:text-align "right"
                               :padding-right (u/rem 1)}]]
@@ -229,7 +230,8 @@
                       :display :flex
                       :flex-direction :column}]
    [:.fixed-top {:background-color "#fff"
-                 :border-bottom [[(u/px 1) :solid (util/get-theme-attribute :color1)]]
+                 :border-bottom (util/get-theme-attribute :header-border)
+                 :box-shadow (util/get-theme-attribute :header-shadow :table-shadow)
                  :min-height (u/px 56)}]
    [:.main-content {:display :flex
                     :flex-direction :column
@@ -301,9 +303,6 @@
                        :background-color (util/get-theme-attribute :color4)}]
    [:.navbar-top-right {:flex 1
                         :background-color (util/get-theme-attribute :color2)}]
-   [:.navbar-bottom-bar {:width (u/percent 100)
-                         :height (u/px 4)
-                         :background-color (util/get-theme-attribute :color1)}]
    [:.navbar-toggler {:border-color (util/get-theme-attribute :color1)}]
    [:.nav-link
     :.btn-link
@@ -330,9 +329,10 @@
    [:footer {:width "100%"
              :height (u/px 53.6)
              :color (util/get-theme-attribute :footer-color :table-heading-color "#fff")
-             :background-color (util/get-theme-attribute :footer-bgcolor :table-heading-bgcolor :color1)
+             :background-color (util/get-theme-attribute :footer-bgcolor :table-heading-bgcolor :color3)
              :text-align "center"
-             :margin-top (u/em 1)}]
+             :margin-top (u/em 1)}
+    [:.navbar {:color (util/get-theme-attribute :footer-color :table-heading-color "#fff")}]]
    [:.jumbotron
     {:background-color "#fff"
      :text-align "center"
@@ -341,7 +341,7 @@
      :color "#000"
      :border-style "solid"
      :border-width (u/px 1)
-     :box-shadow "0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)"}
+     :box-shadow (util/get-theme-attribute :collapse-shadow :table-shadow)}
     [:h2 {:margin-bottom (u/px 20)}]]
    [:.login-btn {:max-height (u/px 70)
                  :margin-bottom (u/px 20)}
@@ -464,8 +464,8 @@
    [:.license-panel {:display :inline-block
                      :width "inherit"}]
    [:.card-header.clickable {:cursor "pointer"}]
-   [:.rems-card-header {:color (util/get-theme-attribute :table-heading-color)
-                        :background-color (util/get-theme-attribute :table-heading-bgcolor)
+   [:.rems-card-header {:color (util/get-theme-attribute :table-heading-color "#fff")
+                        :background-color (util/get-theme-attribute :table-heading-bgcolor :color3)
                         :margin (u/px -1) ; make sure header overlaps container border
                         }]
    [(s/descendant :.card-header :a) {:color :inherit}]
@@ -479,8 +479,9 @@
    [:.collapse-toggle {:text-align :center}]
    [:.collapse-wrapper {:border-radius (u/rem 0.4)
                         :border "1px solid #ccc"
-                        :background-color (util/get-theme-attribute :collapse-bgcolor :table-bgcolor :color1)
+                        :background-color (util/get-theme-attribute :collapse-bgcolor "#fff")
                         :box-shadow (util/get-theme-attribute :collapse-shadow :table-shadow)}
+    [:.card-title {:color (util/get-theme-attribute :collapse-color "#fff")}]
     [:.card-header {:border-bottom "none"
                     :border-radius (u/rem 0.4)
                     :font-weight 500
@@ -526,17 +527,17 @@
     [:.autocomplete__selected-item:last-of-type {:margin-bottom (u/rem 0.5)}]
     [:.autocomplete__selected-item {:height (u/px 40)
                                     :line-height (u/px 40)
-                                    :color (util/get-theme-attribute :table-heading-color "inherit")
-                                    :background-color (util/get-theme-attribute :table-heading-bgcolor :color1)
+                                    :color (util/get-theme-attribute :table-heading-color "#fff")
+                                    :background-color (util/get-theme-attribute :table-heading-bgcolor :color3)
                                     :border-radius (u/rem 0.25)
                                     :border [[(u/px 1) :solid "#111"]]}]
     [:.autocomplete__dropdown {:padding (u/px 10)}]
     [:.autocomplete__control [:input {:display :inline-block}]]
     [:.autocomplete__item {:padding (u/px 10)}]
-    [:.autocomplete__item--selected {:color (util/get-theme-attribute :table-heading-color "inherit")
-                                     :background-color (util/get-theme-attribute :table-heading-bgcolor :color1)}]
-    [:.autocomplete__item:hover {:color (util/get-theme-attribute :table-heading-color "inherit")
-                                 :background-color (util/get-theme-attribute :table-heading-bgcolor :color1)
+    [:.autocomplete__item--selected {:color (util/get-theme-attribute :table-heading-color "#fff")
+                                     :background-color (util/get-theme-attribute :table-heading-bgcolor :color3)}]
+    [:.autocomplete__item:hover {:color (util/get-theme-attribute :table-heading-color "#fff")
+                                 :background-color (util/get-theme-attribute :table-heading-bgcolor :color3)
                                  :cursor :pointer}]
     [:.autocomplete__selected-item {:display :inline-block
                                     :padding [[0 (u/rem 0.5)]]
@@ -544,7 +545,7 @@
      [:a.autocomplete__remove-item-button {:margin-left (u/px 5)
                                            :padding (u/rem 0.5)
                                            :padding-right 0
-                                           :color (util/get-theme-attribute :table-heading-color :danger-color)
+                                           :color (util/get-theme-attribute :danger-color)
                                            :font-weight :bold}]
      [:input {:width (u/percent 100)}]]]
 
