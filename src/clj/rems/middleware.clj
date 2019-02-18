@@ -2,7 +2,9 @@
   (:require [buddy.auth :refer [authenticated?]]
             [buddy.auth.accessrules :refer [restrict]]
             [clojure.set :as set]
+            [clojure.test :refer [deftest is testing]]
             [clojure.tools.logging :as log]
+            [cuerdas.core :as str]
             [rems.auth.auth :as auth]
             [rems.config :refer [env]]
             [rems.context :as context]
@@ -19,7 +21,7 @@
             [ring.middleware.format :refer [wrap-restful-format]]
             [ring.middleware.webjars :refer [wrap-webjars]]
             [ring.util.http-response :refer [unauthorized]]
-            [ring.util.response :refer [redirect]]
+            [ring.util.response :refer [redirect header]]
             [taoensso.tempura :as tempura])
   (:import (javax.servlet ServletContext)))
 
@@ -79,6 +81,25 @@
                                 (set/union (roles/get-roles (getx-user-id))
                                            (dynamic-roles/get-roles (getx-user-id))))]
       (handler request))))
+
+(defn wrap-role-headers [handler]
+  (fn [request]
+    (cond-> (handler request)
+      context/*roles* (header "x-rems-roles" (str/join " " (map name context/*roles*))))))
+
+(deftest test-wrap-role-headers
+  (testing "no roles"
+    (is (= {}
+           (binding [context/*roles* nil]
+             ((wrap-role-headers identity) {})))))
+  (testing "one role"
+    (is (= {:headers {"x-rems-roles" "foo"}}
+           (binding [context/*roles* [:foo]]
+             ((wrap-role-headers identity) {})))))
+  (testing "multiple role"
+    (is (= {:headers {"x-rems-roles" "foo bar"}}
+           (binding [context/*roles* [:foo :bar]]
+             ((wrap-role-headers identity) {}))))))
 
 (defn wrap-internal-error [handler]
   (fn [req]
@@ -179,6 +200,7 @@
       wrap-unauthorized-and-forbidden
       wrap-logging
       wrap-i18n
+      wrap-role-headers
       wrap-context
       wrap-user
       wrap-api-key-or-csrf-token
