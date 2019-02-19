@@ -527,8 +527,8 @@
   (let [application (-> (application-view nil {:event/type :application.event/created
                                                :event/actor "applicant"
                                                :workflow.dynamic/handlers #{"handler"}})
-                        (permissions/give-role-to-user :role-1 "user-1")
-                        (permissions/give-role-to-user :role-2 "user-2")
+                        (permissions/give-role-to-users :role-1 ["user-1"])
+                        (permissions/give-role-to-users :role-2 ["user-2"])
                         (permissions/set-role-permissions {:role-1 []
                                                            :role-2 [:foo :bar]}))]
     (testing "users with a role can see the application"

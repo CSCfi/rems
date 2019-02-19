@@ -3,7 +3,7 @@
 
 (def ^:private conj-set (fnil conj #{}))
 
-(defn give-role-to-user [application role user]
+(defn- give-role-to-user [application role user]
   (assert (keyword? role)
           (str "role must be a keyword: " (pr-str role)))
   (assert (string? user)

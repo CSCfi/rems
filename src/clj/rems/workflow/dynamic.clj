@@ -260,7 +260,7 @@
 (defmethod calculate-permissions :application.event/created
   [application event]
   (-> application
-      (permissions/give-role-to-user :applicant (:event/actor event))
+      (permissions/give-role-to-users :applicant [(:event/actor event)])
       (permissions/give-role-to-users :handler (:workflow.dynamic/handlers event))
       (permissions/set-role-permissions draft-permissions)))
 
@@ -283,18 +283,18 @@
   [application event]
   (-> application
       (permissions/remove-role-from-user :commenter (:event/actor event))
-      (permissions/give-role-to-user :past-commenter (:event/actor event)))) ; allow to still view the application
+      (permissions/give-role-to-users :past-commenter [(:event/actor event)]))) ; allow to still view the application
 
 (defmethod calculate-permissions :application.event/decision-requested
   [application event]
   (-> application
-      (permissions/give-role-to-user :decider (:application/decider event))))
+      (permissions/give-role-to-users :decider [(:application/decider event)])))
 
 (defmethod calculate-permissions :application.event/decided
   [application event]
   (-> application
       (permissions/remove-role-from-user :decider (:event/actor event))
-      (permissions/give-role-to-user :past-decider (:event/actor event)))) ; allow to still view the application
+      (permissions/give-role-to-users :past-decider [(:event/actor event)]))) ; allow to still view the application
 
 (defmethod calculate-permissions :application.event/approved
   [application _event]
