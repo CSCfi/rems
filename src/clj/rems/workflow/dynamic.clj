@@ -725,9 +725,7 @@
                  ::permissions/role-permissions))))))
 
 (defn possible-commands
-  "Calculates which commands should be possible for use in e.g. UI.
-
-  Not every condition is checked exactly so it is in fact a potential set of possible commands only."
+  "Returns the commands which the user is authorized to execute."
   [actor application-state]
   (-> application-state
       remove-impossible-permissions
@@ -1129,100 +1127,3 @@
           (is (= #{} (:commenters (apply-command commented
                                                  {:actor "commenter2" :comment "..." :type ::comment}
                                                  injections)))))))))
-
-(deftest test-possible-commands ; TODO: remove me (simplify)
-  (let [draft (apply-events nil
-                            [{:event/type :application.event/created
-                              :event/actor "applicant"
-                              :workflow/type :workflow/dynamic
-                              :workflow.dynamic/handlers #{"assistant"}}])]
-    (testing "draft"
-      (is (= #{::save-draft ::submit ::invite-member}
-             (possible-commands "applicant" draft)))
-      (is (= #{}
-             (possible-commands "assistant" draft)))
-      (is (= #{}
-             (possible-commands "somebody else" draft)))
-      (testing "when there are invited members"
-        (is (= #{::save-draft ::submit ::invite-member ::uninvite-member}
-               (possible-commands "applicant" (apply-events draft [{:event/type :application.event/member-invited
-                                                                    :event/actor "applicant"
-                                                                    :application/member {:name "Some One" :email "some.one@example.org"}}]))))))
-    (let [submitted (apply-events draft [{:event/type :application.event/submitted
-                                          :event/actor "applicant"}])]
-      (testing "submitted"
-        (is (= #{} ; TODO ::withdraw
-               (possible-commands "applicant" submitted)))
-        (is (= #{::approve ::reject ::return ::request-decision ::request-comment ::add-member ::invite-member}
-               (possible-commands "assistant" submitted)))
-        (is (= #{}
-               (possible-commands "somebody else" submitted)))
-        (testing "when there are invited members"
-          (is (contains? (possible-commands "applicant" (apply-events submitted [{:event/type :application.event/member-invited
-                                                                                  :event/actor "applicant"
-                                                                                  :application/member {:name "Some One" :email "some.one@example.org"}}]))
-                         ::uninvite-member))
-          (is (contains? (possible-commands "assistant" (apply-events submitted [{:event/type :application.event/member-invited
-                                                                                  :event/actor "applicant"
-                                                                                  :application/member {:name "Some One" :email "some.one@example.org"}}]))
-                         ::uninvite-member)))
-        (testing "when there are added members"
-          (is (contains? (possible-commands "applicant" (apply-events submitted [{:event/type :application.event/member-added
-                                                                                  :event/actor "assitant"
-                                                                                  :application/member {:userid "someone"}}]))
-                         ::remove-member))))
-      (let [requested (apply-events submitted [{:event/type :application.event/comment-requested
-                                                :event/actor "assistant"
-                                                :application/commenters ["commenter"]}])]
-        (testing "comment requested"
-          (is (= #{}
-                 (possible-commands "applicant" requested)))
-          (is (= #{::approve ::reject ::return ::request-decision ::request-comment ::add-member ::invite-member}
-                 (possible-commands "assistant" requested)))
-          (is (= #{::comment}
-                 (possible-commands "commenter" requested))))
-        (let [commented (apply-events requested [{:event/type :application.event/commented
-                                                  :event/actor "commenter"
-                                                  :application/comment "..."}])]
-          (testing "comment given"
-            (is (= #{::approve ::reject ::return ::request-decision ::request-comment ::add-member ::invite-member}
-                   (possible-commands "assistant" commented)))
-            (is (= #{}
-                   (possible-commands "commenter" commented))))))
-      (let [requested (apply-events submitted [{:event/type :application.event/decision-requested
-                                                :event/actor "assistant"
-                                                :application/decider "decider"}])]
-        (testing "decision requested"
-          (is (= #{}
-                 (possible-commands "applicant" requested)))
-          (is (= #{::approve ::reject ::return ::request-decision ::request-comment ::add-member ::invite-member}
-                 (possible-commands "assistant" requested)))
-          (is (= #{::decide}
-                 (possible-commands "decider" requested)))))
-      (let [rejected (apply-events submitted [{:event/type :application.event/rejected
-                                               :event/actor "assistant"}])]
-        (testing "rejected"
-          (is (= #{}
-                 (possible-commands "applicant" rejected)))
-          (is (= #{}
-                 (possible-commands "assistant" rejected)))
-          (is (= #{}
-                 (possible-commands "somebody else" rejected)))))
-      (let [approved (apply-events submitted [{:event/type :application.event/approved
-                                               :event/actor "assistant"}])]
-        (testing "approved"
-          (is (= #{}
-                 (possible-commands "applicant" approved)))
-          (is (= #{::close ::add-member ::invite-member}
-                 (possible-commands "assistant" approved)))
-          (is (= #{}
-                 (possible-commands "somebody else" approved))))
-        (testing "closed"
-          (let [closed (apply-events approved [{:event/type :application.event/closed
-                                                :event/actor "assistant"}])]
-            (is (= #{}
-                   (possible-commands "applicant" closed)))
-            (is (= #{}
-                   (possible-commands "assistant" closed)))
-            (is (= #{}
-                   (possible-commands "somebody else" closed)))))))))
