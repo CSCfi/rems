@@ -71,13 +71,14 @@
   `:on-open` triggers the function callback given as an argument when load-more is clicked
   `:title` component displayed in title area
   `:always` component displayed always before collapsible area
-  `:collapse` component that is toggled displayed or not"
-  [{:keys [id class open? on-open title always collapse top-less-button? bottom-less-button?]}]
+  `:collapse` component that is toggled displayed or not
+  `:footer` component displayed always after collapsible area"
+  [{:keys [id class open? on-open title always collapse footer top-less-button? bottom-less-button?]}]
   [:div.collapse-wrapper {:id id
                           :class class}
    (when title [header title])
-   (when (or always collapse)
-     [block id open? on-open always collapse top-less-button? bottom-less-button?])])
+   (when (or always collapse footer)
+     [block id open? on-open always collapse footer top-less-button? bottom-less-button?])])
 
 (defn guide
   []
@@ -88,12 +89,13 @@
                         :title "Collapse minimized"
                         :always [:p "I am content that is always visible"]
                         :collapse [:p "I am content that you can hide"]}])
-   (example "collapsible expanded by default"
+   (example "collapsible expanded by default and footer"
             [component {:id "hello"
                         :open? true
                         :title "Collapse expanded"
                         :always [:p "I am content that is always visible"]
-                        :collapse [:p "I am content that you can hide"]}])
+                        :collapse [:p "I am content that you can hide"]
+                        :footer [:p "I am the footer that is always visible"]}])
    (example "collapsible without title"
             [component {:id "hello5"
                         :open? true
