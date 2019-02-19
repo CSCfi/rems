@@ -245,7 +245,7 @@
         (is-approver? user-id application-id)
         (is-reviewer? user-id application-id)
         (is-third-party-reviewer? user-id application)
-        (not (empty (permissions/user-roles application user-id))))))
+        (permissions/has-any-role? application user-id))))
 
 (defn can-close? [user-id application]
   (assert user-id)
