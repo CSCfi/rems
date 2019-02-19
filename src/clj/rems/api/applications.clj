@@ -135,8 +135,9 @@
           events))
 
 (defn- latest-event [events]
-  (apply time/max-date (map #(or (:time %) ; Non-dynamic events
-                                 (:event/time %)) events))) ; Dynamic events
+  (when (seq events)
+    (apply time/max-date (map #(or (:time %) ; Non-dynamic events
+                                   (:event/time %)) events)))) ; Dynamic events
 
 (defn- update-application-last-modified [application]
   (let [events (or (:events application)
