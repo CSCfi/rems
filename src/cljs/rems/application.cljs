@@ -794,9 +794,12 @@
   [{:keys [element-id attributes application group? can-remove?]}]
   (let [application-id (:id application)
         user-id (or (:eppn attributes) (:userid attributes))
+        sanitized-user-id (-> (or user-id "")
+                              str/lower-case
+                              (str/replace #"[^a-z]" ""))
         other-attributes (dissoc attributes :commonName :name :eppn :userid :mail :email)]
     [collapsible/minimal
-     {:id (str element-id "-" user-id "-info")
+     {:id (str element-id "-" sanitized-user-id "-info")
       :class (when group? "group")
       :always
       [:div
@@ -816,9 +819,9 @@
       :footer [:div#applicant-collapse
                (when can-remove?
                  [:div.commands
-                  [remove-member-action-button "applicant-collapse"]])
+                  [remove-member-action-button (str element-id "-" sanitized-user-id "-remove")]])
                (when can-remove?
-                 [remove-member-form application-id "applicant-collapse" attributes (partial reload! application-id)])]}]))
+                 [remove-member-form application-id (str element-id "-" sanitized-user-id "-form") attributes (partial reload! application-id)])]}]))
 
 (defn applicants-info
   "Renders the applicants, i.e. applicant and members."
@@ -1185,7 +1188,7 @@
    (component-info member-info)
    (example "member-info"
             [member-info {:element-id "info1"
-                          :attributes {:eppn "developer"
+                          :attributes {:eppn "developer@uu.id"
                                        :mail "developer@uu.id"
                                        :commonName "Deve Loper"
                                        :organization "Testers"
