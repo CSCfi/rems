@@ -20,7 +20,7 @@
     (let [config {:theme-path "example-theme/theme.edn"
                   :theme {:color1 "should be overridden"
                           :color42 "not overridden"}}]
-      (is (= {:color1 "#aa0000"
+      (is (= {:color1 "#cbd0d5"
               :color42 "not overridden"}
              (-> (config/load-external-theme config)
                  :theme

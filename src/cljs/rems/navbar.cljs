@@ -59,9 +59,11 @@
 (defn navigation-widget [page-id]
   (let [identity @(rf/subscribe [:identity])]
     [:div.fixed-top
+     [:div.navbar-top-bar [:div.navbar-top-left] [:div.navbar-top-right]]
      [:div.container
       [navbar-normal page-id identity]
-      [navbar-small page-id identity]]]))
+      [navbar-small page-id identity]]
+     [:div.navbar-bottom-bar]]))
 
 (defn guide []
   [:div

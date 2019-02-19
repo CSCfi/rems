@@ -660,7 +660,7 @@
   [{:keys [title id textcontent approved readonly validation]}]
   [license id title approved readonly validation
    [:div.license-panel
-    [:h6.license-title
+    [:span.license-title
      [:a.license-header.collapsed {:data-toggle "collapse"
                                    :href (str "#collapse" id)
                                    :aria-expanded "false"
@@ -776,7 +776,7 @@
                (text :t.applications/state)
                (when state (str ": " (localize-state state))))]
       :always [:div
-               [:div.mb-3 {:class (str "state-" state)} (phases phases-data)]
+               [:div.mb-3 {:class (str "state-" (if (keyword? state) (name state) state))} (phases phases-data)]
                (when last-event
                  (info-field (text :t.applications/latest-comment)
                              (:comment last-event)))]

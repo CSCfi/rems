@@ -9,7 +9,8 @@
             [garden.units :as u]
             [garden.color :as c]
             [mount.core :refer [defstate]]
-            [rems.util :as util]))
+            [rems.util :as util]
+            [clojure.string :as str]))
 
 (defn- generate-at-font-faces []
   (list
@@ -39,6 +40,13 @@
                                        :opacity 1}] ; Mozilla Firefox 19+
    [".form-control:-ms-input-placeholder" {:color "#ccc"}])) ; Internet Explorer 10-11
 
+(defn resolve-image [path]
+  (when path
+    (let [url (if (str/starts-with? path "http")
+                path
+                (str (util/get-theme-attribute :img-path) path))]
+      (str "url(\"" url "\")"))))
+
 (defn- generate-media-queries []
   (list
    (stylesheet/at-media {:max-width (u/px 480)}
@@ -47,7 +55,7 @@
                           {:border-bottom "none"}]
                          [(s/descendant :.logo :.img)
                           {:background-color (util/get-theme-attribute :logo-bgcolor)
-                           :background-image (str "url(\"" (util/get-theme-attribute :img-path) (util/get-theme-attribute :logo-name-sm) "\")")
+                           :background-image (resolve-image (util/get-theme-attribute :logo-name-sm))
                            :-webkit-background-size :contain
                            :-moz-background-size :contain
                            :-o-background-size :contain
@@ -93,7 +101,8 @@
              :flex-direction "row"
              :justify-content "stretch"
              :align-items "center"}
-   [:.phase {:background-color (util/get-theme-attribute :phase-color)
+   [:.phase {:background-color (util/get-theme-attribute :phase-bgcolor "#eee")
+             :color (util/get-theme-attribute :phase-color "#111")
              :flex-grow 1
              :height (u/px 40)
              :display "flex"
@@ -117,12 +126,14 @@
                                           :border-left [[(u/px 10) :solid :white]]
                                           :border-bottom [[(u/px 20) :solid :transparent]]
                                           :border-right "none"}]
-    [:&.active {:background-color (util/get-theme-attribute :phase-color-active)
-                :border-color (util/get-theme-attribute :phase-color-active)
-                :color "#000"}]
-    [:&.completed {:background-color (util/get-theme-attribute :phase-color-completed)
-                   :border-color (util/get-theme-attribute :phase-color-completed)
-                   :color "#fff"}]]])
+    [:&.active (merge {:color (util/get-theme-attribute :phase-color-active :phase-color "#111")}
+                      (if-let [background (util/get-theme-attribute :phase-background-active)]
+                        {:background background}
+                        {:background-color (util/get-theme-attribute :phase-bgcolor-active "#ccc")
+                         :border-color (util/get-theme-attribute :phase-bgcolor-active "#ccc")}))]
+    [:&.completed {:background-color (util/get-theme-attribute :phase-bgcolor-completed "#ccc")
+                   :border-color (util/get-theme-attribute :phase-bgcolor-completed "#ccc")
+                   :color (util/get-theme-attribute :phase-color-completed :phase-color)}]]])
 
 (defn- generate-rems-table-styles []
   (list
@@ -141,14 +152,18 @@
    [:#event-table
     {:white-space "pre-wrap"}
     [:.date {:min-width "160px"}]]
-   [:.rems-table {:margin "1em 0"
-                  :min-width "100%"
-                  :background-color (util/get-theme-attribute :table-bgcolor)
+   [:.table-border {:padding 0
+                    :margin "1em 0"
+                    :border (util/get-theme-attribute :table-border "1px solid #ccc")
+                    :border-radius (u/rem 0.4)}]
+   [:.rems-table {:min-width "100%"
+                  :background-color (util/get-theme-attribute :table-bgcolor :color1)
+                  :box-shadow (util/get-theme-attribute :table-shadow)
                   :color (util/get-theme-attribute :table-text-color)
                   :border-radius (u/rem 0.4)
                   :overflow "hidden"}
     [:th {:color (util/get-theme-attribute :table-heading-color "#fff")
-          :background-color (util/get-theme-attribute :table-heading-bgcolor :color2)}]
+          :background-color (util/get-theme-attribute :table-heading-bgcolor :color3)}]
     [:td {:display "block"}
      [:&:before {:content "attr(data-th)\":\""
                  :font-weight "bold"
@@ -162,12 +177,15 @@
     [:td:before
      {:color (util/get-theme-attribute :table-text-color)}]
     [:tr {:margin "0 1rem"}
+     [:&:hover {:color (util/get-theme-attribute :table-hover-color :table-text-color "#fff")
+                :background-color (util/get-theme-attribute :table-hover-bgcolor :color2)}]
      [(s/& (s/nth-child "2n"))
-      {:background-color (util/get-theme-attribute :table-stripe-color)}]
-     [:&:hover {:color (util/get-theme-attribute :table-hover-color)
-                :background-color (util/get-theme-attribute :table-hover-bgcolor)}]]
+      [:&:hover {:color (util/get-theme-attribute :table-hover-color :table-text-color "#fff")
+                 :background-color (util/get-theme-attribute :table-hover-bgcolor :color2)}]
+      {:background-color (util/get-theme-attribute :table-stripe-color :table-bgcolor :color1)}]]
     [:td.commands:last-child {:text-align "right"
                               :padding-right (u/rem 1)}]]
+   [:.rems-table.cart {:box-shadow :none}]
    [:.inner-cart {:margin (u/em 1)}]
    [:.outer-cart {:border [[(u/px 1) :solid (util/get-theme-attribute :color1)]]
                   :border-radius (u/rem 0.4)}]
@@ -175,7 +193,7 @@
                   :font-weight "bold"}]
    [:.cart-item {:padding-right (u/em 1)}
     [:>span {:display :inline-block :vertical-align :middle}]]
-   [:.text-highlight {:color (c/lighten (util/get-theme-attribute :color4) 20)}]))
+   [:.text-highlight {:color (when (util/get-theme-attribute :color4) (c/lighten (util/get-theme-attribute :color4) 20))}]))
 
 (def ^:private dashed-form-group {:position "relative"
                                   :border "2px dashed #ccc"
@@ -190,16 +208,20 @@
    [:* {:margin 0}]
    [:a
     :button
-    {:cursor :pointer}]
-   [:a {:color (:color3 util/get-theme-attribute)}]
+    {:cursor :pointer}
+    ["&:not([href]):not([tabindex]):not(.btn)" {:color (util/get-theme-attribute :link-color "#007bff")}
+     [:&:hover {:color (util/get-theme-attribute :link-hover-color :color4)}]]]
    [:html {:position :relative
            :min-width (u/px 320)
            :height (u/percent 100)}]
-   [:body {:font-family "'Lato', sans-serif"
+   [:body {:font-family (util/get-theme-attribute :font-family "'Lato', sans-serif")
            :min-height (u/percent 100)
            :display :flex
            :flex-direction :column
            :padding-top (u/px 56)}]
+   [:h1 :h2 {:font-weight 500}]
+   [:h1 :h2 :h3 {:letter-spacing (u/rem 0.17)}]
+   [:h4 :h5 :h6 {:letter-spacing (u/rem 0.12)}]
    [:#app {:min-height (u/percent 100)
            :flex 1
            :display :flex}]
@@ -208,23 +230,26 @@
                       :display :flex
                       :flex-direction :column}]
    [:.fixed-top {:background-color "#fff"
-                 :border-bottom [[(u/px 1) :solid (util/get-theme-attribute :color1)]]
+                 :border-bottom (util/get-theme-attribute :header-border "3px solid #ccc")
+                 :box-shadow (util/get-theme-attribute :header-shadow :table-shadow)
                  :min-height (u/px 56)}]
-   [:.main-content {:display "flex"
+   [:.main-content {:display :flex
                     :flex-direction :column
                     :flex-wrap :none
                     :min-height (u/px 300)
-                    :flex-grow "1"}]
+                    :flex-grow 1}]
    [(s/> :.spaced-sections "*:not(:first-child)") {:margin-top (u/rem 1)}]
    [:.btn-primary
     [:&:hover
      :&:focus
      :&:active:hover
-     {:background-color (util/get-theme-attribute :color4)
-      :border-color (util/get-theme-attribute :color4)
+     {:background-color (util/get-theme-attribute :primary-button-hover-bgcolor :primary-button-bgcolor :color4)
+      :border-color (util/get-theme-attribute :primary-button-hover-bgcolor :primary-button-bgcolor :color4)
+      :color (util/get-theme-attribute :primary-button-hover-color :primary-button-color "#fff")
       :outline-color :transparent}]
-    {:background-color (util/get-theme-attribute :color4)
-     :border-color (util/get-theme-attribute :color4)
+    {:background-color (util/get-theme-attribute :primary-button-bgcolor :color4)
+     :border-color (util/get-theme-attribute :primary-button-bgcolor :color4)
+     :color (util/get-theme-attribute :primary-button-color "#fff")
      :outline-color :transparent}]
    [:.btn-secondary
     [:&:hover
@@ -265,26 +290,33 @@
    [:.nav-link
     :.btn-link
     (s/descendant :.nav-link :a)
-    {:color (util/get-theme-attribute :color3)
+    {:color (util/get-theme-attribute :nav-color :link-color :color3)
      :border 0}] ;for button links
    [:.navbar
     [:.nav-link :.btn-link
-     {:text-transform "uppercase"
-      :background-color :inherit}]]
+     {:background-color :inherit}]]
+   [:.navbar-top-bar {:width (u/percent 100)
+                      :height (u/px 4)
+                      :display :flex
+                      :flex-direction :row}]
+   [:.navbar-top-left {:flex 1
+                       :background-color (util/get-theme-attribute :color4)}]
+   [:.navbar-top-right {:flex 1
+                        :background-color (util/get-theme-attribute :color2)}]
    [:.navbar-toggler {:border-color (util/get-theme-attribute :color1)}]
    [:.nav-link
     :.btn-link
     [:&.active
-     {:color (util/get-theme-attribute :color4)}]
+     {:color (util/get-theme-attribute :nav-active-color :color4)}]
     [:&:hover
-     {:color (util/get-theme-attribute :color4)}]]
+     {:color (util/get-theme-attribute :nav-hover-color :color4)}]]
    [:.logo {:height (u/px 140)
             :background-color (util/get-theme-attribute :logo-bgcolor)
             :padding "0 20px"
             :margin-bottom (u/em 1)}]
    [(s/descendant :.logo :.img) {:height "100%"
                                  :background-color (util/get-theme-attribute :logo-bgcolor)
-                                 :background-image (str "url(\"" (util/get-theme-attribute :img-path) (util/get-theme-attribute :logo-name) "\")")
+                                 :background-image (resolve-image (util/get-theme-attribute :logo-name))
                                  :-webkit-background-size :contain
                                  :-moz-o-background-size :contain
                                  :-o-background-size :contain
@@ -296,10 +328,11 @@
                                  :padding-right (u/px 20)}]
    [:footer {:width "100%"
              :height (u/px 53.6)
-             :color (util/get-theme-attribute :table-heading-color "#fff")
-             :background-color (util/get-theme-attribute :table-heading-bgcolor :color1)
+             :color (util/get-theme-attribute :footer-color :table-heading-color "#fff")
+             :background-color (util/get-theme-attribute :footer-bgcolor :table-heading-bgcolor :color3)
              :text-align "center"
-             :margin-top (u/em 1)}]
+             :margin-top (u/em 1)}
+    [:.navbar {:color (util/get-theme-attribute :footer-color :table-heading-color "#fff")}]]
    [:.jumbotron
     {:background-color "#fff"
      :text-align "center"
@@ -308,7 +341,7 @@
      :color "#000"
      :border-style "solid"
      :border-width (u/px 1)
-     :box-shadow "0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)"}
+     :box-shadow (util/get-theme-attribute :collapse-shadow :table-shadow)}
     [:h2 {:margin-bottom (u/px 20)}]]
    [:.login-btn {:max-height (u/px 70)
                  :margin-bottom (u/px 20)}
@@ -329,7 +362,9 @@
     :.user-name
     {:margin-right (u/px 5)}]
    [:.navbar {:padding-left 0
-              :padding-right 0}]
+              :padding-right 0
+              :letter-spacing (u/rem 0.015)
+              :color (util/get-theme-attribute :navbar-color "#111")}]
    [(s/descendant :.navbar-text :.language-switcher)
     {:margin-right (u/rem 1)}]
    [:.example-page {:margin (u/rem 2)}]
@@ -429,8 +464,8 @@
    [:.license-panel {:display :inline-block
                      :width "inherit"}]
    [:.card-header.clickable {:cursor "pointer"}]
-   [:.rems-card-header {:color (util/get-theme-attribute :table-heading-color)
-                        :background-color (util/get-theme-attribute :table-heading-bgcolor)
+   [:.rems-card-header {:color (util/get-theme-attribute :table-heading-color "#fff")
+                        :background-color (util/get-theme-attribute :table-heading-bgcolor :color3)
                         :margin (u/px -1) ; make sure header overlaps container border
                         }]
    [(s/descendant :.card-header :a) {:color :inherit}]
@@ -443,13 +478,16 @@
                   :transition "height 0.1s linear"}]
    [:.collapse-toggle {:text-align :center}]
    [:.collapse-wrapper {:border-radius (u/rem 0.4)
-                        :border "1px solid #ccc"}
+                        :border "1px solid #ccc"
+                        :background-color (util/get-theme-attribute :collapse-bgcolor "#fff")
+                        :box-shadow (util/get-theme-attribute :collapse-shadow :table-shadow)}
+    [:.card-title {:color (util/get-theme-attribute :collapse-color "#fff")}]
     [:.card-header {:border-bottom "none"
                     :border-radius (u/rem 0.4)
                     :font-weight 500
                     :font-size (u/rem 1.5)
                     :line-height 1.1
-                    :font-family "'Lato'"}]]
+                    :font-family (util/get-theme-attribute :font-family "'Lato', sans-serif")}]]
    [:.collapse-content {:margin (u/rem 1.25)}]
    [:.collapse-wrapper.slow
     [:.collapsing {:-webkit-transition "height 0.25s linear"
@@ -457,9 +495,10 @@
                    :transition "height 0.25s linear"}]]
 
    [:.color1 {:color (util/get-theme-attribute :color1)}]
-   [:.color1-faint {:color (-> (util/get-theme-attribute :color1)
-                               (c/saturate -50)
-                               (c/lighten 33))}]
+   [:.color1-faint {:color (when (util/get-theme-attribute :color1)
+                             (-> (util/get-theme-attribute :color1)
+                                 (c/saturate -50)
+                                 (c/lighten 33)))}]
    [:h2 {:margin [[(u/rem 1) 0]]}]
 
    ;; autocomplete, duplicates some Bootstrap styling
@@ -489,17 +528,17 @@
     [:.autocomplete__selected-item:last-of-type {:margin-bottom (u/rem 0.5)}]
     [:.autocomplete__selected-item {:height (u/px 40)
                                     :line-height (u/px 40)
-                                    :color (util/get-theme-attribute :table-heading-color "inherit")
-                                    :background-color (util/get-theme-attribute :table-heading-bgcolor :color1)
+                                    :color (util/get-theme-attribute :table-heading-color "#fff")
+                                    :background-color (util/get-theme-attribute :table-heading-bgcolor :color3)
                                     :border-radius (u/rem 0.25)
                                     :border [[(u/px 1) :solid "#111"]]}]
     [:.autocomplete__dropdown {:padding (u/px 10)}]
     [:.autocomplete__control [:input {:display :inline-block}]]
     [:.autocomplete__item {:padding (u/px 10)}]
-    [:.autocomplete__item--selected {:color (util/get-theme-attribute :table-heading-color "inherit")
-                                     :background-color (util/get-theme-attribute :table-heading-bgcolor :color1)}]
-    [:.autocomplete__item:hover {:color (util/get-theme-attribute :table-heading-color "inherit")
-                                 :background-color (util/get-theme-attribute :table-heading-bgcolor :color1)
+    [:.autocomplete__item--selected {:color (util/get-theme-attribute :table-heading-color "#fff")
+                                     :background-color (util/get-theme-attribute :table-heading-bgcolor :color3)}]
+    [:.autocomplete__item:hover {:color (util/get-theme-attribute :table-heading-color "#fff")
+                                 :background-color (util/get-theme-attribute :table-heading-bgcolor :color3)
                                  :cursor :pointer}]
     [:.autocomplete__selected-item {:display :inline-block
                                     :padding [[0 (u/rem 0.5)]]
@@ -507,7 +546,7 @@
      [:a.autocomplete__remove-item-button {:margin-left (u/px 5)
                                            :padding (u/rem 0.5)
                                            :padding-right 0
-                                           :color (util/get-theme-attribute :table-heading-color :danger-color)
+                                           :color (util/get-theme-attribute :danger-color)
                                            :font-weight :bold}]
      [:input {:width (u/percent 100)}]]]
 

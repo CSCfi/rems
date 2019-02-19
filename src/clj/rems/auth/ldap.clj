@@ -45,7 +45,7 @@
    :dn (getx user :dn)})
 
 (defn login-component []
-  [:div.m-auto.jumbotron
+  [:div.jumbotron
    [:h2 (text :t.ldap/title)]
    [:form
     {:action "/ldap/login" :method "post"}
