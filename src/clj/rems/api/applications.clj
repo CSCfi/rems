@@ -150,7 +150,7 @@
 
 (defn hide-sensitive-information [application user]
   (let [is-handler? (or (contains? (set (applications/get-handlers (:application application))) user) ; old form
-                        (applications/is-dynamic-handler? user (:application application)))] ; dynamic
+                        (contains? (get-in application [:application :possible-commands]) :see-everything))] ; dynamic
     (if is-handler?
       application
       (-> application

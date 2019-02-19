@@ -795,7 +795,8 @@
                  "rems.workflow.dynamic/add-member"
                  "rems.workflow.dynamic/remove-member"
                  "rems.workflow.dynamic/invite-member"
-                 "rems.workflow.dynamic/uninvite-member"}
+                 "rems.workflow.dynamic/uninvite-member"
+                 "see-everything"}
                (set (get-in data [:application :possible-commands]))))))
 
     (testing "send command without user"

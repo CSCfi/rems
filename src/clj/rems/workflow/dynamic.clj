@@ -226,20 +226,23 @@
   [application _event]
   application)
 
-;; TODO: add :see-everything permission to relevant roles
 (def ^:private draft-permissions {:applicant [::save-draft
                                               ::submit
                                               ::remove-member
                                               ::invite-member
                                               ::uninvite-member]
-                                  :handler [::remove-member
+                                  :handler [:see-everything
+                                            ::remove-member
                                             ::uninvite-member]
-                                  :commenter []
-                                  :decider []})
+                                  :commenter [:see-everything]
+                                  :past-commenter [:see-everything]
+                                  :decider [:see-everything]
+                                  :past-decider [:see-everything]})
 
 (def ^:private submitted-permissions {:applicant [::remove-member
                                                   ::uninvite-member]
-                                      :handler [::add-member
+                                      :handler [:see-everything
+                                                ::add-member
                                                 ::remove-member
                                                 ::invite-member
                                                 ::uninvite-member
@@ -248,13 +251,15 @@
                                                 ::return
                                                 ::approve
                                                 ::reject]
-                                      :commenter [::comment]
-                                      :decider [::decide]})
+                                      :commenter [:see-everything
+                                                  ::comment]
+                                      :decider [:see-everything
+                                                ::decide]})
 
 (def ^:private closed-permissions {:applicant []
-                                   :handler []
-                                   :commenter []
-                                   :decider []})
+                                   :handler [:see-everything]
+                                   :commenter [:see-everything]
+                                   :decider [:see-everything]})
 
 (defmethod calculate-permissions :application.event/created
   [application event]
@@ -328,11 +333,11 @@
                                                         :application/commenters ["commenter1" "commenter2"]}])
           commented (reduce calculate-permissions requested [{:event/type :application.event/commented
                                                               :event/actor "commenter1"}])]
-      (is (= #{::comment}
+      (is (= #{:see-everything ::comment}
              (permissions/user-permissions requested "commenter1")))
-      (is (= #{}
+      (is (= #{:see-everything}
              (permissions/user-permissions commented "commenter1")))
-      (is (= #{::comment}
+      (is (= #{:see-everything ::comment}
              (permissions/user-permissions commented "commenter2")))))
 
   (testing "decider may decide only once"
@@ -346,9 +351,9 @@
                                                         :application/decider "decider"}])
           decided (reduce calculate-permissions requested [{:event/type :application.event/decided
                                                             :event/actor "decider"}])]
-      (is (= #{::decide}
+      (is (= #{:see-everything ::decide}
              (permissions/user-permissions requested "decider")))
-      (is (= #{}
+      (is (= #{:see-everything}
              (permissions/user-permissions decided "decider"))))))
 
 ;;; Application model
@@ -641,9 +646,7 @@
 (defn possible-commands
   "Returns the commands which the user is authorized to execute."
   [actor application-state]
-  (-> application-state
-      (permissions/user-permissions actor)
-      (disj :see-everything))) ; remove non-command permissions
+  (permissions/user-permissions application-state actor))
 
 (defn assoc-possible-commands [actor application-state]
   (assoc application-state
