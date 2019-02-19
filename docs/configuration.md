@@ -59,6 +59,22 @@ For example, to add German localization, create a file `my-translations/de.edn` 
  :default-language :de}
 ```
 
+### Overriding default localizations
+
+To override certain localization key, create a new folder called <b>extra-translations</b> under theme folder.
+
+Create new localization files to the new directory. You don't need to copy whole localization files, it is enough to add only the localizations
+you want to override. For example to override English localizations for keys: <i>administration.catalogue-item, administration.catalogue-items, applicant-info.applicant, applicant-info.applicants</i>
+create the following <b>en.edn</b> file to the new translations folder.
+
+```clojure
+{:t
+ {:administration {:catalogue-item "Research item"
+                   :catalogue-items "Research items"}
+  :applicant-info {:applicant "Student"
+                   :applicants "Students"}}}
+```
+
 ## Themes
 
 Custom themes can be used by creating a file, for example `my-custom-theme.edn`, and specifying its location in the `:theme-path` configuration parameter. The theme file can override some or all of the theme attributes (see `:theme` in [config-defaults.edn](https://github.com/CSCfi/rems/blob/master/resources/config-defaults.edn)). Static resources can be placed in a `public` directory next to the theme configuration file. See [example-theme/theme.edn](https://github.com/CSCfi/rems/blob/master/example-theme/theme.edn) for an example.
