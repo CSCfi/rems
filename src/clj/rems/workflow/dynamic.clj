@@ -1,7 +1,9 @@
 (ns rems.workflow.dynamic
-  (:require [clojure.test :refer :all]
+  (:require [clojure.set :as set]
+            [clojure.test :refer :all]
             [rems.auth.util :refer [throw-unauthorized]]
             [rems.util :refer [getx]]
+            [rems.workflow.permissions :as permissions]
             [schema-refined.core :as r]
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
@@ -196,8 +198,150 @@
                              :event/actor "foo"
                              :application/id 123}))))))
 
+;;; Roles and permissions
 
-;;; Events
+(defn hide-sensitive-dynamic-events [events]
+  (filter (fn [event]
+            ((complement contains?) #{:application.event/comment-requested
+                                      :application.event/commented
+                                      :application.event/decided
+                                      :application.event/decision-requested}
+             (:event/type event)))
+          events))
+
+(defmulti calculate-permissions
+  (fn [_application event] (:event/type event)))
+
+(defmethod calculate-permissions :default
+  [application _event]
+  application)
+
+;; TODO: add :see-everything permission to relevant roles
+(def ^:private draft-permissions {:applicant [::save-draft
+                                              ::submit
+                                              ::remove-member
+                                              ::invite-member
+                                              ::uninvite-member]
+                                  :handler [::remove-member
+                                            ::uninvite-member]
+                                  :commenter []
+                                  :decider []})
+
+(def ^:private submitted-permissions {:applicant [::remove-member
+                                                  ::uninvite-member]
+                                      :handler [::add-member
+                                                ::remove-member
+                                                ::invite-member
+                                                ::uninvite-member
+                                                ::request-comment
+                                                ::request-decision
+                                                ::return
+                                                ::approve
+                                                ::reject]
+                                      :commenter [::comment]
+                                      :decider [::decide]})
+
+(def ^:private closed-permissions {:applicant []
+                                   :handler []
+                                   :commenter []
+                                   :decider []})
+
+(defmethod calculate-permissions :application.event/created
+  [application event]
+  (-> application
+      (permissions/give-role-to-user :applicant (:event/actor event))
+      (permissions/give-role-to-users :handler (:workflow.dynamic/handlers event))
+      (permissions/set-role-permissions draft-permissions)))
+
+(defmethod calculate-permissions :application.event/submitted
+  [application _event]
+  (-> application
+      (permissions/set-role-permissions submitted-permissions)))
+
+(defmethod calculate-permissions :application.event/returned
+  [application _event]
+  (-> application
+      (permissions/set-role-permissions draft-permissions)))
+
+(defmethod calculate-permissions :application.event/comment-requested
+  [application event]
+  (-> application
+      (permissions/give-role-to-users :commenter (:application/commenters event))))
+
+(defmethod calculate-permissions :application.event/commented
+  [application event]
+  (-> application
+      (permissions/remove-role-from-user :commenter (:event/actor event))
+      (permissions/give-role-to-user :past-commenter (:event/actor event)))) ; allow to still view the application
+
+(defmethod calculate-permissions :application.event/decision-requested
+  [application event]
+  (-> application
+      (permissions/give-role-to-user :decider (:application/decider event))))
+
+(defmethod calculate-permissions :application.event/decided
+  [application event]
+  (-> application
+      (permissions/remove-role-from-user :decider (:event/actor event))
+      (permissions/give-role-to-user :past-decider (:event/actor event)))) ; allow to still view the application
+
+(defmethod calculate-permissions :application.event/approved
+  [application _event]
+  (-> application
+      (permissions/set-role-permissions (update closed-permissions
+                                                :handler set/union #{::add-member
+                                                                     ::remove-member
+                                                                     ::invite-member
+                                                                     ::uninvite-member
+                                                                     ::close}))))
+
+(defmethod calculate-permissions :application.event/rejected
+  [application _event]
+  (-> application
+      (permissions/set-role-permissions closed-permissions)))
+
+(defmethod calculate-permissions :application.event/closed
+  [application _event]
+  (-> application
+      (permissions/set-role-permissions closed-permissions)))
+
+(deftest test-calculate-permissions
+  ;; TODO: is this what we want? wouldn't it be useful to be able to write more than one comment?
+  (testing "commenter may comment only once"
+    (let [requested (reduce calculate-permissions nil [{:event/type :application.event/created
+                                                        :event/actor "applicant"
+                                                        :workflow.dynamic/handlers ["handler"]}
+                                                       {:event/type :application.event/submitted
+                                                        :event/actor "applicant"}
+                                                       {:event/type :application.event/comment-requested
+                                                        :event/actor "handler"
+                                                        :application/commenters ["commenter1" "commenter2"]}])
+          commented (reduce calculate-permissions requested [{:event/type :application.event/commented
+                                                              :event/actor "commenter1"}])]
+      (is (= #{::comment}
+             (permissions/user-permissions requested "commenter1")))
+      (is (= #{}
+             (permissions/user-permissions commented "commenter1")))
+      (is (= #{::comment}
+             (permissions/user-permissions commented "commenter2")))))
+
+  (testing "decider may decide only once"
+    (let [requested (reduce calculate-permissions nil [{:event/type :application.event/created
+                                                        :event/actor "applicant"
+                                                        :workflow.dynamic/handlers ["handler"]}
+                                                       {:event/type :application.event/submitted
+                                                        :event/actor "applicant"}
+                                                       {:event/type :application.event/decision-requested
+                                                        :event/actor "handler"
+                                                        :application/decider "decider"}])
+          decided (reduce calculate-permissions requested [{:event/type :application.event/decided
+                                                            :event/actor "decider"}])]
+      (is (= #{::decide}
+             (permissions/user-permissions requested "decider")))
+      (is (= #{}
+             (permissions/user-permissions decided "decider"))))))
+
+;;; Application model
 
 (defmulti ^:private apply-event
   "Applies an event to an application state."
@@ -292,26 +436,27 @@
   (update application :invited-members #(vec (remove #{(:application/member event)} %))))
 
 (defn apply-events [application events]
-  (reduce (fn [application event] (apply-event application (:workflow application) event))
+  (reduce (fn [application event] (-> (apply-event application (:workflow application) event)
+                                      (calculate-permissions event)))
           application
           events))
 
-;;; Commands
+;;; Command handlers
 
-(defmulti handle-command
+(defmulti command-handler
   "Handles a command by an event."
   (fn [cmd _application _injections] (:type cmd)))
 
 (defn get-command-types
   "Fetch sequence of supported command names."
   []
-  (keys (methods handle-command)))
+  (keys (methods command-handler)))
 
 (deftest test-all-command-types-handled
   (is (= CommandTypes (set (get-command-types)))))
 
-(defn impossible-command? [cmd application injections]
-  (let [result (handle-command cmd application injections)]
+(defn- impossible-command? [cmd application injections] ; TODO: remove me
+  (let [result (command-handler cmd application injections)]
     (when-not (:success result)
       result)))
 
@@ -351,7 +496,7 @@
   (when-let [errors ((:validate-form injections) application-id)]
     {:errors errors}))
 
-(defmethod handle-command ::save-draft
+(defmethod command-handler ::save-draft
   [cmd application _injections]
   (or (applicant-error application cmd)
       (state-error application ::draft ::returned)
@@ -366,7 +511,7 @@
                                                     (map first)
                                                     set)}}))
 
-(defmethod handle-command ::submit
+(defmethod command-handler ::submit
   [cmd application injections]
   (or (applicant-error application cmd)
       (state-error application ::draft ::returned)
@@ -377,7 +522,7 @@
                 :event/actor (:actor cmd)
                 :application/id (:application-id cmd)}}))
 
-(defmethod handle-command ::approve
+(defmethod command-handler ::approve
   [cmd application _injections]
   (or (actor-is-not-handler-error application cmd)
       (state-error application ::submitted)
@@ -388,7 +533,7 @@
                 :application/id (:application-id cmd)
                 :application/comment (:comment cmd)}}))
 
-(defmethod handle-command ::reject
+(defmethod command-handler ::reject
   [cmd application _injections]
   (or (actor-is-not-handler-error application cmd)
       (state-error application ::submitted)
@@ -399,7 +544,7 @@
                 :application/id (:application-id cmd)
                 :application/comment (:comment cmd)}}))
 
-(defmethod handle-command ::return
+(defmethod command-handler ::return
   [cmd application _injections]
   (or (actor-is-not-handler-error application cmd)
       (state-error application ::submitted)
@@ -410,7 +555,7 @@
                 :application/id (:application-id cmd)
                 :application/comment (:comment cmd)}}))
 
-(defmethod handle-command ::close
+(defmethod command-handler ::close
   [cmd application _injections]
   (or (actor-is-not-handler-error application cmd)
       (state-error application ::approved)
@@ -421,7 +566,7 @@
                 :application/id (:application-id cmd)
                 :application/comment (:comment cmd)}}))
 
-(defmethod handle-command ::request-decision
+(defmethod command-handler ::request-decision
   [cmd application injections]
   (or (actor-is-not-handler-error application cmd)
       (state-error application ::submitted)
@@ -434,7 +579,7 @@
                 :application/decider (:decider cmd)
                 :application/comment (:comment cmd)}}))
 
-(defmethod handle-command ::decide
+(defmethod command-handler ::decide
   [cmd application _injections]
   (or (when-not (= (:actor cmd) (:decider application))
         {:errors [{:type :forbidden}]})
@@ -458,7 +603,7 @@
   (when-not (seq (get cmd key))
     {:errors [{:type :must-not-be-empty :key key}]}))
 
-(defmethod handle-command ::request-comment
+(defmethod command-handler ::request-comment
   [cmd application injections]
   (or (actor-is-not-handler-error application cmd)
       (state-error application ::submitted)
@@ -476,7 +621,7 @@
   (when-not (contains? (:commenters application) (:actor cmd))
     {:errors [{:type :forbidden}]}))
 
-(defmethod handle-command ::comment
+(defmethod command-handler ::comment
   [cmd application _injections]
   (or (actor-is-not-commenter-error application cmd)
       (state-error application ::submitted)
@@ -487,7 +632,7 @@
                 :application/id (:application-id cmd)
                 :application/comment (:comment cmd)}}))
 
-(defmethod handle-command ::add-member
+(defmethod command-handler ::add-member
   [cmd application injections]
   (or (actor-is-not-handler-error application cmd)
       (state-error application ::submitted ::approved)
@@ -499,7 +644,7 @@
                 :application/member (:member cmd)
                 :application/id (:application-id cmd)}}))
 
-(defmethod handle-command ::invite-member
+(defmethod command-handler ::invite-member
   [cmd application injections]
   (let [success-result {:success true
                         :result {:event/type :application.event/member-invited
@@ -507,15 +652,22 @@
                                  :event/actor (:actor cmd)
                                  :application/member (:member cmd)
                                  :application/id (:application-id cmd)}}]
-    (if (= (:actor cmd) (:applicantuserid application))
+    (if (and (= (:actor cmd) (:applicantuserid application))
+             (handler? application (:actor cmd)))
+      ;; when actor is both applicant and handler, combine the allowed states
       (or (applicant-error application cmd)
-          (state-error application ::draft #_::withdrawn ::returned)
+          (actor-is-not-handler-error application cmd)
+          (state-error application ::draft #_::withdrawn ::returned ::submitted ::approved)
           success-result)
-      (or (actor-is-not-handler-error application cmd)
-          (state-error application ::submitted ::approved)
-          success-result))))
+      (if (= (:actor cmd) (:applicantuserid application))
+        (or (applicant-error application cmd)
+            (state-error application ::draft #_::withdrawn ::returned)
+            success-result)
+        (or (actor-is-not-handler-error application cmd)
+            (state-error application ::submitted ::approved)
+            success-result)))))
 
-(defmethod handle-command ::remove-member
+(defmethod command-handler ::remove-member
   [cmd application injections]
   (or (actor-is-not-handler-or-applicant-error application cmd)
       (when (= (:applicantuserid application) (:userid (:member cmd)))
@@ -531,7 +683,7 @@
                 :application/id (:application-id cmd)
                 :application/comment (:comment cmd)}}))
 
-(defmethod handle-command ::uninvite-member
+(defmethod command-handler ::uninvite-member
   [cmd application injections]
   (or (actor-is-not-handler-or-applicant-error application cmd)
       (when-not (contains? (set (map (juxt :name :email) (:invited-members application)))
@@ -546,13 +698,38 @@
                 :application/id (:application-id cmd)
                 :application/comment (:comment cmd)}}))
 
+(defn handle-command [cmd application injections]
+  (let [permissions (permissions/user-permissions application (:actor cmd))]
+    (if (contains? permissions (:type cmd))
+      (command-handler cmd application injections)
+      {:errors [{:type :forbidden}]})))
+
+(deftest test-handle-command
+  (let [application (apply-events nil [{:event/type :application.event/created
+                                        :event/actor "applicant"
+                                        :workflow/type :workflow/dynamic
+                                        :workflow.dynamic/handlers #{"assistant"}}])
+        command {:type ::save-draft
+                 :actor "applicant"}]
+    (testing "executes command when user is authorized"
+      (is (:success (handle-command command application {}))))
+    (testing "fails when user is not authorized"
+      ;; the permission checks should happen before executing the command handler
+      ;; and only depend on the roles and permissions
+      (let [application (permissions/remove-role-from-user application :applicant "applicant")
+            result (handle-command command application {})]
+        (is (not (:success result)))
+        (is (= [{:type :forbidden}] (:errors result)))))))
+
 (defn- apply-command
   ([application cmd]
    (apply-command application cmd nil))
   ([application cmd injections]
-   (let [result (handle-command cmd application injections)]
-     (assert (:success result) (pr-str result))
-     (apply-event application (:workflow application) (getx result :result)))))
+   (let [result (handle-command cmd application injections)
+         _ (assert (:success result) (str "command " cmd " failed with result " result))
+         event (getx result :result)]
+     (-> (apply-event application (:workflow application) event)
+         (calculate-permissions event)))))
 
 (defn- apply-commands
   ([application commands]
@@ -564,7 +741,7 @@
 
 ;;; Possible commands
 
-(defn- command-candidates [actor application-state]
+(defn- command-candidates [actor application-state] ; TODO: remove me
   ;; NB! not setting :time or :application-id here since we don't
   ;; validate them
   (->>
@@ -611,23 +788,81 @@
          :comment "comment"}))]
    (remove nil?)))
 
-(def ^:private injections-for-possible-commands
+(def ^:private injections-for-possible-commands ; TODO: remove me
   "`possible-commands` are calculated with the expectations that
   - the user is always valid and
   - the validation returns no errors."
   {:valid-user? (constantly true)
    :validate-form (constantly nil)})
 
+(defn- remove-impossible-permissions [application]
+  (let [removable-members (remove #(= (:userid %) (:applicantuserid application))
+                                  (:members application))
+        invited-members (:invited-members application)]
+    (cond-> application
+      (empty? removable-members) (permissions/remove-permission-from-all ::remove-member)
+      (empty? invited-members) (permissions/remove-permission-from-all ::uninvite-member))))
+
+(deftest test-remove-impossible-permissions
+  (testing "uninvite-member"
+    (testing "possible when there are invites"
+      (is (= {:role #{::uninvite-member}}
+             (-> {:invited-members [{:name "foo"
+                                     :email "foo@example.com"}]
+                  ::permissions/role-permissions {:role #{::uninvite-member}}}
+                 remove-impossible-permissions
+                 ::permissions/role-permissions))))
+    (testing "impossible when there are no invites"
+      (is (= {:role #{}}
+             (-> {:invited-members []
+                  ::permissions/role-permissions {:role #{::uninvite-member}}}
+                 remove-impossible-permissions
+                 ::permissions/role-permissions)))))
+
+  (testing "remove-member"
+    (testing "possible when there are members"
+      (is (= {:role #{::remove-member}}
+             (-> {:members [{:userid "foo"}]
+                  ::permissions/role-permissions {:role #{::remove-member}}}
+                 remove-impossible-permissions
+                 ::permissions/role-permissions))))
+    (testing "impossible when there are no members"
+      (is (= {:role #{}}
+             (-> {:members []
+                  ::permissions/role-permissions {:role #{::remove-member}}}
+                 remove-impossible-permissions
+                 ::permissions/role-permissions))))
+    (testing "impossible when the only member is the applicant"
+      (is (= {:role #{}}
+             (-> {:members [{:userid "foo"}]
+                  :applicantuserid "foo"
+                  ::permissions/role-permissions {:role #{::remove-member}}}
+                 remove-impossible-permissions
+                 ::permissions/role-permissions))))))
+
 (defn possible-commands
   "Calculates which commands should be possible for use in e.g. UI.
 
   Not every condition is checked exactly so it is in fact a potential set of possible commands only."
   [actor application-state]
-  (->> application-state
-       (command-candidates actor)
-       (remove #(impossible-command? % application-state injections-for-possible-commands))
-       (map :type)
-       set))
+  (let [new-result (-> application-state
+                       remove-impossible-permissions
+                       (permissions/user-permissions actor))
+        ;; TODO: remove me
+        old-result (->> application-state
+                        (command-candidates actor)
+                        (remove #(impossible-command? % application-state injections-for-possible-commands))
+                        (map :type)
+                        set)]
+    (assert (or (empty? (:dynamic-events application-state))
+                (= (disj new-result ::save-draft) ; only compare permissions which the old impl supports
+                   old-result))
+            (str "possible-commands mismatch:\n"
+                 "new impl gave " (pr-str new-result) "\n"
+                 "but old impl gave " (pr-str old-result) "\n"
+                 "for actor " (pr-str actor) "\n"
+                 "and application " (pr-str application-state)))
+    new-result))
 
 (defn assoc-possible-commands [actor application-state]
   (assoc application-state
@@ -691,7 +926,7 @@
                                         [{:actor "applicant" :type ::save-draft :items {1 "original"} :licenses {2 "original"}}
                                          {:actor "applicant" :type ::submit}]
                                         injections)]
-        (is (= {:errors [{:type :invalid-state :state ::submitted}]}
+        (is (= {:errors [{:type :forbidden}]}
                (handle-command {:type ::save-draft
                                 :actor "applicant"
                                 :items {1 "updated"} :licenses {2 "updated"}}
@@ -745,7 +980,7 @@
              (handle-command {:actor "applicant" :type ::submit} application fail-injections))))
     (let [submitted (apply-command application {:actor "applicant" :type ::submit} injections)]
       (testing "cannot submit twice"
-        (is (= {:errors [{:type :invalid-state :state ::submitted}]}
+        (is (= {:errors [{:type :forbidden}]}
                (handle-command {:actor "applicant" :type ::submit} submitted injections))))
       (testing "submitter is member"
         (is (= [{:userid "applicant"}] (:members submitted))))
@@ -879,12 +1114,14 @@
                                {:type ::invite-member :actor "applicant" :member {:name "Member Applicant 2" :email "member2@applicants.com"}}]
                               injections)))))
     (testing "invite two members by handler"
-      (is (= [{:name "Member Applicant 1" :email "member1@applicants.com"} {:name "Member Applicant 2" :email "member2@applicants.com"}]
-             (:invited-members
-              (apply-commands (assoc application :state ::submitted)
-                              [{:type ::invite-member :actor "assistant" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
-                               {:type ::invite-member :actor "assistant" :member {:name "Member Applicant 2" :email "member2@applicants.com"}}]
-                              injections)))))
+      (let [application (apply-events application [{:event/type :application.event/submitted
+                                                    :event/actor "applicant"}])]
+        (is (= [{:name "Member Applicant 1" :email "member1@applicants.com"} {:name "Member Applicant 2" :email "member2@applicants.com"}]
+               (:invited-members
+                (apply-commands application
+                                [{:type ::invite-member :actor "assistant" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
+                                 {:type ::invite-member :actor "assistant" :member {:name "Member Applicant 2" :email "member2@applicants.com"}}]
+                                injections))))))
     (testing "only applicant or handler can invite members"
       (is (= {:errors [{:type :forbidden}]}
              (handle-command {:type ::invite-member :actor "member1" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
@@ -894,7 +1131,7 @@
                                   [{:event/type :application.event/submitted
                                     :event/actor "applicant"}])]
       (testing "applicant can't invite members to submitted application"
-        (is (= {:errors [{:type :invalid-state :state ::submitted}]}
+        (is (= {:errors [{:type :forbidden}]}
                (handle-command {:type ::invite-member :actor "applicant" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
                                submitted
                                injections))))
@@ -1023,21 +1260,21 @@
                                                  {:actor "commenter2" :comment "..." :type ::comment}
                                                  injections)))))))))
 
-(deftest test-possible-commands
+(deftest test-possible-commands ; TODO: remove me (simplify)
   (let [draft (apply-events nil
                             [{:event/type :application.event/created
                               :event/actor "applicant"
                               :workflow/type :workflow/dynamic
                               :workflow.dynamic/handlers #{"assistant"}}])]
     (testing "draft"
-      (is (= #{::submit ::invite-member}
+      (is (= #{::save-draft ::submit ::invite-member}
              (possible-commands "applicant" draft)))
       (is (= #{}
              (possible-commands "assistant" draft)))
       (is (= #{}
              (possible-commands "somebody else" draft)))
       (testing "when there are invited members"
-        (is (= #{::submit ::invite-member ::uninvite-member}
+        (is (= #{::save-draft ::submit ::invite-member ::uninvite-member}
                (possible-commands "applicant" (apply-events draft [{:event/type :application.event/member-invited
                                                                     :event/actor "applicant"
                                                                     :application/member {:name "Some One" :email "some.one@example.org"}}]))))))
