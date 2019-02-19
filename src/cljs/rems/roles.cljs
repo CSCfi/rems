@@ -12,8 +12,8 @@
 
 ;; TODO: Think of a common name for handlers, commenters and deciders. After removing the legacy workflow, "reviewer" would be a free word.
 (defn is-handler-or-commenter-or-decider? [roles]
-  (has-some? #{:approver ; TODO: remove legacy role
-               :reviewer ; TODO: remove legacy role
+  (has-some? #{:approver ; TODO: remove legacy role (also from database)
+               :reviewer ; TODO: remove legacy role (also from database)
                :handler
                :commenter
                :past-commenter
