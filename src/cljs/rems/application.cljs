@@ -841,7 +841,7 @@
                            :application application
                            :group? (or (seq members-but-not-applicant)
                                        (seq invited-members))
-                           :can-remove? can-remove?}]]
+                           :can-remove? false}]]
             (concat
              (for [member members-but-not-applicant]
                [member-info {:element-id id
