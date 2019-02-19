@@ -836,13 +836,25 @@
       :title (text :t.applicant-info/applicants)
       :always
       (into [:div
-             [member-info {:element-id id :attributes (merge applicant applicant-attributes) :application application :group? (or (seq members-but-not-applicant)
-                                                                                                                                  (seq invited-members)) :can-remove? can-remove?}]]
+             [member-info {:element-id id
+                           :attributes (merge applicant applicant-attributes)
+                           :application application
+                           :group? (or (seq members-but-not-applicant)
+                                       (seq invited-members))
+                           :can-remove? can-remove?}]]
             (concat
              (for [member members-but-not-applicant]
-               [member-info {:element-id id :attributes member :application application :group? true :can-remove? can-remove?}])
+               [member-info {:element-id id
+                             :attributes member
+                             :application application
+                             :group? true
+                             :can-remove? can-remove?}])
              (for [invited-member invited-members]
-               [member-info {:element-id id :attributes invited-member :application application :group? true :can-remove? can-uninvite?}])))
+               [member-info {:element-id id
+                             :attributes invited-member
+                             :application application
+                             :group? true
+                             :can-remove? can-uninvite?}])))
       :footer [:div
                [:div.commands
                 (when can-invite? [invite-member-action-button])
