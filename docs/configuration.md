@@ -61,11 +61,8 @@ For example, to add German localization, create a file `my-translations/de.edn` 
 
 ### Overriding default localizations
 
-To override certain localization key, create a new folder where to put the overriding localization files. Add the new folder to configuration file:
+To override certain localization key, create a new folder called <b>extra-translations</b> under theme folder.
 
-```clojure
-:extra-translations-directory "my-special-translations/"
-```
 Create new localization files to the new directory. You don't need to copy whole localization files, it is enough to add only the localizations
 you want to override. For example to override English localizations for keys: <i>administration.catalogue-item, administration.catalogue-items, applicant-info.applicant, applicant-info.applicants</i>
 create the following <b>en.edn</b> file to the new translations folder.

@@ -33,7 +33,6 @@
 
  ;; Path to a directory with translations for additional languages.
  :translations-directory "translations/"
- :extra-translations-directory nil
 
  ;; Path to an external theme file to override variables in :theme.
  ;; Will automatically set :theme-static-resources to a 'public' directory

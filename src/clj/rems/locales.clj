@@ -1,6 +1,7 @@
 (ns rems.locales
   {:ns-tracker/resource-deps ["translations/en.edn" "translations/fi.edn"]}
   (:require [clojure.java.io :as io]
+            [clojure.string :as str]
             [mount.core :refer [defstate]]
             [rems.config :refer [env]]
             [rems.util :refer [deep-merge]])
@@ -20,17 +21,22 @@
                                          (str "translations could not be found in " resource-path " resource and " :translations-directory " was not set")))))]
     (read-string (slurp file-contents))))
 
-(defn- load-translation [language translations-directory extra-translations-directory]
+(defn- extra-translations-path [theme-path]
+  (let [path (str/join "/" (butlast (str/split theme-path #"/"))) ;;Theme-path is of form /foo/bar/theme.edn
+        translations-path (str path "/extra-translations/")]
+    translations-path))
+
+(defn- load-translation [language translations-directory theme-path]
   (let [filename (str (name language) ".edn")]
-    (if extra-translations-directory
+    (if theme-path
       (deep-merge {language (translations-from-file filename translations-directory)}
-                  {language (translations-from-file filename extra-translations-directory)})
+                  {language (translations-from-file filename (extra-translations-path theme-path))})
       {language (translations-from-file filename translations-directory)})))
 
-(defn load-translations [{:keys [languages translations-directory extra-translations-directory]}]
+(defn load-translations [{:keys [languages translations-directory theme-path]}]
   (if translations-directory
     (->> languages
-         (map #(load-translation % translations-directory extra-translations-directory))
+         (map #(load-translation % translations-directory theme-path))
          (apply merge))
     (throw (RuntimeException. ":translations-directory was not set in config"))))
 
