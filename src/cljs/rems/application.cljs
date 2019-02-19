@@ -825,7 +825,7 @@
   [id application applicant-attributes members invited-members]
   (let [application-id (:id application)
         applicant (first (filter (comp #{(:eppn applicant-attributes)} :userid) members))
-        members-but-not-applicant (remove #{applicant} members)
+        non-applicant-members (remove #{applicant} members)
         possible-commands (:possible-commands application)
         can-add? (contains? possible-commands :rems.workflow.dynamic/add-member)
         can-remove? (contains? possible-commands :rems.workflow.dynamic/remove-member)
@@ -839,11 +839,11 @@
              [member-info {:element-id id
                            :attributes (merge applicant applicant-attributes)
                            :application application
-                           :group? (or (seq members-but-not-applicant)
+                           :group? (or (seq non-applicant-members)
                                        (seq invited-members))
                            :can-remove? false}]]
             (concat
-             (for [member members-but-not-applicant]
+             (for [member non-applicant-members]
                [member-info {:element-id id
                              :attributes member
                              :application application
