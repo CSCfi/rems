@@ -17,9 +17,7 @@
 
 (defn get-roles [user]
   (let [roles (set (map role-from-db (db/get-roles {:user user})))]
-    (if (empty? roles)
-      #{:applicant} ;; default role
-      roles)))
+    (conj roles :logged-in))) ; base role for everybody
 
 (defn add-role! [user role]
   (db/add-role! {:user user :role (role-to-db role)})

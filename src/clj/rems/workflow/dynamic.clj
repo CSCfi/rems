@@ -2,8 +2,8 @@
   (:require [clojure.set :as set]
             [clojure.test :refer :all]
             [rems.auth.util :refer [throw-unauthorized]]
+            [rems.permissions :as permissions]
             [rems.util :refer [getx]]
-            [rems.workflow.permissions :as permissions]
             [schema-refined.core :as r]
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
@@ -200,14 +200,25 @@
 
 ;;; Roles and permissions
 
+(defmulti ^:private hide-sensitive-dynamic-event-content
+  (fn [event] (:event/type event)))
+
+(defmethod hide-sensitive-dynamic-event-content :default
+  [event]
+  event)
+
+(defmethod hide-sensitive-dynamic-event-content :application.event/created
+  [event]
+  (dissoc event :workflow.dynamic/handlers))
+
 (defn hide-sensitive-dynamic-events [events]
-  (filter (fn [event]
-            ((complement contains?) #{:application.event/comment-requested
-                                      :application.event/commented
-                                      :application.event/decided
-                                      :application.event/decision-requested}
-             (:event/type event)))
-          events))
+  (->> events
+       (remove (comp #{:application.event/comment-requested
+                       :application.event/commented
+                       :application.event/decided
+                       :application.event/decision-requested}
+                     :event/type))
+       (map hide-sensitive-dynamic-event-content)))
 
 (defmulti calculate-permissions
   (fn [_application event] (:event/type event)))
@@ -249,7 +260,7 @@
 (defmethod calculate-permissions :application.event/created
   [application event]
   (-> application
-      (permissions/give-role-to-user :applicant (:event/actor event))
+      (permissions/give-role-to-users :applicant [(:event/actor event)])
       (permissions/give-role-to-users :handler (:workflow.dynamic/handlers event))
       (permissions/set-role-permissions draft-permissions)))
 
@@ -272,18 +283,18 @@
   [application event]
   (-> application
       (permissions/remove-role-from-user :commenter (:event/actor event))
-      (permissions/give-role-to-user :past-commenter (:event/actor event)))) ; allow to still view the application
+      (permissions/give-role-to-users :past-commenter [(:event/actor event)]))) ; allow to still view the application
 
 (defmethod calculate-permissions :application.event/decision-requested
   [application event]
   (-> application
-      (permissions/give-role-to-user :decider (:application/decider event))))
+      (permissions/give-role-to-users :decider [(:application/decider event)])))
 
 (defmethod calculate-permissions :application.event/decided
   [application event]
   (-> application
       (permissions/remove-role-from-user :decider (:event/actor event))
-      (permissions/give-role-to-user :past-decider (:event/actor event)))) ; allow to still view the application
+      (permissions/give-role-to-users :past-decider [(:event/actor event)]))) ; allow to still view the application
 
 (defmethod calculate-permissions :application.event/approved
   [application _event]
@@ -795,7 +806,7 @@
   {:valid-user? (constantly true)
    :validate-form (constantly nil)})
 
-(defn- remove-impossible-permissions [application]
+(defn- remove-impossible-permissions [application] ; TODO: can be removed after removing the old permission system
   (let [removable-members (remove #(= (:userid %) (:applicantuserid application))
                                   (:members application))
         invited-members (:invited-members application)]

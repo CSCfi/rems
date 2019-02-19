@@ -39,7 +39,7 @@
 
     (GET "/" []
       :summary "Get catalogue items"
-      :roles #{:applicant :approver :owner} ;; TODO everyone logged in should have applicant role
+      :roles #{:logged-in}
       :query-params [{resource :- (describe s/Str "resource id (optional)") nil}
                      {expand :- (describe s/Str "expanded additional attributes (optional), can be \"names\"") nil}]
       :return GetCatalogueItemsResponse

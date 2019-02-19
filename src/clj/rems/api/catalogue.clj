@@ -15,6 +15,6 @@
 
     (GET "/" []
       :summary "Get the catalogue of items for the UI (does not include disabled)"
-      :roles #{:applicant}
+      :roles #{:logged-in}
       :return GetCatalogueResponse
       (ok (catalogue/get-localized-catalogue-items)))))

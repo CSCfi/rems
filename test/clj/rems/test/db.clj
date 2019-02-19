@@ -545,9 +545,9 @@
   (roles/add-role! "pekka" :reviewer)
   (roles/add-role! "pekka" :reviewer) ;; add should be idempotent
   (roles/add-role! "simo" :approver)
-  (is (= #{:applicant :reviewer} (roles/get-roles "pekka")))
-  (is (= #{:approver} (roles/get-roles "simo")))
-  (is (= #{:applicant} (roles/get-roles "juho"))) ;; default role
+  (is (= #{:logged-in :applicant :reviewer} (roles/get-roles "pekka")))
+  (is (= #{:logged-in :approver} (roles/get-roles "simo")))
+  (is (= #{:logged-in} (roles/get-roles "juho"))) ;; default role
   (is (thrown? RuntimeException (roles/add-role! "pekka" :unknown-role))))
 
 (deftest test-application-events
@@ -752,14 +752,14 @@
         (let [new-app (applications/create-new-draft uid new-wf)]
           (db/add-application-item! {:application new-app :item new-item})
           (applications/submit-application uid new-app)
-          (is (= #{:applicant} (roles/get-roles "third-party-reviewer"))) ;; default role
-          (is (= #{:applicant} (roles/get-roles "another-reviewer"))) ;; default role
+          (is (= #{:logged-in} (roles/get-roles "third-party-reviewer"))) ;; default role
+          (is (= #{:logged-in} (roles/get-roles "another-reviewer"))) ;; default role
           (applications/send-review-request uid new-app 0 "review?" "third-party-reviewer")
-          (is (= #{:reviewer} (roles/get-roles "third-party-reviewer")))
+          (is (= #{:logged-in :reviewer} (roles/get-roles "third-party-reviewer")))
           ;; should not send twice to third-party-reviewer, but another-reviewer should still be added
           (applications/send-review-request uid new-app 0 "can you please review this?" ["third-party-reviewer" "another-reviewer"])
-          (is (= #{:reviewer} (roles/get-roles "third-party-reviewer")))
-          (is (= #{:reviewer} (roles/get-roles "another-reviewer")))
+          (is (= #{:logged-in :reviewer} (roles/get-roles "third-party-reviewer")))
+          (is (= #{:logged-in :reviewer} (roles/get-roles "another-reviewer")))
           (is (= (fetch new-app) {:curround 0 :state "applied"}))
           (applications/perform-third-party-review "third-party-reviewer" new-app 0 "comment")
           (is (thrown? ForbiddenException (applications/review-application "third-party-reviewer" new-app 0 "another comment")

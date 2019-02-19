@@ -364,7 +364,8 @@
                           (authenticate api-key approver)
                           app
                           read-body)]
-        (is (= ["alice" "bob" "carl" "developer" "malice" "owner"] (sort (map :userid reviewers))))
+        (is (= (sort (vals test-data/+fake-users+))
+               (sort (map :userid reviewers))))
         (is (not (contains? (set (map :userid reviewers)) "invalid")))))
     (testing "reviews is not open without authentication"
       (let [response (-> (request :get (str "/api/applications/reviewers"))

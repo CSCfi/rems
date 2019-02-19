@@ -1,10 +1,9 @@
 (ns rems.spa
-  (:require [reagent.core :as r]
-            [re-frame.core :as rf :refer [dispatch reg-event-db reg-event-fx reg-sub reg-fx]]
-            [secretary.core :as secretary]
-            [goog.events :as events]
+  (:require [goog.events :as events]
             [goog.history.EventType :as HistoryEventType]
             [markdown.core :refer [md->html]]
+            [re-frame.core :as rf :refer [dispatch reg-event-db reg-event-fx reg-sub reg-fx]]
+            [reagent.core :as r]
             [rems.actions :refer [actions-page fetch-actions]]
             [rems.administration.administration :refer [administration-page]]
             [rems.administration.catalogue-item :refer [catalogue-item-page]]
@@ -25,7 +24,6 @@
             [rems.ajax :refer [load-interceptors!]]
             [rems.application :refer [application-page]]
             [rems.applications :refer [applications-page]]
-            [rems.atoms :as atoms]
             [rems.auth.auth :as auth]
             [rems.cart :as cart]
             [rems.catalogue :refer [catalogue-page]]
@@ -33,8 +31,10 @@
             [rems.guide-page :refer [guide-page]]
             [rems.navbar :as nav]
             [rems.new-application :refer [new-application-page]]
+            [rems.roles :as roles]
             [rems.text :refer [text]]
-            [rems.util :refer [dispatch! fetch]])
+            [rems.util :refer [dispatch! fetch]]
+            [secretary.core :as secretary])
   (:require-macros [rems.read-gitlog :refer [read-current-version]])
   (:import goog.History))
 
@@ -77,21 +77,6 @@
  (fn [db _]
    (:theme db)))
 
-(reg-sub
- :identity
- (fn [db _]
-   (:identity db)))
-
-(reg-sub
- :user
- (fn [db _]
-   (get-in db [:identity :user])))
-
-(reg-sub
- :roles
- (fn [db _]
-   (get-in db [:identity :roles])))
-
 ;;; handlers
 
 (reg-event-db
@@ -123,11 +108,6 @@
  :loaded-theme
  (fn [db [_ theme]]
    (assoc db :theme theme)))
-
-(reg-event-db
- :set-identity
- (fn [db [_ identity]]
-   (assoc db :identity identity)))
 
 (reg-event-fx
  :set-current-language
@@ -162,9 +142,8 @@
        (println "Selecting landing page based on roles" roles)
        (.removeItem js/sessionStorage "rems-redirect-url")
        (cond
-         (contains? roles :owner) (dispatch! "/#/administration")
-         (contains? roles :approver) (dispatch! "/#/actions")
-         (contains? roles :reviewer) (dispatch! "/#/actions")
+         (roles/is-admin? roles) (dispatch! "/#/administration")
+         (roles/is-handler-or-commenter-or-decider? roles) (dispatch! "/#/actions")
          :else (dispatch! "/#/catalogue"))
        {})
      ;;; else dispatch the same event again while waiting for set-identity (happens especially with Firefox)
@@ -387,21 +366,6 @@
 
 ;; -------------------------
 ;; Initialize app
-
-(defn set-identity!
-  "Receives as a parameter following kind of structure:
-   {:user {:eppn \"\"eppn\" \"developer\"
-           :email \"developer@e.mail\"
-           :displayName \"deve\"
-           :surname \"loper\"
-           ...}
-    :roles [\"applicant\" \"approver\"]}
-    Roles are converted to clojure keywords inside the function before dispatching"
-  [user-and-roles]
-  (let [user-and-roles (js->clj user-and-roles :keywordize-keys true)]
-    (rf/dispatch-sync [:set-identity (if (:user user-and-roles)
-                                       (assoc user-and-roles :roles (set (map keyword (:roles user-and-roles))))
-                                       user-and-roles)])))
 
 (defn fetch-translations! []
   (fetch "/api/translations" {:handler #(rf/dispatch [:loaded-translations %])}))
