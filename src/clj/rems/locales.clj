@@ -28,7 +28,7 @@
 
 (defn- load-translation [language translations-directory theme-path]
   (let [filename (str (name language) ".edn")]
-    (if theme-path
+    (if (and theme-path (.exists (io/file (extra-translations-path theme-path))))
       (deep-merge {language (translations-from-file filename translations-directory)}
                   {language (translations-from-file filename (extra-translations-path theme-path))})
       {language (translations-from-file filename translations-directory)})))
