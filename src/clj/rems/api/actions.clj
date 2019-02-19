@@ -25,7 +25,7 @@
 
     (GET "/" []
       :summary "Get actions page reviewable and approvable applications"
-      :roles #{:approver :reviewer}
+      :roles #{:approver :reviewer :handler :commenter :decider :past-commenter :past-decider}
       :return GetActionsResponse
       (ok {:approver? true
            :reviewer? true
@@ -33,7 +33,7 @@
            :reviews (applications/get-applications-to-review (getx-user-id))}))
     (GET "/handled" []
       :summary "Get data for applications that have been acted on (for example approved or reviewed)"
-      :roles #{:approver :reviewer}
+      :roles #{:approver :reviewer :handler :commenter :decider :past-commenter :past-decider}
       :return GetHandledActionsResponse
       (ok {:approver? true
            :reviewer? true
