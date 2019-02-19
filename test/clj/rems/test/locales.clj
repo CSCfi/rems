@@ -48,8 +48,7 @@
 (deftest load-translations-test
   (testing "loads internal translations"
     (let [translations (locales/load-translations {:languages [:en :fi]
-                                                   :translations-directory "translations/"
-                                                   :extra-translations-directory nil})]
+                                                   :translations-directory "translations/"})]
       (is (= [:en :fi] (sort (keys translations))))
       (is (not (empty? (:en translations))))
       (is (not (empty? (:fi translations))))))
@@ -69,11 +68,9 @@
 
   (testing "loads translations only for listed languages"
     (is (= [:en] (keys (locales/load-translations {:languages [:en]
-                                                   :translations-directory "translations/"
-                                                   :extra-translations-directory nil}))))
+                                                   :translations-directory "translations/"}))))
     (is (= [:fi] (keys (locales/load-translations {:languages [:fi]
-                                                   :translations-directory "translations/"
-                                                   :extra-translations-directory nil})))))
+                                                   :translations-directory "translations/"})))))
 
   (testing "missing translations-directory in config is an error"
     (is (thrown-with-msg? RuntimeException #"^\Q:translations-directory was not set in config\E$"
@@ -88,11 +85,19 @@
   (testing "extra translations override translations"
     (let [translations (locales/load-translations {:languages [:en]
                                                    :translations-directory "translations/"
-                                                   :extra-translations-directory "test-data/translations-test/"})]
+                                                   :theme-path "./example-theme/theme.edn"})]
+      (is (= "Catalogue items extra title" (getx-in translations [:en :t :administration :catalogue-items])))
       (is (= "Overridden extra translation" (getx-in translations [:en :t :actions :applicant])))))
   (testing "extra translations don't override keys that are not defined in extras"
     (let [translations (locales/load-translations {:languages [:en]
                                                    :translations-directory "translations/"
-                                                   :extra-translations-directory "test-data/translations-test/"})]
+                                                   :theme-path "example-theme/theme.edn"})]
       (is (= "Active" (getx-in translations [:en :t :administration :active]))))))
+
+(deftest theme-path-given-no-extra-translations
+  (testing "translations work with theme-path in config and no extra-translations"
+    (let [translations (locales/load-translations {:languages [:en]
+                                                   :translations-directory "translations/"
+                                                   :theme-path "./foo/bar/theme.edn"})]
+      (is (= "Catalogue items" (getx-in translations [:en :t :administration :catalogue-items]))))))
 

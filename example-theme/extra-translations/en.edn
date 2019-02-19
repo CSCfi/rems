@@ -1,0 +1,3 @@
+{:t
+ {:administration {:catalogue-items "Catalogue items extra title"}
+  :actions {:applicant "Overridden extra translation"}}}
