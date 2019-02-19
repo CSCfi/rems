@@ -670,6 +670,7 @@
       (DateTimeUtils/setCurrentMillisSystem))))
 
 (defn create-demo-data! []
+  (db/add-api-key! 55 "Finna")
   (create-demo-users-and-roles!)
   (let [res1 (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :organization "nbn" :owneruserid (+demo-users+ :owner) :modifieruserid (+demo-users+ :owner)}))
         res2 (:id (db/create-resource! {:resid "Extra Data" :organization "nbn" :owneruserid (+demo-users+ :owner) :modifieruserid (+demo-users+ :owner)}))
@@ -693,7 +694,6 @@
         disabled (create-catalogue-item! res1 (:simple workflows) form
                                          {"en" "ELFA Corpus, one approval (extra data, disabled)"
                                           "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti, pois käytöstä)"})]
-    (db/add-api-key! 55 "Finna")
     (create-resource-license! res2 "Some demo license" (+demo-users+ :owner))
     (db/set-catalogue-item-state! {:item disabled :state "disabled" :user (+demo-users+ :owner)})
     (create-applications! simple (:simple workflows) (+demo-users+ :applicant1) (+demo-users+ :approver1))
