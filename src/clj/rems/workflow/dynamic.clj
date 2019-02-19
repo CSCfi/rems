@@ -679,56 +679,10 @@
 
 ;;; Possible commands
 
-(defn- remove-impossible-permissions [application] ; TODO: can be removed after removing the old permission system
-  (let [removable-members (remove #(= (:userid %) (:applicantuserid application))
-                                  (:members application))
-        invited-members (:invited-members application)]
-    (cond-> application
-      (empty? removable-members) (permissions/remove-permission-from-all ::remove-member)
-      (empty? invited-members) (permissions/remove-permission-from-all ::uninvite-member))))
-
-(deftest test-remove-impossible-permissions
-  (testing "uninvite-member"
-    (testing "possible when there are invites"
-      (is (= {:role #{::uninvite-member}}
-             (-> {:invited-members [{:name "foo"
-                                     :email "foo@example.com"}]
-                  ::permissions/role-permissions {:role #{::uninvite-member}}}
-                 remove-impossible-permissions
-                 ::permissions/role-permissions))))
-    (testing "impossible when there are no invites"
-      (is (= {:role #{}}
-             (-> {:invited-members []
-                  ::permissions/role-permissions {:role #{::uninvite-member}}}
-                 remove-impossible-permissions
-                 ::permissions/role-permissions)))))
-
-  (testing "remove-member"
-    (testing "possible when there are members"
-      (is (= {:role #{::remove-member}}
-             (-> {:members [{:userid "foo"}]
-                  ::permissions/role-permissions {:role #{::remove-member}}}
-                 remove-impossible-permissions
-                 ::permissions/role-permissions))))
-    (testing "impossible when there are no members"
-      (is (= {:role #{}}
-             (-> {:members []
-                  ::permissions/role-permissions {:role #{::remove-member}}}
-                 remove-impossible-permissions
-                 ::permissions/role-permissions))))
-    (testing "impossible when the only member is the applicant"
-      (is (= {:role #{}}
-             (-> {:members [{:userid "foo"}]
-                  :applicantuserid "foo"
-                  ::permissions/role-permissions {:role #{::remove-member}}}
-                 remove-impossible-permissions
-                 ::permissions/role-permissions))))))
-
 (defn possible-commands
   "Returns the commands which the user is authorized to execute."
   [actor application-state]
   (-> application-state
-      remove-impossible-permissions
       (permissions/user-permissions actor)
       (disj :see-everything))) ; remove non-command permissions
 
