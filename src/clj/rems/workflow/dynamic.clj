@@ -477,86 +477,82 @@
   (when-let [errors ((:validate-form injections) application-id)]
     {:errors errors}))
 
+(defn- ok [event]
+  {:success true
+   :result event})
+
 (defmethod command-handler ::save-draft
   [cmd _application _injections]
-  {:success true
-   :result {:event/type :application.event/draft-saved
-            :event/time (:time cmd)
-            :event/actor (:actor cmd)
-            :application/id (:application-id cmd)
-            :application/field-values (:items cmd)
-            :application/accepted-licenses (->> (:licenses cmd)
-                                                (filter #(= "approved" (second %)))
-                                                (map first)
-                                                set)}})
+  (ok {:event/type :application.event/draft-saved
+       :event/time (:time cmd)
+       :event/actor (:actor cmd)
+       :application/id (:application-id cmd)
+       :application/field-values (:items cmd)
+       :application/accepted-licenses (->> (:licenses cmd)
+                                           (filter #(= "approved" (second %)))
+                                           (map first)
+                                           set)}))
 
 (defmethod command-handler ::submit
   [cmd _application injections]
   (or (validation-error injections (:application-id cmd))
-      {:success true
-       :result {:event/type :application.event/submitted
-                :event/time (:time cmd)
-                :event/actor (:actor cmd)
-                :application/id (:application-id cmd)}}))
+      (ok {:event/type :application.event/submitted
+           :event/time (:time cmd)
+           :event/actor (:actor cmd)
+           :application/id (:application-id cmd)})))
 
 (defmethod command-handler ::approve
   [cmd _application _injections]
-  {:success true
-   :result {:event/type :application.event/approved
-            :event/time (:time cmd)
-            :event/actor (:actor cmd)
-            :application/id (:application-id cmd)
-            :application/comment (:comment cmd)}})
+  (ok {:event/type :application.event/approved
+       :event/time (:time cmd)
+       :event/actor (:actor cmd)
+       :application/id (:application-id cmd)
+       :application/comment (:comment cmd)}))
 
 (defmethod command-handler ::reject
   [cmd _application _injections]
-  {:success true
-   :result {:event/type :application.event/rejected
-            :event/time (:time cmd)
-            :event/actor (:actor cmd)
-            :application/id (:application-id cmd)
-            :application/comment (:comment cmd)}})
+  (ok {:event/type :application.event/rejected
+       :event/time (:time cmd)
+       :event/actor (:actor cmd)
+       :application/id (:application-id cmd)
+       :application/comment (:comment cmd)}))
 
 (defmethod command-handler ::return
   [cmd _application _injections]
-  {:success true
-   :result {:event/type :application.event/returned
-            :event/time (:time cmd)
-            :event/actor (:actor cmd)
-            :application/id (:application-id cmd)
-            :application/comment (:comment cmd)}})
+  (ok {:event/type :application.event/returned
+       :event/time (:time cmd)
+       :event/actor (:actor cmd)
+       :application/id (:application-id cmd)
+       :application/comment (:comment cmd)}))
 
 (defmethod command-handler ::close
   [cmd _application _injections]
-  {:success true
-   :result {:event/type :application.event/closed
-            :event/time (:time cmd)
-            :event/actor (:actor cmd)
-            :application/id (:application-id cmd)
-            :application/comment (:comment cmd)}})
+  (ok {:event/type :application.event/closed
+       :event/time (:time cmd)
+       :event/actor (:actor cmd)
+       :application/id (:application-id cmd)
+       :application/comment (:comment cmd)}))
 
 (defmethod command-handler ::request-decision
   [cmd _application injections]
   (or (valid-user-error injections (:decider cmd))
-      {:success true
-       :result {:event/type :application.event/decision-requested
-                :event/time (:time cmd)
-                :event/actor (:actor cmd)
-                :application/id (:application-id cmd)
-                :application/decider (:decider cmd)
-                :application/comment (:comment cmd)}}))
+      (ok {:event/type :application.event/decision-requested
+           :event/time (:time cmd)
+           :event/actor (:actor cmd)
+           :application/id (:application-id cmd)
+           :application/decider (:decider cmd)
+           :application/comment (:comment cmd)})))
 
 (defmethod command-handler ::decide
   [cmd _application _injections]
   (or (when-not (contains? #{:approved :rejected} (:decision cmd))
         {:errors [{:type :invalid-decision :decision (:decision cmd)}]})
-      {:success true
-       :result {:event/type :application.event/decided
-                :event/time (:time cmd)
-                :event/actor (:actor cmd)
-                :application/id (:application-id cmd)
-                :application/decision (:decision cmd)
-                :application/comment (:comment cmd)}}))
+      (ok {:event/type :application.event/decided
+           :event/time (:time cmd)
+           :event/actor (:actor cmd)
+           :application/id (:application-id cmd)
+           :application/decision (:decision cmd)
+           :application/comment (:comment cmd)})))
 
 (defn- invalid-users-errors
   "Checks the given users for validity and merges the errors"
@@ -571,41 +567,37 @@
   [cmd _application injections]
   (or (must-not-be-empty cmd :commenters)
       (invalid-users-errors (:commenters cmd) injections)
-      {:success true
-       :result {:event/type :application.event/comment-requested
-                :event/time (:time cmd)
-                :event/actor (:actor cmd)
-                :application/id (:application-id cmd)
-                :application/commenters (:commenters cmd)
-                :application/comment (:comment cmd)}}))
+      (ok {:event/type :application.event/comment-requested
+           :event/time (:time cmd)
+           :event/actor (:actor cmd)
+           :application/id (:application-id cmd)
+           :application/commenters (:commenters cmd)
+           :application/comment (:comment cmd)})))
 
 (defmethod command-handler ::comment
   [cmd _application _injections]
-  {:success true
-   :result {:event/type :application.event/commented
-            :event/time (:time cmd)
-            :event/actor (:actor cmd)
-            :application/id (:application-id cmd)
-            :application/comment (:comment cmd)}})
+  (ok {:event/type :application.event/commented
+       :event/time (:time cmd)
+       :event/actor (:actor cmd)
+       :application/id (:application-id cmd)
+       :application/comment (:comment cmd)}))
 
 (defmethod command-handler ::add-member
   [cmd _application injections]
   (or (valid-user-error injections (:userid (:member cmd)))
-      {:success true
-       :result {:event/type :application.event/member-added
-                :event/time (:time cmd)
-                :event/actor (:actor cmd)
-                :application/member (:member cmd)
-                :application/id (:application-id cmd)}}))
+      (ok {:event/type :application.event/member-added
+           :event/time (:time cmd)
+           :event/actor (:actor cmd)
+           :application/member (:member cmd)
+           :application/id (:application-id cmd)})))
 
 (defmethod command-handler ::invite-member
   [cmd _application _injections]
-  {:success true
-   :result {:event/type :application.event/member-invited
-            :event/time (:time cmd)
-            :event/actor (:actor cmd)
-            :application/member (:member cmd)
-            :application/id (:application-id cmd)}})
+  (ok {:event/type :application.event/member-invited
+       :event/time (:time cmd)
+       :event/actor (:actor cmd)
+       :application/member (:member cmd)
+       :application/id (:application-id cmd)}))
 
 (defmethod command-handler ::remove-member
   [cmd application _injections]
@@ -614,13 +606,12 @@
       (when-not (contains? (set (map :userid (:members application)))
                            (:userid (:member cmd)))
         {:errors [{:type :user-not-member :user (:member cmd)}]})
-      {:success true
-       :result {:event/type :application.event/member-removed
-                :event/time (:time cmd)
-                :event/actor (:actor cmd)
-                :application/member (:member cmd)
-                :application/id (:application-id cmd)
-                :application/comment (:comment cmd)}}))
+      (ok {:event/type :application.event/member-removed
+           :event/time (:time cmd)
+           :event/actor (:actor cmd)
+           :application/member (:member cmd)
+           :application/id (:application-id cmd)
+           :application/comment (:comment cmd)})))
 
 (defmethod command-handler ::uninvite-member
   [cmd application _injections]
@@ -628,13 +619,12 @@
                            [(:name (:member cmd))
                             (:email (:member cmd))])
         {:errors [{:type :user-not-member :user (:member cmd)}]})
-      {:success true
-       :result {:event/type :application.event/member-uninvited
-                :event/time (:time cmd)
-                :event/actor (:actor cmd)
-                :application/member (:member cmd)
-                :application/id (:application-id cmd)
-                :application/comment (:comment cmd)}}))
+      (ok {:event/type :application.event/member-uninvited
+           :event/time (:time cmd)
+           :event/actor (:actor cmd)
+           :application/member (:member cmd)
+           :application/id (:application-id cmd)
+           :application/comment (:comment cmd)})))
 
 (defn handle-command [cmd application injections]
   (let [permissions (permissions/user-permissions application (:actor cmd))]

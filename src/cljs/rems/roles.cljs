@@ -22,4 +22,5 @@
              roles))
 
 (defn is-admin? [roles]
+  ;; TODO: rename owner role to admin role?
   (has-some? #{:owner} roles))
