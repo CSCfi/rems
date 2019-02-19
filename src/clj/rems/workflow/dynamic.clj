@@ -466,36 +466,6 @@
 (deftest test-all-command-types-handled
   (is (= CommandTypes (set (get-command-types)))))
 
-(defn- impossible-command? [cmd application injections] ; TODO: remove me
-  (let [result (command-handler cmd application injections)]
-    (when-not (:success result)
-      result)))
-
-(defn- applicant-error
-  [application cmd]
-  (when-not (= (:actor cmd) (:applicantuserid application))
-    {:errors [{:type :forbidden}]}))
-
-(defn- handler?
-  [application user]
-  (contains? (set (:handlers (:workflow application))) user))
-
-(defn- actor-is-not-handler-error
-  [application cmd]
-  (when-not (handler? application (:actor cmd))
-    {:errors [{:type :forbidden}]}))
-
-(defn- actor-is-not-handler-or-applicant-error
-  [application cmd]
-  (when-not (or (handler? application (:actor cmd))
-                (= (:applicantuserid application) (:actor cmd)))
-    {:errors [:forbidden]}))
-
-(defn- state-error
-  [application & expected-states]
-  (when-not (contains? (set expected-states) (:state application))
-    {:errors [{:type :invalid-state :state (:state application)}]}))
-
 (defn- valid-user-error
   [injections user]
   (cond
@@ -508,25 +478,21 @@
     {:errors errors}))
 
 (defmethod command-handler ::save-draft
-  [cmd application _injections]
-  (or (applicant-error application cmd)
-      (state-error application ::draft ::returned)
-      {:success true
-       :result {:event/type :application.event/draft-saved
-                :event/time (:time cmd)
-                :event/actor (:actor cmd)
-                :application/id (:application-id cmd)
-                :application/field-values (:items cmd)
-                :application/accepted-licenses (->> (:licenses cmd)
-                                                    (filter #(= "approved" (second %)))
-                                                    (map first)
-                                                    set)}}))
+  [cmd _application _injections]
+  {:success true
+   :result {:event/type :application.event/draft-saved
+            :event/time (:time cmd)
+            :event/actor (:actor cmd)
+            :application/id (:application-id cmd)
+            :application/field-values (:items cmd)
+            :application/accepted-licenses (->> (:licenses cmd)
+                                                (filter #(= "approved" (second %)))
+                                                (map first)
+                                                set)}})
 
 (defmethod command-handler ::submit
-  [cmd application injections]
-  (or (applicant-error application cmd)
-      (state-error application ::draft ::returned)
-      (validation-error injections (:application-id cmd))
+  [cmd _application injections]
+  (or (validation-error injections (:application-id cmd))
       {:success true
        :result {:event/type :application.event/submitted
                 :event/time (:time cmd)
@@ -534,54 +500,44 @@
                 :application/id (:application-id cmd)}}))
 
 (defmethod command-handler ::approve
-  [cmd application _injections]
-  (or (actor-is-not-handler-error application cmd)
-      (state-error application ::submitted)
-      {:success true
-       :result {:event/type :application.event/approved
-                :event/time (:time cmd)
-                :event/actor (:actor cmd)
-                :application/id (:application-id cmd)
-                :application/comment (:comment cmd)}}))
+  [cmd _application _injections]
+  {:success true
+   :result {:event/type :application.event/approved
+            :event/time (:time cmd)
+            :event/actor (:actor cmd)
+            :application/id (:application-id cmd)
+            :application/comment (:comment cmd)}})
 
 (defmethod command-handler ::reject
-  [cmd application _injections]
-  (or (actor-is-not-handler-error application cmd)
-      (state-error application ::submitted)
-      {:success true
-       :result {:event/type :application.event/rejected
-                :event/time (:time cmd)
-                :event/actor (:actor cmd)
-                :application/id (:application-id cmd)
-                :application/comment (:comment cmd)}}))
+  [cmd _application _injections]
+  {:success true
+   :result {:event/type :application.event/rejected
+            :event/time (:time cmd)
+            :event/actor (:actor cmd)
+            :application/id (:application-id cmd)
+            :application/comment (:comment cmd)}})
 
 (defmethod command-handler ::return
-  [cmd application _injections]
-  (or (actor-is-not-handler-error application cmd)
-      (state-error application ::submitted)
-      {:success true
-       :result {:event/type :application.event/returned
-                :event/time (:time cmd)
-                :event/actor (:actor cmd)
-                :application/id (:application-id cmd)
-                :application/comment (:comment cmd)}}))
+  [cmd _application _injections]
+  {:success true
+   :result {:event/type :application.event/returned
+            :event/time (:time cmd)
+            :event/actor (:actor cmd)
+            :application/id (:application-id cmd)
+            :application/comment (:comment cmd)}})
 
 (defmethod command-handler ::close
-  [cmd application _injections]
-  (or (actor-is-not-handler-error application cmd)
-      (state-error application ::approved)
-      {:success true
-       :result {:event/type :application.event/closed
-                :event/time (:time cmd)
-                :event/actor (:actor cmd)
-                :application/id (:application-id cmd)
-                :application/comment (:comment cmd)}}))
+  [cmd _application _injections]
+  {:success true
+   :result {:event/type :application.event/closed
+            :event/time (:time cmd)
+            :event/actor (:actor cmd)
+            :application/id (:application-id cmd)
+            :application/comment (:comment cmd)}})
 
 (defmethod command-handler ::request-decision
-  [cmd application injections]
-  (or (actor-is-not-handler-error application cmd)
-      (state-error application ::submitted)
-      (valid-user-error injections (:decider cmd))
+  [cmd _application injections]
+  (or (valid-user-error injections (:decider cmd))
       {:success true
        :result {:event/type :application.event/decision-requested
                 :event/time (:time cmd)
@@ -591,11 +547,8 @@
                 :application/comment (:comment cmd)}}))
 
 (defmethod command-handler ::decide
-  [cmd application _injections]
-  (or (when-not (= (:actor cmd) (:decider application))
-        {:errors [{:type :forbidden}]})
-      (state-error application ::submitted)
-      (when-not (contains? #{:approved :rejected} (:decision cmd))
+  [cmd _application _injections]
+  (or (when-not (contains? #{:approved :rejected} (:decision cmd))
         {:errors [{:type :invalid-decision :decision (:decision cmd)}]})
       {:success true
        :result {:event/type :application.event/decided
@@ -615,10 +568,8 @@
     {:errors [{:type :must-not-be-empty :key key}]}))
 
 (defmethod command-handler ::request-comment
-  [cmd application injections]
-  (or (actor-is-not-handler-error application cmd)
-      (state-error application ::submitted)
-      (must-not-be-empty cmd :commenters)
+  [cmd _application injections]
+  (or (must-not-be-empty cmd :commenters)
       (invalid-users-errors (:commenters cmd) injections)
       {:success true
        :result {:event/type :application.event/comment-requested
@@ -628,26 +579,18 @@
                 :application/commenters (:commenters cmd)
                 :application/comment (:comment cmd)}}))
 
-(defn- actor-is-not-commenter-error [application cmd]
-  (when-not (contains? (:commenters application) (:actor cmd))
-    {:errors [{:type :forbidden}]}))
-
 (defmethod command-handler ::comment
-  [cmd application _injections]
-  (or (actor-is-not-commenter-error application cmd)
-      (state-error application ::submitted)
-      {:success true
-       :result {:event/type :application.event/commented
-                :event/time (:time cmd)
-                :event/actor (:actor cmd)
-                :application/id (:application-id cmd)
-                :application/comment (:comment cmd)}}))
+  [cmd _application _injections]
+  {:success true
+   :result {:event/type :application.event/commented
+            :event/time (:time cmd)
+            :event/actor (:actor cmd)
+            :application/id (:application-id cmd)
+            :application/comment (:comment cmd)}})
 
 (defmethod command-handler ::add-member
-  [cmd application injections]
-  (or (actor-is-not-handler-error application cmd)
-      (state-error application ::submitted ::approved)
-      (valid-user-error injections (:userid (:member cmd)))
+  [cmd _application injections]
+  (or (valid-user-error injections (:userid (:member cmd)))
       {:success true
        :result {:event/type :application.event/member-added
                 :event/time (:time cmd)
@@ -656,32 +599,17 @@
                 :application/id (:application-id cmd)}}))
 
 (defmethod command-handler ::invite-member
-  [cmd application injections]
-  (let [success-result {:success true
-                        :result {:event/type :application.event/member-invited
-                                 :event/time (:time cmd)
-                                 :event/actor (:actor cmd)
-                                 :application/member (:member cmd)
-                                 :application/id (:application-id cmd)}}]
-    (if (and (= (:actor cmd) (:applicantuserid application))
-             (handler? application (:actor cmd)))
-      ;; when actor is both applicant and handler, combine the allowed states
-      (or (applicant-error application cmd)
-          (actor-is-not-handler-error application cmd)
-          (state-error application ::draft #_::withdrawn ::returned ::submitted ::approved)
-          success-result)
-      (if (= (:actor cmd) (:applicantuserid application))
-        (or (applicant-error application cmd)
-            (state-error application ::draft #_::withdrawn ::returned)
-            success-result)
-        (or (actor-is-not-handler-error application cmd)
-            (state-error application ::submitted ::approved)
-            success-result)))))
+  [cmd _application _injections]
+  {:success true
+   :result {:event/type :application.event/member-invited
+            :event/time (:time cmd)
+            :event/actor (:actor cmd)
+            :application/member (:member cmd)
+            :application/id (:application-id cmd)}})
 
 (defmethod command-handler ::remove-member
-  [cmd application injections]
-  (or (actor-is-not-handler-or-applicant-error application cmd)
-      (when (= (:applicantuserid application) (:userid (:member cmd)))
+  [cmd application _injections]
+  (or (when (= (:applicantuserid application) (:userid (:member cmd)))
         {:errors [{:type :cannot-remove-applicant}]})
       (when-not (contains? (set (map :userid (:members application)))
                            (:userid (:member cmd)))
@@ -695,9 +623,8 @@
                 :application/comment (:comment cmd)}}))
 
 (defmethod command-handler ::uninvite-member
-  [cmd application injections]
-  (or (actor-is-not-handler-or-applicant-error application cmd)
-      (when-not (contains? (set (map (juxt :name :email) (:invited-members application)))
+  [cmd application _injections]
+  (or (when-not (contains? (set (map (juxt :name :email) (:invited-members application)))
                            [(:name (:member cmd))
                             (:email (:member cmd))])
         {:errors [{:type :user-not-member :user (:member cmd)}]})
@@ -752,60 +679,6 @@
 
 ;;; Possible commands
 
-(defn- command-candidates [actor application-state] ; TODO: remove me
-  ;; NB! not setting :time or :application-id here since we don't
-  ;; validate them
-  (->>
-   [{:type ::submit
-     :actor actor}
-    {:type ::approve
-     :actor actor}
-    {:type ::reject
-     :actor actor}
-    {:type ::return
-     :actor actor}
-    {:type ::close
-     :actor actor}
-    {:type ::request-decision
-     :actor actor
-     :decider "decider"}
-    {:type ::decide
-     :actor actor
-     :decision :approved}
-    {:type ::request-comment
-     :actor actor
-     :commenters ["commenter"]}
-    {:type ::comment
-     :actor actor
-     :comment "comment"}
-    {:type ::add-member
-     :actor actor
-     :member {:userid "member"}}
-    {:type ::invite-member
-     :actor actor
-     :member {:name "name"
-              :email "email@address.org"}}
-    (let [members (->> application-state :members (remove (comp #{(:applicantuserid application-state)} :userid)))]
-      (when (seq members)
-        {:type ::remove-member
-         :actor actor
-         :member (first members)
-         :comment "comment"}))
-    (let [invited-members (:invited-members application-state)]
-      (when (seq invited-members)
-        {:type ::uninvite-member
-         :actor actor
-         :member (first invited-members)
-         :comment "comment"}))]
-   (remove nil?)))
-
-(def ^:private injections-for-possible-commands ; TODO: remove me
-  "`possible-commands` are calculated with the expectations that
-  - the user is always valid and
-  - the validation returns no errors."
-  {:valid-user? (constantly true)
-   :validate-form (constantly nil)})
-
 (defn- remove-impossible-permissions [application] ; TODO: can be removed after removing the old permission system
   (let [removable-members (remove #(= (:userid %) (:applicantuserid application))
                                   (:members application))
@@ -856,24 +729,10 @@
 
   Not every condition is checked exactly so it is in fact a potential set of possible commands only."
   [actor application-state]
-  (let [new-result (-> application-state
-                       remove-impossible-permissions
-                       (permissions/user-permissions actor))
-        ;; TODO: remove me
-        old-result (->> application-state
-                        (command-candidates actor)
-                        (remove #(impossible-command? % application-state injections-for-possible-commands))
-                        (map :type)
-                        set)]
-    (assert (or (empty? (:dynamic-events application-state))
-                (= (disj new-result ::save-draft) ; only compare permissions which the old impl supports
-                   old-result))
-            (str "possible-commands mismatch:\n"
-                 "new impl gave " (pr-str new-result) "\n"
-                 "but old impl gave " (pr-str old-result) "\n"
-                 "for actor " (pr-str actor) "\n"
-                 "and application " (pr-str application-state)))
-    new-result))
+  (-> application-state
+      remove-impossible-permissions
+      (permissions/user-permissions actor)
+      (disj :see-everything))) ; remove non-command permissions
 
 (defn assoc-possible-commands [actor application-state]
   (assoc application-state
