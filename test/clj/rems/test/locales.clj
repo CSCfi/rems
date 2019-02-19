@@ -7,6 +7,8 @@
             [rems.context :as context]
             [rems.locales :as locales]
             [rems.test.testing :refer [create-temp-dir delete-recursively]]
+            [rems.util :refer [getx-in]]
+            [rems.test.testing :refer [create-temp-dir delete-recursively]]
             [rems.text :refer [with-language]]
             [taoensso.tempura :as tempura])
   (:import (java.io FileNotFoundException)))
@@ -36,7 +38,8 @@
                           clojure.string/split-lines
                           (map read-string)
                           set)
-          tr-config {:dict (locales/load-translations {:languages [:en]})}
+          tr-config {:dict (locales/load-translations {:languages [:en]
+                                                       :translations-directory "translations/"})}
           tr (partial tempura/tr tr-config [:en])]
       (doseq [token all-tokens]
         (testing token
@@ -44,7 +47,8 @@
 
 (deftest load-translations-test
   (testing "loads internal translations"
-    (let [translations (locales/load-translations {:languages [:en :fi]})]
+    (let [translations (locales/load-translations {:languages [:en :fi]
+                                                   :translations-directory "translations/"})]
       (is (= [:en :fi] (sort (keys translations))))
       (is (not (empty? (:en translations))))
       (is (not (empty? (:fi translations))))))
@@ -52,6 +56,7 @@
   (testing "loads external translations"
     (let [translations-dir (create-temp-dir)
           config {:translations-directory translations-dir
+                  :extra-translations-directory nil
                   :languages [:xx]}
           translation {:some-key "some val"}]
       (try
@@ -62,12 +67,37 @@
           (delete-recursively translations-dir)))))
 
   (testing "loads translations only for listed languages"
-    (is (= [:en] (keys (locales/load-translations {:languages [:en]}))))
-    (is (= [:fi] (keys (locales/load-translations {:languages [:fi]})))))
+    (is (= [:en] (keys (locales/load-translations {:languages [:en]
+                                                   :translations-directory "translations/"}))))
+    (is (= [:fi] (keys (locales/load-translations {:languages [:fi]
+                                                   :translations-directory "translations/"})))))
+
+  (testing "missing translations-directory in config is an error"
+    (is (thrown-with-msg? RuntimeException #"^\Q:translations-directory was not set in config\E$"
+                          (locales/load-translations {:languages [:xx]}))))
 
   (testing "missing translations is an error"
-    (is (thrown-with-msg? FileNotFoundException #"^\Qtranslations for :xx language could not be found in some-dir/xx.edn file or translations/xx.edn resource\E$"
-                          (locales/load-translations {:translations-directory "some-dir"
-                                                      :languages [:xx]})))
-    (is (thrown-with-msg? FileNotFoundException #"^\Qtranslations for :xx language could not be found in translations/xx.edn resource and :translations-directory was not set\E$"
-                          (locales/load-translations {:languages [:xx]})))))
+    (is (thrown-with-msg? FileNotFoundException #"^\Qtranslations could not be found in some-dir/xx.edn file or some-dir/xx.edn resource\E$"
+                          (locales/load-translations {:translations-directory "some-dir/"
+                                                      :languages [:xx]})))))
+
+(deftest override-translations-with-extra-translations
+  (testing "extra translations override translations"
+    (let [translations (locales/load-translations {:languages [:en]
+                                                   :translations-directory "translations/"
+                                                   :theme-path "./example-theme/theme.edn"})]
+      (is (= "Language resources" (getx-in translations [:en :t :administration :catalogue-items])))
+      (is (= "Resource applicant" (getx-in translations [:en :t :actions :applicant])))))
+  (testing "extra translations don't override keys that are not defined in extras"
+    (let [translations (locales/load-translations {:languages [:en]
+                                                   :translations-directory "translations/"
+                                                   :theme-path "example-theme/theme.edn"})]
+      (is (= "Active" (getx-in translations [:en :t :administration :active]))))))
+
+(deftest theme-path-given-no-extra-translations
+  (testing "translations work with theme-path in config and no extra-translations"
+    (let [translations (locales/load-translations {:languages [:en]
+                                                   :translations-directory "translations/"
+                                                   :theme-path "./foo/bar/theme.edn"})]
+      (is (= "Catalogue items" (getx-in translations [:en :t :administration :catalogue-items]))))))
+

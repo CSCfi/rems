@@ -708,8 +708,7 @@
         {:keys [items licenses validation]} edit-application
         field-validations (index-by [:field-id] validation)
         license-validations (index-by [:license-id] validation)
-        state (:state application)
-        editable? (editable? state)
+        editable? (editable? application)
         readonly? (not editable?)]
     [collapsible/component
      {:id "form"
@@ -805,7 +804,7 @@
              (:userid attributes) [:h5 (text :t.applicant-info/member)]
              :else [:h5 (text :t.applicant-info/invited-member)])
        (when-let [name (or (:commonName attributes) (:name attributes))]
-         [info-field (text :t.applicant-info/name) name  {:inline? true}])
+         [info-field (text :t.applicant-info/name) name {:inline? true}])
        (when user-id
          [info-field (text :t.applicant-info/username) user-id {:inline? true}])
        (when-let [mail (or (:mail attributes) (:email attributes))]
@@ -838,10 +837,10 @@
       :always
       (into [:div
              [member-info {:element-id id :attributes (merge applicant applicant-attributes) :application application :group? (or (seq members-but-not-applicant)
-                                                                                                                                (seq invited-members)) :can-remove? can-remove?}]]
+                                                                                                                                  (seq invited-members)) :can-remove? can-remove?}]]
             (concat
              (for [member members-but-not-applicant]
-               [member-info {:element-id id :attributes member :application application :group? true :can-remove? can-remove? }])
+               [member-info {:element-id id :attributes member :application application :group? true :can-remove? can-remove?}])
              (for [invited-member invited-members]
                [member-info {:element-id id :attributes invited-member :application application :group? true :can-remove? can-uninvite?}])))
       :footer [:div
@@ -1035,22 +1034,22 @@
 
 
 (defn- dynamic-actions [app]
-  (distinct
-   (mapcat #:rems.workflow.dynamic{:submit [[save-button]
-                                            [submit-button]]
-                                   :return [[return-action-button]]
-                                   :request-decision [[request-decision-action-button]]
-                                   :decide [[decide-action-button]]
-                                   :request-comment [[request-comment-action-button]]
-                                   :comment [[comment-action-button]]
-                                   :approve [[approve-reject-action-button]]
-                                   :reject [[approve-reject-action-button]]
-                                   :close [[close-action-button]]}
-           (:possible-commands app))))
+  (let [commands-and-actions [:rems.workflow.dynamic/save-draft [save-button]
+                              :rems.workflow.dynamic/submit [submit-button]
+                              :rems.workflow.dynamic/return [return-action-button]
+                              :rems.workflow.dynamic/request-decision [request-decision-action-button]
+                              :rems.workflow.dynamic/decide [decide-action-button]
+                              :rems.workflow.dynamic/request-comment [request-comment-action-button]
+                              :rems.workflow.dynamic/comment [comment-action-button]
+                              :rems.workflow.dynamic/approve [approve-reject-action-button]
+                              :rems.workflow.dynamic/reject [approve-reject-action-button]
+                              :rems.workflow.dynamic/close [close-action-button]]]
+    (distinct (for [[command action] (partition 2 commands-and-actions)
+                    :when (contains? (:possible-commands app) command)]
+                action))))
 
 (defn- static-actions [app]
-  (let [state (:state app)
-        editable? (editable? state)]
+  (let [editable? (editable? app)]
     (concat (when (:can-close? app)
               [(if (:is-applicant? app)
                  [applicant-close-action-button]
@@ -1186,34 +1185,34 @@
    (component-info member-info)
    (example "member-info"
             [member-info {:element-id "info1"
-                        :attributes {:eppn "developer"
-                                     :mail "developer@uu.id"
-                                     :commonName "Deve Loper"
-                                     :organization "Testers"
-                                     :address "Testikatu 1, 00100 Helsinki"}
-                        :application {:id 42
-                                      :applicantuserid "developer"}}])
+                          :attributes {:eppn "developer"
+                                       :mail "developer@uu.id"
+                                       :commonName "Deve Loper"
+                                       :organization "Testers"
+                                       :address "Testikatu 1, 00100 Helsinki"}
+                          :application {:id 42
+                                        :applicantuserid "developer"}}])
    (example "member-info with name missing"
             [member-info {:element-id "info2"
-                        :attributes {:eppn "developer"
-                                     :mail "developer@uu.id"
-                                     :organization "Testers"
-                                     :address "Testikatu 1, 00100 Helsinki"}
-                        :application {:id 42
-                                      :applicantuserid "developer"}}])
+                          :attributes {:eppn "developer"
+                                       :mail "developer@uu.id"
+                                       :organization "Testers"
+                                       :address "Testikatu 1, 00100 Helsinki"}
+                          :application {:id 42
+                                        :applicantuserid "developer"}}])
    (example "member-info"
             [member-info {:element-id "info3"
-                        :attributes {:userid "alice"}
-                        :application {:id 42
-                                      :applicantuserid "developer"}
-                        :group? true
-                        :can-remove? true}])
+                          :attributes {:userid "alice"}
+                          :application {:id 42
+                                        :applicantuserid "developer"}
+                          :group? true
+                          :can-remove? true}])
    (example "member-info"
             [member-info {:element-id "info4"
-                        :attributes {:name "John Smith" :email "john.smith@invited.com"}
-                        :application {:id 42
-                                      :applicantuserid "developer"}
-                        :group? true}])
+                          :attributes {:name "John Smith" :email "john.smith@invited.com"}
+                          :application {:id 42
+                                        :applicantuserid "developer"}
+                          :group? true}])
 
    (component-info applicants-info)
    (example "applicants-info"

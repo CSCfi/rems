@@ -1,172 +1,14 @@
 (ns rems.api.applications-v2
-  (:require [clj-time.core :as time]
-            [clojure.set :as set]
-            [clojure.test :refer [deftest is testing]]
-            [clojure.tools.logging :as log]
+  (:require [clojure.test :refer [deftest is testing]]
             [medley.core :refer [map-vals]]
-            [mount.core :refer [defstate]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.form :as form]
             [rems.db.licenses :as licenses]
             [rems.db.users :as users]
-            [rems.workflow.dynamic :as dynamic])
+            [rems.workflow.dynamic :as dynamic]
+            [rems.workflow.permissions :as permissions])
   (:import (org.joda.time DateTime)))
-
-;;; user permissions
-
-(defn- set-permissions
-  "Sets permissions for the application. Use `set-role-permissions` or
-  `set-user-permissions` instead of calling this function directly.
-
-   In `permission-map`, the key is the subject (user or role), and the value
-   is a list of permissions to set for that subject.
-
-   There is a difference between an empty list of permissions and nil.
-   Empty list means that the user has read-only access to the application,
-   whereas nil means that the user has no access to the application.
-
-   The permissions must be keywords. They may represent commands that the user
-   is allowed to run, or they may be used to specify whether the user can see
-   all events and comments from the reviewers (e.g. `:see-everything`)."
-  [application category permission-map]
-  (reduce (fn [application [subject permissions]]
-            (if (nil? permissions)
-              (update application category dissoc subject)
-              (assoc-in application [category subject] (set permissions))))
-          application
-          permission-map))
-
-(defn- set-role-permissions
-  "Sets role specific permissions for the application.
-
-   Users will be mapped to roles based on application state.
-   The supported roles are defined in `user-permissions`.
-
-   The keys in `permission-map` are the role names as keywords.
-   See `set-permissions` for details on `permission-map`."
-  [application permission-map]
-  (assert (every? keyword? (keys permission-map)))
-  (set-permissions application :permissions/by-role permission-map))
-
-(defn- set-user-permissions
-  "Sets user specific permissions for the application.
-
-   User specific permissions can be used e.g. to give specific users
-   commenting access or to give non-applicant members read-only
-   access to the application.
-
-   The keys in `permission-map` are the user IDs as strings.
-   See `set-permissions` for details on `permission-map`."
-  [application permission-map]
-  (assert (every? string? (keys permission-map)))
-  (set-permissions application :permissions/by-user permission-map))
-
-(deftest test-set-permissions
-  (testing "role-specific permissions"
-    (is (= {:permissions/by-role {:role #{:foo :bar}}}
-           (-> {}
-               (set-role-permissions {:role [:foo :bar]}))))
-    (testing "updating"
-      (is (= {:permissions/by-role {:role #{:gazonk}}}
-             (-> {}
-                 (set-role-permissions {:role [:foo :bar]})
-                 (set-role-permissions {:role [:gazonk]})))))
-    (testing "removing (read-only access)"
-      (is (= {:permissions/by-role {:role #{}}}
-             (-> {}
-                 (set-role-permissions {:role [:foo :bar]})
-                 (set-role-permissions {:role []})))))
-    (testing "removing (no access)"
-      (is (= {:permissions/by-role {}}
-             (-> {}
-                 (set-role-permissions {:role [:foo :bar]})
-                 (set-role-permissions {:role nil}))))))
-
-  (testing "user-specific permissions"
-    (is (= {:permissions/by-user {"user" #{:foo :bar}}}
-           (-> {}
-               (set-user-permissions {"user" [:foo :bar]}))))
-    (testing "updating"
-      (is (= {:permissions/by-user {"user" #{:gazonk}}}
-             (-> {}
-                 (set-user-permissions {"user" [:foo :bar]})
-                 (set-user-permissions {"user" [:gazonk]})))))
-    (testing "removing (read-only access)"
-      (is (= {:permissions/by-user {"user" #{}}}
-             (-> {}
-                 (set-user-permissions {"user" [:foo :bar]})
-                 (set-user-permissions {"user" []})))))
-    (testing "removing (no access)"
-      (is (= {:permissions/by-user {}}
-             (-> {}
-                 (set-user-permissions {"user" [:foo :bar]})
-                 (set-user-permissions {"user" nil}))))))
-
-  (testing "can set permissions for multiple roles/users"
-    (is (= {:permissions/by-role {:role-1 #{:foo}
-                                  :role-2 #{:bar}}}
-           (-> {}
-               (set-role-permissions {:role-1 [:foo]
-                                      :role-2 [:bar]})))))
-  (testing "does not alter unrelated roles/users"
-    (is (= {:permissions/by-role {:unrelated #{:foo}
-                                  :role #{:gazonk}}}
-           (-> {}
-               (set-role-permissions {:unrelated [:foo]
-                                      :role [:bar]})
-               (set-role-permissions {:role [:gazonk]}))))))
-
-(defn- user-permissions
-  "Returns the specified user's permissions to this application.
-   Union of all role and user specific permissions. Read the source
-   to find out the supported roles. See also `set-permissions`."
-  [application user-id]
-  (let [applicant? (= user-id (:application/applicant application))
-        handler? (contains? (:workflow.dynamic/handlers application) user-id)
-        permissions (remove nil?
-                            [(get-in application [:permissions/by-user user-id])
-                             (when applicant?
-                               (get-in application [:permissions/by-role :applicant]))
-                             (when handler?
-                               (get-in application [:permissions/by-role :handler]))])]
-    (if (empty? permissions)
-      nil
-      (apply set/union permissions))))
-
-(deftest test-user-permissions
-  (testing "no access"
-    (is (= nil
-           (user-permissions {}
-                             "user"))))
-  (testing "read-only access"
-    (is (= #{}
-           (user-permissions {:permissions/by-user {"user" #{}}}
-                             "user"))))
-  (testing "user permissions"
-    (is (= #{:foo}
-           (user-permissions {:permissions/by-user {"user" #{:foo}}}
-                             "user"))))
-  (testing "applicant permissions"
-    (is (= #{:foo}
-           (user-permissions {:application/applicant "user"
-                              :permissions/by-role {:applicant #{:foo}}}
-                             "user"))))
-  (testing "handler permissions"
-    (is (= #{:foo}
-           (user-permissions {:workflow.dynamic/handlers #{"user"}
-                              :permissions/by-role {:handler #{:foo}}}
-                             "user"))))
-  (testing "combined permissions from multiple roles"
-    (let [application {:application/applicant "user"
-                       :workflow.dynamic/handlers #{"user"}
-                       :permissions/by-user {"user" #{:foo}}
-                       :permissions/by-role {:applicant #{:bar}
-                                             :handler #{:gazonk}}}]
-      (is (= #{:foo :bar :gazonk}
-             (user-permissions application "user")))
-      (is (= nil
-             (user-permissions application "wrong user"))))))
 
 ;;;; v2 API, pure application state based on application events
 
@@ -196,9 +38,7 @@
                                     :workflow/type (:workflow/type event)
                                     ;; TODO: other workflows
                                     :workflow.dynamic/state :rems.workflow.dynamic/draft
-                                    :workflow.dynamic/handlers (:workflow.dynamic/handlers event)})
-      (set-role-permissions {:applicant #{::dynamic/save-draft
-                                          ::dynamic/submit}})))
+                                    :workflow.dynamic/handlers (:workflow.dynamic/handlers event)})))
 
 (defn- set-accepted-licences [licenses accepted-licenses]
   (map (fn [license]
@@ -234,13 +74,7 @@
 (defmethod event-type-specific-application-view :application.event/submitted
   [application event]
   (-> application
-      (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/submitted)
-      (set-role-permissions {:applicant #{}
-                             :handler #{::dynamic/approve
-                                        ::dynamic/reject
-                                        ::dynamic/return
-                                        ::dynamic/request-decision
-                                        ::dynamic/request-comment}})))
+      (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/submitted)))
 
 (defmethod event-type-specific-application-view :application.event/returned
   [application event]
@@ -296,6 +130,7 @@
   [application event]
   (-> application
       (event-type-specific-application-view event)
+      (dynamic/calculate-permissions event)
       (assert-same-application-id event)
       (assoc :application/last-activity (:event/time event))
       (update :application/events conj event)))
@@ -522,6 +357,11 @@
                     :get-user {"applicant" {:eppn "applicant"
                                             :mail "applicant@example.com"
                                             :commonName "Applicant"}}}
+        apply-events (fn [events]
+                       (permissions/cleanup
+                        (build-application-view
+                         (valid-events events)
+                         injections)))
 
         created-event {:event/type :application.event/created
                        :event/time (DateTime. 1000)
@@ -607,15 +447,11 @@
                                   :application/workflow {:workflow/id 50
                                                          :workflow/type :workflow/dynamic
                                                          :workflow.dynamic/state :rems.workflow.dynamic/draft
-                                                         :workflow.dynamic/handlers #{"handler"}}
-                                  :permissions/by-role {:applicant #{::dynamic/save-draft
-                                                                     ::dynamic/submit}}}]
+                                                         :workflow.dynamic/handlers #{"handler"}}}]
 
     (testing "new application"
       (is (= expected-new-application
-             (build-application-view
-              (valid-events [created-event])
-              injections))))
+             (apply-events [created-event]))))
 
     (testing "draft saved"
       (let [draft-saved-event {:event/type :application.event/draft-saved
@@ -634,9 +470,8 @@
                    (assoc-in [:application/description] "foo")
                    (assoc-in [:application/form :form/fields 0 :field/value] "foo")
                    (assoc-in [:application/form :form/fields 1 :field/value] "bar"))
-               (build-application-view
-                (valid-events [created-event draft-saved-event])
-                injections)))))
+               (apply-events [created-event
+                              draft-saved-event])))))
 
     (testing "submitted"
       (let [submitted-event {:event/type :application.event/submitted
@@ -646,16 +481,9 @@
         (is (= (-> expected-new-application
                    (assoc-in [:application/last-activity] (DateTime. 2000))
                    (assoc-in [:application/events] [created-event submitted-event])
-                   (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/submitted)
-                   (assoc-in [:permissions/by-role :applicant] #{})
-                   (assoc-in [:permissions/by-role :handler] #{::dynamic/approve
-                                                               ::dynamic/reject
-                                                               ::dynamic/return
-                                                               ::dynamic/request-decision
-                                                               ::dynamic/request-comment}))
-               (build-application-view
-                (valid-events [created-event submitted-event])
-                injections)))))))
+                   (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/submitted))
+               (apply-events [created-event
+                              submitted-event])))))))
 
 (defn- get-form [form-id]
   (-> (form/get-form form-id)
@@ -680,14 +508,45 @@
                            :get-user get-user})
 
 (defn- apply-user-permissions [application user-id]
-  (when-let [permissions (user-permissions application user-id)]
-    ;; TODO: hide sensitive information from applicant (most event comments, maybe some events also)
-    ;;       - could add :see-everything permission to the appropriate roles and check for it here
-    ;;       https://github.com/CSCfi/rems/issues/859
-    (-> application
-        (assoc :permissions/current-user permissions)
-        (dissoc :permissions/by-user
-                :permissions/by-role))))
+  (let [roles (permissions/user-roles application user-id)
+        permissions (permissions/user-permissions application user-id)
+        see-everything? (contains? permissions :see-everything)]
+    (when (not (empty? roles))
+      (-> application
+          (update :application/events (fn [events] (if see-everything?
+                                                     events
+                                                     (dynamic/hide-sensitive-dynamic-events events))))
+          (assoc :application/permissions permissions)
+          (permissions/cleanup)))))
+
+(deftest test-apply-user-permissions
+  (let [application (-> {}
+                        (permissions/give-role-to-user :role-1 "user-1")
+                        (permissions/give-role-to-user :role-2 "user-2")
+                        (permissions/set-role-permissions {:role-1 []
+                                                           :role-2 [:foo :bar]}))]
+    (testing "users with a role can see the application"
+      (is (not (nil? (apply-user-permissions application "user-1")))))
+    (testing "users without a role cannot see the application"
+      (is (nil? (apply-user-permissions application "user-3"))))
+    (testing "lists the user's permissions"
+      (is (= #{} (:application/permissions (apply-user-permissions application "user-1"))))
+      (is (= #{:foo :bar} (:application/permissions (apply-user-permissions application "user-2")))))
+    (testing "event visibility:"
+      (let [all-events [{:event/type :application.event/created}
+                        {:event/type :application.event/submitted}
+                        {:event/type :application.event/comment-requested}]
+            restricted-events [{:event/type :application.event/created}
+                               {:event/type :application.event/submitted}]
+            application (-> application
+                            (assoc :application/events all-events)
+                            (permissions/set-role-permissions {:role-1 [:see-everything]}))]
+        (testing "privileged users see all events"
+          (is (= all-events
+                 (:application/events (apply-user-permissions application "user-1")))))
+        (testing "normal users see only some events"
+          (is (= restricted-events
+                 (:application/events (apply-user-permissions application "user-2")))))))))
 
 (defn api-get-application-v2 [user-id application-id]
   (let [events (applications/get-dynamic-application-events application-id)]
@@ -749,7 +608,7 @@
                     :workflow {:type (:workflow/type workflow)
                                ;; TODO: add :handlers only when it exists? https://stackoverflow.com/a/16375390
                                :handlers (vec (:workflow.dynamic/handlers workflow))}
-                    :possible-commands (:permissions/current-user application)
+                    :possible-commands (:application/permissions application)
                     :fnlround 0 ; TODO: round-based workflows
                     :review-type nil}) ; TODO: round-based workflows
      :phases (applications/get-application-phases (:workflow.dynamic/state workflow))

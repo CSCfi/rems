@@ -1,8 +1,7 @@
 (ns rems.application-util)
 
-(defn editable? [state]
-  (contains? #{"draft" "returned" "withdrawn"
-               :rems.workflow.dynamic/draft
-               :rems.workflow.dynamic/returned}
-             ;; TODO add dynamic withdrawn state
-             state))
+(defn editable? [application]
+  (or (contains? #{"draft" "returned" "withdrawn"}
+                 (:state application))
+      (contains? (:possible-commands application)
+                 :rems.workflow.dynamic/save-draft)))
