@@ -780,7 +780,9 @@
                 "application.event/draft-saved"
                 "application.event/submitted"]
                (map :event/type (get-in data [:application :dynamic-events]))))
-        (is (= [] (get-in data [:application :possible-commands])))))
+        (is (= ["rems.workflow.dynamic/remove-member"
+                "rems.workflow.dynamic/uninvite-member"]
+               (get-in data [:application :possible-commands])))))
 
     (testing "getting dynamic application as handler"
       (let [data (get-application handler-id application-id)]
@@ -791,7 +793,10 @@
                  "rems.workflow.dynamic/approve"
                  "rems.workflow.dynamic/return"
                  "rems.workflow.dynamic/add-member"
-                 "rems.workflow.dynamic/invite-member"}
+                 "rems.workflow.dynamic/remove-member"
+                 "rems.workflow.dynamic/invite-member"
+                 "rems.workflow.dynamic/uninvite-member"
+                 "see-everything"}
                (set (get-in data [:application :possible-commands]))))))
 
     (testing "send command without user"

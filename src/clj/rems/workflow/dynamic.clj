@@ -143,7 +143,6 @@
   (assoc EventBase
          :event/type (s/eq :application.event/submitted)))
 
-;; TODO: license-accepted & license-required events
 (def event-schemas
   {:application.event/approved ApprovedEvent
    :application.event/closed ClosedEvent
@@ -227,21 +226,24 @@
   [application _event]
   application)
 
-;; TODO: add :see-everything permission to relevant roles
 (def ^:private draft-permissions {:applicant [::save-draft
                                               ::submit
                                               ::remove-member
                                               ::invite-member
                                               ::uninvite-member]
                                   :member []
-                                  :handler [::remove-member
+                                  :handler [:see-everything
+                                            ::remove-member
                                             ::uninvite-member]
-                                  :commenter []
-                                  :decider []})
+                                  :commenter [:see-everything]
+                                  :past-commenter [:see-everything]
+                                  :decider [:see-everything]
+                                  :past-decider [:see-everything]})
 
 (def ^:private submitted-permissions {:applicant [::remove-member
                                                   ::uninvite-member]
-                                      :handler [::add-member
+                                      :handler [:see-everything
+                                                ::add-member
                                                 ::remove-member
                                                 ::invite-member
                                                 ::uninvite-member
@@ -250,13 +252,15 @@
                                                 ::return
                                                 ::approve
                                                 ::reject]
-                                      :commenter [::comment]
-                                      :decider [::decide]})
+                                      :commenter [:see-everything
+                                                  ::comment]
+                                      :decider [:see-everything
+                                                ::decide]})
 
 (def ^:private closed-permissions {:applicant []
-                                   :handler []
-                                   :commenter []
-                                   :decider []})
+                                   :handler [:see-everything]
+                                   :commenter [:see-everything]
+                                   :decider [:see-everything]})
 
 (defmethod calculate-permissions :application.event/created
   [application event]
@@ -340,11 +344,11 @@
                                                         :application/commenters ["commenter1" "commenter2"]}])
           commented (reduce calculate-permissions requested [{:event/type :application.event/commented
                                                               :event/actor "commenter1"}])]
-      (is (= #{::comment}
+      (is (= #{:see-everything ::comment}
              (permissions/user-permissions requested "commenter1")))
-      (is (= #{}
+      (is (= #{:see-everything}
              (permissions/user-permissions commented "commenter1")))
-      (is (= #{::comment}
+      (is (= #{:see-everything ::comment}
              (permissions/user-permissions commented "commenter2")))))
 
   (testing "decider may decide only once"
@@ -358,9 +362,9 @@
                                                         :application/decider "decider"}])
           decided (reduce calculate-permissions requested [{:event/type :application.event/decided
                                                             :event/actor "decider"}])]
-      (is (= #{::decide}
+      (is (= #{:see-everything ::decide}
              (permissions/user-permissions requested "decider")))
-      (is (= #{}
+      (is (= #{:see-everything}
              (permissions/user-permissions decided "decider"))))))
 
 ;;; Application model
@@ -477,36 +481,6 @@
 (deftest test-all-command-types-handled
   (is (= CommandTypes (set (get-command-types)))))
 
-(defn- impossible-command? [cmd application injections] ; TODO: remove me
-  (let [result (command-handler cmd application injections)]
-    (when-not (:success result)
-      result)))
-
-(defn- applicant-error
-  [application cmd]
-  (when-not (= (:actor cmd) (:applicantuserid application))
-    {:errors [{:type :forbidden}]}))
-
-(defn- handler?
-  [application user]
-  (contains? (set (:handlers (:workflow application))) user))
-
-(defn- actor-is-not-handler-error
-  [application cmd]
-  (when-not (handler? application (:actor cmd))
-    {:errors [{:type :forbidden}]}))
-
-(defn- actor-is-not-handler-or-applicant-error
-  [application cmd]
-  (when-not (or (handler? application (:actor cmd))
-                (= (:applicantuserid application) (:actor cmd)))
-    {:errors [:forbidden]}))
-
-(defn- state-error
-  [application & expected-states]
-  (when-not (contains? (set expected-states) (:state application))
-    {:errors [{:type :invalid-state :state (:state application)}]}))
-
 (defn- valid-user-error
   [injections user]
   (cond
@@ -518,103 +492,58 @@
   (when-let [errors ((:validate-form injections) application-id)]
     {:errors errors}))
 
+(defn- ok [event]
+  {:success true
+   :result event})
+
 (defmethod command-handler ::save-draft
-  [cmd application _injections]
-  (or (applicant-error application cmd)
-      (state-error application ::draft ::returned)
-      {:success true
-       :result {:event/type :application.event/draft-saved
-                :event/time (:time cmd)
-                :event/actor (:actor cmd)
-                :application/id (:application-id cmd)
-                :application/field-values (:items cmd)
-                :application/accepted-licenses (->> (:licenses cmd)
-                                                    (filter #(= "approved" (second %)))
-                                                    (map first)
-                                                    set)}}))
+  [cmd _application _injections]
+  (ok {:event/type :application.event/draft-saved
+       :application/field-values (:items cmd)
+       :application/accepted-licenses (->> (:licenses cmd)
+                                           (filter #(= "approved" (second %)))
+                                           (map first)
+                                           set)}))
 
 (defmethod command-handler ::submit
-  [cmd application injections]
-  (or (applicant-error application cmd)
-      (state-error application ::draft ::returned)
-      (validation-error injections (:application-id cmd))
-      {:success true
-       :result {:event/type :application.event/submitted
-                :event/time (:time cmd)
-                :event/actor (:actor cmd)
-                :application/id (:application-id cmd)}}))
+  [cmd _application injections]
+  (or (validation-error injections (:application-id cmd))
+      (ok {:event/type :application.event/submitted})))
 
 (defmethod command-handler ::approve
-  [cmd application _injections]
-  (or (actor-is-not-handler-error application cmd)
-      (state-error application ::submitted)
-      {:success true
-       :result {:event/type :application.event/approved
-                :event/time (:time cmd)
-                :event/actor (:actor cmd)
-                :application/id (:application-id cmd)
-                :application/comment (:comment cmd)}}))
+  [cmd _application _injections]
+  (ok {:event/type :application.event/approved
+       :application/comment (:comment cmd)}))
 
 (defmethod command-handler ::reject
-  [cmd application _injections]
-  (or (actor-is-not-handler-error application cmd)
-      (state-error application ::submitted)
-      {:success true
-       :result {:event/type :application.event/rejected
-                :event/time (:time cmd)
-                :event/actor (:actor cmd)
-                :application/id (:application-id cmd)
-                :application/comment (:comment cmd)}}))
+  [cmd _application _injections]
+  (ok {:event/type :application.event/rejected
+       :application/comment (:comment cmd)}))
 
 (defmethod command-handler ::return
-  [cmd application _injections]
-  (or (actor-is-not-handler-error application cmd)
-      (state-error application ::submitted)
-      {:success true
-       :result {:event/type :application.event/returned
-                :event/time (:time cmd)
-                :event/actor (:actor cmd)
-                :application/id (:application-id cmd)
-                :application/comment (:comment cmd)}}))
+  [cmd _application _injections]
+  (ok {:event/type :application.event/returned
+       :application/comment (:comment cmd)}))
 
 (defmethod command-handler ::close
-  [cmd application _injections]
-  (or (actor-is-not-handler-error application cmd)
-      (state-error application ::approved)
-      {:success true
-       :result {:event/type :application.event/closed
-                :event/time (:time cmd)
-                :event/actor (:actor cmd)
-                :application/id (:application-id cmd)
-                :application/comment (:comment cmd)}}))
+  [cmd _application _injections]
+  (ok {:event/type :application.event/closed
+       :application/comment (:comment cmd)}))
 
 (defmethod command-handler ::request-decision
-  [cmd application injections]
-  (or (actor-is-not-handler-error application cmd)
-      (state-error application ::submitted)
-      (valid-user-error injections (:decider cmd))
-      {:success true
-       :result {:event/type :application.event/decision-requested
-                :event/time (:time cmd)
-                :event/actor (:actor cmd)
-                :application/id (:application-id cmd)
-                :application/decider (:decider cmd)
-                :application/comment (:comment cmd)}}))
+  [cmd _application injections]
+  (or (valid-user-error injections (:decider cmd))
+      (ok {:event/type :application.event/decision-requested
+           :application/decider (:decider cmd)
+           :application/comment (:comment cmd)})))
 
 (defmethod command-handler ::decide
-  [cmd application _injections]
-  (or (when-not (= (:actor cmd) (:decider application))
-        {:errors [{:type :forbidden}]})
-      (state-error application ::submitted)
-      (when-not (contains? #{:approved :rejected} (:decision cmd))
+  [cmd _application _injections]
+  (or (when-not (contains? #{:approved :rejected} (:decision cmd))
         {:errors [{:type :invalid-decision :decision (:decision cmd)}]})
-      {:success true
-       :result {:event/type :application.event/decided
-                :event/time (:time cmd)
-                :event/actor (:actor cmd)
-                :application/id (:application-id cmd)
-                :application/decision (:decision cmd)
-                :application/comment (:comment cmd)}}))
+      (ok {:event/type :application.event/decided
+           :application/decision (:decision cmd)
+           :application/comment (:comment cmd)})))
 
 (defn- invalid-users-errors
   "Checks the given users for validity and merges the errors"
@@ -626,104 +555,66 @@
     {:errors [{:type :must-not-be-empty :key key}]}))
 
 (defmethod command-handler ::request-comment
-  [cmd application injections]
-  (or (actor-is-not-handler-error application cmd)
-      (state-error application ::submitted)
-      (must-not-be-empty cmd :commenters)
+  [cmd _application injections]
+  (or (must-not-be-empty cmd :commenters)
       (invalid-users-errors (:commenters cmd) injections)
-      {:success true
-       :result {:event/type :application.event/comment-requested
-                :event/time (:time cmd)
-                :event/actor (:actor cmd)
-                :application/id (:application-id cmd)
-                :application/commenters (:commenters cmd)
-                :application/comment (:comment cmd)}}))
-
-(defn- actor-is-not-commenter-error [application cmd]
-  (when-not (contains? (:commenters application) (:actor cmd))
-    {:errors [{:type :forbidden}]}))
+      (ok {:event/type :application.event/comment-requested
+           :application/commenters (:commenters cmd)
+           :application/comment (:comment cmd)})))
 
 (defmethod command-handler ::comment
-  [cmd application _injections]
-  (or (actor-is-not-commenter-error application cmd)
-      (state-error application ::submitted)
-      {:success true
-       :result {:event/type :application.event/commented
-                :event/time (:time cmd)
-                :event/actor (:actor cmd)
-                :application/id (:application-id cmd)
-                :application/comment (:comment cmd)}}))
+  [cmd _application _injections]
+  (ok {:event/type :application.event/commented
+       :application/comment (:comment cmd)}))
 
 (defmethod command-handler ::add-member
-  [cmd application injections]
-  (or (actor-is-not-handler-error application cmd)
-      (state-error application ::submitted ::approved)
-      (valid-user-error injections (:userid (:member cmd)))
-      {:success true
-       :result {:event/type :application.event/member-added
-                :event/time (:time cmd)
-                :event/actor (:actor cmd)
-                :application/member (:member cmd)
-                :application/id (:application-id cmd)}}))
+  [cmd _application injections]
+  (or (valid-user-error injections (:userid (:member cmd)))
+      (ok {:event/type :application.event/member-added
+           :application/member (:member cmd)})))
 
 (defmethod command-handler ::invite-member
-  [cmd application injections]
-  (let [success-result {:success true
-                        :result {:event/type :application.event/member-invited
-                                 :event/time (:time cmd)
-                                 :event/actor (:actor cmd)
-                                 :application/member (:member cmd)
-                                 :application/id (:application-id cmd)}}]
-    (if (and (= (:actor cmd) (:applicantuserid application))
-             (handler? application (:actor cmd)))
-      ;; when actor is both applicant and handler, combine the allowed states
-      (or (applicant-error application cmd)
-          (actor-is-not-handler-error application cmd)
-          (state-error application ::draft #_::withdrawn ::returned ::submitted ::approved)
-          success-result)
-      (if (= (:actor cmd) (:applicantuserid application))
-        (or (applicant-error application cmd)
-            (state-error application ::draft #_::withdrawn ::returned)
-            success-result)
-        (or (actor-is-not-handler-error application cmd)
-            (state-error application ::submitted ::approved)
-            success-result)))))
+  [cmd _application _injections]
+  (ok {:event/type :application.event/member-invited
+       :application/member (:member cmd)}))
 
 (defmethod command-handler ::remove-member
-  [cmd application injections]
-  (or (actor-is-not-handler-or-applicant-error application cmd)
-      (when (= (:applicantuserid application) (:userid (:member cmd)))
+  [cmd application _injections]
+  (or (when (= (:applicantuserid application) (:userid (:member cmd)))
         {:errors [{:type :cannot-remove-applicant}]})
       (when-not (contains? (set (map :userid (:members application)))
                            (:userid (:member cmd)))
         {:errors [{:type :user-not-member :user (:member cmd)}]})
-      {:success true
-       :result {:event/type :application.event/member-removed
-                :event/time (:time cmd)
-                :event/actor (:actor cmd)
-                :application/member (:member cmd)
-                :application/id (:application-id cmd)
-                :application/comment (:comment cmd)}}))
+      (ok {:event/type :application.event/member-removed
+           :application/member (:member cmd)
+           :application/comment (:comment cmd)})))
 
 (defmethod command-handler ::uninvite-member
-  [cmd application injections]
-  (or (actor-is-not-handler-or-applicant-error application cmd)
-      (when-not (contains? (set (map (juxt :name :email) (:invited-members application)))
+  [cmd application _injections]
+  (or (when-not (contains? (set (map (juxt :name :email) (:invited-members application)))
                            [(:name (:member cmd))
                             (:email (:member cmd))])
         {:errors [{:type :user-not-member :user (:member cmd)}]})
-      {:success true
-       :result {:event/type :application.event/member-uninvited
-                :event/time (:time cmd)
-                :event/actor (:actor cmd)
-                :application/member (:member cmd)
-                :application/id (:application-id cmd)
-                :application/comment (:comment cmd)}}))
+      (ok {:event/type :application.event/member-uninvited
+           :application/member (:member cmd)
+           :application/comment (:comment cmd)})))
+
+(defn- enrich-event [event cmd]
+  (assoc event
+         :event/time (:time cmd)
+         :event/actor (:actor cmd)
+         :application/id (:application-id cmd)))
+
+(defn- enrich-result [result cmd]
+  (if (:success result)
+    (update result :result enrich-event cmd)
+    result))
 
 (defn handle-command [cmd application injections]
   (let [permissions (permissions/user-permissions application (:actor cmd))]
     (if (contains? permissions (:type cmd))
-      (command-handler cmd application injections)
+      (-> (command-handler cmd application injections)
+          (enrich-result cmd))
       {:errors [{:type :forbidden}]})))
 
 (deftest test-handle-command
@@ -763,128 +654,10 @@
 
 ;;; Possible commands
 
-(defn- command-candidates [actor application-state] ; TODO: remove me
-  ;; NB! not setting :time or :application-id here since we don't
-  ;; validate them
-  (->>
-   [{:type ::submit
-     :actor actor}
-    {:type ::approve
-     :actor actor}
-    {:type ::reject
-     :actor actor}
-    {:type ::return
-     :actor actor}
-    {:type ::close
-     :actor actor}
-    {:type ::request-decision
-     :actor actor
-     :decider "decider"}
-    {:type ::decide
-     :actor actor
-     :decision :approved}
-    {:type ::request-comment
-     :actor actor
-     :commenters ["commenter"]}
-    {:type ::comment
-     :actor actor
-     :comment "comment"}
-    {:type ::add-member
-     :actor actor
-     :member {:userid "member"}}
-    {:type ::invite-member
-     :actor actor
-     :member {:name "name"
-              :email "email@address.org"}}
-    (let [members (->> application-state :members (remove (comp #{(:applicantuserid application-state)} :userid)))]
-      (when (seq members)
-        {:type ::remove-member
-         :actor actor
-         :member (first members)
-         :comment "comment"}))
-    (let [invited-members (:invited-members application-state)]
-      (when (seq invited-members)
-        {:type ::uninvite-member
-         :actor actor
-         :member (first invited-members)
-         :comment "comment"}))]
-   (remove nil?)))
-
-(def ^:private injections-for-possible-commands ; TODO: remove me
-  "`possible-commands` are calculated with the expectations that
-  - the user is always valid and
-  - the validation returns no errors."
-  {:valid-user? (constantly true)
-   :validate-form (constantly nil)})
-
-(defn- remove-impossible-permissions [application] ; TODO: can be removed after removing the old permission system
-  (let [removable-members (remove #(= (:userid %) (:applicantuserid application))
-                                  (:members application))
-        invited-members (:invited-members application)]
-    (cond-> application
-      (empty? removable-members) (permissions/remove-permission-from-all ::remove-member)
-      (empty? invited-members) (permissions/remove-permission-from-all ::uninvite-member))))
-
-(deftest test-remove-impossible-permissions
-  (testing "uninvite-member"
-    (testing "possible when there are invites"
-      (is (= {:role #{::uninvite-member}}
-             (-> {:invited-members [{:name "foo"
-                                     :email "foo@example.com"}]
-                  ::permissions/role-permissions {:role #{::uninvite-member}}}
-                 remove-impossible-permissions
-                 ::permissions/role-permissions))))
-    (testing "impossible when there are no invites"
-      (is (= {:role #{}}
-             (-> {:invited-members []
-                  ::permissions/role-permissions {:role #{::uninvite-member}}}
-                 remove-impossible-permissions
-                 ::permissions/role-permissions)))))
-
-  (testing "remove-member"
-    (testing "possible when there are members"
-      (is (= {:role #{::remove-member}}
-             (-> {:members [{:userid "foo"}]
-                  ::permissions/role-permissions {:role #{::remove-member}}}
-                 remove-impossible-permissions
-                 ::permissions/role-permissions))))
-    (testing "impossible when there are no members"
-      (is (= {:role #{}}
-             (-> {:members []
-                  ::permissions/role-permissions {:role #{::remove-member}}}
-                 remove-impossible-permissions
-                 ::permissions/role-permissions))))
-    (testing "impossible when the only member is the applicant"
-      (is (= {:role #{}}
-             (-> {:members [{:userid "foo"}]
-                  :applicantuserid "foo"
-                  ::permissions/role-permissions {:role #{::remove-member}}}
-                 remove-impossible-permissions
-                 ::permissions/role-permissions))))))
-
 (defn possible-commands
-  "Calculates which commands should be possible for use in e.g. UI.
-
-  Not every condition is checked exactly so it is in fact a potential set of possible commands only."
+  "Returns the commands which the user is authorized to execute."
   [actor application-state]
-  (let [new-result (-> application-state
-                       remove-impossible-permissions
-                       (permissions/user-permissions actor))
-        ;; TODO: remove me
-        old-result (->> application-state
-                        (command-candidates actor)
-                        (remove #(impossible-command? % application-state injections-for-possible-commands))
-                        (map :type)
-                        set)]
-    (assert (or (empty? (:dynamic-events application-state))
-                (= (disj new-result ::save-draft) ; only compare permissions which the old impl supports
-                   old-result))
-            (str "possible-commands mismatch:\n"
-                 "new impl gave " (pr-str new-result) "\n"
-                 "but old impl gave " (pr-str old-result) "\n"
-                 "for actor " (pr-str actor) "\n"
-                 "and application " (pr-str application-state)))
-    new-result))
+  (permissions/user-permissions application-state actor))
 
 (defn assoc-possible-commands [actor application-state]
   (assoc application-state
@@ -1297,100 +1070,3 @@
           (is (= #{} (:commenters (apply-command commented
                                                  {:actor "commenter2" :comment "..." :type ::comment}
                                                  injections)))))))))
-
-(deftest test-possible-commands ; TODO: remove me (simplify)
-  (let [draft (apply-events nil
-                            [{:event/type :application.event/created
-                              :event/actor "applicant"
-                              :workflow/type :workflow/dynamic
-                              :workflow.dynamic/handlers #{"assistant"}}])]
-    (testing "draft"
-      (is (= #{::save-draft ::submit ::invite-member}
-             (possible-commands "applicant" draft)))
-      (is (= #{}
-             (possible-commands "assistant" draft)))
-      (is (= #{}
-             (possible-commands "somebody else" draft)))
-      (testing "when there are invited members"
-        (is (= #{::save-draft ::submit ::invite-member ::uninvite-member}
-               (possible-commands "applicant" (apply-events draft [{:event/type :application.event/member-invited
-                                                                    :event/actor "applicant"
-                                                                    :application/member {:name "Some One" :email "some.one@example.org"}}]))))))
-    (let [submitted (apply-events draft [{:event/type :application.event/submitted
-                                          :event/actor "applicant"}])]
-      (testing "submitted"
-        (is (= #{} ; TODO ::withdraw
-               (possible-commands "applicant" submitted)))
-        (is (= #{::approve ::reject ::return ::request-decision ::request-comment ::add-member ::invite-member}
-               (possible-commands "assistant" submitted)))
-        (is (= #{}
-               (possible-commands "somebody else" submitted)))
-        (testing "when there are invited members"
-          (is (contains? (possible-commands "applicant" (apply-events submitted [{:event/type :application.event/member-invited
-                                                                                  :event/actor "applicant"
-                                                                                  :application/member {:name "Some One" :email "some.one@example.org"}}]))
-                         ::uninvite-member))
-          (is (contains? (possible-commands "assistant" (apply-events submitted [{:event/type :application.event/member-invited
-                                                                                  :event/actor "applicant"
-                                                                                  :application/member {:name "Some One" :email "some.one@example.org"}}]))
-                         ::uninvite-member)))
-        (testing "when there are added members"
-          (is (contains? (possible-commands "applicant" (apply-events submitted [{:event/type :application.event/member-added
-                                                                                  :event/actor "assitant"
-                                                                                  :application/member {:userid "someone"}}]))
-                         ::remove-member))))
-      (let [requested (apply-events submitted [{:event/type :application.event/comment-requested
-                                                :event/actor "assistant"
-                                                :application/commenters ["commenter"]}])]
-        (testing "comment requested"
-          (is (= #{}
-                 (possible-commands "applicant" requested)))
-          (is (= #{::approve ::reject ::return ::request-decision ::request-comment ::add-member ::invite-member}
-                 (possible-commands "assistant" requested)))
-          (is (= #{::comment}
-                 (possible-commands "commenter" requested))))
-        (let [commented (apply-events requested [{:event/type :application.event/commented
-                                                  :event/actor "commenter"
-                                                  :application/comment "..."}])]
-          (testing "comment given"
-            (is (= #{::approve ::reject ::return ::request-decision ::request-comment ::add-member ::invite-member}
-                   (possible-commands "assistant" commented)))
-            (is (= #{}
-                   (possible-commands "commenter" commented))))))
-      (let [requested (apply-events submitted [{:event/type :application.event/decision-requested
-                                                :event/actor "assistant"
-                                                :application/decider "decider"}])]
-        (testing "decision requested"
-          (is (= #{}
-                 (possible-commands "applicant" requested)))
-          (is (= #{::approve ::reject ::return ::request-decision ::request-comment ::add-member ::invite-member}
-                 (possible-commands "assistant" requested)))
-          (is (= #{::decide}
-                 (possible-commands "decider" requested)))))
-      (let [rejected (apply-events submitted [{:event/type :application.event/rejected
-                                               :event/actor "assistant"}])]
-        (testing "rejected"
-          (is (= #{}
-                 (possible-commands "applicant" rejected)))
-          (is (= #{}
-                 (possible-commands "assistant" rejected)))
-          (is (= #{}
-                 (possible-commands "somebody else" rejected)))))
-      (let [approved (apply-events submitted [{:event/type :application.event/approved
-                                               :event/actor "assistant"}])]
-        (testing "approved"
-          (is (= #{}
-                 (possible-commands "applicant" approved)))
-          (is (= #{::close ::add-member ::invite-member}
-                 (possible-commands "assistant" approved)))
-          (is (= #{}
-                 (possible-commands "somebody else" approved))))
-        (testing "closed"
-          (let [closed (apply-events approved [{:event/type :application.event/closed
-                                                :event/actor "assistant"}])]
-            (is (= #{}
-                   (possible-commands "applicant" closed)))
-            (is (= #{}
-                   (possible-commands "assistant" closed)))
-            (is (= #{}
-                   (possible-commands "somebody else" closed)))))))))

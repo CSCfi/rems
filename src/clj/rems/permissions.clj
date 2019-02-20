@@ -67,6 +67,20 @@
       (is (= #{:role-2} (user-roles app "user-2")))
       (is (= #{} (user-roles app "user-3"))))))
 
+(defn has-any-role? [application user]
+  (not (empty? (user-roles application user))))
+
+(deftest test-has-any-role?
+  (testing "no roles"
+    (is (false?
+         (-> {}
+             (has-any-role? "user")))))
+  (testing "some roles"
+    (is (true?
+         (-> {}
+             (give-role-to-user :role "user")
+             (has-any-role? "user"))))))
+
 (defn set-role-permissions
   "Sets role specific permissions for the application.
 
