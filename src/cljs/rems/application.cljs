@@ -744,40 +744,38 @@
    :request-id (:request-id event)
    :time (localize-time (:time event))})
 
-(defn- events-view [events]
-  (let [has-users? (boolean (some :userid events))]
-    [:div
-     [:h4 (text :t.form/events)]
-     (into [:table#event-table.table.table-hover.mb-0
-            [:thead
-             [:tr
-              (when has-users?
-                [:th (text :t.form/user)])
-              [:th (text :t.form/event)]
-              [:th (text :t.form/comment)]
-              [:th (text :t.form/date)]]]
-            (into [:tbody]
-                  (for [e events]
-                    [:tr
-                     (when has-users?
-                       [:td (:userid e)])
-                     [:td (:event e)]
-                     [:td.event-comment (:comment e)]
-                     [:td.date (:time e)]]))])]))
+(defn- event-component [{:keys [time userid event comment]}]
+  [:div.form-group.row
+   [:label.col-sm-2.col-form-label time]
+   [:div.col-sm-10
+    [:div.col-form-label [:span userid] "—"[:span event]]
+    (when comment [:div comment])]])
+
+(defn- events-view [event-groups]
+  [:div
+   [:h4 (text :t.form/events)]
+   (into [:div]
+         (for [group event-groups]
+           (into [:div.group
+                  (for [e group]
+                    [event-component e])])))])
 
 (defn- application-header [state phases-data events]
   (let [;; the event times have millisecond differences, so they need to be formatted to minute precision before deduping
-        events (->> events
-                    (map format-event)
-                    dedupe
-                    (group-by #(:request-id %))
-                    vals
-                    (map (partial sort-by :time))
-                    (sort-by #(:time (first %)))
-                    reverse
-                    flatten)
-        last-event (when (:comment (last events))
-                     (last events))]
+        event-groups (->> events
+                          (map format-event)
+                          dedupe
+                          (group-by #(:request-id %))
+                          vals
+                          (map (partial sort-by :time))
+                          (sort-by #(:time (first %)))
+                          reverse)
+        latest-event (->> event-groups
+                         flatten
+                         (sort-by :time)
+                         first)
+        latest-comment (when (seq (:comment latest-event))
+                         (:comment latest-event))]
     [collapsible/component
      {:id "header"
       :title [:span#application-state
@@ -786,11 +784,11 @@
                (when state (str ": " (localize-state state))))]
       :always [:div
                [:div.mb-3 {:class (str "state-" (if (keyword? state) (name state) state))} (phases phases-data)]
-               (when last-event
+               (when latest-comment
                  (info-field (text :t.applications/latest-comment)
-                             (:comment last-event)))]
-      :collapse (when (seq events)
-                  [events-view events])}]))
+                             latest-comment))]
+      :collapse (when (seq event-groups)
+                  [events-view event-groups])}]))
 
 (defn member-info
   "Renders a applicant, member or invited member of an application
