@@ -770,6 +770,7 @@
   (let [api-key "42"
         user-id "alice"
         handler-id "developer"
+        commenter-id "carl"
         decider-id "bob"
         application-id 13] ;; submitted dynamic application from test data
 
@@ -810,6 +811,61 @@
           "user should be forbidden to send command"))
 
     (testing "send commands with authorized user"
+      (testing "even handler cannot comment without request"
+        (is (= {:errors [{:type "forbidden"}], :success false}
+               (send-dynamic-command handler-id
+                                     {:type :rems.workflow.dynamic/comment
+                                      :application-id application-id
+                                      :comment "What am I commenting on?"}))))
+      (testing "comment with request"
+        (let [eventcount (count (get-in (get-application handler-id application-id)
+                                        [:application :dynamic-events]))]
+          (testing "commenter can't comment before request"
+            (is (= {:errors [{:type "forbidden"}], :success false}
+                   (send-dynamic-command commenter-id
+                                         {:type :rems.workflow.dynamic/comment
+                                          :application-id application-id
+                                          :comment "Not yet?"}))))
+          (testing "requesting comment"
+            (is (= {:success true} (send-dynamic-command handler-id
+                                                         {:type :rems.workflow.dynamic/request-comment
+                                                          :application-id application-id
+                                                          :commenters [decider-id commenter-id]
+                                                          :comment "What say you?"})))
+            (is (= #{commenter-id decider-id}
+                   (set (get-in (get-application handler-id application-id)
+                               [:application :commenters])))))
+          (testing "new request replaces old requests for specified commenters"
+            (is (= {:success true} (send-dynamic-command handler-id
+                                                         {:type :rems.workflow.dynamic/request-comment
+                                                          :application-id application-id
+                                                          :commenters [commenter-id]
+                                                          :comment "Meant to ask?"}))))
+          (testing "commenter can now comment, but only to newest"
+            (is (= {:success true} (send-dynamic-command commenter-id
+                                                         {:type :rems.workflow.dynamic/comment
+                                                          :application-id application-id
+                                                          :comment "Yeah, I dunno"})))
+            (is (= "Yeah, I dunno"
+                   (get-in (get-application handler-id application-id)
+                           [:application :dynamic-events (+ eventcount 2) :application/comment]))))
+          (testing "commenter cannot comment again"
+            (is (= [decider-id]
+                   (get-in (get-application handler-id application-id)
+                           [:application :commenters])))
+            (is (= {:errors [{:type "forbidden"}], :success false}
+                   (send-dynamic-command commenter-id
+                                                   {:type :rems.workflow.dynamic/comment
+                                                    :application-id application-id
+                                                    :comment "I guess so, afterall"}))))
+          (testing "other commenter can still comment to the original"
+            (is (= {:success true} (send-dynamic-command decider-id
+                                                         {:type :rems.workflow.dynamic/comment
+                                                          :application-id application-id
+                                                          :comment "I concur"})))
+            (is (= "I concur"
+                   (get-in (get-application handler-id application-id)
+                           [:application :dynamic-events (+ eventcount 3) :application/comment]))))))
       (testing "request-decision"
         (is (= {:success true} (send-dynamic-command handler-id
                                                      {:type :rems.workflow.dynamic/request-decision
@@ -843,6 +899,10 @@
           (is (= ["application.event/created"
                   "application.event/draft-saved"
                   "application.event/submitted"
+                  "application.event/comment-requested"
+                  "application.event/comment-requested"
+                  "application.event/commented"
+                  "application.event/commented"
                   "application.event/decision-requested"
                   "application.event/decided"
                   "application.event/approved"]
@@ -855,7 +915,9 @@
           (is (= ["application.event/created"
                   "application.event/draft-saved"
                   "application.event/submitted"
-                  ; decision-requested and decided should be missing here
+                  ; decision- and comment-requested, and decided should be missing here
+                  "application.event/commented"
+                  "application.event/commented"
                   "application.event/approved"]
                  (map :event/type (get-in data [:application :dynamic-events])))))))))
 
