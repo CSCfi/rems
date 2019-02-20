@@ -816,12 +816,12 @@
                   (into [:div]
                         (for [[k v] other-attributes]
                           [info-field k v {:inline? true}])))
-      :footer [:div#applicant-collapse
+      :footer [:div {:id (str element-id "-" sanitized-user-id "-actions")}
                (when can-remove?
                  [:div.commands
-                  [remove-member-action-button (str element-id "-" sanitized-user-id "-remove")]])
+                  [remove-member-action-button (str element-id "-" sanitized-user-id "-actions")]])
                (when can-remove?
-                 [remove-member-form application-id (str element-id "-" sanitized-user-id "-form") attributes (partial reload! application-id)])]}]))
+                 [remove-member-form application-id (str element-id "-" sanitized-user-id "-actions") attributes (partial reload! application-id)])]}]))
 
 (defn applicants-info
   "Renders the applicants, i.e. applicant and members."
