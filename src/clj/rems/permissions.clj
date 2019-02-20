@@ -22,6 +22,10 @@
     m))
 
 (defn remove-role-from-user [application role user]
+  (assert (keyword? role)
+          (str "role must be a keyword: " (pr-str role)))
+  (assert (string? user)
+          (str "user must be a string: " (pr-str user)))
   (-> application
       (update-in [::user-roles user] disj role)
       (update ::user-roles dissoc-if-empty user)))

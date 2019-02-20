@@ -233,6 +233,7 @@
                                               ::remove-member
                                               ::invite-member
                                               ::uninvite-member]
+                                  :member []
                                   :handler [::remove-member
                                             ::uninvite-member]
                                   :commenter []
@@ -263,6 +264,16 @@
       (permissions/give-role-to-users :applicant [(:event/actor event)])
       (permissions/give-role-to-users :handler (:workflow.dynamic/handlers event))
       (permissions/set-role-permissions draft-permissions)))
+
+(defmethod calculate-permissions :application.event/member-added
+  [application event]
+  (-> application
+      (permissions/give-role-to-users :member [(get-in event [:application/member :userid])])))
+
+(defmethod calculate-permissions :application.event/member-removed
+  [application event]
+  (-> application
+      (permissions/remove-role-from-user :member (get-in event [:application/member :userid]))))
 
 (defmethod calculate-permissions :application.event/submitted
   [application _event]
@@ -1108,7 +1119,13 @@
       (is (= {:errors [{:type :t.form.validation/invalid-user :userid "member3"}]}
              (handle-command {:type ::add-member :actor "assistant" :member {:userid "member3"}}
                              application
-                             injections))))))
+                             injections))))
+    (testing "added members can see the application"
+      (is (= #{:member}
+             (-> (apply-commands application
+                                 [{:type ::add-member :actor "assistant" :member {:userid "member1"}}]
+                                 injections)
+                 (permissions/user-roles "member1")))))))
 
 (deftest test-invite-member
   (let [application (apply-events nil
@@ -1186,7 +1203,17 @@
       (is (= {:errors [{:type :user-not-member :user {:userid "notamember"}}]}
              (handle-command {:type ::remove-member :actor "assistant" :member {:userid "notamember"}}
                              application
-                             injections))))))
+                             injections))))
+    (testing "removed members cannot see the application"
+      (is (not= #{}
+                (-> application
+                    (permissions/user-roles "somebody"))))
+      (is (= #{}
+             (-> application
+                 (apply-commands [{:type ::remove-member :actor "applicant" :member {:userid "somebody"}}]
+                                 injections)
+                 (permissions/user-roles "somebody")))))))
+
 
 (deftest test-uninvite-member
   (let [application (apply-events nil
