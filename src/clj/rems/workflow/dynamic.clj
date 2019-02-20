@@ -79,10 +79,12 @@
 (s/defschema CommentedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/commented)
+         :application/request-id s/Uuid
          :application/comment s/Str))
 (s/defschema CommentRequestedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/comment-requested)
+         :application/request-id s/Uuid
          :application/commenters [s/Str]
          :application/comment s/Str))
 (s/defschema CreatedEvent
@@ -625,6 +627,7 @@
                 :event/time (:time cmd)
                 :event/actor (:actor cmd)
                 :application/id (:application-id cmd)
+                :application/request-id (java.util.UUID/randomUUID)
                 :application/commenters (:commenters cmd)
                 :application/comment (:comment cmd)}}))
 
@@ -636,12 +639,17 @@
   [cmd application _injections]
   (or (actor-is-not-commenter-error application cmd)
       (state-error application ::submitted)
-      {:success true
-       :result {:event/type :application.event/commented
-                :event/time (:time cmd)
-                :event/actor (:actor cmd)
-                :application/id (:application-id cmd)
-                :application/comment (:comment cmd)}}))
+      (let [last-request-for-actor
+            (last (filter #(contains? (set (:application/commenters %))
+                                      (:actor cmd))
+                           (:dynamic-events application)))]
+        {:success true
+         :result {:event/type :application.event/commented
+                  :event/time (:time cmd)
+                  :event/actor (:actor cmd)
+                  :application/id (:application-id cmd)
+                  :application/request-id (:application/request-id last-request-for-actor)
+                  :application/comment (:comment cmd)}})))
 
 (defmethod command-handler ::add-member
   [cmd application injections]
