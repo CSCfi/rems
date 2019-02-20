@@ -735,10 +735,13 @@
                                 :readonly readonly?
                                 :approved (get licenses (:id license)))]))])]}]))
 
+
+;; FIXME Why do we have both this and dynamic-event->event?
 (defn- format-event [event]
   {:userid (:userid event)
    :event (localize-event (:event event))
    :comment (:comment event)
+   :request-id (:request-id event)
    :time (localize-time (:time event))})
 
 (defn- events-view [events]
@@ -754,7 +757,7 @@
               [:th (text :t.form/comment)]
               [:th (text :t.form/date)]]]
             (into [:tbody]
-                  (for [e (reverse events)]
+                  (for [e events]
                     [:tr
                      (when has-users?
                        [:td (:userid e)])
@@ -766,7 +769,13 @@
   (let [;; the event times have millisecond differences, so they need to be formatted to minute precision before deduping
         events (->> events
                     (map format-event)
-                    dedupe)
+                    dedupe
+                    (group-by #(:request-id %))
+                    vals
+                    (map (partial sort-by :time))
+                    (sort-by #(:time (first %)))
+                    reverse
+                    flatten)
         last-event (when (:comment (last events))
                      (last events))]
     [collapsible/component
@@ -1127,6 +1136,7 @@
   {:event (name (:event/type event))
    :time (:event/time event)
    :userid (:event/actor event)
+   :request-id (:application/request-id event)
    :comment (if (= :application.event/decided (:event/type event))
               (str (localize-decision (:application/decision event)) ": " (:application/comment event))
               (:application/comment event))})
