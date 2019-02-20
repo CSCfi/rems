@@ -742,13 +742,15 @@
    :event (localize-event (:event event))
    :comment (:comment event)
    :request-id (:request-id event)
+   :commenters (:commenters event)
    :time (localize-time (:time event))})
 
-(defn- event-component [{:keys [time userid event comment]}]
+(defn- event-component [{:keys [time userid event comment commenters]}]
   [:div.form-group.row
    [:label.col-sm-2.col-form-label time]
    [:div.col-sm-10
-    [:div.col-form-label [:span userid] "—"[:span event]]
+    [:div.col-form-label [:span userid] " — " [:span event]
+     (when (seq commenters) [:span ": " (for [c commenters] ^{:key c} [:span c])])]
     (when comment [:div comment])]])
 
 (defn- events-view [event-groups]
@@ -756,9 +758,9 @@
    [:h4 (text :t.form/events)]
    (into [:div]
          (for [group event-groups]
-           (into [:div.group
-                  (for [e group]
-                    [event-component e])])))])
+           ^{:key group} [:div.group
+                          (for [e group]
+                            ^{:key e} [event-component e])]))])
 
 (defn- application-header [state phases-data events]
   (let [;; the event times have millisecond differences, so they need to be formatted to minute precision before deduping
@@ -1135,6 +1137,7 @@
    :time (:event/time event)
    :userid (:event/actor event)
    :request-id (:application/request-id event)
+   :commenters (:application/commenters event)
    :comment (if (= :application.event/decided (:event/type event))
               (str (localize-decision (:application/decision event)) ": " (:application/comment event))
               (:application/comment event))})
