@@ -894,11 +894,10 @@
                              application
                              injections))))
     (testing "added members can see the application"
-      (is (= #{:member}
-             (-> (apply-commands application
-                                 [{:type ::add-member :actor "assistant" :member {:userid "member1"}}]
-                                 injections)
-                 (permissions/user-roles "member1")))))))
+      (is (true? (-> (apply-commands application
+                                     [{:type ::add-member :actor "assistant" :member {:userid "member1"}}]
+                                     injections)
+                     (permissions/has-any-role? "member1")))))))
 
 (deftest test-invite-member
   (let [application (apply-events nil
@@ -978,14 +977,12 @@
                              application
                              injections))))
     (testing "removed members cannot see the application"
-      (is (not= #{}
-                (-> application
-                    (permissions/user-roles "somebody"))))
-      (is (= #{}
-             (-> application
-                 (apply-commands [{:type ::remove-member :actor "applicant" :member {:userid "somebody"}}]
-                                 injections)
-                 (permissions/user-roles "somebody")))))))
+      (is (true? (-> application
+                     (permissions/has-any-role? "somebody"))))
+      (is (false? (-> application
+                      (apply-commands [{:type ::remove-member :actor "applicant" :member {:userid "somebody"}}]
+                                      injections)
+                      (permissions/has-any-role? "somebody")))))))
 
 
 (deftest test-uninvite-member
