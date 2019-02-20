@@ -9,7 +9,8 @@
             [rems.spinner :as spinner]
             [rems.status-modal :refer [status-modal]]
             [rems.text :refer [text localize-item]]
-            [rems.util :refer [dispatch! fetch post!]]))
+            [rems.util :refer [dispatch! fetch post!]]
+            [rems.status-modal :refer [status-modal]]))
 
 (defn- reset-form [db]
   (assoc db

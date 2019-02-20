@@ -6,7 +6,9 @@
             [rems.atoms :refer [external-link]]
             [rems.collapsible :as collapsible]
             [rems.text :refer [text localize-item]]
-            [rems.util :refer [dispatch! fetch post!]]))
+            [rems.util :refer [dispatch! fetch post!]]
+            [rems.status-modal :refer [status-modal]]
+            [reagent.core :as r]))
 
 (defn- reset-form [db]
   (dissoc db ::form))
@@ -63,15 +65,17 @@
     (when (valid-request? request languages)
       (localize-item request default-language))))
 
-(defn- create-license [request]
-  (post! "/api/licenses/create" {:params request
-                                 ;; TODO: error handling
-                                 :handler (fn [resp] (dispatch! "#/administration/licenses"))}))
+(defn- create-license! [{:keys [request on-pending on-success on-error]}]
+  (when on-pending (on-pending))
+  (post! "/api/licenses/create" (merge
+                                 {:params request
+                                  :handler on-success}
+                                 (when on-error {:error-handler on-error}))))
 
 (rf/reg-event-fx
  ::create-license
- (fn [_ [_ request]]
-   (create-license request)
+ (fn [_ [_ opts]]
+   (create-license! opts)
    {}))
 
 (defn- save-attachment [language form-data]
@@ -181,13 +185,13 @@
          filename-field
          remove-button]))))
 
-(defn- save-license-button []
+(defn- save-license-button [on-click]
   (let [form @(rf/subscribe [::form])
         default-language @(rf/subscribe [:default-language])
         languages @(rf/subscribe [:languages])
         request (build-request form default-language languages)]
     [:button.btn.btn-primary
-     {:on-click #(rf/dispatch [::create-license request])
+     {:on-click #(on-click request)
       :disabled (nil? request)}
      (text :t.administration/save)]))
 
@@ -197,30 +201,45 @@
    (text :t.administration/cancel)])
 
 (defn create-license-page []
-  (let [default-language @(rf/subscribe [:default-language])
-        languages @(rf/subscribe [:languages])]
-    [:div
-     [administration-navigator-container]
-     [:h2 (text :t.administration/create-license)]
-     [collapsible/component
-      {:id "create-license"
-       :title (text :t.administration/create-license)
-       :always [:div
-                [license-type-radio-group]
-                [language-heading default-language]
-                [license-title-field default-language]
-                [license-link-field default-language]
-                [license-text-field default-language]
-                [license-attachment-field default-language]
+  (let [state (r/atom nil)
+        on-pending #(reset! state {:status :pending})
+        on-success #(reset! state {:status :saved})
+        on-error #(reset! state {:status :failed :error %})
+        on-modal-close #(do (reset! state nil)
+                            (dispatch! "/#/administration/licenses"))]
+    (fn []
+     (let [default-language @(rf/subscribe [:default-language])
+           languages @(rf/subscribe [:languages])]
+       [:div
+        [administration-navigator-container]
+        [:h2 (text :t.administration/create-license)]
+        [collapsible/component
+         {:id "create-license"
+          :title (text :t.administration/create-license)
+          :always [:div
+                   (when (:status @state)
+                     [status-modal (assoc @state
+                                          :description (text :t.actions/add-member)
+                                          :on-close on-modal-close)])
+                   [license-type-radio-group]
+                   [language-heading default-language]
+                   [license-title-field default-language]
+                   [license-link-field default-language]
+                   [license-text-field default-language]
+                   [license-attachment-field default-language]
 
-                (doall (for [language (remove #(= % default-language) languages)]
-                         [:div {:key language}
-                          [language-heading language]
-                          [license-title-field language]
-                          [license-link-field language]
-                          [license-text-field language]
-                          [license-attachment-field language]]))
+                   (doall (for [language (remove #(= % default-language) languages)]
+                            [:div {:key language}
+                             [language-heading language]
+                             [license-title-field language]
+                             [license-link-field language]
+                             [license-text-field language]
+                             [license-attachment-field language]]))
 
-                [:div.col.commands
-                 [cancel-button]
-                 [save-license-button]]]}]]))
+                   [:div.col.commands
+                    [cancel-button]
+                    [save-license-button #(rf/dispatch [::create-license
+                                                        {:request %
+                                                         :on-pending on-pending
+                                                         :on-success on-success
+                                                         :on-error on-error}])]]]}]]))))

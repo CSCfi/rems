@@ -9,7 +9,9 @@
             [rems.collapsible :as collapsible]
             [rems.config :refer [dev-environment?]]
             [rems.text :refer [text text-format localize-item]]
-            [rems.util :refer [dispatch! post!]]))
+            [rems.util :refer [dispatch! post!]]
+            [rems.status-modal :refer [status-modal]]
+            [reagent.core :as r]))
 
 (defn- reset-form [db]
   (assoc db ::form {:items []}))
@@ -147,15 +149,17 @@
     (when (valid-request? request languages)
       request)))
 
-(defn- create-form [request]
-  (post! "/api/forms/create" {:params request
-                              ;; TODO: error handling
-                              :handler (fn [resp] (dispatch! "#/administration/forms"))}))
+(defn- create-form! [{:keys [request on-pending on-success on-error]}]
+  (when on-pending (on-pending))
+  (post! "/api/forms/create" (merge
+                              {:params request
+                               :handler on-success}
+                              (when on-error {:error-handler on-error}))))
 
 (rf/reg-event-fx
  ::create-form
- (fn [_ [_ request]]
-   (create-form request)
+ (fn [_ [_ opts]]
+   (create-form! opts)
    {}))
 
 
@@ -258,12 +262,12 @@
 (defn- move-form-item-down-button [item-index]
   [items/move-down-button #(rf/dispatch [::move-form-item-down item-index])])
 
-(defn- save-form-button []
+(defn- save-form-button [on-click]
   (let [form @(rf/subscribe [::form])
         languages @(rf/subscribe [:languages])
         request (build-request form languages)]
     [:button.btn.btn-primary
-     {:on-click #(rf/dispatch [::create-form request])
+     {:on-click #(on-click request)
       :disabled (nil? request)}
      (text :t.administration/save)]))
 
@@ -273,40 +277,55 @@
    (text :t.administration/cancel)])
 
 (defn create-form-page []
-  (let [form @(rf/subscribe [::form])]
-    [:div
-     [administration-navigator-container]
-     [:h2 (text :t.administration/create-form)]
-     [collapsible/component
-      {:id "create-form"
-       :title (text :t.administration/create-form)
-       :always [:div
-                [form-organization-field]
-                [form-title-field]
+  (let [state (r/atom nil)
+        on-pending #(reset! state {:status :pending})
+        on-success #(reset! state {:status :saved})
+        on-error #(reset! state {:status :failed :error %})
+        on-modal-close #(do (reset! state nil)
+                            (dispatch! "#/administration/forms"))]
+    (fn []
+     (let [form @(rf/subscribe [::form])]
+       [:div
+        [administration-navigator-container]
+        [:h2 (text :t.administration/create-form)]
+        [collapsible/component
+         {:id "create-form"
+          :title (text :t.administration/create-form)
+          :always [:div
+                   (when (:status @state)
+                     [status-modal (assoc @state
+                                          :description (text :t.actions/add-member)
+                                          :on-close on-modal-close)])
+                   [form-organization-field]
+                   [form-title-field]
 
-                (doall (for [item-index (range (count (:items form)))]
-                         [:div.form-item
-                          {:key item-index}
-                          [:div.form-item-header
-                           [:h4 (text-format :t.create-form/item-n (inc item-index))]
-                           [:div.form-item-controls
-                            [move-form-item-up-button item-index]
-                            [move-form-item-down-button item-index]
-                            [remove-form-item-button item-index]]]
+                   (doall (for [item-index (range (count (:items form)))]
+                            [:div.form-item
+                             {:key item-index}
+                             [:div.form-item-header
+                              [:h4 (text-format :t.create-form/item-n (inc item-index))]
+                              [:div.form-item-controls
+                               [move-form-item-up-button item-index]
+                               [move-form-item-down-button item-index]
+                               [remove-form-item-button item-index]]]
 
-                          [form-item-title-field item-index]
-                          [form-item-optional-checkbox item-index]
-                          [form-item-type-radio-group item-index]
-                          (when (supports-input-prompt? (get-in form [:items item-index]))
-                            [form-item-input-prompt-field item-index])
-                          (when (supports-maxlength? (get-in form [:items item-index]))
-                            [form-item-maxlength-field item-index])
-                          (when (supports-options? (get-in form [:items item-index]))
-                            [form-item-option-fields item-index])]))
+                             [form-item-title-field item-index]
+                             [form-item-optional-checkbox item-index]
+                             [form-item-type-radio-group item-index]
+                             (when (supports-input-prompt? (get-in form [:items item-index]))
+                               [form-item-input-prompt-field item-index])
+                             (when (supports-maxlength? (get-in form [:items item-index]))
+                               [form-item-maxlength-field item-index])
+                             (when (supports-options? (get-in form [:items item-index]))
+                               [form-item-option-fields item-index])]))
 
-                [:div.form-item.new-form-item
-                 [add-form-item-button]]
+                   [:div.form-item.new-form-item
+                    [add-form-item-button]]
 
-                [:div.col.commands
-                 [cancel-button]
-                 [save-form-button]]]}]]))
+                   [:div.col.commands
+                    [cancel-button]
+                    [save-form-button #(rf/dispatch [::create-form
+                                                     {:request %
+                                                      :on-pending on-pending
+                                                      :on-success on-success
+                                                      :on-error on-error}])]]]}]]))))

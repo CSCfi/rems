@@ -7,7 +7,9 @@
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
-            [rems.util :refer [dispatch! fetch post!]]))
+            [rems.util :refer [dispatch! fetch post!]]
+            [rems.status-modal :refer [status-modal]]
+            [reagent.core :as r]))
 
 (defn- reset-form [db]
   (-> (dissoc db ::form)
@@ -94,15 +96,17 @@
     (merge {:state "disabled"} request)
     request))
 
-(defn- create-catalogue-item [request]
-  (post! "/api/catalogue-items/create" {:params (create-request-with-state request)
-                                        ;; TODO error handling
-                                        :handler (fn [resp] (dispatch! "#/administration/catalogue-items"))}))
+(defn- create-catalogue-item! [{:keys [request on-pending on-success on-error]}]
+  (when on-pending (on-pending))
+  (post! "/api/catalogue-items/create" (merge
+                                        {:params (create-request-with-state request)
+                                         :handler on-success}
+                                        (when on-error {:error-handler on-error}))))
 
 (rf/reg-event-fx
  ::create-catalogue-item
- (fn [_ [_ request]]
-   (create-catalogue-item request)
+ (fn [_ [_ opts]]
+   (create-catalogue-item! opts)
    {}))
 
 
@@ -228,31 +232,46 @@
    {:on-click #(dispatch! "/#/administration/catalogue-items")}
    (text :t.administration/cancel)])
 
-(defn- save-catalogue-item-button []
+(defn- save-catalogue-item-button [on-click]
   (let [form @(rf/subscribe [::form])
         request (build-request form)]
     [:button.btn.btn-primary
-     {:on-click #(rf/dispatch [::create-catalogue-item request])
+     {:on-click #(on-click request)
       :disabled (nil? request)}
      (text :t.administration/save)]))
 
 (defn create-catalogue-item-page []
-  (let [loading? (rf/subscribe [::loading?])]
-    [:div
-     [administration-navigator-container]
-     [:h2 (text :t.administration/create-catalogue-item)]
-     [collapsible/component
-      {:id "create-catalogue-item"
-       :title (text :t.administration/create-catalogue-item)
-       :always [:div
-                (if @loading?
-                  [:div#catalogue-item-loader [spinner/big]]
-                  [:div#catalogue-item-editor
-                   [catalogue-item-title-field]
-                   [catalogue-item-workflow-field]
-                   [catalogue-item-resource-field]
-                   [catalogue-item-form-field]
+  (let [loading? (rf/subscribe [::loading?])
+        state (r/atom nil)
+        on-pending #(reset! state {:status :pending})
+        on-success #(reset! state {:status :saved})
+        on-error #(reset! state {:status :failed :error %})
+        on-modal-close #(do (reset! state nil)
+                            (dispatch! "#/administration/catalogue-items"))]
+    (fn []
+      [:div
+      [administration-navigator-container]
+      [:h2 (text :t.administration/create-catalogue-item)]
+      [collapsible/component
+       {:id "create-catalogue-item"
+        :title (text :t.administration/create-catalogue-item)
+        :always [:div
+                 (if @loading?
+                   [:div#catalogue-item-loader [spinner/big]]
+                   [:div#catalogue-item-editor
+                    (when (:status @state)
+                      [status-modal (assoc @state
+                                           :description (text :t.actions/add-member)
+                                           :on-close on-modal-close)])
+                    [catalogue-item-title-field]
+                    [catalogue-item-workflow-field]
+                    [catalogue-item-resource-field]
+                    [catalogue-item-form-field]
 
-                   [:div.col.commands
-                    [cancel-button]
-                    [save-catalogue-item-button]]])]}]]))
+                    [:div.col.commands
+                     [cancel-button]
+                     [save-catalogue-item-button #(rf/dispatch [::create-catalogue-item
+                                                                {:request %
+                                                                 :on-pending on-pending
+                                                                 :on-success on-success
+                                                                 :on-error on-error}])]]])]}]])))

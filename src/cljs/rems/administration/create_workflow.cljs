@@ -9,7 +9,9 @@
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
             [rems.text :refer [text text-format localize-item]]
-            [rems.util :refer [dispatch! fetch post!]]))
+            [rems.util :refer [dispatch! fetch post!]]
+            [rems.status-modal :refer [status-modal]]
+            [reagent.core :as r]))
 
 (defn- reset-form [db]
   (assoc db
@@ -80,15 +82,17 @@
     (when (valid-request? request)
       request)))
 
-(defn- create-workflow [request]
-  (post! "/api/workflows/create" {:params request
-                                  ;; TODO: error handling
-                                  :handler (fn [resp] (dispatch! "#/administration/workflows"))}))
+(defn- create-workflow [{:keys [request on-pending on-success on-error]}]
+  (when on-pending (on-pending))
+  (post! "/api/workflows/create" (merge
+                                  {:params request
+                                   :handler on-success}
+                                  (when on-error {:error-handler on-error}))))
 
 (rf/reg-event-fx
  ::create-workflow
- (fn [_ [_ request]]
-   (create-workflow request)
+ (fn [_ [_ opts]]
+   (create-workflow opts)
    {}))
 
 
@@ -229,11 +233,11 @@
    [:i.icon-link.fas.fa-times
     {:aria-hidden true}]])
 
-(defn- save-workflow-button []
+(defn- save-workflow-button [on-click]
   (let [form @(rf/subscribe [::form])
         request (build-request form)]
     [:button.btn.btn-primary
-     {:on-click #(rf/dispatch [::create-workflow request])
+     {:on-click #(on-click request)
       :disabled (nil? request)}
      (text :t.administration/save)]))
 
@@ -292,28 +296,43 @@
    [workflow-type-description (text :t.create-workflow/auto-approve-workflow-description)]])
 
 (defn create-workflow-page []
-  (let [form @(rf/subscribe [::form])
-        workflow-type (:type form)
-        loading? (rf/subscribe [::loading?])]
-    [:div
-     [administration-navigator-container]
-     [:h2 (text :t.administration/create-workflow)]
-     [collapsible/component
-      {:id "create-workflow"
-       :title (text :t.administration/create-workflow)
-       :always [:div
-                (if @loading?
-                  [:div#workflow-loader [spinner/big]]
-                  [:div#workflow-editor
-                   [workflow-organization-field]
-                   [workflow-title-field]
-                   [workflow-type-field]
+  (let [state (r/atom nil)
+        on-pending #(reset! state {:status :pending})
+        on-success #(reset! state {:status :saved})
+        on-error #(reset! state {:status :failed :error %})
+        on-modal-close #(do (reset! state nil)
+                            (dispatch! "#/administration/workflows"))]
+    (fn []
+     (let [form @(rf/subscribe [::form])
+           workflow-type (:type form)
+           loading? (rf/subscribe [::loading?])]
+       [:div
+        [administration-navigator-container]
+        [:h2 (text :t.administration/create-workflow)]
+        [collapsible/component
+         {:id "create-workflow"
+          :title (text :t.administration/create-workflow)
+          :always [:div
+                   (if @loading?
+                     [:div#workflow-loader [spinner/big]]
+                     [:div#workflow-editor
+                      (when (:status @state)
+                        [status-modal (assoc @state
+                                             :description (text :t.actions/add-member)
+                                             :on-close on-modal-close)])
+                      [workflow-organization-field]
+                      [workflow-title-field]
+                      [workflow-type-field]
 
-                   (case workflow-type
-                     :auto-approve [auto-approve-workflow-form]
-                     :dynamic [dynamic-workflow-form]
-                     :rounds [round-workflow-form])
+                      (case workflow-type
+                        :auto-approve [auto-approve-workflow-form]
+                        :dynamic [dynamic-workflow-form]
+                        :rounds [round-workflow-form])
 
-                   [:div.col.commands
-                    [cancel-button]
-                    [save-workflow-button]]])]}]]))
+                      [:div.col.commands
+                       [cancel-button]
+                       [save-workflow-button #(rf/dispatch [::create-workflow
+                                                            {:request %
+                                                             :on-pending on-pending
+                                                             :on-success on-success
+                                                             :on-error on-error}])]]])]}]]))))
