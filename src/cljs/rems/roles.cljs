@@ -7,8 +7,10 @@
 (defn is-logged-in? [roles]
   (has-some? #{:logged-in} roles))
 
-(defn is-applicant? [roles]
-  (has-some? #{:applicant} roles))
+(defn is-applicant-or-member? [roles]
+  (has-some? #{:applicant
+               :member}
+             roles))
 
 ;; TODO: Think of a common name for handlers, commenters and deciders. After removing the legacy workflow, "reviewer" would be a free word.
 (defn is-handler-or-commenter-or-decider? [roles]
