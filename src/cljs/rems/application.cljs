@@ -797,7 +797,8 @@
         sanitized-user-id (-> (or user-id "")
                               str/lower-case
                               (str/replace #"[^a-z]" ""))
-        other-attributes (dissoc attributes :commonName :name :eppn :userid :mail :email)]
+        other-attributes (dissoc attributes :commonName :name :eppn :userid :mail :email)
+        user-actions-id (str element-id "-" sanitized-user-id "-actions")]
     [collapsible/minimal
      {:id (str element-id "-" sanitized-user-id "-info")
       :class (when group? "group")
@@ -816,12 +817,12 @@
                   (into [:div]
                         (for [[k v] other-attributes]
                           [info-field k v {:inline? true}])))
-      :footer [:div {:id (str element-id "-" sanitized-user-id "-actions")}
+      :footer [:div {:id user-actions-id}
                (when can-remove?
                  [:div.commands
-                  [remove-member-action-button (str element-id "-" sanitized-user-id "-actions")]])
+                  [remove-member-action-button user-actions-id]])
                (when can-remove?
-                 [remove-member-form application-id (str element-id "-" sanitized-user-id "-actions") attributes (partial reload! application-id)])]}]))
+                 [remove-member-form application-id user-actions-id attributes (partial reload! application-id)])]}]))
 
 (defn applicants-info
   "Renders the applicants, i.e. applicant and members."
