@@ -318,7 +318,7 @@
                      [:div#workflow-editor
                       (when (:status @state)
                         [status-modal (assoc @state
-                                             :description (text :t.actions/add-member)
+                                             :description (text :t.actions/create-workflow)
                                              :on-close on-modal-close)])
                       [workflow-organization-field]
                       [workflow-title-field]

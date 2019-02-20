@@ -261,7 +261,7 @@
                    [:div#catalogue-item-editor
                     (when (:status @state)
                       [status-modal (assoc @state
-                                           :description (text :t.actions/add-member)
+                                           :description (text :t.actions/create-catalogue-item)
                                            :on-close on-modal-close)])
                     [catalogue-item-title-field]
                     [catalogue-item-workflow-field]

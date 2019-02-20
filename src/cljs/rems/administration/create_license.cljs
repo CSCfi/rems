@@ -219,7 +219,7 @@
           :always [:div
                    (when (:status @state)
                      [status-modal (assoc @state
-                                          :description (text :t.actions/add-member)
+                                          :description (text :t.actions/create-license)
                                           :on-close on-modal-close)])
                    [license-type-radio-group]
                    [language-heading default-language]

@@ -294,7 +294,7 @@
           :always [:div
                    (when (:status @state)
                      [status-modal (assoc @state
-                                          :description (text :t.actions/add-member)
+                                          :description (text :t.actions/create-form)
                                           :on-close on-modal-close)])
                    [form-organization-field]
                    [form-title-field]
