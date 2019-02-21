@@ -1,6 +1,6 @@
 (ns rems.db.form
   (:require [rems.db.core :as db]
-            [cheshire.core :as cheshire]))
+            [rems.json :as json]))
 
 (defn get-forms [filters]
   (->> (db/get-forms)
@@ -9,7 +9,7 @@
 
 (defn get-form [id]
   (-> (db/get-form {:id id})
-      (update :fields cheshire/parse-string true)))
+      (update :fields json/parse-string true)))
 
 (defn- create-form-item! [user-id form-id item-index {:keys [title optional type input-prompt maxlength options]}]
   (let [item-id (:id (db/create-form-item! {:type type

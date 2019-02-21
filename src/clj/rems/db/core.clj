@@ -1,25 +1,11 @@
 (ns rems.db.core
   {:ns-tracker/resource-deps ["sql/queries.sql"]}
-  (:require [cheshire.generate :as cheshire]
-            [clj-time.core :as time]
+  (:require [clj-time.core :as time]
             [clj-time.jdbc] ;; convert db timestamps to joda-time objects
             [clojure.set :refer [superset?]]
-            [cognitect.transit :as transit]
             [conman.core :as conman]
             [mount.core :refer [defstate]]
-            [rems.config :refer [env]])
-  (:import [org.joda.time DateTime ReadableInstant]))
-
-(def joda-time-writer
-  (transit/write-handler
-   "m"
-   (fn [v] (-> ^ReadableInstant v .getMillis))
-   (fn [v] (-> ^ReadableInstant v .getMillis .toString))))
-
-(cheshire/add-encoder
- DateTime
- (fn [c jsonGenerator]
-   (.writeString jsonGenerator (-> ^ReadableInstant c .getMillis .toString))))
+            [rems.config :refer [env]]))
 
 (defstate ^:dynamic *db*
           :start (cond

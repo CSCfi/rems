@@ -1,7 +1,6 @@
 (ns rems.db.applications
   "Query functions for forms and applications."
-  (:require [cheshire.core :as cheshire]
-            [clj-time.coerce :as time-coerce]
+  (:require [clj-time.coerce :as time-coerce]
             [clj-time.core :as time]
             [clojure.set :refer [difference union]]
             [clojure.test :refer [deftest is]]
@@ -21,6 +20,7 @@
             [rems.db.workflow-actors :as actors]
             [rems.email :as email]
             [rems.form-validation :as form-validation]
+            [rems.json :as json]
             [rems.permissions :as permissions]
             [rems.util :refer [getx get-username update-present]]
             [rems.workflow.dynamic :as dynamic]
@@ -951,7 +951,7 @@
 
 (defn- fix-workflow-from-db [wf]
   ;; TODO could use a schema for this coercion
-  (update (cheshire/parse-string wf keyword)
+  (update (json/parse-string wf keyword)
           :type keyword))
 
 (defn- string->datetime [s]
@@ -986,7 +986,7 @@
 (defn json->event [json]
   (when json
     ;; most keys are keywords, but some events use numeric keys in maps
-    (let [result (coerce-dynamic-event (cheshire/parse-string json str->keyword-or-number))]
+    (let [result (coerce-dynamic-event (json/parse-string json str->keyword-or-number))]
       (when (schema.utils/error? result)
         ;; similar exception as what schema.core/validate throws
         (throw (ex-info (str "Value does not match schema: " (pr-str result))
@@ -998,7 +998,7 @@
 
 (defn event->json [event]
   (validate-dynamic-event event)
-  (cheshire/generate-string event))
+  (json/generate-string event))
 
 (defn- fix-event-from-db [event]
   (assoc (-> event :eventdata json->event)

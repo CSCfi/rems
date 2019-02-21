@@ -4,9 +4,6 @@
             [compojure.api.exception :as ex]
             [compojure.api.sweet :refer :all]
             [conman.core :as conman]
-            [muuntaja.core :as muuntaja]
-            [muuntaja.format.json :refer [json-format]]
-            [muuntaja.format.transit :as transit-format]
             [rems.api.actions :refer [actions-api]]
             [rems.api.applications :refer [applications-api]]
             [rems.api.catalogue :refer [catalogue-api]]
@@ -20,6 +17,7 @@
             [rems.api.workflows :refer [workflows-api]]
             [rems.auth.ForbiddenException]
             [rems.auth.NotAuthorizedException]
+            [rems.json :refer [muuntaja]]
             [ring.middleware.cors :refer [wrap-cors]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
@@ -60,23 +58,6 @@
       (conman/with-transaction [rems.db.core/*db* {:isolation :serializable}]
         (handler request))
       (handler request))))
-
-(def muuntaja
-  (muuntaja/create
-   (update
-    muuntaja/default-options
-    :formats
-    merge
-    {"application/json"
-     json-format
-
-     "application/transit+json"
-     {:decoder [(partial transit-format/make-transit-decoder :json)]
-      :encoder [#(transit-format/make-transit-encoder
-                  :json
-                  (merge
-                   %
-                   {:handlers {DateTime joda-time-writer}}))]}})))
 
 (defn slow-middleware [request]
   (Thread/sleep 2000)
