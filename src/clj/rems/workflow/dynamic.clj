@@ -588,7 +588,7 @@
            :application/member (:member cmd)
            :application/comment (:comment cmd)})))
 
-(defn- enrich-event [event cmd]
+(defn- add-common-event-fields-from-command [event cmd]
   (assoc event
          :event/time (:time cmd)
          :event/actor (:actor cmd)
@@ -596,7 +596,7 @@
 
 (defn- enrich-result [result cmd]
   (if (:success result)
-    (update result :result enrich-event cmd)
+    (update result :result add-common-event-fields-from-command cmd)
     result))
 
 (defn handle-command [cmd application injections]
