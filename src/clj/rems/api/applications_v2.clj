@@ -513,10 +513,10 @@
       (update :application/workflow dissoc :workflow.dynamic/handlers)))
 
 (defn- apply-user-permissions [application user-id]
-  (let [roles (permissions/user-roles application user-id)
+  (let [see-application? (permissions/has-any-role? application user-id)
         permissions (permissions/user-permissions application user-id)
         see-everything? (contains? permissions :see-everything)]
-    (when (not (empty? roles))
+    (when see-application?
       (-> (if see-everything?
             application
             (hide-sensitive-information application))
