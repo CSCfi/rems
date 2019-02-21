@@ -7,7 +7,7 @@
             [rems.collapsible :as collapsible]
             [rems.text :refer [text localize-item]]
             [rems.util :refer [dispatch! fetch post!]]
-            [rems.status-modal :refer [status-modal]]
+            [rems.status-modal :as status-modal]
             [reagent.core :as r]))
 
 (defn- reset-form [db]
@@ -200,12 +200,10 @@
    (text :t.administration/cancel)])
 
 (defn create-license-page []
-  (let [state (r/atom nil)
-        on-pending #(reset! state {:status :pending})
-        on-success #(reset! state {:status :saved})
-        on-error #(reset! state {:status :failed :error %})
-        on-modal-close #(do (reset! state nil)
-                            (dispatch! "/#/administration/licenses"))]
+  (let [{:keys [on-pending on-success on-error state-atom] :as modal-opts}
+        (status-modal/status-modal-opts
+         {:on-close-after-success #(dispatch! "/#/administration/licenses")
+          :description (text :t.administration/create-license)})]
     (fn []
      (let [default-language @(rf/subscribe [:default-language])
            languages @(rf/subscribe [:languages])]
@@ -216,10 +214,7 @@
          {:id "create-license"
           :title (text :t.administration/create-license)
           :always [:div
-                   (when (:status @state)
-                     [status-modal (assoc @state
-                                          :description (text :t.administration/create-license)
-                                          :on-close on-modal-close)])
+                   [status-modal/situational-status-modal @state-atom modal-opts]
                    [license-type-radio-group]
                    [language-heading default-language]
                    [license-title-field default-language]

@@ -8,7 +8,7 @@
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
             [rems.util :refer [dispatch! fetch post!]]
-            [rems.status-modal :refer [status-modal]]
+            [rems.status-modal :as status-modal]
             [reagent.core :as r]))
 
 (defn- reset-form [db]
@@ -241,12 +241,10 @@
 
 (defn create-catalogue-item-page []
   (let [loading? (rf/subscribe [::loading?])
-        state (r/atom nil)
-        on-pending #(reset! state {:status :pending})
-        on-success #(reset! state {:status :saved})
-        on-error #(reset! state {:status :failed :error %})
-        on-modal-close #(do (reset! state nil)
-                            (dispatch! "#/administration/catalogue-items"))]
+        {:keys [on-pending on-success on-error state-atom] :as modal-opts}
+        (status-modal/status-modal-opts
+         {:on-close-after-success #(dispatch! "#/administration/catalogue-items")
+          :description (text :t.administration/create-catalogue-item)})]
     (fn []
       [:div
       [administration-navigator-container]
@@ -258,10 +256,7 @@
                  (if @loading?
                    [:div#catalogue-item-loader [spinner/big]]
                    [:div#catalogue-item-editor
-                    (when (:status @state)
-                      [status-modal (assoc @state
-                                           :description (text :t.administration/create-catalogue-item)
-                                           :on-close on-modal-close)])
+                    [status-modal/situational-status-modal @state-atom modal-opts]
                     [catalogue-item-title-field]
                     [catalogue-item-workflow-field]
                     [catalogue-item-resource-field]

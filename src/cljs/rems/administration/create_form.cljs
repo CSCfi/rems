@@ -10,7 +10,7 @@
             [rems.config :refer [dev-environment?]]
             [rems.text :refer [text text-format localize-item]]
             [rems.util :refer [dispatch! post!]]
-            [rems.status-modal :refer [status-modal]]
+            [rems.status-modal :as status-modal]
             [reagent.core :as r]))
 
 (defn- reset-form [db]
@@ -276,12 +276,10 @@
    (text :t.administration/cancel)])
 
 (defn create-form-page []
-  (let [state (r/atom nil)
-        on-pending #(reset! state {:status :pending})
-        on-success #(reset! state {:status :saved})
-        on-error #(reset! state {:status :failed :error %})
-        on-modal-close #(do (reset! state nil)
-                            (dispatch! "#/administration/forms"))]
+  (let [{:keys [on-pending on-success on-error state-atom] :as modal-opts}
+        (status-modal/status-modal-opts
+         {:on-close-after-success #(dispatch! "#/administration/forms")
+          :description (text :t.administration/create-form)})]
     (fn []
      (let [form @(rf/subscribe [::form])]
        [:div
@@ -291,10 +289,7 @@
          {:id "create-form"
           :title (text :t.administration/create-form)
           :always [:div
-                   (when (:status @state)
-                     [status-modal (assoc @state
-                                          :description (text :t.administration/create-form)
-                                          :on-close on-modal-close)])
+                   [status-modal/situational-status-modal @state-atom modal-opts]
                    [form-organization-field]
                    [form-title-field]
 

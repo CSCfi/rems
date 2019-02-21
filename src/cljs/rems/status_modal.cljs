@@ -47,6 +47,55 @@
        (when @state [component @state])
        [:button.btn.btn-secondary {:on-click #(reset! state (assoc opened-state :on-close on-close))} "Open modal"]])))
 
+(defn status-modal-opts
+  "Returns a map of modal options, that can be used by status-modal/situational-status-modal.
+
+   The returned value is a map containing various event handlers, and most importantly,
+   a state atom under the key :state-atom."
+  [{:keys [on-success on-pending on-error on-close-after-success on-close-after-error] :as modal-options}]
+  (let [state (r/atom nil)]
+    (merge
+     modal-options
+     {:state-atom state
+      :on-pending #(do
+                     (swap! state assoc :status :pending)
+                     (when on-pending (on-pending)))
+      :on-success #(do
+                     (swap! state assoc :status :saved)
+                     (when on-success (on-success)))
+      :on-error #(do
+                   (swap! state assoc :status :failed :error %)
+                   (when on-error (on-error)))
+      :on-close-after-success #(do
+                                 (reset! state nil)
+                                 (when on-close-after-success (on-close-after-success)))
+      :on-close-after-error #(do
+                               (reset! state nil)
+                               (when on-close-after-error (on-close-after-error)))})))
+
+(defn situational-status-modal
+  "Modal component, that handles closing differently depending on :status
+
+  State is a map containing key :status. If :status is either :saved or :failed,
+  a status-modal is rendered, using either :on-close-after-success,
+  or :on-close-after-error as the :on-close handler."
+  [state {:keys [on-close-after-success on-close-after-error] :as modal-options}]
+  (cond
+    (= :saved (:status state))
+    [status-modal (merge
+                   (dissoc modal-options :state-atom)
+                   {:on-close on-close-after-success}
+                   state)]
+
+    (= :failed (:status state))
+    [status-modal (merge
+                   (dissoc modal-options :state-atom)
+                   {:on-close on-close-after-error}
+                   state)]
+
+    :default
+    nil))
+
 (defn guide
   []
   [:div

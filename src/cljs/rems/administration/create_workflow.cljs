@@ -4,14 +4,13 @@
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [radio-button-group text-field]]
             [rems.administration.items :as items]
+            [rems.status-modal :as status-modal]
             [rems.application :refer [enrich-user]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
             [rems.text :refer [text text-format localize-item]]
-            [rems.util :refer [dispatch! fetch post!]]
-            [rems.status-modal :refer [status-modal]]
-            [reagent.core :as r]))
+            [rems.util :refer [dispatch! fetch post!]]))
 
 (defn- reset-form [db]
   (assoc db
@@ -295,43 +294,38 @@
    [workflow-type-description (text :t.create-workflow/auto-approve-workflow-description)]])
 
 (defn create-workflow-page []
-  (let [state (r/atom nil)
-        on-pending #(reset! state {:status :pending})
-        on-success #(reset! state {:status :saved})
-        on-error #(reset! state {:status :failed :error %})
-        on-modal-close #(do (reset! state nil)
-                            (dispatch! "#/administration/workflows"))]
+  (let [{:keys [on-pending on-success on-error state-atom] :as modal-opts}
+        (status-modal/status-modal-opts
+         {:on-close-after-success #(dispatch! "#/administration/workflows")
+          :description (text :t.administration/create-workflow)})]
     (fn []
-     (let [form @(rf/subscribe [::form])
-           workflow-type (:type form)
-           loading? (rf/subscribe [::loading?])]
-       [:div
-        [administration-navigator-container]
-        [:h2 (text :t.administration/create-workflow)]
-        [collapsible/component
-         {:id "create-workflow"
-          :title (text :t.administration/create-workflow)
-          :always [:div
-                   (if @loading?
-                     [:div#workflow-loader [spinner/big]]
-                     [:div#workflow-editor
-                      (when (:status @state)
-                        [status-modal (assoc @state
-                                             :description (text :t.administration/create-workflow)
-                                             :on-close on-modal-close)])
-                      [workflow-organization-field]
-                      [workflow-title-field]
-                      [workflow-type-field]
+      (let [form @(rf/subscribe [::form])
+            workflow-type (:type form)
+            loading? (rf/subscribe [::loading?])]
+        [:div
+         [administration-navigator-container]
+         [:h2 (text :t.administration/create-workflow)]
+         [collapsible/component
+          {:id "create-workflow"
+           :title (text :t.administration/create-workflow)
+           :always [:div
+                    (if @loading?
+                      [:div#workflow-loader [spinner/big]]
+                      [:div#workflow-editor
+                       [status-modal/situational-status-modal @state-atom modal-opts]
+                       [workflow-organization-field]
+                       [workflow-title-field]
+                       [workflow-type-field]
 
-                      (case workflow-type
-                        :auto-approve [auto-approve-workflow-form]
-                        :dynamic [dynamic-workflow-form]
-                        :rounds [round-workflow-form])
+                       (case workflow-type
+                         :auto-approve [auto-approve-workflow-form]
+                         :dynamic [dynamic-workflow-form]
+                         :rounds [round-workflow-form])
 
-                      [:div.col.commands
-                       [cancel-button]
-                       [save-workflow-button #(rf/dispatch [::create-workflow
-                                                            {:request %
-                                                             :on-pending on-pending
-                                                             :on-success on-success
-                                                             :on-error on-error}])]]])]}]]))))
+                       [:div.col.commands
+                        [cancel-button]
+                        [save-workflow-button #(rf/dispatch [::create-workflow
+                                                             {:request %
+                                                              :on-pending on-pending
+                                                              :on-success on-success
+                                                              :on-error on-error}])]]])]}]]))))
