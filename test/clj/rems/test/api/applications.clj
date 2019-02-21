@@ -924,9 +924,7 @@
           (is (= ["application.event/created"
                   "application.event/draft-saved"
                   "application.event/submitted"
-                  ; decision- and comment-requested, and decided should be missing here
-                  "application.event/commented"
-                  "application.event/commented"
+                  ; all decision and comment related events should be missing here
                   "application.event/approved"]
                  (map :event/type (get-in data [:application :dynamic-events])))))))))
 
