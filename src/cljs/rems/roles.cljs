@@ -22,5 +22,5 @@
              roles))
 
 (defn is-admin? [roles]
-  ;; TODO: rename owner role to admin role?
+  ;; TODO: add admin role (owner is a business user; admin is a technical user)
   (has-some? #{:owner} roles))
