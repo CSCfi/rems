@@ -84,10 +84,9 @@
 
 (defn- create-workflow [{:keys [request on-pending on-success on-error]}]
   (when on-pending (on-pending))
-  (post! "/api/workflows/create" (merge
-                                  {:params request
-                                   :handler on-success}
-                                  (when on-error {:error-handler on-error}))))
+  (post! "/api/workflows/create" {:params request
+                                  :handler on-success
+                                  :error-handler on-error}))
 
 (rf/reg-event-fx
  ::create-workflow

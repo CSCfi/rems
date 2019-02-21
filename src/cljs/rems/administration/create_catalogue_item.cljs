@@ -98,10 +98,9 @@
 
 (defn- create-catalogue-item! [{:keys [request on-pending on-success on-error]}]
   (when on-pending (on-pending))
-  (post! "/api/catalogue-items/create" (merge
-                                        {:params (create-request-with-state request)
-                                         :handler on-success}
-                                        (when on-error {:error-handler on-error}))))
+  (post! "/api/catalogue-items/create" {:params (create-request-with-state request)
+                                        :handler on-success
+                                        :error-handler on-error}))
 
 (rf/reg-event-fx
  ::create-catalogue-item

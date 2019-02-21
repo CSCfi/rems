@@ -67,10 +67,9 @@
 
 (defn- create-license! [{:keys [request on-pending on-success on-error]}]
   (when on-pending (on-pending))
-  (post! "/api/licenses/create" (merge
-                                 {:params request
-                                  :handler on-success}
-                                 (when on-error {:error-handler on-error}))))
+  (post! "/api/licenses/create" {:params request
+                                 :handler on-success
+                                 :error-handler on-error}))
 
 (rf/reg-event-fx
  ::create-license
