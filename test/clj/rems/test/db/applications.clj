@@ -1,5 +1,6 @@
 (ns ^:integration rems.test.db.applications
-  (:require [clojure.test :refer :all]
+  (:require [clojure.string :as str]
+            [clojure.test :refer :all]
             [clojure.test.check.generators :as generators]
             [luminus-migrations.core :as migrations]
             [mount.core :as mount]
@@ -90,4 +91,4 @@
                  :event/actor "foo"
                  :application/id 123}
           json (event->json event)]
-      (is (str/includes? json "\"event/time\":\"1577872800000\"")))))
+      (is (str/includes? json "\"event/time\":\"2020-01-01T10:00:00.000Z\"")))))
