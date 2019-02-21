@@ -152,7 +152,7 @@
                            [lein-ancient "0.6.15"]
                            [lein-cloverage "1.0.10"]
                            [lein-doo "0.1.11"]
-                           [lein-eftest "0.5.2"]
+                           [lein-eftest "0.5.4"]
                            [lein-figwheel "0.5.18"]]
                  :aot [rems.InvalidRequestException rems.auth.NotAuthorizedException rems.auth.ForbiddenException]
 
