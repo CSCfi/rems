@@ -3,7 +3,7 @@
             [cuerdas.core :refer [numeric? parse-number]]
             [jsonista.core :as j]
             [muuntaja.core :as muuntaja]
-            [muuntaja.format.json :refer [json-format]]
+            [muuntaja.format.json :as json-format]
             [muuntaja.format.transit :as transit-format])
   (:import [org.joda.time DateTime ReadableInstant]
            [com.fasterxml.jackson.datatype.joda JodaModule]))
@@ -21,11 +21,11 @@
     :formats
     merge
     {"application/json"
-     json-format
+     json-format/format
 
      "application/transit+json"
-     {:decoder [(partial transit-format/make-transit-decoder :json)]
-      :encoder [#(transit-format/make-transit-encoder
+     {:decoder [(partial transit-format/decoder :json)]
+      :encoder [#(transit-format/encoder
                   :json
                   (merge
                    %

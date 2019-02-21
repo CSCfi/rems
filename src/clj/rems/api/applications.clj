@@ -15,6 +15,7 @@
             [rems.pdf :as pdf]
             [rems.util :refer [getx-user-id update-present]]
             [rems.workflow.dynamic :as dynamic]
+            [ring.middleware.multipart-params :as multipart]
             [ring.swagger.upload :as upload]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
@@ -341,7 +342,7 @@
       :multipart-params [file :- upload/TempFileUpload]
       :query-params [application-id :- (describe s/Int "application id")
                      field-id :- (describe s/Int "application form field id the attachment is related to")]
-      :middleware [upload/wrap-multipart-params]
+      :middleware [multipart/wrap-multipart-params]
       :return SuccessResponse
       (check-attachment-content-type (:content-type file))
       (applications/save-attachment! file (getx-user-id) application-id field-id)
