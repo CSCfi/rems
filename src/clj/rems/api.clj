@@ -1,8 +1,6 @@
 (ns rems.api
-  (:require [cheshire.generate :as cheshire]
-            [clojure.stacktrace :refer [print-cause-trace]]
+  (:require [clojure.stacktrace :refer [print-cause-trace]]
             [clojure.tools.logging :as log]
-            [cognitect.transit :as transit]
             [compojure.api.exception :as ex]
             [compojure.api.sweet :refer :all]
             [conman.core :as conman]
@@ -25,8 +23,7 @@
             [ring.middleware.cors :refer [wrap-cors]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
-  (:import [org.joda.time DateTime ReadableInstant]
-           [rems.auth ForbiddenException NotAuthorizedException]
+  (:import [rems.auth ForbiddenException NotAuthorizedException]
            rems.InvalidRequestException))
 
 (defn unauthorized-handler
@@ -63,17 +60,6 @@
       (conman/with-transaction [rems.db.core/*db* {:isolation :serializable}]
         (handler request))
       (handler request))))
-
-(def joda-time-writer
-  (transit/write-handler
-   "m"
-   (fn [v] (-> ^ReadableInstant v .getMillis))
-   (fn [v] (-> ^ReadableInstant v .getMillis .toString))))
-
-(cheshire/add-encoder
- DateTime
- (fn [c jsonGenerator]
-   (.writeString jsonGenerator (-> ^ReadableInstant c .getMillis .toString))))
 
 (def muuntaja
   (muuntaja/create
