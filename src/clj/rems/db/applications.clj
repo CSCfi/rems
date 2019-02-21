@@ -952,7 +952,7 @@
 
 (defn- fix-workflow-from-db [wf]
   ;; TODO could use a schema for this coercion
-  (update (json/parse-string wf keyword)
+  (update (json/parse-string wf)
           :type keyword))
 
 (defn- string->datetime [s]

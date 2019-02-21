@@ -4,10 +4,10 @@
             [rems.json :as json]))
 
 (defn- parse-workflow-body [json]
-  (json/parse-string json true))
+  (json/parse-string json))
 
 (defn- parse-licenses [json]
-  (json/parse-string json true))
+  (json/parse-string json))
 
 (defn get-workflow [id]
   (-> {:wfid id}

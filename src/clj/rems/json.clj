@@ -1,12 +1,10 @@
 (ns rems.json
-  (:require [cheshire.core :as cheshire-core]
-            [cheshire.generate :as cheshire-generate]
-            [cognitect.transit :as transit]
+  (:require [cognitect.transit :as transit]
             [cuerdas.core :refer [numeric? parse-number]]
+            [jsonista.core :as j]
             [muuntaja.core :as muuntaja]
             [muuntaja.format.json :refer [json-format]]
-            [muuntaja.format.transit :as transit-format]
-            [jsonista.core :as j])
+            [muuntaja.format.transit :as transit-format])
   (:import [org.joda.time DateTime ReadableInstant]
            [com.fasterxml.jackson.datatype.joda JodaModule]))
 
@@ -43,11 +41,11 @@
 
 (def mapper
   (j/object-mapper
-    {:modules [(JodaModule.)]
-     :decode-key-fn str->keyword-or-number}))
+   {:modules [(JodaModule.)]
+    :decode-key-fn str->keyword-or-number}))
 
-(defn generate-string [foo]
-  (j/write-value-as-string foo mapper))
+(defn generate-string [obj]
+  (j/write-value-as-string obj mapper))
 
-(defn parse-string [string & _]
-  (j/read-value string mapper))
+(defn parse-string [json]
+  (j/read-value json mapper))
