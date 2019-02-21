@@ -1,12 +1,12 @@
 (ns rems.db.entitlements
   "Creating and fetching entitlements."
-  (:require [cheshire.core :as cheshire]
-            [clj-http.client :as http]
+  (:require [clj-http.client :as http]
             [clojure.string :refer [join]]
             [clojure.tools.logging :as log]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.config :refer [env]]
             [rems.db.core :as db]
+            [rems.json :as json]
             [rems.roles :refer [has-roles?]]
             [rems.text :as text]
             [rems.util :refer [getx-user-id]]))
@@ -45,7 +45,7 @@
                      :resource (:resid e)
                      :user (:userid e)
                      :mail (:mail e)})
-          json-payload (cheshire/generate-string payload)]
+          json-payload (json/generate-string payload)]
       (log/infof "Posting entitlements to %s:" target payload)
       (let [response (try
                        (http/post target

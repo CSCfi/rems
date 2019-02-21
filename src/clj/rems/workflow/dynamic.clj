@@ -599,7 +599,7 @@
            :application/member (:member cmd)
            :application/comment (:comment cmd)})))
 
-(defn- enrich-event [event cmd]
+(defn- add-common-event-fields-from-command [event cmd]
   (assoc event
          :event/time (:time cmd)
          :event/actor (:actor cmd)
@@ -607,7 +607,7 @@
 
 (defn- enrich-result [result cmd]
   (if (:success result)
-    (update result :result enrich-event cmd)
+    (update result :result add-common-event-fields-from-command cmd)
     result))
 
 (defn handle-command [cmd application injections]
@@ -894,10 +894,10 @@
                              application
                              injections))))
     (testing "added members can see the application"
-      (is (true? (-> (apply-commands application
-                                     [{:type ::add-member :actor "assistant" :member {:userid "member1"}}]
-                                     injections)
-                     (permissions/has-any-role? "member1")))))))
+      (is (-> (apply-commands application
+                              [{:type ::add-member :actor "assistant" :member {:userid "member1"}}]
+                              injections)
+              (permissions/has-any-role? "member1"))))))
 
 (deftest test-invite-member
   (let [application (apply-events nil
@@ -977,12 +977,12 @@
                              application
                              injections))))
     (testing "removed members cannot see the application"
-      (is (true? (-> application
-                     (permissions/has-any-role? "somebody"))))
-      (is (false? (-> application
-                      (apply-commands [{:type ::remove-member :actor "applicant" :member {:userid "somebody"}}]
-                                      injections)
-                      (permissions/has-any-role? "somebody")))))))
+      (is (-> application
+              (permissions/has-any-role? "somebody")))
+      (is (not (-> application
+                   (apply-commands [{:type ::remove-member :actor "applicant" :member {:userid "somebody"}}]
+                                   injections)
+                   (permissions/has-any-role? "somebody")))))))
 
 
 (deftest test-uninvite-member

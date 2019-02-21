@@ -1,8 +1,8 @@
 (ns rems.db.applications
   "Query functions for forms and applications."
-  (:require [cheshire.core :as cheshire]
-            [clj-time.coerce :as time-coerce]
+  (:require [clj-time.coerce :as time-coerce]
             [clj-time.core :as time]
+            [clj-time.format :as time-format]
             [clojure.set :refer [difference union]]
             [clojure.test :refer [deftest is]]
             [cprop.tools :refer [merge-maps]]
@@ -21,6 +21,7 @@
             [rems.db.workflow-actors :as actors]
             [rems.email :as email]
             [rems.form-validation :as form-validation]
+            [rems.json :as json]
             [rems.permissions :as permissions]
             [rems.util :refer [getx get-username update-present]]
             [rems.workflow.dynamic :as dynamic]
@@ -949,12 +950,12 @@
 
 (defn- fix-workflow-from-db [wf]
   ;; TODO could use a schema for this coercion
-  (update (cheshire/parse-string wf keyword)
+  (update (json/parse-string wf)
           :type keyword))
 
 (defn- string->datetime [s]
   (if (string? s)
-    (time-coerce/from-long (Long/parseLong s))
+    (time-format/parse s)
     s))
 
 (def ^:private datetime-coercion-matcher
@@ -976,15 +977,9 @@
       coerce-dynamic-event-commons
       coerce-dynamic-event-specifics))
 
-(defn- str->keyword-or-number [str]
-  (if (numeric? str)
-    (parse-number str)
-    (keyword str)))
-
 (defn json->event [json]
   (when json
-    ;; most keys are keywords, but some events use numeric keys in maps
-    (let [result (coerce-dynamic-event (cheshire/parse-string json str->keyword-or-number))]
+    (let [result (coerce-dynamic-event (json/parse-string json))]
       (when (schema.utils/error? result)
         ;; similar exception as what schema.core/validate throws
         (throw (ex-info (str "Value does not match schema: " (pr-str result))
@@ -996,7 +991,7 @@
 
 (defn event->json [event]
   (validate-dynamic-event event)
-  (cheshire/generate-string event))
+  (json/generate-string event))
 
 (defn- fix-event-from-db [event]
   (assoc (-> event :eventdata json->event)
@@ -1017,7 +1012,7 @@
                            :workflow (fix-workflow-from-db (:workflow application))
                            :last-modified (or (:event/time (last events))
                                               (:start application)))]
-    (assert (is-dynamic-application? application))
+    (assert (is-dynamic-application? application) (pr-str application))
     (dynamic/apply-events application events)))
 
 (defn add-dynamic-event! [event]

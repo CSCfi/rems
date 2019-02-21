@@ -450,8 +450,6 @@
             "does not see review events nor users, but sees approval comment")))))
 ;; TODO non-happy path tests for review?
 
-;; TODO test for event filtering when it gets implemented
-
 (defn- strip-cookie-attributes [cookie]
   (re-find #"[^;]*" cookie))
 

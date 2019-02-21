@@ -1,13 +1,13 @@
 (ns rems.db.workflow
   (:require [rems.db.core :as db]
             [rems.db.workflow-actors :as actors]
-            [cheshire.core :as cheshire]))
+            [rems.json :as json]))
 
 (defn- parse-workflow-body [json]
-  (cheshire/parse-string json true))
+  (json/parse-string json))
 
 (defn- parse-licenses [json]
-  (cheshire/parse-string json true))
+  (json/parse-string json))
 
 (defn get-workflow [id]
   (-> {:wfid id}
@@ -38,8 +38,8 @@
                                         :modifieruserid user-id,
                                         :title title,
                                         :fnlround 0
-                                        :workflow (cheshire/generate-string {:type :workflow/dynamic
-                                                                             :handlers handlers})}))]
+                                        :workflow (json/generate-string {:type :workflow/dynamic
+                                                                         :handlers handlers})}))]
     {:id wfid}))
 
 (defn- create-rounds-workflow! [{:keys [user-id organization title rounds]}]
