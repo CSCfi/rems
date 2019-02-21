@@ -958,20 +958,11 @@
     (time-format/parse s)
     s))
 
-(defn- longstring->datetime [s]
-  (if (string? s)
-    (time-format/parse s)
-    s))
-
-(def ^:private datetime-coercion-matcher
-  {DateTime longstring->datetime})
-
 (def ^:private datestring-coercion-matcher
   {DateTime datestring->datetime})
 
 (defn- coercion-matcher [schema]
   (or (datestring-coercion-matcher schema)
-      (datetime-coercion-matcher schema)
       (coerce/string-coercion-matcher schema)))
 
 (def ^:private coerce-dynamic-event-commons
