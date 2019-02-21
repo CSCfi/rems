@@ -1,5 +1,6 @@
 (ns ^:integration rems.test.db.applications
-  (:require [clojure.test :refer :all]
+  (:require [clojure.string :as str]
+            [clojure.test :refer :all]
             [clojure.test.check.generators :as generators]
             [luminus-migrations.core :as migrations]
             [mount.core :as mount]
@@ -82,4 +83,12 @@
     (is (thrown-with-msg? ExceptionInfo #"Value does not match schema" (event->json {}))))
 
   (testing "json->event validates events"
-    (is (thrown-with-msg? ExceptionInfo #"Value does not match schema" (json->event "{}")))))
+    (is (thrown-with-msg? ExceptionInfo #"Value does not match schema" (json->event "{}"))))
+
+  (testing "json data format"
+    (let [event {:event/type :application.event/submitted
+                 :event/time (DateTime. 2020 1 1 12 0 0 (DateTimeZone/forID "Europe/Helsinki"))
+                 :event/actor "foo"
+                 :application/id 123}
+          json (event->json event)]
+      (is (str/includes? json "\"event/time\":\"2020-01-01T10:00:00.000Z\"")))))

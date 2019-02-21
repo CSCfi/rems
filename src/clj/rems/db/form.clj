@@ -9,7 +9,7 @@
 
 (defn get-form [id]
   (-> (db/get-form {:id id})
-      (update :fields json/parse-string true)))
+      (update :fields json/parse-string)))
 
 (defn- create-form-item! [user-id form-id item-index {:keys [title optional type input-prompt maxlength options]}]
   (let [item-id (:id (db/create-form-item! {:type type

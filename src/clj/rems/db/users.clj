@@ -19,7 +19,7 @@
     :surname \"loper\"
     ...etc}"
   [userid]
-  (json/parse-string (:userattrs (db/get-user-attributes {:user userid})) true))
+  (json/parse-string (:userattrs (db/get-user-attributes {:user userid}))))
 
 (defn get-all-users
   []
