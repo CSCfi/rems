@@ -27,6 +27,8 @@
                  [markdown-clj "1.0.7"]
                  [metosin/compojure-api "2.0.0-alpha18" :exclusions [cheshire com.fasterxml.jackson.core/jackson-core]]
                  [metosin/komponentit "0.3.7"]
+                 [metosin/jsonista "0.2.2"]
+                 [com.fasterxml.jackson.datatype/jackson-datatype-joda "2.9.5"]
                  [mount "0.1.15"]
                  [org.clojars.luontola/ns-tracker "0.3.1-patch3"]
                  [org.clojars.pntblnk/clj-ldap "0.0.16"]
