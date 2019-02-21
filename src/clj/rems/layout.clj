@@ -1,9 +1,9 @@
 (ns rems.layout
-  (:require [cheshire.core :as cheshire]
-            [hiccup.page :refer [html5 include-css include-js]]
+  (:require [hiccup.page :refer [html5 include-css include-js]]
             [rems.config :refer [env]]
             [rems.context :as context]
             [rems.db.users :as users]
+            [rems.json :as json]
             [rems.text :refer [text]]
             [rems.util :refer [get-user-id]]
             [ring.middleware.anti-forgery :refer [*anti-forgery-token*]]
@@ -76,7 +76,7 @@ window.rems = {
      (format "var csrfToken = '%s';" *anti-forgery-token*)]
     (include-js "/js/app.js")
     [:script {:type "text/javascript"}
-     (format "rems.app.setIdentity(%s);" (cheshire/generate-string {:user context/*user* :roles context/*roles*}))])))
+     (format "rems.app.setIdentity(%s);" (json/generate-string {:user context/*user* :roles context/*roles*}))])))
 
 (defn- error-content
   [error-details]
