@@ -201,6 +201,21 @@
   ;; schema could do these coercions for us...
   (update-present cmd :decision keyword))
 
+(defn- get-user-applications [user-id]
+  ;; XXX: the old API doesn't know about members, so rems.db.applications/get-user-applications doesn't return applications where the user is a member
+  ;; XXX: this code cannot be moved to rems.db.applications/get-user-applications because it would create cyclic dependencies
+  (let [old-applications (applications/get-user-applications user-id)
+        member-application-ids (->> (applications/get-dynamic-application-events-since 0)
+                                    (reduce dynamic-roles/permissions-of-all-applications nil)
+                                    (filter (fn [[_id app]]
+                                              (contains? (permissions/user-roles app user-id)
+                                                         :member)))
+                                    (map first))
+        missing-ids (set/difference (set member-application-ids)
+                                    (set (map :id old-applications)))
+        missing-applications (map #(:application (api-get-application user-id %)) missing-ids)]
+    (concat old-applications missing-applications)))
+
 (def applications-api
   (context "/applications" []
     :tags ["applications"]
@@ -209,20 +224,7 @@
       :summary "Get current user's all applications"
       :roles #{:logged-in}
       :return GetApplicationsResponse
-      ;; XXX: the old API doesn't know about members, so it doesn't return applications where the user is a member
-      ;; XXX: this code cannot be moved to rems.db.applications because it would create a cyclic dependency
-      (let [user-id (getx-user-id)
-            old-applications (applications/get-user-applications user-id)
-            member-application-ids (->> (applications/get-dynamic-application-events-since 0)
-                                        (reduce dynamic-roles/permissions-of-all-applications nil)
-                                        (filter (fn [[_id app]]
-                                                  (contains? (permissions/user-roles app user-id)
-                                                             :member)))
-                                        (map first))
-            missing-ids (set/difference (set member-application-ids)
-                                        (set (map :id old-applications)))
-            missing-applications (map #(:application (api-get-application user-id %)) missing-ids)]
-        (ok (concat old-applications missing-applications))))
+      (ok (get-user-applications (getx-user-id))))
 
     (GET "/draft" []
       :summary "Get application (draft) for `catalogue-items`"

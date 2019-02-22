@@ -1,4 +1,4 @@
-(ns rems.permissions
+(ns ^:focused rems.permissions
   (:require [clojure.test :refer [deftest is testing]]))
 
 (def ^:private conj-set (fnil conj #{}))
