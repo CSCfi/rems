@@ -3,7 +3,8 @@
 -- - Get catalogue items
 -- - :items vector of item ids
 -- - :resource resource id to fetch items for
-SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.state, ci.start
+SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.start
+, (case when ci.enabled = true then 'enabled' else 'disabled' end) as state
 , res.id AS "resource-id"
 /*~ (when (:expand-names? params) */
 , wf.title AS "workflow-name"
@@ -26,7 +27,9 @@ WHERE 1=1
 
 
 -- :name get-catalogue-item :? :1
-SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.state, ci.start, res.id AS "resource-id"
+SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.start
+, (case when ci.enabled = true then 'enabled' else 'disabled' end) as state
+, res.id AS "resource-id"
 , wf.title AS "workflow-name"
 , res.resid AS "resource-name"
 , form.title AS "form-name"
@@ -39,18 +42,18 @@ WHERE ci.id = :item
 -- :name set-catalogue-item-state! :insert
 -- :doc Set catalogue item state enabled or disabled
 UPDATE catalogue_item ci
-SET state = CAST(:state AS item_state)
+SET enabled = (:state = 'enabled')
 WHERE ci.id = :item
 
 -- :name create-catalogue-item! :insert
 -- :doc Create a single catalogue item
 INSERT INTO catalogue_item
-(title, formid, resid, wfid, state)
+(title, formid, resid, wfid, enabled)
 VALUES (:title, :form, :resid, :wfid,
-/*~ (if (:state params) */
-CAST(:state as item_state)
+/*~ (if (= "disabled" (:state params)) */
+false
 /*~*/
-'enabled'
+true
 /*~ ) ~*/
 )
 

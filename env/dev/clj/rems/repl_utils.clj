@@ -1,7 +1,7 @@
 (ns rems.repl-utils
   (:require [clojure.pprint :refer [pprint]]
             [muuntaja.core :as muuntaja]
-            [rems.api :as api])
+            [rems.json :as json])
   (:import (java.awt Toolkit)
            (java.awt.datatransfer DataFlavor)))
 
@@ -11,7 +11,7 @@
       (.getData DataFlavor/stringFlavor)))
 
 (defn decode-transit [data]
-  (muuntaja/decode api/muuntaja "application/transit+json" data))
+  (muuntaja/decode json/muuntaja "application/transit+json" data))
 
 (defn pptransit
   ([]

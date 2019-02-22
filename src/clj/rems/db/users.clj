@@ -1,10 +1,10 @@
 (ns rems.db.users
-  (:require [cheshire.core :refer [generate-string parse-string]]
-            [rems.db.core :as db]))
+  (:require [rems.db.core :as db]
+            [rems.json :as json]))
 
 (defn add-user! [user userattrs]
   (assert (and userattrs user) "User or user attributes missing!")
-  (db/add-user! {:user user :userattrs (generate-string userattrs)}))
+  (db/add-user! {:user user :userattrs (json/generate-string userattrs)}))
 
 (defn add-user-if-logged-in! [user userattrs]
   (when user
@@ -19,7 +19,7 @@
     :surname \"loper\"
     ...etc}"
   [userid]
-  (parse-string (:userattrs (db/get-user-attributes {:user userid})) true))
+  (json/parse-string (:userattrs (db/get-user-attributes {:user userid}))))
 
 (defn get-all-users
   []

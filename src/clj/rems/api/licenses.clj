@@ -7,6 +7,7 @@
             [compojure.api.sweet :refer :all]
             [ring.util.http-response :refer :all]
             [schema.core :as s]
+            [ring.middleware.multipart-params :as multipart]
             [ring.swagger.upload :as upload]))
 
 (s/defschema CreateLicenseCommand
@@ -67,7 +68,7 @@
       :summary "Add an attachment file that will be used in a license"
       :roles #{:owner}
       :multipart-params [file :- upload/TempFileUpload]
-      :middleware [upload/wrap-multipart-params]
+      :middleware [multipart/wrap-multipart-params]
       :return AttachmentMetadata
       (check-attachment-content-type (:content-type file))
       (ok (licenses/create-license-attachment! file (util/getx-user-id))))
