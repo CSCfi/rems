@@ -17,6 +17,9 @@
    :state (s/enum "enabled" "disabled")
    (s/optional-key :langcode) s/Keyword
    :start DateTime
+   :end (s/maybe DateTime)
+   :enabled s/Bool
+   :archived s/Bool
    :localizations (s/maybe {s/Any s/Any})})
 
 (s/defschema License

@@ -3,8 +3,8 @@
 -- - Get catalogue items
 -- - :items vector of item ids
 -- - :resource resource id to fetch items for
-SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.start
-, (case when ci.enabled = true then 'enabled' else 'disabled' end) as state
+SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.start, ci.endt, ci.enabled, ci.archived
+, (case when ci.enabled = true then 'enabled' else 'disabled' end) as state -- TODO: remove state
 , res.id AS "resource-id"
 /*~ (when (:expand-names? params) */
 , wf.title AS "workflow-name"
@@ -27,8 +27,8 @@ WHERE 1=1
 
 
 -- :name get-catalogue-item :? :1
-SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.start
-, (case when ci.enabled = true then 'enabled' else 'disabled' end) as state
+SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.start, ci.endt, ci.enabled, ci.archived
+, (case when ci.enabled = true then 'enabled' else 'disabled' end) as state -- TODO: remove state
 , res.id AS "resource-id"
 , wf.title AS "workflow-name"
 , res.resid AS "resource-name"
@@ -42,7 +42,7 @@ WHERE ci.id = :item
 -- :name set-catalogue-item-state! :insert
 -- :doc Set catalogue item state enabled or disabled
 UPDATE catalogue_item ci
-SET enabled = (:state = 'enabled')
+SET enabled = (:state = 'enabled') -- TODO: remove state
 WHERE ci.id = :item
 
 -- :name create-catalogue-item! :insert
@@ -50,7 +50,7 @@ WHERE ci.id = :item
 INSERT INTO catalogue_item
 (title, formid, resid, wfid, enabled)
 VALUES (:title, :form, :resid, :wfid,
-/*~ (if (= "disabled" (:state params)) */
+/*~ (if (= "disabled" (:state params)) */ -- TODO: remove state
 false
 /*~*/
 true
