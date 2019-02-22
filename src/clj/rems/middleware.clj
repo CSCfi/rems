@@ -15,6 +15,7 @@
             [rems.env :refer [+defaults+]]
             [rems.layout :refer [error-page]]
             [rems.locales :refer [tempura-config]]
+            [rems.logging :refer [with-mdc]]
             [rems.util :refer [getx-user-id]]
             [ring-ttl-session.core :refer [ttl-memory-store]]
             [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
@@ -24,8 +25,7 @@
             [ring.util.http-response :refer [unauthorized]]
             [ring.util.response :refer [redirect header]]
             [taoensso.tempura :as tempura])
-  (:import (javax.servlet ServletContext)
-           (org.slf4j MDC)))
+  (:import (javax.servlet ServletContext)))
 
 (defn calculate-root-path [request]
   (if-let [context (:servlet-context request)]
@@ -82,14 +82,11 @@
               context/*roles* (when context/*user*
                                 (set/union (roles/get-roles (getx-user-id))
                                            (dynamic-roles/get-roles (getx-user-id))))]
-      (try
-        (MDC/put "user" (str (:eppn context/*user*)))
-        (MDC/put "roles" (str/join " " (sort context/*roles*)))
-        (MDC/put "request-method" (str/upper-case (name (:request-method request))))
-        (MDC/put "request-uri" (str (:uri request)))
-        (handler request)
-        (finally
-          (MDC/clear))))))
+      (with-mdc {:user (:eppn context/*user*)
+                 :roles (str/join " " (sort context/*roles*))
+                 :request-method (str/upper-case (name (:request-method request)))
+                 :request-uri (:uri request)}
+        (handler request)))))
 
 (defn wrap-role-headers [handler]
   (fn [request]
