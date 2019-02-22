@@ -568,6 +568,9 @@
   (or (actor-is-not-commenter-error application cmd)
       (let [last-request-for-actor (get-in application [:latest-comment-requests (:actor cmd)])]
         (ok {:event/type :application.event/commented
+             ;; Currently we want to tie all comments to the latest request.
+             ;; In the future this might change so that commenters can freely continue to comment
+             ;; on any request they have gotten.
              :application/request-id last-request-for-actor
              :application/comment (:comment cmd)}))))
 
