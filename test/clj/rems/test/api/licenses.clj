@@ -26,7 +26,7 @@
                      assert-response-is-ok
                      read-body)]
         (is (coll-is-not-empty? data))
-        (is (= #{:id :start :end :licensetype :title :textcontent :localizations :attachment-id} (set (keys (first data)))))))
+        (is (:id (set (keys (first data)))))))
 
     (testing "create linked license"
       (let [command {:title (str "license title " (UUID/randomUUID))
@@ -96,24 +96,24 @@
         (testing "and test that an id is returned" (is (some? id)))
 
         (testing "and test that it can be accessed using GET"
-         (let [response-file (is (-> (request :get (str "/api/licenses/attachments/" id))
-                                     (authenticate api-key user-id)
-                                     app
-                                     assert-response-is-ok))]
-           (is (= (slurp testfile) (slurp (:body response-file))))))
+          (let [response-file (is (-> (request :get (str "/api/licenses/attachments/" id))
+                                      (authenticate api-key user-id)
+                                      app
+                                      assert-response-is-ok))]
+            (is (= (slurp testfile) (slurp (:body response-file))))))
 
         (testing "and delete it"
           (-> (request :post (str "/api/licenses/remove_attachment?attachment-id=" id))
-             (json-body {:attachment-id id})
-             (authenticate api-key user-id)
-             app
-             assert-response-is-ok))
+              (json-body {:attachment-id id})
+              (authenticate api-key user-id)
+              app
+              assert-response-is-ok))
 
         (testing "and check it's not found after deletion"
-         (let [response (is (-> (request :get (str "/api/licenses/attachments/" id))
-                                (authenticate api-key user-id)
-                                app))]
-           (is (response-is-not-found? response))))))
+          (let [response (is (-> (request :get (str "/api/licenses/attachments/" id))
+                                 (authenticate api-key user-id)
+                                 app))]
+            (is (response-is-not-found? response))))))
 
     (testing "create attachment license"
       (let [attachment-id (-> (request :post (str "/api/licenses/add_attachment"))
