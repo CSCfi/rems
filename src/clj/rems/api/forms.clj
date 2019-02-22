@@ -14,7 +14,9 @@
    :title s/Str
    :start DateTime
    :end (s/maybe DateTime)
-   :active s/Bool})
+   :active s/Bool
+   :enabled s/Bool
+   :archived s/Bool})
 
 (def not-neg? (partial <= 0))
 
@@ -35,13 +37,15 @@
   [Form])
 
 (defn- format-form
-  [{:keys [id organization title start endt active?]}]
+  [{:keys [id organization title start endt active? enabled archived]}]
   {:id id
    :organization organization
    :title title
    :start start
    :end endt
-   :active active?})
+   :active active?
+   :enabled enabled
+   :archived archived})
 
 (defn- get-forms [filters]
   (doall

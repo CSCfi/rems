@@ -110,7 +110,9 @@ SELECT
   organization,
   title,
   start,
-  endt
+  endt,
+  enabled,
+  archived
 FROM application_form
 
 -- :name get-form-for-application :? :1
@@ -156,6 +158,8 @@ SELECT
   form.start as start,
   form.endt as "end",
   TRUE as "active", -- TODO implement
+  form.enabled,
+  form.archived,
   (SELECT json_agg(joined)
    FROM (SELECT *,
                 (SELECT json_agg(formitemlocalization)

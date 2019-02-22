@@ -12,7 +12,6 @@
   (let [api-key "42"
         user-id "owner"]
     (testing "get"
-      ;; just a basic smoke test for now
       (let [data (-> (request :get "/api/resources")
                      (authenticate api-key user-id)
                      app

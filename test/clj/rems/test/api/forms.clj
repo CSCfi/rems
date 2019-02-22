@@ -39,9 +39,7 @@
                      assert-response-is-ok
                      read-body)]
         (is (coll-is-not-empty? data))
-        (is (= #{:id :organization :title :start :end :active}
-               (set (keys (first data)))))))
-
+        (is (:id (set (keys (first data)))))))
     (testing "create"
       (let [command {:organization "abc"
                      :title (str "form title " (UUID/randomUUID))
