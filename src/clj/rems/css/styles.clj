@@ -272,6 +272,14 @@
                      :color "#ccc"}
                     [:&:hover {:color (util/get-theme-attribute :color4)
                                :background-color "#eee"}]]]
+   [:alert-primary {:color (util/get-theme-attribute :alert-primary-bgcolor)
+                    :background-color (util/get-theme-attribute :alert-primary-bgcolor)}]
+   [:alert-secondary {:color (util/get-theme-attribute :alert-secondary-bgcolor)
+                      :background-color (util/get-theme-attribute :alert-secondary-bgcolor)}]
+   [:alert-light {:color (util/get-theme-attribute :alert-light-bgcolor)
+                  :background-color (util/get-theme-attribute :alert-light-bgcolor)}]
+   [:alert-dark {:color (util/get-theme-attribute :alert-dark-bgcolor)
+                 :background-color (util/get-theme-attribute :alert-dark-bgcolor)}]
    [:.alert-info
     (s/descendant :.state-info :.phases :.phase.completed)
     {:color (util/get-theme-attribute :info-color)
