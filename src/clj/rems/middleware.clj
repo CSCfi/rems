@@ -2,10 +2,10 @@
   (:require [buddy.auth :refer [authenticated?]]
             [buddy.auth.accessrules :refer [restrict]]
             [clojure.set :as set]
+            [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]
             [clojure.tools.logging :as log]
             [clojure.walk :refer [keywordize-keys]]
-            [cuerdas.core :as str]
             [rems.auth.auth :as auth]
             [rems.config :refer [env]]
             [rems.context :as context]
@@ -24,7 +24,8 @@
             [ring.util.http-response :refer [unauthorized]]
             [ring.util.response :refer [redirect header]]
             [taoensso.tempura :as tempura])
-  (:import (javax.servlet ServletContext)))
+  (:import (javax.servlet ServletContext)
+           (org.slf4j MDC)))
 
 (defn calculate-root-path [request]
   (if-let [context (:servlet-context request)]
@@ -81,7 +82,14 @@
               context/*roles* (when context/*user*
                                 (set/union (roles/get-roles (getx-user-id))
                                            (dynamic-roles/get-roles (getx-user-id))))]
-      (handler request))))
+      (try
+        (MDC/put "user" (str (:eppn context/*user*)))
+        (MDC/put "roles" (str/join " " (sort context/*roles*)))
+        (MDC/put "request-method" (str/upper-case (name (:request-method request))))
+        (MDC/put "request-uri" (str (:uri request)))
+        (handler request)
+        (finally
+          (MDC/clear))))))
 
 (defn wrap-role-headers [handler]
   (fn [request]
