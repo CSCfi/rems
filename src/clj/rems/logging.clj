@@ -13,7 +13,7 @@
     (try
       (doseq [[key val] m]
         (when-not (empty? val)
-          (MDC/put key (str val))))
+          (MDC/put key val)))
       (f)
       (finally
         (doseq [key (keys m)]
