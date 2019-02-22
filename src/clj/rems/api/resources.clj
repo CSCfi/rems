@@ -17,6 +17,8 @@
    :start DateTime
    :end (s/maybe DateTime)
    :active s/Bool
+   :enabled s/Bool
+   :archived s/Bool
    :licenses [ResourceLicense]})
 
 (s/defschema Resources
@@ -33,7 +35,7 @@
    (s/optional-key :errors) [s/Any]})
 
 (defn- format-resource
-  [{:keys [id owneruserid modifieruserid organization resid start endt active?]}]
+  [{:keys [id owneruserid modifieruserid organization resid start endt active? enabled archived]}]
   {:id id
    :owneruserid owneruserid
    :modifieruserid modifieruserid
@@ -41,7 +43,9 @@
    :resid resid
    :start start
    :end endt
-   :active active?})
+   :active active?
+   :enabled enabled
+   :archived archived})
 
 (defn- get-resources [filters]
   (doall

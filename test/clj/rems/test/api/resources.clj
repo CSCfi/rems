@@ -19,7 +19,7 @@
                      assert-response-is-ok
                      read-body)]
         (is (coll-is-not-empty? data))
-        (is (= #{:id :owneruserid :modifieruserid :organization :resid :start :end :active :licenses} (set (keys (first data)))))))
+        (is (:id (set (keys (first data)))))))
     (testing "create"
       (let [licid 1
             resid "RESOURCE-API-TEST"]

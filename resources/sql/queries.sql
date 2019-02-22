@@ -65,7 +65,9 @@ SELECT
   organization,
   resid,
   start,
-  endt
+  endt,
+  enabled,
+  archived
 FROM resource
 
 -- :name get-resource :? :1
@@ -76,7 +78,9 @@ SELECT
   organization,
   resid,
   start,
-  endt
+  endt,
+  enabled,
+  archived
 FROM resource
 WHERE id = :id
 
