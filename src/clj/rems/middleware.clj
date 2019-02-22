@@ -73,7 +73,8 @@
                                         (valid-api-key? request))
                                  header-identity
                                  session-identity)]
-        (handler request)))))
+        (with-mdc {:user (:eppn context/*user*)}
+          (handler request))))))
 
 (defn wrap-context [handler]
   (fn [request]
@@ -82,10 +83,7 @@
               context/*roles* (when context/*user*
                                 (set/union (roles/get-roles (getx-user-id))
                                            (dynamic-roles/get-roles (getx-user-id))))]
-      (with-mdc {:user (:eppn context/*user*)
-                 :roles (str/join " " (sort context/*roles*))
-                 :request-method (str/upper-case (name (:request-method request)))
-                 :request-uri (:uri request)}
+      (with-mdc {:roles (str/join " " (sort context/*roles*))}
         (handler request)))))
 
 (defn wrap-role-headers [handler]
@@ -195,6 +193,12 @@
                   (or (get-in response [:headers "Location"]) ""))
         response))))
 
+(defn- wrap-request-context [handler]
+  (fn [request]
+    (with-mdc {:request-method (str/upper-case (name (:request-method request)))
+               :request-uri (:uri request)}
+      (handler request))))
+
 (def +wrap-defaults-settings+
   (-> site-defaults
       (assoc-in [:security :anti-forgery] false)
@@ -215,4 +219,5 @@
       (wrap-defaults +wrap-defaults-settings+)
       wrap-internal-error
       wrap-i18n ; rendering the error page fails if rems.context/*tempura* is not set
-      wrap-formats))
+      wrap-formats
+      wrap-request-context))
