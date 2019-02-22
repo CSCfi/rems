@@ -98,6 +98,7 @@
    (s/optional-key :decider) s/Str
    (s/optional-key :decision) s/Keyword
    (s/optional-key :commenters) #{s/Str}
+   (s/optional-key :latest-comment-requests) {s/Str s/Uuid}
    (s/optional-key :form-contents) s/Any
    (s/optional-key :submitted-form-contents) s/Any
    (s/optional-key :previous-submitted-form-contents) s/Any})

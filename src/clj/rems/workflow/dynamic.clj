@@ -428,13 +428,18 @@
 
 (defmethod apply-event [:application.event/comment-requested :workflow/dynamic]
   [application _workflow event]
-  (update application :commenters into (:application/commenters event)))
+  (-> application
+      (update :commenters into (:application/commenters event))
+      (update :latest-comment-requests merge (zipmap (:application/commenters event)
+                                                    (repeat (:application/request-id event))))))
 
 (defmethod apply-event [:application.event/commented :workflow/dynamic]
   [application _workflow event]
   ;; we don't store the comments in the state, they're available via
   ;; the event list
-  (update application :commenters disj (:event/actor event)))
+  (-> application
+      (update :commenters disj (:event/actor event))
+      (update :latest-comment-requests dissoc (:event/actor event))))
 
 (defmethod apply-event [:application.event/member-added :workflow/dynamic]
   [application _workflow event]
@@ -561,12 +566,9 @@
 (defmethod command-handler ::comment
   [cmd application _injections]
   (or (actor-is-not-commenter-error application cmd)
-      (let [last-request-for-actor
-            (last (filter #(contains? (set (:application/commenters %))
-                                      (:actor cmd))
-                           (:dynamic-events application)))]
+      (let [last-request-for-actor (get-in application [:latest-comment-requests (:actor cmd)])]
         (ok {:event/type :application.event/commented
-             :application/request-id (:application/request-id last-request-for-actor)
+             :application/request-id last-request-for-actor
              :application/comment (:comment cmd)}))))
 
 (defmethod command-handler ::add-member
