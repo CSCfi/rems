@@ -755,7 +755,6 @@
 
 (defn- events-view [event-groups]
   [:div
-   [:h4 (text :t.form/events)]
    (into [:div]
          (for [group event-groups]
            ^{:key group} [:div.group
@@ -773,13 +772,7 @@
                           vals
                           (map (partial sort-by :time))
                           (sort-by #(:time (first %)))
-                          reverse)
-        latest-event (->> event-groups
-                         flatten
-                         (sort-by :time)
-                         first)
-        latest-comment (when (seq (:comment latest-event))
-                         (:comment latest-event))]
+                          reverse)]
     [collapsible/component
      {:id "header"
       :title [:span#application-state
@@ -788,11 +781,11 @@
                (when state (str ": " (localize-state state))))]
       :always [:div
                [:div.mb-3 {:class (str "state-" (if (keyword? state) (name state) state))} (phases phases-data)]
-               (when latest-comment
-                 (info-field (text :t.applications/latest-comment)
-                             latest-comment))]
-      :collapse (when (seq event-groups)
-                  [events-view event-groups])}]))
+               [:h4 (text :t.form/events)]
+               (when-let [g [(first event-groups)]]
+                 [events-view g])]
+      :collapse (when-let [g (seq (rest event-groups))]
+                  [events-view g])}]))
 
 (defn member-info
   "Renders a applicant, member or invited member of an application
