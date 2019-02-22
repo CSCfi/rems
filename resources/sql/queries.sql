@@ -492,7 +492,7 @@ WHERE wfid = :wfid
 -- :name get-workflow :? :1
 SELECT
   wf.id, wf.organization, wf.owneruserid, wf.modifieruserid, wf.title, wf.fnlround, wf.visibility, wf.start, wf.endt AS "end",
-  wf.workflowBody::TEXT as workflow,
+  wf.workflowBody::TEXT as workflow, wf.enabled, wf.archived,
   (SELECT json_agg(joined)
    FROM (SELECT *, (SELECT json_agg(licloc)
                     FROM license_localization licloc
@@ -515,7 +515,7 @@ AND ci.id = :catid
 -- :name get-workflows :? :*
 SELECT
   wf.id, wf.organization, wf.owneruserid, wf.modifieruserid, wf.title, wf.fnlround, wf.visibility, wf.start, wf.endt,
-  wf.workflowBody::TEXT as workflow
+  wf.workflowBody::TEXT as workflow, wf.enabled, wf.archived
 FROM workflow wf
 
 -- :name clear-field-value! :!

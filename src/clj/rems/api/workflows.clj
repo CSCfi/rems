@@ -52,6 +52,8 @@
    :start DateTime
    :end (s/maybe DateTime)
    :active s/Bool
+   :enabled s/Bool
+   :archived s/Bool
    :actors [Actor]
    :licenses [WorkflowLicense]})
 
@@ -59,7 +61,7 @@
   [Workflow])
 
 (defn- format-workflow
-  [{:keys [id organization owneruserid modifieruserid title fnlround workflow start endt active? licenses]}]
+  [{:keys [id organization owneruserid modifieruserid title fnlround workflow start endt active? enabled archived licenses]}]
   {:id id
    :organization organization
    :owneruserid owneruserid
@@ -70,6 +72,8 @@
    :start start
    :end endt
    :active active?
+   :enabled enabled
+   :archived archived
    :licenses licenses})
 
 (s/defschema CreateWorkflowCommand
