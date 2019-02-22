@@ -5,7 +5,8 @@
             [rems.permissions :as permissions]
             [rems.workflow.dynamic :as dynamic]))
 
-(defn- permissions-of-all-applications [applications event]
+;; TODO: make private after removing the hack which uses this
+(defn permissions-of-all-applications [applications event]
   (if-let [app-id (:application/id event)] ; old style events don't have :application/id
     (update applications app-id dynamic/calculate-permissions event)
     applications))
