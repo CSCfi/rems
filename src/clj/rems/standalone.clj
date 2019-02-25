@@ -71,7 +71,7 @@
     (= "reset" (first args))
     (do
       (println "\n\n*** Are you absolutely sure??? Reset empties the whole database and runs migrations to empty db.***\nType 'YES' to proceed")
-      (if (= "YES" (read-line))
+      (when (= "YES" (read-line))
         (do
           (println "Running reset")
           (mount/start #'rems.config/env)
