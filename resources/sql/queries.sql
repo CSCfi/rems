@@ -3,8 +3,8 @@
 -- - Get catalogue items
 -- - :items vector of item ids
 -- - :resource resource id to fetch items for
-SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.start
-, (case when ci.enabled = true then 'enabled' else 'disabled' end) as state
+SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.start, ci.endt as "end", ci.enabled, ci.archived
+, (case when ci.enabled = true then 'enabled' else 'disabled' end) as state -- TODO: remove state
 , res.id AS "resource-id"
 /*~ (when (:expand-names? params) */
 , wf.title AS "workflow-name"
@@ -25,10 +25,9 @@ WHERE 1=1
   AND res.resid = :resource
 /*~ ) ~*/
 
-
 -- :name get-catalogue-item :? :1
-SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.start
-, (case when ci.enabled = true then 'enabled' else 'disabled' end) as state
+SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.start, ci.endt as "end", ci.enabled, ci.archived
+, (case when ci.enabled = true then 'enabled' else 'disabled' end) as state -- TODO: remove state
 , res.id AS "resource-id"
 , wf.title AS "workflow-name"
 , res.resid AS "resource-name"
@@ -42,7 +41,7 @@ WHERE ci.id = :item
 -- :name set-catalogue-item-state! :insert
 -- :doc Set catalogue item state enabled or disabled
 UPDATE catalogue_item ci
-SET enabled = (:state = 'enabled')
+SET enabled = (:state = 'enabled') -- TODO: remove state
 WHERE ci.id = :item
 
 -- :name create-catalogue-item! :insert
@@ -50,7 +49,7 @@ WHERE ci.id = :item
 INSERT INTO catalogue_item
 (title, formid, resid, wfid, enabled)
 VALUES (:title, :form, :resid, :wfid,
-/*~ (if (= "disabled" (:state params)) */
+/*~ (if (= "disabled" (:state params)) */ -- TODO: remove state
 false
 /*~*/
 true
@@ -65,7 +64,9 @@ SELECT
   organization,
   resid,
   start,
-  endt
+  endt,
+  enabled,
+  archived
 FROM resource
 
 -- :name get-resource :? :1
@@ -76,7 +77,9 @@ SELECT
   organization,
   resid,
   start,
-  endt
+  endt,
+  enabled,
+  archived
 FROM resource
 WHERE id = :id
 
@@ -106,7 +109,9 @@ SELECT
   organization,
   title,
   start,
-  endt
+  endt,
+  enabled,
+  archived
 FROM application_form
 
 -- :name get-form-for-application :? :1
@@ -152,6 +157,8 @@ SELECT
   form.start as start,
   form.endt as "end",
   TRUE as "active", -- TODO implement
+  form.enabled,
+  form.archived,
   (SELECT json_agg(joined)
    FROM (SELECT *,
                 (SELECT json_agg(formitemlocalization)
@@ -484,7 +491,7 @@ WHERE wfid = :wfid
 -- :name get-workflow :? :1
 SELECT
   wf.id, wf.organization, wf.owneruserid, wf.modifieruserid, wf.title, wf.fnlround, wf.visibility, wf.start, wf.endt AS "end",
-  wf.workflowBody::TEXT as workflow,
+  wf.workflowBody::TEXT as workflow, wf.enabled, wf.archived,
   (SELECT json_agg(joined)
    FROM (SELECT *, (SELECT json_agg(licloc)
                     FROM license_localization licloc
@@ -507,7 +514,7 @@ AND ci.id = :catid
 -- :name get-workflows :? :*
 SELECT
   wf.id, wf.organization, wf.owneruserid, wf.modifieruserid, wf.title, wf.fnlround, wf.visibility, wf.start, wf.endt,
-  wf.workflowBody::TEXT as workflow
+  wf.workflowBody::TEXT as workflow, wf.enabled, wf.archived
 FROM workflow wf
 
 -- :name clear-field-value! :!
@@ -530,12 +537,12 @@ WHERE textvalues.catAppId = :application
 -- - Gets application licenses by workflow and catalogue item ids
 -- - :wfid workflow id for workflow licenses
 -- - :items vector of catalogue item ids for resource licenses
-SELECT lic.id, lic.title, lic.type, lic.textcontent, wl.start, wl.endt
+SELECT lic.id, lic.title, lic.type, lic.textcontent, wl.start, wl.endt, lic.enabled, lic.archived
 FROM license lic
 INNER JOIN workflow_licenses wl ON lic.id = wl.licid
 WHERE wl.wfid = :wfid
 UNION
-SELECT lic.id, lic.title, lic.type, lic.textcontent, rl.start, rl.endt
+SELECT lic.id, lic.title, lic.type, lic.textcontent, rl.start, rl.endt, lic.enabled, lic.archived
 FROM license lic
 INNER JOIN resource_licenses rl ON lic.id = rl.licid
 INNER JOIN catalogue_item item ON (item.resid = rl.resid)
@@ -543,17 +550,17 @@ WHERE item.id IN (:v*:items)
 ORDER BY id
 
 -- :name get-resource-licenses :? :*
-SELECT lic.id, lic.title, lic.type, lic.textcontent, rl.start, rl.endt
+SELECT lic.id, lic.title, lic.type, lic.textcontent, rl.start, rl.endt, lic.enabled, lic.archived
 FROM license lic
 INNER JOIN resource_licenses rl ON lic.id = rl.licid
 WHERE rl.resid = :id
 
 -- :name get-all-licenses :? :*
-SELECT lic.id, lic.title, lic.type, lic.textcontent, lic.start, lic.endt, lic.attachmentid
+SELECT lic.id, lic.title, lic.type, lic.textcontent, lic.start, lic.endt, lic.enabled, lic.archived, lic.attachmentid
 FROM license lic
 
 -- :name get-license :? :1
-SELECT lic.id, lic.title, lic.type, lic.textcontent, lic.start, lic.endt, lic.attachmentid
+SELECT lic.id, lic.title, lic.type, lic.textcontent, lic.start, lic.endt, lic.enabled, lic.archived, lic.attachmentid
 , TRUE AS active -- TODO implement active and archiving
 FROM license lic
 WHERE lic.id = :id

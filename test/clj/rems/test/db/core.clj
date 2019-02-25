@@ -22,13 +22,13 @@
     (is (not (now-active? nil yesterday)) "already expired")))
 
 (deftest test-assoc-active
-  (is (= {:active? true} (assoc-active nil)))
-  (is (= {:active? true :start nil :endt nil :foobar 42} (assoc-active {:start nil :endt nil :foobar 42})))
+  (is (= {:active true} (assoc-active nil)))
+  (is (= {:active true :start nil :endt nil :foobar 42} (assoc-active {:start nil :endt nil :foobar 42})))
   (let [today (time/now)
         yesterday (time/minus today (time/days 1))
         tomorrow (time/plus today (time/days 1))]
-    (is (= {:active? false :start tomorrow :endt nil} (assoc-active {:start tomorrow :endt nil})))
-    (is (= {:active? false :start nil :endt yesterday} (assoc-active {:start nil :endt yesterday})))))
+    (is (= {:active false :start tomorrow :endt nil} (assoc-active {:start tomorrow :endt nil})))
+    (is (= {:active false :start nil :endt yesterday} (assoc-active {:start nil :endt yesterday})))))
 
 (defn- take-ids [items]
   (map :id items))
@@ -54,10 +54,10 @@
       (is (= [:normal :expired] (take-ids (get-items nil)))))
 
     (testing "find active items"
-      (is (= [:normal] (take-ids (get-items {:active? true})))))
+      (is (= [:normal] (take-ids (get-items {:active true})))))
 
     (testing "find expired items"
-      (is (= [:expired] (take-ids (get-items {:active? false})))))
+      (is (= [:expired] (take-ids (get-items {:active false})))))
 
-    (testing "calculates :active? property"
-      (is (every? #(contains? % :active?) (get-items {}))))))
+    (testing "calculates :active property"
+      (is (every? #(contains? % :active) (get-items {}))))))
