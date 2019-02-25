@@ -35,7 +35,7 @@
    (s/optional-key :errors) [s/Any]})
 
 (defn- format-resource
-  [{:keys [id owneruserid modifieruserid organization resid start endt active? enabled archived]}]
+  [{:keys [id owneruserid modifieruserid organization resid start endt active enabled archived]}]
   {:id id
    :owneruserid owneruserid
    :modifieruserid modifieruserid
@@ -43,7 +43,7 @@
    :resid resid
    :start start
    :end endt
-   :active active?
+   :active active
    :enabled enabled
    :archived archived})
 
@@ -68,7 +68,7 @@
       :roles #{:owner}
       :query-params [{active :- (describe s/Bool "filter active or inactive resources") nil}]
       :return Resources
-      (ok (get-resources (when-not (nil? active) {:active? active}))))
+      (ok (get-resources (when-not (nil? active) {:active active}))))
 
     (GET "/:resource-id" []
       :summary "Get resource by id"

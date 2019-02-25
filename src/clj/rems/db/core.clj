@@ -37,10 +37,12 @@
             (time/before? now end)))))
 
 (defn assoc-active
-  "Calculates and assocs :active? attribute based on current time and :start and :endt attributes.
+  "Calculates and assocs :active attribute based on current time and :start and :endt attributes.
 
    Current time can be passed in optionally."
   ([x]
    (assoc-active (time/now) x))
   ([now x]
-   (assoc x :active? (now-active? now (:start x) (:endt x)))))
+   ;; TODO: rename endt to end in all places
+   (assoc x :active (now-active? now (:start x) (or (:endt x)
+                                                    (:end x))))))

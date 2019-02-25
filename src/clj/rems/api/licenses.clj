@@ -48,7 +48,7 @@
       :roles #{:owner}
       :query-params [{active :- (describe s/Bool "filter active or inactive licenses") nil}]
       :return Licenses
-      (ok (licenses/get-all-licenses (when-not (nil? active) {:active? active}))))
+      (ok (licenses/get-all-licenses (when-not (nil? active) {:active active}))))
 
     (GET "/:license-id" []
       :summary "Get license"

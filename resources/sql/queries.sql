@@ -25,7 +25,6 @@ WHERE 1=1
   AND res.resid = :resource
 /*~ ) ~*/
 
-
 -- :name get-catalogue-item :? :1
 SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.start, ci.endt as "end", ci.enabled, ci.archived
 , (case when ci.enabled = true then 'enabled' else 'disabled' end) as state -- TODO: remove state
