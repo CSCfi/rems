@@ -310,7 +310,8 @@
              (assoc :formid (:formid (first catalogue-items))
                     :catalogue-items catalogue-items)
              (->> (dynamic/assoc-possible-commands user-id))
-             (permissions/cleanup)))))))
+             (permissions/cleanup)
+             (dynamic/clean-internal-state)))))))
 
 (comment
   (->> (get-applications-impl-batch "developer" {})
@@ -604,7 +605,8 @@
                               :is-applicant? (is-applicant? user-id application)
                               :review-type review-type
                               :description description)
-                       (permissions/cleanup))
+                       (permissions/cleanup)
+                       (dynamic/clean-internal-state))
       :applicant-attributes (users/get-user-attributes (:applicantuserid application))
       :items items
       :licenses licenses

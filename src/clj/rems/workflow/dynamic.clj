@@ -463,6 +463,9 @@
           application
           events))
 
+(defn clean-internal-state [application]
+  (dissoc application :latest-comment-request-by-user))
+
 ;;; Command handlers
 
 (defmulti command-handler

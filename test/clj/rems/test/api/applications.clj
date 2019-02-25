@@ -838,6 +838,9 @@
             (is (= #{commenter-id decider-id}
                    (set (get-in (get-application handler-id application-id)
                                [:application :commenters])))))
+          (testing "cannot see internal commenter state"
+            (is (= nil (get-in (get-application handler-id application-id)
+                               [:application :latest-comment-request-by-user]))))
           (testing "new request replaces old requests for specified commenters"
             (is (= {:success true} (send-dynamic-command handler-id
                                                          {:type :rems.workflow.dynamic/request-comment
@@ -924,13 +927,13 @@
                     "application.event/approved"]
                    handler-event-types)))
           (testing "applicant cannot see all events"
-              (is (= (filter ;; all decision and comment related events should be missing here
-                             #{"application.event/created"
-                               "application.event/draft-saved"
-                               "application.event/submitted"
-                               "application.event/approved"}
-                             handler-event-types)
-                     applicant-event-types))))))))
+            (is (= (filter ;; all decision and comment related events should be missing here
+                           #{"application.event/created"
+                             "application.event/draft-saved"
+                             "application.event/submitted"
+                             "application.event/approved"}
+                           handler-event-types)
+                   applicant-event-types))))))))
 
 (deftest dynamic-application-create-test
   (let [api-key "42"
