@@ -816,7 +816,7 @@
       :collapse (when (seq other-attributes)
                   (into [:div]
                         (for [[k v] other-attributes]
-                          [info-field k v {:inline? true}])))
+                          [info-field k v])))
       :footer [:div {:id user-actions-id}
                (when can-remove?
                  [:div.commands
