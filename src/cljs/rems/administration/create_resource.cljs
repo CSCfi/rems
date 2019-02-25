@@ -10,7 +10,7 @@
             [rems.status-modal :refer [status-modal]]
             [rems.text :refer [text localize-item]]
             [rems.util :refer [dispatch! fetch post!]]
-            [rems.status-modal :refer [status-modal]]))
+            [rems.status-modal :as status-modal]))
 
 (defn- reset-form [db]
   (assoc db
@@ -160,13 +160,9 @@
 (defn create-resource-page []
   (let [loading? (rf/subscribe [::loading?])
         form (rf/subscribe [::form])
-        state (r/atom nil)
-        on-success #(reset! state {:status :saved})
-        on-pending #(reset! state {:status :pending})
-        on-error #(reset! state {:status :failed :error %})
-        on-modal-close #(do (when (= :saved (:status @state))
-                              (dispatch! "#/administration/resources"))
-                            (reset! state nil))]
+        {:keys [on-pending on-success on-error state-atom] :as modal-opts} (status-modal/status-modal-opts
+                                                                            {:on-close-after-success #(dispatch! "#/administration/resources")
+                                                                             :description (text :t.administration/save)})]
     (fn []
       [:div
        [administration-navigator-container]
@@ -175,10 +171,7 @@
         {:id "create-resource"
          :title (text :t.administration/create-resource)
          :always [:div
-                  (when (:status @state)
-                    [status-modal (assoc @state
-                                         :description (text :t.administration/save)
-                                         :on-close on-modal-close)])
+                  (when @state-atom [status-modal/status-modal (merge @state-atom modal-opts)])
                   (if @loading?
                     [:div#resource-loader [spinner/big]]
                     [:div#resource-editor
