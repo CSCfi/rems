@@ -782,8 +782,8 @@
       :always [:div
                [:div.mb-3 {:class (str "state-" (if (keyword? state) (name state) state))} (phases phases-data)]
                [:h4 (text :t.form/events)]
-               (when-let [g [(first event-groups)]]
-                 [events-view g])]
+               (when-let [g (first event-groups)]
+                 [events-view [g]])]
       :collapse (when-let [g (seq (rest event-groups))]
                   [events-view g])}]))
 
