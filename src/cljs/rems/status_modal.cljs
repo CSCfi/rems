@@ -38,13 +38,13 @@
     (#{:saved :success} status)
     [modal/notification {:title description
                          :content [:div [status-widget status error] content]
-                         :on-close on-close-after-success
+                         :on-close (or on-close-after-success on-close)
                          :shade? true}]
 
     (= :failed status)
     [modal/notification {:title description
                          :content [:div [status-widget status error] content]
-                         :on-close on-close-afer-error
+                         :on-close (or on-close-afer-error on-close)
                          :shade? true}]
 
     :default
