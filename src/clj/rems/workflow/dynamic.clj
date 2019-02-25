@@ -13,20 +13,6 @@
 ;; can't use defschema for this alias since s/Str is just String, which doesn't have metadata
 (def UserId s/Str)
 
-(s/defschema Command
-  {:type s/Keyword
-   :actor UserId
-   :application-id Long
-   :time DateTime})
-
-(s/defschema RequestDecisionCommand
-  (assoc Command
-         :decider UserId))
-
-(s/defschema DecisionCommand
-  (assoc Command
-         :decision (s/enum :approve :reject)))
-
 (s/defschema Workflow
   {:type :workflow/dynamic
    :handlers [UserId]})
