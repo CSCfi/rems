@@ -1,4 +1,8 @@
 (ns rems.logging
+  "Logback's Mapped Diagnostic Context (MDC) is a thread-local place
+   for storing information about the current request. The information
+   can then be included in the logs via Logback's appender patterns.
+   See https://logback.qos.ch/manual/mdc.html for more information."
   (:require [clojure.test :refer [deftest is testing]])
   (:import (org.slf4j MDC)))
 
@@ -20,7 +24,7 @@
           (MDC/remove k))))))
 
 (defmacro with-mdc
-  "Adds a map of values to SLF4J's MDC for logging context."
+  "Adds a map of values to Logback's MDC for use within `body`."
   [m & body]
   `(with-mdc* ~m (fn [] ~@body)))
 
