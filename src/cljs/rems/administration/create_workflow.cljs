@@ -312,7 +312,7 @@
                     (if @loading?
                       [:div#workflow-loader [spinner/big]]
                       [:div#workflow-editor
-                       [status-modal/situational-status-modal @state-atom modal-opts]
+                       (when @state-atom [status-modal/status-modal (merge @state-atom modal-opts)])
                        [workflow-organization-field]
                        [workflow-title-field]
                        [workflow-type-field]

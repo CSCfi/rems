@@ -214,7 +214,7 @@
          {:id "create-license"
           :title (text :t.administration/create-license)
           :always [:div
-                   [status-modal/situational-status-modal @state-atom modal-opts]
+                   (when @state-atom [status-modal/status-modal (merge @state-atom modal-opts)])
                    [license-type-radio-group]
                    [language-heading default-language]
                    [license-title-field default-language]

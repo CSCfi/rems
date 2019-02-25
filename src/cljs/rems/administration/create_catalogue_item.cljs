@@ -256,7 +256,7 @@
                  (if @loading?
                    [:div#catalogue-item-loader [spinner/big]]
                    [:div#catalogue-item-editor
-                    [status-modal/situational-status-modal @state-atom modal-opts]
+                    (when @state-atom [status-modal/status-modal (merge @state-atom modal-opts)])
                     [catalogue-item-title-field]
                     [catalogue-item-workflow-field]
                     [catalogue-item-resource-field]

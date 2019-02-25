@@ -289,7 +289,7 @@
          {:id "create-form"
           :title (text :t.administration/create-form)
           :always [:div
-                   [status-modal/situational-status-modal @state-atom modal-opts]
+                   (when @state-atom [status-modal/status-modal (merge @state-atom modal-opts)])
                    [form-organization-field]
                    [form-title-field]
 

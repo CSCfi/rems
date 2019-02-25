@@ -33,11 +33,25 @@
   `:error` - error that may contain :key, :status and :status-text
            like translated errors or http errors
   `:on-close` - callback is called when the modal wants to close itself"
-  [{:keys [description status error content on-close]}]
-  [modal/notification {:title description
-                       :content [:div [status-widget status error] content]
-                       :on-close on-close
-                       :shade? true}])
+  [{:keys [description status error content on-close on-close-afer-error on-close-after-success]}]
+  (cond
+    (= :saved status)
+    [modal/notification {:title description
+                         :content [:div [status-widget status error] content]
+                         :on-close on-close-after-success
+                         :shade? true}]
+
+    (= :failed status)
+    [modal/notification {:title description
+                         :content [:div [status-widget status error] content]
+                         :on-close on-close-afer-error
+                         :shade? true}]
+
+    :default
+    [modal/notification {:title description
+                        :content [:div [status-widget status error] content]
+                        :on-close on-close
+                        :shade? true}]))
 
 (defn example-wrapper [{:keys [opened-state component]}]
   (let [state (r/atom nil)
@@ -72,29 +86,6 @@
       :on-close-after-error #(do
                                (reset! state nil)
                                (when on-close-after-error (on-close-after-error)))})))
-
-(defn situational-status-modal
-  "Modal component, that handles closing differently depending on :status
-
-  State is a map containing key :status. If :status is either :saved or :failed,
-  a status-modal is rendered, using either :on-close-after-success,
-  or :on-close-after-error as the :on-close handler."
-  [state {:keys [on-close-after-success on-close-after-error] :as modal-options}]
-  (cond
-    (= :saved (:status state))
-    [status-modal (merge
-                   (dissoc modal-options :state-atom)
-                   {:on-close on-close-after-success}
-                   state)]
-
-    (= :failed (:status state))
-    [status-modal (merge
-                   (dissoc modal-options :state-atom)
-                   {:on-close on-close-after-error}
-                   state)]
-
-    :default
-    nil))
 
 (defn guide
   []
