@@ -68,7 +68,7 @@
       :roles #{:owner}
       :query-params [{active :- (describe s/Bool "filter active or inactive resources") nil}]
       :return Resources
-      (ok (get-resources (when-not (nil? active) {:active active}))))
+      (ok (get-resources (when active {:active active}))))
 
     (GET "/:resource-id" []
       :summary "Get resource by id"

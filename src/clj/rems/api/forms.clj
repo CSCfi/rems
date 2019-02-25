@@ -69,7 +69,7 @@
       :roles #{:owner}
       :query-params [{active :- (describe s/Bool "filter active or inactive forms") nil}]
       :return Forms
-      (ok (get-forms (when-not (nil? active) {:active active}))))
+      (ok (get-forms (when active {:active active}))))
 
     (GET "/:form-id" []
       :summary "Get form by id"

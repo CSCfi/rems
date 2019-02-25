@@ -115,7 +115,7 @@
       :roles #{:owner}
       :query-params [{active :- (describe s/Bool "filter active or inactive workflows") nil}]
       :return Workflows
-      (ok (get-workflows (when-not (nil? active) {:active active}))))
+      (ok (get-workflows (when active {:active active}))))
 
     (POST "/create" []
       :summary "Create workflow"
