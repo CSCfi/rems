@@ -9,18 +9,18 @@
 
 (defn- status-widget [status error]
   [:div {:class (when (= :failed status) "alert alert-danger")}
-   (case status
-     nil ""
-     :pending [spinner/big]
-     :saved [:div [:i {:class ["fa fa-check-circle text-success"]}] (text :t.form/success)]
-     :failed [:div [:i {:class "fa fa-times-circle text-danger"}]
-              (str (text :t.form/failed)
-                   (when (:key error)
-                     (str ": " (text (:key error))))
-                   (when-let [text (:status-text error)]
-                     (str ": " text))
-                   (when-let [text (:status error)]
-                     (str " (" text ")")))])])
+   (condp contains? status
+     #{nil} ""
+     #{:pending} [spinner/big]
+     #{:saved :success} [:div [:i {:class ["fa fa-check-circle text-success"]}] (text :t.form/success)]
+     #{:failed} [:div [:i {:class "fa fa-times-circle text-danger"}]
+                 (str (text :t.form/failed)
+                      (when (:key error)
+                        (str ": " (text (:key error))))
+                      (when-let [text (:status-text error)]
+                        (str ": " text))
+                      (when-let [text (:status error)]
+                        (str " (" text ")")))])])
 
 (defn status-modal
   "Modal component showing the status of an action.
@@ -35,7 +35,7 @@
   `:on-close` - callback is called when the modal wants to close itself"
   [{:keys [description status error content on-close on-close-afer-error on-close-after-success]}]
   (cond
-    (= :saved status)
+    (#{:saved :success} status)
     [modal/notification {:title description
                          :content [:div [status-widget status error] content]
                          :on-close on-close-after-success
@@ -62,7 +62,7 @@
        [:button.btn.btn-secondary {:on-click #(reset! state (assoc opened-state :on-close on-close))} "Open modal"]])))
 
 (defn status-modal-opts
-  "Returns a map of modal options, that can be used by status-modal/situational-status-modal.
+  "Returns a map of modal options, that can be used by status-modal component
 
    The returned value is a map containing various event handlers, and most importantly,
    a state atom under the key :state-atom."
@@ -75,7 +75,7 @@
                      (swap! state assoc :status :pending)
                      (when on-pending (on-pending)))
       :on-success #(do
-                     (swap! state assoc :status :saved)
+                     (swap! state assoc :status :success)
                      (when on-success (on-success)))
       :on-error #(do
                    (swap! state assoc :status :failed :error %)
