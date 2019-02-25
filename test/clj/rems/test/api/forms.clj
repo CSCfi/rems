@@ -38,7 +38,6 @@
                      app
                      assert-response-is-ok
                      read-body)]
-        (is (coll-is-not-empty? data))
         (is (:id (first data)))))
     (testing "create"
       (let [command {:organization "abc"
