@@ -160,7 +160,7 @@
 (defn create-resource-page []
   (let [loading? (rf/subscribe [::loading?])
         form (rf/subscribe [::form])
-        {:keys [on-pending on-success on-error state-atom] :as modal-opts} (status-modal/status-modal-opts
+        {:keys [on-pending on-success on-error state-atom] :as modal-opts} (status-modal/status-modal-state-handling
                                                                             {:on-close-after-success #(dispatch! "#/administration/resources")
                                                                              :description (text :t.administration/save)})]
     (fn []

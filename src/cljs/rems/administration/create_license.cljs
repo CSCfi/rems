@@ -202,7 +202,7 @@
 (defn create-license-page []
   (let [default-language @(rf/subscribe [:default-language])
         languages @(rf/subscribe [:languages])
-        {:keys [on-pending on-success on-error state-atom] :as modal-opts} (status-modal/status-modal-opts
+        {:keys [on-pending on-success on-error state-atom] :as modal-opts} (status-modal/status-modal-state-handling
                                                                             {:on-close-after-success #(dispatch! "/#/administration/licenses")
                                                                              :description (text :t.administration/create-license)})]
     (fn []

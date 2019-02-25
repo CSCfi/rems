@@ -277,7 +277,7 @@
 
 (defn create-form-page []
   (let [form @(rf/subscribe [::form])
-        {:keys [on-pending on-success on-error state-atom] :as modal-opts} (status-modal/status-modal-opts
+        {:keys [on-pending on-success on-error state-atom] :as modal-opts} (status-modal/status-modal-state-handling
                                                                             {:on-close-after-success #(dispatch! "#/administration/forms")
                                                                              :description (text :t.administration/create-form)})]
     (fn []

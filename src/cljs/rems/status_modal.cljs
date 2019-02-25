@@ -61,7 +61,7 @@
        (when @state [component @state])
        [:button.btn.btn-secondary {:on-click #(reset! state (assoc opened-state :on-close on-close))} "Open modal"]])))
 
-(defn status-modal-opts
+(defn status-modal-state-handling
   "Returns a map of modal options, that can be used by status-modal component
 
    The returned value is a map containing various event handlers, and most importantly,
