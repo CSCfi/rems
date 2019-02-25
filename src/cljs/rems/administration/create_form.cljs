@@ -276,50 +276,49 @@
    (text :t.administration/cancel)])
 
 (defn create-form-page []
-  (let [{:keys [on-pending on-success on-error state-atom] :as modal-opts}
-        (status-modal/status-modal-opts
-         {:on-close-after-success #(dispatch! "#/administration/forms")
-          :description (text :t.administration/create-form)})]
+  (let [form @(rf/subscribe [::form])
+        {:keys [on-pending on-success on-error state-atom] :as modal-opts} (status-modal/status-modal-opts
+                                                                            {:on-close-after-success #(dispatch! "#/administration/forms")
+                                                                             :description (text :t.administration/create-form)})]
     (fn []
-     (let [form @(rf/subscribe [::form])]
-       [:div
-        [administration-navigator-container]
-        [:h2 (text :t.administration/create-form)]
-        [collapsible/component
-         {:id "create-form"
-          :title (text :t.administration/create-form)
-          :always [:div
-                   (when @state-atom [status-modal/status-modal (merge @state-atom modal-opts)])
-                   [form-organization-field]
-                   [form-title-field]
+      [:div
+       [administration-navigator-container]
+       [:h2 (text :t.administration/create-form)]
+       [collapsible/component
+        {:id "create-form"
+         :title (text :t.administration/create-form)
+         :always [:div
+                  (when @state-atom [status-modal/status-modal (merge @state-atom modal-opts)])
+                  [form-organization-field]
+                  [form-title-field]
 
-                   (doall (for [item-index (range (count (:items form)))]
-                            [:div.form-item
-                             {:key item-index}
-                             [:div.form-item-header
-                              [:h4 (text-format :t.create-form/item-n (inc item-index))]
-                              [:div.form-item-controls
-                               [move-form-item-up-button item-index]
-                               [move-form-item-down-button item-index]
-                               [remove-form-item-button item-index]]]
+                  (doall (for [item-index (range (count (:items form)))]
+                           [:div.form-item
+                            {:key item-index}
+                            [:div.form-item-header
+                             [:h4 (text-format :t.create-form/item-n (inc item-index))]
+                             [:div.form-item-controls
+                              [move-form-item-up-button item-index]
+                              [move-form-item-down-button item-index]
+                              [remove-form-item-button item-index]]]
 
-                             [form-item-title-field item-index]
-                             [form-item-optional-checkbox item-index]
-                             [form-item-type-radio-group item-index]
-                             (when (supports-input-prompt? (get-in form [:items item-index]))
-                               [form-item-input-prompt-field item-index])
-                             (when (supports-maxlength? (get-in form [:items item-index]))
-                               [form-item-maxlength-field item-index])
-                             (when (supports-options? (get-in form [:items item-index]))
-                               [form-item-option-fields item-index])]))
+                            [form-item-title-field item-index]
+                            [form-item-optional-checkbox item-index]
+                            [form-item-type-radio-group item-index]
+                            (when (supports-input-prompt? (get-in form [:items item-index]))
+                              [form-item-input-prompt-field item-index])
+                            (when (supports-maxlength? (get-in form [:items item-index]))
+                              [form-item-maxlength-field item-index])
+                            (when (supports-options? (get-in form [:items item-index]))
+                              [form-item-option-fields item-index])]))
 
-                   [:div.form-item.new-form-item
-                    [add-form-item-button]]
+                  [:div.form-item.new-form-item
+                   [add-form-item-button]]
 
-                   [:div.col.commands
-                    [cancel-button]
-                    [save-form-button #(rf/dispatch [::create-form
-                                                     {:request %
-                                                      :on-pending on-pending
-                                                      :on-success on-success
-                                                      :on-error on-error}])]]]}]]))))
+                  [:div.col.commands
+                   [cancel-button]
+                   [save-form-button #(rf/dispatch [::create-form
+                                                    {:request %
+                                                     :on-pending on-pending
+                                                     :on-success on-success
+                                                     :on-error on-error}])]]]}]])))

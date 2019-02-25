@@ -200,40 +200,39 @@
    (text :t.administration/cancel)])
 
 (defn create-license-page []
-  (let [{:keys [on-pending on-success on-error state-atom] :as modal-opts}
-        (status-modal/status-modal-opts
-         {:on-close-after-success #(dispatch! "/#/administration/licenses")
-          :description (text :t.administration/create-license)})]
+  (let [default-language @(rf/subscribe [:default-language])
+        languages @(rf/subscribe [:languages])
+        {:keys [on-pending on-success on-error state-atom] :as modal-opts} (status-modal/status-modal-opts
+                                                                            {:on-close-after-success #(dispatch! "/#/administration/licenses")
+                                                                             :description (text :t.administration/create-license)})]
     (fn []
-     (let [default-language @(rf/subscribe [:default-language])
-           languages @(rf/subscribe [:languages])]
-       [:div
-        [administration-navigator-container]
-        [:h2 (text :t.administration/create-license)]
-        [collapsible/component
-         {:id "create-license"
-          :title (text :t.administration/create-license)
-          :always [:div
-                   (when @state-atom [status-modal/status-modal (merge @state-atom modal-opts)])
-                   [license-type-radio-group]
-                   [language-heading default-language]
-                   [license-title-field default-language]
-                   [license-link-field default-language]
-                   [license-text-field default-language]
-                   [license-attachment-field default-language]
+      [:div
+       [administration-navigator-container]
+       [:h2 (text :t.administration/create-license)]
+       [collapsible/component
+        {:id "create-license"
+         :title (text :t.administration/create-license)
+         :always [:div
+                  (when @state-atom [status-modal/status-modal (merge @state-atom modal-opts)])
+                  [license-type-radio-group]
+                  [language-heading default-language]
+                  [license-title-field default-language]
+                  [license-link-field default-language]
+                  [license-text-field default-language]
+                  [license-attachment-field default-language]
 
-                   (doall (for [language (remove #(= % default-language) languages)]
-                            [:div {:key language}
-                             [language-heading language]
-                             [license-title-field language]
-                             [license-link-field language]
-                             [license-text-field language]
-                             [license-attachment-field language]]))
+                  (doall (for [language (remove #(= % default-language) languages)]
+                           [:div {:key language}
+                            [language-heading language]
+                            [license-title-field language]
+                            [license-link-field language]
+                            [license-text-field language]
+                            [license-attachment-field language]]))
 
-                   [:div.col.commands
-                    [cancel-button]
-                    [save-license-button #(rf/dispatch [::create-license
-                                                        {:request %
-                                                         :on-pending on-pending
-                                                         :on-success on-success
-                                                         :on-error on-error}])]]]}]]))))
+                  [:div.col.commands
+                   [cancel-button]
+                   [save-license-button #(rf/dispatch [::create-license
+                                                       {:request %
+                                                        :on-pending on-pending
+                                                        :on-success on-success
+                                                        :on-error on-error}])]]]}]])))

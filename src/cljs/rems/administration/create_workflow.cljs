@@ -294,38 +294,37 @@
    [workflow-type-description (text :t.create-workflow/auto-approve-workflow-description)]])
 
 (defn create-workflow-page []
-  (let [{:keys [on-pending on-success on-error state-atom] :as modal-opts}
-        (status-modal/status-modal-opts
-         {:on-close-after-success #(dispatch! "#/administration/workflows")
-          :description (text :t.administration/create-workflow)})]
+  (let [form @(rf/subscribe [::form])
+        workflow-type (:type form)
+        loading? (rf/subscribe [::loading?])
+        {:keys [on-pending on-success on-error state-atom] :as modal-opts} (status-modal/status-modal-opts
+                                                                            {:on-close-after-success #(dispatch! "#/administration/workflows")
+                                                                             :description (text :t.administration/create-workflow)})]
     (fn []
-      (let [form @(rf/subscribe [::form])
-            workflow-type (:type form)
-            loading? (rf/subscribe [::loading?])]
-        [:div
-         [administration-navigator-container]
-         [:h2 (text :t.administration/create-workflow)]
-         [collapsible/component
-          {:id "create-workflow"
-           :title (text :t.administration/create-workflow)
-           :always [:div
-                    (if @loading?
-                      [:div#workflow-loader [spinner/big]]
-                      [:div#workflow-editor
-                       (when @state-atom [status-modal/status-modal (merge @state-atom modal-opts)])
-                       [workflow-organization-field]
-                       [workflow-title-field]
-                       [workflow-type-field]
+      [:div
+       [administration-navigator-container]
+       [:h2 (text :t.administration/create-workflow)]
+       [collapsible/component
+        {:id "create-workflow"
+         :title (text :t.administration/create-workflow)
+         :always [:div
+                  (if @loading?
+                    [:div#workflow-loader [spinner/big]]
+                    [:div#workflow-editor
+                     (when @state-atom [status-modal/status-modal (merge @state-atom modal-opts)])
+                     [workflow-organization-field]
+                     [workflow-title-field]
+                     [workflow-type-field]
 
-                       (case workflow-type
-                         :auto-approve [auto-approve-workflow-form]
-                         :dynamic [dynamic-workflow-form]
-                         :rounds [round-workflow-form])
+                     (case workflow-type
+                       :auto-approve [auto-approve-workflow-form]
+                       :dynamic [dynamic-workflow-form]
+                       :rounds [round-workflow-form])
 
-                       [:div.col.commands
-                        [cancel-button]
-                        [save-workflow-button #(rf/dispatch [::create-workflow
-                                                             {:request %
-                                                              :on-pending on-pending
-                                                              :on-success on-success
-                                                              :on-error on-error}])]]])]}]]))))
+                     [:div.col.commands
+                      [cancel-button]
+                      [save-workflow-button #(rf/dispatch [::create-workflow
+                                                           {:request %
+                                                            :on-pending on-pending
+                                                            :on-success on-success
+                                                            :on-error on-error}])]]])]}]])))

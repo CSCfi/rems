@@ -241,31 +241,30 @@
 
 (defn create-catalogue-item-page []
   (let [loading? (rf/subscribe [::loading?])
-        {:keys [on-pending on-success on-error state-atom] :as modal-opts}
-        (status-modal/status-modal-opts
-         {:on-close-after-success #(dispatch! "#/administration/catalogue-items")
-          :description (text :t.administration/create-catalogue-item)})]
+        {:keys [on-pending on-success on-error state-atom] :as modal-opts} (status-modal/status-modal-opts
+                                                                            {:on-close-after-success #(dispatch! "#/administration/catalogue-items")
+                                                                             :description (text :t.administration/create-catalogue-item)})]
     (fn []
       [:div
-      [administration-navigator-container]
-      [:h2 (text :t.administration/create-catalogue-item)]
-      [collapsible/component
-       {:id "create-catalogue-item"
-        :title (text :t.administration/create-catalogue-item)
-        :always [:div
-                 (if @loading?
-                   [:div#catalogue-item-loader [spinner/big]]
-                   [:div#catalogue-item-editor
-                    (when @state-atom [status-modal/status-modal (merge @state-atom modal-opts)])
-                    [catalogue-item-title-field]
-                    [catalogue-item-workflow-field]
-                    [catalogue-item-resource-field]
-                    [catalogue-item-form-field]
+       [administration-navigator-container]
+       [:h2 (text :t.administration/create-catalogue-item)]
+       [collapsible/component
+        {:id "create-catalogue-item"
+         :title (text :t.administration/create-catalogue-item)
+         :always [:div
+                  (if @loading?
+                    [:div#catalogue-item-loader [spinner/big]]
+                    [:div#catalogue-item-editor
+                     (when @state-atom [status-modal/status-modal (merge @state-atom modal-opts)])
+                     [catalogue-item-title-field]
+                     [catalogue-item-workflow-field]
+                     [catalogue-item-resource-field]
+                     [catalogue-item-form-field]
 
-                    [:div.col.commands
-                     [cancel-button]
-                     [save-catalogue-item-button #(rf/dispatch [::create-catalogue-item
-                                                                {:request %
-                                                                 :on-pending on-pending
-                                                                 :on-success on-success
-                                                                 :on-error on-error}])]]])]}]])))
+                     [:div.col.commands
+                      [cancel-button]
+                      [save-catalogue-item-button #(rf/dispatch [::create-catalogue-item
+                                                                 {:request %
+                                                                  :on-pending on-pending
+                                                                  :on-success on-success
+                                                                  :on-error on-error}])]]])]}]])))
