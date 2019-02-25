@@ -745,7 +745,7 @@
    :commenters (:commenters event)
    :time (localize-time (:time event))})
 
-(defn- event-component [{:keys [time userid event comment commenters]}]
+(defn- event-view [{:keys [time userid event comment commenters]}]
   [:div.form-group.row
    [:label.col-sm-2.col-form-label time]
    [:div.col-sm-10
@@ -753,13 +753,13 @@
      (when (seq commenters) [:span ": " (for [c commenters] ^{:key c} [:span c])])]
     (when comment [:div comment])]])
 
-(defn- events-view [event-groups]
+(defn- event-groups-view [event-groups]
   [:div
    (into [:div]
          (for [group event-groups]
            ^{:key group} [:div.group
                           (for [e group]
-                            ^{:key e} [event-component e])]))])
+                            ^{:key e} [event-view e])]))])
 
 (defn- application-header [state phases-data events]
   (let [;; the event times have millisecond differences, so they need to be formatted to minute precision before deduping
@@ -783,9 +783,9 @@
                [:div.mb-3 {:class (str "state-" (if (keyword? state) (name state) state))} (phases phases-data)]
                [:h4 (text :t.form/events)]
                (when-let [g (first event-groups)]
-                 [events-view [g]])]
+                 [event-groups-view [g]])]
       :collapse (when-let [g (seq (rest event-groups))]
-                  [events-view g])}]))
+                  [event-groups-view g])}]))
 
 (defn member-info
   "Renders a applicant, member or invited member of an application
