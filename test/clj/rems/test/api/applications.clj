@@ -904,32 +904,33 @@
         (is (= {:success true} (send-dynamic-command handler-id {:type :rems.workflow.dynamic/approve
                                                                  :application-id application-id
                                                                  :comment ""})))
-        (let [data (get-application handler-id application-id)]
-          (is (= {:id application-id
-                  :state "rems.workflow.dynamic/approved"}
-                 (select-keys (:application data) [:id :state])))
-          (is (= ["application.event/created"
-                  "application.event/draft-saved"
-                  "application.event/submitted"
-                  "application.event/comment-requested"
-                  "application.event/comment-requested"
-                  "application.event/commented"
-                  "application.event/commented"
-                  "application.event/decision-requested"
-                  "application.event/decided"
-                  "application.event/approved"]
-                 (map :event/type (get-in data [:application :dynamic-events]))))))
-      (testing "applicant cannot see all events"
-        (let [data (get-application user-id application-id)]
-          (is (= {:id application-id
-                  :state "rems.workflow.dynamic/approved"}
-                 (select-keys (:application data) [:id :state])))
-          (is (= ["application.event/created"
-                  "application.event/draft-saved"
-                  "application.event/submitted"
-                  ; all decision and comment related events should be missing here
-                  "application.event/approved"]
-                 (map :event/type (get-in data [:application :dynamic-events])))))))))
+        (let [handler-data (get-application handler-id application-id)
+              handler-event-types (map :event/type (get-in handler-data [:application :dynamic-events]))
+              applicant-data (get-application user-id application-id)
+              applicant-event-types (map :event/type (get-in applicant-data [:application :dynamic-events]))]
+          (testing "handler can see all events"
+            (is (= {:id application-id
+                    :state "rems.workflow.dynamic/approved"}
+                   (select-keys (:application handler-data) [:id :state])))
+            (is (= ["application.event/created"
+                    "application.event/draft-saved"
+                    "application.event/submitted"
+                    "application.event/comment-requested"
+                    "application.event/comment-requested"
+                    "application.event/commented"
+                    "application.event/commented"
+                    "application.event/decision-requested"
+                    "application.event/decided"
+                    "application.event/approved"]
+                   handler-event-types)))
+          (testing "applicant cannot see all events"
+              (is (= (filter ;; all decision and comment related events should be missing here
+                             #{"application.event/created"
+                               "application.event/draft-saved"
+                               "application.event/submitted"
+                               "application.event/approved"}
+                             handler-event-types)
+                     applicant-event-types))))))))
 
 (deftest dynamic-application-create-test
   (let [api-key "42"
