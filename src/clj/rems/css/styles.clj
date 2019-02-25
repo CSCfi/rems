@@ -298,25 +298,25 @@
                     :background-color (util/get-theme-attribute :alert-primary-bgcolor)}]
    [:alert-secondary {:color (util/get-theme-attribute :alert-secondary-bgcolor)
                       :background-color (util/get-theme-attribute :alert-secondary-bgcolor)}]
-   [:alert-light {:color (util/get-theme-attribute :alert-light-bgcolor)
-                  :background-color (util/get-theme-attribute :alert-light-bgcolor)}]
-   [:alert-dark {:color (util/get-theme-attribute :alert-dark-bgcolor)
-                 :background-color (util/get-theme-attribute :alert-dark-bgcolor)}]
-   [:.alert-info
-    (s/descendant :.state-info :.phases :.phase.completed)
-    {:color (util/get-theme-attribute :info-color)
-     :background-color (util/get-theme-attribute :info-bgcolor)}]
    [:.alert-success
     (s/descendant :.state-approved :.phases :.phase.completed)
     {:color (util/get-theme-attribute :success-color)
      :background-color (util/get-theme-attribute :success-bgcolor)}]
-   [:.alert-warning {:color (util/get-theme-attribute :warning-color)
-                     :background-color (util/get-theme-attribute :warning-bgcolor)}]
    [:.alert-danger
     :.state-rejected
     (s/descendant :.state-rejected :.phases :.phase.completed)
     {:color (util/get-theme-attribute :danger-color)
      :background-color (util/get-theme-attribute :danger-bgcolor)}]
+   [:.alert-warning {:color (util/get-theme-attribute :warning-color)
+                     :background-color (util/get-theme-attribute :warning-bgcolor)}]
+   [:.alert-info
+    (s/descendant :.state-info :.phases :.phase.completed)
+    {:color (util/get-theme-attribute :info-color)
+     :background-color (util/get-theme-attribute :info-bgcolor)}]
+   [:alert-light {:color (util/get-theme-attribute :alert-light-bgcolor)
+                  :background-color (util/get-theme-attribute :alert-light-bgcolor)}]
+   [:alert-dark {:color (util/get-theme-attribute :alert-dark-bgcolor)
+                 :background-color (util/get-theme-attribute :alert-dark-bgcolor)}]
    [:.nav-link
     :.btn-link
     (s/descendant :.nav-link :a)
