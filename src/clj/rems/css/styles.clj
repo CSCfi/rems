@@ -272,6 +272,28 @@
                      :color "#ccc"}
                     [:&:hover {:color (util/get-theme-attribute :color4)
                                :background-color "#eee"}]]]
+
+   [:text-primary {:color (util/get-theme-attribute :alert-primary-color)}]
+   [:text-secondary {:color (util/get-theme-attribute :alert-secondary-color)}]
+   [:text-success {:color (util/get-theme-attribute :alert-success-color)}]
+   [:text-danger {:color (util/get-theme-attribute :alert-danger-color)}]
+   [:text-warning {:color (util/get-theme-attribute :alert-warning-color)}]
+   [:text-info {:color (util/get-theme-attribute :alert-info-color)}]
+   [:text-light {:color (util/get-theme-attribute :alert-light-color)}]
+   [:text-dark {:color (util/get-theme-attribute :alert-dark-color)}]
+   [:text-muted {:color (util/get-theme-attribute :alert-muted-color)}]
+   [:text-white {:color (util/get-theme-attribute :alert-white-color)}]
+
+   [:bg-primary {:color (util/get-theme-attribute :alert-primary-bgcolor)}]
+   [:bg-secondary {:color (util/get-theme-attribute :alert-secondary-bgcolor)}]
+   [:bg-success {:color (util/get-theme-attribute :alert-success-bgcolor)}]
+   [:bg-danger {:color (util/get-theme-attribute :alert-danger-bgcolor)}]
+   [:bg-warning {:color (util/get-theme-attribute :alert-warning-bgcolor)}]
+   [:bg-info {:color (util/get-theme-attribute :alert-info-bgcolor)}]
+   [:bg-light {:color (util/get-theme-attribute :alert-light-bgcolor)}]
+   [:bg-dark {:color (util/get-theme-attribute :alert-dark-bgcolor)}]
+   [:bg-white {:color (util/get-theme-attribute :alert-white-bgcolor)}]
+
    [:alert-primary {:color (util/get-theme-attribute :alert-primary-bgcolor)
                     :background-color (util/get-theme-attribute :alert-primary-bgcolor)}]
    [:alert-secondary {:color (util/get-theme-attribute :alert-secondary-bgcolor)
