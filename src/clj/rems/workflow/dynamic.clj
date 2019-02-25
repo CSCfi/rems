@@ -87,12 +87,14 @@
 (s/defschema DecidedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/decided)
+         :application/request-id s/Uuid
          :application/decision (s/enum :approved :rejected)
          :application/comment s/Str))
 (s/defschema DecisionRequestedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/decision-requested)
-         :application/decider s/Str
+         :application/request-id s/Uuid
+         :application/deciders [s/Str]
          :application/comment s/Str))
 (s/defschema DraftSavedEvent
   (assoc EventBase
@@ -280,7 +282,7 @@
 (defmethod calculate-permissions :application.event/decision-requested
   [application event]
   (-> application
-      (permissions/give-role-to-users :decider [(:application/decider event)])))
+      (permissions/give-role-to-users :decider (:application/deciders event))))
 
 (defmethod calculate-permissions :application.event/decided
   [application event]
@@ -336,7 +338,7 @@
                                                         :event/actor "applicant"}
                                                        {:event/type :application.event/decision-requested
                                                         :event/actor "handler"
-                                                        :application/decider "decider"}])
+                                                        :application/deciders ["decider"]}])
           decided (reduce calculate-permissions requested [{:event/type :application.event/decided
                                                             :event/actor "decider"}])]
       (is (= #{:see-everything ::decide}
@@ -382,6 +384,7 @@
   (assoc application
          :state ::submitted
          :commenters #{}
+         :deciders #{}
          :members [{:userid (:event/actor event)}]
          :previous-submitted-form-contents (:submitted-form-contents application)
          :submitted-form-contents (:form-contents application)))
@@ -404,20 +407,25 @@
 
 (defmethod apply-event [:application.event/decision-requested :workflow/dynamic]
   [application _workflow event]
-  (assoc application :decider (:application/decider event)))
+  (-> application
+      (update :deciders into (:application/deciders event))
+      (update ::latest-decision-request-by-user merge (zipmap (:application/deciders event)
+                                                              (repeat (:application/request-id event))))))
 
 (defmethod apply-event [:application.event/decided :workflow/dynamic]
   [application _workflow event]
+  ;; we don't store the decisions in the state, they're available via
+  ;; the event list
   (-> application
-      (assoc :decision (:application/decision event))
-      (dissoc :decider)))
+      (update :deciders disj (:event/actor event))
+      (update ::latest-decision-request-by-user dissoc (:event/actor event))))
 
 (defmethod apply-event [:application.event/comment-requested :workflow/dynamic]
   [application _workflow event]
   (-> application
       (update :commenters into (:application/commenters event))
       (update ::latest-comment-request-by-user merge (zipmap (:application/commenters event)
-                                                            (repeat (:application/request-id event))))))
+                                                             (repeat (:application/request-id event))))))
 
 (defmethod apply-event [:application.event/commented :workflow/dynamic]
   [application _workflow event]
@@ -450,7 +458,7 @@
           events))
 
 (defn clean-internal-state [application]
-  (dissoc application ::latest-comment-request-by-user))
+  (dissoc application ::latest-comment-request-by-user ::latest-decision-request-by-user))
 
 ;;; Command handlers
 
@@ -471,6 +479,11 @@
   (cond
     (not (:valid-user? injections)) {:errors [{:type :missing-injection :injection :valid-user?}]}
     (not ((:valid-user? injections) user)) {:errors [{:type :t.form.validation/invalid-user :userid user}]}))
+
+(defn- invalid-users-errors
+  "Checks the given users for validity and merges the errors"
+  [user-ids injections]
+  (apply merge-with into (keep (partial valid-user-error injections) user-ids)))
 
 (defn- validation-error
   [injections application-id]
@@ -515,29 +528,33 @@
   (ok {:event/type :application.event/closed
        :application/comment (:comment cmd)}))
 
-(defmethod command-handler ::request-decision
-  [cmd _application injections]
-  (or (valid-user-error injections (:decider cmd))
-      (ok {:event/type :application.event/decision-requested
-           :application/decider (:decider cmd)
-           :application/comment (:comment cmd)})))
-
-(defmethod command-handler ::decide
-  [cmd _application _injections]
-  (or (when-not (contains? #{:approved :rejected} (:decision cmd))
-        {:errors [{:type :invalid-decision :decision (:decision cmd)}]})
-      (ok {:event/type :application.event/decided
-           :application/decision (:decision cmd)
-           :application/comment (:comment cmd)})))
-
-(defn- invalid-users-errors
-  "Checks the given users for validity and merges the errors"
-  [user-ids injections]
-  (apply merge-with into (keep (partial valid-user-error injections) user-ids)))
-
 (defn- must-not-be-empty [cmd key]
   (when-not (seq (get cmd key))
     {:errors [{:type :must-not-be-empty :key key}]}))
+
+(defmethod command-handler ::request-decision
+  [cmd _application injections]
+  (or (must-not-be-empty cmd :deciders)
+      (invalid-users-errors (:deciders cmd) injections)
+      (ok {:event/type :application.event/decision-requested
+           :application/request-id (java.util.UUID/randomUUID)
+           :application/deciders (:deciders cmd)
+           :application/comment (:comment cmd)})))
+
+(defn- actor-is-not-decider-error [application cmd]
+  (when-not (contains? (:deciders application) (:actor cmd))
+    {:errors [{:type :forbidden}]}))
+
+(defmethod command-handler ::decide
+  [cmd application _injections]
+  (or (actor-is-not-decider-error application cmd)
+      (when-not (contains? #{:approved :rejected} (:decision cmd))
+       {:errors [{:type :invalid-decision :decision (:decision cmd)}]})
+      (let [last-request-for-actor (get-in application [::latest-decision-request-by-user (:actor cmd)])]
+        (ok {:event/type :application.event/decided
+             :application/request-id last-request-for-actor
+             :application/decision (:decision cmd)
+             :application/comment (:comment cmd)}))))
 
 (defmethod command-handler ::request-comment
   [cmd _application injections]
@@ -815,12 +832,12 @@
         injections {:valid-user? #{"deity"}}]
     (testing "required :valid-user? injection"
       (is (= {:errors [{:type :missing-injection :injection :valid-user?}]}
-             (handle-command {:actor "assistant" :decider "deity" :type ::request-decision}
+             (handle-command {:actor "assistant" :deciders ["deity"] :type ::request-decision}
                              application
                              {}))))
     (testing "decider must be a valid user"
       (is (= {:errors [{:type :t.form.validation/invalid-user :userid "deity2"}]}
-             (handle-command {:actor "assistant" :decider "deity2" :type ::request-decision}
+             (handle-command {:actor "assistant" :deciders ["deity2"] :type ::request-decision}
                              application
                              injections))))
     (testing "deciding before ::request-decision should fail"
@@ -828,9 +845,9 @@
              (handle-command {:actor "deity" :decision :approved :type ::decide}
                              application
                              injections))))
-    (let [requested (apply-command application {:actor "assistant" :decider "deity" :type ::request-decision} injections)]
+    (let [requested (apply-command application {:actor "assistant" :deciders ["deity"] :type ::request-decision} injections)]
       (testing "request decision succesfully"
-        (is (= {:decider "deity"} (select-keys requested [:decider :decision]))))
+        (is (= #{"deity"} (:deciders requested))))
       (testing "only the requested user can decide"
         (is (= {:errors [{:type :forbidden}]}
                (handle-command {:actor "deity2" :decision :approved :type ::decide}
@@ -838,7 +855,7 @@
                                injections))))
       (let [approved (apply-command requested {:actor "deity" :decision :approved :type ::decide} injections)]
         (testing "succesfully approved"
-          (is (= {:decision :approved} (select-keys approved [:decider :decision]))))
+          (is (= #{} (:deciders approved))))
         (testing "cannot approve twice"
           (is (= {:errors [{:type :forbidden}]}
                  (handle-command {:actor "deity" :decision :approved :type ::decide}
@@ -846,7 +863,7 @@
                                  injections)))))
       (let [rejected (apply-command requested {:actor "deity" :decision :rejected :type ::decide} injections)]
         (testing "successfully rejected"
-          (is (= {:decision :rejected} (select-keys rejected [:decider :decision]))))
+          (is (= #{} (:deciders rejected))))
         (testing "can not reject twice"
           (is (= {:errors [{:type :forbidden}]}
                  (handle-command {:actor "deity" :decision :rejected :type ::decide}
