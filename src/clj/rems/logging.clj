@@ -4,11 +4,11 @@
 
 (defn with-mdc* [m f]
   (let [m (->> m
-               (map (fn [[key val]]
-                      [(if (keyword? key)
-                         (name key)
-                         key)
-                       (str val)]))
+               (map (fn [[k v]]
+                      [(if (keyword? k)
+                         (name k)
+                         k)
+                       (str v)]))
                (into {}))]
     (try
       (doseq [[key val] m]
