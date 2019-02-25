@@ -3,7 +3,7 @@
 -- - Get catalogue items
 -- - :items vector of item ids
 -- - :resource resource id to fetch items for
-SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.start, ci.endt, ci.enabled, ci.archived
+SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.start, ci.endt as "end", ci.enabled, ci.archived
 , (case when ci.enabled = true then 'enabled' else 'disabled' end) as state -- TODO: remove state
 , res.id AS "resource-id"
 /*~ (when (:expand-names? params) */
@@ -27,7 +27,7 @@ WHERE 1=1
 
 
 -- :name get-catalogue-item :? :1
-SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.start, ci.endt, ci.enabled, ci.archived
+SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.start, ci.endt as "end", ci.enabled, ci.archived
 , (case when ci.enabled = true then 'enabled' else 'disabled' end) as state -- TODO: remove state
 , res.id AS "resource-id"
 , wf.title AS "workflow-name"

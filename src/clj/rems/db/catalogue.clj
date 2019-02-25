@@ -22,10 +22,7 @@
   "Associates localisations into a catalogue item from
   the preloaded state."
   [item]
-  (-> item
-      (assoc :localizations ((cached :localizations) (:id item))
-             :end (:endt item))
-      (dissoc :endt)))
+  (assoc item :localizations ((cached :localizations) (:id item))))
 
 (defn get-localized-catalogue-items
   ([]
