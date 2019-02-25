@@ -11,13 +11,13 @@
                        (str v)]))
                (into {}))]
     (try
-      (doseq [[key val] m]
-        (when-not (empty? val)
-          (MDC/put key val)))
+      (doseq [[k v] m]
+        (when (seq v)
+          (MDC/put k v)))
       (f)
       (finally
-        (doseq [key (keys m)]
-          (MDC/remove key))))))
+        (doseq [k (keys m)]
+          (MDC/remove k))))))
 
 (defmacro with-mdc
   "Adds a map of values to SLF4J's MDC for logging context."
