@@ -1,10 +1,9 @@
 (ns rems.json
   (:require [cognitect.transit :as transit]
             [cuerdas.core :refer [numeric? parse-number]]
+            [clojure.test :refer [deftest is testing]]
             [jsonista.core :as j]
-            [muuntaja.core :as muuntaja]
-            [muuntaja.format.json :as json-format]
-            [muuntaja.format.transit :as transit-format])
+            [muuntaja.core :as muuntaja])
   (:import [org.joda.time DateTime ReadableInstant]
            [com.fasterxml.jackson.datatype.joda JodaModule]))
 
@@ -36,3 +35,25 @@
 
 (defn parse-string [json]
   (j/read-value json mapper))
+
+(deftest test-muuntaja
+  (let [format "application/json"]
+    (testing format
+      (testing "encoding"
+        (is (= "{\"date-time\":\"2000-01-01T10:00:00.000Z\"}"
+               (slurp (muuntaja/encode muuntaja format {:date-time (DateTime. 2000 1 1 12 0)})))))
+
+      ;; TODO: decoding dates requires coercion
+      #_(testing "decoding"
+          (is (= {:date-time (.toDate (DateTime. 2000 1 1 12 0))}
+                 (muuntaja/decode muuntaja format "{\"date-time\":\"2000-01-01T10:00:00.000Z\"}"))))))
+
+  (let [format "application/transit+json"]
+    (testing format
+      (testing "encoding"
+        (is (= "[\"^ \",\"~:date-time\",\"~m946720800000\"]"
+               (slurp (muuntaja/encode muuntaja format {:date-time (DateTime. 2000 1 1 12 0)})))))
+
+      (testing "decoding")
+      (is (= {:date-time (.toDate (DateTime. 2000 1 1 12 0))}
+             (muuntaja/decode muuntaja format "[\"^ \",\"~:date-time\",\"~m946720800000\"]"))))))
