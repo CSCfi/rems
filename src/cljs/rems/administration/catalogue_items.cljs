@@ -32,7 +32,8 @@
 
 (defn- update-catalogue-item [[id state]]
   (put! "/api/catalogue-items/update"
-        {:params {:id id :state state}
+        {:params {:id id
+                  :enabled (= "enabled" state)}
          :handler #(rf/dispatch [::enter-page])}))
 
 (rf/reg-fx ::update-catalogue-item update-catalogue-item)
