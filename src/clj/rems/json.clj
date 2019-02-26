@@ -16,22 +16,11 @@
 
 (def muuntaja
   (muuntaja/create
-   (update
-    muuntaja/default-options
-    :formats
-    merge
-    {"application/json"
-     json-format/format
-
-     "application/transit+json"
-     {:decoder [(partial transit-format/decoder :json)]
-      :encoder [#(transit-format/encoder
-                  :json
-                  (merge
-                   %
-                   {:handlers {DateTime joda-time-writer}}))]}})))
-
-
+   (-> muuntaja/default-options
+       (assoc-in [:formats "application/json" :encoder-opts :modules] [(JodaModule.)])
+       (assoc-in [:formats "application/transit+json"]
+                 {:decoder [(partial transit-format/decoder :json)]
+                  :encoder [#(transit-format/encoder :json (merge % {:handlers {DateTime joda-time-writer}}))]}))))
 
 ;; Sometimes we have ints as keys in clj maps, which are stringified in JSON
 (defn- str->keyword-or-number [str]
