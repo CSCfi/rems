@@ -53,3 +53,12 @@
     (let [x {:foo 2}]
       (is (= "2/" (andstr (:foo x) "/")))
       (is (= "(2)" (andstr "(" (:foo x) ")"))))))
+
+(defn deep-merge [a & maps]
+  (if (map? a)
+    (apply merge-with deep-merge a maps)
+    (apply merge-with deep-merge maps)))
+
+(deftest test-deep-merge
+  (is (= {:a {:b {:c 100 :d 2}}}
+         (deep-merge {:a {:b {:c 1 :d 2}}} {:a {:b {:c 100}}}))))
