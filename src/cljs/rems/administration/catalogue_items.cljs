@@ -30,10 +30,9 @@
 (rf/reg-sub ::catalogue (fn [db _] (::catalogue db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
-(defn- update-catalogue-item [{:keys [id enabled]}]
+(defn- update-catalogue-item [item]
   (put! "/api/catalogue-items/update"
-        {:params {:id id
-                  :enabled enabled}
+        {:params (select-keys item [:id :enabled])
          :handler #(rf/dispatch [::enter-page])}))
 
 (rf/reg-fx ::update-catalogue-item update-catalogue-item)
