@@ -5,7 +5,7 @@
             [rems.application-util :refer [editable?]]
             [rems.atoms :refer [external-link]]
             [rems.cart :as cart]
-            [rems.catalogue-util :refer [disabled-catalogue-item? get-catalogue-item-title urn-catalogue-item-link urn-catalogue-item?]]
+            [rems.catalogue-util :refer [get-catalogue-item-title urn-catalogue-item-link urn-catalogue-item?]]
             [rems.guide-functions]
             [rems.roles :as roles]
             [rems.spinner :as spinner]
@@ -91,7 +91,7 @@
    (merge {:column-definitions (catalogue-columns language config)
            :visible-columns [:name :commands]
            :id-function :id
-           :items (filter (complement disabled-catalogue-item?) items)
+           :items (filter :enabled items)
            :class "catalogue"}
           (select-keys [:sorting :filtering] params))])
 

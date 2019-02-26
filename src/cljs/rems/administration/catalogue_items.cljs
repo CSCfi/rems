@@ -2,7 +2,7 @@
   (:require [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.atoms :refer [external-link readonly-checkbox]]
-            [rems.catalogue-util :refer [get-catalogue-item-title disabled-catalogue-item?]]
+            [rems.catalogue-util :refer [get-catalogue-item-title]]
             [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.text :refer [localize-time text]]
@@ -76,10 +76,10 @@
     :on-click #(rf/dispatch [::update-catalogue-item (:id item) "enabled"])}
    (text :t.administration/enable)])
 
-(defn- toggle-state-button [item]
-  (if (disabled-catalogue-item? item)
-    [enable-button item]
-    [disable-button item]))
+(defn- toggle-enabled-button [item]
+  (if (:enabled item)
+    [disable-button item]
+    [enable-button item]))
 
 (defn- catalogue-columns [language]
   {:name {:header #(text :t.catalogue/header)
@@ -107,10 +107,10 @@
    :end {:header #(text :t.administration/end)
          :value (comp localize-time :end)}
    :active {:header #(text :t.administration/active)
-            :value (comp readonly-checkbox not disabled-catalogue-item?)}
+            :value (comp readonly-checkbox :enabled)}
    :commands {:values (fn [item]
                         [[to-catalogue-item (:id item)]
-                         [toggle-state-button item]])
+                         [toggle-enabled-button item]])
               :sortable? false
               :filterable? false}})
 
