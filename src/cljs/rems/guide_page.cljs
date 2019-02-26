@@ -41,7 +41,10 @@
    [:div.alert.alert-warning "Warning level message"]
    [:div.alert.alert-info "Info level message"]
    [:div.alert.alert-light "Light message"]
-   [:div.alert.alert-dark "Dark message"]
+   [:div.alert.alert-dark "Dark message"]])
+
+(defn text-and-background []
+  [:div
    [:div.bg-primary "Primary background"]
    [:div.bg-secondary "Secondary background"]
    [:div.bg-success "Success background"]
@@ -80,6 +83,7 @@
     [:h2 "Colors"]
     (example "Brand colors" [color-boxes])
     (example "Alerts" [alerts])
+    (example "Text and background colors" [text-and-background])
 
     [:h2 "Buttons"]
     (example "Button" [buttons])
