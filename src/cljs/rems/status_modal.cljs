@@ -61,15 +61,17 @@
                            :shade? shade?}])))
 
 (defn set-pending! [& [opts]]
-  (rf/dispatch [::merge-state (-> opts
-                                  (assoc :open? true)
-                                  (dissoc :result))]))
+  (rf/dispatch [::merge-state (deep-merge {:open? true
+                                           :result nil}
+                                          opts)]))
 (defn set-success! [opts]
-  (rf/dispatch [::merge-state (deep-merge opts {:open? true
-                                                :result {:success? true}})]))
+  (rf/dispatch [::merge-state (deep-merge {:open? true
+                                           :result {:success? true}}
+                                          opts)]))
 (defn set-error! [opts]
-  (rf/dispatch [::merge-state (deep-merge opts {:open? true
-                                                :result {:success? false}})]))
+  (rf/dispatch [::merge-state (deep-merge {:open? true
+                                           :result {:success? false}}
+                                          opts)]))
 
 (defn guide
   []
