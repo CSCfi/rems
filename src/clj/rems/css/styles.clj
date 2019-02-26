@@ -262,7 +262,7 @@
      :background-color "#aaa"
      :border-color "#aaa"}]
    [:.button-min-width {:min-width (u/rem 5)}]
-   [:.icon-link {:color "#6c757d" ; same colors as .btn-secondary
+   [:.icon-link {:color "#6c757d"      ; same colors as .btn-secondary
                  :cursor "pointer"}
     [:&:hover {:color "#5a6268"}]]
    [:.modal--title [:.link
@@ -291,7 +291,7 @@
     :.btn-link
     (s/descendant :.nav-link :a)
     {:color (util/get-theme-attribute :nav-color :link-color :color3)
-     :border 0}] ;for button links
+     :border 0}] ; for button links
    [:.navbar
     [:.nav-link :.btn-link
      {:background-color :inherit}]]
