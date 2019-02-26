@@ -1,13 +1,10 @@
 (ns rems.db.applications
   "Query functions for forms and applications."
-  (:require [clj-time.coerce :as time-coerce]
-            [clj-time.core :as time]
+  (:require [clj-time.core :as time]
             [clj-time.format :as time-format]
             [clojure.set :refer [difference union]]
             [clojure.test :refer [deftest is]]
             [cprop.tools :refer [merge-maps]]
-            [cuerdas.core :refer [numeric? parse-number]]
-            [medley.core :refer [map-keys]]
             [rems.application-util :refer [editable?]]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.context :as context]
@@ -23,7 +20,7 @@
             [rems.form-validation :as form-validation]
             [rems.json :as json]
             [rems.permissions :as permissions]
-            [rems.util :refer [getx get-username update-present]]
+            [rems.util :refer [get-username]]
             [rems.workflow.dynamic :as dynamic]
             [schema-tools.core :as st]
             [schema.coerce :as coerce]
