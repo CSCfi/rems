@@ -34,10 +34,31 @@
 
 (defn alerts []
   [:div
+   [:div.alert.alert-primary "Primary level message"]
+   [:div.alert.alert-secondary "Secondary level message"]
    [:div.alert.alert-success "Success level message"]
-   [:div.alert.alert-info "Info level message"]
+   [:div.alert.alert-danger "Danger level message"]
    [:div.alert.alert-warning "Warning level message"]
-   [:div.alert.alert-danger "Danger level message"]])
+   [:div.alert.alert-info "Info level message"]
+   [:div.alert.alert-light "Light message"]
+   [:div.alert.alert-dark "Dark message"]
+   [:div.bg-primary "Primary background"]
+   [:div.bg-secondary "Secondary background"]
+   [:div.bg-success "Success background"]
+   [:div.bg-danger "Danger background"]
+   [:div.bg-warning "Warning background"]
+   [:div.bg-info "Info background"]
+   [:div.text-primary "Primary text"]
+   [:div.text-secondary "Secondary text"]
+   [:div.text-success "Success text"]
+   [:div.text-danger "Danger text"]
+   [:div.text-warning "Warning text"]
+   [:div.text-info "Info text"]
+   [:div.text-dark.bg-white "Dark text and white background"]
+   [:div.text-dark.bg-light "Dark text and light background"]
+   [:div.text-light.bg-dark "Light text and dark background"]
+   [:div.text-muted.bg-dark "Muted text and dark background"]
+   [:div.text-white.bg-dark "White text and dark background"]])
 
 (defn buttons []
   [:div {:style {:display :flex :flex-direction :row :flex-wrap :wrap}}
@@ -48,7 +69,8 @@
    [:div.btn.btn-light "Light button"]
    [:div.btn.btn-dark "Dark button"]
    [:div.btn.btn-warning "Warning button"]
-   [:div.btn.btn-danger "Danger button"]])
+   [:div.btn.btn-danger "Danger button"]
+   [:div.btn.btn-link "Link button"]])
 
 (defn guide-page []
   [:div.container
