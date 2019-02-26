@@ -13,8 +13,10 @@
   (let [items (->> (catalogue/get-localized-catalogue-items {:resource resource})
                    (filter :enabled))]
     (cond
-      (= 0 (count items)) (not-found "Resource not found")
-      (< 1 (count items)) (not-found "Resource ID is not unique")
+      (= 0 (count items)) (-> (not-found "Resource not found")
+                              (content-type "text/plain"))
+      (< 1 (count items)) (-> (not-found "Resource ID is not unique")
+                              (content-type "text/plain"))
       :else (redirect (str "/#/application?items=" (:id (first items)))))))
 
 (defn- find-allowed-markdown-file [filename]
