@@ -296,35 +296,35 @@
 
    [:.alert-primary {:color (util/get-theme-attribute :alert-primary-color)
                      :background-color (util/get-theme-attribute :alert-primary-bgcolor)
-                     :border-color (util/get-theme-attribute :alert-primary-bordercolor)}]
+                     :border-color (util/get-theme-attribute :alert-primary-bordercolor :alert-primary-color)}]
    [:.alert-secondary {:color (util/get-theme-attribute :alert-secondary-color)
                        :background-color (util/get-theme-attribute :alert-secondary-bgcolor)
-                       :border-color (util/get-theme-attribute :alert-secondary-bordercolor)}]
+                       :border-color (util/get-theme-attribute :alert-secondary-bordercolor :alert-secondary-color)}]
    [:.alert-success
     (s/descendant :.state-approved :.phases :.phase.completed)
     {:color (util/get-theme-attribute :alert-success-color)
      :background-color (util/get-theme-attribute :alert-success-bgcolor)
-     :border-color (util/get-theme-attribute :alert-success-bordercolor)}]
+     :border-color (util/get-theme-attribute :alert-success-bordercolor :alert-success-color)}]
    [:.alert-danger
     :.state-rejected
     (s/descendant :.state-rejected :.phases :.phase.completed)
     {:color (util/get-theme-attribute :alert-danger-color)
      :background-color (util/get-theme-attribute :alert-danger-bgcolor)
-     :border-color (util/get-theme-attribute :alert-danger-bordercolor)}]
+     :border-color (util/get-theme-attribute :alert-danger-bordercolor :alert-danger-color)}]
    [:.alert-warning {:color (util/get-theme-attribute :alert-warning-color)
                      :background-color (util/get-theme-attribute :alert-warning-bgcolor)
-                     :border-color (util/get-theme-attribute :alert-warning-bordercolor)}]
+                     :border-color (util/get-theme-attribute :alert-warning-bordercolor :alert-warning-color)}]
    [:.alert-info
     (s/descendant :.state-info :.phases :.phase.completed)
     {:color (util/get-theme-attribute :alert-info-color)
      :background-color (util/get-theme-attribute :alert-info-bgcolor)
-     :border-color (util/get-theme-attribute :alert-info-bordercolor)}]
+     :border-color (util/get-theme-attribute :alert-info-bordercolor :alert-info-color)}]
    [:alert-light {:color (util/get-theme-attribute :alert-light-color)
                   :background-color (util/get-theme-attribute :alert-light-bgcolor)
-                  :border-color (util/get-theme-attribute :alert-light-bordercolor)}]
+                  :border-color (util/get-theme-attribute :alert-light-bordercolor :alert-light-color)}]
    [:alert-dark {:color (util/get-theme-attribute :alert-dark-color)
                  :background-color (util/get-theme-attribute :alert-dark-bgcolor)
-                 :border-color (util/get-theme-attribute :alert-dark-bordercolor)}]
+                 :border-color (util/get-theme-attribute :alert-dark-bordercolor :alert-dark-color)}]
    [:.nav-link
     :.btn-link
     (s/descendant :.nav-link :a)
