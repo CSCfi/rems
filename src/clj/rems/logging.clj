@@ -31,19 +31,40 @@
 (deftest test-with-mdc
   (testing "adds keys to context"
     (with-mdc {"foo" "bar"}
-      (is (= "bar" (MDC/get "foo")))))
+      (is (= "bar" (MDC/get "foo")))
+      (is (= {"foo" "bar"} (MDC/getCopyOfContextMap)))))
+
   (testing "removes keys from context afterwards"
     (with-mdc {"foo" "bar"})
-    (is (nil? (MDC/get "foo"))))
+    (is (empty? (MDC/getCopyOfContextMap)) "key is removed after clean exit")
+
+    (is (thrown? RuntimeException
+                 (with-mdc {"foo" "bar"}
+                   (throw (RuntimeException. "dummy")))))
+    (is (empty? (MDC/getCopyOfContextMap)) "key is removed after exception"))
+
+  (testing "returns the value which is returned from the sexp body"
+    (is (= "result" (with-mdc {"foo" "bar"}
+                      "result"))))
+
   (testing "can add multiple keys at once"
     (with-mdc {"foo" "one"
                "bar" "two"}
-      (is (= "one" (MDC/get "foo")))
-      (is (= "two" (MDC/get "bar"))))
-    (is (empty? (MDC/getCopyOfContextMap))))
+      (is (= {"foo" "one"
+              "bar" "two"} (MDC/getCopyOfContextMap)) "inside sexp"))
+    (is (empty? (MDC/getCopyOfContextMap)) "after sexp"))
+
+  (testing "contexts can be nested"
+    (with-mdc {"foo" "one"}
+      (with-mdc {"bar" "two"}
+        (is (= {"foo" "one"
+                "bar" "two"} (MDC/getCopyOfContextMap)) "inside nested sexp"))
+      (is (= {"foo" "one"} (MDC/getCopyOfContextMap)) "after nested sexp")))
+
   (testing "converts keyword keys to string"
     (with-mdc {:foo "bar"}
-      (is (= "bar" (MDC/get "foo")))))
+      (is (= {"foo" "bar"} (MDC/getCopyOfContextMap)))))
+
   (testing "converts non-string values to string"
     (with-mdc {"foo" :bar}
       (is (= ":bar" (MDC/get "foo"))))
@@ -51,12 +72,17 @@
       (is (= "123" (MDC/get "foo"))))
     (with-mdc {"foo" true}
       (is (= "true" (MDC/get "foo")))))
+
   (testing "ignores nil values"
     (with-mdc {"foo" nil}
-      (is (empty? (MDC/getCopyOfContextMap)))))
+      (is (nil? (MDC/get "foo")) "value is nil")
+      (is (empty? (MDC/getCopyOfContextMap)) "key is not even added to context")))
+
   (testing "ignores empty string values"
     (with-mdc {"foo" ""}
-      (is (empty? (MDC/getCopyOfContextMap)))))
+      (is (nil? (MDC/get "foo")) "value is nil")
+      (is (empty? (MDC/getCopyOfContextMap)) "key is not even added to context")))
+
   (testing "does not ignore false values"
     (with-mdc {"foo" false}
       (is (= "false" (MDC/get "foo"))))))
