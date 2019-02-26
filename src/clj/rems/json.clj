@@ -1,17 +1,17 @@
 (ns rems.json
-  (:require [cognitect.transit :as transit]
+  (:require [clojure.test :refer [deftest is testing]]
+            [cognitect.transit :as transit]
             [cuerdas.core :refer [numeric? parse-number]]
-            [clojure.test :refer [deftest is testing]]
             [jsonista.core :as j]
             [muuntaja.core :as muuntaja])
-  (:import [org.joda.time DateTime ReadableInstant]
-           [com.fasterxml.jackson.datatype.joda JodaModule]))
+  (:import [com.fasterxml.jackson.datatype.joda JodaModule]
+           [org.joda.time DateTime ReadableInstant DateTimeZone]
+           [org.joda.time.format ISODateTimeFormat]))
 
 (def joda-time-writer
   (transit/write-handler
-   "m"
-   (fn [v] (-> ^ReadableInstant v .getMillis))
-   (fn [v] (-> ^ReadableInstant v .getMillis .toString))))
+   "t"
+   (fn [v] (-> (ISODateTimeFormat/dateTime) (.print ^ReadableInstant v)))))
 
 (def muuntaja
   (muuntaja/create
@@ -40,20 +40,26 @@
   (let [format "application/json"]
     (testing format
       (testing "encoding"
+        (is (= "{\"date-time\":\"2000-01-01T12:00:00.000Z\"}"
+               (slurp (muuntaja/encode muuntaja format {:date-time (DateTime. 2000 1 1 12 0 DateTimeZone/UTC)}))))
         (is (= "{\"date-time\":\"2000-01-01T10:00:00.000Z\"}"
-               (slurp (muuntaja/encode muuntaja format {:date-time (DateTime. 2000 1 1 12 0)})))))
+               (slurp (muuntaja/encode muuntaja format {:date-time (DateTime. 2000 1 1 12 0 (DateTimeZone/forID "Europe/Helsinki"))})))))
 
-      ;; TODO: decoding dates requires coercion
-      #_(testing "decoding"
-          (is (= {:date-time (.toDate (DateTime. 2000 1 1 12 0))}
-                 (muuntaja/decode muuntaja format "{\"date-time\":\"2000-01-01T10:00:00.000Z\"}"))))))
+      (testing "decoding"
+        ;; decoding dates from JSON requires coercion, so it's passed through as just plain string
+        (is (= {:date-time "2000-01-01T10:00:00.000Z"}
+               (muuntaja/decode muuntaja format "{\"date-time\":\"2000-01-01T10:00:00.000Z\"}"))))))
 
   (let [format "application/transit+json"]
     (testing format
       (testing "encoding"
-        (is (= "[\"^ \",\"~:date-time\",\"~m946720800000\"]"
-               (slurp (muuntaja/encode muuntaja format {:date-time (DateTime. 2000 1 1 12 0)})))))
+        (is (= "[\"^ \",\"~:date-time\",\"~t2000-01-01T12:00:00.000Z\"]"
+               (slurp (muuntaja/encode muuntaja format {:date-time (DateTime. 2000 1 1 12 0 DateTimeZone/UTC)}))))
+        (is (= "[\"^ \",\"~:date-time\",\"~t2000-01-01T12:00:00.000+02:00\"]"
+               (slurp (muuntaja/encode muuntaja format {:date-time (DateTime. 2000 1 1 12 0 (DateTimeZone/forID "Europe/Helsinki"))})))))
 
-      (testing "decoding")
-      (is (= {:date-time (.toDate (DateTime. 2000 1 1 12 0))}
-             (muuntaja/decode muuntaja format "[\"^ \",\"~:date-time\",\"~m946720800000\"]"))))))
+      (testing "decoding"
+        (is (= {:date-time (.toDate (DateTime. 2000 1 1 12 0 DateTimeZone/UTC))}
+               (muuntaja/decode muuntaja format "[\"^ \",\"~:date-time\",\"~t2000-01-01T12:00:00.000Z\"]")))
+        (is (= {:date-time (.toDate (DateTime. 2000 1 1 12 0 DateTimeZone/UTC))}
+               (muuntaja/decode muuntaja format "[\"^ \",\"~:date-time\",\"~m946728000000\"]")))))))
