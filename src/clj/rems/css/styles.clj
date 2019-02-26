@@ -584,7 +584,7 @@
      [:a.autocomplete__remove-item-button {:margin-left (u/px 5)
                                            :padding (u/rem 0.5)
                                            :padding-right 0
-                                           :color (util/get-theme-attribute :danger-color)
+                                           :color (util/get-theme-attribute :alert-danger-bgcolor)
                                            :font-weight :bold}]
      [:input {:width (u/percent 100)}]]]
 
