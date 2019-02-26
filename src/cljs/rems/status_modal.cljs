@@ -57,7 +57,7 @@
                            :content content
                            :on-close (fn []
                                        (rf/dispatch [::set-state nil])
-                                       (on-close))
+                                       (when on-close (on-close)))
                            :shade? shade?}])))
 
 (defn set-pending! [& [opts]]
