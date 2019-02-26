@@ -272,51 +272,59 @@
                      :color "#ccc"}
                     [:&:hover {:color (util/get-theme-attribute :color4)
                                :background-color "#eee"}]]]
+   
+   [:.text-primary {:color (util/get-theme-attribute :text-primary)}]
+   [:.text-secondary {:color (util/get-theme-attribute :text-secondary)}]
+   [:.text-success {:color (util/get-theme-attribute :text-success)}]
+   [:.text-danger {:color (util/get-theme-attribute :text-danger)}]
+   [:.text-warning {:color (util/get-theme-attribute :text-warning)}]
+   [:.text-info {:color (util/get-theme-attribute :text-info)}]
+   [:.text-light {:color (util/get-theme-attribute :text-light)}]
+   [:.text-dark {:color (util/get-theme-attribute :text-dark)}]
+   [:.text-muted {:color (util/get-theme-attribute :text-muted)}]
+   [:.text-white {:color (util/get-theme-attribute :text-white)}]
 
-   [:text-primary {:color (util/get-theme-attribute :text-primary :alert-primary-color)}]
-   [:text-secondary {:color (util/get-theme-attribute :text-secondary :alert-secondary-color)}]
-   [:text-success {:color (util/get-theme-attribute :text-success :alert-success-color)}]
-   [:text-danger {:color (util/get-theme-attribute :text-danger :alert-danger-color)}]
-   [:text-warning {:color (util/get-theme-attribute :text-warning :alert-warning-color)}]
-   [:text-info {:color (util/get-theme-attribute :text-info :alert-info-color)}]
-   [:text-light {:color (util/get-theme-attribute :text-light :alert-light-color)}]
-   [:text-dark {:color (util/get-theme-attribute :text-dark :alert-dark-color)}]
-   [:text-muted {:color (util/get-theme-attribute :text-muted :alert-muted-color)}]
-   [:text-white {:color (util/get-theme-attribute :text-white :alert-white-color)}]
+   [:.bg-primary {:background-color (util/get-theme-attribute :bg-primary)}]
+   [:.bg-secondary {:background-color (util/get-theme-attribute :bg-secondary)}]
+   [:.bg-success {:background-color (util/get-theme-attribute :bg-success)}]
+   [:.bg-danger {:background-color (util/get-theme-attribute :bg-danger)}]
+   [:.bg-warning {:background-color (util/get-theme-attribute :bg-warning)}]
+   [:.bg-info {:background-color (util/get-theme-attribute :bg-info)}]
+   [:.bg-light {:background-color (util/get-theme-attribute :bg-light)}]
+   [:.bg-dark {:background-color (util/get-theme-attribute :bg-dark)}]
+   [:.bg-white {:background-color (util/get-theme-attribute :bg-white)}]
 
-   [:bg-primary {:color (util/get-theme-attribute :bg-primary :alert-primary-bgcolor)}]
-   [:bg-secondary {:color (util/get-theme-attribute :bg-secondary :alert-secondary-bgcolor)}]
-   [:bg-success {:color (util/get-theme-attribute :bg-success :alert-success-bgcolor)}]
-   [:bg-danger {:color (util/get-theme-attribute :bg-danger :alert-danger-bgcolor)}]
-   [:bg-warning {:color (util/get-theme-attribute :bg-warning :alert-warning-bgcolor)}]
-   [:bg-info {:color (util/get-theme-attribute :bg-info :alert-info-bgcolor)}]
-   [:bg-light {:color (util/get-theme-attribute :bg-light :alert-light-bgcolor)}]
-   [:bg-dark {:color (util/get-theme-attribute :bg-dark :alert-dark-bgcolor)}]
-   [:bg-white {:color (util/get-theme-attribute :bg-white :alert-white-bgcolor)}]
-
-   [:alert-primary {:color (util/get-theme-attribute :alert-primary-bgcolor)
-                    :background-color (util/get-theme-attribute :alert-primary-bgcolor)}]
-   [:alert-secondary {:color (util/get-theme-attribute :alert-secondary-bgcolor)
-                      :background-color (util/get-theme-attribute :alert-secondary-bgcolor)}]
+   [:.alert-primary {:color (util/get-theme-attribute :alert-primary-color)
+                     :background-color (util/get-theme-attribute :alert-primary-bgcolor)
+                     :border-color (util/get-theme-attribute :alert-primary-bordercolor)}]
+   [:.alert-secondary {:color (util/get-theme-attribute :alert-secondary-color)
+                       :background-color (util/get-theme-attribute :alert-secondary-bgcolor)
+                       :border-color (util/get-theme-attribute :alert-secondary-bordercolor)}]
    [:.alert-success
     (s/descendant :.state-approved :.phases :.phase.completed)
-    {:color (util/get-theme-attribute :success-color)
-     :background-color (util/get-theme-attribute :success-bgcolor)}]
+    {:color (util/get-theme-attribute :alert-success-color)
+     :background-color (util/get-theme-attribute :alert-success-bgcolor)
+     :border-color (util/get-theme-attribute :alert-success-bordercolor)}]
    [:.alert-danger
     :.state-rejected
     (s/descendant :.state-rejected :.phases :.phase.completed)
-    {:color (util/get-theme-attribute :danger-color)
-     :background-color (util/get-theme-attribute :danger-bgcolor)}]
-   [:.alert-warning {:color (util/get-theme-attribute :warning-color)
-                     :background-color (util/get-theme-attribute :warning-bgcolor)}]
+    {:color (util/get-theme-attribute :alert-danger-color)
+     :background-color (util/get-theme-attribute :alert-danger-bgcolor)
+     :border-color (util/get-theme-attribute :alert-danger-bordercolor)}]
+   [:.alert-warning {:color (util/get-theme-attribute :alert-warning-color)
+                     :background-color (util/get-theme-attribute :alert-warning-bgcolor)
+                     :border-color (util/get-theme-attribute :alert-warning-bordercolor)}]
    [:.alert-info
     (s/descendant :.state-info :.phases :.phase.completed)
-    {:color (util/get-theme-attribute :info-color)
-     :background-color (util/get-theme-attribute :info-bgcolor)}]
-   [:alert-light {:color (util/get-theme-attribute :alert-light-bgcolor)
-                  :background-color (util/get-theme-attribute :alert-light-bgcolor)}]
-   [:alert-dark {:color (util/get-theme-attribute :alert-dark-bgcolor)
-                 :background-color (util/get-theme-attribute :alert-dark-bgcolor)}]
+    {:color (util/get-theme-attribute :alert-info-color)
+     :background-color (util/get-theme-attribute :alert-info-bgcolor)
+     :border-color (util/get-theme-attribute :alert-info-bordercolor)}]
+   [:alert-light {:color (util/get-theme-attribute :alert-light-color)
+                  :background-color (util/get-theme-attribute :alert-light-bgcolor)
+                  :border-color (util/get-theme-attribute :alert-light-bordercolor)}]
+   [:alert-dark {:color (util/get-theme-attribute :alert-dark-color)
+                 :background-color (util/get-theme-attribute :alert-dark-bgcolor)
+                 :border-color (util/get-theme-attribute :alert-dark-bordercolor)}]
    [:.nav-link
     :.btn-link
     (s/descendant :.nav-link :a)
