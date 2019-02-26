@@ -70,10 +70,7 @@
       :body [command UpdateCatalogueItemCommand]
       :return SuccessResponse
       (db/set-catalogue-item-state! {:item (:id command)
-                                     :enabled (:enabled command)
-                                     :state (if (:enabled command)
-                                              "enabled"
-                                              "disabled")})
+                                     :enabled (:enabled command)})
       (ok {:success true}))
 
     (POST "/create-localization" []

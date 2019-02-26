@@ -28,7 +28,7 @@
                                             :wfid 1}))))
 
 (defn disable-catalogue-item [catid]
-  (db/set-catalogue-item-state! {:item catid :enabled false :state "disabled"}))
+  (db/set-catalogue-item-state! {:item catid :enabled false}))
 
 (deftest redirect-to-new-application-test
   (testing "redirects to new application page for catalogue item matching the resource ID"
