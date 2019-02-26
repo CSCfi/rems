@@ -1,107 +1,107 @@
 (ns rems.status-modal
+  "Component for showing a status modal dialog.
+
+  There should only be one `status-modal` at the root of the component hieararchy.
+
+  Use the functions `set-pending!`, `set-success!` and `set-error!` to control its state.
+  See `rems.status-modal/component` for values to use in the calls."
   (:require [re-frame.core :as rf]
             [reagent.core :as r]
+            [rems.common-util :refer [deep-merge]]
             [rems.guide-functions]
             [rems.modal :as modal]
             [rems.spinner :as spinner]
             [rems.text :refer [text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
-(defn- status-widget [status error]
-  [:div {:class (when (= :failed status) "alert alert-danger")}
-   (condp contains? status
-     #{nil} ""
-     #{:pending} [spinner/big]
-     #{:saved :success} [:div [:i {:class ["fa fa-check-circle text-success"]}] (text :t.form/success)]
-     #{:failed} [:div [:i {:class "fa fa-times-circle text-danger"}]
-                 (str (text :t.form/failed)
-                      (when (:key error)
-                        (str ": " (text (:key error))))
-                      (when-let [text (:status-text error)]
-                        (str ": " text))
-                      (when-let [text (:status error)]
-                        (str " (" text ")")))])])
+(defn- status-widget [success? errors]
+  (cond
+    (and (not success?)  (not errors)) [spinner/big]
+    success? [:p [:i {:class ["fa fa-check-circle text-success"]}] (text :t.form/success)]
+    errors (into [:p [:i {:class "fa fa-times-circle text-danger"}]]
+                 (for [error errors]
+                   [:span (text :t.form/failed)
+                    (when (:key error)
+                      (str ": " (text (:key error))))
+                    (when (:type error)
+                      (str ": " (text (:type error))))
+                    (when-let [text (:status-text error)]
+                      (str ": " text))
+                    (when-let [text (:status error)]
+                      (str " (" text ")"))]))))
+
+(rf/reg-event-db ::set-state (fn [db [_ state]] (assoc db ::state state)))
+(rf/reg-event-db ::merge-state (fn [db [_ state]] (update db ::state deep-merge state)))
+(rf/reg-sub ::state (fn [db _] (::state db)))
 
 (defn status-modal
   "Modal component showing the status of an action.
 
-  `:status` - Show spinner while `:pending`. Either `:saved` or `:failed`
-            status is shown with the internal status-widget that
-            may show the `:error` contents.
-  `:description` - the title of the modal.
-  `:content` - additional content to show after the status widget.
-  `:error` - error that may contain :key, :status and :status-text
-           like translated errors or http errors
+  `:result`   - Either {:success? true} or {:error ...} {:errors ...}
+                Show spinner while neither.
+  `:title`    - title of the modal, i.e. name of the operation
+  `:content`  - additional content to show after the status widget
+  `:error`    - error that may contain `:key`, `:type`, `:status` and `:status-text`
+                like translated errors or http errors
   `:on-close` - callback is called when the modal wants to close itself"
-  [{:keys [description status error content on-close on-close-afer-error on-close-after-success]}]
-  (cond
-    (#{:saved :success} status)
-    [modal/notification {:title description
-                         :content [:div [status-widget status error] content]
-                         :on-close (or on-close-after-success on-close)
-                         :shade? true}]
+  [initial-state]
+  (let [internal-state @(rf/subscribe [::state])
+        state (deep-merge initial-state internal-state)
+        {:keys [title content result on-close shade? open?]} state
+        success? (:success? result)
+        errors (if (:error result) [(:error result)] (:errors result))
+        content [:div [status-widget success? errors] content]]
+    (when open?
+      [modal/notification {:title title
+                           :title-class (when errors "alert alert-danger")
+                           :content content
+                           :on-close (fn []
+                                       (rf/dispatch [::set-state nil])
+                                       (on-close))
+                           :shade? shade?}])))
 
-    (= :failed status)
-    [modal/notification {:title description
-                         :content [:div [status-widget status error] content]
-                         :on-close (or on-close-afer-error on-close)
-                         :shade? true}]
-
-    :default
-    [modal/notification {:title description
-                        :content [:div [status-widget status error] content]
-                        :on-close on-close
-                        :shade? true}]))
-
-(defn example-wrapper [{:keys [opened-state component]}]
-  (let [state (r/atom nil)
-        on-close #(reset! state nil)]
-    (fn [{:keys [opened-state componenent]}]
-      [:div
-       (when @state [component @state])
-       [:button.btn.btn-secondary {:on-click #(reset! state (assoc opened-state :on-close on-close))} "Open modal"]])))
-
-(defn status-modal-state-handling
-  "Returns a map of modal options, that can be used by status-modal component
-
-   The returned value is a map containing various event handlers, and most importantly,
-   a state atom under the key :state-atom."
-  [{:keys [on-success on-pending on-error on-close-after-success on-close-after-error] :as modal-options}]
-  (let [state (r/atom nil)]
-    (merge
-     modal-options
-     {:state-atom state
-      :on-pending #(do
-                     (swap! state assoc :status :pending)
-                     (when on-pending (on-pending)))
-      :on-success #(do
-                     (swap! state assoc :status :success)
-                     (when on-success (on-success)))
-      :on-error #(do
-                   (swap! state assoc :status :failed :error %)
-                   (when on-error (on-error)))
-      :on-close-after-success #(do
-                                 (reset! state nil)
-                                 (when on-close-after-success (on-close-after-success)))
-      :on-close-after-error #(do
-                               (reset! state nil)
-                               (when on-close-after-error (on-close-after-error)))})))
+(defn set-pending! [& [opts]]
+  (rf/dispatch [::merge-state (-> opts
+                                  (assoc :open? true)
+                                  (dissoc :result))]))
+(defn set-success! [opts]
+  (rf/dispatch [::merge-state (deep-merge opts {:open? true
+                                                :result {:success? true}})]))
+(defn set-error! [opts]
+  (rf/dispatch [::merge-state (deep-merge opts {:open? true
+                                                :result {:success? false}})]))
 
 (defn guide
   []
   [:div
    (component-info status-modal)
-   (example "status-modal that opens as pending"
-            [example-wrapper {:opened-state {:status :pending
-                                             :description "Pending modal"}
-                              :component status-modal}])
-   (example "status-modal that opens as saved"
-            [example-wrapper {:opened-state {:status :saved
-                                             :description "Saved modal"}
-                              :component status-modal}])
-   (example "status-modal that opens as failed"
-            [example-wrapper {:opened-state {:status :failed
-                                             :error {:status 404
-                                                     :status-text "Not found"}
-                                             :description "Failed modal"}
-                              :component status-modal}])])
+   (example "status-modal while result is pending"
+            [status-modal {:open? true
+                           :shade? false
+                           :title "Pending"
+                           :content [:p "We are experiencing unexpected slowness"]}])
+   (example "status-modal for success"
+            [status-modal {:open? true
+                           :result {:success? true}
+                           :shade? false
+                           :title "Success"
+                           :content [:p "This was a great success for all!"]}])
+   (example "status-modal for result with a single error"
+            [status-modal {:open? true
+                           :result {:error {:status 404
+                                            :status-text "Not found"}}
+                           :shade? false
+                           :title "Error"
+                           :content [:p "This did not go as planned"]}])
+   (example "status-modal for result with errors"
+            [status-modal {:open? true
+                           :result {:errors [{:type :t.form.validation/errors}]}
+                           :shade? false
+                           :title "Errors"
+                           :content [:p "You should check the errors"]}])])
+
+
+
+
+
+(defn status-modal-state-handling [& args])

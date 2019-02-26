@@ -32,6 +32,7 @@
             [rems.navbar :as nav]
             [rems.new-application :refer [new-application-page]]
             [rems.roles :as roles]
+            [rems.status-modal :as status-modal]
             [rems.text :refer [text]]
             [rems.util :refer [dispatch! fetch]]
             [secretary.core :as secretary])
@@ -231,6 +232,7 @@
         content (pages page-id)]
     [:div
      [nav/navigation-widget page-id]
+     [status-modal/status-modal]
      [logo]
      [:div.container.main-content [content]]
      [footer]]))
