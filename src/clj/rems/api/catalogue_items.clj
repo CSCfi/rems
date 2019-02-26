@@ -69,9 +69,11 @@
       :roles #{:owner}
       :body [command UpdateCatalogueItemCommand]
       :return SuccessResponse
-      (db/set-catalogue-item-state! {:item (:id command) :state (if (:enabled command)
-                                                                  "enabled"
-                                                                  "disabled")})
+      (db/set-catalogue-item-state! {:item (:id command)
+                                     :enabled (:enabled command)
+                                     :state (if (:enabled command)
+                                              "enabled"
+                                              "disabled")})
       (ok {:success true}))
 
     (POST "/create-localization" []
