@@ -30,7 +30,7 @@
 (rf/reg-sub ::catalogue (fn [db _] (::catalogue db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
-(defn- update-catalogue-item [[id state]]
+(defn- update-catalogue-item [{:keys [id state]}]
   (put! "/api/catalogue-items/update"
         {:params {:id id
                   :enabled (= "enabled" state)}
@@ -40,8 +40,8 @@
 
 (rf/reg-event-fx
  ::update-catalogue-item
- (fn [_ [_ id state]]
-   {::update-catalogue-item [id state]}))
+ (fn [_ [_ item]]
+   {::update-catalogue-item item}))
 
 (rf/reg-event-db ::set-sorting (fn [db [_ sorting]] (assoc db ::sorting sorting)))
 
@@ -68,13 +68,15 @@
 (defn- disable-button [item]
   [:button.btn.btn-secondary.button-min-width
    {:type "submit"
-    :on-click #(rf/dispatch [::update-catalogue-item (:id item) "disabled"])}
+    :on-click #(rf/dispatch [::update-catalogue-item {:id (:id item)
+                                                      :state "disabled"}])}
    (text :t.administration/disable)])
 
 (defn- enable-button [item]
   [:button.btn.btn-primary.button-min-width
    {:type "submit"
-    :on-click #(rf/dispatch [::update-catalogue-item (:id item) "enabled"])}
+    :on-click #(rf/dispatch [::update-catalogue-item {:id (:id item)
+                                                      :state "enabled"}])}
    (text :t.administration/enable)])
 
 (defn- toggle-enabled-button [item]
