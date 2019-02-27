@@ -96,6 +96,7 @@
             :withdraw "Withdraw"
             :withdraw-success "Application withdrawn"}
   :administration {:active "Active"
+                   :archive "Archive"
                    :back "Back"
                    :cancel "Cancel"
                    :catalogue-item "Catalogue item"
@@ -116,8 +117,8 @@
                    :forms "Forms"
                    :id "Id"
                    :license "License"
-                   :licenses "Licenses"
                    :license-field "License \"%1\""
+                   :licenses "Licenses"
                    :no-licenses "No licenses"
                    :organization "Organization"
                    :organization-placeholder "testorganization.org"
@@ -128,6 +129,7 @@
                    :start "Start"
                    :title "Title"
                    :type "Type"
+                   :unarchive "Unarchive"
                    :view "View"
                    :workflow "Workflow"
                    :workflows "Workflows"}

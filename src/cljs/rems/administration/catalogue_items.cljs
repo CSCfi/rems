@@ -81,6 +81,23 @@
     [disable-button item]
     [enable-button item]))
 
+(defn- archive-button [item]
+  [:button.btn.btn-secondary.button-min-width
+   {:type "button"
+    :on-click #(rf/dispatch [::update-catalogue-item (assoc item :archived true)])}
+   (text :t.administration/archive)])
+
+(defn- unarchive-button [item]
+  [:button.btn.btn-primary.button-min-width
+   {:type "button"
+    :on-click #(rf/dispatch [::update-catalogue-item (assoc item :archived false)])}
+   (text :t.administration/unarchive)])
+
+(defn- toggle-archived-button [item]
+  (if (:archived item)
+    [unarchive-button item]
+    [archive-button item]))
+
 (defn- catalogue-columns [language]
   {:name {:header #(text :t.catalogue/header)
           :value #(get-catalogue-item-title % language)}
@@ -110,7 +127,8 @@
             :value (comp readonly-checkbox :enabled)}
    :commands {:values (fn [item]
                         [[to-catalogue-item (:id item)]
-                         [toggle-enabled-button item]])
+                         [toggle-enabled-button item]
+                         [toggle-archived-button item]])
               :sortable? false
               :filterable? false}})
 
