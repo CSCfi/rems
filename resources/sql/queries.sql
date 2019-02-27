@@ -39,10 +39,9 @@ LEFT OUTER JOIN application_form form ON (ci.formid = form.id)
 WHERE ci.id = :item
 
 -- :name set-catalogue-item-state! :insert
--- :doc Set catalogue item state enabled or disabled
 UPDATE catalogue_item ci
-SET enabled = :enabled
-WHERE ci.id = :item
+SET enabled = :enabled, archived = :archived
+WHERE ci.id = :id
 
 -- :name create-catalogue-item! :insert
 -- :doc Create a single catalogue item

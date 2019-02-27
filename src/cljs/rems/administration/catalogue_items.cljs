@@ -32,7 +32,7 @@
 
 (defn- update-catalogue-item [item]
   (put! "/api/catalogue-items/update"
-        {:params (select-keys item [:id :enabled])
+        {:params (select-keys item [:id :enabled :archived])
          :handler #(rf/dispatch [::enter-page])}))
 
 (rf/reg-fx ::update-catalogue-item update-catalogue-item)
