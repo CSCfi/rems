@@ -66,16 +66,14 @@
 
 (defn- disable-button [item]
   [:button.btn.btn-secondary.button-min-width
-   {:type "submit"
-    :on-click #(rf/dispatch [::update-catalogue-item {:id (:id item)
-                                                      :enabled false}])}
+   {:type "button"
+    :on-click #(rf/dispatch [::update-catalogue-item (assoc item :enabled false)])}
    (text :t.administration/disable)])
 
 (defn- enable-button [item]
   [:button.btn.btn-primary.button-min-width
-   {:type "submit"
-    :on-click #(rf/dispatch [::update-catalogue-item {:id (:id item)
-                                                      :enabled true}])}
+   {:type "button"
+    :on-click #(rf/dispatch [::update-catalogue-item (assoc item :enabled true)])}
    (text :t.administration/enable)])
 
 (defn- toggle-enabled-button [item]
