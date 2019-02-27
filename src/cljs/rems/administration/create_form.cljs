@@ -27,11 +27,6 @@
  (fn [db _]
    (::form db)))
 
-(rf/reg-sub
- ::form-item
- (fn [db [_ item-index]]
-   (get-in db [::form :items item-index])))
-
 (rf/reg-event-db
  ::set-form-field
  (fn [db [_ keys value]]
@@ -79,6 +74,9 @@
 
 
 ;;;; form submit
+
+(defn- supports-optional? [item]
+  (not= "label" (:type item)))
 
 (defn- supports-input-prompt? [item]
   (contains? #{"text" "texta" "description"} (:type item)))
@@ -240,17 +238,11 @@
                                          {:value "multiselect", :label (text :t.create-form/type-multiselect)}
                                          {:value "date", :label (text :t.create-form/type-date)}
                                          {:value "attachment", :label (text :t.create-form/type-attachment)}
-                                         {:value "label" :label (text :t.create-form/type-label)
-                                          :on-change #(rf/dispatch [::set-form-field [:items item-index :optional] true])}]}])
+                                         {:value "label" :label (text :t.create-form/type-label)}]}])
 
 (defn- form-item-optional-checkbox [item-index]
-  (let [item @(rf/subscribe [::form-item item-index])]
-    (if (= "label" (:type item))
-      [checkbox context {:label (text :t.create-form/optional)
-                         :disabled? true}]
-
-      [checkbox context {:keys [:items item-index :optional]
-                        :label (text :t.create-form/optional)}])))
+  [checkbox context {:keys [:items item-index :optional]
+                     :label (text :t.create-form/optional)}])
 
 (defn- add-form-item-button []
   [:a
@@ -306,8 +298,9 @@
                             [remove-form-item-button item-index]]]
 
                           [form-item-title-field item-index]
-                          [form-item-optional-checkbox item-index]
                           [form-item-type-radio-group item-index]
+                          (when (supports-optional? (get-in form [:items item-index]))
+                            [form-item-optional-checkbox item-index])
                           (when (supports-input-prompt? (get-in form [:items item-index]))
                             [form-item-input-prompt-field item-index])
                           (when (supports-maxlength? (get-in form [:items item-index]))
