@@ -11,14 +11,21 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
+   {:db (assoc db ::display-archived? false)
+    :dispatch [::reload-page]}))
+
+(rf/reg-event-fx
+ ::reload-page
+ (fn [{:keys [db]}]
    {:db (assoc db ::loading? true)
-    ::fetch-catalogue nil}))
+    ::fetch-catalogue {:archived (::display-archived? db)}}))
 
-(defn- fetch-catalogue []
-  (fetch "/api/catalogue-items/" {:url-params {:expand :names}
-                                  :handler #(rf/dispatch [::fetch-catalogue-result %])}))
-
-(rf/reg-fx ::fetch-catalogue (fn [_] (fetch-catalogue)))
+(rf/reg-fx
+ ::fetch-catalogue
+ (fn [{:keys [archived]}]
+   (fetch "/api/catalogue-items/" {:url-params {:expand :names
+                                                :archived archived}
+                                   :handler #(rf/dispatch [::fetch-catalogue-result %])})))
 
 (rf/reg-event-db
  ::fetch-catalogue-result
@@ -30,10 +37,17 @@
 (rf/reg-sub ::catalogue (fn [db _] (::catalogue db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
+(rf/reg-sub ::display-archived? (fn [db _] (::display-archived? db)))
+(rf/reg-event-fx
+ ::set-display-archived?
+ (fn [{:keys [db]} [_ display-archived?]]
+   {:db (assoc db ::display-archived? display-archived?)
+    :dispatch [::reload-page]}))
+
 (defn- update-catalogue-item [item]
   (put! "/api/catalogue-items/update"
         {:params (select-keys item [:id :enabled :archived])
-         :handler #(rf/dispatch [::enter-page])}))
+         :handler #(rf/dispatch [::reload-page])}))
 
 (rf/reg-fx ::update-catalogue-item update-catalogue-item)
 
@@ -98,6 +112,17 @@
     [unarchive-button item]
     [archive-button item]))
 
+(defn- display-archived-catalogue-items []
+  (let [display-archived? @(rf/subscribe [::display-archived?])
+        toggle #(rf/dispatch [::set-display-archived? (not display-archived?)])]
+    [:div.form-check.form-check-inline {:style {:float "right"}}
+     [:input.form-check-input {:type "checkbox"
+                               :id "display-archived"
+                               :checked display-archived?
+                               :on-change toggle}]
+     [:label.form-check-label {:for "display-archived"}
+      (text :t.administration/display-archived)]]))
+
 (defn- catalogue-columns [language]
   {:name {:header #(text :t.catalogue/header)
           :value #(get-catalogue-item-title % language)}
@@ -150,6 +175,7 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-catalogue-item]
+           [display-archived-catalogue-items]
            [catalogue-list
             @(rf/subscribe [::catalogue])
             @(rf/subscribe [:language])
