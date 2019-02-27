@@ -5,7 +5,8 @@
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [checkbox localized-text-field number-field radio-button-group text-field]]
             [rems.administration.items :as items]
-            [rems.application :refer [enrich-user normalize-option-key]]
+            [rems.application :refer [normalize-option-key]]
+            [rems.atoms :refer [enrich-user]]
             [rems.collapsible :as collapsible]
             [rems.config :refer [dev-environment?]]
             [rems.text :refer [text text-format localize-item]]
@@ -20,7 +21,6 @@
  ::enter-page
  (fn [{:keys [db]}]
    {:db (reset-form db)}))
-
 
 ;;;; form state
 
@@ -127,15 +127,14 @@
     (when (valid-request? request languages)
       request)))
 
-(defn- create-form! [_ [_ request]]
-  (status-modal/set-pending! {:title (text :t.administration/create-form)})
-  (post! "/api/forms/create" {:params request
-                              :handler (fn [response]
-                                         (status-modal/set-success! {:on-close #(dispatch! "#/administration/forms")}))
-                              :error-handler #(status-modal/set-error! {:result {:error %}})})
-  {})
-
-(rf/reg-event-fx ::create-form create-form!)
+(rf/reg-event-fx
+ ::create-form
+ (fn [_ [_ request]]
+   (status-modal/common-pending-handler (text :t.administration/create-form))
+   (post! "/api/forms/create" {:params request
+                               :handler (partial status-modal/common-success-handler #(dispatch! "#/administration/forms"))
+                               :error-handler status-modal/common-error-handler})
+   {}))
 
 
 ;;;; UI

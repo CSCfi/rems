@@ -7,7 +7,7 @@
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
-            [rems.status-modal :refer [status-modal]]
+            [rems.status-modal :as status-modal]
             [rems.text :refer [text localize-item]]
             [rems.util :refer [dispatch! fetch post!]]
             [rems.status-modal :as status-modal]))
@@ -48,18 +48,15 @@
     (when (valid-request? request)
       request)))
 
-(defn- create-resource! [_ [_ request]]
-  (status-modal/set-pending! {:title (text :t.administration/save)})
+(rf/reg-event-fx
+ ::create-resource
+ (fn [_ [_ request]]
+  (status-modal/common-pending-handler (text :t.administration/save))
   (post! "/api/resources/create"
          {:params request
-          :handler (fn [response]
-                     (if (:success response)
-                       (status-modal/set-success! {:on-close #(dispatch! "#/administration/resources")})
-                       (status-modal/set-error! {:result response})))
-          :error-handler #(status-modal/set-error! {:result {:error %}})})
-  {})
-
-(rf/reg-event-fx ::create-resource create-resource!)
+          :handler (partial status-modal/common-success-handler #(dispatch! "#/administration/resources"))
+          :error-handler status-modal/common-error-handler})
+  {}))
                                         ;
 ;; available licenses
 
