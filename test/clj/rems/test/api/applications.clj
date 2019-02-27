@@ -823,12 +823,6 @@
       (testing "comment with request"
         (let [eventcount (count (get-in (get-application handler-id application-id)
                                         [:application :dynamic-events]))]
-          (testing "commenter can't comment before request"
-            (is (= {:errors [{:type "forbidden"}], :success false}
-                   (send-dynamic-command commenter-id
-                                         {:type :rems.workflow.dynamic/comment
-                                          :application-id application-id
-                                          :comment "Not yet?"}))))
           (testing "requesting comment"
             (is (= {:success true} (send-dynamic-command handler-id
                                                          {:type :rems.workflow.dynamic/request-comment
@@ -838,49 +832,17 @@
             (is (= #{commenter-id decider-id}
                    (set (get-in (get-application handler-id application-id)
                                [:application :commenters])))))
-          (testing "cannot see internal commenter state"
-            (is (= nil (get-in (get-application handler-id application-id)
-                               [:application :latest-comment-request-by-user]))))
-          (testing "new request replaces old requests for specified commenters"
-            (is (= {:success true} (send-dynamic-command handler-id
-                                                         {:type :rems.workflow.dynamic/request-comment
-                                                          :application-id application-id
-                                                          :commenters [commenter-id]
-                                                          :comment "Meant to ask?"})))
-            (testing "commenter can now comment, but only to newest"
-              (is (= {:success true} (send-dynamic-command commenter-id
-                                                           {:type :rems.workflow.dynamic/comment
-                                                            :application-id application-id
-                                                            :comment "Yeah, I dunno"})))
-              (let [comment-event (get-in (get-application handler-id application-id)
-                                          [:application :dynamic-events (+ eventcount 2)])]
-                (is (= "Yeah, I dunno"
-                       (:application/comment comment-event)))
-                (is (= (:application/request-id (get-in (get-application handler-id application-id)
-                                                    [:application :dynamic-events (+ eventcount 1)]))
-                       (:application/request-id comment-event))))))
-          (testing "commenter cannot comment again"
-            (is (= [decider-id]
-                   (get-in (get-application handler-id application-id)
-                           [:application :commenters])))
-            (is (= {:errors [{:type "forbidden"}], :success false}
-                   (send-dynamic-command commenter-id
-                                                   {:type :rems.workflow.dynamic/comment
-                                                    :application-id application-id
-                                                    :comment "I guess so, afterall"}))))
-          (testing "other commenter can still comment to the original"
-            (is (= {:success true} (send-dynamic-command decider-id
+          (testing "commenter can now comment"
+            (is (= {:success true} (send-dynamic-command commenter-id
                                                          {:type :rems.workflow.dynamic/comment
                                                           :application-id application-id
-                                                          :comment "I concur"})))
-            (let [request-event (get-in (get-application handler-id application-id)
-                                     [:application :dynamic-events eventcount])
-                  comment-event (get-in (get-application handler-id application-id)
-                                        [:application :dynamic-events (+ eventcount 3)])]
-              (is (= "I concur"
-                     (:application/comment comment-event)))
-              (is (= (:application/request-id comment-event)
-                     (:application/request-id request-event)))))))
+                                                          :comment "Yeah, I dunno"}))))
+          (testing "comment was linked to request"
+            (let [application (get-application handler-id application-id)
+                  request-event (get-in application [:application :dynamic-events eventcount])
+                  comment-event (get-in application [:application :dynamic-events (inc eventcount)])]
+              (is (= (:application/request-id request-event)
+                     (:application/request-id comment-event)))))))
       (testing "request-decision"
         (is (= {:success true} (send-dynamic-command handler-id
                                                      {:type :rems.workflow.dynamic/request-decision
@@ -919,20 +881,16 @@
                     "application.event/draft-saved"
                     "application.event/submitted"
                     "application.event/comment-requested"
-                    "application.event/comment-requested"
-                    "application.event/commented"
                     "application.event/commented"
                     "application.event/decision-requested"
                     "application.event/decided"
                     "application.event/approved"]
                    handler-event-types)))
           (testing "applicant cannot see all events"
-            (is (= (filter ;; all decision and comment related events should be missing here
-                           #{"application.event/created"
-                             "application.event/draft-saved"
-                             "application.event/submitted"
-                             "application.event/approved"}
-                           handler-event-types)
+            (is (= ["application.event/created"
+                    "application.event/draft-saved"
+                    "application.event/submitted"
+                    "application.event/approved"]
                    applicant-event-types))))))))
 
 (deftest dynamic-application-create-test

@@ -1042,8 +1042,9 @@
                              application
                              injections))))
     (let [requested (apply-commands application
-                                    [{:actor "assistant" :commenters ["commenter"] :type ::request-comment}
-                                     {:actor "assistant" :commenters ["commenter2"] :type ::request-comment}]
+                                    [{:actor "assistant" :commenters ["commenter" "commenter2"] :type ::request-comment}
+                                     ;; Make a new request that should partly override previous
+                                     {:actor "assistant" :commenters ["commenter"] :type ::request-comment}]
                                     injections)]
       (testing "request comment succesfully"
         (is (= #{"commenter2" "commenter"} (:commenters requested))))
@@ -1052,6 +1053,17 @@
                (handle-command {:actor "commenter3" :comment "..." :type ::comment}
                                requested
                                injections))))
+      (testing "comments are linked to different requests"
+        (is (not (= (get-in requested [:latest-comment-request-by-user "commenter"])
+                    (get-in requested [:latest-comment-request-by-user "commenter2"]))))
+        (is (= (get-in requested [:latest-comment-request-by-user "commenter"])
+               (get-in (handle-command {:actor "commenter" :comment "..." :type ::comment}
+                                       requested injections)
+                       [:result :application/request-id])))
+        (is (= (get-in requested [:latest-comment-request-by-user "commenter2"])
+               (get-in (handle-command {:actor "commenter2" :comment "..." :type ::comment}
+                                       requested injections)
+                       [:result :application/request-id]))))
       (let [commented (apply-command requested {:actor "commenter" :comment "..." :type ::comment} injections)]
         (testing "succesfully commented"
           (is (= #{"commenter2"} (:commenters commented))))
@@ -1060,7 +1072,7 @@
                  (handle-command {:actor "commenter" :comment "..." :type ::comment}
                                  commented
                                  injections))))
-        (testing "other commenter can also comment"
+        (testing "other commenter can still comment"
           (is (= #{} (:commenters (apply-command commented
                                                  {:actor "commenter2" :comment "..." :type ::comment}
                                                  injections)))))))))
