@@ -27,6 +27,11 @@
  (fn [db _]
    (::form db)))
 
+(rf/reg-sub
+ ::form-item
+ (fn [db [_ item-index]]
+   (get-in db [::form :items item-index])))
+
 (rf/reg-event-db
  ::set-form-field
  (fn [db [_ keys value]]
@@ -235,11 +240,17 @@
                                          {:value "multiselect", :label (text :t.create-form/type-multiselect)}
                                          {:value "date", :label (text :t.create-form/type-date)}
                                          {:value "attachment", :label (text :t.create-form/type-attachment)}
-                                         {:value "label", :label (text :t.create-form/type-label)}]}])
+                                         {:value "label" :label (text :t.create-form/type-label)
+                                          :on-change #(rf/dispatch [::set-form-field [:items item-index :optional] true])}]}])
 
 (defn- form-item-optional-checkbox [item-index]
-  [checkbox context {:keys [:items item-index :optional]
-                     :label (text :t.create-form/optional)}])
+  (let [item @(rf/subscribe [::form-item item-index])]
+    (if (= "label" (:type item))
+      [checkbox context {:label (text :t.create-form/optional)
+                         :disabled? true}]
+
+      [checkbox context {:keys [:items item-index :optional]
+                        :label (text :t.create-form/optional)}])))
 
 (defn- add-form-item-button []
   [:a
