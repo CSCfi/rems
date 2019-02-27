@@ -12,6 +12,8 @@
    :licensetype (:type license)
    :start (:start license)
    :end (:endt license)
+   :enabled (:enabled license)
+   :archived (:archived license)
    ;; TODO why do licenses have a non-localized title & content while items don't?
    :title (:title license)
    :textcontent (:textcontent license)

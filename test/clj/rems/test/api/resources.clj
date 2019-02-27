@@ -12,14 +12,12 @@
   (let [api-key "42"
         user-id "owner"]
     (testing "get"
-      ;; just a basic smoke test for now
       (let [data (-> (request :get "/api/resources")
                      (authenticate api-key user-id)
                      app
                      assert-response-is-ok
                      read-body)]
-        (is (coll-is-not-empty? data))
-        (is (= #{:id :owneruserid :modifieruserid :organization :resid :start :end :active :licenses} (set (keys (first data)))))))
+        (is (:id (first data)))))
     (testing "create"
       (let [licid 1
             resid "RESOURCE-API-TEST"]

@@ -17,6 +17,9 @@
    :state (s/enum "enabled" "disabled")
    (s/optional-key :langcode) s/Keyword
    :start DateTime
+   :end (s/maybe DateTime)
+   :enabled s/Bool
+   :archived s/Bool
    :localizations (s/maybe {s/Any s/Any})})
 
 (s/defschema License
@@ -24,6 +27,8 @@
    :licensetype (s/enum "text" "link" "attachment")
    :start DateTime
    :end (s/maybe DateTime)
+   :enabled s/Bool
+   :archived s/Bool
    :title s/Str
    :textcontent s/Str
    (s/optional-key :attachment-id) (s/maybe s/Num)

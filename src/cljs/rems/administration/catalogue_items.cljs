@@ -2,7 +2,7 @@
   (:require [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.atoms :refer [external-link readonly-checkbox]]
-            [rems.catalogue-util :refer [get-catalogue-item-title disabled-catalogue-item?]]
+            [rems.catalogue-util :refer [get-catalogue-item-title]]
             [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.text :refer [localize-time text]]
@@ -30,17 +30,17 @@
 (rf/reg-sub ::catalogue (fn [db _] (::catalogue db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
-(defn- update-catalogue-item [[id state]]
+(defn- update-catalogue-item [item]
   (put! "/api/catalogue-items/update"
-        {:params {:id id :state state}
+        {:params (select-keys item [:id :enabled])
          :handler #(rf/dispatch [::enter-page])}))
 
 (rf/reg-fx ::update-catalogue-item update-catalogue-item)
 
 (rf/reg-event-fx
  ::update-catalogue-item
- (fn [_ [_ id state]]
-   {::update-catalogue-item [id state]}))
+ (fn [_ [_ item]]
+   {::update-catalogue-item item}))
 
 (rf/reg-event-db ::set-sorting (fn [db [_ sorting]] (assoc db ::sorting sorting)))
 
@@ -67,19 +67,21 @@
 (defn- disable-button [item]
   [:button.btn.btn-secondary.button-min-width
    {:type "submit"
-    :on-click #(rf/dispatch [::update-catalogue-item (:id item) "disabled"])}
+    :on-click #(rf/dispatch [::update-catalogue-item {:id (:id item)
+                                                      :enabled false}])}
    (text :t.administration/disable)])
 
 (defn- enable-button [item]
   [:button.btn.btn-primary.button-min-width
    {:type "submit"
-    :on-click #(rf/dispatch [::update-catalogue-item (:id item) "enabled"])}
+    :on-click #(rf/dispatch [::update-catalogue-item {:id (:id item)
+                                                      :enabled true}])}
    (text :t.administration/enable)])
 
-(defn- toggle-state-button [item]
-  (if (disabled-catalogue-item? item)
-    [enable-button item]
-    [disable-button item]))
+(defn- toggle-enabled-button [item]
+  (if (:enabled item)
+    [disable-button item]
+    [enable-button item]))
 
 (defn- catalogue-columns [language]
   {:name {:header #(text :t.catalogue/header)
@@ -107,10 +109,10 @@
    :end {:header #(text :t.administration/end)
          :value (comp localize-time :end)}
    :active {:header #(text :t.administration/active)
-            :value (comp readonly-checkbox not disabled-catalogue-item?)}
+            :value (comp readonly-checkbox :enabled)}
    :commands {:values (fn [item]
                         [[to-catalogue-item (:id item)]
-                         [toggle-state-button item]])
+                         [toggle-enabled-button item]])
               :sortable? false
               :filterable? false}})
 

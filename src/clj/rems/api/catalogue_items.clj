@@ -30,7 +30,7 @@
 
 (s/defschema UpdateCatalogueItemCommand
   {:id s/Num
-   :state (s/enum "disabled" "enabled")})
+   :enabled s/Bool})
 
 ;; TODO use declarative roles everywhere
 (def catalogue-items-api
@@ -69,7 +69,8 @@
       :roles #{:owner}
       :body [command UpdateCatalogueItemCommand]
       :return SuccessResponse
-      (db/set-catalogue-item-state! {:item (:id command) :state (:state command)})
+      (db/set-catalogue-item-state! {:item (:id command)
+                                     :enabled (:enabled command)})
       (ok {:success true}))
 
     (POST "/create-localization" []

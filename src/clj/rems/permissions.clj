@@ -4,10 +4,8 @@
 (def ^:private conj-set (fnil conj #{}))
 
 (defn- give-role-to-user [application role user]
-  (assert (keyword? role)
-          (str "role must be a keyword: " (pr-str role)))
-  (assert (string? user)
-          (str "user must be a string: " (pr-str user)))
+  (assert (keyword? role) {:role role})
+  (assert (string? user) {:user user})
   (update-in application [::user-roles user] conj-set role))
 
 (defn give-role-to-users [application role users]
@@ -22,6 +20,8 @@
     m))
 
 (defn remove-role-from-user [application role user]
+  (assert (keyword? role) {:role role})
+  (assert (string? user) {:user user})
   (-> application
       (update-in [::user-roles user] disj role)
       (update ::user-roles dissoc-if-empty user)))
@@ -63,6 +63,18 @@
       (is (= #{:role-2} (user-roles app "user-2")))
       (is (= #{} (user-roles app "user-3"))))))
 
+(defn has-any-role? [application user]
+  (seq (user-roles application user)))
+
+(deftest test-has-any-role?
+  (testing "no roles"
+    (is (not (-> {}
+                 (has-any-role? "user")))))
+  (testing "some roles"
+    (is (-> {}
+            (give-role-to-user :role "user")
+            (has-any-role? "user")))))
+
 (defn set-role-permissions
   "Sets role specific permissions for the application.
 
@@ -73,7 +85,7 @@
    comments from the reviewers (e.g. `:see-everything`)."
   [application permission-map]
   (reduce (fn [application [role permissions]]
-            (assert (keyword? role))
+            (assert (keyword? role) {:role role})
             (assoc-in application [::role-permissions role] (set permissions)))
           application
           permission-map))

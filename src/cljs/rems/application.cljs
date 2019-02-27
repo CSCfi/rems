@@ -337,10 +337,11 @@
 (defn attachment-field
   [{:keys [title id value validation app-id] :as opts}]
   (let [click-upload (fn [e] (when-not (:readonly opts) (.click (.getElementById js/document (id-to-name id)))))
-        filename-field [:a.btn.btn-secondary.mr-2
-                        {:href (str "/api/applications/attachments/?application-id=" app-id "&field-id=" id)
-                         :target :_new}
-                        value " " (external-link)]
+        filename-field [:div.field
+                        [:a.btn.btn-secondary.mr-2
+                         {:href (str "/api/applications/attachments/?application-id=" app-id "&field-id=" id)
+                          :target :_new}
+                         value " " (external-link)]]
         upload-field [:div.upload-file.mr-2
                       [:input {:style {:display "none"}
                                :type "file"
@@ -552,40 +553,44 @@
                                 :readonly readonly?
                                 :approved (get licenses (:id license)))]))])]}]))
 
+
+;; FIXME Why do we have both this and dynamic-event->event?
 (defn- format-event [event]
   {:userid (:userid event)
    :event (localize-event (:event event))
    :comment (:comment event)
+   :request-id (:request-id event)
+   :commenters (:commenters event)
    :time (localize-time (:time event))})
 
-(defn- events-view [events]
-  (let [has-users? (boolean (some :userid events))]
-    [:div
-     [:h4 (text :t.form/events)]
-     (into [:table#event-table.table.table-hover.mb-0
-            [:thead
-             [:tr
-              (when has-users?
-                [:th (text :t.form/user)])
-              [:th (text :t.form/event)]
-              [:th (text :t.form/comment)]
-              [:th (text :t.form/date)]]]
-            (into [:tbody]
-                  (for [e (reverse events)]
-                    [:tr
-                     (when has-users?
-                       [:td (:userid e)])
-                     [:td (:event e)]
-                     [:td.event-comment (:comment e)]
-                     [:td.date (:time e)]]))])]))
+(defn- event-view [{:keys [time userid event comment commenters]}]
+  [:div.form-group.row
+   [:label.col-sm-2.col-form-label time]
+   [:div.col-sm-10
+    [:div.col-form-label [:span userid] " — " [:span event]
+     (when (seq commenters) [:span ": " (for [c commenters] ^{:key c} [:span c])])]
+    (when comment [:div comment])]])
+
+(defn- event-groups-view [event-groups]
+  [:div
+   (into [:div]
+         (for [group event-groups]
+           ^{:key group} [:div.group
+                          (for [e group]
+                            ^{:key e} [event-view e])]))])
 
 (defn- application-header [state phases-data events]
   (let [;; the event times have millisecond differences, so they need to be formatted to minute precision before deduping
-        events (->> events
-                    (map format-event)
-                    dedupe)
-        last-event (when (:comment (last events))
-                     (last events))]
+        event-groups (->> events
+                          (map format-event)
+                          dedupe
+                          (group-by #(or (:request-id %)
+                                         ; Might want to replace this by exposing id from backend
+                                         [(:event %) (:time %)]))
+                          vals
+                          (map (partial sort-by :time))
+                          (sort-by #(:time (first %)))
+                          reverse)]
     [collapsible/component
      {:id "header"
       :title [:span#application-state
@@ -594,11 +599,11 @@
                (when state (str ": " (localize-state state))))]
       :always [:div
                [:div.mb-3 {:class (str "state-" (if (keyword? state) (name state) state))} (phases phases-data)]
-               (when last-event
-                 (info-field (text :t.applications/latest-comment)
-                             (:comment last-event)))]
-      :collapse (when (seq events)
-                  [events-view events])}]))
+               [:h4 (text :t.form/events)]
+               (when-let [g (first event-groups)]
+                 [event-groups-view [g]])]
+      :collapse (when-let [g (seq (rest event-groups))]
+                  [event-groups-view g])}]))
 
 (defn member-info
   "Renders a applicant, member or invited member of an application
@@ -614,7 +619,8 @@
         sanitized-user-id (-> (or user-id "")
                               str/lower-case
                               (str/replace #"[^a-z]" ""))
-        other-attributes (dissoc attributes :commonName :name :eppn :userid :mail :email)]
+        other-attributes (dissoc attributes :commonName :name :eppn :userid :mail :email)
+        user-actions-id (str element-id "-" sanitized-user-id "-actions")]
     [collapsible/minimal
      {:id (str element-id "-" sanitized-user-id "-info")
       :class (when group? "group")
@@ -632,20 +638,20 @@
       :collapse (when (seq other-attributes)
                   (into [:div]
                         (for [[k v] other-attributes]
-                          [info-field k v {:inline? true}])))
-      :footer [:div#applicant-collapse
+                          [info-field k v])))
+      :footer [:div {:id user-actions-id}
                (when can-remove?
                  [:div.commands
-                  [remove-member-action-button (str element-id "-" sanitized-user-id "-remove")]])
+                  [remove-member-action-button user-actions-id]])
                (when can-remove?
-                 [remove-member-form application-id (str element-id "-" sanitized-user-id "-form") attributes (partial reload! application-id)])]}]))
+                 [remove-member-form application-id user-actions-id attributes (partial reload! application-id)])]}]))
 
 (defn applicants-info
   "Renders the applicants, i.e. applicant and members."
   [id application applicant-attributes members invited-members]
   (let [application-id (:id application)
         applicant (first (filter (comp #{(:eppn applicant-attributes)} :userid) members))
-        members-but-not-applicant (remove #{applicant} members)
+        non-applicant-members (remove #{applicant} members)
         possible-commands (:possible-commands application)
         can-add? (contains? possible-commands :rems.workflow.dynamic/add-member)
         can-remove? (contains? possible-commands :rems.workflow.dynamic/remove-member)
@@ -656,13 +662,25 @@
       :title (text :t.applicant-info/applicants)
       :always
       (into [:div
-             [member-info {:element-id id :attributes (merge applicant applicant-attributes) :application application :group? (or (seq members-but-not-applicant)
-                                                                                                                                  (seq invited-members)) :can-remove? can-remove?}]]
+             [member-info {:element-id id
+                           :attributes (merge applicant applicant-attributes)
+                           :application application
+                           :group? (or (seq non-applicant-members)
+                                       (seq invited-members))
+                           :can-remove? false}]]
             (concat
-             (for [member members-but-not-applicant]
-               [member-info {:element-id id :attributes member :application application :group? true :can-remove? can-remove?}])
+             (for [member non-applicant-members]
+               [member-info {:element-id id
+                             :attributes member
+                             :application application
+                             :group? true
+                             :can-remove? can-remove?}])
              (for [invited-member invited-members]
-               [member-info {:element-id id :attributes invited-member :application application :group? true :can-remove? can-uninvite?}])))
+               [member-info {:element-id id
+                             :attributes invited-member
+                             :application application
+                             :group? true
+                             :can-remove? can-uninvite?}])))
       :footer [:div
                [:div.commands
                 (when can-invite? [invite-member-action-button])
@@ -729,6 +747,8 @@
   {:event (name (:event/type event))
    :time (:event/time event)
    :userid (:event/actor event)
+   :request-id (:application/request-id event)
+   :commenters (:application/commenters event)
    :comment (if (= :application.event/decided (:event/type event))
               (str (localize-decision (:application/decision event)) ": " (:application/comment event))
               (:application/comment event))})

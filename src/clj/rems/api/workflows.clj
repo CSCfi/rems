@@ -52,6 +52,8 @@
    :start DateTime
    :end (s/maybe DateTime)
    :active s/Bool
+   :enabled s/Bool
+   :archived s/Bool
    :actors [Actor]
    :licenses [WorkflowLicense]})
 
@@ -59,7 +61,7 @@
   [Workflow])
 
 (defn- format-workflow
-  [{:keys [id organization owneruserid modifieruserid title fnlround workflow start endt active? licenses]}]
+  [{:keys [id organization owneruserid modifieruserid title fnlround workflow start endt active enabled archived licenses]}]
   {:id id
    :organization organization
    :owneruserid owneruserid
@@ -69,7 +71,9 @@
    :workflow workflow
    :start start
    :end endt
-   :active active?
+   :active active
+   :enabled enabled
+   :archived archived
    :licenses licenses})
 
 (s/defschema CreateWorkflowCommand
@@ -111,7 +115,7 @@
       :roles #{:owner}
       :query-params [{active :- (describe s/Bool "filter active or inactive workflows") nil}]
       :return Workflows
-      (ok (get-workflows (when-not (nil? active) {:active? active}))))
+      (ok (get-workflows (when active {:active active}))))
 
     (POST "/create" []
       :summary "Create workflow"

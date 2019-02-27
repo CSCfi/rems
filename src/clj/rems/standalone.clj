@@ -58,6 +58,7 @@
   "Arguments can be either arguments to mount/start-with-args, or one of
      \"migrate\" -- migrate database
      \"rollback\" -- roll back database migration
+     \"reset\" -- empties database and runs migrations to empty db
      \"test-data\" -- insert test data into database
      \"demo-data\" -- insert data for demoing purposes into database
      \"validate\" -- validate data in db"
@@ -67,6 +68,14 @@
     (do
       (mount/start #'rems.config/env)
       (migrations/migrate args (select-keys env [:database-url])))
+    (= "reset" (first args))
+    (do
+      (println "\n\n*** Are you absolutely sure??? Reset empties the whole database and runs migrations to empty db.***\nType 'YES' to proceed")
+      (when (= "YES" (read-line))
+        (do
+          (println "Running reset")
+          (mount/start #'rems.config/env)
+          (migrations/migrate args (select-keys env [:database-url])))))
     (= "test-data" (first args))
     (do
       (mount/start #'rems.config/env #'rems.db.core/*db*)

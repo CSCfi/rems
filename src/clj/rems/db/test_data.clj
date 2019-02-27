@@ -652,7 +652,7 @@
                                            {"en" "ELFA Corpus, one approval (extra data, disabled)"
                                             "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti, pois käytöstä)"})]
       (create-resource-license! res2 "Some test license" (+fake-users+ :owner))
-      (db/set-catalogue-item-state! {:item disabled :state "disabled" :user (+fake-users+ :approver1)})
+      (db/set-catalogue-item-state! {:item disabled :enabled false :user (+fake-users+ :approver1)})
       (create-applications! simple (:simple workflows) (+fake-users+ :approver1) (+fake-users+ :approver1))
       (create-disabled-applications! disabled (:simple workflows) (+fake-users+ :approver1) (+fake-users+ :approver1))
       (create-bundled-application! simple bundlable (:simple workflows) (+fake-users+ :applicant1) (+fake-users+ :approver1))
@@ -670,6 +670,7 @@
       (DateTimeUtils/setCurrentMillisSystem))))
 
 (defn create-demo-data! []
+  (db/add-api-key! {:apikey 55 :comment "Finna"})
   (create-demo-users-and-roles!)
   (let [res1 (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :organization "nbn" :owneruserid (+demo-users+ :owner) :modifieruserid (+demo-users+ :owner)}))
         res2 (:id (db/create-resource! {:resid "Extra Data" :organization "nbn" :owneruserid (+demo-users+ :owner) :modifieruserid (+demo-users+ :owner)}))
@@ -694,7 +695,7 @@
                                          {"en" "ELFA Corpus, one approval (extra data, disabled)"
                                           "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti, pois käytöstä)"})]
     (create-resource-license! res2 "Some demo license" (+demo-users+ :owner))
-    (db/set-catalogue-item-state! {:item disabled :state "disabled" :user (+demo-users+ :owner)})
+    (db/set-catalogue-item-state! {:item disabled :enabled false :user (+demo-users+ :owner)})
     (create-applications! simple (:simple workflows) (+demo-users+ :applicant1) (+demo-users+ :approver1))
     (create-disabled-applications! disabled (:simple workflows) (+demo-users+ :applicant1) (+demo-users+ :approver1))
     (create-bundled-application! simple bundlable (:simple workflows) (+demo-users+ :applicant2) (+demo-users+ :approver1))
@@ -707,4 +708,4 @@
       (create-dynamic-applications! dynamic (:dynamic workflows) +demo-users+))
     (let [thlform (create-thl-demo-form! +demo-users+)
           thl-catid (create-catalogue-item! res1 (:dynamic workflows) thlform {"en" "THL catalogue item" "fi" "THL katalogi-itemi"})]
-    (create-member-applications! thl-catid (:dynamic workflows) (+demo-users+ :applicant1) (+demo-users+ :approver1) [{:userid (+demo-users+ :applicant2)}]))))
+      (create-member-applications! thl-catid (:dynamic workflows) (+demo-users+ :applicant1) (+demo-users+ :approver1) [{:userid (+demo-users+ :applicant2)}]))))

@@ -1,5 +1,6 @@
 (ns rems.api.applications
   (:require [clj-time.core :as time]
+            [clojure.set :as set]
             [clojure.string :as str]
             [clojure.test :refer [deftest is]]
             [compojure.api.sweet :refer :all]
@@ -10,11 +11,14 @@
             [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
+            [rems.db.dynamic-roles :as dynamic-roles]
             [rems.db.users :as users]
             [rems.form :as form]
             [rems.pdf :as pdf]
+            [rems.permissions :as permissions]
             [rems.util :refer [getx-user-id update-present]]
             [rems.workflow.dynamic :as dynamic]
+            [ring.middleware.multipart-params :as multipart]
             [ring.swagger.upload :as upload]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
@@ -133,16 +137,6 @@
             ((complement contains?) #{"third-party-review" "review-request" "review"} (:event event)))
           events))
 
-(defn- latest-event [events]
-  (when (seq events)
-    (apply time/max-date (map #(or (:time %) ; Non-dynamic events
-                                   (:event/time %)) events)))) ; Dynamic events
-
-(defn- update-application-last-modified [application]
-  (let [events (or (:events application)
-                   (:dynamic-events application))]
-    (assoc application :last-modified (latest-event events))))
-
 (defn- hide-users [events]
   (map (fn [event]
          (assoc event :userid nil))
@@ -150,11 +144,10 @@
 
 (defn hide-sensitive-information [application user]
   (let [is-handler? (or (contains? (set (applications/get-handlers (:application application))) user) ; old form
-                        (applications/is-dynamic-handler? user (:application application)))] ; dynamic
+                        (contains? (get-in application [:application :possible-commands]) :see-everything))] ; dynamic
     (if is-handler?
       application
       (-> application
-          (update :application update-application-last-modified)
           (update-in [:application :events] hide-sensitive-events)
           (update-in [:application :dynamic-events] dynamic/hide-sensitive-dynamic-events)
           (update-in [:application :events] hide-users)
@@ -208,6 +201,21 @@
   ;; schema could do these coercions for us...
   (update-present cmd :decision keyword))
 
+(defn- get-user-applications [user-id]
+  ;; XXX: the old API doesn't know about members, so rems.db.applications/get-user-applications doesn't return applications where the user is a member
+  ;; XXX: this code cannot be moved to rems.db.applications/get-user-applications because it would create cyclic dependencies
+  (let [old-applications (applications/get-user-applications user-id)
+        member-application-ids (->> (applications/get-dynamic-application-events-since 0)
+                                    (reduce dynamic-roles/permissions-of-all-applications nil)
+                                    (filter (fn [[_id app]]
+                                              (contains? (permissions/user-roles app user-id)
+                                                         :member)))
+                                    (map first))
+        missing-ids (set/difference (set member-application-ids)
+                                    (set (map :id old-applications)))
+        missing-applications (map #(:application (api-get-application user-id %)) missing-ids)]
+    (concat old-applications missing-applications)))
+
 (def applications-api
   (context "/applications" []
     :tags ["applications"]
@@ -216,7 +224,7 @@
       :summary "Get current user's all applications"
       :roles #{:logged-in}
       :return GetApplicationsResponse
-      (ok (applications/get-user-applications (getx-user-id))))
+      (ok (get-user-applications (getx-user-id))))
 
     (GET "/draft" []
       :summary "Get application (draft) for `catalogue-items`"
@@ -351,7 +359,7 @@
       :multipart-params [file :- upload/TempFileUpload]
       :query-params [application-id :- (describe s/Int "application id")
                      field-id :- (describe s/Int "application form field id the attachment is related to")]
-      :middleware [upload/wrap-multipart-params]
+      :middleware [multipart/wrap-multipart-params]
       :return SuccessResponse
       (check-attachment-content-type (:content-type file))
       (applications/save-attachment! file (getx-user-id) application-id field-id)

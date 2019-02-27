@@ -1,9 +1,7 @@
 (ns rems.db.resource
   (:require [rems.db.core :as db]
-            [rems.InvalidRequestException]
             [rems.util :refer [getx-user-id]])
-  (:import (org.postgresql.util PSQLException)
-           (rems InvalidRequestException)))
+  (:import (org.postgresql.util PSQLException)))
 
 (defn get-resource [id]
   (-> {:id id}

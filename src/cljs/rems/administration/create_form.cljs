@@ -52,6 +52,9 @@
 
 ;;;; form submit
 
+(defn- supports-optional? [item]
+  (not= "label" (:type item)))
+
 (defn- supports-input-prompt? [item]
   (contains? #{"text" "texta" "description"} (:type item)))
 
@@ -258,8 +261,9 @@
                           [remove-form-item-button item-index]]]
 
                         [form-item-title-field item-index]
-                        [form-item-optional-checkbox item-index]
                         [form-item-type-radio-group item-index]
+                        (when (supports-optional? (get-in form [:items item-index]))
+                          [form-item-optional-checkbox item-index])
                         (when (supports-input-prompt? item)
                           [form-item-input-prompt-field item-index])
                         (when (supports-maxlength? item)
@@ -279,7 +283,6 @@
        :always [:div
                 [form-organization-field]
                 [form-title-field]
-
                 [form-items (:items form)]
 
                 [:div.form-item.new-form-item

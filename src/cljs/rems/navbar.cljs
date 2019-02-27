@@ -30,7 +30,7 @@
     [e [:div.navbar-nav.mr-auto
         (when (roles/is-logged-in? roles)
           [nav-link "#/catalogue" (text :t.navigation/catalogue) (= page-id :catalogue)])
-        (when (roles/is-applicant? roles)
+        (when (roles/is-applicant-or-member? roles)
           [nav-link "#/applications" (text :t.navigation/applications) (contains? #{:application
                                                                                     :applications}
                                                                                   page-id)])
