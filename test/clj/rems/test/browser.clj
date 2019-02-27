@@ -159,8 +159,11 @@
                            {:css "input[type='checkbox']"}]))
 
 (defn send-application []
-  (click-visible *driver* :submit)
-  (wait-has-class *driver* :apply-phase "completed"))
+  (doto *driver*
+    (click-visible :submit)
+    (wait-visible  :status-success)
+    (click-visible :modal-ok)
+    (wait-has-class :apply-phase "completed")))
 
 (defn get-application-id []
   (last (str/split (get-url *driver*) #"/")))

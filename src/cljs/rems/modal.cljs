@@ -60,7 +60,7 @@
 
   See `modal/component` for options."
   [{:keys [title title-class content on-close shade?] :as opts}]
-  [component (assoc opts :commands [[:button.btn.btn-primary {:on-click on-close} (text :t.actions/ok)]])])
+  [component (assoc opts :commands [[:button#modal-ok.btn.btn-primary {:on-click on-close} (text :t.actions/ok)]])])
 
 (defn guide
   []

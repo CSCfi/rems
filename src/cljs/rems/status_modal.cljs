@@ -29,8 +29,8 @@
 (defn- status-widget [success? error-content]
   (cond
     (and (not success?) (not error-content)) [spinner/big]
-    success? [:p [:i {:class ["fa fa-check-circle text-success"]}] (text :t.form/success)]
-    error-content [:div [:p [:i {:class "fa fa-times-circle text-danger"}] (text :t.form/failed)]
+    success? [:p#status-success [:i {:class ["fa fa-check-circle text-success"]}] (text :t.form/success)]
+    error-content [:div [:p#status-failed [:i {:class "fa fa-times-circle text-danger"}] (text :t.form/failed)]
                    error-content]))
 
 (rf/reg-event-db ::set-state (fn [db [_ state]] (assoc db ::state state)))
