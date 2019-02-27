@@ -109,7 +109,7 @@
       [:label.form-check-label {:for id}
        label]]]))
 
-(defn- radio-button [context {:keys [keys value label orientation]}]
+(defn- radio-button [context {:keys [keys value label orientation on-change]}]
   (let [form @(rf/subscribe [(:get-form context)])
         name (keys-to-id keys)
         id (keys-to-id (conj keys value))]
@@ -122,6 +122,7 @@
                                :value value
                                :checked (= value (get-in form keys))
                                :on-change #(when (.. % -target -checked)
+                                             (when on-change (on-change))
                                              (rf/dispatch [(:update-form context) keys value]))}]
      [:label.form-check-label {:for id}
       label]]))
@@ -137,8 +138,9 @@
   [:div.form-group.field {:id id}
    (when label [:label {:for id} label])
    (into [:div.form-control]
-         (map (fn [{:keys [value label]}]
+         (map (fn [{:keys [value label on-change]}]
                 [radio-button context {:keys keys
+                                       :on-change on-change
                                        :value value
                                        :label label
                                        :orientation orientation}])
