@@ -47,15 +47,15 @@
 (rf/reg-event-fx
  ::send-request-comment
  (fn [_ [_ {:keys [application-id commenters comment on-finished]}]]
-  (status-modal/common-pending-handler (text :t.actions/request-comment))
-  (post! "/api/applications/command"
-         {:params {:application-id application-id
-                   :type :rems.workflow.dynamic/request-comment
-                   :comment comment
-                   :commenters (map :userid commenters)}
-          :handler (partial status-modal/common-success-handler on-finished)
-          :error-handler status-modal/common-error-handler})
-  {}))
+   (status-modal/common-pending-handler! (text :t.actions/request-comment))
+   (post! "/api/applications/command"
+          {:params {:application-id application-id
+                    :type :rems.workflow.dynamic/request-comment
+                    :comment comment
+                    :commenters (map :userid commenters)}
+           :handler (partial status-modal/common-success-handler! on-finished)
+           :error-handler status-modal/common-error-handler!})
+   {}))
 
 (def ^:private action-form-id "request-comment")
 

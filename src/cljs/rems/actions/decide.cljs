@@ -19,15 +19,15 @@
 (rf/reg-event-fx
  ::send-decide
  (fn [_ [_ {:keys [application-id comment decision on-finished]}]]
-  (status-modal/common-pending-handler (text :t.actions/decide))
-  (post! "/api/applications/command"
-         {:params {:application-id application-id
-                   :type :rems.workflow.dynamic/decide
-                   :decision decision
-                   :comment comment}
-          :handler (partial status-modal/common-success-handler on-finished)
-          :error-handler status-modal/common-error-handler})
-  {}))
+   (status-modal/common-pending-handler! (text :t.actions/decide))
+   (post! "/api/applications/command"
+          {:params {:application-id application-id
+                    :type :rems.workflow.dynamic/decide
+                    :decision decision
+                    :comment comment}
+           :handler (partial status-modal/common-success-handler! on-finished)
+           :error-handler status-modal/common-error-handler!})
+   {}))
 
 (def ^:private action-form-id "decide")
 

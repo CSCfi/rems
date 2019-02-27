@@ -91,18 +91,18 @@
                               :licenses (into {} (map (juxt :id :approved) (:licenses application)))})))
 
 (defn- submit-application [app description application-id catalogue-items items licenses]
-  (status-modal/common-pending-handler description)
+  (status-modal/common-pending-handler! description)
   (post! "/api/applications/command"
-         {:handler (partial status-modal/common-success-handler #(rf/dispatch [::enter-application-page application-id]))
-          :error-handler status-modal/common-error-handler
+         {:handler (partial status-modal/common-success-handler! #(rf/dispatch [::enter-application-page application-id]))
+          :error-handler status-modal/common-error-handler!
           :params {:type :rems.workflow.dynamic/submit
                    :application-id application-id}}))
 
 (defn- save-application [app description application-id catalogue-items items licenses]
-  (status-modal/common-pending-handler description)
+  (status-modal/common-pending-handler! description)
   (post! "/api/applications/save"
-         {:handler (partial status-modal/common-success-handler #(rf/dispatch [::enter-application-page application-id]))
-          :error-handler status-modal/common-error-handler
+         {:handler (partial status-modal/common-success-handler! #(rf/dispatch [::enter-application-page application-id]))
+          :error-handler status-modal/common-error-handler!
           :params (merge {:command "save"
                           :items (map-vals :value items)
                           :licenses licenses}
@@ -128,21 +128,21 @@
 
 (defn- save-attachment [{:keys [db]} [_ field-id file description]]
   (let [application-id (get-in db [::application :application :id])]
-    (status-modal/common-pending-handler description)
+    (status-modal/common-pending-handler! description)
     (post! (str "/api/applications/add_attachment?application-id=" application-id "&field-id=" field-id)
            {:body file
-            :handler (partial status-modal/common-success-handler nil)
-            :error-handler status-modal/common-error-handler})
+            :handler (partial status-modal/common-success-handler! nil)
+            :error-handler status-modal/common-error-handler!})
     {}))
 
 (rf/reg-event-fx ::save-attachment save-attachment)
 
 (defn- remove-attachment [_ [_ application-id field-id description]]
-  (status-modal/common-pending-handler description)
+  (status-modal/common-pending-handler! description)
   (post! (str "/api/applications/remove_attachment?application-id=" application-id "&field-id=" field-id)
          {:body {}
-          :handler (partial status-modal/common-success-handler nil)
-          :error-handler status-modal/common-error-handler})
+          :handler (partial status-modal/common-success-handler! nil)
+          :error-handler status-modal/common-error-handler!})
   {})
 
 (rf/reg-event-fx ::remove-attachment remove-attachment)

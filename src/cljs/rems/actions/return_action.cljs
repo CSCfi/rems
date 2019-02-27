@@ -19,13 +19,13 @@
 (rf/reg-event-fx
  ::send-return
  (fn [_ [_ {:keys [application-id comment on-finished]}]]
-  (status-modal/common-pending-handler (text :t.actions/return))
-  (post! "/api/applications/command"
-         {:params {:application-id application-id
-                   :type :rems.workflow.dynamic/return
-                   :comment comment}
-          :handler (partial status-modal/common-success-handler on-finished)
-          :error-handler status-modal/common-error-handler})))
+   (status-modal/common-pending-handler! (text :t.actions/return))
+   (post! "/api/applications/command"
+          {:params {:application-id application-id
+                    :type :rems.workflow.dynamic/return
+                    :comment comment}
+           :handler (partial status-modal/common-success-handler! on-finished)
+           :error-handler status-modal/common-error-handler!})))
 
 (def ^:private action-form-id "return")
 

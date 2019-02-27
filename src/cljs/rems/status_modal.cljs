@@ -102,16 +102,16 @@
                            :title "Errors"
                            :content [:p "You should check the errors"]}])])
 
-(defn common-pending-handler [title]
+(defn common-pending-handler! [title]
   (set-pending! {:title title}))
 
-(defn common-success-handler [on-close response]
+(defn common-success-handler! [on-close response]
   (if (:success response)
     (set-success! {:on-close on-close})
     (set-error! {:result response})))
 
-(defn common-error-handler [response]
-    (set-error! {:result {:error response}}))
+(defn common-error-handler! [response]
+  (set-error! {:result {:error response}}))
 
 
 (defn status-modal-state-handling [& args])

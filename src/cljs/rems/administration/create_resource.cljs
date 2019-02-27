@@ -51,12 +51,12 @@
 (rf/reg-event-fx
  ::create-resource
  (fn [_ [_ request]]
-  (status-modal/common-pending-handler (text :t.administration/save))
-  (post! "/api/resources/create"
-         {:params request
-          :handler (partial status-modal/common-success-handler #(dispatch! "#/administration/resources"))
-          :error-handler status-modal/common-error-handler})
-  {}))
+   (status-modal/common-pending-handler! (text :t.administration/save))
+   (post! "/api/resources/create"
+          {:params request
+           :handler (partial status-modal/common-success-handler! #(dispatch! "#/administration/resources"))
+           :error-handler status-modal/common-error-handler!})
+   {}))
                                         ;
 ;; available licenses
 

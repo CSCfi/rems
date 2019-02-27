@@ -19,26 +19,26 @@
 (rf/reg-event-fx
  ::send-approve
  (fn [_ [_ {:keys [application-id comment on-finished]}]]
-  (status-modal/common-pending-handler (text :t.actions/approve))
-  (post! "/api/applications/command"
-         {:params {:application-id application-id
-                   :type :rems.workflow.dynamic/approve
-                   :comment comment}
-          :handler (partial status-modal/common-success-handler on-finished)
-          :error-handler status-modal/common-error-handler})
+   (status-modal/common-pending-handler! (text :t.actions/approve))
+   (post! "/api/applications/command"
+          {:params {:application-id application-id
+                    :type :rems.workflow.dynamic/approve
+                    :comment comment}
+           :handler (partial status-modal/common-success-handler! on-finished)
+           :error-handler status-modal/common-error-handler!})
    {}))
 
 (rf/reg-event-fx
  ::send-reject
  (fn [_ [_ {:keys [application-id comment on-finished]}]]
-  (status-modal/common-pending-handler (text :t.actions/reject))
-  (post! "/api/applications/command"
-         {:params {:application-id application-id
-                   :type :rems.workflow.dynamic/reject
-                   :comment comment}
-          :handler (partial status-modal/common-success-handler on-finished)
-          :error-handler status-modal/common-error-handler})
-  {}))
+   (status-modal/common-pending-handler! (text :t.actions/reject))
+   (post! "/api/applications/command"
+          {:params {:application-id application-id
+                    :type :rems.workflow.dynamic/reject
+                    :comment comment}
+           :handler (partial status-modal/common-success-handler! on-finished)
+           :error-handler status-modal/common-error-handler!})
+   {}))
 
 (def ^:private action-form-id "approve-reject")
 

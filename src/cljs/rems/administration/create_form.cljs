@@ -130,10 +130,10 @@
 (rf/reg-event-fx
  ::create-form
  (fn [_ [_ request]]
-   (status-modal/common-pending-handler (text :t.administration/create-form))
+   (status-modal/common-pending-handler! (text :t.administration/create-form))
    (post! "/api/forms/create" {:params request
-                               :handler (partial status-modal/common-success-handler #(dispatch! "#/administration/forms"))
-                               :error-handler status-modal/common-error-handler})
+                               :handler (partial status-modal/common-success-handler! #(dispatch! "#/administration/forms"))
+                               :error-handler status-modal/common-error-handler!})
    {}))
 
 

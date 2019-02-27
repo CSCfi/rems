@@ -20,7 +20,7 @@
 (rf/reg-event-fx
  ::send-remove-member
  (fn [_ [_ {:keys [application-id member comment on-finished]}]]
-   (status-modal/common-pending-handler (text :t.actions/remove-member))
+   (status-modal/common-pending-handler! (text :t.actions/remove-member))
    (post! "/api/applications/command"
           {:params {:application-id application-id
                     :type (if (:userid member)
@@ -30,8 +30,8 @@
                               (select-keys member [:userid])
                               (select-keys member [:name :email]))
                     :comment comment}
-           :handler (partial status-modal/common-success-handler on-finished)
-           :error-handler status-modal/common-error-handler})
+           :handler (partial status-modal/common-success-handler! on-finished)
+           :error-handler status-modal/common-error-handler!})
    {}))
 
 (defn remove-member-action-button [member-collapse-id]

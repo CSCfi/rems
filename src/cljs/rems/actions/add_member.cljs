@@ -42,13 +42,13 @@
 (rf/reg-event-fx
  ::send-add-member
  (fn [_ [_ {:keys [member application-id on-finished]}]]
-   (status-modal/common-pending-handler (text :t.actions/add-member))
+   (status-modal/common-pending-handler! (text :t.actions/add-member))
    (post! "/api/applications/command"
           {:params {:application-id application-id
                     :type :rems.workflow.dynamic/add-member
                     :member (select-keys member [:userid])}
-           :handler (status-modal/common-success-handler on-finished)
-           :error-handler status-modal/common-error-handler})
+           :handler (status-modal/common-success-handler! on-finished)
+           :error-handler status-modal/common-error-handler!})
    {}))
 
 (def ^:private action-form-id "add-member")

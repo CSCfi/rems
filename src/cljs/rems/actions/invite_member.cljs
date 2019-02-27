@@ -25,14 +25,14 @@
 (rf/reg-event-fx
  ::send-invite-member
  (fn [_ [_ {:keys [member application-id on-finished]}]]
-  (status-modal/common-pending-handler (text :t.actions/invite-member))
-  (post! "/api/applications/command"
-         {:params {:application-id application-id
-                   :type :rems.workflow.dynamic/invite-member
-                   :member member}
-          :handler (partial status-modal/common-success-handler on-finished)
-          :error-handler status-modal/common-error-handler})
-  {}))
+   (status-modal/common-pending-handler! (text :t.actions/invite-member))
+   (post! "/api/applications/command"
+          {:params {:application-id application-id
+                    :type :rems.workflow.dynamic/invite-member
+                    :member member}
+           :handler (partial status-modal/common-success-handler! on-finished)
+           :error-handler status-modal/common-error-handler!})
+   {}))
 
 (def ^:private action-form-id "invite-member")
 

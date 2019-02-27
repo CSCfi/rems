@@ -69,11 +69,11 @@
 (rf/reg-event-fx
  ::create-workflow
  (fn [_ [_ request]]
-  (status-modal/common-pending-handler (text :t.administration/create-workflow))
-  (post! "/api/workflows/create" {:params request
-                                  :handler (partial status-modal/common-success-handler #(dispatch! "#/administration/workflows"))
-                                  :error-handler status-modal/common-error-handler})
-  {}))
+   (status-modal/common-pending-handler! (text :t.administration/create-workflow))
+   (post! "/api/workflows/create" {:params request
+                                   :handler (partial status-modal/common-success-handler! #(dispatch! "#/administration/workflows"))
+                                   :error-handler status-modal/common-error-handler!})
+   {}))
 
 (defn- remove-actor [actors actor]
   (filter #(not= (:userid %)
