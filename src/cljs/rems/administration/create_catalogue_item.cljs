@@ -30,52 +30,19 @@
     ::fetch-resources nil
     ::fetch-forms nil}))
 
-(rf/reg-sub
- ::loading?
- (fn [db _]
-   (::loading? db)))
+(rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
-; form state
+(rf/reg-sub ::form (fn [db _] (::form db)))
+(rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
 
-(rf/reg-sub
- ::form
- (fn [db _]
-   (::form db)))
+(rf/reg-sub ::selected-workflow (fn [db _] (get-in db [::form :workflow])))
+(rf/reg-event-db ::set-selected-workflow (fn [db [_ workflow]] (assoc-in db [::form :workflow] workflow)))
 
-(rf/reg-event-db
- ::set-form-field
- (fn [db [_ keys value]]
-   (assoc-in db (concat [::form] keys) value)))
+(rf/reg-sub ::selected-resource (fn [db _] (get-in db [::form :resource])))
+(rf/reg-event-db ::set-selected-resource (fn [db [_ resource]] (assoc-in db [::form :resource] resource)))
 
-(rf/reg-sub
- ::selected-workflow
- (fn [db _]
-   (get-in db [::form :workflow])))
-
-(rf/reg-event-db
- ::set-selected-workflow
- (fn [db [_ workflow]]
-   (assoc-in db [::form :workflow] workflow)))
-
-(rf/reg-sub
- ::selected-resource
- (fn [db _]
-   (get-in db [::form :resource])))
-
-(rf/reg-event-db
- ::set-selected-resource
- (fn [db [_ resource]]
-   (assoc-in db [::form :resource] resource)))
-
-(rf/reg-sub
- ::selected-form
- (fn [db _]
-   (get-in db [::form :form])))
-
-(rf/reg-event-db
- ::set-selected-form
- (fn [db [_ form]]
-   (assoc-in db [::form :form] form)))
+(rf/reg-sub ::selected-form (fn [db _] (get-in db [::form :form])))
+(rf/reg-event-db ::set-selected-form (fn [db [_ form]] (assoc-in db [::form :form] form)))
 
 (defn- valid-request? [request]
   (and (not (str/blank? (:title request)))
@@ -96,26 +63,21 @@
     (merge {:state "disabled"} request)
     request))
 
-(defn- create-catalogue-item! [{:keys [request on-pending on-success on-error]}]
-  (when on-pending (on-pending))
+(defn- create-catalogue-item! [_ [_ request]]
+  (status-modal/set-pending! {:title (text :t.administration/create-catalogue-item)})
   (post! "/api/catalogue-items/create" {:params (create-request-with-state request)
-                                        :handler on-success
-                                        :error-handler on-error}))
+                                        :handler (fn [_]
+                                                   (status-modal/set-success! {:on-close #(dispatch! "#/administration/catalogue-items")}))
+                                        :error-handler #(status-modal/set-error! {:result {:error %}})})
+  {})
 
-(rf/reg-event-fx
- ::create-catalogue-item
- (fn [_ [_ opts]]
-   (create-catalogue-item! opts)
-   {}))
+(rf/reg-event-fx ::create-catalogue-item create-catalogue-item!)
 
 
 (defn- fetch-workflows []
   (fetch "/api/workflows/?active=true" {:handler #(rf/dispatch [::fetch-workflows-result %])}))
 
-(rf/reg-fx
- ::fetch-workflows
- (fn [_]
-   (fetch-workflows)))
+(rf/reg-fx ::fetch-workflows fetch-workflows)
 
 (rf/reg-event-db
  ::fetch-workflows-result
@@ -123,18 +85,12 @@
    (-> (assoc db ::workflows workflows)
        (update-loading))))
 
-(rf/reg-sub
- ::workflows
- (fn [db _]
-   (::workflows db)))
+(rf/reg-sub ::workflows (fn [db _] (::workflows db)))
 
 (defn- fetch-resources []
   (fetch "/api/resources/?active=true" {:handler #(rf/dispatch [::fetch-resources-result %])}))
 
-(rf/reg-fx
- ::fetch-resources
- (fn [_]
-   (fetch-resources)))
+(rf/reg-fx ::fetch-resources fetch-resources)
 
 (rf/reg-event-db
  ::fetch-resources-result
@@ -142,19 +98,13 @@
    (-> (assoc db ::resources resources)
        (update-loading))))
 
-(rf/reg-sub
- ::resources
- (fn [db _]
-   (::resources db)))
+(rf/reg-sub ::resources (fn [db _] (::resources db)))
 
 
 (defn- fetch-forms []
   (fetch "/api/forms/?active=true" {:handler #(rf/dispatch [::fetch-forms-result %])}))
 
-(rf/reg-fx
- ::fetch-forms
- (fn [_]
-   (fetch-forms)))
+(rf/reg-fx ::fetch-forms fetch-forms)
 
 (rf/reg-event-db
  ::fetch-forms-result
@@ -162,16 +112,14 @@
    (-> (assoc db ::forms forms)
        (update-loading))))
 
-(rf/reg-sub
- ::forms
- (fn [db _]
-   (::forms db)))
+(rf/reg-sub ::forms (fn [db _] (::forms db)))
 
 
 ;;;; UI
 
-(def ^:private context {:get-form ::form
-                        :update-form ::set-form-field})
+(def ^:private context
+  {:get-form ::form
+   :update-form ::set-form-field})
 
 (defn- catalogue-item-title-field []
   [text-field context {:keys [:title]
@@ -231,40 +179,31 @@
    {:on-click #(dispatch! "/#/administration/catalogue-items")}
    (text :t.administration/cancel)])
 
-(defn- save-catalogue-item-button [on-click]
-  (let [form @(rf/subscribe [::form])
-        request (build-request form)]
+(defn- save-catalogue-item-button [form on-click]
+  (let [request (build-request form)]
     [:button.btn.btn-primary
      {:on-click #(on-click request)
       :disabled (nil? request)}
      (text :t.administration/save)]))
 
 (defn create-catalogue-item-page []
-  (let [loading? (rf/subscribe [::loading?])
-        {:keys [on-pending on-success on-error state-atom] :as modal-opts} (status-modal/status-modal-state-handling
-                                                                            {:on-close-after-success #(dispatch! "#/administration/catalogue-items")
-                                                                             :description (text :t.administration/create-catalogue-item)})]
-    (fn []
-      [:div
-       [administration-navigator-container]
-       [:h2 (text :t.administration/create-catalogue-item)]
-       [collapsible/component
-        {:id "create-catalogue-item"
-         :title (text :t.administration/create-catalogue-item)
-         :always [:div
-                  (if @loading?
-                    [:div#catalogue-item-loader [spinner/big]]
-                    [:div#catalogue-item-editor
-                     (when @state-atom [status-modal/status-modal (merge @state-atom modal-opts)])
-                     [catalogue-item-title-field]
-                     [catalogue-item-workflow-field]
-                     [catalogue-item-resource-field]
-                     [catalogue-item-form-field]
+  (let [loading? @(rf/subscribe [::loading?])
+        form @(rf/subscribe [::form])]
+    [:div
+     [administration-navigator-container]
+     [:h2 (text :t.administration/create-catalogue-item)]
+     [collapsible/component
+      {:id "create-catalogue-item"
+       :title (text :t.administration/create-catalogue-item)
+       :always [:div
+                (if loading?
+                  [:div#catalogue-item-loader [spinner/big]]
+                  [:div#catalogue-item-editor
+                   [catalogue-item-title-field]
+                   [catalogue-item-workflow-field]
+                   [catalogue-item-resource-field]
+                   [catalogue-item-form-field]
 
-                     [:div.col.commands
-                      [cancel-button]
-                      [save-catalogue-item-button #(rf/dispatch [::create-catalogue-item
-                                                                 {:request %
-                                                                  :on-pending on-pending
-                                                                  :on-success on-success
-                                                                  :on-error on-error}])]]])]}]])))
+                   [:div.col.commands
+                    [cancel-button]
+                    [save-catalogue-item-button form #(rf/dispatch [::create-catalogue-item %])]]])]}]]))

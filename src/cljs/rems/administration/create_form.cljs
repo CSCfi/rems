@@ -24,35 +24,13 @@
 
 ;;;; form state
 
-(rf/reg-sub
- ::form
- (fn [db _]
-   (::form db)))
+(rf/reg-sub ::form (fn [db _] (::form db)))
+(rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
 
-(rf/reg-event-db
- ::set-form-field
- (fn [db [_ keys value]]
-   (assoc-in db (concat [::form] keys) value)))
-
-(rf/reg-event-db
- ::add-form-item
- (fn [db [_]]
-   (update-in db [::form :items] items/add {})))
-
-(rf/reg-event-db
- ::remove-form-item
- (fn [db [_ item-index]]
-   (update-in db [::form :items] items/remove item-index)))
-
-(rf/reg-event-db
- ::move-form-item-up
- (fn [db [_ item-index]]
-   (update-in db [::form :items] items/move-up item-index)))
-
-(rf/reg-event-db
- ::move-form-item-down
- (fn [db [_ item-index]]
-   (update-in db [::form :items] items/move-down item-index)))
+(rf/reg-event-db ::add-form-item (fn [db [_]] (update-in db [::form :items] items/add {})))
+(rf/reg-event-db ::remove-form-item (fn [db [_ item-index]] (update-in db [::form :items] items/remove item-index)))
+(rf/reg-event-db ::move-form-item-up (fn [db [_ item-index]] (update-in db [::form :items] items/move-up item-index)))
+(rf/reg-event-db ::move-form-item-down (fn [db [_ item-index]] (update-in db [::form :items] items/move-down item-index)))
 
 (rf/reg-event-db
  ::add-form-item-option
@@ -149,23 +127,22 @@
     (when (valid-request? request languages)
       request)))
 
-(defn- create-form! [{:keys [request on-pending on-success on-error]}]
-  (when on-pending (on-pending))
+(defn- create-form! [_ [_ request]]
+  (status-modal/set-pending! {:title (text :t.administration/create-form)})
   (post! "/api/forms/create" {:params request
-                              :handler on-success
-                              :error-handler on-error}))
+                              :handler (fn [response]
+                                         (status-modal/set-success! {:on-close #(dispatch! "#/administration/forms")}))
+                              :error-handler #(status-modal/set-error! {:result {:error %}})})
+  {})
 
-(rf/reg-event-fx
- ::create-form
- (fn [_ [_ opts]]
-   (create-form! opts)
-   {}))
+(rf/reg-event-fx ::create-form create-form!)
 
 
 ;;;; UI
 
-(def ^:private context {:get-form ::form
-                        :update-form ::set-form-field})
+(def ^:private context
+  {:get-form ::form
+   :update-form ::set-form-field})
 
 (defn- form-organization-field []
   [text-field context {:keys [:organization]
@@ -189,11 +166,10 @@
                          :label (text :t.create-form/maxlength)}])
 
 (defn- add-form-item-option-button [item-index]
-  [:a
-   {:href "#"
-    :on-click (fn [event]
-                (.preventDefault event)
-                (rf/dispatch [::add-form-item-option item-index]))}
+  [:a {:href "#"
+       :on-click (fn [event]
+                   (.preventDefault event)
+                   (rf/dispatch [::add-form-item-option item-index]))}
    (text :t.create-form/add-option)])
 
 (defn- remove-form-item-option-button [item-index option-index]
@@ -245,11 +221,10 @@
                      :label (text :t.create-form/optional)}])
 
 (defn- add-form-item-button []
-  [:a
-   {:href "#"
-    :on-click (fn [event]
-                (.preventDefault event)
-                (rf/dispatch [::add-form-item]))}
+  [:a {:href "#"
+       :on-click (fn [event]
+                   (.preventDefault event)
+                   (rf/dispatch [::add-form-item]))}
    (text :t.create-form/add-form-item)])
 
 (defn- remove-form-item-button [item-index]
@@ -275,50 +250,45 @@
    {:on-click #(dispatch! "/#/administration/forms")}
    (text :t.administration/cancel)])
 
+(defn- form-items [items]
+  (into [:div]
+        (map-indexed (fn [item-index item]
+                       [:div.form-item {:key item-index}
+                        [:div.form-item-header
+                         [:h4 (text-format :t.create-form/item-n (inc item-index))]
+                         [:div.form-item-controls
+                          [move-form-item-up-button item-index]
+                          [move-form-item-down-button item-index]
+                          [remove-form-item-button item-index]]]
+
+                        [form-item-title-field item-index]
+                        [form-item-optional-checkbox item-index]
+                        [form-item-type-radio-group item-index]
+                        (when (supports-input-prompt? item)
+                          [form-item-input-prompt-field item-index])
+                        (when (supports-maxlength? item)
+                          [form-item-maxlength-field item-index])
+                        (when (supports-options? item)
+                          [form-item-option-fields item-index])])
+                     items)))
+
 (defn create-form-page []
-  (let [form @(rf/subscribe [::form])
-        {:keys [on-pending on-success on-error state-atom] :as modal-opts} (status-modal/status-modal-state-handling
-                                                                            {:on-close-after-success #(dispatch! "#/administration/forms")
-                                                                             :description (text :t.administration/create-form)})]
-    (fn []
-      [:div
-       [administration-navigator-container]
-       [:h2 (text :t.administration/create-form)]
-       [collapsible/component
-        {:id "create-form"
-         :title (text :t.administration/create-form)
-         :always [:div
-                  (when @state-atom [status-modal/status-modal (merge @state-atom modal-opts)])
-                  [form-organization-field]
-                  [form-title-field]
+  (let [form @(rf/subscribe [::form])]
+    [:div
+     [administration-navigator-container]
+     [:h2 (text :t.administration/create-form)]
+     [collapsible/component
+      {:id "create-form"
+       :title (text :t.administration/create-form)
+       :always [:div
+                [form-organization-field]
+                [form-title-field]
 
-                  (doall (for [item-index (range (count (:items form)))]
-                           [:div.form-item
-                            {:key item-index}
-                            [:div.form-item-header
-                             [:h4 (text-format :t.create-form/item-n (inc item-index))]
-                             [:div.form-item-controls
-                              [move-form-item-up-button item-index]
-                              [move-form-item-down-button item-index]
-                              [remove-form-item-button item-index]]]
+                [form-items (:items form)]
 
-                            [form-item-title-field item-index]
-                            [form-item-optional-checkbox item-index]
-                            [form-item-type-radio-group item-index]
-                            (when (supports-input-prompt? (get-in form [:items item-index]))
-                              [form-item-input-prompt-field item-index])
-                            (when (supports-maxlength? (get-in form [:items item-index]))
-                              [form-item-maxlength-field item-index])
-                            (when (supports-options? (get-in form [:items item-index]))
-                              [form-item-option-fields item-index])]))
+                [:div.form-item.new-form-item
+                 [add-form-item-button]]
 
-                  [:div.form-item.new-form-item
-                   [add-form-item-button]]
-
-                  [:div.col.commands
-                   [cancel-button]
-                   [save-form-button #(rf/dispatch [::create-form
-                                                    {:request %
-                                                     :on-pending on-pending
-                                                     :on-success on-success
-                                                     :on-error on-error}])]]]}]])))
+                [:div.col.commands
+                 [cancel-button]
+                 [save-form-button #(rf/dispatch [::create-form %])]]]}]]))

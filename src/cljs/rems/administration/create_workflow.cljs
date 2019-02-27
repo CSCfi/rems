@@ -23,32 +23,17 @@
    {:db (reset-form db)
     ::fetch-actors nil}))
 
-(rf/reg-sub
- ::loading?
- (fn [db _]
-   (::loading? db)))
+(rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
 ;;; form state
 
-(rf/reg-sub
- ::form
- (fn [db _]
-   (::form db)))
+(rf/reg-sub ::form (fn [db _] (::form db)))
 
-(rf/reg-event-db
- ::set-form-field
- (fn [db [_ keys value]]
-   (assoc-in db (concat [::form] keys) value)))
+(rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
 
-(rf/reg-event-db
- ::add-round
- (fn [db [_]]
-   (update-in db [::form :rounds] items/add {})))
+(rf/reg-event-db ::add-round (fn [db [_]] (update-in db [::form :rounds] items/add {})))
 
-(rf/reg-event-db
- ::remove-round
- (fn [db [_ index]]
-   (update-in db [::form :rounds] items/remove index)))
+(rf/reg-event-db ::remove-round (fn [db [_ index]] (update-in db [::form :rounds] items/remove index)))
 
 
 ;;; form submit
@@ -81,64 +66,37 @@
     (when (valid-request? request)
       request)))
 
-(defn- create-workflow [{:keys [request on-pending on-success on-error]}]
-  (when on-pending (on-pending))
+(defn- create-workflow! [_ [_ request]]
+  (status-modal/set-pending! {:title (text :t.administration/create-workflow)})
   (post! "/api/workflows/create" {:params request
-                                  :handler on-success
-                                  :error-handler on-error}))
+                                  :handler (fn [_] (status-modal/set-success! {:on-close #(dispatch! "#/administration/workflows")}))
+                                  :error-handler #(status-modal/set-error! {:result {:error %}})})
+  {})
 
-(rf/reg-event-fx
- ::create-workflow
- (fn [_ [_ opts]]
-   (create-workflow opts)
-   {}))
-
-
-;;; selected actors
+(rf/reg-event-fx ::create-workflow create-workflow!)
 
 (defn- remove-actor [actors actor]
   (filter #(not= (:userid %)
                  (:userid actor))
           actors))
 
-(rf/reg-event-db
- ::remove-actor
- (fn [db [_ round actor]]
-   (update-in db [::form :rounds round :actors] remove-actor actor)))
-
 (defn- add-actor [actors actor]
   (-> actors
       (remove-actor actor) ; avoid duplicates
       (conj actor)))
 
-(rf/reg-event-db
- ::add-actor
- (fn [db [_ round actor]]
-   (update-in db [::form :rounds round :actors] add-actor actor)))
+(rf/reg-event-db ::remove-actor (fn [db [_ round actor]] (update-in db [::form :rounds round :actors] remove-actor actor)))
+(rf/reg-event-db ::add-actor (fn [db [_ round actor]] (update-in db [::form :rounds round :actors] add-actor actor)))
 
 
-;;; selected handlers
+(rf/reg-event-db ::remove-handler (fn [db [_ handler]] (update-in db [::form :handlers] remove-actor handler)))
+(rf/reg-event-db ::add-handler (fn [db [_ handler]] (update-in db [::form :handlers] add-actor handler)))
 
-(rf/reg-event-db
- ::remove-handler
- (fn [db [_ handler]]
-   (update-in db [::form :handlers] remove-actor handler)))
-
-(rf/reg-event-db
- ::add-handler
- (fn [db [_ handler]]
-   (update-in db [::form :handlers] add-actor handler)))
-
-
-;;; available actors
 
 (defn- fetch-actors []
   (fetch "/api/workflows/actors" {:handler #(rf/dispatch [::fetch-actors-result %])}))
 
-(rf/reg-fx
- ::fetch-actors
- (fn [_]
-   (fetch-actors)))
+(rf/reg-fx ::fetch-actors fetch-actors)
 
 (rf/reg-event-db
  ::fetch-actors-result
@@ -147,16 +105,14 @@
        (assoc ::actors (map enrich-user actors))
        (dissoc ::loading?))))
 
-(rf/reg-sub
- ::actors
- (fn [db _]
-   (::actors db)))
+(rf/reg-sub ::actors (fn [db _] (::actors db)))
 
 
 ;;;; UI
 
-(def ^:private context {:get-form ::form
-                        :update-form ::set-form-field})
+(def ^:private context
+  {:get-form ::form
+   :update-form ::set-form-field})
 
 (defn- workflow-organization-field []
   [text-field context {:keys [:organization]
@@ -213,11 +169,10 @@
    {:aria-hidden true}])
 
 (defn- add-round-button []
-  [:a
-   {:href "#"
-    :on-click (fn [event]
-                (.preventDefault event)
-                (rf/dispatch [::add-round]))}
+  [:a {:href "#"
+       :on-click (fn [event]
+                   (.preventDefault event)
+                   (rf/dispatch [::add-round]))}
    (text :t.create-workflow/add-round)])
 
 (defn- remove-round-button [round]
@@ -296,35 +251,25 @@
 (defn create-workflow-page []
   (let [form @(rf/subscribe [::form])
         workflow-type (:type form)
-        loading? (rf/subscribe [::loading?])
-        {:keys [on-pending on-success on-error state-atom] :as modal-opts} (status-modal/status-modal-state-handling
-                                                                            {:on-close-after-success #(dispatch! "#/administration/workflows")
-                                                                             :description (text :t.administration/create-workflow)})]
-    (fn []
-      [:div
-       [administration-navigator-container]
-       [:h2 (text :t.administration/create-workflow)]
-       [collapsible/component
-        {:id "create-workflow"
-         :title (text :t.administration/create-workflow)
-         :always [:div
-                  (if @loading?
-                    [:div#workflow-loader [spinner/big]]
-                    [:div#workflow-editor
-                     (when @state-atom [status-modal/status-modal (merge @state-atom modal-opts)])
-                     [workflow-organization-field]
-                     [workflow-title-field]
-                     [workflow-type-field]
+        loading? @(rf/subscribe [::loading?])]
+    [:div
+     [administration-navigator-container]
+     [:h2 (text :t.administration/create-workflow)]
+     [collapsible/component
+      {:id "create-workflow"
+       :title (text :t.administration/create-workflow)
+       :always (if loading?
+                 [:div#workflow-loader [spinner/big]]
+                 [:div#workflow-editor
+                  [workflow-organization-field]
+                  [workflow-title-field]
+                  [workflow-type-field]
 
-                     (case workflow-type
-                       :auto-approve [auto-approve-workflow-form]
-                       :dynamic [dynamic-workflow-form]
-                       :rounds [round-workflow-form])
+                  (case workflow-type
+                    :auto-approve [auto-approve-workflow-form]
+                    :dynamic [dynamic-workflow-form]
+                    :rounds [round-workflow-form])
 
-                     [:div.col.commands
-                      [cancel-button]
-                      [save-workflow-button #(rf/dispatch [::create-workflow
-                                                           {:request %
-                                                            :on-pending on-pending
-                                                            :on-success on-success
-                                                            :on-error on-error}])]]])]}]])))
+                  [:div.col.commands
+                   [cancel-button]
+                   [save-workflow-button #(rf/dispatch [::create-workflow %])]]])}]]))
