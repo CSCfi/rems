@@ -28,7 +28,7 @@
 
 (defn- status-widget [success? error-content]
   (cond
-    (and (not success?)  (not error-content)) [spinner/big]
+    (and (not success?) (not error-content)) [spinner/big]
     success? [:p [:i {:class ["fa fa-check-circle text-success"]}] (text :t.form/success)]
     error-content [:div [:p [:i {:class "fa fa-times-circle text-danger"}] (text :t.form/failed)]
                    error-content]))
@@ -54,7 +54,7 @@
         {:keys [title content error-content result on-close shade? open?]} state
         success? (:success? result)
         errors (if (:error result) [(:error result)] (:errors result))
-        error-content (or error-content (format-errors errors))
+        error-content (or error-content (and errors (format-errors errors)))
         content [:div [status-widget success? error-content] content]]
     (when open?
       [modal/notification {:title title
@@ -66,9 +66,8 @@
                            :shade? shade?}])))
 
 (defn set-pending! [& [opts]]
-  (rf/dispatch [::merge-state (deep-merge {:open? true
-                                           :result nil}
-                                          opts)]))
+  (rf/dispatch [::set-state (deep-merge {:open? true}
+                                        opts)]))
 (defn set-success! [opts]
   (rf/dispatch [::merge-state (deep-merge {:open? true
                                            :result {:success? true}}

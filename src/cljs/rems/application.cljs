@@ -53,12 +53,13 @@
   [application msgs]
   (let [fields-by-id (index-by [:id] (map localize-item (:items application)))
         licenses-by-id (index-by [:id] (map localize-item (:licenses application)))]
-    (into [:ul]
-          (concat
-           (for [{:keys [type field-id]} (filter :field-id msgs)]
-             [:li (text-format type (:title (fields-by-id field-id)))])
-           (for [{:keys [type license-id]} (filter :license-id msgs)]
-             [:li (text-format type (:title (licenses-by-id license-id)))])))))
+    [:div (text :t.form/validation.errors)
+     (into [:ul]
+           (concat
+            (for [{:keys [type field-id]} (filter :field-id msgs)]
+              [:li (text-format type (:title (fields-by-id field-id)))])
+            (for [{:keys [type license-id]} (filter :license-id msgs)]
+              [:li (text-format type (:title (licenses-by-id license-id)))])))]))
 
 
 
@@ -134,18 +135,28 @@
 
 (defn- submit-application [application description application-id catalogue-items items licenses]
   (status-modal/common-pending-handler! description)
-  (post! "/api/applications/command"
+  (post! "/api/applications/save"
          {:handler (fn [response]
                      (if (:success response)
-                       (status-modal/set-success! {:on-close #(rf/dispatch [::enter-application-page application-id (:errors %)])})
-                       (do
-                         (prn application)
-                         (status-modal/set-error! {:result response
-                                                   :error-content (format-validation-messages application (:errors response))})
-                         (rf/dispatch [::set-validation (:errors response)]))))
+                       (post! "/api/applications/command"
+                              {:handler (fn [response]
+                                          (if (:success response)
+                                            (status-modal/set-success! {:on-close #(rf/dispatch [::enter-application-page application-id (:errors %)])})
+                                            (do
+                                              (status-modal/set-error! {:result response
+                                                                        :error-content (format-validation-messages application (:errors response))})
+                                              (rf/dispatch [::set-validation (:errors response)]))))
+                               :error-handler status-modal/common-error-handler!
+                               :params {:type :rems.workflow.dynamic/submit
+                                        :application-id application-id}})
+                       (status-modal/common-error-handler! response)))
           :error-handler status-modal/common-error-handler!
-          :params {:type :rems.workflow.dynamic/submit
-                   :application-id application-id}}))
+          :params (merge {:command "save"
+                          :items (map-vals :value items)
+                          :licenses licenses}
+                         (if application-id
+                           {:application-id application-id}
+                           {:catalogue-items catalogue-items}))}))
 
 (rf/reg-event-fx
  ::submit-application
@@ -734,8 +745,7 @@
                           (when (:validation edit-application)
                             [flash-message
                              {:status :danger
-                              :contents [:div (text :t.form/validation.errors)
-                                         [format-validation-messages application (:validation edit-application)]]}])])]
+                              :contents [format-validation-messages application (:validation edit-application)]}])])]
     [:div
      [:div {:class "float-right"} [pdf-button (:id app)]]
      [:h2 (text :t.applications/application)]
