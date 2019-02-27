@@ -112,6 +112,3 @@
 
 (defn common-error-handler! [response]
   (set-error! {:result {:error response}}))
-
-
-(defn status-modal-state-handling [& args])

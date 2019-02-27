@@ -47,7 +47,7 @@
           {:params {:application-id application-id
                     :type :rems.workflow.dynamic/add-member
                     :member (select-keys member [:userid])}
-           :handler (status-modal/common-success-handler! on-finished)
+           :handler (partial status-modal/common-success-handler! on-finished)
            :error-handler status-modal/common-error-handler!})
    {}))
 
