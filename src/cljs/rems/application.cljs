@@ -112,7 +112,7 @@
 
 (rf/reg-event-fx
  ::save-application
- (fn [{:keys [db]} [_ command description]]
+ (fn [{:keys [db]} [_ description]]
    (let [app (get-in db [::application :application])
          app-id (get-in db [::application :application :id])
          catalogue-items (get-in db [::application :catalogue-items])
@@ -124,6 +124,22 @@
                               :when checked?]
                           [id "approved"]))]
      (save-application app description app-id catalogue-ids items licenses))
+   {:db (assoc-in db [::edit-application :validation] nil)}))
+
+(rf/reg-event-fx
+ ::submit-application
+ (fn [{:keys [db]} [_ description]]
+   (let [app (get-in db [::application :application])
+         app-id (get-in db [::application :application :id])
+         catalogue-items (get-in db [::application :catalogue-items])
+         catalogue-ids (mapv :id catalogue-items)
+         items (get-in db [::edit-application :items])
+         ;; TODO change api to booleans
+         licenses (into {}
+                        (for [[id checked?] (get-in db [::edit-application :licenses])
+                              :when checked?]
+                          [id "approved"]))]
+     (submit-application app description app-id catalogue-ids items licenses))
    {:db (assoc-in db [::edit-application :validation] nil)}))
 
 (defn- save-attachment [{:keys [db]} [_ field-id file description]]
@@ -475,13 +491,13 @@
 (defn- save-button []
   [button-wrapper {:id "save"
                    :text (text :t.form/save)
-                   :on-click #(rf/dispatch [::save-application "save" (text :t.form/save)])}])
+                   :on-click #(rf/dispatch [::save-application (text :t.form/save)])}])
 
 (defn- submit-button []
   [button-wrapper {:id "submit"
                    :text (text :t.form/submit)
                    :class :btn-primary
-                   :on-click #(rf/dispatch [::save-application "submit" (text :t.form/submit)])}])
+                   :on-click #(rf/dispatch [::submit-application (text :t.form/submit)])}])
 
 (defn- fields [form edit-application language]
   (let [application (:application form)
