@@ -24,6 +24,9 @@ WHERE 1=1
 /*~ (when (:resource params) */
   AND res.resid = :resource
 /*~ ) ~*/
+/*~ (when (not (:archived params)) */
+  AND ci.archived = false
+/*~ ) ~*/
 
 -- :name get-catalogue-item :? :1
 SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.start, ci.endt as "end", ci.enabled, ci.archived

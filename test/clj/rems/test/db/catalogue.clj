@@ -69,3 +69,19 @@
       (is (= {:enabled false
               :archived false}
              (status-flags item-id2))))))
+
+(deftest test-get-localized-catalogue-items
+  (let [uid "test-user"
+        form-id (:id (db/create-form! {:organization "org" :title "form with max lengths" :user uid}))
+        wf-id (:id (db/create-workflow! {:organization "org" :modifieruserid uid :owneruserid uid :title "Test workflow" :fnlround 0}))
+        item-id (:id (db/create-catalogue-item! {:title "item" :form form-id :resid nil :wfid wf-id}))]
+
+    (testing "find all"
+      (is (= [item-id] (map :id (catalogue/get-localized-catalogue-items)))))
+
+    (testing "archived catalogue items"
+      (db/set-catalogue-item-state! {:id item-id
+                                     :archived true})
+      (is (= [] (map :id (catalogue/get-localized-catalogue-items))))
+      (is (= [item-id] (map :id (catalogue/get-localized-catalogue-items {:archived true}))))
+      (is (= [] (map :id (catalogue/get-localized-catalogue-items {:archived false})))))))
