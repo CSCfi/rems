@@ -430,8 +430,8 @@
   [application _workflow event]
   (-> application
       (update :commenters into (:application/commenters event))
-      (update :latest-comment-request-by-user merge (zipmap (:application/commenters event)
-                                                           (repeat (:application/request-id event))))))
+      (update ::latest-comment-request-by-user merge (zipmap (:application/commenters event)
+                                                            (repeat (:application/request-id event))))))
 
 (defmethod apply-event [:application.event/commented :workflow/dynamic]
   [application _workflow event]
@@ -439,7 +439,7 @@
   ;; the event list
   (-> application
       (update :commenters disj (:event/actor event))
-      (update :latest-comment-request-by-user dissoc (:event/actor event))))
+      (update ::latest-comment-request-by-user dissoc (:event/actor event))))
 
 (defmethod apply-event [:application.event/member-added :workflow/dynamic]
   [application _workflow event]
@@ -464,7 +464,7 @@
           events))
 
 (defn clean-internal-state [application]
-  (dissoc application :latest-comment-request-by-user))
+  (dissoc application ::latest-comment-request-by-user))
 
 ;;; Command handlers
 
@@ -569,7 +569,7 @@
 (defmethod command-handler ::comment
   [cmd application _injections]
   (or (actor-is-not-commenter-error application cmd)
-      (let [last-request-for-actor (get-in application [:latest-comment-request-by-user (:actor cmd)])]
+      (let [last-request-for-actor (get-in application [::latest-comment-request-by-user (:actor cmd)])]
         (ok {:event/type :application.event/commented
              ;; Currently we want to tie all comments to the latest request.
              ;; In the future this might change so that commenters can freely continue to comment
@@ -1054,13 +1054,13 @@
                                requested
                                injections))))
       (testing "comments are linked to different requests"
-        (is (not (= (get-in requested [:latest-comment-request-by-user "commenter"])
-                    (get-in requested [:latest-comment-request-by-user "commenter2"]))))
-        (is (= (get-in requested [:latest-comment-request-by-user "commenter"])
+        (is (not (= (get-in requested [::latest-comment-request-by-user "commenter"])
+                    (get-in requested [::latest-comment-request-by-user "commenter2"]))))
+        (is (= (get-in requested [::latest-comment-request-by-user "commenter"])
                (get-in (handle-command {:actor "commenter" :comment "..." :type ::comment}
                                        requested injections)
                        [:result :application/request-id])))
-        (is (= (get-in requested [:latest-comment-request-by-user "commenter2"])
+        (is (= (get-in requested [::latest-comment-request-by-user "commenter2"])
                (get-in (handle-command {:actor "commenter2" :comment "..." :type ::comment}
                                        requested injections)
                        [:result :application/request-id]))))
