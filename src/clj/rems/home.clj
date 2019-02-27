@@ -2,7 +2,6 @@
   (:require [compojure.core :refer [GET defroutes]]
             [markdown.core :as md]
             [rems.auth.util :as auth-util]
-            [rems.catalogue-util :refer [disabled-catalogue-item?]]
             [rems.common-util :refer [index-by]]
             [rems.config :refer [env]]
             [rems.css.styles :as styles]
@@ -12,10 +11,12 @@
 
 (defn- apply-for-resource [resource]
   (let [items (->> (catalogue/get-localized-catalogue-items {:resource resource})
-                   (remove disabled-catalogue-item?))]
+                   (filter :enabled))]
     (cond
-      (= 0 (count items)) (not-found "Resource not found")
-      (< 1 (count items)) (not-found "Resource ID is not unique")
+      (= 0 (count items)) (-> (not-found "Resource not found")
+                              (content-type "text/plain"))
+      (< 1 (count items)) (-> (not-found "Resource ID is not unique")
+                              (content-type "text/plain"))
       :else (redirect (str "/#/application?items=" (:id (first items)))))))
 
 (defn- find-allowed-markdown-file [filename]

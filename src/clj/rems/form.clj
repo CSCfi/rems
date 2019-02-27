@@ -1,6 +1,5 @@
 (ns rems.form
   (:require [clj-time.core :as time]
-            [rems.catalogue-util :refer [disabled-catalogue-item?]]
             [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
@@ -63,7 +62,7 @@
            (when-not valid? {:validation validation}))))
 
 (defn- check-for-disabled-items! [items]
-  (let [disabled-items (filter disabled-catalogue-item? items)]
+  (let [disabled-items (remove :enabled items)]
     (when (seq disabled-items)
       (throw (rems.InvalidRequestException. (str "Disabled catalogue items " (pr-str disabled-items)))))))
 

@@ -652,7 +652,7 @@
                                            {"en" "ELFA Corpus, one approval (extra data, disabled)"
                                             "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti, pois käytöstä)"})]
       (create-resource-license! res2 "Some test license" (+fake-users+ :owner))
-      (db/set-catalogue-item-state! {:item disabled :state "disabled" :user (+fake-users+ :approver1)})
+      (db/set-catalogue-item-state! {:item disabled :enabled false :user (+fake-users+ :approver1)})
       (create-applications! simple (:simple workflows) (+fake-users+ :approver1) (+fake-users+ :approver1))
       (create-disabled-applications! disabled (:simple workflows) (+fake-users+ :approver1) (+fake-users+ :approver1))
       (create-bundled-application! simple bundlable (:simple workflows) (+fake-users+ :applicant1) (+fake-users+ :approver1))
@@ -695,7 +695,7 @@
                                          {"en" "ELFA Corpus, one approval (extra data, disabled)"
                                           "fi" "ELFA-korpus, yksi hyväksyntä (lisäpaketti, pois käytöstä)"})]
     (create-resource-license! res2 "Some demo license" (+demo-users+ :owner))
-    (db/set-catalogue-item-state! {:item disabled :state "disabled" :user (+demo-users+ :owner)})
+    (db/set-catalogue-item-state! {:item disabled :enabled false :user (+demo-users+ :owner)})
     (create-applications! simple (:simple workflows) (+demo-users+ :applicant1) (+demo-users+ :approver1))
     (create-disabled-applications! disabled (:simple workflows) (+demo-users+ :applicant1) (+demo-users+ :approver1))
     (create-bundled-application! simple bundlable (:simple workflows) (+demo-users+ :applicant2) (+demo-users+ :approver1))

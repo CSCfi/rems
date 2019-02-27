@@ -41,7 +41,7 @@ WHERE ci.id = :item
 -- :name set-catalogue-item-state! :insert
 -- :doc Set catalogue item state enabled or disabled
 UPDATE catalogue_item ci
-SET enabled = (:state = 'enabled') -- TODO: remove state
+SET enabled = :enabled
 WHERE ci.id = :item
 
 -- :name create-catalogue-item! :insert
