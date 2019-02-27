@@ -743,14 +743,16 @@
    :comment (:comment event)
    :request-id (:request-id event)
    :commenters (:commenters event)
+   :deciders (:deciders event)
    :time (localize-time (:time event))})
 
-(defn- event-view [{:keys [time userid event comment commenters]}]
+(defn- event-view [{:keys [time userid event comment commenters deciders]}]
   [:div.form-group.row
    [:label.col-sm-2.col-form-label time]
    [:div.col-sm-10
     [:div.col-form-label [:span userid] " — " [:span event]
-     (when (seq commenters) [:span ": " (for [c commenters] ^{:key c} [:span c])])]
+     (when-let [targets (seq (concat commenters deciders))]
+       [:span ": " (str/join ", " targets)])]
     (when comment [:div comment])]])
 
 (defn- event-groups-view [event-groups]
@@ -1145,6 +1147,7 @@
    :userid (:event/actor event)
    :request-id (:application/request-id event)
    :commenters (:application/commenters event)
+   :deciders (:application/deciders event)
    :comment (if (= :application.event/decided (:event/type event))
               (str (localize-decision (:application/decision event)) ": " (:application/comment event))
               (:application/comment event))})
