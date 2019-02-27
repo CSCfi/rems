@@ -2,7 +2,7 @@
   (:require [clj-time.format :as time-format]
             [clojure.test :refer [deftest is]]
             [compojure.api.sweet :refer :all]
-            [rems.api.applications :refer [Reviewer get-reviewers]]
+            [rems.api.applications :refer [User get-users]]
             [rems.api.util]
             [rems.db.core :as db]
             [rems.db.workflow :as workflow]
@@ -88,9 +88,9 @@
   {:id s/Num})
 
 ; TODO: deduplicate or decouple with /api/applications/reviewers API?
-(s/defschema AvailableActor Reviewer)
+(s/defschema AvailableActor User)
 (s/defschema AvailableActors [AvailableActor])
-(def get-available-actors get-reviewers)
+(def get-available-actors get-users)
 
 (defn- get-workflows [filters]
   (doall

@@ -79,18 +79,15 @@
    :comment s/Str
    :recipients [s/Str]})
 
+(s/defschema User
+  {:userid s/Str
+   :name (s/maybe s/Str)
+   :email (s/maybe s/Str)})
+
 (s/defschema Applicant
   {:userid s/Str
    :name (s/maybe s/Str)
    :email (s/maybe s/Str)})
-
-(s/defschema Reviewer
-  {:userid s/Str
-   :name (s/maybe s/Str)
-   :email (s/maybe s/Str)})
-
-(s/defschema Reviewers
-  [Reviewer])
 
 (s/defschema Commenter
   {:userid s/Str
@@ -176,8 +173,6 @@
 
 (def get-applicants get-users)
 
-(def get-reviewers get-users)
-
 (def get-commenters get-users)
 
 (def get-deciders get-users)
@@ -233,12 +228,6 @@
       :return GetApplicationResponse
       (let [app (applications/make-draft-application (getx-user-id) catalogue-items)]
         (ok (applications/get-draft-form-for app))))
-
-    (GET "/reviewers" []
-      :summary "Available third party reviewers"
-      :roles #{:approver}
-      :return Reviewers
-      (ok (get-reviewers)))
 
     (GET "/commenters" []
       :summary "Available third party commenters"
@@ -332,25 +321,6 @@
       :body [request SaveApplicationCommand]
       :return SaveApplicationResponse
       (ok (form/api-save (assoc (fix-keys request) :actor (getx-user-id)))))
-
-    (POST "/judge" []
-      :summary "Judge an application"
-      :roles #{:applicant :approver :reviewer}
-      :body [request JudgeApplicationCommand]
-      :return SuccessResponse
-      (ok (api-judge (assoc request :actor (getx-user-id)))))
-
-    (POST "/review_request" []
-      :summary "Request a review"
-      :roles #{:approver}
-      :body [request ReviewRequestCommand]
-      :return SuccessResponse
-      (applications/send-review-request (getx-user-id)
-                                        (:application-id request)
-                                        (:round request)
-                                        (:comment request)
-                                        (:recipients request))
-      (ok {:success true}))
 
     ;; TODO: think about size limit
     (POST "/add_attachment" []
