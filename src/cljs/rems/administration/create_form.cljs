@@ -14,13 +14,10 @@
             [rems.status-modal :as status-modal]
             [reagent.core :as r]))
 
-(defn- reset-form [db]
-  (assoc db ::form {:items []}))
-
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (reset-form db)}))
+   {:db (assoc db ::form {:items []})}))
 
 ;;;; form state
 

@@ -12,15 +12,12 @@
             [rems.text :refer [text text-format localize-item]]
             [rems.util :refer [dispatch! fetch post!]]))
 
-(defn- reset-form [db]
-  (assoc db
-         ::form {:type :auto-approve}
-         ::loading? true))
-
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (reset-form db)
+   {:db (assoc db
+         ::form {:type :auto-approve}
+         ::loading? true)
     ::fetch-actors nil}))
 
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))

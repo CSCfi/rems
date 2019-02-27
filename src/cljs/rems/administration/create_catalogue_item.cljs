@@ -11,11 +11,6 @@
             [rems.status-modal :as status-modal]
             [reagent.core :as r]))
 
-(defn- reset-form [db]
-  (-> (dissoc db ::form)
-      (assoc ::loading? true
-             ::loading-progress 0)))
-
 (defn- update-loading [db]
   (let [progress (::loading-progress db)]
     (if (<= 2 progress)
@@ -25,7 +20,9 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (reset-form db)
+   {:db (-> (dissoc db ::form)
+            (assoc ::loading? true
+                   ::loading-progress 0))
     ::fetch-workflows nil
     ::fetch-resources nil
     ::fetch-forms nil}))

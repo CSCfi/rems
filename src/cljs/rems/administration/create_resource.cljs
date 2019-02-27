@@ -12,15 +12,13 @@
             [rems.util :refer [dispatch! fetch post!]]
             [rems.status-modal :as status-modal]))
 
-(defn- reset-form [db]
-  (assoc db
-         ::form {:licenses #{}}
-         ::loading? true))
 
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (reset-form db)
+   {:db (assoc db
+         ::form {:licenses #{}}
+         ::loading? true)
     ::fetch-licenses nil}))
 
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))

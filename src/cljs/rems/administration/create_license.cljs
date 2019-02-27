@@ -10,19 +10,13 @@
             [rems.status-modal :as status-modal]
             [reagent.core :as r]))
 
-(defn- reset-form [db]
-  (dissoc db ::form))
-
 (rf/reg-event-db
  ::enter-page
  (fn [db _]
-   (reset-form db)))
+   (dissoc db ::form)))
 
 
-(rf/reg-sub
- ::form
- (fn [db _]
-   (::form db)))
+(rf/reg-sub ::form (fn [db _] (::form db)))
 
 (rf/reg-event-db
  ::set-form-field
