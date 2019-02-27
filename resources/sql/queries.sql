@@ -40,8 +40,15 @@ WHERE ci.id = :item
 
 -- :name set-catalogue-item-state! :insert
 UPDATE catalogue_item ci
-SET enabled = :enabled, archived = :archived
-WHERE ci.id = :id
+SET
+/*~ (if (boolean? (:enabled params)) */
+  enabled = :enabled,
+/*~ ) ~*/
+/*~ (if (boolean? (:archived params)) */
+  archived = :archived,
+/*~ ) ~*/
+  id = id
+WHERE ci.id = :id;
 
 -- :name create-catalogue-item! :insert
 -- :doc Create a single catalogue item
