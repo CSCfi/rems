@@ -735,40 +735,44 @@
                                 :readonly readonly?
                                 :approved (get licenses (:id license)))]))])]}]))
 
+
+;; FIXME Why do we have both this and dynamic-event->event?
 (defn- format-event [event]
   {:userid (:userid event)
    :event (localize-event (:event event))
    :comment (:comment event)
+   :request-id (:request-id event)
+   :commenters (:commenters event)
    :time (localize-time (:time event))})
 
-(defn- events-view [events]
-  (let [has-users? (boolean (some :userid events))]
-    [:div
-     [:h4 (text :t.form/events)]
-     (into [:table#event-table.table.table-hover.mb-0
-            [:thead
-             [:tr
-              (when has-users?
-                [:th (text :t.form/user)])
-              [:th (text :t.form/event)]
-              [:th (text :t.form/comment)]
-              [:th (text :t.form/date)]]]
-            (into [:tbody]
-                  (for [e (reverse events)]
-                    [:tr
-                     (when has-users?
-                       [:td (:userid e)])
-                     [:td (:event e)]
-                     [:td.event-comment (:comment e)]
-                     [:td.date (:time e)]]))])]))
+(defn- event-view [{:keys [time userid event comment commenters]}]
+  [:div.form-group.row
+   [:label.col-sm-2.col-form-label time]
+   [:div.col-sm-10
+    [:div.col-form-label [:span userid] " — " [:span event]
+     (when (seq commenters) [:span ": " (for [c commenters] ^{:key c} [:span c])])]
+    (when comment [:div comment])]])
+
+(defn- event-groups-view [event-groups]
+  [:div
+   (into [:div]
+         (for [group event-groups]
+           ^{:key group} [:div.group
+                          (for [e group]
+                            ^{:key e} [event-view e])]))])
 
 (defn- application-header [state phases-data events]
   (let [;; the event times have millisecond differences, so they need to be formatted to minute precision before deduping
-        events (->> events
-                    (map format-event)
-                    dedupe)
-        last-event (when (:comment (last events))
-                     (last events))]
+        event-groups (->> events
+                          (map format-event)
+                          dedupe
+                          (group-by #(or (:request-id %)
+                                         ; Might want to replace this by exposing id from backend
+                                         [(:event %) (:time %)]))
+                          vals
+                          (map (partial sort-by :time))
+                          (sort-by #(:time (first %)))
+                          reverse)]
     [collapsible/component
      {:id "header"
       :title [:span#application-state
@@ -777,11 +781,11 @@
                (when state (str ": " (localize-state state))))]
       :always [:div
                [:div.mb-3 {:class (str "state-" (if (keyword? state) (name state) state))} (phases phases-data)]
-               (when last-event
-                 (info-field (text :t.applications/latest-comment)
-                             (:comment last-event)))]
-      :collapse (when (seq events)
-                  [events-view events])}]))
+               [:h4 (text :t.form/events)]
+               (when-let [g (first event-groups)]
+                 [event-groups-view [g]])]
+      :collapse (when-let [g (seq (rest event-groups))]
+                  [event-groups-view g])}]))
 
 (defn member-info
   "Renders a applicant, member or invited member of an application
@@ -1139,6 +1143,8 @@
   {:event (name (:event/type event))
    :time (:event/time event)
    :userid (:event/actor event)
+   :request-id (:application/request-id event)
+   :commenters (:application/commenters event)
    :comment (if (= :application.event/decided (:event/type event))
               (str (localize-decision (:application/decision event)) ": " (:application/comment event))
               (:application/comment event))})
