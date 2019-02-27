@@ -94,12 +94,13 @@
 
 (defn checkbox
   "A single checkbox, on its own line."
-  [context {:keys [keys label]}]
+  [context {:keys [keys label disabled?]}]
   (let [form @(rf/subscribe [(:get-form context)])
         id (keys-to-id keys)]
     [:div.form-group.field
      [:div.form-check
       [:input.form-check-input {:id id
+                                :disabled disabled?
                                 :type "checkbox"
                                 :checked (boolean (get-in form keys))
                                 :on-change #(rf/dispatch [(:update-form context)
