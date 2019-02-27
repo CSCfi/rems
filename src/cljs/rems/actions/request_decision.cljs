@@ -8,24 +8,22 @@
             [rems.text :refer [text]]
             [rems.util :refer [fetch post!]]))
 
-(defn fetch-potential-deciders
-  [[user on-success]]
+(rf/reg-fx
+ ::fetch-potential-deciders
+ (fn [[user on-success]]
   (fetch (str "/api/applications/deciders")
          {:handler on-success
-          :headers {"x-rems-user-id" (:eppn user)}}))
+          :headers {"x-rems-user-id" (:eppn user)}})))
 
-(rf/reg-fx ::fetch-potential-deciders fetch-potential-deciders)
-
-(defn open-form
-  [{:keys [db]} _]
+(rf/reg-event-fx
+ ::open-form
+ (fn [{:keys [db]} _]
   {:db (assoc db
               ::comment ""
               ::potential-deciders #{}
               ::selected-deciders #{})
    ::fetch-potential-deciders [(get-in db [:identity :user])
-                               #(rf/dispatch [::set-potential-deciders %])]})
-
-(rf/reg-event-fx ::open-form open-form)
+                               #(rf/dispatch [::set-potential-deciders %])]}))
 
 (rf/reg-sub ::potential-deciders (fn [db _] (::potential-deciders db)))
 

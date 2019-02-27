@@ -8,23 +8,23 @@
             [rems.text :refer [text]]
             [rems.util :refer [fetch post!]]))
 
-(defn fetch-potential-members
-  [[user on-success]]
-  (fetch (str "/api/applications/members")
-         {:handler on-success
-          :headers {"x-rems-user-id" (:eppn user)}}))
 
-(rf/reg-fx ::fetch-potential-members fetch-potential-members)
 
-(defn open-form
-  [{:keys [db]} _]
-  {:db (assoc db
-              ::potential-members #{}
-              ::selected-members #{})
-   ::fetch-potential-members [(get-in db [:identity :user])
-                              #(rf/dispatch [::set-potential-members %])]})
+(rf/reg-fx
+ ::fetch-potential-members
+ (fn [[user on-success]]
+   (fetch (str "/api/applications/members")
+          {:handler on-success
+           :headers {"x-rems-user-id" (:eppn user)}})))
 
-(rf/reg-event-fx ::open-form open-form)
+(rf/reg-event-fx
+ ::open-form
+ (fn [{:keys [db]} _]
+   {:db (assoc db
+               ::potential-members #{}
+               ::selected-members #{})
+    ::fetch-potential-members [(get-in db [:identity :user])
+                               #(rf/dispatch [::set-potential-members %])]}))
 
 (rf/reg-event-db
  ::set-potential-members

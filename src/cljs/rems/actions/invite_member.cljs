@@ -8,13 +8,12 @@
             [rems.text :refer [text]]
             [rems.util :refer [fetch post!]]))
 
-(defn open-form
-  [{:keys [db]} _]
+(rf/reg-event-fx
+ ::open-form
+ (fn [{:keys [db]} _]
   {:db (assoc db
               ::name ""
-              ::email "")})
-
-(rf/reg-event-fx ::open-form open-form)
+              ::email "")}))
 
 (rf/reg-event-db ::set-name (fn [db [_ name]] (assoc db ::name name)))
 (rf/reg-sub ::name (fn [db _] (::name db)))

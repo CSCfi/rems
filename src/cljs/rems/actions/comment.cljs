@@ -7,11 +7,10 @@
             [rems.text :refer [text]]
             [rems.util :refer [fetch post!]]))
 
-(defn open-form
-  [{:keys [db]} _]
-  {:db (assoc db ::comment "")})
-
-(rf/reg-event-fx ::open-form open-form)
+(rf/reg-event-fx
+ ::open-form
+ (fn [{:keys [db]} _]
+  {:db (assoc db ::comment "")}))
 
 (rf/reg-sub ::comment (fn [db _] (::comment db)))
 (rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))

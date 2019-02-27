@@ -8,24 +8,23 @@
             [rems.text :refer [text]]
             [rems.util :refer [fetch post!]]))
 
-(defn fetch-potential-commenters
-  [[user on-success]]
+(rf/reg-fx
+ ::fetch-potential-commenters
+ (fn [[user on-success]]
   (fetch (str "/api/applications/commenters")
          {:handler on-success
-          :headers {"x-rems-user-id" (:eppn user)}}))
+          :headers {"x-rems-user-id" (:eppn user)}})))
 
-(rf/reg-fx ::fetch-potential-commenters fetch-potential-commenters)
-
-(defn open-form
+(rf/reg-event-fx
+ ::open-form
+ (fn
   [{:keys [db]} _]
   {:db (assoc db
               ::comment ""
               ::potential-commenters #{}
               ::selected-commenters #{})
    ::fetch-potential-commenters [(get-in db [:identity :user])
-                                 #(rf/dispatch [::set-potential-commenters %])]})
-
-(rf/reg-event-fx ::open-form open-form)
+                                 #(rf/dispatch [::set-potential-commenters %])]}))
 
 (rf/reg-event-db
  ::set-potential-commenters
