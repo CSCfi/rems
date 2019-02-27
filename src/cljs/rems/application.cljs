@@ -49,6 +49,17 @@
   [id & [replace?]]
   (dispatch! (str "#/application/" id) replace?))
 
+(defn- format-validation-messages
+  [application msgs]
+  (let [fields-by-id (index-by [:id] (map localize-item (:items application)))
+        licenses-by-id (index-by [:id] (map localize-item (:licenses application)))]
+    (into [:ul]
+          (concat
+           (for [{:keys [type field-id]} (filter :field-id msgs)]
+             [:li (text-format type (:title (fields-by-id field-id)))])
+           (for [{:keys [type license-id]} (filter :license-id msgs)]
+             [:li (text-format type (:title (licenses-by-id license-id)))])))))
+
 
 
 
@@ -61,18 +72,15 @@
 
 ;;;; State
 
-(defn- reset-state [db]
-  (assoc db
-         ::application nil
-         ::edit-application nil))
-
 (rf/reg-sub ::application (fn [db _] (::application db)))
 (rf/reg-sub ::edit-application (fn [db _] (::edit-application db)))
 
 (rf/reg-event-fx
  ::enter-application-page
  (fn [{:keys [db]} [_ id]]
-   (merge {:db (reset-state db)
+   (merge {:db (assoc db
+                      ::application nil
+                      ::edit-application nil)
            ::fetch-application id})))
 
 (rf/reg-fx
@@ -90,13 +98,11 @@
                                                 [(:id item) (select-keys item [:value :previous-value])]))
                               :licenses (into {} (map (juxt :id :approved) (:licenses application)))})))
 
-(defn- submit-application [app description application-id catalogue-items items licenses]
-  (status-modal/common-pending-handler! description)
-  (post! "/api/applications/command"
-         {:handler (partial status-modal/common-success-handler! #(rf/dispatch [::enter-application-page application-id]))
-          :error-handler status-modal/common-error-handler!
-          :params {:type :rems.workflow.dynamic/submit
-                   :application-id application-id}}))
+(rf/reg-event-db
+ ::set-validation
+ (fn [db [_ errors]]
+   (prn errors)
+   (assoc-in db [::edit-application :validation] errors)))
 
 (defn- save-application [app description application-id catalogue-items items licenses]
   (status-modal/common-pending-handler! description)
@@ -126,10 +132,25 @@
      (save-application app description app-id catalogue-ids items licenses))
    {:db (assoc-in db [::edit-application :validation] nil)}))
 
+(defn- submit-application [application description application-id catalogue-items items licenses]
+  (status-modal/common-pending-handler! description)
+  (post! "/api/applications/command"
+         {:handler (fn [response]
+                     (if (:success response)
+                       (status-modal/set-success! {:on-close #(rf/dispatch [::enter-application-page application-id (:errors %)])})
+                       (do
+                         (prn application)
+                         (status-modal/set-error! {:result response
+                                                   :error-content (format-validation-messages application (:errors response))})
+                         (rf/dispatch [::set-validation (:errors response)]))))
+          :error-handler status-modal/common-error-handler!
+          :params {:type :rems.workflow.dynamic/submit
+                   :application-id application-id}}))
+
 (rf/reg-event-fx
  ::submit-application
  (fn [{:keys [db]} [_ description]]
-   (let [app (get-in db [::application :application])
+   (let [application (get-in db [::application])
          app-id (get-in db [::application :application :id])
          catalogue-items (get-in db [::application :catalogue-items])
          catalogue-ids (mapv :id catalogue-items)
@@ -139,7 +160,7 @@
                         (for [[id checked?] (get-in db [::edit-application :licenses])
                               :when checked?]
                           [id "approved"]))]
-     (submit-application app description app-id catalogue-ids items licenses))
+     (submit-application application description app-id catalogue-ids items licenses))
    {:db (assoc-in db [::edit-application :validation] nil)}))
 
 (defn- save-attachment [{:keys [db]} [_ field-id file description]]
@@ -167,17 +188,6 @@
 
 
 ;;;; UI components
-
-(defn- format-validation-messages
-  [application msgs]
-  (let [fields-by-id (index-by [:id] (map localize-item (:items application)))
-        licenses-by-id (index-by [:id] (map localize-item (:licenses application)))]
-    (into [:ul]
-          (concat
-           (for [{:keys [type field-id]} (filter :field-id msgs)]
-             [:li (text-format type (:title (fields-by-id field-id)))])
-           (for [{:keys [type license-id]} (filter :license-id msgs)]
-             [:li (text-format type (:title (licenses-by-id license-id)))])))))
 
 (defn- pdf-button [id]
   (when id

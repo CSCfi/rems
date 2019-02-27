@@ -14,21 +14,24 @@
             [rems.text :refer [text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
-(defn- status-widget [success? errors]
+(defn- format-errors [errors]
+  [:div (for [error errors]
+          [:p
+           (when (:key error)
+             (str (text (:key error))))
+           (when (:type error)
+             (str (text (:type error))))
+           (when-let [text (:status-text error)]
+             (str text))
+           (when-let [text (:status error)]
+             (str " (" text ")"))])])
+
+(defn- status-widget [success? error-content]
   (cond
-    (and (not success?)  (not errors)) [spinner/big]
+    (and (not success?)  (not error-content)) [spinner/big]
     success? [:p [:i {:class ["fa fa-check-circle text-success"]}] (text :t.form/success)]
-    errors (into [:p [:i {:class "fa fa-times-circle text-danger"}]]
-                 (for [error errors]
-                   [:span (text :t.form/failed)
-                    (when (:key error)
-                      (str ": " (text (:key error))))
-                    (when (:type error)
-                      (str ": " (text (:type error))))
-                    (when-let [text (:status-text error)]
-                      (str ": " text))
-                    (when-let [text (:status error)]
-                      (str " (" text ")"))]))))
+    error-content [:div [:p [:i {:class "fa fa-times-circle text-danger"}] (text :t.form/failed)]
+                   error-content]))
 
 (rf/reg-event-db ::set-state (fn [db [_ state]] (assoc db ::state state)))
 (rf/reg-event-db ::merge-state (fn [db [_ state]] (update db ::state deep-merge state)))
@@ -37,20 +40,22 @@
 (defn status-modal
   "Modal component showing the status of an action.
 
-  `:result`   - Either {:success? true} or {:error ...} {:errors ...}
-                Show spinner while neither.
-  `:title`    - title of the modal, i.e. name of the operation
-  `:content`  - additional content to show after the status widget
-  `:error`    - error that may contain `:key`, `:type`, `:status` and `:status-text`
-                like translated errors or http errors
-  `:on-close` - callback is called when the modal wants to close itself"
+  `:result`        - Either {:success? true} or {:error ...} {:errors ...}
+                     Show spinner while neither.
+  `:title`         - title of the modal, i.e. name of the operation
+  `:content`       - additional content to show after the status widget
+  `:error`         - error that may contain `:key`, `:type`, `:status` and `:status-text`
+                     like translated errors or http errors
+  `:error-content` - content to show instead of generated content from errors
+  `:on-close`      - callback is called when the modal wants to close itself"
   [initial-state]
   (let [internal-state @(rf/subscribe [::state])
         state (deep-merge initial-state internal-state)
-        {:keys [title content result on-close shade? open?]} state
+        {:keys [title content error-content result on-close shade? open?]} state
         success? (:success? result)
         errors (if (:error result) [(:error result)] (:errors result))
-        content [:div [status-widget success? errors] content]]
+        error-content (or error-content (format-errors errors))
+        content [:div [status-widget success? error-content] content]]
     (when open?
       [modal/notification {:title title
                            :title-class (when errors "alert alert-danger")

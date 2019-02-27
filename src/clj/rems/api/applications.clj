@@ -59,10 +59,9 @@
 
 (s/defschema SaveApplicationResponse
   {:success s/Bool
-   :valid s/Bool
    (s/optional-key :id) s/Num
    (s/optional-key :state) (s/cond-pre s/Str s/Keyword) ;; HACK for dynamic applications
-   (s/optional-key :validation) [ValidationMessage]})
+   (s/optional-key :errors) [ValidationMessage]})
 
 (s/defschema JudgeApplicationCommand
   {:command (s/enum "approve" "close" "reject" "return" "review" "third-party-review" "withdraw")
