@@ -79,10 +79,12 @@
 (s/defschema CommentedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/commented)
+         :application/request-id s/Uuid
          :application/comment s/Str))
 (s/defschema CommentRequestedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/comment-requested)
+         :application/request-id s/Uuid
          :application/commenters [s/Str]
          :application/comment s/Str))
 (s/defschema CreatedEvent
@@ -437,13 +439,18 @@
 
 (defmethod apply-event [:application.event/comment-requested :workflow/dynamic]
   [application _workflow event]
-  (update application :commenters into (:application/commenters event)))
+  (-> application
+      (update :commenters into (:application/commenters event))
+      (update ::latest-comment-request-by-user merge (zipmap (:application/commenters event)
+                                                            (repeat (:application/request-id event))))))
 
 (defmethod apply-event [:application.event/commented :workflow/dynamic]
   [application _workflow event]
   ;; we don't store the comments in the state, they're available via
   ;; the event list
-  (update application :commenters disj (:event/actor event)))
+  (-> application
+      (update :commenters disj (:event/actor event))
+      (update ::latest-comment-request-by-user dissoc (:event/actor event))))
 
 (defmethod apply-event [:application.event/member-added :workflow/dynamic]
   [application _workflow event]
@@ -466,6 +473,9 @@
                                       (calculate-permissions event)))
           application
           events))
+
+(defn clean-internal-state [application]
+  (dissoc application ::latest-comment-request-by-user))
 
 ;;; Command handlers
 
@@ -559,13 +569,24 @@
   (or (must-not-be-empty cmd :commenters)
       (invalid-users-errors (:commenters cmd) injections)
       (ok {:event/type :application.event/comment-requested
+           :application/request-id (java.util.UUID/randomUUID)
            :application/commenters (:commenters cmd)
            :application/comment (:comment cmd)})))
 
+(defn- actor-is-not-commenter-error [application cmd]
+  (when-not (contains? (:commenters application) (:actor cmd))
+    {:errors [{:type :forbidden}]}))
+
 (defmethod command-handler ::comment
-  [cmd _application _injections]
-  (ok {:event/type :application.event/commented
-       :application/comment (:comment cmd)}))
+  [cmd application _injections]
+  (or (actor-is-not-commenter-error application cmd)
+      (let [last-request-for-actor (get-in application [::latest-comment-request-by-user (:actor cmd)])]
+        (ok {:event/type :application.event/commented
+             ;; Currently we want to tie all comments to the latest request.
+             ;; In the future this might change so that commenters can freely continue to comment
+             ;; on any request they have gotten.
+             :application/request-id last-request-for-actor
+             :application/comment (:comment cmd)}))))
 
 (defmethod command-handler ::add-member
   [cmd _application injections]
@@ -1045,8 +1066,9 @@
                              application
                              injections))))
     (let [requested (apply-commands application
-                                    [{:actor "assistant" :commenters ["commenter"] :type ::request-comment}
-                                     {:actor "assistant" :commenters ["commenter2"] :type ::request-comment}]
+                                    [{:actor "assistant" :commenters ["commenter" "commenter2"] :type ::request-comment}
+                                     ;; Make a new request that should partly override previous
+                                     {:actor "assistant" :commenters ["commenter"] :type ::request-comment}]
                                     injections)]
       (testing "request comment succesfully"
         (is (= #{"commenter2" "commenter"} (:commenters requested))))
@@ -1055,6 +1077,17 @@
                (handle-command {:actor "commenter3" :comment "..." :type ::comment}
                                requested
                                injections))))
+      (testing "comments are linked to different requests"
+        (is (not (= (get-in requested [::latest-comment-request-by-user "commenter"])
+                    (get-in requested [::latest-comment-request-by-user "commenter2"]))))
+        (is (= (get-in requested [::latest-comment-request-by-user "commenter"])
+               (get-in (handle-command {:actor "commenter" :comment "..." :type ::comment}
+                                       requested injections)
+                       [:result :application/request-id])))
+        (is (= (get-in requested [::latest-comment-request-by-user "commenter2"])
+               (get-in (handle-command {:actor "commenter2" :comment "..." :type ::comment}
+                                       requested injections)
+                       [:result :application/request-id]))))
       (let [commented (apply-command requested {:actor "commenter" :comment "..." :type ::comment} injections)]
         (testing "succesfully commented"
           (is (= #{"commenter2"} (:commenters commented))))
@@ -1063,7 +1096,7 @@
                  (handle-command {:actor "commenter" :comment "..." :type ::comment}
                                  commented
                                  injections))))
-        (testing "other commenter can also comment"
+        (testing "other commenter can still comment"
           (is (= #{} (:commenters (apply-command commented
                                                  {:actor "commenter2" :comment "..." :type ::comment}
                                                  injections)))))))))
