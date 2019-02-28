@@ -12,20 +12,15 @@
  ::enter-page
  (fn [{:keys [db]}]
    {:db (assoc db ::display-archived? false)
-    :dispatch [::reload-page]}))
+    :dispatch [::fetch-catalogue]}))
 
 (rf/reg-event-fx
- ::reload-page
- (fn [{:keys [db]}]
-   {:db (assoc db ::loading? true)
-    ::fetch-catalogue {:archived (::display-archived? db)}}))
-
-(rf/reg-fx
  ::fetch-catalogue
- (fn [{:keys [archived]}]
+ (fn [{:keys [db]}]
    (fetch "/api/catalogue-items/" {:url-params {:expand :names
-                                                :archived archived}
-                                   :handler #(rf/dispatch [::fetch-catalogue-result %])})))
+                                                :archived (::display-archived? db)}
+                                   :handler #(rf/dispatch [::fetch-catalogue-result %])})
+   {:db (assoc db ::loading? true)}))
 
 (rf/reg-event-db
  ::fetch-catalogue-result
@@ -37,27 +32,22 @@
 (rf/reg-sub ::catalogue (fn [db _] (::catalogue db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
-(rf/reg-sub ::display-archived? (fn [db _] (::display-archived? db)))
 (rf/reg-event-fx
  ::set-display-archived?
  (fn [{:keys [db]} [_ display-archived?]]
    {:db (assoc db ::display-archived? display-archived?)
-    :dispatch [::reload-page]}))
-
-(defn- update-catalogue-item [item]
-  (put! "/api/catalogue-items/update"
-        {:params (select-keys item [:id :enabled :archived])
-         :handler #(rf/dispatch [::reload-page])}))
-
-(rf/reg-fx ::update-catalogue-item update-catalogue-item)
+    :dispatch [::fetch-catalogue]}))
+(rf/reg-sub ::display-archived? (fn [db _] (::display-archived? db)))
 
 (rf/reg-event-fx
  ::update-catalogue-item
  (fn [_ [_ item]]
-   {::update-catalogue-item item}))
+   (put! "/api/catalogue-items/update"
+         {:params (select-keys item [:id :enabled :archived])
+          :handler #(rf/dispatch [::fetch-catalogue])})
+   {}))
 
 (rf/reg-event-db ::set-sorting (fn [db [_ sorting]] (assoc db ::sorting sorting)))
-
 (rf/reg-sub
  ::sorting
  (fn [db _]
