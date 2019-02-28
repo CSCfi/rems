@@ -72,27 +72,55 @@
                                        (when on-close (on-close)))
                            "shade?" shade?}])))
 
-(defn set-pending! [& [state]]
-  (rf/dispatch [::set-state (deep-merge {:open? true}
-                                        state)]))
-(defn set-success! [state]
+(defn set-pending!
+  "Globally set the modal state to reflect a pending operation.
+
+  The given `state` is like in `status-modal` and it replaces the
+  current state. It's convenient here to set the `:title` of the operation.
+
+  The modal will be shown."
+  [& [state]]
+  (rf/dispatch [::set-state (merge {:open? true} state)]))
+
+(defn set-success!
+  "Globally set the modal state to reflect a successful operation.
+
+  The given `state` is like in `status-modal` and it's merged to the
+  current state so state set by a previous `set-pending!` can be shared.
+
+  The modal will be shown."
+  [state]
   (rf/dispatch [::merge-state (deep-merge {:open? true
                                            :result {:success? true}}
                                           state)]))
-(defn set-error! [state]
+(defn set-error!
+  "Globally set the modal state to reflect a failed operation.
+
+  The given `state` is like in `status-modal` and it's merged to the
+  current state so state set by a previous `set-pending!` can be shared.
+
+  The modal will be shown."
+  [state]
   (rf/dispatch [::merge-state (deep-merge {:open? true
                                            :result {:success? false}}
                                           state)]))
 
-(defn common-pending-handler! [title]
+(defn common-pending-handler!
+  "Common variant of `set-pending!` where you only wish to customize the `title`."
+  [title]
   (set-pending! {:title title}))
 
-(defn common-success-handler! [on-close response]
+(defn common-success-handler!
+  "Common variant of `set-success!` where you only wish to customize the `on-close`
+  by currying."
+  [on-close response]
   (if (:success response)
     (set-success! {:on-close on-close})
     (set-error! {:result response})))
 
-(defn common-error-handler! [response]
+(defn common-error-handler!
+  "Common variant of `set-error!` where you don't need to customize handling."
+  [response]
   (set-error! {:result {:error response}}))
 
 (defn guide
