@@ -3,15 +3,15 @@
   accessing the application on a browser. The garden styles can also
   be manually compiled by calling the function
   rems.css.styles/generate-css"
-  (:require [garden.core :as g]
+  (:require [clojure.string :as str]
+            [clojure.test :refer [deftest is testing]]
+            [garden.color :as c]
+            [garden.core :as g]
             [garden.selectors :as s]
             [garden.stylesheet :as stylesheet]
             [garden.units :as u]
-            [garden.color :as c]
             [mount.core :refer [defstate]]
-            [rems.util :as util]
-            [clojure.string :as str]
-            [clojure.test :refer [deftest is]]))
+            [rems.util :as util]))
 
 (defn- generate-at-font-faces []
   (list
@@ -204,23 +204,38 @@
                                   :margin-bottom (u/px 16)})
 
 (defn- remove-nil-vals
-  "Recursively removes nil values from a map.
-
-  {:a 1 :b {:c 1 :d nil} :e nil} => {:a 1 :b {:c 1}}
-
-  Returns nil if all values are nil."
+  "Recursively removes all keys with nil values from a map."
   [m]
   (let [rules (keep
                (fn [[k v]]
                  (cond
                    (map? v) (when-let [v (remove-nil-vals v)] [k v])
-                   :default (when v [k v])))
+                   :default (when-not (nil? v) [k v])))
                m)]
     (when (not-empty rules) (into {} rules))))
 
 (deftest test-remove-nil-vals
-  (is (= {:a 1 :b {:c 1}}
-         (remove-nil-vals {:a 1 :b {:c 1 :d nil} :e nil}))))
+  (testing "empty"
+    (is (= nil
+           (remove-nil-vals {}))))
+  (testing "flat"
+    (is (= nil
+           (remove-nil-vals {:a nil})))
+    (is (= {:a 1}
+           (remove-nil-vals {:a 1})))
+    (is (= {:a false}
+           (remove-nil-vals {:a false})))
+    (is (= {:a ""}
+           (remove-nil-vals {:a ""}))))
+  (testing "nested"
+    (is (= nil
+           (remove-nil-vals {:a {:b nil}})))
+    (is (= {:a {:b 1}}
+           (remove-nil-vals {:a {:b 1}}))))
+  (testing "multiple keys"
+    (is (= {:b 2}
+           (remove-nil-vals {:a nil
+                             :b 2})))))
 
 (defn build-screen []
   (list
