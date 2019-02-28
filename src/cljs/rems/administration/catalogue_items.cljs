@@ -4,6 +4,7 @@
             [rems.atoms :refer [external-link readonly-checkbox]]
             [rems.catalogue-util :refer [get-catalogue-item-title]]
             [rems.spinner :as spinner]
+            [rems.status-modal :as status-modal]
             [rems.table :as table]
             [rems.text :refer [localize-time text]]
             [rems.util :refer [dispatch! fetch put!]]))
@@ -19,7 +20,8 @@
  (fn [{:keys [db]}]
    (fetch "/api/catalogue-items/" {:url-params {:expand :names
                                                 :archived (::display-archived? db)}
-                                   :handler #(rf/dispatch [::fetch-catalogue-result %])})
+                                   :handler #(rf/dispatch [::fetch-catalogue-result %])
+                                   :error-handler status-modal/common-error-handler!})
    {:db (assoc db ::loading? true)}))
 
 (rf/reg-event-db
@@ -44,7 +46,8 @@
  (fn [_ [_ item]]
    (put! "/api/catalogue-items/update"
          {:params (select-keys item [:id :enabled :archived])
-          :handler #(rf/dispatch [::fetch-catalogue])})
+          :handler #(rf/dispatch [::fetch-catalogue])
+          :error-handler status-modal/common-error-handler!})
    {}))
 
 (rf/reg-event-db ::set-sorting (fn [db [_ sorting]] (assoc db ::sorting sorting)))
