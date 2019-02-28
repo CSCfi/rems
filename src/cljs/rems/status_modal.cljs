@@ -4,7 +4,7 @@
   There should only be one `status-modal` at the root of the component hieararchy.
 
   Use the functions `set-pending!`, `set-success!` and `set-error!` to control its state.
-  See `rems.status-modal/component` for values to use in the calls."
+  See `rems.status-modal/status-model` for values to use in the calls."
   (:require [re-frame.core :as rf]
             [reagent.core :as r]
             [rems.common-util :refer [deep-merge]]
@@ -40,15 +40,22 @@
 (defn status-modal
   "Modal component showing the status of an action.
 
-  `:result`        - Either {:success? true} or {:error ...} {:errors ...}
-                     Show spinner while neither.
+   `initial-state` can contain:
+
+  `:result`        - Either {:success? true} one of {:error ...} or {:errors ...}
+                     Shows the status based on the values or a spinner while neither.
+    `:error`       - error that may contain `:key`, `:type`, `:status` and `:status-text`
+                     like translated errors or http errors
+    `:errors`      - seq like `:error`
+
   `:title`         - title of the modal, i.e. name of the operation
   `:content`       - additional content to show after the status widget
-  `:error`         - error that may contain `:key`, `:type`, `:status` and `:status-text`
-                     like translated errors or http errors
-  `:error-content` - content to show instead of generated content from errors
-  `:on-close`      - callback is called when the modal wants to close itself"
-  [initial-state]
+  `:error-content` - content to show instead of generated content from result errors
+  `:on-close`      - callback is called when the modal wants to close itself
+
+  Also when setting global state with `set-pending!`, `set-success!` or `set-error!`
+  the same structure applies."
+  [& [initial-state]]
   (let [internal-state @(rf/subscribe [::state])
         state (deep-merge initial-state internal-state)
         {:keys [title content error-content result on-close shade? open?]} state
