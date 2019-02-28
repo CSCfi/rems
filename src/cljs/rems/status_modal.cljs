@@ -63,19 +63,19 @@
                            :on-close (fn []
                                        (rf/dispatch [::set-state nil])
                                        (when on-close (on-close)))
-                           :shade? shade?}])))
+                           "shade?" shade?}])))
 
-(defn set-pending! [& [opts]]
+(defn set-pending! [& [state]]
   (rf/dispatch [::set-state (deep-merge {:open? true}
-                                        opts)]))
-(defn set-success! [opts]
+                                        state)]))
+(defn set-success! [state]
   (rf/dispatch [::merge-state (deep-merge {:open? true
                                            :result {:success? true}}
-                                          opts)]))
-(defn set-error! [opts]
+                                          state)]))
+(defn set-error! [state]
   (rf/dispatch [::merge-state (deep-merge {:open? true
                                            :result {:success? false}}
-                                          opts)]))
+                                          state)]))
 
 (defn guide
   []
