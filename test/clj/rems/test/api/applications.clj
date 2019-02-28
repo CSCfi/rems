@@ -847,13 +847,13 @@
         (is (= {:success true} (send-dynamic-command handler-id
                                                      {:type :rems.workflow.dynamic/request-decision
                                                       :application-id application-id
-                                                      :decider decider-id
+                                                      :deciders [decider-id]
                                                       :comment ""})))
         (let [data (get-application handler-id application-id)]
           (is (= {:id application-id
-                  :decider decider-id
+                  :deciders [decider-id]
                   :state "rems.workflow.dynamic/submitted"}
-                 (select-keys (:application data) [:id :decider :state])))))
+                 (select-keys (:application data) [:id :deciders :state])))))
       (testing "decide"
         (is (= {:success true} (send-dynamic-command decider-id
                                                      {:type :rems.workflow.dynamic/decide
@@ -862,9 +862,9 @@
                                                       :comment ""})))
         (let [data (get-application handler-id application-id)]
           (is (= {:id application-id
-                  :decision "approved"
+                  :deciders []
                   :state "rems.workflow.dynamic/submitted"}
-                 (select-keys (:application data) [:id :decider :decision :state])))))
+                 (select-keys (:application data) [:id :deciders :state])))))
       (testing "approve"
         (is (= {:success true} (send-dynamic-command handler-id {:type :rems.workflow.dynamic/approve
                                                                  :application-id application-id

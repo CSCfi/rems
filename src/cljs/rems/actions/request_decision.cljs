@@ -56,8 +56,7 @@
 (rf/reg-event-db
  ::add-selected-decider
  (fn [db [_ decider]]
-   (assoc db ::selected-deciders [decider]) ; TODO decide if there can be one or more deciders
-   #_(update db ::selected-deciders conj decider)))
+   (update db ::selected-deciders conj decider)))
 
 (rf/reg-event-db
  ::remove-selected-decider
@@ -76,7 +75,7 @@
          {:params {:application-id application-id
                    :type :rems.workflow.dynamic/request-decision
                    :comment comment
-                   :decider (first (map :userid deciders))} ; TODO decide if there can be one or more deciders
+                   :deciders (map :userid deciders)}
           :handler on-success ; TODO interpret :errors as failure
           :error-handler on-error}))
 
