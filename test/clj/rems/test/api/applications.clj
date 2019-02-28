@@ -90,75 +90,6 @@
         (is (response-is-unauthorized? response))
         (is (= "invalid api key" body))))))
 
-#_(deftest applications-api-security-test
-  (testing "listing without authentication"
-    (let [response (-> (request :get (str "/api/applications"))
-                       app)
-          body (read-body response)]
-      (is (= "unauthorized" body))))
-
-  (testing "fetch application without authentication"
-    (let [response (-> (request :get (str "/api/applications/1"))
-                       app)
-          body (read-body response)]
-      (is (= body "unauthorized"))))
-  (testing "fetch reviewers without authentication"
-    (let [response (-> (request :get (str "/api/applications/reviewers"))
-                       app)
-          body (read-body response)]
-      (is (= body "unauthorized"))))
-  (testing "save without authentication"
-    (let [response (-> (request :post (str "/api/applications/save"))
-                       (json-body {:command "save"
-                                   :catalogue-items [2]
-                                   :items {1 "REST-Test"}})
-                       app)
-          body (read-body response)]
-      (is (str/includes? body "Invalid anti-forgery token"))))
-  (testing "save with wrong API-Key"
-    (let [response (-> (request :post (str "/api/applications/save"))
-                       (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
-                       (json-body {:command "save"
-                                   :catalogue-items [2]
-                                   :items {1 "REST-Test"}})
-                       app)
-          body (read-body response)]
-      (is (= "invalid api key" body))))
-  (testing "judge without authentication"
-    (let [body (-> (request :post (str "/api/applications/judge"))
-                   (json-body {:command "approve"
-                               :application-id 2
-                               :round 0
-                               :comment "msg"})
-                   app
-                   read-body)]
-      (is (str/includes? body "Invalid anti-forgery token"))))
-  (testing "judge with wrong API-Key"
-    (let [body (-> (request :post (str "/api/applications/judge"))
-                   (authenticate "invalid-api-key" "developer")
-                   (json-body {:command "approve"
-                               :application-id 2
-                               :round 0
-                               :comment "msg"})
-                   app
-                   read-body)]
-      (is (= "invalid api key" body))))
-  (testing "upload attachment without authentication"
-    (let [body (-> (request :post (str "/api/applications/add_attachment"))
-                   (assoc :params {"file" filecontent})
-                   (assoc :multipart-params {"file" filecontent})
-                   app
-                   read-body)]
-      (is (str/includes? body "Invalid anti-forgery token"))))
-  (testing "upload attachment with wrong API-Key"
-    (let [body (-> (request :post (str "/api/applications/add_attachment"))
-                   (assoc :params {"file" filecontent})
-                   (assoc :multipart-params {"file" filecontent})
-                   (authenticate "invalid-api-key" "developer")
-                   app
-                   read-body)]
-      (is (= "invalid api key" body)))))
-
 (deftest pdf-smoke-test
   (testing "not found"
     (let [response (-> (request :get (str "/api/applications/9999999/pdf"))
@@ -557,3 +488,54 @@
                          (authenticate api-key user-id)
                          app)]
         (is (response-is-forbidden? response))))))
+
+(deftest applications-api-security-test
+  (testing "listing without authentication"
+    (is (response-is-unauthorized? (-> (request :get (str "/api/applications"))
+                                       app))))
+  (testing "fetch application without authentication"
+    (is (response-is-unauthorized? (-> (request :get (str "/api/applications/1"))
+                                       app))))
+  (testing "fetch deciders without authentication"
+    (is (response-is-unauthorized? (-> (request :get (str "/api/applications/deciders"))
+                                       app))))
+  (testing "save without authentication"
+    (is (response-is-unauthorized? (-> (request :post (str "/api/applications/save"))
+                                       (json-body {:command "save"
+                                                   :catalogue-items [2]
+                                                   :items {1 "REST-Test"}})
+                                       app))))
+  (testing "save with wrong API-Key"
+    (is (response-is-unauthorized? (-> (request :post (str "/api/applications/save"))
+                                       (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
+                                       (json-body {:command "save"
+                                                   :catalogue-items [2]
+                                                   :items {1 "REST-Test"}})
+                                       app))))
+  (let [app-id (save-application {:command "save"
+                                  :catalogue-items [9]
+                                  :items {1 "x" 2 "x"}
+                                  :licenses {1 "approved" 2 "approved"}})]
+    (is (pos? app-id))
+    (testing "send command without authentication"
+      (is (response-is-unauthorized? (-> (request :post (str "/api/applications/command"))
+                                         (json-body {:type :rems.workflow.dynamic/submit
+                                                     :application-id app-id})
+                                         app))))
+    (testing "send command with wrong api-key"
+      (is (response-is-unauthorized? (-> (request :post (str "/api/applications/command"))
+                                         (authenticate "invalid-api-key" "alice")
+                                         (json-body {:type :rems.workflow.dynamic/submit
+                                                     :application-id app-id})
+                                         app)))))
+  (testing "upload attachment without authentication"
+    (is (response-is-unauthorized? (-> (request :post (str "/api/applications/add_attachment"))
+                                       (assoc :params {"file" filecontent})
+                                       (assoc :multipart-params {"file" filecontent})
+                                       app))))
+  (testing "upload attachment with wrong API-Key"
+    (is (response-is-unauthorized? (-> (request :post (str "/api/applications/add_attachment"))
+                                       (assoc :params {"file" filecontent})
+                                       (assoc :multipart-params {"file" filecontent})
+                                       (authenticate "invalid-api-key" "developer")
+                                       app)))))
