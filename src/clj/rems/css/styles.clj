@@ -11,7 +11,7 @@
             [garden.stylesheet :as stylesheet]
             [garden.units :as u]
             [medley.core :refer [map-vals remove-vals]]
-            [mount.core :refer [defstate]]
+            [mount.core :as mount :refer [defstate]]
             [rems.util :as util]))
 
 (defn- generate-at-font-faces []
@@ -214,7 +214,8 @@
                     (map-vals remove-nil-vals)
                     (remove-vals nil?)
                     not-empty)
-    (sequential? obj) (map remove-nil-vals obj)
+    (vector? obj) (mapv remove-nil-vals obj)
+    (seq? obj) (map remove-nil-vals obj)
     :else obj))
 
 (deftest test-remove-nil-vals
@@ -240,6 +241,7 @@
            (remove-nil-vals {:a nil
                              :b 2}))))
   (testing "vectors"
+    (is (vector? (remove-nil-vals [1])))
     (is (= []
            (remove-nil-vals [])))
     (is (= [:a]
@@ -251,6 +253,7 @@
     (is (= [:a nil]
            (remove-nil-vals [:a {:b nil}]))))
   (testing "lists"
+    (is (seq? (remove-nil-vals '(1))))
     (is (= '()
            (remove-nil-vals '())))
     (is (= '(:a)
@@ -653,3 +656,8 @@
    (generate-form-placeholder-styles)))
 
 (defstate screen :start (g/css {:pretty-print? false} (remove-nil-vals (build-screen))))
+
+(deftest test-screen
+  (mount/start #'rems.css.styles/screen)
+  (is (string? screen))
+  (mount/stop #'rems.css.styles/screen))
