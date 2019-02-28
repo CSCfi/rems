@@ -7,12 +7,9 @@
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
-            [rems.util :refer [dispatch! fetch post!]]))
-
-(defn- reset-form [db]
-  (-> (dissoc db ::form)
-      (assoc ::loading? true
-             ::loading-progress 0)))
+            [rems.util :refer [dispatch! fetch post!]]
+            [rems.status-modal :as status-modal]
+            [reagent.core :as r]))
 
 (defn- update-loading [db]
   (let [progress (::loading-progress db)]
@@ -23,57 +20,26 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (reset-form db)
+   {:db (-> (dissoc db ::form)
+            (assoc ::loading? true
+                   ::loading-progress 0))
     ::fetch-workflows nil
     ::fetch-resources nil
     ::fetch-forms nil}))
 
-(rf/reg-sub
- ::loading?
- (fn [db _]
-   (::loading? db)))
+(rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
-; form state
+(rf/reg-sub ::form (fn [db _] (::form db)))
+(rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
 
-(rf/reg-sub
- ::form
- (fn [db _]
-   (::form db)))
+(rf/reg-sub ::selected-workflow (fn [db _] (get-in db [::form :workflow])))
+(rf/reg-event-db ::set-selected-workflow (fn [db [_ workflow]] (assoc-in db [::form :workflow] workflow)))
 
-(rf/reg-event-db
- ::set-form-field
- (fn [db [_ keys value]]
-   (assoc-in db (concat [::form] keys) value)))
+(rf/reg-sub ::selected-resource (fn [db _] (get-in db [::form :resource])))
+(rf/reg-event-db ::set-selected-resource (fn [db [_ resource]] (assoc-in db [::form :resource] resource)))
 
-(rf/reg-sub
- ::selected-workflow
- (fn [db _]
-   (get-in db [::form :workflow])))
-
-(rf/reg-event-db
- ::set-selected-workflow
- (fn [db [_ workflow]]
-   (assoc-in db [::form :workflow] workflow)))
-
-(rf/reg-sub
- ::selected-resource
- (fn [db _]
-   (get-in db [::form :resource])))
-
-(rf/reg-event-db
- ::set-selected-resource
- (fn [db [_ resource]]
-   (assoc-in db [::form :resource] resource)))
-
-(rf/reg-sub
- ::selected-form
- (fn [db _]
-   (get-in db [::form :form])))
-
-(rf/reg-event-db
- ::set-selected-form
- (fn [db [_ form]]
-   (assoc-in db [::form :form] form)))
+(rf/reg-sub ::selected-form (fn [db _] (get-in db [::form :form])))
+(rf/reg-event-db ::set-selected-form (fn [db [_ form]] (assoc-in db [::form :form] form)))
 
 (defn- valid-request? [request]
   (and (not (str/blank? (:title request)))
@@ -94,25 +60,21 @@
     (merge {:state "disabled"} request)
     request))
 
-(defn- create-catalogue-item [request]
+(defn- create-catalogue-item! [_ [_ request]]
+  (status-modal/set-pending! {:title (text :t.administration/create-catalogue-item)})
   (post! "/api/catalogue-items/create" {:params (create-request-with-state request)
-                                        ;; TODO error handling
-                                        :handler (fn [resp] (dispatch! "#/administration/catalogue-items"))}))
+                                        :handler (fn [_]
+                                                   (status-modal/set-success! {:on-close #(dispatch! "#/administration/catalogue-items")}))
+                                        :error-handler #(status-modal/set-error! {:result {:error %}})})
+  {})
 
-(rf/reg-event-fx
- ::create-catalogue-item
- (fn [_ [_ request]]
-   (create-catalogue-item request)
-   {}))
+(rf/reg-event-fx ::create-catalogue-item create-catalogue-item!)
 
 
 (defn- fetch-workflows []
   (fetch "/api/workflows/?active=true" {:handler #(rf/dispatch [::fetch-workflows-result %])}))
 
-(rf/reg-fx
- ::fetch-workflows
- (fn [_]
-   (fetch-workflows)))
+(rf/reg-fx ::fetch-workflows fetch-workflows)
 
 (rf/reg-event-db
  ::fetch-workflows-result
@@ -120,18 +82,12 @@
    (-> (assoc db ::workflows workflows)
        (update-loading))))
 
-(rf/reg-sub
- ::workflows
- (fn [db _]
-   (::workflows db)))
+(rf/reg-sub ::workflows (fn [db _] (::workflows db)))
 
 (defn- fetch-resources []
   (fetch "/api/resources/?active=true" {:handler #(rf/dispatch [::fetch-resources-result %])}))
 
-(rf/reg-fx
- ::fetch-resources
- (fn [_]
-   (fetch-resources)))
+(rf/reg-fx ::fetch-resources fetch-resources)
 
 (rf/reg-event-db
  ::fetch-resources-result
@@ -139,19 +95,13 @@
    (-> (assoc db ::resources resources)
        (update-loading))))
 
-(rf/reg-sub
- ::resources
- (fn [db _]
-   (::resources db)))
+(rf/reg-sub ::resources (fn [db _] (::resources db)))
 
 
 (defn- fetch-forms []
   (fetch "/api/forms/?active=true" {:handler #(rf/dispatch [::fetch-forms-result %])}))
 
-(rf/reg-fx
- ::fetch-forms
- (fn [_]
-   (fetch-forms)))
+(rf/reg-fx ::fetch-forms fetch-forms)
 
 (rf/reg-event-db
  ::fetch-forms-result
@@ -159,16 +109,14 @@
    (-> (assoc db ::forms forms)
        (update-loading))))
 
-(rf/reg-sub
- ::forms
- (fn [db _]
-   (::forms db)))
+(rf/reg-sub ::forms (fn [db _] (::forms db)))
 
 
 ;;;; UI
 
-(def ^:private context {:get-form ::form
-                        :update-form ::set-form-field})
+(def ^:private context
+  {:get-form ::form
+   :update-form ::set-form-field})
 
 (defn- catalogue-item-title-field []
   [text-field context {:keys [:title]
@@ -228,16 +176,16 @@
    {:on-click #(dispatch! "/#/administration/catalogue-items")}
    (text :t.administration/cancel)])
 
-(defn- save-catalogue-item-button []
-  (let [form @(rf/subscribe [::form])
-        request (build-request form)]
+(defn- save-catalogue-item-button [form on-click]
+  (let [request (build-request form)]
     [:button.btn.btn-primary
-     {:on-click #(rf/dispatch [::create-catalogue-item request])
+     {:on-click #(on-click request)
       :disabled (nil? request)}
      (text :t.administration/save)]))
 
 (defn create-catalogue-item-page []
-  (let [loading? (rf/subscribe [::loading?])]
+  (let [loading? @(rf/subscribe [::loading?])
+        form @(rf/subscribe [::form])]
     [:div
      [administration-navigator-container]
      [:h2 (text :t.administration/create-catalogue-item)]
@@ -245,7 +193,7 @@
       {:id "create-catalogue-item"
        :title (text :t.administration/create-catalogue-item)
        :always [:div
-                (if @loading?
+                (if loading?
                   [:div#catalogue-item-loader [spinner/big]]
                   [:div#catalogue-item-editor
                    [catalogue-item-title-field]
@@ -255,4 +203,4 @@
 
                    [:div.col.commands
                     [cancel-button]
-                    [save-catalogue-item-button]]])]}]]))
+                    [save-catalogue-item-button form #(rf/dispatch [::create-catalogue-item %])]]])]}]]))

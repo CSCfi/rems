@@ -6,21 +6,17 @@
             [rems.atoms :refer [external-link]]
             [rems.collapsible :as collapsible]
             [rems.text :refer [text localize-item]]
-            [rems.util :refer [dispatch! fetch post!]]))
-
-(defn- reset-form [db]
-  (dissoc db ::form))
+            [rems.util :refer [dispatch! fetch post!]]
+            [rems.status-modal :as status-modal]
+            [reagent.core :as r]))
 
 (rf/reg-event-db
  ::enter-page
  (fn [db _]
-   (reset-form db)))
+   (dissoc db ::form)))
 
 
-(rf/reg-sub
- ::form
- (fn [db _]
-   (::form db)))
+(rf/reg-sub ::form (fn [db _] (::form db)))
 
 (rf/reg-event-db
  ::set-form-field
@@ -63,16 +59,15 @@
     (when (valid-request? request languages)
       (localize-item request default-language))))
 
-(defn- create-license [request]
+(defn- create-license! [_ [_ request]]
+  (status-modal/set-pending! {:title (text :t.administration/create-license)})
   (post! "/api/licenses/create" {:params request
-                                 ;; TODO: error handling
-                                 :handler (fn [resp] (dispatch! "#/administration/licenses"))}))
+                                 :handler (fn [result]
+                                              (status-modal/set-success! {:on-close #(dispatch! "/#/administration/licenses")}))
+                                 :error-handler #(status-modal/set-error! {:result {:error %}})})
+  {})
 
-(rf/reg-event-fx
- ::create-license
- (fn [_ [_ request]]
-   (create-license request)
-   {}))
+(rf/reg-event-fx ::create-license create-license!)
 
 (defn- save-attachment [language form-data]
   (post! (str "api/licenses/add_attachment")
@@ -181,13 +176,13 @@
          filename-field
          remove-button]))))
 
-(defn- save-license-button []
+(defn- save-license-button [on-click]
   (let [form @(rf/subscribe [::form])
         default-language @(rf/subscribe [:default-language])
         languages @(rf/subscribe [:languages])
         request (build-request form default-language languages)]
     [:button.btn.btn-primary
-     {:on-click #(rf/dispatch [::create-license request])
+     {:on-click #(on-click request)
       :disabled (nil? request)}
      (text :t.administration/save)]))
 
@@ -223,4 +218,4 @@
 
                 [:div.col.commands
                  [cancel-button]
-                 [save-license-button]]]}]]))
+                 [save-license-button #(rf/dispatch [::create-license %])]]]}]]))

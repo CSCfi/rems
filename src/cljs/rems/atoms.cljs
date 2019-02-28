@@ -64,6 +64,9 @@
     :target :_new}
    title " " [external-link]])
 
+(defn enrich-user [user]
+  (assoc user :display (str (:name user) " (" (:email user) ")")))
+
 (defn guide []
   [:div
    (component-info flash-message)

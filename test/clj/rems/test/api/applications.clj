@@ -10,7 +10,8 @@
   :once
   api-fixture)
 
-(deftest applications-api-test
+;; TODO salvage some api tests by moving to dynamic
+#_(deftest applications-api-test
   (testing "fetch applications"
     (let [api-key "42"
           user-id "developer"]
@@ -33,7 +34,7 @@
           (is (= "application/transit+json; charset=utf-8" (get-in response [:headers "Content-Type"])))
           (is (= 7 (count data))))))))
 
-(deftest applications-api-command-test
+#_(deftest applications-api-command-test
   (let [api-key "42"
         user-id "alice"
         another-user "alice_smith"
@@ -113,7 +114,7 @@
           (is (= "approved" (:state application)))
           (is (= [nil nil "msg"] (map :comment (:events application)))))))))
 
-(deftest application-validation-test
+#_(deftest application-validation-test
   (let [api-key "42"
         user-id "alice"
         catid 2]
@@ -200,7 +201,7 @@
           (is (:valid cmd-response))
           (is (empty? validations)))))))
 
-(deftest disabled-catalogue-item
+#_(deftest disabled-catalogue-item
   (let [api-key "42"
         user-id "developer"
         catid 6]
@@ -224,7 +225,7 @@
                          app)]
         (is (= 400 (:status response)) "should not be possible to submit with disabled item")))))
 
-(deftest application-api-roles
+#_(deftest application-api-roles
   (let [api-key "42"
         applicant "alice"
         approver "developer"
@@ -284,7 +285,7 @@
           (is (:can-close? application))
           (is (not (:can-approve? application))))))))
 
-(deftest application-api-action-test
+#_(deftest application-api-action-test
   ;; Run through all the application actions that are available
   (let [api-key "42"
         user "developer"
@@ -344,111 +345,6 @@
               ["close" "closed"]]
              (map (juxt :event :comment) events))))))
 
-(deftest application-api-third-party-review-test
-  (let [api-key "42"
-        applicant "alice"
-        approver "developer"
-        reviewer "carl"
-        catid 2
-        app-id (-> (request :post (str "/api/applications/save"))
-                   (authenticate api-key applicant)
-                   (json-body {:command "submit"
-                               :catalogue-items [catid]
-                               :items {1 "x" 2 "y" 3 "z"}
-                               :licenses {1 "approved" 2 "approved"}})
-                   app
-                   read-body
-                   :id)]
-    (testing "fetch reviewers"
-      (let [reviewers (-> (request :get (str "/api/applications/reviewers"))
-                          (authenticate api-key approver)
-                          app
-                          read-body)]
-        (is (= (sort (vals test-data/+fake-users+))
-               (sort (map :userid reviewers))))
-        (is (not (contains? (set (map :userid reviewers)) "invalid")))))
-    (testing "reviews is not open without authentication"
-      (let [response (-> (request :get (str "/api/applications/reviewers"))
-                         app)]
-        (is (= 401 (:status response)))))
-    (testing "reviews is not open with applicant"
-      (let [response (-> (request :get (str "/api/applications/reviewers"))
-                         (authenticate api-key applicant)
-                         app)]
-        (is (= 403 (:status response)))))
-    (testing "send review request"
-      (-> (request :post (str "/api/applications/review_request"))
-          (authenticate api-key approver)
-          (json-body {:application-id app-id
-                      :round 0
-                      :comment "pls revu"
-                      :recipients [reviewer]})
-          app
-          assert-response-is-ok))
-    (testing "check review event"
-      (let [events (-> (request :get (str "/api/applications/" app-id))
-                       (authenticate api-key reviewer)
-                       app
-                       read-body
-                       :application
-                       :events)]
-        (is (= [{:userid applicant :comment nil :event "apply"}
-                {:userid reviewer :comment "pls revu" :event "review-request"}]
-               (map #(select-keys % [:userid :comment :event]) events)))))
-    (testing "send review"
-      (-> (request :post (str "/api/applications/judge"))
-          (authenticate api-key reviewer)
-          (json-body {:command "third-party-review"
-                      :application-id app-id
-                      :round 0
-                      :comment "is ok"})
-          app
-          assert-response-is-ok))
-    (testing "approve"
-      (-> (request :post (str "/api/applications/judge"))
-          (authenticate api-key approver)
-          (json-body {:command "approve"
-                      :application-id app-id
-                      :round 0
-                      :comment "I approve this"})
-          app
-          assert-response-is-ok))
-    (testing "events of approver"
-      (let [events (-> (request :get (str "/api/applications/" app-id))
-                       (authenticate api-key approver)
-                       app
-                       read-body
-                       :application
-                       :events)]
-        (is (= [{:userid applicant :comment nil :event "apply"}
-                {:userid reviewer :comment "pls revu" :event "review-request"}
-                {:userid reviewer :comment "is ok" :event "third-party-review"}
-                {:userid approver :comment "I approve this" :event "approve"}]
-               (map #(select-keys % [:userid :comment :event]) events)))))
-    (testing "events of reviewer"
-      (let [events (-> (request :get (str "/api/applications/" app-id))
-                       (authenticate api-key reviewer)
-                       app
-                       read-body
-                       :application
-                       :events)]
-        (is (= [{:userid applicant :comment nil :event "apply"}
-                {:userid reviewer :comment "pls revu" :event "review-request"}
-                {:userid reviewer :comment "is ok" :event "third-party-review"}
-                {:userid approver :comment "I approve this" :event "approve"}]
-               (map #(select-keys % [:userid :comment :event]) events)))))
-    (testing "events of applicant"
-      (let [events (-> (request :get (str "/api/applications/" app-id))
-                       (authenticate api-key applicant)
-                       app
-                       read-body
-                       :application
-                       :events)]
-        (is (= [{:userid nil :comment nil :event "apply"}
-                {:userid nil :comment "I approve this" :event "approve"}]
-               (map #(select-keys % [:userid :comment :event]) events))
-            "does not see review events nor users, but sees approval comment")))))
-;; TODO non-happy path tests for review?
 
 (defn- strip-cookie-attributes [cookie]
   (re-find #"[^;]*" cookie))
@@ -458,7 +354,7 @@
         [_ token] (re-find token-regex (:body response))]
     token))
 
-(deftest application-api-session-test
+#_(deftest application-api-session-test
   (let [username "alice"
         login-headers (-> (request :get "/Shibboleth.sso/Login" {:username username})
                           app
@@ -521,7 +417,7 @@
                         :filename "malicious_test.html"
                         :size (.length malicious-file)})
 
-(deftest application-api-attachments-test
+#_(deftest application-api-attachments-test
   (let [api-key "42"
         user-id "alice"
         catid 2
@@ -584,7 +480,7 @@
                            app)]
           (is (response-is-forbidden? response)))))))
 
-(deftest applications-api-security-test
+#_(deftest applications-api-security-test
   (testing "listing without authentication"
     (let [response (-> (request :get (str "/api/applications"))
                        app)
@@ -653,7 +549,7 @@
                    read-body)]
       (is (= "invalid api key" body)))))
 
-(deftest pdf-smoke-test
+#_(deftest pdf-smoke-test
   (testing "not found"
     (let [response (-> (request :get (str "/api/applications/9999999/pdf"))
                        (authenticate "42" "developer")
@@ -831,7 +727,7 @@
                                                           :comment "What say you?"})))
             (is (= #{commenter-id decider-id}
                    (set (get-in (get-application handler-id application-id)
-                               [:application :commenters])))))
+                                [:application :commenters])))))
           (testing "commenter can now comment"
             (is (= {:success true} (send-dynamic-command commenter-id
                                                          {:type :rems.workflow.dynamic/comment

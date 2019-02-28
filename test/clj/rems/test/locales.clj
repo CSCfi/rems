@@ -86,8 +86,8 @@
     (let [translations (locales/load-translations {:languages [:en]
                                                    :translations-directory "translations/"
                                                    :theme-path "./example-theme/theme.edn"})]
-      (is (= "Language resources" (getx-in translations [:en :t :administration :catalogue-items])))
-      (is (= "Resource applicant" (getx-in translations [:en :t :actions :applicant])))))
+      (is (= "Catalogue" (getx-in translations [:en :t :administration :catalogue-items])))
+      (is (= "Members" (getx-in translations [:en :t :actions :applicant])))))
   (testing "extra translations don't override keys that are not defined in extras"
     (let [translations (locales/load-translations {:languages [:en]
                                                    :translations-directory "translations/"
@@ -100,4 +100,3 @@
                                                    :translations-directory "translations/"
                                                    :theme-path "./foo/bar/theme.edn"})]
       (is (= "Catalogue items" (getx-in translations [:en :t :administration :catalogue-items]))))))
-

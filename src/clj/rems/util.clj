@@ -60,15 +60,6 @@
   ([user]
    (:mail user)))
 
-(defn deep-merge [a & maps]
-  (if (map? a)
-    (apply merge-with deep-merge a maps)
-    (apply merge-with deep-merge maps)))
-
-(deftest test-deep-merge
-  (is (= {:a {:b {:c 100 :d 2}}}
-         (deep-merge {:a {:b {:c 1 :d 2}}} {:a {:b {:c 100}}}))))
-
 (defn update-present
   "Like clojure.core/update, but does nothing if the key `k` does not exist in `m`."
   [m k f & args]

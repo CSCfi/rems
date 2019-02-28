@@ -3,8 +3,8 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
             [mount.core :refer [defstate]]
-            [rems.config :refer [env]]
-            [rems.util :refer [deep-merge]])
+            [rems.common-util :refer [deep-merge]]
+            [rems.config :refer [env]])
   (:import (java.io FileNotFoundException)))
 
 (defn- translations-from-file [filename dir]

@@ -4,9 +4,8 @@
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn- header
-  [title]
-  [:div.card-header.rems-card-header
-   [:span.card-title title]])
+  [title title-class]
+  [:div.card-header {:class (or title-class "rems-card-header")} title])
 
 (defn- show-more-button
   [id expanded callback]
@@ -50,12 +49,13 @@
   `:bottom-less-button?` should bottom show less button be shown? Default true
   `:on-open` triggers the function callback given as an argument when load-more is clicked
   `:title` component displayed in title area
+  `:title-class` class for the title area
   `:always` component displayed always before collapsible area
   `:collapse` component that is toggled displayed or not
   `:footer` component displayed always after collapsible area"
-  [{:keys [id class open? on-open title always collapse footer top-less-button? bottom-less-button?]}]
+  [{:keys [id class open? on-open title title-class always collapse footer top-less-button? bottom-less-button?]}]
   [:div {:id id :class class}
-   (when title [header title])
+   (when title [header title title-class])
    (when (or always collapse footer)
      [block id open? on-open always collapse footer top-less-button? bottom-less-button?])])
 
@@ -70,13 +70,14 @@
   `:bottom-less-button?` should bottom show less button be shown? Default true
   `:on-open` triggers the function callback given as an argument when load-more is clicked
   `:title` component displayed in title area
+  `:title-class` class for the title area
   `:always` component displayed always before collapsible area
   `:collapse` component that is toggled displayed or not
   `:footer` component displayed always after collapsible area"
-  [{:keys [id class open? on-open title always collapse footer top-less-button? bottom-less-button?]}]
+  [{:keys [id class open? on-open title title-class always collapse footer top-less-button? bottom-less-button?]}]
   [:div.collapse-wrapper {:id id
                           :class class}
-   (when title [header title])
+   (when title [header title title-class])
    (when (or always collapse footer)
      [block id open? on-open always collapse footer top-less-button? bottom-less-button?])])
 

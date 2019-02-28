@@ -107,9 +107,8 @@
                                     :round 0
                                     :event "save"
                                     :comment nil})))
-    (cond-> {:success success?
-             :valid valid?}
-      (not valid?) (assoc :validation validation)
+    (cond-> {:success success?}
+      (not success?) (assoc :errors validation)
       success? (assoc :id application-id
                       :state (:state application)))))
 

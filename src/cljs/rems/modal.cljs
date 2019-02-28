@@ -28,11 +28,12 @@
 
   Pass a map of options with the following keys:
   `:title` component displayed in title area
+  `:title-class` class for the title area
   `:content` component displayed in content area
   `:commands` seq of components displayed in commands area
   `:on-close` triggers the function callback given as an argument when modal should be closed
   `:shade?` should the modal have a dark blocking shade behind it? Default true"
-  [{:keys [title content commands on-close shade?]}]
+  [{:keys [title title-class content commands on-close shade?]}]
   (let [content [collapsible/component
                  {:title [:div.modal--title {:style {:display :flex
                                                      :justify-content
@@ -41,6 +42,7 @@
                           title
                           [:button.btn.btn-link.link.ml-3 {:on-click on-close}
                            [:i.fa.fa-times {:style {:margin 0}}]]]
+                  :title-class title-class
                   :always [:div.full
                            [:div.modal--content content]
                            (into [:div.modal--commands.commands {:style {:padding 0}}]
@@ -57,8 +59,8 @@
   A notification dialog shows an OK button to close the dialog.
 
   See `modal/component` for options."
-  [{:keys [title content on-close shade?] :as opts}]
-  [component (assoc opts :commands [[:button.btn.btn-primary {:on-click on-close} (text :t.actions/ok)]])])
+  [{:keys [title title-class content on-close shade?] :as opts}]
+  [component (assoc opts :commands [[:button#modal-ok.btn.btn-primary {:on-click on-close} (text :t.actions/ok)]])])
 
 (defn guide
   []
