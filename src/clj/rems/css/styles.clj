@@ -210,11 +210,10 @@
   (assert (not= "" obj))
   (cond
     (record? obj) obj
-    (map? obj) (let [m (->> obj
-                            (map-vals remove-nil-vals)
-                            (remove-vals nil?))]
-                 (when (seq m)
-                   m))
+    (map? obj) (->> obj
+                    (map-vals remove-nil-vals)
+                    (remove-vals nil?)
+                    not-empty)
     (sequential? obj) (map remove-nil-vals obj)
     :else obj))
 
