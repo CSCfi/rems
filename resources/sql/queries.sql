@@ -1,8 +1,9 @@
 -- :name get-catalogue-items :? :*
 -- :doc
 -- - Get catalogue items
--- - :items vector of item ids
+-- - :ids vector of item ids
 -- - :resource resource id to fetch items for
+-- - :archived true if archived items should be included
 SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.start, ci.endt as "end", ci.enabled, ci.archived
 , (case when ci.enabled = true then 'enabled' else 'disabled' end) as state -- TODO: remove state
 , res.id AS "resource-id"
@@ -18,8 +19,8 @@ LEFT OUTER JOIN workflow wf ON (ci.wfid = wf.id)
 LEFT OUTER JOIN application_form form ON (ci.formid = form.id)
 /*~ ) ~*/
 WHERE 1=1
-/*~ (when (:items params) */
-  AND ci.id IN (:v*:items)
+/*~ (when (:ids params) */
+  AND ci.id IN (:v*:ids)
 /*~ ) ~*/
 /*~ (when (:resource params) */
   AND res.resid = :resource
@@ -27,6 +28,7 @@ WHERE 1=1
 /*~ (when (not (:archived params)) */
   AND ci.archived = false
 /*~ ) ~*/
+;
 
 -- :name get-catalogue-item :? :1
 SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.start, ci.endt as "end", ci.enabled, ci.archived
@@ -63,7 +65,7 @@ false
 /*~*/
 true
 /*~ ) ~*/
-)
+);
 
 -- :name get-resources :? :*
 SELECT
