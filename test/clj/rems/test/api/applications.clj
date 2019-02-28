@@ -236,7 +236,7 @@
                    read-body)]
       (is (= "invalid api key" body)))))
 
-#_(deftest pdf-smoke-test
+(deftest pdf-smoke-test
   (testing "not found"
     (let [response (-> (request :get (str "/api/applications/9999999/pdf"))
                        (authenticate "42" "developer")
