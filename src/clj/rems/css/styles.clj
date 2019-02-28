@@ -209,15 +209,13 @@
   [obj]
   (cond
     (record? obj) obj
-    (map? obj) (let [m obj
-                     m (->> m
+    (map? obj) (let [m (->> obj
                             (map-vals remove-nil-vals)
                             (remove-vals nil?))]
                  (when (seq m)
                    m))
-    (sequential? obj) (let [coll obj]
-                        (map remove-nil-vals coll))
-    :default obj))
+    (sequential? obj) (map remove-nil-vals obj)
+    :else obj))
 
 (deftest test-remove-nil-vals
   (testing "empty"
