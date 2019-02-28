@@ -208,6 +208,7 @@
   "Recursively removes all keys with nil values from a map."
   [obj]
   (cond
+    (record? obj) obj
     (map? obj) (let [m obj
                      m (->> m
                             (map-vals remove-nil-vals)
@@ -258,7 +259,10 @@
     (is (= '(:a)
            (remove-nil-vals '(:a))))
     (is (= '(:a nil)
-           (remove-nil-vals '(:a {}))))))
+           (remove-nil-vals '(:a {})))))
+  (testing "records"
+    (is (= (u/px 10)
+           (remove-nil-vals (u/px 10))))))
 
 (defn build-screen []
   (list
