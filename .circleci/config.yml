@@ -44,7 +44,7 @@ jobs:
           keys:
           - v2-dependencies-{{ checksum "project.clj" }}
       # verify that we can run unit tests without the database:
-      - run: DATABASE_URL=invalid lein test
+      - run: DATABASE_URL=invalid lein eftest
 
   cloverage:
     <<: *defaults
