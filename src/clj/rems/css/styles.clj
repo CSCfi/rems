@@ -10,7 +10,7 @@
             [garden.selectors :as s]
             [garden.stylesheet :as stylesheet]
             [garden.units :as u]
-            [medley.core :refer [map-vals]]
+            [medley.core :refer [map-vals remove-vals]]
             [mount.core :refer [defstate]]
             [rems.util :as util]))
 
@@ -212,8 +212,7 @@
     (map? obj) (let [m obj
                      m (->> m
                             (map-vals remove-nil-vals)
-                            (remove (fn [[_k v]] (nil? v)))
-                            (into {}))]
+                            (remove-vals nil?))]
                  (when (seq m)
                    m))
     (sequential? obj) (let [coll obj]
