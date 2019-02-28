@@ -90,83 +90,6 @@
         (is (response-is-unauthorized? response))
         (is (= "invalid api key" body))))))
 
-(def testfile (clojure.java.io/file "./test-data/test.txt"))
-
-(def malicious-file (clojure.java.io/file "./test-data/malicious_test.html"))
-
-(def filecontent {:tempfile testfile
-                  :content-type "text/plain"
-                  :filename "test.txt"
-                  :size (.length testfile)})
-
-(def malicious-content {:tempfile malicious-file
-                        :content-type "text/html"
-                        :filename "malicious_test.html"
-                        :size (.length malicious-file)})
-
-#_(deftest application-api-attachments-test
-  (let [api-key "42"
-        user-id "alice"
-        catid 2
-        field-id 5
-        response (-> (request :post (str "/api/applications/save"))
-                     (authenticate api-key user-id)
-                     (json-body {:command "save"
-                                 :catalogue-items [catid]
-                                 :items {1 ""}})
-                     app
-                     read-body)
-        app-id (:id response)]
-    (testing "uploading attachment for a draft"
-      (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
-          (assoc :params {"file" filecontent})
-          (assoc :multipart-params {"file" filecontent})
-          (authenticate api-key user-id)
-          app
-          assert-response-is-ok))
-    (testing "uploading malicious file for a draft"
-      (let [response (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
-                         (assoc :params {"file" malicious-content})
-                         (assoc :multipart-params {"file" malicious-content})
-                         (authenticate api-key user-id)
-                         app)]
-        (is (= 400 (:status response)))))
-    (testing "retrieving attachment for a draft"
-      (let [response (-> (request :get (str "/api/applications/attachments/") {:application-id app-id :field-id field-id})
-                         (authenticate api-key user-id)
-                         app
-                         assert-response-is-ok)]
-        (is (= (slurp testfile) (slurp (:body response))))))
-    (testing "uploading attachment as non-applicant"
-      (let [response (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
-                         (assoc :params {"file" filecontent})
-                         (assoc :multipart-params {"file" filecontent})
-                         (authenticate api-key "carl")
-                         app)]
-        (is (response-is-forbidden? response))))
-    (testing "retrieving attachment as non-applicant"
-      (let [response (-> (request :get (str "/api/applications/attachments/") {:application-id app-id :field-id field-id})
-                         (authenticate api-key "carl")
-                         app)]
-        (is (response-is-forbidden? response))))
-    (testing "uploading attachment for a submitted application"
-      (let [body (-> (request :post (str "/api/applications/save"))
-                     (authenticate api-key user-id)
-                     (json-body {:application-id app-id
-                                 :command "submit"
-                                 :catalogue-items [catid]
-                                 :items {1 "x" 2 "y" 3 "z"}
-                                 :licenses {1 "approved" 2 "approved"}})
-                     app
-                     read-body)]
-        (is (= "applied" (:state body)))
-        (let [response (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
-                           (assoc :params {"file" filecontent})
-                           (assoc :multipart-params {"file" filecontent})
-                           (authenticate api-key user-id)
-                           app)]
-          (is (response-is-forbidden? response)))))))
-
 #_(deftest applications-api-security-test
   (testing "listing without authentication"
     (let [response (-> (request :get (str "/api/applications"))
@@ -568,3 +491,69 @@
       (is (= {:success false :errors [{:type "forbidden"}]}
              (send-dynamic-command user-id {:type :rems.workflow.dynamic/submit
                                             :application-id application-id}))))))
+
+(def testfile (clojure.java.io/file "./test-data/test.txt"))
+
+(def malicious-file (clojure.java.io/file "./test-data/malicious_test.html"))
+
+(def filecontent {:tempfile testfile
+                  :content-type "text/plain"
+                  :filename "test.txt"
+                  :size (.length testfile)})
+
+(def malicious-content {:tempfile malicious-file
+                        :content-type "text/html"
+                        :filename "malicious_test.html"
+                        :size (.length malicious-file)})
+
+(deftest application-api-attachments-test
+  (let [api-key "42"
+        user-id "alice"
+        catid 9
+        field-id 5
+        app-id (save-application {:command "save"
+                                  :catalogue-items [catid]
+                                  :items {1 "x" 2 "x"}
+                                  :licenses {1 "approved" 2 "approved"}})]
+    (testing "uploading attachment for a draft"
+      (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
+          (assoc :params {"file" filecontent})
+          (assoc :multipart-params {"file" filecontent})
+          (authenticate api-key user-id)
+          app
+          assert-response-is-ok))
+    (testing "uploading malicious file for a draft"
+      (let [response (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
+                         (assoc :params {"file" malicious-content})
+                         (assoc :multipart-params {"file" malicious-content})
+                         (authenticate api-key user-id)
+                         app)]
+        (is (= 400 (:status response)))))
+    (testing "retrieving attachment for a draft"
+      (let [response (-> (request :get (str "/api/applications/attachments/") {:application-id app-id :field-id field-id})
+                         (authenticate api-key user-id)
+                         app
+                         assert-response-is-ok)]
+        (is (= (slurp testfile) (slurp (:body response))))))
+    (testing "uploading attachment as non-applicant"
+      (let [response (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
+                         (assoc :params {"file" filecontent})
+                         (assoc :multipart-params {"file" filecontent})
+                         (authenticate api-key "carl")
+                         app)]
+        (is (response-is-forbidden? response))))
+    (testing "retrieving attachment as non-applicant"
+      (let [response (-> (request :get (str "/api/applications/attachments/") {:application-id app-id :field-id field-id})
+                         (authenticate api-key "carl")
+                         app)]
+        (is (response-is-forbidden? response))))
+    (testing "submit application"
+      (is (= {:success true} (send-dynamic-command user-id {:type :rems.workflow.dynamic/submit
+                                                            :application-id app-id}))))
+    (testing "uploading attachment for a submitted application"
+      (let [response (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
+                         (assoc :params {"file" filecontent})
+                         (assoc :multipart-params {"file" filecontent})
+                         (authenticate api-key user-id)
+                         app)]
+        (is (response-is-forbidden? response))))))
