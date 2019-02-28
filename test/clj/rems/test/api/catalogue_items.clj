@@ -27,7 +27,7 @@
                                :state "enabled"})
                    app
                    read-body)]
-      (is (= 11 (:id data))))
+      (is (= 12 (:id data))))
     (let [data (-> (request :get "/api/catalogue-items/7")
                    (authenticate api-key user-id)
                    app

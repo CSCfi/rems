@@ -22,7 +22,7 @@
                            assert-response-is-ok)
               data (read-body response)]
           (is (= "application/json; charset=utf-8" (get-in response [:headers "Content-Type"])))
-          (is (= [1 2 3 4 5 6 7] (map :id (sort-by :id data))))))
+          (is (= [1 2 3 4 5 6 7 19] (map :id (sort-by :id data))))))
       (testing "transit support"
         (let [response (-> (request :get "/api/applications")
                            (authenticate api-key user-id)
@@ -31,31 +31,7 @@
                            assert-response-is-ok)
               data (read-body response)]
           (is (= "application/transit+json; charset=utf-8" (get-in response [:headers "Content-Type"])))
-          (is (= 7 (count data))))))))
-
-#_(deftest disabled-catalogue-item
-  (let [api-key "42"
-        user-id "developer"
-        catid 6]
-    (testing "save draft for disabled item"
-      (let [response (-> (request :post (str "/api/applications/save"))
-                         (authenticate api-key user-id)
-                         (json-body {:command "save"
-                                     :catalogue-items [catid]
-                                     :items {1 ""}})
-                         app)]
-        ;; TODO should we actually return a nice error message here?
-        (is (= 400 (:status response)) "should not be able to save draft with disbled item")))
-    (testing "submit for application with disabled item"
-      (let [response (-> (request :post (str "/api/applications/save"))
-                         (authenticate api-key user-id)
-                         (json-body {:application-id 6 ;; application-id 6 is already created, but catalogue-item was disabled later
-                                     :command "submit"
-                                     :catalogue-items [catid]
-                                     :items {1 "x" 2 "y" 3 "z"}
-                                     :licenses {1 "approved" 2 "approved"}})
-                         app)]
-        (is (= 400 (:status response)) "should not be possible to submit with disabled item")))))
+          (is (= 8 (count data))))))))
 
 #_(deftest application-api-roles
   (let [api-key "42"
@@ -695,3 +671,21 @@
                   "application.event/draft-saved"
                   "application.event/submitted"]
                  (map :event/type (get-in submitted [:application :dynamic-events])))))))))
+
+(deftest disabled-catalogue-item
+  (let [api-key "42"
+        user-id "alice"
+        catid 11
+        application-id 19]
+    (testing "save draft for disabled item"
+      (let [response (-> (request :post (str "/api/applications/save"))
+                         (authenticate api-key user-id)
+                         (json-body {:command "save"
+                                     :catalogue-items [catid]
+                                     :items {1 ""}})
+                         app)]
+        (is (= 400 (:status response)))))
+    (testing "submit for application with disabled item"
+      (is (= {:success false :errors [{:type "forbidden"}]}
+             (send-dynamic-command user-id {:type :rems.workflow.dynamic/submit
+                                            :application-id application-id}))))))

@@ -665,7 +665,12 @@
         (create-dynamic-applications! dynamic (:dynamic workflows) +fake-users+))
       (let [thlform (create-thl-demo-form! +fake-users+)
             thl-catid (create-catalogue-item! res1 (:dynamic workflows) thlform {"en" "THL catalogue item" "fi" "THL katalogi-itemi"})]
-        (create-member-applications! thl-catid (:dynamic workflows) (+fake-users+ :applicant1) (+fake-users+ :approver1) [{:userid (+fake-users+ :applicant2)}])))
+        (create-member-applications! thl-catid (:dynamic workflows) (+fake-users+ :applicant1) (+fake-users+ :approver1) [{:userid (+fake-users+ :applicant2)}]))
+      (let [dynamic-disabled (create-catalogue-item! res1 (:dynamic workflows) form
+                                                     {"en" "Dynamic workflow (disabled)"
+                                                      "fi" "Dynaaminen työvuo (pois käytöstä)"})]
+        (create-draft! (+fake-users+ :approver1) [dynamic-disabled] (:dynamic workflows) "draft for disabled application")
+        (db/set-catalogue-item-state! {:item dynamic-disabled :enabled false :user (+fake-users+ :approver1)})))
     (finally
       (DateTimeUtils/setCurrentMillisSystem))))
 
@@ -706,6 +711,7 @@
     (let [dynamic (create-catalogue-item! res1 (:dynamic workflows) form
                                           {"en" "Dynamic workflow" "fi" "Dynaaminen työvuo"})]
       (create-dynamic-applications! dynamic (:dynamic workflows) +demo-users+))
+    ;; TODO disabled dynamic here!
     (let [thlform (create-thl-demo-form! +demo-users+)
           thl-catid (create-catalogue-item! res1 (:dynamic workflows) thlform {"en" "THL catalogue item" "fi" "THL katalogi-itemi"})]
       (create-member-applications! thl-catid (:dynamic workflows) (+demo-users+ :applicant1) (+demo-users+ :approver1) [{:userid (+demo-users+ :applicant2)}]))))
