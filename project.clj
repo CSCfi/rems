@@ -142,7 +142,6 @@
                                 [doo "0.1.11"]
                                 [eftest "0.5.4"]
                                 [figwheel-sidecar "0.5.18" :exclusions [org.clojure/tools.nrepl org.clojure/core.async com.fasterxml.jackson.core/jackson-core]]
-                                [pjstadig/humane-test-output "0.9.0"]
                                 [re-frisk "0.5.4"]
                                 [ring/ring-mock "0.3.2" :exclusions [cheshire]]
                                 [se.haleby/stub-http "0.2.5"]
@@ -161,8 +160,6 @@
                  :resource-paths ["env/dev/resources"]
                  :repl-options {:init-ns rems.standalone
                                 :welcome (rems.standalone/repl-help)}
-                 :injections [(require 'pjstadig.humane-test-output)
-                              (pjstadig.humane-test-output/activate!)]
 
                  :cljsbuild {:builds {:dev {:source-paths ["src/cljs" "src/cljc"]
                                             :figwheel {:on-jsload "rems.spa/mount-components"}
