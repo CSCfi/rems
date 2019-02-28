@@ -205,14 +205,20 @@
 
 (defn- remove-nil-vals
   "Recursively removes all keys with nil values from a map."
-  [m]
-  (let [rules (keep
-               (fn [[k v]]
-                 (cond
-                   (map? v) (when-let [v (remove-nil-vals v)] [k v])
-                   :default (when-not (nil? v) [k v])))
-               m)]
-    (when (not-empty rules) (into {} rules))))
+  [obj]
+  (cond
+    (map? obj) (let [m obj
+                     rules (keep
+                            (fn [[k v]]
+                              (cond
+                                (map? v) (when-let [v (remove-nil-vals v)] [k v])
+                                :default (when-not (nil? v) [k v])))
+                            m)]
+                 (when (not-empty rules)
+                   (into {} rules)))
+    (vector? obj) (let [coll obj]
+                    (mapv remove-nil-vals coll))
+    :default obj))
 
 (deftest test-remove-nil-vals
   (testing "empty"
@@ -235,7 +241,18 @@
   (testing "multiple keys"
     (is (= {:b 2}
            (remove-nil-vals {:a nil
-                             :b 2})))))
+                             :b 2}))))
+  (testing "vectors"
+    (is (= []
+           (remove-nil-vals [])))
+    (is (= [:a]
+           (remove-nil-vals [:a])))
+    (is (= [:a nil]
+           (remove-nil-vals [:a {}])))
+    (is (= [:a {:b 1}]
+           (remove-nil-vals [:a {:b 1}])))
+    (is (= [:a nil]
+           (remove-nil-vals [:a {:b nil}])))))
 
 (defn build-screen []
   (list
