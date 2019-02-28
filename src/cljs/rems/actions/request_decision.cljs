@@ -28,7 +28,7 @@
 (rf/reg-sub ::potential-deciders (fn [db _] (::potential-deciders db)))
 
 (rf/reg-event-db ::set-selected-deciders (fn [db [_ deciders]] (assoc db ::selected-deciders deciders)))
-(rf/reg-event-db ::add-selected-decider (fn [db [_ decider]] (assoc db ::selected-deciders [decider])))
+(rf/reg-event-db ::add-selected-decider (fn [db [_ decider]] (update db ::selected-deciders conj decider)))
 (rf/reg-event-db ::remove-selected-decider (fn [db [_ decider]] (update db ::selected-deciders disj decider)))
 (rf/reg-sub ::selected-deciders (fn [db _] (::selected-deciders db)))
 
@@ -43,7 +43,7 @@
           {:params {:application-id application-id
                     :type :rems.workflow.dynamic/request-decision
                     :comment comment
-                    :decider (first (map :userid deciders))}
+                    :deciders (map :userid deciders)}
            :handler (partial status-modal/common-success-handler! on-finished)
            :error-handler status-modal/common-error-handler!})
    {}))
