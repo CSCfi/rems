@@ -46,10 +46,10 @@ WHERE ci.id = :id;
 -- :name set-catalogue-item-state! :insert
 UPDATE catalogue_item ci
 SET
-/*~ (if (boolean? (:enabled params)) */
+/*~ (when (boolean? (:enabled params)) */
   enabled = :enabled,
 /*~ ) ~*/
-/*~ (if (boolean? (:archived params)) */
+/*~ (when (boolean? (:archived params)) */
   archived = :archived,
 /*~ ) ~*/
   id = id
@@ -60,11 +60,7 @@ WHERE ci.id = :id;
 INSERT INTO catalogue_item
 (title, formid, resid, wfid, enabled)
 VALUES (:title, :form, :resid, :wfid,
-/*~ (if (= "disabled" (:state params)) */ -- TODO: remove state
-false
-/*~*/
-true
-/*~ ) ~*/
+/*~ (if (= "disabled" (:state params)) */  false /*~*/ true /*~ ) ~*/ -- TODO: remove state
 );
 
 -- :name get-resources :? :*
@@ -78,7 +74,7 @@ SELECT
   endt,
   enabled,
   archived
-FROM resource
+FROM resource;
 
 -- :name get-resource :? :1
 SELECT
@@ -92,7 +88,7 @@ SELECT
   enabled,
   archived
 FROM resource
-WHERE id = :id
+WHERE id = :id;
 
 -- :name create-resource! :insert
 -- :doc Create a single resource
@@ -100,19 +96,19 @@ INSERT INTO resource
 (resid, organization, ownerUserId, modifieruserid, endt)
 VALUES (:resid, :organization, :owneruserid, :modifieruserid,
  /*~ (if (:endt params) */ :endt /*~*/ NULL /*~ ) ~*/
-)
+);
 
 -- :name get-database-name :? :1
-SELECT current_database()
+SELECT current_database();
 
 -- :name get-catalogue-item-localizations :? :*
 SELECT catid AS id, langcode, title
-FROM catalogue_item_localization
+FROM catalogue_item_localization;
 
 -- :name create-catalogue-item-localization! :insert
 INSERT INTO catalogue_item_localization
   (catid, langcode, title)
-VALUES (:id, :langcode, :title)
+VALUES (:id, :langcode, :title);
 
 -- :name get-forms :? :*
 SELECT
@@ -123,7 +119,7 @@ SELECT
   endt,
   enabled,
   archived
-FROM application_form
+FROM application_form;
 
 -- :name get-form-for-application :? :1
 SELECT
@@ -134,7 +130,7 @@ SELECT
 FROM catalogue_item_application_items ciai
 LEFT OUTER JOIN catalogue_item ci ON ci.id = ciai.catItemId
 LEFT OUTER JOIN application_form form ON form.id = ci.formId
-WHERE ciai.catAppId = :application
+WHERE ciai.catAppId = :application;
 
 -- :name get-form-for-item :? :1
 SELECT
@@ -143,7 +139,7 @@ SELECT
   form.visibility as formvisibility
 FROM catalogue_item ci
 LEFT OUTER JOIN application_form form ON form.id = ci.formId
-WHERE ci.id = :item
+WHERE ci.id = :item;
 
 -- :name get-form-items :? :*
 SELECT
@@ -158,7 +154,7 @@ FROM application_form form
 LEFT OUTER JOIN application_form_item_map itemmap ON form.id = itemmap.formId
 LEFT OUTER JOIN application_form_item item ON item.id = itemmap.formItemId
 WHERE form.id = :id AND item.id IS NOT NULL
-ORDER BY itemorder
+ORDER BY itemorder;
 
 -- :name get-form :? :1
 SELECT
@@ -181,7 +177,7 @@ SELECT
          WHERE formitemmap.formid = form.id) joined)::TEXT
          AS fields
 FROM application_form form
-WHERE form.id = :id
+WHERE form.id = :id;
 
 -- :name get-all-form-items :? :*
 SELECT id, type, value, visibility, start, endt, owneruserid, modifieruserid
@@ -197,6 +193,7 @@ WHERE 1=1
 /*~ (when (:item params) */
   AND itemId = :item
 /*~ ) ~*/
+;
 
 -- :name create-form! :insert
 INSERT INTO application_form
@@ -208,31 +205,27 @@ VALUES
  :user,
  'public',
  /*~ (if (:endt params) */ :endt /*~*/ NULL /*~ ) ~*/
-)
+);
 
 -- :name create-form-item! :insert
 INSERT INTO application_form_item
 (type, value, modifierUserId, ownerUserId, visibility)
 VALUES
-(CAST (:type as itemtype), :value, :user, :user, 'public')
+(CAST (:type as itemtype), :value, :user, :user, 'public');
 
 -- :name link-form-item! :insert
 INSERT INTO application_form_item_map
 (formId, formItemId, modifierUserId, itemOrder, formItemOptional, maxlength)
 VALUES
 (:form, :item, :user, :itemorder, :optional,
-/*~ (if (:maxlength params) */
-:maxlength
-/*~*/
-NULL
-/*~ ) ~*/
-)
+/*~ (if (:maxlength params) */ :maxlength /*~*/ NULL /*~ ) ~*/
+);
 
 -- :name localize-form-item! :insert
 INSERT INTO application_form_item_localization
 (itemId, langCode, title, inputPrompt)
 VALUES
-(:item, :langcode, :title, :inputprompt)
+(:item, :langcode, :title, :inputprompt);
 
 -- :name create-form-item-option! :insert
 INSERT INTO application_form_item_options
@@ -252,20 +245,17 @@ WHERE id = :id;
 -- :name create-application! :insert
 INSERT INTO catalogue_item_application
 (applicantUserId, wfid, start)
-VALUES
-/*~ (if (:start params) */
-(:user, :wfid, :start)
-/*~*/
-(:user, :wfid, now())
-/*~ ) ~*/
-RETURNING id
+VALUES (:user, :wfid,
+/*~ (if (:start params) */ :start /*~*/ now() /*~ ) ~*/
+)
+RETURNING id;
 
 -- :name add-application-item! :insert
 INSERT INTO catalogue_item_application_items
 (catAppId, catItemId)
 VALUES
 (:application, :item)
-RETURNING catAppId, catItemId
+RETURNING catAppId, catItemId;
 
 -- :name get-applications :? :*
 -- :doc
@@ -283,11 +273,12 @@ WHERE 1=1
 /*~ (when (:applicant params) */
   AND app.applicantUserId = :applicant
 /*~ ) ~*/
+;
 
 -- :name update-application-description! :!
 UPDATE catalogue_item_application
 SET description = :description
-WHERE id = :id
+WHERE id = :id;
 
 -- :name get-application-items :? :*
 -- :doc
@@ -300,6 +291,7 @@ WHERE 1=1
 /*~ (when (:application params) */
   AND ciai.catAppId = :application
 /*~ ) ~*/
+;
 
 -- :name add-entitlement! :!
 -- TODO remove resId from this table to make it normalized?
@@ -308,12 +300,12 @@ SELECT :application, :user, cat.resid
 FROM catalogue_item_application_items ciai
 LEFT OUTER JOIN catalogue_item_application app ON ciai.catAppId = app.id
 LEFT OUTER JOIN catalogue_item cat ON ciai.catItemId = cat.id
-WHERE ciai.catAppId = :application
+WHERE ciai.catAppId = :application;
 
 -- :name end-entitlement! :!
 UPDATE entitlement
 SET endt = current_timestamp
-WHERE catAppId = :application
+WHERE catAppId = :application;
 
 -- :name get-entitlements :?
 -- :doc
@@ -334,6 +326,7 @@ WHERE 1=1
 /*~ (when (:resource params) */
   AND res.resId = :resource
 /*~ ) ~*/
+;
 
 -- :name save-field-value! :!
 INSERT INTO application_text_values
@@ -344,7 +337,7 @@ VALUES
   WHERE formId = :form AND formItemId = :item))
 ON CONFLICT (catAppId, formMapId)
 DO UPDATE
-SET (modifierUserId, value) = (:user, :value)
+SET (modifierUserId, value) = (:user, :value);
 
 -- :name save-attachment! :!
 INSERT INTO application_attachments
@@ -355,20 +348,20 @@ VALUES
   WHERE formId = :form AND formItemId = :item))
 ON CONFLICT (catAppId, formMapId)
 DO UPDATE
-SET (modifierUserId, filename, type, data) = (:user, :filename, :type, :data)
+SET (modifierUserId, filename, type, data) = (:user, :filename, :type, :data);
 
 -- :name remove-attachment! :!
 DELETE FROM application_attachments
 WHERE catAppId = :application
 AND formmapid = (SELECT id FROM application_form_item_map
-                 WHERE formId = :form AND formItemId = :item)
+                 WHERE formId = :form AND formItemId = :item);
 
 -- :name get-attachment :? :1
 SELECT filename, type, data FROM application_attachments attachments
 LEFT OUTER JOIN application_form_item_map itemmap ON attachments.formMapId = itemmap.id
 WHERE attachments.catAppId = :application
   AND itemmap.formItemId = :item
-  AND itemmap.formId = :form
+  AND itemmap.formId = :form;
 
 -- :name save-license-approval! :!
 -- NB: this is not atomic
@@ -383,20 +376,20 @@ WHERE catappid = :catappid AND licid = :licid AND modifieruserid = :actoruserid)
 
 -- :name delete-license-approval! :!
 DELETE FROM application_license_approval_values
-WHERE catappid = :catappid AND licid = :licid AND modifieruserid = :actoruserid
+WHERE catappid = :catappid AND licid = :licid AND modifieruserid = :actoruserid;
 
 -- :name get-application-license-approval :? :1
 SELECT state FROM application_license_approval_values
-WHERE catappid = :catappid AND licid = :licid AND modifieruserid = :actoruserid
+WHERE catappid = :catappid AND licid = :licid AND modifieruserid = :actoruserid;
 
 -- :name create-license! :insert
 INSERT INTO license
 (ownerUserId, modifierUserId, title, type, textcontent, attachmentId, endt)
 VALUES
 (:owneruserid, :modifieruserid, :title, :type::license_type, :textcontent,
-/*~ (if (:attachmentId params) */ :attachmentId, /*~*/ NULL, /*~ ) ~*/
+/*~ (if (:attachmentId params) */ :attachmentId /*~*/ NULL /*~ ) ~*/,
 /*~ (if (:endt params) */ :endt /*~*/ NULL /*~ ) ~*/
-)
+);
 
 -- :name create-license-attachment! :insert
 INSERT INTO license_attachment
@@ -416,7 +409,8 @@ INSERT INTO license_localization
 (licid, langcode, title, textcontent, attachmentId)
 VALUES
 (:licid, :langcode, :title, :textcontent,
-/*~ (if (:attachmentId params) */ :attachmentId /*~*/ NULL /*~ ) ~*/)
+/*~ (if (:attachmentId params) */ :attachmentId /*~*/ NULL /*~ ) ~*/
+);
 
 -- :name create-workflow! :insert
 INSERT INTO workflow
@@ -429,38 +423,38 @@ VALUES
  :fnlround,
  /*~ (if (:endt params) */ :endt /*~*/ NULL /*~ ) ~*/,
  /*~ (if (:workflow params) */ :workflow::jsonb /*~*/ NULL /*~ ) ~*/
- )
+);
 
 -- :name create-workflow-license! :insert
 INSERT INTO workflow_licenses
 (wfid, licid, round)
 VALUES
-(:wfid, :licid, :round)
+(:wfid, :licid, :round);
 
 -- TODO: consider renaming this to link-resource-license!
 -- :name create-resource-license! :insert
 INSERT INTO resource_licenses
 (resid, licid)
 VALUES
-(:resid, :licid)
+(:resid, :licid);
 
 -- :name set-resource-license-validity! :insert
 -- :doc set license expiration
 UPDATE resource_licenses rl
 SET start = :start, endt = :end
-WHERE rl.licid = :licid
+WHERE rl.licid = :licid;
 
 -- :name set-workflow-license-validity! :insert
 -- :doc set license expiration
 UPDATE workflow_licenses wl
 SET start = :start, endt = :end
-WHERE wl.licid = :licid
+WHERE wl.licid = :licid;
 
 -- :name create-workflow-actor! :insert
 INSERT INTO workflow_actors
 (wfid, actoruserid, role, round)
 VALUES
-(:wfid, :actoruserid, CAST (:role as workflow_actor_role), :round)
+(:wfid, :actoruserid, CAST (:role as workflow_actor_role), :round);
 
 -- :name get-actors-for-applications :? :*
 -- :doc
@@ -492,12 +486,13 @@ WHERE 1=1
 /*~ (when (:role params) */
   AND wfa.role = CAST (:role as workflow_actor_role)
 /*~ ) ~*/
+;
 
 -- :name get-workflow-actors :? :*
 SELECT
   actoruserid, role, round
 FROM workflow_actors
-WHERE wfid = :wfid
+WHERE wfid = :wfid;
 
 -- :name get-workflow :? :1
 SELECT
@@ -521,18 +516,19 @@ AND wf.id = :wfid
 /*~ (when (:catid params) */
 AND ci.id = :catid
 /*~ ) ~*/
+;
 
 -- :name get-workflows :? :*
 SELECT
   wf.id, wf.organization, wf.owneruserid, wf.modifieruserid, wf.title, wf.fnlround, wf.visibility, wf.start, wf.endt,
   wf.workflowBody::TEXT as workflow, wf.enabled, wf.archived
-FROM workflow wf
+FROM workflow wf;
 
 -- :name clear-field-value! :!
 DELETE FROM application_text_values
 WHERE catAppId = :application
   AND formMapId = (SELECT id FROM application_form_item_map
-                   WHERE formId = :form AND formItemId = :item)
+                   WHERE formId = :form AND formItemId = :item);
 
 -- :name get-field-value :? :n
 SELECT
@@ -541,7 +537,7 @@ FROM application_text_values textvalues
 LEFT OUTER JOIN application_form_item_map itemmap ON textvalues.formMapId = itemmap.id
 WHERE textvalues.catAppId = :application
   AND itemmap.formItemId = :item
-  AND itemmap.formId = :form
+  AND itemmap.formId = :form;
 
 -- :name get-licenses :? :*
 -- :doc
@@ -558,53 +554,53 @@ FROM license lic
 INNER JOIN resource_licenses rl ON lic.id = rl.licid
 INNER JOIN catalogue_item item ON (item.resid = rl.resid)
 WHERE item.id IN (:v*:items)
-ORDER BY id
+ORDER BY id;
 
 -- :name get-resource-licenses :? :*
 SELECT lic.id, lic.title, lic.type, lic.textcontent, rl.start, rl.endt, lic.enabled, lic.archived
 FROM license lic
 INNER JOIN resource_licenses rl ON lic.id = rl.licid
-WHERE rl.resid = :id
+WHERE rl.resid = :id;
 
 -- :name get-all-licenses :? :*
 SELECT lic.id, lic.title, lic.type, lic.textcontent, lic.start, lic.endt, lic.enabled, lic.archived, lic.attachmentid
-FROM license lic
+FROM license lic;
 
 -- :name get-license :? :1
 SELECT lic.id, lic.title, lic.type, lic.textcontent, lic.start, lic.endt, lic.enabled, lic.archived, lic.attachmentid
 , TRUE AS active -- TODO implement active and archiving
 FROM license lic
-WHERE lic.id = :id
+WHERE lic.id = :id;
 
 -- :name get-license-localizations :? :*
 SELECT licid, langcode, title, textcontent, attachmentid
-FROM license_localization
+FROM license_localization;
 
 -- :name get-roles :? :*
 SELECT role
 FROM roles
-WHERE userId = :user
+WHERE userId = :user;
 
 -- :name add-role! :!
 INSERT INTO roles (userId, role)
 VALUES (:user, :role)
 ON CONFLICT (userId, role)
-DO NOTHING
+DO NOTHING;
 
 -- :name add-user! :!
 INSERT INTO users (userId, userAttrs)
 VALUES (:user, :userattrs::jsonb)
 ON CONFLICT (userId)
-DO UPDATE SET userAttrs = :userattrs::jsonb
+DO UPDATE SET userAttrs = :userattrs::jsonb;
 
 -- :name get-users :? :*
 SELECT userId
-FROM users
+FROM users;
 
 -- :name get-user-attributes :? :1
 SELECT userAttrs::TEXT
 FROM users
-WHERE userId = :user
+WHERE userId = :user;
 
 -- :name get-application-events :? :*
 SELECT id, appId, userId, round, event, comment, eventData::TEXT, time
@@ -613,23 +609,19 @@ WHERE 1=1
 /*~ (when (:application params) */
   AND appId = :application
 /*~ ) ~*/
-ORDER BY id ASC
+ORDER BY id ASC;
 
 -- :name get-application-events-since :? :*
 SELECT id, eventdata::TEXT
 FROM application_event
 WHERE id > :id
-ORDER BY id ASC
+ORDER BY id ASC;
 
 -- :name add-application-event! :insert
 INSERT INTO application_event (appId, userId, round, event, comment, eventData)
 VALUES (:application, :user, :round, :event, :comment,
-/*~ (if (:eventdata params) */
-        :eventdata::jsonb
-/*~*/
-        NULL
-/*~ ) ~*/
-        )
+/*~ (if (:eventdata params) */ :eventdata::jsonb /*~*/ NULL /*~ ) ~*/
+);
 
 -- :name get-application-states :? :*
 SELECT unnest(enum_range(NULL::application_state));
@@ -640,8 +632,8 @@ VALUES (:payload::jsonb, :status);
 
 -- :name add-api-key! :insert
 INSERT INTO api_key (apiKey, comment)
-VALUES (:apikey, :comment)
+VALUES (:apikey, :comment);
 
 -- :name get-api-key :? :1
 SELECT apiKey FROM api_key
-WHERE apiKey = :apikey
+WHERE apiKey = :apikey;
