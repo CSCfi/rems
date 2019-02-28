@@ -10,7 +10,8 @@
             [garden.color :as c]
             [mount.core :refer [defstate]]
             [rems.util :as util]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [clojure.test :refer [deftest is]]))
 
 (defn- generate-at-font-faces []
   (list
@@ -202,6 +203,25 @@
                                   :margin-top 0
                                   :margin-bottom (u/px 16)})
 
+(defn- remove-nil-vals
+  "Recursively removes nil values from a map.
+
+  {:a 1 :b {:c 1 :d nil} :e nil} => {:a 1 :b {:c 1}}
+
+  Returns nil if all values are nil."
+  [m]
+  (let [rules (keep
+               (fn [[k v]]
+                 (cond
+                   (map? v) (when-let [v (remove-nil-vals v)] [k v])
+                   :default (when v [k v])))
+               m)]
+    (when (not-empty rules) (into {} rules))))
+
+(deftest test-remove-nil-vals
+  (is (= {:a 1 :b {:c 1}}
+         (remove-nil-vals {:a 1 :b {:c 1 :d nil} :e nil}))))
+
 (defn build-screen []
   (list
    (generate-at-font-faces)
@@ -272,59 +292,60 @@
                      :color "#ccc"}
                     [:&:hover {:color (util/get-theme-attribute :color4)
                                :background-color "#eee"}]]]
-   
-   [:.text-primary {:color (util/get-theme-attribute :text-primary)}]
-   [:.text-secondary {:color (util/get-theme-attribute :text-secondary)}]
-   [:.text-success {:color (util/get-theme-attribute :text-success)}]
-   [:.text-danger {:color (util/get-theme-attribute :text-danger)}]
-   [:.text-warning {:color (util/get-theme-attribute :text-warning)}]
-   [:.text-info {:color (util/get-theme-attribute :text-info)}]
-   [:.text-light {:color (util/get-theme-attribute :text-light)}]
-   [:.text-dark {:color (util/get-theme-attribute :text-dark)}]
-   [:.text-muted {:color (util/get-theme-attribute :text-muted)}]
-   [:.text-white {:color (util/get-theme-attribute :text-white)}]
 
-   [:.bg-primary {:background-color (util/get-theme-attribute :bg-primary)}]
-   [:.bg-secondary {:background-color (util/get-theme-attribute :bg-secondary)}]
-   [:.bg-success {:background-color (util/get-theme-attribute :bg-success)}]
-   [:.bg-danger {:background-color (util/get-theme-attribute :bg-danger)}]
-   [:.bg-warning {:background-color (util/get-theme-attribute :bg-warning)}]
-   [:.bg-info {:background-color (util/get-theme-attribute :bg-info)}]
-   [:.bg-light {:background-color (util/get-theme-attribute :bg-light)}]
-   [:.bg-dark {:background-color (util/get-theme-attribute :bg-dark)}]
-   [:.bg-white {:background-color (util/get-theme-attribute :bg-white)}]
+   (when-let [style (remove-nil-vals {:color (util/get-theme-attribute :text-primary)})] [:.text-primary style])
+   (when-let [style (remove-nil-vals {:color (util/get-theme-attribute :text-secondary)})] [:.text-secondary style])
+   (when-let [style (remove-nil-vals {:color (util/get-theme-attribute :text-success)})] [:.text-success style])
+   (when-let [style (remove-nil-vals {:color (util/get-theme-attribute :text-danger)})] [:.text-danger style])
+   (when-let [style (remove-nil-vals {:color (util/get-theme-attribute :text-warning)})] [:.text-warning style])
+   (when-let [style (remove-nil-vals {:color (util/get-theme-attribute :text-info)})] [:.text-info style])
+   (when-let [style (remove-nil-vals {:color (util/get-theme-attribute :text-light)})] [:.text-light style])
+   (when-let [style (remove-nil-vals {:color (util/get-theme-attribute :text-dark)})] [:.text-dark style])
+   (when-let [style (remove-nil-vals {:color (util/get-theme-attribute :text-muted)})] [:.text-muted style])
+   (when-let [style (remove-nil-vals {:color (util/get-theme-attribute :text-white)})] [:.text-white style])
 
-   [:.alert-primary {:color (util/get-theme-attribute :alert-primary-color)
-                     :background-color (util/get-theme-attribute :alert-primary-bgcolor)
-                     :border-color (util/get-theme-attribute :alert-primary-bordercolor :alert-primary-color)}]
-   [:.alert-secondary {:color (util/get-theme-attribute :alert-secondary-color)
-                       :background-color (util/get-theme-attribute :alert-secondary-bgcolor)
-                       :border-color (util/get-theme-attribute :alert-secondary-bordercolor :alert-secondary-color)}]
-   [:.alert-success
-    (s/descendant :.state-approved :.phases :.phase.completed)
-    {:color (util/get-theme-attribute :alert-success-color)
-     :background-color (util/get-theme-attribute :alert-success-bgcolor)
-     :border-color (util/get-theme-attribute :alert-success-bordercolor :alert-success-color)}]
-   [:.alert-danger
-    :.state-rejected
-    (s/descendant :.state-rejected :.phases :.phase.completed)
-    {:color (util/get-theme-attribute :alert-danger-color)
-     :background-color (util/get-theme-attribute :alert-danger-bgcolor)
-     :border-color (util/get-theme-attribute :alert-danger-bordercolor :alert-danger-color)}]
-   [:.alert-warning {:color (util/get-theme-attribute :alert-warning-color)
-                     :background-color (util/get-theme-attribute :alert-warning-bgcolor)
-                     :border-color (util/get-theme-attribute :alert-warning-bordercolor :alert-warning-color)}]
-   [:.alert-info
-    (s/descendant :.state-info :.phases :.phase.completed)
-    {:color (util/get-theme-attribute :alert-info-color)
-     :background-color (util/get-theme-attribute :alert-info-bgcolor)
-     :border-color (util/get-theme-attribute :alert-info-bordercolor :alert-info-color)}]
-   [:alert-light {:color (util/get-theme-attribute :alert-light-color)
-                  :background-color (util/get-theme-attribute :alert-light-bgcolor)
-                  :border-color (util/get-theme-attribute :alert-light-bordercolor :alert-light-color)}]
-   [:alert-dark {:color (util/get-theme-attribute :alert-dark-color)
-                 :background-color (util/get-theme-attribute :alert-dark-bgcolor)
-                 :border-color (util/get-theme-attribute :alert-dark-bordercolor :alert-dark-color)}]
+   (when-let [style (remove-nil-vals {:background-color (util/get-theme-attribute :bg-primary)})] [:.bg-primary style])
+   (when-let [style (remove-nil-vals {:background-color (util/get-theme-attribute :bg-secondary)})] [:.bg-secondary style])
+   (when-let [style (remove-nil-vals {:background-color (util/get-theme-attribute :bg-success)})] [:.bg-success style])
+   (when-let [style (remove-nil-vals {:background-color (util/get-theme-attribute :bg-danger)})] [:.bg-danger style])
+   (when-let [style (remove-nil-vals {:background-color (util/get-theme-attribute :bg-warning)})] [:.bg-warning style])
+   (when-let [style (remove-nil-vals {:background-color (util/get-theme-attribute :bg-info)})] [:.bg-info style])
+   (when-let [style (remove-nil-vals {:background-color (util/get-theme-attribute :bg-light)})] [:.bg-light style])
+   (when-let [style (remove-nil-vals {:background-color (util/get-theme-attribute :bg-dark)})] [:.bg-dark style])
+   (when-let [style (remove-nil-vals {:background-color (util/get-theme-attribute :bg-white)})] [:.bg-white style])
+
+   (when-let [style (remove-nil-vals {:color (util/get-theme-attribute :alert-primary-color)
+                                      :background-color (util/get-theme-attribute :alert-primary-bgcolor)
+                                      :border-color (util/get-theme-attribute :alert-primary-bordercolor :alert-primary-color)})]
+     [:.alert-primary style])
+   (when-let [style (remove-nil-vals {:color (util/get-theme-attribute :alert-secondary-color)
+                                      :background-color (util/get-theme-attribute :alert-secondary-bgcolor)
+                                      :border-color (util/get-theme-attribute :alert-secondary-bordercolor :alert-secondary-color)})]
+     [:.alert-secondary style])
+   (when-let [style (remove-nil-vals {:color (util/get-theme-attribute :alert-success-color)
+                                      :background-color (util/get-theme-attribute :alert-success-bgcolor)
+                                      :border-color (util/get-theme-attribute :alert-success-bordercolor :alert-success-color)})]
+     [:.alert-success (s/descendant :.state-approved :.phases :.phase.completed) style])
+   (when-let [style (remove-nil-vals {:color (util/get-theme-attribute :alert-danger-color)
+                                      :background-color (util/get-theme-attribute :alert-danger-bgcolor)
+                                      :border-color (util/get-theme-attribute :alert-danger-bordercolor :alert-danger-color)})]
+     [:.alert-danger :.state-rejected (s/descendant :.state-rejected :.phases :.phase.completed) style])
+   (when-let [style (remove-nil-vals {:color (util/get-theme-attribute :alert-warning-color)
+                                      :background-color (util/get-theme-attribute :alert-warning-bgcolor)
+                                      :border-color (util/get-theme-attribute :alert-warning-bordercolor :alert-warning-color)})]
+     [:.alert-warning style])
+   (when-let [style (remove-nil-vals {:color (util/get-theme-attribute :alert-info-color)
+                                      :background-color (util/get-theme-attribute :alert-info-bgcolor)
+                                      :border-color (util/get-theme-attribute :alert-info-bordercolor :alert-info-color)})]
+     [:.alert-info (s/descendant :.state-info :.phases :.phase.completed) style])
+   (when-let [style (remove-nil-vals {:color (util/get-theme-attribute :alert-light-color)
+                                      :background-color (util/get-theme-attribute :alert-light-bgcolor)
+                                      :border-color (util/get-theme-attribute :alert-light-bordercolor :alert-light-color)})]
+     [:.alert-light style])
+   (when-let [style (remove-nil-vals {:color (util/get-theme-attribute :alert-dark-color)
+                                      :background-color (util/get-theme-attribute :alert-dark-bgcolor)
+                                      :border-color (util/get-theme-attribute :alert-dark-bordercolor :alert-dark-color)})]
+     [:.alert-dark style])
    [:.nav-link
     :.btn-link
     (s/descendant :.nav-link :a)
