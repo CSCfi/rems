@@ -10,6 +10,7 @@
             [garden.selectors :as s]
             [garden.stylesheet :as stylesheet]
             [garden.units :as u]
+            [medley.core :refer [map-vals]]
             [mount.core :refer [defstate]]
             [rems.util :as util]))
 
@@ -208,16 +209,14 @@
   [obj]
   (cond
     (map? obj) (let [m obj
-                     rules (keep
-                            (fn [[k v]]
-                              (cond
-                                (map? v) (when-let [v (remove-nil-vals v)] [k v])
-                                :default (when-not (nil? v) [k v])))
-                            m)]
-                 (when (not-empty rules)
-                   (into {} rules)))
-    (vector? obj) (let [coll obj]
-                    (mapv remove-nil-vals coll))
+                     m (->> m
+                            (map-vals remove-nil-vals)
+                            (remove (fn [[_k v]] (nil? v)))
+                            (into {}))]
+                 (when (seq m)
+                   m))
+    (vector? obj) (let [v obj]
+                    (mapv remove-nil-vals v))
     :default obj))
 
 (deftest test-remove-nil-vals
