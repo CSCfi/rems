@@ -10,8 +10,7 @@
   :once
   api-fixture)
 
-;; TODO salvage some api tests by moving to dynamic
-#_(deftest applications-api-test
+(deftest applications-api-test
   (testing "fetch applications"
     (let [api-key "42"
           user-id "developer"]
