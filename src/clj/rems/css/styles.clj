@@ -215,8 +215,8 @@
                             (into {}))]
                  (when (seq m)
                    m))
-    (vector? obj) (let [v obj]
-                    (mapv remove-nil-vals v))
+    (sequential? obj) (let [coll obj]
+                        (map remove-nil-vals coll))
     :default obj))
 
 (deftest test-remove-nil-vals
@@ -251,7 +251,14 @@
     (is (= [:a {:b 1}]
            (remove-nil-vals [:a {:b 1}])))
     (is (= [:a nil]
-           (remove-nil-vals [:a {:b nil}])))))
+           (remove-nil-vals [:a {:b nil}]))))
+  (testing "lists"
+    (is (= '()
+           (remove-nil-vals '())))
+    (is (= '(:a)
+           (remove-nil-vals '(:a))))
+    (is (= '(:a nil)
+           (remove-nil-vals '(:a {}))))))
 
 (defn build-screen []
   (list
