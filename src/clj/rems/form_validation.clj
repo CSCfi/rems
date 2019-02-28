@@ -4,7 +4,7 @@
 (defn- validate-item
   [item]
   (if (empty? (:value item))
-    (when-not (:optional item)
+    (when-not (or (:optional item) (= "label" (:type item)))
       {:field-id (:id item)
        :type :t.form.validation/required})
     (when (and (:maxlength item)

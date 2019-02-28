@@ -4,51 +4,33 @@
             [rems.actions.action :refer [action-button action-form-view button-wrapper]]
             [rems.atoms :refer [textarea]]
             [rems.autocomplete :as autocomplete]
-            [rems.status-modal :refer [status-modal]]
+            [rems.status-modal :as status-modal]
             [rems.text :refer [text]]
             [rems.util :refer [fetch post!]]))
 
-(defn open-form
-  [{:keys [db]} _]
+(rf/reg-event-fx
+ ::open-form
+ (fn [{:keys [db]} _]
   {:db (assoc db
               ::name ""
-              ::email "")})
+              ::email "")}))
 
-(rf/reg-event-fx ::open-form open-form)
-
-(rf/reg-event-db
- ::set-name
- (fn [db [_ name]]
-   (assoc db ::name name)))
-
+(rf/reg-event-db ::set-name (fn [db [_ name]] (assoc db ::name name)))
 (rf/reg-sub ::name (fn [db _] (::name db)))
 
-(rf/reg-event-db
- ::set-email
- (fn [db [_ email]]
-   (assoc db ::email email)))
-
+(rf/reg-event-db ::set-email (fn [db [_ email]] (assoc db ::email email)))
 (rf/reg-sub ::email (fn [db _] (::email db)))
-
-(defn- send-invite-member! [{:keys [member application-id on-success on-error]}]
-  (post! "/api/applications/command"
-         {:params {:application-id application-id
-                   :type :rems.workflow.dynamic/invite-member
-                   :member member}
-          :handler (fn [response]
-                     (if (:success response)
-                       (on-success response)
-                       (on-error (first (:errors response)))))
-          :error-handler on-error}))
 
 (rf/reg-event-fx
  ::send-invite-member
- (fn [{:keys [db]} [_ {:keys [application-id member on-pending on-success on-error]}]]
-   (send-invite-member! {:member member
-                         :application-id application-id
-                         :on-success on-success
-                         :on-error on-error})
-   (on-pending)
+ (fn [_ [_ {:keys [member application-id on-finished]}]]
+   (status-modal/common-pending-handler! (text :t.actions/invite-member))
+   (post! "/api/applications/command"
+          {:params {:application-id application-id
+                    :type :rems.workflow.dynamic/invite-member
+                    :member member}
+           :handler (partial status-modal/common-success-handler! on-finished)
+           :error-handler status-modal/common-error-handler!})
    {}))
 
 (def ^:private action-form-id "invite-member")
@@ -91,27 +73,12 @@
    {:collapse-id "member-action-forms"}])
 
 (defn invite-member-form [application-id on-finished]
-  (let [name (rf/subscribe [::name])
-        email (rf/subscribe [::email])
-        description (text :t.actions/invite-member)
-        state (r/atom nil)
-        on-pending #(reset! state {:status :pending})
-        on-success #(reset! state {:status :saved})
-        on-error #(reset! state {:status :failed :error %})
-        on-modal-close #(do (reset! state nil)
-                            (on-finished))]
-    (fn [application-id on-finished]
-      [:div
-       (when (:status @state)
-         [status-modal (assoc @state
-                              :description (text :t.actions/invite-member)
-                              :on-close on-modal-close)])
-       [invite-member-view {:name @name
-                            :email @email
-                            :on-invite-member #(rf/dispatch [::add-selected-member %])
-                            :on-remove-member #(rf/dispatch [::remove-selected-member %])
-                            :on-send #(rf/dispatch [::send-invite-member {:application-id application-id
-                                                                          :member {:name @name :email @email}
-                                                                          :on-pending on-pending
-                                                                          :on-success on-success
-                                                                          :on-error on-error}])}]])))
+  (let [name @(rf/subscribe [::name])
+        email @(rf/subscribe [::email])]
+    [invite-member-view {:name name
+                         :email email
+                         :on-invite-member #(rf/dispatch [::add-selected-member %])
+                         :on-remove-member #(rf/dispatch [::remove-selected-member %])
+                         :on-send #(rf/dispatch [::send-invite-member {:application-id application-id
+                                                                       :member {:name name :email email}
+                                                                       :on-finished on-finished}])}]))

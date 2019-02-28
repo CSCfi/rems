@@ -2,33 +2,29 @@
   (:require [re-frame.core :as rf]
             [reagent.core :as r]
             [rems.actions.action :refer [action-button action-form-view button-wrapper]]
-            [rems.atoms :refer [textarea]]
+            [rems.atoms :refer [enrich-user textarea]]
             [rems.autocomplete :as autocomplete]
-            [rems.status-modal :refer [status-modal]]
+            [rems.status-modal :as status-modal]
             [rems.text :refer [text]]
             [rems.util :refer [fetch post!]]))
 
-(defn fetch-potential-members
-  [[user on-success]]
-  (fetch (str "/api/applications/members")
-         {:handler on-success
-          :headers {"x-rems-user-id" (:eppn user)}}))
 
-(rf/reg-fx ::fetch-potential-members fetch-potential-members)
 
-(defn open-form
-  [{:keys [db]} _]
-  {:db (assoc db
-              ::potential-members #{}
-              ::selected-members #{})
-   ::fetch-potential-members [(get-in db [:identity :user])
-                              #(rf/dispatch [::set-potential-members %])]})
+(rf/reg-fx
+ ::fetch-potential-members
+ (fn [[user on-success]]
+   (fetch (str "/api/applications/members")
+          {:handler on-success
+           :headers {"x-rems-user-id" (:eppn user)}})))
 
-(rf/reg-event-fx ::open-form open-form)
-
-;; TODO together with application.cljs extract a user selection component
-(defn enrich-user [user]
-  (assoc user :display (str (:name user) " (" (:email user) ")")))
+(rf/reg-event-fx
+ ::open-form
+ (fn [{:keys [db]} _]
+   {:db (assoc db
+               ::potential-members #{}
+               ::selected-members #{})
+    ::fetch-potential-members [(get-in db [:identity :user])
+                               #(rf/dispatch [::set-potential-members %])]}))
 
 (rf/reg-event-db
  ::set-potential-members
@@ -39,37 +35,20 @@
 
 (rf/reg-sub ::potential-members (fn [db _] (::potential-members db)))
 
-(rf/reg-event-db
- ::set-selected-member
- (fn [db [_ member]]
-   (assoc db ::selected-member member)))
-
-(rf/reg-event-db
- ::remove-selected-member
- (fn [db [_ member]]
-   (dissoc db ::selected-member)))
-
+(rf/reg-event-db ::set-selected-member (fn [db [_ member]] (assoc db ::selected-member member)))
+(rf/reg-event-db ::remove-selected-member (fn [db [_ member]] (dissoc db ::selected-member)))
 (rf/reg-sub ::selected-member (fn [db _] (::selected-member db)))
-
-(defn- send-add-member! [{:keys [member application-id on-success on-error]}]
-  (post! "/api/applications/command"
-         {:params {:application-id application-id
-                   :type :rems.workflow.dynamic/add-member
-                   :member (select-keys member [:userid])}
-          :handler (fn [response]
-                     (if (:success response)
-                       (on-success response)
-                       (on-error (first (:errors response)))))
-          :error-handler on-error}))
 
 (rf/reg-event-fx
  ::send-add-member
- (fn [{:keys [db]} [_ {:keys [application-id member on-pending on-success on-error]}]]
-   (send-add-member! {:member member
-                      :application-id application-id
-                      :on-success on-success
-                      :on-error on-error})
-   (on-pending)
+ (fn [_ [_ {:keys [member application-id on-finished]}]]
+   (status-modal/common-pending-handler! (text :t.actions/add-member))
+   (post! "/api/applications/command"
+          {:params {:application-id application-id
+                    :type :rems.workflow.dynamic/add-member
+                    :member (select-keys member [:userid])}
+           :handler (partial status-modal/common-success-handler! on-finished)
+           :error-handler status-modal/common-error-handler!})
    {}))
 
 (def ^:private action-form-id "add-member")
@@ -103,27 +82,12 @@
    {:collapse-id "member-action-forms"}])
 
 (defn add-member-form [application-id on-finished]
-  (let [selected-member (rf/subscribe [::selected-member])
-        potential-members (rf/subscribe [::potential-members])
-        description (text :t.actions/add-member)
-        state (r/atom nil)
-        on-pending #(reset! state {:status :pending})
-        on-success #(reset! state {:status :saved})
-        on-error #(reset! state {:status :failed :error %})
-        on-modal-close #(do (reset! state nil)
-                            (on-finished))]
-    (fn [application-id on-finished]
-      [:div
-       (when (:status @state)
-         [status-modal (assoc @state
-                              :description (text :t.actions/add-member)
-                              :on-close on-modal-close)])
-       [add-member-view {:selected-member @selected-member
-                         :potential-members @potential-members
-                         :on-add-member #(rf/dispatch [::set-selected-member %])
-                         :on-remove-member #(rf/dispatch [::remove-selected-member %])
-                         :on-send #(rf/dispatch [::send-add-member {:application-id application-id
-                                                                    :member @selected-member
-                                                                    :on-pending on-pending
-                                                                    :on-success on-success
-                                                                    :on-error on-error}])}]])))
+  (let [selected-member @(rf/subscribe [::selected-member])
+        potential-members @(rf/subscribe [::potential-members])]
+    [add-member-view {:selected-member selected-member
+                      :potential-members potential-members
+                      :on-add-member #(rf/dispatch [::set-selected-member %])
+                      :on-remove-member #(rf/dispatch [::remove-selected-member %])
+                      :on-send #(rf/dispatch [::send-add-member {:application-id application-id
+                                                                 :member selected-member
+                                                                 :on-finished on-finished }])}]))

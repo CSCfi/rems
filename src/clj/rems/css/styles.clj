@@ -262,7 +262,7 @@
      :background-color "#aaa"
      :border-color "#aaa"}]
    [:.button-min-width {:min-width (u/rem 5)}]
-   [:.icon-link {:color "#6c757d" ; same colors as .btn-secondary
+   [:.icon-link {:color "#6c757d"      ; same colors as .btn-secondary
                  :cursor "pointer"}
     [:&:hover {:color "#5a6268"}]]
    [:.modal--title [:.link
@@ -291,7 +291,7 @@
     :.btn-link
     (s/descendant :.nav-link :a)
     {:color (util/get-theme-attribute :nav-color :link-color :color3)
-     :border 0}] ;for button links
+     :border 0}] ; for button links
    [:.navbar
     [:.nav-link :.btn-link
      {:background-color :inherit}]]
@@ -481,13 +481,14 @@
                         :border "1px solid #ccc"
                         :background-color (util/get-theme-attribute :collapse-bgcolor "#fff")
                         :box-shadow (util/get-theme-attribute :collapse-shadow :table-shadow)}
-    [:.card-title {:color (util/get-theme-attribute :collapse-color "#fff")}]
     [:.card-header {:border-bottom "none"
                     :border-radius (u/rem 0.4)
                     :font-weight 500
                     :font-size (u/rem 1.5)
                     :line-height 1.1
-                    :font-family (util/get-theme-attribute :font-family "'Lato', sans-serif")}]]
+                    :font-family (util/get-theme-attribute :font-family "'Lato', sans-serif")
+                    :color (util/get-theme-attribute :collapse-color "#fff")}
+     [:&.alert-danger {:color (util/get-theme-attribute :danger-color "inherit")}]]]
    [:.collapse-content {:margin (u/rem 1.25)}]
    [:.collapse-wrapper.slow
     [:.collapsing {:-webkit-transition "height 0.25s linear"

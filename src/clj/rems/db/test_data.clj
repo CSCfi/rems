@@ -582,7 +582,7 @@
       (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :rems.workflow.dynamic/request-comment :commenters [reviewer] :comment ""}))
     (let [app-id (create-draft! applicant catid wfid "application in deciding")] ; still in deciding
       (run-and-check-dynamic-command! {:application-id app-id :actor applicant :time (time/now) :type :rems.workflow.dynamic/submit})
-      (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :rems.workflow.dynamic/request-decision :decider reviewer :comment ""}))))
+      (run-and-check-dynamic-command! {:application-id app-id :actor approver :time (time/now) :type :rems.workflow.dynamic/request-decision :deciders [reviewer] :comment ""}))))
 
 (defn- create-review-applications! [catid wfid users]
   (let [applicant (users :applicant1)

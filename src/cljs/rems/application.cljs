@@ -22,7 +22,7 @@
             [rems.guide-utils :refer [lipsum lipsum-short lipsum-paragraphs]]
             [rems.phase :refer [phases]]
             [rems.spinner :as spinner]
-            [rems.status-modal :refer [status-modal]]
+            [rems.status-modal :as status-modal]
             [rems.text :refer [localize-decision localize-event localize-item localize-state localize-time text text-format]]
             [rems.util :refer [dispatch! fetch post!]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
@@ -49,6 +49,18 @@
   [id & [replace?]]
   (dispatch! (str "#/application/" id) replace?))
 
+(defn- format-validation-messages
+  [application msgs]
+  (let [fields-by-id (index-by [:id] (map localize-item (:items application)))
+        licenses-by-id (index-by [:id] (map localize-item (:licenses application)))]
+    [:div (text :t.form/validation.errors)
+     (into [:ul]
+           (concat
+            (for [{:keys [type field-id]} (filter :field-id msgs)]
+              [:li (text-format type (:title (fields-by-id field-id)))])
+            (for [{:keys [type license-id]} (filter :license-id msgs)]
+              [:li (text-format type (:title (licenses-by-id license-id)))])))]))
+
 
 
 
@@ -61,39 +73,22 @@
 
 ;;;; State
 
-(defn- reset-state [db]
-  (assoc db
-         ::application nil
-         ::edit-application nil
-         ;; dynamic applications put all state under ::edit-application
-
-         ;; static applications
-         ::judge-comment ""
-         ::review-comment ""
-         ::send-third-party-review-request-success false))
-
 (rf/reg-sub ::application (fn [db _] (::application db)))
 (rf/reg-sub ::edit-application (fn [db _] (::edit-application db)))
 
 (rf/reg-event-fx
  ::enter-application-page
  (fn [{:keys [db]} [_ id]]
-   (merge {:db (reset-state db)
-           ::fetch-application id}
-          (when (contains? (get-in db [:identity :roles]) :approver)
-            {::fetch-potential-third-party-reviewers (get-in db [:identity :user])}))))
-
-(defn fetch-application [id on-success]
-  (fetch (str "/api/applications/" id)
-         {:handler on-success}))
-
-(comment
-  (fetch-application 19 prn))
+   (merge {:db (assoc db
+                      ::application nil
+                      ::edit-application nil)
+           ::fetch-application id})))
 
 (rf/reg-fx
  ::fetch-application
  (fn [id]
-   (fetch-application id #(rf/dispatch [::fetch-application-result %]))))
+   (fetch (str "/api/applications/" id)
+          {:handler #(rf/dispatch [::fetch-application-result %])})))
 
 (rf/reg-event-db
  ::fetch-application-result
@@ -105,29 +100,16 @@
                               :licenses (into {} (map (juxt :id :approved) (:licenses application)))})))
 
 (rf/reg-event-db
- ::set-status
- (fn [db [_ {:keys [status description validation error]}]]
-   (assert (contains? #{:pending :saved :failed nil} status))
-   (cond-> db
-     true (assoc-in [::edit-application :status]
-                    {:open? (not (nil? status))
-                     :status status
-                     :description description
-                     :error error})
-     validation (assoc-in [::edit-application :validation] validation)))) ; NB don't clear validation results on modal close
+ ::set-validation
+ (fn [db [_ errors]]
+   (prn errors)
+   (assoc-in db [::edit-application :validation] errors)))
 
-(defn- save-application [app description application-id catalogue-items items licenses on-success]
+(defn- save-application [app description application-id catalogue-items items licenses]
+  (status-modal/common-pending-handler! description)
   (post! "/api/applications/save"
-         {:handler (fn [resp]
-                     (if (:success resp)
-                       (on-success resp)
-                       (rf/dispatch [::set-status {:status :failed
-                                                   :description description
-                                                   :validation (:validation resp)}])))
-          :error-handler (fn [error]
-                           (rf/dispatch [::set-status {:status :failed
-                                                       :description description
-                                                       :error error}]))
+         {:handler (partial status-modal/common-success-handler! #(rf/dispatch [::enter-application-page application-id]))
+          :error-handler status-modal/common-error-handler!
           :params (merge {:command "save"
                           :items (map-vals :value items)
                           :licenses licenses}
@@ -135,45 +117,9 @@
                            {:application-id application-id}
                            {:catalogue-items catalogue-items}))}))
 
-(defn- submit-application [app description application-id catalogue-items items licenses]
-  (if (= :workflow/dynamic (get-in app [:workflow :type]))
-    (post! "/api/applications/command"
-           {:handler (fn [resp]
-                       (if (:success resp)
-                         (do (rf/dispatch [::set-status {:status :saved
-                                                         :description description}])
-                             (rf/dispatch [::enter-application-page application-id]))
-                         (rf/dispatch [::set-status {:status :failed
-                                                     :description description}])))
-            :error-handler (fn [error]
-                             (rf/dispatch [::set-status {:status :failed
-                                                         :description description
-                                                         :error error}]))
-            :params {:type :rems.workflow.dynamic/submit
-                     :application-id application-id}})
-    (post! "/api/applications/save"
-           {:handler (fn [resp]
-                       (if (:success resp)
-                         (do (rf/dispatch [::set-status {:status :saved
-                                                         :description description}])
-                             (rf/dispatch [::enter-application-page application-id]))
-                         (rf/dispatch [::set-status {:status :failed
-                                                     :description description
-                                                     :validation (:validation resp)}])))
-            :error-handler (fn [error]
-                             (rf/dispatch [::set-status {:status :failed
-                                                         :description description
-                                                         :error error}]))
-            :params (merge {:command "submit"
-                            :items (map-vals :value items)
-                            :licenses licenses}
-                           (if application-id
-                             {:application-id application-id}
-                             {:catalogue-items catalogue-items}))})))
-
 (rf/reg-event-fx
  ::save-application
- (fn [{:keys [db]} [_ command description]]
+ (fn [{:keys [db]} [_ description]]
    (let [app (get-in db [::application :application])
          app-id (get-in db [::application :application :id])
          catalogue-items (get-in db [::application :catalogue-items])
@@ -184,206 +130,75 @@
                         (for [[id checked?] (get-in db [::edit-application :licenses])
                               :when checked?]
                           [id "approved"]))]
-     ;; TODO disable form while saving?
-     (rf/dispatch [::set-status {:status :pending
-                                 :description description}])
-     (save-application app description app-id catalogue-ids items licenses
-                       (fn [resp]
-                         (if (= command "submit")
-                           (fetch-application (:id resp)
-                                              (fn [app]
-                                                ;; fetch-application zeroes validation so we put it back here
-                                                (rf/dispatch [::set-status {:validation (:validation resp)}])
-                                                (submit-application (:application app) description (:id resp) catalogue-ids items licenses)))
-                           (do
-                             (rf/dispatch [::set-status {:status :saved
-                                                         :description description}])
-                             (rf/dispatch [::enter-application-page (:id resp)]))))))
+     (save-application app description app-id catalogue-ids items licenses))
    {:db (assoc-in db [::edit-application :validation] nil)}))
 
-(defn- save-attachment [application-id field-id form-data description]
-  (post! (str "/api/applications/add_attachment?application-id=" application-id "&field-id=" field-id)
-         {:body form-data
-          :error-handler (fn [_] (rf/dispatch [::set-status {:status :failed
-                                                             :description description}]))})) ; TODO show error in modal
+(defn- submit-application [application description application-id catalogue-items items licenses]
+  (status-modal/common-pending-handler! description)
+  (post! "/api/applications/save"
+         {:handler (fn [response]
+                     (if (:success response)
+                       (post! "/api/applications/command"
+                              {:handler (fn [response]
+                                          (if (:success response)
+                                            (status-modal/set-success! {:on-close #(rf/dispatch [::enter-application-page application-id (:errors %)])})
+                                            (do
+                                              (status-modal/set-error! {:result response
+                                                                        :error-content (format-validation-messages application (:errors response))})
+                                              (rf/dispatch [::set-validation (:errors response)]))))
+                               :error-handler status-modal/common-error-handler!
+                               :params {:type :rems.workflow.dynamic/submit
+                                        :application-id application-id}})
+                       (status-modal/common-error-handler! response)))
+          :error-handler status-modal/common-error-handler!
+          :params (merge {:command "save"
+                          :items (map-vals :value items)
+                          :licenses licenses}
+                         (if application-id
+                           {:application-id application-id}
+                           {:catalogue-items catalogue-items}))}))
 
-(defn- remove-attachment [application-id field-id description]
+(rf/reg-event-fx
+ ::submit-application
+ (fn [{:keys [db]} [_ description]]
+   (let [application (get-in db [::application])
+         app-id (get-in db [::application :application :id])
+         catalogue-items (get-in db [::application :catalogue-items])
+         catalogue-ids (mapv :id catalogue-items)
+         items (get-in db [::edit-application :items])
+         ;; TODO change api to booleans
+         licenses (into {}
+                        (for [[id checked?] (get-in db [::edit-application :licenses])
+                              :when checked?]
+                          [id "approved"]))]
+     (submit-application application description app-id catalogue-ids items licenses))
+   {:db (assoc-in db [::edit-application :validation] nil)}))
+
+(defn- save-attachment [{:keys [db]} [_ field-id file description]]
+  (let [application-id (get-in db [::application :application :id])]
+    (status-modal/common-pending-handler! description)
+    (post! (str "/api/applications/add_attachment?application-id=" application-id "&field-id=" field-id)
+           {:body file
+            :handler (partial status-modal/common-success-handler! nil)
+            :error-handler status-modal/common-error-handler!})
+    {}))
+
+(rf/reg-event-fx ::save-attachment save-attachment)
+
+(defn- remove-attachment [_ [_ application-id field-id description]]
+  (status-modal/common-pending-handler! description)
   (post! (str "/api/applications/remove_attachment?application-id=" application-id "&field-id=" field-id)
          {:body {}
-          :error-handler (fn [_] (rf/dispatch [::set-status {:status :failed
-                                                             :description description}]))})) ; TODO show error in modal
+          :handler (partial status-modal/common-success-handler! nil)
+          :error-handler status-modal/common-error-handler!})
+  {})
 
-(rf/reg-event-fx
- ::save-attachment
- (fn [{:keys [db]} [_ field-id file description]]
-   (let [application-id (get-in db [::application :application :id])]
-     (save-attachment application-id field-id file description)
-     (let [catalogue-items (get-in db [::application :catalogue-items])
-           catalogue-ids (mapv :id catalogue-items)
-           items (get-in db [::edit-application :items])
-           ;; TODO change api to booleans
-           licenses (into {}
-                          (for [[id checked?] (get-in db [::edit-application :licenses])
-                                :when checked?]
-                            [id "approved"]))]))
-   {}))
-
-(rf/reg-event-fx
- ::remove-attachment
- (fn [{:keys [db]} [_ application-id field-id description]]
-   (when application-id
-     (remove-attachment application-id field-id description))
-   {}))
-
-
-
-
-
-;;; Dynamic workflow state
-
-
-
-
-
-
-;;; Static workflow state
-
-(rf/reg-sub ::judge-comment (fn [db _] (::judge-comment db)))
-
-(rf/reg-event-db ::set-field (fn [db [_ id value]] (assoc-in db [::edit-application :items id :value] value)))
-(rf/reg-event-db ::toggle-diff (fn [db [_ id]] (update-in db [::edit-application :items id :diff] not)))
-(rf/reg-event-db ::set-license (fn [db [_ id value]] (assoc-in db [::edit-application :licenses id] value)))
-(rf/reg-event-db ::set-judge-comment (fn [db [_ value]] (assoc db ::judge-comment value)))
-
-(rf/reg-fx
- ::fetch-potential-third-party-reviewers
- (fn [user]
-   (fetch (str "/api/applications/reviewers")
-          {:handler #(do (rf/dispatch [::set-potential-third-party-reviewers %])
-                         (rf/dispatch [::set-selected-third-party-reviewers #{}]))
-           :headers {"x-rems-user-id" (:eppn user)}})))
-
-(defn enrich-user [user]
-  (assoc user :display (str (:name user) " (" (:email user) ")")))
-
-(rf/reg-event-db
- ::set-potential-third-party-reviewers
- (fn [db [_ reviewers]]
-   (assoc db ::potential-third-party-reviewers (map enrich-user reviewers))))
-
-(rf/reg-sub ::potential-third-party-reviewers (fn [db _] (::potential-third-party-reviewers db)))
-
-(rf/reg-event-db
- ::set-selected-third-party-reviewers
- (fn [db [_ reviewers]]
-   (assoc db ::selected-third-party-reviewers reviewers)))
-
-(rf/reg-event-db
- ::add-selected-third-party-reviewer
- (fn [db [_ reviewer]]
-   (if (contains? (::selected-third-party-reviewers db) reviewer)
-     db
-     (update db ::selected-third-party-reviewers conj reviewer))))
-
-(rf/reg-event-db
- ::remove-selected-third-party-reviewer
- (fn [db [_ reviewer]]
-   (update db ::selected-third-party-reviewers disj reviewer)))
-
-(rf/reg-sub ::selected-third-party-reviewers (fn [db _] (::selected-third-party-reviewers db)))
-(rf/reg-sub ::review-comment (fn [db _] (::review-comment db)))
-
-(rf/reg-event-db
- ::set-review-comment
- (fn [db [_ value]]
-   (assoc db ::review-comment value)))
-
-(defn- send-third-party-review-request [reviewers user application-id round comment description]
-  (post! "/api/applications/review_request"
-         {:params {:application-id application-id
-                   :round round
-                   :comment comment
-                   :recipients (map :userid reviewers)}
-          :handler (fn [resp]
-                     (rf/dispatch [::set-status {:status :saved
-                                                 :description description}])
-                     (rf/dispatch [::send-third-party-review-request-success true])
-                     (rf/dispatch [::enter-application-page application-id])
-                     (scroll-to-top!))
-          :error-handler (fn [error]
-                           (rf/dispatch [::set-status {:status :failed
-                                                       :description description
-                                                       :error error}]))}))
-
-(rf/reg-event-fx
- ::send-third-party-review-request
- (fn [{:keys [db]} [_ reviewers comment description]]
-   (let [application-id (get-in db [::application :application :id])
-         round (get-in db [::application :application :curround])
-         user (get-in db [:identity :user])]
-     (send-third-party-review-request reviewers user application-id round comment description)
-     {:dispatch [::set-status {:status :pending
-                               :description description}]})))
-
-(rf/reg-event-db
- ::send-third-party-review-request-success
- (fn [db [_ value]]
-   (assoc db ::send-third-party-review-request-message value)))
-
-(rf/reg-sub
- ::send-third-party-review-request-message
- (fn [db _]
-   (::send-third-party-review-request-message db)))
-
-(defn- judge-application [command application-id round comment description]
-  (post! "/api/applications/judge"
-         {:params {:command command
-                   :application-id application-id
-                   :round round
-                   :comment comment}
-          :handler (fn [resp]
-                     (rf/dispatch [::set-status {:status :saved
-                                                 :description description}])
-                     (rf/dispatch [::enter-application-page application-id]))
-          :error-handler (fn [error]
-                           (rf/dispatch [::set-status {:status :failed
-                                                       :description description
-                                                       :error error}]))}))
-
-(rf/reg-event-fx
- ::judge-application
- (fn [{:keys [db]} [_ command description]]
-   (let [application-id (get-in db [::application :application :id])
-         round (get-in db [::application :application :curround])
-         comment (get db ::judge-comment "")]
-     (rf/dispatch [::set-status {:status :pending
-                                 :description description}])
-     (rf/dispatch [::set-judge-comment ""])
-     (judge-application command application-id round comment description)
-     {})))
-
-
-
-
-
-
-
+(rf/reg-event-fx ::remove-attachment remove-attachment)
 
 
 
 
 ;;;; UI components
-
-(defn- format-validation-messages
-  [application msgs]
-  (let [fields-by-id (index-by [:id] (map localize-item (:items application)))
-        licenses-by-id (index-by [:id] (map localize-item (:licenses application)))]
-    (into [:ul]
-          (concat
-           (for [{:keys [type field-id]} (filter :field-id msgs)]
-             [:li (text-format type (:title (fields-by-id field-id)))])
-           (for [{:keys [type license-id]} (filter :license-id msgs)]
-             [:li (text-format type (:title (licenses-by-id license-id)))])))))
 
 (defn- pdf-button [id]
   (when id
@@ -392,6 +207,8 @@
       :target :_new}
      "PDF " (external-link)]))
 
+(rf/reg-event-db ::set-field (fn [db [_ id value]] (assoc-in db [::edit-application :items id :value] value)))
+(rf/reg-event-db ::set-license (fn [db [_ id value]] (assoc-in db [::edit-application :licenses id] value)))
 (defn- set-field-value
   [id]
   (fn [event]
@@ -520,10 +337,11 @@
 (defn attachment-field
   [{:keys [title id value validation app-id] :as opts}]
   (let [click-upload (fn [e] (when-not (:readonly opts) (.click (.getElementById js/document (id-to-name id)))))
-        filename-field [:a.btn.btn-secondary.mr-2
-                        {:href (str "/api/applications/attachments/?application-id=" app-id "&field-id=" id)
-                         :target :_new}
-                        value " " (external-link)]
+        filename-field [:div.field
+                        [:a.btn.btn-secondary.mr-2
+                         {:href (str "/api/applications/attachments/?application-id=" app-id "&field-id=" id)
+                          :target :_new}
+                         value " " (external-link)]]
         upload-field [:div.upload-file.mr-2
                       [:input {:style {:display "none"}
                                :type "file"
@@ -695,13 +513,13 @@
 (defn- save-button []
   [button-wrapper {:id "save"
                    :text (text :t.form/save)
-                   :on-click #(rf/dispatch [::save-application "save" (text :t.form/save)])}])
+                   :on-click #(rf/dispatch [::save-application (text :t.form/save)])}])
 
 (defn- submit-button []
   [button-wrapper {:id "submit"
                    :text (text :t.form/submit)
                    :class :btn-primary
-                   :on-click #(rf/dispatch [::save-application "submit" (text :t.form/submit)])}])
+                   :on-click #(rf/dispatch [::submit-application (text :t.form/submit)])}])
 
 (defn- fields [form edit-application language]
   (let [application (:application form)
@@ -743,14 +561,16 @@
    :comment (:comment event)
    :request-id (:request-id event)
    :commenters (:commenters event)
+   :deciders (:deciders event)
    :time (localize-time (:time event))})
 
-(defn- event-view [{:keys [time userid event comment commenters]}]
+(defn- event-view [{:keys [time userid event comment commenters deciders]}]
   [:div.form-group.row
    [:label.col-sm-2.col-form-label time]
    [:div.col-sm-10
     [:div.col-form-label [:span userid] " — " [:span event]
-     (when (seq commenters) [:span ": " (for [c commenters] ^{:key c} [:span c])])]
+     (when-let [targets (seq (concat commenters deciders))]
+       [:span ": " (str/join ", " targets)])]
     (when comment [:div comment])]])
 
 (defn- event-groups-view [event-groups]
@@ -871,188 +691,6 @@
                 [invite-member-form application-id (partial reload! application-id)]
                 [add-member-form application-id (partial reload! application-id)]]]}]))
 
-(defn action-form [id title comment-title button content]
-  [action-form-view id
-   title
-   [button]
-   [:div
-    content
-    (when comment-title
-      [action-comment {:id id
-                       :label comment-title
-                       :comment @(rf/subscribe [::judge-comment])
-                       :on-comment #(rf/dispatch [::set-judge-comment %])}])]])
-
-(defn- judge-application-button [{:keys [command text] :as opts}]
-  [button-wrapper (merge {:id command
-                          :on-click #(rf/dispatch [::judge-application command text])}
-                         (dissoc opts :command))])
-
-
-(def ^:private approve-form-id "approve")
-
-(defn- approve-action-button []
-  [action-button {:id approve-form-id
-                  :text (text :t.actions/approve)
-                  :class "btn-primary"}])
-
-(defn- approve-form []
-  [action-form approve-form-id
-   (text :t.actions/approve)
-   (text :t.form/add-comments-shown-to-applicant)
-   [judge-application-button {:id "static-approve"
-                              :command "approve"
-                              :text (text :t.actions/approve)
-                              :class "btn-success"}]])
-
-
-(def ^:private reject-form-id "reject")
-
-(defn- reject-action-button []
-  [action-button {:id reject-form-id
-                  :text (text :t.actions/reject)}])
-
-(defn- reject-form []
-  [action-form reject-form-id
-   (text :t.actions/reject)
-   (text :t.form/add-comments-shown-to-applicant)
-   [judge-application-button {:id "static-reject"
-                              :command "reject"
-                              :text (text :t.actions/reject)
-                              :class "btn-danger"}]])
-
-
-(def ^:private static-return-form-id "static-return")
-
-(defn- static-return-action-button []
-  [action-button {:id static-return-form-id
-                  :text (text :t.actions/return)}])
-
-(defn- static-return-form []
-  [action-form static-return-form-id
-   (text :t.actions/return)
-   (text :t.form/add-comments-shown-to-applicant)
-   [judge-application-button {:id static-return-form-id
-                              :command "return"
-                              :text (text :t.actions/return)
-                              :class "btn-primary"}]])
-
-
-(def ^:private review-form-id "review")
-
-(defn- review-action-button []
-  [action-button {:id review-form-id
-                  :text (text :t.actions/review)}])
-
-(defn- review-form []
-  [action-form review-form-id
-   (text :t.actions/review)
-   (text :t.form/add-comments-not-shown-to-applicant)
-   [judge-application-button {:command "review"
-                              :text (text :t.actions/review)
-                              :class "btn-primary"}]])
-
-
-(def ^:private third-party-review-form-id "third-party-review")
-
-(defn- third-party-review-action-button []
-  [action-button {:id third-party-review-form-id
-                  :text (text :t.actions/review)}])
-
-(defn- third-party-review-form []
-  [action-form third-party-review-form-id
-   (text :t.actions/review)
-   (text :t.form/add-comments-not-shown-to-applicant)
-   [judge-application-button {:command "third-party-review"
-                              :text (text :t.actions/review)
-                              :class "btn-primary"}]])
-
-
-(def ^:private applicant-close-form-id "applicant-close")
-
-(defn- applicant-close-action-button []
-  [action-button {:id applicant-close-form-id
-                  :text (text :t.actions/close)}])
-
-(defn- applicant-close-form []
-  [action-form applicant-close-form-id
-   (text :t.actions/close)
-   (text :t.form/add-comments)
-   [judge-application-button {:id "applicant-close"
-                              :command "close"
-                              :text (text :t.actions/close)
-                              :class "btn-danger"}]])
-
-
-(def ^:private approver-close-form-id "approver-close")
-
-(defn- approver-close-action-button []
-  [action-button {:id approver-close-form-id
-                  :text (text :t.actions/close)}])
-
-(defn- approver-close-form []
-  [action-form approver-close-form-id
-   (text :t.actions/close)
-   (text :t.form/add-comments-shown-to-applicant)
-   [judge-application-button {:id "approver-close"
-                              :command "close"
-                              :text (text :t.actions/close)
-                              :class "btn-danger"}]])
-
-
-(def ^:private withdraw-form-id "withdraw")
-
-(defn- withdraw-action-button []
-  [action-button {:id withdraw-form-id
-                  :text (text :t.actions/withdraw)}])
-
-(defn- withdraw-form []
-  [action-form withdraw-form-id
-   (text :t.actions/withdraw)
-   (text :t.form/add-comments)
-   [judge-application-button {:command "withdraw"
-                              :text (text :t.actions/withdraw)
-                              :class "btn-primary"}]])
-
-
-(def ^:private review-request-form-id "review-request")
-
-(defn- review-request-action-button []
-  [action-button {:id review-request-form-id
-                  :text (text :t.actions/review-request)}])
-
-(defn- review-request-form []
-  (let [selected-third-party-reviewers @(rf/subscribe [::selected-third-party-reviewers])
-        potential-third-party-reviewers @(rf/subscribe [::potential-third-party-reviewers])
-        review-comment @(rf/subscribe [::review-comment])]
-    [action-form review-request-form-id
-     (text :t.actions/review-request)
-     nil
-     [button-wrapper {:id "review-request"
-                      :text (text :t.actions/review-request)
-                      :class "btn-primary"
-                      :on-click #(rf/dispatch [::send-third-party-review-request selected-third-party-reviewers review-comment (text :t.actions/review-request)])
-                      :disabled (empty? selected-third-party-reviewers)}]
-     [:div [:div.form-group
-            [:label {:for "review-comment"} (text :t.form/add-comments-not-shown-to-applicant)]
-            [textarea {:id "review-comment"
-                       :name "review-comment"
-                       :placeholder (text :t.form/comment)
-                       :on-change #(rf/dispatch [::set-review-comment (.. % -target -value)])}]]
-      [:div.form-group
-       [:label (text :t.actions/review-request-selection)]
-       [autocomplete/component
-        {:value (sort-by :display selected-third-party-reviewers)
-         :items potential-third-party-reviewers
-         :value->text #(:display %2)
-         :item->key :userid
-         :item->text :display
-         :item->value identity
-         :search-fields [:name :email]
-         :add-fn #(rf/dispatch [::add-selected-third-party-reviewer %])
-         :remove-fn #(rf/dispatch [::remove-selected-third-party-reviewer %])}]]]]))
-
-
 (defn- dynamic-actions [app]
   (let [commands-and-actions [:rems.workflow.dynamic/save-draft [save-button]
                               :rems.workflow.dynamic/submit [submit-button]
@@ -1068,49 +706,17 @@
                     :when (contains? (:possible-commands app) command)]
                 action))))
 
-(defn- static-actions [app]
-  (let [editable? (editable? app)]
-    (concat (when (:can-close? app)
-              [(if (:is-applicant? app)
-                 [applicant-close-action-button]
-                 [approver-close-action-button])])
-            (when (:can-withdraw? app)
-              [[withdraw-action-button]])
-            (when (:can-approve? app)
-              [[review-request-action-button]
-               [static-return-action-button]
-               [reject-action-button]
-               [approve-action-button]])
-            (when (= :normal (:review-type app))
-              [[review-action-button]])
-            (when (= :third-party (:review-type app))
-              [[third-party-review-action-button]])
-            (when (and (:is-applicant? app) editable?)
-              [[save-button]
-               [submit-button]]))))
-
 (defn- actions-form [app]
-  (let [actions (if (= :workflow/dynamic (get-in app [:workflow :type]))
-                  (dynamic-actions app)
-                  (static-actions app))
+  (let [actions (dynamic-actions app)
         reload (partial reload! (:id app))
         forms [[:div#actions-forms.mt-3
-                [approve-form]
-                [reject-form]
-                [static-return-form]
-                [review-form]
-                [review-request-form]
                 [request-comment-form (:id app) reload]
                 [request-decision-form (:id app) reload]
                 [comment-form (:id app) reload]
                 [close-form (:id app) reload]
                 [decide-form (:id app) reload]
                 [return-form (:id app) reload]
-                [approve-reject-form (:id app) reload]
-                [third-party-review-form]
-                [applicant-close-form]
-                [approver-close-form]
-                [withdraw-form]]]]
+                [approve-reject-form (:id app) reload]]]]
     (when (seq actions)
       [collapsible/component
        {:id "actions"
@@ -1145,11 +751,12 @@
    :userid (:event/actor event)
    :request-id (:application/request-id event)
    :commenters (:application/commenters event)
+   :deciders (:application/deciders event)
    :comment (if (= :application.event/decided (:event/type event))
               (str (localize-decision (:application/decision event)) ": " (:application/comment event))
               (:application/comment event))})
 
-(defn- render-application [application edit-application language status]
+(defn- render-application [application edit-application language]
   (let [app (:application application)
         state (:state app)
         phases (:phases application)
@@ -1158,15 +765,10 @@
         applicant-attributes (:applicant-attributes application)
         messages (remove nil?
                          [(disabled-items-warning (:catalogue-items application)) ; NB: eval this here so we get nil or a warning
-                          (when @(rf/subscribe [::send-third-party-review-request-message])
-                            [flash-message
-                             {:status :success
-                              :contents (text :t.actions/review-request-success)}])
                           (when (:validation edit-application)
                             [flash-message
                              {:status :danger
-                              :contents [:div (text :t.form/validation.errors)
-                                         [format-validation-messages application (:validation edit-application)]]}])])]
+                              :contents [format-validation-messages application (:validation edit-application)]}])])]
     [:div
      [:div {:class "float-right"} [pdf-button (:id app)]]
      [:h2 (text :t.applications/application)]
@@ -1175,11 +777,7 @@
      [:div.mt-3 [applicants-info "applicants-info" app applicant-attributes (:members app) (:invited-members app)]]
      [:div.mt-3 [applied-resources (:catalogue-items application)]]
      [:div.my-3 [fields application edit-application language]]
-     [:div.mb-3 [actions-form app]]
-     (when (:open? status)
-       [status-modal (assoc status
-                            :content (when (seq messages) (into [:div] messages))
-                            :on-close #(rf/dispatch [::set-status nil]))])]))
+     [:div.mb-3 [actions-form app]]]))
 
 ;;;; Entrypoint
 
@@ -1187,13 +785,12 @@
   (let [application @(rf/subscribe [::application])
         edit-application @(rf/subscribe [::edit-application])
         language @(rf/subscribe [:language])
-        loading? (not application)
-        status (:status edit-application)]
+        loading? (not application)]
     (if loading?
       [:div
        [:h2 (text :t.applications/application)]
        [spinner/big]]
-      [render-application application edit-application language status])))
+      [render-application application edit-application language])))
 
 
 
