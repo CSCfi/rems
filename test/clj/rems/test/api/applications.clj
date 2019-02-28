@@ -41,7 +41,7 @@
         [_ token] (re-find token-regex (:body response))]
     token))
 
-#_(deftest application-api-session-test
+(deftest application-api-session-test
   (let [username "alice"
         login-headers (-> (request :get "/Shibboleth.sso/Login" {:username username})
                           app
@@ -55,11 +55,11 @@
                  get-csrf-token)]
     (is cookie)
     (is csrf)
-    (testing "submit with session"
+    (testing "save with session"
       (let [body (-> (request :post (str "/api/applications/save"))
                      (header "Cookie" cookie)
                      (header "x-csrf-token" csrf)
-                     (json-body {:command "submit"
+                     (json-body {:command "save"
                                  :catalogue-items [2]
                                  :items {1 "x" 2 "y" 3 "z"}
                                  :licenses {1 "approved" 2 "approved"}})
@@ -67,21 +67,21 @@
                      assert-response-is-ok
                      read-body)]
         (is (:success body))))
-    (testing "submit with session but without csrf"
+    (testing "save with session but without csrf"
       (let [response (-> (request :post (str "/api/applications/save"))
                          (header "Cookie" cookie)
-                         (json-body {:command "submit"
+                         (json-body {:command "save"
                                      :catalogue-items [2]
                                      :items {1 "x" 2 "y" 3 "z"}
                                      :licenses {1 "approved" 2 "approved"}})
                          app)]
         (is (response-is-unauthorized? response))))
-    (testing "submit with session and csrf and wrong api-key"
+    (testing "save with session and csrf and wrong api-key"
       (let [response (-> (request :post (str "/api/applications/save"))
                          (header "Cookie" cookie)
                          (header "x-csrf-token" csrf)
                          (header "x-rems-api-key" "WRONG")
-                         (json-body {:command "submit"
+                         (json-body {:command "save"
                                      :catalogue-items [2]
                                      :items {1 "x" 2 "y" 3 "z"}
                                      :licenses {1 "approved" 2 "approved"}})
