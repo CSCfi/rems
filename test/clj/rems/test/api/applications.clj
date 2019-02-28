@@ -10,8 +10,7 @@
   :once
   api-fixture)
 
-;; TODO salvage some api tests by moving to dynamic
-#_(deftest applications-api-test
+(deftest applications-api-test
   (testing "fetch applications"
     (let [api-key "42"
           user-id "developer"]
@@ -23,7 +22,7 @@
                            assert-response-is-ok)
               data (read-body response)]
           (is (= "application/json; charset=utf-8" (get-in response [:headers "Content-Type"])))
-          (is (= [1 2 3 4 5 6 7] (map :id (sort-by :id data))))))
+          (is (= [1 2 3 4 5 6 7 19] (map :id (sort-by :id data))))))
       (testing "transit support"
         (let [response (-> (request :get "/api/applications")
                            (authenticate api-key user-id)
@@ -32,319 +31,7 @@
                            assert-response-is-ok)
               data (read-body response)]
           (is (= "application/transit+json; charset=utf-8" (get-in response [:headers "Content-Type"])))
-          (is (= 7 (count data))))))))
-
-#_(deftest applications-api-command-test
-  (let [api-key "42"
-        user-id "alice"
-        another-user "alice_smith"
-        catid 2]
-    (let [response (-> (request :post (str "/api/applications/save"))
-                       (authenticate api-key user-id)
-                       (json-body {:command "save"
-                                   :catalogue-items [catid]
-                                   :items {1 "REST-Test"}})
-                       app)
-          cmd-response (read-body response)
-          application-id (:id cmd-response)]
-
-      (testing "saving"
-        (is (:success cmd-response))
-        (is (not (:errors cmd-response)))
-        (is (= "draft" (:state cmd-response)))
-        (is (not (:valid cmd-response)))
-        (is (= [{:type "t.form.validation/required" :field-id 2}
-                {:type "t.form.validation/required" :license-id 1}
-                {:type "t.form.validation/required" :license-id 2}]
-               (:validation cmd-response))))
-      (testing "retrieving"
-        (let [response (-> (request :get (str "/api/applications/" application-id))
-                           (authenticate api-key user-id)
-                           app)
-              application (read-body response)]
-          (is (not (:errors application)))
-          (is (= application-id (:id (:application application))))
-          (is (= "draft" (:state (:application application))))
-          (is (= 2 (count (:licenses application))))
-          (is (< 6 (count (:items application))))))
-      (testing "retrieving as other user"
-        (let [response (-> (request :get (str "/api/applications/" application-id))
-                           (authenticate api-key another-user)
-                           app)]
-          (is (response-is-forbidden? response))))
-      (testing "saving as other user"
-        (let [response (-> (request :post (str "/api/applications/save"))
-                           (authenticate api-key another-user)
-                           (json-body {:command "save"
-                                       :application-id application-id
-                                       :items {1 "REST-Test"}})
-                           app)]
-          (is (response-is-forbidden? response))))
-      (testing "submitting"
-        (let [response (-> (request :post (str "/api/applications/save"))
-                           (authenticate api-key user-id)
-                           (json-body {:command "submit"
-                                       :application-id application-id
-                                       :items {1 "REST-Test"
-                                               2 "2017-2018"
-                                               3 "The purpose is to test this REST service.}"}
-                                       :licenses {1 "approved" 2 "approved"}})
-                           app)
-              cmd-response (read-body response)]
-          (is (:success cmd-response))
-          (is (not (:errors cmd-response)))
-          (is (= application-id (:id cmd-response)))
-          (is (= "applied" (:state cmd-response)))
-          (is (:valid cmd-response))
-          (is (empty? (:validation cmd-response)))))
-      (testing "approving"
-        (let [response (-> (request :post (str "/api/applications/judge"))
-                           (authenticate api-key "developer")
-                           (json-body {:command "approve"
-                                       :application-id application-id
-                                       :round 0
-                                       :comment "msg"})
-                           app)
-              cmd-response (read-body response)
-              application-response (-> (request :get (str "/api/applications/" application-id))
-                                       (authenticate api-key user-id)
-                                       app)
-              application (:application (read-body application-response))]
-          (is (:success cmd-response))
-          (is (= "approved" (:state application)))
-          (is (= [nil nil "msg"] (map :comment (:events application)))))))))
-
-#_(deftest application-validation-test
-  (let [api-key "42"
-        user-id "alice"
-        catid 2]
-    (let [response (-> (request :post (str "/api/applications/save"))
-                       (authenticate api-key user-id)
-                       (json-body {:command "save"
-                                   :catalogue-items [catid]
-                                   ;; "" should fail validation just like nil
-                                   :items {1 ""}})
-                       app)
-          cmd-response (read-body response)
-          validations (:validation cmd-response)
-          application-id (:id cmd-response)]
-      (testing "empty draft"
-        (is (:success cmd-response))
-        ;; 2 fields, 2 licenses
-        (is (= [{:type "t.form.validation/required" :field-id 1}
-                {:type "t.form.validation/required" :field-id 2}
-                {:type "t.form.validation/required" :license-id 1}
-                {:type "t.form.validation/required" :license-id 2}]
-               validations)))
-      (testing "add one field"
-        (let [response (-> (request :post (str "/api/applications/save"))
-                           (authenticate api-key user-id)
-                           (json-body {:command "save"
-                                       :application-id application-id
-                                       :items {1 "FOO"}})
-                           app)
-              cmd-response (read-body response)
-              validations (:validation cmd-response)]
-          (is (:success cmd-response))
-          (is (not (:valid cmd-response)))
-          (is (= 3 (count validations)))))
-      (testing "add one license"
-        (let [response (-> (request :post (str "/api/applications/save"))
-                           (authenticate api-key user-id)
-                           (json-body {:command "save"
-                                       :application-id application-id
-                                       :items {1 "FOO"}
-                                       :licenses {1 "approved"}})
-                           app)
-              cmd-response (read-body response)
-              validations (:validation cmd-response)]
-          (is (:success cmd-response))
-          (is (not (:valid cmd-response)))
-          (is (= 2 (count validations)))))
-      (testing "submit partial form"
-        (let [response (-> (request :post (str "/api/applications/save"))
-                           (authenticate api-key user-id)
-                           (json-body {:command "submit"
-                                       :application-id application-id
-                                       :items {1 "FOO"}
-                                       :licenses {1 "approved"}})
-                           app)
-              cmd-response (read-body response)
-              validations (:validation cmd-response)]
-          (is (not (:success cmd-response)))
-          (is (not (:valid cmd-response)))
-          (is (= 2 (count validations)))))
-      (testing "save full form"
-        (let [response (-> (request :post (str "/api/applications/save"))
-                           (authenticate api-key user-id)
-                           (json-body {:command "save"
-                                       :application-id application-id
-                                       :items {1 "FOO" 2 "ding" 3 "plong"}
-                                       :licenses {1 "approved" 2 "approved"}})
-                           app)
-              cmd-response (read-body response)
-              validations (:validation cmd-response)]
-          (is (:success cmd-response))
-          (is (:valid cmd-response))
-          (is (empty? validations))))
-      (testing "submit full form"
-        (let [response (-> (request :post (str "/api/applications/save"))
-                           (authenticate api-key user-id)
-                           (json-body {:command "submit"
-                                       :application-id application-id
-                                       :items {1 "FOO" 2 "ding" 3 "plong"}
-                                       :licenses {1 "approved" 2 "approved"}})
-                           app)
-              cmd-response (read-body response)
-              validations (:validation cmd-response)]
-          (is (:success cmd-response))
-          (is (:valid cmd-response))
-          (is (empty? validations)))))))
-
-#_(deftest disabled-catalogue-item
-  (let [api-key "42"
-        user-id "developer"
-        catid 6]
-    (testing "save draft for disabled item"
-      (let [response (-> (request :post (str "/api/applications/save"))
-                         (authenticate api-key user-id)
-                         (json-body {:command "save"
-                                     :catalogue-items [catid]
-                                     :items {1 ""}})
-                         app)]
-        ;; TODO should we actually return a nice error message here?
-        (is (= 400 (:status response)) "should not be able to save draft with disbled item")))
-    (testing "submit for application with disabled item"
-      (let [response (-> (request :post (str "/api/applications/save"))
-                         (authenticate api-key user-id)
-                         (json-body {:application-id 6 ;; application-id 6 is already created, but catalogue-item was disabled later
-                                     :command "submit"
-                                     :catalogue-items [catid]
-                                     :items {1 "x" 2 "y" 3 "z"}
-                                     :licenses {1 "approved" 2 "approved"}})
-                         app)]
-        (is (= 400 (:status response)) "should not be possible to submit with disabled item")))))
-
-#_(deftest application-api-roles
-  (let [api-key "42"
-        applicant "alice"
-        approver "developer"
-        catid 2]
-    (let [response (-> (request :post (str "/api/applications/save"))
-                       (authenticate api-key applicant)
-                       (json-body {:command "submit"
-                                   :catalogue-items [catid]
-                                   :items {1 "x" 2 "y" 3 "z"}
-                                   :licenses {1 "approved" 2 "approved"}})
-                       app
-                       assert-response-is-ok)
-          cmd-response (read-body response)
-          app-id (:id cmd-response)]
-      (is (number? app-id))
-      (testing "get application as applicant"
-        (let [application (-> (request :get (str "/api/applications/" app-id))
-                              (authenticate api-key applicant)
-                              app
-                              read-body
-                              :application)]
-          (is (:can-withdraw? application))
-          (is (:can-close? application))
-          (is (not (:can-approve? application)))))
-      (testing "get application as approver"
-        (let [application (-> (request :get (str "/api/applications/" app-id))
-                              (authenticate api-key approver)
-                              app
-                              read-body
-                              :application)]
-          (is (not (:can-close? application)))
-          (is (:can-approve? application))))
-      ;; TODO tests for :review-type
-      (testing "approve application"
-        (-> (request :post (str "/api/applications/judge"))
-            (authenticate api-key approver)
-            (json-body {:command "approve"
-                        :application-id app-id
-                        :round 0
-                        :comment "msg"})
-            app
-            assert-response-is-ok))
-      (testing "get approved application as applicant"
-        (let [application (-> (request :get (str "/api/applications/" app-id))
-                              (authenticate api-key applicant)
-                              app
-                              read-body
-                              :application)]
-          (is (:can-close? application))
-          (is (not (:can-approve? application)))))
-      (testing "get approved application as approver"
-        (let [application (-> (request :get (str "/api/applications/" app-id))
-                              (authenticate api-key approver)
-                              app
-                              read-body
-                              :application)]
-          (is (:can-close? application))
-          (is (not (:can-approve? application))))))))
-
-#_(deftest application-api-action-test
-  ;; Run through all the application actions that are available
-  (let [api-key "42"
-        user "developer"
-        catid 2
-        app-id (-> (request :post (str "/api/applications/save"))
-                   (authenticate api-key user)
-                   (json-body {:command "save"
-                               :catalogue-items [catid]
-                               :items {1 "x" 2 "y" 3 "z"}
-                               :licenses {1 "approved" 2 "approved"}})
-                   app
-                   read-body
-                   :id)
-        submit (fn []
-                 (-> (request :post (str "/api/applications/save"))
-                     (authenticate api-key user)
-                     (json-body {:command "submit"
-                                 :application-id app-id
-                                 :items {1 "x" 2 "y" 3 "z"}
-                                 :licenses {1 "approved" 2 "approved"}})
-                     app
-                     assert-response-is-ok))
-        action (fn [body]
-                 (-> (request :post (str "/api/applications/judge"))
-                     (authenticate api-key user)
-                     (json-body (merge {:application-id app-id
-                                        :round 0}
-                                       body))
-                     app
-                     assert-response-is-ok))]
-    (submit)
-    (action {:command "return"
-             :comment "returned"})
-    (submit)
-    (action {:command "withdraw"
-             :comment "withdrawn"})
-    (submit)
-    (action {:command "approve"
-             :comment "approved"})
-    (action {:command "close"
-             :comment "closed"})
-    (let [response (-> (request :get (str "/api/applications/" app-id))
-                       (authenticate api-key user)
-                       app
-                       assert-response-is-ok)
-          events (-> response
-                     read-body
-                     :application
-                     :events)]
-      (is (= [["save" nil]
-              ["apply" nil]
-              ["return" "returned"]
-              ["apply" nil]
-              ["withdraw" "withdrawn"]
-              ["apply" nil]
-              ["approve" "approved"]
-              ["close" "closed"]]
-             (map (juxt :event :comment) events))))))
-
+          (is (= 8 (count data))))))))
 
 (defn- strip-cookie-attributes [cookie]
   (re-find #"[^;]*" cookie))
@@ -354,7 +41,7 @@
         [_ token] (re-find token-regex (:body response))]
     token))
 
-#_(deftest application-api-session-test
+(deftest application-api-session-test
   (let [username "alice"
         login-headers (-> (request :get "/Shibboleth.sso/Login" {:username username})
                           app
@@ -368,11 +55,11 @@
                  get-csrf-token)]
     (is cookie)
     (is csrf)
-    (testing "submit with session"
+    (testing "save with session"
       (let [body (-> (request :post (str "/api/applications/save"))
                      (header "Cookie" cookie)
                      (header "x-csrf-token" csrf)
-                     (json-body {:command "submit"
+                     (json-body {:command "save"
                                  :catalogue-items [2]
                                  :items {1 "x" 2 "y" 3 "z"}
                                  :licenses {1 "approved" 2 "approved"}})
@@ -380,21 +67,21 @@
                      assert-response-is-ok
                      read-body)]
         (is (:success body))))
-    (testing "submit with session but without csrf"
+    (testing "save with session but without csrf"
       (let [response (-> (request :post (str "/api/applications/save"))
                          (header "Cookie" cookie)
-                         (json-body {:command "submit"
+                         (json-body {:command "save"
                                      :catalogue-items [2]
                                      :items {1 "x" 2 "y" 3 "z"}
                                      :licenses {1 "approved" 2 "approved"}})
                          app)]
         (is (response-is-unauthorized? response))))
-    (testing "submit with session and csrf and wrong api-key"
+    (testing "save with session and csrf and wrong api-key"
       (let [response (-> (request :post (str "/api/applications/save"))
                          (header "Cookie" cookie)
                          (header "x-csrf-token" csrf)
                          (header "x-rems-api-key" "WRONG")
-                         (json-body {:command "submit"
+                         (json-body {:command "save"
                                      :catalogue-items [2]
                                      :items {1 "x" 2 "y" 3 "z"}
                                      :licenses {1 "approved" 2 "approved"}})
@@ -403,153 +90,7 @@
         (is (response-is-unauthorized? response))
         (is (= "invalid api key" body))))))
 
-(def testfile (clojure.java.io/file "./test-data/test.txt"))
-
-(def malicious-file (clojure.java.io/file "./test-data/malicious_test.html"))
-
-(def filecontent {:tempfile testfile
-                  :content-type "text/plain"
-                  :filename "test.txt"
-                  :size (.length testfile)})
-
-(def malicious-content {:tempfile malicious-file
-                        :content-type "text/html"
-                        :filename "malicious_test.html"
-                        :size (.length malicious-file)})
-
-#_(deftest application-api-attachments-test
-  (let [api-key "42"
-        user-id "alice"
-        catid 2
-        field-id 5
-        response (-> (request :post (str "/api/applications/save"))
-                     (authenticate api-key user-id)
-                     (json-body {:command "save"
-                                 :catalogue-items [catid]
-                                 :items {1 ""}})
-                     app
-                     read-body)
-        app-id (:id response)]
-    (testing "uploading attachment for a draft"
-      (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
-          (assoc :params {"file" filecontent})
-          (assoc :multipart-params {"file" filecontent})
-          (authenticate api-key user-id)
-          app
-          assert-response-is-ok))
-    (testing "uploading malicious file for a draft"
-      (let [response (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
-                         (assoc :params {"file" malicious-content})
-                         (assoc :multipart-params {"file" malicious-content})
-                         (authenticate api-key user-id)
-                         app)]
-        (is (= 400 (:status response)))))
-    (testing "retrieving attachment for a draft"
-      (let [response (-> (request :get (str "/api/applications/attachments/") {:application-id app-id :field-id field-id})
-                         (authenticate api-key user-id)
-                         app
-                         assert-response-is-ok)]
-        (is (= (slurp testfile) (slurp (:body response))))))
-    (testing "uploading attachment as non-applicant"
-      (let [response (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
-                         (assoc :params {"file" filecontent})
-                         (assoc :multipart-params {"file" filecontent})
-                         (authenticate api-key "carl")
-                         app)]
-        (is (response-is-forbidden? response))))
-    (testing "retrieving attachment as non-applicant"
-      (let [response (-> (request :get (str "/api/applications/attachments/") {:application-id app-id :field-id field-id})
-                         (authenticate api-key "carl")
-                         app)]
-        (is (response-is-forbidden? response))))
-    (testing "uploading attachment for a submitted application"
-      (let [body (-> (request :post (str "/api/applications/save"))
-                     (authenticate api-key user-id)
-                     (json-body {:application-id app-id
-                                 :command "submit"
-                                 :catalogue-items [catid]
-                                 :items {1 "x" 2 "y" 3 "z"}
-                                 :licenses {1 "approved" 2 "approved"}})
-                     app
-                     read-body)]
-        (is (= "applied" (:state body)))
-        (let [response (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
-                           (assoc :params {"file" filecontent})
-                           (assoc :multipart-params {"file" filecontent})
-                           (authenticate api-key user-id)
-                           app)]
-          (is (response-is-forbidden? response)))))))
-
-#_(deftest applications-api-security-test
-  (testing "listing without authentication"
-    (let [response (-> (request :get (str "/api/applications"))
-                       app)
-          body (read-body response)]
-      (is (= "unauthorized" body))))
-
-  (testing "fetch application without authentication"
-    (let [response (-> (request :get (str "/api/applications/1"))
-                       app)
-          body (read-body response)]
-      (is (= body "unauthorized"))))
-  (testing "fetch reviewers without authentication"
-    (let [response (-> (request :get (str "/api/applications/reviewers"))
-                       app)
-          body (read-body response)]
-      (is (= body "unauthorized"))))
-  (testing "save without authentication"
-    (let [response (-> (request :post (str "/api/applications/save"))
-                       (json-body {:command "save"
-                                   :catalogue-items [2]
-                                   :items {1 "REST-Test"}})
-                       app)
-          body (read-body response)]
-      (is (str/includes? body "Invalid anti-forgery token"))))
-  (testing "save with wrong API-Key"
-    (let [response (-> (request :post (str "/api/applications/save"))
-                       (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
-                       (json-body {:command "save"
-                                   :catalogue-items [2]
-                                   :items {1 "REST-Test"}})
-                       app)
-          body (read-body response)]
-      (is (= "invalid api key" body))))
-  (testing "judge without authentication"
-    (let [body (-> (request :post (str "/api/applications/judge"))
-                   (json-body {:command "approve"
-                               :application-id 2
-                               :round 0
-                               :comment "msg"})
-                   app
-                   read-body)]
-      (is (str/includes? body "Invalid anti-forgery token"))))
-  (testing "judge with wrong API-Key"
-    (let [body (-> (request :post (str "/api/applications/judge"))
-                   (authenticate "invalid-api-key" "developer")
-                   (json-body {:command "approve"
-                               :application-id 2
-                               :round 0
-                               :comment "msg"})
-                   app
-                   read-body)]
-      (is (= "invalid api key" body))))
-  (testing "upload attachment without authentication"
-    (let [body (-> (request :post (str "/api/applications/add_attachment"))
-                   (assoc :params {"file" filecontent})
-                   (assoc :multipart-params {"file" filecontent})
-                   app
-                   read-body)]
-      (is (str/includes? body "Invalid anti-forgery token"))))
-  (testing "upload attachment with wrong API-Key"
-    (let [body (-> (request :post (str "/api/applications/add_attachment"))
-                   (assoc :params {"file" filecontent})
-                   (assoc :multipart-params {"file" filecontent})
-                   (authenticate "invalid-api-key" "developer")
-                   app
-                   read-body)]
-      (is (= "invalid api key" body)))))
-
-#_(deftest pdf-smoke-test
+(deftest pdf-smoke-test
   (testing "not found"
     (let [response (-> (request :get (str "/api/applications/9999999/pdf"))
                        (authenticate "42" "developer")
@@ -810,6 +351,19 @@
           (is (= "workflow/dynamic" (get-in saved [:application :workflow :type])))
           (is (= "rems.workflow.dynamic/draft" (get-in saved [:application :state])))
           (is (= "dynamic test" (get-in saved [:items 0 :value])))))
+      (testing "getting application as other user is forbidden"
+        (is (response-is-forbidden?
+             (-> (request :get (str "/api/applications/" application-id))
+                 (authenticate api-key "bob")
+                 app))))
+      (testing "saving fields as other user is forbidden"
+        (is (response-is-forbidden?
+             (-> (request :post "/api/applications/save")
+                 (authenticate api-key "bob")
+                 (json-body {:command "save"
+                             :application-id application-id
+                             :items {1 "xxxxx"}})
+                 app))))
       (testing "can't submit with missing required fields"
         (is (= {:success false :errors [{:type "t.form.validation/required" :field-id 2}
                                         {:type "t.form.validation/required" :license-id 1}
@@ -850,3 +404,138 @@
                   "application.event/draft-saved"
                   "application.event/submitted"]
                  (map :event/type (get-in submitted [:application :dynamic-events])))))))))
+
+(deftest disabled-catalogue-item
+  (let [api-key "42"
+        user-id "alice"
+        catid 11
+        application-id 19]
+    (testing "save draft for disabled item"
+      (let [response (-> (request :post (str "/api/applications/save"))
+                         (authenticate api-key user-id)
+                         (json-body {:command "save"
+                                     :catalogue-items [catid]
+                                     :items {1 ""}})
+                         app)]
+        (is (= 400 (:status response)))))
+    (testing "submit for application with disabled item"
+      (is (= {:success false :errors [{:type "forbidden"}]}
+             (send-dynamic-command user-id {:type :rems.workflow.dynamic/submit
+                                            :application-id application-id}))))))
+
+(def testfile (clojure.java.io/file "./test-data/test.txt"))
+
+(def malicious-file (clojure.java.io/file "./test-data/malicious_test.html"))
+
+(def filecontent {:tempfile testfile
+                  :content-type "text/plain"
+                  :filename "test.txt"
+                  :size (.length testfile)})
+
+(def malicious-content {:tempfile malicious-file
+                        :content-type "text/html"
+                        :filename "malicious_test.html"
+                        :size (.length malicious-file)})
+
+(deftest application-api-attachments-test
+  (let [api-key "42"
+        user-id "alice"
+        catid 9
+        field-id 5
+        app-id (save-application {:command "save"
+                                  :catalogue-items [catid]
+                                  :items {1 "x" 2 "x"}
+                                  :licenses {1 "approved" 2 "approved"}})]
+    (testing "uploading attachment for a draft"
+      (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
+          (assoc :params {"file" filecontent})
+          (assoc :multipart-params {"file" filecontent})
+          (authenticate api-key user-id)
+          app
+          assert-response-is-ok))
+    (testing "uploading malicious file for a draft"
+      (let [response (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
+                         (assoc :params {"file" malicious-content})
+                         (assoc :multipart-params {"file" malicious-content})
+                         (authenticate api-key user-id)
+                         app)]
+        (is (= 400 (:status response)))))
+    (testing "retrieving attachment for a draft"
+      (let [response (-> (request :get (str "/api/applications/attachments/") {:application-id app-id :field-id field-id})
+                         (authenticate api-key user-id)
+                         app
+                         assert-response-is-ok)]
+        (is (= (slurp testfile) (slurp (:body response))))))
+    (testing "uploading attachment as non-applicant"
+      (let [response (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
+                         (assoc :params {"file" filecontent})
+                         (assoc :multipart-params {"file" filecontent})
+                         (authenticate api-key "carl")
+                         app)]
+        (is (response-is-forbidden? response))))
+    (testing "retrieving attachment as non-applicant"
+      (let [response (-> (request :get (str "/api/applications/attachments/") {:application-id app-id :field-id field-id})
+                         (authenticate api-key "carl")
+                         app)]
+        (is (response-is-forbidden? response))))
+    (testing "submit application"
+      (is (= {:success true} (send-dynamic-command user-id {:type :rems.workflow.dynamic/submit
+                                                            :application-id app-id}))))
+    (testing "uploading attachment for a submitted application"
+      (let [response (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
+                         (assoc :params {"file" filecontent})
+                         (assoc :multipart-params {"file" filecontent})
+                         (authenticate api-key user-id)
+                         app)]
+        (is (response-is-forbidden? response))))))
+
+(deftest applications-api-security-test
+  (testing "listing without authentication"
+    (is (response-is-unauthorized? (-> (request :get (str "/api/applications"))
+                                       app))))
+  (testing "fetch application without authentication"
+    (is (response-is-unauthorized? (-> (request :get (str "/api/applications/1"))
+                                       app))))
+  (testing "fetch deciders without authentication"
+    (is (response-is-unauthorized? (-> (request :get (str "/api/applications/deciders"))
+                                       app))))
+  (testing "save without authentication"
+    (is (response-is-unauthorized? (-> (request :post (str "/api/applications/save"))
+                                       (json-body {:command "save"
+                                                   :catalogue-items [2]
+                                                   :items {1 "REST-Test"}})
+                                       app))))
+  (testing "save with wrong API-Key"
+    (is (response-is-unauthorized? (-> (request :post (str "/api/applications/save"))
+                                       (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
+                                       (json-body {:command "save"
+                                                   :catalogue-items [2]
+                                                   :items {1 "REST-Test"}})
+                                       app))))
+  (let [app-id (save-application {:command "save"
+                                  :catalogue-items [9]
+                                  :items {1 "x" 2 "x"}
+                                  :licenses {1 "approved" 2 "approved"}})]
+    (is (pos? app-id))
+    (testing "send command without authentication"
+      (is (response-is-unauthorized? (-> (request :post (str "/api/applications/command"))
+                                         (json-body {:type :rems.workflow.dynamic/submit
+                                                     :application-id app-id})
+                                         app))))
+    (testing "send command with wrong api-key"
+      (is (response-is-unauthorized? (-> (request :post (str "/api/applications/command"))
+                                         (authenticate "invalid-api-key" "alice")
+                                         (json-body {:type :rems.workflow.dynamic/submit
+                                                     :application-id app-id})
+                                         app)))))
+  (testing "upload attachment without authentication"
+    (is (response-is-unauthorized? (-> (request :post (str "/api/applications/add_attachment"))
+                                       (assoc :params {"file" filecontent})
+                                       (assoc :multipart-params {"file" filecontent})
+                                       app))))
+  (testing "upload attachment with wrong API-Key"
+    (is (response-is-unauthorized? (-> (request :post (str "/api/applications/add_attachment"))
+                                       (assoc :params {"file" filecontent})
+                                       (assoc :multipart-params {"file" filecontent})
+                                       (authenticate "invalid-api-key" "developer")
+                                       app)))))
