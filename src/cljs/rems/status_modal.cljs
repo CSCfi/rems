@@ -84,6 +84,17 @@
                                            :result {:success? false}}
                                           state)]))
 
+(defn common-pending-handler! [title]
+  (set-pending! {:title title}))
+
+(defn common-success-handler! [on-close response]
+  (if (:success response)
+    (set-success! {:on-close on-close})
+    (set-error! {:result response})))
+
+(defn common-error-handler! [response]
+  (set-error! {:result {:error response}}))
+
 (defn guide
   []
   [:div
@@ -112,14 +123,3 @@
                            :shade? false
                            :title "Errors"
                            :content [:p "You should check the errors"]}])])
-
-(defn common-pending-handler! [title]
-  (set-pending! {:title title}))
-
-(defn common-success-handler! [on-close response]
-  (if (:success response)
-    (set-success! {:on-close on-close})
-    (set-error! {:result response})))
-
-(defn common-error-handler! [response]
-  (set-error! {:result {:error response}}))
