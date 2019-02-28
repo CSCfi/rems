@@ -70,7 +70,7 @@
                            :on-close (fn []
                                        (rf/dispatch [::set-state nil])
                                        (when on-close (on-close)))
-                           "shade?" shade?}])))
+                           :shade? shade?}])))
 
 (defn set-pending!
   "Globally set the modal state to reflect a pending operation.
