@@ -207,6 +207,7 @@
 (defn- remove-nil-vals
   "Recursively removes all keys with nil values from a map."
   [obj]
+  (assert (not= "" obj))
   (cond
     (record? obj) obj
     (map? obj) (let [m (->> obj
@@ -228,8 +229,8 @@
            (remove-nil-vals {:a 1})))
     (is (= {:a false}
            (remove-nil-vals {:a false})))
-    (is (= {:a ""}
-           (remove-nil-vals {:a ""}))))
+    (is (= {:a "#fff"}
+           (remove-nil-vals {:a "#fff"}))))
   (testing "nested"
     (is (= nil
            (remove-nil-vals {:a {:b nil}})))
@@ -259,7 +260,12 @@
            (remove-nil-vals '(:a {})))))
   (testing "records"
     (is (= (u/px 10)
-           (remove-nil-vals (u/px 10))))))
+           (remove-nil-vals (u/px 10)))))
+  (testing "empty strings are not supported"
+    ;; CSS should not contain empty strings, but to be sure
+    ;; that we don't accidentally break stuff, we don't convert
+    ;; them to nil but instead throw an error.
+    (is (thrown? AssertionError (remove-nil-vals {:a ""})))))
 
 (defn build-screen []
   (list
