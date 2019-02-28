@@ -670,7 +670,7 @@
                                                      {"en" "Dynamic workflow (disabled)"
                                                       "fi" "Dynaaminen työvuo (pois käytöstä)"})]
         (create-draft! (+fake-users+ :approver1) [dynamic-disabled] (:dynamic workflows) "draft for disabled application")
-        (db/set-catalogue-item-state! {:item dynamic-disabled :enabled false :user (+fake-users+ :approver1)})))
+        (db/set-catalogue-item-state! {:id dynamic-disabled :enabled false})))
     (finally
       (DateTimeUtils/setCurrentMillisSystem))))
 
