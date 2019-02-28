@@ -30,7 +30,8 @@
 
 (s/defschema UpdateCatalogueItemCommand
   {:id s/Num
-   :enabled s/Bool})
+   :enabled s/Bool
+   :archived s/Bool})
 
 ;; TODO use declarative roles everywhere
 (def catalogue-items-api
@@ -41,10 +42,12 @@
       :summary "Get catalogue items"
       :roles #{:logged-in}
       :query-params [{resource :- (describe s/Str "resource id (optional)") nil}
-                     {expand :- (describe s/Str "expanded additional attributes (optional), can be \"names\"") nil}]
+                     {expand :- (describe s/Str "expanded additional attributes (optional), can be \"names\"") nil}
+                     {archived :- (describe s/Bool "'true' to include archived items, defaults to 'false'") false}]
       :return GetCatalogueItemsResponse
       (ok (catalogue/get-localized-catalogue-items {:resource resource
-                                                    :expand-names? (str/includes? (or expand "") "names")})))
+                                                    :expand-names? (str/includes? (or expand "") "names")
+                                                    :archived archived})))
 
     (GET "/:item-id" []
       :summary "Get a single catalogue item"
@@ -69,8 +72,7 @@
       :roles #{:owner}
       :body [command UpdateCatalogueItemCommand]
       :return SuccessResponse
-      (db/set-catalogue-item-state! {:item (:id command)
-                                     :enabled (:enabled command)})
+      (db/set-catalogue-item-state! command)
       (ok {:success true}))
 
     (POST "/create-localization" []

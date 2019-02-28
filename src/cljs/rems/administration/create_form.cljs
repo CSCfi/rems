@@ -262,7 +262,7 @@
 
                         [form-item-title-field item-index]
                         [form-item-type-radio-group item-index]
-                        (when (supports-optional? (get-in form [:items item-index]))
+                        (when (supports-optional? item)
                           [form-item-optional-checkbox item-index])
                         (when (supports-input-prompt? item)
                           [form-item-input-prompt-field item-index])

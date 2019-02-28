@@ -4,6 +4,7 @@
             [rems.atoms :refer [external-link readonly-checkbox]]
             [rems.catalogue-util :refer [get-catalogue-item-title]]
             [rems.spinner :as spinner]
+            [rems.status-modal :as status-modal]
             [rems.table :as table]
             [rems.text :refer [localize-time text]]
             [rems.util :refer [dispatch! fetch put!]]))
@@ -11,14 +12,17 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (assoc db ::loading? true)
-    ::fetch-catalogue nil}))
+   {:db (assoc db ::display-archived? false)
+    :dispatch [::fetch-catalogue]}))
 
-(defn- fetch-catalogue []
-  (fetch "/api/catalogue-items/" {:url-params {:expand :names}
-                                  :handler #(rf/dispatch [::fetch-catalogue-result %])}))
-
-(rf/reg-fx ::fetch-catalogue (fn [_] (fetch-catalogue)))
+(rf/reg-event-fx
+ ::fetch-catalogue
+ (fn [{:keys [db]}]
+   (fetch "/api/catalogue-items/" {:url-params {:expand :names
+                                                :archived (::display-archived? db)}
+                                   :handler #(rf/dispatch [::fetch-catalogue-result %])
+                                   :error-handler status-modal/common-error-handler!})
+   {:db (assoc db ::loading? true)}))
 
 (rf/reg-event-db
  ::fetch-catalogue-result
@@ -30,20 +34,23 @@
 (rf/reg-sub ::catalogue (fn [db _] (::catalogue db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
-(defn- update-catalogue-item [item]
-  (put! "/api/catalogue-items/update"
-        {:params (select-keys item [:id :enabled])
-         :handler #(rf/dispatch [::enter-page])}))
-
-(rf/reg-fx ::update-catalogue-item update-catalogue-item)
+(rf/reg-event-fx
+ ::set-display-archived?
+ (fn [{:keys [db]} [_ display-archived?]]
+   {:db (assoc db ::display-archived? display-archived?)
+    :dispatch [::fetch-catalogue]}))
+(rf/reg-sub ::display-archived? (fn [db _] (::display-archived? db)))
 
 (rf/reg-event-fx
  ::update-catalogue-item
  (fn [_ [_ item]]
-   {::update-catalogue-item item}))
+   (put! "/api/catalogue-items/update"
+         {:params (select-keys item [:id :enabled :archived])
+          :handler #(rf/dispatch [::fetch-catalogue])
+          :error-handler status-modal/common-error-handler!})
+   {}))
 
 (rf/reg-event-db ::set-sorting (fn [db [_ sorting]] (assoc db ::sorting sorting)))
-
 (rf/reg-sub
  ::sorting
  (fn [db _]
@@ -66,22 +73,48 @@
 
 (defn- disable-button [item]
   [:button.btn.btn-secondary.button-min-width
-   {:type "submit"
-    :on-click #(rf/dispatch [::update-catalogue-item {:id (:id item)
-                                                      :enabled false}])}
+   {:type "button"
+    :on-click #(rf/dispatch [::update-catalogue-item (assoc item :enabled false)])}
    (text :t.administration/disable)])
 
 (defn- enable-button [item]
   [:button.btn.btn-primary.button-min-width
-   {:type "submit"
-    :on-click #(rf/dispatch [::update-catalogue-item {:id (:id item)
-                                                      :enabled true}])}
+   {:type "button"
+    :on-click #(rf/dispatch [::update-catalogue-item (assoc item :enabled true)])}
    (text :t.administration/enable)])
 
 (defn- toggle-enabled-button [item]
   (if (:enabled item)
     [disable-button item]
     [enable-button item]))
+
+(defn- archive-button [item]
+  [:button.btn.btn-secondary.button-min-width
+   {:type "button"
+    :on-click #(rf/dispatch [::update-catalogue-item (assoc item :archived true)])}
+   (text :t.administration/archive)])
+
+(defn- unarchive-button [item]
+  [:button.btn.btn-primary.button-min-width
+   {:type "button"
+    :on-click #(rf/dispatch [::update-catalogue-item (assoc item :archived false)])}
+   (text :t.administration/unarchive)])
+
+(defn- toggle-archived-button [item]
+  (if (:archived item)
+    [unarchive-button item]
+    [archive-button item]))
+
+(defn- display-archived-catalogue-items []
+  (let [display-archived? @(rf/subscribe [::display-archived?])
+        toggle #(rf/dispatch [::set-display-archived? (not display-archived?)])]
+    [:div.form-check.form-check-inline {:style {:float "right"}}
+     [:input.form-check-input {:type "checkbox"
+                               :id "display-archived"
+                               :checked display-archived?
+                               :on-change toggle}]
+     [:label.form-check-label {:for "display-archived"}
+      (text :t.administration/display-archived)]]))
 
 (defn- catalogue-columns [language]
   {:name {:header #(text :t.catalogue/header)
@@ -112,7 +145,8 @@
             :value (comp readonly-checkbox :enabled)}
    :commands {:values (fn [item]
                         [[to-catalogue-item (:id item)]
-                         [toggle-enabled-button item]])
+                         [toggle-enabled-button item]
+                         [toggle-archived-button item]])
               :sortable? false
               :filterable? false}})
 
@@ -134,6 +168,7 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-catalogue-item]
+           [display-archived-catalogue-items]
            [catalogue-list
             @(rf/subscribe [::catalogue])
             @(rf/subscribe [:language])

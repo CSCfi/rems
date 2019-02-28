@@ -31,7 +31,7 @@
    (map localize-catalogue-item (db/get-catalogue-items query-params))))
 
 (defn get-localized-catalogue-item [id]
-  (when-let [item (db/get-catalogue-item {:item id})]
+  (when-let [item (db/get-catalogue-item {:id id})]
     (localize-catalogue-item item)))
 
 (defn create-catalogue-item! [command]

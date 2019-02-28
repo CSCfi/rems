@@ -269,7 +269,7 @@
   can be given as a parameter to avoid excessive database calls."
   ([ids]
    (mapv translate-catalogue-item
-         (get-localized-catalogue-items {:items ids})))
+         (get-localized-catalogue-items {:ids ids})))
   ([ids localized-items]
    (mapv translate-catalogue-item
          (filter #(some #{(:id %)} ids)

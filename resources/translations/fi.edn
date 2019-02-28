@@ -96,6 +96,7 @@
             :withdraw "Palauta muokattavaksi"
             :withdraw-success "Hakemus palautettu muokattavaksi"}
   :administration {:active "Aktiivinen"
+                   :archive "Arkistoi"
                    :back "Takaisin"
                    :cancel "Peruuta"
                    :catalogue-item "Aineisto"
@@ -107,6 +108,7 @@
                    :create-workflow "Uusi työvuo"
                    :created "Luotu"
                    :disable "Poista käytöstä"
+                   :display-archived "Näytä arkistoidut"
                    :enable "Ota käyttöön"
                    :end "Loppu"
                    :errors {:duplicate-resid "Resurssi on jo olemassa organisaatiossa."}
@@ -116,8 +118,8 @@
                    :forms "Lomakkeet"
                    :id "Id"
                    :license "Lisenssi"
-                   :licenses "Lisenssit"
                    :license-field "License \"%1\""
+                   :licenses "Lisenssit"
                    :no-licenses "Ei lisenssejä"
                    :organization "Organisaatio"
                    :organization-placeholder "testorganization.org"
@@ -128,6 +130,7 @@
                    :start "Alku"
                    :title "Nimi"
                    :type "Tyyppi"
+                   :unarchive "Palauta arkistosta"
                    :view "Avaa"
                    :workflow "Työvuo"
                    :workflows "Työvuot"}
