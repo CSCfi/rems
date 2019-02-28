@@ -335,54 +335,54 @@
                     [:&:hover {:color (util/get-theme-attribute :color4)
                                :background-color "#eee"}]]]
 
-   [:.text-primary (remove-nil-vals {:color (util/get-theme-attribute :text-primary)})]
-   [:.text-secondary (remove-nil-vals {:color (util/get-theme-attribute :text-secondary)})]
-   [:.text-success (remove-nil-vals {:color (util/get-theme-attribute :text-success)})]
-   [:.text-danger (remove-nil-vals {:color (util/get-theme-attribute :text-danger)})]
-   [:.text-warning (remove-nil-vals {:color (util/get-theme-attribute :text-warning)})]
-   [:.text-info (remove-nil-vals {:color (util/get-theme-attribute :text-info)})]
-   [:.text-light (remove-nil-vals {:color (util/get-theme-attribute :text-light)})]
-   [:.text-dark (remove-nil-vals {:color (util/get-theme-attribute :text-dark)})]
-   [:.text-muted (remove-nil-vals {:color (util/get-theme-attribute :text-muted)})]
-   [:.text-white (remove-nil-vals {:color (util/get-theme-attribute :text-white)})]
+   [:.text-primary {:color (util/get-theme-attribute :text-primary)}]
+   [:.text-secondary {:color (util/get-theme-attribute :text-secondary)}]
+   [:.text-success {:color (util/get-theme-attribute :text-success)}]
+   [:.text-danger {:color (util/get-theme-attribute :text-danger)}]
+   [:.text-warning {:color (util/get-theme-attribute :text-warning)}]
+   [:.text-info {:color (util/get-theme-attribute :text-info)}]
+   [:.text-light {:color (util/get-theme-attribute :text-light)}]
+   [:.text-dark {:color (util/get-theme-attribute :text-dark)}]
+   [:.text-muted {:color (util/get-theme-attribute :text-muted)}]
+   [:.text-white {:color (util/get-theme-attribute :text-white)}]
 
-   [:.bg-primary (remove-nil-vals {:background-color (util/get-theme-attribute :bg-primary)})]
-   [:.bg-secondary (remove-nil-vals {:background-color (util/get-theme-attribute :bg-secondary)})]
-   [:.bg-success (remove-nil-vals {:background-color (util/get-theme-attribute :bg-success)})]
-   [:.bg-danger (remove-nil-vals {:background-color (util/get-theme-attribute :bg-danger)})]
-   [:.bg-warning (remove-nil-vals {:background-color (util/get-theme-attribute :bg-warning)})]
-   [:.bg-info (remove-nil-vals {:background-color (util/get-theme-attribute :bg-info)})]
-   [:.bg-light (remove-nil-vals {:background-color (util/get-theme-attribute :bg-light)})]
-   [:.bg-dark (remove-nil-vals {:background-color (util/get-theme-attribute :bg-dark)})]
-   [:.bg-white (remove-nil-vals {:background-color (util/get-theme-attribute :bg-white)})]
+   [:.bg-primary {:background-color (util/get-theme-attribute :bg-primary)}]
+   [:.bg-secondary {:background-color (util/get-theme-attribute :bg-secondary)}]
+   [:.bg-success {:background-color (util/get-theme-attribute :bg-success)}]
+   [:.bg-danger {:background-color (util/get-theme-attribute :bg-danger)}]
+   [:.bg-warning {:background-color (util/get-theme-attribute :bg-warning)}]
+   [:.bg-info {:background-color (util/get-theme-attribute :bg-info)}]
+   [:.bg-light {:background-color (util/get-theme-attribute :bg-light)}]
+   [:.bg-dark {:background-color (util/get-theme-attribute :bg-dark)}]
+   [:.bg-white {:background-color (util/get-theme-attribute :bg-white)}]
 
-   [:.alert-primary (remove-nil-vals {:color (util/get-theme-attribute :alert-primary-color)
-                                      :background-color (util/get-theme-attribute :alert-primary-bgcolor)
-                                      :border-color (util/get-theme-attribute :alert-primary-bordercolor :alert-primary-color)})]
-   [:.alert-secondary (remove-nil-vals {:color (util/get-theme-attribute :alert-secondary-color)
-                                        :background-color (util/get-theme-attribute :alert-secondary-bgcolor)
-                                        :border-color (util/get-theme-attribute :alert-secondary-bordercolor :alert-secondary-color)})]
+   [:.alert-primary {:color (util/get-theme-attribute :alert-primary-color)
+                     :background-color (util/get-theme-attribute :alert-primary-bgcolor)
+                     :border-color (util/get-theme-attribute :alert-primary-bordercolor :alert-primary-color)}]
+   [:.alert-secondary {:color (util/get-theme-attribute :alert-secondary-color)
+                       :background-color (util/get-theme-attribute :alert-secondary-bgcolor)
+                       :border-color (util/get-theme-attribute :alert-secondary-bordercolor :alert-secondary-color)}]
    [:.alert-success (s/descendant :.state-approved :.phases :.phase.completed)
-    (remove-nil-vals {:color (util/get-theme-attribute :alert-success-color)
-                      :background-color (util/get-theme-attribute :alert-success-bgcolor)
-                      :border-color (util/get-theme-attribute :alert-success-bordercolor :alert-success-color)})]
+    {:color (util/get-theme-attribute :alert-success-color)
+     :background-color (util/get-theme-attribute :alert-success-bgcolor)
+     :border-color (util/get-theme-attribute :alert-success-bordercolor :alert-success-color)}]
    [:.alert-danger :.state-rejected (s/descendant :.state-rejected :.phases :.phase.completed)
-    (remove-nil-vals {:color (util/get-theme-attribute :alert-danger-color)
-                      :background-color (util/get-theme-attribute :alert-danger-bgcolor)
-                      :border-color (util/get-theme-attribute :alert-danger-bordercolor :alert-danger-color)})]
-   [:.alert-warning (remove-nil-vals {:color (util/get-theme-attribute :alert-warning-color)
-                                      :background-color (util/get-theme-attribute :alert-warning-bgcolor)
-                                      :border-color (util/get-theme-attribute :alert-warning-bordercolor :alert-warning-color)})]
+    {:color (util/get-theme-attribute :alert-danger-color)
+     :background-color (util/get-theme-attribute :alert-danger-bgcolor)
+     :border-color (util/get-theme-attribute :alert-danger-bordercolor :alert-danger-color)}]
+   [:.alert-warning {:color (util/get-theme-attribute :alert-warning-color)
+                     :background-color (util/get-theme-attribute :alert-warning-bgcolor)
+                     :border-color (util/get-theme-attribute :alert-warning-bordercolor :alert-warning-color)}]
    [:.alert-info (s/descendant :.state-info :.phases :.phase.completed)
-    (remove-nil-vals {:color (util/get-theme-attribute :alert-info-color)
-                      :background-color (util/get-theme-attribute :alert-info-bgcolor)
-                      :border-color (util/get-theme-attribute :alert-info-bordercolor :alert-info-color)})]
-   [:.alert-light (remove-nil-vals {:color (util/get-theme-attribute :alert-light-color)
-                                    :background-color (util/get-theme-attribute :alert-light-bgcolor)
-                                    :border-color (util/get-theme-attribute :alert-light-bordercolor :alert-light-color)})]
-   [:.alert-dark (remove-nil-vals {:color (util/get-theme-attribute :alert-dark-color)
-                                   :background-color (util/get-theme-attribute :alert-dark-bgcolor)
-                                   :border-color (util/get-theme-attribute :alert-dark-bordercolor :alert-dark-color)})]
+    {:color (util/get-theme-attribute :alert-info-color)
+     :background-color (util/get-theme-attribute :alert-info-bgcolor)
+     :border-color (util/get-theme-attribute :alert-info-bordercolor :alert-info-color)}]
+   [:.alert-light {:color (util/get-theme-attribute :alert-light-color)
+                   :background-color (util/get-theme-attribute :alert-light-bgcolor)
+                   :border-color (util/get-theme-attribute :alert-light-bordercolor :alert-light-color)}]
+   [:.alert-dark {:color (util/get-theme-attribute :alert-dark-color)
+                  :background-color (util/get-theme-attribute :alert-dark-bgcolor)
+                  :border-color (util/get-theme-attribute :alert-dark-bordercolor :alert-dark-color)}]
    [:.nav-link
     :.btn-link
     (s/descendant :.nav-link :a)
@@ -650,4 +650,4 @@
    ;; These must be last as the parsing fails when the first non-standard element is met
    (generate-form-placeholder-styles)))
 
-(defstate screen :start (g/css {:pretty-print? false} (build-screen)))
+(defstate screen :start (g/css {:pretty-print? false} (remove-nil-vals (build-screen))))
