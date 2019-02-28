@@ -39,7 +39,7 @@ FROM catalogue_item ci
 LEFT OUTER JOIN resource res ON (ci.resid = res.id)
 LEFT OUTER JOIN workflow wf ON (ci.wfid = wf.id)
 LEFT OUTER JOIN application_form form ON (ci.formid = form.id)
-WHERE ci.id = :item
+WHERE ci.id = :id;
 
 -- :name set-catalogue-item-state! :insert
 UPDATE catalogue_item ci
