@@ -3,14 +3,16 @@
   accessing the application on a browser. The garden styles can also
   be manually compiled by calling the function
   rems.css.styles/generate-css"
-  (:require [garden.core :as g]
+  (:require [clojure.string :as str]
+            [clojure.test :refer [deftest is testing]]
+            [garden.color :as c]
+            [garden.core :as g]
             [garden.selectors :as s]
             [garden.stylesheet :as stylesheet]
             [garden.units :as u]
-            [garden.color :as c]
-            [mount.core :refer [defstate]]
-            [rems.util :as util]
-            [clojure.string :as str]))
+            [medley.core :refer [map-vals remove-vals]]
+            [mount.core :as mount :refer [defstate]]
+            [rems.util :as util]))
 
 (defn- generate-at-font-faces []
   (list
@@ -202,6 +204,71 @@
                                   :margin-top 0
                                   :margin-bottom (u/px 16)})
 
+(defn- remove-nil-vals
+  "Recursively removes all keys with nil values from a map."
+  [obj]
+  (assert (not= "" obj))
+  (cond
+    (record? obj) obj
+    (map? obj) (->> obj
+                    (map-vals remove-nil-vals)
+                    (remove-vals nil?)
+                    not-empty)
+    (vector? obj) (mapv remove-nil-vals obj)
+    (seq? obj) (map remove-nil-vals obj)
+    :else obj))
+
+(deftest test-remove-nil-vals
+  (testing "empty"
+    (is (= nil
+           (remove-nil-vals {}))))
+  (testing "flat"
+    (is (= nil
+           (remove-nil-vals {:a nil})))
+    (is (= {:a 1}
+           (remove-nil-vals {:a 1})))
+    (is (= {:a false}
+           (remove-nil-vals {:a false})))
+    (is (= {:a "#fff"}
+           (remove-nil-vals {:a "#fff"}))))
+  (testing "nested"
+    (is (= nil
+           (remove-nil-vals {:a {:b nil}})))
+    (is (= {:a {:b 1}}
+           (remove-nil-vals {:a {:b 1}}))))
+  (testing "multiple keys"
+    (is (= {:b 2}
+           (remove-nil-vals {:a nil
+                             :b 2}))))
+  (testing "vectors"
+    (is (vector? (remove-nil-vals [1])))
+    (is (= []
+           (remove-nil-vals [])))
+    (is (= [:a]
+           (remove-nil-vals [:a])))
+    (is (= [:a nil]
+           (remove-nil-vals [:a {}])))
+    (is (= [:a {:b 1}]
+           (remove-nil-vals [:a {:b 1}])))
+    (is (= [:a nil]
+           (remove-nil-vals [:a {:b nil}]))))
+  (testing "lists"
+    (is (seq? (remove-nil-vals '(1))))
+    (is (= '()
+           (remove-nil-vals '())))
+    (is (= '(:a)
+           (remove-nil-vals '(:a))))
+    (is (= '(:a nil)
+           (remove-nil-vals '(:a {})))))
+  (testing "records"
+    (is (= (u/px 10)
+           (remove-nil-vals (u/px 10)))))
+  (testing "empty strings are not supported"
+    ;; CSS should not contain empty strings, but to be sure
+    ;; that we don't accidentally break stuff, we don't convert
+    ;; them to nil but instead throw an error.
+    (is (thrown? AssertionError (remove-nil-vals {:a ""})))))
+
 (defn build-screen []
   (list
    (generate-at-font-faces)
@@ -272,21 +339,55 @@
                      :color "#ccc"}
                     [:&:hover {:color (util/get-theme-attribute :color4)
                                :background-color "#eee"}]]]
-   [:.alert-info
-    (s/descendant :.state-info :.phases :.phase.completed)
-    {:color (util/get-theme-attribute :info-color)
-     :background-color (util/get-theme-attribute :info-bgcolor)}]
-   [:.alert-success
-    (s/descendant :.state-approved :.phases :.phase.completed)
-    {:color (util/get-theme-attribute :success-color)
-     :background-color (util/get-theme-attribute :success-bgcolor)}]
-   [:.alert-warning {:color (util/get-theme-attribute :warning-color)
-                     :background-color (util/get-theme-attribute :warning-bgcolor)}]
-   [:.alert-danger
-    :.state-rejected
-    (s/descendant :.state-rejected :.phases :.phase.completed)
-    {:color (util/get-theme-attribute :danger-color)
-     :background-color (util/get-theme-attribute :danger-bgcolor)}]
+
+   [:.text-primary {:color (util/get-theme-attribute :text-primary)}]
+   [:.text-secondary {:color (util/get-theme-attribute :text-secondary)}]
+   [:.text-success {:color (util/get-theme-attribute :text-success)}]
+   [:.text-danger {:color (util/get-theme-attribute :text-danger)}]
+   [:.text-warning {:color (util/get-theme-attribute :text-warning)}]
+   [:.text-info {:color (util/get-theme-attribute :text-info)}]
+   [:.text-light {:color (util/get-theme-attribute :text-light)}]
+   [:.text-dark {:color (util/get-theme-attribute :text-dark)}]
+   [:.text-muted {:color (util/get-theme-attribute :text-muted)}]
+   [:.text-white {:color (util/get-theme-attribute :text-white)}]
+
+   [:.bg-primary {:background-color (util/get-theme-attribute :bg-primary)}]
+   [:.bg-secondary {:background-color (util/get-theme-attribute :bg-secondary)}]
+   [:.bg-success {:background-color (util/get-theme-attribute :bg-success)}]
+   [:.bg-danger {:background-color (util/get-theme-attribute :bg-danger)}]
+   [:.bg-warning {:background-color (util/get-theme-attribute :bg-warning)}]
+   [:.bg-info {:background-color (util/get-theme-attribute :bg-info)}]
+   [:.bg-light {:background-color (util/get-theme-attribute :bg-light)}]
+   [:.bg-dark {:background-color (util/get-theme-attribute :bg-dark)}]
+   [:.bg-white {:background-color (util/get-theme-attribute :bg-white)}]
+
+   [:.alert-primary {:color (util/get-theme-attribute :alert-primary-color)
+                     :background-color (util/get-theme-attribute :alert-primary-bgcolor)
+                     :border-color (util/get-theme-attribute :alert-primary-bordercolor :alert-primary-color)}]
+   [:.alert-secondary {:color (util/get-theme-attribute :alert-secondary-color)
+                       :background-color (util/get-theme-attribute :alert-secondary-bgcolor)
+                       :border-color (util/get-theme-attribute :alert-secondary-bordercolor :alert-secondary-color)}]
+   [:.alert-success (s/descendant :.state-approved :.phases :.phase.completed)
+    {:color (util/get-theme-attribute :alert-success-color)
+     :background-color (util/get-theme-attribute :alert-success-bgcolor)
+     :border-color (util/get-theme-attribute :alert-success-bordercolor :alert-success-color)}]
+   [:.alert-danger :.state-rejected (s/descendant :.state-rejected :.phases :.phase.completed)
+    {:color (util/get-theme-attribute :alert-danger-color)
+     :background-color (util/get-theme-attribute :alert-danger-bgcolor)
+     :border-color (util/get-theme-attribute :alert-danger-bordercolor :alert-danger-color)}]
+   [:.alert-warning {:color (util/get-theme-attribute :alert-warning-color)
+                     :background-color (util/get-theme-attribute :alert-warning-bgcolor)
+                     :border-color (util/get-theme-attribute :alert-warning-bordercolor :alert-warning-color)}]
+   [:.alert-info (s/descendant :.state-info :.phases :.phase.completed)
+    {:color (util/get-theme-attribute :alert-info-color)
+     :background-color (util/get-theme-attribute :alert-info-bgcolor)
+     :border-color (util/get-theme-attribute :alert-info-bordercolor :alert-info-color)}]
+   [:.alert-light {:color (util/get-theme-attribute :alert-light-color)
+                   :background-color (util/get-theme-attribute :alert-light-bgcolor)
+                   :border-color (util/get-theme-attribute :alert-light-bordercolor :alert-light-color)}]
+   [:.alert-dark {:color (util/get-theme-attribute :alert-dark-color)
+                  :background-color (util/get-theme-attribute :alert-dark-bgcolor)
+                  :border-color (util/get-theme-attribute :alert-dark-bordercolor :alert-dark-color)}]
    [:.nav-link
     :.btn-link
     (s/descendant :.nav-link :a)
@@ -466,8 +567,7 @@
    [:.card-header.clickable {:cursor "pointer"}]
    [:.rems-card-header {:color (util/get-theme-attribute :table-heading-color "#fff")
                         :background-color (util/get-theme-attribute :table-heading-bgcolor :color3)
-                        :margin (u/px -1) ; make sure header overlaps container border
-                        }]
+                        :margin (u/px -1)}] ; make sure header overlaps container border
    [(s/descendant :.card-header :a) {:color :inherit}]
    ;; hax for opening misalignment
    [:.license-title {:margin-top (u/px 3)}]
@@ -547,7 +647,7 @@
      [:a.autocomplete__remove-item-button {:margin-left (u/px 5)
                                            :padding (u/rem 0.5)
                                            :padding-right 0
-                                           :color (util/get-theme-attribute :danger-color)
+                                           :color (util/get-theme-attribute :alert-danger-color)
                                            :font-weight :bold}]
      [:input {:width (u/percent 100)}]]]
 
@@ -556,4 +656,9 @@
    ;; These must be last as the parsing fails when the first non-standard element is met
    (generate-form-placeholder-styles)))
 
-(defstate screen :start (g/css {:pretty-print? false} (build-screen)))
+(defstate screen :start (g/css {:pretty-print? false} (remove-nil-vals (build-screen))))
+
+(deftest test-screen
+  (mount/start #'rems.css.styles/screen)
+  (is (string? screen))
+  (mount/stop #'rems.css.styles/screen))

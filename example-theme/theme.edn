@@ -5,14 +5,31 @@
  :color4 "#830051"
  :nav-color "#595959"
  :nav-active-color "#830051"
- :info-bgcolor "#d9edf7"
- :danger-bgcolor "#f2dede"
- :success-bgcolor "#dff0d8"
- :warning-bgcolor "#fcf8e3"
- :info-color "#31708f"
- :danger-color "#a94442"
- :success-color "#3c763d"
- :warning-color "#8a6d3b"
+
+ :alert-success-color "#3c763d"
+ :alert-success-bgcolor "#dff0d8"
+ :alert-success-bordercolor "#3c763d"
+ :text-success "#28a745!important" ; .text and .bg colors need !important to take hold
+ :bg-success "#28a745!important"
+
+ :alert-danger-color "#a94442"
+ :alert-danger-bgcolor "#f2dede"
+ :alert-danger-bordercolor "#a94442"
+ :text-danger "#dc3545!important"
+ :bg-danger "#dc3545!important"
+
+ :alert-warning-color "#8a6d3b"
+ :alert-warning-bgcolor "#fcf8e3"
+ :alert-warning-bordercolor "#8a6d3b"
+ :text-warning "#ffc107!important"
+ :bg-warning "#ffc107!important"
+
+ :alert-info-color "#31708f"
+ :alert-info-bgcolor "#d9edf7"
+ :alert-info-bordercolor "#31708f"
+ :text-info "#17a2b8!important"
+ :bg-info "#17a2b8!important"
+
  :img-path "/img/"
  :logo-bgcolor nil
  :logo-name "rems_logo_en.png"
