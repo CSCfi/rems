@@ -40,4 +40,5 @@
                                        :user user-id}))]
     (doseq [[index item] (map-indexed vector items)]
       (create-form-item! user-id form-id index item))
-    {:id form-id}))
+    {:success (not (nil? form-id))
+     :id form-id}))
