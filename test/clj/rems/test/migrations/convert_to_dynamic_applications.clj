@@ -68,7 +68,7 @@
 (deftest test-migration
   (let [applications (applications/get-applications-impl-batch "whatever" {})
         application (->> applications
-                         (filter #(= 1 (:id %)))
+                         (filter #(= 2 (:id %)))
                          (first))
         dynamic-workflows (->> (workflow/get-workflows {})
                                (filter #(= "workflow/dynamic" (get-in % [:workflow :type]))))
@@ -79,46 +79,87 @@
     (println "--- before ---")
     (pprint application)
     (migrate-catalogue-items! (:id new-workflow))
+    (migrate-application! 1 (:id new-workflow))
     (migrate-application! (:id application) (:id new-workflow))
     (println "--- after ---")
     (pprint (applications/get-application-state (:id application))))
 
-  (let [application (applications/get-application-state 1)]
-    (is (= {:id 1
-            :description "draft application"
-            :applicantuserid "developer"
-            :dynamic-events [{:event/type :application.event/created
-                              :event/actor "developer"
-                              :event/time test-data/creation-time
-                              :event/id 46
-                              :application/id 1
-                              :application/resources [{:catalogue-item/id 2
-                                                       :resource/ext-id "urn:nbn:fi:lb-201403262"}]
-                              :application/licenses [{:license/id 1}
-                                                     {:license/id 2}]
-                              :form/id 1
-                              :workflow/id 7
-                              :workflow/type :workflow/dynamic
-                              :workflow.dynamic/handlers #{"developer"}}
-                             {:event/type :application.event/draft-saved
-                              :event/actor "developer"
-                              :event/time test-data/creation-time
-                              :event/id 47
-                              :application/id 1
-                              :application/field-values {1 "draft application"
-                                                         2 "draft application"
-                                                         3 "draft application"
-                                                         4 ""
-                                                         5 "draft application"
-                                                         6 "draft application"
-                                                         7 "draft appl"
-                                                         8 "draft application"}
-                              :application/accepted-licenses #{1 2}}]
-            :state :rems.workflow.dynamic/draft
-            :workflow {:type :workflow/dynamic
-                       :handlers ["developer"]}}
-           (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow])))))
+  (let [event-id-seq (atom 45)
+        next-event-id #(swap! event-id-seq inc)]
 
+    (let [app-id 1
+          application (applications/get-application-state app-id)]
+      (is (= {:id app-id
+              :description "draft application"
+              :applicantuserid "developer"
+              :dynamic-events [{:event/type :application.event/created
+                                :event/actor "developer"
+                                :event/time test-data/creation-time
+                                :event/id (next-event-id)
+                                :application/id app-id
+                                :application/resources [{:catalogue-item/id 2
+                                                         :resource/ext-id "urn:nbn:fi:lb-201403262"}]
+                                :application/licenses [{:license/id 1}
+                                                       {:license/id 2}]
+                                :form/id 1
+                                :workflow/id 7
+                                :workflow/type :workflow/dynamic
+                                :workflow.dynamic/handlers #{"developer"}}
+                               {:event/type :application.event/draft-saved
+                                :event/actor "developer"
+                                :event/time test-data/creation-time
+                                :event/id (next-event-id)
+                                :application/id app-id
+                                :application/field-values {1 "draft application"
+                                                           2 "draft application"
+                                                           3 "draft application"
+                                                           4 ""
+                                                           5 "draft application"
+                                                           6 "draft application"
+                                                           7 "draft appl"
+                                                           8 "draft application"}
+                                :application/accepted-licenses #{1 2}}]
+              :state :rems.workflow.dynamic/draft
+              :workflow {:type :workflow/dynamic
+                         :handlers ["developer"]}}
+             (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow]))))
 
+    (let [app-id 2
+          application (applications/get-application-state app-id)]
+      (is (= {:id app-id
+              :description "applied application"
+              :applicantuserid "developer"
+              :dynamic-events [{:event/type :application.event/created
+                                :event/actor "developer"
+                                :event/time test-data/creation-time
+                                :event/id (next-event-id)
+                                :application/id app-id
+                                :application/resources [{:catalogue-item/id 2
+                                                         :resource/ext-id "urn:nbn:fi:lb-201403262"}]
+                                :application/licenses [{:license/id 1}
+                                                       {:license/id 2}]
+                                :form/id 1
+                                :workflow/id 7
+                                :workflow/type :workflow/dynamic
+                                :workflow.dynamic/handlers #{"developer"}}
+                               {:event/type :application.event/draft-saved
+                                :event/actor "developer"
+                                :event/time test-data/creation-time
+                                :event/id (next-event-id)
+                                :application/id app-id
+                                :application/field-values {1 "applied application"
+                                                           2 "applied application"
+                                                           3 "applied application"
+                                                           4 ""
+                                                           5 "applied application"
+                                                           6 "applied application"
+                                                           7 "applied ap"
+                                                           8 "applied application"}
+                                :application/accepted-licenses #{1 2}}]
+              :state :rems.workflow.dynamic/draft
+              :workflow {:type :workflow/dynamic
+                         :handlers ["developer"]}}
+             (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow]))))))
 
-
+(comment
+  (user/run-tests 'rems.test.migrations.convert-to-dynamic-applications))
