@@ -15,6 +15,10 @@
   :once
   api-fixture)
 
+(defn migrate-catalogue-items! [workflow-id]
+  (jdbc/with-db-connection [conn *db*]
+    (jdbc/execute! conn ["update catalogue_item set wfid = ?" workflow-id])))
+
 (defn migrate-application! [application-id workflow-id]
   (let [read-user (->> (users/get-all-users)
                        (map (fn [user] (assoc user :roles (roles/get-roles (:eppn user)))))
@@ -61,12 +65,9 @@
     (assert application)
     (assert (= 1 (count dynamic-workflows)))
 
-    (jdbc/with-db-connection [conn *db*]
-      ;; use the dynamic workflow
-      (jdbc/execute! conn ["update catalogue_item set wfid = ?" (:id new-workflow)]))
-
     (println "--- before ---")
     (pprint application)
+    (migrate-catalogue-items! (:id new-workflow))
     (migrate-application! (:id application) (:id new-workflow))
     (println "--- after ---")
     (pprint (applications/get-application-state (:id application))))
