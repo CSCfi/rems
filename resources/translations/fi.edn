@@ -333,9 +333,6 @@
                :administration "Ylläpito"
                :applications "Hakemukset"
                :catalogue "Aineistoluettelo"
-               :create-catalogue-item "Luo uusi aineisto luetteloon"
-               :create-license "Luo lisenssi"
-               :create-resource "Luo resurssi"
                :home "Etusivu"
                :login "Kirjaudu sisään"
                :logout "Kirjaudu ulos"}
