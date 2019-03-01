@@ -15,16 +15,16 @@
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn- format-errors [errors]
-  [:div (for [error errors]
+  (into [:div]
+        (for [error errors]
           [:p
            (when (:key error)
-             (str (text (:key error))))
+             (text (:key error)))
            (when (:type error)
-             (str (text (:type error))))
-           (when-let [text (:status-text error)]
-             (str text))
+             (text (:type error)))
+           (when-let [text (:status-text error)] text)
            (when-let [text (:status error)]
-             (str " (" text ")"))])])
+             (str " (" text ")"))])))
 
 (defn- status-widget [success? error-content]
   (cond
