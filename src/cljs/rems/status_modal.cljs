@@ -115,7 +115,7 @@
   by currying."
   [on-close response]
   (if (:success response)
-    (set-success! {:on-close on-close})
+    (set-success! {:on-close (partial on-close response)})
     (set-error! {:result response})))
 
 (defn common-error-handler!
