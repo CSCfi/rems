@@ -65,7 +65,7 @@
         content [:div [status-widget success? error-content] content]]
     (when open?
       [modal/notification {:title title
-                           :title-class (when errors "alert alert-danger")
+                           :title-class (when (or errors error-content) "alert alert-danger")
                            :content content
                            :on-close (fn []
                                        (rf/dispatch [::set-state nil])
