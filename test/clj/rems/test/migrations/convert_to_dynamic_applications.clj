@@ -37,13 +37,6 @@
       ;; delete old events
       (jdbc/execute! conn ["delete from application_event where appid = ?" (:id application)]))
 
-    ;; TODO: migrate "autoapprove"
-    ;; TODO: migrate "review"
-    ;; TODO: migrate "third-party-review"
-    ;; TODO: migrate "review-request"
-    ;; TODO: migrate "withdraw"
-    ;; TODO: migrate "close"
-
     (applications/add-application-created-event! {:application-id (:id application)
                                                   :catalogue-item-ids (->> (:catalogue-items application)
                                                                            (map :id))
@@ -78,6 +71,7 @@
                                                     :event/actor (:userid event)
                                                     :application/id (:id application)
                                                     :application/comment (:comment event)})
+        "autoapprove" (assert false "not implemented") ; TODO: migrate "autoapprove"
         "return" (applications/add-dynamic-event! {:event/type :application.event/returned
                                                    :event/time (:time event)
                                                    :event/actor (:userid event)
@@ -89,7 +83,11 @@
                                                    :application/id (:id application)
                                                    ;; TODO: request-id doesn't make much sense for these old applications
                                                    :application/request-id (UUID. 0 0)
-                                                   :application/comment (:comment event)})))))
+                                                   :application/comment (:comment event)})
+        "third-party-review" (assert false "not implemented") ; TODO: migrate "third-party-review"
+        "review-request" (assert false "not implemented") ; TODO: migrate "review-request"
+        "withdraw" (assert false "not implemented") ; TODO: migrate "withdraw"
+        "close" (assert false "not implemented"))))) ; TODO: migrate "close"
 
 (deftest test-migration
   (let [applications (applications/get-applications-impl-batch "whatever" {})
