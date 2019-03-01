@@ -9,7 +9,8 @@
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
             [rems.migrations.convert-to-dynamic-applications :refer :all]
-            [rems.test.api :refer [api-fixture]]))
+            [rems.test.api :refer [api-fixture]])
+  (:import [java.util UUID]))
 
 (use-fixtures
   :once
@@ -80,12 +81,19 @@
                                                    :event/time (:time event)
                                                    :event/actor (:userid event)
                                                    :application/id (:id application)
+                                                   :application/comment (:comment event)})
+        "review" (applications/add-dynamic-event! {:event/type :application.event/commented
+                                                   :event/time (:time event)
+                                                   :event/actor (:userid event)
+                                                   :application/id (:id application)
+                                                   ;; TODO: request-id doesn't make much sense for these old applications
+                                                   :application/request-id (UUID. 0 0)
                                                    :application/comment (:comment event)})))))
 
 (deftest test-migration
   (let [applications (applications/get-applications-impl-batch "whatever" {})
         application (->> applications
-                         (filter #(= 8 (:id %)))
+                         (filter #(= 9 (:id %)))
                          first)
         dynamic-workflows (->> (workflow/get-workflows {})
                                (filter #(= "workflow/dynamic" (get-in % [:workflow :type]))))
@@ -101,6 +109,7 @@
     (migrate-application! 3 (:id new-workflow))
     (migrate-application! 4 (:id new-workflow))
     (migrate-application! 5 (:id new-workflow))
+    (migrate-application! 8 (:id new-workflow))
     (migrate-application! (:id application) (:id new-workflow))
     (println "--- after ---")
     (pprint (applications/get-application-state (:id application))))
@@ -383,6 +392,61 @@
                                 :event/id (next-event-id)
                                 :application/id app-id}]
               :state :rems.workflow.dynamic/submitted
+              :workflow {:type :workflow/dynamic
+                         :handlers ["developer"]}}
+             (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow]))))
+
+    (let [app-id 9
+          application (applications/get-application-state app-id)]
+      (is (= {:id app-id
+              :description "application with review"
+              :applicantuserid "alice"
+              :dynamic-events [{:event/type :application.event/created
+                                :event/actor "alice"
+                                :event/time test-data/creation-time
+                                :event/id (next-event-id)
+                                :application/id app-id
+                                :application/resources [{:catalogue-item/id 4
+                                                         :resource/ext-id "urn:nbn:fi:lb-201403262"}]
+                                :application/licenses [{:license/id 1}
+                                                       {:license/id 2}]
+                                :form/id 1
+                                :workflow/id 7
+                                :workflow/type :workflow/dynamic
+                                :workflow.dynamic/handlers #{"developer"}}
+                               {:event/type :application.event/draft-saved
+                                :event/actor "alice"
+                                :event/time test-data/creation-time
+                                :event/id (next-event-id)
+                                :application/id app-id
+                                :application/field-values {1 "application with review"
+                                                           2 "application with review"
+                                                           3 "application with review"
+                                                           4 ""
+                                                           5 "application with review"
+                                                           6 "application with review"
+                                                           7 "applicatio"
+                                                           8 "application with review"}
+                                :application/accepted-licenses #{1 2}}
+                               {:event/type :application.event/submitted
+                                :event/actor "alice"
+                                :event/time (-> application :dynamic-events (nth 2) :event/time)
+                                :event/id (next-event-id)
+                                :application/id app-id}
+                               {:event/type :application.event/commented
+                                :event/actor "carl"
+                                :event/time (-> application :dynamic-events (nth 3) :event/time)
+                                :event/id (next-event-id)
+                                :application/id app-id
+                                :application/request-id (UUID/fromString "00000000-0000-0000-0000-000000000000")
+                                :application/comment "comment for review"}
+                               {:event/type :application.event/approved
+                                :event/actor "developer"
+                                :event/time (-> application :dynamic-events (nth 4) :event/time)
+                                :event/id (next-event-id)
+                                :application/id app-id
+                                :application/comment "comment for approval"}]
+              :state :rems.workflow.dynamic/approved
               :workflow {:type :workflow/dynamic
                          :handlers ["developer"]}}
              (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow]))))))
