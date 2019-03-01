@@ -85,8 +85,8 @@
 (deftest test-migration
   (let [applications (applications/get-applications-impl-batch "whatever" {})
         application (->> applications
-                         (filter #(= 5 (:id %)))
-                         (first))
+                         (filter #(= 8 (:id %)))
+                         first)
         dynamic-workflows (->> (workflow/get-workflows {})
                                (filter #(= "workflow/dynamic" (get-in % [:workflow :type]))))
         new-workflow (first dynamic-workflows)]
@@ -100,6 +100,7 @@
     (migrate-application! 2 (:id new-workflow))
     (migrate-application! 3 (:id new-workflow))
     (migrate-application! 4 (:id new-workflow))
+    (migrate-application! 5 (:id new-workflow))
     (migrate-application! (:id application) (:id new-workflow))
     (println "--- after ---")
     (pprint (applications/get-application-state (:id application))))
@@ -326,6 +327,62 @@
                                 :application/id app-id
                                 :application/comment "comment for return"}]
               :state :rems.workflow.dynamic/returned
+              :workflow {:type :workflow/dynamic
+                         :handlers ["developer"]}}
+             (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow]))))
+
+    (let [app-id 8
+          application (applications/get-application-state app-id)]
+      (is (= {:id app-id
+              :description "bundled application"
+              :applicantuserid "alice"
+              :dynamic-events [{:event/type :application.event/created
+                                :event/actor "alice"
+                                :event/time test-data/creation-time
+                                :event/id (next-event-id)
+                                :application/id app-id
+                                :application/resources [{:catalogue-item/id 2
+                                                         :resource/ext-id "urn:nbn:fi:lb-201403262"}
+                                                        {:catalogue-item/id 3
+                                                         :resource/ext-id "Extra Data"}]
+                                :application/licenses [{:license/id 1}
+                                                       {:license/id 2}
+                                                       {:license/id 3}]
+                                :form/id 1
+                                :workflow/id 7
+                                :workflow/type :workflow/dynamic
+                                :workflow.dynamic/handlers #{"developer"}}
+                               {:event/type :application.event/draft-saved
+                                :event/actor "alice"
+                                :event/time test-data/creation-time
+                                :event/id (next-event-id)
+                                :application/id app-id
+                                :application/field-values {1 "bundled application"
+                                                           2 "bundled application"
+                                                           3 "bundled application"
+                                                           4 ""
+                                                           5 "bundled application"
+                                                           6 "bundled application"
+                                                           7 "bundled ap"
+                                                           8 "bundled application"}
+                                :application/accepted-licenses #{1 2 3}}
+                               {:event/type :application.event/submitted
+                                :event/actor "alice"
+                                :event/time (-> application :dynamic-events (nth 2) :event/time)
+                                :event/id (next-event-id)
+                                :application/id app-id}
+                               {:event/type :application.event/returned
+                                :event/actor "developer"
+                                :event/time (-> application :dynamic-events (nth 3) :event/time)
+                                :event/id (next-event-id)
+                                :application/id app-id
+                                :application/comment "comment for return"}
+                               {:event/type :application.event/submitted
+                                :event/actor "alice"
+                                :event/time (-> application :dynamic-events (nth 4) :event/time)
+                                :event/id (next-event-id)
+                                :application/id app-id}]
+              :state :rems.workflow.dynamic/submitted
               :workflow {:type :workflow/dynamic
                          :handlers ["developer"]}}
              (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow]))))))
