@@ -658,12 +658,28 @@
         (is (not (:success result)))
         (is (= [{:type :forbidden}] (:errors result)))))))
 
+(defmacro assert-ex
+  "Like assert but throw the result with ex-info and not as string. "
+  ([x message]
+   `(when-not ~x
+      (throw (ex-info (str "Assert failed: " ~message "\n" (pr-str '~x))
+                      (merge ~message {:expression '~x}))))))
+
+
+(defmacro catch-ex
+  "Like `catch` but automatically unwraps possible exception to the result."
+  [& body]
+  `(try
+     ~@body
+     (catch RuntimeException e#
+               (ex-data e#))))
+
 (defn- apply-command
   ([application cmd]
    (apply-command application cmd nil))
   ([application cmd injections]
    (let [result (handle-command cmd application injections)
-         _ (assert (:success result) (str "command " cmd " failed with result " result))
+         _ (assert-ex (:success result) {:cmd cmd :result result})
          event (getx result :result)]
      (-> (apply-event application (:workflow application) event)
          (calculate-permissions event)))))
