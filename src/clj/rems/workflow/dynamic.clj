@@ -729,7 +729,7 @@
   `(try
      ~@body
      (catch RuntimeException e#
-               (ex-data e#))))
+       (ex-data e#))))
 
 (defn- apply-command
   ([application cmd]
