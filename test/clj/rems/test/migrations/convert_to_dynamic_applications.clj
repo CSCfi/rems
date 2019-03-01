@@ -92,8 +92,9 @@
 
 (deftest test-migration
   (let [applications (applications/get-applications-impl-batch "whatever" {})
+        application-id 10
         application (->> applications
-                         (filter #(= 9 (:id %)))
+                         (filter #(= application-id (:id %)))
                          first)
         dynamic-workflows (->> (workflow/get-workflows {})
                                (filter #(= "workflow/dynamic" (get-in % [:workflow :type]))))
@@ -110,6 +111,7 @@
     (migrate-application! 4 (:id new-workflow))
     (migrate-application! 5 (:id new-workflow))
     (migrate-application! 8 (:id new-workflow))
+    (migrate-application! 9 (:id new-workflow))
     (migrate-application! (:id application) (:id new-workflow))
     (println "--- after ---")
     (pprint (applications/get-application-state (:id application))))
@@ -447,6 +449,48 @@
                                 :application/id app-id
                                 :application/comment "comment for approval"}]
               :state :rems.workflow.dynamic/approved
+              :workflow {:type :workflow/dynamic
+                         :handlers ["developer"]}}
+             (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow]))))
+
+    (let [app-id 10
+          application (applications/get-application-state app-id)]
+      (is (= {:id app-id
+              :description "application in review"
+              :applicantuserid "alice"
+              :dynamic-events [{:event/type :application.event/created
+                                :event/actor "alice"
+                                :event/time test-data/creation-time
+                                :event/id (next-event-id)
+                                :application/id app-id
+                                :application/resources [{:catalogue-item/id 4
+                                                         :resource/ext-id "urn:nbn:fi:lb-201403262"}]
+                                :application/licenses [{:license/id 1}
+                                                       {:license/id 2}]
+                                :form/id 1
+                                :workflow/id 7
+                                :workflow/type :workflow/dynamic
+                                :workflow.dynamic/handlers #{"developer"}}
+                               {:event/type :application.event/draft-saved
+                                :event/actor "alice"
+                                :event/time test-data/creation-time
+                                :event/id (next-event-id)
+                                :application/id app-id
+                                :application/field-values {1 "application in review"
+                                                           2 "application in review"
+                                                           3 "application in review"
+                                                           4 ""
+                                                           5 "application in review"
+                                                           6 "application in review"
+                                                           7 "applicatio"
+                                                           8 "application in review"}
+                                :application/accepted-licenses #{1 2}}
+                               {:event/type :application.event/submitted
+                                :event/actor "alice"
+                                :event/time (-> application :dynamic-events (nth 2) :event/time)
+                                :event/id (next-event-id)
+                                :application/id app-id}]
+              :state :rems.workflow.dynamic/submitted
               :workflow {:type :workflow/dynamic
                          :handlers ["developer"]}}
              (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow]))))))
