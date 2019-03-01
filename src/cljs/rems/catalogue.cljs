@@ -18,7 +18,7 @@
  ::enter-page
  (fn [{:keys [db]} _]
    (if (roles/is-logged-in? (get-in db [:identity :roles]))
-     {:db (assoc db ::loading-catalogue? true)
+     {:db (assoc db ::catalogue nil)
       ::fetch-catalogue nil
       ::fetch-drafts nil}
      (unauthorized!))))
@@ -41,11 +41,8 @@
 (rf/reg-event-db
  ::fetch-catalogue-result
  (fn [db [_ catalogue]]
-   (-> db
-       (assoc ::catalogue catalogue)
-       (dissoc ::loading-catalogue?))))
+   (assoc db ::catalogue catalogue)))
 
-(rf/reg-sub ::loading-catalogue? (fn [db _] (::loading-catalogue? db)))
 (rf/reg-sub ::catalogue (fn [db _] (::catalogue db)))
 
 
@@ -119,7 +116,7 @@
         items @(rf/subscribe [::catalogue])]
     [:div
      [:h2 (text :t.catalogue/catalogue)]
-     (if (or (empty? items) @(rf/subscribe [::loading-catalogue?]))
+     (if (empty? items)
        [spinner/big]
        [:div
         [draft-application-list @(rf/subscribe [::draft-applications]) @language]
