@@ -110,6 +110,11 @@
    :application-id s/Num
    s/Keyword s/Any})
 
+(s/defschema AcceptInvitationResult
+  {:success s/Bool
+   (s/optional-key :application-id) s/Num
+   (s/optional-key :errors) [s/Any]})
+
 ;; Api implementation
 
 (defn- api-judge [{:keys [command application-id round comment actor]}]
@@ -143,12 +148,13 @@
   (let [is-handler? (or (contains? (set (applications/get-handlers (:application application))) user) ; old form
                         (contains? (get-in application [:application :possible-commands]) :see-everything))] ; dynamic
     (if is-handler?
-      application
+      (update-in application [:application] dissoc :invitation-tokens)
       (-> application
           (update-in [:application :events] hide-sensitive-events)
           (update-in [:application :dynamic-events] dynamic/hide-sensitive-dynamic-events)
           (update-in [:application :events] hide-users)
-          (update-in [:application :workflow] dissoc :handlers)))))
+          (update-in [:application :workflow] dissoc :handlers)
+          (update-in [:application] dissoc :invitation-tokens)))))
 
 (defn api-get-application [user-id application-id]
   (when (not (empty? (db/get-applications {:id application-id})))
@@ -199,7 +205,8 @@
 (defn- get-user-applications [user-id]
   ;; XXX: the old API doesn't know about members, so rems.db.applications/get-user-applications doesn't return applications where the user is a member
   ;; XXX: this code cannot be moved to rems.db.applications/get-user-applications because it would create cyclic dependencies
-  (let [old-applications (applications/get-user-applications user-id)
+  (let [old-applications (->> (applications/get-user-applications user-id)
+                              (map #(:application (hide-sensitive-information {:application %} user-id))))
         member-application-ids (->> (applications/get-dynamic-application-events-since 0)
                                     (reduce dynamic-roles/permissions-of-all-applications nil)
                                     (filter (fn [[_id app]]
@@ -262,6 +269,13 @@
                   (ok)
                   (content-type (:type attachment))))
           (not-found! "not found"))))
+
+    (POST "/accept-invitation" []
+      :summary "Accept an invitation by token"
+      :roles #{:logged-in}
+      :query-params [invitation-token :- (describe s/Str "invitation token")]
+      :return AcceptInvitationResult
+      (ok (applications/accept-invitation (getx-user-id) invitation-token)))
 
     (GET "/:application-id" []
       :summary "Get application by `application-id`"

@@ -29,6 +29,7 @@
 (def CommandTypes
   #{#_::accept-license
     #_::require-license
+    ::accept-invitation
     ::add-member
     ::invite-member
     ::approve
@@ -109,7 +110,12 @@
   (assoc EventBase
          :event/type (s/eq :application.event/member-invited)
          :application/member {:name s/Str
-                              :email s/Str}))
+                              :email s/Str}
+         :invitation/token s/Str))
+(s/defschema MemberJoinedEvent
+  (assoc EventBase
+         :event/type (s/eq :application.event/member-joined)
+         :invitation/token s/Str))
 (s/defschema MemberRemovedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/member-removed)
@@ -144,6 +150,7 @@
    :application.event/draft-saved DraftSavedEvent
    :application.event/member-added MemberAddedEvent
    :application.event/member-invited MemberInvitedEvent
+   :application.event/member-joined MemberJoinedEvent
    :application.event/member-removed MemberRemovedEvent
    :application.event/member-uninvited MemberUninvitedEvent
    :application.event/rejected RejectedEvent
@@ -199,6 +206,14 @@
 (defmethod hide-sensitive-dynamic-event-content :application.event/created
   [event]
   (dissoc event :workflow.dynamic/handlers))
+
+(defmethod hide-sensitive-dynamic-event-content :application.event/member-invited
+  [event]
+  (dissoc event :invitation/token))
+
+(defmethod hide-sensitive-dynamic-event-content :application.event/member-joined
+  [event]
+  (dissoc event :invitation/token))
 
 (defn hide-sensitive-dynamic-events [events]
   (->> events
@@ -263,6 +278,11 @@
   [application event]
   (-> application
       (permissions/give-role-to-users :member [(get-in event [:application/member :userid])])))
+
+(defmethod calculate-permissions :application.event/member-joined
+  [application event]
+  (-> application
+      (permissions/give-role-to-users :member [(:event/actor event)])))
 
 (defmethod calculate-permissions :application.event/member-removed
   [application event]
@@ -452,7 +472,17 @@
 
 (defmethod apply-event [:application.event/member-invited :workflow/dynamic]
   [application _workflow event]
-  (update application :invited-members #(vec (conj % (:application/member event)))))
+  (-> application
+      (update :invited-members #(vec (conj % (:application/member event))))
+      (update :invitation-tokens assoc (:invitation/token event) (:application/member event))))
+
+(defmethod apply-event [:application.event/member-joined :workflow/dynamic]
+  [application _workflow event]
+  (let [member-by-token ((:invitation-tokens application) (:invitation/token event))]
+    (-> application
+        (update :members #(vec (conj % {:userid (:event/actor event)})))
+        (update :invited-members #(remove #{member-by-token} %))
+        (update :invitation-tokens dissoc (:invitation/token event)))))
 
 (defmethod apply-event [:application.event/member-removed :workflow/dynamic]
   [application _workflow event]
@@ -500,6 +530,18 @@
   [injections application-id]
   (when-let [errors ((:validate-form injections) application-id)]
     {:errors errors}))
+
+(defn- valid-invitation-token? [application token]
+  (contains? (:invitation-tokens application) token))
+
+(defn- invitation-token-error
+  [application token]
+  (when-not (valid-invitation-token? application token)
+    {:errors [{:type :t.actions.errors/invalid-token :token token}]}))
+
+(defn already-member-error [injections application userid]
+  (when (contains? (set (map :userid (:members application))) userid)
+    {:errors [{:type :t.actions.errors/already-member :application-id (:id application)}]}))
 
 (defn- ok [event]
   {:success true
@@ -592,15 +634,29 @@
              :application/comment (:comment cmd)}))))
 
 (defmethod command-handler ::add-member
-  [cmd _application injections]
+  [cmd application injections]
   (or (valid-user-error injections (:userid (:member cmd)))
+      (already-member-error injections application (:userid (:member cmd)))
       (ok {:event/type :application.event/member-added
            :application/member (:member cmd)})))
 
 (defmethod command-handler ::invite-member
-  [cmd _application _injections]
+  [cmd _application injections]
   (ok {:event/type :application.event/member-invited
-       :application/member (:member cmd)}))
+       :application/member (:member cmd)
+       :invitation/token ((getx injections :secure-token))}))
+
+(defmethod command-handler ::accept-invitation
+  [cmd application injections]
+  (or (valid-user-error injections (:actor cmd))
+      (already-member-error injections application (:actor cmd))
+      (invitation-token-error application (:token cmd))
+      {:success true
+       :result {:event/type :application.event/member-joined
+                :event/time (:time cmd)
+                :event/actor (:actor cmd)
+                :application/id (:application-id cmd)
+                :invitation/token (:token cmd)}}))
 
 (defmethod command-handler ::remove-member
   [cmd application _injections]
@@ -635,7 +691,8 @@
     result))
 
 (defn handle-command [cmd application injections]
-  (let [permissions (permissions/user-permissions application (:actor cmd))]
+  (let [permissions (-> (permissions/user-permissions application (:actor cmd))
+                        (conj ::accept-invitation))]
     (if (contains? permissions (:type cmd))
       (-> (command-handler cmd application injections)
           (enrich-result cmd))
@@ -697,7 +754,8 @@
 (defn possible-commands
   "Returns the commands which the user is authorized to execute."
   [actor application-state]
-  (permissions/user-permissions application-state actor))
+  (-> (permissions/user-permissions application-state actor)
+      (conj ::accept-invitation)))
 
 (defn assoc-possible-commands [actor application-state]
   (assoc application-state
@@ -945,7 +1003,8 @@
                                     :event/actor "applicant"
                                     :workflow/type :workflow/dynamic
                                     :workflow.dynamic/handlers #{"assistant"}}])
-        injections {:valid-user? #{"somebody" "applicant"}}]
+        injections {:valid-user? #{"somebody" "applicant"}
+                    :secure-token (constantly "very-secure")}]
     (testing "invite two members by applicant"
       (is (= [{:name "Member Applicant 1" :email "member1@applicants.com"} {:name "Member Applicant 2" :email "member2@applicants.com"}]
              (:invited-members
@@ -953,6 +1012,11 @@
                               [{:type ::invite-member :actor "applicant" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
                                {:type ::invite-member :actor "applicant" :member {:name "Member Applicant 2" :email "member2@applicants.com"}}]
                               injections)))))
+    (is (= "very-secure"
+           (:invitation/token
+            (:result
+             (handle-command {:type ::invite-member :actor "applicant" :member {:name "Member Applicant 1" :email "member1@applicants.com"}} application injections))))
+        "should generate secure token")
     (testing "invite two members by handler"
       (let [application (apply-events application [{:event/type :application.event/submitted
                                                     :event/actor "applicant"}])]
@@ -980,6 +1044,73 @@
                (:invited-members
                 (apply-commands submitted
                                 [{:type ::invite-member :actor "assistant" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}]
+                                injections))))))))
+
+(deftest test-accept-invitation
+  (let [application (apply-events nil
+                                  [{:event/type :application.event/created
+                                    :event/actor "applicant"
+                                    :workflow/type :workflow/dynamic
+                                    :workflow.dynamic/handlers #{"assistant"}}
+                                   {:event/type :application.event/member-invited
+                                    :event/:actor "applicant"
+                                    :application/member {:name "Some Body" :email "somebody@applicants.com"}
+                                    :invitation/token "very-secure"}])
+        injections {:valid-user? #{"somebody" "somebody2" "applicant"}}]
+    (testing "invitation token is available before use"
+      (is (= ["very-secure"]
+             (keys (:invitation-tokens application)))))
+
+    (testing "invitation token is not available after use"
+      (is (empty?
+           (keys (:invitation-tokens
+                  (apply-commands application
+                                  [{:type ::accept-invitation :actor "somebody" :token "very-secure"}]
+                                  injections))))))
+
+    (testing "invited member can join draft"
+      (is (= [{:userid "applicant"} {:userid "somebody"}]
+             (:members
+              (apply-commands application
+                              [{:type ::accept-invitation :actor "somebody" :token "very-secure"}]
+                              injections)))))
+
+    (let [application (apply-events application
+                                    [{:event/type :application.event/member-added
+                                      :event/actor "applicant"
+                                      :application/member {:userid "somebody"}}])]
+      (testing "invited member can't join if they are already a member"
+        (is (= {:errors [{:type :t.actions.errors/already-member :application-id (:id application)}]}
+               (:result (catch-ex
+                         (apply-command application
+                                        {:type ::accept-invitation :actor "somebody" :token "very-secure"}
+                                        injections)))))))
+
+    (testing "invalid token can't be used to join"
+      (is (= {:errors [{:type :t.actions.errors/invalid-token :token "wrong-token"}]}
+             (:result
+              (catch-ex
+               (apply-commands application
+                               [{:type ::accept-invitation :actor "somebody" :token "wrong-token"}]
+                               injections))))))
+
+    (testing "token can't be used twice"
+      (is (= {:errors [{:type :t.actions.errors/invalid-token :token "very-secure"}]}
+             (:result
+              (catch-ex
+               (apply-commands application
+                               [{:type ::accept-invitation :actor "somebody" :token "very-secure"}
+                                {:type ::accept-invitation :actor "somebody2" :token "very-secure"}]
+                               injections))))))
+
+    (let [submitted (apply-events application
+                                  [{:event/type :application.event/submitted
+                                    :event/actor "applicant"}])]
+      (testing "invited member can join submitted application"
+        (is (= [{:userid "applicant"} {:userid "somebody"}]
+               (:members
+                (apply-commands application
+                                [{:type ::accept-invitation :actor "somebody" :token "very-secure"}]
                                 injections))))))))
 
 (deftest test-remove-member

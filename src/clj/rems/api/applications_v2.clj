@@ -63,6 +63,10 @@
   [application event]
   application)
 
+(defmethod event-type-specific-application-view :application.event/member-joined
+  [application event]
+  application)
+
 (defmethod event-type-specific-application-view :application.event/member-removed
   [application event]
   application)
@@ -510,7 +514,8 @@
 (defn- hide-sensitive-information [application]
   (-> application
       (update :application/events dynamic/hide-sensitive-dynamic-events)
-      (update :application/workflow dissoc :workflow.dynamic/handlers)))
+      (update :application/workflow dissoc :workflow.dynamic/handlers)
+      (dissoc :invitation-tokens)))
 
 (defn- apply-user-permissions [application user-id]
   (let [see-application? (permissions/has-any-role? application user-id)

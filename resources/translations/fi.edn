@@ -46,7 +46,10 @@
                   [:p "Sitoudut siihen, että et syötä REMS-demoon mitään tunnistettua tai tunnistettavissa olevaa luonnollista henkilöä koskevaa tietoa."]
                   [:h3 "Rahoittaja"]
                   [:p "CSC:n REMS-tuote on saanut rahoitusta Opetus- ja kulttuuriministeriöltä ja Suomen akatemialta (apurahat 271642 ja 263164 Biomedinfraa varten, joka on Suomen ELIXIR, BBMRI ja EATRIS-tutkimusinfrastruktuurisolmujen muodostama konsortio)."]]]}
-  :actions {:add-member "Add member"
+  :actions {:accept-invitation "Hyväksy kutsu"
+            :accept-invitation-success [:div [:p "Liittyminen hakemukseen onnistui."] [:p "Seuraavaksi pääset katsomaan hakemuksen tietoja."]]
+            :accept-invitation-already-member [:div. [:p "Olet jo jäsen."] [:p "Seuraavaksi pääset katsomaan hakemuksen tietoja."]]
+            :add-member "Lisää jäsen"
             :applicant "Hakija"
             :application "Hakemus"
             :approve "Hyväksy"
@@ -61,6 +64,7 @@
             :decide "Päätä"
             :description "Kuvaus"
             :empty "Sinulla ei ole hakemuksia käsiteltäväksi."
+            :errors {:invalid-token [:div [:p "Hakemukseen liittyminen epäonnistui."] [:p "Tarkista kutsukoodi " [:code "%1"]]]}
             :export-entitlements "Lataa käyttöoikeudet csv-tiedostona"
             :handled-approvals "Käsitellyt hakemukset"
             :handled-reviews "Käsitellyt katselmoinnit"
@@ -154,6 +158,7 @@
                                   :draft-saved "Muokattu"
                                   :member-added "Lisätty jäsen"
                                   :member-invited "Kutsuttu jäsen"
+                                  :member-joined "Jäsen liittyi"
                                   :member-removed "Poistettu jäsen"
                                   :member-uninvited "Poistettu jäsen"
                                   :rejected "Hylätty"

@@ -46,7 +46,10 @@
                   [:p "You agree not to introduce to REMS any information that relates to an identified or identifiable natural person."]
                   [:h3 "Acknowledgements"]
                   [:p "CSC’s work for REMS has been supported by the Ministry of Education and Culture of Finland and by Academy of Finland grants 271642 and 263164 to construct Biomedinfra, the Finnish consortium for ELIXIR, BBMRI and EATRIS ESFRI."]]]}
-  :actions {:add-member "Add member"
+  :actions {:accept-invitation "Accept invitation"
+            :accept-invitation-success [:div [:p "Joining the application was successful."] [:p "Next you will be taken to the application."]]
+            :accept-invitation-already-member [:div [:p "You are already a member."] [:p "Next you will be taken to the application."]]
+            :add-member "Add member"
             :applicant "Applicant"
             :application "Application"
             :approve "Approve"
@@ -61,6 +64,7 @@
             :decide "Decide"
             :description "Description"
             :empty "You don't have any applications to process."
+            :errors {:invalid-token [:div [:p "Joining the application failed."] [:p "Check the invitation token " [:code "%1"]]]}
             :export-entitlements "Export entitlements as csv"
             :handled-approvals "Handled applications"
             :handled-reviews "Handled reviews"
@@ -154,6 +158,7 @@
                                   :draft-saved "Modified"
                                   :member-added "Member added"
                                   :member-invited "Member invited"
+                                  :member-joined "Member joined"
                                   :member-removed "Member removed"
                                   :member-uninvited "Member uninvited"
                                   :rejected "Rejected"

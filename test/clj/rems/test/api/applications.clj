@@ -216,7 +216,8 @@
                 "application.event/draft-saved"
                 "application.event/submitted"]
                (map :event/type (get-in data [:application :dynamic-events]))))
-        (is (= ["rems.workflow.dynamic/remove-member"
+        (is (= ["rems.workflow.dynamic/accept-invitation"
+                "rems.workflow.dynamic/remove-member"
                 "rems.workflow.dynamic/uninvite-member"]
                (get-in data [:application :possible-commands])))))
 
@@ -232,6 +233,7 @@
                  "rems.workflow.dynamic/remove-member"
                  "rems.workflow.dynamic/invite-member"
                  "rems.workflow.dynamic/uninvite-member"
+                 "rems.workflow.dynamic/accept-invitation"
                  "see-everything"}
                (set (get-in data [:application :possible-commands]))))))
 
