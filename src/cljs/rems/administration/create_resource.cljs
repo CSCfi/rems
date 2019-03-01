@@ -52,7 +52,7 @@
    (status-modal/common-pending-handler! (text :t.administration/save))
    (post! "/api/resources/create"
           {:params request
-           :handler (partial status-modal/common-success-handler! #(dispatch! "#/administration/resources"))
+           :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/resources/" (:id %))))
            :error-handler status-modal/common-error-handler!})
    {}))
                                         ;

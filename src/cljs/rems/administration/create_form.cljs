@@ -132,7 +132,7 @@
  (fn [_ [_ request]]
    (status-modal/common-pending-handler! (text :t.administration/create-form))
    (post! "/api/forms/create" {:params request
-                               :handler (partial status-modal/common-success-handler! #(dispatch! "#/administration/forms"))
+                               :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/forms/" (:id %))))
                                :error-handler status-modal/common-error-handler!})
    {}))
 
