@@ -96,7 +96,8 @@
                                         :title (:title localization)
                                         :textcontent (:textcontent localization)
                                         :attachmentId (:attachment-id localization)}))
-    {:id licid}))
+    {:success (not (nil? licid))
+     :id licid}))
 
 (defn create-license-attachment! [{:keys [tempfile filename content-type]} user-id]
   (let [byte-array (with-open [input (FileInputStream. tempfile)
