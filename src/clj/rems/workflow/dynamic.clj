@@ -380,6 +380,7 @@
   (assoc application
          :state ::draft
          :applicantuserid (:event/actor event)
+         :members [{:userid (:event/actor event)}]
          :workflow {:type (:workflow/type event)
                     :handlers (vec (:workflow.dynamic/handlers event))}))
 
@@ -396,7 +397,6 @@
          :state ::submitted
          :commenters #{}
          :deciders #{}
-         :members [{:userid (:event/actor event)}]
          :previous-submitted-form-contents (:submitted-form-contents application)
          :submitted-form-contents (:form-contents application)))
 
