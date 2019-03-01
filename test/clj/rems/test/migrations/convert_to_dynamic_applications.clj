@@ -36,7 +36,6 @@
       ;; delete old events
       (jdbc/execute! conn ["delete from application_event where appid = ?" (:id application)]))
 
-    ;; TODO: migrate "save" or actually just the form values
     ;; TODO: migrate "apply"
     ;; TODO: migrate "approve"
     ;; TODO: migrate "autoapprove"
@@ -52,7 +51,19 @@
                                                   :catalogue-item-ids (->> (:catalogue-items application)
                                                                            (map :id))
                                                   :time (:start application)
-                                                  :actor (:applicantuserid application)})))
+                                                  :actor (:applicantuserid application)})
+    (applications/add-dynamic-event! {:event/type :application.event/draft-saved
+                                      :event/time (:start application)
+                                      :event/actor (:applicantuserid application)
+                                      :application/id (:id application)
+                                      :application/field-values (->> (:items form)
+                                                                     (map (fn [item]
+                                                                            [(:id item) (:value item)]))
+                                                                     (into {}))
+                                      :application/accepted-licenses (->> (:licenses form)
+                                                                          (filter :approved)
+                                                                          (map :id)
+                                                                          set)})))
 
 (deftest test-migration
   (let [applications (applications/get-applications-impl-batch "whatever" {})
@@ -74,23 +85,37 @@
 
   (let [application (applications/get-application-state 1)]
     (is (= {:id 1
-            :description "draft application",
-            :applicantuserid "developer",
-            :dynamic-events [{:event/type :application.event/created,
-                              :event/actor "developer",
+            :description "draft application"
+            :applicantuserid "developer"
+            :dynamic-events [{:event/type :application.event/created
+                              :event/actor "developer"
                               :event/time test-data/creation-time
-                              :event/id 46,
-                              :application/id 1,
-                              :application/resources [{:catalogue-item/id 2,
-                                                       :resource/ext-id "urn:nbn:fi:lb-201403262"}],
+                              :event/id 46
+                              :application/id 1
+                              :application/resources [{:catalogue-item/id 2
+                                                       :resource/ext-id "urn:nbn:fi:lb-201403262"}]
                               :application/licenses [{:license/id 1}
-                                                     {:license/id 2}],
-                              :form/id 1,
-                              :workflow/id 7,
-                              :workflow/type :workflow/dynamic,
-                              :workflow.dynamic/handlers #{"developer"}}]
-            :state :rems.workflow.dynamic/draft,
-            :workflow {:type :workflow/dynamic,
+                                                     {:license/id 2}]
+                              :form/id 1
+                              :workflow/id 7
+                              :workflow/type :workflow/dynamic
+                              :workflow.dynamic/handlers #{"developer"}}
+                             {:event/type :application.event/draft-saved
+                              :event/actor "developer"
+                              :event/time test-data/creation-time
+                              :event/id 47
+                              :application/id 1
+                              :application/field-values {1 "draft application"
+                                                         2 "draft application"
+                                                         3 "draft application"
+                                                         4 ""
+                                                         5 "draft application"
+                                                         6 "draft application"
+                                                         7 "draft appl"
+                                                         8 "draft application"}
+                              :application/accepted-licenses #{1 2}}]
+            :state :rems.workflow.dynamic/draft
+            :workflow {:type :workflow/dynamic
                        :handlers ["developer"]}}
            (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow])))))
 
