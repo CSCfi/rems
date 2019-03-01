@@ -115,17 +115,18 @@
        :items drafts}]]))
 
 (defn catalogue-page []
-  (let [language (rf/subscribe [:language])]
+  (let [language (rf/subscribe [:language])
+        items @(rf/subscribe [::catalogue])]
     [:div
      [:h2 (text :t.catalogue/catalogue)]
-     (if @(rf/subscribe [::loading-catalogue?])
+     (if (or (empty? items) @(rf/subscribe [::loading-catalogue?]))
        [spinner/big]
        [:div
         [draft-application-list @(rf/subscribe [::draft-applications]) @language]
         [:h4 (text :t.catalogue/apply-resources)]
         [cart/cart-list-container @language]
         [catalogue-list
-         {:items @(rf/subscribe [::catalogue])
+         {:items items
           :language @language
           :sorting (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))
           :filtering (assoc @(rf/subscribe [::filtering]) :set-filtering #(rf/dispatch [::set-filtering %]))
