@@ -58,7 +58,10 @@
     {:id wfid}))
 
 (defn create-workflow! [command]
-  (case (:type command)
-    :auto-approve (create-auto-approve-workflow! command)
-    :dynamic (create-dynamic-workflow! command)
-    :rounds (create-rounds-workflow! command)))
+  (let [result (case (:type command)
+                 :auto-approve (create-auto-approve-workflow! command)
+                 :dynamic (create-dynamic-workflow! command)
+                 :rounds (create-rounds-workflow! command))]
+    (merge
+     result
+     {:success (not (nil? (:id result)))})))
