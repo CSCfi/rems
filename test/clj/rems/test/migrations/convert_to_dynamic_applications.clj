@@ -36,10 +36,7 @@
       ;; delete old events
       (jdbc/execute! conn ["delete from application_event where appid = ?" (:id application)]))
 
-    ;; TODO: migrate "apply"
-    ;; TODO: migrate "approve"
     ;; TODO: migrate "autoapprove"
-    ;; TODO: migrate "reject"
     ;; TODO: migrate "return"
     ;; TODO: migrate "review"
     ;; TODO: migrate "third-party-review"
@@ -74,12 +71,17 @@
                                                    :event/time (:time event)
                                                    :event/actor (:userid event)
                                                    :application/id (:id application)
-                                                   :application/comment (:comment event)})))))
+                                                   :application/comment (:comment event)})
+        "approve" (applications/add-dynamic-event! {:event/type :application.event/approved
+                                                    :event/time (:time event)
+                                                    :event/actor (:userid event)
+                                                    :application/id (:id application)
+                                                    :application/comment (:comment event)})))))
 
 (deftest test-migration
   (let [applications (applications/get-applications-impl-batch "whatever" {})
         application (->> applications
-                         (filter #(= 3 (:id %)))
+                         (filter #(= 4 (:id %)))
                          (first))
         dynamic-workflows (->> (workflow/get-workflows {})
                                (filter #(= "workflow/dynamic" (get-in % [:workflow :type]))))
@@ -92,6 +94,7 @@
     (migrate-catalogue-items! (:id new-workflow))
     (migrate-application! 1 (:id new-workflow))
     (migrate-application! 2 (:id new-workflow))
+    (migrate-application! 3 (:id new-workflow))
     (migrate-application! (:id application) (:id new-workflow))
     (println "--- after ---")
     (pprint (applications/get-application-state (:id application))))
@@ -222,6 +225,54 @@
                                 :application/id app-id
                                 :application/comment "comment for rejection"}]
               :state :rems.workflow.dynamic/rejected
+              :workflow {:type :workflow/dynamic
+                         :handlers ["developer"]}}
+             (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow]))))
+
+    (let [app-id 4
+          application (applications/get-application-state app-id)]
+      (is (= {:id app-id
+              :description "accepted application"
+              :applicantuserid "developer"
+              :dynamic-events [{:event/type :application.event/created
+                                :event/actor "developer"
+                                :event/time test-data/creation-time
+                                :event/id (next-event-id)
+                                :application/id app-id
+                                :application/resources [{:catalogue-item/id 2
+                                                         :resource/ext-id "urn:nbn:fi:lb-201403262"}]
+                                :application/licenses [{:license/id 1}
+                                                       {:license/id 2}]
+                                :form/id 1
+                                :workflow/id 7
+                                :workflow/type :workflow/dynamic
+                                :workflow.dynamic/handlers #{"developer"}}
+                               {:event/type :application.event/draft-saved
+                                :event/actor "developer"
+                                :event/time test-data/creation-time
+                                :event/id (next-event-id)
+                                :application/id app-id
+                                :application/field-values {1 "accepted application"
+                                                           2 "accepted application"
+                                                           3 "accepted application"
+                                                           4 ""
+                                                           5 "accepted application"
+                                                           6 "accepted application"
+                                                           7 "accepted a"
+                                                           8 "accepted application"}
+                                :application/accepted-licenses #{1 2}}
+                               {:event/type :application.event/submitted
+                                :event/actor "developer"
+                                :event/time (-> application :dynamic-events (nth 2) :event/time)
+                                :event/id (next-event-id)
+                                :application/id app-id}
+                               {:event/type :application.event/approved
+                                :event/actor "developer"
+                                :event/time (-> application :dynamic-events (nth 3) :event/time)
+                                :event/id (next-event-id)
+                                :application/id app-id
+                                :application/comment "comment for approval"}]
+              :state :rems.workflow.dynamic/approved
               :workflow {:type :workflow/dynamic
                          :handlers ["developer"]}}
              (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow]))))))
