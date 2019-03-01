@@ -79,7 +79,7 @@
   current state. It's convenient here to set the `:title` of the operation.
 
   The modal will be shown."
-  [& [state]]
+  [state]
   (rf/dispatch [::set-state (merge {:open? true} state)]))
 
 (defn set-success!
