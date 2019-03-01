@@ -63,7 +63,13 @@
                                       :application/accepted-licenses (->> (:licenses form)
                                                                           (filter :approved)
                                                                           (map :id)
-                                                                          set)})))
+                                                                          set)})
+    (doseq [event (:events application)]
+      (case (:event event)
+        "apply" (applications/add-dynamic-event! {:event/type :application.event/submitted
+                                                  :event/time (:time event)
+                                                  :event/actor (:userid event)
+                                                  :application/id (:id application)})))))
 
 (deftest test-migration
   (let [applications (applications/get-applications-impl-batch "whatever" {})
@@ -155,11 +161,17 @@
                                                            6 "applied application"
                                                            7 "applied ap"
                                                            8 "applied application"}
-                                :application/accepted-licenses #{1 2}}]
-              :state :rems.workflow.dynamic/draft
+                                :application/accepted-licenses #{1 2}}
+                               {:event/type :application.event/submitted
+                                :event/actor "developer"
+                                :event/time (-> application :dynamic-events (nth 2) :event/time)
+                                :event/id (next-event-id)
+                                :application/id app-id}]
+              :state :rems.workflow.dynamic/submitted
               :workflow {:type :workflow/dynamic
                          :handlers ["developer"]}}
              (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow]))))))
 
 (comment
+  (applications/get-application-state 2)
   (user/run-tests 'rems.test.migrations.convert-to-dynamic-applications))
