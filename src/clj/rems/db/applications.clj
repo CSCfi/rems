@@ -1101,15 +1101,3 @@
              :errors (:errors response)})))
       {:success false
        :errors [{:type :t.actions.errors/invalid-token :token invitation-token}]}))
-
-(comment
-  (valid-invitation-token? "98553a586ab319eeede2e78959eb3ae4" 19)
-  (accept-invitation "frank" "98553a586ab319eeede2e78959eb3ae4")
-  (get-application-state 19)
-  (db/get-application-by-invitation-token {:token "98553a586ab319eeede2e78959eb3ae4"})
-  (dynamic-command! {:type :rems.workflow.dynamic/invite-member
-                     :actor "alice"
-                     :application-id 19
-                     :member {:name "Keijo Kenguru" :email "keijo.kenguru@mail.com"}
-                     :time (time/now)})
-  (db/get-invitation-tokens {}))
