@@ -63,6 +63,7 @@
                                                                           set)})
     (doseq [event (:events application)]
       (case (:event event)
+        "save" nil ; skip - the save-draft event is produced separately
         "apply" (applications/add-dynamic-event! {:event/type :application.event/submitted
                                                   :event/time (:time event)
                                                   :event/actor (:userid event)
