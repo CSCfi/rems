@@ -33,7 +33,7 @@
         (status-modal/set-success! {:content (text :t.actions/accept-invitation-success)
                                     :on-close #(dispatch! (str "#/application/" (:application-id response)))})
 
-        (= :t.actions.errors/already-member (:type (first (:errors response))))
+        (= :already-member (:type (first (:errors response))))
         (status-modal/set-success! {:content (text :t.actions/accept-invitation-already-member)
                                     :on-close #(dispatch! (str "#/application/" (:application-id (first (:errors response)))))})
 

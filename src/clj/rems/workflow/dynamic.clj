@@ -541,7 +541,7 @@
 
 (defn already-member-error [injections application userid]
   (when (contains? (set (map :userid (:members application))) userid)
-    {:errors [{:type :t.actions.errors/already-member :application-id (:id application)}]}))
+    {:errors [{:type :already-member :application-id (:id application)}]}))
 
 (defn- ok [event]
   {:success true
@@ -602,7 +602,7 @@
   [cmd application _injections]
   (or (actor-is-not-decider-error application cmd)
       (when-not (contains? #{:approved :rejected} (:decision cmd))
-       {:errors [{:type :invalid-decision :decision (:decision cmd)}]})
+        {:errors [{:type :invalid-decision :decision (:decision cmd)}]})
       (let [last-request-for-actor (get-in application [::latest-decision-request-by-user (:actor cmd)])]
         (ok {:event/type :application.event/decided
              :application/request-id last-request-for-actor
@@ -1080,7 +1080,7 @@
                                       :event/actor "applicant"
                                       :application/member {:userid "somebody"}}])]
       (testing "invited member can't join if they are already a member"
-        (is (= {:errors [{:type :t.actions.errors/already-member :application-id (:id application)}]}
+        (is (= {:errors [{:type :already-member :application-id (:id application)}]}
                (:result (catch-ex
                          (apply-command application
                                         {:type ::accept-invitation :actor "somebody" :token "very-secure"}
