@@ -53,10 +53,12 @@
     :asc))
 
 (defn- apply-sorting [column-definitions sort-column sort-order items]
-  (let [sorted (sort-by #(column-sort-value column-definitions sort-column %) items)]
-    (case sort-order
-      :asc sorted
-      :desc (reverse sorted))))
+  (sort-by #(column-sort-value column-definitions sort-column %)
+           (case sort-order
+             :desc #(compare %2 %1)
+             #(compare %1 %2))
+           items))
+
 
 (defn matches-filter [column-definitions col filter-value item]
   (let [actual-value (str (column-filter-value column-definitions col item))]
