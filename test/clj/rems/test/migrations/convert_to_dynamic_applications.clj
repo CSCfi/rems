@@ -1,4 +1,4 @@
-(ns ^:integration rems.test.migrations.convert-to-dynamic-applications
+(ns ^:focused ^:integration rems.test.migrations.convert-to-dynamic-applications
   (:require [clojure.pprint :refer [pprint]]
             [clojure.test :refer :all]
             [conman.core :as conman]

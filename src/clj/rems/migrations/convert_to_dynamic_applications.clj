@@ -70,7 +70,7 @@
                                                    :event/time (:time event)
                                                    :event/actor (:userid event)
                                                    :application/id (:id application)
-                                                   ;; TODO: request-id doesn't make much sense for these old applications
+                                                   ;; TODO: request-id doesn't make much sense for these old applications - make it optional?
                                                    :application/request-id (UUID. 0 0)
                                                    :application/comment (:comment event)})
         "third-party-review" (assert false "not implemented") ; TODO: migrate "third-party-review"
