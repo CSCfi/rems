@@ -1,3 +1,0 @@
-{:ns rems.migrations.convert-to-dynamic-applications
- :up-fn migrate-up
- :down-fn nil}
