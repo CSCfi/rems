@@ -2,6 +2,7 @@
   (:require [clojure.java.jdbc :as jdbc]
             [clojure.pprint :refer [pprint]]
             [clojure.test :refer :all]
+            [conman.core :as conman]
             [rems.db.applications :as applications]
             [rems.db.core :as db :refer [*db*]]
             [rems.db.roles :as roles]
@@ -17,8 +18,7 @@
   api-fixture)
 
 (defn migrate-catalogue-items! [workflow-id]
-  (jdbc/with-db-connection [conn *db*]
-    (jdbc/execute! conn ["update catalogue_item set wfid = ?" workflow-id])))
+  (jdbc/execute! *db* ["update catalogue_item set wfid = ?" workflow-id]))
 
 (defn migrate-application! [application-id workflow-id]
   (let [read-user (->> (users/get-all-users)
@@ -31,11 +31,10 @@
         workflow (workflow/get-workflow workflow-id)]
     (assert (= "workflow/dynamic" (get-in workflow [:workflow :type])))
 
-    (jdbc/with-db-connection [conn *db*]
-      ;; use the dynamic workflow
-      (jdbc/execute! conn ["update catalogue_item_application set wfid = ? where id = ?" (:id workflow) (:id application)])
-      ;; delete old events
-      (jdbc/execute! conn ["delete from application_event where appid = ?" (:id application)]))
+    ;; use the dynamic workflow
+    (jdbc/execute! *db* ["update catalogue_item_application set wfid = ? where id = ?" (:id workflow) (:id application)])
+    ;; delete old events
+    (jdbc/execute! *db* ["delete from application_event where appid = ?" (:id application)])
 
     (applications/add-application-created-event! {:application-id (:id application)
                                                   :catalogue-item-ids (->> (:catalogue-items application)
@@ -103,15 +102,16 @@
 
     (println "--- before ---")
     (pprint application)
-    (migrate-catalogue-items! (:id new-workflow))
-    (migrate-application! 1 (:id new-workflow))
-    (migrate-application! 2 (:id new-workflow))
-    (migrate-application! 3 (:id new-workflow))
-    (migrate-application! 4 (:id new-workflow))
-    (migrate-application! 5 (:id new-workflow))
-    (migrate-application! 8 (:id new-workflow))
-    (migrate-application! 9 (:id new-workflow))
-    (migrate-application! (:id application) (:id new-workflow))
+    (conman/with-transaction [*db* {:isolation :serializable}]
+      (migrate-catalogue-items! (:id new-workflow))
+      (migrate-application! 1 (:id new-workflow))
+      (migrate-application! 2 (:id new-workflow))
+      (migrate-application! 3 (:id new-workflow))
+      (migrate-application! 4 (:id new-workflow))
+      (migrate-application! 5 (:id new-workflow))
+      (migrate-application! 8 (:id new-workflow))
+      (migrate-application! 9 (:id new-workflow))
+      (migrate-application! (:id application) (:id new-workflow)))
     (println "--- after ---")
     (pprint (applications/get-application-state (:id application))))
 
