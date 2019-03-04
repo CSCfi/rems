@@ -44,8 +44,8 @@
 
 (defn- flip [order]
   (case order
-    :asc :desc
-    :desc :asc))
+    :desc :asc
+    :desc))
 
 (defn- change-sort-order [old-column old-order new-column]
   (if (= old-column new-column)
