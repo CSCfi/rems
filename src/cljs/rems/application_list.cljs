@@ -80,11 +80,11 @@
    (component-info component)
    (example "empty list"
             [component {:visible-columns +default-columns+
-                        :sorting {:sort-column :id, :sort-order :asc}
+                        :sorting {:sort-column :id :sort-order :asc}
                         :items []}])
    (example "applications, default order"
             [component {:visible-columns +default-columns+
-                        :sorting {:sort-column :id, :sort-order :asc}
+                        :sorting {:sort-column :id :sort-order :asc}
                         :items +example-applications+}])
    (example "applications, descending date, all columns"
             [component {:visible-columns +all-columns+
