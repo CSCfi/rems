@@ -88,5 +88,10 @@
                         :items +example-applications+}])
    (example "applications, descending date, all columns"
             [component {:visible-columns +all-columns+
-                        :sorting{:sort-column :created, :sort-order :desc}
+                        :sorting {:sort-column :created :sort-order :desc}
+                        :items +example-applications+}])
+   (example "applications, initially sorted by id descending, then resource descending"
+            [component {:visible-columns +all-columns+
+                        :sorting {:initial-sort [{:sort-column :id :sort-order :desc}
+                                                 {:sort-column :resource :sort-order :desc}]}
                         :items +example-applications+}])])

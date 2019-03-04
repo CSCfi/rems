@@ -59,6 +59,9 @@
              #(compare %1 %2))
            items))
 
+(defn- apply-initial-sorting [column-definitions initial-sort items]
+  (reduce (fn [items {:keys [sort-column sort-order]}]
+            (apply-sorting column-definitions sort-column sort-order items)) items initial-sort))
 
 (defn matches-filter [column-definitions col filter-value item]
   (let [actual-value (str (column-filter-value column-definitions col item))]
@@ -86,7 +89,9 @@
                                    (s/optional-key :filter-value) Applicable
                                    (s/optional-key :class) (s/cond-pre s/Str Applicable)}}
    :visible-columns [s/Keyword]
-   (s/optional-key :sorting) {(s/optional-key :sort-column) s/Keyword
+   (s/optional-key :sorting) {(s/optional-key :initial-sort) [{:sort-column s/Keyword
+                                                               (s/optional-key :sort-order) (s/enum :asc :desc)}]
+                              (s/optional-key :sort-column) s/Keyword
                               (s/optional-key :sort-order) (s/enum :asc :desc)
                               (s/optional-key :set-sorting) Applicable}
    (s/optional-key :filtering) {(s/optional-key :filters) {s/Keyword s/Str}
@@ -151,11 +156,12 @@
                [column-filter-view column column-definitions filtering])))]))
 
 (defn- body [{:keys [column-definitions visible-columns sorting filtering id-function items class] :as params}]
-  (let [{:keys [sort-column sort-order set-sorting]} sorting
+  (let [{:keys [initial-sort sort-column sort-order set-sorting]} sorting
         {:keys [show-filters filters set-filtering]} filtering]
     [:tbody
      (map (fn [item] ^{:key (id-function item)} [row column-definitions visible-columns item])
           (cond->> items
+            (and initial-sort (not sort-column)) (apply-initial-sorting column-definitions initial-sort)
             (and filtering filters) (apply-filtering column-definitions filters)
             (and sorting sort-column) (apply-sorting column-definitions sort-column sort-order)))]))
 
@@ -176,6 +182,7 @@
   `:visible-columns`    - a sequence of keys that occur in column-definitions
 
   `:sorting`            - sorting options map with keys
+    `:initial-sort`     - seq of {`:sort-column` :xxx} and optionally `:sort-order` to initially sort by
     `:sort-column`      - the column to sort by
     `:sort-order`       - direction of sort (`:asc` or `:desc`)
     `:set-sorting`      - callback that is called when sorting changes
