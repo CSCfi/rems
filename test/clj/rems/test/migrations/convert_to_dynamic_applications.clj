@@ -7,7 +7,8 @@
             [rems.db.test-data :as test-data]
             [rems.db.workflow :as workflow]
             [rems.migrations.convert-to-dynamic-applications :refer :all]
-            [rems.test.api :refer [api-fixture]])
+            [rems.test.api :refer [api-fixture]]
+            [rems.validate :as validate])
   (:import [java.util UUID]))
 
 (use-fixtures
@@ -39,7 +40,9 @@
       (migrate-application! 9 (:id new-workflow))
       (migrate-application! (:id application) (:id new-workflow)))
     (println "--- after ---")
-    (pprint (applications/get-application-state (:id application))))
+    (pprint (applications/get-application-state (:id application)))
+    ;; validation already happens when the events are written, but just in case...
+    (is (empty? (validate/validate))))
 
   (let [event-id-seq (atom 45)
         next-event-id #(swap! event-id-seq inc)]
