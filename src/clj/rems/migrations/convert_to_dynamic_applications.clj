@@ -45,7 +45,7 @@
                                                                           set)})
     (doseq [event (:events application)]
       (case (:event event)
-        "save" nil ; skip - the save-draft event is produced separately
+        "save" nil ; skip - the draft-saved event is produced separately and the legacy applications don't have form history
         "apply" (applications/add-dynamic-event! {:event/type :application.event/submitted
                                                   :event/time (:time event)
                                                   :event/actor (:userid event)
@@ -79,14 +79,13 @@
                                                    :application/comment (:comment event)})
         "review-request" (applications/add-dynamic-event! {:event/type :application.event/comment-requested
                                                            :event/time (:time event)
-                                                           ;; TODO: it's not known that who made the review request; can we guess the approver?
+                                                           ;; TODO: the review request's actor is not known; can we guess the approver?
                                                            :event/actor (:userid event)
                                                            :application/id (:id application)
-                                                           :application/request-id (do
-                                                                                     (let [request-id (UUID/randomUUID)]
-                                                                                       (swap! comment-requests-by-commenter
-                                                                                              assoc (:userid event) request-id)
-                                                                                       request-id))
+                                                           :application/request-id (let [request-id (UUID/randomUUID)]
+                                                                                     (swap! comment-requests-by-commenter
+                                                                                            assoc (:userid event) request-id)
+                                                                                     request-id)
                                                            :application/commenters [(:userid event)]
                                                            :application/comment (:comment event)})
         "third-party-review" (applications/add-dynamic-event! {:event/type :application.event/commented
