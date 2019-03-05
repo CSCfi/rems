@@ -289,7 +289,7 @@
     (get-catalogue-items (mapv :item application-items)
                          localized-items)))
 
-(defn- get-applications-impl-batch
+(defn get-applications-impl-batch
   "Prefetches all possibly relevant data from the database and returns all the applications, according to the query parameters, with all the events
   and catalogue items associated with them."
   [user-id query-params]

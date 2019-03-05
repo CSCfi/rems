@@ -21,7 +21,8 @@
    (s/optional-key :state) (s/maybe s/Str)})
 
 (s/defschema CreateCatalogueItemResponse
-  CatalogueItem)
+  {:success s/Bool
+   :id s/Num})
 
 (s/defschema CreateCatalogueItemLocalizationCommand
   {:id s/Num

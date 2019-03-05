@@ -59,15 +59,14 @@
     (when (valid-request? request languages)
       (localize-item request default-language))))
 
-(defn- create-license! [_ [_ request]]
-  (status-modal/set-pending! {:title (text :t.administration/create-license)})
-  (post! "/api/licenses/create" {:params request
-                                 :handler (fn [result]
-                                              (status-modal/set-success! {:on-close #(dispatch! "/#/administration/licenses")}))
-                                 :error-handler #(status-modal/set-error! {:result {:error %}})})
-  {})
-
-(rf/reg-event-fx ::create-license create-license!)
+(rf/reg-event-fx
+ ::create-license
+ (fn [_ [_ request]]
+   (status-modal/common-pending-handler! (text :t.administration/create-license))
+   (post! "/api/licenses/create" {:params request
+                                  :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/licenses/" (:id %))))
+                                  :error-handler status-modal/common-error-handler!})
+   {}))
 
 (defn- save-attachment [language form-data]
   (post! (str "api/licenses/add_attachment")
