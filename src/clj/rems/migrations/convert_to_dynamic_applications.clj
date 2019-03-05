@@ -16,7 +16,8 @@
                       (:applicantuserid (applications/get-application-state application-id)))
         form (applications/get-form-for read-user application-id)
         application (:application form)
-        workflow (workflow/get-workflow workflow-id)]
+        workflow (workflow/get-workflow workflow-id)
+        comment-requests-by-commenter (atom {})]
     (assert (= "workflow/dynamic" (get-in workflow [:workflow :type])))
 
     ;; use the dynamic workflow
@@ -75,7 +76,23 @@
                                                    ;; TODO: request-id doesn't make much sense for these old applications - make it optional?
                                                    :application/request-id (UUID. 0 0)
                                                    :application/comment (:comment event)})
-        "third-party-review" (assert false "third-party-review not implemented") ; TODO: migrate "third-party-review"
-        "review-request" (assert false "review-request not implemented") ; TODO: migrate "review-request"
+        "review-request" (applications/add-dynamic-event! {:event/type :application.event/comment-requested
+                                                           :event/time (:time event)
+                                                           ;; TODO: it's not known that who made the review request; can we guess the approver?
+                                                           :event/actor (:userid event)
+                                                           :application/id (:id application)
+                                                           :application/request-id (do
+                                                                                     (let [request-id (UUID/randomUUID)]
+                                                                                       (swap! comment-requests-by-commenter
+                                                                                              assoc (:userid event) request-id)
+                                                                                       request-id))
+                                                           :application/commenters [(:userid event)]
+                                                           :application/comment (:comment event)})
+        "third-party-review" (applications/add-dynamic-event! {:event/type :application.event/commented
+                                                               :event/time (:time event)
+                                                               :event/actor (:userid event)
+                                                               :application/id (:id application)
+                                                               :application/request-id (get @comment-requests-by-commenter (:userid event))
+                                                               :application/comment (:comment event)})
         "withdraw" (assert false "withdraw not implemented") ; TODO: migrate "withdraw"
         "close" (assert false "close not implemented"))))) ; TODO: migrate "close"

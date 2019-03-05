@@ -94,7 +94,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
         next-event-id #(swap! event-id-seq inc)]
 
     (let [applications (applications/get-applications-impl-batch "whatever" {})
-          application-id 20
+          application-id 21
           application (->> applications
                            (filter #(= application-id (:id %)))
                            first)
@@ -116,6 +116,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
         (migrate-application! 8 (:id new-workflow))
         (migrate-application! 9 (:id new-workflow))
         (migrate-application! 10 (:id new-workflow))
+        (migrate-application! 20 (:id new-workflow))
         (migrate-application! (:id application) (:id new-workflow)))
       (println "--- after ---")
       (pprint (applications/get-application-state (:id application)))
@@ -542,6 +543,65 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :application/id app-id
                                 :application/comment ""}]
               :state :rems.workflow.dynamic/approved
+              :workflow {:type :workflow/dynamic
+                         :handlers ["developer"]}}
+             (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow]))))
+
+    (let [app-id 21
+          application (applications/get-application-state app-id)
+          request-id (-> application :dynamic-events (nth 3) :application/request-id)]
+      (is request-id)
+      (is (= {:id app-id
+              :description "third party review"
+              :applicantuserid "alice"
+              :dynamic-events [{:event/type :application.event/created
+                                :event/actor "alice"
+                                :event/time (-> application :dynamic-events (nth 0) :event/time)
+                                :event/id (next-event-id)
+                                :application/id app-id
+                                :application/resources [{:catalogue-item/id 2
+                                                         :resource/ext-id "urn:nbn:fi:lb-201403262"}]
+                                :application/licenses [{:license/id 1}
+                                                       {:license/id 2}]
+                                :form/id 1
+                                :workflow/id 7
+                                :workflow/type :workflow/dynamic
+                                :workflow.dynamic/handlers #{"developer"}}
+                               {:event/type :application.event/draft-saved
+                                :event/actor "alice"
+                                :event/time (-> application :dynamic-events (nth 1) :event/time)
+                                :event/id (next-event-id)
+                                :application/id app-id
+                                :application/field-values {1 "third party review"
+                                                           2 "third party review"
+                                                           3 ""
+                                                           4 ""
+                                                           5 ""
+                                                           6 ""
+                                                           7 ""
+                                                           8 ""}
+                                :application/accepted-licenses #{1 2}}
+                               {:event/type :application.event/submitted
+                                :event/actor "alice"
+                                :event/time (-> application :dynamic-events (nth 2) :event/time)
+                                :event/id (next-event-id)
+                                :application/id app-id}
+                               {:event/type :application.event/comment-requested
+                                :event/actor "carl" ;; TODO: should really be "developer" but the old event doesn't tell it
+                                :event/time (-> application :dynamic-events (nth 3) :event/time)
+                                :event/id (next-event-id)
+                                :application/id app-id
+                                :application/request-id request-id
+                                :application/commenters ["carl"]
+                                :application/comment "plz comment"}
+                               {:event/type :application.event/commented
+                                :event/actor "carl"
+                                :event/time (-> application :dynamic-events (nth 4) :event/time)
+                                :event/id (next-event-id)
+                                :application/id app-id
+                                :application/request-id request-id
+                                :application/comment "lgtm"}]
+              :state :rems.workflow.dynamic/submitted
               :workflow {:type :workflow/dynamic
                          :handlers ["developer"]}}
              (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow]))))))
