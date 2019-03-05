@@ -656,4 +656,3 @@ WHERE evt.eventdata->>'invitation/token' IS NOT NULL
 /*~ (when (:appid params) */
 AND appid = :appid
 /*~ ) ~*/
->>>>>>> feat: accept invitations
