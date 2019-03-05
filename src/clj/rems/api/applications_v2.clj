@@ -514,8 +514,7 @@
 (defn- hide-sensitive-information [application]
   (-> application
       (update :application/events dynamic/hide-sensitive-dynamic-events)
-      (update :application/workflow dissoc :workflow.dynamic/handlers)
-      (dissoc :invitation-tokens)))
+      (update :application/workflow dissoc :workflow.dynamic/handlers)))
 
 (defn- apply-user-permissions [application user-id]
   (let [see-application? (permissions/has-any-role? application user-id)
