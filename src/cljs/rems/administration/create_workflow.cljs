@@ -68,7 +68,7 @@
  (fn [_ [_ request]]
    (status-modal/common-pending-handler! (text :t.administration/create-workflow))
    (post! "/api/workflows/create" {:params request
-                                   :handler (partial status-modal/common-success-handler! #(dispatch! "#/administration/workflows"))
+                                   :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/workflows/" (:id %))))
                                    :error-handler status-modal/common-error-handler!})
    {}))
 

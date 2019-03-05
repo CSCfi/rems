@@ -64,7 +64,7 @@
  (fn [_ [_ request]]
    (status-modal/common-pending-handler! (text :t.administration/create-license))
    (post! "/api/licenses/create" {:params request
-                                  :handler (partial status-modal/common-success-handler! #(dispatch! "/#/administration/licenses"))
+                                  :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/licenses/" (:id %))))
                                   :error-handler status-modal/common-error-handler!})
    {}))
 
