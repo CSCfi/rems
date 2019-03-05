@@ -1,5 +1,6 @@
 (ns rems.migrations.convert-to-dynamic-applications
   (:require [clojure.java.jdbc :as jdbc]
+            [conman.core :as conman]
             [rems.db.applications :as applications]
             [rems.db.core :refer [*db*]]
             [rems.db.workflow :as workflow]
@@ -103,4 +104,16 @@
                                                   :event/time (:time event)
                                                   :event/actor (:userid event)
                                                   :application/id (:id application)
-                                                  :application/comment (:comment event)}))))) 
+                                                  :application/comment (:comment event)})))))
+
+(defn migrate-all-applications! [new-workflow-id]
+  (conman/with-transaction [*db* {:isolation :serializable}]
+    (let [new-workflow (workflow/get-workflow new-workflow-id)]
+      (assert (= "workflow/dynamic" (get-in new-workflow [:workflow :type])))
+
+      (migrate-catalogue-items! (:id new-workflow))
+      (doseq [application (->> (applications/get-applications-impl-batch "whatever" {})
+                               (remove applications/is-dynamic-application?))]
+        (println "Converting application" (:id application))
+        (migrate-application! (:id application) (:id new-workflow)))
+      (println "Done"))))
