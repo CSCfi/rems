@@ -93,19 +93,11 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
   (let [event-id-seq (atom (:currval (first (jdbc/query *db* ["select currval('application_event_id_seq')"]))))
         next-event-id #(swap! event-id-seq inc)]
 
-    (let [applications (applications/get-applications-impl-batch "whatever" {})
-          application-id 23
-          application (->> applications
-                           (filter #(= application-id (:id %)))
-                           first)
-          dynamic-workflows (->> (workflow/get-workflows {})
+    (let [dynamic-workflows (->> (workflow/get-workflows {})
                                  (filter #(= "workflow/dynamic" (get-in % [:workflow :type]))))
           new-workflow (first dynamic-workflows)]
-      (assert application)
       (assert (= 1 (count dynamic-workflows)))
-
-      (println "--- before ---")
-      (pprint application)
+      (assert new-workflow)
       (conman/with-transaction [*db* {:isolation :serializable}]
         (migrate-catalogue-items! (:id new-workflow))
         (migrate-application! 1 (:id new-workflow))
@@ -119,9 +111,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
         (migrate-application! 20 (:id new-workflow))
         (migrate-application! 21 (:id new-workflow))
         (migrate-application! 22 (:id new-workflow))
-        (migrate-application! (:id application) (:id new-workflow)))
-      (println "--- after ---")
-      (pprint (applications/get-application-state (:id application)))
+        (migrate-application! 23 (:id new-workflow)))
       ;; validation already happens when the events are written, but just in case...
       (is (empty? (validate/validate))))
 
@@ -711,5 +701,4 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
              (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow]))))))
 
 (comment
-  (applications/get-application-state 2)
   (user/run-tests 'rems.test.migrations.convert-to-dynamic-applications))
