@@ -99,4 +99,8 @@
                                                      :event/actor (:userid event)
                                                      :application/id (:id application)
                                                      :application/comment (:comment event)})
-        "close" (assert false "close not implemented"))))) ; TODO: migrate "close"
+        "close" (applications/add-dynamic-event! {:event/type :application.event/closed
+                                                  :event/time (:time event)
+                                                  :event/actor (:userid event)
+                                                  :application/id (:id application)
+                                                  :application/comment (:comment event)}))))) 
