@@ -88,12 +88,13 @@
   See `table/component`."
   [{:keys [items language sorting filtering config] :as params}]
   [table/component
-   (merge {:column-definitions (catalogue-columns language config)
-           :visible-columns [:name :commands]
-           :id-function :id
-           :items (filter :enabled items)
-           :class "catalogue"}
-          (select-keys [:sorting :filtering] params))])
+   {:column-definitions (catalogue-columns language config)
+    :visible-columns [:name :commands]
+    :id-function :id
+    :items (filter :enabled items)
+    :class "catalogue"
+    :sorting sorting
+    :filtering filtering}])
 
 (defn- format-catalogue-items [app]
   (str/join ", " (map :title (:catalogue-items app))))
