@@ -44,8 +44,8 @@
 
 (defn- flip [order]
   (case order
-    :asc :desc
-    :desc :asc))
+    :desc :asc
+    :desc))
 
 (defn- change-sort-order [old-column old-order new-column]
   (if (= old-column new-column)
@@ -53,10 +53,15 @@
     :asc))
 
 (defn- apply-sorting [column-definitions sort-column sort-order items]
-  (let [sorted (sort-by #(column-sort-value column-definitions sort-column %) items)]
-    (case sort-order
-      :asc sorted
-      :desc (reverse sorted))))
+  (sort-by #(column-sort-value column-definitions sort-column %)
+           (case sort-order
+             :desc #(compare %2 %1)
+             #(compare %1 %2))
+           items))
+
+(defn- apply-initial-sorting [column-definitions initial-sort items]
+  (reduce (fn [items {:keys [sort-column sort-order]}]
+            (apply-sorting column-definitions sort-column sort-order items)) items initial-sort))
 
 (defn matches-filter [column-definitions col filter-value item]
   (let [actual-value (str (column-filter-value column-definitions col item))]
@@ -84,7 +89,9 @@
                                    (s/optional-key :filter-value) Applicable
                                    (s/optional-key :class) (s/cond-pre s/Str Applicable)}}
    :visible-columns [s/Keyword]
-   (s/optional-key :sorting) {(s/optional-key :sort-column) s/Keyword
+   (s/optional-key :sorting) {(s/optional-key :initial-sort) [{:sort-column s/Keyword
+                                                               (s/optional-key :sort-order) (s/enum :asc :desc)}]
+                              (s/optional-key :sort-column) s/Keyword
                               (s/optional-key :sort-order) (s/enum :asc :desc)
                               (s/optional-key :set-sorting) Applicable}
    (s/optional-key :filtering) {(s/optional-key :filters) {s/Keyword s/Str}
@@ -94,6 +101,69 @@
    :items [s/Any]
    (s/optional-key :class) s/Str})
 
+(defn- filter-toggle [{:keys [show-filters set-filtering] :as filtering}]
+  (when filtering
+    [:div.rems-table-search-toggle.d-flex.flex-row-reverse
+     [:button.btn
+      {:class (if show-filters "btn-secondary" "btn-primary")
+       :on-click #(set-filtering (update filtering :show-filters not))}
+      (search-symbol)]]))
+
+(defn- column-header-view [column column-definitions sorting]
+  (let [{:keys [sort-column sort-order set-sorting]} sorting
+        sortable? (get-in column-definitions [column :sortable?] true)]
+    [:th
+     [:div.column-header
+      (when (and sortable? set-sorting)
+        {:on-click (fn []
+                     (set-sorting (-> sorting
+                                      (assoc :sort-column column)
+                                      (assoc :sort-order (change-sort-order sort-column sort-order column)))))})
+      (column-header column-definitions column)
+      " "
+      (when (= column sort-column)
+        (sort-symbol sort-order))]]))
+
+(defn- column-filter-view [column column-definitions filtering]
+  (let [{:keys [show-filters filters set-filtering]} filtering]
+    [:th
+     (when (get-in column-definitions [column :filterable?] true)
+       [:div.column-filter
+        [:input
+         {:type        "text"
+          :name        (str (name column) "-search")
+          :value       (str (column filters))
+          :placeholder ""
+          :on-input    (fn [event]
+                         (set-filtering
+                          (assoc-in filtering [:filters column] (-> event .-target .-value))))}]
+        (when (not= "" (get filters column ""))
+          [:div.reset-button.icon-link.fa.fa-backspace
+           {:on-click (fn []
+                        (set-filtering
+                         (assoc-in filtering [:filters column] "")))
+            :aria-hidden true}])])]))
+
+(defn- head [{:keys [column-definitions visible-columns sorting filtering id-function items class] :as params}]
+  (let [{:keys [show-filters]} filtering]
+    [:thead
+     (into [:tr]
+           (for [column visible-columns]
+             [column-header-view column column-definitions sorting]))
+     (when show-filters
+       (into [:tr]
+             (for [column visible-columns]
+               [column-filter-view column column-definitions filtering])))]))
+
+(defn- body [{:keys [column-definitions visible-columns sorting filtering id-function items class] :as params}]
+  (let [{:keys [initial-sort sort-column sort-order set-sorting]} sorting
+        {:keys [show-filters filters set-filtering]} filtering]
+    [:tbody
+     (map (fn [item] ^{:key (id-function item)} [row column-definitions visible-columns item])
+          (cond->> items
+            (and initial-sort (not sort-column)) (apply-initial-sorting column-definitions initial-sort)
+            (and filtering filters) (apply-filtering column-definitions filters)
+            (and sorting sort-column) (apply-sorting column-definitions sort-column sort-order)))]))
 
 (defn component
   "Table component.
@@ -112,6 +182,7 @@
   `:visible-columns`    - a sequence of keys that occur in column-definitions
 
   `:sorting`            - sorting options map with keys
+    `:initial-sort`     - seq of {`:sort-column` :xxx} and optionally `:sort-order` to initially sort by
     `:sort-column`      - the column to sort by
     `:sort-order`       - direction of sort (`:asc` or `:desc`)
     `:set-sorting`      - callback that is called when sorting changes
@@ -128,53 +199,9 @@
   See also `TableParams`."
   [{:keys [column-definitions visible-columns sorting filtering id-function items class] :as params}]
   {:pre [(s/validate TableParams params)]}
-  (let [{:keys [sort-column sort-order set-sorting]} sorting
-        {:keys [show-filters filters set-filtering]} filtering]
-    [:div
-     (when filtering
-       [:div.rems-table-search-toggle.d-flex.flex-row-reverse
-        [:button.btn
-         {:class (if show-filters "btn-secondary" "btn-primary")
-          :on-click #(set-filtering (update filtering :show-filters not))}
-         (search-symbol)]])
-     [:div.table-border
-      [:table.rems-table (when class {:class class})
-       [:thead
-        (into [:tr]
-              (for [column visible-columns
-                    :let [sortable? (get-in column-definitions [column :sortable?] true)]]
-                [:th
-                 [:div.column-header
-                  (when (and sortable? set-sorting)
-                    {:on-click (fn []
-                                 (set-sorting (-> sorting
-                                                  (assoc :sort-column column)
-                                                  (assoc :sort-order (change-sort-order sort-column sort-order column)))))})
-                  (column-header column-definitions column)
-                  " "
-                  (when (= column sort-column)
-                    (sort-symbol sort-order))]]))
-        (when show-filters
-          (into [:tr]
-                (for [column visible-columns]
-                  [:th
-                   (when (get-in column-definitions [column :filterable?] true)
-                     [:div.column-filter
-                      [:input
-                       {:type        "text"
-                        :name        (str (name column) "-search")
-                        :value       (str (column filters))
-                        :placeholder ""
-                        :on-input    (fn [event]
-                                       (set-filtering
-                                        (assoc-in filtering [:filters column] (-> event .-target .-value))))}]
-                      (when (not= "" (get filters column ""))
-                        [:div.reset-button.icon-link.fa.fa-backspace
-                         {:on-click (fn [] (set-filtering
-                                            (assoc-in filtering [:filters column] "")))
-                          :aria-hidden true}])])])))]
-       (into [:tbody]
-             (map (fn [item] ^{:key (id-function item)} [row column-definitions visible-columns item])
-                  (cond->> items
-                    (and filtering filters) (apply-filtering column-definitions filters)
-                    (and sorting sort-column) (apply-sorting column-definitions sort-column sort-order))))]]]))
+  [:div
+   [filter-toggle filtering]
+   [:div.table-border
+    [:table.rems-table (when class {:class class})
+     [head params]
+     [body params]]]])

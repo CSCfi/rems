@@ -90,7 +90,8 @@
            :id-function :id
            :items (filter :enabled items)
            :class "catalogue"}
-          (select-keys [:sorting :filtering] params))])
+          (when sorting {:sorting sorting})
+          (when filtering {:filtering filtering}))])
 
 (defn- format-catalogue-items [app]
   (str/join ", " (map :title (:catalogue-items app))))

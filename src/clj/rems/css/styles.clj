@@ -68,31 +68,7 @@
                           {:height (u/px 150)}]))
    (stylesheet/at-media {:min-width (u/px 992)}
                         (list
-                         [(s/descendant :.rems-table :td:before)
-                          {:display "none"}]
-                         [:.rems-table-search-toggle
-                          {:display "flex !important"
-                           :margin-top (u/px 20)}]
-                         [:.rems-table
-                          [:th
-                           :td
-                           {:display "table-cell"
-                            :vertical-align "top"}]]
-                         [:.rems-table
-                          [:.column-header
-                           {:white-space "nowrap"}]]
-                         [:.rems-table
-                          [:.column-filter
-                           {:position "relative"}
-                           [:input
-                            {:width "100%"}]
-                           [:.reset-button
-                            {:position "absolute"
-                             :right "0px"
-                             :top "50%"
-                             :margin-top "-0.5em"}]]] ; center vertically
-                         [:.language-switcher
-                          {:padding ".5em .5em"}]))
+                         [:.language-switcher {:padding ".5em .5em"}]))
    (stylesheet/at-media {:min-width (u/px 480)}
                         [:.commands {:white-space "nowrap"}])))
 
@@ -149,29 +125,29 @@
      {:color "#000"}]
     [:tr
      [(s/& (s/nth-child "2n")) {:background "#fff"}]]]
-   [:.rems-table-search-toggle ;; TODO: search fields are not visible in mobile mode
-    {:display "none !important"}]
    [:#event-table
     {:white-space "pre-wrap"}
     [:.date {:min-width "160px"}]]
    [:.table-border {:padding 0
                     :margin "1em 0"
                     :border (util/get-theme-attribute :table-border "1px solid #ccc")
-                    :border-radius (u/rem 0.4)}]
+                    :border-radius (u/rem 0.4)
+                    :overflow :hidden}]
    [:.rems-table {:min-width "100%"
                   :background-color (util/get-theme-attribute :table-bgcolor :color1)
                   :box-shadow (util/get-theme-attribute :table-shadow)
-                  :color (util/get-theme-attribute :table-text-color)
-                  :border-radius (u/rem 0.4)
-                  :overflow "hidden"}
+                  :color (util/get-theme-attribute :table-text-color)}
+    [:.column-header {:white-space "nowrap"}]
+    [:.column-filter {:position "relative"}
+     [:input
+      {:width "100%"}]
+     [:.reset-button
+      {:position "absolute"
+       :right "0px"
+       :top "50%"
+       :margin-top "-0.5em"}]]
     [:th {:color (util/get-theme-attribute :table-heading-color "#fff")
           :background-color (util/get-theme-attribute :table-heading-bgcolor :color3)}]
-    [:td {:display "block"}
-     [:&:before {:content "attr(data-th)\":\""
-                 :font-weight "bold"
-                 :margin-right (u/rem 0.5)
-                 :display "inline-block"}]
-     [:&:last-child:before {:content "attr(data-th)\"\""}]]
     [:th
      :td
      {:text-align "left"
@@ -304,8 +280,10 @@
                     :flex-direction :column
                     :flex-wrap :none
                     :min-height (u/px 300)
+                    :max-width (u/px 1200)
                     :flex-grow 1}]
    [(s/> :.spaced-sections "*:not(:first-child)") {:margin-top (u/rem 1)}]
+   [:.btn {:white-space :nowrap}]
    [:.btn-primary
     [:&:hover
      :&:focus
