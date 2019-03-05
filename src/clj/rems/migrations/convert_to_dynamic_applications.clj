@@ -2,20 +2,18 @@
   (:require [clojure.java.jdbc :as jdbc]
             [rems.db.applications :as applications]
             [rems.db.core :refer [*db*]]
-            [rems.db.roles :as roles]
-            [rems.db.users :as users]
-            [rems.db.workflow :as workflow])
+            [rems.db.workflow :as workflow]
+            [rems.db.workflow-actors :as actors])
   (:import [java.util UUID]))
 
 (defn migrate-catalogue-items! [workflow-id]
   (jdbc/execute! *db* ["update catalogue_item set wfid = ?" workflow-id]))
 
 (defn migrate-application! [application-id workflow-id]
-  (let [read-user (->> (users/get-all-users)
-                       (map (fn [user] (assoc user :roles (roles/get-roles (:eppn user)))))
-                       (filter (fn [user] (contains? (:roles user) :approver)))
-                       first
-                       :eppn)
+  (let [read-user (or (first (actors/get-by-role application-id "approver"))
+                      ;; auto-approved workflows do not have an approver,
+                      ;; so the applicant is the only one who can see the application
+                      (:applicantuserid (applications/get-application-state application-id)))
         form (applications/get-form-for read-user application-id)
         application (:application form)
         workflow (workflow/get-workflow workflow-id)]
@@ -60,7 +58,11 @@
                                                     :event/actor (:userid event)
                                                     :application/id (:id application)
                                                     :application/comment (:comment event)})
-        "autoapprove" (assert false "not implemented") ; TODO: migrate "autoapprove"
+        "autoapprove" (applications/add-dynamic-event! {:event/type :application.event/approved
+                                                        :event/time (:time event)
+                                                        :event/actor (:userid event)
+                                                        :application/id (:id application)
+                                                        :application/comment ""})
         "return" (applications/add-dynamic-event! {:event/type :application.event/returned
                                                    :event/time (:time event)
                                                    :event/actor (:userid event)
@@ -73,7 +75,7 @@
                                                    ;; TODO: request-id doesn't make much sense for these old applications - make it optional?
                                                    :application/request-id (UUID. 0 0)
                                                    :application/comment (:comment event)})
-        "third-party-review" (assert false "not implemented") ; TODO: migrate "third-party-review"
-        "review-request" (assert false "not implemented") ; TODO: migrate "review-request"
-        "withdraw" (assert false "not implemented") ; TODO: migrate "withdraw"
-        "close" (assert false "not implemented"))))) ; TODO: migrate "close"
+        "third-party-review" (assert false "third-party-review not implemented") ; TODO: migrate "third-party-review"
+        "review-request" (assert false "review-request not implemented") ; TODO: migrate "review-request"
+        "withdraw" (assert false "withdraw not implemented") ; TODO: migrate "withdraw"
+        "close" (assert false "close not implemented"))))) ; TODO: migrate "close"
