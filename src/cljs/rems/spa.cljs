@@ -234,7 +234,8 @@
      [nav/navigation-widget page-id]
      [status-modal/status-modal]
      [logo]
-     [:div.container.main-content [content]]
+     [:div.container-fluid.main-content
+       [content]]
      [footer]]))
 
 ;; -------------------------
