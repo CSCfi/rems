@@ -723,8 +723,8 @@
                       (merge ~message {:expression '~x}))))))
 
 
-(defmacro catch-ex
-  "Like `catch` but automatically unwraps possible exception to the result."
+(defmacro try-catch-ex
+  "Wraps the code in `try` and `catch` and automatically unwraps the possible exception `ex-data` into regular result."
   [& body]
   `(try
      ~@body
@@ -1081,7 +1081,7 @@
                                       :application/member {:userid "somebody"}}])]
       (testing "invited member can't join if they are already a member"
         (is (= {:errors [{:type :already-member :application-id (:id application)}]}
-               (:result (catch-ex
+               (:result (try-catch-ex
                          (apply-command application
                                         {:type ::accept-invitation :actor "somebody" :token "very-secure"}
                                         injections)))))))
@@ -1089,7 +1089,7 @@
     (testing "invalid token can't be used to join"
       (is (= {:errors [{:type :t.actions.errors/invalid-token :token "wrong-token"}]}
              (:result
-              (catch-ex
+              (try-catch-ex
                (apply-commands application
                                [{:type ::accept-invitation :actor "somebody" :token "wrong-token"}]
                                injections))))))
@@ -1097,7 +1097,7 @@
     (testing "token can't be used twice"
       (is (= {:errors [{:type :t.actions.errors/invalid-token :token "very-secure"}]}
              (:result
-              (catch-ex
+              (try-catch-ex
                (apply-commands application
                                [{:type ::accept-invitation :actor "somebody" :token "very-secure"}
                                 {:type ::accept-invitation :actor "somebody2" :token "very-secure"}]
