@@ -224,6 +224,8 @@
                      :event/type))
        (map hide-sensitive-dynamic-event-content)))
 
+(defn see-application? [application user-id]
+  (not= #{:everyone-else} (permissions/user-roles application user-id)))
 (defmulti calculate-permissions
   (fn [_application event] (:event/type event)))
 
@@ -243,7 +245,8 @@
                                   :commenter [:see-everything]
                                   :past-commenter [:see-everything]
                                   :decider [:see-everything]
-                                  :past-decider [:see-everything]})
+                                  :past-decider [:see-everything]
+                                  :everyone-else [::accept-invitation]})
 
 (def ^:private submitted-permissions {:applicant [::remove-member
                                                   ::uninvite-member]
@@ -265,7 +268,8 @@
 (def ^:private closed-permissions {:applicant []
                                    :handler [:see-everything]
                                    :commenter [:see-everything]
-                                   :decider [:see-everything]})
+                                   :decider [:see-everything]
+                                   :everyone-else nil})
 
 (defmethod calculate-permissions :application.event/created
   [application event]
@@ -375,7 +379,23 @@
       (is (= #{:see-everything ::decide}
              (permissions/user-permissions requested "decider")))
       (is (= #{:see-everything}
-             (permissions/user-permissions decided "decider"))))))
+             (permissions/user-permissions decided "decider")))))
+
+  (testing "everyone can accept invitation"
+    (let [created (reduce calculate-permissions nil [{:event/type :application.event/created
+                                                      :event/actor "applicant"
+                                                      :workflow.dynamic/handlers ["handler"]}])]
+      (is (= #{::accept-invitation}
+             (permissions/user-permissions created "joe")))))
+  (testing "nobody can accept invitation for closed application"
+    (let [created (reduce calculate-permissions nil [{:event/type :application.event/created
+                                                      :event/actor "applicant"
+                                                      :workflow.dynamic/handlers ["handler"]}
+                                                     {:event/type :application.event/closed
+                                                      :event/actor "applicant"}])]
+      (is (= #{}
+             (permissions/user-permissions created "joe")
+             (permissions/user-permissions created "applicant"))))))
 
 ;;; Application model
 
@@ -691,12 +711,12 @@
     result))
 
 (defn handle-command [cmd application injections]
-  (let [permissions (-> (permissions/user-permissions application (:actor cmd))
-                        (conj ::accept-invitation))]
+  (let [permissions (-> (permissions/user-permissions application (:actor cmd)))]
     (if (contains? permissions (:type cmd))
       (-> (command-handler cmd application injections)
           (enrich-result cmd))
-      {:errors [{:type :forbidden}]})))
+      {:errors (or (:errors (command-handler cmd application injections)) ; prefer more specific error
+                   [{:type :forbidden}])})))
 
 (deftest test-handle-command
   (let [application (apply-events nil [{:event/type :application.event/created
@@ -754,8 +774,7 @@
 (defn possible-commands
   "Returns the commands which the user is authorized to execute."
   [actor application-state]
-  (-> (permissions/user-permissions application-state actor)
-      (conj ::accept-invitation)))
+  (-> (permissions/user-permissions application-state actor)))
 
 (defn assoc-possible-commands [actor application-state]
   (assoc application-state
@@ -980,10 +999,10 @@
                               injections)))))
     (testing "only handler can add members"
       (is (= {:errors [{:type :forbidden}]}
-             (handle-command {:type ::add-member :actor "member1" :member "member1"}
+             (handle-command {:type ::add-member :actor "applicant" :member {:userid "member1"}}
                              application
                              injections)
-             (handle-command {:type ::add-member :actor "applicant" :member "member1"}
+             (handle-command {:type ::add-member :actor "member1" :member {:userid "member2"}}
                              application
                              injections))))
     (testing "only valid users can be added"
@@ -995,7 +1014,7 @@
       (is (-> (apply-commands application
                               [{:type ::add-member :actor "assistant" :member {:userid "member1"}}]
                               injections)
-              (permissions/has-any-role? "member1"))))))
+              (see-application? "member1"))))))
 
 (deftest test-invite-member
   (let [application (apply-events nil
@@ -1111,7 +1130,17 @@
                (:members
                 (apply-commands application
                                 [{:type ::accept-invitation :actor "somebody" :token "very-secure"}]
-                                injections))))))))
+                                injections)))))
+      (let [closed (apply-events submitted
+                                 [{:event/type :application.event/closed
+                                   :event/actor "applicant"}])]
+        (testing "invited member can't join a closed application"
+          (is (= {:errors [{:type :forbidden}]}
+                 (:result
+                  (try-catch-ex
+                   (apply-commands closed
+                                   [{:type ::accept-invitation :actor "somebody" :token "very-secure"}]
+                                   injections))))))))))
 
 (deftest test-remove-member
   (let [application (apply-events nil
@@ -1149,11 +1178,11 @@
                              injections))))
     (testing "removed members cannot see the application"
       (is (-> application
-              (permissions/has-any-role? "somebody")))
+              (see-application? "somebody")))
       (is (not (-> application
                    (apply-commands [{:type ::remove-member :actor "applicant" :member {:userid "somebody"}}]
                                    injections)
-                   (permissions/has-any-role? "somebody")))))))
+                   (see-application? "somebody")))))))
 
 
 (deftest test-uninvite-member

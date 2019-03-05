@@ -27,7 +27,10 @@
       (update ::user-roles dissoc-if-empty user)))
 
 (defn user-roles [application user]
-  (set (get-in application [::user-roles user])))
+  (let [specific-roles (set (get-in application [::user-roles user]))]
+    (if (seq specific-roles)
+      specific-roles
+      #{:everyone-else})))
 
 (deftest test-user-roles
   (testing "give first role"
@@ -61,19 +64,7 @@
                   (give-role-to-user :role-2 "user-2"))]
       (is (= #{:role-1} (user-roles app "user-1")))
       (is (= #{:role-2} (user-roles app "user-2")))
-      (is (= #{} (user-roles app "user-3"))))))
-
-(defn has-any-role? [application user]
-  (seq (user-roles application user)))
-
-(deftest test-has-any-role?
-  (testing "no roles"
-    (is (not (-> {}
-                 (has-any-role? "user")))))
-  (testing "some roles"
-    (is (-> {}
-            (give-role-to-user :role "user")
-            (has-any-role? "user")))))
+      (is (= #{:everyone-else} (user-roles app "user-3"))))))
 
 (defn set-role-permissions
   "Sets role specific permissions for the application.
