@@ -1,4 +1,4 @@
-(ns ^:focused ^:integration rems.test.migrations.convert-to-dynamic-applications
+(ns ^:integration rems.test.migrations.convert-to-dynamic-applications
   (:require [clojure.java.jdbc :as jdbc]
             [clojure.pprint :refer [pprint]]
             [clojure.test :refer :all]
@@ -16,7 +16,80 @@
   :once
   api-fixture)
 
+(defn add-more-test-data! []
+  (jdbc/execute! *db* ["
+INSERT INTO catalogue_item_application (id, applicantuserid, start, endt, modifieruserid, wfid, description) VALUES (20, 'alice', '2019-03-05 11:56:19.353103', null, null, 1, 'direct approval');
+INSERT INTO catalogue_item_application (id, applicantuserid, start, endt, modifieruserid, wfid, description) VALUES (21, 'alice', '2019-03-05 11:56:59.596975', null, null, 2, 'third party review');
+INSERT INTO catalogue_item_application (id, applicantuserid, start, endt, modifieruserid, wfid, description) VALUES (22, 'alice', '2019-03-05 11:58:25.793817', null, null, 2, 'withdraw');
+INSERT INTO catalogue_item_application (id, applicantuserid, start, endt, modifieruserid, wfid, description) VALUES (23, 'alice', '2019-03-05 11:59:08.412314', null, null, 2, 'close');
+INSERT INTO catalogue_item_application_items (catappid, catitemid) VALUES (20, 1);
+INSERT INTO catalogue_item_application_items (catappid, catitemid) VALUES (21, 2);
+INSERT INTO catalogue_item_application_items (catappid, catitemid) VALUES (22, 2);
+INSERT INTO catalogue_item_application_items (catappid, catitemid) VALUES (23, 2);
+INSERT INTO application_event (appid, userid, round, event, comment, time, eventdata) VALUES (20, 'alice', 0, 'save', null, '2019-03-05 11:56:19.353103', null);
+INSERT INTO application_event (appid, userid, round, event, comment, time, eventdata) VALUES (20, 'alice', 0, 'save', null, '2019-03-05 11:56:32.083122', null);
+INSERT INTO application_event (appid, userid, round, event, comment, time, eventdata) VALUES (20, 'alice', 0, 'apply', null, '2019-03-05 11:56:32.397157', null);
+INSERT INTO application_event (appid, userid, round, event, comment, time, eventdata) VALUES (20, 'alice', 0, 'autoapprove', null, '2019-03-05 11:56:32.397157', null);
+INSERT INTO application_event (appid, userid, round, event, comment, time, eventdata) VALUES (21, 'alice', 0, 'save', null, '2019-03-05 11:56:59.596975', null);
+INSERT INTO application_event (appid, userid, round, event, comment, time, eventdata) VALUES (21, 'alice', 0, 'save', null, '2019-03-05 11:57:15.083212', null);
+INSERT INTO application_event (appid, userid, round, event, comment, time, eventdata) VALUES (21, 'alice', 0, 'apply', null, '2019-03-05 11:57:15.396081', null);
+INSERT INTO application_event (appid, userid, round, event, comment, time, eventdata) VALUES (21, 'carl', 0, 'review-request', 'plz comment', '2019-03-05 11:57:45.355694', null);
+INSERT INTO application_event (appid, userid, round, event, comment, time, eventdata) VALUES (21, 'carl', 0, 'third-party-review', 'lgtm', '2019-03-05 11:58:03.891460', null);
+INSERT INTO application_event (appid, userid, round, event, comment, time, eventdata) VALUES (22, 'alice', 0, 'save', null, '2019-03-05 11:58:25.793817', null);
+INSERT INTO application_event (appid, userid, round, event, comment, time, eventdata) VALUES (22, 'alice', 0, 'save', null, '2019-03-05 11:58:38.616129', null);
+INSERT INTO application_event (appid, userid, round, event, comment, time, eventdata) VALUES (22, 'alice', 0, 'apply', null, '2019-03-05 11:58:38.882900', null);
+INSERT INTO application_event (appid, userid, round, event, comment, time, eventdata) VALUES (22, 'alice', 0, 'withdraw', 'nope nope nope', '2019-03-05 11:58:47.882659', null);
+INSERT INTO application_event (appid, userid, round, event, comment, time, eventdata) VALUES (23, 'alice', 0, 'save', null, '2019-03-05 11:59:08.412314', null);
+INSERT INTO application_event (appid, userid, round, event, comment, time, eventdata) VALUES (23, 'alice', 0, 'save', null, '2019-03-05 11:59:17.267323', null);
+INSERT INTO application_event (appid, userid, round, event, comment, time, eventdata) VALUES (23, 'alice', 0, 'apply', null, '2019-03-05 11:59:17.559004', null);
+INSERT INTO application_event (appid, userid, round, event, comment, time, eventdata) VALUES (23, 'developer', 0, 'approve', '', '2019-03-05 11:59:42.328008', null);
+INSERT INTO application_event (appid, userid, round, event, comment, time, eventdata) VALUES (23, 'developer', 0, 'close', 'no more', '2019-03-05 11:59:54.974911', null);
+INSERT INTO application_license_approval_values (catappid, formmapid, licid, modifieruserid, state, start, endt) VALUES (20, null, 1, 'alice', 'approved', '2019-03-05 11:56:32.083122', null);
+INSERT INTO application_license_approval_values (catappid, formmapid, licid, modifieruserid, state, start, endt) VALUES (20, null, 2, 'alice', 'approved', '2019-03-05 11:56:32.083122', null);
+INSERT INTO application_license_approval_values (catappid, formmapid, licid, modifieruserid, state, start, endt) VALUES (21, null, 1, 'alice', 'approved', '2019-03-05 11:57:15.083212', null);
+INSERT INTO application_license_approval_values (catappid, formmapid, licid, modifieruserid, state, start, endt) VALUES (21, null, 2, 'alice', 'approved', '2019-03-05 11:57:15.083212', null);
+INSERT INTO application_license_approval_values (catappid, formmapid, licid, modifieruserid, state, start, endt) VALUES (22, null, 1, 'alice', 'approved', '2019-03-05 11:58:38.616129', null);
+INSERT INTO application_license_approval_values (catappid, formmapid, licid, modifieruserid, state, start, endt) VALUES (22, null, 2, 'alice', 'approved', '2019-03-05 11:58:38.616129', null);
+INSERT INTO application_license_approval_values (catappid, formmapid, licid, modifieruserid, state, start, endt) VALUES (23, null, 1, 'alice', 'approved', '2019-03-05 11:59:17.267323', null);
+INSERT INTO application_license_approval_values (catappid, formmapid, licid, modifieruserid, state, start, endt) VALUES (23, null, 2, 'alice', 'approved', '2019-03-05 11:59:17.267323', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (20, 1, 'alice', 'direct approval', '2019-03-05 11:56:32.083122', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (20, 2, 'alice', 'direct approval', '2019-03-05 11:56:32.083122', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (20, 3, 'alice', '', '2019-03-05 11:56:32.083122', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (20, 4, 'alice', '', '2019-03-05 11:56:32.083122', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (20, 5, 'alice', '', '2019-03-05 11:56:32.083122', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (20, 6, 'alice', '', '2019-03-05 11:56:32.083122', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (20, 7, 'alice', '', '2019-03-05 11:56:32.083122', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (20, 8, 'alice', '', '2019-03-05 11:56:32.083122', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (21, 1, 'alice', 'third party review', '2019-03-05 11:57:15.083212', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (21, 2, 'alice', 'third party review', '2019-03-05 11:57:15.083212', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (21, 3, 'alice', '', '2019-03-05 11:57:15.083212', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (21, 4, 'alice', '', '2019-03-05 11:57:15.083212', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (21, 5, 'alice', '', '2019-03-05 11:57:15.083212', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (21, 6, 'alice', '', '2019-03-05 11:57:15.083212', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (21, 7, 'alice', '', '2019-03-05 11:57:15.083212', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (21, 8, 'alice', '', '2019-03-05 11:57:15.083212', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (22, 1, 'alice', 'withdraw', '2019-03-05 11:58:38.616129', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (22, 2, 'alice', 'withdraw', '2019-03-05 11:58:38.616129', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (22, 3, 'alice', '', '2019-03-05 11:58:38.616129', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (22, 4, 'alice', '', '2019-03-05 11:58:38.616129', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (22, 5, 'alice', '', '2019-03-05 11:58:38.616129', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (22, 6, 'alice', '', '2019-03-05 11:58:38.616129', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (22, 7, 'alice', '', '2019-03-05 11:58:38.616129', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (22, 8, 'alice', '', '2019-03-05 11:58:38.616129', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (23, 1, 'alice', 'close', '2019-03-05 11:59:17.267323', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (23, 2, 'alice', 'close', '2019-03-05 11:59:17.267323', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (23, 3, 'alice', '', '2019-03-05 11:59:17.267323', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (23, 4, 'alice', '', '2019-03-05 11:59:17.267323', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (23, 5, 'alice', '', '2019-03-05 11:59:17.267323', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (23, 6, 'alice', '', '2019-03-05 11:59:17.267323', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (23, 7, 'alice', '', '2019-03-05 11:59:17.267323', null);
+INSERT INTO application_text_values (catappid, formmapid, modifieruserid, value, start, endt) VALUES (23, 8, 'alice', '', '2019-03-05 11:59:17.267323', null);
+INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 20, 'alice', '2019-03-05 11:56:32.397157', null);
+INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'alice', '2019-03-05 11:59:42.328008', '2019-03-05 11:59:54.974911');
+"]))
+
 (deftest test-migration
+  (add-more-test-data!)
   (let [event-id-seq (atom (:currval (first (jdbc/query *db* ["select currval('application_event_id_seq')"]))))
         next-event-id #(swap! event-id-seq inc)]
 
