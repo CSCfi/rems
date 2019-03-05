@@ -116,7 +116,7 @@
         items @(rf/subscribe [::catalogue])]
     [:div
      [:h2 (text :t.catalogue/catalogue)]
-     (if (empty? items)
+     (if (nil? items)
        [spinner/big]
        [:div
         [draft-application-list @(rf/subscribe [::draft-applications]) @language]
