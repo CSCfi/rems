@@ -61,11 +61,10 @@
     request))
 
 (defn- create-catalogue-item! [_ [_ request]]
-  (status-modal/set-pending! {:title (text :t.administration/create-catalogue-item)})
+  (status-modal/common-pending-handler! (text :t.administration/create-catalogue-item))
   (post! "/api/catalogue-items/create" {:params (create-request-with-state request)
-                                        :handler (fn [_]
-                                                   (status-modal/set-success! {:on-close #(dispatch! "#/administration/catalogue-items")}))
-                                        :error-handler #(status-modal/set-error! {:result {:error %}})})
+                                        :handler (partial status-modal/common-success-handler! #(dispatch! "#/administration/catalogue-items"))
+                                        :error-handler status-modal/common-error-handler!})
   {})
 
 (rf/reg-event-fx ::create-catalogue-item create-catalogue-item!)

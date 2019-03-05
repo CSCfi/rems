@@ -36,7 +36,8 @@
 
 (defn create-catalogue-item! [command]
   (let [id (:id (db/create-catalogue-item! (select-keys command [:title :form :resid :wfid :state])))]
-    (get-localized-catalogue-item id)))
+    {:success (not (nil? id))
+     :id id}))
 
 (defn create-catalogue-item-localization! [command]
   (let [return {:success (not (nil? (:id (db/create-catalogue-item-localization! (select-keys command [:id :langcode :title])))))}]

@@ -85,7 +85,8 @@
                               :actors [UserId]}]})
 
 (s/defschema CreateWorkflowResponse
-  {:id s/Num})
+  {:success s/Bool
+   :id s/Num})
 
 ; TODO: deduplicate or decouple with /api/applications/reviewers API?
 (s/defschema AvailableActor User)
