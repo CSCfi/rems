@@ -1,5 +1,6 @@
 (ns ^:focused ^:integration rems.test.migrations.convert-to-dynamic-applications
-  (:require [clojure.pprint :refer [pprint]]
+  (:require [clojure.java.jdbc :as jdbc]
+            [clojure.pprint :refer [pprint]]
             [clojure.test :refer :all]
             [conman.core :as conman]
             [rems.db.applications :as applications]
@@ -16,36 +17,36 @@
   api-fixture)
 
 (deftest test-migration
-  (let [applications (applications/get-applications-impl-batch "whatever" {})
-        application-id 10
-        application (->> applications
-                         (filter #(= application-id (:id %)))
-                         first)
-        dynamic-workflows (->> (workflow/get-workflows {})
-                               (filter #(= "workflow/dynamic" (get-in % [:workflow :type]))))
-        new-workflow (first dynamic-workflows)]
-    (assert application)
-    (assert (= 1 (count dynamic-workflows)))
-
-    (println "--- before ---")
-    (pprint application)
-    (conman/with-transaction [*db* {:isolation :serializable}]
-      (migrate-catalogue-items! (:id new-workflow))
-      (migrate-application! 1 (:id new-workflow))
-      (migrate-application! 2 (:id new-workflow))
-      (migrate-application! 3 (:id new-workflow))
-      (migrate-application! 4 (:id new-workflow))
-      (migrate-application! 5 (:id new-workflow))
-      (migrate-application! 8 (:id new-workflow))
-      (migrate-application! 9 (:id new-workflow))
-      (migrate-application! (:id application) (:id new-workflow)))
-    (println "--- after ---")
-    (pprint (applications/get-application-state (:id application)))
-    ;; validation already happens when the events are written, but just in case...
-    (is (empty? (validate/validate))))
-
-  (let [event-id-seq (atom 45)
+  (let [event-id-seq (atom (:currval (first (jdbc/query *db* ["select currval('application_event_id_seq')"]))))
         next-event-id #(swap! event-id-seq inc)]
+
+    (let [applications (applications/get-applications-impl-batch "whatever" {})
+          application-id 10
+          application (->> applications
+                           (filter #(= application-id (:id %)))
+                           first)
+          dynamic-workflows (->> (workflow/get-workflows {})
+                                 (filter #(= "workflow/dynamic" (get-in % [:workflow :type]))))
+          new-workflow (first dynamic-workflows)]
+      (assert application)
+      (assert (= 1 (count dynamic-workflows)))
+
+      (println "--- before ---")
+      (pprint application)
+      (conman/with-transaction [*db* {:isolation :serializable}]
+        (migrate-catalogue-items! (:id new-workflow))
+        (migrate-application! 1 (:id new-workflow))
+        (migrate-application! 2 (:id new-workflow))
+        (migrate-application! 3 (:id new-workflow))
+        (migrate-application! 4 (:id new-workflow))
+        (migrate-application! 5 (:id new-workflow))
+        (migrate-application! 8 (:id new-workflow))
+        (migrate-application! 9 (:id new-workflow))
+        (migrate-application! (:id application) (:id new-workflow)))
+      (println "--- after ---")
+      (pprint (applications/get-application-state (:id application)))
+      ;; validation already happens when the events are written, but just in case...
+      (is (empty? (validate/validate))))
 
     (let [app-id 1
           application (applications/get-application-state app-id)]
