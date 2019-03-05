@@ -581,7 +581,7 @@
                           (for [e group]
                             ^{:key e} [event-view e])]))])
 
-(defn- application-header [state phases-data events]
+(defn- application-header [state phases-data events last-modified]
   (let [;; the event times have millisecond differences, so they need to be formatted to minute precision before deduping
         event-groups (->> events
                           (map format-event)
@@ -598,7 +598,8 @@
       :title [:span#application-state
               (str
                (text :t.applications/state)
-               (when state (str ": " (localize-state state))))]
+               (when state (str ": " (localize-state state)))
+               " — " (text :t.applications/last-modified) ": " (localize-time last-modified))]
       :always [:div
                [:div.mb-3 {:class (str "state-" (if (keyword? state) (name state) state))} (phases phases-data)]
                [:h4 (text :t.form/events)]
@@ -759,6 +760,7 @@
 (defn- render-application [application edit-application language]
   (let [app (:application application)
         state (:state app)
+        last-modified (:last-modified app)
         phases (:phases application)
         events (concat (:events app)
                        (map dynamic-event->event (:dynamic-events app)))
@@ -773,7 +775,7 @@
      [:div {:class "float-right"} [pdf-button (:id app)]]
      [:h2 (text :t.applications/application)]
      (into [:div] messages)
-     [application-header state phases events]
+     [application-header state phases events last-modified]
      [:div.mt-3 [applicants-info "applicants-info" app applicant-attributes (:members app) (:invited-members app)]]
      [:div.mt-3 [applied-resources (:catalogue-items application)]]
      [:div.my-3 [fields application edit-application language]]
