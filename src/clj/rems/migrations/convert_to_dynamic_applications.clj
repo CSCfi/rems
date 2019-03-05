@@ -94,5 +94,9 @@
                                                                :application/id (:id application)
                                                                :application/request-id (get @comment-requests-by-commenter (:userid event))
                                                                :application/comment (:comment event)})
-        "withdraw" (assert false "withdraw not implemented") ; TODO: migrate "withdraw"
+        "withdraw" (applications/add-dynamic-event! {:event/type :application.event/returned
+                                                     :event/time (:time event)
+                                                     :event/actor (:userid event)
+                                                     :application/id (:id application)
+                                                     :application/comment (:comment event)})
         "close" (assert false "close not implemented"))))) ; TODO: migrate "close"
