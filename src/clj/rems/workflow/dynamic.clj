@@ -388,14 +388,14 @@
       (is (= #{::accept-invitation}
              (permissions/user-permissions created "joe")))))
   (testing "nobody can accept invitation for closed application"
-    (let [created (reduce calculate-permissions nil [{:event/type :application.event/created
-                                                      :event/actor "applicant"
-                                                      :workflow.dynamic/handlers ["handler"]}
-                                                     {:event/type :application.event/closed
-                                                      :event/actor "applicant"}])]
+    (let [closed (reduce calculate-permissions nil [{:event/type :application.event/created
+                                                     :event/actor "applicant"
+                                                     :workflow.dynamic/handlers ["handler"]}
+                                                    {:event/type :application.event/closed
+                                                     :event/actor "applicant"}])]
       (is (= #{}
-             (permissions/user-permissions created "joe")
-             (permissions/user-permissions created "applicant"))))))
+             (permissions/user-permissions closed "joe")
+             (permissions/user-permissions closed "applicant"))))))
 
 ;;; Application model
 
@@ -711,7 +711,7 @@
     result))
 
 (defn handle-command [cmd application injections]
-  (let [permissions (-> (permissions/user-permissions application (:actor cmd)))]
+  (let [permissions (permissions/user-permissions application (:actor cmd))]
     (if (contains? permissions (:type cmd))
       (-> (command-handler cmd application injections)
           (enrich-result cmd))
@@ -774,7 +774,7 @@
 (defn possible-commands
   "Returns the commands which the user is authorized to execute."
   [actor application-state]
-  (-> (permissions/user-permissions application-state actor)))
+  (permissions/user-permissions application-state actor))
 
 (defn assoc-possible-commands [actor application-state]
   (assoc application-state
