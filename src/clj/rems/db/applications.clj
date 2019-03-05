@@ -20,7 +20,7 @@
             [rems.form-validation :as form-validation]
             [rems.json :as json]
             [rems.permissions :as permissions]
-            [rems.util :refer [get-username]]
+            [rems.util :refer [get-username secure-token]]
             [rems.workflow.dynamic :as dynamic]
             [schema-tools.core :as st]
             [schema.coerce :as coerce]
@@ -243,7 +243,7 @@
         (is-approver? user-id application-id)
         (is-reviewer? user-id application-id)
         (is-third-party-reviewer? user-id application)
-        (permissions/has-any-role? application user-id))))
+        (dynamic/see-application? application user-id))))
 
 (defn can-close? [user-id application]
   (assert user-id)
@@ -327,7 +327,8 @@
 
 (defn get-approvals [user-id]
   (->> (get-applications-impl-batch user-id {})
-       (filterv (partial can-approve? user-id))))
+       (filterv (partial can-approve? user-id))
+       (map #(dissoc % :invitation-tokens)))) ; TODO use same hiding in all applications lists
 
 (comment
   (->> (get-approvals "developer")
@@ -345,7 +346,8 @@
                     (let [application (get-application-state (:id app))]
                       (if (is-dynamic-application? application)
                         (contains? (set (actors-of-dynamic-application application)) user-id)
-                        (is-actor? user-id (actors/filter-by-application-id actors (:id app))))))))))
+                        (is-actor? user-id (actors/filter-by-application-id actors (:id app)))))))
+         (map #(dissoc % :invitation-tokens)))))  ; TODO use same hiding in all applications lists
 
 (comment
   (->> (get-handled-approvals "developer")
@@ -360,7 +362,8 @@
                     (or (is-actor? user-id (actors/filter-by-application-id actors (:id app)))
                         (is-third-party-reviewer? user-id app)
                         (is-commenter? user-id app)
-                        (is-decider? user-id app)))))))
+                        (is-decider? user-id app))))
+         (map #(dissoc % :invitation-tokens)))))  ; TODO use same hiding in all applications lists
 
 (comment
   (get-handled-reviews "bob")
@@ -396,7 +399,8 @@
                            (can-third-party-review? user-id app)
                            (can-comment? user-id (:id app))
                            (can-decide? user-id (:id app))))))
-       (mapv (partial assoc-review-type-to-app user-id))))
+       (mapv (partial assoc-review-type-to-app user-id))
+       (map #(dissoc % :invitation-tokens))))  ; TODO use same hiding in all applications lists
 
 (defn make-draft-application
   "Make a draft application with an initial set of catalogue items."
@@ -1065,7 +1069,8 @@
 
 (def ^:private db-injections
   {:valid-user? valid-user?
-   :validate-form validate-form})
+   :validate-form validate-form
+   :secure-token secure-token})
 
 (defn dynamic-command! [cmd]
   (assert (:application-id cmd))
@@ -1081,3 +1086,18 @@
 ;; TODO use also in UI side?
 (defn is-dynamic-application? [application]
   (= :workflow/dynamic (get-in application [:workflow :type])))
+
+(defn accept-invitation [user-id invitation-token]
+  (or (when-let [application-id (:id (db/get-application-by-invitation-token {:token invitation-token}))]
+        (let [response (dynamic-command! {:type :rems.workflow.dynamic/accept-invitation
+                                          :actor user-id
+                                          :application-id application-id
+                                          :token invitation-token
+                                          :time (time/now)})]
+          (if-not response
+            {:success true
+             :application-id application-id}
+            {:success false
+             :errors (:errors response)})))
+      {:success false
+       :errors [{:type :t.actions.errors/invalid-token :token invitation-token}]}))

@@ -63,6 +63,10 @@
   [application event]
   application)
 
+(defmethod event-type-specific-application-view :application.event/member-joined
+  [application event]
+  application)
+
 (defmethod event-type-specific-application-view :application.event/member-removed
   [application event]
   application)
@@ -513,7 +517,7 @@
       (update :application/workflow dissoc :workflow.dynamic/handlers)))
 
 (defn- apply-user-permissions [application user-id]
-  (let [see-application? (permissions/has-any-role? application user-id)
+  (let [see-application? (dynamic/see-application? application user-id)
         permissions (permissions/user-permissions application user-id)
         see-everything? (contains? permissions :see-everything)]
     (when see-application?

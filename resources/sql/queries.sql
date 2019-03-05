@@ -637,3 +637,22 @@ VALUES (:apikey, :comment);
 -- :name get-api-key :? :1
 SELECT apiKey FROM api_key
 WHERE apiKey = :apikey;
+
+-- :name get-application-by-invitation-token :? :1
+SELECT app.id
+FROM catalogue_item_application app
+JOIN application_event evt ON (app.id = evt.appid)
+WHERE evt.eventdata->>'invitation/token' = :token
+
+-- :name get-invitation-tokens :? :*
+SELECT
+evt.eventdata->>'event/type' AS event,
+evt.eventdata->>'invitation/token' AS token,
+evt.eventdata->>'event/actor' AS actor,
+evt.eventdata->'application/member'->>'name' AS name,
+evt.eventdata->'application/member'->>'email' AS email
+FROM application_event evt
+WHERE evt.eventdata->>'invitation/token' IS NOT NULL
+/*~ (when (:appid params) */
+AND appid = :appid
+/*~ ) ~*/

@@ -31,6 +31,7 @@
 
 (defroutes home-routes
   (GET "/" [] (layout/home-page))
+  (GET "/accept-invitation" {{:keys [token]} :params} (redirect (str "/#/application/accept-invitation/" token)))
   (GET "/apply-for" {{:keys [resource]} :params} (apply-for-resource resource))
   (GET "/landing_page" req (redirect "/#/redirect")) ; DEPRECATED: legacy url redirect
   (GET "/markdown/:filename" [filename] (markdown-page filename))

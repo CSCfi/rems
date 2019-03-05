@@ -15,16 +15,16 @@
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn- format-errors [errors]
-  [:div (for [error errors]
+  (into [:div]
+        (for [error errors]
           [:p
            (when (:key error)
-             (str (text (:key error))))
+             (text (:key error)))
            (when (:type error)
-             (str (text (:type error))))
-           (when-let [text (:status-text error)]
-             (str text))
+             (text (:type error)))
+           (when-let [text (:status-text error)] text)
            (when-let [text (:status error)]
-             (str " (" text ")"))])])
+             (str " (" text ")"))])))
 
 (defn- status-widget [success? error-content]
   (cond
@@ -65,7 +65,7 @@
         content [:div [status-widget success? error-content] content]]
     (when open?
       [modal/notification {:title title
-                           :title-class (when errors "alert alert-danger")
+                           :title-class (when (or errors error-content) "alert alert-danger")
                            :content content
                            :on-close (fn []
                                        (rf/dispatch [::set-state nil])
@@ -79,7 +79,7 @@
   current state. It's convenient here to set the `:title` of the operation.
 
   The modal will be shown."
-  [& [state]]
+  [state]
   (rf/dispatch [::set-state (merge {:open? true} state)]))
 
 (defn set-success!
