@@ -4,6 +4,7 @@
             [hiccup.util :refer [url]]
             [rems.db.core :as db]
             [rems.db.test-data :refer [+fake-user-data+]]
+            [rems.json :as json]
             [ring.util.response :refer [content-type redirect
                                         response]]))
 
@@ -45,7 +46,9 @@ a:visited { color: #fff; }
 
 (defn- fake-login [session username]
   (assoc (redirect "/#/redirect")
-         :session (assoc session :identity (get +fake-user-data+ username))))
+         :session (assoc session :identity (-> (db/get-user-attributes {:user username})
+                                               :userattrs
+                                               json/parse-string))))
 
 (defn- user-selection [username]
   (let [url (url "/Shibboleth.sso/Login" {:username username})]
