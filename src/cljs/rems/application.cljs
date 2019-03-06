@@ -565,7 +565,7 @@
    :time (localize-time (:time event))})
 
 (defn- event-view [{:keys [time userid event comment commenters deciders]}]
-  [:div.form-group.row
+  [:div.row
    [:label.col-sm-2.col-form-label time]
    [:div.col-sm-10
     [:div.col-form-label [:span userid] " — " [:span event]
