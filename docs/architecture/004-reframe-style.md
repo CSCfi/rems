@@ -30,17 +30,17 @@ In other words, this is how we used to do things:
 ```clojure
 (rf/reg-event-fx
  ::send-request-decision
- (fn [{{::keys [deciders application-id comment on-finished]} :db} _]
-   {:request-decision-effect [deciders application-id comment on-finished]}))
+ (fn [{{::keys [deciders application-id comment]} :db} _]
+   {:request-decision-effect [deciders application-id comment]}))
 
 (rf/reg-fx
  :request-decision-effect
- (fn [[deciders application-id comment on-finished]]
+ (fn [[deciders application-id comment]]
    (fetch "/api/applications/request-decision"
           {:params {:deciders deciders
                     :application-id application-id
                     :comment comment}
-           :handler on-finished})))
+           :handler #(rf/dispatch [::decision-results %]})))
 ```
 
 In some cases the effect handler was not even calling fetch directly,
@@ -51,21 +51,29 @@ but we will instead write
 ```clojure
 (rf/reg-event-fx
  ::send-request-decision
- (fn [{{::keys [deciders application-id comment on-finished]} :db} _]
+ (fn [{{::keys [deciders application-id comment]} :db} _]
    (fetch "/api/applications/request-decision"
           {:params {:deciders deciders
                     :application-id application-id
                     :comment comment}
-           :handler on-finished})
+           :handler #(rf/dispatch [::decision-results %]})})
    {}))
 ```
 
 In particular do not mix side-effects and effect handlers in the same flow!
 
+```clojure
+(rf/reg-event-fx
+ ::send-request-decision
+ (fn [{{::keys [deciders application-id comment]} :db} _]
+   (do-another-kind-of-side-effect!)
+   {:request-decision-effect [deciders application-id comment]}))
+```
+
 ## Handling user interaction in components
 
-We could also launch the fetch directly from the components, like buttons,
-but we will keep this level of indirection for consistency,
+We could also launch the fetch directly from components (e.g. buttons on-click handlers)
+but we will always dispatch a re-frame events for consistency,
 since quite often we need to do something else than just fire API calls.
 One common case is to set some kind of loading toggle in the db,
 that in turn will show a loading spinner while the data hasn't yet arrived.
