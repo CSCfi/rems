@@ -73,7 +73,7 @@ In particular do not mix side-effects and effect handlers in the same flow!
 ## Handling user interaction in components
 
 We could also launch the fetch directly from components (e.g. buttons on-click handlers)
-but we will always dispatch a re-frame events for consistency,
+but we will always dispatch a re-frame event for consistency,
 since quite often we need to do something else than just fire API calls.
 One common case is to set some kind of loading toggle in the db,
 that in turn will show a loading spinner while the data hasn't yet arrived.
