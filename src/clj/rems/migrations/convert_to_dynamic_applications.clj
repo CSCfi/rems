@@ -54,12 +54,12 @@
                                                    :event/time (:time event)
                                                    :event/actor (:userid event)
                                                    :application/id (:id application)
-                                                   :application/comment (:comment event)})
+                                                   :application/comment (or (:comment event) "")})
         "approve" (applications/add-dynamic-event! {:event/type :application.event/approved
                                                     :event/time (:time event)
                                                     :event/actor (:userid event)
                                                     :application/id (:id application)
-                                                    :application/comment (:comment event)})
+                                                    :application/comment (or (:comment event) "")})
         "autoapprove" (applications/add-dynamic-event! {:event/type :application.event/approved
                                                         :event/time (:time event)
                                                         :event/actor (:userid event)
@@ -69,14 +69,14 @@
                                                    :event/time (:time event)
                                                    :event/actor (:userid event)
                                                    :application/id (:id application)
-                                                   :application/comment (:comment event)})
+                                                   :application/comment (or (:comment event) "")})
         "review" (applications/add-dynamic-event! {:event/type :application.event/commented
                                                    :event/time (:time event)
                                                    :event/actor (:userid event)
                                                    :application/id (:id application)
                                                    ;; TODO: request-id doesn't make much sense for these old applications - make it optional?
                                                    :application/request-id (UUID. 0 0)
-                                                   :application/comment (:comment event)})
+                                                   :application/comment (or (:comment event) "")})
         "review-request" (applications/add-dynamic-event! {:event/type :application.event/comment-requested
                                                            :event/time (:time event)
                                                            ;; TODO: the review request's actor is not known; can we guess the approver?
@@ -87,23 +87,23 @@
                                                                                             assoc (:userid event) request-id)
                                                                                      request-id)
                                                            :application/commenters [(:userid event)]
-                                                           :application/comment (:comment event)})
+                                                           :application/comment (or (:comment event) "")})
         "third-party-review" (applications/add-dynamic-event! {:event/type :application.event/commented
                                                                :event/time (:time event)
                                                                :event/actor (:userid event)
                                                                :application/id (:id application)
                                                                :application/request-id (get @comment-requests-by-commenter (:userid event))
-                                                               :application/comment (:comment event)})
+                                                               :application/comment (or (:comment event) "")})
         "withdraw" (applications/add-dynamic-event! {:event/type :application.event/returned
                                                      :event/time (:time event)
                                                      :event/actor (:userid event)
                                                      :application/id (:id application)
-                                                     :application/comment (:comment event)})
+                                                     :application/comment (or (:comment event) "")})
         "close" (applications/add-dynamic-event! {:event/type :application.event/closed
                                                   :event/time (:time event)
                                                   :event/actor (:userid event)
                                                   :application/id (:id application)
-                                                  :application/comment (:comment event)})))))
+                                                  :application/comment (or (:comment event) "")})))))
 
 (defn migrate-all-applications! [new-workflow-id]
   (conman/with-transaction [*db* {:isolation :serializable}]
