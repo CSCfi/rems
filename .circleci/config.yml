@@ -4,6 +4,11 @@
 #
 version: 2
 
+# We use the machine executor because our dev_db.sh uses docker to run
+# a fixed postgres version. Additionally, if we wanted to use docker
+# for builds we'd need to setup a custom lein+npm+postgres image and
+# publish it on docker hub. Maybe some day.
+
 defaults: &defaults
   machine: true
   working_directory: ~/repo
