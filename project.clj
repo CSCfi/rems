@@ -112,8 +112,7 @@
             "browsertests" ["do" ["cljsbuild" "once"] ["eftest" ":browser"]]
             "cljtests" ["do" ["cljsbuild" "once"] ["eftest" ":all"]]
             "alltests" ["do" ["cljsbuild" "once"] ["eftest" ":all"] ["doo" "once"]]
-            "test-ancient" ["do" ["cljsbuild" "once"] ["eftest" ":all"] ["doo" "once"]] ; for lein ancient to work and run all tests
-            "run-cloverage" ["do" ["cljsbuild" "once"] ["with-profile" "test" "cloverage"]]}
+            "test-ancient" ["do" ["cljsbuild" "once"] ["eftest" ":all"] ["doo" "once"]]} ; for lein ancient to work and run all tests
 
   :profiles
   {:uberjar {:omit-source true
@@ -154,7 +153,6 @@
 
                  :plugins [[com.jakemccrary/lein-test-refresh "0.21.1"]
                            [lein-ancient "0.6.15"]
-                           [lein-cloverage "1.0.10"]
                            [lein-doo "0.1.11"]
                            [lein-eftest "0.5.4"]
                            [lein-figwheel "0.5.18"]]
