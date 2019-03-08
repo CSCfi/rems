@@ -11,8 +11,9 @@
             [garden.stylesheet :as stylesheet]
             [garden.units :as u]
             [medley.core :refer [map-vals remove-vals]]
-            [mount.core :as mount :refer [defstate]]
-            [rems.util :as util]))
+            [rems.util :as util]
+            [rems.context :as context]))
+
 
 (defn- generate-at-font-faces []
   (list
@@ -634,9 +635,9 @@
    ;; These must be last as the parsing fails when the first non-standard element is met
    (generate-form-placeholder-styles)))
 
-(defstate screen :start (g/css {:pretty-print? false} (remove-nil-vals (build-screen))))
+(defn screen []
+  (g/css {:pretty-print? false} (remove-nil-vals (build-screen))))
 
 (deftest test-screen
-  (mount/start #'rems.css.styles/screen)
-  (is (string? screen))
-  (mount/stop #'rems.css.styles/screen))
+  (binding [context/*lang* :fi]
+    (is (string? (rems.css.styles/screen)))))
