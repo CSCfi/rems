@@ -5,7 +5,7 @@
 version: 2
 
 defaults: &defaults
-  executor: machine
+  machine: true
   working_directory: ~/repo
   environment:
     LEIN_ROOT: "true"
