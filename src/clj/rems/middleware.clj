@@ -148,7 +148,7 @@
    (tempura/wrap-ring-request
     (fn [request]
       (binding [context/*tempura* (:tempura/tr request)
-                context/*lang* (or (get-in request [:param :lang])
+                context/*lang* (or (get-in request [:params :lang])
                                    (get-in request [:session :language])
                                    (:default-language env))]
         (handler request)))
