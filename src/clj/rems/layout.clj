@@ -32,7 +32,7 @@ window.rems = {
            [:title (text :t.header/title)]
            (include-css "/assets/bootstrap/css/bootstrap.min.css")
            (include-css "/assets/font-awesome/css/all.css")
-           (include-css "/css/screen.css")]
+           [:link {:id "stylesheet" :type "text/css" :href "/css/screen.css" :rel "stylesheet"}]]
           [:body
            [:div#app]
            (include-js "/assets/font-awesome/js/fontawesome.js")
