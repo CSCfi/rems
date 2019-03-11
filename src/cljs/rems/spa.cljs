@@ -120,7 +120,9 @@
 (reg-fx
  :update-document-language
  (fn [language]
-   (set! (.. js/document -documentElement -lang) language)))
+   (set! (.. js/document -documentElement -lang) language)
+   (set! (.-href (.getElementById js/document "stylesheet"))
+         (str "/css/screen.css?lang=" language))))
 
 (reg-event-fx
  :unauthorized!

@@ -11,8 +11,22 @@
             [garden.stylesheet :as stylesheet]
             [garden.units :as u]
             [medley.core :refer [map-vals remove-vals]]
-            [mount.core :as mount :refer [defstate]]
-            [rems.util :as util]))
+            [rems.util :as util]
+            [rems.context :as context]))
+
+(defn resolve-image [path]
+  (when path
+    (let [url (if (str/starts-with? path "http")
+                path
+                (str (util/get-theme-attribute :img-path "../img/") path))]
+      (str "url(\"" url "\")"))))
+
+(defn get-logo-image [lang]
+  (resolve-image (util/get-theme-attribute (keyword (str "logo-name-" (name lang))) :logo-name)))
+
+(defn get-logo-name-sm [lang]
+  (resolve-image (util/get-theme-attribute (keyword (str "logo-name-" (name lang) "-sm")) :logo-name-sm)))
+
 
 (defn- generate-at-font-faces []
   (list
@@ -42,13 +56,6 @@
                                        :opacity 1}] ; Mozilla Firefox 19+
    [".form-control:-ms-input-placeholder" {:color "#ccc"}])) ; Internet Explorer 10-11
 
-(defn resolve-image [path]
-  (when path
-    (let [url (if (str/starts-with? path "http")
-                path
-                (str (util/get-theme-attribute :img-path "../img/") path))]
-      (str "url(\"" url "\")"))))
-
 (defn- generate-media-queries []
   (list
    (stylesheet/at-media {:max-width (u/px 480)}
@@ -57,7 +64,7 @@
                           {:border-bottom "none"}]
                          [(s/descendant :.logo :.img)
                           {:background-color (util/get-theme-attribute :logo-bgcolor)
-                           :background-image (resolve-image (util/get-theme-attribute :logo-name-sm))
+                           :background-image (get-logo-name-sm context/*lang*)
                            :-webkit-background-size :contain
                            :-moz-background-size :contain
                            :-o-background-size :contain
@@ -395,7 +402,7 @@
             :margin-bottom (u/em 1)}]
    [(s/descendant :.logo :.img) {:height "100%"
                                  :background-color (util/get-theme-attribute :logo-bgcolor)
-                                 :background-image (resolve-image (util/get-theme-attribute :logo-name))
+                                 :background-image (get-logo-image context/*lang*)
                                  :-webkit-background-size :contain
                                  :-moz-o-background-size :contain
                                  :-o-background-size :contain
@@ -634,9 +641,9 @@
    ;; These must be last as the parsing fails when the first non-standard element is met
    (generate-form-placeholder-styles)))
 
-(defstate screen :start (g/css {:pretty-print? false} (remove-nil-vals (build-screen))))
+(defn screen []
+  (g/css {:pretty-print? false} (remove-nil-vals (build-screen))))
 
 (deftest test-screen
-  (mount/start #'rems.css.styles/screen)
-  (is (string? screen))
-  (mount/stop #'rems.css.styles/screen))
+  (binding [context/*lang* :fi]
+    (is (string? (rems.css.styles/screen)))))

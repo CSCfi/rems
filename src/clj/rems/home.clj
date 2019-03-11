@@ -1,9 +1,11 @@
 (ns rems.home
-  (:require [compojure.core :refer [GET defroutes]]
+  (:require [clojure.tools.logging :as log]
+            [compojure.core :refer [GET defroutes]]
             [markdown.core :as md]
             [rems.auth.util :as auth-util]
             [rems.common-util :refer [index-by]]
             [rems.config :refer [env]]
+            [rems.context :as context]
             [rems.css.styles :as styles]
             [rems.db.catalogue :as catalogue]
             [rems.layout :as layout]
@@ -29,6 +31,17 @@
     (layout/render filename (md/md-to-html-string (slurp (:file allowed-file))))
     (auth-util/throw-unauthorized)))
 
+(defn render-css
+  "Helper function for rendering styles that has parameters for
+  easy memoization purposes."
+  [language]
+  (log/info (str "Rendering stylesheet for language " language))
+  (-> (styles/screen)
+      (response)
+      (content-type "text/css")))
+
+(def memoized-render-css (memoize render-css))
+
 (defroutes home-routes
   (GET "/" [] (layout/home-page))
   (GET "/accept-invitation" {{:keys [token]} :params} (redirect (str "/#/application/accept-invitation/" token)))
@@ -36,6 +49,4 @@
   (GET "/landing_page" req (redirect "/#/redirect")) ; DEPRECATED: legacy url redirect
   (GET "/markdown/:filename" [filename] (markdown-page filename))
   (GET "/favicon.ico" [] (redirect "/img/favicon.ico"))
-  (GET "/css/screen.css" [] (-> styles/screen
-                                (response)
-                                (content-type "text/css"))))
+  (GET "/css/screen.css" [] (memoized-render-css context/*lang*)))

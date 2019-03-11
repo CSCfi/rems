@@ -565,7 +565,7 @@
    :time (localize-time (:time event))})
 
 (defn- event-view [{:keys [time userid event comment commenters deciders]}]
-  [:div.form-group.row
+  [:div.row
    [:label.col-sm-2.col-form-label time]
    [:div.col-sm-10
     [:div.col-form-label [:span userid] " — " [:span event]
@@ -573,13 +573,11 @@
        [:span ": " (str/join ", " targets)])]
     (when comment [:div comment])]])
 
-(defn- event-groups-view [event-groups]
-  [:div
-   (into [:div]
-         (for [group event-groups]
-           ^{:key group} [:div.group
-                          (for [e group]
-                            ^{:key e} [event-view e])]))])
+(defn- render-event-groups [event-groups]
+  (for [group event-groups]
+    ^{:key group} [:div.group
+                   (for [e group]
+                     ^{:key e} [event-view e])]))
 
 (defn- application-header [state phases-data events]
   (let [;; the event times have millisecond differences, so they need to be formatted to minute precision before deduping
@@ -603,9 +601,9 @@
                [:div.mb-3 {:class (str "state-" (if (keyword? state) (name state) state))} (phases phases-data)]
                [:h4 (text :t.form/events)]
                (when-let [g (first event-groups)]
-                 [event-groups-view [g]])]
+                 (render-event-groups [g]))]
       :collapse (when-let [g (seq (rest event-groups))]
-                  [event-groups-view g])}]))
+                  (render-event-groups g))}]))
 
 (defn member-info
   "Renders a applicant, member or invited member of an application
