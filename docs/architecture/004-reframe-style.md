@@ -8,21 +8,7 @@ The re-frame architecture allows for the separation of side-effects from the eve
 
 The input consists of the event vector with the event name and parameters, and a map of coeffects. The output is called effects, of which the db effect is the most common. In other words, all event handlers are pure functions from the coeffect map and event vector to the effect map.
 
-[The listed reasons are](https://github.com/Day8/re-frame/blob/master/docs/EffectfulHandlers.md#bad-why)
-
-> 1. Cognitive load for the function's later readers goes up because they can no longer reason locally.
-> 2. Testing becomes more difficult and involves "mocking". How do we test that the http GET above is using the right URL? "mocking" should be mocked. It is a bad omen.
-> 3. And event replay-ability is lost.
-
-As REMS is a relatively simple SPA, we have found that the added indirection actually causes more cognitive load. When you find e.g. a click handler, you have to find the effect handler, and then all the coeffects and effects, all of which are referred to with keywords so jumping to definition is slower. Also they are not necessarily co-located.
-
-Also, we are not unit testing the event handlers anyway, because they are for the most part straightforward. All important logic can be split to helper functions that are easy to test with regular ClojureScript test functionality.
-
-Furthermore we haven't used a time travelling debugger or anything else that benefits from the replay-ability.
-
-Therefore we have decided that it's ok to cause simple side-effects, such as fetching data from the backend, directly within event handlers.
-
-In other words, this is how re-frame suggests you should to do things:
+**This is how re-frame suggests you should to do things:**
 
 ```clojure
 (rf/reg-event-fx
@@ -44,9 +30,21 @@ In other words, this is how re-frame suggests you should to do things:
                 :on-click #(rf/dispatch [::send-request-decision])}])         ; first indirection
 ```
 
-In some cases the effect handler does not even call the fetch function directly, but has one more indirection of calling a specific function `fetch-this-one-thing!` without parameters. It's slightly better to inline the actual fetch to the effect.
+[The listed reasons are](https://github.com/Day8/re-frame/blob/master/docs/EffectfulHandlers.md#bad-why)
 
-**We will write**
+> 1. Cognitive load for the function's later readers goes up because they can no longer reason locally.
+> 2. Testing becomes more difficult and involves "mocking". How do we test that the http GET above is using the right URL? "mocking" should be mocked. It is a bad omen.
+> 3. And event replay-ability is lost.
+
+As REMS is a relatively simple SPA, we have found that the added indirection actually causes more cognitive load. When you find e.g. a click handler, you have to find the effect handler, and then all the coeffects and effects, all of which are referred to with keywords so jumping to definition is slower. Also they are not necessarily co-located.
+
+Also, we are not unit testing the event handlers anyway, because they are for the most part straightforward. All important logic can be split to helper functions that are easy to test with regular ClojureScript test functionality.
+
+Furthermore we haven't used a time travelling debugger or anything else that benefits from the replay-ability.
+
+**Therefore we have decided that it's ok to cause simple side-effects, such as fetching data from the backend, directly within event handlers.**
+
+**We will therefore write our handlers like this:**
 
 ```clojure
 (rf/reg-event-fx
