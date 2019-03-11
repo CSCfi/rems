@@ -188,7 +188,7 @@
                           :returned "Palautettu"
                           :unknown "Tuntematon"
                           :withdrawn "Palautettu takaisin"}
-                 :last-modified "viimeksi muokattu"
+                 :latest-activity "Viimeisin toimenpide %1"
                  :user "Käyttäjä"
                  :view "Näytä"}
   :autocomplete {:no-results "Ei tuloksia"

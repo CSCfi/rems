@@ -598,13 +598,14 @@
       :title [:span#application-state
               (str
                (text :t.applications/state)
-               (when state (str ": " (localize-state state)))
-               " — " (text :t.applications/last-modified) ": " (localize-time last-modified))]
+               (when state (str ": " (localize-state state))))]
       :always [:div
                [:div.mb-3 {:class (str "state-" (if (keyword? state) (name state) state))} (phases phases-data)]
-               [:h4 (text :t.form/events)]
+               [:h4 (text-format :t.applications/latest-activity (localize-time last-modified))]
                (when-let [g (first event-groups)]
-                 [event-groups-view [g]])]
+                 (list
+                  [:h4 (text :t.form/events)]
+                  [event-groups-view [g]]))]
       :collapse (when-let [g (seq (rest event-groups))]
                   [event-groups-view g])}]))
 
