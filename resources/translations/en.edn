@@ -189,7 +189,6 @@
                           :unknown "Unknown"
                           :withdrawn "Withdrawn"}
                  :last-modified "last modified at"
-                 :latest-comment "Latest comment"
                  :user "User"
                  :view "View"}
   :autocomplete {:no-results "No results"

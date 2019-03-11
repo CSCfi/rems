@@ -189,7 +189,6 @@
                           :unknown "Tuntematon"
                           :withdrawn "Palautettu takaisin"}
                  :last-modified "viimeksi muokattu"
-                 :latest-comment "Viimeisin kommentti"
                  :user "Käyttäjä"
                  :view "Näytä"}
   :autocomplete {:no-results "Ei tuloksia"
