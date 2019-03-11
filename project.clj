@@ -17,7 +17,6 @@
                  [compojure "1.6.1"]
                  [conman "0.8.3"]
                  [cprop "0.1.13"]
-                 [garden "1.3.6"]
                  [haka-buddy "0.2.3" :exclusions [cheshire]]
                  [hiccup "1.0.5"]
                  [javax.xml.bind/jaxb-api "2.3.1"]
@@ -32,7 +31,8 @@
                  [metosin/komponentit "0.3.7"]
                  [metosin/ring-swagger "0.26.1"]
                  [mount "0.1.15"]
-                 [org.clojars.luontola/ns-tracker "0.3.1-patch3"]
+                 [org.clojars.luontola/garden "1.3.6-patch1"] ;; TODO: waiting for a new release with https://github.com/noprompt/garden/pull/172
+                 [org.clojars.luontola/ns-tracker "0.3.1-patch3"] ;; TODO: waiting for a new release with https://github.com/weavejester/ns-tracker/pull/24
                  [org.clojars.pntblnk/clj-ldap "0.0.16"]
                  [org.clojars.runa/conjure "2.2.0"]
                  [org.clojure/clojure "1.10.0"]
