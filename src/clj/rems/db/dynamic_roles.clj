@@ -25,7 +25,7 @@
                 {:event/type :application.event/created
                  :event/actor "applicant-and-handler"
                  :application/id 2}]]
-    (is (= #{:applicant}
+    (is (= #{:applicant :everyone-else}
            (roles-from-all-applications "applicant-only" events)))
     (is (= #{:applicant :handler}
            (roles-from-all-applications "applicant-and-handler" events)))))

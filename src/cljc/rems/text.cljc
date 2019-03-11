@@ -84,6 +84,7 @@
           "draft-saved" :t.applications.dynamic-events/draft-saved
           "member-added" :t.applications.dynamic-events/member-added
           "member-invited" :t.applications.dynamic-events/member-invited
+          "member-joined" :t.applications.dynamic-events/member-joined
           "member-removed" :t.applications.dynamic-events/member-removed
           "member-uninvited" :t.applications.dynamic-events/member-uninvited
           "rejected" :t.applications.dynamic-events/rejected

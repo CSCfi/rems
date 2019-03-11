@@ -37,7 +37,8 @@
     (throw (rems.InvalidRequestException. (str "Unsupported content-type: " content-type)))))
 
 (s/defschema CreateLicenseResponse
-  {:id s/Num})
+  {:success s/Bool
+   :id s/Num})
 
 (def licenses-api
   (context "/licenses" []

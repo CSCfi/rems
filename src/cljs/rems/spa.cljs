@@ -5,6 +5,7 @@
             [re-frame.core :as rf :refer [dispatch reg-event-db reg-event-fx reg-sub reg-fx]]
             [reagent.core :as r]
             [rems.actions :refer [actions-page fetch-actions]]
+            [rems.actions.accept-invitation :refer [accept-invitation-page]]
             [rems.administration.administration :refer [administration-page]]
             [rems.administration.catalogue-item :refer [catalogue-item-page]]
             [rems.administration.catalogue-items :refer [catalogue-items-page]]
@@ -119,7 +120,9 @@
 (reg-fx
  :update-document-language
  (fn [language]
-   (set! (.. js/document -documentElement -lang) language)))
+   (set! (.. js/document -documentElement -lang) language)
+   (set! (.-href (.getElementById js/document "stylesheet"))
+         (str "/css/screen.css?lang=" language))))
 
 (reg-event-fx
  :unauthorized!
@@ -195,6 +198,7 @@
    :application application-page
    :new-application new-application-page
    :applications applications-page
+   :rems.actions/accept-invitation accept-invitation-page
    :rems.administration/administration administration-page
    :rems.administration/catalogue-item catalogue-item-page
    :rems.administration/catalogue-items catalogue-items-page
@@ -234,8 +238,17 @@
      [nav/navigation-widget page-id]
      [status-modal/status-modal]
      [logo]
-     [:div.container.main-content [content]]
+     [:div.container-fluid.main-content
+       [content]]
      [footer]]))
+
+(reg-event-fx
+ :after-translations-are-loaded
+ (fn [{:keys [db]} [_ on-loaded]]
+   (if (seq (:translations db))
+     (on-loaded)
+     (.setTimeout js/window #(dispatch [:after-translations-are-loaded on-loaded]) 100))
+   {}))
 
 ;; -------------------------
 ;; Routes
@@ -258,6 +271,12 @@
 (secretary/defroute "/actions" []
   (rf/dispatch [:rems.actions/enter-page])
   (rf/dispatch [:set-active-page :actions]))
+
+(secretary/defroute "/application/accept-invitation/:invitation-token" [invitation-token]
+  (rf/dispatch [:after-translations-are-loaded
+                #(do
+                   (rf/dispatch [:rems.actions.accept-invitation/enter-page invitation-token])
+                   (rf/dispatch [:set-active-page :rems.actions/accept-invitation]))]))
 
 (secretary/defroute "/application/:id" {id :id}
   (rf/dispatch [:rems.application/enter-application-page id])

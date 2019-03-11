@@ -58,7 +58,8 @@
    :items [FormField]})
 
 (s/defschema CreateFormResponse
-  {:id s/Num})
+  {:success s/Bool
+   :id s/Num})
 
 (def forms-api
   (context "/forms" []

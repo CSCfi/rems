@@ -1,5 +1,7 @@
 (ns rems.util
   (:require [clojure.test :refer [deftest is]]
+            [buddy.core.nonce :as buddy-nonce]
+            [buddy.core.codecs :as buddy-codecs]
             [rems.config :refer [env]]
             [rems.context :as context]))
 
@@ -71,3 +73,8 @@
   (is (= {:a 1} (update-present {:a 1} :b (constantly true))))
   (is (= {:a 1 :b true} (update-present {:a 1 :b 2} :b (constantly true))))
   (is (= {:a 1 :b true} (update-present {:a 1 :b nil} :b (constantly true)))))
+
+(defn secure-token
+  []
+  (let [randomdata (buddy-nonce/random-bytes 16)]
+    (buddy-codecs/bytes->hex randomdata)))

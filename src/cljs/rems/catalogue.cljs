@@ -18,7 +18,7 @@
  ::enter-page
  (fn [{:keys [db]} _]
    (if (roles/is-logged-in? (get-in db [:identity :roles]))
-     {:db (assoc db ::loading-catalogue? true)
+     {:db (assoc db ::catalogue nil)
       ::fetch-catalogue nil
       ::fetch-drafts nil}
      (unauthorized!))))
@@ -41,11 +41,8 @@
 (rf/reg-event-db
  ::fetch-catalogue-result
  (fn [db [_ catalogue]]
-   (-> db
-       (assoc ::catalogue catalogue)
-       (dissoc ::loading-catalogue?))))
+   (assoc db ::catalogue catalogue)))
 
-(rf/reg-sub ::loading-catalogue? (fn [db _] (::loading-catalogue? db)))
 (rf/reg-sub ::catalogue (fn [db _] (::catalogue db)))
 
 
@@ -93,7 +90,8 @@
            :id-function :id
            :items (filter :enabled items)
            :class "catalogue"}
-          (select-keys [:sorting :filtering] params))])
+          (when sorting {:sorting sorting})
+          (when filtering {:filtering filtering}))])
 
 (defn- format-catalogue-items [app]
   (str/join ", " (map :title (:catalogue-items app))))
@@ -115,17 +113,18 @@
        :items drafts}]]))
 
 (defn catalogue-page []
-  (let [language (rf/subscribe [:language])]
+  (let [language (rf/subscribe [:language])
+        items @(rf/subscribe [::catalogue])]
     [:div
      [:h2 (text :t.catalogue/catalogue)]
-     (if @(rf/subscribe [::loading-catalogue?])
+     (if (nil? items)
        [spinner/big]
        [:div
         [draft-application-list @(rf/subscribe [::draft-applications]) @language]
         [:h4 (text :t.catalogue/apply-resources)]
         [cart/cart-list-container @language]
         [catalogue-list
-         {:items @(rf/subscribe [::catalogue])
+         {:items items
           :language @language
           :sorting (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))
           :filtering (assoc @(rf/subscribe [::filtering]) :set-filtering #(rf/dispatch [::set-filtering %]))

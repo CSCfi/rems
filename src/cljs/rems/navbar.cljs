@@ -50,7 +50,7 @@
     [:button.navbar-toggler
      {:type "button" :data-toggle "collapse" :data-target "#small-navbar"}
      "\u2630"]
-    [navbar-items :div#big-navbar.collapse.navbar-collapse page-id identity]]
+    [navbar-items :div#big-navbar.collapse.navbar-collapse.mr-3 page-id identity]]
    [:div.navbar [user-widget (:user identity)]]])
 
 (defn navbar-small [page-id user]
