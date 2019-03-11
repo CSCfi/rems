@@ -4,8 +4,13 @@
 #
 version: 2
 
+# We use the machine executor because our dev_db.sh uses docker to run
+# a fixed postgres version. Additionally, if we wanted to use docker
+# for builds we'd need to setup a custom lein+npm+postgres image and
+# publish it on docker hub. Maybe some day.
+
 defaults: &defaults
-  executor: machine
+  machine: true
   working_directory: ~/repo
   environment:
     LEIN_ROOT: "true"
@@ -46,7 +51,7 @@ jobs:
       # verify that we can run unit tests without the database:
       - run: DATABASE_URL=invalid lein eftest
 
-  cloverage:
+  test:
     <<: *defaults
     steps:
       - checkout
@@ -54,8 +59,7 @@ jobs:
           keys:
           - v2-dependencies-{{ checksum "project.clj" }}
       - run: ./dev_db.sh
-      # run all tests with coverage tracking:
-      - run: lein run-cloverage
+      - run: lein cljtests
       - store_artifacts:
           path: browsertest-errors
 
@@ -95,7 +99,7 @@ workflows:
         - without-db:
             requires:
               - build
-        - cloverage:
+        - test:
             requires:
               - build
         - doo:
@@ -108,6 +112,6 @@ workflows:
             requires:
               - build
               - without-db
-              - cloverage
+              - test
               - doo
               - war
