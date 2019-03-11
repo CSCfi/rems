@@ -587,7 +587,7 @@
                           (map format-event)
                           dedupe
                           (group-by #(or (:request-id %)
-                                         ; Might want to replace this by exposing id from backend
+                                         ;; Might want to replace this by exposing id from backend
                                          [(:event %) (:time %)]))
                           vals
                           (map (partial sort-by :time))
