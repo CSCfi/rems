@@ -22,7 +22,6 @@
       (str "url(\"" url "\")"))))
 
 (defn get-logo-image [lang]
-  (prn :kieli lang)
   (resolve-image (util/get-theme-attribute (keyword (str "logo-name-" (name lang))) :logo-name)))
 
 (defn get-logo-name-sm [lang]
