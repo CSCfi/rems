@@ -44,7 +44,9 @@ In other words, this is how re-frame suggests you should to do things:
                 :on-click #(rf/dispatch [::send-request-decision])}])         ; first indirection
 ```
 
-In some cases the effect handler does not even call the fetch function directly, but has one more indirection of calling a specific function `fetch-this-one-thing!` without parameters. It's slightly better to inline the actual fetch to the effect, but we will instead write
+In some cases the effect handler does not even call the fetch function directly, but has one more indirection of calling a specific function `fetch-this-one-thing!` without parameters. It's slightly better to inline the actual fetch to the effect.
+
+**We will write**
 
 ```clojure
 (rf/reg-event-fx
@@ -58,7 +60,7 @@ In some cases the effect handler does not even call the fetch function directly,
    {}))
 ```
 
-In particular do not mix side-effects and effect handlers in the same flow!
+In particular we do not want to mix side-effects and effect handlers in the same flow! **Please avoid doing this mixed model** because it's even more confusing than either solution!
 
 ```clojure
 (rf/reg-event-fx
