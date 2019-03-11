@@ -579,13 +579,13 @@
                    (for [e group]
                      ^{:key e} [event-view e])]))
 
-(defn- application-header [state phases-data events]
+(defn- application-header [state phases-data events last-modified]
   (let [;; the event times have millisecond differences, so they need to be formatted to minute precision before deduping
         event-groups (->> events
                           (map format-event)
                           dedupe
                           (group-by #(or (:request-id %)
-                                         ; Might want to replace this by exposing id from backend
+                                         ;; Might want to replace this by exposing id from backend
                                          [(:event %) (:time %)]))
                           vals
                           (map (partial sort-by :time))
@@ -599,9 +599,11 @@
                (when state (str ": " (localize-state state))))]
       :always [:div
                [:div.mb-3 {:class (str "state-" (if (keyword? state) (name state) state))} (phases phases-data)]
-               [:h4 (text :t.form/events)]
+               [:h4 (text-format :t.applications/latest-activity (localize-time last-modified))]
                (when-let [g (first event-groups)]
-                 (render-event-groups [g]))]
+                 (list
+                  [:h4 (text :t.form/events)]
+                  (render-event-groups [g])))]
       :collapse (when-let [g (seq (rest event-groups))]
                   (render-event-groups g))}]))
 
@@ -757,6 +759,7 @@
 (defn- render-application [application edit-application language]
   (let [app (:application application)
         state (:state app)
+        last-modified (:last-modified app)
         phases (:phases application)
         events (concat (:events app)
                        (map dynamic-event->event (:dynamic-events app)))
@@ -771,7 +774,7 @@
      [:div {:class "float-right"} [pdf-button (:id app)]]
      [:h2 (text :t.applications/application)]
      (into [:div] messages)
-     [application-header state phases events]
+     [application-header state phases events last-modified]
      [:div.mt-3 [applicants-info "applicants-info" app applicant-attributes (:members app) (:invited-members app)]]
      [:div.mt-3 [applied-resources (:catalogue-items application)]]
      [:div.my-3 [fields application edit-application language]]

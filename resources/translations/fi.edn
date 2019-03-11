@@ -193,7 +193,7 @@
                           :returned "Palautettu"
                           :unknown "Tuntematon"
                           :withdrawn "Palautettu takaisin"}
-                 :latest-comment "Viimeisin kommentti"
+                 :latest-activity "Viimeisin toimenpide %1"
                  :user "Käyttäjä"
                  :view "Näytä"}
   :autocomplete {:no-results "Ei tuloksia"

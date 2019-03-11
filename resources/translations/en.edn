@@ -193,7 +193,7 @@
                           :returned "Returned"
                           :unknown "Unknown"
                           :withdrawn "Withdrawn"}
-                 :latest-comment "Latest comment"
+                 :latest-activity "Latest activity %1"
                  :user "User"
                  :view "View"}
   :autocomplete {:no-results "No results"
