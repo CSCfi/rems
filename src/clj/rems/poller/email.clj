@@ -3,9 +3,13 @@
   (:require [clojure.test :refer :all]
             [clojure.tools.logging :as log]
             [mount.core :as mount]
-            [rems.json :as json]
+            [postal.core :as postal]
+            [rems.config :refer [env]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
+            [rems.db.users :as users]
+            [rems.json :as json]
+            [rems.util :as util]
             [rems.workflow.dynamic :as dynamic]))
 
 ;;; Mapping events to emails
@@ -18,36 +22,36 @@
 
 (defmethod event-to-emails-impl :application.event/approved [event application]
   (for [member (:members application)] ;; applicant is a member
-    {:to (:userid member)
+    {:to-user (:userid member)
      :body (str "application " (:application/id event) " has been approved")}))
 
 (defmethod event-to-emails-impl :application.event/rejected [event application]
   (for [member (:members application)] ;; applicant is a member
-    {:to (:userid member)
+    {:to-user (:userid member)
      :body (str "application " (:application/id event) " has been rejected")}))
 
 (defmethod event-to-emails-impl :application.event/comment-requested [event _application]
   (for [c (:application/commenters event)]
-    {:to c
+    {:to-user c
      :body (str "please comment on " (:application/id event))}))
 
 (defmethod event-to-emails-impl :application.event/decision-requested [event _application]
   (for [c (:application/deciders event)]
-    {:to c
+    {:to-user c
      :body (str "please decide " (:application/id event))}))
 
 (defmethod event-to-emails-impl :application.event/commented [event application]
   (for [h (get-in application [:workflow :handlers])]
-    {:to h
+    {:to-user h
      :body (str "comment by " (:event/actor event)  ": " (:application/comment event))}))
 
 (defmethod event-to-emails-impl :application.event/decided [event application]
   (for [h (get-in application [:workflow :handlers])]
-    {:to h
+    {:to-user h
      :body (str "decision by " (:event/actor event)  ": " (:application/decision event))}))
 
 (defmethod event-to-emails-impl :application.event/member-added [event _application]
-  [{:to (:userid (:application/member event))
+  [{:to-user (:userid (:application/member event))
     :body "you've been added"}])
 
 (defmethod event-to-emails-impl :application.event/member-invited [event _application]
@@ -120,12 +124,6 @@
              {:to "somebody", :body "application 7 has been approved"}
              {:to "member", :body "application 7 has been approved"}]]
            (mapv #(event-to-emails-impl % application) events)))))
-
-;;; Sending emails
-
-(defn send-email! [email-spec]
-  ;; just a stub for now
-  (log/info "email:" (pr-str email-spec)))
 
 ;;; Generic poller infrastructure
 
@@ -200,6 +198,23 @@
         (is (= [{:event/id 7} {:event/id 9}] @processed))))))
 
 ;;; Email poller
+
+(defn send-email! [email-spec]
+  (let [host (:smtp-host env)
+        port (:smtp-port env)]
+    (if (and host port)
+      (let [fixed-email (assoc email-spec
+                               :from (:mail-from env)
+                               :subject "REMS notification"
+                               :to (or (:to email-spec)
+                                       (util/get-user-mail
+                                        (users/get-user-attributes
+                                         (:to-user email-spec)))))]
+        ;; TODO check that :to is set
+        (log/info "sending email:" (pr-str fixed-email))
+        (postal/send-message {:host host :port port} fixed-email))
+      (do
+        (log/info "pretending to send email:" (pr-str email-spec))))))
 
 (defn run []
   (run-event-poller ::poller (fn [event]
