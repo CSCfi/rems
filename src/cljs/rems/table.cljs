@@ -1,8 +1,10 @@
 (ns rems.table
   "Generic sortable table widget"
-  (:require [rems.atoms :refer [sort-symbol search-symbol]]
+  (:require [clojure.string :as str]
+            [clojure.test :refer [deftest is testing]]
+            [hiccup-find.core :as hf]
             [schema.core :as s]
-            [clojure.string :as str]))
+            [rems.atoms :refer [sort-symbol search-symbol]]))
 
 (defn column-header [column-definitions col]
   ((get-in column-definitions [col :header] (constantly ""))))
@@ -29,11 +31,13 @@
       (throw (js/Error. (str "No `:sort-value` or `:value` defined for column \"" col "\""))))))
 
 (defn column-filter-value [column-definitions col item]
-  (let [filter-value-fn (or (get-in column-definitions [col :filter-value])
-                            (get-in column-definitions [col :value]))]
-    (if filter-value-fn
-      (filter-value-fn item)
-      (throw (js/Error. (str "No `:filter-value` or `:value` defined for column \"" col "\""))))))
+  (if (get-in column-definitions [col :filterable?] true)
+    (let [filter-value-fn (or (get-in column-definitions [col :filter-value])
+                              (get-in column-definitions [col :value]))]
+      (if filter-value-fn
+        (str (filter-value-fn item))
+        (throw (js/Error. (str "No `:filter-value` or `:value` defined for column \"" col "\"")))))
+    ""))
 
 (defn- row [column-definitions columns item]
   (into [:tr.action]
@@ -63,18 +67,60 @@
   (reduce (fn [items {:keys [sort-column sort-order]}]
             (apply-sorting column-definitions sort-column sort-order items)) items initial-sort))
 
-(defn matches-filter [column-definitions col filter-value item]
-  (let [actual-value (str (column-filter-value column-definitions col item))]
-    (str/includes? (str/lower-case actual-value)
-                   (str/lower-case filter-value))))
+(defn match-filter? [column-definitions filter-word item]
+  (some (fn [col]
+          (str/includes? (str/lower-case (column-filter-value column-definitions col item))
+                         (str/lower-case filter-word)))
+        (keys column-definitions)))
 
-(defn matches-filters [column-definitions filters item]
-  (every? (fn [[col filter-value]] ()
-            (matches-filter column-definitions col filter-value item))
-          filters))
+(deftest test-match-filter
+ (is (true? (match-filter? {:id {:value :id}
+                            :description {:value :description}}
+                           "bar"
+                           {:id "foo"
+                            :description "bar"}))
+     "matches")
+ (is (not (match-filter? {:id {:value :id}
+                          :description {:value :its-a-trap
+                                        :filter-value :description}}
+                         "willnotmatch"
+                         {:id "foo"
+                          :its-a-trap "willnotmatch"
+                          :description "bar"}))
+     "doesn't match with value if filter-value is provided"))
+
+(defn match-filters? [column-definitions filters item]
+  (every? (fn [filter-word]
+            (match-filter? column-definitions filter-word item))
+          (str/split filters #"\s+")))
+
+(deftest test-match-filters
+ (is (true? (match-filters? {:id {:value :id}
+                             :description {:value :its-a-trap
+                                           :filter-value :description}}
+                            "foo bar"
+                            {:id "foo"
+                             :its-a-trap "willnotmatch"
+                             :description "bar"}))
+     "match with filter-value")
+ (is (not (match-filters? {:id {:value :id}
+                           :description {:value :its-a-trap
+                                         :filter-value :description}}
+                          "foo bar"
+                          {:id "foo"
+                           :its-a-trap "bar"
+                           :description "shouldnotmatch"}))
+     "doesn't match with value if filter-value is provided")
+ (is (not (match-filters? {:id {:value :id}
+                           :description {:value :description
+                                         :filterable? false}}
+                          "foo shouldnotmatch"
+                          {:id "foo"
+                           :description "shouldnotmatch"}))
+     "doesn't match if filterable is false"))
 
 (defn apply-filtering [column-definitions filters items]
-  (filter #(matches-filters column-definitions filters %) items))
+  (filter #(match-filters? column-definitions filters %) items))
 
 (s/defschema Applicable
   (s/cond-pre s/Keyword (s/pred fn?)))
@@ -94,12 +140,28 @@
                               (s/optional-key :sort-column) s/Keyword
                               (s/optional-key :sort-order) (s/enum :asc :desc)
                               (s/optional-key :set-sorting) Applicable}
-   (s/optional-key :filtering) {(s/optional-key :filters) {s/Keyword s/Str}
+   (s/optional-key :filtering) {(s/optional-key :filters) s/Str
                                 (s/optional-key :show-filters) s/Bool
                                 (s/optional-key :set-filtering) Applicable}
    :id-function Applicable
    :items [s/Any]
    (s/optional-key :class) s/Str})
+
+(defn- filter-view [filtering]
+  (let [{:keys [filters set-filtering]} filtering]
+    [:div
+      [:input
+       {:type "text"
+        :name "table-search"
+        :value filters
+        :placeholder ""
+        :on-input (fn [event]
+                    (set-filtering (assoc filtering :filters (-> event .-target .-value))))}]
+      (when (seq filters)
+        [:div.reset-button.icon-link.fa.fa-backspace
+         {:on-click (fn []
+                      (set-filtering (assoc filtering :filters "")))
+          :aria-hidden true}])]))
 
 (defn- filter-toggle [{:keys [show-filters set-filtering] :as filtering}]
   (when filtering
@@ -107,7 +169,9 @@
      [:button.btn
       {:class (if show-filters "btn-secondary" "btn-primary")
        :on-click #(set-filtering (update filtering :show-filters not))}
-      (search-symbol)]]))
+      (search-symbol)]
+     (when show-filters
+       [filter-view filtering])]))
 
 (defn- column-header-view [column column-definitions sorting]
   (let [{:keys [sort-column sort-order set-sorting]} sorting
@@ -124,45 +188,20 @@
       (when (= column sort-column)
         (sort-symbol sort-order))]]))
 
-(defn- column-filter-view [column column-definitions filtering]
-  (let [{:keys [show-filters filters set-filtering]} filtering]
-    [:th
-     (when (get-in column-definitions [column :filterable?] true)
-       [:div.column-filter
-        [:input
-         {:type        "text"
-          :name        (str (name column) "-search")
-          :value       (str (column filters))
-          :placeholder ""
-          :on-input    (fn [event]
-                         (set-filtering
-                          (assoc-in filtering [:filters column] (-> event .-target .-value))))}]
-        (when (not= "" (get filters column ""))
-          [:div.reset-button.icon-link.fa.fa-backspace
-           {:on-click (fn []
-                        (set-filtering
-                         (assoc-in filtering [:filters column] "")))
-            :aria-hidden true}])])]))
-
 (defn- head [{:keys [column-definitions visible-columns sorting filtering id-function items class] :as params}]
-  (let [{:keys [show-filters]} filtering]
-    [:thead
-     (into [:tr]
-           (for [column visible-columns]
-             [column-header-view column column-definitions sorting]))
-     (when show-filters
-       (into [:tr]
-             (for [column visible-columns]
-               [column-filter-view column column-definitions filtering])))]))
+  [:thead
+   (into [:tr]
+         (for [column visible-columns]
+           [column-header-view column column-definitions sorting]))])
 
 (defn- body [{:keys [column-definitions visible-columns sorting filtering id-function items class] :as params}]
   (let [{:keys [initial-sort sort-column sort-order set-sorting]} sorting
-        {:keys [show-filters filters set-filtering]} filtering]
+        {:keys [show-filters filters]} filtering]
     [:tbody
      (map (fn [item] ^{:key (id-function item)} [row column-definitions visible-columns item])
           (cond->> items
             (and initial-sort (not sort-column)) (apply-initial-sorting column-definitions initial-sort)
-            (and filtering filters) (apply-filtering column-definitions filters)
+            (and show-filters filters) (apply-filtering column-definitions filters)
             (and sorting sort-column) (apply-sorting column-definitions sort-column sort-order)))]))
 
 (defn component
