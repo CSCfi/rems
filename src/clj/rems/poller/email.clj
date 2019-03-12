@@ -18,14 +18,14 @@
   [])
 
 (defmethod event-to-emails-impl :application.event/approved [event application]
-  ;; TODO other members
-  [{:to (:applicantuserid application)
-    :body (str "application " (:application/id event) " has been approved")}])
+  (for [member (:members application)] ;; applicant is a member
+    {:to (:userid member)
+     :body (str "application " (:application/id event) " has been approved")}))
 
 (defmethod event-to-emails-impl :application.event/rejected [event application]
-  ;; TODO other members
-  [{:to (:applicantuserid application)
-    :body (str "application " (:application/id event) " has been rejected")}])
+  (for [member (:members application)] ;; applicant is a member
+    {:to (:userid member)
+     :body (str "application " (:application/id event) " has been rejected")}))
 
 (defmethod event-to-emails-impl :application.event/comment-requested [event _application]
   (for [c (:application/commenters event)]
@@ -117,7 +117,9 @@
             [{:to "decider" :body "please decide 7"}]
             [{:to "handler" :body "decision by decider: :approved"}
              {:to "assistant" :body "decision by decider: :approved"}]
-            [{:to "applicant" :body "application 7 has been approved"}]]
+            [{:to "applicant" :body "application 7 has been approved"}
+             {:to "somebody", :body "application 7 has been approved"}
+             {:to "member", :body "application 7 has been approved"}]]
            (mapv #(event-to-emails-impl % application) events)))))
 
 ;;; Sending emails
