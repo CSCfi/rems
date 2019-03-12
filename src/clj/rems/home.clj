@@ -1,6 +1,7 @@
 (ns rems.home
   (:require [clojure.tools.logging :as log]
-            [compojure.core :refer [GET defroutes]]
+            [clojure.test :refer [deftest is]]
+            [compojure.core :refer [GET defroutes routes]]
             [markdown.core :as md]
             [rems.auth.util :as auth-util]
             [rems.common-util :refer [index-by]]
@@ -9,7 +10,8 @@
             [rems.css.styles :as styles]
             [rems.db.catalogue :as catalogue]
             [rems.layout :as layout]
-            [ring.util.response :refer [content-type not-found redirect response]]))
+            [ring.util.response :refer [content-type not-found redirect response]]
+            [clojure.string :as str]))
 
 (defn- apply-for-resource [resource]
   (let [items (->> (catalogue/get-localized-catalogue-items {:resource resource})
@@ -36,17 +38,25 @@
   easy memoization purposes."
   [language]
   (log/info (str "Rendering stylesheet for language " language))
-  (-> (styles/screen)
+  (-> (styles/screen-css)
       (response)
       (content-type "text/css")))
 
 (def memoized-render-css (memoize render-css))
 
-(defroutes home-routes
+(defroutes normal-routes
   (GET "/" [] (layout/home-page))
   (GET "/accept-invitation" {{:keys [token]} :params} (redirect (str "/#/application/accept-invitation/" token)))
   (GET "/apply-for" {{:keys [resource]} :params} (apply-for-resource resource))
   (GET "/landing_page" req (redirect "/#/redirect")) ; DEPRECATED: legacy url redirect
   (GET "/markdown/:filename" [filename] (markdown-page filename))
-  (GET "/favicon.ico" [] (redirect "/img/favicon.ico"))
-  (GET "/css/screen.css" [] (memoized-render-css context/*lang*)))
+  (GET "/favicon.ico" [] (redirect "/img/favicon.ico")))
+
+(defroutes css-routes
+  (GET "/css/:language/screen.css" [language]
+    (binding [context/*lang* (keyword language)]
+      (memoized-render-css context/*lang*))))
+
+(defn home-routes []
+  (routes normal-routes
+          css-routes))

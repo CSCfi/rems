@@ -15,7 +15,6 @@
 /log/
 /pom.xml
 /profiles.clj
-/resources/public/css/compiled/screen.css
 /target/
 /node_modules/
 /.rebel_readline_history
