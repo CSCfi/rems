@@ -554,10 +554,13 @@
                         :background-color (util/get-theme-attribute :table-heading-bgcolor :color3)
                         :margin (u/px -1)}] ; make sure header overlaps container border
    [(s/descendant :.card-header :a) {:color :inherit}]
-   ;; hax for opening misalignment
-   [:.license-title {:margin-top (u/px 3)}]
-   [:.license-block {:color "#000"
-                     :white-space "pre-wrap"}]
+   [:.license {:margin-bottom (u/rem 1)}
+    [:.license-block {:color "#000"
+                      :white-space "pre-wrap"}]
+    [:.license-title {;; hax for opening misalignment
+                      :margin-top (u/px 3)
+                      :line-height (u/rem 1.25)
+                      :font-size (u/rem 1.25)}]]
    [:.collapsing {:-webkit-transition "height 0.1s linear"
                   :-o-transition "height 0.1s linear"
                   :transition "height 0.1s linear"}]

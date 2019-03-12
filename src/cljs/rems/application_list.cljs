@@ -1,6 +1,6 @@
 (ns rems.application-list
   (:require [clojure.string :as str]
-            [rems.application-util :refer [editable?]]
+            [rems.application-util :refer [form-fields-editable?]]
             [rems.guide-functions]
             [rems.table :as table]
             [rems.text :refer [localize-state localize-time text]])
@@ -21,7 +21,7 @@
   [:id :description :resource :applicant :state :created :view])
 
 (defn state-class [item]
-  (if (editable? item)
+  (if (form-fields-editable? item)
     "state text-highlight"
     "state"))
 

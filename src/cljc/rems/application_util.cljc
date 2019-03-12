@@ -1,6 +1,6 @@
 (ns rems.application-util)
 
-(defn editable? [application]
+(defn form-fields-editable? [application]
   (or (contains? #{"draft" "returned" "withdrawn"}
                  (:state application))
       (contains? (:possible-commands application)
