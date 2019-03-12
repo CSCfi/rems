@@ -13,7 +13,7 @@
             [rems.actions.request-comment :refer [request-comment-action-button request-comment-form]]
             [rems.actions.request-decision :refer [request-decision-action-button request-decision-form]]
             [rems.actions.return-action :refer [return-action-button return-form]]
-            [rems.application-util :refer [editable?]]
+            [rems.application-util :refer [form-fields-editable?]]
             [rems.atoms :refer [external-link flash-message info-field textarea]]
             [rems.autocomplete :as autocomplete]
             [rems.catalogue-util :refer [get-catalogue-item-title]]
@@ -526,8 +526,8 @@
         {:keys [items licenses validation]} edit-application
         field-validations (index-by [:field-id] validation)
         license-validations (index-by [:license-id] validation)
-        editable? (editable? application)
-        readonly? (not editable?)]
+        form-fields-editable? (form-fields-editable? application)
+        readonly? (not form-fields-editable?)]
     [collapsible/component
      {:id "form"
       :title (text :t.form/application)

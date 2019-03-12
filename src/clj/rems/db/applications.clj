@@ -5,7 +5,7 @@
             [clojure.set :refer [difference union]]
             [clojure.test :refer [deftest is]]
             [cprop.tools :refer [merge-maps]]
-            [rems.application-util :refer [editable?]]
+            [rems.application-util :refer [form-fields-editable?]]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.context :as context]
             [rems.db.catalogue :refer [get-localized-catalogue-items]]
@@ -470,7 +470,7 @@
    :maxlength (:maxlength item)})
 
 (defn- assoc-item-previous-values [application items]
-  (let [previous-values (:items (if (editable? application)
+  (let [previous-values (:items (if (form-fields-editable? application)
                                   (:submitted-form-contents application)
                                   (:previous-submitted-form-contents application)))]
     (for [item items]
@@ -620,7 +620,7 @@
                                buffer (ByteArrayOutputStream.)]
                      (clojure.java.io/copy input buffer)
                      (.toByteArray buffer))]
-    (when-not (editable? (:application form))
+    (when-not (form-fields-editable? (:application form))
       (throw-forbidden))
     (db/save-attachment! {:application application-id
                           :form (:id form)
@@ -633,7 +633,7 @@
 (defn remove-attachment!
   [user-id application-id item-id]
   (let [form (get-form-for user-id application-id)]
-    (when-not (editable? (:application form))
+    (when-not (form-fields-editable? (:application form))
       (throw-forbidden))
     (db/remove-attachment! {:application application-id
                             :form (:id form)
