@@ -120,6 +120,12 @@
             [{:to "applicant" :body "application 7 has been approved"}]]
            (mapv #(event-to-emails-impl % application) events)))))
 
+;;; Sending emails
+
+(defn send-email! [email-spec]
+  ;; just a stub for now
+  (log/info "email:" (pr-str email-spec)))
+
 ;;; Poller
 
 (defn get-state []
@@ -135,11 +141,17 @@
         events (applications/get-dynamic-application-events-since (:event/id prev-state))]
     (log/info "email poller starting with state" (pr-str prev-state))
     (when-not (empty? events)
-      (doseq [e events]
-        (log/info "email poller processing event" (:event/id e))
-        (doseq [mail (event-to-emails e)]
-          (log/info "email:" (pr-str mail))))
-      (set-state! {:event/id (:event/id (last events))}))
+      (try
+        (doseq [e events]
+          (try
+            (log/info "email poller processing event" (:event/id e))
+            (doseq [mail (event-to-emails e)]
+              (send-email! mail))
+            (set-state! {:event/id (:event/id e)})
+            (catch Throwable t
+              (throw (Exception. (str "While processing event " (pr-str e)) t)))))
+        (catch Throwable t
+          (log/error t))))
     (log/info "email poller finished")))
 
 (mount/defstate email-poller
