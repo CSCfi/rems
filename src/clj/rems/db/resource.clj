@@ -35,3 +35,7 @@
         {:success false
          :errors [{:type :t.administration.errors/duplicate-resid :resid resid}]}
         (throw e)))))
+
+(defn update-resource! [command]
+  (db/set-resource-state! (select-keys command [:id :enabled :archived]))
+  {:success true})

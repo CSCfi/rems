@@ -35,6 +35,11 @@
    (s/optional-key :id) s/Num
    (s/optional-key :errors) [s/Any]})
 
+(s/defschema UpdateResourceCommand
+  {:id s/Num
+   :enabled s/Bool
+   :archived s/Bool})
+
 (defn- format-resource
   [{:keys [id owneruserid modifieruserid organization resid start endt active enabled archived]}]
   {:id id
@@ -83,4 +88,11 @@
       :roles #{:owner}
       :body [command CreateResourceCommand]
       :return CreateResourceResponse
-      (ok (resource/create-resource! command (getx-user-id))))))
+      (ok (resource/create-resource! command (getx-user-id))))
+
+    (PUT "/update" []
+      :summary "Update resource"
+      :roles #{:owner}
+      :body [command UpdateResourceCommand]
+      :return SuccessResponse
+      (ok (resource/update-resource! command)))))

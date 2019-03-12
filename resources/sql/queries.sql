@@ -44,7 +44,7 @@ LEFT OUTER JOIN application_form form ON (ci.formid = form.id)
 WHERE ci.id = :id;
 
 -- :name set-catalogue-item-state! :insert
-UPDATE catalogue_item ci
+UPDATE catalogue_item
 SET
 /*~ (when (boolean? (:enabled params)) */
   enabled = :enabled,
@@ -53,7 +53,7 @@ SET
   archived = :archived,
 /*~ ) ~*/
   id = id
-WHERE ci.id = :id;
+WHERE id = :id;
 
 -- :name create-catalogue-item! :insert
 -- :doc Create a single catalogue item
@@ -97,6 +97,18 @@ INSERT INTO resource
 VALUES (:resid, :organization, :owneruserid, :modifieruserid,
  /*~ (if (:endt params) */ :endt /*~*/ NULL /*~ ) ~*/
 );
+
+-- :name set-resource-state! :insert
+UPDATE resource
+SET
+  /*~ (when (boolean? (:enabled params)) */
+  enabled = :enabled,
+  /*~ ) ~*/
+  /*~ (when (boolean? (:archived params)) */
+  archived = :archived,
+  /*~ ) ~*/
+  id = id
+WHERE id = :id;
 
 -- :name get-database-name :? :1
 SELECT current_database();
