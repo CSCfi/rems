@@ -773,7 +773,8 @@
                        (map dynamic-event->event (:dynamic-events app)))
         applicant-attributes (:applicant-attributes application)
         messages (remove nil?
-                         [(when (editable? application)(disabled-items-warning (:catalogue-items application))) ; NB: eval this here so we get nil or a warning
+                         [(when (editable? application)
+                            (disabled-items-warning (:catalogue-items application))) ; NB: eval this here so we get nil or a warning
                           (when (:validation edit-application)
                             [flash-message
                              {:status :danger
