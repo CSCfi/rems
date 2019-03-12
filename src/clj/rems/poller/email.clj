@@ -154,6 +154,50 @@
           (log/error t))))
     (log/info name-kw "finished")))
 
+(deftest test-run-event-poller-error-handling
+  (let [events (atom [])
+        add-event! #(swap! events conj %)
+        ids-to-fail (atom #{})
+        processed (atom [])
+        process-event! (fn [event]
+                         (when (contains? @ids-to-fail (:event/id event))
+                           (throw (Error. "BOOM")))
+                         (swap! processed conj event))
+        poller-state (atom {:event/id -1})
+        run #(run-event-poller :test process-event!)]
+    (with-redefs [applications/get-dynamic-application-events-since (fn [id] (prn :ID id :EVENTS @events) (filterv #(< id (:event/id %)) @events))
+                  get-poller-state (fn [_] @poller-state)
+                  set-poller-state! (fn [_ state] (reset! poller-state state))]
+      (testing "no events, nothing should happen"
+        (run)
+        (is (= {:event/id -1} @poller-state))
+        (is (= [] @processed)))
+      (testing "add a few events, process them"
+        (add-event! {:event/id 1})
+        (add-event! {:event/id 3})
+        (run)
+        (is (= {:event/id 3} @poller-state))
+        (is (= [{:event/id 1} {:event/id 3}] @processed)))
+      (testing "add a failing event"
+        (add-event! {:event/id 5})
+        (add-event! {:event/id 7})
+        (add-event! {:event/id 9})
+        (reset! ids-to-fail #{7})
+        (reset! processed [])
+        (run)
+        (is (= {:event/id 5} @poller-state))
+        (is (= [{:event/id 5}] @processed)))
+      (testing "run again after failure, nothing should happen"
+        (reset! processed [])
+        (run)
+        (is (= {:event/id 5} @poller-state))
+        (is (= [] @processed)))
+      (testing "fix failure, run"
+        (reset! ids-to-fail #{})
+        (run)
+        (is (= {:event/id 9} @poller-state))
+        (is (= [{:event/id 7} {:event/id 9}] @processed))))))
+
 ;;; Email poller
 
 (defn run []
