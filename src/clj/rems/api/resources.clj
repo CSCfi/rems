@@ -72,9 +72,11 @@
     (GET "/" []
       :summary "Get resources"
       :roles #{:owner}
-      :query-params [{active :- (describe s/Bool "filter active or inactive resources") nil}]
+      :query-params [{active :- (describe s/Bool "filter active or inactive resources") nil}
+                     {archived :- (describe s/Bool "whether to include archived resources") false}]
       :return Resources
-      (ok (get-resources (when active {:active active}))))
+      (ok (get-resources (merge (when active {:active active})
+                                (when-not archived {:archived false})))))
 
     (GET "/:resource-id" []
       :summary "Get resource by id"
