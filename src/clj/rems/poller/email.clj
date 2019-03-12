@@ -126,33 +126,40 @@
   ;; just a stub for now
   (log/info "email:" (pr-str email-spec)))
 
-;;; Poller
+;;; Generic poller infrastructure
 
-(defn get-state []
-  (or (json/parse-string (:state (db/get-poller-state {:name (name ::state)})))
+;; these can be moved to rems.poller once we have multiple pollers
+(defn get-poller-state [name-kw]
+  (or (json/parse-string (:state (db/get-poller-state {:name (name name-kw)})))
       {:event/id -1}))
 
-(defn set-state! [state]
-  (db/set-poller-state! {:name (name ::state) :state (json/generate-string state)})
+(defn set-poller-state! [name-kw state]
+  (db/set-poller-state! {:name (name name-kw) :state (json/generate-string state)})
   nil)
 
-(defn run []
-  (let [prev-state (get-state)
+(defn run-event-poller [name-kw process-event!]
+  (let [prev-state (get-poller-state name-kw)
         events (applications/get-dynamic-application-events-since (:event/id prev-state))]
-    (log/info "email poller starting with state" (pr-str prev-state))
+    (log/info name-kw "running with state" (pr-str prev-state))
     (when-not (empty? events)
       (try
         (doseq [e events]
           (try
-            (log/info "email poller processing event" (:event/id e))
-            (doseq [mail (event-to-emails e)]
-              (send-email! mail))
-            (set-state! {:event/id (:event/id e)})
+            (log/info name-kw "processing event" (:event/id e))
+            (process-event! e)
+            (set-poller-state! name-kw {:event/id (:event/id e)})
             (catch Throwable t
-              (throw (Exception. (str "While processing event " (pr-str e)) t)))))
+              (throw (Exception. (str name-kw " processing event " (pr-str e)) t)))))
         (catch Throwable t
           (log/error t))))
-    (log/info "email poller finished")))
+    (log/info name-kw "finished")))
+
+;;; Email poller
+
+(defn run []
+  (run-event-poller ::poller (fn [event]
+                               (doseq [mail (event-to-emails event)]
+                                 (send-email! mail)))))
 
 (mount/defstate email-poller
   :start (doto (java.util.concurrent.ScheduledThreadPoolExecutor. 1)
