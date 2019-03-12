@@ -16,6 +16,7 @@
 (defn duplicate-resid? [^Exception e]
   (let [cause (.getCause e)]
     (and (instance? PSQLException cause)
+         (.getServerErrorMessage ^PSQLException cause)
          (= "duplicate key value violates unique constraint \"resource_resid_u\""
             (.getMessage (.getServerErrorMessage ^PSQLException cause))))))
 
