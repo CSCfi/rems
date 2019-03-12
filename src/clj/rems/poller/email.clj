@@ -1,6 +1,7 @@
 (ns rems.poller.email
   "Sending emails based on application events."
-  (:require [rems.json :as json]
+  (:require [mount.core :as mount]
+            [rems.json :as json]
             [rems.db.applications :as applications]
             [rems.db.core :as db]))
 
@@ -74,3 +75,14 @@
       (doseq [e events]
         (prn (event-to-emails e)))
       (set-state! {:event/id (:event/id (last events))}))))
+
+(mount/defstate email-poller
+  :start (doto (java.util.concurrent.ScheduledThreadPoolExecutor. 1)
+           (.scheduleWithFixedDelay run 10 10 java.util.concurrent.TimeUnit/SECONDS))
+  :stop (doto email-poller
+          (.shutdown)
+          (.awaitTermination 60 java.util.concurrent.TimeUnit/SECONDS)))
+
+(comment
+  (mount/start #{#'email-poller})
+  (mount/stop #{#'email-poller}))
