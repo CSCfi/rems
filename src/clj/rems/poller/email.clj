@@ -1,6 +1,7 @@
 (ns rems.poller.email
   "Sending emails based on application events."
-  (:require [mount.core :as mount]
+  (:require [clojure.tools.logging :as log]
+            [mount.core :as mount]
             [rems.json :as json]
             [rems.db.applications :as applications]
             [rems.db.core :as db]))
@@ -70,11 +71,14 @@
 (defn run []
   (let [prev-state (get-state)
         events (applications/get-dynamic-application-events-since (:event/id prev-state))]
-    (prn :START prev-state)
+    (log/info "email poller starting with state" (pr-str prev-state))
     (when-not (empty? events)
       (doseq [e events]
-        (prn (event-to-emails e)))
-      (set-state! {:event/id (:event/id (last events))}))))
+        (log/info "email poller processing event" (:event/id e))
+        (doseq [mail (event-to-emails e)]
+          (log/info "email:" (pr-str mail))))
+      (set-state! {:event/id (:event/id (last events))}))
+    (log/info "email poller finished")))
 
 (mount/defstate email-poller
   :start (doto (java.util.concurrent.ScheduledThreadPoolExecutor. 1)
