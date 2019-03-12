@@ -523,9 +523,8 @@
 
 (defn- fields [form edit-application language]
   (let [application (:application form)
-        {:keys [items licenses validation]} edit-application
+        {:keys [items validation]} edit-application
         field-validations (index-by [:field-id] validation)
-        license-validations (index-by [:license-id] validation)
         form-fields-editable? (form-fields-editable? application)
         readonly? (not form-fields-editable?)]
     [collapsible/component
@@ -542,16 +541,26 @@
                              :value (get-in items [(:id item) :value])
                              :previous-value (get-in items [(:id item) :previous-value])
                              :diff (get-in items [(:id item) :diff])
-                             :app-id (:id application))]))
-       (when-let [form-licenses (not-empty (:licenses form))]
-         [:div.form-group.field
-          [:h4 (text :t.form/licenses)]
-          (into [:div#licenses]
-                (for [license form-licenses]
-                  [field (assoc (localize-item license)
-                                :validation (license-validations (:id license))
-                                :readonly readonly?
-                                :approved (get licenses (:id license)))]))])]}]))
+                             :app-id (:id application))]))]}]))
+
+(defn- application-licenses [form edit-application language]
+  (when-let [form-licenses (not-empty (:licenses form))]
+    (let [application (:application form)
+          {:keys [licenses validation]} edit-application
+          license-validations (index-by [:license-id] validation)
+          form-fields-editable? (form-fields-editable? application)
+          readonly? (not form-fields-editable?)]
+      [collapsible/component
+       {:id "form"
+        :title (text :t.form/licenses)
+        :always
+        [:div.form-group.field
+         (into [:div#licenses]
+               (for [license form-licenses]
+                 [field (assoc (localize-item license)
+                               :validation (license-validations (:id license))
+                               :readonly readonly?
+                               :approved (get licenses (:id license)))]))]}])))
 
 
 ;; FIXME Why do we have both this and dynamic-event->event?
@@ -778,6 +787,7 @@
      [:div.mt-3 [applicants-info "applicants-info" app applicant-attributes (:members app) (:invited-members app)]]
      [:div.mt-3 [applied-resources (:catalogue-items application)]]
      [:div.my-3 [fields application edit-application language]]
+     [:div.my-3 [application-licenses application edit-application language]]
      [:div.mb-3 [actions-form app]]]))
 
 ;;;; Entrypoint
