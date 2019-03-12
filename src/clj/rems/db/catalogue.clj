@@ -44,3 +44,7 @@
     ;; Reset cache so that next call to get localizations will get this one.
     (memo/memo-clear! cached)
     return))
+
+(defn update-catalogue-item! [command]
+  (db/set-catalogue-item-state! (select-keys command [:id :enabled :archived]))
+  {:success true})
