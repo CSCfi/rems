@@ -503,7 +503,6 @@
     "date" [date-field f]
     "description" [text-field f]
     "label" [label f]
-    "license" [license-field f]
     "multiselect" [multiselect-field f]
     "option" [option-field f]
     "text" [text-field f]
@@ -557,10 +556,10 @@
         [:div.form-group.field
          (into [:div#licenses]
                (for [license form-licenses]
-                 [field (assoc (localize-item license)
-                               :validation (license-validations (:id license))
-                               :readonly readonly?
-                               :approved (get licenses (:id license)))]))]}])))
+                 [license-field (assoc (localize-item license)
+                                       :validation (license-validations (:id license))
+                                       :readonly readonly?
+                                       :approved (get licenses (:id license)))]))]}])))
 
 
 ;; FIXME Why do we have both this and dynamic-event->event?
