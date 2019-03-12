@@ -167,7 +167,7 @@
                          (swap! processed conj event))
         poller-state (atom {:event/id -1})
         run #(run-event-poller :test process-event!)]
-    (with-redefs [applications/get-dynamic-application-events-since (fn [id] (prn :ID id :EVENTS @events) (filterv #(< id (:event/id %)) @events))
+    (with-redefs [applications/get-dynamic-application-events-since (fn [id] (filterv #(< id (:event/id %)) @events))
                   get-poller-state (fn [_] @poller-state)
                   set-poller-state! (fn [_ state] (reset! poller-state state))]
       (testing "no events, nothing should happen"
