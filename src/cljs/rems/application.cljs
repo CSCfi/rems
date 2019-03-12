@@ -521,7 +521,7 @@
                    :class :btn-primary
                    :on-click #(rf/dispatch [::submit-application (text :t.form/submit)])}])
 
-(defn- fields [form edit-application language]
+(defn- application-fields [form edit-application language]
   (let [application (:application form)
         {:keys [items validation]} edit-application
         field-validations (index-by [:field-id] validation)
@@ -786,7 +786,7 @@
      [application-header state phases events last-modified]
      [:div.mt-3 [applicants-info "applicants-info" app applicant-attributes (:members app) (:invited-members app)]]
      [:div.mt-3 [applied-resources (:catalogue-items application)]]
-     [:div.my-3 [fields application edit-application language]]
+     [:div.my-3 [application-fields application edit-application language]]
      [:div.my-3 [application-licenses application edit-application language]]
      [:div.mb-3 [actions-form app]]]))
 
