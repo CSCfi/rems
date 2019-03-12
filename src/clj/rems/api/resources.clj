@@ -4,6 +4,7 @@
             [rems.api.util]
             [rems.db.licenses :as licenses]
             [rems.db.resource :as resource]
+            [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
@@ -82,4 +83,4 @@
       :roles #{:owner}
       :body [command CreateResourceCommand]
       :return CreateResourceResponse
-      (ok (resource/create-resource! command)))))
+      (ok (resource/create-resource! command (getx-user-id))))))

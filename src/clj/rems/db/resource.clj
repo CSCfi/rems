@@ -1,6 +1,5 @@
 (ns rems.db.resource
-  (:require [rems.db.core :as db]
-            [rems.util :refer [getx-user-id]])
+  (:require [rems.db.core :as db])
   (:import (org.postgresql.util PSQLException)))
 
 (defn get-resource [id]
@@ -20,12 +19,12 @@
          (= "duplicate key value violates unique constraint \"resource_resid_u\""
             (.getMessage (.getServerErrorMessage ^PSQLException cause))))))
 
-(defn create-resource! [{:keys [resid organization licenses]}]
+(defn create-resource! [{:keys [resid organization licenses]} user-id]
   (try
     (let [id (:id (db/create-resource! {:resid resid
                                         :organization organization
-                                        :owneruserid (getx-user-id)
-                                        :modifieruserid (getx-user-id)}))]
+                                        :owneruserid user-id
+                                        :modifieruserid user-id}))]
       (doseq [licid licenses]
         (db/create-resource-license! {:resid id
                                       :licid licid}))
