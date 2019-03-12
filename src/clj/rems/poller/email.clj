@@ -1,10 +1,12 @@
 (ns rems.poller.email
   "Sending emails based on application events."
-  (:require [clojure.tools.logging :as log]
+  (:require [clojure.test :refer :all]
+            [clojure.tools.logging :as log]
             [mount.core :as mount]
             [rems.json :as json]
             [rems.db.applications :as applications]
-            [rems.db.core :as db]))
+            [rems.db.core :as db]
+            [rems.workflow.dynamic :as dynamic]))
 
 ;;; Mapping events to emails
 
@@ -57,6 +59,66 @@
   (when-let [app-id (:application/id event)]
     ;; TODO use api-get-application-v2 or similar
     (event-to-emails-impl event (applications/get-application-state app-id))))
+
+(deftest test-event-to-emails-impl
+  (let [events [{:application/id 7
+                 :event/type :application.event/created
+                 :event/actor "applicant"
+                 :workflow/type :workflow/dynamic
+                 :workflow.dynamic/handlers #{"handler" "assistant"}}
+                {:application/id 7
+                 :event/type :application.event/submitted
+                 :event/actor "applicant"}
+                {:application/id 7
+                 :event/type :application.event/member-invited
+                 :event/actor "applicant"
+                 :application/member {:name "Some Body" :email "somebody@example.com"}
+                 :invitation/toke "abc"}
+                {:application/id 7
+                 :event/type :application.event/comment-requested
+                 :application/request-id "r1"
+                 :application/commenters ["commenter1" "commenter2"]}
+                {:application/id 7
+                 :event/type :application.event/member-joined
+                 :event/actor "somebody"}
+                {:application/id 7
+                 :event/type :application.event/commented
+                 :event/actor "commenter2"
+                 :application/request-id "r1"
+                 :application/comment ["this is a comment"]}
+                {:application/id 7
+                 :event/type :application.event/member-added
+                 :event/actor "handler"
+                 :application/member {:userid "member"}}
+                {:application/id 7
+                 :event/type :application.event/decision-requested
+                 :event/actor "assistant"
+                 :application/request-id "r2"
+                 :application/deciders ["decider"]}
+                {:application/id 7
+                 :event/type :application.event/decided
+                 :event/actor "decider"
+                 :application/decision :approved}
+                {:application/id 7
+                 :event/type :application.event/approved
+                 :event/actor "handler"}]
+        application (dynamic/apply-events nil events)]
+    (is (= [[] ;; created
+            [] ;; submitted
+            [{:to "somebody@example.com" :body "invitation email"}]
+            [{:to "commenter1" :body "please comment on 7"}
+             {:to "commenter2" :body "please comment on 7"}]
+            [] ;; member-joined
+            [{:to "handler"
+              :body "comment by commenter2: [\"this is a comment\"]"}
+             {:to "assistant"
+              :body "comment by commenter2: [\"this is a comment\"]"}]
+            [{:to "member" :body "you've been added"}]
+            [{:to "decider" :body "please decide 7"}]
+            [{:to "handler" :body "decision by decider: :approved"}
+             {:to "assistant" :body "decision by decider: :approved"}]
+            [{:to "applicant" :body "application 7 has been approved"}]]
+           (mapv #(event-to-emails-impl % application) events)))))
 
 ;;; Poller
 
