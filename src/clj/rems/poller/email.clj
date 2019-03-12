@@ -10,7 +10,6 @@
 
 ;;; Mapping events to emails
 
-;; TODO pass in application state
 (defmulti ^:private event-to-emails-impl
   (fn [event _application] (:event/type event)))
 
