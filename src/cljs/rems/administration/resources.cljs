@@ -3,6 +3,7 @@
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.atoms :refer [external-link readonly-checkbox]]
             [rems.spinner :as spinner]
+            [rems.status-modal :as status-modal]
             [rems.table :as table]
             [rems.text :refer [localize-time text]]
             [rems.util :refer [dispatch! fetch put!]]))
@@ -10,13 +11,15 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (assoc db ::loading? true)
-    ::fetch-resources nil}))
+   {:db db
+    :dispatch [::fetch-resources]}))
 
-(defn- fetch-resources []
-  (fetch "/api/resources/" {:handler #(rf/dispatch [::fetch-resources-result %])}))
-
-(rf/reg-fx ::fetch-resources (fn [_] (fetch-resources)))
+(rf/reg-event-fx
+ ::fetch-resources
+ (fn [{:keys [db]}]
+   (fetch "/api/resources/" {:handler #(rf/dispatch [::fetch-resources-result %])
+                             :error-handler status-modal/common-error-handler!})
+   {:db (assoc db ::loading? true)}))
 
 (rf/reg-event-db
  ::fetch-resources-result
