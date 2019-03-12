@@ -11,7 +11,7 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db db
+   {:db (assoc db ::display-archived? false)
     :dispatch [::fetch-resources]}))
 
 (rf/reg-event-fx
@@ -31,6 +31,16 @@
 (rf/reg-sub ::resources (fn [db _] (::resources db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
+(rf/reg-event-fx
+ ::update-resource
+ (fn [_ [_ item]]
+   ;; TODO: create API
+   (put! "/api/resources/update"
+         {:params (select-keys item [:id :enabled :archived])
+          :handler #(rf/dispatch [::fetch-resources])
+          :error-handler status-modal/common-error-handler!})
+   {}))
+
 (rf/reg-event-db ::set-sorting (fn [db [_ sorting]] (assoc db ::sorting sorting)))
 (rf/reg-sub ::sorting (fn [db _] (::sorting db {:sort-order :asc
                                                 :sort-column :title})))
@@ -48,6 +58,63 @@
    {:href (str "/#/administration/resources/" resource-id)}
    (text :t.administration/view)])
 
+
+;;; Archiving
+;; TODO: deduplicate
+
+(rf/reg-event-fx
+ ::set-display-archived?
+ (fn [{:keys [db]} [_ display-archived?]]
+   {:db (assoc db ::display-archived? display-archived?)
+    :dispatch [::fetch-resources]}))
+(rf/reg-sub ::display-archived? (fn [db _] (::display-archived? db)))
+
+(defn- disable-button [item]
+  [:button.btn.btn-secondary.button-min-width
+   {:type "button"
+    :on-click #(rf/dispatch [::update-resource (assoc item :enabled false)])}
+   (text :t.administration/disable)])
+
+(defn- enable-button [item]
+  [:button.btn.btn-primary.button-min-width
+   {:type "button"
+    :on-click #(rf/dispatch [::update-resource (assoc item :enabled true)])}
+   (text :t.administration/enable)])
+
+(defn- toggle-enabled-button [item]
+  (if (:enabled item)
+    [disable-button item]
+    [enable-button item]))
+
+(defn- archive-button [item]
+  [:button.btn.btn-secondary.button-min-width
+   {:type "button"
+    :on-click #(rf/dispatch [::update-resource (assoc item :archived true)])}
+   (text :t.administration/archive)])
+
+(defn- unarchive-button [item]
+  [:button.btn.btn-primary.button-min-width
+   {:type "button"
+    :on-click #(rf/dispatch [::update-resource (assoc item :archived false)])}
+   (text :t.administration/unarchive)])
+
+(defn- toggle-archived-button [item]
+  (if (:archived item)
+    [unarchive-button item]
+    [archive-button item]))
+
+(defn- display-archived-resources []
+  (let [display-archived? @(rf/subscribe [::display-archived?])
+        toggle #(rf/dispatch [::set-display-archived? (not display-archived?)])]
+    [:div.form-check.form-check-inline {:style {:float "right"}}
+     [:input.form-check-input {:type "checkbox"
+                               :id "display-archived"
+                               :checked display-archived?
+                               :on-change toggle}]
+     [:label.form-check-label {:for "display-archived"}
+      (text :t.administration/display-archived)]]))
+
+
 (defn- resources-columns []
   {:organization {:header #(text :t.administration/organization)
                   :value :organization}
@@ -59,7 +126,10 @@
          :value (comp localize-time :end)}
    :active {:header #(text :t.administration/active)
             :value (comp readonly-checkbox :active)}
-   :commands {:value (fn [resource] [to-view-resource (:id resource)])
+   :commands {:values (fn [resource]
+                        [[to-view-resource (:id resource)]
+                         [toggle-enabled-button resource]
+                         [toggle-archived-button resource]])
               :sortable? false
               :filterable? false}})
 
@@ -81,6 +151,7 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-resource]
+           [display-archived-resources]
            [resources-list
             @(rf/subscribe [::resources])
             (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))

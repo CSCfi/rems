@@ -35,13 +35,6 @@
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
 (rf/reg-event-fx
- ::set-display-archived?
- (fn [{:keys [db]} [_ display-archived?]]
-   {:db (assoc db ::display-archived? display-archived?)
-    :dispatch [::fetch-catalogue]}))
-(rf/reg-sub ::display-archived? (fn [db _] (::display-archived? db)))
-
-(rf/reg-event-fx
  ::update-catalogue-item
  (fn [_ [_ item]]
    (put! "/api/catalogue-items/update"
@@ -70,6 +63,17 @@
   [:a.btn.btn-primary
    {:href (str "/#/administration/catalogue-items/" catalogue-item-id)}
    (text :t.administration/view)])
+
+
+;;; Archiving
+;; TODO: deduplicate
+
+(rf/reg-event-fx
+ ::set-display-archived?
+ (fn [{:keys [db]} [_ display-archived?]]
+   {:db (assoc db ::display-archived? display-archived?)
+    :dispatch [::fetch-catalogue]}))
+(rf/reg-sub ::display-archived? (fn [db _] (::display-archived? db)))
 
 (defn- disable-button [item]
   [:button.btn.btn-secondary.button-min-width
@@ -115,6 +119,7 @@
                                :on-change toggle}]
      [:label.form-check-label {:for "display-archived"}
       (text :t.administration/display-archived)]]))
+
 
 (defn- catalogue-columns [language]
   {:name {:header #(text :t.catalogue/header)
