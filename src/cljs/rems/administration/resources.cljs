@@ -103,7 +103,9 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-resource]
-           [status-flags/display-archived-toggle ::display-archived? ::set-display-archived?]
+           [status-flags/display-archived-toggle
+            @(rf/subscribe [::display-archived?])
+            #(rf/dispatch [::set-display-archived? %])]
            [resources-list
             @(rf/subscribe [::resources])
             (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))

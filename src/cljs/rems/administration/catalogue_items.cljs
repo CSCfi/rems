@@ -124,7 +124,9 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-catalogue-item]
-           [status-flags/display-archived-toggle ::display-archived? ::set-display-archived?]
+           [status-flags/display-archived-toggle
+            @(rf/subscribe [::display-archived?])
+            #(rf/dispatch [::set-display-archived? %])]
            [catalogue-list
             @(rf/subscribe [::catalogue])
             @(rf/subscribe [:language])

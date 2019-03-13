@@ -1,6 +1,5 @@
 (ns rems.administration.status-flags
-  (:require [re-frame.core :as rf]
-            [rems.text :refer [text]]))
+  (:require [rems.text :refer [text]]))
 
 (defn- disable-button [item on-change]
   [:button.btn.btn-secondary.button-min-width
@@ -38,13 +37,11 @@
     [archive-button item on-change]))
 
 
-(defn display-archived-toggle [display-archived-sub set-display-archived-cmd]
-  (let [display-archived? @(rf/subscribe [display-archived-sub])
-        toggle #(rf/dispatch [set-display-archived-cmd (not display-archived?)])]
-    [:div.form-check.form-check-inline {:style {:float "right"}}
-     [:input.form-check-input {:type "checkbox"
-                               :id "display-archived"
-                               :checked display-archived?
-                               :on-change toggle}]
-     [:label.form-check-label {:for "display-archived"}
-      (text :t.administration/display-archived)]]))
+(defn display-archived-toggle [display-archived? on-change]
+  [:div.form-check.form-check-inline {:style {:float "right"}}
+   [:input.form-check-input {:type "checkbox"
+                             :id "display-archived"
+                             :checked display-archived?
+                             :on-change #(on-change (not display-archived?))}]
+   [:label.form-check-label {:for "display-archived"}
+    (text :t.administration/display-archived)]])
