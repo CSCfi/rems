@@ -56,14 +56,23 @@
                                  :enabled true
                                  :archived true}
                                 api-key user-id)]
-        (testing "hides archived by default"
+        (testing "hides disabled and archived by default"
           (let [data (-> (request :get "/api/resources")
                          (authenticate api-key user-id)
                          app
                          read-ok-body)
                 app-ids (set (map :id data))]
             (is (contains? app-ids enabled-id))
-            (is (contains? app-ids disabled-id)) ; TODO: hide disabled by default
+            (is (not (contains? app-ids disabled-id)))
+            (is (not (contains? app-ids archived-id)))))
+        (testing "includes disabled when requested"
+          (let [data (-> (request :get "/api/resources?disabled=true")
+                         (authenticate api-key user-id)
+                         app
+                         read-ok-body)
+                app-ids (set (map :id data))]
+            (is (contains? app-ids enabled-id))
+            (is (contains? app-ids disabled-id))
             (is (not (contains? app-ids archived-id)))))
         (testing "includes archived when requested"
           (let [data (-> (request :get "/api/resources?archived=true")
@@ -72,7 +81,7 @@
                          read-ok-body)
                 app-ids (set (map :id data))]
             (is (contains? app-ids enabled-id))
-            (is (contains? app-ids disabled-id))
+            (is (not (contains? app-ids disabled-id)))
             (is (contains? app-ids archived-id))))))
     (testing "create"
       (let [licid 1

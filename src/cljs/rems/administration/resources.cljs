@@ -17,9 +17,10 @@
 (rf/reg-event-fx
  ::fetch-resources
  (fn [{:keys [db]}]
-   (fetch "/api/resources/" {:url-params {:archived (::display-archived? db)}
-                             :handler #(rf/dispatch [::fetch-resources-result %])
-                             :error-handler status-modal/common-error-handler!})
+   (fetch "/api/resources" {:url-params {:disabled true
+                                         :archived (::display-archived? db)}
+                            :handler #(rf/dispatch [::fetch-resources-result %])
+                            :error-handler status-modal/common-error-handler!})
    {:db (assoc db ::loading? true)}))
 
 (rf/reg-event-db
