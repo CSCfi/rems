@@ -194,7 +194,6 @@
     (if (and host port)
       (let [fixed-email (assoc email-spec
                                :from (:mail-from env)
-                               :subject (or (:subject email-spec) "REMS notification") ;; TODO remove
                                :body (str (:body email-spec)
                                           (text/text :t.email/footer))
                                :to (or (:to email-spec)
