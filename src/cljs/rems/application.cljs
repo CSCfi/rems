@@ -13,7 +13,7 @@
             [rems.actions.request-comment :refer [request-comment-action-button request-comment-form]]
             [rems.actions.request-decision :refer [request-decision-action-button request-decision-form]]
             [rems.actions.return-action :refer [return-action-button return-form]]
-            [rems.application-util :refer [form-fields-editable?]]
+            [rems.application-util :refer [draft? form-fields-editable?]]
             [rems.atoms :refer [external-link flash-message info-field textarea]]
             [rems.autocomplete :as autocomplete]
             [rems.catalogue-util :refer [get-catalogue-item-title]]
@@ -764,6 +764,11 @@
               (str (localize-decision (:application/decision event)) ": " (:application/comment event))
               (:application/comment event))})
 
+(defn- show-items-warning? [application]
+  (let [is-applicant (:is-applicant? application)
+        is-draft (draft? application)]
+    (and is-applicant is-draft)))
+
 (defn- render-application [application edit-application language]
   (let [app (:application application)
         state (:state app)
@@ -773,7 +778,7 @@
                        (map dynamic-event->event (:dynamic-events app)))
         applicant-attributes (:applicant-attributes application)
         messages (remove nil?
-                         [(when (editable? application)
+                         [(when (show-items-warning? application)
                             (disabled-items-warning (:catalogue-items application))) ; NB: eval this here so we get nil or a warning
                           (when (:validation edit-application)
                             [flash-message
