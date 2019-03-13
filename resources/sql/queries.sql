@@ -101,12 +101,12 @@ VALUES (:resid, :organization, :owneruserid, :modifieruserid,
 -- :name set-resource-state! :insert
 UPDATE resource
 SET
-  /*~ (when (boolean? (:enabled params)) */
+/*~ (when (boolean? (:enabled params)) */
   enabled = :enabled,
-  /*~ ) ~*/
-  /*~ (when (boolean? (:archived params)) */
+/*~ ) ~*/
+/*~ (when (boolean? (:archived params)) */
   archived = :archived,
-  /*~ ) ~*/
+/*~ ) ~*/
   id = id
 WHERE id = :id;
 

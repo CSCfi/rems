@@ -11,7 +11,7 @@
   (-> (resources/get-resource res-id)
       (select-keys [:enabled :archived])))
 
-(deftest test-update-catalogue-item!
+(deftest test-update-resource!
   (let [user-id "test-user"
         res-id (:id (resources/create-resource! {:resid "res1" :organization "abc" :licenses []} user-id))
         res-id2 (:id (resources/create-resource! {:resid "res2" :organization "abc" :licenses []} user-id))]
