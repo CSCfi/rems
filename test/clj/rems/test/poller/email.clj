@@ -56,7 +56,10 @@
                  :application/decision :approved}
                 {:application/id 7
                  :event/type :application.event/approved
-                 :event/actor "handler"}]
+                 :event/actor "handler"}
+                {:application/id 7
+                 :event/type :application.event/closed
+                 :event/actor "assistant"}]
         application (dynamic/apply-events nil events)]
     (is (= [[] ;; created
             [] ;; submitted
@@ -96,6 +99,15 @@
               :body "Dear somebody,\nYour application  has been approved.\nView your application: http://localhost:3001/#/application/"}
              {:to-user "member",
               :subject "Your application has been approved",
-              :body "Dear member,\nYour application  has been approved.\nView your application: http://localhost:3001/#/application/"}]]
+              :body "Dear member,\nYour application  has been approved.\nView your application: http://localhost:3001/#/application/"}]
+            [{:to-user "applicant",
+              :subject "Your application has been closed",
+              :body "Dear applicant,\nYour application  has been closed.\nView your application: http://localhost:3001/#/application/"}
+              {:to-user "somebody",
+               :subject "Your application has been closed",
+               :body "Dear somebody,\nYour application  has been closed.\nView your application: http://localhost:3001/#/application/"}
+              {:to-user "member",
+               :subject "Your application has been closed",
+               :body "Dear member,\nYour application  has been closed.\nView your application: http://localhost:3001/#/application/"}]]
            (text/with-language :en
              (fn [] (mapv #(#'rems.poller.email/event-to-emails-impl % application) events)))))))

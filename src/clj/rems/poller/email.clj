@@ -51,6 +51,16 @@
                          (:id application)
                          (link-to-application (:id application)))})))
 
+(defmethod event-to-emails-impl :application.event/closed [event application]
+  (vec
+   (for [member (:members application)] ;; applicant is a member
+     {:to-user (:userid member)
+      :subject (text :t.email.application-closed/subject)
+      :body (text-format :t.email.application-closed/message
+                         (:userid member)
+                         (:id application)
+                         (link-to-application (:id application)))})))
+
 (defmethod event-to-emails-impl :application.event/comment-requested [event _application]
   (vec
    (for [commenter (:application/commenters event)]
