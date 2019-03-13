@@ -262,32 +262,7 @@
                     :rounds-workflow "Round-based workflow"
                     :rounds-workflow-description "The application will flow through a predetermined list of review and approval rounds."
                     :title "Title"}
-  :email {:action-not-needed-msg "Dear %1,
-                                  Applicant's %2 submitted application %3 no longer requires your attention.
-                                  Please do not reply to this automatically generated message."
-          :action-not-needed-subject "Action no longer required"
-          :application-sent-msg "Dear %1,
-                                 An application to access the resources %2 has been created.
-                                 You will receive messages about the application's progress. You can also check its status: %3
-                                 Please do not reply to this automatically generated message."
-          :application-sent-subject "New application created"
-          :approval-request-msg "Dear %1,
-                                 %2 has submitted the application %3 to access the resources %4 and your attention is required.
-                                 You can approve or reject the application: %5
-                                 Please do not reply to this automatically generated message."
-          :approval-request-subject "Approval request"
-          :review-request-msg "Dear %1,
-                               %2 has requested you to review the application %3 to access the resources %4.
-                               You can review the application: %5
-                               Please do not reply to this automatically generated message."
-          :review-request-subject "Review request"
-          :status-changed-msg "Dear %1,
-                               Your application %2 to access the resources %3 has progressed to state: %4.
-                               You can view the application: %5
-                               Please do not reply to this automatically generated message."
-          :status-changed-subject "Application state change"
-
-          :footer "\nPlease do not reply to this automatically generated message."
+  :email {:footer "\nPlease do not reply to this automatically generated message."
 
           :application-approved-subject "Your application has been approved"
           :application-approved-message "Dear %1,\nYour application %2 has been approved."
