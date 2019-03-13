@@ -286,7 +286,7 @@
          :add-comments "Lisää kommentti"
          :add-comments-not-shown-to-applicant "Lisää kommentti (ei näy hakijalle)"
          :add-comments-shown-to-applicant "Lisää kommentti (näkyy hakijalle)"
-         :alert-disabled-items "Seuraavia resursseja ei voi enää hakea. Harkitse tämän luonnoksen sulkemista ja tee sitten uusi hakemus."
+         :alert-disabled-items "Seuraavia resursseja ei voi enää hakea."
          :application "Tiedot"
          :attachment-remove "Poista"
          :back "Takaisin aineistoluetteloon"
