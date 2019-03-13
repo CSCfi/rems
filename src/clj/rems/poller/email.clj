@@ -29,8 +29,8 @@
   (vec
    (for [member (:members application)] ;; applicant is a member
      {:to-user (:userid member)
-      :subject (text/text :t.email/application-approved-subject)
-      :body (text/text-format :t.email/application-approved-message
+      :subject (text/text :t.email.application-approved/subject)
+      :body (text/text-format :t.email.application-approved/message
                               (:userid member)
                               (:id application))})))
 
@@ -38,8 +38,8 @@
   (vec
    (for [member (:members application)] ;; applicant is a member
      {:to-user (:userid member)
-      :subject (text/text :t.email/application-rejected-subject)
-      :body (text/text-format :t.email/application-rejected-message
+      :subject (text/text :t.email.application-rejected/subject)
+      :body (text/text-format :t.email.application-rejected/message
                               (:userid member)
                               (:id application))})))
 
@@ -47,8 +47,8 @@
   (vec
    (for [c (:application/commenters event)]
      {:to-user c
-      :subject (text/text :t.email/comment-requested-subject)
-      :body (text/text-format :t.email/comment-requested-message
+      :subject (text/text :t.email.comment-requested/subject)
+      :body (text/text-format :t.email.comment-requested/message
                               c
                               (:event/actor event)
                               (:application/id event))})))
@@ -57,8 +57,8 @@
   (vec
    (for [c (:application/deciders event)]
      {:to-user c
-      :subject (text/text :t.email/decision-requested-subject)
-      :body (text/text-format :t.email/decision-requested-message
+      :subject (text/text :t.email.decision-requested/subject)
+      :body (text/text-format :t.email.decision-requested/message
                               c
                               (:event/actor event)
                               (:application/id event))})))
@@ -67,8 +67,8 @@
   (vec
    (for [h (get-in application [:workflow :handlers])]
      {:to-user h
-      :subject (text/text :t.email/commented-subject)
-      :body (text/text-format :t.email/commented-message
+      :subject (text/text :t.email.commented/subject)
+      :body (text/text-format :t.email.commented/message
                               h
                               (:event/actor event)
                               (:application/id event))})))
@@ -77,8 +77,8 @@
   (vec
    (for [h (get-in application [:workflow :handlers])]
      {:to-user h
-      :subject (text/text :t.email/decided-subject)
-      :body (text/text-format :t.email/decided-message
+      :subject (text/text :t.email.decided/subject)
+      :body (text/text-format :t.email.decided/message
                               h
                               (:event/actor event)
                               (:application/id event))})))
@@ -86,15 +86,15 @@
 (defmethod event-to-emails-impl :application.event/member-added [event _application]
   ;; TODO email to applicant? email to handler?
   [{:to-user (:userid (:application/member event))
-    :subject (text/text :t.email/member-added-subject)
-    :body (text/text-format :t.email/member-added-message
+    :subject (text/text :t.email.member-added/subject)
+    :body (text/text-format :t.email.member-added/message
                             (:userid (:application/member event))
                             (:application/id event))}])
 
 (defmethod event-to-emails-impl :application.event/member-invited [event _application]
   [{:to (:email (:application/member event))
-    :subject (text/text :t.email/member-invited-subject)
-    :body (text/text-format :t.email/member-invited-message
+    :subject (text/text :t.email.member-invited/subject)
+    :body (text/text-format :t.email.member-invited/message
                             (:email (:application/member event))
                             ;; TODO the actual invitation link!
                             (:invitation/token event))}])

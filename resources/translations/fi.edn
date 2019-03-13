@@ -263,23 +263,23 @@
                     :rounds-workflow-description "Hakemus valuu ennaltapäätettyjen katselmointi- ja hyväksymiskierrosten läpi."
                     :title "Työvuon nimi"}
   :email {;; TODO translate these? emails are always sent in English currently
+          :application-approved {:subject "Your application has been approved"
+                                 :message "Dear %1,\nYour application %2 has been approved."}
+          :application-rejected {:subject "Your application has been rejected"
+                                 :message "Dear %1,\nYour application %2 has been rejected."}
+          :comment-requested {:subject "Comment request"
+                              :message "Dear %1,\nUser %2 has requested your comment on application %3."}
+          :commented {:subject "New comment notification"
+                      :message "Dear %1,\nUser %2 has posted a comment on application %3."}
+          :decided {:subject "New decision notification"
+                    :message "Dear %1,\nUser %2 has sent a decision on application %3."}
+          :decision-requested {:subject "Decision request"
+                               :message "Dear %1,\nUser %2 has requested your decision on application %3."}
           :footer "\nPlease do not reply to this automatically generated message."
-          :application-approved-subject "Your application has been approved"
-          :application-approved-message "Dear %1,\nYour application %2 has been approved."
-          :application-rejected-subject "Your application has been rejected"
-          :application-rejected-message "Dear %1,\nYour application %2 has been rejected."
-          :comment-requested-subject "Comment request"
-          :comment-requested-message "Dear %1,\nUser %2 has requested your comment on application %3."
-          :decision-requested-subject "Decision request"
-          :decision-requested-message "Dear %1,\nUser %2 has requested your decision on application %3."
-          :commented-subject "New comment notification"
-          :commented-message "Dear %1,\nUser %2 has posted a comment on application %3."
-          :decided-subject "New decision notification"
-          :decided-message "Dear %1,\nUser %2 has sent a decision on application %3."
-          :member-added-subject "You've been added as a member to an application"
-          :member-added-message "Dear %1,\nYou've been added as a member to application %2."
-          :member-invited-subject "Invitation to participate in an application"
-          :member-invited-message "Hello,\nThis email address (%1) has been invited to participate in an application.\nYour code: %2"}
+          :member-added {:subject "You've been added as a member to an application"
+                         :message "Dear %1,\nYou've been added as a member to application %2."}
+          :member-invited {:subject "Invitation to participate in an application"
+                           :message "Hello,\nThis email address (%1) has been invited to participate in an application.\nYour code: %2"}}
   :footer "CSC - IT Center for Science"
   :form {:actions "Toiminnot"
          :add-comments "Lisää kommentti"
