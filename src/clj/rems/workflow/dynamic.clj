@@ -46,8 +46,6 @@
     ::uninvite-member
     #_::withdraw})
 
-;; TODO: namespaced keys e.g. :event/type, :event/time, :event/actor, :application/id
-;; TODO: add version number to events
 (s/defschema EventBase
   {(s/optional-key :event/id) s/Int
    :event/type s/Keyword
