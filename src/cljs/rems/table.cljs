@@ -73,12 +73,12 @@
                          (str/lower-case filter-word)))
         (keys column-definitions)))
 
-(deftest test-match-filter
- (is (true? (match-filter? {:id {:value :id}
-                            :description {:value :description}}
-                           "bar"
-                           {:id "foo"
-                            :description "bar"}))
+(deftest test-match-filter?
+ (is (match-filter? {:id {:value :id}
+                     :description {:value :description}}
+                    "bar"
+                    {:id "foo"
+                     :description "bar"})
      "matches")
  (is (not (match-filter? {:id {:value :id}
                           :description {:value :its-a-trap
@@ -87,37 +87,19 @@
                          {:id "foo"
                           :its-a-trap "willnotmatch"
                           :description "bar"}))
-     "doesn't match with value if filter-value is provided"))
+     "doesn't match with value if filter-value is provided")
+ (is (not (match-filter? {:id {:value :id}
+                          :description {:value :description
+                                        :filterable? false}}
+                         "shouldnotmatch"
+                         {:id "foo"
+                          :description "shouldnotmatch"}))
+     "doesn't match if filterable is false"))
 
 (defn match-filters? [column-definitions filters item]
   (every? (fn [filter-word]
             (match-filter? column-definitions filter-word item))
           (str/split filters #"\s+")))
-
-(deftest test-match-filters
- (is (true? (match-filters? {:id {:value :id}
-                             :description {:value :its-a-trap
-                                           :filter-value :description}}
-                            "foo bar"
-                            {:id "foo"
-                             :its-a-trap "willnotmatch"
-                             :description "bar"}))
-     "match with filter-value")
- (is (not (match-filters? {:id {:value :id}
-                           :description {:value :its-a-trap
-                                         :filter-value :description}}
-                          "foo bar"
-                          {:id "foo"
-                           :its-a-trap "bar"
-                           :description "shouldnotmatch"}))
-     "doesn't match with value if filter-value is provided")
- (is (not (match-filters? {:id {:value :id}
-                           :description {:value :description
-                                         :filterable? false}}
-                          "foo shouldnotmatch"
-                          {:id "foo"
-                           :description "shouldnotmatch"}))
-     "doesn't match if filterable is false"))
 
 (defn apply-filtering [column-definitions filters items]
   (filter #(match-filters? column-definitions filters %) items))
