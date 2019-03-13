@@ -99,7 +99,7 @@
                             ;; TODO the actual invitation link!
                             (:invitation/token event))}])
 
-;; TODO member-joined
+;; TODO member-joined?
 
 (defn event-to-emails [event]
   (when-let [app-id (:application/id event)]
@@ -179,6 +179,14 @@
         (is (= [{:event/id 7} {:event/id 9}] @processed))))))
 
 ;;; Email poller
+
+;; You can test email sending by:
+;;
+;; 1. running mailhog: docker run -p 1025:1025 -p 8025:8025 mailhog/mailhog
+;; 2. adding {:mail-from "rems@example.com" :smtp-host "localhost" :smtp-port 1025} to dev-config.edn
+;; 3. generating some emails
+;;    - you can reset the email poller state with (set-poller-state! :rems.poller.email/poller nil)
+;; 4. open http://localhost:8025 in your browser to view the emails
 
 (defn send-email! [email-spec]
   (let [host (:smtp-host env)
