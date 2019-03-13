@@ -262,24 +262,25 @@
                     :rounds-workflow "Kierrospohjainen työvuo"
                     :rounds-workflow-description "Hakemus valuu ennaltapäätettyjen katselmointi- ja hyväksymiskierrosten läpi."
                     :title "Työvuon nimi"}
-  :email {;; TODO translate these? emails are always sent in English currently
-          :application-approved {:subject "Your application has been approved"
-                                 :message "Dear %1,\nYour application %2 has been approved."}
-          :application-rejected {:subject "Your application has been rejected"
-                                 :message "Dear %1,\nYour application %2 has been rejected."}
-          :comment-requested {:subject "Comment request"
-                              :message "Dear %1,\nUser %2 has requested your comment on application %3."}
-          :commented {:subject "New comment notification"
-                      :message "Dear %1,\nUser %2 has posted a comment on application %3."}
-          :decided {:subject "New decision notification"
-                    :message "Dear %1,\nUser %2 has sent a decision on application %3."}
-          :decision-requested {:subject "Decision request"
-                               :message "Dear %1,\nUser %2 has requested your decision on application %3."}
-          :footer "\nPlease do not reply to this automatically generated message."
-          :member-added {:subject "You've been added as a member to an application"
-                         :message "Dear %1,\nYou've been added as a member to application %2."}
-          :member-invited {:subject "Invitation to participate in an application"
-                           :message "Hello,\nThis email address (%1) has been invited to participate in an application.\nYour code: %2"}}
+  :email {:application-approved {:subject "Hakemuksesi on hyväksytty"
+                                 :message "Hyvä %1,\nHakemuksesi %2 on hyväksytty.\nKatsele hakemusta: %3"}
+          :application-rejected {:subject "Hakemuksesi on hylätty"
+                                 :message "Hyvä %1,\nHakemuksesi %2 on hylätty.\nKatsele hakemusta: %3"}
+          :application-closed {:subject "Hakemuksesi on suljettu"
+                               :message "Hyvä %1,\nHakemuksesi %2 on suljettu.\nKatsele hakemusta: %3"}
+          :comment-requested {:subject "Kommenttipyyntö"
+                              :message "Hyvä %1,\nKäyttäjä %2 on pyytänyt sinulta kommenttia hakemukseen %3.\nKommentoi täällä: %4"}
+          :commented {:subject "Uusi kommentti"
+                      :message "Hyvä %1,\nKäyttäjä %2 on kommentoinut hakemusta %3.\nKatsele hakemusta: %4"}
+          :decided {:subject "Uusi päätös"
+                    :message "Hyvä %1,\nKäyttäjä %2 on tehnyt päätöksen hakemuksesta %3.\nKatsele hakemusta: %4"}
+          :decision-requested {:subject "Päätöspyyntö"
+                               :message "Hyvä %1,\nKäyttäjä %2 on pyytänyt sinulta päätöstä hakemukseen %3.\nKatsele hakemusta: %4"}
+          :footer "\nTämä on automaattinen viesti. Älä vastaa tähän."
+          :member-added {:subject "Sinut on lisätty hakemukseen"
+                         :message "Hyvä %1,\nSinut on lisätty jäseneksi hakemukseen %2.\nKatsele hakemusta: %3"}
+          :member-invited {:subject "Kutsu osallistumaan hakemukseen"
+                           :message "Hei,\nTämä sähköpostiosoite (%1) on kutsuttu osallistumaan hakemukseen.\nOsallistumislinkki: %2"}}
   :footer "CSC - IT Center for Science"
   :form {:actions "Toiminnot"
          :add-comments "Lisää kommentti"

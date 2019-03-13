@@ -15,9 +15,15 @@
 
 ;;; Mapping events to emails
 
-;; TODO link to application?
 ;; TODO list of resources?
 ;; TODO use real name when addressing user?
+
+;; move this to a util namespace if its needed somewhere else
+(defn- link-to-application [application-id]
+  (str (:public-url env) "#/application/" application-id))
+
+(defn- invitation-link [token]
+  (str (:public-url env) "accept-invitation?token=" token))
 
 (defmulti ^:private event-to-emails-impl
   (fn [event _application] (:event/type event)))
@@ -32,7 +38,8 @@
       :subject (text :t.email.application-approved/subject)
       :body (text-format :t.email.application-approved/message
                          (:userid member)
-                         (:id application))})))
+                         (:application/id event)
+                         (link-to-application (:application/id event)))})))
 
 (defmethod event-to-emails-impl :application.event/rejected [event application]
   (vec
@@ -41,7 +48,18 @@
       :subject (text :t.email.application-rejected/subject)
       :body (text-format :t.email.application-rejected/message
                          (:userid member)
-                         (:id application))})))
+                         (:application/id event)
+                         (link-to-application (:application/id event)))})))
+
+(defmethod event-to-emails-impl :application.event/closed [event application]
+  (vec
+   (for [member (:members application)] ;; applicant is a member
+     {:to-user (:userid member)
+      :subject (text :t.email.application-closed/subject)
+      :body (text-format :t.email.application-closed/message
+                         (:userid member)
+                         (:application/id event)
+                         (link-to-application (:application/id event)))})))
 
 (defmethod event-to-emails-impl :application.event/comment-requested [event _application]
   (vec
@@ -51,7 +69,8 @@
       :body (text-format :t.email.comment-requested/message
                          commenter
                          (:event/actor event)
-                         (:application/id event))})))
+                         (:application/id event)
+                         (link-to-application (:application/id event)))})))
 
 (defmethod event-to-emails-impl :application.event/decision-requested [event _application]
   (vec
@@ -61,7 +80,8 @@
       :body (text-format :t.email.decision-requested/message
                          decider
                          (:event/actor event)
-                         (:application/id event))})))
+                         (:application/id event)
+                         (link-to-application (:application/id event)))})))
 
 (defmethod event-to-emails-impl :application.event/commented [event application]
   (vec
@@ -71,7 +91,8 @@
       :body (text-format :t.email.commented/message
                          handler
                          (:event/actor event)
-                         (:application/id event))})))
+                         (:application/id event)
+                         (link-to-application (:application/id event)))})))
 
 (defmethod event-to-emails-impl :application.event/decided [event application]
   (vec
@@ -81,7 +102,8 @@
       :body (text-format :t.email.decided/message
                          handler
                          (:event/actor event)
-                         (:application/id event))})))
+                         (:application/id event)
+                         (link-to-application (:application/id event)))})))
 
 (defmethod event-to-emails-impl :application.event/member-added [event _application]
   ;; TODO email to applicant? email to handler?
@@ -89,15 +111,15 @@
     :subject (text :t.email.member-added/subject)
     :body (text-format :t.email.member-added/message
                        (:userid (:application/member event))
-                       (:application/id event))}])
+                       (:application/id event)
+                       (link-to-application (:application/id event)))}])
 
 (defmethod event-to-emails-impl :application.event/member-invited [event _application]
   [{:to (:email (:application/member event))
     :subject (text :t.email.member-invited/subject)
     :body (text-format :t.email.member-invited/message
                        (:email (:application/member event))
-                       ;; TODO the actual invitation link!
-                       (:invitation/token event))}])
+                       (invitation-link (:invitation/token event)))}])
 
 ;; TODO member-joined?
 
@@ -191,7 +213,8 @@
 (defn send-email! [email-spec]
   (let [host (:smtp-host env)
         port (:smtp-port env)]
-    (if (and host port)
+    (if (not (and host port))
+      (log/info "pretending to send email:" (pr-str email-spec))
       (let [email (assoc email-spec
                          :from (:mail-from env)
                          :body (str (:body email-spec)
@@ -202,13 +225,11 @@
                                    (:to-user email-spec)))))]
         ;; TODO check that :to is set
         (log/info "sending email:" (pr-str email))
-        (postal/send-message {:host host :port port} email))
-      (do
-        (log/info "pretending to send email:" (pr-str email-spec))))))
+        (postal/send-message {:host host :port port} email)))))
 
 (defn run []
   (run-event-poller ::poller (fn [event]
-                               (with-language :en
+                               (with-language (:default-language env)
                                  #(doseq [mail (event-to-emails event)]
                                     (send-email! mail))))))
 
