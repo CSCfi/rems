@@ -3,4 +3,5 @@
  :database-url "postgresql://localhost/rems?user=rems"
  :theme-path "example-theme/theme.edn"
  :authentication :fake-shibboleth
- :public-url "http://localhost:3000/"}
+ :public-url "http://localhost:3000/"
+ :render-css-file? true}

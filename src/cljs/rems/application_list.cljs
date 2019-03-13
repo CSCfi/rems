@@ -39,12 +39,10 @@
            :class state-class}
    :created {:value #(localize-time (:start %))
              :sort-value :start
-             :header #(text :t.actions/created)
-             :filterable? false}
+             :header #(text :t.actions/created)}
    :last-modified {:value #(localize-time (:last-modified %))
                    :sort-value :last-modified
-                   :header #(text :t.actions/last-modified)
-                   :filterable? false}
+                   :header #(text :t.actions/last-modified)}
    :view {:value view-button
           :sortable? false
           :filterable? false}})

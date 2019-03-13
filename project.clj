@@ -36,7 +36,7 @@
                  [org.clojars.pntblnk/clj-ldap "0.0.16"]
                  [org.clojars.runa/conjure "2.2.0"]
                  [org.clojure/clojure "1.10.0"]
-                 [org.clojure/clojurescript "1.10.439" :exclusions [com.fasterxml.jackson.core/jackson-core]]
+                 [org.clojure/clojurescript "1.10.520" :exclusions [com.fasterxml.jackson.core/jackson-core]]
                  [org.clojure/core.memoize "0.7.1"]
                  [org.clojure/tools.cli "0.4.1"]
                  [org.clojure/tools.logging "0.4.1"]
@@ -77,13 +77,11 @@
             [lein-uberwar "0.2.0"]
             [migratus-lein "0.5.7"]]
 
-  :clean-targets ^{:protect false} ["resources/public/js/compiled"
-                                    "resources/public/css/compiled"
-                                    "target"]
+  :clean-targets ["target"]
 
   :figwheel {:http-server-root "public"
              :nrepl-port 7002
-             :css-dirs ["resources/public/css"]
+             :css-dirs ["target/resources/public/css"]
              :nrepl-middleware [cider.piggieback/wrap-cljs-repl]}
 
   :uberwar {:handler rems.handler/app

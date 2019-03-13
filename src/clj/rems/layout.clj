@@ -21,6 +21,9 @@ window.rems = {
 };
 "])
 
+(defn- css-filename [language]
+  (str "/css/" (name language) "/screen.css"))
+
 (defn- page-template
   [content]
   (html5 [:html {:lang "en"}
@@ -32,7 +35,7 @@ window.rems = {
            [:title (text :t.header/title)]
            (include-css "/assets/bootstrap/css/bootstrap.min.css")
            (include-css "/assets/font-awesome/css/all.css")
-           [:link {:id "stylesheet" :type "text/css" :href "/css/screen.css" :rel "stylesheet"}]]
+           (include-css (css-filename (env :default-language)))]
           [:body
            [:div#app]
            (include-js "/assets/font-awesome/js/fontawesome.js")
