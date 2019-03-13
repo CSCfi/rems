@@ -264,7 +264,7 @@
                     :title "Työvuon nimi"}
   :email {:application-approved {:subject "Hakemuksesi on hyväksytty"
                                  :message "Hyvä %1,\nHakemuksesi %2 on hyväksytty.\nKatsele hakemusta: %3"}
-          :application-rejected {:subject "Hakemuksesi on hyältty"
+          :application-rejected {:subject "Hakemuksesi on hylätty"
                                  :message "Hyvä %1,\nHakemuksesi %2 on hylätty.\nKatsele hakemusta: %3"}
           :application-closed {:subject "Hakemuksesi on suljettu"
                                :message "Hyvä %1,\nHakemuksesi %2 on suljettu.\nKatsele hakemusta: %3"}
