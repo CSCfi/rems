@@ -1,5 +1,6 @@
 (ns rems.home
-  (:require [clojure.tools.logging :as log]
+  (:require [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [clojure.test :refer [deftest is]]
             [compojure.core :refer [GET defroutes routes]]
             [markdown.core :as md]
@@ -10,8 +11,7 @@
             [rems.css.styles :as styles]
             [rems.db.catalogue :as catalogue]
             [rems.layout :as layout]
-            [ring.util.response :refer [content-type not-found redirect response]]
-            [clojure.string :as str]))
+            [ring.util.response :refer [content-type not-found redirect response]]))
 
 (defn- apply-for-resource [resource]
   (let [items (->> (catalogue/get-localized-catalogue-items {:resource resource})

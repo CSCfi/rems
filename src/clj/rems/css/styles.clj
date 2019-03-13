@@ -8,6 +8,7 @@
   so that Figwheel can autoreload them."
   (:require [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]
+            [clojure.tools.logging :as log]
             [garden.color :as c]
             [garden.core :as g]
             [garden.selectors :as s]
@@ -17,8 +18,7 @@
             [mount.core :as mount]
             [rems.config :refer [env]]
             [rems.util :as util]
-            [rems.context :as context]
-            [clojure.tools.logging :as log]))
+            [rems.context :as context]))
 
 (defn resolve-image [path]
   (when path
