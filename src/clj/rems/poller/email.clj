@@ -8,11 +8,16 @@
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.users :as users]
+            [rems.text :as text]
             [rems.json :as json]
             [rems.util :as util]
             [rems.workflow.dynamic :as dynamic]))
 
 ;;; Mapping events to emails
+
+;; TODO link to application?
+;; TODO list of resources?
+;; TODO use real name when addressing user?
 
 (defmulti ^:private event-to-emails-impl
   (fn [event _application] (:event/type event)))
@@ -21,109 +26,85 @@
   [])
 
 (defmethod event-to-emails-impl :application.event/approved [event application]
-  (for [member (:members application)] ;; applicant is a member
-    {:to-user (:userid member)
-     :body (str "application " (:application/id event) " has been approved")}))
+  (vec
+   (for [member (:members application)] ;; applicant is a member
+     {:to-user (:userid member)
+      :subject (text/text :t.email/application-approved-subject)
+      :body (text/text-format :t.email/application-approved-message
+                              (:userid member)
+                              (:id application))})))
 
 (defmethod event-to-emails-impl :application.event/rejected [event application]
-  (for [member (:members application)] ;; applicant is a member
-    {:to-user (:userid member)
-     :body (str "application " (:application/id event) " has been rejected")}))
+  (vec
+   (for [member (:members application)] ;; applicant is a member
+     {:to-user (:userid member)
+      :subject (text/text :t.email/application-rejected-subject)
+      :body (text/text-format :t.email/application-rejected-message
+                              (:userid member)
+                              (:id application))})))
 
 (defmethod event-to-emails-impl :application.event/comment-requested [event _application]
-  (for [c (:application/commenters event)]
-    {:to-user c
-     :body (str "please comment on " (:application/id event))}))
+  (vec
+   (for [c (:application/commenters event)]
+     {:to-user c
+      :subject (text/text :t.email/comment-requested-subject)
+      :body (text/text-format :t.email/comment-requested-message
+                              c
+                              (:event/actor event)
+                              (:application/id event))})))
 
 (defmethod event-to-emails-impl :application.event/decision-requested [event _application]
-  (for [c (:application/deciders event)]
-    {:to-user c
-     :body (str "please decide " (:application/id event))}))
+  (vec
+   (for [c (:application/deciders event)]
+     {:to-user c
+      :subject (text/text :t.email/decision-requested-subject)
+      :body (text/text-format :t.email/decision-requested-message
+                              c
+                              (:event/actor event)
+                              (:application/id event))})))
 
 (defmethod event-to-emails-impl :application.event/commented [event application]
-  (for [h (get-in application [:workflow :handlers])]
-    {:to-user h
-     :body (str "comment by " (:event/actor event)  ": " (:application/comment event))}))
+  (vec
+   (for [h (get-in application [:workflow :handlers])]
+     {:to-user h
+      :subject (text/text :t.email/commented-subject)
+      :body (text/text-format :t.email/commented-message
+                              h
+                              (:event/actor event)
+                              (:application/id event))})))
 
 (defmethod event-to-emails-impl :application.event/decided [event application]
-  (for [h (get-in application [:workflow :handlers])]
-    {:to-user h
-     :body (str "decision by " (:event/actor event)  ": " (:application/decision event))}))
+  (vec
+   (for [h (get-in application [:workflow :handlers])]
+     {:to-user h
+      :subject (text/text :t.email/decided-subject)
+      :body (text/text-format :t.email/decided-message
+                              h
+                              (:event/actor event)
+                              (:application/id event))})))
 
 (defmethod event-to-emails-impl :application.event/member-added [event _application]
+  ;; TODO email to applicant? email to handler?
   [{:to-user (:userid (:application/member event))
-    :body "you've been added"}])
+    :subject (text/text :t.email/member-added-subject)
+    :body (text/text-format :t.email/member-added-message
+                            (:userid (:application/member event))
+                            (:application/id event))}])
 
 (defmethod event-to-emails-impl :application.event/member-invited [event _application]
   [{:to (:email (:application/member event))
-    :body "invitation email"}])
+    :subject (text/text :t.email/member-invited-subject)
+    :body (text/text-format :t.email/member-invited-message
+                            (:email (:application/member event))
+                            ;; TODO the actual invitation link!
+                            (:invitation/token event))}])
+
+;; TODO member-joined
 
 (defn event-to-emails [event]
   (when-let [app-id (:application/id event)]
     ;; TODO use api-get-application-v2 or similar
     (event-to-emails-impl event (applications/get-application-state app-id))))
-
-(deftest test-event-to-emails-impl
-  (let [events [{:application/id 7
-                 :event/type :application.event/created
-                 :event/actor "applicant"
-                 :workflow/type :workflow/dynamic
-                 :workflow.dynamic/handlers #{"handler" "assistant"}}
-                {:application/id 7
-                 :event/type :application.event/submitted
-                 :event/actor "applicant"}
-                {:application/id 7
-                 :event/type :application.event/member-invited
-                 :event/actor "applicant"
-                 :application/member {:name "Some Body" :email "somebody@example.com"}
-                 :invitation/toke "abc"}
-                {:application/id 7
-                 :event/type :application.event/comment-requested
-                 :application/request-id "r1"
-                 :application/commenters ["commenter1" "commenter2"]}
-                {:application/id 7
-                 :event/type :application.event/member-joined
-                 :event/actor "somebody"}
-                {:application/id 7
-                 :event/type :application.event/commented
-                 :event/actor "commenter2"
-                 :application/request-id "r1"
-                 :application/comment ["this is a comment"]}
-                {:application/id 7
-                 :event/type :application.event/member-added
-                 :event/actor "handler"
-                 :application/member {:userid "member"}}
-                {:application/id 7
-                 :event/type :application.event/decision-requested
-                 :event/actor "assistant"
-                 :application/request-id "r2"
-                 :application/deciders ["decider"]}
-                {:application/id 7
-                 :event/type :application.event/decided
-                 :event/actor "decider"
-                 :application/decision :approved}
-                {:application/id 7
-                 :event/type :application.event/approved
-                 :event/actor "handler"}]
-        application (dynamic/apply-events nil events)]
-    (is (= [[] ;; created
-            [] ;; submitted
-            [{:to "somebody@example.com" :body "invitation email"}]
-            [{:to "commenter1" :body "please comment on 7"}
-             {:to "commenter2" :body "please comment on 7"}]
-            [] ;; member-joined
-            [{:to "handler"
-              :body "comment by commenter2: [\"this is a comment\"]"}
-             {:to "assistant"
-              :body "comment by commenter2: [\"this is a comment\"]"}]
-            [{:to "member" :body "you've been added"}]
-            [{:to "decider" :body "please decide 7"}]
-            [{:to "handler" :body "decision by decider: :approved"}
-             {:to "assistant" :body "decision by decider: :approved"}]
-            [{:to "applicant" :body "application 7 has been approved"}
-             {:to "somebody", :body "application 7 has been approved"}
-             {:to "member", :body "application 7 has been approved"}]]
-           (mapv #(event-to-emails-impl % application) events)))))
 
 ;;; Generic poller infrastructure
 
@@ -205,7 +186,9 @@
     (if (and host port)
       (let [fixed-email (assoc email-spec
                                :from (:mail-from env)
-                               :subject "REMS notification"
+                               :subject (or (:subject email-spec) "REMS notification") ;; TODO remove
+                               :body (str (:body email-spec)
+                                          (text/text :t.email/footer))
                                :to (or (:to email-spec)
                                        (util/get-user-mail
                                         (users/get-user-attributes
@@ -218,8 +201,9 @@
 
 (defn run []
   (run-event-poller ::poller (fn [event]
-                               (doseq [mail (event-to-emails event)]
-                                 (send-email! mail)))))
+                               (text/with-language :en
+                                 #(doseq [mail (event-to-emails event)]
+                                    (send-email! mail))))))
 
 (mount/defstate email-poller
   :start (doto (java.util.concurrent.ScheduledThreadPoolExecutor. 1)
