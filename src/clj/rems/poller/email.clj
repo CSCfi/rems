@@ -229,7 +229,7 @@
 
 (defn run []
   (run-event-poller ::poller (fn [event]
-                               (with-language :en
+                               (with-language (:default-language env)
                                  #(doseq [mail (event-to-emails event)]
                                     (send-email! mail))))))
 
