@@ -203,7 +203,8 @@
 (defn send-email! [email-spec]
   (let [host (:smtp-host env)
         port (:smtp-port env)]
-    (if (and host port)
+    (if (not (and host port))
+      (log/info "pretending to send email:" (pr-str email-spec))
       (let [email (assoc email-spec
                          :from (:mail-from env)
                          :body (str (:body email-spec)
@@ -214,9 +215,7 @@
                                    (:to-user email-spec)))))]
         ;; TODO check that :to is set
         (log/info "sending email:" (pr-str email))
-        (postal/send-message {:host host :port port} email))
-      (do
-        (log/info "pretending to send email:" (pr-str email-spec))))))
+        (postal/send-message {:host host :port port} email)))))
 
 (defn run []
   (run-event-poller ::poller (fn [event]
