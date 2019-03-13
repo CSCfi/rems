@@ -487,7 +487,26 @@
                    (assoc-in [:application/events] [created-event submitted-event])
                    (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/submitted))
                (apply-events [created-event
-                              submitted-event])))))))
+                              submitted-event])))))
+
+    (testing "returned") ; TODO
+    (testing "second version submitted") ; TODO
+
+    (testing "approved") ; TODO
+    (testing "rejected") ; TODO
+    (testing "closed") ; TODO
+
+    (testing "comment requested") ; TODO
+    (testing "commented") ; TODO
+
+    (testing "decision requested") ; TODO
+    (testing "decided") ; TODO
+
+    (testing "member invited") ; TODO
+    (testing "member uninvited") ; TODO
+    (testing "member joined") ; TODO
+    (testing "member added") ; TODO
+    (testing "member removed"))) ; TODO
 
 (defn- get-form [form-id]
   (-> (form/get-form form-id)
