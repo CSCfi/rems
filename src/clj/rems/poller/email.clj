@@ -8,7 +8,7 @@
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.users :as users]
-            [rems.text :as text]
+            [rems.text :refer [text text-format with-language]]
             [rems.json :as json]
             [rems.util :as util]
             [rems.workflow.dynamic :as dynamic]))
@@ -29,8 +29,8 @@
   (vec
    (for [member (:members application)] ;; applicant is a member
      {:to-user (:userid member)
-      :subject (text/text :t.email.application-approved/subject)
-      :body (text/text-format :t.email.application-approved/message
+      :subject (text :t.email.application-approved/subject)
+      :body (text-format :t.email.application-approved/message
                               (:userid member)
                               (:id application))})))
 
@@ -38,63 +38,63 @@
   (vec
    (for [member (:members application)] ;; applicant is a member
      {:to-user (:userid member)
-      :subject (text/text :t.email.application-rejected/subject)
-      :body (text/text-format :t.email.application-rejected/message
+      :subject (text :t.email.application-rejected/subject)
+      :body (text-format :t.email.application-rejected/message
                               (:userid member)
                               (:id application))})))
 
 (defmethod event-to-emails-impl :application.event/comment-requested [event _application]
   (vec
-   (for [c (:application/commenters event)]
-     {:to-user c
-      :subject (text/text :t.email.comment-requested/subject)
-      :body (text/text-format :t.email.comment-requested/message
-                              c
+   (for [commenter (:application/commenters event)]
+     {:to-user commenter
+      :subject (text :t.email.comment-requested/subject)
+      :body (text-format :t.email.comment-requested/message
+                              commenter
                               (:event/actor event)
                               (:application/id event))})))
 
 (defmethod event-to-emails-impl :application.event/decision-requested [event _application]
   (vec
-   (for [c (:application/deciders event)]
-     {:to-user c
-      :subject (text/text :t.email.decision-requested/subject)
-      :body (text/text-format :t.email.decision-requested/message
-                              c
+   (for [commenter (:application/deciders event)]
+     {:to-user commenter
+      :subject (text :t.email.decision-requested/subject)
+      :body (text-format :t.email.decision-requested/message
+                              commenter
                               (:event/actor event)
                               (:application/id event))})))
 
 (defmethod event-to-emails-impl :application.event/commented [event application]
   (vec
-   (for [h (get-in application [:workflow :handlers])]
-     {:to-user h
-      :subject (text/text :t.email.commented/subject)
-      :body (text/text-format :t.email.commented/message
-                              h
+   (for [handler (get-in application [:workflow :handlers])]
+     {:to-user handler
+      :subject (text :t.email.commented/subject)
+      :body (text-format :t.email.commented/message
+                              handler
                               (:event/actor event)
                               (:application/id event))})))
 
 (defmethod event-to-emails-impl :application.event/decided [event application]
   (vec
-   (for [h (get-in application [:workflow :handlers])]
-     {:to-user h
-      :subject (text/text :t.email.decided/subject)
-      :body (text/text-format :t.email.decided/message
-                              h
+   (for [handler (get-in application [:workflow :handlers])]
+     {:to-user handler
+      :subject (text :t.email.decided/subject)
+      :body (text-format :t.email.decided/message
+                              handler
                               (:event/actor event)
                               (:application/id event))})))
 
 (defmethod event-to-emails-impl :application.event/member-added [event _application]
   ;; TODO email to applicant? email to handler?
   [{:to-user (:userid (:application/member event))
-    :subject (text/text :t.email.member-added/subject)
-    :body (text/text-format :t.email.member-added/message
+    :subject (text :t.email.member-added/subject)
+    :body (text-format :t.email.member-added/message
                             (:userid (:application/member event))
                             (:application/id event))}])
 
 (defmethod event-to-emails-impl :application.event/member-invited [event _application]
   [{:to (:email (:application/member event))
-    :subject (text/text :t.email.member-invited/subject)
-    :body (text/text-format :t.email.member-invited/message
+    :subject (text :t.email.member-invited/subject)
+    :body (text-format :t.email.member-invited/message
                             (:email (:application/member event))
                             ;; TODO the actual invitation link!
                             (:invitation/token event))}])
@@ -192,23 +192,23 @@
   (let [host (:smtp-host env)
         port (:smtp-port env)]
     (if (and host port)
-      (let [fixed-email (assoc email-spec
-                               :from (:mail-from env)
-                               :body (str (:body email-spec)
-                                          (text/text :t.email/footer))
-                               :to (or (:to email-spec)
-                                       (util/get-user-mail
-                                        (users/get-user-attributes
-                                         (:to-user email-spec)))))]
+      (let [email (assoc email-spec
+                         :from (:mail-from env)
+                         :body (str (:body email-spec)
+                                    (text :t.email/footer))
+                         :to (or (:to email-spec)
+                                 (util/get-user-mail
+                                  (users/get-user-attributes
+                                   (:to-user email-spec)))))]
         ;; TODO check that :to is set
-        (log/info "sending email:" (pr-str fixed-email))
-        (postal/send-message {:host host :port port} fixed-email))
+        (log/info "sending email:" (pr-str email))
+        (postal/send-message {:host host :port port} email))
       (do
         (log/info "pretending to send email:" (pr-str email-spec))))))
 
 (defn run []
   (run-event-poller ::poller (fn [event]
-                               (text/with-language :en
+                               (with-language :en
                                  #(doseq [mail (event-to-emails event)]
                                     (send-email! mail))))))
 
