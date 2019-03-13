@@ -666,7 +666,7 @@
 ;; for development use and Figwheel updates
 ;; render all configured css files
 (mount/defstate
-  rendered-css-file
+  rendered-css-files
   :start
   (when (env :render-css-file?)
     (doseq [language (env :languages)]
