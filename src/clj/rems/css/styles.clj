@@ -663,12 +663,10 @@
   (binding [context/*lang* :fi]
     (is (string? (screen-css)))))
 
-;; For development use and Figwheel updates
-;; render all configured css files so that
-;; Figwheel will notice this change and force
-;; our app to reload CSS files from the usual
-;; route. The files are not used for anything
-;; besides this signaling to Figwheel.
+;; For development use and Figwheel updates render all configured CSS
+;; files so that Figwheel will notice this change and force our app
+;; to reload CSS files from the usual route.
+;; The files are not used for anything besides this signaling to Figwheel.
 (mount/defstate
   rendered-css-files
   :start
