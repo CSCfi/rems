@@ -5,3 +5,8 @@
                  (:state application))
       (contains? (:possible-commands application)
                  :rems.workflow.dynamic/save-draft)))
+
+(defn draft? [application]
+  (contains? #{"draft"}
+             (:state application)))
+
