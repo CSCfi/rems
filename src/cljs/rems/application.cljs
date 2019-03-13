@@ -765,8 +765,8 @@
               (:application/comment event))})
 
 (defn- show-items-warning? [application]
-  (let [is-applicant (:is-applicant? application)
-        is-draft (draft? application)]
+  (let [is-applicant (:is-applicant? (:application application))  ;;TODO move this to application-util or sth
+        is-draft (draft? (:application application))]
     (and is-applicant is-draft)))
 
 (defn- render-application [application edit-application language]
