@@ -149,19 +149,13 @@
 
 (defn- filter-view [filtering]
   (let [{:keys [filters set-filtering]} filtering]
-    [:div
-      [:input
-       {:type "text"
-        :name "table-search"
-        :value filters
-        :placeholder ""
-        :on-input (fn [event]
-                    (set-filtering (assoc filtering :filters (-> event .-target .-value))))}]
-      (when (seq filters)
-        [:div.reset-button.icon-link.fa.fa-backspace
-         {:on-click (fn []
-                      (set-filtering (assoc filtering :filters "")))
-          :aria-hidden true}])]))
+    [:input.flex-grow-1
+     {:type "text"
+      :name "table-search"
+      :value filters
+      :placeholder ""
+      :on-input (fn [event]
+                  (set-filtering (assoc filtering :filters (-> event .-target .-value))))}]))
 
 (defn- filter-toggle [{:keys [show-filters set-filtering] :as filtering}]
   (when filtering
