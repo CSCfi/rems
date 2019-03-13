@@ -14,54 +14,62 @@
     (f)
     (mount/stop)))
 
+(defn events-to-emails [events]
+  (let [application (dynamic/apply-events nil events)]
+    (text/with-language :en
+      (fn [] (mapv #(#'rems.poller.email/event-to-emails-impl % application) events)))))
+
 (deftest test-event-to-emails-impl
-  (let [base (dynamic/apply-events nil [{:application/id 7
-                                         :event/type :application.event/created
-                                         :event/actor "applicant"
-                                         :workflow/type :workflow/dynamic
-                                         :workflow.dynamic/handlers #{"handler" "assistant"}}
-                                        {:application/id 7
-                                         :event/type :application.event/submitted
-                                         :event/actor "applicant"}])]
-    (let [events [{:application/id 7
-                   :event/type :application.event/member-invited
-                   :event/actor "applicant"
-                   :application/member {:name "Some Body" :email "somebody@example.com"}
-                   :invitation/token "abc"}
-                  {:application/id 7
-                   :event/type :application.event/comment-requested
-                   :event/actor "handler"
-                   :application/request-id "r1"
-                   :application/commenters ["commenter1" "commenter2"]}
-                  {:application/id 7
-                   :event/type :application.event/member-joined
-                   :event/actor "somebody"}
-                  {:application/id 7
-                   :event/type :application.event/commented
-                   :event/actor "commenter2"
-                   :application/request-id "r1"
-                   :application/comment ["this is a comment"]}
-                  {:application/id 7
-                   :event/type :application.event/member-added
-                   :event/actor "handler"
-                   :application/member {:userid "member"}}
-                  {:application/id 7
-                   :event/type :application.event/decision-requested
-                   :event/actor "assistant"
-                   :application/request-id "r2"
-                   :application/deciders ["decider"]}
-                  {:application/id 7
-                   :event/type :application.event/decided
-                   :event/actor "decider"
-                   :application/decision :approved}
-                  {:application/id 7
-                   :event/type :application.event/approved
-                   :event/actor "handler"}
-                  {:application/id 7
-                   :event/type :application.event/closed
-                   :event/actor "assistant"}]
-          application (dynamic/apply-events base events)]
-      (is (= [[{:to "somebody@example.com",
+  (let [base-events [{:application/id 7
+                      :event/type :application.event/created
+                      :event/actor "applicant"
+                      :workflow/type :workflow/dynamic
+                      :workflow.dynamic/handlers #{"handler" "assistant"}}
+                     {:application/id 7
+                      :event/type :application.event/submitted
+                      :event/actor "applicant"}]]
+    (let [events (into
+                  base-events
+                  [{:application/id 7
+                    :event/type :application.event/member-invited
+                    :event/actor "applicant"
+                    :application/member {:name "Some Body" :email "somebody@example.com"}
+                    :invitation/token "abc"}
+                   {:application/id 7
+                    :event/type :application.event/comment-requested
+                    :event/actor "handler"
+                    :application/request-id "r1"
+                    :application/commenters ["commenter1" "commenter2"]}
+                   {:application/id 7
+                    :event/type :application.event/member-joined
+                    :event/actor "somebody"}
+                   {:application/id 7
+                    :event/type :application.event/commented
+                    :event/actor "commenter2"
+                    :application/request-id "r1"
+                    :application/comment ["this is a comment"]}
+                   {:application/id 7
+                    :event/type :application.event/member-added
+                    :event/actor "handler"
+                    :application/member {:userid "member"}}
+                   {:application/id 7
+                    :event/type :application.event/decision-requested
+                    :event/actor "assistant"
+                    :application/request-id "r2"
+                    :application/deciders ["decider"]}
+                   {:application/id 7
+                    :event/type :application.event/decided
+                    :event/actor "decider"
+                    :application/decision :approved}
+                   {:application/id 7
+                    :event/type :application.event/approved
+                    :event/actor "handler"}
+                   {:application/id 7
+                    :event/type :application.event/closed
+                    :event/actor "assistant"}])]
+      (is (= [[]
+              []
+              [{:to "somebody@example.com",
                 :subject "Invitation to participate in an application",
                 :body "Hello,\nThis email address (somebody@example.com) has been invited to participate in an application.\nParticipate with this link: http://localhost:3001/accept-invitation?token=abc"}]
               [{:to-user "commenter1",
@@ -107,13 +115,14 @@
                {:to-user "member",
                 :subject "Your application has been closed",
                 :body "Dear member,\nYour application 7 has been closed.\nView your application: http://localhost:3001/#/application/7"}]]
-             (text/with-language :en
-               (fn [] (mapv #(#'rems.poller.email/event-to-emails-impl % application) events))))))
-    (let [reject-event {:application/id 7
-                        :event/type :application.event/rejected
-                        :event/actor "handler"}]
-      (is (= [{:subject "Your application has been rejected",
-               :body "Dear applicant,\nYour application 7 has been rejected.\nView your application: http://localhost:3001/#/application/7",
-               :to-user "applicant"}]
-             (text/with-language :en
-               (fn [] (#'rems.poller.email/event-to-emails-impl reject-event (dynamic/apply-events base [reject-event])))))))))
+             (events-to-emails events))))
+    (let [events (conj base-events
+                      {:application/id 7
+                       :event/type :application.event/rejected
+                       :event/actor "handler"})]
+      (is (= [[]
+              []
+              [{:subject "Your application has been rejected",
+                :body "Dear applicant,\nYour application 7 has been rejected.\nView your application: http://localhost:3001/#/application/7",
+                :to-user "applicant"}]]
+             (events-to-emails events))))))
