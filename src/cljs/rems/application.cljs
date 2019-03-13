@@ -13,7 +13,7 @@
             [rems.actions.request-comment :refer [request-comment-action-button request-comment-form]]
             [rems.actions.request-decision :refer [request-decision-action-button request-decision-form]]
             [rems.actions.return-action :refer [return-action-button return-form]]
-            [rems.application-util :refer [editable?]]
+            [rems.application-util :refer [form-fields-editable?]]
             [rems.atoms :refer [external-link flash-message info-field textarea]]
             [rems.autocomplete :as autocomplete]
             [rems.catalogue-util :refer [get-catalogue-item-title]]
@@ -458,6 +458,7 @@
 
 (defn- license [id title approved readonly validation content]
   [:div.license
+   [field-validation-message validation title]
    [:div.form-check
     [:input.form-check-input {:type "checkbox"
                               :name (str "license" id)
@@ -465,13 +466,12 @@
                               :class (when validation "is-invalid")
                               :checked (boolean approved)
                               :on-change (set-license-approval id)}]
-    [:span.form-check-label content]]
-   [field-validation-message validation title]])
+    [:span.form-check-label content]]])
 
 (defn- link-license
   [{:keys [title id textcontent readonly approved validation]}]
   [license id title approved readonly validation
-   [:a {:href textcontent :target "_blank"}
+   [:a.license-title {:href textcontent :target "_blank"}
     title " " (external-link)]])
 
 (defn- text-license
@@ -503,7 +503,6 @@
     "date" [date-field f]
     "description" [text-field f]
     "label" [label f]
-    "license" [license-field f]
     "multiselect" [multiselect-field f]
     "option" [option-field f]
     "text" [text-field f]
@@ -521,13 +520,12 @@
                    :class :btn-primary
                    :on-click #(rf/dispatch [::submit-application (text :t.form/submit)])}])
 
-(defn- fields [form edit-application language]
+(defn- application-fields [form edit-application language]
   (let [application (:application form)
-        {:keys [items licenses validation]} edit-application
+        {:keys [items validation]} edit-application
         field-validations (index-by [:field-id] validation)
-        license-validations (index-by [:license-id] validation)
-        editable? (editable? application)
-        readonly? (not editable?)]
+        form-fields-editable? (form-fields-editable? application)
+        readonly? (not form-fields-editable?)]
     [collapsible/component
      {:id "form"
       :title (text :t.form/application)
@@ -542,16 +540,26 @@
                              :value (get-in items [(:id item) :value])
                              :previous-value (get-in items [(:id item) :previous-value])
                              :diff (get-in items [(:id item) :diff])
-                             :app-id (:id application))]))
-       (when-let [form-licenses (not-empty (:licenses form))]
-         [:div.form-group.field
-          [:h4 (text :t.form/licenses)]
-          (into [:div#licenses]
-                (for [license form-licenses]
-                  [field (assoc (localize-item license)
-                                :validation (license-validations (:id license))
-                                :readonly readonly?
-                                :approved (get licenses (:id license)))]))])]}]))
+                             :app-id (:id application))]))]}]))
+
+(defn- application-licenses [form edit-application language]
+  (when-let [form-licenses (not-empty (:licenses form))]
+    (let [application (:application form)
+          {:keys [licenses validation]} edit-application
+          license-validations (index-by [:license-id] validation)
+          form-fields-editable? (form-fields-editable? application)
+          readonly? (not form-fields-editable?)]
+      [collapsible/component
+       {:id "form"
+        :title (text :t.form/licenses)
+        :always
+        [:div.form-group.field
+         (into [:div#licenses]
+               (for [license form-licenses]
+                 [license-field (assoc (localize-item license)
+                                       :validation (license-validations (:id license))
+                                       :readonly readonly?
+                                       :approved (get licenses (:id license)))]))]}])))
 
 
 ;; FIXME Why do we have both this and dynamic-event->event?
@@ -777,7 +785,8 @@
      [application-header state phases events last-modified]
      [:div.mt-3 [applicants-info "applicants-info" app applicant-attributes (:members app) (:invited-members app)]]
      [:div.mt-3 [applied-resources (:catalogue-items application)]]
-     [:div.my-3 [fields application edit-application language]]
+     [:div.my-3 [application-fields application edit-application language]]
+     [:div.my-3 [application-licenses application edit-application language]]
      [:div.mb-3 [actions-form app]]]))
 
 ;;;; Entrypoint

@@ -11,6 +11,7 @@
             [rems.home :as home]
             [rems.layout :refer [error-page]]
             [rems.middleware :as middleware]
+            [rems.poller.email] ;; to enable email polling
             [rems.util :refer [never-match-route]]
             [ring.util.response :refer [file-response]]))
 

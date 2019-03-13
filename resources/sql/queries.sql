@@ -656,3 +656,14 @@ WHERE evt.eventdata->>'invitation/token' IS NOT NULL
 /*~ (when (:appid params) */
 AND appid = :appid
 /*~ ) ~*/
+
+-- :name get-poller-state :? :1
+SELECT state::TEXT FROM poller_state
+WHERE name = :name;
+
+-- :name set-poller-state! :!
+INSERT INTO poller_state (name, state)
+VALUES (:name, :state::jsonb)
+ON CONFLICT (name)
+DO UPDATE
+SET state = :state::jsonb;

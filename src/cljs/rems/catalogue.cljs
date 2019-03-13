@@ -2,7 +2,7 @@
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
             [rems.application-list :as application]
-            [rems.application-util :refer [editable?]]
+            [rems.application-util :refer [form-fields-editable?]]
             [rems.atoms :refer [external-link]]
             [rems.cart :as cart]
             [rems.catalogue-util :refer [get-catalogue-item-title urn-catalogue-item-link urn-catalogue-item?]]
@@ -51,7 +51,7 @@
 (rf/reg-event-db
  ::fetch-drafts-result
  (fn [db [_ applications]]
-   (assoc db ::draft-applications (filter editable? applications))))
+   (assoc db ::draft-applications (filter form-fields-editable? applications))))
 
 (defn- fetch-drafts []
   (fetch "/api/applications/" {:handler #(rf/dispatch [::fetch-drafts-result %])}))

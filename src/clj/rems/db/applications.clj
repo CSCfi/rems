@@ -5,7 +5,7 @@
             [clojure.set :refer [difference union]]
             [clojure.test :refer [deftest is]]
             [cprop.tools :refer [merge-maps]]
-            [rems.application-util :refer [editable?]]
+            [rems.application-util :refer [form-fields-editable?]]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.context :as context]
             [rems.db.catalogue :refer [get-localized-catalogue-items]]
@@ -16,7 +16,6 @@
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
             [rems.db.workflow-actors :as actors]
-            [rems.email :as email]
             [rems.form-validation :as form-validation]
             [rems.json :as json]
             [rems.permissions :as permissions]
@@ -369,22 +368,6 @@
   (get-handled-reviews "bob")
   (get-handled-reviews "carl"))
 
-(defn- check-for-unneeded-actions
-  "Checks whether the current event will advance into the next workflow round and notifies to all actors, who didn't react, by email that their attention is no longer needed."
-  [application-id round event]
-  (when (or (= "approve" event)
-            (= "review" event))
-    (let [application (get-application-state application-id)
-          applicant-name (get-username (users/get-user-attributes (:applicantuserid application)))
-          approvers (difference (set (actors/get-by-role application-id round "approver"))
-                                (set (map :userid (get-approval-events application round))))
-          reviewers (difference (set (actors/get-by-role application-id round "reviewer"))
-                                (set (map :userid (get-review-events application round))))
-          requestees (difference (get-third-party-reviewers application round)
-                                 (set (map :userid (get-third-party-review-events application round))))]
-      (doseq [user (union approvers reviewers requestees)] (let [user-attrs (users/get-user-attributes user)]
-                                                             (email/action-not-needed user-attrs applicant-name application-id))))))
-
 (defn assoc-review-type-to-app [user-id app]
   (assoc app :review-type (if (is-reviewer? user-id (:id app)) :normal :third-party)))
 
@@ -470,7 +453,7 @@
    :maxlength (:maxlength item)})
 
 (defn- assoc-item-previous-values [application items]
-  (let [previous-values (:items (if (editable? application)
+  (let [previous-values (:items (if (form-fields-editable? application)
                                   (:submitted-form-contents application)
                                   (:previous-submitted-form-contents application)))]
     (for [item items]
@@ -620,7 +603,7 @@
                                buffer (ByteArrayOutputStream.)]
                      (clojure.java.io/copy input buffer)
                      (.toByteArray buffer))]
-    (when-not (editable? (:application form))
+    (when-not (form-fields-editable? (:application form))
       (throw-forbidden))
     (db/save-attachment! {:application application-id
                           :form (:id form)
@@ -633,7 +616,7 @@
 (defn remove-attachment!
   [user-id application-id item-id]
   (let [form (get-form-for user-id application-id)]
-    (when-not (editable? (:application form))
+    (when-not (form-fields-editable? (:application form))
       (throw-forbidden))
     (db/remove-attachment! {:application application-id
                             :form (:id form)
@@ -821,28 +804,8 @@
                                       :round round :event "autoapprove" :comment nil})
           true)))))
 
-(defn- send-emails-for [application]
-  (let [applicant-attrs (users/get-user-attributes (:applicantuserid application))
-        application-id (:id application)
-        items (get-catalogue-items-by-application-id application-id)
-        round (:curround application)
-        state (:state application)]
-    (if (= "applied" state)
-      (let [approvers (actors/get-by-role application-id round "approver")
-            reviewers (actors/get-by-role application-id round "reviewer")
-            applicant-name (get-username applicant-attrs)]
-        (doseq [approver approvers] (let [user-attrs (users/get-user-attributes approver)]
-                                      (email/approval-request user-attrs applicant-name application-id items)))
-        (doseq [reviewer reviewers] (let [user-attrs (users/get-user-attributes reviewer)]
-                                      (email/review-request user-attrs applicant-name application-id items))))
-      (email/status-change-alert applicant-attrs
-                                 application-id
-                                 items
-                                 state))))
-
 (defn handle-state-change [user-id application-id]
   (let [application (get-application-state application-id)]
-    (send-emails-for application)
     (entitlements/update-entitlements-for application)
     (when (try-autoapprove-application user-id application)
       (recur user-id application-id))))
@@ -857,7 +820,6 @@
       (throw-forbidden))
     (db/add-application-event! {:application application-id :user applicant-id
                                 :round 0 :event "apply" :comment nil})
-    (email/confirm-application-creation application-id (get-catalogue-items-by-application-id application-id))
     (handle-state-change applicant-id application-id)))
 
 (defn- judge-application [approver-id application-id event round msg]
@@ -871,7 +833,6 @@
       (throw-forbidden))
     (db/add-application-event! {:application application-id :user approver-id
                                 :round round :event event :comment msg})
-    (check-for-unneeded-actions application-id round event)
     (handle-state-change approver-id application-id)))
 
 (defn approve-application [approver-id application-id round msg]
@@ -918,11 +879,7 @@
         (when-not (is-third-party-reviewer? recipient (:curround application) application)
           (db/add-application-event! {:application application-id :user recipient
                                       :round round :event "review-request" :comment msg})
-          (roles/add-role! recipient :reviewer)
-          (email/review-request (users/get-user-attributes recipient)
-                                (get-username (users/get-user-attributes (:applicantuserid application)))
-                                application-id
-                                (get-catalogue-items-by-application-id application-id)))))))
+          (roles/add-role! recipient :reviewer))))))
 
 ;; TODO better name
 ;; TODO consider refactoring together with judge
