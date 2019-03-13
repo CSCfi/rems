@@ -80,8 +80,8 @@
             :value (comp readonly-checkbox :active)}
    :commands {:values (fn [resource]
                         [[to-view-resource (:id resource)]
-                         [status-flags/enabled-toggle ::update-resource resource]
-                         [status-flags/archived-toggle ::update-resource resource]])
+                         [status-flags/enabled-toggle resource #(rf/dispatch [::update-resource %])]
+                         [status-flags/archived-toggle resource #(rf/dispatch [::update-resource %])]])
               :sortable? false
               :filterable? false}})
 

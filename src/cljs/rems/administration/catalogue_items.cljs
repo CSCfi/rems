@@ -101,8 +101,8 @@
             :value (comp readonly-checkbox :enabled)}
    :commands {:values (fn [item]
                         [[to-catalogue-item (:id item)]
-                         [status-flags/enabled-toggle ::update-catalogue-item item]
-                         [status-flags/archived-toggle ::update-catalogue-item item]])
+                         [status-flags/enabled-toggle item #(rf/dispatch [::update-catalogue-item %])]
+                         [status-flags/archived-toggle item #(rf/dispatch [::update-catalogue-item %])]])
               :sortable? false
               :filterable? false}})
 

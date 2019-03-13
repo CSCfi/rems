@@ -2,40 +2,40 @@
   (:require [re-frame.core :as rf]
             [rems.text :refer [text]]))
 
-(defn- disable-button [update-item-cmd item]
+(defn- disable-button [item on-change]
   [:button.btn.btn-secondary.button-min-width
    {:type "button"
-    :on-click #(rf/dispatch [update-item-cmd (assoc item :enabled false)])}
+    :on-click #(on-change (assoc item :enabled false))}
    (text :t.administration/disable)])
 
-(defn- enable-button [update-item-cmd item]
+(defn- enable-button [item on-change]
   [:button.btn.btn-primary.button-min-width
    {:type "button"
-    :on-click #(rf/dispatch [update-item-cmd (assoc item :enabled true)])}
+    :on-click #(on-change (assoc item :enabled true))}
    (text :t.administration/enable)])
 
-(defn enabled-toggle [update-item-cmd item]
+(defn enabled-toggle [item on-change]
   (if (:enabled item)
-    [disable-button update-item-cmd item]
-    [enable-button update-item-cmd item]))
+    [disable-button item on-change]
+    [enable-button item on-change]))
 
 
-(defn- archive-button [update-item-cmd item]
+(defn- archive-button [item on-change]
   [:button.btn.btn-secondary.button-min-width
    {:type "button"
-    :on-click #(rf/dispatch [update-item-cmd (assoc item :archived true)])}
+    :on-click #(on-change (assoc item :archived true))}
    (text :t.administration/archive)])
 
-(defn- unarchive-button [update-item-cmd item]
+(defn- unarchive-button [item on-change]
   [:button.btn.btn-primary.button-min-width
    {:type "button"
-    :on-click #(rf/dispatch [update-item-cmd (assoc item :archived false)])}
+    :on-click #(on-change (assoc item :archived false))}
    (text :t.administration/unarchive)])
 
-(defn archived-toggle [update-item-cmd item]
+(defn archived-toggle [item on-change]
   (if (:archived item)
-    [unarchive-button update-item-cmd item]
-    [archive-button update-item-cmd item]))
+    [unarchive-button item on-change]
+    [archive-button item on-change]))
 
 
 (defn display-archived-toggle [display-archived-sub set-display-archived-cmd]
