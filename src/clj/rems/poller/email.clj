@@ -38,7 +38,7 @@
       :subject (text :t.email.application-approved/subject)
       :body (text-format :t.email.application-approved/message
                          (:userid member)
-                         (:id application)
+                         (:application/id event)
                          (link-to-application (:id application)))})))
 
 (defmethod event-to-emails-impl :application.event/rejected [event application]
@@ -48,7 +48,7 @@
       :subject (text :t.email.application-rejected/subject)
       :body (text-format :t.email.application-rejected/message
                          (:userid member)
-                         (:id application)
+                         (:application/id event)
                          (link-to-application (:id application)))})))
 
 (defmethod event-to-emails-impl :application.event/closed [event application]
@@ -58,7 +58,7 @@
       :subject (text :t.email.application-closed/subject)
       :body (text-format :t.email.application-closed/message
                          (:userid member)
-                         (:id application)
+                         (:application/id event)
                          (link-to-application (:id application)))})))
 
 (defmethod event-to-emails-impl :application.event/comment-requested [event _application]
