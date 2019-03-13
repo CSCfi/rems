@@ -2,4 +2,5 @@
  :nrepl-port 7000
  :database-url "postgresql://localhost/rems?user=rems"
  :theme-path "example-theme/theme.edn"
- :authentication :fake-shibboleth}
+ :authentication :fake-shibboleth
+ :render-css-file? true}

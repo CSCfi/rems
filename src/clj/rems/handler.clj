@@ -39,7 +39,7 @@
 
 (defn public-routes []
   (routes
-   home/home-routes
+   (home/home-routes)
    (auth/auth-routes)))
 
 (defroutes secured-routes

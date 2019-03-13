@@ -1,5 +1,6 @@
 (ns rems.spa
-  (:require [goog.events :as events]
+  (:require [clojure.string :as str]
+            [goog.events :as events]
             [goog.history.EventType :as HistoryEventType]
             [markdown.core :refer [md->html]]
             [re-frame.core :as rf :refer [dispatch reg-event-db reg-event-fx reg-sub reg-fx]]
@@ -120,9 +121,13 @@
 (reg-fx
  :update-document-language
  (fn [language]
-   (set! (.. js/document -documentElement -lang) language)
-   (set! (.-href (.getElementById js/document "stylesheet"))
-         (str "/css/screen.css?lang=" language))))
+   (let [localized-css (str "/css/" (name language) "/screen.css")]
+     (set! (.. js/document -documentElement -lang) language)
+     ;; Figwheel replaces the linked stylesheet
+     ;; so we need to search dynamically
+     (doseq [element (array-seq (.getElementsByTagName js/document "link"))]
+       (when (str/includes? (.-href element) "screen.css")
+         (set! (.-href element) localized-css))))))
 
 (reg-event-fx
  :unauthorized!

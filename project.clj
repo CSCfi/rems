@@ -77,13 +77,11 @@
             [lein-uberwar "0.2.0"]
             [migratus-lein "0.5.7"]]
 
-  :clean-targets ^{:protect false} ["resources/public/js/compiled"
-                                    "resources/public/css/compiled"
-                                    "target"]
+  :clean-targets ["target"]
 
   :figwheel {:http-server-root "public"
              :nrepl-port 7002
-             :css-dirs ["resources/public/css"]
+             :css-dirs ["target/resources/public/css"]
              :nrepl-middleware [cider.piggieback/wrap-cljs-repl]}
 
   :uberwar {:handler rems.handler/app
