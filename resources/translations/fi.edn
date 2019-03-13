@@ -262,31 +262,24 @@
                     :rounds-workflow "Kierrospohjainen työvuo"
                     :rounds-workflow-description "Hakemus valuu ennaltapäätettyjen katselmointi- ja hyväksymiskierrosten läpi."
                     :title "Työvuon nimi"}
-  :email {:action-not-needed-msg "Hyvä %1,
-                                  Hakijan %2 hakemus %3 ei enää vaadi huomiotanne.
-                                  Älkää vastatko tähän automaattisesti luotuun viestiin."
-          :action-not-needed-subject "Toimenpiteitä ei enää tarvita"
-          :application-sent-msg "Hyvä %1,
-                                 Hakemuksenne käyttää resursseja (%2) on lähetetty käsiteltäväksi.
-                                 Saatte sähköpostitse tietoa hakemuksen etenemisestä. Voitte myös seurata sitä itse: %3
-                                 Älkää vastatko tähän automaattisesti luotuun viestiin."
-          :application-sent-subject "Uusi hakemus lähetetty"
-          :approval-request-msg "Hyvä %1,
-                                 %2 on tehnyt huomiotanne vaativan hakemuksen %3 käyttää resursseja %4.
-                                 Voitte hyväksyä tai hylätä hakemuksen: %5
-                                 Älkää vastatko tähän automaattisesti luotuun viestiin."
-          :approval-request-subject "Hyväksymispyyntö"
-          :review-request-msg "Hyvä %1,
-                               %2 on tehnyt huomiotanne vaativan hakemuksen %3 käyttää resursseja %4.
-                               Voitte katselmoida hakemuksen: %5
-                               Älkää vastatko tähän automaattisesti luotuun viestiin."
-
-          :review-request-subject "Katselmointi pyyntö"
-          :status-changed-msg "Hyvä %1,
-                               Hakemuksenne %2 käyttää resursseja (%3) on edennyt tilaan: %4.
-                               Voitte seurata hakemustanne: %5
-                               Älkää vastatko tähän automaattisesti luotuun viestiin."
-          :status-changed-subject "Hakemuksen tila on muuttunut"}
+  :email {;; TODO translate these? emails are always sent in English currently
+          :application-approved {:subject "Your application has been approved"
+                                 :message "Dear %1,\nYour application %2 has been approved."}
+          :application-rejected {:subject "Your application has been rejected"
+                                 :message "Dear %1,\nYour application %2 has been rejected."}
+          :comment-requested {:subject "Comment request"
+                              :message "Dear %1,\nUser %2 has requested your comment on application %3."}
+          :commented {:subject "New comment notification"
+                      :message "Dear %1,\nUser %2 has posted a comment on application %3."}
+          :decided {:subject "New decision notification"
+                    :message "Dear %1,\nUser %2 has sent a decision on application %3."}
+          :decision-requested {:subject "Decision request"
+                               :message "Dear %1,\nUser %2 has requested your decision on application %3."}
+          :footer "\nPlease do not reply to this automatically generated message."
+          :member-added {:subject "You've been added as a member to an application"
+                         :message "Dear %1,\nYou've been added as a member to application %2."}
+          :member-invited {:subject "Invitation to participate in an application"
+                           :message "Hello,\nThis email address (%1) has been invited to participate in an application.\nYour code: %2"}}
   :footer "CSC - IT Center for Science"
   :form {:actions "Toiminnot"
          :add-comments "Lisää kommentti"
