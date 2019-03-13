@@ -19,6 +19,10 @@
 ;; TODO list of resources?
 ;; TODO use real name when addressing user?
 
+;; move this to a util namespace if its needed somewhere else
+(defn- link-to-application [id]
+  (str (:public-url env) "#/application/" id))
+
 (defmulti ^:private event-to-emails-impl
   (fn [event _application] (:event/type event)))
 
@@ -32,7 +36,8 @@
       :subject (text :t.email.application-approved/subject)
       :body (text-format :t.email.application-approved/message
                          (:userid member)
-                         (:id application))})))
+                         (:id application)
+                         (link-to-application (:id application)))})))
 
 (defmethod event-to-emails-impl :application.event/rejected [event application]
   (vec
@@ -41,7 +46,8 @@
       :subject (text :t.email.application-rejected/subject)
       :body (text-format :t.email.application-rejected/message
                          (:userid member)
-                         (:id application))})))
+                         (:id application)
+                         (link-to-application (:id application)))})))
 
 (defmethod event-to-emails-impl :application.event/comment-requested [event _application]
   (vec
@@ -51,7 +57,8 @@
       :body (text-format :t.email.comment-requested/message
                          commenter
                          (:event/actor event)
-                         (:application/id event))})))
+                         (:application/id event)
+                         (link-to-application (:application/id event)))})))
 
 (defmethod event-to-emails-impl :application.event/decision-requested [event _application]
   (vec
@@ -61,7 +68,8 @@
       :body (text-format :t.email.decision-requested/message
                          decider
                          (:event/actor event)
-                         (:application/id event))})))
+                         (:application/id event)
+                         (link-to-application (:application/id event)))})))
 
 (defmethod event-to-emails-impl :application.event/commented [event application]
   (vec
@@ -71,7 +79,8 @@
       :body (text-format :t.email.commented/message
                          handler
                          (:event/actor event)
-                         (:application/id event))})))
+                         (:application/id event)
+                         (link-to-application (:application/id event)))})))
 
 (defmethod event-to-emails-impl :application.event/decided [event application]
   (vec
@@ -81,7 +90,8 @@
       :body (text-format :t.email.decided/message
                          handler
                          (:event/actor event)
-                         (:application/id event))})))
+                         (:application/id event)
+                         (link-to-application (:application/id event)))})))
 
 (defmethod event-to-emails-impl :application.event/member-added [event _application]
   ;; TODO email to applicant? email to handler?
@@ -89,7 +99,8 @@
     :subject (text :t.email.member-added/subject)
     :body (text-format :t.email.member-added/message
                        (:userid (:application/member event))
-                       (:application/id event))}])
+                       (:application/id event)
+                       (link-to-application (:application/id event)))}])
 
 (defmethod event-to-emails-impl :application.event/member-invited [event _application]
   [{:to (:email (:application/member event))

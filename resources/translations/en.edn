@@ -263,20 +263,20 @@
                     :rounds-workflow-description "The application will flow through a predetermined list of review and approval rounds."
                     :title "Title"}
   :email {:application-approved {:subject "Your application has been approved"
-                                 :message "Dear %1,\nYour application %2 has been approved."}
+                                 :message "Dear %1,\nYour application %2 has been approved.\nView your application: %3"}
           :application-rejected {:subject "Your application has been rejected"
-                                 :message "Dear %1,\nYour application %2 has been rejected."}
+                                 :message "Dear %1,\nYour application %2 has been rejected.\nView your application: %3"}
           :comment-requested {:subject "Comment request"
-                              :message "Dear %1,\nUser %2 has requested your comment on application %3."}
+                              :message "Dear %1,\nUser %2 has requested your comment on application %3.\nComment here: %4"}
           :commented {:subject "New comment notification"
-                      :message "Dear %1,\nUser %2 has posted a comment on application %3."}
+                      :message "Dear %1,\nUser %2 has posted a comment on application %3.\nView the application: %4"}
           :decided {:subject "New decision notification"
-                    :message "Dear %1,\nUser %2 has sent a decision on application %3."}
+                    :message "Dear %1,\nUser %2 has sent a decision on application %3.\nView the application: %4"}
           :decision-requested {:subject "Decision request"
-                               :message "Dear %1,\nUser %2 has requested your decision on application %3."}
+                               :message "Dear %1,\nUser %2 has requested your decision on application %3.\nView the application: %4"}
           :footer "\nPlease do not reply to this automatically generated message."
           :member-added {:subject "You've been added as a member to an application"
-                         :message "Dear %1,\nYou've been added as a member to application %2."}
+                         :message "Dear %1,\nYou've been added as a member to application %2.\nView the application: %3"}
           :member-invited {:subject "Invitation to participate in an application"
                            :message "Hello,\nThis email address (%1) has been invited to participate in an application.\nYour code: %2"}}
   :footer "Powered by CSC - IT Center for Science"

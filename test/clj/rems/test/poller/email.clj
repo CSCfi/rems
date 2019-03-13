@@ -30,6 +30,7 @@
                  :invitation/token "abc"}
                 {:application/id 7
                  :event/type :application.event/comment-requested
+                 :event/actor "handler"
                  :application/request-id "r1"
                  :application/commenters ["commenter1" "commenter2"]}
                 {:application/id 7
@@ -61,49 +62,40 @@
             [] ;; submitted
             [{:to "somebody@example.com",
               :subject "Invitation to participate in an application",
-              :body
-              "Hello,\nThis email address (somebody@example.com) has been invited to participate in an application.\nYour code: abc"}]
+              :body "Hello,\nThis email address (somebody@example.com) has been invited to participate in an application.\nYour code: abc"}]
             [{:to-user "commenter1",
               :subject "Comment request",
-              :body
-              "Dear commenter1,\nUser  has requested your comment on application 7."}
+              :body "Dear commenter1,\nUser handler has requested your comment on application 7.\nComment here: http://localhost:3001/#/application/7"}
              {:to-user "commenter2",
               :subject "Comment request",
-              :body
-              "Dear commenter2,\nUser  has requested your comment on application 7."}]
-            [] ;; member-joined
+              :body "Dear commenter2,\nUser handler has requested your comment on application 7.\nComment here: http://localhost:3001/#/application/7"}]
+            []
             [{:to-user "handler",
               :subject "New comment notification",
-              :body
-              "Dear handler,\nUser commenter2 has posted a comment on application 7."}
+              :body "Dear handler,\nUser commenter2 has posted a comment on application 7.\nView the application: http://localhost:3001/#/application/7"}
              {:to-user "assistant",
               :subject "New comment notification",
-              :body
-              "Dear assistant,\nUser commenter2 has posted a comment on application 7."}]
+              :body "Dear assistant,\nUser commenter2 has posted a comment on application 7.\nView the application: http://localhost:3001/#/application/7"}]
             [{:to-user "member",
               :subject "You've been added as a member to an application",
-              :body
-              "Dear member,\nYou've been added as a member to application 7."}]
+              :body "Dear member,\nYou've been added as a member to application 7.\nView the application: http://localhost:3001/#/application/7"}]
             [{:to-user "decider",
               :subject "Decision request",
-              :body
-              "Dear decider,\nUser assistant has requested your decision on application 7."}]
+              :body "Dear decider,\nUser assistant has requested your decision on application 7.\nView the application: http://localhost:3001/#/application/7"}]
             [{:to-user "handler",
               :subject "New decision notification",
-              :body
-              "Dear handler,\nUser decider has sent a decision on application 7."}
+              :body "Dear handler,\nUser decider has sent a decision on application 7.\nView the application: http://localhost:3001/#/application/7"}
              {:to-user "assistant",
               :subject "New decision notification",
-              :body
-              "Dear assistant,\nUser decider has sent a decision on application 7."}]
+              :body "Dear assistant,\nUser decider has sent a decision on application 7.\nView the application: http://localhost:3001/#/application/7"}]
             [{:to-user "applicant",
               :subject "Your application has been approved",
-              :body "Dear applicant,\nYour application  has been approved."}
+              :body "Dear applicant,\nYour application  has been approved.\nView your application: http://localhost:3001/#/application/"}
              {:to-user "somebody",
               :subject "Your application has been approved",
-              :body "Dear somebody,\nYour application  has been approved."}
+              :body "Dear somebody,\nYour application  has been approved.\nView your application: http://localhost:3001/#/application/"}
              {:to-user "member",
               :subject "Your application has been approved",
-              :body "Dear member,\nYour application  has been approved."}]]
+              :body "Dear member,\nYour application  has been approved.\nView your application: http://localhost:3001/#/application/"}]]
            (text/with-language :en
              (fn [] (mapv #(#'rems.poller.email/event-to-emails-impl % application) events)))))))

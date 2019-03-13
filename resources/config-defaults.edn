@@ -22,6 +22,7 @@
  :smtp-host nil
  :smtp-port 25
  :mail-from nil
+ :public-url nil ;; url to rems SPA, for generating links in emails
 
  ;; URLs to notify about granted and revoked entitlements.
  :entitlements-target {:add nil
