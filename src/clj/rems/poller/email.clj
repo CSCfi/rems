@@ -15,7 +15,6 @@
 
 ;;; Mapping events to emails
 
-;; TODO link to application?
 ;; TODO list of resources?
 ;; TODO use real name when addressing user?
 
