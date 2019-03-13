@@ -62,7 +62,7 @@
             [] ;; submitted
             [{:to "somebody@example.com",
               :subject "Invitation to participate in an application",
-              :body "Hello,\nThis email address (somebody@example.com) has been invited to participate in an application.\nYour code: abc"}]
+              :body "Hello,\nThis email address (somebody@example.com) has been invited to participate in an application.\nParticipate with this link: http://localhost:3001/accept-invitation?token=abc"}]
             [{:to-user "commenter1",
               :subject "Comment request",
               :body "Dear commenter1,\nUser handler has requested your comment on application 7.\nComment here: http://localhost:3001/#/application/7"}

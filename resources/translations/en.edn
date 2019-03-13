@@ -278,7 +278,7 @@
           :member-added {:subject "You've been added as a member to an application"
                          :message "Dear %1,\nYou've been added as a member to application %2.\nView the application: %3"}
           :member-invited {:subject "Invitation to participate in an application"
-                           :message "Hello,\nThis email address (%1) has been invited to participate in an application.\nYour code: %2"}}
+                           :message "Hello,\nThis email address (%1) has been invited to participate in an application.\nParticipate with this link: %2"}}
   :footer "Powered by CSC - IT Center for Science"
   :form {:actions "Actions"
          :add-comments "Add comment"

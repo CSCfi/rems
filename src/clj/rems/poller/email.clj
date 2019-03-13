@@ -20,8 +20,11 @@
 ;; TODO use real name when addressing user?
 
 ;; move this to a util namespace if its needed somewhere else
-(defn- link-to-application [id]
-  (str (:public-url env) "#/application/" id))
+(defn- link-to-application [application-id]
+  (str (:public-url env) "#/application/" application-id))
+
+(defn- invitation-link [token]
+  (str (:public-url env) "accept-invitation?token=" token))
 
 (defmulti ^:private event-to-emails-impl
   (fn [event _application] (:event/type event)))
@@ -107,8 +110,7 @@
     :subject (text :t.email.member-invited/subject)
     :body (text-format :t.email.member-invited/message
                        (:email (:application/member event))
-                       ;; TODO the actual invitation link!
-                       (:invitation/token event))}])
+                       (invitation-link (:invitation/token event)))}])
 
 ;; TODO member-joined?
 
