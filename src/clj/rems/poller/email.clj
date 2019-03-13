@@ -55,11 +55,11 @@
 
 (defmethod event-to-emails-impl :application.event/decision-requested [event _application]
   (vec
-   (for [commenter (:application/deciders event)]
-     {:to-user commenter
+   (for [decider (:application/deciders event)]
+     {:to-user decider
       :subject (text :t.email.decision-requested/subject)
       :body (text-format :t.email.decision-requested/message
-                              commenter
+                              decider
                               (:event/actor event)
                               (:application/id event))})))
 
