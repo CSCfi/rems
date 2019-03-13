@@ -31,8 +31,8 @@
      {:to-user (:userid member)
       :subject (text :t.email.application-approved/subject)
       :body (text-format :t.email.application-approved/message
-                              (:userid member)
-                              (:id application))})))
+                         (:userid member)
+                         (:id application))})))
 
 (defmethod event-to-emails-impl :application.event/rejected [event application]
   (vec
@@ -40,8 +40,8 @@
      {:to-user (:userid member)
       :subject (text :t.email.application-rejected/subject)
       :body (text-format :t.email.application-rejected/message
-                              (:userid member)
-                              (:id application))})))
+                         (:userid member)
+                         (:id application))})))
 
 (defmethod event-to-emails-impl :application.event/comment-requested [event _application]
   (vec
@@ -49,9 +49,9 @@
      {:to-user commenter
       :subject (text :t.email.comment-requested/subject)
       :body (text-format :t.email.comment-requested/message
-                              commenter
-                              (:event/actor event)
-                              (:application/id event))})))
+                         commenter
+                         (:event/actor event)
+                         (:application/id event))})))
 
 (defmethod event-to-emails-impl :application.event/decision-requested [event _application]
   (vec
@@ -59,9 +59,9 @@
      {:to-user decider
       :subject (text :t.email.decision-requested/subject)
       :body (text-format :t.email.decision-requested/message
-                              decider
-                              (:event/actor event)
-                              (:application/id event))})))
+                         decider
+                         (:event/actor event)
+                         (:application/id event))})))
 
 (defmethod event-to-emails-impl :application.event/commented [event application]
   (vec
@@ -69,9 +69,9 @@
      {:to-user handler
       :subject (text :t.email.commented/subject)
       :body (text-format :t.email.commented/message
-                              handler
-                              (:event/actor event)
-                              (:application/id event))})))
+                         handler
+                         (:event/actor event)
+                         (:application/id event))})))
 
 (defmethod event-to-emails-impl :application.event/decided [event application]
   (vec
@@ -79,25 +79,25 @@
      {:to-user handler
       :subject (text :t.email.decided/subject)
       :body (text-format :t.email.decided/message
-                              handler
-                              (:event/actor event)
-                              (:application/id event))})))
+                         handler
+                         (:event/actor event)
+                         (:application/id event))})))
 
 (defmethod event-to-emails-impl :application.event/member-added [event _application]
   ;; TODO email to applicant? email to handler?
   [{:to-user (:userid (:application/member event))
     :subject (text :t.email.member-added/subject)
     :body (text-format :t.email.member-added/message
-                            (:userid (:application/member event))
-                            (:application/id event))}])
+                       (:userid (:application/member event))
+                       (:application/id event))}])
 
 (defmethod event-to-emails-impl :application.event/member-invited [event _application]
   [{:to (:email (:application/member event))
     :subject (text :t.email.member-invited/subject)
     :body (text-format :t.email.member-invited/message
-                            (:email (:application/member event))
-                            ;; TODO the actual invitation link!
-                            (:invitation/token event))}])
+                       (:email (:application/member event))
+                       ;; TODO the actual invitation link!
+                       (:invitation/token event))}])
 
 ;; TODO member-joined?
 
