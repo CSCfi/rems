@@ -1,6 +1,7 @@
 (ns rems.administration.resources
   (:require [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.status-flags :as status-flags]
             [rems.atoms :refer [external-link readonly-checkbox]]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
@@ -36,7 +37,6 @@
 (rf/reg-event-fx
  ::update-resource
  (fn [_ [_ item]]
-   ;; TODO: create API
    (put! "/api/resources/update"
          {:params (select-keys item [:id :enabled :archived])
           :handler #(rf/dispatch [::fetch-resources])
@@ -50,6 +50,13 @@
 (rf/reg-event-db ::set-filtering (fn [db [_ filtering]] (assoc db ::filtering filtering)))
 (rf/reg-sub ::filtering (fn [db _] (or (::filtering db))))
 
+(rf/reg-event-fx
+ ::set-display-archived?
+ (fn [{:keys [db]} [_ display-archived?]]
+   {:db (assoc db ::display-archived? display-archived?)
+    :dispatch [::fetch-resources]}))
+(rf/reg-sub ::display-archived? (fn [db _] (::display-archived? db)))
+
 (defn- to-create-resource []
   [:a.btn.btn-primary
    {:href "/#/administration/create-resource"}
@@ -59,63 +66,6 @@
   [:a.btn.btn-primary
    {:href (str "/#/administration/resources/" resource-id)}
    (text :t.administration/view)])
-
-
-;;; Archiving
-;; TODO: deduplicate
-
-(rf/reg-event-fx
- ::set-display-archived?
- (fn [{:keys [db]} [_ display-archived?]]
-   {:db (assoc db ::display-archived? display-archived?)
-    :dispatch [::fetch-resources]}))
-(rf/reg-sub ::display-archived? (fn [db _] (::display-archived? db)))
-
-(defn- disable-button [item]
-  [:button.btn.btn-secondary.button-min-width
-   {:type "button"
-    :on-click #(rf/dispatch [::update-resource (assoc item :enabled false)])}
-   (text :t.administration/disable)])
-
-(defn- enable-button [item]
-  [:button.btn.btn-primary.button-min-width
-   {:type "button"
-    :on-click #(rf/dispatch [::update-resource (assoc item :enabled true)])}
-   (text :t.administration/enable)])
-
-(defn- toggle-enabled-button [item]
-  (if (:enabled item)
-    [disable-button item]
-    [enable-button item]))
-
-(defn- archive-button [item]
-  [:button.btn.btn-secondary.button-min-width
-   {:type "button"
-    :on-click #(rf/dispatch [::update-resource (assoc item :archived true)])}
-   (text :t.administration/archive)])
-
-(defn- unarchive-button [item]
-  [:button.btn.btn-primary.button-min-width
-   {:type "button"
-    :on-click #(rf/dispatch [::update-resource (assoc item :archived false)])}
-   (text :t.administration/unarchive)])
-
-(defn- toggle-archived-button [item]
-  (if (:archived item)
-    [unarchive-button item]
-    [archive-button item]))
-
-(defn- display-archived-resources []
-  (let [display-archived? @(rf/subscribe [::display-archived?])
-        toggle #(rf/dispatch [::set-display-archived? (not display-archived?)])]
-    [:div.form-check.form-check-inline {:style {:float "right"}}
-     [:input.form-check-input {:type "checkbox"
-                               :id "display-archived"
-                               :checked display-archived?
-                               :on-change toggle}]
-     [:label.form-check-label {:for "display-archived"}
-      (text :t.administration/display-archived)]]))
-
 
 (defn- resources-columns []
   {:organization {:header #(text :t.administration/organization)
@@ -130,8 +80,8 @@
             :value (comp readonly-checkbox :active)}
    :commands {:values (fn [resource]
                         [[to-view-resource (:id resource)]
-                         [toggle-enabled-button resource]
-                         [toggle-archived-button resource]])
+                         [status-flags/enabled-toggle ::update-resource resource]
+                         [status-flags/archived-toggle ::update-resource resource]])
               :sortable? false
               :filterable? false}})
 
@@ -153,7 +103,7 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-resource]
-           [display-archived-resources]
+           [status-flags/display-archived-toggle ::display-archived? ::set-display-archived?]
            [resources-list
             @(rf/subscribe [::resources])
             (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))
