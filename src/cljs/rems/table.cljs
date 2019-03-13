@@ -134,7 +134,7 @@
     [:input.flex-grow-1
      {:type "text"
       :name "table-search"
-      :value filters
+      :value (str filters) ; To make react happy when filters is nil
       :placeholder ""
       :on-input (fn [event]
                   (set-filtering (assoc filtering :filters (-> event .-target .-value))))}]))
