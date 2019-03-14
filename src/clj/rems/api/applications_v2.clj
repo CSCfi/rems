@@ -40,6 +40,7 @@
              :application/workflow {:workflow/id (:workflow/id event)
                                     :workflow/type (:workflow/type event)
                                     ;; TODO: other workflows
+                                    ;; TODO: extract an event handler for dynamic workflow specific stuff
                                     :workflow.dynamic/state :rems.workflow.dynamic/draft
                                     :workflow.dynamic/handlers (:workflow.dynamic/handlers event)
                                     :workflow.dynamic/awaiting-commenters #{}
