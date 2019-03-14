@@ -113,7 +113,8 @@
 
 (defmethod event-type-specific-application-view :application.event/closed
   [application event]
-  application)
+  (-> application
+      (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/closed)))
 
 (deftest test-event-type-specific-application-view
   (testing "supports all event types"
@@ -557,30 +558,41 @@
                 (testing "> approved"
                   (let [events (conj events
                                      {:event/type :application.event/approved
-                                      :event/time (DateTime. 8000)
+                                      :event/time (DateTime. 4000)
                                       :event/actor "handler"
                                       :application/id 1
                                       :application/comment "looks good"})
                         expected-application (deep-merge expected-application
-                                                         {:application/last-activity (DateTime. 8000)
+                                                         {:application/last-activity (DateTime. 4000)
                                                           :application/events events
                                                           :application/workflow {:workflow.dynamic/state ::dynamic/approved}})]
-                    (is (= expected-application (apply-events events)))))
+                    (is (= expected-application (apply-events events)))
+
+                    (testing "> closed"
+                      (let [events (conj events
+                                         {:event/type :application.event/closed
+                                          :event/time (DateTime. 5000)
+                                          :event/actor "handler"
+                                          :application/id 1
+                                          :application/comment "the project is finished"})
+                            expected-application (deep-merge expected-application
+                                                             {:application/last-activity (DateTime. 5000)
+                                                              :application/events events
+                                                              :application/workflow {:workflow.dynamic/state ::dynamic/closed}})]
+                        (is (= expected-application (apply-events events)))))))
 
                 (testing "> rejected"
                   (let [events (conj events
                                      {:event/type :application.event/rejected
-                                      :event/time (DateTime. 9000)
+                                      :event/time (DateTime. 4000)
                                       :event/actor "handler"
                                       :application/id 1
                                       :application/comment "never gonna happen"})
                         expected-application (deep-merge expected-application
-                                                         {:application/last-activity (DateTime. 9000)
+                                                         {:application/last-activity (DateTime. 4000)
                                                           :application/events events
                                                           :application/workflow {:workflow.dynamic/state ::dynamic/rejected}})]
                     (is (= expected-application (apply-events events)))))))))))
-
-    (testing "closed") ; TODO
 
     (testing "comment requested") ; TODO
     (testing "commented") ; TODO
