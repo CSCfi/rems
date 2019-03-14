@@ -1,5 +1,6 @@
 (ns rems.api.applications-v2
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.set :as set]
+            [clojure.test :refer [deftest is testing]]
             [medley.core :refer [map-vals]]
             [rems.common-util :refer [deep-merge]]
             [rems.db.applications :as applications]
@@ -9,7 +10,8 @@
             [rems.db.users :as users]
             [rems.permissions :as permissions]
             [rems.workflow.dynamic :as dynamic])
-  (:import (org.joda.time DateTime)))
+  (:import [java.util UUID]
+           [org.joda.time DateTime]))
 
 ;;;; v2 API, pure application state based on application events
 
@@ -38,7 +40,9 @@
                                     :workflow/type (:workflow/type event)
                                     ;; TODO: other workflows
                                     :workflow.dynamic/state :rems.workflow.dynamic/draft
-                                    :workflow.dynamic/handlers (:workflow.dynamic/handlers event)})))
+                                    :workflow.dynamic/handlers (:workflow.dynamic/handlers event)
+                                    :workflow.dynamic/awaiting-commenters #{}
+                                    :workflow.dynamic/awaiting-deciders #{}})))
 
 (defn- set-accepted-licences [licenses accepted-licenses]
   (map (fn [license]
@@ -87,11 +91,13 @@
 
 (defmethod event-type-specific-application-view :application.event/comment-requested
   [application event]
-  application)
+  (-> application
+      (update-in [:application/workflow :workflow.dynamic/awaiting-commenters] set/union (set (:application/commenters event)))))
 
 (defmethod event-type-specific-application-view :application.event/commented
   [application event]
-  application)
+  (-> application
+      (update-in [:application/workflow :workflow.dynamic/awaiting-commenters] disj (:event/actor event))))
 
 (defmethod event-type-specific-application-view :application.event/decision-requested
   [application event]
@@ -470,7 +476,9 @@
                                   :application/workflow {:workflow/id 50
                                                          :workflow/type :workflow/dynamic
                                                          :workflow.dynamic/state :rems.workflow.dynamic/draft
-                                                         :workflow.dynamic/handlers #{"handler"}}}]
+                                                         :workflow.dynamic/handlers #{"handler"}
+                                                         :workflow.dynamic/awaiting-commenters #{}
+                                                         :workflow.dynamic/awaiting-deciders #{}}}]
         (is (= expected-application (apply-events events)))
 
         (testing "> draft saved"
@@ -592,10 +600,37 @@
                                                          {:application/last-activity (DateTime. 4000)
                                                           :application/events events
                                                           :application/workflow {:workflow.dynamic/state ::dynamic/rejected}})]
-                    (is (= expected-application (apply-events events)))))))))))
+                    (is (= expected-application (apply-events events)))))
 
-    (testing "comment requested") ; TODO
-    (testing "commented") ; TODO
+                (testing "> comment requested"
+                  (let [request-id (UUID/fromString "4de6c2b0-bb2e-4745-8f92-bd1d1f1e8298")
+                        events (conj events
+                                     {:event/type :application.event/comment-requested
+                                      :event/time (DateTime. 4000)
+                                      :event/actor "handler"
+                                      :application/id 1
+                                      :application/request-id request-id
+                                      :application/commenters ["commenter1"]
+                                      :application/comment "please comment"})
+                        expected-application (deep-merge expected-application
+                                                         {:application/last-activity (DateTime. 4000)
+                                                          :application/events events
+                                                          :application/workflow {:workflow.dynamic/awaiting-commenters #{"commenter1"}}})]
+                    (is (= expected-application (apply-events events)))
+
+                    (testing "> commented"
+                      (let [events (conj events
+                                         {:event/type :application.event/commented
+                                          :event/time (DateTime. 5000)
+                                          :event/actor "commenter1"
+                                          :application/id 1
+                                          :application/request-id request-id
+                                          :application/comment "looks good"})
+                            expected-application (deep-merge expected-application
+                                                             {:application/last-activity (DateTime. 5000)
+                                                              :application/events events
+                                                              :application/workflow {:workflow.dynamic/awaiting-commenters #{}}})]
+                        (is (= expected-application (apply-events events)))))))))))))
 
     (testing "decision requested") ; TODO
     (testing "decided") ; TODO
