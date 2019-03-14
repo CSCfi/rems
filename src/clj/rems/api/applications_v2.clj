@@ -63,21 +63,6 @@
   (-> application
       (update-in [:application/workflow :workflow.dynamic/invitations] assoc (:invitation/token event) (:application/member event))))
 
-(defmethod event-type-specific-application-view :application.event/member-added
-  [application event]
-  (-> application
-      (update :application/members conj (:application/member event))))
-
-(defmethod event-type-specific-application-view :application.event/member-joined
-  [application event]
-  (-> application
-      (update :application/members conj {:userid (:event/actor event)})
-      (update-in [:application/workflow :workflow.dynamic/invitations] dissoc (:invitation/token event))))
-
-(defmethod event-type-specific-application-view :application.event/member-removed
-  [application event]
-  application)
-
 (defmethod event-type-specific-application-view :application.event/member-uninvited
   [application event]
   (-> application
@@ -86,6 +71,21 @@
                                                                               (remove (fn [[_token member]]
                                                                                         (= member (:application/member event))))
                                                                               (into {}))))))
+
+(defmethod event-type-specific-application-view :application.event/member-joined
+  [application event]
+  (-> application
+      (update :application/members conj {:userid (:event/actor event)})
+      (update-in [:application/workflow :workflow.dynamic/invitations] dissoc (:invitation/token event))))
+
+(defmethod event-type-specific-application-view :application.event/member-added
+  [application event]
+  (-> application
+      (update :application/members conj (:application/member event))))
+
+(defmethod event-type-specific-application-view :application.event/member-removed
+  [application event]
+  application)
 
 (defmethod event-type-specific-application-view :application.event/submitted
   [application event]
