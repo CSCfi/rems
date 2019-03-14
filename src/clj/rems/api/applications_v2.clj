@@ -278,7 +278,7 @@
   (-> (reduce application-view nil events)
       (enrich-with-injections injections)))
 
-(defn- valid-events [events]
+(defn- validate-events [events]
   (doseq [event events]
     (applications/validate-dynamic-event event))
   events)
@@ -362,27 +362,27 @@
                                             :mail "applicant@example.com"
                                             :commonName "Applicant"}}}
         apply-events (fn [events]
-                       (permissions/cleanup
-                        (build-application-view
-                         (valid-events events)
-                         injections)))
+                       (-> events
+                           validate-events
+                           (build-application-view injections)
+                           permissions/cleanup))]
 
-        created-event {:event/type :application.event/created
-                       :event/time (DateTime. 1000)
-                       :event/actor "applicant"
-                       :application/id 1
-                       :application/resources [{:catalogue-item/id 10
-                                                :resource/ext-id "urn:11"}
-                                               {:catalogue-item/id 20
-                                                :resource/ext-id "urn:21"}]
-                       :application/licenses [{:license/id 30}
-                                              {:license/id 31}]
-                       :form/id 40
-                       :workflow/id 50
-                       :workflow/type :workflow/dynamic
-                       :workflow.dynamic/handlers #{"handler"}}
-
-        expected-new-application {:application/id 1
+    (testing "created"
+      (let [events [{:event/type :application.event/created
+                     :event/time (DateTime. 1000)
+                     :event/actor "applicant"
+                     :application/id 1
+                     :application/resources [{:catalogue-item/id 10
+                                              :resource/ext-id "urn:11"}
+                                             {:catalogue-item/id 20
+                                              :resource/ext-id "urn:21"}]
+                     :application/licenses [{:license/id 30}
+                                            {:license/id 31}]
+                     :form/id 40
+                     :workflow/id 50
+                     :workflow/type :workflow/dynamic
+                     :workflow.dynamic/handlers #{"handler"}}]
+            expected-application {:application/id 1
                                   :application/created (DateTime. 1000)
                                   :application/modified (DateTime. 1000)
                                   :application/last-activity (DateTime. 1000)
@@ -428,7 +428,7 @@
                                                           :license/text {:en "en license text"
                                                                          :fi "fi license text"
                                                                          :default "non-localized license text"}}]
-                                  :application/events [created-event]
+                                  :application/events events
                                   :application/description ""
                                   :application/form {:form/id 40
                                                      :form/title "form title"
@@ -452,42 +452,37 @@
                                                          :workflow/type :workflow/dynamic
                                                          :workflow.dynamic/state :rems.workflow.dynamic/draft
                                                          :workflow.dynamic/handlers #{"handler"}}}]
+        (is (= expected-application (apply-events events)))
 
-    (testing "new application"
-      (is (= expected-new-application
-             (apply-events [created-event]))))
+        (testing "> draft saved"
+          (let [events (conj events {:event/type :application.event/draft-saved
+                                     :event/time (DateTime. 2000)
+                                     :event/actor "applicant"
+                                     :application/id 1
+                                     :application/field-values {41 "foo"
+                                                                42 "bar"}
+                                     :application/accepted-licenses #{30 31}})
+                expected-application (-> expected-application
+                                         (assoc-in [:application/modified] (DateTime. 2000))
+                                         (assoc-in [:application/last-activity] (DateTime. 2000))
+                                         (assoc-in [:application/events] events)
+                                         (assoc-in [:application/licenses 0 :license/accepted] true)
+                                         (assoc-in [:application/licenses 1 :license/accepted] true)
+                                         (assoc-in [:application/description] "foo")
+                                         (assoc-in [:application/form :form/fields 0 :field/value] "foo")
+                                         (assoc-in [:application/form :form/fields 1 :field/value] "bar"))]
+            (is (= expected-application (apply-events events))))
 
-    (testing "draft saved"
-      (let [draft-saved-event {:event/type :application.event/draft-saved
-                               :event/time (DateTime. 2000)
-                               :event/actor "applicant"
-                               :application/id 1
-                               :application/field-values {41 "foo"
-                                                          42 "bar"}
-                               :application/accepted-licenses #{30 31}}]
-        (is (= (-> expected-new-application
-                   (assoc-in [:application/modified] (DateTime. 2000))
-                   (assoc-in [:application/last-activity] (DateTime. 2000))
-                   (assoc-in [:application/events] [created-event draft-saved-event])
-                   (assoc-in [:application/licenses 0 :license/accepted] true)
-                   (assoc-in [:application/licenses 1 :license/accepted] true)
-                   (assoc-in [:application/description] "foo")
-                   (assoc-in [:application/form :form/fields 0 :field/value] "foo")
-                   (assoc-in [:application/form :form/fields 1 :field/value] "bar"))
-               (apply-events [created-event
-                              draft-saved-event])))))
-
-    (testing "submitted"
-      (let [submitted-event {:event/type :application.event/submitted
-                             :event/time (DateTime. 2000)
-                             :event/actor "applicant"
-                             :application/id 1}]
-        (is (= (-> expected-new-application
-                   (assoc-in [:application/last-activity] (DateTime. 2000))
-                   (assoc-in [:application/events] [created-event submitted-event])
-                   (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/submitted))
-               (apply-events [created-event
-                              submitted-event])))))
+          (testing "> submitted"
+            (let [events (conj events {:event/type :application.event/submitted
+                                       :event/time (DateTime. 3000)
+                                       :event/actor "applicant"
+                                       :application/id 1})
+                  expected-application (-> expected-application
+                                           (assoc-in [:application/last-activity] (DateTime. 3000))
+                                           (assoc-in [:application/events] events)
+                                           (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/submitted))]
+              (is (= expected-application (apply-events events))))))))
 
     (testing "returned") ; TODO
     (testing "second version submitted") ; TODO
