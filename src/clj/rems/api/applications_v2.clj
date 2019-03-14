@@ -85,7 +85,8 @@
 
 (defmethod event-type-specific-application-view :application.event/member-removed
   [application event]
-  application)
+  (-> application
+      (update :application/members disj (:application/member event))))
 
 (defmethod event-type-specific-application-view :application.event/submitted
   [application event]
@@ -735,9 +736,21 @@
                                                          {:application/last-activity (DateTime. 4000)
                                                           :application/events events
                                                           :application/members #{{:userid "member"}}})]
-                    (is (= expected-application (apply-events events)))))))))))
+                    (is (= expected-application (apply-events events)))
 
-    (testing "member removed"))) ; TODO
+                    (testing "> member removed"
+                      (let [events (conj events
+                                         {:event/type :application.event/member-removed
+                                          :event/time (DateTime. 5000)
+                                          :event/actor "applicant"
+                                          :application/id 1
+                                          :application/member {:userid "member"}
+                                          :application/comment "he left the project"})
+                            expected-application (deep-merge expected-application
+                                                             {:application/last-activity (DateTime. 5000)
+                                                              :application/events events
+                                                              :application/members #{}})]
+                        (is (= expected-application (apply-events events)))))))))))))))
 
 (defn- get-form [form-id]
   (-> (form/get-form form-id)
