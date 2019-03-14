@@ -76,7 +76,12 @@
 
 (defmethod event-type-specific-application-view :application.event/member-uninvited
   [application event]
-  application)
+  (-> application
+      (update-in [:application/workflow :workflow.dynamic/invitations] (fn [invitations]
+                                                                         (->> invitations
+                                                                              (remove (fn [[_token member]]
+                                                                                        (= member (:application/member event))))
+                                                                              (into {}))))))
 
 (defmethod event-type-specific-application-view :application.event/submitted
   [application event]
@@ -683,10 +688,23 @@
                                                           :application/events events
                                                           :application/workflow {:workflow.dynamic/invitations {token {:name "member"
                                                                                                                        :email "member@example.com"}}}})]
-                    (is (= expected-application (apply-events events)))))))))))
+                    (is (= expected-application (apply-events events)))
 
-    (testing "member invited") ; TODO
-    (testing "member uninvited") ; TODO
+                    (testing "> member uninvited"
+                      (let [events (conj events
+                                         {:event/type :application.event/member-uninvited
+                                          :event/time (DateTime. 5000)
+                                          :event/actor "applicant"
+                                          :application/id 1
+                                          :application/member {:name "member"
+                                                               :email "member@example.com"}
+                                          :application/comment "he left the project"})
+                            expected-application (-> (deep-merge expected-application
+                                                                 {:application/last-activity (DateTime. 5000)
+                                                                  :application/events events})
+                                                     (assoc-in [:application/workflow :workflow.dynamic/invitations] {}))]
+                        (is (= expected-application (apply-events events)))))))))))))
+
     (testing "member joined") ; TODO
     (testing "member added") ; TODO
     (testing "member removed"))) ; TODO
