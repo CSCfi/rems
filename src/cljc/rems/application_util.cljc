@@ -11,3 +11,5 @@
                  (:state application))
       (= (:state application) :rems.workflow.dynamic/draft)))
 
+(defn is-applicant? [application]
+  (:is-applicant? application))

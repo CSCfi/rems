@@ -13,7 +13,7 @@
             [rems.actions.request-comment :refer [request-comment-action-button request-comment-form]]
             [rems.actions.request-decision :refer [request-decision-action-button request-decision-form]]
             [rems.actions.return-action :refer [return-action-button return-form]]
-            [rems.application-util :refer [draft? form-fields-editable?]]
+            [rems.application-util :refer [is-applicant? draft? form-fields-editable?]]
             [rems.atoms :refer [external-link flash-message info-field textarea]]
             [rems.autocomplete :as autocomplete]
             [rems.catalogue-util :refer [get-catalogue-item-title]]
@@ -765,9 +765,8 @@
               (:application/comment event))})
 
 (defn- show-items-warning? [application]
-  (let [is-applicant (:is-applicant? (:application application))  ;;TODO move this to application-util or sth
-        is-draft (draft? (:application application))]
-    (and is-applicant is-draft)))
+  (let [application-form (:application application)]
+    (and (is-applicant? application-form) (draft? application-form))))
 
 (defn- render-application [application edit-application language]
   (let [app (:application application)
