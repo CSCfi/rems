@@ -7,9 +7,17 @@
                  :rems.workflow.dynamic/save-draft)))
 
 (defn draft? [application]
-  (or (contains? #{"draft" "returned" "withdrawn"}
-                 (:state application))
-      (= (:state application) :rems.workflow.dynamic/draft)))
+  (contains? #{"draft" "returned" "withdrawn" :rems.workflow.dynamic/draft}
+             (:state application)))
 
 (defn is-applicant? [application]
   (:is-applicant? application))
+
+(defn in-processing? [application]
+  (not (contains? #{"approved"
+                    "rejected"
+                    "closed"
+                    :rems.workflow.dynamic/approved
+                    :rems.workflow.dynamic/rejected
+                    :rems.workflow.dynamic/closed}
+                  (:state application))))
