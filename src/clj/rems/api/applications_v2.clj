@@ -65,7 +65,8 @@
 
 (defmethod event-type-specific-application-view :application.event/member-added
   [application event]
-  application)
+  (-> application
+      (update :application/members conj (:application/member event))))
 
 (defmethod event-type-specific-application-view :application.event/member-joined
   [application event]
@@ -721,9 +722,21 @@
                                                                   :application/events events
                                                                   :application/members #{{:userid "member"}}})
                                                      (assoc-in [:application/workflow :workflow.dynamic/invitations] {}))]
-                        (is (= expected-application (apply-events events)))))))))))))
+                        (is (= expected-application (apply-events events)))))))
 
-    (testing "member added") ; TODO
+                (testing "> member added"
+                  (let [events (conj events
+                                     {:event/type :application.event/member-added
+                                      :event/time (DateTime. 4000)
+                                      :event/actor "handler"
+                                      :application/id 1
+                                      :application/member {:userid "member"}})
+                        expected-application (deep-merge expected-application
+                                                         {:application/last-activity (DateTime. 4000)
+                                                          :application/events events
+                                                          :application/members #{{:userid "member"}}})]
+                    (is (= expected-application (apply-events events)))))))))))
+
     (testing "member removed"))) ; TODO
 
 (defn- get-form [form-id]
