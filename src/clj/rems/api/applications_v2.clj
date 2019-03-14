@@ -1,6 +1,7 @@
 (ns rems.api.applications-v2
   (:require [clojure.test :refer [deftest is testing]]
             [medley.core :refer [map-vals]]
+            [rems.common-util :refer [deep-merge]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.form :as form]
@@ -462,15 +463,15 @@
                                      :application/field-values {41 "foo"
                                                                 42 "bar"}
                                      :application/accepted-licenses #{30 31}})
-                expected-application (-> expected-application
-                                         (assoc-in [:application/modified] (DateTime. 2000))
-                                         (assoc-in [:application/last-activity] (DateTime. 2000))
-                                         (assoc-in [:application/events] events)
-                                         (assoc-in [:application/licenses 0 :license/accepted] true)
-                                         (assoc-in [:application/licenses 1 :license/accepted] true)
-                                         (assoc-in [:application/description] "foo")
-                                         (assoc-in [:application/form :form/fields 0 :field/value] "foo")
-                                         (assoc-in [:application/form :form/fields 1 :field/value] "bar"))]
+                expected-application (deep-merge expected-application
+                                                 {:application/modified (DateTime. 2000)
+                                                  :application/last-activity (DateTime. 2000)
+                                                  :application/events events
+                                                  :application/licenses [{:license/accepted true}
+                                                                         {:license/accepted true}]
+                                                  :application/description "foo"
+                                                  :application/form {:form/fields [{:field/value "foo"}
+                                                                                   {:field/value "bar"}]}})]
             (is (= expected-application (apply-events events))))
 
           (testing "> submitted"
@@ -478,10 +479,10 @@
                                        :event/time (DateTime. 3000)
                                        :event/actor "applicant"
                                        :application/id 1})
-                  expected-application (-> expected-application
-                                           (assoc-in [:application/last-activity] (DateTime. 3000))
-                                           (assoc-in [:application/events] events)
-                                           (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/submitted))]
+                  expected-application (deep-merge expected-application
+                                                   {:application/last-activity (DateTime. 3000)
+                                                    :application/events events
+                                                    :application/workflow {:workflow.dynamic/state ::dynamic/submitted}})]
               (is (= expected-application (apply-events events))))))))
 
     (testing "returned") ; TODO
