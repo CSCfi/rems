@@ -54,6 +54,10 @@
                                                         {:field/id field-id
                                                          :field/value value})
                                                       (:application/field-values event)))
+      ;; XXX: keep :field/previous-value
+      (update-in [:application/form :form/fields] (fn [fields]
+                                                    (deep-merge (get-in application [:application/form :form/fields])
+                                                                fields)))
       (update :application/licenses set-accepted-licences (:application/accepted-licenses event))))
 
 (defmethod event-type-specific-application-view :application.event/member-invited
@@ -84,7 +88,12 @@
 (defmethod event-type-specific-application-view :application.event/returned
   [application event]
   (-> application
-      (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/returned)))
+      (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/returned)
+      ;; TODO: refactor
+      (update-in [:application/form :form/fields] (fn [fields]
+                                                    (map (fn [field]
+                                                           (assoc field :field/previous-value (:field/value field)))
+                                                         fields)))))
 
 (defmethod event-type-specific-application-view :application.event/comment-requested
   [application event]
@@ -495,9 +504,43 @@
                         expected-application (deep-merge expected-application
                                                          {:application/last-activity (DateTime. 4000)
                                                           :application/events events
-                                                          :application/workflow {:workflow.dynamic/state ::dynamic/returned}})]
-                    (is (= expected-application (apply-events events)))))))))))
-    (testing "second version submitted") ; TODO
+                                                          :application/workflow {:workflow.dynamic/state ::dynamic/returned}
+                                                          :application/form {:form/fields [{:field/previous-value "foo"}
+                                                                                           {:field/previous-value "bar"}]}})]
+                    (is (= expected-application (apply-events events)))
+
+                    (testing "> second version submitted"
+                      (let [events (conj events
+                                         {:event/type :application.event/draft-saved
+                                          :event/time (DateTime. 5000)
+                                          :event/actor "applicant"
+                                          :application/id 1
+                                          ;; non-submitted versions should not show up as the previous value
+                                          :application/field-values {41 "intermediate draft"
+                                                                     42 "intermediate draft"}
+                                          :application/accepted-licenses #{30 31}}
+                                         {:event/type :application.event/draft-saved
+                                          :event/time (DateTime. 6000)
+                                          :event/actor "applicant"
+                                          :application/id 1
+                                          :application/field-values {41 "second submitted version"
+                                                                     42 "second submitted version"}
+                                          :application/accepted-licenses #{30 31}}
+                                         {:event/type :application.event/submitted
+                                          :event/time (DateTime. 7000)
+                                          :event/actor "applicant"
+                                          :application/id 1})
+                            expected-application (deep-merge expected-application
+                                                             {:application/modified (DateTime. 6000)
+                                                              :application/last-activity (DateTime. 7000)
+                                                              :application/events events
+                                                              :application/workflow {:workflow.dynamic/state ::dynamic/submitted}
+                                                              :application/description "second submitted version"
+                                                              :application/form {:form/fields [{:field/value "second submitted version"
+                                                                                                :field/previous-value "foo"}
+                                                                                               {:field/value "second submitted version"
+                                                                                                :field/previous-value "bar"}]}})]
+                        (is (= expected-application (apply-events events)))))))))))))
 
     (testing "approved") ; TODO
     (testing "rejected") ; TODO
@@ -688,7 +731,7 @@
                     :options (:field/options field)
                     :maxlength (:field/max-length field)
                     :value (:field/value field)
-                    :previous-value nil ; TODO
+                    :previous-value (:field/previous-value field)
                     :localizations (into {} (for [lang (set (concat (keys (:field/title field))
                                                                     (keys (:field/placeholder field))))]
                                               [lang {:title (get-in field [:field/title lang])
