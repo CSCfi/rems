@@ -83,7 +83,8 @@
 
 (defmethod event-type-specific-application-view :application.event/returned
   [application event]
-  application)
+  (-> application
+      (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/returned)))
 
 (defmethod event-type-specific-application-view :application.event/comment-requested
   [application event]
@@ -472,20 +473,30 @@
                                                   :application/description "foo"
                                                   :application/form {:form/fields [{:field/value "foo"}
                                                                                    {:field/value "bar"}]}})]
-            (is (= expected-application (apply-events events))))
+            (is (= expected-application (apply-events events)))
 
-          (testing "> submitted"
-            (let [events (conj events {:event/type :application.event/submitted
-                                       :event/time (DateTime. 3000)
-                                       :event/actor "applicant"
-                                       :application/id 1})
-                  expected-application (deep-merge expected-application
-                                                   {:application/last-activity (DateTime. 3000)
-                                                    :application/events events
-                                                    :application/workflow {:workflow.dynamic/state ::dynamic/submitted}})]
-              (is (= expected-application (apply-events events))))))))
+            (testing "> submitted"
+              (let [events (conj events {:event/type :application.event/submitted
+                                         :event/time (DateTime. 3000)
+                                         :event/actor "applicant"
+                                         :application/id 1})
+                    expected-application (deep-merge expected-application
+                                                     {:application/last-activity (DateTime. 3000)
+                                                      :application/events events
+                                                      :application/workflow {:workflow.dynamic/state ::dynamic/submitted}})]
+                (is (= expected-application (apply-events events)))
 
-    (testing "returned") ; TODO
+                (testing "> returned"
+                  (let [events (conj events {:event/type :application.event/returned
+                                             :event/time (DateTime. 4000)
+                                             :event/actor "handler"
+                                             :application/id 1
+                                             :application/comment "fix stuff"})
+                        expected-application (deep-merge expected-application
+                                                         {:application/last-activity (DateTime. 4000)
+                                                          :application/events events
+                                                          :application/workflow {:workflow.dynamic/state ::dynamic/returned}})]
+                    (is (= expected-application (apply-events events)))))))))))
     (testing "second version submitted") ; TODO
 
     (testing "approved") ; TODO
