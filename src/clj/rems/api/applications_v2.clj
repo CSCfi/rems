@@ -33,6 +33,7 @@
                                           {:license/id (:license/id license)
                                            :license/accepted false})
                                         (:application/licenses event))
+             :application/accepted-licenses {(:event/actor event) #{}}
              :application/events []
              :application/form {:form/id (:form/id event)}
              :application/workflow {:workflow/id (:workflow/id event)
@@ -54,7 +55,8 @@
   (-> application
       (assoc :application/modified (:event/time event))
       (assoc ::draft-answers (:application/field-values event))
-      (update :application/licenses set-accepted-licences (:application/accepted-licenses event))))
+      (update :application/licenses set-accepted-licences (:application/accepted-licenses event))
+      (update :application/accepted-licenses into (map :license/id (:application/accepted-licenses event)))))
 
 (defmethod event-type-specific-application-view :application.event/member-invited
   [application event]
