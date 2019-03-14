@@ -1,6 +1,7 @@
 (ns rems.administration.catalogue-items
   (:require [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.status-flags :as status-flags]
             [rems.atoms :refer [external-link readonly-checkbox]]
             [rems.catalogue-util :refer [get-catalogue-item-title]]
             [rems.spinner :as spinner]
@@ -35,13 +36,6 @@
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
 (rf/reg-event-fx
- ::set-display-archived?
- (fn [{:keys [db]} [_ display-archived?]]
-   {:db (assoc db ::display-archived? display-archived?)
-    :dispatch [::fetch-catalogue]}))
-(rf/reg-sub ::display-archived? (fn [db _] (::display-archived? db)))
-
-(rf/reg-event-fx
  ::update-catalogue-item
  (fn [_ [_ item]]
    (put! "/api/catalogue-items/update"
@@ -61,6 +55,13 @@
 (rf/reg-event-db ::set-filtering (fn [db [_ filtering]] (assoc db ::filtering filtering)))
 (rf/reg-sub ::filtering (fn [db _] (::filtering db)))
 
+(rf/reg-event-fx
+ ::set-display-archived?
+ (fn [{:keys [db]} [_ display-archived?]]
+   {:db (assoc db ::display-archived? display-archived?)
+    :dispatch [::fetch-catalogue]}))
+(rf/reg-sub ::display-archived? (fn [db _] (::display-archived? db)))
+
 (defn- to-create-catalogue-item []
   [:a.btn.btn-primary
    {:href "/#/administration/create-catalogue-item"}
@@ -70,51 +71,6 @@
   [:a.btn.btn-primary
    {:href (str "/#/administration/catalogue-items/" catalogue-item-id)}
    (text :t.administration/view)])
-
-(defn- disable-button [item]
-  [:button.btn.btn-secondary.button-min-width
-   {:type "button"
-    :on-click #(rf/dispatch [::update-catalogue-item (assoc item :enabled false)])}
-   (text :t.administration/disable)])
-
-(defn- enable-button [item]
-  [:button.btn.btn-primary.button-min-width
-   {:type "button"
-    :on-click #(rf/dispatch [::update-catalogue-item (assoc item :enabled true)])}
-   (text :t.administration/enable)])
-
-(defn- toggle-enabled-button [item]
-  (if (:enabled item)
-    [disable-button item]
-    [enable-button item]))
-
-(defn- archive-button [item]
-  [:button.btn.btn-secondary.button-min-width
-   {:type "button"
-    :on-click #(rf/dispatch [::update-catalogue-item (assoc item :archived true)])}
-   (text :t.administration/archive)])
-
-(defn- unarchive-button [item]
-  [:button.btn.btn-primary.button-min-width
-   {:type "button"
-    :on-click #(rf/dispatch [::update-catalogue-item (assoc item :archived false)])}
-   (text :t.administration/unarchive)])
-
-(defn- toggle-archived-button [item]
-  (if (:archived item)
-    [unarchive-button item]
-    [archive-button item]))
-
-(defn- display-archived-catalogue-items []
-  (let [display-archived? @(rf/subscribe [::display-archived?])
-        toggle #(rf/dispatch [::set-display-archived? (not display-archived?)])]
-    [:div.form-check.form-check-inline {:style {:float "right"}}
-     [:input.form-check-input {:type "checkbox"
-                               :id "display-archived"
-                               :checked display-archived?
-                               :on-change toggle}]
-     [:label.form-check-label {:for "display-archived"}
-      (text :t.administration/display-archived)]]))
 
 (defn- catalogue-columns [language]
   {:name {:header #(text :t.catalogue/header)
@@ -145,8 +101,8 @@
             :value (comp readonly-checkbox :enabled)}
    :commands {:values (fn [item]
                         [[to-catalogue-item (:id item)]
-                         [toggle-enabled-button item]
-                         [toggle-archived-button item]])
+                         [status-flags/enabled-toggle item #(rf/dispatch [::update-catalogue-item %])]
+                         [status-flags/archived-toggle item #(rf/dispatch [::update-catalogue-item %])]])
               :sortable? false
               :filterable? false}})
 
@@ -168,7 +124,9 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-catalogue-item]
-           [display-archived-catalogue-items]
+           [status-flags/display-archived-toggle
+            @(rf/subscribe [::display-archived?])
+            #(rf/dispatch [::set-display-archived? %])]
            [catalogue-list
             @(rf/subscribe [::catalogue])
             @(rf/subscribe [:language])

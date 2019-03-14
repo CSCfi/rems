@@ -73,8 +73,7 @@
       :roles #{:owner}
       :body [command UpdateCatalogueItemCommand]
       :return SuccessResponse
-      (db/set-catalogue-item-state! command)
-      (ok {:success true}))
+      (ok (catalogue/update-catalogue-item! command)))
 
     (POST "/create-localization" []
       :summary "Create a new catalogue item localization"

@@ -1,6 +1,5 @@
 (ns ^:integration rems.test.redirects
   (:require [clojure.test :refer :all]
-            [rems.context :as context]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.resource :as resource]
@@ -15,17 +14,16 @@
 (def test-user {:eppn "test-user"})
 
 (defn dummy-resource [resid]
-  (binding [context/*user* test-user]
-    (:id (resource/create-resource! {:resid resid
-                                     :organization "abc"
-                                     :licenses []}))))
+  (:id (resource/create-resource! {:resid resid
+                                   :organization "abc"
+                                   :licenses []}
+                                  (:eppn test-user))))
 
 (defn dummy-catalogue-item [resid]
-  (binding [context/*user* test-user]
-    (:id (catalogue/create-catalogue-item! {:title ""
-                                            :form 1
-                                            :resid resid
-                                            :wfid 1}))))
+  (:id (catalogue/create-catalogue-item! {:title ""
+                                          :form 1
+                                          :resid resid
+                                          :wfid 1})))
 
 (defn disable-catalogue-item [catid]
   (db/set-catalogue-item-state! {:id catid :enabled false}))

@@ -4,6 +4,7 @@
             [rems.api.util]
             [rems.db.licenses :as licenses]
             [rems.db.resource :as resource]
+            [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
@@ -33,6 +34,11 @@
   {:success s/Bool
    (s/optional-key :id) s/Num
    (s/optional-key :errors) [s/Any]})
+
+(s/defschema UpdateResourceCommand
+  {:id s/Num
+   :enabled s/Bool
+   :archived s/Bool})
 
 (defn- format-resource
   [{:keys [id owneruserid modifieruserid organization resid start endt active enabled archived]}]
@@ -66,9 +72,13 @@
     (GET "/" []
       :summary "Get resources"
       :roles #{:owner}
-      :query-params [{active :- (describe s/Bool "filter active or inactive resources") nil}]
+      :query-params [{active :- (describe s/Bool "filter active or inactive resources") nil}
+                     {disabled :- (describe s/Bool "whether to include disabled resources") false}
+                     {archived :- (describe s/Bool "whether to include archived resources") false}]
       :return Resources
-      (ok (get-resources (when active {:active active}))))
+      (ok (get-resources (merge (when active {:active active})
+                                (when-not disabled {:enabled true})
+                                (when-not archived {:archived false})))))
 
     (GET "/:resource-id" []
       :summary "Get resource by id"
@@ -82,4 +92,11 @@
       :roles #{:owner}
       :body [command CreateResourceCommand]
       :return CreateResourceResponse
-      (ok (resource/create-resource! command)))))
+      (ok (resource/create-resource! command (getx-user-id))))
+
+    (PUT "/update" []
+      :summary "Update resource"
+      :roles #{:owner}
+      :body [command UpdateResourceCommand]
+      :return SuccessResponse
+      (ok (resource/update-resource! command)))))
