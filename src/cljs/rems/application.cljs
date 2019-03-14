@@ -733,9 +733,13 @@
                                   actions)]
                       forms)}])))
 
+(defn item-disabled? [item]
+  (or (= "disabled" (:state item))
+      (:archived item)))
+
 (defn- disabled-items-warning [catalogue-items]
   (let [language @(rf/subscribe [:language])]
-    (when-some [items (seq (filter #(= "disabled" (:state %)) catalogue-items))]
+    (when-some [items (seq (filter item-disabled? catalogue-items))]
       [:div.alert.alert-danger
        (text :t.form/alert-disabled-items)
        (into [:ul]
