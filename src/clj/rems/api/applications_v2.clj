@@ -53,7 +53,7 @@
   [application event]
   (-> application
       (assoc :application/modified (:event/time event))
-      (assoc ::draft-form (:application/field-values event))
+      (assoc ::draft-answers (:application/field-values event))
       (update :application/licenses set-accepted-licences (:application/accepted-licenses event))))
 
 (defmethod event-type-specific-application-view :application.event/member-invited
@@ -79,9 +79,9 @@
 (defmethod event-type-specific-application-view :application.event/submitted
   [application event]
   (-> application
-      (assoc ::previous-submitted-form (::submitted-form application))
-      (assoc ::submitted-form (::draft-form application))
-      (dissoc ::draft-form)
+      (assoc ::previous-submitted-answers (::submitted-answers application))
+      (assoc ::submitted-answers (::draft-answers application))
+      (dissoc ::draft-answers)
       (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/submitted)))
 
 (defmethod event-type-specific-application-view :application.event/returned
@@ -279,22 +279,22 @@
     (merge-lists-by :license/id rich-licenses app-licenses)))
 
 (defn- enrich-with-injections [application {:keys [get-form get-catalogue-item get-license get-user]}]
-  (let [form-versions (remove nil? [(::draft-form application)
-                                    (::submitted-form application)
-                                    (::previous-submitted-form application)])
-        current-form (first form-versions)
-        previous-form (second form-versions)]
+  (let [answer-versions (remove nil? [(::draft-answers application)
+                                      (::submitted-answers application)
+                                      (::previous-submitted-answers application)])
+        current-answers (first answer-versions)
+        previous-answers (second answer-versions)]
     (-> application
-        (dissoc ::draft-form ::submitted-form ::previous-submitted-form)
+        (dissoc ::draft-answers ::submitted-answers ::previous-submitted-answers)
         (assoc-in [:application/form :form/fields] (merge-lists-by :field/id
                                                                    (map (fn [[field-id value]]
                                                                           {:field/id field-id
                                                                            :field/previous-value value})
-                                                                        previous-form)
+                                                                        previous-answers)
                                                                    (map (fn [[field-id value]]
                                                                           {:field/id field-id
                                                                            :field/value value})
-                                                                        current-form)))
+                                                                        current-answers)))
         (update :application/form enrich-form get-form)
         set-application-description
         (update :application/resources enrich-resources get-catalogue-item)
