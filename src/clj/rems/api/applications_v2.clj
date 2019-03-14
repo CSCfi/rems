@@ -33,8 +33,7 @@
                                            :license/accepted false})
                                         (:application/licenses event))
              :application/events []
-             :application/form {:form/id (:form/id event)
-                                :form/fields []}
+             :application/form {:form/id (:form/id event)}
              :application/workflow {:workflow/id (:workflow/id event)
                                     :workflow/type (:workflow/type event)
                                     ;; TODO: other workflows
@@ -50,14 +49,7 @@
   [application event]
   (-> application
       (assoc :application/modified (:event/time event))
-      (assoc-in [:application/form :form/fields] (map (fn [[field-id value]]
-                                                        {:field/id field-id
-                                                         :field/value value})
-                                                      (:application/field-values event)))
-      ;; XXX: keep :field/previous-value
-      (update-in [:application/form :form/fields] (fn [fields]
-                                                    (deep-merge (get-in application [:application/form :form/fields])
-                                                                fields)))
+      (assoc ::draft-form (:application/field-values event))
       (update :application/licenses set-accepted-licences (:application/accepted-licenses event))))
 
 (defmethod event-type-specific-application-view :application.event/member-invited
@@ -83,17 +75,15 @@
 (defmethod event-type-specific-application-view :application.event/submitted
   [application event]
   (-> application
+      (assoc ::previous-submitted-form (::submitted-form application))
+      (assoc ::submitted-form (::draft-form application))
+      (dissoc ::draft-form)
       (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/submitted)))
 
 (defmethod event-type-specific-application-view :application.event/returned
   [application event]
   (-> application
-      (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/returned)
-      ;; TODO: refactor
-      (update-in [:application/form :form/fields] (fn [fields]
-                                                    (map (fn [field]
-                                                           (assoc field :field/previous-value (:field/value field)))
-                                                         fields)))))
+      (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/returned)))
 
 (defmethod event-type-specific-application-view :application.event/comment-requested
   [application event]
@@ -278,12 +268,27 @@
     (merge-lists-by :license/id rich-licenses app-licenses)))
 
 (defn- enrich-with-injections [application {:keys [get-form get-catalogue-item get-license get-user]}]
-  (-> application
-      (update :application/form enrich-form get-form)
-      set-application-description
-      (update :application/resources enrich-resources get-catalogue-item)
-      (update :application/licenses enrich-licenses get-license)
-      (assoc :application/applicant-attributes (get-user (:application/applicant application)))))
+  (let [form-versions (remove nil? [(::draft-form application)
+                                    (::submitted-form application)
+                                    (::previous-submitted-form application)])
+        current-form (first form-versions)
+        previous-form (second form-versions)]
+    (-> application
+        (dissoc ::draft-form ::submitted-form ::previous-submitted-form)
+        (assoc-in [:application/form :form/fields] (merge-lists-by :field/id
+                                                                   (map (fn [[field-id value]]
+                                                                          {:field/id field-id
+                                                                           :field/previous-value value})
+                                                                        previous-form)
+                                                                   (map (fn [[field-id value]]
+                                                                          {:field/id field-id
+                                                                           :field/value value})
+                                                                        current-form)))
+        (update :application/form enrich-form get-form)
+        set-application-description
+        (update :application/resources enrich-resources get-catalogue-item)
+        (update :application/licenses enrich-licenses get-license)
+        (assoc :application/applicant-attributes (get-user (:application/applicant application))))))
 
 (defn- build-application-view [events injections]
   (-> (reduce application-view nil events)
@@ -504,12 +509,10 @@
                         expected-application (deep-merge expected-application
                                                          {:application/last-activity (DateTime. 4000)
                                                           :application/events events
-                                                          :application/workflow {:workflow.dynamic/state ::dynamic/returned}
-                                                          :application/form {:form/fields [{:field/previous-value "foo"}
-                                                                                           {:field/previous-value "bar"}]}})]
+                                                          :application/workflow {:workflow.dynamic/state ::dynamic/returned}})]
                     (is (= expected-application (apply-events events)))
 
-                    (testing "> second version submitted"
+                    (testing "> draft saved x2"
                       (let [events (conj events
                                          {:event/type :application.event/draft-saved
                                           :event/time (DateTime. 5000)
@@ -523,24 +526,31 @@
                                           :event/time (DateTime. 6000)
                                           :event/actor "applicant"
                                           :application/id 1
-                                          :application/field-values {41 "second submitted version"
-                                                                     42 "second submitted version"}
-                                          :application/accepted-licenses #{30 31}}
-                                         {:event/type :application.event/submitted
-                                          :event/time (DateTime. 7000)
-                                          :event/actor "applicant"
-                                          :application/id 1})
+                                          :application/field-values {41 "new foo"
+                                                                     42 "new bar"}
+                                          :application/accepted-licenses #{30 31}})
                             expected-application (deep-merge expected-application
                                                              {:application/modified (DateTime. 6000)
-                                                              :application/last-activity (DateTime. 7000)
+                                                              :application/last-activity (DateTime. 6000)
                                                               :application/events events
-                                                              :application/workflow {:workflow.dynamic/state ::dynamic/submitted}
-                                                              :application/description "second submitted version"
-                                                              :application/form {:form/fields [{:field/value "second submitted version"
+                                                              :application/description "new foo"
+                                                              :application/form {:form/fields [{:field/value "new foo"
                                                                                                 :field/previous-value "foo"}
-                                                                                               {:field/value "second submitted version"
+                                                                                               {:field/value "new bar"
                                                                                                 :field/previous-value "bar"}]}})]
-                        (is (= expected-application (apply-events events)))))))))))))
+                        (is (= expected-application (apply-events events)))
+
+                        (testing "> submitted"
+                          (let [events (conj events
+                                             {:event/type :application.event/submitted
+                                              :event/time (DateTime. 7000)
+                                              :event/actor "applicant"
+                                              :application/id 1})
+                                expected-application (deep-merge expected-application
+                                                                 {:application/last-activity (DateTime. 7000)
+                                                                  :application/events events
+                                                                  :application/workflow {:workflow.dynamic/state ::dynamic/submitted}})]
+                            (is (= expected-application (apply-events events)))))))))))))))
 
     (testing "approved") ; TODO
     (testing "rejected") ; TODO
