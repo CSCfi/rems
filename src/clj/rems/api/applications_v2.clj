@@ -101,11 +101,13 @@
 
 (defmethod event-type-specific-application-view :application.event/decision-requested
   [application event]
-  application)
+  (-> application
+      (update-in [:application/workflow :workflow.dynamic/awaiting-deciders] set/union (set (:application/deciders event)))))
 
 (defmethod event-type-specific-application-view :application.event/decided
   [application event]
-  application)
+  (-> application
+      (update-in [:application/workflow :workflow.dynamic/awaiting-deciders] disj (:event/actor event))))
 
 (defmethod event-type-specific-application-view :application.event/approved
   [application event]
@@ -610,19 +612,19 @@
                                       :event/actor "handler"
                                       :application/id 1
                                       :application/request-id request-id
-                                      :application/commenters ["commenter1"]
+                                      :application/commenters ["commenter"]
                                       :application/comment "please comment"})
                         expected-application (deep-merge expected-application
                                                          {:application/last-activity (DateTime. 4000)
                                                           :application/events events
-                                                          :application/workflow {:workflow.dynamic/awaiting-commenters #{"commenter1"}}})]
+                                                          :application/workflow {:workflow.dynamic/awaiting-commenters #{"commenter"}}})]
                     (is (= expected-application (apply-events events)))
 
                     (testing "> commented"
                       (let [events (conj events
                                          {:event/type :application.event/commented
                                           :event/time (DateTime. 5000)
-                                          :event/actor "commenter1"
+                                          :event/actor "commenter"
                                           :application/id 1
                                           :application/request-id request-id
                                           :application/comment "looks good"})
@@ -630,10 +632,38 @@
                                                              {:application/last-activity (DateTime. 5000)
                                                               :application/events events
                                                               :application/workflow {:workflow.dynamic/awaiting-commenters #{}}})]
-                        (is (= expected-application (apply-events events)))))))))))))
+                        (is (= expected-application (apply-events events)))))))
 
-    (testing "decision requested") ; TODO
-    (testing "decided") ; TODO
+                (testing "> decision requested"
+                  (let [request-id (UUID/fromString "db9c7fd6-53be-4b04-b15d-a3a8e0a45e49")
+                        events (conj events
+                                     {:event/type :application.event/decision-requested
+                                      :event/time (DateTime. 4000)
+                                      :event/actor "handler"
+                                      :application/id 1
+                                      :application/request-id request-id
+                                      :application/deciders ["decider"]
+                                      :application/comment "please decide"})
+                        expected-application (deep-merge expected-application
+                                                         {:application/last-activity (DateTime. 4000)
+                                                          :application/events events
+                                                          :application/workflow {:workflow.dynamic/awaiting-deciders #{"decider"}}})]
+                    (is (= expected-application (apply-events events)))
+
+                    (testing "> decided"
+                      (let [events (conj events
+                                         {:event/type :application.event/decided
+                                          :event/time (DateTime. 5000)
+                                          :event/actor "decider"
+                                          :application/id 1
+                                          :application/request-id request-id
+                                          :application/decision :approved
+                                          :application/comment "I approve this"})
+                            expected-application (deep-merge expected-application
+                                                             {:application/last-activity (DateTime. 5000)
+                                                              :application/events events
+                                                              :application/workflow {:workflow.dynamic/awaiting-deciders #{}}})]
+                        (is (= expected-application (apply-events events)))))))))))))
 
     (testing "member invited") ; TODO
     (testing "member uninvited") ; TODO
