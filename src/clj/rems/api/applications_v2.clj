@@ -42,7 +42,8 @@
                                     :workflow.dynamic/state :rems.workflow.dynamic/draft
                                     :workflow.dynamic/handlers (:workflow.dynamic/handlers event)
                                     :workflow.dynamic/awaiting-commenters #{}
-                                    :workflow.dynamic/awaiting-deciders #{}})))
+                                    :workflow.dynamic/awaiting-deciders #{}
+                                    :workflow.dynamic/invitations {}})))
 
 (defn- set-accepted-licences [licenses accepted-licenses]
   (map (fn [license]
@@ -58,7 +59,8 @@
 
 (defmethod event-type-specific-application-view :application.event/member-invited
   [application event]
-  application)
+  (-> application
+      (update-in [:application/workflow :workflow.dynamic/invitations] assoc (:invitation/token event) (:application/member event))))
 
 (defmethod event-type-specific-application-view :application.event/member-added
   [application event]
@@ -480,7 +482,8 @@
                                                          :workflow.dynamic/state :rems.workflow.dynamic/draft
                                                          :workflow.dynamic/handlers #{"handler"}
                                                          :workflow.dynamic/awaiting-commenters #{}
-                                                         :workflow.dynamic/awaiting-deciders #{}}}]
+                                                         :workflow.dynamic/awaiting-deciders #{}
+                                                         :workflow.dynamic/invitations {}}}]
         (is (= expected-application (apply-events events)))
 
         (testing "> draft saved"
@@ -663,7 +666,24 @@
                                                              {:application/last-activity (DateTime. 5000)
                                                               :application/events events
                                                               :application/workflow {:workflow.dynamic/awaiting-deciders #{}}})]
-                        (is (= expected-application (apply-events events)))))))))))))
+                        (is (= expected-application (apply-events events)))))))
+
+                (testing "> member invited"
+                  (let [token "b187bda7b9da9053a5d8b815b029e4ba"
+                        events (conj events
+                                     {:event/type :application.event/member-invited
+                                      :event/time (DateTime. 4000)
+                                      :event/actor "applicant"
+                                      :application/id 1
+                                      :application/member {:name "member"
+                                                           :email "member@example.com"}
+                                      :invitation/token token})
+                        expected-application (deep-merge expected-application
+                                                         {:application/last-activity (DateTime. 4000)
+                                                          :application/events events
+                                                          :application/workflow {:workflow.dynamic/invitations {token {:name "member"
+                                                                                                                       :email "member@example.com"}}}})]
+                    (is (= expected-application (apply-events events)))))))))))
 
     (testing "member invited") ; TODO
     (testing "member uninvited") ; TODO
@@ -698,6 +718,10 @@
       (update :application/events dynamic/hide-sensitive-dynamic-events)
       (update :application/workflow dissoc :workflow.dynamic/handlers)))
 
+(defn- hide-very-sensitive-information [application]
+  (-> application
+      (update-in [:application/workflow :workflow.dynamic/invitations] vals))) ; the keys are invitation tokens
+
 (defn- apply-user-permissions [application user-id]
   (let [see-application? (dynamic/see-application? application user-id)
         permissions (permissions/user-permissions application user-id)
@@ -706,6 +730,7 @@
       (-> (if see-everything?
             application
             (hide-sensitive-information application))
+          (hide-very-sensitive-information)
           (assoc :application/permissions permissions)
           (permissions/cleanup)))))
 
@@ -749,7 +774,17 @@
                    (:application/events application))))
           (testing "don't see dynamic workflow handlers"
             (is (= nil
-                   (get-in application [:application/workflow :workflow.dynamic/handlers])))))))))
+                   (get-in application [:application/workflow :workflow.dynamic/handlers])))))))
+
+    (testing "invitation tokens are not visible to anybody"
+      (let [application (application-view application {:event/type :application.event/member-invited
+                                                       :application/member {:name "member"
+                                                                            :email "member@example.com"}
+                                                       :invitation/token "secret"})]
+        (is (= [{:name "member"
+                 :email "member@example.com"}]
+               (get-in (apply-user-permissions application "applicant") [:application/workflow :workflow.dynamic/invitations])
+               (get-in (apply-user-permissions application "handler") [:application/workflow :workflow.dynamic/invitations])))))))
 
 (defn api-get-application-v2 [user-id application-id]
   (let [events (applications/get-dynamic-application-events application-id)]
