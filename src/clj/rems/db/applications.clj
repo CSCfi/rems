@@ -605,6 +605,7 @@
       :applicant-attributes (users/get-user-attributes (:applicantuserid application))
       :items items
       :licenses licenses
+      :accepted-licenses (:accepted-licenses application)
       :phases (get-application-phases (:state application))})))
 
 (defn save-attachment!
@@ -657,6 +658,7 @@
       :applicant-attributes (users/get-user-attributes (:applicantuserid application))
       :items items
       :licenses licenses
+      :accepted-licenses {}
       :phases (get-application-phases (:state application))})))
 
 (defn create-new-draft [user-id wfid]
