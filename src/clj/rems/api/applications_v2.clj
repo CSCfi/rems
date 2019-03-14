@@ -26,6 +26,7 @@
              :application/created (:event/time event)
              :application/modified (:event/time event)
              :application/applicant (:event/actor event)
+             :application/members #{}
              :application/resources (map (fn [resource]
                                            {:catalogue-item/id (:catalogue-item/id resource)
                                             :resource/ext-id (:resource/ext-id resource)})
@@ -68,7 +69,9 @@
 
 (defmethod event-type-specific-application-view :application.event/member-joined
   [application event]
-  application)
+  (-> application
+      (update :application/members conj {:userid (:event/actor event)})
+      (update-in [:application/workflow :workflow.dynamic/invitations] dissoc (:invitation/token event))))
 
 (defmethod event-type-specific-application-view :application.event/member-removed
   [application event]
@@ -424,6 +427,7 @@
                                   :application/applicant-attributes {:eppn "applicant"
                                                                      :mail "applicant@example.com"
                                                                      :commonName "Applicant"}
+                                  :application/members #{}
                                   :application/resources [{:catalogue-item/id 10
                                                            :resource/id 11
                                                            :resource/ext-id "urn:11"
@@ -680,13 +684,13 @@
                                       :event/time (DateTime. 4000)
                                       :event/actor "applicant"
                                       :application/id 1
-                                      :application/member {:name "member"
+                                      :application/member {:name "Mr. Member"
                                                            :email "member@example.com"}
                                       :invitation/token token})
                         expected-application (deep-merge expected-application
                                                          {:application/last-activity (DateTime. 4000)
                                                           :application/events events
-                                                          :application/workflow {:workflow.dynamic/invitations {token {:name "member"
+                                                          :application/workflow {:workflow.dynamic/invitations {token {:name "Mr. Member"
                                                                                                                        :email "member@example.com"}}}})]
                     (is (= expected-application (apply-events events)))
 
@@ -696,16 +700,29 @@
                                           :event/time (DateTime. 5000)
                                           :event/actor "applicant"
                                           :application/id 1
-                                          :application/member {:name "member"
+                                          :application/member {:name "Mr. Member"
                                                                :email "member@example.com"}
                                           :application/comment "he left the project"})
                             expected-application (-> (deep-merge expected-application
                                                                  {:application/last-activity (DateTime. 5000)
                                                                   :application/events events})
                                                      (assoc-in [:application/workflow :workflow.dynamic/invitations] {}))]
+                        (is (= expected-application (apply-events events)))))
+
+                    (testing "> member joined"
+                      (let [events (conj events
+                                         {:event/type :application.event/member-joined
+                                          :event/time (DateTime. 5000)
+                                          :event/actor "member"
+                                          :application/id 1
+                                          :invitation/token token})
+                            expected-application (-> (deep-merge expected-application
+                                                                 {:application/last-activity (DateTime. 5000)
+                                                                  :application/events events
+                                                                  :application/members #{{:userid "member"}}})
+                                                     (assoc-in [:application/workflow :workflow.dynamic/invitations] {}))]
                         (is (= expected-application (apply-events events)))))))))))))
 
-    (testing "member joined") ; TODO
     (testing "member added") ; TODO
     (testing "member removed"))) ; TODO
 
