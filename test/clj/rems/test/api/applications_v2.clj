@@ -1,7 +1,10 @@
 (ns rems.test.api.applications-v2
   (:require [clojure.test :refer :all]
+            [lambdaisland.deep-diff :as ddiff]
+            [rems.api.applications :refer [api-get-application]]
             [rems.api.applications-v2 :refer :all]
             [rems.common-util :refer [deep-merge]]
+            [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.permissions :as permissions]
             [rems.workflow.dynamic :as dynamic])
@@ -494,3 +497,13 @@
                  :email "member@example.com"}]
                (get-in (apply-user-permissions application "applicant") [:application/workflow :workflow.dynamic/invitations])
                (get-in (apply-user-permissions application "handler") [:application/workflow :workflow.dynamic/invitations])))))))
+
+(comment
+  (let [user-id "developer"]
+    (binding [context/*lang* :en]
+      (doseq [app (applications/get-user-applications user-id)]
+        (when (applications/is-dynamic-application? app)
+          (ddiff/pretty-print (ddiff/diff (assoc-in (api-get-application user-id (:id app))
+                                                    [:application :dynamic-events] nil)
+                                          (assoc-in (api-get-application-v1 user-id (:id app))
+                                                    [:application :dynamic-events] nil))))))))

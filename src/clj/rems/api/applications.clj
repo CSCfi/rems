@@ -8,7 +8,6 @@
             [rems.api.schema :refer :all]
             [rems.api.util :refer [longify-keys]]
             [rems.config :refer [env]]
-            [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.dynamic-roles :as dynamic-roles]
@@ -371,13 +370,3 @@
           (ok {:success false
                :errors (:errors errors)})
           (ok {:success true}))))))
-
-(comment
-  (let [user-id "developer"]
-    (binding [context/*lang* :en]
-      (doseq [app (applications/get-user-applications user-id)]
-        (when (applications/is-dynamic-application? app)
-          (is (= (assoc-in (api-get-application user-id (:id app))
-                           [:application :dynamic-events] nil)
-                 (assoc-in (api-get-application-v1 user-id (:id app))
-                           [:application :dynamic-events] nil))))))))

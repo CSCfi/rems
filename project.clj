@@ -20,6 +20,7 @@
                  [haka-buddy "0.2.3" :exclusions [cheshire]]
                  [hiccup "1.0.5"]
                  [javax.xml.bind/jaxb-api "2.3.1"]
+                 [lambdaisland/deep-diff "0.0-25"]
                  [luminus-jetty "0.1.7"]
                  [luminus-migrations "0.6.3"]
                  [luminus-nrepl "0.1.5"]
