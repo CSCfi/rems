@@ -1,19 +1,19 @@
 (ns rems.cljs-tests
   (:require [doo.runner :refer-macros [doo-tests]]
-            rems.test.administration.catalogue-item
-            rems.test.administration.form
-            rems.test.administration.items
-            rems.test.administration.license
-            rems.test.administration.resource
-            rems.test.administration.workflow
-            rems.test.application
-            rems.test.util))
+            rems.administration.test-catalogue-item
+            rems.administration.test-form
+            rems.administration.test-items
+            rems.administration.test-license
+            rems.administration.test-resource
+            rems.administration.test-workflow
+            rems.test-application
+            rems.test-util))
 
-(doo-tests 'rems.test.administration.catalogue-item
-           'rems.test.administration.form
-           'rems.test.administration.items
-           'rems.test.administration.license
-           'rems.test.administration.resource
-           'rems.test.administration.workflow
-           'rems.test.application
-           'rems.test.util)
+(doo-tests 'rems.administration.test-catalogue-item
+           'rems.administration.test-form
+           'rems.administration.test-items
+           'rems.administration.test-license
+           'rems.administration.test-resource
+           'rems.administration.test-workflow
+           'rems.test-application
+           'rems.test-util)

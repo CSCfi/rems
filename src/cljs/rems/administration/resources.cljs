@@ -1,8 +1,10 @@
 (ns rems.administration.resources
   (:require [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.status-flags :as status-flags]
             [rems.atoms :refer [external-link readonly-checkbox]]
             [rems.spinner :as spinner]
+            [rems.status-modal :as status-modal]
             [rems.table :as table]
             [rems.text :refer [localize-time text]]
             [rems.util :refer [dispatch! fetch put!]]))
@@ -10,13 +12,17 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (assoc db ::loading? true)
-    ::fetch-resources nil}))
+   {:db (assoc db ::display-archived? false)
+    :dispatch [::fetch-resources]}))
 
-(defn- fetch-resources []
-  (fetch "/api/resources/" {:handler #(rf/dispatch [::fetch-resources-result %])}))
-
-(rf/reg-fx ::fetch-resources (fn [_] (fetch-resources)))
+(rf/reg-event-fx
+ ::fetch-resources
+ (fn [{:keys [db]}]
+   (fetch "/api/resources" {:url-params {:disabled true
+                                         :archived (::display-archived? db)}
+                            :handler #(rf/dispatch [::fetch-resources-result %])
+                            :error-handler status-modal/common-error-handler!})
+   {:db (assoc db ::loading? true)}))
 
 (rf/reg-event-db
  ::fetch-resources-result
@@ -28,12 +34,28 @@
 (rf/reg-sub ::resources (fn [db _] (::resources db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
+(rf/reg-event-fx
+ ::update-resource
+ (fn [_ [_ item]]
+   (put! "/api/resources/update"
+         {:params (select-keys item [:id :enabled :archived])
+          :handler #(rf/dispatch [::fetch-resources])
+          :error-handler status-modal/common-error-handler!})
+   {}))
+
 (rf/reg-event-db ::set-sorting (fn [db [_ sorting]] (assoc db ::sorting sorting)))
 (rf/reg-sub ::sorting (fn [db _] (::sorting db {:sort-order :asc
                                                 :sort-column :title})))
 
 (rf/reg-event-db ::set-filtering (fn [db [_ filtering]] (assoc db ::filtering filtering)))
 (rf/reg-sub ::filtering (fn [db _] (or (::filtering db))))
+
+(rf/reg-event-fx
+ ::set-display-archived?
+ (fn [{:keys [db]} [_ display-archived?]]
+   {:db (assoc db ::display-archived? display-archived?)
+    :dispatch [::fetch-resources]}))
+(rf/reg-sub ::display-archived? (fn [db _] (::display-archived? db)))
 
 (defn- to-create-resource []
   [:a.btn.btn-primary
@@ -56,7 +78,10 @@
          :value (comp localize-time :end)}
    :active {:header #(text :t.administration/active)
             :value (comp readonly-checkbox :active)}
-   :commands {:value (fn [resource] [to-view-resource (:id resource)])
+   :commands {:values (fn [resource]
+                        [[to-view-resource (:id resource)]
+                         [status-flags/enabled-toggle resource #(rf/dispatch [::update-resource %])]
+                         [status-flags/archived-toggle resource #(rf/dispatch [::update-resource %])]])
               :sortable? false
               :filterable? false}})
 
@@ -78,6 +103,9 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-resource]
+           [status-flags/display-archived-toggle
+            @(rf/subscribe [::display-archived?])
+            #(rf/dispatch [::set-display-archived? %])]
            [resources-list
             @(rf/subscribe [::resources])
             (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))
