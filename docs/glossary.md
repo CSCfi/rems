@@ -2,6 +2,7 @@
 
 ## Core concepts
 
+- REMS: Resource Entitlement Management System
 - resource: an external resource
   - has an identifier that's meaningful outside rems
   - might have an URN
