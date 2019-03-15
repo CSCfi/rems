@@ -207,6 +207,18 @@ WHERE 1=1
 /*~ ) ~*/
 ;
 
+-- :name save-form-template! :insert
+INSERT INTO form_template
+(organization, title, modifierUserId, ownerUserId, visibility, fields)
+VALUES
+(:organization,
+ :title,
+ :user,
+ :user,
+ 'public',
+ :fields::jsonb
+);
+
 -- :name create-form! :insert
 INSERT INTO application_form
 (organization, title, modifierUserId, ownerUserId, visibility, endt)
