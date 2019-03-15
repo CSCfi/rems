@@ -545,7 +545,7 @@
                                             [:application :dynamic-events] nil))))
 
 (comment
-  (diff-app-v1 "alice" 18) ;; TODO: members
+  (diff-app-v1 "alice" 18)
   ;; TODO: attachments
   (let [user-id "developer"]
     (binding [context/*lang* :en]
