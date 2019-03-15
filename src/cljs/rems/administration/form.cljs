@@ -37,11 +37,6 @@
    {:on-click #(dispatch! "/#/administration/forms")}
    (text :t.administration/back)])
 
-(defn- to-create-form []
-  [:a.btn.btn-primary
-   {:href "/#/administration/create-form"}
-   (text :t.administration/create-form)])
-
 (defn get-localized-value [field key language]
   (key (first (filter (comp #{(name language)} :langcode)
                       (:localizations field)))))
@@ -81,9 +76,8 @@
               [inline-info-field (text :t.administration/end) (localize-time (:end form))]
               [inline-info-field (text :t.administration/active) (str (:active form))]]}]
    [form-fields (:fields form) language]
-   [:div.col.commands [back-button]]
+   [:div.col.commands [back-button]]])
    ;; TODO Do we support form licenses?
-   ])
 
 (defn form-page []
   (let [form (rf/subscribe [::form])
