@@ -1,4 +1,4 @@
-(ns rems.test.common-util
+(ns rems.test-common-util
   (:require #?(:clj [clojure.test :refer :all])
             [rems.common-util :refer :all]))
 
