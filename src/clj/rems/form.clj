@@ -9,14 +9,14 @@
             [ring.util.http-response :refer [bad-request!]]))
 
 
-(defn save-application-items [application-id catalogue-item-ids]
+(defn- save-application-items! [application-id catalogue-item-ids]
   (assert application-id)
   (assert (empty? (filter nil? catalogue-item-ids)) "nils sent in catalogue-item-ids")
   (assert (not (empty? catalogue-item-ids)))
   (doseq [catalogue-item-id catalogue-item-ids]
     (db/add-application-item! {:application application-id :item catalogue-item-id})))
 
-(defn- save-fields
+(defn- save-fields!
   [user-id application-id input]
   (let [form (applications/get-form-for user-id application-id)]
     (doseq [{item-id :id :as item} (:items form)]
@@ -30,7 +30,7 @@
           (db/update-application-description! {:id application-id
                                                :description value}))))))
 
-(defn save-licenses
+(defn- save-licenses!
   [user-id application-id input]
   (let [form (applications/get-form-for user-id application-id)]
     (doseq [{licid :id :as license} (sort-by :id (:licenses form))]
@@ -46,8 +46,8 @@
 
 ;; TODO think a better name
 (defn- save-form-inputs [applicant-id application-id submit? items licenses]
-  (save-fields applicant-id application-id items)
-  (save-licenses applicant-id application-id licenses)
+  (save-fields! applicant-id application-id items)
+  (save-licenses! applicant-id application-id licenses)
   (let [form (applications/get-form-for applicant-id application-id)
         validation (form-validation/validate form)
         valid? (= :valid validation)
@@ -71,7 +71,7 @@
     (check-for-disabled-items! (getx draft :catalogue-items))
     (let [wfid (getx draft :wfid)
           id (applications/create-new-draft user-id wfid)]
-      (save-application-items id catalogue-item-ids)
+      (save-application-items! id catalogue-item-ids)
       id)))
 
 (defn api-save [{:keys [application-id catalogue-items items licenses command actor]}]
