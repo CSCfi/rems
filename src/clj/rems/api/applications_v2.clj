@@ -415,6 +415,9 @@
                     :formid (:form/id form)
                     :wfid (:workflow/id workflow)
                     :applicantuserid (:application/applicant application)
+                    :members [{:userid (:application/applicant application)}]
+                    :commenters (:workflow.dynamic/awaiting-commenters workflow)
+                    :deciders (:workflow.dynamic/awaiting-deciders workflow)
                     :start (:application/created application)
                     :last-modified (:application/last-activity application)
                     :state (:workflow.dynamic/state workflow) ; TODO: round-based workflows
@@ -425,6 +428,8 @@
                                     :licenses (into {} (for [license (:application/licenses application)]
                                                          (when (:license/accepted license)
                                                            [(:license/id license) "approved"])))}
+                    :submitted-form-contents nil ; TODO: not used in the UI, so not needed?
+                    :previous-submitted-form-contents nil ; TODO: not used in the UI, so not needed?
                     :events [] ; TODO: round-based workflows
                     :dynamic-events (:application/events application)
                     :workflow {:type (:workflow/type workflow)
