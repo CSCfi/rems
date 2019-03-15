@@ -1,4 +1,4 @@
-(ns rems.test.util
+(ns rems.test-util
   (:require [cljs.test :refer-macros [deftest is testing]]
             [cljs-time.core :as time]
             [cljs-time.format :as format]

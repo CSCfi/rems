@@ -1,4 +1,4 @@
-(ns rems.test.testing
+(ns rems.testing
   (:require [re-frame.core :as rf]))
 
 (defn isolate-re-frame-state [f]

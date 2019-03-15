@@ -1,4 +1,4 @@
-(ns rems.test.administration.items
+(ns rems.administration.test-items
   (:require [cljs.test :refer-macros [deftest is testing]]
             [rems.administration.items :as items]))
 

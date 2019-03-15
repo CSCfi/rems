@@ -1,4 +1,4 @@
-(ns rems.test.application
+(ns rems.test-application
   (:require [cljs.test :refer-macros [deftest is testing use-fixtures]]
             [hiccup-find.core :refer [hiccup-find]]
             [re-frame.core :as rf]
