@@ -416,6 +416,7 @@
                     :wfid (:workflow/id workflow)
                     :applicantuserid (:application/applicant application)
                     :members [{:userid (:application/applicant application)}]
+                    :invited-members (:workflow.dynamic/invitations workflow)
                     :commenters (:workflow.dynamic/awaiting-commenters workflow)
                     :deciders (:workflow.dynamic/awaiting-deciders workflow)
                     :start (:application/created application)

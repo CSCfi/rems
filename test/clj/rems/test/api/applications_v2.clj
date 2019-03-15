@@ -518,12 +518,16 @@
                (get-in (apply-user-permissions application "applicant") [:application/workflow :workflow.dynamic/invitations])
                (get-in (apply-user-permissions application "handler") [:application/workflow :workflow.dynamic/invitations])))))))
 
+(defn- diff-app-v1 [user-id app-id]
+  (ddiff/pretty-print (ddiff/diff (assoc-in (api-get-application user-id app-id)
+                                            [:application :dynamic-events] nil)
+                                  (assoc-in (api-get-application-v1 user-id app-id)
+                                            [:application :dynamic-events] nil))))
+
 (comment
-  (let [user-id "developer"]
+  (diff-app-v1 "alice" 8)
+  (let [user-id "alice"]
     (binding [context/*lang* :en]
       (doseq [app (applications/get-user-applications user-id)]
         (when (applications/is-dynamic-application? app)
-          (ddiff/pretty-print (ddiff/diff (assoc-in (api-get-application user-id (:id app))
-                                                    [:application :dynamic-events] nil)
-                                          (assoc-in (api-get-application-v1 user-id (:id app))
-                                                    [:application :dynamic-events] nil))))))))
+          (diff-app-v1 user-id (:id app)))))))
