@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
-            [rems.form :as form]
+            [rems.db.form :as form]
             [rems.test-db :refer [db-each-fixture db-once-fixture]]))
 
 (use-fixtures :once db-once-fixture)
