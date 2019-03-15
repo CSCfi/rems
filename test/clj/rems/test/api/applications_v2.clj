@@ -20,8 +20,6 @@
   (let [injections {:get-form {40 {:id 40
                                    :organization "org"
                                    :title "form title"
-                                   :start (DateTime. 100)
-                                   :end nil
                                    :items [{:id 41
                                             :localizations {:en {:title "en title"
                                                                  :inputprompt "en placeholder"}
@@ -39,7 +37,9 @@
                                             :optional false
                                             :options []
                                             :maxlength 100
-                                            :type "text"}]}}
+                                            :type "text"}]
+                                   :start (DateTime. 100)
+                                   :end nil}}
 
                     :get-catalogue-item {10 {:id 10
                                              :resource-id 11
@@ -54,6 +54,9 @@
                                                                   :langcode :fi
                                                                   :title "fi title"}}
                                              :start (DateTime. 100)
+                                             :end nil
+                                             :enabled true
+                                             :archived false
                                              :state "enabled"}
                                          20 {:id 20
                                              :resource-id 21
@@ -68,28 +71,35 @@
                                                                   :langcode :fi
                                                                   :title "fi title"}}
                                              :start (DateTime. 100)
+                                             :end nil
+                                             :enabled true
+                                             :archived false
                                              :state "enabled"}}
 
                     :get-license {30 {:id 30
                                       :licensetype "link"
-                                      :start (DateTime. 100)
-                                      :end nil
                                       :title "non-localized title"
                                       :textcontent "http://non-localized-license-link"
                                       :localizations {:en {:title "en title"
                                                            :textcontent "http://en-license-link"}
                                                       :fi {:title "fi title"
-                                                           :textcontent "http://fi-license-link"}}}
-                                  31 {:id 31
-                                      :licensetype "text"
+                                                           :textcontent "http://fi-license-link"}}
                                       :start (DateTime. 100)
                                       :end nil
+                                      :enabled true
+                                      :archived false}
+                                  31 {:id 31
+                                      :licensetype "text"
                                       :title "non-localized title"
                                       :textcontent "non-localized license text"
                                       :localizations {:en {:title "en title"
                                                            :textcontent "en license text"}
                                                       :fi {:title "fi title"
-                                                           :textcontent "fi license text"}}}}
+                                                           :textcontent "fi license text"}}
+                                      :start (DateTime. 100)
+                                      :end nil
+                                      :enabled true
+                                      :archived false}}
 
                     :get-user {"applicant" {:eppn "applicant"
                                             :mail "applicant@example.com"
@@ -131,6 +141,9 @@
                                                                                   :fi "fi title"
                                                                                   :default "non-localized title"}
                                                            :catalogue-item/start (DateTime. 100)
+                                                           :catalogue-item/end nil
+                                                           :catalogue-item/enabled true
+                                                           :catalogue-item/archived false
                                                            :catalogue-item/state :enabled}
                                                           {:catalogue-item/id 20
                                                            :resource/id 21
@@ -139,29 +152,36 @@
                                                                                   :fi "fi title"
                                                                                   :default "non-localized title"}
                                                            :catalogue-item/start (DateTime. 100)
+                                                           :catalogue-item/end nil
+                                                           :catalogue-item/enabled true
+                                                           :catalogue-item/archived false
                                                            :catalogue-item/state :enabled}]
                                   :application/licenses [{:license/id 30
                                                           :license/accepted false
                                                           :license/type :link
-                                                          :license/start (DateTime. 100)
-                                                          :license/end nil
                                                           :license/title {:en "en title"
                                                                           :fi "fi title"
                                                                           :default "non-localized title"}
                                                           :license/link {:en "http://en-license-link"
                                                                          :fi "http://fi-license-link"
-                                                                         :default "http://non-localized-license-link"}}
+                                                                         :default "http://non-localized-license-link"}
+                                                          :license/start (DateTime. 100)
+                                                          :license/end nil
+                                                          :license/enabled true
+                                                          :license/archived false}
                                                          {:license/id 31
                                                           :license/accepted false
                                                           :license/type :text
-                                                          :license/start (DateTime. 100)
-                                                          :license/end nil
                                                           :license/title {:en "en title"
                                                                           :fi "fi title"
                                                                           :default "non-localized title"}
                                                           :license/text {:en "en license text"
                                                                          :fi "fi license text"
-                                                                         :default "non-localized license text"}}]
+                                                                         :default "non-localized license text"}
+                                                          :license/start (DateTime. 100)
+                                                          :license/end nil
+                                                          :license/enabled true
+                                                          :license/archived false}]
                                   :application/events events
                                   :application/description ""
                                   :application/form {:form/id 40

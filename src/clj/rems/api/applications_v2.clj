@@ -264,7 +264,11 @@
                :resource/ext-id (:resid item)
                :catalogue-item/title (assoc (localization-for :title item)
                                             :default (:title item))
+               ;; TODO: remove unused keys
                :catalogue-item/start (:start item)
+               :catalogue-item/end (:end item)
+               :catalogue-item/enabled (:enabled item)
+               :catalogue-item/archived (:archived item)
                :catalogue-item/state (keyword (:state item))}))
        (sort-by :catalogue-item/id)))
 
@@ -273,18 +277,23 @@
                            (map :license/id)
                            (map get-license)
                            (map (fn [license]
-                                  (let [type (keyword (:licensetype license))
-                                        content-key (case type
-                                                      :link :license/link
-                                                      :text :license/text)]
-                                    {:license/id (:id license)
-                                     :license/type type
-                                     :license/start (:start license)
-                                     :license/end (:end license)
-                                     :license/title (assoc (localization-for :title license)
-                                                           :default (:title license))
-                                     content-key (assoc (localization-for :textcontent license)
-                                                        :default (:textcontent license))})))
+                                  (let [license-type (keyword (:licensetype license))]
+                                    (merge {:license/id (:id license)
+                                            :license/type license-type
+                                            :license/title (assoc (localization-for :title license)
+                                                                  :default (:title license))
+                                            ;; TODO: remove unused keys
+                                            :license/start (:start license)
+                                            :license/end (:end license)
+                                            :license/enabled (:enabled license)
+                                            :license/archived (:archived license)}
+                                           (case license-type
+                                             :text {:license/text (assoc (localization-for :textcontent license)
+                                                                         :default (:textcontent license))}
+                                             :link {:license/link (assoc (localization-for :textcontent license)
+                                                                         :default (:textcontent license))}
+                                             :attachment {:license/attachment-id (:attachment-id license)})))))
+
                            (sort-by :license/id))]
     (merge-lists-by :license/id rich-licenses app-licenses)))
 
@@ -385,7 +394,10 @@
                                  :wfid (:workflow/id workflow)
                                  :formid (:form/id form)
                                  :start (:catalogue-item/start resource)
+                                 :end (:catalogue-item/end resource)
                                  :state (name (:catalogue-item/state resource))
+                                 :archived (:catalogue-item/archived resource)
+                                 :enabled (:catalogue-item/enabled resource)
                                  :title (:default (:catalogue-item/title resource))
                                  :localizations (into {} (for [lang (-> (set (keys (:catalogue-item/title resource)))
                                                                         (disj :default))]
@@ -432,10 +444,13 @@
                        ;;       the new one returns license.start for now. Should we keep all three or simplify?
                        :start (:license/start license)
                        :end (:license/end license)
+                       :enabled (:license/enabled license)
+                       :archived (:license/archived license)
                        :approved (:license/accepted license)
                        :title (:default (:license/title license))
                        :textcontent (:default (or (:license/link license)
                                                   (:license/text license)))
+                       :attachment-id (:license/attachment-id license)
                        :localizations (into {} (for [lang (-> (set (concat (keys (:license/title license))
                                                                            (keys (:license/link license))
                                                                            (keys (:license/text license))))
