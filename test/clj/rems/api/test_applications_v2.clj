@@ -129,6 +129,7 @@
                                   :application/created (DateTime. 1000)
                                   :application/modified (DateTime. 1000)
                                   :application/last-activity (DateTime. 1000)
+                                  ;; TODO: unify applicant, members, handlers etc. to use either {:userid "user"} or "user"
                                   :application/applicant "applicant"
                                   :application/applicant-attributes {:eppn "applicant"
                                                                      :mail "applicant@example.com"
