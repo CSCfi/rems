@@ -250,7 +250,9 @@
                         expected-application (deep-merge expected-application
                                                          {:application/last-activity (DateTime. 4000)
                                                           :application/events events
-                                                          :application/workflow {:workflow.dynamic/state ::dynamic/returned}})]
+                                                          :application/workflow {:workflow.dynamic/state ::dynamic/returned}
+                                                          :application/form {:form/fields [{:field/previous-value "foo"}
+                                                                                           {:field/previous-value "bar"}]}})]
                     (is (= expected-application (apply-events events)))
 
                     (testing "> draft saved x2"
@@ -291,7 +293,25 @@
                                                                  {:application/last-activity (DateTime. 7000)
                                                                   :application/events events
                                                                   :application/workflow {:workflow.dynamic/state ::dynamic/submitted}})]
-                            (is (= expected-application (apply-events events)))))))))
+                            (is (= expected-application (apply-events events)))))))
+
+                    (testing "> submitted (no draft saved)"
+                      (let [events (conj events
+                                         {:event/type :application.event/submitted
+                                          :event/time (DateTime. 7000)
+                                          :event/actor "applicant"
+                                          :application/id 1})
+                            expected-application (deep-merge expected-application
+                                                             {:application/last-activity (DateTime. 7000)
+                                                              :application/events events
+                                                              :application/workflow {:workflow.dynamic/state ::dynamic/submitted}
+                                                              ;; when there was no draft-saved event, the current and
+                                                              ;; previous submitted answers must be the same
+                                                              :application/form {:form/fields [{:field/value "foo"
+                                                                                                :field/previous-value "foo"}
+                                                                                               {:field/value "bar"
+                                                                                                :field/previous-value "bar"}]}})]
+                        (is (= expected-application (apply-events events)))))))
 
                 (testing "> approved"
                   (let [events (conj events
@@ -525,8 +545,9 @@
                                             [:application :dynamic-events] nil))))
 
 (comment
-  (diff-app-v1 "alice" 8)
-  (let [user-id "alice"]
+  (diff-app-v1 "alice" 18) ;; TODO: members
+  ;; TODO: attachments
+  (let [user-id "developer"]
     (binding [context/*lang* :en]
       (doseq [app (applications/get-user-applications user-id)]
         (when (applications/is-dynamic-application? app)

@@ -97,6 +97,7 @@
 (defmethod event-type-specific-application-view :application.event/returned
   [application event]
   (-> application
+      (assoc ::draft-answers (::submitted-answers application)) ; guard against re-submit without saving a new draft
       (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/returned)))
 
 (defmethod event-type-specific-application-view :application.event/comment-requested
