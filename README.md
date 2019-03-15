@@ -6,13 +6,7 @@
 
 ### Development database
 
-Run the official postgres docker image and initialize the database by the way of a lein alias
-
-```
-lein dev-db
-```
-
-You can also start an empty development database by running the script
+Run the official postgres docker image and initialize the database by running
 
 ```
 ./dev_db.sh
@@ -22,7 +16,7 @@ Which does roughly the following:
 
 1. run a postgres container named `rems_test`
 2. initialize the database with `resources/sql/init.sql`
-3. create the schema with `lein run migrate`
+3. create the schema and populates it with test data
 
 When done you can stop (and automatically remove) the database.
 
