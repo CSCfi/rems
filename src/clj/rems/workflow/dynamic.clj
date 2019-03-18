@@ -536,16 +536,15 @@
 (deftest test-all-command-types-handled
   (is (= CommandTypes (set (get-command-types)))))
 
-(defn- invalid-user-error
-  [injections user]
+(defn- invalid-user-error [user-id injections]
   (cond
     (not (:valid-user? injections)) {:errors [{:type :missing-injection :injection :valid-user?}]}
-    (not ((:valid-user? injections) user)) {:errors [{:type :t.form.validation/invalid-user :userid user}]}))
+    (not ((:valid-user? injections) user-id)) {:errors [{:type :t.form.validation/invalid-user :userid user-id}]}))
 
 (defn- invalid-users-errors
   "Checks the given users for validity and merges the errors"
   [user-ids injections]
-  (apply merge-with into (keep (partial invalid-user-error injections) user-ids)))
+  (apply merge-with into (keep #(invalid-user-error % injections) user-ids)))
 
 (defn- validation-error [application {:keys [get-form]}]
   (let [form (get-form (:form/id application))
@@ -664,7 +663,7 @@
 
 (defmethod command-handler ::add-member
   [cmd application injections]
-  (or (invalid-user-error injections (:userid (:member cmd)))
+  (or (invalid-user-error (:userid (:member cmd)) injections)
       (already-member-error application (:userid (:member cmd)))
       (ok {:event/type :application.event/member-added
            :application/member (:member cmd)})))
@@ -677,7 +676,7 @@
 
 (defmethod command-handler ::accept-invitation
   [cmd application injections]
-  (or (invalid-user-error injections (:actor cmd))
+  (or (invalid-user-error (:actor cmd) injections)
       (already-member-error application (:actor cmd))
       (invitation-token-error application (:token cmd))
       {:success true
