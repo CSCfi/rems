@@ -426,13 +426,6 @@
                     :state (:workflow.dynamic/state workflow) ; TODO: round-based workflows
                     :description (:application/description application)
                     :catalogue-items catalogue-items
-                    :form-contents {:items (into {} (for [field (:form/fields form)]
-                                                      [(:field/id field) (:field/value field)]))
-                                    :licenses (into {} (for [license (:application/licenses application)]
-                                                         (when (:license/accepted license)
-                                                           [(:license/id license) "approved"])))}
-                    :submitted-form-contents nil ; TODO: not used in the UI, so not needed?
-                    :previous-submitted-form-contents nil ; TODO: not used in the UI, so not needed?
                     :events [] ; TODO: round-based workflows
                     :dynamic-events (:application/events application)
                     :workflow {:type (:workflow/type workflow)

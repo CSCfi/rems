@@ -326,7 +326,10 @@
           :invitation-tokens
           ;; only used in the write model
           :form/id
-          :application/licenses))
+          :application/licenses
+          :form-contents
+          :submitted-form-contents
+          :previous-submitted-form-contents))
 
 (defn get-approvals [user-id]
   (->> (get-applications-impl-batch user-id {})
