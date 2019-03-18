@@ -568,7 +568,7 @@
   (when-not (valid-invitation-token? application token)
     {:errors [{:type :t.actions.errors/invalid-token :token token}]}))
 
-(defn already-member-error [injections application userid]
+(defn already-member-error [application userid]
   (when (contains? (set (map :userid (:members application))) userid)
     {:errors [{:type :already-member :application-id (:id application)}]}))
 
@@ -665,7 +665,7 @@
 (defmethod command-handler ::add-member
   [cmd application injections]
   (or (invalid-user-error injections (:userid (:member cmd)))
-      (already-member-error injections application (:userid (:member cmd)))
+      (already-member-error application (:userid (:member cmd)))
       (ok {:event/type :application.event/member-added
            :application/member (:member cmd)})))
 
@@ -678,7 +678,7 @@
 (defmethod command-handler ::accept-invitation
   [cmd application injections]
   (or (invalid-user-error injections (:actor cmd))
-      (already-member-error injections application (:actor cmd))
+      (already-member-error application (:actor cmd))
       (invitation-token-error application (:token cmd))
       {:success true
        :result {:event/type :application.event/member-joined
