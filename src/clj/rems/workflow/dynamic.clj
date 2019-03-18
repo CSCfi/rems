@@ -545,8 +545,8 @@
   (apply merge-with into (keep (partial invalid-user-error injections) user-ids)))
 
 (defn- validation-error
-  [injections application-id]
-  (when-let [errors ((:validate-form injections) application-id)]
+  [application injections]
+  (when-let [errors ((:validate-form injections) (:id application))]
     {:errors errors}))
 
 (defn- valid-invitation-token? [application token]
@@ -575,8 +575,8 @@
                                            set)}))
 
 (defmethod command-handler ::submit
-  [cmd _application injections]
-  (or (validation-error injections (:application-id cmd))
+  [cmd application injections]
+  (or (validation-error application injections)
       (ok {:event/type :application.event/submitted})))
 
 (defmethod command-handler ::approve
