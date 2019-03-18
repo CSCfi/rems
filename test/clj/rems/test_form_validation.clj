@@ -14,11 +14,13 @@
                            :optional false
                            :value "1"}]})))
 
-  (is (not= :valid (validate
-                    {:items [{:title "A"
-                              :optional false
-                              :value "a"}]
-                     :licenses [{:title "LGPL"}]})))
+  (is (= [{:type :t.form.validation/required :license-id 123}]
+         (validate
+          {:items [{:title "A"
+                    :optional false
+                    :value "a"}]
+           :licenses [{:id 123
+                       :title "LGPL"}]})))
 
   (is (= :valid (validate
                  {:items [{:title "A"
