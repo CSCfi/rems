@@ -207,11 +207,29 @@ WHERE 1=1
 /*~ ) ~*/
 ;
 
+-- :name get-form-template :? :1
+SELECT
+  id,
+  organization,
+  title,
+  start,
+  endt as "end",
+  fields::TEXT,
+  enabled,
+  archived,
+  TRUE AS active -- TODO implement active and archiving
+FROM form_template
+WHERE id = :id;
+
+-- :name get-form-templates
+select id from form_template;
+
 -- :name save-form-template! :insert
 INSERT INTO form_template
-(organization, title, modifierUserId, ownerUserId, visibility, fields)
+(id, organization, title, modifierUserId, ownerUserId, visibility, fields)
 VALUES
-(:organization,
+(:id,
+ :organization,
  :title,
  :user,
  :user,
