@@ -144,16 +144,16 @@
        events))
 
 (defn hide-sensitive-information [application user]
-  (let [is-handler? (or (contains? (set (applications/get-handlers (:application application))) user) ; old form
+  (let [application (update application :application applications/application-cleanup)
+        is-handler? (or (contains? (set (applications/get-handlers (:application application))) user) ; old form
                         (contains? (get-in application [:application :possible-commands]) :see-everything))] ; dynamic
     (if is-handler?
-      (update-in application [:application] dissoc :invitation-tokens)
+      application
       (-> application
           (update-in [:application :events] hide-sensitive-events)
           (update-in [:application :dynamic-events] dynamic/hide-sensitive-dynamic-events)
           (update-in [:application :events] hide-users)
-          (update-in [:application :workflow] dissoc :handlers)
-          (update-in [:application] dissoc :invitation-tokens)))))
+          (update-in [:application :workflow] dissoc :handlers)))))
 
 (defn api-get-application [user-id application-id]
   (when (not (empty? (db/get-applications {:id application-id})))

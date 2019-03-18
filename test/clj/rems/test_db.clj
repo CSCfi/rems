@@ -945,6 +945,12 @@
                                               :member {:name "Jane Doe" :email "jane.doe@members.com"}
                                               :application-id app-id
                                               :time (time/now)})))
+    (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/save-draft
+                                              :actor "alice"
+                                              :application-id app-id
+                                              :time (time/now)
+                                              :items {form-item "X"}
+                                              :licenses {}})))
     (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/submit
                                               :actor "alice"
                                               :application-id app-id

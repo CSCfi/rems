@@ -2,6 +2,7 @@
   (:require [clojure.set :as set]
             [clojure.test :refer :all]
             [rems.auth.util :refer [throw-unauthorized]]
+            [rems.form-validation :as form-validation]
             [rems.permissions :as permissions]
             [rems.util :refer [getx]]
             [schema-refined.core :as r]
@@ -419,6 +420,8 @@
          :state ::draft
          :applicantuserid (:event/actor event)
          :members [{:userid (:event/actor event)}]
+         :form/id (:form/id event)
+         :application/licenses (:application/licenses event)
          :workflow {:type (:workflow/type event)
                     :handlers (vec (:workflow.dynamic/handlers event))}))
 
@@ -544,16 +547,24 @@
   [user-ids injections]
   (apply merge-with into (keep (partial invalid-user-error injections) user-ids)))
 
-(defn- validation-error
-  [application injections]
-  (when-let [errors ((:validate-form injections) (:id application))]
-    {:errors errors}))
+(defn- validation-error [application {:keys [get-form]}]
+  (let [form (get-form (:form/id application))
+        _ (assert form)
+        answers (:form-contents application)
+        legacy-form {:items (for [field (:items form)]
+                              (assoc field :value (get-in answers [:items (:id field)])))
+                     :licenses (for [license (:application/licenses application)]
+                                 {:id (:license/id license)
+                                  :approved (= "approved"
+                                               (get-in answers [:licenses (:license/id license)]))})}
+        result (form-validation/validate legacy-form)]
+    (when-not (= :valid result)
+      {:errors result})))
 
 (defn- valid-invitation-token? [application token]
   (contains? (:invitation-tokens application) token))
 
-(defn- invitation-token-error
-  [application token]
+(defn- invitation-token-error [application token]
   (when-not (valid-invitation-token? application token)
     {:errors [{:type :t.actions.errors/invalid-token :token token}]}))
 
@@ -781,10 +792,11 @@
 ;;; Tests
 
 (deftest test-save-draft
-  (let [injections {:validate-form (constantly nil)}
+  (let [injections {:get-form {1 {}}}
         application (apply-events nil
                                   [{:event/type :application.event/created
                                     :event/actor "applicant"
+                                    :form/id 1
                                     :workflow/type :workflow/dynamic
                                     :workflow.dynamic/handlers #{"assistant"}}])
         relevant-application-keys [:state :form-contents :submitted-form-contents :previous-submitted-form-contents]]
@@ -873,21 +885,88 @@
                                  injections)
                  (select-keys relevant-application-keys)))))))
 
+(deftest test-submit
+  (let [injections {:get-form {40 {:items [{:id 41
+                                            :optional false}
+                                           {:id 42
+                                            :optional false}]}}}
+        run-cmd (fn [events command]
+                  (let [application (apply-events nil events)]
+                    (handle-command command application injections)))
+
+        created-event {:event/type :application.event/created
+                       :event/time (DateTime. 1000)
+                       :event/actor "applicant"
+                       :application/id 1
+                       :application/resources [{:catalogue-item/id 10
+                                                :resource/ext-id "urn:11"}
+                                               {:catalogue-item/id 20
+                                                :resource/ext-id "urn:21"}]
+                       :application/licenses [{:license/id 30}
+                                              {:license/id 31}]
+                       :form/id 40
+                       :workflow/id 50
+                       :workflow/type :workflow/dynamic
+                       :workflow.dynamic/handlers #{"handler"}}
+        draft-saved-event {:event/type :application.event/draft-saved
+                           :event/time (DateTime. 2000)
+                           :event/actor "applicant"
+                           :application/id 1
+                           :application/field-values {41 "foo"
+                                                      42 "bar"}
+                           :application/accepted-licenses #{30 31}}
+        submit-command {:type ::submit
+                        :time (DateTime. 3000)
+                        :actor "applicant"
+                        :application-id 1}]
+
+    (testing "can submit a valid form"
+      (is (= {:success true
+              :result {:event/type :application.event/submitted
+                       :event/time (DateTime. 3000)
+                       :event/actor "applicant"
+                       :application/id 1}}
+             (run-cmd [created-event
+                       draft-saved-event]
+                      submit-command))))
+
+    (testing "cannot submit when required fields are empty"
+      (is (= {:errors [{:type :t.form.validation/required
+                        :field-id 41}]}
+             (run-cmd [created-event
+                       (assoc-in draft-saved-event [:application/field-values 41] "")]
+                      submit-command))))
+
+    (testing "cannot submit when not all licenses are accepted"
+      (is (= {:errors [{:type :t.form.validation/required
+                        :license-id 31}]}
+             (run-cmd [created-event
+                       (update-in draft-saved-event [:application/accepted-licenses] disj 31)]
+                      submit-command))))))
+
 (deftest test-submit-approve-or-reject
-  (let [injections {:validate-form (constantly nil)}
-        expected-errors [{:type :t.form.validation/required}]
-        fail-injections {:validate-form (constantly expected-errors)}
+  (let [injections {:get-form {1 {:items [{:id 10
+                                           :optional false}]}}}
         application (apply-events nil
                                   [{:event/type :application.event/created
                                     :event/actor "applicant"
+                                    :form/id 1
                                     :workflow/type :workflow/dynamic
-                                    :workflow.dynamic/handlers #{"assistant"}}])]
-    (testing "only applicant can submit"
+                                    :workflow.dynamic/handlers #{"assistant"}}
+                                   {:event/type :application.event/draft-saved
+                                    :event/actor "applicant"
+                                    :application/field-values {10 "foo"}
+                                    :application/accepted-licenses #{}}])]
+    (testing "non-applicant cannot submit"
       (is (= {:errors [{:type :forbidden}]}
              (handle-command {:actor "not-applicant" :type ::submit} application injections))))
-    (testing "can only submit valid form"
-      (is (= {:errors expected-errors}
-             (handle-command {:actor "applicant" :type ::submit} application fail-injections))))
+    (testing "cannot submit non-valid forms"
+      (let [application (apply-events application [{:event/type :application.event/draft-saved
+                                                    :event/actor "applicant"
+                                                    :application/field-values {10 ""}
+                                                    :application/accepted-licenses #{}}])]
+        (is (= {:errors [{:type :t.form.validation/required :field-id 10}]}
+               (handle-command {:actor "applicant" :type ::submit} application injections)))))
     (let [submitted (apply-command application {:actor "applicant" :type ::submit} injections)]
       (testing "cannot submit twice"
         (is (= {:errors [{:type :forbidden}]}
@@ -902,10 +981,11 @@
                                                  injections))))))))
 
 (deftest test-submit-return-submit-approve-close
-  (let [injections {:validate-form (constantly nil)}
+  (let [injections {:get-form {1 {}}}
         application (apply-events nil
                                   [{:event/type :application.event/created
                                     :event/actor "applicant"
+                                    :form/id 1
                                     :workflow/type :workflow/dynamic
                                     :workflow.dynamic/handlers #{"assistant"}}])
         returned-application (apply-commands application
