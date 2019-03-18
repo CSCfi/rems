@@ -508,7 +508,7 @@
           :application/form
           :application/licenses))
 
-(defn get-user-applications-v2 [user-id]
+(defn get-all-applications-v2 [user-id]
   ;; TODO: cache the applications and build the projection incrementally as new events are published
   (let [events (applications/get-dynamic-application-events-since 0)
         applications (reduce all-applications-view nil events)]
@@ -518,3 +518,11 @@
          ;; TODO: for caching it may be necessary to make assoc-injections idempotent and consider cache invalidation
          (map #(enrich-with-injections % injections))
          (map exclude-unnecessary-keys-from-summary))))
+
+(defn- applicant-or-member? [user-id application]
+  (or (= user-id (:application/applicant application))
+      (contains? (:application/members application) {:userid user-id})))
+
+(defn get-user-applications-v2 [user-id]
+  (->> (get-all-applications-v2 user-id)
+       (filter #(applicant-or-member? user-id %))))
