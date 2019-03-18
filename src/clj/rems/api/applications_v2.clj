@@ -293,7 +293,12 @@
                                                                          :default (:textcontent license))}
                                              :link {:license/link (assoc (localization-for :textcontent license)
                                                                          :default (:textcontent license))}
-                                             :attachment {:license/attachment-id (:attachment-id license)})))))
+                                             :attachment {:license/attachment-id (assoc (localization-for :attachment-id license)
+                                                                                        :default (:attachment-id license))
+                                                          ;; TODO: remove filename as unused?
+                                                          :license/attachment-filename (assoc (localization-for :textcontent license)
+                                                                                              :default (:textcontent license))})))))
+
 
                            (sort-by :license/id))]
     (merge-lists-by :license/id rich-licenses app-licenses)))
@@ -457,15 +462,18 @@
                        :approved (:license/accepted license)
                        :title (:default (:license/title license))
                        :textcontent (:default (or (:license/link license)
-                                                  (:license/text license)))
-                       :attachment-id (:license/attachment-id license)
+                                                  (:license/text license)
+                                                  (:license/attachment-filename license)))
+                       :attachment-id (:default (:license/attachment-id license))
                        :localizations (into {} (for [lang (-> (set (concat (keys (:license/title license))
                                                                            (keys (:license/link license))
                                                                            (keys (:license/text license))))
                                                               (disj :default))]
                                                  [lang {:title (get-in license [:license/title lang])
                                                         :textcontent (or (get-in license [:license/link lang])
-                                                                         (get-in license [:license/text lang]))}]))})
+                                                                         (get-in license [:license/text lang])
+                                                                         (get-in license [:license/attachment-filename lang]))
+                                                        :attachment-id (get-in license [:license/attachment-id lang])}]))})
                     (:application/licenses application))
      :items (map (fn [field]
                    {:id (:field/id field)
