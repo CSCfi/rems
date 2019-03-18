@@ -892,8 +892,6 @@
       (testing "cannot submit twice"
         (is (= {:errors [{:type :forbidden}]}
                (handle-command {:actor "applicant" :type ::submit} submitted injections))))
-      (testing "submitter is member"
-        (is (= [{:userid "applicant"}] (:members submitted))))
       (testing "approving"
         (is (= ::approved (:state (apply-command submitted
                                                  {:actor "assistant" :type ::approve}
