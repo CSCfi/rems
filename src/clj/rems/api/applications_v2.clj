@@ -363,6 +363,7 @@
 
 (defn apply-user-permissions [application user-id]
   (let [see-application? (dynamic/see-application? application user-id)
+        roles (permissions/user-roles application user-id)
         permissions (permissions/user-permissions application user-id)
         see-everything? (contains? permissions :see-everything)]
     (when see-application?
@@ -371,6 +372,7 @@
             (hide-sensitive-information application))
           (hide-very-sensitive-information)
           (assoc :application/permissions permissions)
+          (assoc :application/roles roles)
           (permissions/cleanup)))))
 
 (defn api-get-application-v2 [user-id application-id]
@@ -519,28 +521,38 @@
          (map #(enrich-with-injections % injections))
          (map exclude-unnecessary-keys-from-summary))))
 
-(defn- applicant-or-member? [user-id application]
-  (or (= user-id (:application/applicant application))
-      (contains? (:application/members application) {:userid user-id})))
+(defn- own-application? [application]
+  (some #{:applicant
+          :member}
+        (:application/roles application)))
 
 (defn get-user-applications-v2 [user-id]
   (->> (get-all-applications-v2 user-id)
-       (filter #(applicant-or-member? user-id %))))
+       (filter own-application?)))
 
-(defn- open-review? [user-id application]
+(defn- review? [application]
+  (and (some #{:handler
+               :commenter
+               :past-commenter
+               :decider
+               :past-decider}
+             (:application/roles application))
+       (not= ::dynamic/draft (get-in application [:application/workflow :workflow.dynamic/state]))))
+
+(defn get-all-reviews-v2 [user-id]
+  (->> (get-all-applications-v2 user-id)
+       (filter review?)))
+
+(defn- open-review? [application]
   (some #{::dynamic/approve
           ::dynamic/comment
           ::dynamic/decide}
         (:application/permissions application)))
 
 (defn get-open-reviews-v2 [user-id]
-  (->> (get-all-applications-v2 user-id)
-       (filter #(open-review? user-id %))))
-
-(defn- handled-review? [user-id application]
-  ;; FIXME: this includes applications where the user is just a member
-  (not (open-review? user-id application)))
+  (->> (get-all-reviews-v2 user-id)
+       (filter open-review?)))
 
 (defn get-handled-reviews-v2 [user-id]
-  (->> (get-all-applications-v2 user-id)
-       (filter #(handled-review? user-id %))))
+  (->> (get-all-reviews-v2 user-id)
+       (remove open-review?)))

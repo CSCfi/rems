@@ -535,6 +535,9 @@
     (testing "lists the user's permissions"
       (is (= #{} (:application/permissions (apply-user-permissions application "user-1"))))
       (is (= #{:foo :bar} (:application/permissions (apply-user-permissions application "user-2")))))
+    (testing "lists the user's roles"
+      (is (= #{:role-1} (:application/roles (apply-user-permissions application "user-1"))))
+      (is (= #{:role-2} (:application/roles (apply-user-permissions application "user-2")))))
 
     (let [all-events [{:event/type :application.event/created}
                       {:event/type :application.event/submitted}
