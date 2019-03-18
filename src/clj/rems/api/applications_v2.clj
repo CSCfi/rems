@@ -526,3 +526,21 @@
 (defn get-user-applications-v2 [user-id]
   (->> (get-all-applications-v2 user-id)
        (filter #(applicant-or-member? user-id %))))
+
+(defn- open-review? [user-id application]
+  (some #{::dynamic/approve
+          ::dynamic/comment
+          ::dynamic/decide}
+        (:application/permissions application)))
+
+(defn get-open-reviews-v2 [user-id]
+  (->> (get-all-applications-v2 user-id)
+       (filter #(open-review? user-id %))))
+
+(defn- handled-review? [user-id application]
+  ;; FIXME: this includes applications where the user is just a member
+  (not (open-review? user-id application)))
+
+(defn get-handled-reviews-v2 [user-id]
+  (->> (get-all-applications-v2 user-id)
+       (filter #(handled-review? user-id %))))
