@@ -54,11 +54,55 @@
       (is (= "2/" (andstr (:foo x) "/")))
       (is (= "(2)" (andstr "(" (:foo x) ")"))))))
 
-(defn deep-merge [a & maps]
-  (if (map? a)
-    (apply merge-with deep-merge a maps)
-    (apply merge-with deep-merge maps)))
+(defn deep-merge [a b]
+  (cond (and (sequential? a)
+             (sequential? b)) (let [max-length (max (count a) (count b))
+                                    a (take max-length (concat a (repeat nil)))
+                                    b (take max-length (concat b (repeat nil)))]
+                                (->> (interleave a b)
+                                     (partition 2)
+                                     (map (fn [[x y]] (deep-merge x y)))))
+        (map? a) (merge-with deep-merge a b)
+        :else (merge-with deep-merge b)))
 
 (deftest test-deep-merge
-  (is (= {:a {:b {:c 100 :d 2}}}
-         (deep-merge {:a {:b {:c 1 :d 2}}} {:a {:b {:c 100}}}))))
+  (testing "merge nil"
+    (is (= nil
+           (deep-merge nil
+                       nil)))
+    (is (= {:a 1}
+           (deep-merge nil
+                       {:a 1})))
+    (is (= {:a 1}
+           (deep-merge {:a 1}
+                       nil))))
+  (testing "merge maps"
+    (is (= {:a 2}
+           (deep-merge {:a 1}
+                       {:a 2})))
+    (is (= {:a 1 :b 2 :c 2}
+           (deep-merge {:a 1 :b 1}
+                       {:b 2 :c 2})))
+    (is (= {:a {:b {:c 100 :d 2}}}
+           (deep-merge {:a {:b {:c 1 :d 2}}}
+                       {:a {:b {:c 100}}}))))
+  (testing "merge vectors"
+    (is (= [{:a 2}]
+           (deep-merge [{:a 1}]
+                       [{:a 2}])))
+    (is (= [{:a 1 :b 2 :c 2}]
+           (deep-merge [{:a 1 :b 1}]
+                       [{:b 2 :c 2}])))
+    (is (= [{:a 1} {:b 2}]
+           (deep-merge [{:a 1}]
+                       [nil {:b 2}])))
+    (is (= [{:b 2} {:a 1}]
+           (deep-merge [nil {:a 1}]
+                       [{:b 2}]))))
+  (testing "merge lists"
+    (is (= [{:a 2}]
+           (deep-merge '({:a 1})
+                       '({:a 2}))))
+    (is (= [{:a 1 :b 2 :c 2}]
+           (deep-merge '({:a 1 :b 1})
+                       '({:b 2 :c 2}))))))

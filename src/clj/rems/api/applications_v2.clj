@@ -1,5 +1,6 @@
 (ns rems.api.applications-v2
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.set :as set]
+            [clojure.test :refer [deftest is testing]]
             [medley.core :refer [map-vals]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
@@ -7,8 +8,7 @@
             [rems.db.licenses :as licenses]
             [rems.db.users :as users]
             [rems.permissions :as permissions]
-            [rems.workflow.dynamic :as dynamic])
-  (:import (org.joda.time DateTime)))
+            [rems.workflow.dynamic :as dynamic]))
 
 ;;;; v2 API, pure application state based on application events
 
@@ -23,6 +23,7 @@
              :application/created (:event/time event)
              :application/modified (:event/time event)
              :application/applicant (:event/actor event)
+             :application/members #{}
              :application/resources (map (fn [resource]
                                            {:catalogue-item/id (:catalogue-item/id resource)
                                             :resource/ext-id (:resource/ext-id resource)})
@@ -32,13 +33,16 @@
                                            :license/accepted false})
                                         (:application/licenses event))
              :application/events []
-             :application/form {:form/id (:form/id event)
-                                :form/fields []}
+             :application/form {:form/id (:form/id event)}
              :application/workflow {:workflow/id (:workflow/id event)
                                     :workflow/type (:workflow/type event)
                                     ;; TODO: other workflows
+                                    ;; TODO: extract an event handler for dynamic workflow specific stuff
                                     :workflow.dynamic/state :rems.workflow.dynamic/draft
-                                    :workflow.dynamic/handlers (:workflow.dynamic/handlers event)})))
+                                    :workflow.dynamic/handlers (:workflow.dynamic/handlers event)
+                                    :workflow.dynamic/awaiting-commenters #{}
+                                    :workflow.dynamic/awaiting-deciders #{}
+                                    :workflow.dynamic/invitations {}})))
 
 (defn- set-accepted-licences [licenses accepted-licenses]
   (map (fn [license]
@@ -49,68 +53,87 @@
   [application event]
   (-> application
       (assoc :application/modified (:event/time event))
-      (assoc-in [:application/form :form/fields] (map (fn [[field-id value]]
-                                                        {:field/id field-id
-                                                         :field/value value})
-                                                      (:application/field-values event)))
+      (assoc ::draft-answers (:application/field-values event))
       (update :application/licenses set-accepted-licences (:application/accepted-licenses event))))
 
 (defmethod event-type-specific-application-view :application.event/member-invited
   [application event]
-  application)
-
-(defmethod event-type-specific-application-view :application.event/member-added
-  [application event]
-  application)
-
-(defmethod event-type-specific-application-view :application.event/member-joined
-  [application event]
-  application)
-
-(defmethod event-type-specific-application-view :application.event/member-removed
-  [application event]
-  application)
+  (-> application
+      (update-in [:application/workflow :workflow.dynamic/invitations] assoc (:invitation/token event) (:application/member event))))
 
 (defmethod event-type-specific-application-view :application.event/member-uninvited
   [application event]
-  application)
+  (-> application
+      (update-in [:application/workflow :workflow.dynamic/invitations] (fn [invitations]
+                                                                         (->> invitations
+                                                                              (remove (fn [[_token member]]
+                                                                                        (= member (:application/member event))))
+                                                                              (into {}))))))
+
+(defmethod event-type-specific-application-view :application.event/member-joined
+  [application event]
+  (-> application
+      (update :application/members conj {:userid (:event/actor event)})
+      (update-in [:application/workflow :workflow.dynamic/invitations] dissoc (:invitation/token event))))
+
+(defmethod event-type-specific-application-view :application.event/member-added
+  [application event]
+  (-> application
+      (update :application/members conj (:application/member event))))
+
+(defmethod event-type-specific-application-view :application.event/member-removed
+  [application event]
+  (-> application
+      (update :application/members disj (:application/member event))))
 
 (defmethod event-type-specific-application-view :application.event/submitted
   [application event]
   (-> application
+      (assoc ::previous-submitted-answers (::submitted-answers application))
+      (assoc ::submitted-answers (::draft-answers application))
+      (dissoc ::draft-answers)
       (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/submitted)))
 
 (defmethod event-type-specific-application-view :application.event/returned
   [application event]
-  application)
+  (-> application
+      (assoc ::draft-answers (::submitted-answers application)) ; guard against re-submit without saving a new draft
+      (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/returned)))
 
 (defmethod event-type-specific-application-view :application.event/comment-requested
   [application event]
-  application)
+  (-> application
+      (update-in [:application/workflow :workflow.dynamic/awaiting-commenters] set/union (set (:application/commenters event)))))
 
 (defmethod event-type-specific-application-view :application.event/commented
   [application event]
-  application)
+  (-> application
+      (update-in [:application/workflow :workflow.dynamic/awaiting-commenters] disj (:event/actor event))))
 
 (defmethod event-type-specific-application-view :application.event/decision-requested
   [application event]
-  application)
+  (-> application
+      (update-in [:application/workflow :workflow.dynamic/awaiting-deciders] set/union (set (:application/deciders event)))))
 
 (defmethod event-type-specific-application-view :application.event/decided
   [application event]
-  application)
+  (-> application
+      (update-in [:application/workflow :workflow.dynamic/awaiting-deciders] disj (:event/actor event))))
 
 (defmethod event-type-specific-application-view :application.event/approved
   [application event]
-  application)
+  (-> application
+      (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/approved)))
 
 (defmethod event-type-specific-application-view :application.event/rejected
   [application event]
-  application)
+  (-> application
+      (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/rejected)))
 
 (defmethod event-type-specific-application-view :application.event/closed
   [application event]
-  application)
+  (-> application
+      (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/closed)))
 
 (deftest test-event-type-specific-application-view
   (testing "supports all event types"
@@ -127,7 +150,7 @@
 ;; TODO: replace rems.workflow.dynamic/apply-event with this
 ;;       (it will couple the write and read models, but it's probably okay
 ;;        because they both are about a single application and are logically coupled)
-(defn- application-view
+(defn application-view
   "Projection for the current state of a single application.
   Pure function; must use `enrich-with-injections` to enrich the model with
   data from other entities."
@@ -242,7 +265,11 @@
                :resource/ext-id (:resid item)
                :catalogue-item/title (assoc (localization-for :title item)
                                             :default (:title item))
+               ;; TODO: remove unused keys
                :catalogue-item/start (:start item)
+               :catalogue-item/end (:end item)
+               :catalogue-item/enabled (:enabled item)
+               :catalogue-item/archived (:archived item)
                :catalogue-item/state (keyword (:state item))}))
        (sort-by :catalogue-item/id)))
 
@@ -251,243 +278,52 @@
                            (map :license/id)
                            (map get-license)
                            (map (fn [license]
-                                  (let [type (keyword (:licensetype license))
-                                        content-key (case type
-                                                      :link :license/link
-                                                      :text :license/text)]
-                                    {:license/id (:id license)
-                                     :license/type type
-                                     :license/start (:start license)
-                                     :license/end (:end license)
-                                     :license/title (assoc (localization-for :title license)
-                                                           :default (:title license))
-                                     content-key (assoc (localization-for :textcontent license)
-                                                        :default (:textcontent license))})))
+                                  (let [license-type (keyword (:licensetype license))]
+                                    (merge {:license/id (:id license)
+                                            :license/type license-type
+                                            :license/title (assoc (localization-for :title license)
+                                                                  :default (:title license))
+                                            ;; TODO: remove unused keys
+                                            :license/start (:start license)
+                                            :license/end (:end license)
+                                            :license/enabled (:enabled license)
+                                            :license/archived (:archived license)}
+                                           (case license-type
+                                             :text {:license/text (assoc (localization-for :textcontent license)
+                                                                         :default (:textcontent license))}
+                                             :link {:license/link (assoc (localization-for :textcontent license)
+                                                                         :default (:textcontent license))}
+                                             :attachment {:license/attachment-id (:attachment-id license)})))))
+
                            (sort-by :license/id))]
     (merge-lists-by :license/id rich-licenses app-licenses)))
 
 (defn- enrich-with-injections [application {:keys [get-form get-catalogue-item get-license get-user]}]
-  (-> application
-      (update :application/form enrich-form get-form)
-      set-application-description
-      (update :application/resources enrich-resources get-catalogue-item)
-      (update :application/licenses enrich-licenses get-license)
-      (assoc :application/applicant-attributes (get-user (:application/applicant application)))))
+  (let [answer-versions (remove nil? [(::draft-answers application)
+                                      (::submitted-answers application)
+                                      (::previous-submitted-answers application)])
+        current-answers (first answer-versions)
+        previous-answers (second answer-versions)]
+    (-> application
+        (dissoc ::draft-answers ::submitted-answers ::previous-submitted-answers)
+        (assoc-in [:application/form :form/fields] (merge-lists-by :field/id
+                                                                   (map (fn [[field-id value]]
+                                                                          {:field/id field-id
+                                                                           :field/previous-value value})
+                                                                        previous-answers)
+                                                                   (map (fn [[field-id value]]
+                                                                          {:field/id field-id
+                                                                           :field/value value})
+                                                                        current-answers)))
+        (update :application/form enrich-form get-form)
+        set-application-description
+        (update :application/resources enrich-resources get-catalogue-item)
+        (update :application/licenses enrich-licenses get-license)
+        (assoc :application/applicant-attributes (get-user (:application/applicant application))))))
 
-(defn- build-application-view [events injections]
+(defn build-application-view [events injections]
   (-> (reduce application-view nil events)
       (enrich-with-injections injections)))
-
-(defn- valid-events [events]
-  (doseq [event events]
-    (applications/validate-dynamic-event event))
-  events)
-
-(deftest test-application-view
-  (let [injections {:get-form {40 {:id 40
-                                   :organization "org"
-                                   :title "form title"
-                                   :start (DateTime. 100)
-                                   :end nil
-                                   :items [{:id 41
-                                            :localizations {:en {:title "en title"
-                                                                 :inputprompt "en placeholder"}
-                                                            :fi {:title "fi title"
-                                                                 :inputprompt "fi placeholder"}}
-                                            :optional false
-                                            :options []
-                                            :maxlength 100
-                                            :type "description"}
-                                           {:id 42
-                                            :localizations {:en {:title "en title"
-                                                                 :inputprompt "en placeholder"}
-                                                            :fi {:title "fi title"
-                                                                 :inputprompt "fi placeholder"}}
-                                            :optional false
-                                            :options []
-                                            :maxlength 100
-                                            :type "text"}]}}
-
-                    :get-catalogue-item {10 {:id 10
-                                             :resource-id 11
-                                             :resid "urn:11"
-                                             :wfid 50
-                                             :formid 40
-                                             :title "non-localized title"
-                                             :localizations {:en {:id 10
-                                                                  :langcode :en
-                                                                  :title "en title"}
-                                                             :fi {:id 10
-                                                                  :langcode :fi
-                                                                  :title "fi title"}}
-                                             :start (DateTime. 100)
-                                             :state "enabled"}
-                                         20 {:id 20
-                                             :resource-id 21
-                                             :resid "urn:21"
-                                             :wfid 50
-                                             :formid 40
-                                             :title "non-localized title"
-                                             :localizations {:en {:id 20
-                                                                  :langcode :en
-                                                                  :title "en title"}
-                                                             :fi {:id 20
-                                                                  :langcode :fi
-                                                                  :title "fi title"}}
-                                             :start (DateTime. 100)
-                                             :state "enabled"}}
-
-                    :get-license {30 {:id 30
-                                      :licensetype "link"
-                                      :start (DateTime. 100)
-                                      :end nil
-                                      :title "non-localized title"
-                                      :textcontent "http://non-localized-license-link"
-                                      :localizations {:en {:title "en title"
-                                                           :textcontent "http://en-license-link"}
-                                                      :fi {:title "fi title"
-                                                           :textcontent "http://fi-license-link"}}}
-                                  31 {:id 31
-                                      :licensetype "text"
-                                      :start (DateTime. 100)
-                                      :end nil
-                                      :title "non-localized title"
-                                      :textcontent "non-localized license text"
-                                      :localizations {:en {:title "en title"
-                                                           :textcontent "en license text"}
-                                                      :fi {:title "fi title"
-                                                           :textcontent "fi license text"}}}}
-
-                    :get-user {"applicant" {:eppn "applicant"
-                                            :mail "applicant@example.com"
-                                            :commonName "Applicant"}}}
-        apply-events (fn [events]
-                       (permissions/cleanup
-                        (build-application-view
-                         (valid-events events)
-                         injections)))
-
-        created-event {:event/type :application.event/created
-                       :event/time (DateTime. 1000)
-                       :event/actor "applicant"
-                       :application/id 1
-                       :application/resources [{:catalogue-item/id 10
-                                                :resource/ext-id "urn:11"}
-                                               {:catalogue-item/id 20
-                                                :resource/ext-id "urn:21"}]
-                       :application/licenses [{:license/id 30}
-                                              {:license/id 31}]
-                       :form/id 40
-                       :workflow/id 50
-                       :workflow/type :workflow/dynamic
-                       :workflow.dynamic/handlers #{"handler"}}
-
-        expected-new-application {:application/id 1
-                                  :application/created (DateTime. 1000)
-                                  :application/modified (DateTime. 1000)
-                                  :application/last-activity (DateTime. 1000)
-                                  :application/applicant "applicant"
-                                  :application/applicant-attributes {:eppn "applicant"
-                                                                     :mail "applicant@example.com"
-                                                                     :commonName "Applicant"}
-                                  :application/resources [{:catalogue-item/id 10
-                                                           :resource/id 11
-                                                           :resource/ext-id "urn:11"
-                                                           :catalogue-item/title {:en "en title"
-                                                                                  :fi "fi title"
-                                                                                  :default "non-localized title"}
-                                                           :catalogue-item/start (DateTime. 100)
-                                                           :catalogue-item/state :enabled}
-                                                          {:catalogue-item/id 20
-                                                           :resource/id 21
-                                                           :resource/ext-id "urn:21"
-                                                           :catalogue-item/title {:en "en title"
-                                                                                  :fi "fi title"
-                                                                                  :default "non-localized title"}
-                                                           :catalogue-item/start (DateTime. 100)
-                                                           :catalogue-item/state :enabled}]
-                                  :application/licenses [{:license/id 30
-                                                          :license/accepted false
-                                                          :license/type :link
-                                                          :license/start (DateTime. 100)
-                                                          :license/end nil
-                                                          :license/title {:en "en title"
-                                                                          :fi "fi title"
-                                                                          :default "non-localized title"}
-                                                          :license/link {:en "http://en-license-link"
-                                                                         :fi "http://fi-license-link"
-                                                                         :default "http://non-localized-license-link"}}
-                                                         {:license/id 31
-                                                          :license/accepted false
-                                                          :license/type :text
-                                                          :license/start (DateTime. 100)
-                                                          :license/end nil
-                                                          :license/title {:en "en title"
-                                                                          :fi "fi title"
-                                                                          :default "non-localized title"}
-                                                          :license/text {:en "en license text"
-                                                                         :fi "fi license text"
-                                                                         :default "non-localized license text"}}]
-                                  :application/events [created-event]
-                                  :application/description ""
-                                  :application/form {:form/id 40
-                                                     :form/title "form title"
-                                                     :form/fields [{:field/id 41
-                                                                    :field/value ""
-                                                                    :field/type :description
-                                                                    :field/title {:en "en title" :fi "fi title"}
-                                                                    :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
-                                                                    :field/optional false
-                                                                    :field/options []
-                                                                    :field/max-length 100}
-                                                                   {:field/id 42
-                                                                    :field/value ""
-                                                                    :field/type :text
-                                                                    :field/title {:en "en title" :fi "fi title"}
-                                                                    :field/placeholder {:en "en placeholder" :fi "fi placeholder"}
-                                                                    :field/optional false
-                                                                    :field/options []
-                                                                    :field/max-length 100}]}
-                                  :application/workflow {:workflow/id 50
-                                                         :workflow/type :workflow/dynamic
-                                                         :workflow.dynamic/state :rems.workflow.dynamic/draft
-                                                         :workflow.dynamic/handlers #{"handler"}}}]
-
-    (testing "new application"
-      (is (= expected-new-application
-             (apply-events [created-event]))))
-
-    (testing "draft saved"
-      (let [draft-saved-event {:event/type :application.event/draft-saved
-                               :event/time (DateTime. 2000)
-                               :event/actor "applicant"
-                               :application/id 1
-                               :application/field-values {41 "foo"
-                                                          42 "bar"}
-                               :application/accepted-licenses #{30 31}}]
-        (is (= (-> expected-new-application
-                   (assoc-in [:application/modified] (DateTime. 2000))
-                   (assoc-in [:application/last-activity] (DateTime. 2000))
-                   (assoc-in [:application/events] [created-event draft-saved-event])
-                   (assoc-in [:application/licenses 0 :license/accepted] true)
-                   (assoc-in [:application/licenses 1 :license/accepted] true)
-                   (assoc-in [:application/description] "foo")
-                   (assoc-in [:application/form :form/fields 0 :field/value] "foo")
-                   (assoc-in [:application/form :form/fields 1 :field/value] "bar"))
-               (apply-events [created-event
-                              draft-saved-event])))))
-
-    (testing "submitted"
-      (let [submitted-event {:event/type :application.event/submitted
-                             :event/time (DateTime. 2000)
-                             :event/actor "applicant"
-                             :application/id 1}]
-        (is (= (-> expected-new-application
-                   (assoc-in [:application/last-activity] (DateTime. 2000))
-                   (assoc-in [:application/events] [created-event submitted-event])
-                   (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/submitted))
-               (apply-events [created-event
-                              submitted-event])))))))
 
 (defn- get-form [form-id]
   (-> (form/get-form form-id)
@@ -516,7 +352,11 @@
       (update :application/events dynamic/hide-sensitive-dynamic-events)
       (update :application/workflow dissoc :workflow.dynamic/handlers)))
 
-(defn- apply-user-permissions [application user-id]
+(defn- hide-very-sensitive-information [application]
+  (-> application
+      (update-in [:application/workflow :workflow.dynamic/invitations] vals))) ; the keys are invitation tokens
+
+(defn apply-user-permissions [application user-id]
   (let [see-application? (dynamic/see-application? application user-id)
         permissions (permissions/user-permissions application user-id)
         see-everything? (contains? permissions :see-everything)]
@@ -524,50 +364,9 @@
       (-> (if see-everything?
             application
             (hide-sensitive-information application))
+          (hide-very-sensitive-information)
           (assoc :application/permissions permissions)
           (permissions/cleanup)))))
-
-(deftest test-apply-user-permissions
-  (let [application (-> (application-view nil {:event/type :application.event/created
-                                               :event/actor "applicant"
-                                               :workflow.dynamic/handlers #{"handler"}})
-                        (permissions/give-role-to-users :role-1 ["user-1"])
-                        (permissions/give-role-to-users :role-2 ["user-2"])
-                        (permissions/set-role-permissions {:role-1 []
-                                                           :role-2 [:foo :bar]}))]
-    (testing "users with a role can see the application"
-      (is (not (nil? (apply-user-permissions application "user-1")))))
-    (testing "users without a role cannot see the application"
-      (is (nil? (apply-user-permissions application "user-3"))))
-    (testing "lists the user's permissions"
-      (is (= #{} (:application/permissions (apply-user-permissions application "user-1"))))
-      (is (= #{:foo :bar} (:application/permissions (apply-user-permissions application "user-2")))))
-
-    (let [all-events [{:event/type :application.event/created}
-                      {:event/type :application.event/submitted}
-                      {:event/type :application.event/comment-requested}]
-          restricted-events [{:event/type :application.event/created}
-                             {:event/type :application.event/submitted}]
-          application (-> application
-                          (assoc :application/events all-events)
-                          (permissions/set-role-permissions {:role-1 [:see-everything]}))]
-      (testing "privileged users"
-        (let [application (apply-user-permissions application "user-1")]
-          (testing "see all events"
-            (is (= all-events
-                   (:application/events application))))
-          (testing "see dynamic workflow handlers"
-            (is (= #{"handler"}
-                   (get-in application [:application/workflow :workflow.dynamic/handlers]))))))
-
-      (testing "normal users"
-        (let [application (apply-user-permissions application "user-2")]
-          (testing "see only some events"
-            (is (= restricted-events
-                   (:application/events application))))
-          (testing "don't see dynamic workflow handlers"
-            (is (= nil
-                   (get-in application [:application/workflow :workflow.dynamic/handlers])))))))))
 
 (defn api-get-application-v2 [user-id application-id]
   (let [events (applications/get-dynamic-application-events application-id)]
@@ -596,7 +395,10 @@
                                  :wfid (:workflow/id workflow)
                                  :formid (:form/id form)
                                  :start (:catalogue-item/start resource)
+                                 :end (:catalogue-item/end resource)
                                  :state (name (:catalogue-item/state resource))
+                                 :archived (:catalogue-item/archived resource)
+                                 :enabled (:catalogue-item/enabled resource)
                                  :title (:default (:catalogue-item/title resource))
                                  :localizations (into {} (for [lang (-> (set (keys (:catalogue-item/title resource)))
                                                                         (disj :default))]
@@ -614,6 +416,11 @@
                     :formid (:form/id form)
                     :wfid (:workflow/id workflow)
                     :applicantuserid (:application/applicant application)
+                    :members (into [{:userid (:application/applicant application)}]
+                                   (:application/members application))
+                    :invited-members (:workflow.dynamic/invitations workflow)
+                    :commenters (:workflow.dynamic/awaiting-commenters workflow)
+                    :deciders (:workflow.dynamic/awaiting-deciders workflow)
                     :start (:application/created application)
                     :last-modified (:application/last-activity application)
                     :state (:workflow.dynamic/state workflow) ; TODO: round-based workflows
@@ -624,6 +431,8 @@
                                     :licenses (into {} (for [license (:application/licenses application)]
                                                          (when (:license/accepted license)
                                                            [(:license/id license) "approved"])))}
+                    :submitted-form-contents nil ; TODO: not used in the UI, so not needed?
+                    :previous-submitted-form-contents nil ; TODO: not used in the UI, so not needed?
                     :events [] ; TODO: round-based workflows
                     :dynamic-events (:application/events application)
                     :workflow {:type (:workflow/type workflow)
@@ -643,10 +452,13 @@
                        ;;       the new one returns license.start for now. Should we keep all three or simplify?
                        :start (:license/start license)
                        :end (:license/end license)
+                       :enabled (:license/enabled license)
+                       :archived (:license/archived license)
                        :approved (:license/accepted license)
                        :title (:default (:license/title license))
                        :textcontent (:default (or (:license/link license)
                                                   (:license/text license)))
+                       :attachment-id (:license/attachment-id license)
                        :localizations (into {} (for [lang (-> (set (concat (keys (:license/title license))
                                                                            (keys (:license/link license))
                                                                            (keys (:license/text license))))
@@ -662,7 +474,7 @@
                     :options (:field/options field)
                     :maxlength (:field/max-length field)
                     :value (:field/value field)
-                    :previous-value nil ; TODO
+                    :previous-value (:field/previous-value field)
                     :localizations (into {} (for [lang (set (concat (keys (:field/title field))
                                                                     (keys (:field/placeholder field))))]
                                               [lang {:title (get-in field [:field/title lang])
