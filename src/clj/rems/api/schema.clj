@@ -99,9 +99,7 @@
    (s/optional-key :members) [AddedMember]
    (s/optional-key :description) (s/maybe s/Str)
    (s/optional-key :workflow) s/Any
-   (s/optional-key :possible-commands) #{s/Keyword}
-   (s/optional-key :deciders) #{s/Str}
-   (s/optional-key :commenters) #{s/Str}})
+   (s/optional-key :possible-commands) #{s/Keyword}})
 
 (s/defschema Entitlement
   {:resource s/Str

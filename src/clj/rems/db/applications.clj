@@ -329,7 +329,9 @@
           :application/licenses
           :form-contents
           :submitted-form-contents
-          :previous-submitted-form-contents))
+          :previous-submitted-form-contents
+          :deciders
+          :commenters))
 
 (defn get-approvals [user-id]
   (->> (get-applications-impl-batch user-id {})

@@ -354,7 +354,12 @@
 
 (defn- hide-very-sensitive-information [application]
   (-> application
-      (update-in [:application/workflow :workflow.dynamic/invitations] vals))) ; the keys are invitation tokens
+      ;; the keys are invitation tokens and must be kept secret
+      (update-in [:application/workflow :workflow.dynamic/invitations] vals)
+      ;; these are not used by the UI, so no need to expose them
+      (update-in [:application/workflow] dissoc
+                 :workflow.dynamic/awaiting-commenters
+                 :workflow.dynamic/awaiting-deciders)))
 
 (defn apply-user-permissions [application user-id]
   (let [see-application? (dynamic/see-application? application user-id)
@@ -419,8 +424,6 @@
                     :members (into [{:userid (:application/applicant application)}]
                                    (:application/members application))
                     :invited-members (:workflow.dynamic/invitations workflow)
-                    :commenters (:workflow.dynamic/awaiting-commenters workflow)
-                    :deciders (:workflow.dynamic/awaiting-deciders workflow)
                     :start (:application/created application)
                     :last-modified (:application/last-activity application)
                     :state (:workflow.dynamic/state workflow) ; TODO: round-based workflows
