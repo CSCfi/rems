@@ -1,8 +1,8 @@
 (ns rems.workflow.dynamic
   (:require [clojure.set :as set]
+            [clojure.string :as str]
             [clojure.test :refer :all]
             [rems.auth.util :refer [throw-unauthorized]]
-            [rems.form-validation :as form-validation]
             [rems.permissions :as permissions]
             [rems.util :refer [getx]]
             [schema-refined.core :as r]
@@ -548,12 +548,13 @@
   [user-ids injections]
   (apply merge-with into (keep #(invalid-user-error % injections) user-ids)))
 
-(defn- validate-form-answers [form-id answers get-form] ;; TODO: inject this
-  (let [form (get-form form-id)
-        _ (assert form)
-        fields (for [field (:items form)]
-                 (assoc field :value (get-in answers [:items (:id field)])))]
-    (form-validation/validate-fields fields)))
+(defn- fake-validate-form-answers [_form-id answers]
+  (->> (:items answers)
+       (map (fn [[field-id value]]
+              (when (str/blank? value)
+                {:type :t.form.validation/required
+                 :field-id field-id})))
+       (remove nil?)))
 
 (defn- validate-licenses [application]
   (let [all-licenses (set (map :license/id (:application/licenses application)))
@@ -564,10 +565,10 @@
                 {:type :t.form.validation/required
                  :license-id license-id})))))
 
-(defn- validation-error [application {:keys [get-form]}]
+(defn- validation-error [application {:keys [validate-form-answers]}]
   (let [form-id (:form/id application)
         answers (:form-contents application)
-        errors (concat (validate-form-answers form-id answers get-form)
+        errors (concat (validate-form-answers form-id answers)
                        (validate-licenses application))]
     (when (seq errors)
       {:errors errors})))
@@ -803,7 +804,7 @@
 ;;; Tests
 
 (deftest test-save-draft
-  (let [injections {:get-form {1 {}}}
+  (let [injections {:validate-form-answers (constantly nil)}
         application (apply-events nil
                                   [{:event/type :application.event/created
                                     :event/actor "applicant"
@@ -897,10 +898,7 @@
                  (select-keys relevant-application-keys)))))))
 
 (deftest test-submit
-  (let [injections {:get-form {40 {:items [{:id 41
-                                            :optional false}
-                                           {:id 42
-                                            :optional false}]}}}
+  (let [injections {:validate-form-answers fake-validate-form-answers}
         run-cmd (fn [events command]
                   (let [application (apply-events nil events)]
                     (handle-command command application injections)))
@@ -956,8 +954,7 @@
                       submit-command))))))
 
 (deftest test-submit-approve-or-reject
-  (let [injections {:get-form {1 {:items [{:id 10
-                                           :optional false}]}}}
+  (let [injections {:validate-form-answers fake-validate-form-answers}
         application (apply-events nil
                                   [{:event/type :application.event/created
                                     :event/actor "applicant"
@@ -992,7 +989,7 @@
                                                  injections))))))))
 
 (deftest test-submit-return-submit-approve-close
-  (let [injections {:get-form {1 {}}}
+  (let [injections {:validate-form-answers (constantly nil)}
         application (apply-events nil
                                   [{:event/type :application.event/created
                                     :event/actor "applicant"

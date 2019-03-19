@@ -16,6 +16,7 @@
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
             [rems.db.workflow-actors :as actors]
+            [rems.form-validation :as form-validation]
             [rems.json :as json]
             [rems.permissions :as permissions]
             [rems.util :refer [get-username secure-token]]
@@ -1034,9 +1035,16 @@
       (assoc :items (->> (db/get-form-items {:id form-id})
                          (mapv #(process-item nil form-id %))))))
 
+(defn- validate-form-answers [form-id answers]
+  (let [form (get-form form-id)
+        _ (assert form)
+        fields (for [field (:items form)]
+                 (assoc field :value (get-in answers [:items (:id field)])))]
+    (form-validation/validate-fields fields)))
+
 (def ^:private db-injections
   {:valid-user? valid-user?
-   :get-form get-form
+   :validate-form-answers validate-form-answers
    :secure-token secure-token})
 
 (defn dynamic-command! [cmd]
