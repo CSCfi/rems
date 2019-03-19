@@ -293,7 +293,12 @@
                                                                          :default (:textcontent license))}
                                              :link {:license/link (assoc (localization-for :textcontent license)
                                                                          :default (:textcontent license))}
-                                             :attachment {:license/attachment-id (:attachment-id license)})))))
+                                             :attachment {:license/attachment-id (assoc (localization-for :attachment-id license)
+                                                                                        :default (:attachment-id license))
+                                                          ;; TODO: remove filename as unused?
+                                                          :license/attachment-filename (assoc (localization-for :textcontent license)
+                                                                                              :default (:textcontent license))})))))
+
 
                            (sort-by :license/id))]
     (merge-lists-by :license/id rich-licenses app-licenses)))
@@ -358,6 +363,7 @@
 
 (defn apply-user-permissions [application user-id]
   (let [see-application? (dynamic/see-application? application user-id)
+        roles (permissions/user-roles application user-id)
         permissions (permissions/user-permissions application user-id)
         see-everything? (contains? permissions :see-everything)]
     (when see-application?
@@ -366,6 +372,7 @@
             (hide-sensitive-information application))
           (hide-very-sensitive-information)
           (assoc :application/permissions permissions)
+          (assoc :application/roles roles)
           (permissions/cleanup)))))
 
 (defn api-get-application-v2 [user-id application-id]
@@ -457,15 +464,18 @@
                        :approved (:license/accepted license)
                        :title (:default (:license/title license))
                        :textcontent (:default (or (:license/link license)
-                                                  (:license/text license)))
-                       :attachment-id (:license/attachment-id license)
+                                                  (:license/text license)
+                                                  (:license/attachment-filename license)))
+                       :attachment-id (:default (:license/attachment-id license))
                        :localizations (into {} (for [lang (-> (set (concat (keys (:license/title license))
                                                                            (keys (:license/link license))
                                                                            (keys (:license/text license))))
                                                               (disj :default))]
                                                  [lang {:title (get-in license [:license/title lang])
                                                         :textcontent (or (get-in license [:license/link lang])
-                                                                         (get-in license [:license/text lang]))}]))})
+                                                                         (get-in license [:license/text lang])
+                                                                         (get-in license [:license/attachment-filename lang]))
+                                                        :attachment-id (get-in license [:license/attachment-id lang])}]))})
                     (:application/licenses application))
      :items (map (fn [field]
                    {:id (:field/id field)
@@ -500,7 +510,7 @@
           :application/form
           :application/licenses))
 
-(defn get-user-applications-v2 [user-id]
+(defn get-all-applications-v2 [user-id]
   ;; TODO: cache the applications and build the projection incrementally as new events are published
   (let [events (applications/get-dynamic-application-events-since 0)
         applications (reduce all-applications-view nil events)]
@@ -510,3 +520,39 @@
          ;; TODO: for caching it may be necessary to make assoc-injections idempotent and consider cache invalidation
          (map #(enrich-with-injections % injections))
          (map exclude-unnecessary-keys-from-summary))))
+
+(defn- own-application? [application]
+  (some #{:applicant
+          :member}
+        (:application/roles application)))
+
+(defn get-user-applications-v2 [user-id]
+  (->> (get-all-applications-v2 user-id)
+       (filter own-application?)))
+
+(defn- review? [application]
+  (and (some #{:handler
+               :commenter
+               :past-commenter
+               :decider
+               :past-decider}
+             (:application/roles application))
+       (not= ::dynamic/draft (get-in application [:application/workflow :workflow.dynamic/state]))))
+
+(defn get-all-reviews-v2 [user-id]
+  (->> (get-all-applications-v2 user-id)
+       (filter review?)))
+
+(defn- open-review? [application]
+  (some #{::dynamic/approve
+          ::dynamic/comment
+          ::dynamic/decide}
+        (:application/permissions application)))
+
+(defn get-open-reviews-v2 [user-id]
+  (->> (get-all-reviews-v2 user-id)
+       (filter open-review?)))
+
+(defn get-handled-reviews-v2 [user-id]
+  (->> (get-all-reviews-v2 user-id)
+       (remove open-review?)))

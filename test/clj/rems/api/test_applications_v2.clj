@@ -99,6 +99,21 @@
                                       :start (DateTime. 100)
                                       :end nil
                                       :enabled true
+                                      :archived false}
+                                  32 {:id 32
+                                      :licensetype "attachment"
+                                      :title "non-localized title"
+                                      :textcontent "non-localized filename"
+                                      :attachment-id 3200
+                                      :localizations {:en {:title "en title"
+                                                           :textcontent "en filename"
+                                                           :attachment-id 3201}
+                                                      :fi {:title "fi title"
+                                                           :textcontent "fi filename"
+                                                           :attachment-id 3202}}
+                                      :start (DateTime. 100)
+                                      :end nil
+                                      :enabled true
                                       :archived false}}
 
                     :get-user {"applicant" {:eppn "applicant"
@@ -120,7 +135,8 @@
                                              {:catalogue-item/id 20
                                               :resource/ext-id "urn:21"}]
                      :application/licenses [{:license/id 30}
-                                            {:license/id 31}]
+                                            {:license/id 31}
+                                            {:license/id 32}]
                      :form/id 40
                      :workflow/id 50
                      :workflow/type :workflow/dynamic
@@ -182,6 +198,22 @@
                                                           :license/start (DateTime. 100)
                                                           :license/end nil
                                                           :license/enabled true
+                                                          :license/archived false}
+                                                         {:license/id 32
+                                                          :license/accepted false
+                                                          :license/type :attachment
+                                                          :license/title {:en "en title"
+                                                                          :fi "fi title"
+                                                                          :default "non-localized title"}
+                                                          :license/attachment-id {:en 3201
+                                                                                  :fi 3202
+                                                                                  :default 3200}
+                                                          :license/attachment-filename {:en "en filename"
+                                                                                        :fi "fi filename"
+                                                                                        :default "non-localized filename"}
+                                                          :license/start (DateTime. 100)
+                                                          :license/end nil
+                                                          :license/enabled true
                                                           :license/archived false}]
                                   :application/events events
                                   :application/description ""
@@ -219,12 +251,13 @@
                                      :application/id 1
                                      :application/field-values {41 "foo"
                                                                 42 "bar"}
-                                     :application/accepted-licenses #{30 31}})
+                                     :application/accepted-licenses #{30 31 32}})
                 expected-application (deep-merge expected-application
                                                  {:application/modified (DateTime. 2000)
                                                   :application/last-activity (DateTime. 2000)
                                                   :application/events events
                                                   :application/licenses [{:license/accepted true}
+                                                                         {:license/accepted true}
                                                                          {:license/accepted true}]
                                                   :application/description "foo"
                                                   :application/form {:form/fields [{:field/value "foo"}
@@ -265,14 +298,14 @@
                                           ;; non-submitted versions should not show up as the previous value
                                           :application/field-values {41 "intermediate draft"
                                                                      42 "intermediate draft"}
-                                          :application/accepted-licenses #{30 31}}
+                                          :application/accepted-licenses #{30 31 32}}
                                          {:event/type :application.event/draft-saved
                                           :event/time (DateTime. 6000)
                                           :event/actor "applicant"
                                           :application/id 1
                                           :application/field-values {41 "new foo"
                                                                      42 "new bar"}
-                                          :application/accepted-licenses #{30 31}})
+                                          :application/accepted-licenses #{30 31 32}})
                             expected-application (deep-merge expected-application
                                                              {:application/modified (DateTime. 6000)
                                                               :application/last-activity (DateTime. 6000)
@@ -502,6 +535,9 @@
     (testing "lists the user's permissions"
       (is (= #{} (:application/permissions (apply-user-permissions application "user-1"))))
       (is (= #{:foo :bar} (:application/permissions (apply-user-permissions application "user-2")))))
+    (testing "lists the user's roles"
+      (is (= #{:role-1} (:application/roles (apply-user-permissions application "user-1"))))
+      (is (= #{:role-2} (:application/roles (apply-user-permissions application "user-2")))))
 
     (let [all-events [{:event/type :application.event/created}
                       {:event/type :application.event/submitted}
@@ -547,7 +583,6 @@
 
 (comment
   (diff-app-v1 "alice" 18)
-  ;; TODO: attachments
   (let [user-id "developer"]
     (binding [context/*lang* :en]
       (doseq [app (applications/get-user-applications user-id)]
