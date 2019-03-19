@@ -110,3 +110,79 @@
 (s/defschema SuccessResponse
   {:success s/Bool
    (s/optional-key :errors) [s/Any]})
+
+(s/defschema LocalizedString
+  {s/Keyword s/Str})
+
+(s/defschema LocalizedInt
+  {s/Keyword s/Int})
+
+(s/defschema V2Resource
+  {:resource/id s/Int
+   :resource/ext-id s/Str
+   :catalogue-item/id s/Int
+   :catalogue-item/title LocalizedString
+   :catalogue-item/start DateTime
+   :catalogue-item/end (s/maybe DateTime)
+   :catalogue-item/enabled s/Bool
+   :catalogue-item/archived s/Bool
+   :catalogue-item/state s/Keyword})
+
+(s/defschema V2License
+  {:license/id s/Int
+   :license/accepted s/Bool
+   :license/type (s/enum :text :link :attachment)
+   :license/title LocalizedString
+   (s/optional-key :license/link) LocalizedString
+   (s/optional-key :license/text) LocalizedString
+   (s/optional-key :license/attachment-id) LocalizedInt
+   (s/optional-key :license/attachment-filename) LocalizedString
+   :license/start DateTime
+   :license/end (s/maybe DateTime)
+   :license/enabled s/Bool
+   :license/archived s/Bool})
+
+(s/defschema V2Field
+  {:field/id s/Int
+   :field/value s/Str
+   (s/optional-key :field/previous-value) s/Str
+   :field/type (s/enum :attachment :date :description :label :multiselect :option :text :texta)
+   :field/title LocalizedString
+   :field/placeholder LocalizedString
+   :field/optional s/Bool
+   :field/options [{:key s/Str
+                    :label LocalizedString}]
+   :field/max-length (s/maybe s/Int)})
+
+(s/defschema V2Form
+  {:form/id s/Int
+   :form/title s/Str
+   :form/fields [V2Field]})
+
+(s/defschema V2Application
+  {:application/id s/Int
+   :application/created DateTime
+   :application/modified DateTime
+   :application/last-activity DateTime
+   :application/applicant s/Str
+   :application/applicant-attributes {s/Keyword s/Str}
+   :application/members #{{:userid s/Str}}
+   :application/invited-members #{{:name s/Str
+                                   :email s/Str}}
+   :application/resources [V2Resource]
+   :application/licenses [V2License]
+   :application/events [DynamicEvent]
+   :application/description s/Str
+   :application/form V2Form
+   :application/workflow {:workflow/id s/Int
+                          :workflow/type s/Keyword
+                          :workflow.dynamic/state s/Keyword
+                          (s/optional-key :workflow.dynamic/handlers) #{s/Str}}
+   :application/roles #{s/Keyword}
+   :application/permissions #{s/Keyword}})
+
+(s/defschema V2ApplicationSummary
+  (dissoc V2Application
+          :application/form
+          :application/events
+          :application/licenses))

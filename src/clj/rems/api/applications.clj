@@ -349,14 +349,14 @@
     (GET "/" []
       :summary "Get current user's all applications"
       :roles #{:logged-in}
-      :return [s/Any]
+      :return [V2ApplicationSummary]
       (ok (get-user-applications-v2 (getx-user-id))))
 
     (GET "/:application-id" []
       :summary "Get application by `application-id`"
       :roles #{:logged-in}
       :path-params [application-id :- (describe s/Num "application id")]
-      :responses {200 {:schema s/Any}
+      :responses {200 {:schema V2Application}
                   404 {:schema s/Str :description "Not found"}}
       (if-let [app (api-get-application-v2 (getx-user-id) application-id)]
         (ok app)
