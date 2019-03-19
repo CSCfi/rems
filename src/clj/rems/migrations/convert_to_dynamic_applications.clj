@@ -4,7 +4,8 @@
             [rems.db.applications :as applications]
             [rems.db.core :refer [*db*]]
             [rems.db.workflow :as workflow]
-            [rems.db.workflow-actors :as actors])
+            [rems.db.workflow-actors :as actors]
+            [rems.poller.email :as email])
   (:import [java.util UUID]))
 
 (defn migrate-catalogue-items! [workflow-id]
@@ -115,4 +116,6 @@
                                (remove applications/is-dynamic-application?))]
         (println "Converting application" (:id application))
         (migrate-application! (:id application) (:id new-workflow)))
+      (println "Marking all pending emails as sent")
+      (email/mark-all-emails-as-sent!)
       (println "Done"))))
