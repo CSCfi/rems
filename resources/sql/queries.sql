@@ -175,7 +175,6 @@ SELECT
   form.title as title,
   form.start as start,
   form.endt as "end",
-  TRUE as "active", -- TODO implement
   form.enabled,
   form.archived,
   (SELECT json_agg(joined)
@@ -206,6 +205,32 @@ WHERE 1=1
   AND itemId = :item
 /*~ ) ~*/
 ;
+
+-- :name get-form-template :? :1
+SELECT
+  id,
+  organization,
+  title,
+  start,
+  endt as "end",
+  fields::TEXT,
+  enabled,
+  archived
+FROM form_template
+WHERE id = :id;
+
+-- :name save-form-template! :insert
+INSERT INTO form_template
+(id, organization, title, modifierUserId, ownerUserId, visibility, fields)
+VALUES
+(:id,
+ :organization,
+ :title,
+ :user,
+ :user,
+ 'public',
+ :fields::jsonb
+);
 
 -- :name create-form! :insert
 INSERT INTO application_form
@@ -580,7 +605,6 @@ FROM license lic;
 
 -- :name get-license :? :1
 SELECT lic.id, lic.title, lic.type, lic.textcontent, lic.start, lic.endt, lic.enabled, lic.archived, lic.attachmentid
-, TRUE AS active -- TODO implement active and archiving
 FROM license lic
 WHERE lic.id = :id;
 

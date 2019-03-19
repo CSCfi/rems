@@ -78,10 +78,20 @@
                          read-body)
                 forms (->> body
                            (filter #(= (:title %) (:title command))))
-                form (first forms)]
+                form (first forms)
+                form-template (-> (request :get (str "/api/forms/v2/" (:id form)))
+                                  (authenticate api-key user-id)
+                                  app
+                                  assert-response-is-ok
+                                  read-body)]
             (is (= 1 (count forms))
                 "only one form got created")
             ;; TODO: create an API for reading full forms (will be needed latest for editing forms)
+            (testing "form template matches command"
+              (is (= (select-keys command [:title :organization])
+                     (select-keys form-template [:title :organization])))
+              (is (= (:items command)
+                     (:fields form-template))))
             (is (= (select-keys command [:title :organization])
                    (select-keys form [:title :organization])))
             (is (= [{:optional true

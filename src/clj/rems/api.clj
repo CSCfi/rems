@@ -43,6 +43,21 @@
   [exception ex-data request]
   (internal-server-error (with-out-str (print-cause-trace exception))))
 
+(defn with-logging
+  ;; Like in compojure.api.exception, but logs some of the data (with pprint)
+  "Wrap compojure-api exception-handler a function which will log the
+  exception message and stack-trace with given log-level."
+  ([handler] (with-logging handler :error))
+  ([handler log-level]
+   {:pre [(#{:trace :debug :info :warn :error :fatal} log-level)]}
+   (fn [^Exception e data req]
+     (log/log log-level e (str (.getMessage e)
+                               "\n"
+                               (with-out-str
+                                (clojure.pprint/pprint
+                                 (select-keys data [:schema :errors :response])))))
+     (handler e data req))))
+
 (def cors-middleware
   #(wrap-cors
     %
@@ -74,9 +89,9 @@
                              InvalidRequestException  invalid-handler
                              ;; java.lang.Throwable (ex/with-logging debug-handler) ; optional Debug handler
                              ;; add logging to validation handlers
-                             ::ex/request-validation  (ex/with-logging ex/request-validation-handler)
-                             ::ex/request-parsing     (ex/with-logging ex/request-parsing-handler)
-                             ::ex/response-validation (ex/with-logging ex/response-validation-handler)}}
+                             ::ex/request-validation  (with-logging ex/request-validation-handler)
+                             ::ex/request-parsing     (with-logging ex/request-parsing-handler)
+                             ::ex/response-validation (with-logging ex/response-validation-handler)}}
      :swagger    {:ui   "/swagger-ui"
                   :spec "/swagger.json"
                   :data {:info {:version     "1.0.0"
