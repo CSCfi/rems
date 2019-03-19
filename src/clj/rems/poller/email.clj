@@ -210,6 +210,11 @@
 ;;    - you can reset the email poller state with (set-poller-state! :rems.poller.email/poller nil)
 ;; 4. open http://localhost:8025 in your browser to view the emails
 
+(defn mark-all-emails-as-sent! []
+  (let [events (applications/get-dynamic-application-events-since 0)
+        last-id (:event/id (last events))]
+    (set-poller-state! ::poller {:last-processed-event-id last-id})))
+
 (defn send-email! [email-spec]
   (let [host (:smtp-host env)
         port (:smtp-port env)]
