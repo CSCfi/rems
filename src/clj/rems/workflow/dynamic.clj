@@ -546,19 +546,25 @@
   [user-ids injections]
   (apply merge-with into (keep #(invalid-user-error % injections) user-ids)))
 
-(defn- validation-error [application {:keys [get-form]}]
-  (let [form (get-form (:form/id application))
+(defn- validate-form-answers [form-id answers get-form] ;; TODO: inject this
+  (let [form (get-form form-id)
         _ (assert form)
+        fields (for [field (:items form)]
+                 (assoc field :value (get-in answers [:items (:id field)])))]
+    (form-validation/validate-fields fields)))
+
+(defn- validation-error [application {:keys [get-form]}]
+  (let [form-id (:form/id application)
         answers (:form-contents application)
-        legacy-form {:items (for [field (:items form)]
-                              (assoc field :value (get-in answers [:items (:id field)])))
-                     :licenses (for [license (:application/licenses application)]
-                                 {:id (:license/id license)
-                                  :approved (= "approved"
-                                               (get-in answers [:licenses (:license/id license)]))})}
-        result (form-validation/validate legacy-form)]
-    (when-not (= :valid result)
-      {:errors result})))
+        ;; TODO: use :application/accepted-licenses instead of this legacy format
+        licenses (for [license (:application/licenses application)]
+                   {:id (:license/id license)
+                    :approved (= "approved"
+                                 (get-in answers [:licenses (:license/id license)]))})
+        errors (concat (validate-form-answers form-id answers get-form)
+                       (form-validation/validate-licenses licenses))]
+    (when (seq errors)
+      {:errors errors})))
 
 (defn- valid-invitation-token? [application token]
   (contains? (:invitation-tokens application) token))
