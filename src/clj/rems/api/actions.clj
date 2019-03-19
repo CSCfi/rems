@@ -49,13 +49,11 @@
     (GET "/open" []
       :summary "Lists applications which the user needs to review"
       :roles #{:handler :commenter :decider :past-commenter :past-decider}
-      :return s/Any ;; TODO: add schema
-      (when (:dev env) ; TODO: remove feature toggle
-        (ok (get-open-reviews-v2 (getx-user-id)))))
+      :return [V2ApplicationSummary]
+      (ok (get-open-reviews-v2 (getx-user-id))))
 
     (GET "/handled" []
       :summary "Lists applications which the user has already reviewed"
       :roles #{:handler :commenter :decider :past-commenter :past-decider}
-      :return s/Any ;; TODO: add schema
-      (when (:dev env) ; TODO: remove feature toggle
-        (ok (get-handled-reviews-v2 (getx-user-id)))))))
+      :return [V2ApplicationSummary]
+      (ok (get-handled-reviews-v2 (getx-user-id))))))
