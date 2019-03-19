@@ -76,8 +76,7 @@
                        [attachment-link (:attachment-id localization) (:title localization)]
                        {:no-box? true}])))
                 [[inline-info-field (text :t.administration/start) (localize-time (:start license))]
-                 [inline-info-field (text :t.administration/end) (localize-time (:end license))]])
-        ))
+                 [inline-info-field (text :t.administration/end) (localize-time (:end license))]])))
 
 (defn round-view [actors]
   [:div.form-item

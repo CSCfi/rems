@@ -1,5 +1,6 @@
 (ns rems.workflow.dynamic
   (:require [clojure.set :as set]
+            [clojure.string :as str]
             [clojure.test :refer :all]
             [rems.auth.util :refer [throw-unauthorized]]
             [rems.permissions :as permissions]
@@ -419,15 +420,19 @@
          :state ::draft
          :applicantuserid (:event/actor event)
          :members [{:userid (:event/actor event)}]
+         :form/id (:form/id event)
+         :application/licenses (:application/licenses event)
          :workflow {:type (:workflow/type event)
                     :handlers (vec (:workflow.dynamic/handlers event))}))
 
 (defmethod apply-event [:application.event/draft-saved :workflow/dynamic]
   [application _workflow event]
-  (assoc application :form-contents {:items (:application/field-values event)
-                                     :licenses (->> (:application/accepted-licenses event)
-                                                    (map (fn [id] [id "approved"]))
-                                                    (into {}))}))
+  (assoc application
+         :application/accepted-licenses (:application/accepted-licenses event)
+         :form-contents {:items (:application/field-values event)
+                         :licenses (->> (:application/accepted-licenses event)
+                                        (map (fn [id] [id "approved"]))
+                                        (into {}))}))
 
 (defmethod apply-event [:application.event/submitted :workflow/dynamic]
   [application _workflow event]
@@ -533,31 +538,49 @@
 (deftest test-all-command-types-handled
   (is (= CommandTypes (set (get-command-types)))))
 
-(defn- valid-user-error
-  [injections user]
+(defn- invalid-user-error [user-id injections]
   (cond
     (not (:valid-user? injections)) {:errors [{:type :missing-injection :injection :valid-user?}]}
-    (not ((:valid-user? injections) user)) {:errors [{:type :t.form.validation/invalid-user :userid user}]}))
+    (not ((:valid-user? injections) user-id)) {:errors [{:type :t.form.validation/invalid-user :userid user-id}]}))
 
 (defn- invalid-users-errors
   "Checks the given users for validity and merges the errors"
   [user-ids injections]
-  (apply merge-with into (keep (partial valid-user-error injections) user-ids)))
+  (apply merge-with into (keep #(invalid-user-error % injections) user-ids)))
 
-(defn- validation-error
-  [injections application-id]
-  (when-let [errors ((:validate-form injections) application-id)]
-    {:errors errors}))
+(defn- fake-validate-form-answers [_form-id answers]
+  (->> (:items answers)
+       (map (fn [[field-id value]]
+              (when (str/blank? value)
+                {:type :t.form.validation/required
+                 :field-id field-id})))
+       (remove nil?)))
+
+(defn- validate-licenses [application]
+  (let [all-licenses (set (map :license/id (:application/licenses application)))
+        accepted-licenses (set (:application/accepted-licenses application))
+        missing-licenses (set/difference all-licenses accepted-licenses)]
+    (->> (sort missing-licenses)
+         (map (fn [license-id]
+                {:type :t.form.validation/required
+                 :license-id license-id})))))
+
+(defn- validation-error [application {:keys [validate-form-answers]}]
+  (let [form-id (:form/id application)
+        answers (:form-contents application)
+        errors (concat (validate-form-answers form-id answers)
+                       (validate-licenses application))]
+    (when (seq errors)
+      {:errors errors})))
 
 (defn- valid-invitation-token? [application token]
   (contains? (:invitation-tokens application) token))
 
-(defn- invitation-token-error
-  [application token]
+(defn- invitation-token-error [application token]
   (when-not (valid-invitation-token? application token)
     {:errors [{:type :t.actions.errors/invalid-token :token token}]}))
 
-(defn already-member-error [injections application userid]
+(defn already-member-error [application userid]
   (when (contains? (set (map :userid (:members application))) userid)
     {:errors [{:type :already-member :application-id (:id application)}]}))
 
@@ -575,8 +598,8 @@
                                            set)}))
 
 (defmethod command-handler ::submit
-  [cmd _application injections]
-  (or (validation-error injections (:application-id cmd))
+  [cmd application injections]
+  (or (validation-error application injections)
       (ok {:event/type :application.event/submitted})))
 
 (defmethod command-handler ::approve
@@ -653,8 +676,8 @@
 
 (defmethod command-handler ::add-member
   [cmd application injections]
-  (or (valid-user-error injections (:userid (:member cmd)))
-      (already-member-error injections application (:userid (:member cmd)))
+  (or (invalid-user-error (:userid (:member cmd)) injections)
+      (already-member-error application (:userid (:member cmd)))
       (ok {:event/type :application.event/member-added
            :application/member (:member cmd)})))
 
@@ -666,8 +689,8 @@
 
 (defmethod command-handler ::accept-invitation
   [cmd application injections]
-  (or (valid-user-error injections (:actor cmd))
-      (already-member-error injections application (:actor cmd))
+  (or (invalid-user-error (:actor cmd) injections)
+      (already-member-error application (:actor cmd))
       (invitation-token-error application (:token cmd))
       {:success true
        :result {:event/type :application.event/member-joined
@@ -781,10 +804,11 @@
 ;;; Tests
 
 (deftest test-save-draft
-  (let [injections {:validate-form (constantly nil)}
+  (let [injections {:validate-form-answers (constantly nil)}
         application (apply-events nil
                                   [{:event/type :application.event/created
                                     :event/actor "applicant"
+                                    :form/id 1
                                     :workflow/type :workflow/dynamic
                                     :workflow.dynamic/handlers #{"assistant"}}])
         relevant-application-keys [:state :form-contents :submitted-form-contents :previous-submitted-form-contents]]
@@ -873,27 +897,88 @@
                                  injections)
                  (select-keys relevant-application-keys)))))))
 
+(deftest test-submit
+  (let [injections {:validate-form-answers fake-validate-form-answers}
+        run-cmd (fn [events command]
+                  (let [application (apply-events nil events)]
+                    (handle-command command application injections)))
+
+        created-event {:event/type :application.event/created
+                       :event/time (DateTime. 1000)
+                       :event/actor "applicant"
+                       :application/id 1
+                       :application/resources [{:catalogue-item/id 10
+                                                :resource/ext-id "urn:11"}
+                                               {:catalogue-item/id 20
+                                                :resource/ext-id "urn:21"}]
+                       :application/licenses [{:license/id 30}
+                                              {:license/id 31}]
+                       :form/id 40
+                       :workflow/id 50
+                       :workflow/type :workflow/dynamic
+                       :workflow.dynamic/handlers #{"handler"}}
+        draft-saved-event {:event/type :application.event/draft-saved
+                           :event/time (DateTime. 2000)
+                           :event/actor "applicant"
+                           :application/id 1
+                           :application/field-values {41 "foo"
+                                                      42 "bar"}
+                           :application/accepted-licenses #{30 31}}
+        submit-command {:type ::submit
+                        :time (DateTime. 3000)
+                        :actor "applicant"
+                        :application-id 1}]
+
+    (testing "can submit a valid form"
+      (is (= {:success true
+              :result {:event/type :application.event/submitted
+                       :event/time (DateTime. 3000)
+                       :event/actor "applicant"
+                       :application/id 1}}
+             (run-cmd [created-event
+                       draft-saved-event]
+                      submit-command))))
+
+    (testing "cannot submit when required fields are empty"
+      (is (= {:errors [{:type :t.form.validation/required
+                        :field-id 41}]}
+             (run-cmd [created-event
+                       (assoc-in draft-saved-event [:application/field-values 41] "")]
+                      submit-command))))
+
+    (testing "cannot submit when not all licenses are accepted"
+      (is (= {:errors [{:type :t.form.validation/required
+                        :license-id 31}]}
+             (run-cmd [created-event
+                       (update-in draft-saved-event [:application/accepted-licenses] disj 31)]
+                      submit-command))))))
+
 (deftest test-submit-approve-or-reject
-  (let [injections {:validate-form (constantly nil)}
-        expected-errors [{:type :t.form.validation/required}]
-        fail-injections {:validate-form (constantly expected-errors)}
+  (let [injections {:validate-form-answers fake-validate-form-answers}
         application (apply-events nil
                                   [{:event/type :application.event/created
                                     :event/actor "applicant"
+                                    :form/id 1
                                     :workflow/type :workflow/dynamic
-                                    :workflow.dynamic/handlers #{"assistant"}}])]
-    (testing "only applicant can submit"
+                                    :workflow.dynamic/handlers #{"assistant"}}
+                                   {:event/type :application.event/draft-saved
+                                    :event/actor "applicant"
+                                    :application/field-values {10 "foo"}
+                                    :application/accepted-licenses #{}}])]
+    (testing "non-applicant cannot submit"
       (is (= {:errors [{:type :forbidden}]}
              (handle-command {:actor "not-applicant" :type ::submit} application injections))))
-    (testing "can only submit valid form"
-      (is (= {:errors expected-errors}
-             (handle-command {:actor "applicant" :type ::submit} application fail-injections))))
+    (testing "cannot submit non-valid forms"
+      (let [application (apply-events application [{:event/type :application.event/draft-saved
+                                                    :event/actor "applicant"
+                                                    :application/field-values {10 ""}
+                                                    :application/accepted-licenses #{}}])]
+        (is (= {:errors [{:type :t.form.validation/required :field-id 10}]}
+               (handle-command {:actor "applicant" :type ::submit} application injections)))))
     (let [submitted (apply-command application {:actor "applicant" :type ::submit} injections)]
       (testing "cannot submit twice"
         (is (= {:errors [{:type :forbidden}]}
                (handle-command {:actor "applicant" :type ::submit} submitted injections))))
-      (testing "submitter is member"
-        (is (= [{:userid "applicant"}] (:members submitted))))
       (testing "approving"
         (is (= ::approved (:state (apply-command submitted
                                                  {:actor "assistant" :type ::approve}
@@ -904,10 +989,11 @@
                                                  injections))))))))
 
 (deftest test-submit-return-submit-approve-close
-  (let [injections {:validate-form (constantly nil)}
+  (let [injections {:validate-form-answers (constantly nil)}
         application (apply-events nil
                                   [{:event/type :application.event/created
                                     :event/actor "applicant"
+                                    :form/id 1
                                     :workflow/type :workflow/dynamic
                                     :workflow.dynamic/handlers #{"assistant"}}])
         returned-application (apply-commands application

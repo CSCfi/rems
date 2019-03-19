@@ -91,9 +91,6 @@
   ([app round]
    (get-events-of-type app round "third-party-review")))
 
-(defn get-applicant-of-application [application-id]
-  (:applicantuserid (first (db/get-applications {:id application-id}))))
-
 (declare is-commenter?)
 (declare can-comment?)
 (declare is-decider?)
@@ -324,10 +321,24 @@
   (->> (get-applications-impl-batch "alice" {:applicant "alice"})
        (mapv :id)))
 
+(defn application-cleanup [application]
+  (dissoc application
+          ;; very sensitive
+          :invitation-tokens
+          ;; only used in the write model
+          :form/id
+          :application/licenses
+          :application/accepted-licenses
+          :form-contents
+          :submitted-form-contents
+          :previous-submitted-form-contents
+          :deciders
+          :commenters))
+
 (defn get-approvals [user-id]
   (->> (get-applications-impl-batch user-id {})
        (filterv (partial can-approve? user-id))
-       (map #(dissoc % :invitation-tokens)))) ; TODO use same hiding in all applications lists
+       (map application-cleanup)))
 
 (comment
   (->> (get-approvals "developer")
@@ -346,7 +357,7 @@
                       (if (is-dynamic-application? application)
                         (contains? (set (actors-of-dynamic-application application)) user-id)
                         (is-actor? user-id (actors/filter-by-application-id actors (:id app)))))))
-         (map #(dissoc % :invitation-tokens)))))  ; TODO use same hiding in all applications lists
+         (map application-cleanup))))
 
 (comment
   (->> (get-handled-approvals "developer")
@@ -362,7 +373,7 @@
                         (is-third-party-reviewer? user-id app)
                         (is-commenter? user-id app)
                         (is-decider? user-id app))))
-         (map #(dissoc % :invitation-tokens)))))  ; TODO use same hiding in all applications lists
+         (map application-cleanup))))
 
 (comment
   (get-handled-reviews "bob")
@@ -383,7 +394,7 @@
                            (can-comment? user-id (:id app))
                            (can-decide? user-id (:id app))))))
        (mapv (partial assoc-review-type-to-app user-id))
-       (map #(dissoc % :invitation-tokens))))  ; TODO use same hiding in all applications lists
+       (map application-cleanup)))
 
 (defn make-draft-application
   "Make a draft application with an initial set of catalogue items."
@@ -1018,15 +1029,22 @@
 (defn- valid-user? [userid]
   (not (nil? (users/get-user-attributes userid))))
 
-(defn- validate-form [application-id]
-  (let [user-id (get-applicant-of-application application-id)
-        validation (form-validation/validate (get-form-for user-id application-id))]
-    (when-not (= :valid validation)
-      validation)))
+(defn- get-form [form-id]
+  (-> ((resolve 'rems.db.form/get-form) form-id) ;; XXX: avoid cyclic dependency
+      (select-keys [:id :organization :title :start :end])
+      (assoc :items (->> (db/get-form-items {:id form-id})
+                         (mapv #(process-item nil form-id %))))))
+
+(defn- validate-form-answers [form-id answers]
+  (let [form (get-form form-id)
+        _ (assert form)
+        fields (for [field (:items form)]
+                 (assoc field :value (get-in answers [:items (:id field)])))]
+    (form-validation/validate-fields fields)))
 
 (def ^:private db-injections
   {:valid-user? valid-user?
-   :validate-form validate-form
+   :validate-form-answers validate-form-answers
    :secure-token secure-token})
 
 (defn dynamic-command! [cmd]
