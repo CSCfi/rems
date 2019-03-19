@@ -221,9 +221,6 @@ SELECT
 FROM form_template
 WHERE id = :id;
 
--- :name get-form-templates
-select id from form_template;
-
 -- :name save-form-template! :insert
 INSERT INTO form_template
 (id, organization, title, modifierUserId, ownerUserId, visibility, fields)
