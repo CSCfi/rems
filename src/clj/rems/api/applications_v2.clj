@@ -253,7 +253,7 @@
                          (filter #(= :description (:field/type %)))
                          first
                          :field/value)]
-    (assoc application :application/description description)))
+    (assoc application :application/description (str description))))
 
 (defn- enrich-resources [app-resources get-catalogue-item]
   (->> app-resources

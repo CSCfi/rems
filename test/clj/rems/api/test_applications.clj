@@ -119,13 +119,16 @@
       read-ok-body
       :id))
 
-(defn- create-catalogue-item-with-form [form-id]
+(defn- create-empty-form []
+  (create-form-with-fields []))
+
+(defn- create-catalogue-item [form-id workflow-id]
   (-> (request :post "/api/catalogue-items/create")
       (authenticate "42" "owner")
       (json-body {:title ""
                   :form form-id
                   :resid 1
-                  :wfid 1
+                  :wfid workflow-id
                   :state "enabled"})
       app
       read-ok-body
@@ -164,7 +167,7 @@
 (deftest application-description-test
   (testing "applications without description field have no description"
     (let [form-id (create-form-with-fields [])
-          cat-item-id (create-catalogue-item-with-form form-id)
+          cat-item-id (create-catalogue-item form-id 1)
           app-id (save-application {:command "save"
                                     :catalogue-items [cat-item-id]
                                     :items {}
@@ -178,7 +181,7 @@
                                              :optional false
                                              :type "description"
                                              :input-prompt {:en ""}}])
-          cat-item-id (create-catalogue-item-with-form form-id)
+          cat-item-id (create-catalogue-item form-id 1)
           draft (create-application-draft-for-catalogue-item cat-item-id)
           app-id (save-application {:command "save"
                                     :catalogue-items [cat-item-id]
@@ -526,3 +529,86 @@
                                        (assoc :multipart-params {"file" filecontent})
                                        (authenticate "invalid-api-key" "developer")
                                        app)))))
+
+(defn- create-dynamic-workflow []
+  (-> (request :post "/api/workflows/create")
+      (json-body {:organization "abc"
+                  :title "dynamic workflow"
+                  :type :dynamic
+                  :handlers ["developer"]})
+      (authenticate "42" "owner")
+      app
+      read-ok-body
+      :id))
+
+(defn- create-dynamic-application []
+  (let [form-id (create-empty-form)
+        workflow-id (create-dynamic-workflow)
+        cat-item-id (create-catalogue-item form-id workflow-id)
+        app-id (save-application {:command "save"
+                                  :catalogue-items [cat-item-id]
+                                  :items {}
+                                  :licenses {}})]
+    app-id))
+
+(defn- get-ids [applications]
+  (set (map :application/id applications)))
+
+(defn- get-v2-applications [user-id]
+  (-> (request :get "/api/v2/applications")
+      (authenticate "42" user-id)
+      app
+      read-ok-body))
+
+(defn- get-v2-application [app-id user-id]
+  (-> (request :get (str "/api/v2/applications/" app-id))
+      (authenticate "42" user-id)
+      app
+      read-ok-body))
+
+(deftest test-v2-application-api
+  (let [app-id (create-dynamic-application)]
+
+    (testing "list user applications"
+      (is (contains? (get-ids (get-v2-applications "alice"))
+                     app-id)))
+
+    (testing "get single application"
+      (is (= app-id
+             (:application/id (get-v2-application app-id "alice")))))))
+
+(defn- get-v2-open-reviews [user-id]
+  (-> (request :get "/api/v2/reviews/open")
+      (authenticate "42" user-id)
+      app
+      read-ok-body))
+
+(defn- get-v2-handled-reviews [user-id]
+  (-> (request :get "/api/v2/reviews/handled")
+      (authenticate "42" user-id)
+      app
+      read-ok-body))
+
+(deftest test-v2-review-api
+  (let [app-id (create-dynamic-application)]
+
+    (testing "does not list drafts"
+      (is (not (contains? (get-ids (get-v2-open-reviews "developer"))
+                          app-id))))
+
+    (testing "lists submitted in open reviews"
+      (is (= {:success true} (send-dynamic-command "alice" {:type :rems.workflow.dynamic/submit
+                                                            :application-id app-id})))
+      (is (contains? (get-ids (get-v2-open-reviews "developer"))
+                     app-id))
+      (is (not (contains? (get-ids (get-v2-handled-reviews "developer"))
+                          app-id))))
+
+    (testing "lists handled in handled reviews"
+      (is (= {:success true} (send-dynamic-command "developer" {:type :rems.workflow.dynamic/approve
+                                                                :application-id app-id
+                                                                :comment ""})))
+      (is (not (contains? (get-ids (get-v2-open-reviews "developer"))
+                          app-id)))
+      (is (contains? (get-ids (get-v2-handled-reviews "developer"))
+                     app-id)))))
