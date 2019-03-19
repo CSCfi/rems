@@ -24,6 +24,7 @@
              :application/modified (:event/time event)
              :application/applicant (:event/actor event)
              :application/members #{}
+             :application/invitation-tokens {}
              :application/resources (map (fn [resource]
                                            {:catalogue-item/id (:catalogue-item/id resource)
                                             :resource/ext-id (:resource/ext-id resource)})
@@ -41,8 +42,7 @@
                                     :workflow.dynamic/state :rems.workflow.dynamic/draft
                                     :workflow.dynamic/handlers (:workflow.dynamic/handlers event)
                                     :workflow.dynamic/awaiting-commenters #{}
-                                    :workflow.dynamic/awaiting-deciders #{}
-                                    :workflow.dynamic/invitations {}})))
+                                    :workflow.dynamic/awaiting-deciders #{}})))
 
 (defn- set-accepted-licences [licenses accepted-licenses]
   (map (fn [license]
@@ -59,22 +59,22 @@
 (defmethod event-type-specific-application-view :application.event/member-invited
   [application event]
   (-> application
-      (update-in [:application/workflow :workflow.dynamic/invitations] assoc (:invitation/token event) (:application/member event))))
+      (update :application/invitation-tokens assoc (:invitation/token event) (:application/member event))))
 
 (defmethod event-type-specific-application-view :application.event/member-uninvited
   [application event]
   (-> application
-      (update-in [:application/workflow :workflow.dynamic/invitations] (fn [invitations]
-                                                                         (->> invitations
-                                                                              (remove (fn [[_token member]]
-                                                                                        (= member (:application/member event))))
-                                                                              (into {}))))))
+      (update :application/invitation-tokens (fn [invitations]
+                                               (->> invitations
+                                                    (remove (fn [[_token member]]
+                                                              (= member (:application/member event))))
+                                                    (into {}))))))
 
 (defmethod event-type-specific-application-view :application.event/member-joined
   [application event]
   (-> application
       (update :application/members conj {:userid (:event/actor event)})
-      (update-in [:application/workflow :workflow.dynamic/invitations] dissoc (:invitation/token event))))
+      (update :application/invitation-tokens dissoc (:invitation/token event))))
 
 (defmethod event-type-specific-application-view :application.event/member-added
   [application event]
@@ -360,7 +360,8 @@
 (defn- hide-very-sensitive-information [application]
   (-> application
       ;; the keys are invitation tokens and must be kept secret
-      (update-in [:application/workflow :workflow.dynamic/invitations] vals)
+      (dissoc :application/invitation-tokens)
+      (assoc :application/invited-members (set (vals (:application/invitation-tokens application))))
       ;; these are not used by the UI, so no need to expose them
       (update-in [:application/workflow] dissoc
                  :workflow.dynamic/awaiting-commenters
@@ -430,7 +431,7 @@
                     :applicantuserid (:application/applicant application)
                     :members (into [{:userid (:application/applicant application)}]
                                    (:application/members application))
-                    :invited-members (:workflow.dynamic/invitations workflow)
+                    :invited-members (vec (:application/invited-members application))
                     :start (:application/created application)
                     :last-modified (:application/last-activity application)
                     :state (:workflow.dynamic/state workflow) ; TODO: round-based workflows
