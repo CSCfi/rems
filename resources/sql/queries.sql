@@ -175,7 +175,6 @@ SELECT
   form.title as title,
   form.start as start,
   form.endt as "end",
-  TRUE as "active", -- TODO implement
   form.enabled,
   form.archived,
   (SELECT json_agg(joined)
@@ -216,8 +215,7 @@ SELECT
   endt as "end",
   fields::TEXT,
   enabled,
-  archived,
-  TRUE AS active -- TODO implement active and archiving
+  archived
 FROM form_template
 WHERE id = :id;
 
@@ -607,7 +605,6 @@ FROM license lic;
 
 -- :name get-license :? :1
 SELECT lic.id, lic.title, lic.type, lic.textcontent, lic.start, lic.endt, lic.enabled, lic.archived, lic.attachmentid
-, TRUE AS active -- TODO implement active and archiving
 FROM license lic
 WHERE lic.id = :id;
 

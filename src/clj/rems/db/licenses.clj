@@ -49,6 +49,7 @@
   [id]
   (->> (db/get-license {:id id})
        (format-license)
+       (db/assoc-active)
        (localize-license (get-license-localizations))))
 
 ;; NB! There are three different "license activity" concepts:
