@@ -427,10 +427,12 @@
 
 (defmethod apply-event [:application.event/draft-saved :workflow/dynamic]
   [application _workflow event]
-  (assoc application :form-contents {:items (:application/field-values event)
-                                     :licenses (->> (:application/accepted-licenses event)
-                                                    (map (fn [id] [id "approved"]))
-                                                    (into {}))}))
+  (assoc application
+         :application/accepted-licenses (:application/accepted-licenses event)
+         :form-contents {:items (:application/field-values event)
+                         :licenses (->> (:application/accepted-licenses event)
+                                        (map (fn [id] [id "approved"]))
+                                        (into {}))}))
 
 (defmethod apply-event [:application.event/submitted :workflow/dynamic]
   [application _workflow event]
@@ -553,16 +555,20 @@
                  (assoc field :value (get-in answers [:items (:id field)])))]
     (form-validation/validate-fields fields)))
 
+(defn- validate-licenses [application]
+  (let [all-licenses (set (map :license/id (:application/licenses application)))
+        accepted-licenses (set (:application/accepted-licenses application))
+        missing-licenses (set/difference all-licenses accepted-licenses)]
+    (->> (sort missing-licenses)
+         (map (fn [license-id]
+                {:type :t.form.validation/required
+                 :license-id license-id})))))
+
 (defn- validation-error [application {:keys [get-form]}]
   (let [form-id (:form/id application)
         answers (:form-contents application)
-        ;; TODO: use :application/accepted-licenses instead of this legacy format
-        licenses (for [license (:application/licenses application)]
-                   {:id (:license/id license)
-                    :approved (= "approved"
-                                 (get-in answers [:licenses (:license/id license)]))})
         errors (concat (validate-form-answers form-id answers get-form)
-                       (form-validation/validate-licenses licenses))]
+                       (validate-licenses application))]
     (when (seq errors)
       {:errors errors})))
 

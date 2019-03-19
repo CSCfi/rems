@@ -327,6 +327,7 @@
           ;; only used in the write model
           :form/id
           :application/licenses
+          :application/accepted-licenses
           :form-contents
           :submitted-form-contents
           :previous-submitted-form-contents
