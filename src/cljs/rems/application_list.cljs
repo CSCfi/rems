@@ -8,7 +8,7 @@
 
 (defn- view-button [app]
   [:a.btn.btn-primary
-   {:href (str "#/application/" (:id app))}
+   {:href (str "#/application/" (:application/id app))}
    (text :t.applications/view)])
 
 (defn- format-catalogue-items [app]
