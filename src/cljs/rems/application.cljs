@@ -738,13 +738,17 @@
       (:archived item)))
 
 (defn- disabled-items-warning [catalogue-items]
-  (let [language @(rf/subscribe [:language])]
-    (when-some [items (seq (filter item-disabled? catalogue-items))]
-      [:div.alert.alert-danger
-       (text :t.form/alert-disabled-items)
-       (into [:ul]
-             (for [item items]
-               [:li (get-catalogue-item-title item language)]))])))
+  (let [language @(rf/subscribe [:language])
+        application-form (:application application)]
+    (when (or (and (is-applicant? application-form)
+                   (draft? application-form))
+              (in-processing? application-form))
+      (when-some [items (seq (filter item-disabled? catalogue-items))]
+        [:div.alert.alert-danger
+         (text :t.form/alert-disabled-items)
+         (into [:ul]
+               (for [item items]
+                 [:li (get-catalogue-item-title item language)]))]))))
 
 (defn- applied-resources [catalogue-items]
   (let [language @(rf/subscribe [:language])]
@@ -768,12 +772,6 @@
               (str (localize-decision (:application/decision event)) ": " (:application/comment event))
               (:application/comment event))})
 
-(defn- show-items-warning? [application]
-  (let [application-form (:application application)]
-    (if (is-applicant? application-form)
-      (draft? application-form)
-      (in-processing? application-form))))
-
 (defn- render-application [application edit-application language]
   (let [app (:application application)
         state (:state app)
@@ -783,8 +781,7 @@
                        (map dynamic-event->event (:dynamic-events app)))
         applicant-attributes (:applicant-attributes application)
         messages (remove nil?
-                         [(when (show-items-warning? application)
-                            (disabled-items-warning (:catalogue-items application))) ; NB: eval this here so we get nil or a warning
+                         [(disabled-items-warning (:catalogue-items application)) ; NB: eval this here so we get nil or a warning
                           (when (:validation edit-application)
                             [flash-message
                              {:status :danger
