@@ -737,11 +737,11 @@
   (or (= "disabled" (:state item))
       (:archived item)))
 
-(defn- disabled-items-warning [catalogue-items]
+(defn- disabled-items-warning [application]
   (let [language @(rf/subscribe [:language])
+        catalogue-items (:catalogue-items application)
         application-form (:application application)]
-    (when (or (and (is-applicant? application-form)
-                   (draft? application-form))
+    (when (or (and (is-applicant? application-form) (draft? application-form))
               (in-processing? application-form))
       (when-some [items (seq (filter item-disabled? catalogue-items))]
         [:div.alert.alert-danger
@@ -781,7 +781,7 @@
                        (map dynamic-event->event (:dynamic-events app)))
         applicant-attributes (:applicant-attributes application)
         messages (remove nil?
-                         [(disabled-items-warning (:catalogue-items application)) ; NB: eval this here so we get nil or a warning
+                         [(disabled-items-warning application) ; NB: eval this here so we get nil or a warning
                           (when (:validation edit-application)
                             [flash-message
                              {:status :danger
