@@ -155,7 +155,7 @@
                                   :created "Created"
                                   :decided "Decided"
                                   :decision-requested "Decision requested"
-                                  :draft-saved "Modified"
+                                  :draft-saved "Saved"
                                   :member-added "Member added"
                                   :member-invited "Member invited"
                                   :member-joined "Member joined"

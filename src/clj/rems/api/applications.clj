@@ -42,6 +42,7 @@
    :applicant-attributes (s/maybe {s/Keyword s/Str})
    :application (s/maybe Application)
    :licenses [ApplicationLicense]
+   :accepted-licenses (s/maybe {s/Str #{s/Num}})
    :phases Phases
    :title s/Str
    :items [Item]})

@@ -632,13 +632,13 @@
               (str
                (text :t.applications/state)
                (when state (str ": " (localize-state state))))]
-      :always [:div
-               [:div.mb-3 {:class (str "state-" (if (keyword? state) (name state) state))} (phases phases-data)]
-               [:h4 (text-format :t.applications/latest-activity (localize-time last-modified))]
-               (when-let [g (first event-groups)]
-                 (list
-                  [:h4 (text :t.form/events)]
-                  (render-event-groups [g])))]
+      :always (into [:div
+                     [:div.mb-3 {:class (str "state-" (if (keyword? state) (name state) state))} (phases phases-data)]
+                     [:h4 (text-format :t.applications/latest-activity (localize-time last-modified))]]
+                    (when-let [g (first event-groups)]
+                      (concat
+                       [[:h4 (text :t.form/events)]]
+                       (render-event-groups [g]))))
       :collapse (when-let [g (seq (rest event-groups))]
                   (render-event-groups g))}]))
 

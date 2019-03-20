@@ -432,7 +432,9 @@
          :form-contents {:items (:application/field-values event)
                          :licenses (->> (:application/accepted-licenses event)
                                         (map (fn [id] [id "approved"]))
-                                        (into {}))}))
+                                        (into {}))
+                         :accepted-licenses (->> (:accepted-licenses application)
+                                                 (merge {(:event/actor event) (:application/accepted-licenses event)}))}))
 
 (defmethod apply-event [:application.event/submitted :workflow/dynamic]
   [application _workflow event]
@@ -849,7 +851,8 @@
     (testing "draft can be updated multiple times"
       (is (= {:state :rems.workflow.dynamic/draft
               :form-contents {:items {1 "updated"}
-                              :licenses {3 "approved"}}}
+                              :licenses {3 "approved"}
+                              :accepted-licenses {"applicant" #{3}}}}
              (-> (apply-commands application
                                  [{:actor "applicant" :type ::save-draft :items {1 "original"} :licenses {2 "approved"}}
                                   {:actor "applicant" :type ::save-draft :items {1 "updated"} :licenses {3 "approved"}}]
@@ -869,9 +872,11 @@
     (testing "draft can be updated after returning it to applicant"
       (is (= {:state ::returned
               :form-contents {:items {1 "updated"}
-                              :licenses {3 "approved"}}
+                              :licenses {3 "approved"}
+                              :accepted-licenses {"applicant" #{3}}}
               :submitted-form-contents {:items {1 "original"}
-                                        :licenses {2 "approved"}}
+                                        :licenses {2 "approved"}
+                                        :accepted-licenses {"applicant" #{2}}}
               :previous-submitted-form-contents nil}
              (-> (apply-commands application
                                  [{:actor "applicant" :type ::save-draft :items {1 "original"} :licenses {2 "approved"}}
@@ -883,11 +888,14 @@
     (testing "resubmitting remembers the previous and current application"
       (is (= {:state ::submitted
               :form-contents {:items {1 "updated"}
-                              :licenses {3 "approved"}}
+                              :licenses {3 "approved"}
+                              :accepted-licenses {"applicant" #{3}}}
               :submitted-form-contents {:items {1 "updated"}
-                                        :licenses {3 "approved"}}
+                                        :licenses {3 "approved"}
+                                        :accepted-licenses {"applicant" #{3}}}
               :previous-submitted-form-contents {:items {1 "original"}
-                                                 :licenses {2 "approved"}}}
+                                                 :licenses {2 "approved"}
+                                                 :accepted-licenses {"applicant" #{2}}}}
              (-> (apply-commands application
                                  [{:actor "applicant" :type ::save-draft :items {1 "original"} :licenses {2 "approved"}}
                                   {:actor "applicant" :type ::submit}

@@ -216,6 +216,7 @@
                                                           :license/end nil
                                                           :license/enabled true
                                                           :license/archived false}]
+                                  :application/accepted-licenses {"applicant" #{}}
                                   :application/events events
                                   :application/description ""
                                   :application/form {:form/id 40

@@ -171,6 +171,7 @@
                                    :email s/Str}}
    :application/resources [V2Resource]
    :application/licenses [V2License]
+   :application/accepted-licenses (s/maybe {s/Str #{s/Num}})
    :application/events [DynamicEvent]
    :application/description s/Str
    :application/form V2Form
