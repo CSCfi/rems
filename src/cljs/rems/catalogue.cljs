@@ -18,9 +18,9 @@
  ::enter-page
  (fn [{:keys [db]} _]
    (if (roles/is-logged-in? (get-in db [:identity :roles]))
-     {:db (assoc db ::catalogue nil)
-      ::fetch-catalogue nil
-      ::fetch-drafts nil}
+     {:db (dissoc db ::catalogue ::draft-applications)
+      :dispatch-n [[::fetch-catalogue]
+                   [::fetch-drafts]]}
      (unauthorized!))))
 
 ;;;; table sorting
@@ -33,32 +33,41 @@
 
 ;;;; catalogue
 
-(defn- fetch-catalogue []
-  (fetch "/api/catalogue/" {:handler #(rf/dispatch [::fetch-catalogue-result %])}))
-
-(rf/reg-fx ::fetch-catalogue (fn [_] (fetch-catalogue)))
+(rf/reg-event-fx
+ ::fetch-catalogue
+ (fn [{:keys [db]} _]
+   (fetch "/api/catalogue/"
+          {:handler #(rf/dispatch [::fetch-catalogue-result %])})
+   {:db (assoc db ::loading-catalogue? true)}))
 
 (rf/reg-event-db
  ::fetch-catalogue-result
  (fn [db [_ catalogue]]
-   (assoc db ::catalogue catalogue)))
+   (-> db
+       (assoc ::catalogue catalogue)
+       (dissoc ::loading-catalogue?))))
 
 (rf/reg-sub ::catalogue (fn [db _] (::catalogue db)))
-
+(rf/reg-sub ::loading-catalogue? (fn [db _] (::loading-catalogue? db)))
 
 ;;;; draft applications
+
+(rf/reg-event-fx
+ ::fetch-drafts
+ (fn [{:keys [db]} _]
+   (fetch "/api/applications/"
+          {:handler #(rf/dispatch [::fetch-drafts-result %])})
+   {:db (assoc db ::loading-drafts? true)}))
 
 (rf/reg-event-db
  ::fetch-drafts-result
  (fn [db [_ applications]]
-   (assoc db ::draft-applications (filter form-fields-editable? applications))))
-
-(defn- fetch-drafts []
-  (fetch "/api/applications/" {:handler #(rf/dispatch [::fetch-drafts-result %])}))
-
-(rf/reg-fx ::fetch-drafts (fn [_] (fetch-drafts)))
+   (-> db
+       (assoc ::draft-applications (filter form-fields-editable? applications))
+       (dissoc ::loading-drafts?))))
 
 (rf/reg-sub ::draft-applications (fn [db _] (::draft-applications db)))
+(rf/reg-sub ::loading-drafts? (fn [db _] (::loading-drafts? db)))
 
 ;;;; UI
 
@@ -113,19 +122,24 @@
        :items drafts}]]))
 
 (defn catalogue-page []
-  (let [language (rf/subscribe [:language])
-        items @(rf/subscribe [::catalogue])]
+  (let [language @(rf/subscribe [:language])
+        catalogue @(rf/subscribe [::catalogue])
+        loading-catalogue? @(rf/subscribe [::loading-catalogue?])
+        drafts @(rf/subscribe [::draft-applications])
+        loading-drafts? @(rf/subscribe [::loading-drafts?])]
     [:div
      [:h2 (text :t.catalogue/catalogue)]
-     (if (nil? items)
+     (if loading-catalogue?
        [spinner/big]
        [:div
-        [draft-application-list @(rf/subscribe [::draft-applications]) @language]
+        (if loading-drafts?
+          [spinner/big]
+          [draft-application-list drafts])
         [:h4 (text :t.catalogue/apply-resources)]
-        [cart/cart-list-container @language]
+        [cart/cart-list-container language]
         [catalogue-list
-         {:items items
-          :language @language
+         {:items catalogue
+          :language language
           :sorting (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))
           :filtering (assoc @(rf/subscribe [::filtering]) :set-filtering #(rf/dispatch [::set-filtering %]))
           :config @(rf/subscribe [:rems.config/config])}]])]))
@@ -177,4 +191,4 @@
    (example "catalogue-list with item linked to urn.fi"
             [catalogue-list {:items [{:title "Item title" :resid "urn:nbn:fi:lb-201403262"}] :sorting {:sort-column :name, :sort-order :asc}}])
    (example "catalogue-list with item linked to example.org"
-            [catalogue-list {:items [{:title "Item title" :resid "urn:nbn:fi:lb-201403262"}] :sorting {:sort-column :name, :sort-order :asc}  :config {:urn-organization "http://example.org/"}}])])
+            [catalogue-list {:items [{:title "Item title" :resid "urn:nbn:fi:lb-201403262"}] :sorting {:sort-column :name, :sort-order :asc} :config {:urn-organization "http://example.org/"}}])])
