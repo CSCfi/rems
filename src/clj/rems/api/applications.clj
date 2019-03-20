@@ -286,35 +286,6 @@
         (ok app)
         (not-found! "not found")))
 
-    (GET "/v2-wip/" []
-      :summary "Get current user's all applications"
-      :roles #{:logged-in}
-      :return [s/Any] ; TODO: add schema once the API has stabilized
-      (when (:dev env) ; TODO: remove feature toggle
-        (ok (get-user-applications-v2 (getx-user-id)))))
-
-    (GET "/v2-wip/:application-id" []
-      :summary "Get application by `application-id`"
-      :roles #{:logged-in}
-      :path-params [application-id :- (describe s/Num "application id")]
-      :responses {200 {:schema s/Any} ; TODO: add schema once the API has stabilized
-                  404 {:schema s/Str :description "Not found"}}
-      (when (:dev env) ; TODO: remove feature toggle
-        (if-let [app (api-get-application-v2 (getx-user-id) application-id)]
-          (ok app)
-          (not-found! "not found"))))
-
-    (GET "/v2-to-v1-wip/:application-id" []
-      :summary "Get application by `application-id`"
-      :roles #{:logged-in}
-      :path-params [application-id :- (describe s/Num "application id")]
-      :responses {200 {:schema s/Any} ; TODO: use GetApplicationResponse schema
-                  404 {:schema s/Str :description "Not found"}}
-      (when (:dev env) ; TODO: remove feature toggle
-        (if-let [app (api-get-application-v1 (getx-user-id) application-id)]
-          (ok app)
-          (not-found! "not found"))))
-
     (GET "/:application-id/pdf" []
       :summary "Get a pdf version of an application"
       :roles #{:logged-in}
@@ -370,3 +341,33 @@
           (ok {:success false
                :errors (:errors errors)})
           (ok {:success true}))))))
+
+(def v2-applications-api
+  (context "/v2/applications" []
+    :tags ["applications"]
+
+    (GET "/" []
+      :summary "Get current user's all applications"
+      :roles #{:logged-in}
+      :return [V2ApplicationOverview]
+      (ok (get-user-applications-v2 (getx-user-id))))
+
+    (GET "/:application-id" []
+      :summary "Get application by `application-id`"
+      :roles #{:logged-in}
+      :path-params [application-id :- (describe s/Num "application id")]
+      :responses {200 {:schema V2Application}
+                  404 {:schema s/Str :description "Not found"}}
+      (if-let [app (api-get-application-v2 (getx-user-id) application-id)]
+        (ok app)
+        (not-found! "not found")))
+
+    (GET "/:application-id/migration" []
+      :summary "Get application by `application-id` in v1 schema"
+      :roles #{:logged-in}
+      :path-params [application-id :- (describe s/Num "application id")]
+      :responses {200 {:schema GetApplicationResponse}
+                  404 {:schema s/Str :description "Not found"}}
+      (if-let [app (api-get-application-v1 (getx-user-id) application-id)]
+        (ok app)
+        (not-found! "not found")))))

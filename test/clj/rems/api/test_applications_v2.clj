@@ -151,6 +151,7 @@
                                                                      :mail "applicant@example.com"
                                                                      :commonName "Applicant"}
                                   :application/members #{}
+                                  :application/invitation-tokens {}
                                   :application/resources [{:catalogue-item/id 10
                                                            :resource/id 11
                                                            :resource/ext-id "urn:11"
@@ -240,8 +241,7 @@
                                                          :workflow.dynamic/state :rems.workflow.dynamic/draft
                                                          :workflow.dynamic/handlers #{"handler"}
                                                          :workflow.dynamic/awaiting-commenters #{}
-                                                         :workflow.dynamic/awaiting-deciders #{}
-                                                         :workflow.dynamic/invitations {}}}]
+                                                         :workflow.dynamic/awaiting-deciders #{}}}]
         (is (= expected-application (apply-events events)))
 
         (testing "> draft saved"
@@ -460,8 +460,8 @@
                         expected-application (deep-merge expected-application
                                                          {:application/last-activity (DateTime. 4000)
                                                           :application/events events
-                                                          :application/workflow {:workflow.dynamic/invitations {token {:name "Mr. Member"
-                                                                                                                       :email "member@example.com"}}}})]
+                                                          :application/invitation-tokens {token {:name "Mr. Member"
+                                                                                                 :email "member@example.com"}}})]
                     (is (= expected-application (apply-events events)))
 
                     (testing "> member uninvited"
@@ -476,7 +476,7 @@
                             expected-application (-> (deep-merge expected-application
                                                                  {:application/last-activity (DateTime. 5000)
                                                                   :application/events events})
-                                                     (assoc-in [:application/workflow :workflow.dynamic/invitations] {}))]
+                                                     (assoc :application/invitation-tokens {}))]
                         (is (= expected-application (apply-events events)))))
 
                     (testing "> member joined"
@@ -490,7 +490,7 @@
                                                                  {:application/last-activity (DateTime. 5000)
                                                                   :application/events events
                                                                   :application/members #{{:userid "member"}}})
-                                                     (assoc-in [:application/workflow :workflow.dynamic/invitations] {}))]
+                                                     (assoc :application/invitation-tokens {}))]
                         (is (= expected-application (apply-events events)))))))
 
                 (testing "> member added"
@@ -570,10 +570,20 @@
                                                        :application/member {:name "member"
                                                                             :email "member@example.com"}
                                                        :invitation/token "secret"})]
-        (is (= [{:name "member"
-                 :email "member@example.com"}]
-               (get-in (apply-user-permissions application "applicant") [:application/workflow :workflow.dynamic/invitations])
-               (get-in (apply-user-permissions application "handler") [:application/workflow :workflow.dynamic/invitations])))))))
+        (testing "- original"
+          (is (= {"secret" {:name "member"
+                            :email "member@example.com"}}
+                 (:application/invitation-tokens application)))
+          (is (= nil
+                 (:application/invited-members application))))
+        (doseq [user-id ["applicant" "handler"]]
+          (testing (str "- as user " user-id)
+            (let [application (apply-user-permissions application user-id)]
+              (is (= nil
+                     (:application/invitation-tokens application)))
+              (is (= #{{:name "member"
+                        :email "member@example.com"}}
+                     (:application/invited-members application))))))))))
 
 (defn- diff-app-v1 [user-id app-id]
   (ddiff/pretty-print (ddiff/diff (assoc-in (api-get-application user-id app-id)
