@@ -18,13 +18,13 @@
        (str/join ", ")))
 
 (def +all-columns+
-  [:id :description :resource :applicant :state :created :last-modified :view])
+  [:id :description :resource :applicant :state :created :last-activity :view])
 
 (def +default-columns+
   [:id :description :resource :applicant :state :created :view])
 
 (def +draft-columns+
-  [:id :resource :last-modified :view])
+  [:id :resource :last-activity :view])
 
 (defn- state-class [item]
   (if (form-fields-editable? item)
@@ -46,9 +46,9 @@
    :created {:value #(localize-time (:application/created %))
              :sort-value :application/created
              :header #(text :t.actions/created)}
-   :last-modified {:value #(localize-time (:application/last-activity %))
+   :last-activity {:value #(localize-time (:application/last-activity %))
                    :sort-value :application/last-activity
-                   :header #(text :t.actions/last-modified)}
+                   :header #(text :t.actions/last-activity)}
    :view {:value view-button
           :sortable? false
           :filterable? false}})

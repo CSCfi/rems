@@ -77,7 +77,7 @@
  ::sorting
  (fn [db [_ key]]
    (get-in db [::sorting key]
-           {:sort-column :last-modified
+           {:sort-column :last-activity
             :sort-order :desc})))
 
 (rf/reg-event-db ::set-sorting (fn [db [_ key sorting]] (assoc-in db [::sorting key] sorting)))
@@ -141,7 +141,7 @@
       [:div
        top-buttons
        [application-list/component
-        {:visible-columns [:id :description :resource :applicant :state :last-modified :view]
+        {:visible-columns [:id :description :resource :applicant :state :last-activity :view]
          :sorting (assoc @(rf/subscribe [::sorting ::handled-applications])
                          :set-sorting #(rf/dispatch [::set-sorting ::handled-applications %]))
          :filtering (assoc @(rf/subscribe [::filtering ::handled-applications])
