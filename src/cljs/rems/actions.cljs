@@ -13,20 +13,18 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} _]
-   {:db (-> db
-            (assoc ::loading-actions? true)
-            (dissoc ::actions ::handled-actions)) ; zero state that should be reloaded, good for performance
-    ::fetch-actions nil}))
+   {:db (dissoc db ::actions ::handled-actions) ; zero state that should be reloaded, good for performance
+    :dispatch [::fetch-actions]}))
 
 ;;;; actions
 
-(defn- fetch-actions []
-  (fetch "/api/actions/" {:handler #(rf/dispatch [::fetch-actions-result %])}))
-
-(rf/reg-fx
+(rf/reg-event-fx
  ::fetch-actions
- (fn [_]
-   (fetch-actions)))
+ (fn [{:keys [db]} _]
+   (fetch "/api/actions/"
+          {:handler #(rf/dispatch [::fetch-actions-result %])})
+   {:db (assoc db ::loading-actions? true)}))
+
 
 (rf/reg-event-db
  ::fetch-actions-result
@@ -48,18 +46,11 @@
 ;;;; handled actions
 
 (rf/reg-event-fx
- ::start-fetch-handled-actions
- (fn [{:keys [db]} _]
-   {:db (assoc db ::loading-handled-actions? true)
-    ::fetch-handled-actions []}))
-
-(defn- fetch-handled-actions []
-  (fetch "/api/actions/handled" {:handler #(rf/dispatch [::fetch-handled-actions-result %])}))
-
-(rf/reg-fx
  ::fetch-handled-actions
- (fn [_]
-   (fetch-handled-actions)))
+ (fn [{:keys [db]} _]
+   (fetch "/api/actions/handled"
+          {:handler #(rf/dispatch [::fetch-handled-actions-result %])})
+   {:db (assoc db ::loading-handled-actions? true)}))
 
 (rf/reg-event-db
  ::fetch-handled-actions-result
@@ -175,7 +166,7 @@
        (when (or (:reviewer? @actions) (:approver? @actions))
          [collapsible/component
           {:id "handled-approvals"
-           :on-open #(rf/dispatch [:rems.actions/start-fetch-handled-actions])
+           :on-open #(rf/dispatch [::fetch-handled-actions])
            :title (text :t.actions/handled-approvals)
            :collapse [handled-applications
                       (distinct-by :id (concat (:handled-reviews @handled-actions)
