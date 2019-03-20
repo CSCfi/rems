@@ -535,7 +535,7 @@
                                        :actor applicant
                                        :time (time/now)
                                        :type :rems.workflow.dynamic/submit}))
-    (let [appid2 (create-draft! applicant catid wfid "approved application with disabled item")]
+    (let [appid2 (create-draft! applicant catid wfid "submitted application with disabled item")]
       (run-and-check-dynamic-command! {:application-id appid2
                                        :actor applicant
                                        :time (time/now)
