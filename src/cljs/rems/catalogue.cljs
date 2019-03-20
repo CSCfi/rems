@@ -1,7 +1,7 @@
 (ns rems.catalogue
   (:require [clojure.string :as str]
             [re-frame.core :as rf]
-            [rems.application-list :as application]
+            [rems.application-list :as application-list]
             [rems.application-util :refer [form-fields-editable?]]
             [rems.atoms :refer [external-link]]
             [rems.cart :as cart]
@@ -36,7 +36,7 @@
 (rf/reg-event-fx
  ::fetch-catalogue
  (fn [{:keys [db]} _]
-   (fetch "/api/catalogue/"
+   (fetch "/api/catalogue"
           {:handler #(rf/dispatch [::fetch-catalogue-result %])})
    {:db (assoc db ::loading-catalogue? true)}))
 
@@ -55,7 +55,7 @@
 (rf/reg-event-fx
  ::fetch-drafts
  (fn [{:keys [db]} _]
-   (fetch "/api/applications/"
+   (fetch "/api/v2/applications"
           {:handler #(rf/dispatch [::fetch-drafts-result %])})
    {:db (assoc db ::loading-drafts? true)}))
 
@@ -102,23 +102,13 @@
           (when sorting {:sorting sorting})
           (when filtering {:filtering filtering}))])
 
-(defn- format-catalogue-items [app]
-  (str/join ", " (map :title (:catalogue-items app))))
-
 (defn draft-application-list [drafts]
   (when (seq drafts)
     [:div.drafts
      [:h4 (text :t.catalogue/continue-existing-application)]
-     [table/component
-      {:column-definitions {:id {:value :id
-                                 :header #(text :t.actions/application)}
-                            :resource {:value format-catalogue-items
-                                       :header #(text :t.actions/resource)}
-                            :modified {:value #(localize-time (:last-modified %))
-                                       :header #(text :t.actions/last-modified)}
-                            :view {:value application/view-button}}
-       :visible-columns [:id :resource :modified :view]
-       :id-function :id
+     [application-list/component
+      ;; TODO: use +all-columns+ like on other pages?
+      {:visible-columns application-list/+draft-columns+
        :items drafts}]]))
 
 (defn catalogue-page []

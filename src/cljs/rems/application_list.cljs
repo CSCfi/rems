@@ -6,12 +6,12 @@
             [rems.text :refer [localize-state localize-time localize-string text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
-(defn view-button [app]
+(defn- view-button [app]
   [:a.btn.btn-primary
    {:href (str "#/application/" (:id app))}
    (text :t.applications/view)])
 
-(defn- get-catalogue-items [app]
+(defn- format-catalogue-items [app]
   (->> (:application/resources app)
        (map :catalogue-item/title)
        (map localize-string)
@@ -23,7 +23,10 @@
 (def +default-columns+
   [:id :description :resource :applicant :state :created :view])
 
-(defn state-class [item]
+(def +draft-columns+
+  [:id :resource :last-modified :view])
+
+(defn- state-class [item]
   (if (form-fields-editable? item)
     "state text-highlight"
     "state"))
@@ -33,7 +36,7 @@
         :header #(text :t.actions/application)}
    :description {:value :application/description
                  :header #(text :t.actions/description)}
-   :resource {:value get-catalogue-items
+   :resource {:value format-catalogue-items
               :header #(text :t.actions/resource)}
    :applicant {:value :application/applicant
                :header #(text :t.actions/applicant)}
