@@ -129,12 +129,10 @@
         loading-drafts? @(rf/subscribe [::loading-drafts?])]
     [:div
      [:h2 (text :t.catalogue/catalogue)]
-     (if loading-catalogue?
+     (if (or loading-catalogue? loading-drafts?)
        [spinner/big]
        [:div
-        (if loading-drafts?
-          [spinner/big]
-          [draft-application-list drafts])
+        [draft-application-list drafts]
         [:h4 (text :t.catalogue/apply-resources)]
         [cart/cart-list-container language]
         [catalogue-list
