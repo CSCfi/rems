@@ -501,7 +501,7 @@
     (update applications app-id application-view event)
     applications))
 
-(defn- exclude-unnecessary-keys-from-summary [application]
+(defn- exclude-unnecessary-keys-from-overview [application]
   (dissoc application
           :application/events
           :application/form
@@ -516,7 +516,7 @@
          (remove nil?)
          ;; TODO: for caching it may be necessary to make assoc-injections idempotent and consider cache invalidation
          (map #(enrich-with-injections % injections))
-         (map exclude-unnecessary-keys-from-summary))))
+         (map exclude-unnecessary-keys-from-overview))))
 
 (defn- own-application? [application]
   (some #{:applicant

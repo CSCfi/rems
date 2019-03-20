@@ -181,7 +181,7 @@
    :application/roles #{s/Keyword}
    :application/permissions #{s/Keyword}})
 
-(s/defschema V2ApplicationSummary
+(s/defschema V2ApplicationOverview
   (dissoc V2Application
           :application/form
           :application/events

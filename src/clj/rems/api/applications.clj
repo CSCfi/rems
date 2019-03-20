@@ -349,7 +349,7 @@
     (GET "/" []
       :summary "Get current user's all applications"
       :roles #{:logged-in}
-      :return [V2ApplicationSummary]
+      :return [V2ApplicationOverview]
       (ok (get-user-applications-v2 (getx-user-id))))
 
     (GET "/:application-id" []
