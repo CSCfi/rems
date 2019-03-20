@@ -22,7 +22,7 @@
                            assert-response-is-ok)
               data (read-body response)]
           (is (= "application/json; charset=utf-8" (get-in response [:headers "Content-Type"])))
-          (is (= [1 2 3 4 5 6 7 19] (map :id (sort-by :id data))))))
+          (is (= [1 2 3 4 5 17 18 19] (map :id (sort-by :id data))))))
       (testing "transit support"
         (let [response (-> (request :get "/api/applications")
                            (authenticate api-key user-id)
@@ -207,7 +207,7 @@
         handler-id "developer"
         commenter-id "carl"
         decider-id "bob"
-        application-id 13] ;; submitted dynamic application from test data
+        application-id 11] ;; submitted dynamic application from test data
 
     (testing "getting dynamic application as applicant"
       (let [data (get-application user-id application-id)]
@@ -407,21 +407,28 @@
 
 (deftest disabled-catalogue-item
   (let [api-key "42"
-        user-id "alice"
-        catid 11
-        application-id 19]
-    (testing "save draft for disabled item"
+        applicant "alice"
+        handler "developer"
+        disabled-catalogue-item 11
+        draft-with-disabled 17
+        submitted-with-disabled 18]
+    (testing "save is forbidden for an application with a disabled item"
       (let [response (-> (request :post (str "/api/applications/save"))
-                         (authenticate api-key user-id)
+                         (authenticate api-key applicant)
                          (json-body {:command "save"
-                                     :catalogue-items [catid]
+                                     :catalogue-items [disabled-catalogue-item]
                                      :items {1 ""}})
                          app)]
         (is (= 400 (:status response)))))
-    (testing "submit for application with disabled item"
+    (testing "submit is forbidden for an application with a disabled item"
       (is (= {:success false :errors [{:type "forbidden"}]}
-             (send-dynamic-command user-id {:type :rems.workflow.dynamic/submit
-                                            :application-id application-id}))))))
+             (send-dynamic-command applicant {:type :rems.workflow.dynamic/submit
+                                              :application-id draft-with-disabled}))))
+    (testing "approve is allowed for a submitted application with a disabled item"
+      (is (= {:success true}
+             (send-dynamic-command handler {:type :rems.workflow.dynamic/approve
+                                              :application-id submitted-with-disabled
+                                              :comment "Looks fine."}))))))
 
 (def testfile (clojure.java.io/file "./test-data/test.txt"))
 

@@ -522,12 +522,29 @@
       (applications/submit-application applicant application)
       (applications/return-application approver application 0 "comment for return"))))
 
+(defn- run-and-check-dynamic-command! [& args]
+  (let [result (apply applications/dynamic-command! args)]
+    (assert (nil? result) {:actual result})
+    result))
+
 (defn- create-disabled-applications! [catid wfid applicant approver]
   (binding [context/*tempura* (locales/tempura-config)]
     (create-draft! applicant catid wfid "draft with disabled item")
-    (let [application (create-draft! applicant catid wfid "approved application with disabled item")]
-      (applications/submit-application applicant application)
-      (applications/approve-application approver application 0 "comment for approval"))))
+    (let [appid1 (create-draft! applicant catid wfid "approved application with disabled item")]
+      (run-and-check-dynamic-command! {:application-id appid1
+                                       :actor applicant
+                                       :time (time/now)
+                                       :type :rems.workflow.dynamic/submit}))
+    (let [appid2 (create-draft! applicant catid wfid "approved application with disabled item")]
+      (run-and-check-dynamic-command! {:application-id appid2
+                                       :actor applicant
+                                       :time (time/now)
+                                       :type :rems.workflow.dynamic/submit})
+      (run-and-check-dynamic-command! {:application-id appid2
+                                       :actor applicant
+                                       :time (time/now)
+                                       :type :rems.workflow.dynamic/approve
+                                       :comment "Looking good"}))))
 
 (defn- create-bundled-application! [catid catid2 wfid applicant approver]
   (binding [context/*tempura* (locales/tempura-config)]
@@ -535,11 +552,6 @@
       (applications/submit-application applicant app-id)
       (applications/return-application approver app-id 0 "comment for return")
       (applications/submit-application applicant app-id))))
-
-(defn- run-and-check-dynamic-command! [& args]
-  (let [result (apply applications/dynamic-command! args)]
-    (assert (nil? result) {:actual result})
-    result))
 
 (defn- create-member-applications! [catid wfid applicant approver members]
   (let [appid1 (create-draft! applicant catid wfid "draft with invited members")]
@@ -654,7 +666,6 @@
       (create-resource-license! res2 "Some test license" (+fake-users+ :owner))
       (db/set-catalogue-item-state! {:id disabled :enabled false})
       (create-applications! simple (:simple workflows) (+fake-users+ :approver1) (+fake-users+ :approver1))
-      (create-disabled-applications! disabled (:simple workflows) (+fake-users+ :approver1) (+fake-users+ :approver1))
       (create-bundled-application! simple bundlable (:simple workflows) (+fake-users+ :applicant1) (+fake-users+ :approver1))
       (create-review-applications! with-review (:with-review workflows) +fake-users+)
       (create-application-with-expired-resource-license! (:simple workflows) form +fake-users+)
@@ -669,7 +680,7 @@
       (let [dynamic-disabled (create-catalogue-item! res1 (:dynamic workflows) form
                                                      {"en" "Dynamic workflow (disabled)"
                                                       "fi" "Dynaaminen työvuo (pois käytöstä)"})]
-        (create-draft! (+fake-users+ :approver1) [dynamic-disabled] (:dynamic workflows) "draft for disabled application")
+        (create-disabled-applications! dynamic-disabled (:dynamic workflows) (+fake-users+ :approver1) (+fake-users+ :approver1))
         (db/set-catalogue-item-state! {:id dynamic-disabled :enabled false})))
     (finally
       (DateTimeUtils/setCurrentMillisSystem))))
@@ -702,7 +713,7 @@
     (create-resource-license! res2 "Some demo license" (+demo-users+ :owner))
     (db/set-catalogue-item-state! {:id disabled :enabled false})
     (create-applications! simple (:simple workflows) (+demo-users+ :applicant1) (+demo-users+ :approver1))
-    (create-disabled-applications! disabled (:simple workflows) (+demo-users+ :applicant1) (+demo-users+ :approver1))
+    (create-disabled-applications! disabled (:dynamic workflows) (+demo-users+ :applicant1) (+demo-users+ :approver1))
     (create-bundled-application! simple bundlable (:simple workflows) (+demo-users+ :applicant2) (+demo-users+ :approver1))
     (create-review-applications! with-review (:with-review workflows) +demo-users+)
     (create-application-with-expired-resource-license! (:simple workflows) form +demo-users+)

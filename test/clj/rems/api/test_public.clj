@@ -27,7 +27,7 @@
                      (authenticate api-key "developer")
                      app
                      read-body)]
-        (is (= 3 (count data)))))
+        (is (= 2 (count data)))))
 
     (testing "just for alice"
       (let [data (-> (request :get "/api/entitlements?user=alice")

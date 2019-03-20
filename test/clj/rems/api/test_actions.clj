@@ -21,9 +21,9 @@
           handled-body (get-response-body "developer" "actions/handled")]
       (is (:approver? actions-body))
       (is (:approver? handled-body))
-      (is (= [2 8 11 12 13 15 16 18] (map :id (:approvals actions-body))))
-      (is (= [2 2 3 7 8 9 9 9 10] (sort (map :id (mapcat :catalogue-items (:approvals actions-body))))))
-      (is (= [3 4 5 7 9 14] (map :id (:handled-approvals handled-body))))
+      (is (= [2 6 9 10 11 13 14 16 18] (map :id (:approvals actions-body))))
+      (is (= [2 2 3 7 8 9 9 9 10 11] (sort (map :id (mapcat :catalogue-items (:approvals actions-body))))))
+      (is (= [3 4 5 7 12 19] (map :id (:handled-approvals handled-body))))
       (is (empty? (:reviews body)))
       (is (empty? (:handled-reviews handled-body)))))
   (testing "listing as another approver"
@@ -31,9 +31,9 @@
           handled-body (get-response-body "bob" "actions/handled")]
       (is (:approver? actions-body))
       (is (:approver? handled-body))
-      (is (= [2 8 11 12] (map :id (:approvals actions-body))))
+      (is (= [2 6 9 10] (map :id (:approvals actions-body))))
       (is (= [2 2 3 7 8] (sort (map :id (mapcat :catalogue-items (:approvals actions-body))))))
-      (is (= [3 4 5 7] (map :id (:handled-approvals handled-body))))
+      (is (= [3 4 5] (map :id (:handled-approvals handled-body))))
       (is (empty? (:reviews body)))
       (is (empty? (:handled-reviews handled-body)))))
   (testing "listing as a reviewer"
@@ -42,9 +42,9 @@
       (is (:reviewer? actions-body))
       (is (:reviewer? handled-body))
       (is (empty? (:approvals body)))
-      (is (= [14] (map :id (:handled-approvals handled-body)))) ; TODO should have only one handled
+      (is (= [12] (map :id (:handled-approvals handled-body)))) ; TODO should have only one handled
       (is (empty? (:reviews body)))
-      (is (= [9 14] (map :id (:handled-reviews handled-body)))))))
+      (is (= [7 12] (map :id (:handled-reviews handled-body)))))))
 
 (deftest actions-api-security-test
   (testing "listing actions without authentication"
