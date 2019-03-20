@@ -3,7 +3,7 @@
             [rems.application-util :refer [form-fields-editable?]]
             [rems.guide-functions]
             [rems.table :as table]
-            [rems.text :refer [localize-state localize-time text]])
+            [rems.text :refer [localize-state localize-time localize-string text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn view-button [app]
@@ -12,7 +12,10 @@
    (text :t.applications/view)])
 
 (defn- get-catalogue-items [app]
-  (str/join ", " (map :title (:catalogue-items app))))
+  (->> (:application/resources app)
+       (map :catalogue-item/title)
+       (map localize-string)
+       (str/join ", ")))
 
 (def +all-columns+
   [:id :description :resource :applicant :state :created :last-modified :view])
@@ -26,22 +29,22 @@
     "state"))
 
 (def ^:private +columns+
-  {:id {:value :id
+  {:id {:value :application/id
         :header #(text :t.actions/application)}
-   :description {:value :description
+   :description {:value :application/description
                  :header #(text :t.actions/description)}
    :resource {:value get-catalogue-items
               :header #(text :t.actions/resource)}
-   :applicant {:value :applicantuserid
+   :applicant {:value :application/applicant
                :header #(text :t.actions/applicant)}
-   :state {:value #(localize-state (:state %))
+   :state {:value #(localize-state (get-in % [:application/workflow :workflow.dynamic/state]))
            :header #(text :t.actions/state)
            :class state-class}
-   :created {:value #(localize-time (:start %))
-             :sort-value :start
+   :created {:value #(localize-time (:application/created %))
+             :sort-value :application/created
              :header #(text :t.actions/created)}
-   :last-modified {:value #(localize-time (:last-modified %))
-                   :sort-value :last-modified
+   :last-modified {:value #(localize-time (:application/last-activity %))
+                   :sort-value :application/last-activity
                    :header #(text :t.actions/last-modified)}
    :view {:value view-button
           :sortable? false
@@ -56,7 +59,7 @@
   [opts]
   [table/component
    (merge {:column-definitions +columns+
-           :id-function :id
+           :id-function :application/id
            :class "applications"}
           opts)])
 

@@ -16,7 +16,7 @@
 ;;;; applications
 
 (defn- fetch-my-applications []
-  (fetch "/api/applications/" {:handler #(rf/dispatch [::fetch-my-applications-result %])}))
+  (fetch "/api/v2/applications" {:handler #(rf/dispatch [::fetch-my-applications-result %])}))
 
 (rf/reg-fx
  ::fetch-my-applications

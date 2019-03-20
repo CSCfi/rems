@@ -41,6 +41,12 @@
                  (.error js/console e)
                  (str (vec ks)))))))
 
+(defn localize-string [str]
+  (or #?(:clj (get str context/*lang*)
+         :cljs (get str @(rf/subscribe [:language])))
+      (get str :default)
+      str))
+
 (defn localize-state [state]
   (text (case state
           "draft" :t.applications.states/draft

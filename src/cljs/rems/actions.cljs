@@ -21,10 +21,9 @@
 (rf/reg-event-fx
  ::fetch-actions
  (fn [{:keys [db]} _]
-   (fetch "/api/actions/"
+   (fetch "/api/v2/reviews/open"
           {:handler #(rf/dispatch [::fetch-actions-result %])})
    {:db (assoc db ::loading-actions? true)}))
-
 
 (rf/reg-event-db
  ::fetch-actions-result
@@ -48,7 +47,7 @@
 (rf/reg-event-fx
  ::fetch-handled-actions
  (fn [{:keys [db]} _]
-   (fetch "/api/actions/handled"
+   (fetch "/api/v2/reviews/handled"
           {:handler #(rf/dispatch [::fetch-handled-actions-result %])})
    {:db (assoc db ::loading-handled-actions? true)}))
 
@@ -149,27 +148,19 @@
                            :set-filtering #(rf/dispatch [::set-filtering ::handled-applications %]))
          :items apps}]])))
 
-(defn actions-page [reviews]
-  (let [actions (rf/subscribe [::actions])
-        handled-actions (rf/subscribe [::handled-actions])]
+(defn actions-page []
+  (let [actions @(rf/subscribe [::actions])
+        handled-actions @(rf/subscribe [::handled-actions])]
     (if @(rf/subscribe [::loading-actions?])
       [spinner/big]
       [:div.spaced-sections
-       (when (or (:reviewer? @actions) (:approver? @actions))
-         [collapsible/component
-          {:id "open-approvals"
-           :open? true
-           :title (text :t.actions/open-approvals)
-           :collapse [open-applications
-                      (distinct-by :id (concat (:reviews @actions)
-                                               (:approvals @actions)))]}])
-       (when (or (:reviewer? @actions) (:approver? @actions))
-         [collapsible/component
-          {:id "handled-approvals"
-           :on-open #(rf/dispatch [::fetch-handled-actions])
-           :title (text :t.actions/handled-approvals)
-           :collapse [handled-applications
-                      (distinct-by :id (concat (:handled-reviews @handled-actions)
-                                               (:handled-approvals @handled-actions)))
-                      nil
-                      @(rf/subscribe [::loading-handled-actions?])]}])])))
+       [collapsible/component
+        {:id "open-approvals"
+         :open? true
+         :title (text :t.actions/open-approvals)
+         :collapse [open-applications actions]}]
+       [collapsible/component
+        {:id "handled-approvals"
+         :on-open #(rf/dispatch [::fetch-handled-actions])
+         :title (text :t.actions/handled-approvals)
+         :collapse [handled-applications handled-actions nil @(rf/subscribe [::loading-handled-actions?])]}]])))
