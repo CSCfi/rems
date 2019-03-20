@@ -1,6 +1,5 @@
 (ns rems.catalogue
-  (:require [clojure.string :as str]
-            [re-frame.core :as rf]
+  (:require [re-frame.core :as rf]
             [rems.application-list :as application-list]
             [rems.application-util :refer [form-fields-editable?]]
             [rems.atoms :refer [external-link]]
@@ -160,12 +159,20 @@
 
    (component-info draft-application-list)
    (example "draft-list empty"
-            [draft-application-list [] nil])
+            [draft-application-list []])
    (example "draft-list with two drafts"
-            [draft-application-list [{:id 1 :catalogue-items [{:title "Item 5"}] :state "draft" :applicantuserid "alice"
-                                      :start "1980-01-02T13:45:00.000Z" :last-modified "2017-01-01T01:01:01:001Z"}
-                                     {:id 2 :catalogue-items [{:title "Item 3"}] :state "draft" :applicantuserid "bob"
-                                      :start "1971-02-03T23:59:00.000Z" :last-modified "2017-01-01T01:01:01:001Z"}] nil])
+            [draft-application-list [{:application/id 1
+                                      :application/resources [{:catalogue-item/title "Item 5"}]
+                                      :application/workflow {:workflow.dynamic/state :rems.workflow.dynamic/draft}
+                                      :application/applicant "alice"
+                                      :application/created "1980-01-02T13:45:00.000Z"
+                                      :application/last-activity "2017-01-01T01:01:01:001Z"}
+                                     {:application/id 2
+                                      :application/resources [{:catalogue-item/title "Item 3"}]
+                                      :application/workflow {:workflow.dynamic/state :rems.workflow.dynamic/draft}
+                                      :application/applicant "bob"
+                                      :application/created "1971-02-03T23:59:00.000Z"
+                                      :application/last-activity "2017-01-01T01:01:01:001Z"}]])
 
    (component-info catalogue-list)
    (example "catalogue-list empty"
