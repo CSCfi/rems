@@ -8,20 +8,17 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} _]
-   {:db (-> db
-            (assoc ::loading-my-applications? true)
-            (dissoc ::my-applications))
-    ::fetch-my-applications nil}))
+   {:db (dissoc db ::my-applications)
+    :dispatch [::fetch-my-applications]}))
 
 ;;;; applications
 
-(defn- fetch-my-applications []
-  (fetch "/api/v2/applications" {:handler #(rf/dispatch [::fetch-my-applications-result %])}))
-
-(rf/reg-fx
+(rf/reg-event-fx
  ::fetch-my-applications
- (fn [_]
-   (fetch-my-applications)))
+ (fn [{:keys [db]} _]
+   (fetch "/api/v2/applications"
+          {:handler #(rf/dispatch [::fetch-my-applications-result %])})
+   {:db (assoc db ::loading-my-applications? true)}))
 
 (rf/reg-event-db
  ::fetch-my-applications-result
@@ -58,13 +55,14 @@
 ;;;; UI
 
 (defn applications-page []
-  (let [apps (rf/subscribe [::my-applications])]
+  (let [apps @(rf/subscribe [::my-applications])
+        loading? @(rf/subscribe [::loading-my-applications?])]
     [:div
      [:h2 (text :t.applications/applications)]
-     (cond @(rf/subscribe [::loading-my-applications?])
+     (cond loading?
            [spinner/big]
 
-           (empty? @apps)
+           (empty? apps)
            [:div.applications.alert.alert-success (text :t/applications.empty)]
 
            :else
@@ -72,4 +70,4 @@
             {:visible-columns application-list/+all-columns+
              :sorting (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))
              :filtering (assoc @(rf/subscribe [::filtering]) :set-filtering #(rf/dispatch [::set-filtering %]))
-             :items @apps}])]))
+             :items apps}])]))
