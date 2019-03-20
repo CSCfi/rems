@@ -55,7 +55,8 @@
       (is (= "(2)" (andstr "(" (:foo x) ")"))))))
 
 (defn deep-merge [a b]
-  (cond (and (sequential? a)
+  (cond (:replace (meta b)) (merge-with deep-merge b)
+        (and (sequential? a)
              (sequential? b)) (let [max-length (max (count a) (count b))
                                     a (take max-length (concat a (repeat nil)))
                                     b (take max-length (concat b (repeat nil)))]
@@ -105,4 +106,11 @@
                        '({:a 2}))))
     (is (= [{:a 1 :b 2 :c 2}]
            (deep-merge '({:a 1 :b 1})
-                       '({:b 2 :c 2}))))))
+                       '({:b 2 :c 2})))))
+  (testing "replace instead of merge"
+    (is (= {:a {:bar 2}}
+           (deep-merge {:a {:foo 1}}
+                       {:a ^:replace {:bar 2}})))
+    (is (= {:a []}
+           (deep-merge {:a [{:foo 1}]}
+                       {:a ^:replace []})))))
