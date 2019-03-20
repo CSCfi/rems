@@ -1,7 +1,6 @@
 (ns rems.catalogue
-  (:require [clojure.string :as str]
-            [re-frame.core :as rf]
-            [rems.application-list :as application]
+  (:require [re-frame.core :as rf]
+            [rems.application-list :as application-list]
             [rems.application-util :refer [form-fields-editable?]]
             [rems.atoms :refer [external-link]]
             [rems.cart :as cart]
@@ -18,9 +17,9 @@
  ::enter-page
  (fn [{:keys [db]} _]
    (if (roles/is-logged-in? (get-in db [:identity :roles]))
-     {:db (assoc db ::catalogue nil)
-      ::fetch-catalogue nil
-      ::fetch-drafts nil}
+     {:db (dissoc db ::catalogue ::draft-applications)
+      :dispatch-n [[::fetch-catalogue]
+                   [::fetch-drafts]]}
      (unauthorized!))))
 
 ;;;; table sorting
@@ -33,32 +32,41 @@
 
 ;;;; catalogue
 
-(defn- fetch-catalogue []
-  (fetch "/api/catalogue/" {:handler #(rf/dispatch [::fetch-catalogue-result %])}))
-
-(rf/reg-fx ::fetch-catalogue (fn [_] (fetch-catalogue)))
+(rf/reg-event-fx
+ ::fetch-catalogue
+ (fn [{:keys [db]} _]
+   (fetch "/api/catalogue"
+          {:handler #(rf/dispatch [::fetch-catalogue-result %])})
+   {:db (assoc db ::loading-catalogue? true)}))
 
 (rf/reg-event-db
  ::fetch-catalogue-result
  (fn [db [_ catalogue]]
-   (assoc db ::catalogue catalogue)))
+   (-> db
+       (assoc ::catalogue catalogue)
+       (dissoc ::loading-catalogue?))))
 
 (rf/reg-sub ::catalogue (fn [db _] (::catalogue db)))
-
+(rf/reg-sub ::loading-catalogue? (fn [db _] (::loading-catalogue? db)))
 
 ;;;; draft applications
+
+(rf/reg-event-fx
+ ::fetch-drafts
+ (fn [{:keys [db]} _]
+   (fetch "/api/v2/applications"
+          {:handler #(rf/dispatch [::fetch-drafts-result %])})
+   {:db (assoc db ::loading-drafts? true)}))
 
 (rf/reg-event-db
  ::fetch-drafts-result
  (fn [db [_ applications]]
-   (assoc db ::draft-applications (filter form-fields-editable? applications))))
-
-(defn- fetch-drafts []
-  (fetch "/api/applications/" {:handler #(rf/dispatch [::fetch-drafts-result %])}))
-
-(rf/reg-fx ::fetch-drafts (fn [_] (fetch-drafts)))
+   (-> db
+       (assoc ::draft-applications (filter form-fields-editable? applications))
+       (dissoc ::loading-drafts?))))
 
 (rf/reg-sub ::draft-applications (fn [db _] (::draft-applications db)))
+(rf/reg-sub ::loading-drafts? (fn [db _] (::loading-drafts? db)))
 
 ;;;; UI
 
@@ -93,39 +101,32 @@
           (when sorting {:sorting sorting})
           (when filtering {:filtering filtering}))])
 
-(defn- format-catalogue-items [app]
-  (str/join ", " (map :title (:catalogue-items app))))
-
 (defn draft-application-list [drafts]
   (when (seq drafts)
     [:div.drafts
      [:h4 (text :t.catalogue/continue-existing-application)]
-     [table/component
-      {:column-definitions {:id {:value :id
-                                 :header #(text :t.actions/application)}
-                            :resource {:value format-catalogue-items
-                                       :header #(text :t.actions/resource)}
-                            :modified {:value #(localize-time (:last-modified %))
-                                       :header #(text :t.actions/last-modified)}
-                            :view {:value application/view-button}}
-       :visible-columns [:id :resource :modified :view]
-       :id-function :id
+     [application-list/component
+      ;; TODO: use +all-columns+ like on other pages?
+      {:visible-columns application-list/+draft-columns+
        :items drafts}]]))
 
 (defn catalogue-page []
-  (let [language (rf/subscribe [:language])
-        items @(rf/subscribe [::catalogue])]
+  (let [language @(rf/subscribe [:language])
+        catalogue @(rf/subscribe [::catalogue])
+        loading-catalogue? @(rf/subscribe [::loading-catalogue?])
+        drafts @(rf/subscribe [::draft-applications])
+        loading-drafts? @(rf/subscribe [::loading-drafts?])]
     [:div
      [:h2 (text :t.catalogue/catalogue)]
-     (if (nil? items)
+     (if (or loading-catalogue? loading-drafts?)
        [spinner/big]
        [:div
-        [draft-application-list @(rf/subscribe [::draft-applications]) @language]
+        [draft-application-list drafts]
         [:h4 (text :t.catalogue/apply-resources)]
-        [cart/cart-list-container @language]
+        [cart/cart-list-container language]
         [catalogue-list
-         {:items items
-          :language @language
+         {:items catalogue
+          :language language
           :sorting (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))
           :filtering (assoc @(rf/subscribe [::filtering]) :set-filtering #(rf/dispatch [::set-filtering %]))
           :config @(rf/subscribe [:rems.config/config])}]])]))
@@ -158,12 +159,20 @@
 
    (component-info draft-application-list)
    (example "draft-list empty"
-            [draft-application-list [] nil])
+            [draft-application-list []])
    (example "draft-list with two drafts"
-            [draft-application-list [{:id 1 :catalogue-items [{:title "Item 5"}] :state "draft" :applicantuserid "alice"
-                                      :start "1980-01-02T13:45:00.000Z" :last-modified "2017-01-01T01:01:01:001Z"}
-                                     {:id 2 :catalogue-items [{:title "Item 3"}] :state "draft" :applicantuserid "bob"
-                                      :start "1971-02-03T23:59:00.000Z" :last-modified "2017-01-01T01:01:01:001Z"}] nil])
+            [draft-application-list [{:application/id 1
+                                      :application/resources [{:catalogue-item/title "Item 5"}]
+                                      :application/workflow {:workflow.dynamic/state :rems.workflow.dynamic/draft}
+                                      :application/applicant "alice"
+                                      :application/created "1980-01-02T13:45:00.000Z"
+                                      :application/last-activity "2017-01-01T01:01:01:001Z"}
+                                     {:application/id 2
+                                      :application/resources [{:catalogue-item/title "Item 3"}]
+                                      :application/workflow {:workflow.dynamic/state :rems.workflow.dynamic/draft}
+                                      :application/applicant "bob"
+                                      :application/created "1971-02-03T23:59:00.000Z"
+                                      :application/last-activity "2017-01-01T01:01:01:001Z"}]])
 
    (component-info catalogue-list)
    (example "catalogue-list empty"
@@ -177,4 +186,4 @@
    (example "catalogue-list with item linked to urn.fi"
             [catalogue-list {:items [{:title "Item title" :resid "urn:nbn:fi:lb-201403262"}] :sorting {:sort-column :name, :sort-order :asc}}])
    (example "catalogue-list with item linked to example.org"
-            [catalogue-list {:items [{:title "Item title" :resid "urn:nbn:fi:lb-201403262"}] :sorting {:sort-column :name, :sort-order :asc}  :config {:urn-organization "http://example.org/"}}])])
+            [catalogue-list {:items [{:title "Item title" :resid "urn:nbn:fi:lb-201403262"}] :sorting {:sort-column :name, :sort-order :asc} :config {:urn-organization "http://example.org/"}}])])

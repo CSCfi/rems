@@ -69,7 +69,7 @@
             :handled-approvals "Handled applications"
             :handled-reviews "Handled reviews"
             :invite-member "Invite member"
-            :last-modified "Modified"
+            :last-activity "Last activity"
             :load-application-states "Load application states"
             :member "Member"
             :member-name "Name"

@@ -13,20 +13,17 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]} _]
-   {:db (-> db
-            (assoc ::loading-actions? true)
-            (dissoc ::actions ::handled-actions)) ; zero state that should be reloaded, good for performance
-    ::fetch-actions nil}))
+   {:db (dissoc db ::actions ::handled-actions) ; zero state that should be reloaded, good for performance
+    :dispatch [::fetch-actions]}))
 
 ;;;; actions
 
-(defn- fetch-actions []
-  (fetch "/api/actions/" {:handler #(rf/dispatch [::fetch-actions-result %])}))
-
-(rf/reg-fx
+(rf/reg-event-fx
  ::fetch-actions
- (fn [_]
-   (fetch-actions)))
+ (fn [{:keys [db]} _]
+   (fetch "/api/v2/reviews/open"
+          {:handler #(rf/dispatch [::fetch-actions-result %])})
+   {:db (assoc db ::loading-actions? true)}))
 
 (rf/reg-event-db
  ::fetch-actions-result
@@ -48,18 +45,11 @@
 ;;;; handled actions
 
 (rf/reg-event-fx
- ::start-fetch-handled-actions
- (fn [{:keys [db]} _]
-   {:db (assoc db ::loading-handled-actions? true)
-    ::fetch-handled-actions []}))
-
-(defn- fetch-handled-actions []
-  (fetch "/api/actions/handled" {:handler #(rf/dispatch [::fetch-handled-actions-result %])}))
-
-(rf/reg-fx
  ::fetch-handled-actions
- (fn [_]
-   (fetch-handled-actions)))
+ (fn [{:keys [db]} _]
+   (fetch "/api/v2/reviews/handled"
+          {:handler #(rf/dispatch [::fetch-handled-actions-result %])})
+   {:db (assoc db ::loading-handled-actions? true)}))
 
 (rf/reg-event-db
  ::fetch-handled-actions-result
@@ -87,7 +77,7 @@
  ::sorting
  (fn [db [_ key]]
    (get-in db [::sorting key]
-           {:sort-column :last-modified
+           {:sort-column :last-activity
             :sort-order :desc})))
 
 (rf/reg-event-db ::set-sorting (fn [db [_ key sorting]] (assoc-in db [::sorting key] sorting)))
@@ -151,33 +141,26 @@
       [:div
        top-buttons
        [application-list/component
-        {:visible-columns [:id :description :resource :applicant :state :last-modified :view]
+        {:visible-columns [:id :description :resource :applicant :state :last-activity :view]
          :sorting (assoc @(rf/subscribe [::sorting ::handled-applications])
                          :set-sorting #(rf/dispatch [::set-sorting ::handled-applications %]))
          :filtering (assoc @(rf/subscribe [::filtering ::handled-applications])
                            :set-filtering #(rf/dispatch [::set-filtering ::handled-applications %]))
          :items apps}]])))
 
-(defn actions-page [reviews]
-  (let [actions (rf/subscribe [::actions])
-        handled-actions (rf/subscribe [::handled-actions])]
+(defn actions-page []
+  (let [actions @(rf/subscribe [::actions])
+        handled-actions @(rf/subscribe [::handled-actions])]
     (if @(rf/subscribe [::loading-actions?])
       [spinner/big]
       [:div.spaced-sections
-       (when (or (:reviewer? @actions) (:approver? @actions))
-         [collapsible/component
-          {:id "open-approvals"
-           :open? true
-           :title (text :t.actions/open-approvals)
-           :collapse [open-applications
-                      (distinct-by :id (concat (:reviews @actions)
-                                               (:approvals @actions)))]}])
-       (when (or (:reviewer? @actions) (:approver? @actions))
-         [collapsible/component
-          {:id "handled-approvals"
-           :on-open #(rf/dispatch [:rems.actions/start-fetch-handled-actions])
-           :title (text :t.actions/handled-approvals)
-           :collapse [handled-applications
-                      (distinct-by :id (concat (:handled-reviews @handled-actions)
-                                               (:handled-approvals @handled-actions)))
-                      @(rf/subscribe [::loading-handled-actions?])]}])])))
+       [collapsible/component
+        {:id "open-approvals"
+         :open? true
+         :title (text :t.actions/open-approvals)
+         :collapse [open-applications actions]}]
+       [collapsible/component
+        {:id "handled-approvals"
+         :on-open #(rf/dispatch [::fetch-handled-actions])
+         :title (text :t.actions/handled-approvals)
+         :collapse [handled-applications handled-actions nil @(rf/subscribe [::loading-handled-actions?])]}]])))

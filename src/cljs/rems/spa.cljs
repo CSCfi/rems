@@ -5,7 +5,7 @@
             [markdown.core :refer [md->html]]
             [re-frame.core :as rf :refer [dispatch reg-event-db reg-event-fx reg-sub reg-fx]]
             [reagent.core :as r]
-            [rems.actions :refer [actions-page fetch-actions]]
+            [rems.actions :refer [actions-page]]
             [rems.actions.accept-invitation :refer [accept-invitation-page]]
             [rems.administration.administration :refer [administration-page]]
             [rems.administration.catalogue-item :refer [catalogue-item-page]]
