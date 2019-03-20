@@ -180,4 +180,5 @@
            :collapse [handled-applications
                       (distinct-by :id (concat (:handled-reviews @handled-actions)
                                                (:handled-approvals @handled-actions)))
+                      nil
                       @(rf/subscribe [::loading-handled-actions?])]}])])))
