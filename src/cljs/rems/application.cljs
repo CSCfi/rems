@@ -13,7 +13,7 @@
             [rems.actions.request-comment :refer [request-comment-action-button request-comment-form]]
             [rems.actions.request-decision :refer [request-decision-action-button request-decision-form]]
             [rems.actions.return-action :refer [return-action-button return-form]]
-            [rems.application-util :refer [form-fields-editable?]]
+            [rems.application-util :refer [draft? form-fields-editable? is-applicant? in-processing?]]
             [rems.atoms :refer [external-link flash-message info-field textarea]]
             [rems.autocomplete :as autocomplete]
             [rems.catalogue-util :refer [get-catalogue-item-title]]
@@ -37,6 +37,32 @@
 
 ;; TODO named secretary routes give us equivalent functions
 ;; TODO should the secretary route definitions be in this ns too?
+
+(defn item-disabled? [item]
+  (or (= "disabled" (:state item))
+      (:archived item)))
+
+(defn- can-submit-application? [application]
+  (let [catalogue-items (:catalogue-items application)
+        application-form (:application application)]
+    (prn (is-applicant? application-form))
+    (prn (draft? application-form))
+    (not (and (is-applicant? application-form)
+              (draft? application-form)
+              (seq (filter item-disabled? catalogue-items))))))
+
+(defn- disabled-items-warning [application]
+  (let [language @(rf/subscribe [:language])
+        catalogue-items (:catalogue-items application)
+        application-form (:application application)]
+    (when (or (and (is-applicant? application-form) (draft? application-form))
+              (in-processing? application-form))
+      (when-some [items (seq (filter item-disabled? catalogue-items))]
+        [:div.alert.alert-danger
+         (text :t.form/alert-disabled-items)
+         (into [:ul]
+               (for [item items]
+                 [:li (get-catalogue-item-title item language)]))]))))
 
 (defn apply-for [items]
   (let [url (str "#/application?items=" (str/join "," (sort (map :id items))))]
@@ -514,10 +540,11 @@
                    :text (text :t.form/save)
                    :on-click #(rf/dispatch [::save-application (text :t.form/save)])}])
 
-(defn- submit-button []
+(defn- submit-button [application]
   [button-wrapper {:id "submit"
                    :text (text :t.form/submit)
                    :class :btn-primary
+                   :disabled (not (can-submit-application? application))
                    :on-click #(rf/dispatch [::submit-application (text :t.form/submit)])}])
 
 (defn- application-fields [form edit-application language]
@@ -699,9 +726,10 @@
                 [invite-member-form application-id (partial reload! application-id)]
                 [add-member-form application-id (partial reload! application-id)]]]}]))
 
-(defn- dynamic-actions [app]
-  (let [commands-and-actions [:rems.workflow.dynamic/save-draft [save-button]
-                              :rems.workflow.dynamic/submit [submit-button]
+(defn- dynamic-actions [application]
+  (let [app (:application application)
+        commands-and-actions [:rems.workflow.dynamic/save-draft [save-button]
+                              :rems.workflow.dynamic/submit [submit-button application]
                               :rems.workflow.dynamic/return [return-action-button]
                               :rems.workflow.dynamic/request-decision [request-decision-action-button]
                               :rems.workflow.dynamic/decide [decide-action-button]
@@ -714,8 +742,9 @@
                     :when (contains? (:possible-commands app) command)]
                 action))))
 
-(defn- actions-form [app]
-  (let [actions (dynamic-actions app)
+(defn- actions-form [application]
+  (let [app (:application application)
+        actions (dynamic-actions application)
         reload (partial reload! (:id app))
         forms [[:div#actions-forms.mt-3
                 [request-comment-form (:id app) reload]
@@ -732,15 +761,6 @@
         :always (into [:div (into [:div.commands]
                                   actions)]
                       forms)}])))
-
-(defn- disabled-items-warning [catalogue-items]
-  (let [language @(rf/subscribe [:language])]
-    (when-some [items (seq (filter #(= "disabled" (:state %)) catalogue-items))]
-      [:div.alert.alert-danger
-       (text :t.form/alert-disabled-items)
-       (into [:ul]
-             (for [item items]
-               [:li (get-catalogue-item-title item language)]))])))
 
 (defn- applied-resources [catalogue-items]
   (let [language @(rf/subscribe [:language])]
@@ -773,7 +793,7 @@
                        (map dynamic-event->event (:dynamic-events app)))
         applicant-attributes (:applicant-attributes application)
         messages (remove nil?
-                         [(disabled-items-warning (:catalogue-items application)) ; NB: eval this here so we get nil or a warning
+                         [(disabled-items-warning application) ; NB: eval this here so we get nil or a warning
                           (when (:validation edit-application)
                             [flash-message
                              {:status :danger
@@ -787,7 +807,7 @@
      [:div.mt-3 [applied-resources (:catalogue-items application)]]
      [:div.my-3 [application-fields application edit-application language]]
      [:div.my-3 [application-licenses application edit-application language]]
-     [:div.mb-3 [actions-form app]]]))
+     [:div.mb-3 [actions-form application]]]))
 
 ;;;; Entrypoint
 

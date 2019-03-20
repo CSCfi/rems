@@ -105,9 +105,9 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
         (migrate-application! 3 (:id new-workflow))
         (migrate-application! 4 (:id new-workflow))
         (migrate-application! 5 (:id new-workflow))
+        (migrate-application! 6 (:id new-workflow))
+        (migrate-application! 7 (:id new-workflow))
         (migrate-application! 8 (:id new-workflow))
-        (migrate-application! 9 (:id new-workflow))
-        (migrate-application! 10 (:id new-workflow))
         (migrate-application! 20 (:id new-workflow))
         (migrate-application! 21 (:id new-workflow))
         (migrate-application! 22 (:id new-workflow))
@@ -338,7 +338,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                          :handlers ["developer"]}}
              (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow]))))
 
-    (let [app-id 8
+    (let [app-id 6
           application (applications/get-application-state app-id)]
       (is (= {:id app-id
               :description "bundled application"
@@ -394,7 +394,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                          :handlers ["developer"]}}
              (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow]))))
 
-    (let [app-id 9
+    (let [app-id 7
           application (applications/get-application-state app-id)]
       (is (= {:id app-id
               :description "application with review"
@@ -449,7 +449,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                          :handlers ["developer"]}}
              (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow]))))
 
-    (let [app-id 10
+    (let [app-id 8
           application (applications/get-application-state app-id)]
       (is (= {:id app-id
               :description "application in review"
