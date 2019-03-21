@@ -104,10 +104,8 @@
 (rf/reg-event-fx
  ::enter-application-page
  (fn [{:keys [db]} [_ id]]
-   (merge {:db (assoc db
-                      ::application nil
-                      ::edit-application nil)
-           ::fetch-application id})))
+   {:db (dissoc db ::application ::edit-application)
+    ::fetch-application id}))
 
 (rf/reg-fx
  ::fetch-application
