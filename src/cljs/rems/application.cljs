@@ -24,7 +24,7 @@
             [rems.phase :refer [phases]]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
-            [rems.text :refer [localize-decision localize-event localize-item localize-state localize-time text text-format]]
+            [rems.text :refer [localize-decision localize-event localize-string localize-item localize-state localize-time text text-format]]
             [rems.util :refer [dispatch! fetch post!]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
@@ -804,16 +804,15 @@
                                   actions)]
                       forms)}])))
 
-(defn- applied-resources [catalogue-items]
-  (let [language @(rf/subscribe [:language])]
-    [collapsible/component
-     {:id "resources"
-      :title (text :t.form/resources)
-      :always [:div.form-items.form-group
-               (into [:ul]
-                     (for [item catalogue-items]
-                       ^{:key (:id item)}
-                       [:li (get-catalogue-item-title item language)]))]}]))
+(defn- applied-resources [application]
+  [collapsible/component
+   {:id "resources"
+    :title (text :t.form/resources)
+    :always [:div.form-items.form-group
+             (into [:ul]
+                   (for [resource (:application/resources application)]
+                     ^{:key (:resource/id resource)}
+                     [:li (localize-string (:catalogue-item/title resource))]))]}])
 
 (defn- render-application [application edit-application language]
   (let [messages (remove nil?
@@ -828,7 +827,7 @@
      (into [:div] messages)
      [application-header application]
      [:div.mt-3 [applicants-info application]]
-     [:div.mt-3 [applied-resources (:catalogue-items application)]]
+     [:div.mt-3 [applied-resources application]]
      [:div.my-3 [application-fields application edit-application language]]
      [:div.my-3 [application-licenses application edit-application language]]
      [:div.mb-3 [actions-form application]]]))
@@ -1042,35 +1041,35 @@
    (example "application, partially filled"
             [render-application
              {:application/id 17
-              :application/workflow {:workflow.dynamic/state :rems.workflow.dynamic/draft}}
-             :application/resources [{:catalogue-item/title "An applied item"}]
-             :application/form {:form/fields [{:field/id 1
-                                               :field/type :text
-                                               :field/title {:en "Field 1"}
-                                               :field/placeholder {:en "prompt 1"}}
-                                              {:field/id 2
-                                               :field/type :label
-                                               :title "Please input your wishes below."}
-                                              {:field/id 3
-                                               :field/type :texta
-                                               :field/optional true
-                                               :field/title {:en "Field 2"}
-                                               :field/placeholder {:en "prompt 2"}}
-                                              {:field/id 4
-                                               :field/type :unsupported
-                                               :field/title {:en "Field 3"}
-                                               :field/placeholder {:en "prompt 3"}}
-                                              {:field/id 5
-                                               :field/type :date
-                                               :field/title {:en "Field 4"}}]}
-             :application/licenses [{:license/id 4
-                                     :license/type :text
-                                     :license/title {:en "A Text License"}
-                                     :license/text {:en lipsum}}
-                                    {:license/id 5
-                                     :license/type :link
-                                     :license/title {:en "Link to license"}
-                                     :license/link {:en "/#/guide"}}]
+              :application/workflow {:workflow.dynamic/state :rems.workflow.dynamic/draft}
+              :application/resources [{:catalogue-item/title {:en "An applied item"}}]
+              :application/form {:form/fields [{:field/id 1
+                                                :field/type :text
+                                                :field/title {:en "Field 1"}
+                                                :field/placeholder {:en "prompt 1"}}
+                                               {:field/id 2
+                                                :field/type :label
+                                                :title "Please input your wishes below."}
+                                               {:field/id 3
+                                                :field/type :texta
+                                                :field/optional true
+                                                :field/title {:en "Field 2"}
+                                                :field/placeholder {:en "prompt 2"}}
+                                               {:field/id 4
+                                                :field/type :unsupported
+                                                :field/title {:en "Field 3"}
+                                                :field/placeholder {:en "prompt 3"}}
+                                               {:field/id 5
+                                                :field/type :date
+                                                :field/title {:en "Field 4"}}]}
+              :application/licenses [{:license/id 4
+                                      :license/type :text
+                                      :license/title {:en "A Text License"}
+                                      :license/text {:en lipsum}}
+                                     {:license/id 5
+                                      :license/type :link
+                                      :license/title {:en "Link to license"}
+                                      :license/link {:en "/#/guide"}}]}
              {:items {1 "abc"}
               :licenses {4 false 5 true}}
              :en])
@@ -1078,7 +1077,7 @@
             [render-application
              {:application/id 17
               :application/workflow {:workflow.dynamic/state :rems.workflow.dynamic/submitted}
-              :application/resources [{:catalogue-item/title "An applied item"}]
+              :application/resources [{:catalogue-item/title {:en "An applied item"}}]
               :application/form {:form/fields [{:field/id 1
                                                 :field/type :text
                                                 :field/title {:en "Field 1"}
@@ -1097,7 +1096,7 @@
               :application/applicant-attributes {:eppn "eppn"
                                                  :mail "email@example.com"
                                                  :additional "additional field"}
-              :application/resources [{:catalogue-item/title "An applied item"}]
+              :application/resources [{:catalogue-item/title {:en "An applied item"}}]
               :application/form {:form/fields [{:field/id 1
                                                 :field/type :text
                                                 :field/title {:en "Field 1"}
