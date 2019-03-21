@@ -684,7 +684,7 @@
   `:can-remove?`        - can the user be removed?
   `:accepted-licenses?` - has the member accepted the licenses?"
   [{:keys [element-id attributes application group? can-remove? accepted-licenses?]}]
-  (let [application-id (:id application)
+  (let [application-id (:application/id application)
         user-id (or (:eppn attributes) (:userid attributes))
         sanitized-user-id (-> (or user-id "")
                               str/lower-case
@@ -696,7 +696,7 @@
       :class (when group? "group")
       :always
       [:div
-       (cond (= (:applicantuserid application) user-id) [:h5 (text :t.applicant-info/applicant)]
+       (cond (= (:application/applicant application) user-id) [:h5 (text :t.applicant-info/applicant)]
              (:userid attributes) [:h5 (text :t.applicant-info/member)]
              :else [:h5 (text :t.applicant-info/invited-member)])
        (when-let [name (or (:commonName attributes) (:name attributes))]
@@ -722,13 +722,11 @@
   "Renders the applicants, i.e. applicant and members."
   [application]
   (let [id "applicants-info"
-        app (:application application)
-        applicant-attributes (:application/applicant-attributes application)
-        members (:members app)
-        invited-members (:invited-members app)
         application-id (:application/id application)
-        applicant (first (filter (comp #{(:eppn applicant-attributes)} :userid) members))
-        non-applicant-members (remove #{applicant} members)
+        applicant (merge {:userid (:application/applicant application)}
+                         (:application/applicant-attributes application))
+        members (:application/members application)
+        invited-members (:application/invited-members application)
         possible-commands (:application/permissions application)
         can-add? (contains? possible-commands :rems.workflow.dynamic/add-member)
         can-remove? (contains? possible-commands :rems.workflow.dynamic/remove-member)
@@ -740,26 +738,26 @@
       :always
       (into [:div
              [member-info {:element-id id
-                           :attributes (merge applicant applicant-attributes)
-                           :application app
-                           :group? (or (seq non-applicant-members)
+                           :attributes applicant
+                           :application application
+                           :group? (or (seq members)
                                        (seq invited-members))
                            :can-remove? false
-                           :accepted-licenses? (every? (or (get (:accepted-licenses application)
-                                                                (:userid applicant))
+                           :accepted-licenses? (every? (or (get (:application/accepted-licenses application)
+                                                                (:application/applicant application))
                                                            #{})
-                                                       (map :id (:licenses application)))}]]
+                                                       (map :license/id (:application/licenses application)))}]]
             (concat
-             (for [member non-applicant-members]
+             (for [member members]
                [member-info {:element-id id
                              :attributes member
-                             :application app
+                             :application application
                              :group? true
                              :can-remove? can-remove?}])
              (for [invited-member invited-members]
                [member-info {:element-id id
                              :attributes invited-member
-                             :application app
+                             :application application
                              :group? true
                              :can-remove? can-uninvite?}])))
       :footer [:div
@@ -865,8 +863,8 @@
                                        :commonName "Deve Loper"
                                        :organization "Testers"
                                        :address "Testikatu 1, 00100 Helsinki"}
-                          :application {:id 42
-                                        :applicantuserid "developer"}
+                          :application {:application/id 42
+                                        :application/applicant "developer"}
                           :accepted-licenses? true}])
    (example "member-info with name missing"
             [member-info {:element-id "info2"
@@ -874,44 +872,39 @@
                                        :mail "developer@uu.id"
                                        :organization "Testers"
                                        :address "Testikatu 1, 00100 Helsinki"}
-                          :application {:id 42
-                                        :applicantuserid "developer"}}])
+                          :application {:application/id 42
+                                        :application/applicant "developer"}}])
    (example "member-info"
             [member-info {:element-id "info3"
                           :attributes {:userid "alice"}
-                          :application {:id 42
-                                        :applicantuserid "developer"}
+                          :application {:application/id 42
+                                        :application/applicant "developer"}
                           :group? true
                           :can-remove? true}])
    (example "member-info"
             [member-info {:element-id "info4"
-                          :attributes {:name "John Smith" :email "john.smith@invited.com"}
-                          :application {:id 42
-                                        :applicantuserid "developer"}
+                          :attributes {:name "John Smith"
+                                       :email "john.smith@invited.com"}
+                          :application {:application/id 42
+                                        :application/applicant "developer"}
                           :group? true}])
 
    (component-info applicants-info)
    (example "applicants-info"
-            [applicants-info "applicants"
-             {:application {:id 42
-                            :applicantuserid "developer"
-                            :possible-commands #{:rems.workflow.dynamic/add-member
-                                                 :rems.workflow.dynamic/invite-member}
-                            :accepted-licenses {"developer" #{1}}}
-              :licenses [{:id 1}]}
-             {:eppn "developer"
-              :mail "developer@uu.id"
-              :commonName "Deve Loper"
-              :organization "Testers"
-              :address "Testikatu 1, 00100 Helsinki"}
-             [{:userid "developer"
-               :mail "developer@uu.id"
-               :commonName "Deve Loper"
-               :organization "Testers"
-               :address "Testikatu 1, 00100 Helsinki"}
-              {:userid "alice"}
-              {:userid "bob"}]
-             [{:name "John Smith" :email "john.smith@invited.com"}]])
+            [applicants-info {:application/id 42
+                              :application/applicant "developer"
+                              :application/applicant-attributes {:eppn "developer"
+                                                                 :mail "developer@uu.id"
+                                                                 :commonName "Deve Loper"
+                                                                 :organization "Testers"
+                                                                 :address "Testikatu 1, 00100 Helsinki"}
+                              :application/members #{{:userid "alice"}
+                                                     {:userid "bob"}}
+                              :application/invited-members #{{:name "John Smith" :email "john.smith@invited.com"}}
+                              :application/licenses [{:license/id 1}]
+                              :application/accepted-licenses {"developer" #{1}}
+                              :application/permissions #{:rems.workflow.dynamic/add-member
+                                                         :rems.workflow.dynamic/invite-member}}])
 
    (component-info disabled-items-warning)
    (example "no disabled items"
