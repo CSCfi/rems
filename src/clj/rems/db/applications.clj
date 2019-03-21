@@ -377,20 +377,6 @@
 (defn assoc-review-type-to-app [user-id app]
   (assoc app :review-type (if (is-reviewer? user-id (:id app)) :normal :third-party)))
 
-(defn get-applications-to-review
-  "Returns applications that are waiting for a normal or 3rd party review. Type of the review, with key :review and values :normal or :third-party,
-  are added to each application's attributes"
-  [user-id]
-  (->> (get-applications-impl-batch user-id {})
-       (filterv
-        (fn [app] (and (not (reviewed? user-id app))
-                       (or (can-review? user-id app)
-                           (can-third-party-review? user-id app)
-                           (can-comment? user-id (:id app))
-                           (can-decide? user-id (:id app))))))
-       (mapv (partial assoc-review-type-to-app user-id))
-       (map application-cleanup)))
-
 (defn make-draft-application
   "Make a draft application with an initial set of catalogue items."
   [user-id catalogue-item-ids]
