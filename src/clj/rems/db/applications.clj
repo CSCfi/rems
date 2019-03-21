@@ -310,11 +310,6 @@
   (->> (get-applications-impl-batch "developer" {})
        (mapv :id)))
 
-(defn get-user-applications [user-id]
-  (assert user-id "Must have user-id")
-  (->> (get-applications-impl-batch user-id {:applicant user-id})
-       (remove (comp #{"closed"} :state))))
-
 (comment
   (->> (get-applications-impl-batch "developer" {:applicant "developer"})
        (mapv :id))

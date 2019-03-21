@@ -585,17 +585,3 @@
               (is (= #{{:name "member"
                         :email "member@example.com"}}
                      (:application/invited-members application))))))))))
-
-(defn- diff-app-v1 [user-id app-id]
-  (ddiff/pretty-print (ddiff/diff (assoc-in (api-get-application user-id app-id)
-                                            [:application :dynamic-events] nil)
-                                  (assoc-in (api-get-application-v1 user-id app-id)
-                                            [:application :dynamic-events] nil))))
-
-(comment
-  (diff-app-v1 "alice" 18)
-  (let [user-id "developer"]
-    (binding [context/*lang* :en]
-      (doseq [app (applications/get-user-applications user-id)]
-        (when (applications/is-dynamic-application? app)
-          (diff-app-v1 user-id (:id app)))))))
