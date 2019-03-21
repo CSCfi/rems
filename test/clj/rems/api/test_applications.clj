@@ -125,38 +125,6 @@
       read-ok-body
       :id))
 
-(defn- get-application-description-through-api [app-id]
-  (get-in (-> (request :get (str "/api/applications/" app-id))
-              (authenticate "42" "alice")
-              app
-              read-ok-body)
-          [:application :description]))
-
-(deftest application-description-test
-  (testing "applications without description field have no description"
-    (let [form-id (create-form-with-fields [])
-          cat-item-id (create-catalogue-item form-id 1)
-          app-id (save-application {:command "save"
-                                    :catalogue-items [cat-item-id]
-                                    :items {}
-                                    :licenses {}})]
-      (is (= nil
-             (get-application-description-through-api app-id)))))
-
-  (testing "applications with description field have a description"
-    (let [form-id (create-form-with-fields [{:title {:en ""}
-                                             :optional false
-                                             :type "description"
-                                             :input-prompt {:en ""}}])
-          cat-item-id (create-catalogue-item form-id 1)
-          draft (create-application-draft-for-catalogue-item cat-item-id)
-          app-id (save-application {:command "save"
-                                    :catalogue-items [cat-item-id]
-                                    :items {(get-in draft [:items 0 :id]) "some description text"}
-                                    :licenses {}})]
-      (is (= "some description text"
-             (get-application-description-through-api app-id))))))
-
 (defn- send-dynamic-command [actor cmd]
   (-> (request :post (str "/api/applications/command"))
       (authenticate "42" actor)
@@ -164,8 +132,9 @@
       app
       read-body))
 
+;; TODO refactor tests to use true v2 api
 (defn- get-application [actor id]
-  (-> (request :get (str "/api/applications/" id))
+  (-> (request :get (str "/api/v2/applications/" id "/migration"))
       (authenticate "42" actor)
       app
       read-body))
@@ -308,8 +277,8 @@
           (is (= "rems.workflow.dynamic/draft" (get-in saved [:application :state])))
           (is (= "dynamic test" (get-in saved [:items 0 :value])))))
       (testing "getting application as other user is forbidden"
-        (is (response-is-forbidden?
-             (-> (request :get (str "/api/applications/" application-id))
+        (is (response-is-not-found? ;; TODO this should probably be forbidden
+             (-> (request :get (str "/api/v2/applications/" application-id))
                  (authenticate api-key "bob")
                  app))))
       (testing "saving fields as other user is forbidden"
@@ -454,7 +423,7 @@
 
 (deftest applications-api-security-test
   (testing "fetch application without authentication"
-    (is (response-is-unauthorized? (-> (request :get (str "/api/applications/1"))
+    (is (response-is-unauthorized? (-> (request :get (str "/api/v2/applications/13"))
                                        app))))
   (testing "fetch deciders without authentication"
     (is (response-is-unauthorized? (-> (request :get (str "/api/applications/deciders"))

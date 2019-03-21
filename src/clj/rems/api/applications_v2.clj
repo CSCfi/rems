@@ -384,6 +384,9 @@
           (permissions/cleanup)))))
 
 (defn api-get-application-v2 [user-id application-id]
+  ;; TODO should this throw rems.auth.NotAuthorizedException in some
+  ;; case? Now it returns nil, which results in 404 if permissions are
+  ;; missing
   (let [events (applications/get-dynamic-application-events application-id)]
     (when (not (empty? events))
       (-> (build-application-view events injections)

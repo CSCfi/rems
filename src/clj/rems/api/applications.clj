@@ -255,16 +255,6 @@
       :return AcceptInvitationResult
       (ok (applications/accept-invitation (getx-user-id) invitation-token)))
 
-    (GET "/:application-id" []
-      :summary "Get application by `application-id`"
-      :roles #{:logged-in}
-      :path-params [application-id :- (describe s/Num "application id")]
-      :responses {200 {:schema GetApplicationResponse}
-                  404 {:schema s/Str :description "Not found"}}
-      (if-let [app (api-get-application (getx-user-id) application-id)]
-        (ok app)
-        (not-found! "not found")))
-
     (GET "/:application-id/pdf" []
       :summary "Get a pdf version of an application"
       :roles #{:logged-in}
