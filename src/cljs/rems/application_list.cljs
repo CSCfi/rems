@@ -3,7 +3,7 @@
             [rems.application-util :refer [form-fields-editable?]]
             [rems.guide-functions]
             [rems.table :as table]
-            [rems.text :refer [localize-state localize-time localize-string text]])
+            [rems.text :refer [localize-state localize-time localized text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn- view-button [app]
@@ -14,7 +14,7 @@
 (defn- format-catalogue-items [app]
   (->> (:application/resources app)
        (map :catalogue-item/title)
-       (map localize-string)
+       (map localized)
        (str/join ", ")))
 
 (def +all-columns+

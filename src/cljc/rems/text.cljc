@@ -41,11 +41,12 @@
                  (.error js/console e)
                  (str (vec ks)))))))
 
-(defn localize-string [str]
-  (or #?(:clj (get str context/*lang*)
-         :cljs (get str @(rf/subscribe [:language])))
-      (get str :default)
-      str))
+(defn localized [m]
+  (let [lang #?(:clj context/*lang*
+                :cljs @(rf/subscribe [:language]))]
+    (or (get m lang)
+        (get m :default)
+        (first (vals m)))))
 
 (def ^:private states
   {:rems.workflow.dynamic/draft :t.applications.dynamic-states/draft
