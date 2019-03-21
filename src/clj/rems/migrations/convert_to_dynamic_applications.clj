@@ -2,7 +2,7 @@
   (:require [clojure.java.jdbc :as jdbc]
             [conman.core :as conman]
             [rems.db.applications :as applications]
-            [rems.db.core :refer [*db*]]
+            [rems.db.core :refer [*db*] :as db]
             [rems.db.workflow :as workflow]
             [rems.db.workflow-actors :as actors]
             [rems.poller.email :as email])
@@ -112,8 +112,8 @@
       (assert (= "workflow/dynamic" (get-in new-workflow [:workflow :type])))
 
       (migrate-catalogue-items! (:id new-workflow))
-      (doseq [application (->> (applications/get-applications-impl-batch "whatever" {})
-                               (remove applications/is-dynamic-application?))]
+      (doseq [application (->> (db/get-applications {})
+                               (remove :workflow))] ;; remove dynamic applications
         (println "Converting application" (:id application))
         (migrate-application! (:id application) (:id new-workflow)))
       (println "Marking all pending emails as sent")

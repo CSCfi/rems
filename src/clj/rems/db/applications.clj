@@ -285,37 +285,6 @@
     (get-catalogue-items (mapv :item application-items)
                          localized-items)))
 
-(defn get-applications-impl-batch
-  "Prefetches all possibly relevant data from the database and returns all the applications, according to the query parameters, with all the events
-  and catalogue items associated with them."
-  [user-id query-params]
-  (let [events (db/get-application-events {})
-        application-items (db/get-application-items)
-        localized-items (get-localized-catalogue-items)]
-    (doall
-     (for [app (db/get-applications query-params)]
-       (let [catalogue-items (get-catalogue-items-by-application-items (filter #(= (:id app) (:application %)) application-items) localized-items)
-             app-events (for [e events
-                              :when (= (:id app) (:appid e))]
-                          ;; :appid needed only for batching
-                          (dissoc e :appid :id))]
-         (-> (get-application-state app app-events)
-             (assoc :formid (:formid (first catalogue-items))
-                    :catalogue-items catalogue-items)
-             (->> (dynamic/assoc-possible-commands user-id))
-             (permissions/cleanup)
-             (dynamic/clean-internal-state)))))))
-
-(comment
-  (->> (get-applications-impl-batch "developer" {})
-       (mapv :id)))
-
-(comment
-  (->> (get-applications-impl-batch "developer" {:applicant "developer"})
-       (mapv :id))
-  (->> (get-applications-impl-batch "alice" {:applicant "alice"})
-       (mapv :id)))
-
 (defn application-cleanup [application]
   (dissoc application
           ;; very sensitive
@@ -330,66 +299,8 @@
           :deciders
           :commenters))
 
-(defn get-approvals [user-id]
-  (->> (get-applications-impl-batch user-id {})
-       (filterv (partial can-approve? user-id))
-       (map application-cleanup)))
-
-(comment
-  (->> (get-approvals "developer")
-       (mapv :id)))
-
-(defn actors-of-dynamic-application [application]
-  (map :event/actor (:dynamic-events application)))
-
-;; TODO combine handled approvals and reviews as just handled applications
-(defn get-handled-approvals [user-id]
-  (let [actors (db/get-actors-for-applications {:role "approver"})]
-    (->> (get-applications-impl-batch user-id {})
-         (filterv handled?)
-         (filterv (fn [app]
-                    (let [application (get-application-state (:id app))]
-                      (if (is-dynamic-application? application)
-                        (contains? (set (actors-of-dynamic-application application)) user-id)
-                        (is-actor? user-id (actors/filter-by-application-id actors (:id app)))))))
-         (map application-cleanup))))
-
-(comment
-  (->> (get-handled-approvals "developer")
-       (mapv :id)))
-
-;; TODO: consider refactoring to finding the review events from the current user and mapping those to applications
-(defn get-handled-reviews [user-id]
-  (let [actors (db/get-actors-for-applications {:role "reviewer"})]
-    (->> (get-applications-impl-batch user-id {})
-         (filterv (fn [app] (reviewed? user-id app)))
-         (filterv (fn [app]
-                    (or (is-actor? user-id (actors/filter-by-application-id actors (:id app)))
-                        (is-third-party-reviewer? user-id app)
-                        (is-commenter? user-id app)
-                        (is-decider? user-id app))))
-         (map application-cleanup))))
-
-(comment
-  (get-handled-reviews "bob")
-  (get-handled-reviews "carl"))
-
 (defn assoc-review-type-to-app [user-id app]
   (assoc app :review-type (if (is-reviewer? user-id (:id app)) :normal :third-party)))
-
-(defn get-applications-to-review
-  "Returns applications that are waiting for a normal or 3rd party review. Type of the review, with key :review and values :normal or :third-party,
-  are added to each application's attributes"
-  [user-id]
-  (->> (get-applications-impl-batch user-id {})
-       (filterv
-        (fn [app] (and (not (reviewed? user-id app))
-                       (or (can-review? user-id app)
-                           (can-third-party-review? user-id app)
-                           (can-comment? user-id (:id app))
-                           (can-decide? user-id (:id app))))))
-       (mapv (partial assoc-review-type-to-app user-id))
-       (map application-cleanup)))
 
 (defn make-draft-application
   "Make a draft application with an initial set of catalogue items."
