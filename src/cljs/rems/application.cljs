@@ -614,8 +614,23 @@
                    (for [e group]
                      ^{:key e} [event-view e])]))
 
-(defn- application-header [state phases-data events last-modified]
-  (let [;; the event times have millisecond differences, so they need to be formatted to minute precision before deduping
+(defn- dynamic-event->event [event]
+  {:event (name (:event/type event))
+   :time (:event/time event)
+   :userid (:event/actor event)
+   :request-id (:application/request-id event)
+   :commenters (:application/commenters event)
+   :deciders (:application/deciders event)
+   :comment (if (= :application.event/decided (:event/type event))
+              (str (localize-decision (:application/decision event)) ": " (:application/comment event))
+              (:application/comment event))})
+
+(defn- application-header [application]
+  (let [state (get-in application [:application/workflow :workflow.dynamic/state])
+        phases-data (:phases application)
+        events (map dynamic-event->event (:application/events application))
+        last-modified (:application/last-activity application)
+        ;; the event times have millisecond differences, so they need to be formatted to minute precision before deduping
         event-groups (->> events
                           (map format-event)
                           dedupe
@@ -688,12 +703,16 @@
 
 (defn applicants-info
   "Renders the applicants, i.e. applicant and members."
-  [id application applicant-attributes members invited-members]
-  (let [app (:application application)
-        application-id (:id app)
+  [application]
+  (let [id "applicants-info"
+        app (:application application)
+        applicant-attributes (:application/applicant-attributes application)
+        members (:members app)
+        invited-members (:invited-members app)
+        application-id (:application/id application)
         applicant (first (filter (comp #{(:eppn applicant-attributes)} :userid) members))
         non-applicant-members (remove #{applicant} members)
-        possible-commands (:possible-commands app)
+        possible-commands (:application/permissions application)
         can-add? (contains? possible-commands :rems.workflow.dynamic/add-member)
         can-remove? (contains? possible-commands :rems.workflow.dynamic/remove-member)
         can-invite? (contains? possible-commands :rems.workflow.dynamic/invite-member)
@@ -781,37 +800,19 @@
                        ^{:key (:id item)}
                        [:li (get-catalogue-item-title item language)]))]}]))
 
-(defn- dynamic-event->event [event]
-  {:event (name (:event/type event))
-   :time (:event/time event)
-   :userid (:event/actor event)
-   :request-id (:application/request-id event)
-   :commenters (:application/commenters event)
-   :deciders (:application/deciders event)
-   :comment (if (= :application.event/decided (:event/type event))
-              (str (localize-decision (:application/decision event)) ": " (:application/comment event))
-              (:application/comment event))})
-
 (defn- render-application [application edit-application language]
-  (let [app (:application application)
-        state (:state app)
-        last-modified (:last-modified app)
-        phases (:phases application)
-        events (concat (:events app)
-                       (map dynamic-event->event (:dynamic-events app)))
-        applicant-attributes (:applicant-attributes application)
-        messages (remove nil?
+  (let [messages (remove nil?
                          [(disabled-items-warning application) ; NB: eval this here so we get nil or a warning
                           (when (:validation edit-application)
                             [flash-message
                              {:status :danger
                               :contents [format-validation-messages application (:validation edit-application)]}])])]
     [:div
-     [:div {:class "float-right"} [pdf-button (:id app)]]
+     [:div {:class "float-right"} [pdf-button (:application/id application)]]
      [:h2 (text :t.applications/application)]
      (into [:div] messages)
-     [application-header state phases events last-modified]
-     [:div.mt-3 [applicants-info "applicants-info" application applicant-attributes (:members app) (:invited-members app)]]
+     [application-header application]
+     [:div.mt-3 [applicants-info application]]
      [:div.mt-3 [applied-resources (:catalogue-items application)]]
      [:div.my-3 [application-fields application edit-application language]]
      [:div.my-3 [application-licenses application edit-application language]]
