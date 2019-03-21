@@ -134,28 +134,6 @@
       (update-in [:items] longify-keys)
       (update-in [:licenses] longify-keys)))
 
-(defn- hide-sensitive-events [events]
-  (filter (fn [event]
-            ((complement contains?) #{"third-party-review" "review-request" "review"} (:event event)))
-          events))
-
-(defn- hide-users [events]
-  (map (fn [event]
-         (assoc event :userid nil))
-       events))
-
-(defn hide-sensitive-information [application user]
-  (let [application (update application :application applications/application-cleanup)
-        is-handler? (or (contains? (set (applications/get-handlers (:application application))) user) ; old form
-                        (contains? (get-in application [:application :possible-commands]) :see-everything))] ; dynamic
-    (if is-handler?
-      application
-      (-> application
-          (update-in [:application :events] hide-sensitive-events)
-          (update-in [:application :dynamic-events] dynamic/hide-sensitive-dynamic-events)
-          (update-in [:application :events] hide-users)
-          (update-in [:application :workflow] dissoc :handlers)))))
-
 (defn invalid-user? [u]
   (or (str/blank? (:eppn u))
       (str/blank? (:commonName u))
