@@ -11,29 +11,28 @@
 (rf/reg-fx
  ::fetch-potential-commenters
  (fn [[user on-success]]
-  (fetch (str "/api/applications/commenters")
-         {:handler on-success
-          :headers {"x-rems-user-id" (:eppn user)}})))
+   (fetch (str "/api/applications/commenters")
+          {:handler on-success
+           :headers {"x-rems-user-id" (:eppn user)}})))
 
 (rf/reg-event-fx
  ::open-form
  (fn
-  [{:keys [db]} _]
-  {:db (assoc db
-              ::comment ""
-              ::potential-commenters #{}
-              ::selected-commenters #{})
-   ::fetch-potential-commenters [(get-in db [:identity :user])
-                                 #(rf/dispatch [::set-potential-commenters %])]}))
+   [{:keys [db]} _]
+   {:db (assoc db
+               ::comment ""
+               ::potential-commenters #{}
+               ::selected-commenters #{})
+    ::fetch-potential-commenters [(get-in db [:identity :user])
+                                  #(rf/dispatch [::set-potential-commenters %])]}))
 
+(rf/reg-sub ::potential-commenters (fn [db _] (::potential-commenters db)))
 (rf/reg-event-db
  ::set-potential-commenters
  (fn [db [_ commenters]]
    (assoc db
           ::potential-commenters (set (map enrich-user commenters))
           ::selected-commenters #{})))
-
-(rf/reg-sub ::potential-commenters (fn [db _] (::potential-commenters db)))
 
 (rf/reg-sub ::selected-commenters (fn [db _] (::selected-commenters db)))
 (rf/reg-event-db ::set-selected-commenters (fn [db [_ commenters]] (assoc db ::selected-commenters commenters)))

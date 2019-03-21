@@ -11,26 +11,32 @@
 (rf/reg-fx
  ::fetch-potential-deciders
  (fn [[user on-success]]
-  (fetch (str "/api/applications/deciders")
-         {:handler on-success
-          :headers {"x-rems-user-id" (:eppn user)}})))
+   (fetch (str "/api/applications/deciders")
+          {:handler on-success
+           :headers {"x-rems-user-id" (:eppn user)}})))
 
 (rf/reg-event-fx
  ::open-form
  (fn [{:keys [db]} _]
-  {:db (assoc db
-              ::comment ""
-              ::potential-deciders #{}
-              ::selected-deciders #{})
-   ::fetch-potential-deciders [(get-in db [:identity :user])
-                               #(rf/dispatch [::set-potential-deciders %])]}))
+   {:db (assoc db
+               ::comment ""
+               ::potential-deciders #{}
+               ::selected-deciders #{})
+    ::fetch-potential-deciders [(get-in db [:identity :user])
+                                #(rf/dispatch [::set-potential-deciders %])]}))
 
 (rf/reg-sub ::potential-deciders (fn [db _] (::potential-deciders db)))
+(rf/reg-event-db
+ ::set-potential-deciders
+ (fn [db [_ deciders]]
+   (assoc db
+          ::potential-deciders (set (map enrich-user deciders))
+          ::selected-deciders #{})))
 
+(rf/reg-sub ::selected-deciders (fn [db _] (::selected-deciders db)))
 (rf/reg-event-db ::set-selected-deciders (fn [db [_ deciders]] (assoc db ::selected-deciders deciders)))
 (rf/reg-event-db ::add-selected-decider (fn [db [_ decider]] (update db ::selected-deciders conj decider)))
 (rf/reg-event-db ::remove-selected-decider (fn [db [_ decider]] (update db ::selected-deciders disj decider)))
-(rf/reg-sub ::selected-deciders (fn [db _] (::selected-deciders db)))
 
 (rf/reg-sub ::comment (fn [db _] (::comment db)))
 (rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))

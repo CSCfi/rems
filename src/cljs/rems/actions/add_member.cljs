@@ -26,14 +26,13 @@
     ::fetch-potential-members [(get-in db [:identity :user])
                                #(rf/dispatch [::set-potential-members %])]}))
 
+(rf/reg-sub ::potential-members (fn [db _] (::potential-members db)))
 (rf/reg-event-db
  ::set-potential-members
  (fn [db [_ members]]
    (assoc db
           ::potential-members (set (map enrich-user members))
           ::selected-members #{})))
-
-(rf/reg-sub ::potential-members (fn [db _] (::potential-members db)))
 
 (rf/reg-event-db ::set-selected-member (fn [db [_ member]] (assoc db ::selected-member member)))
 (rf/reg-event-db ::remove-selected-member (fn [db [_ member]] (dissoc db ::selected-member)))
@@ -90,4 +89,4 @@
                       :on-remove-member #(rf/dispatch [::remove-selected-member %])
                       :on-send #(rf/dispatch [::send-add-member {:application-id application-id
                                                                  :member selected-member
-                                                                 :on-finished on-finished }])}]))
+                                                                 :on-finished on-finished}])}]))
