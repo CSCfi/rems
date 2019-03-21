@@ -330,50 +330,6 @@
           :deciders
           :commenters))
 
-(defn get-approvals [user-id]
-  (->> (get-applications-impl-batch user-id {})
-       (filterv (partial can-approve? user-id))
-       (map application-cleanup)))
-
-(comment
-  (->> (get-approvals "developer")
-       (mapv :id)))
-
-(defn actors-of-dynamic-application [application]
-  (map :event/actor (:dynamic-events application)))
-
-;; TODO combine handled approvals and reviews as just handled applications
-(defn get-handled-approvals [user-id]
-  (let [actors (db/get-actors-for-applications {:role "approver"})]
-    (->> (get-applications-impl-batch user-id {})
-         (filterv handled?)
-         (filterv (fn [app]
-                    (let [application (get-application-state (:id app))]
-                      (if (is-dynamic-application? application)
-                        (contains? (set (actors-of-dynamic-application application)) user-id)
-                        (is-actor? user-id (actors/filter-by-application-id actors (:id app)))))))
-         (map application-cleanup))))
-
-(comment
-  (->> (get-handled-approvals "developer")
-       (mapv :id)))
-
-;; TODO: consider refactoring to finding the review events from the current user and mapping those to applications
-(defn get-handled-reviews [user-id]
-  (let [actors (db/get-actors-for-applications {:role "reviewer"})]
-    (->> (get-applications-impl-batch user-id {})
-         (filterv (fn [app] (reviewed? user-id app)))
-         (filterv (fn [app]
-                    (or (is-actor? user-id (actors/filter-by-application-id actors (:id app)))
-                        (is-third-party-reviewer? user-id app)
-                        (is-commenter? user-id app)
-                        (is-decider? user-id app))))
-         (map application-cleanup))))
-
-(comment
-  (get-handled-reviews "bob")
-  (get-handled-reviews "carl"))
-
 (defn assoc-review-type-to-app [user-id app]
   (assoc app :review-type (if (is-reviewer? user-id (:id app)) :normal :third-party)))
 
