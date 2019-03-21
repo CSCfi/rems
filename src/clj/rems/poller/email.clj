@@ -30,6 +30,9 @@
 (defmethod event-to-emails-impl :default [_event _application]
   [])
 
+;; There's a slight inconsistency here: we look at current members, so
+;; a member might get an email for an event that happens before he was
+;; added.
 (defmethod event-to-emails-impl :application.event/approved [event application]
   (vec
    (for [member (:members application)] ;; applicant is a member
