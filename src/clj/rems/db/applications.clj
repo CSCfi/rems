@@ -285,37 +285,6 @@
     (get-catalogue-items (mapv :item application-items)
                          localized-items)))
 
-(defn get-applications-impl-batch
-  "Prefetches all possibly relevant data from the database and returns all the applications, according to the query parameters, with all the events
-  and catalogue items associated with them."
-  [user-id query-params]
-  (let [events (db/get-application-events {})
-        application-items (db/get-application-items)
-        localized-items (get-localized-catalogue-items)]
-    (doall
-     (for [app (db/get-applications query-params)]
-       (let [catalogue-items (get-catalogue-items-by-application-items (filter #(= (:id app) (:application %)) application-items) localized-items)
-             app-events (for [e events
-                              :when (= (:id app) (:appid e))]
-                          ;; :appid needed only for batching
-                          (dissoc e :appid :id))]
-         (-> (get-application-state app app-events)
-             (assoc :formid (:formid (first catalogue-items))
-                    :catalogue-items catalogue-items)
-             (->> (dynamic/assoc-possible-commands user-id))
-             (permissions/cleanup)
-             (dynamic/clean-internal-state)))))))
-
-(comment
-  (->> (get-applications-impl-batch "developer" {})
-       (mapv :id)))
-
-(comment
-  (->> (get-applications-impl-batch "developer" {:applicant "developer"})
-       (mapv :id))
-  (->> (get-applications-impl-batch "alice" {:applicant "alice"})
-       (mapv :id)))
-
 (defn application-cleanup [application]
   (dissoc application
           ;; very sensitive
