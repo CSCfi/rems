@@ -222,12 +222,6 @@
   (context "/applications" []
     :tags ["applications"]
 
-    (GET "/" []
-      :summary "Get current user's all applications"
-      :roles #{:logged-in}
-      :return GetApplicationsResponse
-      (ok (get-user-applications (getx-user-id))))
-
     (GET "/draft" []
       :summary "Get application (draft) for `catalogue-items`"
       :roles #{:logged-in}
