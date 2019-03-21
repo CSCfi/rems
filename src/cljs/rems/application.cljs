@@ -625,9 +625,39 @@
               (str (localize-decision (:application/decision event)) ": " (:application/comment event))
               (:application/comment event))})
 
+(defn- get-application-phases [state]
+  (cond (contains? #{:rems.workflow.dynamic/rejected} state)
+        [{:phase :apply :completed? true :text :t.phases/apply}
+         {:phase :approve :completed? true :rejected? true :text :t.phases/approve}
+         {:phase :result :completed? true :rejected? true :text :t.phases/rejected}]
+
+        (contains? #{:rems.workflow.dynamic/approved} state)
+        [{:phase :apply :completed? true :text :t.phases/apply}
+         {:phase :approve :completed? true :approved? true :text :t.phases/approve}
+         {:phase :result :completed? true :approved? true :text :t.phases/approved}]
+
+        (contains? #{:rems.workflow.dynamic/closed} state)
+        [{:phase :apply :closed? true :text :t.phases/apply}
+         {:phase :approve :closed? true :text :t.phases/approve}
+         {:phase :result :closed? true :text :t.phases/approved}]
+
+        (contains? #{:rems.workflow.dynamic/draft :rems.workflow.dynamic/returned} state)
+        [{:phase :apply :active? true :text :t.phases/apply}
+         {:phase :approve :text :t.phases/approve}
+         {:phase :result :text :t.phases/approved}]
+
+        (contains? #{:rems.workflow.dynamic/submitted} state)
+        [{:phase :apply :completed? true :text :t.phases/apply}
+         {:phase :approve :active? true :text :t.phases/approve}
+         {:phase :result :text :t.phases/approved}]
+
+        :else
+        [{:phase :apply :active? true :text :t.phases/apply}
+         {:phase :approve :text :t.phases/approve}
+         {:phase :result :text :t.phases/approved}]))
+
 (defn- application-header [application]
   (let [state (get-in application [:application/workflow :workflow.dynamic/state])
-        phases-data (:phases application)
         events (map dynamic-event->event (:application/events application))
         last-modified (:application/last-activity application)
         ;; the event times have millisecond differences, so they need to be formatted to minute precision before deduping
@@ -646,9 +676,10 @@
       :title [:span#application-state
               (str
                (text :t.applications/state)
-               (when state (str ": " (localize-state state))))]
+               (str ": " (localize-state state)))]
       :always (into [:div
-                     [:div.mb-3 {:class (str "state-" (if (keyword? state) (name state) state))} (phases phases-data)]
+                     [:div.mb-3 {:class (str "state-" (name state))}
+                      (phases (get-application-phases state))]
                      [:h4 (text-format :t.applications/latest-activity (localize-time last-modified))]]
                     (when-let [g (first event-groups)]
                       (concat
