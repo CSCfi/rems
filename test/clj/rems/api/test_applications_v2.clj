@@ -1,7 +1,6 @@
 (ns rems.api.test-applications-v2
   (:require [clojure.test :refer :all]
             [lambdaisland.deep-diff :as ddiff]
-            [rems.api.applications :refer [api-get-application]]
             [rems.api.applications-v2 :refer :all]
             [rems.common-util :refer [deep-merge]]
             [rems.context :as context]

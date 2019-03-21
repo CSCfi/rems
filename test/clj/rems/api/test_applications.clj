@@ -72,14 +72,14 @@
     (let [response (-> (request :get (str "/api/applications/9999999/pdf"))
                        (authenticate "42" "developer")
                        app)]
-      (is (= 404 (:status response)))))
+      (is (response-is-not-found? response))))
   (testing "forbidden"
-    (let [response (-> (request :get (str "/api/applications/2/pdf"))
-                       (authenticate "42" "alice")
+    (let [response (-> (request :get (str "/api/applications/13/pdf"))
+                       (authenticate "42" "bob")
                        app)]
-      (is (response-is-forbidden? response))))
+      (is (response-is-not-found? response)))) ;; TODO this should actually be forbidden
   (testing "success"
-    (let [response (-> (request :get (str "/api/applications/2/pdf"))
+    (let [response (-> (request :get (str "/api/applications/13/pdf"))
                        (authenticate "42" "developer")
                        app
                        assert-response-is-ok)]

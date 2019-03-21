@@ -156,11 +156,6 @@
           (update-in [:application :events] hide-users)
           (update-in [:application :workflow] dissoc :handlers)))))
 
-(defn api-get-application [user-id application-id]
-  (when (not (empty? (db/get-applications {:id application-id})))
-    (-> (applications/get-form-for user-id application-id)
-        (hide-sensitive-information user-id))))
-
 (defn invalid-user? [u]
   (or (str/blank? (:eppn u))
       (str/blank? (:commonName u))
@@ -260,7 +255,7 @@
       :roles #{:logged-in}
       :path-params [application-id :- (describe s/Num "application id")]
       :produces ["application/pdf"]
-      (if-let [app (api-get-application (getx-user-id) application-id)]
+      (if-let [app (api-get-application-v1 (getx-user-id) application-id)]
         (-> app
             (pdf/application-to-pdf-bytes)
             (java.io.ByteArrayInputStream.)
