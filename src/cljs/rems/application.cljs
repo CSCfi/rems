@@ -589,15 +589,16 @@
                                        :approved (get licenses (:id license)))]))]}])))
 
 
-;; FIXME Why do we have both this and dynamic-event->event?
 (defn- format-event [event]
-  {:userid (:userid event)
-   :event (localize-event (:event event))
-   :comment (:comment event)
-   :request-id (:request-id event)
-   :commenters (:commenters event)
-   :deciders (:deciders event)
-   :time (localize-time (:time event))})
+  {:userid (:event/actor event)
+   :event (localize-event (:event/type event))
+   :comment (if (= :application.event/decided (:event/type event))
+              (str (localize-decision (:application/decision event)) ": " (:application/comment event))
+              (:application/comment event))
+   :request-id (:application/request-id event)
+   :commenters (:application/commenters event)
+   :deciders (:application/deciders event)
+   :time (localize-time (:event/time event))})
 
 (defn- event-view [{:keys [time userid event comment commenters deciders]}]
   [:div.row
@@ -613,17 +614,6 @@
     ^{:key group} [:div.group
                    (for [e group]
                      ^{:key e} [event-view e])]))
-
-(defn- dynamic-event->event [event]
-  {:event (name (:event/type event))
-   :time (:event/time event)
-   :userid (:event/actor event)
-   :request-id (:application/request-id event)
-   :commenters (:application/commenters event)
-   :deciders (:application/deciders event)
-   :comment (if (= :application.event/decided (:event/type event))
-              (str (localize-decision (:application/decision event)) ": " (:application/comment event))
-              (:application/comment event))})
 
 (defn- get-application-phases [state]
   (cond (contains? #{:rems.workflow.dynamic/rejected} state)
@@ -658,10 +648,9 @@
 
 (defn- application-header [application]
   (let [state (get-in application [:application/workflow :workflow.dynamic/state])
-        events (map dynamic-event->event (:application/events application))
         last-modified (:application/last-activity application)
         ;; the event times have millisecond differences, so they need to be formatted to minute precision before deduping
-        event-groups (->> events
+        event-groups (->> (:application/events application)
                           (map format-event)
                           dedupe
                           (group-by #(or (:request-id %)
@@ -680,7 +669,7 @@
       :always (into [:div
                      [:div.mb-3 {:class (str "state-" (name state))}
                       (phases (get-application-phases state))]
-                     [:h4 (text-format :t.applications/latest-activity (localize-time last-modified))]]
+                     [:h4 (text-format :t.applications/latest-activity (localize-time last-activity))]]
                     (when-let [g (first event-groups)]
                       (concat
                        [[:h4 (text :t.form/events)]]
@@ -1062,57 +1051,71 @@
    (component-info render-application)
    (example "application, partially filled"
             [render-application
-             {:title "Form title"
-              :application {:id 17 :state "draft"
-                            :can-approve? false
-                            :can-close? true
-                            :review-type nil}
-              :catalogue-items [{:title "An applied item"}]
-              :items [{:id 1 :type "text" :title "Field 1" :inputprompt "prompt 1"}
-                      {:id 2 :type "label" :title "Please input your wishes below."}
-                      {:id 3 :type "texta" :title "Field 2" :optional true :inputprompt "prompt 2"}
-                      {:id 4 :type "unsupported" :title "Field 3" :inputprompt "prompt 3"}
-                      {:id 5 :type "date" :title "Field 4"}]
-              :licenses [{:id 4 :type "license" :title "" :textcontent "" :licensetype "text"
-                          :localizations {:en {:title "A Text License" :textcontent lipsum}}}
-                         {:id 5 :type "license" :licensetype "link" :title "" :textcontent ""
-                          :localizations {:en {:title "Link to license" :textcontent "/guide"}}}]}
+             {:application/id 17
+              :application/workflow {:workflow.dynamic/state :rems.workflow.dynamic/draft}}
+             :application/resources [{:catalogue-item/title "An applied item"}]
+             :application/form {:form/fields [{:field/id 1
+                                               :field/type :text
+                                               :field/title {:en "Field 1"}
+                                               :field/placeholder {:en "prompt 1"}}
+                                              {:field/id 2
+                                               :field/type :label
+                                               :title "Please input your wishes below."}
+                                              {:field/id 3
+                                               :field/type :texta
+                                               :field/optional true
+                                               :field/title {:en "Field 2"}
+                                               :field/placeholder {:en "prompt 2"}}
+                                              {:field/id 4
+                                               :field/type :unsupported
+                                               :field/title {:en "Field 3"}
+                                               :field/placeholder {:en "prompt 3"}}
+                                              {:field/id 5
+                                               :field/type :date
+                                               :field/title {:en "Field 4"}}]}
+             :application/licenses [{:license/id 4
+                                     :license/type :text
+                                     :license/title {:en "A Text License"}
+                                     :license/text {:en lipsum}}
+                                    {:license/id 5
+                                     :license/type :link
+                                     :license/title {:en "Link to license"}
+                                     :license/link {:en "/#/guide"}}]
              {:items {1 "abc"}
               :licenses {4 false 5 true}}
              :en])
    (example "application, applied"
             [render-application
-             {:title "Form title"
-              :application {:id 17 :state "applied"
-                            :can-approve? true
-                            :can-close? false
-                            :review-type nil}
-              :catalogue-items [{:title "An applied item"}]
-              :items [{:id 1 :type "text" :title "Field 1" :inputprompt "prompt 1"}]
-              :licenses [{:id 2 :type "license" :title "" :licensetype "text"
-                          :textcontent ""
-                          :localizations {:en {:title "A Text License" :textcontent lipsum}}}]}
+             {:application/id 17
+              :application/workflow {:workflow.dynamic/state :rems.workflow.dynamic/submitted}
+              :application/resources [{:catalogue-item/title "An applied item"}]
+              :application/form {:form/fields [{:field/id 1
+                                                :field/type :text
+                                                :field/title {:en "Field 1"}
+                                                :field/placeholder {:en "prompt 1"}}]}
+              :application/licenses [{:license/id 4
+                                      :license/type :text
+                                      :license/title {:en "A Text License"}
+                                      :license/text {:en lipsum}}]}
              {:items {1 "abc"}
-              :licenses {2 true}}
+              :licenses {4 true}}
              :en])
    (example "application, approved"
             [render-application
-             {:title "Form title"
-              :catalogue-items [{:title "An applied item"}]
-              :applicant-attributes {:eppn "eppn" :mail "email@example.com" :additional "additional field"}
-              :application {:id 17 :state "approved"
-                            :can-approve? false
-                            :can-close? true
-                            :review-type nil
-                            :events [{:event "approve" :comment "Looking good, approved!"}]}
-              :items [{:id 1 :type "text" :title "Field 1" :inputprompt "prompt 1"}
-                      {:id 2 :type "label" :title "Please input your wishes below."}
-                      {:id 3 :type "texta" :title "Field 2" :optional true :inputprompt "prompt 2"}
-                      {:id 4 :type "unsupported" :title "Field 3" :inputprompt "prompt 3"}]
-              :licenses [{:id 5 :type "license" :title "A Text License" :licensetype "text"
-                          :textcontent lipsum}
-                         {:id 6 :type "license" :licensetype "link" :title "Link to license" :textcontent "/guide"
-                          :approved true}]
-              :comments [{:comment "a comment"}]}
-             {:items {1 "abc" 3 "def"}
-              :licenses {5 true 6 true}}])])
+             {:application/id 17
+              :application/workflow {:workflow.dynamic/state :rems.workflow.dynamic/approved}
+              :application/applicant-attributes {:eppn "eppn"
+                                                 :mail "email@example.com"
+                                                 :additional "additional field"}
+              :application/resources [{:catalogue-item/title "An applied item"}]
+              :application/form {:form/fields [{:field/id 1
+                                                :field/type :text
+                                                :field/title {:en "Field 1"}
+                                                :field/placeholder {:en "prompt 1"}}]}
+              :application/licenses [{:license/id 4
+                                      :license/type :text
+                                      :license/title {:en "A Text License"}
+                                      :license/text {:en lipsum}}]}
+             {:items {1 "abc"}
+              :licenses {4 true}}
+             :en])])
