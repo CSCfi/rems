@@ -475,10 +475,10 @@
                                           :application/member {:name "Mr. Member"
                                                                :email "member@example.com"}
                                           :application/comment "he left the project"})
-                            expected-application (-> (deep-merge expected-application
-                                                                 {:application/last-activity (DateTime. 5000)
-                                                                  :application/events events})
-                                                     (assoc :application/invitation-tokens {}))]
+                            expected-application (merge expected-application
+                                                        {:application/last-activity (DateTime. 5000)
+                                                         :application/events events
+                                                         :application/invitation-tokens {}})]
                         (is (= expected-application (apply-events events)))))
 
                     (testing "> member joined"
@@ -488,11 +488,11 @@
                                           :event/actor "member"
                                           :application/id 1
                                           :invitation/token token})
-                            expected-application (-> (deep-merge expected-application
-                                                                 {:application/last-activity (DateTime. 5000)
-                                                                  :application/events events
-                                                                  :application/members #{{:userid "member"}}})
-                                                     (assoc :application/invitation-tokens {}))]
+                            expected-application (merge expected-application
+                                                        {:application/last-activity (DateTime. 5000)
+                                                         :application/events events
+                                                         :application/members #{{:userid "member"}}
+                                                         :application/invitation-tokens {}})]
                         (is (= expected-application (apply-events events)))))))
 
                 (testing "> member added"
@@ -502,10 +502,10 @@
                                       :event/actor "handler"
                                       :application/id 1
                                       :application/member {:userid "member"}})
-                        expected-application (deep-merge expected-application
-                                                         {:application/last-activity (DateTime. 4000)
-                                                          :application/events events
-                                                          :application/members #{{:userid "member"}}})]
+                        expected-application (merge expected-application
+                                                    {:application/last-activity (DateTime. 4000)
+                                                     :application/events events
+                                                     :application/members #{{:userid "member"}}})]
                     (is (= expected-application (apply-events events)))
 
                     (testing "> member removed"
@@ -516,10 +516,10 @@
                                           :application/id 1
                                           :application/member {:userid "member"}
                                           :application/comment "he left the project"})
-                            expected-application (deep-merge expected-application
-                                                             {:application/last-activity (DateTime. 5000)
-                                                              :application/events events
-                                                              :application/members #{}})]
+                            expected-application (merge expected-application
+                                                        {:application/last-activity (DateTime. 5000)
+                                                         :application/events events
+                                                         :application/members #{}})]
                         (is (= expected-application (apply-events events)))))))))))))))
 
 (deftest test-apply-user-permissions
