@@ -36,8 +36,8 @@
   "Displays a checkbox."
   [checked?]
   (if checked?
-    [:i.fa.fa-lg.fa-check-square.color1]
-    [:i.fa.fa-lg.fa-square.color1-faint]))
+    [:i.far.fa-lg.fa-check-square.color1]
+    [:i.far.fa-lg.fa-square.color1]))
 
 (defn info-field
   "A component that shows a readonly field with title and value.
