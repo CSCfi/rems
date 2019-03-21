@@ -1,8 +1,7 @@
 (ns rems.actions.request-comment
   (:require [re-frame.core :as rf]
-            [reagent.core :as r]
             [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper]]
-            [rems.atoms :refer [enrich-user textarea]]
+            [rems.atoms :refer [enrich-user]]
             [rems.autocomplete :as autocomplete]
             [rems.status-modal :as status-modal]
             [rems.text :refer [text]]

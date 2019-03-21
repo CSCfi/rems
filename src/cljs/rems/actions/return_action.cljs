@@ -1,16 +1,14 @@
 (ns rems.actions.return-action
   (:require [re-frame.core :as rf]
-            [reagent.core :as r]
             [rems.actions.action :refer [action-button action-form-view action-comment button-wrapper]]
-            [rems.atoms :refer [textarea]]
             [rems.status-modal :as status-modal]
             [rems.text :refer [text]]
-            [rems.util :refer [fetch post!]]))
+            [rems.util :refer [post!]]))
 
 (rf/reg-event-fx
  ::open-form
  (fn [{:keys [db]} _]
-  {:db (assoc db ::comment "")}))
+   {:db (assoc db ::comment "")}))
 
 (rf/reg-sub ::comment (fn [db _] (::comment db)))
 (rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))
