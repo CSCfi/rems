@@ -1032,7 +1032,8 @@
   (not (nil? (users/get-user-attributes userid))))
 
 (defn- get-form [form-id]
-  (-> ((resolve 'rems.db.form/get-form) form-id) ;; XXX: avoid cyclic dependency
+  (require 'rems.db.form) ;; XXX: avoid cyclic dependency
+  (-> ((resolve 'rems.db.form/get-form) form-id) ;; XXX
       (select-keys [:id :organization :title :start :end])
       (assoc :items (->> (db/get-form-items {:id form-id})
                          (mapv #(process-item nil form-id %))))))
