@@ -476,7 +476,7 @@
                                                                          (get-in license [:license/attachment-filename lang]))
                                                         :attachment-id (get-in license [:license/attachment-id lang])}]))})
                     (:application/licenses application))
-     :accepted-licenses nil ;; TODO
+     :accepted-licenses (:application/accepted-licenses application)
      :items (map (fn [field]
                    {:id (:field/id field)
                     :type (name (:field/type field))
