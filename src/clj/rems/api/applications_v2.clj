@@ -56,7 +56,7 @@
       (assoc :application/modified (:event/time event))
       (assoc ::draft-answers (:application/field-values event))
       (update :application/licenses set-accepted-licences (:application/accepted-licenses event))
-      (update :application/accepted-licenses into (map :license/id (:application/accepted-licenses event)))))
+      (assoc-in [:application/accepted-licenses (:event/actor event)] (:application/accepted-licenses event))))
 
 (defmethod event-type-specific-application-view :application.event/member-invited
   [application event]
@@ -476,7 +476,7 @@
                                                                          (get-in license [:license/attachment-filename lang]))
                                                         :attachment-id (get-in license [:license/attachment-id lang])}]))})
                     (:application/licenses application))
-     :accepted-licenses nil ;; TODO
+     :accepted-licenses (:application/accepted-licenses application)
      :items (map (fn [field]
                    {:id (:field/id field)
                     :type (name (:field/type field))

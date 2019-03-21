@@ -282,7 +282,8 @@
           :member-invited {:subject "Kutsu osallistumaan hakemukseen"
                            :message "Hei,\nTämä sähköpostiosoite (%1) on kutsuttu osallistumaan hakemukseen.\nOsallistumislinkki: %2"}}
   :footer "CSC - IT Center for Science"
-  :form {:actions "Toiminnot"
+  :form {:accepted-licenses "Hyväksynyt käyttöehdot"
+         :actions "Toiminnot"
          :add-comments "Lisää kommentti"
          :add-comments-not-shown-to-applicant "Lisää kommentti (ei näy hakijalle)"
          :add-comments-shown-to-applicant "Lisää kommentti (näkyy hakijalle)"

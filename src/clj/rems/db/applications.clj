@@ -605,7 +605,7 @@
       :applicant-attributes (users/get-user-attributes (:applicantuserid application))
       :items items
       :licenses licenses
-      :accepted-licenses (:accepted-licenses application)
+      :accepted-licenses (get-in application [:form-contents :accepted-licenses])
       :phases (get-application-phases (:state application))})))
 
 (defn save-attachment!

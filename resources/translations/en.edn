@@ -282,7 +282,8 @@
           :member-invited {:subject "Invitation to participate in an application"
                            :message "Hello,\nThis email address (%1) has been invited to participate in an application.\nParticipate with this link: %2"}}
   :footer "Powered by CSC - IT Center for Science"
-  :form {:actions "Actions"
+  :form {:accepted-licenses "Accepted terms of use"
+         :actions "Actions"
          :add-comments "Add comment"
          :add-comments-not-shown-to-applicant "Add comment (not shown to applicant)"
          :add-comments-shown-to-applicant "Add comment (shown to applicant)"

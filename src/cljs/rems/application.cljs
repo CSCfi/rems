@@ -14,7 +14,8 @@
             [rems.actions.request-decision :refer [request-decision-action-button request-decision-form]]
             [rems.actions.return-action :refer [return-action-button return-form]]
             [rems.application-util :refer [draft? form-fields-editable? is-applicant? in-processing?]]
-            [rems.atoms :refer [external-link flash-message info-field textarea]]
+            [rems.atoms :refer [external-link flash-message info-field readonly-checkbox textarea]]
+            [rems.application-util :refer [form-fields-editable?]]
             [rems.autocomplete :as autocomplete]
             [rems.catalogue-util :refer [get-catalogue-item-title]]
             [rems.collapsible :as collapsible]
@@ -45,8 +46,6 @@
 (defn- can-submit-application? [application]
   (let [catalogue-items (:catalogue-items application)
         application-form (:application application)]
-    (prn (is-applicant? application-form))
-    (prn (draft? application-form))
     (not (and (is-applicant? application-form)
               (draft? application-form)
               (seq (filter item-disabled? catalogue-items))))))
@@ -645,12 +644,13 @@
 (defn member-info
   "Renders a applicant, member or invited member of an application
 
-  `:element-id`  - id of the element to generate unique ids
-  `:attributes`  - user attributes to display
-  `:application` - application
-  `:group?`      - specifies if a group border is rendered
-  `:can-remove?` - can the user be removed?"
-  [{:keys [element-id attributes application group? can-remove?]}]
+  `:element-id`         - id of the element to generate unique ids
+  `:attributes`         - user attributes to display
+  `:application`        - application
+  `:group?`             - specifies if a group border is rendered
+  `:can-remove?`        - can the user be removed?
+  `:accepted-licenses?` - has the member accepted the licenses?"
+  [{:keys [element-id attributes application group? can-remove? accepted-licenses?]}]
   (let [application-id (:id application)
         user-id (or (:eppn attributes) (:userid attributes))
         sanitized-user-id (-> (or user-id "")
@@ -671,7 +671,9 @@
        (when user-id
          [info-field (text :t.applicant-info/username) user-id {:inline? true}])
        (when-let [mail (or (:mail attributes) (:email attributes))]
-         [info-field (text :t.applicant-info/email) mail {:inline? true}])]
+         [info-field (text :t.applicant-info/email) mail {:inline? true}])
+       (when-not (nil? accepted-licenses?)
+         [info-field (text :t.form/accepted-licenses) [readonly-checkbox accepted-licenses?] {:inline? true}])]
       :collapse (when (seq other-attributes)
                   (into [:div]
                         (for [[k v] other-attributes]
@@ -686,10 +688,11 @@
 (defn applicants-info
   "Renders the applicants, i.e. applicant and members."
   [id application applicant-attributes members invited-members]
-  (let [application-id (:id application)
+  (let [app (:application application)
+        application-id (:id app)
         applicant (first (filter (comp #{(:eppn applicant-attributes)} :userid) members))
         non-applicant-members (remove #{applicant} members)
-        possible-commands (:possible-commands application)
+        possible-commands (:possible-commands app)
         can-add? (contains? possible-commands :rems.workflow.dynamic/add-member)
         can-remove? (contains? possible-commands :rems.workflow.dynamic/remove-member)
         can-invite? (contains? possible-commands :rems.workflow.dynamic/invite-member)
@@ -701,21 +704,25 @@
       (into [:div
              [member-info {:element-id id
                            :attributes (merge applicant applicant-attributes)
-                           :application application
+                           :application app
                            :group? (or (seq non-applicant-members)
                                        (seq invited-members))
-                           :can-remove? false}]]
+                           :can-remove? false
+                           :accepted-licenses? (every? (or (get (:accepted-licenses application)
+                                                                (:userid applicant))
+                                                           #{})
+                                                       (map :id (:licenses application)))}]]
             (concat
              (for [member non-applicant-members]
                [member-info {:element-id id
                              :attributes member
-                             :application application
+                             :application app
                              :group? true
                              :can-remove? can-remove?}])
              (for [invited-member invited-members]
                [member-info {:element-id id
                              :attributes invited-member
-                             :application application
+                             :application app
                              :group? true
                              :can-remove? can-uninvite?}])))
       :footer [:div
@@ -803,7 +810,7 @@
      [:h2 (text :t.applications/application)]
      (into [:div] messages)
      [application-header state phases events last-modified]
-     [:div.mt-3 [applicants-info "applicants-info" app applicant-attributes (:members app) (:invited-members app)]]
+     [:div.mt-3 [applicants-info "applicants-info" application applicant-attributes (:members app) (:invited-members app)]]
      [:div.mt-3 [applied-resources (:catalogue-items application)]]
      [:div.my-3 [application-fields application edit-application language]]
      [:div.my-3 [application-licenses application edit-application language]]
@@ -840,7 +847,8 @@
                                        :organization "Testers"
                                        :address "Testikatu 1, 00100 Helsinki"}
                           :application {:id 42
-                                        :applicantuserid "developer"}}])
+                                        :applicantuserid "developer"}
+                          :accepted-licenses? true}])
    (example "member-info with name missing"
             [member-info {:element-id "info2"
                           :attributes {:eppn "developer"
@@ -866,16 +874,24 @@
    (component-info applicants-info)
    (example "applicants-info"
             [applicants-info "applicants"
-             {:id 42
-              :applicantuserid "developer"
-              :possible-commands #{:rems.workflow.dynamic/add-member
-                                   :rems.workflow.dynamic/invite-member}}
+             {:application {:id 42
+                            :applicantuserid "developer"
+                            :possible-commands #{:rems.workflow.dynamic/add-member
+                                                 :rems.workflow.dynamic/invite-member}
+                            :accepted-licenses {"developer" #{1}}}
+              :licenses [{:id 1}]}
              {:eppn "developer"
               :mail "developer@uu.id"
               :commonName "Deve Loper"
               :organization "Testers"
               :address "Testikatu 1, 00100 Helsinki"}
-             [{:userid "alice"} {:userid "bob"}]
+             [{:userid "developer"
+               :mail "developer@uu.id"
+               :commonName "Deve Loper"
+               :organization "Testers"
+               :address "Testikatu 1, 00100 Helsinki"}
+              {:userid "alice"}
+              {:userid "bob"}]
              [{:name "John Smith" :email "john.smith@invited.com"}]])
 
    (component-info disabled-items-warning)

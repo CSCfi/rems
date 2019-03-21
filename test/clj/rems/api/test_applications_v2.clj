@@ -261,6 +261,7 @@
                                                                          {:license/accepted true}
                                                                          {:license/accepted true}]
                                                   :application/description "foo"
+                                                  :application/accepted-licenses {"applicant" #{30 31 32}}
                                                   :application/form {:form/fields [{:field/value "foo"}
                                                                                    {:field/value "bar"}]}})]
             (is (= expected-application (apply-events events)))

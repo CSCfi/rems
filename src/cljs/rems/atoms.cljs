@@ -36,8 +36,8 @@
   "Displays a checkbox."
   [checked?]
   (if checked?
-    [:i.fa.fa-lg.fa-check-square.color1]
-    [:i.fa.fa-lg.fa-square.color1-faint]))
+    [:i.far.fa-lg.fa-check-square.color1]
+    [:i.far.fa-lg.fa-square.color1]))
 
 (defn info-field
   "A component that shows a readonly field with title and value.
@@ -50,8 +50,8 @@
   [title value & [{:keys [inline? no-box?] :as opts}]]
   (if inline?
     [:div.form-group.row
-     [:label.col-sm-2.col-form-label title]
-     [:div.col-sm-10 (if no-box? {:style {:padding-left 0}} {:class "form-control"}) value]]
+     [:label.col-sm-3.col-form-label title]
+     [:div.col-sm-9 (if no-box? {:style {:padding-left 0}} {:class "form-control"}) value]]
     [:div.form-group
      [:label title]
      [:div (if no-box? {:style {:padding-left 0}} {:class "form-control"}) value]]))
