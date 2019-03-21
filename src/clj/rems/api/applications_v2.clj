@@ -56,7 +56,7 @@
       (assoc :application/modified (:event/time event))
       (assoc ::draft-answers (:application/field-values event))
       (update :application/licenses set-accepted-licences (:application/accepted-licenses event))
-      (update :application/accepted-licenses into (map :license/id (:application/accepted-licenses event)))))
+      (assoc-in [:application/accepted-licenses (:event/actor event)] (:application/accepted-licenses event))))
 
 (defmethod event-type-specific-application-view :application.event/member-invited
   [application event]
