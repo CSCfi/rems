@@ -45,8 +45,6 @@
 (defn- can-submit-application? [application]
   (let [catalogue-items (:catalogue-items application)
         application-form (:application application)]
-    (prn (is-applicant? application-form))
-    (prn (draft? application-form))
     (not (and (is-applicant? application-form)
               (draft? application-form)
               (seq (filter item-disabled? catalogue-items))))))
