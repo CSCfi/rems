@@ -10,29 +10,6 @@
   :once
   api-fixture)
 
-(deftest applications-api-test
-  (testing "fetch applications"
-    (let [api-key "42"
-          user-id "developer"]
-      (testing "regular fetch"
-        (let [response (-> (request :get "/api/applications")
-                           (authenticate api-key user-id)
-                           (header "Accept" "application/json")
-                           app
-                           assert-response-is-ok)
-              data (read-body response)]
-          (is (= "application/json; charset=utf-8" (get-in response [:headers "Content-Type"])))
-          (is (= [1 2 3 4 5 17 18 19] (map :id (sort-by :id data))))))
-      (testing "transit support"
-        (let [response (-> (request :get "/api/applications")
-                           (authenticate api-key user-id)
-                           (header "Accept" "application/transit+json")
-                           app
-                           assert-response-is-ok)
-              data (read-body response)]
-          (is (= "application/transit+json; charset=utf-8" (get-in response [:headers "Content-Type"])))
-          (is (= 8 (count data))))))))
-
 (defn- strip-cookie-attributes [cookie]
   (re-find #"[^;]*" cookie))
 
@@ -148,21 +125,12 @@
       read-ok-body
       :id))
 
-(defn- get-application-description-through-api-1 [app-id]
+(defn- get-application-description-through-api [app-id]
   (get-in (-> (request :get (str "/api/applications/" app-id))
               (authenticate "42" "alice")
               app
               read-ok-body)
           [:application :description]))
-
-(defn- get-application-description-through-api-2 [app-id]
-  (get-in (-> (request :get (str "/api/applications/"))
-              (authenticate "42" "alice")
-              app
-              read-ok-body
-              (->> (filter #(= app-id (:id %))))
-              first)
-          [:description]))
 
 (deftest application-description-test
   (testing "applications without description field have no description"
@@ -173,8 +141,7 @@
                                     :items {}
                                     :licenses {}})]
       (is (= nil
-             (get-application-description-through-api-1 app-id)
-             (get-application-description-through-api-2 app-id)))))
+             (get-application-description-through-api app-id)))))
 
   (testing "applications with description field have a description"
     (let [form-id (create-form-with-fields [{:title {:en ""}
@@ -188,8 +155,7 @@
                                     :items {(get-in draft [:items 0 :id]) "some description text"}
                                     :licenses {}})]
       (is (= "some description text"
-             (get-application-description-through-api-1 app-id)
-             (get-application-description-through-api-2 app-id))))))
+             (get-application-description-through-api app-id))))))
 
 (defn- send-dynamic-command [actor cmd]
   (-> (request :post (str "/api/applications/command"))
@@ -487,9 +453,6 @@
         (is (response-is-forbidden? response))))))
 
 (deftest applications-api-security-test
-  (testing "listing without authentication"
-    (is (response-is-unauthorized? (-> (request :get (str "/api/applications"))
-                                       app))))
   (testing "fetch application without authentication"
     (is (response-is-unauthorized? (-> (request :get (str "/api/applications/1"))
                                        app))))
