@@ -50,8 +50,8 @@
   [title value & [{:keys [inline? no-box?] :as opts}]]
   (if inline?
     [:div.form-group.row
-     [:label.col-sm-2.col-form-label title]
-     [:div.col-sm-10 (if no-box? {:style {:padding-left 0}} {:class "form-control"}) value]]
+     [:label.col-sm-3.col-form-label title]
+     [:div.col-sm-9 (if no-box? {:style {:padding-left 0}} {:class "form-control"}) value]]
     [:div.form-group
      [:label title]
      [:div (if no-box? {:style {:padding-left 0}} {:class "form-control"}) value]]))
