@@ -648,18 +648,15 @@
 
 (defn- application-header [application]
   (let [state (get-in application [:application/workflow :workflow.dynamic/state])
-        last-modified (:application/last-activity application)
-        ;; the event times have millisecond differences, so they need to be formatted to minute precision before deduping
+        last-activity (:application/last-activity application)
         event-groups (->> (:application/events application)
-                          (map format-event)
-                          dedupe
-                          (group-by #(or (:request-id %)
-                                         ;; Might want to replace this by exposing id from backend
-                                         [(:event %) (:time %)]))
+                          (group-by #(or (:application/request-id %)
+                                         (:event/id %)))
                           vals
-                          (map (partial sort-by :time))
-                          (sort-by #(:time (first %)))
-                          reverse)]
+                          (map (partial sort-by :event/time))
+                          (sort-by #(:event/time (first %)))
+                          reverse
+                          (map #(map format-event %)))]
     [collapsible/component
      {:id "header"
       :title [:span#application-state
