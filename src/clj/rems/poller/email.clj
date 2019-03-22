@@ -6,10 +6,9 @@
             [postal.core :as postal]
             [rems.config :refer [env]]
             [rems.db.applications :as applications]
-            [rems.db.core :as db]
             [rems.db.users :as users]
             [rems.text :refer [text text-format with-language]]
-            [rems.json :as json]
+            [rems.poller.common :as common]
             [rems.util :as util]
             [rems.workflow.dynamic :as dynamic]))
 
@@ -31,6 +30,9 @@
 (defmethod event-to-emails-impl :default [_event _application]
   [])
 
+;; There's a slight inconsistency here: we look at current members, so
+;; a member might get an email for an event that happens before he was
+;; added.
 (defmethod event-to-emails-impl :application.event/approved [event application]
   (vec
    (for [member (:members application)] ;; applicant is a member
@@ -130,76 +132,6 @@
 
 ;;; Generic poller infrastructure
 
-;; these can be moved to rems.poller once we have multiple pollers
-(defn get-poller-state [name-kw]
-  (or (json/parse-string (:state (db/get-poller-state {:name (name name-kw)})))
-      {:last-processed-event-id 0}))
-
-(defn set-poller-state! [name-kw state]
-  (db/set-poller-state! {:name (name name-kw) :state (json/generate-string state)})
-  nil)
-
-(defn run-event-poller [name-kw process-event!]
-  ;; This isn't thread-safe but ScheduledThreadPoolExecutor guarantees exclusion
-  (let [prev-state (get-poller-state name-kw)
-        events (applications/get-dynamic-application-events-since (:last-processed-event-id prev-state))]
-    (log/info name-kw "running with state" (pr-str prev-state))
-    (try
-      (doseq [e events]
-        (try
-          (log/info name-kw "processing event" (:event/id e))
-          (process-event! e)
-          (set-poller-state! name-kw {:last-processed-event-id (:event/id e)})
-          (catch Throwable t
-            (throw (Exception. (str name-kw " processing event " (pr-str e)) t)))))
-      (catch Throwable t
-        (log/error t)))
-    (log/info name-kw "finished")))
-
-(deftest test-run-event-poller-error-handling
-  (let [events (atom [])
-        add-event! #(swap! events conj %)
-        ids-to-fail (atom #{})
-        processed (atom [])
-        process-event! (fn [event]
-                         (when (contains? @ids-to-fail (:event/id event))
-                           (throw (Error. "BOOM")))
-                         (swap! processed conj event))
-        poller-state (atom {:last-processed-event-id 0})
-        run #(run-event-poller :test process-event!)]
-    (with-redefs [applications/get-dynamic-application-events-since (fn [id] (filterv #(< id (:event/id %)) @events))
-                  get-poller-state (fn [_] @poller-state)
-                  set-poller-state! (fn [_ state] (reset! poller-state state))]
-      (testing "no events, nothing should happen"
-        (run)
-        (is (= {:last-processed-event-id 0} @poller-state))
-        (is (= [] @processed)))
-      (testing "add a few events, process them"
-        (add-event! {:event/id 1})
-        (add-event! {:event/id 3})
-        (run)
-        (is (= {:last-processed-event-id 3} @poller-state))
-        (is (= [{:event/id 1} {:event/id 3}] @processed)))
-      (testing "add a failing event"
-        (add-event! {:event/id 5})
-        (add-event! {:event/id 7})
-        (add-event! {:event/id 9})
-        (reset! ids-to-fail #{7})
-        (reset! processed [])
-        (run)
-        (is (= {:last-processed-event-id 5} @poller-state))
-        (is (= [{:event/id 5}] @processed)))
-      (testing "run again after failure, nothing should happen"
-        (reset! processed [])
-        (run)
-        (is (= {:last-processed-event-id 5} @poller-state))
-        (is (= [] @processed)))
-      (testing "fix failure, run"
-        (reset! ids-to-fail #{})
-        (run)
-        (is (= {:last-processed-event-id 9} @poller-state))
-        (is (= [{:event/id 7} {:event/id 9}] @processed))))))
-
 ;;; Email poller
 
 ;; You can test email sending by:
@@ -207,13 +139,13 @@
 ;; 1. running mailhog: docker run -p 1025:1025 -p 8025:8025 mailhog/mailhog
 ;; 2. adding {:mail-from "rems@example.com" :smtp-host "localhost" :smtp-port 1025} to dev-config.edn
 ;; 3. generating some emails
-;;    - you can reset the email poller state with (set-poller-state! :rems.poller.email/poller nil)
+;;    - you can reset the email poller state with (common/set-poller-state! :rems.poller.email/poller nil)
 ;; 4. open http://localhost:8025 in your browser to view the emails
 
 (defn mark-all-emails-as-sent! []
   (let [events (applications/get-dynamic-application-events-since 0)
         last-id (:event/id (last events))]
-    (set-poller-state! ::poller {:last-processed-event-id last-id})))
+    (common/set-poller-state! ::poller {:last-processed-event-id last-id})))
 
 (defn send-email! [email-spec]
   (let [host (:smtp-host env)
@@ -233,10 +165,10 @@
         (postal/send-message {:host host :port port} email)))))
 
 (defn run []
-  (run-event-poller ::poller (fn [event]
-                               (with-language (:default-language env)
-                                 #(doseq [mail (event-to-emails event)]
-                                    (send-email! mail))))))
+  (common/run-event-poller ::poller (fn [event]
+                                      (with-language (:default-language env)
+                                        #(doseq [mail (event-to-emails event)]
+                                           (send-email! mail))))))
 
 (mount/defstate email-poller
   :start (doto (java.util.concurrent.ScheduledThreadPoolExecutor. 1)
