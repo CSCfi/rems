@@ -111,6 +111,7 @@
                                                  (map (juxt :field/id :field/value))
                                                  (into {}))
                               :show-diff {}
+                              :validation-errors nil
                               :accepted-licenses (set (get (:application/accepted-licenses application)
                                                            (:application/applicant application)))
                               ;; TODO: remove these
@@ -121,10 +122,10 @@
                                                                                (:application/applicant application))))})))
 
 (rf/reg-event-db
- ::set-validation
+ ::set-validation-errors
  (fn [db [_ errors]]
    (prn errors)
-   (assoc-in db [::edit-application :validation] errors)))
+   (assoc-in db [::edit-application :validation-errors] errors)))
 
 (defn- save-application [description application-id catalogue-ids fields licenses]
   (status-modal/common-pending-handler! description)
@@ -151,7 +152,7 @@
                               :when checked?]
                           [id "approved"]))]
      (save-application description app-id catalogue-ids items licenses))
-   {:db (assoc-in db [::edit-application :validation] nil)}))
+   {:db (assoc-in db [::edit-application :validation-errors] nil)}))
 
 (defn- submit-application [application description application-id catalogue-items items licenses]
   (status-modal/common-pending-handler! description)
@@ -165,7 +166,7 @@
                                             (do
                                               (status-modal/set-error! {:result response
                                                                         :error-content (format-validation-errors application (:errors response))})
-                                              (rf/dispatch [::set-validation (:errors response)]))))
+                                              (rf/dispatch [::set-validation-errors (:errors response)]))))
                                :error-handler status-modal/common-error-handler!
                                :params {:type :rems.workflow.dynamic/submit
                                         :application-id application-id}})
@@ -191,7 +192,7 @@
                               :when checked?]
                           [id "approved"]))]
      (submit-application application description app-id catalogue-ids items licenses))
-   {:db (assoc-in db [::edit-application :validation] nil)}))
+   {:db (assoc-in db [::edit-application :validation-errors] nil)}))
 
 (defn- save-attachment [{:keys [db]} [_ field-id file description]]
   (let [application-id (get-in db [::application :application/id])]
@@ -592,8 +593,8 @@
                    :on-click #(rf/dispatch [::submit-application (text :t.form/submit)])}])
 
 (defn- application-fields [application edit-application]
-  (let [{:keys [items validation]} edit-application
-        field-validations (index-by [:field-id] validation)
+  (let [items (:items edit-application)
+        field-validations (index-by [:field-id] (:validation-errors edit-application))
         form-fields-editable? (form-fields-editable? application)
         readonly? (not form-fields-editable?)]
     [collapsible/component
@@ -614,8 +615,7 @@
 (defn- application-licenses [application edit-application]
   (when-let [licenses (not-empty (:application/licenses application))]
     (let [edit-licenses (:licenses edit-application)
-          validation (:validation edit-application)
-          license-validations (index-by [:license-id] validation)
+          license-validations (index-by [:license-id] (:validation-errors edit-application))
           form-fields-editable? (form-fields-editable? application)
           readonly? (not form-fields-editable?)]
       [collapsible/component
@@ -858,10 +858,10 @@
 (defn- render-application [application edit-application]
   (let [messages (remove nil?
                          [(disabled-items-warning application) ; NB: eval this here so we get nil or a warning
-                          (when (:validation edit-application)
+                          (when-let [errors (:validation-errors edit-application)]
                             [flash-message
                              {:status :danger
-                              :contents [format-validation-errors application (:validation edit-application)]}])])]
+                              :contents [format-validation-errors application errors]}])])]
     [:div
      [:div {:class "float-right"} [pdf-button (:application/id application)]]
      [:h2 (text :t.applications/application)]
