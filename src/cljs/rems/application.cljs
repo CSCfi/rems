@@ -562,7 +562,7 @@
                    :class :btn-primary
                    :on-click #(rf/dispatch [::submit-application (text :t.form/submit)])}])
 
-(defn- application-fields [application edit-application language]
+(defn- application-fields [application edit-application]
   (let [{:keys [items validation]} edit-application
         field-validations (index-by [:field-id] validation)
         form-fields-editable? (form-fields-editable? application)
@@ -577,7 +577,6 @@
                [field (assoc fld
                              :validation (field-validations (:field/id fld))
                              :readonly readonly?
-                             :language language
                              :field/value (get-in items [(:field/id fld) :value])
                              :field/previous-value (get-in items [(:field/id fld) :previous-value])
                              :diff (get-in items [(:field/id fld) :diff])
@@ -827,7 +826,7 @@
                      ^{:key (:resource/id resource)}
                      [:li (localized (:catalogue-item/title resource))]))]}])
 
-(defn- render-application [application edit-application language]
+(defn- render-application [application edit-application]
   (let [messages (remove nil?
                          [(disabled-items-warning application) ; NB: eval this here so we get nil or a warning
                           (when (:validation edit-application)
@@ -841,7 +840,7 @@
      [application-header application]
      [:div.mt-3 [applicants-info application]]
      [:div.mt-3 [applied-resources application]]
-     [:div.my-3 [application-fields application edit-application language]]
+     [:div.my-3 [application-fields application edit-application]]
      [:div.my-3 [application-licenses application edit-application]]
      [:div.mb-3 [actions-form application]]]))
 
@@ -850,17 +849,12 @@
 (defn application-page []
   (let [application @(rf/subscribe [::application])
         edit-application @(rf/subscribe [::edit-application])
-        language @(rf/subscribe [:language])
         loading? (not application)]
     (if loading?
       [:div
        [:h2 (text :t.applications/application)]
        [spinner/big]]
-      [render-application application edit-application language])))
-
-
-
-
+      [render-application application edit-application])))
 
 
 ;;;; Guide
@@ -1187,8 +1181,7 @@
                                       :license/title {:en "Link to license"}
                                       :license/link {:en "https://creativecommons.org/licenses/by/4.0/deed.en"}}]}
              {:items {1 "abc"}
-              :licenses {4 false 5 true}}
-             :en])
+              :licenses {4 false 5 true}}])
    (example "application, applied"
             [render-application
              {:application/id 17
@@ -1203,8 +1196,7 @@
                                       :license/title {:en "A Text License"}
                                       :license/text {:en lipsum}}]}
              {:items {1 "abc"}
-              :licenses {4 true}}
-             :en])
+              :licenses {4 true}}])
    (example "application, approved"
             [render-application
              {:application/id 17
@@ -1222,5 +1214,4 @@
                                       :license/title {:en "A Text License"}
                                       :license/text {:en lipsum}}]}
              {:items {1 "abc"}
-              :licenses {4 true}}
-             :en])])
+              :licenses {4 true}}])])
