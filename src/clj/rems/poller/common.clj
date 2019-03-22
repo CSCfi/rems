@@ -7,11 +7,11 @@
             [rems.json :as json]))
 
 (defn get-poller-state [name-kw]
-  (or (json/parse-string (:state (db/get-poller-state {:name (name name-kw)})))
+  (or (json/parse-string (:state (db/get-poller-state {:name (str name-kw)})))
       {:last-processed-event-id 0}))
 
 (defn set-poller-state! [name-kw state]
-  (db/set-poller-state! {:name (name name-kw) :state (json/generate-string state)})
+  (db/set-poller-state! {:name (str name-kw) :state (json/generate-string state)})
   nil)
 
 (defn run-event-poller [name-kw process-event!]
