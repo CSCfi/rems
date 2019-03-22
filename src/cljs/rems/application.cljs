@@ -107,24 +107,24 @@
    (prn errors)
    (assoc-in db [::edit-application :validation] errors)))
 
-(defn- save-application [description application-id catalogue-items items licenses]
+(defn- save-application [description application-id catalogue-ids fields licenses]
   (status-modal/common-pending-handler! description)
   (post! "/api/applications/save"
          {:handler (partial status-modal/common-success-handler! #(rf/dispatch [::enter-application-page application-id]))
           :error-handler status-modal/common-error-handler!
           :params (merge {:command "save"
-                          :items (map-vals :value items)
+                          :items (map-vals :value fields)
                           :licenses licenses}
                          (if application-id
                            {:application-id application-id}
-                           {:catalogue-items catalogue-items}))}))
+                           {:catalogue-items catalogue-ids}))}))
 
 (rf/reg-event-fx
  ::save-application
  (fn [{:keys [db]} [_ description]]
-   (let [app-id (get-in db [::application :application/id])
-         catalogue-items (get-in db [::application :catalogue-items])
-         catalogue-ids (mapv :id catalogue-items)
+   (let [application (::application db)
+         app-id (:application/id application)
+         catalogue-ids (map :catalogue-item/id (:application/resources application))
          items (get-in db [::edit-application :items])
          ;; TODO change api to booleans
          licenses (into {}
@@ -162,10 +162,9 @@
 (rf/reg-event-fx
  ::submit-application
  (fn [{:keys [db]} [_ description]]
-   (let [application (get-in db [::application])
-         app-id (get-in db [::application :application/id])
-         catalogue-items (get-in db [::application :catalogue-items])
-         catalogue-ids (mapv :id catalogue-items)
+   (let [application (::application db)
+         app-id (:application/id application)
+         catalogue-ids (map :catalogue-item/id (:application/resources application))
          items (get-in db [::edit-application :items])
          ;; TODO change api to booleans
          licenses (into {}
@@ -789,17 +788,17 @@
                 action))))
 
 (defn- actions-form [application]
-  (let [app (:application application)
+  (let [app-id (:application/id application)
         actions (dynamic-actions application)
-        reload (partial reload! (:id app))
+        reload (partial reload! app-id)
         forms [[:div#actions-forms.mt-3
-                [request-comment-form (:id app) reload]
-                [request-decision-form (:id app) reload]
-                [comment-form (:id app) reload]
-                [close-form (:id app) reload]
-                [decide-form (:id app) reload]
-                [return-form (:id app) reload]
-                [approve-reject-form (:id app) reload]]]]
+                [request-comment-form app-id reload]
+                [request-decision-form app-id reload]
+                [comment-form app-id reload]
+                [close-form app-id reload]
+                [decide-form app-id reload]
+                [return-form app-id reload]
+                [approve-reject-form app-id reload]]]]
     (when (seq actions)
       [collapsible/component
        {:id "actions"
