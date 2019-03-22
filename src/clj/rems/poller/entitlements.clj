@@ -2,6 +2,7 @@
   "Handing out entitlements for accepted applications. Stores
    entitlements in the db and optionally POSTs them to a webhook."
   (:require [clojure.test :refer :all]
+            [mount.core :as mount]
             [rems.db.applications :as applications]
             [rems.db.entitlements :as entitlements]
             [rems.poller.common :as common]))
@@ -16,7 +17,9 @@
 (defn run []
   (common/run-event-poller ::poller entitlements-for-event))
 
-(comment
-  (common/get-poller-state ::poller)
-  (common/set-poller-state! ::poller nil)
-  (run))
+(mount/defstate entitlements-poller
+  :start (doto (java.util.concurrent.ScheduledThreadPoolExecutor. 1)
+           (.scheduleWithFixedDelay run 10 10 java.util.concurrent.TimeUnit/SECONDS))
+  :stop (doto entitlements-poller
+          (.shutdown)
+          (.awaitTermination 60 java.util.concurrent.TimeUnit/SECONDS)))
