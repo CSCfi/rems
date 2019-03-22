@@ -20,7 +20,9 @@
      {:db (dissoc db ::catalogue ::draft-applications)
       :dispatch-n [[::fetch-catalogue]
                    [::fetch-drafts]]}
-     (unauthorized!))))
+     (do
+       (unauthorized!)
+       {}))))
 
 ;;;; table sorting
 

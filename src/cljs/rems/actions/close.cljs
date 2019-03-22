@@ -8,7 +8,7 @@
 (rf/reg-event-fx
  ::open-form
  (fn [{:keys [db]} _]
-  {:db (assoc db ::comment "")}))
+   {:db (assoc db ::comment "")}))
 
 (rf/reg-sub ::comment (fn [db _] (::comment db)))
 (rf/reg-event-db ::set-comment (fn [db [_ value]] (assoc db ::comment value)))

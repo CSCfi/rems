@@ -22,7 +22,8 @@
                     :type :rems.workflow.dynamic/return
                     :comment comment}
            :handler (partial status-modal/common-success-handler! on-finished)
-           :error-handler status-modal/common-error-handler!})))
+           :error-handler status-modal/common-error-handler!})
+   {}))
 
 (def ^:private action-form-id "return")
 
