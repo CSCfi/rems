@@ -13,7 +13,7 @@
             [rems.actions.request-comment :refer [request-comment-action-button request-comment-form]]
             [rems.actions.request-decision :refer [request-decision-action-button request-decision-form]]
             [rems.actions.return-action :refer [return-action-button return-form]]
-            [rems.application-util :refer [form-fields-editable? in-processing?]]
+            [rems.application-util :refer [form-fields-editable?]]
             [rems.atoms :refer [external-link flash-message info-field readonly-checkbox textarea]]
             [rems.catalogue-util :refer [get-catalogue-item-title]]
             [rems.collapsible :as collapsible]
@@ -33,6 +33,12 @@
 
 (defn reload! [application-id]
   (rf/dispatch [:rems.application/enter-application-page application-id]))
+
+(defn- in-processing? [application]
+  (not (contains? #{:rems.workflow.dynamic/approved
+                    :rems.workflow.dynamic/rejected
+                    :rems.workflow.dynamic/closed}
+                  (get-in application [:application/workflow :workflow.dynamic/state]))))
 
 (defn- disabled-items-warning [application]
   (when (in-processing? application)
