@@ -119,9 +119,11 @@
  (fn [db [_ application]]
    (assoc db
           ::application application
-          ::edit-application {:items (into {} (for [item (:items application)]
-                                                [(:id item) (select-keys item [:value :previous-value])]))
-                              :licenses (into {} (map (juxt :id :approved) (:licenses application)))})))
+          ::edit-application {:items (into {} (for [field (get-in application [:application/form :form/fields])]
+                                                [(:field/id field) {:value (:field/value field)
+                                                                    :previous-value (:field/previous-value field)}]))
+                              :licenses (into {} (map (fn [id] [id true]) (get (:application/accepted-licenses application)
+                                                                               (:application/applicant application))))})))
 
 (rf/reg-event-db
  ::set-validation
@@ -129,7 +131,7 @@
    (prn errors)
    (assoc-in db [::edit-application :validation] errors)))
 
-(defn- save-application [app description application-id catalogue-items items licenses]
+(defn- save-application [description application-id catalogue-items items licenses]
   (status-modal/common-pending-handler! description)
   (post! "/api/applications/save"
          {:handler (partial status-modal/common-success-handler! #(rf/dispatch [::enter-application-page application-id]))
@@ -144,8 +146,7 @@
 (rf/reg-event-fx
  ::save-application
  (fn [{:keys [db]} [_ description]]
-   (let [app (get-in db [::application :application])
-         app-id (get-in db [::application :application :id])
+   (let [app-id (get-in db [::application :application/id])
          catalogue-items (get-in db [::application :catalogue-items])
          catalogue-ids (mapv :id catalogue-items)
          items (get-in db [::edit-application :items])
@@ -154,7 +155,7 @@
                         (for [[id checked?] (get-in db [::edit-application :licenses])
                               :when checked?]
                           [id "approved"]))]
-     (save-application app description app-id catalogue-ids items licenses))
+     (save-application description app-id catalogue-ids items licenses))
    {:db (assoc-in db [::edit-application :validation] nil)}))
 
 (defn- submit-application [application description application-id catalogue-items items licenses]
@@ -186,7 +187,7 @@
  ::submit-application
  (fn [{:keys [db]} [_ description]]
    (let [application (get-in db [::application])
-         app-id (get-in db [::application :application :id])
+         app-id (get-in db [::application :application/id])
          catalogue-items (get-in db [::application :catalogue-items])
          catalogue-ids (mapv :id catalogue-items)
          items (get-in db [::edit-application :items])
@@ -199,7 +200,7 @@
    {:db (assoc-in db [::edit-application :validation] nil)}))
 
 (defn- save-attachment [{:keys [db]} [_ field-id file description]]
-  (let [application-id (get-in db [::application :application :id])]
+  (let [application-id (get-in db [::application :application/id])]
     (status-modal/common-pending-handler! description)
     (post! (str "/api/applications/add_attachment?application-id=" application-id "&field-id=" field-id)
            {:body file
