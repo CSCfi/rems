@@ -113,13 +113,7 @@
                               :show-diff {}
                               :validation-errors nil
                               :accepted-licenses (set (get (:application/accepted-licenses application)
-                                                           (:application/applicant application)))
-                              ;; TODO: remove these
-                              :items (into {} (for [field (get-in application [:application/form :form/fields])]
-                                                [(:field/id field) {:value (:field/value field)
-                                                                    :previous-value (:field/previous-value field)}]))
-                              :licenses (into {} (map (fn [id] [id true]) (get (:application/accepted-licenses application)
-                                                                               (:application/applicant application))))})))
+                                                           (:application/applicant application)))})))
 
 (rf/reg-event-db
  ::set-validation-errors
@@ -239,25 +233,19 @@
 (rf/reg-event-db
  ::set-field-value
  (fn [db [_ field-id value]]
-   (-> db
-       (assoc-in [::edit-application :items field-id :value] value)
-       (assoc-in [::edit-application :field-values field-id] value))))
+   (assoc-in db [::edit-application :field-values field-id] value)))
 
 (rf/reg-event-db
  ::toggle-diff
  (fn [db [_ field-id]]
-   (-> db
-       (update-in [::edit-application :items field-id :diff] not)
-       (update-in [::edit-application :show-diff field-id] not))))
+   (update-in db [::edit-application :show-diff field-id] not)))
 
 (rf/reg-event-db
  ::set-license-accepted
  (fn [db [_ license-id accepted]]
-   (-> db
-       (assoc-in [::edit-application :licenses license-id] accepted)
-       (update-in [::edit-application :accepted-licenses] (if accepted
-                                                            #(conj % license-id)
-                                                            #(disj % license-id))))))
+   (update-in db [::edit-application :accepted-licenses] (if accepted
+                                                           #(conj % license-id)
+                                                           #(disj % license-id)))))
 
 (defn- id-to-name [id]
   (str "field" id))
