@@ -5,7 +5,7 @@
             [rems.spinner :as spinner]
             [rems.table :as table]
             [rems.text :refer [localize-time text]]
-            [rems.util :refer [dispatch! fetch put!]]))
+            [rems.util :refer [dispatch! fetch]]))
 
 (rf/reg-event-fx
  ::enter-page
@@ -86,5 +86,5 @@
           [[to-create-workflow]
            [workflows-list
             @(rf/subscribe [::workflows])
-            (assoc @(rf/subscribe [::sorting]) :set-sorting  #(rf/dispatch [::set-sorting %]))
-            (assoc @(rf/subscribe [::filtering]) :set-filtering  #(rf/dispatch [::set-filtering %]))]])))
+            (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))
+            (assoc @(rf/subscribe [::filtering]) :set-filtering #(rf/dispatch [::set-filtering %]))]])))

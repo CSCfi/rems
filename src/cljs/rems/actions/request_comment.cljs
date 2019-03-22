@@ -10,7 +10,7 @@
 (rf/reg-fx
  ::fetch-potential-commenters
  (fn [[user on-success]]
-   (fetch (str "/api/applications/commenters")
+   (fetch "/api/applications/commenters"
           {:handler on-success
            :headers {"x-rems-user-id" (:eppn user)}})))
 

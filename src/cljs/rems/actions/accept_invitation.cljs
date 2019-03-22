@@ -42,8 +42,9 @@
 (rf/reg-fx
  ::accept-invitation
  (fn [[user token]]
-   (post! (str "/api/applications/accept-invitation?invitation-token=" token)
-          {:handler success-handler
+   (post! "/api/applications/accept-invitation"
+          {:url-params {:invitation-token token}
+           :handler success-handler
            :error-handler error-handler
            :headers {"x-rems-user-id" (:eppn user)}})))
 

@@ -202,8 +202,10 @@
 (defn- save-attachment [{:keys [db]} [_ field-id file description]]
   (let [application-id (get-in db [::application :application/id])]
     (status-modal/common-pending-handler! description)
-    (post! (str "/api/applications/add_attachment?application-id=" application-id "&field-id=" field-id)
-           {:body file
+    (post! "/api/applications/add_attachment"
+           {:url-params {:application-id application-id
+                         :field-id field-id}
+            :body file
             :handler (partial status-modal/common-success-handler! nil)
             :error-handler status-modal/common-error-handler!})
     {}))
@@ -212,8 +214,10 @@
 
 (defn- remove-attachment [_ [_ application-id field-id description]]
   (status-modal/common-pending-handler! description)
-  (post! (str "/api/applications/remove_attachment?application-id=" application-id "&field-id=" field-id)
-         {:body {}
+  (post! "/api/applications/remove_attachment"
+         {:url-params {:application-id application-id
+                       :field-id field-id}
+          :body {}
           :handler (partial status-modal/common-success-handler! nil)
           :error-handler status-modal/common-error-handler!})
   {})

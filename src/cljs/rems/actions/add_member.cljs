@@ -12,7 +12,7 @@
 (rf/reg-fx
  ::fetch-potential-members
  (fn [[user on-success]]
-   (fetch (str "/api/applications/members")
+   (fetch "/api/applications/members"
           {:handler on-success
            :headers {"x-rems-user-id" (:eppn user)}})))
 
