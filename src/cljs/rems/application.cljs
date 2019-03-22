@@ -127,14 +127,18 @@
    (prn errors)
    (assoc-in db [::edit-application :validation-errors] errors)))
 
-(defn- save-application [description application-id catalogue-ids fields licenses]
+(defn- save-application! [description application-id catalogue-ids field-values accepted-licenses]
   (status-modal/common-pending-handler! description)
   (post! "/api/applications/save"
          {:handler (partial status-modal/common-success-handler! #(rf/dispatch [::enter-application-page application-id]))
           :error-handler status-modal/common-error-handler!
+          ;; TODO change the API to match the draft-saved event's structure
           :params (merge {:command "save"
-                          :items (map-vals :value fields)
-                          :licenses licenses}
+                          :items field-values
+                          :licenses (->> accepted-licenses
+                                         (map (fn [license-id]
+                                                [license-id "approved"]))
+                                         (into {}))}
                          (if application-id
                            {:application-id application-id}
                            {:catalogue-items catalogue-ids}))}))
@@ -143,18 +147,17 @@
  ::save-application
  (fn [{:keys [db]} [_ description]]
    (let [application (::application db)
-         app-id (:application/id application)
-         catalogue-ids (map :catalogue-item/id (:application/resources application))
-         items (get-in db [::edit-application :items])
-         ;; TODO change api to booleans
-         licenses (into {}
-                        (for [[id checked?] (get-in db [::edit-application :licenses])
-                              :when checked?]
-                          [id "approved"]))]
-     (save-application description app-id catalogue-ids items licenses))
+         edit-application (::edit-application db)
+         catalogue-ids (map :catalogue-item/id (:application/resources application))]
+     (save-application! description
+                        (:application/id application)
+                        catalogue-ids
+                        (:field-values edit-application)
+                        (:accepted-licenses edit-application)))
    {:db (assoc-in db [::edit-application :validation-errors] nil)}))
 
-(defn- submit-application [application description application-id catalogue-items items licenses]
+(defn- submit-application! [application description application-id catalogue-ids field-values accepted-licenses]
+  ;; TODO: deduplicate with save-application!
   (status-modal/common-pending-handler! description)
   (post! "/api/applications/save"
          {:handler (fn [response]
@@ -173,25 +176,27 @@
                        (status-modal/common-error-handler! response)))
           :error-handler status-modal/common-error-handler!
           :params (merge {:command "save"
-                          :items (map-vals :value items)
-                          :licenses licenses}
+                          :items field-values
+                          :licenses (->> accepted-licenses
+                                         (map (fn [license-id]
+                                                [license-id "approved"]))
+                                         (into {}))}
                          (if application-id
                            {:application-id application-id}
-                           {:catalogue-items catalogue-items}))}))
+                           {:catalogue-items catalogue-ids}))}))
 
 (rf/reg-event-fx
  ::submit-application
  (fn [{:keys [db]} [_ description]]
    (let [application (::application db)
-         app-id (:application/id application)
-         catalogue-ids (map :catalogue-item/id (:application/resources application))
-         items (get-in db [::edit-application :items])
-         ;; TODO change api to booleans
-         licenses (into {}
-                        (for [[id checked?] (get-in db [::edit-application :licenses])
-                              :when checked?]
-                          [id "approved"]))]
-     (submit-application application description app-id catalogue-ids items licenses))
+         edit-application (::edit-application db)
+         catalogue-ids (map :catalogue-item/id (:application/resources application))]
+     (submit-application! application
+                          description
+                          (:application/id application)
+                          catalogue-ids
+                          (:field-values edit-application)
+                          (:accepted-licenses edit-application)))
    {:db (assoc-in db [::edit-application :validation-errors] nil)}))
 
 (defn- save-attachment [{:keys [db]} [_ field-id file description]]
