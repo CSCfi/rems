@@ -7,7 +7,10 @@
             [rems.poller.common :as common]))
 
 (defn- entitlements-for-event [event]
-  (when (= :application.event/approved (:event/type event))
+  ;; we filter by event here, and by state in update-entitlements-for.
+  ;; this is because update-entitlements-for is not actually
+  ;; idempotent.
+  (when (contains? #{:application.event/approved :application.event/closed} (:event/type event))
     (entitlements/update-entitlements-for (applications/get-dynamic-application-state (:application/id event)))))
 
 (defn run []
