@@ -77,7 +77,7 @@
     (let [response (-> (request :get (str "/api/applications/13/pdf"))
                        (authenticate "42" "bob")
                        app)]
-      (is (response-is-not-found? response)))) ;; TODO this should actually be forbidden
+      (is (response-is-forbidden? response))))
   (testing "success"
     (let [response (-> (request :get (str "/api/applications/13/pdf"))
                        (authenticate "42" "developer")
@@ -277,7 +277,7 @@
           (is (= "rems.workflow.dynamic/draft" (get-in saved [:application :state])))
           (is (= "dynamic test" (get-in saved [:items 0 :value])))))
       (testing "getting application as other user is forbidden"
-        (is (response-is-not-found? ;; TODO this should probably be forbidden
+        (is (response-is-forbidden?
              (-> (request :get (str "/api/v2/applications/" application-id))
                  (authenticate api-key "bob")
                  app))))
