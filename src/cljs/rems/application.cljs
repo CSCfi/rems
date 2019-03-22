@@ -616,9 +616,9 @@
 
 (defn- render-event-groups [event-groups]
   (for [group event-groups]
-    ^{:key group} [:div.group
-                   (for [e group]
-                     ^{:key e} [event-view e])]))
+    (into [:div.group]
+          (for [e group]
+            [event-view e]))))
 
 (defn- get-application-phases [state]
   (cond (contains? #{:rems.workflow.dynamic/rejected} state)
@@ -673,11 +673,11 @@
                       (phases (get-application-phases state))]
                      [:h4 (text-format :t.applications/latest-activity (localize-time last-activity))]]
                     (when-let [g (first event-groups)]
-                      (concat
-                       [[:h4 (text :t.form/events)]]
-                       (render-event-groups [g]))))
+                      (into [[:h4 (text :t.form/events)]]
+                            (render-event-groups [g]))))
       :collapse (when-let [g (seq (rest event-groups))]
-                  (render-event-groups g))}]))
+                  (into [:div]
+                        (render-event-groups g)))}]))
 
 (defn member-info
   "Renders a applicant, member or invited member of an application
