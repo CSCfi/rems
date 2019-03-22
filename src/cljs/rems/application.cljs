@@ -57,17 +57,23 @@
   [id & [replace?]]
   (dispatch! (str "#/application/" id) replace?))
 
-(defn- format-validation-messages
-  [application msgs]
-  (let [fields-by-id (index-by [:id] (map localize-item (:items application)))
-        licenses-by-id (index-by [:id] (map localize-item (:licenses application)))]
+(defn- format-validation-errors
+  [application errors]
+  (let [fields-by-id (->> (get-in application [:application/form :form/fields])
+                          (index-by [:field/id]))
+        licenses-by-id (->> (get-in application [:application/licenses])
+                            (index-by [:license/id]))]
     [:div (text :t.form/validation.errors)
      (into [:ul]
            (concat
-            (for [{:keys [type field-id]} (filter :field-id msgs)]
-              [:li (text-format type (:title (fields-by-id field-id)))])
-            (for [{:keys [type license-id]} (filter :license-id msgs)]
-              [:li (text-format type (:title (licenses-by-id license-id)))])))]))
+            (for [{:keys [type field-id]} (filter :field-id errors)]
+              (let [field (get fields-by-id field-id)
+                    field-title (localized (:field/title field))]
+                [:li (text-format type field-title)]))
+            (for [{:keys [type license-id]} (filter :license-id errors)]
+              (let [license (get licenses-by-id license-id)
+                    license-title (localized (:license/title license))]
+                [:li (text-format type license-title)]))))]))
 
 
 ;;;; State
@@ -145,7 +151,7 @@
                                             (status-modal/set-success! {:on-close #(rf/dispatch [::enter-application-page application-id (:errors %)])})
                                             (do
                                               (status-modal/set-error! {:result response
-                                                                        :error-content (format-validation-messages application (:errors response))})
+                                                                        :error-content (format-validation-errors application (:errors response))})
                                               (rf/dispatch [::set-validation (:errors response)]))))
                                :error-handler status-modal/common-error-handler!
                                :params {:type :rems.workflow.dynamic/submit
@@ -823,7 +829,7 @@
                           (when (:validation edit-application)
                             [flash-message
                              {:status :danger
-                              :contents [format-validation-messages application (:validation edit-application)]}])])]
+                              :contents [format-validation-errors application (:validation edit-application)]}])])]
     [:div
      [:div {:class "float-right"} [pdf-button (:application/id application)]]
      [:h2 (text :t.applications/application)]
