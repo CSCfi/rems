@@ -544,20 +544,20 @@
     [:span.form-check-label content]]])
 
 (defn- link-license
-  [{:keys [readonly approved validation] :as opts}]
+  [{:keys [accepted readonly validation] :as opts}]
   (let [id (:license/id opts)
         title (localized (:license/title opts))
         link (localized (:license/link opts))]
-    [license id title approved readonly validation
+    [license id title accepted readonly validation
      [:a.license-title {:href link :target "_blank"}
       title " " (external-link)]]))
 
 (defn- text-license
-  [{:keys [approved readonly validation] :as opts}]
+  [{:keys [accepted readonly validation] :as opts}]
   (let [id (:license/id opts)
         title (localized (:license/title opts))
         text (localized (:license/text opts))]
-    [license id title approved readonly validation
+    [license id title accepted readonly validation
      [:div.license-panel
       [:span.license-title
        [:a.license-header.collapsed {:data-toggle "collapse"
@@ -602,7 +602,8 @@
                    :on-click #(rf/dispatch [::submit-application (text :t.form/submit)])}])
 
 (defn- application-fields [application edit-application]
-  (let [items (:items edit-application)
+  (let [field-values (:field-values edit-application)
+        show-diff (:show-diff edit-application)
         field-validations (index-by [:field-id] (:validation-errors edit-application))
         form-fields-editable? (form-fields-editable? application)
         readonly? (not form-fields-editable?)]
@@ -614,16 +615,15 @@
        (into [:div]
              (for [fld (get-in application [:application/form :form/fields])]
                [field (assoc fld
+                             :field/value (get field-values (:field/id fld))
+                             :diff (get show-diff (:field/id fld))
                              :validation (field-validations (:field/id fld))
                              :readonly readonly?
-                             :field/value (get-in items [(:field/id fld) :value])
-                             :field/previous-value (get-in items [(:field/id fld) :previous-value])
-                             :diff (get-in items [(:field/id fld) :diff])
                              :app-id (:application/id application))]))]}]))
 
 (defn- application-licenses [application edit-application]
   (when-let [licenses (not-empty (:application/licenses application))]
-    (let [edit-licenses (:licenses edit-application)
+    (let [accepted-licenses (:accepted-licenses edit-application)
           license-validations (index-by [:license-id] (:validation-errors edit-application))
           form-fields-editable? (form-fields-editable? application)
           readonly? (not form-fields-editable?)]
@@ -635,9 +635,9 @@
          (into [:div#licenses]
                (for [license licenses]
                  [license-field (assoc license
-                                       :validation (license-validations (:license/id license))
+                                       :accepted (contains? accepted-licenses (:license/id license))
                                        :readonly readonly?
-                                       :approved (get edit-licenses (:license/id license)))]))]}])))
+                                       :validation (license-validations (:license/id license)))]))]}])))
 
 
 (defn- format-event [event]
