@@ -1206,8 +1206,10 @@
                                       :license/type :link
                                       :license/title {:en "Link to license"}
                                       :license/link {:en "https://creativecommons.org/licenses/by/4.0/deed.en"}}]}
-             {:items {1 "abc"}
-              :licenses {4 false 5 true}}])
+             {:field-values {1 "abc"}
+              :show-diff {}
+              :validation-errors nil
+              :accepted-licenses #{5}}])
    (example "application, applied"
             [render-application
              {:application/id 17
@@ -1221,8 +1223,8 @@
                                       :license/type :text
                                       :license/title {:en "A Text License"}
                                       :license/text {:en lipsum}}]}
-             {:items {1 "abc"}
-              :licenses {4 true}}])
+             {:field-values {1 "abc"}
+              :accepted-licenses #{4}}])
    (example "application, approved"
             [render-application
              {:application/id 17
@@ -1239,5 +1241,5 @@
                                       :license/type :text
                                       :license/title {:en "A Text License"}
                                       :license/text {:en lipsum}}]}
-             {:items {1 "abc"}
-              :licenses {4 true}}])])
+             {:field-values {1 "abc"}
+              :accepted-licenses #{4}}])])
