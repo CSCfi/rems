@@ -26,11 +26,6 @@
 (def +draft-columns+
   [:id :resource :last-activity :view])
 
-(defn- state-class [item]
-  (if (form-fields-editable? item)
-    "state text-highlight"
-    "state"))
-
 (def ^:private +columns+
   {:id {:value :application/id
         :header #(text :t.actions/application)}
@@ -42,7 +37,7 @@
                :header #(text :t.actions/applicant)}
    :state {:value #(localize-state (get-in % [:application/workflow :workflow.dynamic/state]))
            :header #(text :t.actions/state)
-           :class state-class}
+           :class #(if (form-fields-editable? %) "state text-highlight" "state")}
    :created {:value #(localize-time (:application/created %))
              :sort-value :application/created
              :header #(text :t.actions/created)}

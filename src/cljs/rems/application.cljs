@@ -15,8 +15,6 @@
             [rems.actions.return-action :refer [return-action-button return-form]]
             [rems.application-util :refer [draft? form-fields-editable? is-applicant? in-processing?]]
             [rems.atoms :refer [external-link flash-message info-field readonly-checkbox textarea]]
-            [rems.application-util :refer [form-fields-editable?]]
-            [rems.autocomplete :as autocomplete]
             [rems.catalogue-util :refer [get-catalogue-item-title]]
             [rems.collapsible :as collapsible]
             [rems.common-util :refer [index-by]]
@@ -521,32 +519,38 @@
     [:span.form-check-label content]]])
 
 (defn- link-license
-  [{:keys [title id textcontent readonly approved validation]}]
-  [license id title approved readonly validation
-   [:a.license-title {:href textcontent :target "_blank"}
-    title " " (external-link)]])
+  [{:keys [readonly approved validation] :as opts}]
+  (let [id (:license/id opts)
+        title (localized (:license/title opts))
+        link (localized (:license/link opts))]
+    [license id title approved readonly validation
+     [:a.license-title {:href link :target "_blank"}
+      title " " (external-link)]]))
 
 (defn- text-license
-  [{:keys [title id textcontent approved readonly validation]}]
-  [license id title approved readonly validation
-   [:div.license-panel
-    [:span.license-title
-     [:a.license-header.collapsed {:data-toggle "collapse"
-                                   :href (str "#collapse" id)
-                                   :aria-expanded "false"
-                                   :aria-controls (str "collapse" id)}
-      title " " [:i {:class "fa fa-ellipsis-h"}]]]
-    [:div.collapse {:id (str "collapse" id)}
-     [:div.license-block (str/trim textcontent)]]]])
+  [{:keys [approved readonly validation] :as opts}]
+  (let [id (:license/id opts)
+        title (localized (:license/title opts))
+        text (localized (:license/text opts))]
+    [license id title approved readonly validation
+     [:div.license-panel
+      [:span.license-title
+       [:a.license-header.collapsed {:data-toggle "collapse"
+                                     :href (str "#collapse" id)
+                                     :aria-expanded "false"
+                                     :aria-controls (str "collapse" id)}
+        title " " [:i {:class "fa fa-ellipsis-h"}]]]
+      [:div.collapse {:id (str "collapse" id)}
+       [:div.license-block (str/trim (str text))]]]]))
 
 (defn- unsupported-field
   [f]
   [:p.alert.alert-warning "Unsupported field " (pr-str f)])
 
 (defn license-field [f]
-  (case (:licensetype f)
-    "link" [link-license f]
-    "text" [text-license f]
+  (case (:license/type f)
+    :link [link-license f]
+    :text [text-license f]
     [unsupported-field f]))
 
 (defn- field [f]
@@ -594,10 +598,10 @@
                              :diff (get-in items [(:field/id fld) :diff])
                              :app-id (:application/id application))]))]}]))
 
-(defn- application-licenses [form edit-application language]
-  (when-let [form-licenses (not-empty (:licenses form))]
-    (let [application (:application form)
-          {:keys [licenses validation]} edit-application
+(defn- application-licenses [application edit-application]
+  (when-let [licenses (not-empty (:application/licenses application))]
+    (let [edit-licenses (:licenses edit-application)
+          validation (:validation edit-application)
           license-validations (index-by [:license-id] validation)
           form-fields-editable? (form-fields-editable? application)
           readonly? (not form-fields-editable?)]
@@ -607,11 +611,11 @@
         :always
         [:div.form-group.field
          (into [:div#licenses]
-               (for [license form-licenses]
-                 [license-field (assoc (localize-item license)
-                                       :validation (license-validations (:id license))
+               (for [license licenses]
+                 [license-field (assoc license
+                                       :validation (license-validations (:license/id license))
                                        :readonly readonly?
-                                       :approved (get licenses (:id license)))]))]}])))
+                                       :approved (get edit-licenses (:license/id license)))]))]}])))
 
 
 (defn- format-event [event]
@@ -1140,19 +1144,30 @@
 
    (example "link license"
             [:form
-             [field {:type "license" :title "Link to license" :licensetype "link" :textcontent "/guide"}]])
+             [license-field {:license/id 1
+                             :license/type :link
+                             :license/title {:en "Link to license"}
+                             :license/link {:en "https://creativecommons.org/licenses/by/4.0/deed.en"}}]])
    (example "link license with validation error"
             [:form
-             [field {:type "license" :title "Link to license" :licensetype "link" :textcontent "/guide"
-                     :validation {:type :t.form.validation.required}}]])
+             [license-field {:license/id 1
+                             :license/type :link
+                             :license/title {:en "Link to license"}
+                             :license/link {:en "https://creativecommons.org/licenses/by/4.0/deed.en"}
+                             :validation {:type :t.form.validation.required}}]])
    (example "text license"
             [:form
-             [field {:type "license" :id 1 :title "A Text License" :licensetype "text"
-                     :textcontent lipsum-paragraphs}]])
+             [license-field {:license/id 1
+                             :license/type :text
+                             :license/title {:en "A Text License"}
+                             :license/text {:en lipsum-paragraphs}}]])
    (example "text license with validation error"
             [:form
-             [field {:type "license" :id 1 :title "A Text License" :licensetype "text" :textcontent lipsum-paragraphs
-                     :validation {:type :t.form.validation.required}}]])
+             [license-field {:license/id 1
+                             :license/type :text
+                             :license/title {:en "A Text License"}
+                             :license/text {:en lipsum-paragraphs}
+                             :validation {:type :t.form.validation.required}}]])
 
    (component-info render-application)
    (example "application, partially filled"
@@ -1186,7 +1201,7 @@
                                      {:license/id 5
                                       :license/type :link
                                       :license/title {:en "Link to license"}
-                                      :license/link {:en "/#/guide"}}]}
+                                      :license/link {:en "https://creativecommons.org/licenses/by/4.0/deed.en"}}]}
              {:items {1 "abc"}
               :licenses {4 false 5 true}}
              :en])
