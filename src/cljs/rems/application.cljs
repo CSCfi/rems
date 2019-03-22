@@ -107,7 +107,14 @@
  (fn [db [_ application]]
    (assoc db
           ::application application
-          ::edit-application {:items (into {} (for [field (get-in application [:application/form :form/fields])]
+          ::edit-application {:field-values (->> (get-in application [:application/form :form/fields])
+                                                 (map (juxt :field/id :field/value))
+                                                 (into {}))
+                              :show-diff {}
+                              :accepted-licenses (set (get (:application/accepted-licenses application)
+                                                           (:application/applicant application)))
+                              ;; TODO: remove these
+                              :items (into {} (for [field (get-in application [:application/form :form/fields])]
                                                 [(:field/id field) {:value (:field/value field)
                                                                     :previous-value (:field/previous-value field)}]))
                               :licenses (into {} (map (fn [id] [id true]) (get (:application/accepted-licenses application)
@@ -212,38 +219,53 @@
 
 ;;;; UI components
 
-(defn- pdf-button [id]
-  (when id
+(defn- pdf-button [app-id]
+  (when app-id
     [:a.btn.btn-secondary
-     {:href (str "/api/applications/" id "/pdf")
+     {:href (str "/api/applications/" app-id "/pdf")
       :target :_new}
      "PDF " (external-link)]))
 
-(rf/reg-event-db ::set-field (fn [db [_ id value]] (assoc-in db [::edit-application :items id :value] value)))
-(rf/reg-event-db ::toggle-diff (fn [db [_ id]] (update-in db [::edit-application :items id :diff] not)))
-(rf/reg-event-db ::set-license (fn [db [_ id value]] (assoc-in db [::edit-application :licenses id] value)))
-(defn- set-field-value
-  [id]
-  (fn [event]
-    (rf/dispatch [::set-field id (.. event -target -value)])))
+(rf/reg-event-db
+ ::set-field-value
+ (fn [db [_ field-id value]]
+   (-> db
+       (assoc-in [::edit-application :items field-id :value] value)
+       (assoc-in [::edit-application :field-values field-id] value))))
+
+(rf/reg-event-db
+ ::toggle-diff
+ (fn [db [_ field-id]]
+   (-> db
+       (update-in [::edit-application :items field-id :diff] not)
+       (update-in [::edit-application :show-diff field-id] not))))
+
+(rf/reg-event-db
+ ::set-license-accepted
+ (fn [db [_ license-id accepted]]
+   (-> db
+       (assoc-in [::edit-application :licenses license-id] accepted)
+       (update-in [::edit-application :accepted-licenses] (if accepted
+                                                            #(conj % license-id)
+                                                            #(disj % license-id))))))
 
 (defn- id-to-name [id]
   (str "field" id))
 
 (defn- set-attachment
-  [id description]
+  [field-id description]
   (fn [event]
     (let [filecontent (aget (.. event -target -files) 0)
           form-data (doto (js/FormData.)
                       (.append "file" filecontent))]
-      (rf/dispatch [::set-field id (.-name filecontent)])
-      (rf/dispatch [::save-attachment id form-data description]))))
+      (rf/dispatch [::set-field-value field-id (.-name filecontent)])
+      (rf/dispatch [::save-attachment field-id form-data description]))))
 
 (defn- remove-attachment-action
-  [app-id id description]
+  [app-id field-id description]
   (fn [event]
-    (rf/dispatch [::set-field id nil])
-    (rf/dispatch [::remove-attachment app-id id description])))
+    (rf/dispatch [::set-field-value field-id nil])
+    (rf/dispatch [::remove-attachment app-id field-id description])))
 
 (defn- readonly-field [{:keys [id value]}]
   [:div.form-control {:id id} (str/trim (str value))])
@@ -328,6 +350,10 @@
                                      :value value}])
        :else editor-component)
      [field-validation-message validation title]]))
+
+(defn- set-field-value [field-id]
+  (fn [event]
+    (rf/dispatch [::set-field-value field-id (.. event -target -value)])))
 
 (defn- text-field
   [{:keys [validation] :as opts}]
@@ -473,7 +499,7 @@
                                      selected-keys (if checked
                                                      (conj selected-keys key)
                                                      (disj selected-keys key))]
-                                 (rf/dispatch [::set-field id (encode-option-keys selected-keys)])))]
+                                 (rf/dispatch [::set-field-value id (encode-option-keys selected-keys)])))]
                [:div.form-check
                 [:input.form-check-input {:type "checkbox"
                                           :id option-id
@@ -490,10 +516,10 @@
     [:div.form-group
      [:label (localized title)]]))
 
-(defn- set-license-approval
+(defn- set-license-accepted
   [id]
   (fn [event]
-    (rf/dispatch [::set-license id (.. event -target -checked)])))
+    (rf/dispatch [::set-license-accepted id (.. event -target -checked)])))
 
 (defn- license [id title approved readonly validation content]
   [:div.license
@@ -504,7 +530,7 @@
                               :disabled readonly
                               :class (when validation "is-invalid")
                               :checked (boolean approved)
-                              :on-change (set-license-approval id)}]
+                              :on-change (set-license-accepted id)}]
     [:span.form-check-label content]]])
 
 (defn- link-license
