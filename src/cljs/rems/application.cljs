@@ -13,7 +13,7 @@
             [rems.actions.request-comment :refer [request-comment-action-button request-comment-form]]
             [rems.actions.request-decision :refer [request-decision-action-button request-decision-form]]
             [rems.actions.return-action :refer [return-action-button return-form]]
-            [rems.application-util :refer [draft? form-fields-editable? is-applicant? in-processing?]]
+            [rems.application-util :refer [form-fields-editable? in-processing?]]
             [rems.atoms :refer [external-link flash-message info-field readonly-checkbox textarea]]
             [rems.catalogue-util :refer [get-catalogue-item-title]]
             [rems.collapsible :as collapsible]
@@ -34,32 +34,17 @@
 (defn reload! [application-id]
   (rf/dispatch [:rems.application/enter-application-page application-id]))
 
-;; TODO named secretary routes give us equivalent functions
-;; TODO should the secretary route definitions be in this ns too?
-
-(defn item-disabled? [item]
-  (or (= "disabled" (:state item))
-      (:archived item)))
-
-(defn- can-submit-application? [application]
-  (let [catalogue-items (:catalogue-items application)
-        application-form (:application application)]
-    (not (and (is-applicant? application-form)
-              (draft? application-form)
-              (seq (filter item-disabled? catalogue-items))))))
-
 (defn- disabled-items-warning [application]
-  (let [language @(rf/subscribe [:language])
-        catalogue-items (:catalogue-items application)
-        application-form (:application application)]
-    (when (or (and (is-applicant? application-form) (draft? application-form))
-              (in-processing? application-form))
-      (when-some [items (seq (filter item-disabled? catalogue-items))]
-        [:div.alert.alert-danger
-         (text :t.form/alert-disabled-items)
-         (into [:ul]
-               (for [item items]
-                 [:li (get-catalogue-item-title item language)]))]))))
+  (when (in-processing? application)
+    (when-some [resources (->> (:application/resources application)
+                               (filter #(or (not (:catalogue-item/enabled %))
+                                            (:catalogue-item/archived %)))
+                               seq)]
+      [:div.alert.alert-danger
+       (text :t.form/alert-disabled-resources)
+       (into [:ul]
+             (for [resource resources]
+               [:li (localized (:catalogue-item/title resource))]))])))
 
 (defn apply-for [items]
   (let [url (str "#/application?items=" (str/join "," (sort (map :id items))))]
@@ -83,15 +68,6 @@
               [:li (text-format type (:title (fields-by-id field-id)))])
             (for [{:keys [type license-id]} (filter :license-id msgs)]
               [:li (text-format type (:title (licenses-by-id license-id)))])))]))
-
-
-
-
-
-
-
-
-
 
 
 ;;;; State
@@ -571,11 +547,10 @@
                    :text (text :t.form/save)
                    :on-click #(rf/dispatch [::save-application (text :t.form/save)])}])
 
-(defn- submit-button [application]
+(defn- submit-button []
   [button-wrapper {:id "submit"
                    :text (text :t.form/submit)
                    :class :btn-primary
-                   :disabled (not (can-submit-application? application))
                    :on-click #(rf/dispatch [::submit-application (text :t.form/submit)])}])
 
 (defn- application-fields [application edit-application language]
@@ -799,9 +774,8 @@
                 [add-member-form application-id (partial reload! application-id)]]]}]))
 
 (defn- dynamic-actions [application]
-  (let [app (:application application)
-        commands-and-actions [:rems.workflow.dynamic/save-draft [save-button]
-                              :rems.workflow.dynamic/submit [submit-button application]
+  (let [commands-and-actions [:rems.workflow.dynamic/save-draft [save-button]
+                              :rems.workflow.dynamic/submit [submit-button]
                               :rems.workflow.dynamic/return [return-action-button]
                               :rems.workflow.dynamic/request-decision [request-decision-action-button]
                               :rems.workflow.dynamic/decide [decide-action-button]
@@ -811,7 +785,7 @@
                               :rems.workflow.dynamic/reject [approve-reject-action-button]
                               :rems.workflow.dynamic/close [close-action-button]]]
     (distinct (for [[command action] (partition 2 commands-and-actions)
-                    :when (contains? (:possible-commands app) command)]
+                    :when (contains? (:application/permissions application) command)]
                 action))))
 
 (defn- actions-form [application]

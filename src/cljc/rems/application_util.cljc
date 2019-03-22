@@ -5,18 +5,8 @@
                  (:application/permissions application))
              :rems.workflow.dynamic/save-draft))
 
-(defn draft? [application]
-  (contains? #{"draft" "returned" "withdrawn" :rems.workflow.dynamic/draft}
-             (:state application)))
-
-(defn is-applicant? [application]
-  (:is-applicant? application))
-
 (defn in-processing? [application]
-  (not (contains? #{"approved"
-                    "rejected"
-                    "closed"
-                    :rems.workflow.dynamic/approved
+  (not (contains? #{:rems.workflow.dynamic/approved
                     :rems.workflow.dynamic/rejected
                     :rems.workflow.dynamic/closed}
-                  (:state application))))
+                  (get-in application [:application/workflow :workflow.dynamic/state]))))

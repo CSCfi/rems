@@ -269,7 +269,7 @@
          :add-comments "Add comment"
          :add-comments-not-shown-to-applicant "Add comment (not shown to applicant)"
          :add-comments-shown-to-applicant "Add comment (shown to applicant)"
-         :alert-disabled-items "The following resources can't be applied anymore."
+         :alert-disabled-resources "The following resources can't be applied anymore."
          :application "Application"
          :attachment-remove "Remove"
          :back "Back to catalogue"
