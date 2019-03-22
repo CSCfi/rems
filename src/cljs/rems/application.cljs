@@ -63,6 +63,9 @@
   [id & [replace?]]
   (dispatch! (str "#/application/" id) replace?))
 
+(defn- format-validation-error [type title]
+  [:li (text-format type (localized title))])
+
 (defn- format-validation-errors
   [application errors]
   (let [fields-by-id (->> (get-in application [:application/form :form/fields])
@@ -72,14 +75,14 @@
     [:div (text :t.form/validation.errors)
      (into [:ul]
            (concat
-            (for [{:keys [type field-id]} (filter :field-id errors)]
-              (let [field (get fields-by-id field-id)
-                    field-title (localized (:field/title field))]
-                [:li (text-format type field-title)]))
-            (for [{:keys [type license-id]} (filter :license-id errors)]
-              (let [license (get licenses-by-id license-id)
-                    license-title (localized (:license/title license))]
-                [:li (text-format type license-title)]))))]))
+            (for [{:keys [type field-id]} errors
+                  :when field-id]
+              (let [field (get fields-by-id field-id)]
+                (format-validation-error type (:field/title field))))
+            (for [{:keys [type license-id]} errors
+                  :when license-id]
+              (let [license (get licenses-by-id license-id)]
+                (format-validation-error type (:license/title license))))))]))
 
 
 ;;;; State
