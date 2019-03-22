@@ -206,7 +206,7 @@
            {:url-params {:application-id application-id
                          :field-id field-id}
             :body file
-            :handler (partial status-modal/common-success-handler! nil)
+            :handler (partial status-modal/common-success-handler! (fn [] (println "added attachment")))
             :error-handler status-modal/common-error-handler!})
     {}))
 
@@ -218,7 +218,7 @@
          {:url-params {:application-id application-id
                        :field-id field-id}
           :body {}
-          :handler (partial status-modal/common-success-handler! nil)
+          :handler (partial status-modal/common-success-handler! (fn [] (println "removed attachment")))
           :error-handler status-modal/common-error-handler!})
   {})
 
