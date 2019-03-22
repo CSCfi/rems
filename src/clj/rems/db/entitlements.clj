@@ -66,14 +66,17 @@
   "If the given application is approved, add an entitlement to the db
   and call the entitlement REST callback (if defined)."
   [application]
-  (when (= "approved" (:state application))
+  ;; TODO this is not idempotent
+  (when (contains? #{:rems.workflow.dynamic/approved "approved"} (:state application))
+    (log/info "granting entitlements on application" (:id application) "to" (:applicantuserid application))
     (db/add-entitlement! {:application (:id application)
                           :user (:applicantuserid application)})
     (post-entitlements :add (db/get-entitlements {:application (:id application)}))))
 
 (defn- end-entitlements-for
   [application]
-  (when (= "closed" (:state application))
+  (when (contains? #{:rems.workflow.dynamic/closed "closed"} (:state application))
+    (log/info "ending entitlements on application" (:id application) "to" (:applicantuserid application))
     (db/end-entitlement! {:application (:id application)})
     (post-entitlements :remove (db/get-entitlements {:application (:id application)}))))
 
