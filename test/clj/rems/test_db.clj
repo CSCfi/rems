@@ -19,6 +19,7 @@
             [rems.db.roles :as roles]
             [rems.db.users :as users]
             [rems.db.workflow-actors :as actors]
+            rems.poller.entitlements
             [rems.testing-tempura :refer [fake-tempura-fixture]]
             [rems.util :refer [get-user-id]]
             [stub-http.core :as stub])
@@ -678,12 +679,7 @@
       (is (thrown? ForbiddenException
                    (entitlements/get-entitlements-for-export))))))
 
-(deftest test-entitlements-post
-  (testing "application that is not approved should not result in entitlements"
-    (with-redefs [rems.db.core/add-entitlement! #(throw (Error. "don't call me"))]
-      (entitlements/update-entitlements-for {:id 3
-                                             :state "applied"
-                                             :applicantuserid "bob"})))
+(deftest test-entitlement-granting
   (with-open [server (stub/start! {"/add" {:status 200}
                                    "/remove" {:status 200}})]
     (with-redefs [rems.config/env {:entitlements-target
@@ -692,34 +688,71 @@
       (let [uid "bob"
             admin "owner"
             organization "foo"
-            wf (:id (db/create-workflow! {:organization "abc" :modifieruserid admin :owneruserid admin :title "Test workflow" :fnlround 1}))
+            workflow {:type :workflow/dynamic :handlers [admin]}
+            wfid (:id (db/create-workflow! {:organization "abc" :modifieruserid "owner" :owneruserid "owner" :title "dynamic" :fnlround -1 :workflow (cheshire/generate-string workflow)}))
+            formid (:id (db/create-form! {:organization "abc" :title "internal-title" :user "owner"}))
             res1 (:id (db/create-resource! {:resid "resource1" :organization organization :owneruserid admin :modifieruserid admin}))
             res2 (:id (db/create-resource! {:resid "resource2" :organization organization :owneruserid admin :modifieruserid admin}))
-            item1 (:id (db/create-catalogue-item! {:title "item1" :form nil :resid res1 :wfid wf}))
-            item2 (:id (db/create-catalogue-item! {:title "item2" :form nil :resid res2 :wfid wf}))]
+            item1 (:id (db/create-catalogue-item! {:title "item1" :form formid :resid res1 :wfid wfid}))
+            item2 (:id (db/create-catalogue-item! {:title "item2" :form formid :resid res2 :wfid wfid}))]
         (db/add-user! {:user uid :userattrs (cheshire/generate-string {"mail" "b@o.b"})})
-        (let [application (applications/create-new-draft uid wf)]
-          (db/add-application-item! {:application application :item item1})
-          (db/add-application-item! {:application application :item item2})
-          ;; should get autoapproved, which calls update-entitlements-for
-          (applications/submit-application uid application)
-          (testing "application that is approved should result in POST"
-            (let [data (first (stub/recorded-requests server))
-                  target (:path data)
-                  body (cheshire/parse-string (get-in data [:body "postData"]))]
-              (is (= "/add" target))
-              (is (= [{"resource" "resource1" "application" application "user" "bob" "mail" "b@o.b"}
-                      {"resource" "resource2" "application" application "user" "bob" "mail" "b@o.b"}]
-                     body))))
-          (applications/close-application uid application 1 "close msg")
-          (testing "closing application should result in new POST"
-            (let [data (second (stub/recorded-requests server))
-                  target (:path data)
-                  body (cheshire/parse-string (get-in data [:body "postData"]))]
-              (is (= "/remove" target))
-              (is (= [{"resource" "resource1" "application" application "user" "bob" "mail" "b@o.b"}
-                      {"resource" "resource2" "application" application "user" "bob" "mail" "b@o.b"}]
-                     body)))))))))
+        (db/add-user! {:user admin :userattrs nil})
+        (let [app-id (applications/create-new-draft uid wfid)]
+          (db/add-application-item! {:application app-id :item item1})
+          (db/add-application-item! {:application app-id :item item2})
+          (applications/add-application-created-event! {:application-id app-id
+                                                        :catalogue-item-ids [item1 item2]
+                                                        :time (time/now)
+                                                        :actor uid})
+          (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/submit
+                                                    :actor uid
+                                                    :application-id app-id
+                                                    :time (time/now)})))
+          (testing "submitted application should not yet cause entitlements"
+            (rems.poller.entitlements/run)
+            (is (empty? (db/get-entitlements {:application app-id})))
+            (is (empty? (stub/recorded-requests server))))
+
+          (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/approve
+                                                    :actor admin
+                                                    :application-id app-id
+                                                    :comment ""
+                                                    :time (time/now)})))
+
+          (testing "approved application generated entitlements"
+            (rems.poller.entitlements/run)
+            (rems.poller.entitlements/run) ;; run twice to check idempotence
+            (testing "db"
+              (= [1 2]
+                 (db/get-entitlements {:application app-id})))
+            (testing "POST"
+              (let [data (first (stub/recorded-requests server))
+                    target (:path data)
+                    body (cheshire/parse-string (get-in data [:body "postData"]))]
+                (is (= "/add" target))
+                (is (= [{"resource" "resource1" "application" app-id "user" "bob" "mail" "b@o.b"}
+                        {"resource" "resource2" "application" app-id "user" "bob" "mail" "b@o.b"}]
+                       body)))))
+
+          (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/close
+                                                    :actor admin
+                                                    :application-id app-id
+                                                    :comment ""
+                                                    :time (time/now)})))
+
+          (testing "closed application should end entitlements"
+            (rems.poller.entitlements/run)
+            (testing "db"
+              (= [1 2]
+                 (db/get-entitlements {:application app-id})))
+            (testing "POST"
+              (let [data (second (stub/recorded-requests server))
+                    target (:path data)
+                    body (cheshire/parse-string (get-in data [:body "postData"]))]
+                (is (= "/remove" target))
+                (is (= [{"resource" "resource1" "application" app-id "user" "bob" "mail" "b@o.b"}
+                        {"resource" "resource2" "application" app-id "user" "bob" "mail" "b@o.b"}]
+                       body))))))))))
 
 (deftest test-dynamic-workflow
   (db/add-user! {:user "alice" :userattrs "{}"})

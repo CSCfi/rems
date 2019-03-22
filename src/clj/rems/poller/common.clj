@@ -7,18 +7,18 @@
             [rems.json :as json]))
 
 (defn get-poller-state [name-kw]
-  (or (json/parse-string (:state (db/get-poller-state {:name (name name-kw)})))
+  (or (json/parse-string (:state (db/get-poller-state {:name (str name-kw)})))
       {:last-processed-event-id 0}))
 
 (defn set-poller-state! [name-kw state]
-  (db/set-poller-state! {:name (name name-kw) :state (json/generate-string state)})
+  (db/set-poller-state! {:name (str name-kw) :state (json/generate-string state)})
   nil)
 
 (defn run-event-poller [name-kw process-event!]
   ;; This isn't thread-safe but ScheduledThreadPoolExecutor guarantees exclusion
   (let [prev-state (get-poller-state name-kw)
         events (applications/get-dynamic-application-events-since (:last-processed-event-id prev-state))]
-    (log/info name-kw "running with state" (pr-str prev-state))
+    (log/debug name-kw "running with state" (pr-str prev-state))
     (try
       (doseq [e events]
         (try
@@ -29,7 +29,7 @@
             (throw (Exception. (str name-kw " processing event " (pr-str e)) t)))))
       (catch Throwable t
         (log/error t)))
-    (log/info name-kw "finished")))
+    (log/debug name-kw "finished")))
 
 (deftest test-run-event-poller-error-handling
   (let [events (atom [])
