@@ -2,6 +2,7 @@
   (:require [clojure.set :as set]
             [clojure.test :refer [deftest is testing]]
             [medley.core :refer [map-vals]]
+            [rems.auth.util :refer [throw-forbidden]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.form :as form]
@@ -385,9 +386,11 @@
 
 (defn api-get-application-v2 [user-id application-id]
   (let [events (applications/get-dynamic-application-events application-id)]
-    (when (not (empty? events))
-      (-> (build-application-view events injections)
-          (apply-user-permissions user-id)))))
+    (if (empty? events)
+      nil ;; will result in a 404
+      (or (-> (build-application-view events injections)
+              (apply-user-permissions user-id))
+          (throw-forbidden)))))
 
 ;;; v1 API compatibility layer
 

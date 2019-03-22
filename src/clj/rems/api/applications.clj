@@ -134,33 +134,6 @@
       (update-in [:items] longify-keys)
       (update-in [:licenses] longify-keys)))
 
-(defn- hide-sensitive-events [events]
-  (filter (fn [event]
-            ((complement contains?) #{"third-party-review" "review-request" "review"} (:event event)))
-          events))
-
-(defn- hide-users [events]
-  (map (fn [event]
-         (assoc event :userid nil))
-       events))
-
-(defn hide-sensitive-information [application user]
-  (let [application (update application :application applications/application-cleanup)
-        is-handler? (or (contains? (set (applications/get-handlers (:application application))) user) ; old form
-                        (contains? (get-in application [:application :possible-commands]) :see-everything))] ; dynamic
-    (if is-handler?
-      application
-      (-> application
-          (update-in [:application :events] hide-sensitive-events)
-          (update-in [:application :dynamic-events] dynamic/hide-sensitive-dynamic-events)
-          (update-in [:application :events] hide-users)
-          (update-in [:application :workflow] dissoc :handlers)))))
-
-(defn api-get-application [user-id application-id]
-  (when (not (empty? (db/get-applications {:id application-id})))
-    (-> (applications/get-form-for user-id application-id)
-        (hide-sensitive-information user-id))))
-
 (defn invalid-user? [u]
   (or (str/blank? (:eppn u))
       (str/blank? (:commonName u))
@@ -255,22 +228,12 @@
       :return AcceptInvitationResult
       (ok (applications/accept-invitation (getx-user-id) invitation-token)))
 
-    (GET "/:application-id" []
-      :summary "Get application by `application-id`"
-      :roles #{:logged-in}
-      :path-params [application-id :- (describe s/Num "application id")]
-      :responses {200 {:schema GetApplicationResponse}
-                  404 {:schema s/Str :description "Not found"}}
-      (if-let [app (api-get-application (getx-user-id) application-id)]
-        (ok app)
-        (not-found! "not found")))
-
     (GET "/:application-id/pdf" []
       :summary "Get a pdf version of an application"
       :roles #{:logged-in}
       :path-params [application-id :- (describe s/Num "application id")]
       :produces ["application/pdf"]
-      (if-let [app (api-get-application (getx-user-id) application-id)]
+      (if-let [app (api-get-application-v1 (getx-user-id) application-id)]
         (-> app
             (pdf/application-to-pdf-bytes)
             (java.io.ByteArrayInputStream.)
