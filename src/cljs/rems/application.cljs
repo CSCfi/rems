@@ -90,11 +90,9 @@
 (rf/reg-fx
  ::fetch-application
  (fn [id]
-   (fetch (str "/api/v2/applications/" id "/migration") ;; TODO: remove v1 usage
-          {:handler (fn [app-v1]
-                      (fetch (str "/api/v2/applications/" id)
-                             {:handler (fn [app-v2]
-                                         (rf/dispatch [::fetch-application-result (merge app-v1 app-v2)]))}))})))
+   (fetch (str "/api/v2/applications/" id)
+          {:handler (fn [application]
+                      (rf/dispatch [::fetch-application-result application]))})))
 
 (rf/reg-event-db
  ::fetch-application-result
@@ -148,7 +146,7 @@
                        (post! "/api/applications/command"
                               {:handler (fn [response]
                                           (if (:success response)
-                                            (status-modal/set-success! {:on-close #(rf/dispatch [::enter-application-page application-id (:errors %)])})
+                                            (status-modal/set-success! {:on-close #(rf/dispatch [::enter-application-page application-id])})
                                             (do
                                               (status-modal/set-error! {:result response
                                                                         :error-content (format-validation-errors application (:errors response))})
