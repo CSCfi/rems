@@ -341,7 +341,7 @@
 (defn- get-catalogue-item [catalogue-item-id]
   (assert (int? catalogue-item-id)
           (pr-str catalogue-item-id))
-  (first (applications/get-catalogue-items [catalogue-item-id])))
+  (applications/get-catalogue-item catalogue-item-id))
 
 (defn- get-license [license-id]
   (licenses/get-license license-id))

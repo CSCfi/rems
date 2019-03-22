@@ -8,7 +8,7 @@
             [rems.application-util :refer [form-fields-editable?]]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.context :as context]
-            [rems.db.catalogue :refer [get-localized-catalogue-items]]
+            [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.entitlements :as entitlements]
             [rems.db.licenses :as licenses]
@@ -265,11 +265,14 @@
   can be given as a parameter to avoid excessive database calls."
   ([ids]
    (mapv translate-catalogue-item
-         (get-localized-catalogue-items {:ids ids})))
+         (catalogue/get-localized-catalogue-items {:ids ids})))
   ([ids localized-items]
    (mapv translate-catalogue-item
          (filter #(some #{(:id %)} ids)
                  localized-items))))
+
+(defn get-catalogue-item [id]
+  (translate-catalogue-item (catalogue/get-localized-catalogue-item id)))
 
 (defn get-catalogue-items-by-application-id
   "Given an `app-id`, the function queries for all the items related to that application and calls `get-catalogue-items` to return all the catalogue items
