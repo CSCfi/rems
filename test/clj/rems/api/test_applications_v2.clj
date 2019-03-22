@@ -147,6 +147,8 @@
                                   :application/modified (DateTime. 1000)
                                   :application/last-activity (DateTime. 1000)
                                   ;; TODO: unify applicant, members, handlers etc. to use either {:userid "user"} or "user"
+                                  ;; TODO invited members are quite different to the others so if you want to unify them also then "user" is simply not enough
+                                  ;; TODO why not put applicant attributes together or under the applicant, same goes for others?
                                   :application/applicant "applicant"
                                   :application/applicant-attributes {:eppn "applicant"
                                                                      :mail "applicant@example.com"
