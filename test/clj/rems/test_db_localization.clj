@@ -3,7 +3,6 @@
             [luminus-migrations.core :as migrations]
             [mount.core :as mount]
             [rems.config :refer [env]]
-            [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.test-locales :refer [loc-en]]
             [rems.testing-tempura :refer [with-fake-tempura]]
@@ -27,37 +26,22 @@
        (not (.contains str "Unknown"))))
 
 (deftest test-all-state-localizations
-  (let [old-states (map :unnest (rems.db.core/get-application-states))]
-    (is (= (-> (:states (:applications (:t loc-en)))
-               (dissoc :unknown)
-               (keys)
-               (sort))
-           (->> old-states
-                (map keyword)
-                (sort))))
-    (is (= (-> (:dynamic-states (:applications (:t loc-en)))
-               (dissoc :unknown)
-               (keys)
-               (sort))
-           (->> dynamic/States
-                (map name)
-                (map keyword)
-                (sort))))
-    (with-language :en
-      (fn []
-        (is (not (valid-localization? (localize-state "foobar"))))
-        (doseq [s (concat old-states dynamic/States)]
-          (testing s
-            (is (valid-localization? (localize-state s)))))))))
-
-(deftest test-all-event-localizations
-  (is (= (-> (:events (:applications (:t loc-en)))
+  (is (= (-> (:dynamic-states (:applications (:t loc-en)))
              (dissoc :unknown)
              (keys)
              (sort))
-         (->> (applications/get-event-types)
+         (->> dynamic/States
+              (map name)
               (map keyword)
               (sort))))
+  (with-language :en
+    (fn []
+      (is (not (valid-localization? (localize-state "foobar"))))
+      (doseq [s dynamic/States]
+        (testing s
+          (is (valid-localization? (localize-state s))))))))
+
+(deftest test-all-event-localizations
   (is (= (-> (:dynamic-events (:applications (:t loc-en)))
              (dissoc :unknown)
              (keys)
@@ -66,11 +50,9 @@
               (map name)
               (map keyword)
               (sort))))
-  (let [event-types (concat (applications/get-event-types)
-                            (map name (dynamic/get-event-types)))]
-    (with-language :en
-      (fn []
-        (is (not (valid-localization? (localize-event "foobar"))))
-        (doseq [e event-types]
-          (testing e
-            (is (valid-localization? (localize-event e)))))))))
+  (with-language :en
+    (fn []
+      (is (not (valid-localization? (localize-event "foobar"))))
+      (doseq [event-type (dynamic/get-event-types)]
+        (testing event-type
+          (is (valid-localization? (localize-event event-type))))))))

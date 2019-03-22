@@ -3,7 +3,7 @@
             [rems.application-util :refer [form-fields-editable?]]
             [rems.guide-functions]
             [rems.table :as table]
-            [rems.text :refer [localize-state localize-time localize-string text]])
+            [rems.text :refer [localize-state localize-time localized text]])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
 (defn- view-button [app]
@@ -14,7 +14,7 @@
 (defn- format-catalogue-items [app]
   (->> (:application/resources app)
        (map :catalogue-item/title)
-       (map localize-string)
+       (map localized)
        (str/join ", ")))
 
 (def +all-columns+
@@ -25,11 +25,6 @@
 
 (def +draft-columns+
   [:id :resource :last-activity :view])
-
-(defn- state-class [item]
-  (if (form-fields-editable? item)
-    "state text-highlight"
-    "state"))
 
 (def ^:private +columns+
   {:id {:value :application/id
@@ -42,7 +37,7 @@
                :header #(text :t.actions/applicant)}
    :state {:value #(localize-state (get-in % [:application/workflow :workflow.dynamic/state]))
            :header #(text :t.actions/state)
-           :class state-class}
+           :class #(if (form-fields-editable? %) "state text-highlight" "state")}
    :created {:value #(localize-time (:application/created %))
              :sort-value :application/created
              :header #(text :t.actions/created)}
@@ -68,32 +63,32 @@
 
 (def ^:private +example-applications+
   [{:application/id 1
-    :application/resources [{:catalogue-item/title "Item 5"}]
+    :application/resources [{:catalogue-item/title {:en "Item 5"}}]
     :application/workflow {:workflow.dynamic/state :rems.workflow.dynamic/draft}
     :application/applicant "alice"
     :application/created "1980-01-02T13:45:00.000Z"
     :application/last-activity "2017-01-01T01:01:01:001Z"}
    {:application/id 2
-    :application/resources [{:catalogue-item/title "Item 3"}]
+    :application/resources [{:catalogue-item/title {:en "Item 3"}}]
     :application/workflow {:workflow.dynamic/state :rems.workflow.dynamic/submitted}
     :application/applicant "bob"
     :application/created "1971-02-03T23:59:00.000Z"
     :application/last-activity "2017-01-01T01:01:01:001Z"}
    {:application/id 3
-    :application/resources [{:catalogue-item/title "Item 2"}
-                            {:catalogue-item/title "Item 5"}]
+    :application/resources [{:catalogue-item/title {:en "Item 2"}}
+                            {:catalogue-item/title {:en "Item 5"}}]
     :application/workflow {:workflow.dynamic/state :rems.workflow.dynamic/approved}
     :application/applicant "charlie"
     :application/created "1980-01-01T01:01:00.000Z"
     :application/last-activity "2017-01-01T01:01:01:001Z"}
    {:application/id 4
-    :application/resources [{:catalogue-item/title "Item 2"}]
+    :application/resources [{:catalogue-item/title {:en "Item 2"}}]
     :application/workflow {:workflow.dynamic/state :rems.workflow.dynamic/rejected}
     :application/applicant "david"
     :application/created "1972-12-12T12:12:00.000Z"
     :application/last-activity "2017-01-01T01:01:01:001Z"}
    {:application/id 5
-    :application/resources [{:catalogue-item/title "Item 2"}]
+    :application/resources [{:catalogue-item/title {:en "Item 2"}}]
     :application/workflow {:workflow.dynamic/state :rems.workflow.dynamic/closed}
     :application/applicant "ernie"
     :application/created "1972-12-12T12:12:00.000Z"

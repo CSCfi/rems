@@ -134,7 +134,8 @@
  (fn [_ [_ current-url]]
    (println "Received unauthorized from" current-url)
    (.setItem js/sessionStorage "rems-redirect-url" current-url)
-   (dispatch! "/")))
+   (dispatch! "/")
+   {}))
 
 (reg-event-fx
  :forbidden!
@@ -244,7 +245,7 @@
      [status-modal/status-modal]
      [logo]
      [:div.container-fluid.main-content
-       [content]]
+      [content]]
      [footer]]))
 
 (reg-event-fx

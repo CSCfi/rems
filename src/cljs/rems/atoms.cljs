@@ -1,5 +1,6 @@
 (ns rems.atoms
-  (:require [komponentit.autosize :as autosize]
+  (:require [clojure.string :as str]
+            [komponentit.autosize :as autosize]
             [rems.guide-functions])
   (:require-macros [rems.guide-macros :refer [component-info example]]))
 
@@ -21,7 +22,8 @@
   [:i.fa {:class "fa-search"}])
 
 (defn textarea [attrs]
-  [autosize/textarea (merge {:class "form-control" :min-rows 5} attrs)])
+  [autosize/textarea (merge {:min-rows 5}
+                            (update attrs :class #(str/trim (str "form-control " %))))])
 
 (defn flash-message
   "Displays a notification (aka flash) message.

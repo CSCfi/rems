@@ -1,6 +1,5 @@
 (ns rems.actions.action
-  (:require [re-frame.core :as rf]
-            [rems.atoms :refer [textarea]]
+  (:require [rems.atoms :refer [textarea]]
             [rems.text :refer [text]]))
 
 (defn- action-collapse-id [action-id]

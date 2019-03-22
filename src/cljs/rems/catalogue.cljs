@@ -20,7 +20,9 @@
      {:db (dissoc db ::catalogue ::draft-applications)
       :dispatch-n [[::fetch-catalogue]
                    [::fetch-drafts]]}
-     (unauthorized!))))
+     (do
+       (unauthorized!)
+       {}))))
 
 ;;;; table sorting
 
@@ -162,13 +164,13 @@
             [draft-application-list []])
    (example "draft-list with two drafts"
             [draft-application-list [{:application/id 1
-                                      :application/resources [{:catalogue-item/title "Item 5"}]
+                                      :application/resources [{:catalogue-item/title {:en "Item 5"}}]
                                       :application/workflow {:workflow.dynamic/state :rems.workflow.dynamic/draft}
                                       :application/applicant "alice"
                                       :application/created "1980-01-02T13:45:00.000Z"
                                       :application/last-activity "2017-01-01T01:01:01:001Z"}
                                      {:application/id 2
-                                      :application/resources [{:catalogue-item/title "Item 3"}]
+                                      :application/resources [{:catalogue-item/title {:en "Item 3"}}]
                                       :application/workflow {:workflow.dynamic/state :rems.workflow.dynamic/draft}
                                       :application/applicant "bob"
                                       :application/created "1971-02-03T23:59:00.000Z"

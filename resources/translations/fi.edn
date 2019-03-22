@@ -171,28 +171,10 @@
                                   :returned "Palautettu"
                                   :submitted "Haettu"}
                  :empty "Sinulla ei ole hakemuksia."
-                 :events {:apply "Lähetetty hyväksyttäväksi"
-                          :approve "Hyväksytty"
-                          :autoapprove "Automaattisesti hyväksytty"
-                          :close "Poistettu"
-                          :reject "Hylätty"
-                          :return "Muutoksia pyydetty"
-                          :review "Katselmoitu"
-                          :review-request "Lähetetty katselmoitavaksi"
-                          :save "Muokattu"
-                          :third-party-review "Katselmoitu ulkoisen toimijan toimesta"
-                          :unknown "Unknown"
-                          :withdraw "Palautettu muokattavaksi"}
+                 :events {:unknown "Tuntematon"}
                  :resource "Resurssi"
                  :state "Tila"
-                 :states {:applied "Haettu"
-                          :approved "Hyväksytty"
-                          :closed "Poistettu"
-                          :draft "Luonnos"
-                          :rejected "Hylätty"
-                          :returned "Palautettu"
-                          :unknown "Tuntematon"
-                          :withdrawn "Palautettu takaisin"}
+                 :states {:unknown "Tuntematon"}
                  :latest-activity "Viimeisin toimenpide %1"
                  :user "Käyttäjä"
                  :view "Näytä"}
@@ -287,7 +269,7 @@
          :add-comments "Lisää kommentti"
          :add-comments-not-shown-to-applicant "Lisää kommentti (ei näy hakijalle)"
          :add-comments-shown-to-applicant "Lisää kommentti (näkyy hakijalle)"
-         :alert-disabled-items "Seuraavia resursseja ei voi enää hakea."
+         :alert-disabled-resources "Seuraavia resursseja ei voi enää hakea."
          :application "Tiedot"
          :attachment-remove "Poista"
          :back "Takaisin aineistoluetteloon"

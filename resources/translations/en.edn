@@ -171,28 +171,10 @@
                                   :returned "Returned"
                                   :submitted "Applied"}
                  :empty "You don't have any applications."
-                 :events {:apply "Applied"
-                          :approve "Approved"
-                          :autoapprove "Automatically approved"
-                          :close "Deleted"
-                          :reject "Rejected"
-                          :return "Changes requested"
-                          :review "Reviewed"
-                          :review-request "Review requested"
-                          :save "Modified"
-                          :third-party-review "Reviewed by a third party"
-                          :unknown "Unknown"
-                          :withdraw "Withdrawn for modifying"}
+                 :events {:unknown "Unknown"}
                  :resource "Resource"
                  :state "State"
-                 :states {:applied "Applied"
-                          :approved "Approved"
-                          :closed "Deleted"
-                          :draft "Draft"
-                          :rejected "Rejected"
-                          :returned "Returned"
-                          :unknown "Unknown"
-                          :withdrawn "Withdrawn"}
+                 :states {:unknown "Unknown"}
                  :latest-activity "Latest activity %1"
                  :user "User"
                  :view "View"}
@@ -287,7 +269,7 @@
          :add-comments "Add comment"
          :add-comments-not-shown-to-applicant "Add comment (not shown to applicant)"
          :add-comments-shown-to-applicant "Add comment (shown to applicant)"
-         :alert-disabled-items "The following resources can't be applied anymore."
+         :alert-disabled-resources "The following resources can't be applied anymore."
          :application "Application"
          :attachment-remove "Remove"
          :back "Back to catalogue"

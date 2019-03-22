@@ -1,19 +1,16 @@
 (ns rems.actions.invite-member
   (:require [re-frame.core :as rf]
-            [reagent.core :as r]
             [rems.actions.action :refer [action-button action-form-view button-wrapper]]
-            [rems.atoms :refer [textarea]]
-            [rems.autocomplete :as autocomplete]
             [rems.status-modal :as status-modal]
             [rems.text :refer [text]]
-            [rems.util :refer [fetch post!]]))
+            [rems.util :refer [post!]]))
 
 (rf/reg-event-fx
  ::open-form
  (fn [{:keys [db]} _]
-  {:db (assoc db
-              ::name ""
-              ::email "")}))
+   {:db (assoc db
+               ::name ""
+               ::email "")}))
 
 (rf/reg-event-db ::set-name (fn [db [_ name]] (assoc db ::name name)))
 (rf/reg-sub ::name (fn [db _] (::name db)))
