@@ -939,6 +939,22 @@
 (defn add-application-created-event! [opts]
   (add-dynamic-event! (application-created-event opts)))
 
+(defn- get-workflow-id-for-catalogue-items [catalogue-item-ids]
+  (:workflow/id (application-created-event {:catalogue-item-ids catalogue-item-ids})))
+
+(defn create-application! [user-id catalogue-item-ids]
+  (let [start (time/now)
+        app-id (:id (db/create-application! {:user user-id
+                                             ;; TODO: remove catalogue_item_application.wfid
+                                             :wfid (get-workflow-id-for-catalogue-items catalogue-item-ids)
+                                             :start start}))]
+    (add-application-created-event! {:application-id app-id
+                                     :catalogue-item-ids catalogue-item-ids
+                                     :time start
+                                     :actor user-id})
+    {:success true
+     :application-id app-id}))
+
 (defn- valid-user? [userid]
   (not (nil? (users/get-user-attributes userid))))
 

@@ -24,6 +24,13 @@
 
 ;; Response models
 
+(s/defschema CreateApplicationCommand
+  {:catalogue-item-ids [s/Int]})
+
+(s/defschema CreateApplicationResponse
+  {:success s/Bool
+   (s/optional-key :application-id) s/Int})
+
 (s/defschema GetApplicationsResponse
   [Application])
 
@@ -293,6 +300,13 @@
       :roles #{:logged-in}
       :return [V2ApplicationOverview]
       (ok (get-user-applications-v2 (getx-user-id))))
+
+    (POST "/create" []
+      :summary "Create a new application"
+      :roles #{:logged-in}
+      :body [request CreateApplicationCommand]
+      :return CreateApplicationResponse
+      (ok (applications/create-application! (getx-user-id) (:catalogue-item-ids request))))
 
     (GET "/:application-id" []
       :summary "Get application by `application-id`"

@@ -352,8 +352,8 @@
     (testing "approve is allowed for a submitted application with a disabled item"
       (is (= {:success true}
              (send-dynamic-command handler {:type :rems.workflow.dynamic/approve
-                                              :application-id submitted-with-disabled
-                                              :comment "Looks fine."}))))))
+                                            :application-id submitted-with-disabled
+                                            :comment "Looks fine."}))))))
 
 (def testfile (clojure.java.io/file "./test-data/test.txt"))
 
@@ -480,15 +480,19 @@
       read-ok-body
       :id))
 
-(defn- create-dynamic-application []
+(defn- create-v2-application [catalogue-item-ids user-id]
+  (-> (request :post (str "/api/v2/applications/create"))
+      (authenticate "42" user-id)
+      (json-body {:catalogue-item-ids catalogue-item-ids})
+      app
+      read-ok-body
+      :application-id))
+
+(defn- create-dynamic-application [user-id]
   (let [form-id (create-empty-form)
         workflow-id (create-dynamic-workflow)
-        cat-item-id (create-catalogue-item form-id workflow-id)
-        app-id (save-application {:command "save"
-                                  :catalogue-items [cat-item-id]
-                                  :items {}
-                                  :licenses {}})]
-    app-id))
+        cat-item-id (create-catalogue-item form-id workflow-id)]
+    (create-v2-application [cat-item-id] user-id)))
 
 (defn- get-ids [applications]
   (set (map :application/id applications)))
@@ -506,7 +510,7 @@
       read-ok-body))
 
 (deftest test-v2-application-api
-  (let [app-id (create-dynamic-application)]
+  (let [app-id (create-dynamic-application "alice")]
 
     (testing "list user applications"
       (is (contains? (get-ids (get-v2-applications "alice"))
@@ -529,7 +533,7 @@
       read-ok-body))
 
 (deftest test-v2-review-api
-  (let [app-id (create-dynamic-application)]
+  (let [app-id (create-dynamic-application "alice")]
 
     (testing "does not list drafts"
       (is (not (contains? (get-ids (get-v2-open-reviews "developer"))
