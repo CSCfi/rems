@@ -6,8 +6,12 @@
             [mount.core :as mount]
             [rems.config :refer [env]]
             [rems.db.applications :refer :all]
+            [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
+            [rems.db.form :as form]
+            [rems.db.resource :as resource]
             [rems.db.test-data :as test-data]
+            [rems.db.workflow :as workflow]
             [rems.workflow.dynamic :as dynamic]
             [schema-generators.generators :as sg])
   (:import (org.joda.time DateTime DateTimeZone)
@@ -92,3 +96,54 @@
                  :application/id 123}
           json (event->json event)]
       (is (str/includes? json "\"event/time\":\"2020-01-01T10:00:00.000Z\"")))))
+
+(deftest test-application-created-event
+  (let [form-id (:id (form/create-form! "owner" {:organization "abc"
+                                                 :title ""
+                                                 :items []}))
+        res-id (:id (resource/create-resource! {:resid "res1"
+                                                :organization "abc"
+                                                :licenses []}
+                                               "owner"))
+        wf-id (:id (workflow/create-workflow! {:type :dynamic
+                                               :organization "abc"
+                                               :title ""
+                                               :handlers []
+                                               :user-id "owner"}))
+        cat-id (:id (catalogue/create-catalogue-item! {:title ""
+                                                       :form form-id
+                                                       :resid res-id
+                                                       :wfid wf-id}))]
+
+    (testing "minimal application"
+      (is (= {:event/type :application.event/created
+              :event/actor "alice"
+              :event/time (DateTime. 1000)
+              :application/id 42
+              :application/resources [{:catalogue-item/id cat-id
+                                       :resource/ext-id "res1"}]
+              :application/licenses []
+              :form/id form-id
+              :workflow/id wf-id
+              :workflow/type :workflow/dynamic
+              :workflow.dynamic/handlers #{}}
+             (application-created-event {:application-id 42
+                                         :catalogue-item-ids [cat-id]
+                                         :time (DateTime. 1000)
+                                         :actor "alice"}))))
+
+    (testing "multiple catalogue items") ; TODO
+
+    (testing "error: zero catalogue items") ; TODO
+
+    (testing "error: non-existing catalogue items") ; TODO
+
+    (testing "error: catalogue items with different forms") ; TODO
+
+    (testing "error: catalogue items with different workflows") ; TODO
+
+    (testing "resource licenses") ; TODO
+
+    (testing "workflow licenses") ; TODO
+
+    (testing "workflow handlers"))) ; TODO
