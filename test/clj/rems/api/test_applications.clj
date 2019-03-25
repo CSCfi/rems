@@ -1,4 +1,4 @@
-(ns ^:focused ^:integration rems.api.test-applications
+(ns ^:integration rems.api.test-applications
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
             [rems.db.form :as form]
@@ -51,20 +51,6 @@
   (let [form-id (create-empty-form)
         workflow-id (create-dynamic-workflow)]
     (create-catalogue-item form-id workflow-id)))
-
-(defn- create-application-draft-for-catalogue-item [cat-item-id]
-  (-> (request :get (str "/api/applications/draft?catalogue-items=" cat-item-id))
-      (authenticate "42" "alice")
-      app
-      read-ok-body))
-
-(defn- save-application [command]
-  (-> (request :post (str "/api/applications/save"))
-      (authenticate "42" "alice")
-      (json-body command)
-      app
-      read-ok-body
-      :id))
 
 (defn- send-dynamic-command [actor cmd]
   (-> (request :post (str "/api/applications/command"))
@@ -307,77 +293,36 @@
 (deftest dynamic-application-create-test
   (let [api-key "42"
         user-id "alice"
-        catid 9 ;; catalogue item with dynamic workflow in test-data
-        draft (create-application-draft-for-catalogue-item 9)]
-    (testing "get draft"
-      (is (< 6 (count (:items draft)))))
-    (let [response (-> (request :post (str "/api/applications/save"))
-                       (authenticate api-key user-id)
-                       (json-body {:command "save"
-                                   :catalogue-items [catid]
-                                   :items {1 "dynamic test"}})
-                       app
-                       read-body)
-          application-id (:id response)]
-      (testing "create application"
-        (is (some? application-id))
-        (let [saved (get-application user-id application-id)]
-          (is (= "workflow/dynamic" (get-in saved [:application :workflow :type])))
-          (is (= "rems.workflow.dynamic/draft" (get-in saved [:application :state])))
-          (is (= "dynamic test" (get-in saved [:items 0 :value])))))
-      (testing "getting application as other user is forbidden"
-        (is (response-is-forbidden?
-             (-> (request :get (str "/api/v2/applications/" application-id))
-                 (authenticate api-key "bob")
-                 app))))
-      (testing "saving fields as other user is forbidden"
-        (is (response-is-forbidden?
-             (-> (request :post "/api/applications/save")
-                 (authenticate api-key "bob")
-                 (json-body {:command "save"
-                             :application-id application-id
-                             :items {1 "xxxxx"}})
-                 app))))
-      (testing "can't submit with missing required fields"
-        (is (= {:success false :errors [{:type "t.form.validation/required" :field-id 2}
-                                        {:type "t.form.validation/required" :license-id 1}
-                                        {:type "t.form.validation/required" :license-id 2}]}
-               (send-dynamic-command user-id {:type :rems.workflow.dynamic/submit
-                                              :application-id application-id}))))
-      (testing "add missing fields"
-        (let [save-again (-> (request :post (str "/api/applications/save"))
-                             (authenticate api-key user-id)
-                             (json-body {:command "save"
-                                         :application-id application-id
-                                         :items {1 "dynamic test2"
-                                                 2 "purpose"}
-                                         :licenses {1 "approved" 2 "approved"}})
-                             app
-                             read-body)
-              saved (get-application user-id application-id)]
-          (is (true? (:success save-again)))
-          (is (= application-id (:id save-again)))
-          (is (= "dynamic test2" (get-in saved [:items 0 :value])))))
-      (testing "old-style submit fails"
-        (let [try-submit (-> (request :post (str "/api/applications/save"))
-                             (authenticate api-key user-id)
-                             (json-body {:command "submit"
-                                         :application-id application-id
-                                         :items {}
-                                         :licenses {1 "approved" 2 "approved"}})
-                             app)]
-          (is (= 400 (:status try-submit)))
-          (is (= "Can not submit dynamic application via /save" (read-body try-submit)))))
-      (testing "submitting"
-        (is (= {:success true} (send-dynamic-command user-id {:type :rems.workflow.dynamic/submit
-                                                              :application-id application-id})))
-        (let [submitted (get-application user-id application-id)]
-          (is (= "rems.workflow.dynamic/submitted" (get-in submitted [:application :state])))
-          (is (= ["application.event/created"
-                  "application.event/draft-saved"
-                  "application.event/draft-saved"
-                  "application.event/submitted"]
-                 (map :event/type (get-in submitted [:application :dynamic-events])))))))))
+        application-id (create-dynamic-application user-id)]
+
+    (testing "creating"
+      (is (some? application-id))
+      (let [created (get-application user-id application-id)]
+        (is (= "rems.workflow.dynamic/draft" (get-in created [:application :state])))))
+
+    (testing "getting application as other user is forbidden"
+      (is (response-is-forbidden?
+           (-> (request :get (str "/api/v2/applications/" application-id))
+               (authenticate api-key "bob")
+               app))))
+
+    (testing "modifying application as other user is forbidden"
+      (is (= {:success false
+              :errors [{:type "forbidden"}]}
+             (send-dynamic-command "bob" {:type :rems.workflow.dynamic/save-draft
+                                          :application-id application-id
+                                          :field-values {}
+                                          :accepted-licenses #{}}))))
+
+    (testing "submitting"
+      (is (= {:success true}
+             (send-dynamic-command user-id {:type :rems.workflow.dynamic/submit
+                                            :application-id application-id})))
+      (let [submitted (get-application user-id application-id)]
+        (is (= "rems.workflow.dynamic/submitted" (get-in submitted [:application :state])))
+        (is (= ["application.event/created"
+                "application.event/submitted"]
+               (map :event/type (get-in submitted [:application :dynamic-events]))))))))
 
 (def testfile (clojure.java.io/file "./test-data/test.txt"))
 
@@ -466,11 +411,7 @@
                                                    :catalogue-items [2]
                                                    :items {1 "REST-Test"}})
                                        app))))
-  (let [app-id (save-application {:command "save"
-                                  :catalogue-items [9]
-                                  :items {1 "x" 2 "x"}
-                                  :licenses {1 "approved" 2 "approved"}})]
-    (is (pos? app-id))
+  (let [app-id (create-dynamic-application "alice")]
     (testing "send command without authentication"
       (is (response-is-unauthorized? (-> (request :post (str "/api/applications/command"))
                                          (json-body {:type :rems.workflow.dynamic/submit
