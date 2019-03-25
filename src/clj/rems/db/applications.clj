@@ -290,37 +290,6 @@
     (get-catalogue-items (mapv :item application-items)
                          localized-items)))
 
-(defn application-cleanup [application]
-  (dissoc application
-          ;; very sensitive
-          :invitation-tokens
-          ;; only used in the write model
-          :form/id
-          :application/licenses
-          :application/accepted-licenses
-          :form-contents
-          :submitted-form-contents
-          :previous-submitted-form-contents
-          :deciders
-          :commenters))
-
-(defn assoc-review-type-to-app [user-id app]
-  (assoc app :review-type (if (is-reviewer? user-id (:id app)) :normal :third-party)))
-
-(defn make-draft-application
-  "Make a draft application with an initial set of catalogue items."
-  [user-id catalogue-item-ids]
-  (let [items (get-catalogue-items catalogue-item-ids)]
-    (assert (= 1 (count (distinct (mapv :wfid items)))))
-    (assert (= 1 (count (distinct (mapv :formid items)))))
-    {:id nil
-     :state "draft"
-     :applicantuserid user-id
-     :wfid (:wfid (first items))
-     :formid (:formid (first items))
-     :catalogue-items items
-     :events []}))
-
 (defn- get-item-value [item form-id application-id]
   (let [query-params {:item (:id item)
                       :form form-id
@@ -547,33 +516,6 @@
                             :form (:form/id application)
                             :item item-id})))
 
-(defn get-draft-form-for
-  "Returns a draft form structure like `get-form-for` used when a new application is created."
-  ([application]
-   (let [application-id (:id application)
-         catalogue-item-ids (map :id (:catalogue-items application))
-         item-id (first catalogue-item-ids)
-         form (db/get-form-for-item {:item item-id})
-         form-id (:formid form)
-         catalogue-items (:catalogue-items application)
-         items (->> (db/get-form-items {:id form-id})
-                    (mapv #(process-item application-id form-id %))
-                    (assoc-item-previous-values application))
-         licenses (get-application-licenses application catalogue-item-ids)]
-     {:id application-id
-      :title (:formtitle form)
-      :catalogue-items catalogue-items
-      :application (assoc application
-                          :can-approve? false
-                          :can-close? false
-                          :is-applicant? true
-                          :review-type nil)
-      :applicant-attributes (users/get-user-attributes (:applicantuserid application))
-      :items items
-      :licenses licenses
-      :accepted-licenses {}
-      :phases (get-application-phases (:state application))})))
-
 (defn create-new-draft [user-id wfid]
   (assert user-id)
   (assert wfid)
@@ -704,9 +646,6 @@
                            (assoc :last-modified (or (:time (last events))
                                                      (:start application))))]
        (apply-events application events)))))
-
-(comment
-  (get-application-state 12))
 
 (declare handle-state-change)
 

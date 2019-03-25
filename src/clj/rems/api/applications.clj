@@ -9,7 +9,6 @@
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
-            [rems.db.form :as form]
             [rems.db.users :as users]
             [rems.pdf :as pdf]
             [rems.util :refer [getx-user-id update-present]]
@@ -49,26 +48,6 @@
    :title s/Str
    :items [Item]})
 
-(s/defschema SaveApplicationCommand
-  {:command (s/enum "save" "submit")
-   (s/optional-key :application-id) s/Num
-   (s/optional-key :catalogue-items) [s/Num]
-   ;; NOTE: compojure-api only supports keyword keys properly, see
-   ;; https://github.com/metosin/compojure-api/issues/341
-   :items {s/Any s/Str}
-   (s/optional-key :licenses) {s/Any s/Str}})
-
-(s/defschema ValidationMessage
-  {:type s/Keyword
-   (s/optional-key :field-id) s/Num
-   (s/optional-key :license-id) s/Num})
-
-(s/defschema SaveApplicationResponse
-  {:success s/Bool
-   (s/optional-key :id) s/Num
-   (s/optional-key :state) (s/cond-pre s/Str s/Keyword) ;; HACK for dynamic applications
-   (s/optional-key :errors) [ValidationMessage]})
-
 (s/defschema User
   {:userid s/Str
    :name (s/maybe s/Str)
@@ -106,11 +85,6 @@
    (s/optional-key :errors) [s/Any]})
 
 ;; Api implementation
-
-(defn- fix-keys [application]
-  (-> application
-      (update-in [:items] longify-keys)
-      (update-in [:licenses] longify-keys)))
 
 (defn invalid-user? [u]
   (or (str/blank? (:eppn u))
