@@ -258,7 +258,7 @@
 (defn- remove-attachment-action
   [app-id field-id description]
   (fn [event]
-    (rf/dispatch [::set-field-value field-id nil])
+    (rf/dispatch [::set-field-value field-id ""])
     (rf/dispatch [::remove-attachment app-id field-id description])))
 
 (defn- readonly-field [{:keys [id value]}]
