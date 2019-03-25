@@ -1,7 +1,8 @@
 (ns ^:integration rems.api.test-forms
   (:require [clojure.test :refer :all]
-            [rems.handler :refer [app]]
             [rems.api.testing :refer :all]
+            [rems.db.form :as form]
+            [rems.handler :refer [app]]
             [ring.mock.request :refer :all])
   (:import (java.util UUID)))
 
@@ -9,29 +10,10 @@
   :once
   api-fixture)
 
-(defn- get-draft-form [form-id]
-  ;; XXX: there is no simple API for reading the form items
-  (let [api-key "42"
-        catalogue-item (-> (request :post "/api/catalogue-items/create")
-                           (authenticate api-key "owner")
-                           (json-body {:title "tmp"
-                                       :form form-id
-                                       :resid 1
-                                       :wfid 1
-                                       :state "enabled"})
-                           app
-                           assert-response-is-ok
-                           read-body)
-        draft (-> (request :get "/api/applications/draft" {:catalogue-items (:id catalogue-item)})
-                  (authenticate api-key "alice")
-                  app
-                  assert-response-is-ok
-                  read-body)]
-    draft))
-
 (deftest forms-api-test
   (let [api-key "42"
         user-id "owner"]
+
     (testing "get"
       (let [data (-> (request :get "/api/forms")
                      (authenticate api-key user-id)
@@ -39,6 +21,7 @@
                      assert-response-is-ok
                      read-body)]
         (is (:id (first data)))))
+
     (testing "create"
       (let [command {:organization "abc"
                      :title (str "form title " (UUID/randomUUID))
@@ -48,7 +31,9 @@
                               :type "text"
                               :input-prompt {:en "en prompt"
                                              :fi "fi prompt"}}]}]
+
         (testing "invalid create"
+          ;; TODO: silence the logging for this expected error
           (let [command-with-invalid-maxlength (assoc-in command [:items 0 :maxlength] -1)
                 response (-> (request :post "/api/forms/create")
                              (authenticate api-key user-id)
@@ -56,6 +41,7 @@
                              app)]
             (is (= 400 (:status response))
                 "can't send negative maxlength")))
+
         (testing "invalid create: field too long"
           (let [command-with-long-prompt (assoc-in command [:items 0 :input-prompt :en]
                                                    (apply str (repeat 10000 "x")))
@@ -64,12 +50,14 @@
                              (json-body command-with-long-prompt)
                              app)]
             (is (= 500 (:status response)))))
+
         (testing "valid create"
           (-> (request :post "/api/forms/create")
               (authenticate api-key user-id)
               (json-body command)
               app
               assert-response-is-ok))
+
         (testing "and fetch"
           (let [body (-> (request :get "/api/forms")
                          (authenticate api-key user-id)
@@ -86,7 +74,7 @@
                                   read-body)]
             (is (= 1 (count forms))
                 "only one form got created")
-            ;; TODO: create an API for reading full forms (will be needed latest for editing forms)
+
             (testing "form template matches command"
               (is (= (select-keys command [:title :organization])
                      (select-keys form-template [:title :organization])))
@@ -94,15 +82,8 @@
                      (:fields form-template))))
             (is (= (select-keys command [:title :organization])
                    (select-keys form [:title :organization])))
-            (is (= [{:optional true
-                     :type "text"
-                     :localizations {:en {:title "en title"
-                                          :inputprompt "en prompt"}
-                                     :fi {:title "fi title"
-                                          :inputprompt "fi prompt"}}}]
-                   (->> (get-draft-form (:id form))
-                        :items
-                        (map #(select-keys % [:optional :type :localizations])))))))))))
+            (is (= (:items command)
+                   (:fields (form/get-form-template (:id form)))))))))))
 
 (deftest option-form-item-test
   (let [api-key "42"
@@ -135,21 +116,8 @@
                 form (->> body
                           (filter #(= (:title %) (:title command)))
                           first)]
-            (is (= [{:optional true
-                     :type "option"
-                     :localizations {:en {:title "en title"
-                                          :inputprompt nil}
-                                     :fi {:title "fi title"
-                                          :inputprompt nil}}
-                     :options [{:key "yes"
-                                :label {:en "Yes"
-                                        :fi "Kyllä"}}
-                               {:key "no"
-                                :label {:en "No"
-                                        :fi "Ei"}}]}]
-                   (->> (get-draft-form (:id form))
-                        :items
-                        (map #(select-keys % [:optional :type :localizations :options])))))))))))
+            (is (= (:items command)
+                   (:fields (form/get-form-template (:id form)))))))))))
 
 (deftest forms-api-filtering-test
   (let [unfiltered (-> (request :get "/api/forms")
