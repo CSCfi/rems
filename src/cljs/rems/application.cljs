@@ -196,6 +196,9 @@
            {:url-params {:application-id application-id
                          :field-id field-id}
             :body file
+            ;; adding an attachment and not clicking [Save] will leave
+            ;; a dangling attachment in the db. consider forcing a
+            ;; save here. see also comment in remove-attachment
             :handler (partial status-modal/common-success-handler! (fn []))
             :error-handler status-modal/common-error-handler!})
     {}))
@@ -208,7 +211,14 @@
          {:url-params {:application-id application-id
                        :field-id field-id}
           :body {}
-          :handler (partial status-modal/common-success-handler! (fn []))
+          :handler (fn [response]
+                     ;; if we just remove the attachment from the backend but
+                     ;; don't save the field, the application will be left in an
+                     ;; inconsistent state (referring to a nonexistant attachment)
+                     ;; TODO: save only the value for the attachment field
+                     (if (:success response)
+                       (rf/dispatch [::save-application (text :t.form/save)])
+                       (status-modal/common-error-handler! response)))
           :error-handler status-modal/common-error-handler!})
   {})
 
@@ -258,7 +268,7 @@
 (defn- remove-attachment-action
   [app-id field-id description]
   (fn [event]
-    (rf/dispatch [::set-field-value field-id nil])
+    (rf/dispatch [::set-field-value field-id ""])
     (rf/dispatch [::remove-attachment app-id field-id description])))
 
 (defn- readonly-field [{:keys [id value]}]
