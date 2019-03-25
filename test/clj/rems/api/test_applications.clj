@@ -8,6 +8,115 @@
   :once
   api-fixture)
 
+;;; shared helpers
+
+(defn- create-form-with-fields [form-items]
+  (-> (request :post "/api/forms/create")
+      (authenticate "42" "owner")
+      (json-body {:organization "abc"
+                  :title ""
+                  :items form-items})
+      app
+      read-ok-body
+      :id))
+
+(defn- create-empty-form []
+  (create-form-with-fields []))
+
+(defn- create-catalogue-item [form-id workflow-id]
+  (-> (request :post "/api/catalogue-items/create")
+      (authenticate "42" "owner")
+      (json-body {:title ""
+                  :form form-id
+                  :resid 1
+                  :wfid workflow-id
+                  :state "enabled"})
+      app
+      read-ok-body
+      :id))
+
+(defn- create-application-draft-for-catalogue-item [cat-item-id]
+  (-> (request :get (str "/api/applications/draft?catalogue-items=" cat-item-id))
+      (authenticate "42" "alice")
+      app
+      read-ok-body))
+
+(defn- save-application [command]
+  (-> (request :post (str "/api/applications/save"))
+      (authenticate "42" "alice")
+      (json-body command)
+      app
+      read-ok-body
+      :id))
+
+(defn- send-dynamic-command [actor cmd]
+  (-> (request :post (str "/api/applications/command"))
+      (authenticate "42" actor)
+      (json-body cmd)
+      app
+      read-body))
+
+;; TODO refactor tests to use true v2 api
+(defn- get-application [actor id]
+  (-> (request :get (str "/api/v2/applications/" id "/migration"))
+      (authenticate "42" actor)
+      app
+      read-body))
+
+(defn- create-dynamic-workflow []
+  (-> (request :post "/api/workflows/create")
+      (json-body {:organization "abc"
+                  :title "dynamic workflow"
+                  :type :dynamic
+                  :handlers ["developer"]})
+      (authenticate "42" "owner")
+      app
+      read-ok-body
+      :id))
+
+(defn- create-v2-application [catalogue-item-ids user-id]
+  (-> (request :post (str "/api/v2/applications/create"))
+      (authenticate "42" user-id)
+      (json-body {:catalogue-item-ids catalogue-item-ids})
+      app
+      read-ok-body
+      :application-id))
+
+(defn- create-dynamic-application [user-id]
+  (let [form-id (create-empty-form)
+        workflow-id (create-dynamic-workflow)
+        cat-item-id (create-catalogue-item form-id workflow-id)]
+    (create-v2-application [cat-item-id] user-id)))
+
+(defn- get-ids [applications]
+  (set (map :application/id applications)))
+
+(defn- get-v2-applications [user-id]
+  (-> (request :get "/api/v2/applications")
+      (authenticate "42" user-id)
+      app
+      read-ok-body))
+
+(defn- get-v2-application [app-id user-id]
+  (-> (request :get (str "/api/v2/applications/" app-id))
+      (authenticate "42" user-id)
+      app
+      read-ok-body))
+
+(defn- get-v2-open-reviews [user-id]
+  (-> (request :get "/api/v2/reviews/open")
+      (authenticate "42" user-id)
+      app
+      read-ok-body))
+
+(defn- get-v2-handled-reviews [user-id]
+  (-> (request :get "/api/v2/reviews/handled")
+      (authenticate "42" user-id)
+      app
+      read-ok-body))
+
+;;; tests
+
 (defn- strip-cookie-attributes [cookie]
   (re-find #"[^;]*" cookie))
 
@@ -83,59 +192,6 @@
                        assert-response-is-ok)]
       (is (= "application/pdf" (get-in response [:headers "Content-Type"])))
       (is (.startsWith (slurp (:body response)) "%PDF-1.")))))
-
-(defn- create-form-with-fields [form-items]
-  (-> (request :post "/api/forms/create")
-      (authenticate "42" "owner")
-      (json-body {:organization "abc"
-                  :title ""
-                  :items form-items})
-      app
-      read-ok-body
-      :id))
-
-(defn- create-empty-form []
-  (create-form-with-fields []))
-
-(defn- create-catalogue-item [form-id workflow-id]
-  (-> (request :post "/api/catalogue-items/create")
-      (authenticate "42" "owner")
-      (json-body {:title ""
-                  :form form-id
-                  :resid 1
-                  :wfid workflow-id
-                  :state "enabled"})
-      app
-      read-ok-body
-      :id))
-
-(defn- create-application-draft-for-catalogue-item [cat-item-id]
-  (-> (request :get (str "/api/applications/draft?catalogue-items=" cat-item-id))
-      (authenticate "42" "alice")
-      app
-      read-ok-body))
-
-(defn- save-application [command]
-  (-> (request :post (str "/api/applications/save"))
-      (authenticate "42" "alice")
-      (json-body command)
-      app
-      read-ok-body
-      :id))
-
-(defn- send-dynamic-command [actor cmd]
-  (-> (request :post (str "/api/applications/command"))
-      (authenticate "42" actor)
-      (json-body cmd)
-      app
-      read-body))
-
-;; TODO refactor tests to use true v2 api
-(defn- get-application [actor id]
-  (-> (request :get (str "/api/v2/applications/" id "/migration"))
-      (authenticate "42" actor)
-      app
-      read-body))
 
 (deftest dynamic-applications-test
   (let [api-key "42"
@@ -442,46 +498,6 @@
                                        (authenticate "invalid-api-key" "developer")
                                        app)))))
 
-(defn- create-dynamic-workflow []
-  (-> (request :post "/api/workflows/create")
-      (json-body {:organization "abc"
-                  :title "dynamic workflow"
-                  :type :dynamic
-                  :handlers ["developer"]})
-      (authenticate "42" "owner")
-      app
-      read-ok-body
-      :id))
-
-(defn- create-v2-application [catalogue-item-ids user-id]
-  (-> (request :post (str "/api/v2/applications/create"))
-      (authenticate "42" user-id)
-      (json-body {:catalogue-item-ids catalogue-item-ids})
-      app
-      read-ok-body
-      :application-id))
-
-(defn- create-dynamic-application [user-id]
-  (let [form-id (create-empty-form)
-        workflow-id (create-dynamic-workflow)
-        cat-item-id (create-catalogue-item form-id workflow-id)]
-    (create-v2-application [cat-item-id] user-id)))
-
-(defn- get-ids [applications]
-  (set (map :application/id applications)))
-
-(defn- get-v2-applications [user-id]
-  (-> (request :get "/api/v2/applications")
-      (authenticate "42" user-id)
-      app
-      read-ok-body))
-
-(defn- get-v2-application [app-id user-id]
-  (-> (request :get (str "/api/v2/applications/" app-id))
-      (authenticate "42" user-id)
-      app
-      read-ok-body))
-
 (deftest test-v2-application-api
   (let [app-id (create-dynamic-application "alice")]
 
@@ -492,18 +508,6 @@
     (testing "get single application"
       (is (= app-id
              (:application/id (get-v2-application app-id "alice")))))))
-
-(defn- get-v2-open-reviews [user-id]
-  (-> (request :get "/api/v2/reviews/open")
-      (authenticate "42" user-id)
-      app
-      read-ok-body))
-
-(defn- get-v2-handled-reviews [user-id]
-  (-> (request :get "/api/v2/reviews/handled")
-      (authenticate "42" user-id)
-      app
-      read-ok-body))
 
 (deftest test-v2-review-api
   (let [app-id (create-dynamic-application "alice")]
