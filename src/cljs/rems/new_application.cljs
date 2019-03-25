@@ -47,7 +47,7 @@
 (rf/reg-fx
  ::fetch-draft-application
  (fn [items]
-   (fetch (str "/api/applications/draft")
+   (fetch "/api/applications/draft"
           {:handler #(rf/dispatch [::fetch-draft-application-result %])
            :params {:catalogue-items items}})))
 

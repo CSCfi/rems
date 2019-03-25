@@ -71,7 +71,8 @@
 
 
 (defn- fetch-workflows []
-  (fetch "/api/workflows/?active=true" {:handler #(rf/dispatch [::fetch-workflows-result %])}))
+  (fetch "/api/workflows" {:url-params {:active true}
+                           :handler #(rf/dispatch [::fetch-workflows-result %])}))
 
 (rf/reg-fx ::fetch-workflows fetch-workflows)
 
@@ -84,7 +85,8 @@
 (rf/reg-sub ::workflows (fn [db _] (::workflows db)))
 
 (defn- fetch-resources []
-  (fetch "/api/resources/?active=true" {:handler #(rf/dispatch [::fetch-resources-result %])}))
+  (fetch "/api/resources" {:url-params {:active true}
+                           :handler #(rf/dispatch [::fetch-resources-result %])}))
 
 (rf/reg-fx ::fetch-resources fetch-resources)
 
@@ -98,7 +100,8 @@
 
 
 (defn- fetch-forms []
-  (fetch "/api/forms/?active=true" {:handler #(rf/dispatch [::fetch-forms-result %])}))
+  (fetch "/api/forms" {:url-params {:active true}
+                       :handler #(rf/dispatch [::fetch-forms-result %])}))
 
 (rf/reg-fx ::fetch-forms fetch-forms)
 

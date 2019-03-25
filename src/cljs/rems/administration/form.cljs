@@ -8,7 +8,7 @@
             [rems.common-util :refer [andstr]]
             [rems.spinner :as spinner]
             [rems.text :refer [localize-time text text-format]]
-            [rems.util :refer [dispatch! fetch put!]]))
+            [rems.util :refer [dispatch! fetch]]))
 
 (rf/reg-event-fx
  ::enter-page

@@ -107,26 +107,30 @@
  (fn [db [_ application]]
    (assoc db
           ::application application
-          ::edit-application {:items (into {} (for [field (get-in application [:application/form :form/fields])]
-                                                [(:field/id field) {:value (:field/value field)
-                                                                    :previous-value (:field/previous-value field)}]))
-                              :licenses (into {} (map (fn [id] [id true]) (get (:application/accepted-licenses application)
-                                                                               (:application/applicant application))))})))
+          ::edit-application {:field-values (->> (get-in application [:application/form :form/fields])
+                                                 (map (juxt :field/id :field/value))
+                                                 (into {}))
+                              :show-diff {}
+                              :validation-errors nil
+                              :accepted-licenses (set (get (:application/accepted-licenses application)
+                                                           (:application/applicant application)))})))
 
 (rf/reg-event-db
- ::set-validation
+ ::set-validation-errors
  (fn [db [_ errors]]
    (prn errors)
-   (assoc-in db [::edit-application :validation] errors)))
+   (assoc-in db [::edit-application :validation-errors] errors)))
 
-(defn- save-application [description application-id catalogue-ids fields licenses]
+(defn- save-application! [description application-id catalogue-ids field-values accepted-licenses]
   (status-modal/common-pending-handler! description)
   (post! "/api/applications/save"
          {:handler (partial status-modal/common-success-handler! #(rf/dispatch [::enter-application-page application-id]))
           :error-handler status-modal/common-error-handler!
+          ;; TODO change the API to match the draft-saved event's structure
           :params (merge {:command "save"
-                          :items (map-vals :value fields)
-                          :licenses licenses}
+                          :items field-values
+                          :licenses (into {} (for [license-id accepted-licenses]
+                                               [license-id "approved"]))}
                          (if application-id
                            {:application-id application-id}
                            {:catalogue-items catalogue-ids}))}))
@@ -135,18 +139,17 @@
  ::save-application
  (fn [{:keys [db]} [_ description]]
    (let [application (::application db)
-         app-id (:application/id application)
-         catalogue-ids (map :catalogue-item/id (:application/resources application))
-         items (get-in db [::edit-application :items])
-         ;; TODO change api to booleans
-         licenses (into {}
-                        (for [[id checked?] (get-in db [::edit-application :licenses])
-                              :when checked?]
-                          [id "approved"]))]
-     (save-application description app-id catalogue-ids items licenses))
-   {:db (assoc-in db [::edit-application :validation] nil)}))
+         edit-application (::edit-application db)
+         catalogue-ids (map :catalogue-item/id (:application/resources application))]
+     (save-application! description
+                        (:application/id application)
+                        catalogue-ids
+                        (:field-values edit-application)
+                        (:accepted-licenses edit-application)))
+   {:db (assoc-in db [::edit-application :validation-errors] nil)}))
 
-(defn- submit-application [application description application-id catalogue-items items licenses]
+(defn- submit-application! [application description application-id catalogue-ids field-values accepted-licenses]
+  ;; TODO: deduplicate with save-application!
   (status-modal/common-pending-handler! description)
   (post! "/api/applications/save"
          {:handler (fn [response]
@@ -158,40 +161,42 @@
                                             (do
                                               (status-modal/set-error! {:result response
                                                                         :error-content (format-validation-errors application (:errors response))})
-                                              (rf/dispatch [::set-validation (:errors response)]))))
+                                              (rf/dispatch [::set-validation-errors (:errors response)]))))
                                :error-handler status-modal/common-error-handler!
                                :params {:type :rems.workflow.dynamic/submit
                                         :application-id application-id}})
                        (status-modal/common-error-handler! response)))
           :error-handler status-modal/common-error-handler!
           :params (merge {:command "save"
-                          :items (map-vals :value items)
-                          :licenses licenses}
+                          :items field-values
+                          :licenses (into {} (for [license-id accepted-licenses]
+                                               [license-id "approved"]))}
                          (if application-id
                            {:application-id application-id}
-                           {:catalogue-items catalogue-items}))}))
+                           {:catalogue-items catalogue-ids}))}))
 
 (rf/reg-event-fx
  ::submit-application
  (fn [{:keys [db]} [_ description]]
    (let [application (::application db)
-         app-id (:application/id application)
-         catalogue-ids (map :catalogue-item/id (:application/resources application))
-         items (get-in db [::edit-application :items])
-         ;; TODO change api to booleans
-         licenses (into {}
-                        (for [[id checked?] (get-in db [::edit-application :licenses])
-                              :when checked?]
-                          [id "approved"]))]
-     (submit-application application description app-id catalogue-ids items licenses))
-   {:db (assoc-in db [::edit-application :validation] nil)}))
+         edit-application (::edit-application db)
+         catalogue-ids (map :catalogue-item/id (:application/resources application))]
+     (submit-application! application
+                          description
+                          (:application/id application)
+                          catalogue-ids
+                          (:field-values edit-application)
+                          (:accepted-licenses edit-application)))
+   {:db (assoc-in db [::edit-application :validation-errors] nil)}))
 
 (defn- save-attachment [{:keys [db]} [_ field-id file description]]
   (let [application-id (get-in db [::application :application/id])]
     (status-modal/common-pending-handler! description)
-    (post! (str "/api/applications/add_attachment?application-id=" application-id "&field-id=" field-id)
-           {:body file
-            :handler (partial status-modal/common-success-handler! nil)
+    (post! "/api/applications/add_attachment"
+           {:url-params {:application-id application-id
+                         :field-id field-id}
+            :body file
+            :handler (partial status-modal/common-success-handler! (fn []))
             :error-handler status-modal/common-error-handler!})
     {}))
 
@@ -199,9 +204,11 @@
 
 (defn- remove-attachment [_ [_ application-id field-id description]]
   (status-modal/common-pending-handler! description)
-  (post! (str "/api/applications/remove_attachment?application-id=" application-id "&field-id=" field-id)
-         {:body {}
-          :handler (partial status-modal/common-success-handler! nil)
+  (post! "/api/applications/remove_attachment"
+         {:url-params {:application-id application-id
+                       :field-id field-id}
+          :body {}
+          :handler (partial status-modal/common-success-handler! (fn []))
           :error-handler status-modal/common-error-handler!})
   {})
 
@@ -212,38 +219,47 @@
 
 ;;;; UI components
 
-(defn- pdf-button [id]
-  (when id
+(defn- pdf-button [app-id]
+  (when app-id
     [:a.btn.btn-secondary
-     {:href (str "/api/applications/" id "/pdf")
+     {:href (str "/api/applications/" app-id "/pdf")
       :target :_new}
      "PDF " (external-link)]))
 
-(rf/reg-event-db ::set-field (fn [db [_ id value]] (assoc-in db [::edit-application :items id :value] value)))
-(rf/reg-event-db ::toggle-diff (fn [db [_ id]] (update-in db [::edit-application :items id :diff] not)))
-(rf/reg-event-db ::set-license (fn [db [_ id value]] (assoc-in db [::edit-application :licenses id] value)))
-(defn- set-field-value
-  [id]
-  (fn [event]
-    (rf/dispatch [::set-field id (.. event -target -value)])))
+(rf/reg-event-db
+ ::set-field-value
+ (fn [db [_ field-id value]]
+   (assoc-in db [::edit-application :field-values field-id] value)))
+
+(rf/reg-event-db
+ ::toggle-diff
+ (fn [db [_ field-id]]
+   (update-in db [::edit-application :show-diff field-id] not)))
+
+(rf/reg-event-db
+ ::set-license-accepted
+ (fn [db [_ license-id accepted]]
+   (update-in db [::edit-application :accepted-licenses] (if accepted
+                                                           #(conj % license-id)
+                                                           #(disj % license-id)))))
 
 (defn- id-to-name [id]
   (str "field" id))
 
 (defn- set-attachment
-  [id description]
+  [field-id description]
   (fn [event]
     (let [filecontent (aget (.. event -target -files) 0)
           form-data (doto (js/FormData.)
                       (.append "file" filecontent))]
-      (rf/dispatch [::set-field id (.-name filecontent)])
-      (rf/dispatch [::save-attachment id form-data description]))))
+      (rf/dispatch [::set-field-value field-id (.-name filecontent)])
+      (rf/dispatch [::save-attachment field-id form-data description]))))
 
 (defn- remove-attachment-action
-  [app-id id description]
+  [app-id field-id description]
   (fn [event]
-    (rf/dispatch [::set-field id nil])
-    (rf/dispatch [::remove-attachment app-id id description])))
+    (rf/dispatch [::set-field-value field-id nil])
+    (rf/dispatch [::remove-attachment app-id field-id description])))
 
 (defn- readonly-field [{:keys [id value]}]
   [:div.form-control {:id id} (str/trim (str value))])
@@ -328,6 +344,10 @@
                                      :value value}])
        :else editor-component)
      [field-validation-message validation title]]))
+
+(defn- set-field-value [field-id]
+  (fn [event]
+    (rf/dispatch [::set-field-value field-id (.. event -target -value)])))
 
 (defn- text-field
   [{:keys [validation] :as opts}]
@@ -473,7 +493,7 @@
                                      selected-keys (if checked
                                                      (conj selected-keys key)
                                                      (disj selected-keys key))]
-                                 (rf/dispatch [::set-field id (encode-option-keys selected-keys)])))]
+                                 (rf/dispatch [::set-field-value id (encode-option-keys selected-keys)])))]
                [:div.form-check
                 [:input.form-check-input {:type "checkbox"
                                           :id option-id
@@ -490,10 +510,10 @@
     [:div.form-group
      [:label (localized title)]]))
 
-(defn- set-license-approval
+(defn- set-license-accepted
   [id]
   (fn [event]
-    (rf/dispatch [::set-license id (.. event -target -checked)])))
+    (rf/dispatch [::set-license-accepted id (.. event -target -checked)])))
 
 (defn- license [id title approved readonly validation content]
   [:div.license
@@ -504,24 +524,24 @@
                               :disabled readonly
                               :class (when validation "is-invalid")
                               :checked (boolean approved)
-                              :on-change (set-license-approval id)}]
+                              :on-change (set-license-accepted id)}]
     [:span.form-check-label content]]])
 
 (defn- link-license
-  [{:keys [readonly approved validation] :as opts}]
+  [{:keys [accepted readonly validation] :as opts}]
   (let [id (:license/id opts)
         title (localized (:license/title opts))
         link (localized (:license/link opts))]
-    [license id title approved readonly validation
+    [license id title accepted readonly validation
      [:a.license-title {:href link :target "_blank"}
       title " " (external-link)]]))
 
 (defn- text-license
-  [{:keys [approved readonly validation] :as opts}]
+  [{:keys [accepted readonly validation] :as opts}]
   (let [id (:license/id opts)
         title (localized (:license/title opts))
         text (localized (:license/text opts))]
-    [license id title approved readonly validation
+    [license id title accepted readonly validation
      [:div.license-panel
       [:span.license-title
        [:a.license-header.collapsed {:data-toggle "collapse"
@@ -566,8 +586,9 @@
                    :on-click #(rf/dispatch [::submit-application (text :t.form/submit)])}])
 
 (defn- application-fields [application edit-application]
-  (let [{:keys [items validation]} edit-application
-        field-validations (index-by [:field-id] validation)
+  (let [field-values (:field-values edit-application)
+        show-diff (:show-diff edit-application)
+        field-validations (index-by [:field-id] (:validation-errors edit-application))
         form-fields-editable? (form-fields-editable? application)
         readonly? (not form-fields-editable?)]
     [collapsible/component
@@ -578,18 +599,16 @@
        (into [:div]
              (for [fld (get-in application [:application/form :form/fields])]
                [field (assoc fld
+                             :field/value (get field-values (:field/id fld))
+                             :diff (get show-diff (:field/id fld))
                              :validation (field-validations (:field/id fld))
                              :readonly readonly?
-                             :field/value (get-in items [(:field/id fld) :value])
-                             :field/previous-value (get-in items [(:field/id fld) :previous-value])
-                             :diff (get-in items [(:field/id fld) :diff])
                              :app-id (:application/id application))]))]}]))
 
 (defn- application-licenses [application edit-application]
   (when-let [licenses (not-empty (:application/licenses application))]
-    (let [edit-licenses (:licenses edit-application)
-          validation (:validation edit-application)
-          license-validations (index-by [:license-id] validation)
+    (let [accepted-licenses (:accepted-licenses edit-application)
+          license-validations (index-by [:license-id] (:validation-errors edit-application))
           form-fields-editable? (form-fields-editable? application)
           readonly? (not form-fields-editable?)]
       [collapsible/component
@@ -600,9 +619,9 @@
          (into [:div#licenses]
                (for [license licenses]
                  [license-field (assoc license
-                                       :validation (license-validations (:license/id license))
+                                       :accepted (contains? accepted-licenses (:license/id license))
                                        :readonly readonly?
-                                       :approved (get edit-licenses (:license/id license)))]))]}])))
+                                       :validation (license-validations (:license/id license)))]))]}])))
 
 
 (defn- format-event [event]
@@ -832,10 +851,10 @@
 (defn- render-application [application edit-application]
   (let [messages (remove nil?
                          [(disabled-items-warning application) ; NB: eval this here so we get nil or a warning
-                          (when (:validation edit-application)
+                          (when-let [errors (:validation-errors edit-application)]
                             [flash-message
                              {:status :danger
-                              :contents [format-validation-errors application (:validation edit-application)]}])])]
+                              :contents [format-validation-errors application errors]}])])]
     [:div
      [:div {:class "float-right"} [pdf-button (:application/id application)]]
      [:h2 (text :t.applications/application)]
@@ -1183,8 +1202,10 @@
                                       :license/type :link
                                       :license/title {:en "Link to license"}
                                       :license/link {:en "https://creativecommons.org/licenses/by/4.0/deed.en"}}]}
-             {:items {1 "abc"}
-              :licenses {4 false 5 true}}])
+             {:field-values {1 "abc"}
+              :show-diff {}
+              :validation-errors nil
+              :accepted-licenses #{5}}])
    (example "application, applied"
             [render-application
              {:application/id 17
@@ -1198,8 +1219,8 @@
                                       :license/type :text
                                       :license/title {:en "A Text License"}
                                       :license/text {:en lipsum}}]}
-             {:items {1 "abc"}
-              :licenses {4 true}}])
+             {:field-values {1 "abc"}
+              :accepted-licenses #{4}}])
    (example "application, approved"
             [render-application
              {:application/id 17
@@ -1216,5 +1237,5 @@
                                       :license/type :text
                                       :license/title {:en "A Text License"}
                                       :license/text {:en lipsum}}]}
-             {:items {1 "abc"}
-              :licenses {4 true}}])])
+             {:field-values {1 "abc"}
+              :accepted-licenses #{4}}])])

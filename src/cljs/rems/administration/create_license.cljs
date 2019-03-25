@@ -6,9 +6,8 @@
             [rems.atoms :refer [external-link]]
             [rems.collapsible :as collapsible]
             [rems.text :refer [text localize-item]]
-            [rems.util :refer [dispatch! fetch post!]]
-            [rems.status-modal :as status-modal]
-            [reagent.core :as r]))
+            [rems.util :refer [dispatch! post!]]
+            [rems.status-modal :as status-modal]))
 
 (rf/reg-event-db
  ::enter-page
@@ -69,10 +68,10 @@
    {}))
 
 (defn- save-attachment [language form-data]
-  (post! (str "api/licenses/add_attachment")
+  (post! "/api/licenses/add_attachment"
          {:body form-data
-          :handler (fn [{:keys [id] :as response}]
-                     (rf/dispatch [::attachment-saved language id]))}))
+          :handler (fn [response]
+                     (rf/dispatch [::attachment-saved language (:id response)]))}))
 
 (rf/reg-event-db
  ::attachment-saved
@@ -80,8 +79,9 @@
    (assoc-in db [::form :localizations language :attachment-id] attachment-id)))
 
 (defn- remove-attachment [attachment-id]
-  (post! (str "api/licenses/remove_attachment?attachment-id="attachment-id)
-         {:body {}}))
+  (post! "/api/licenses/remove_attachment"
+         {:url-params {:attachment-id attachment-id}
+          :body {}}))
 
 (rf/reg-event-fx
  ::save-attachment
@@ -155,7 +155,7 @@
           filename (get-in form [:localizations language :attachment-filename])
           attachment-id (get-in form [:localizations language :attachment-id])
           filename-field [:a.btn.btn-secondary.mr-2
-                          {:href (str "api/licenses/attachments/"attachment-id)
+                          {:href (str "/api/licenses/attachments/" attachment-id)
                            :target :_new}
                           filename " " [external-link]]
           upload-field [:div.upload-file.mr-2

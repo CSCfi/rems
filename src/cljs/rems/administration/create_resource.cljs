@@ -17,8 +17,8 @@
  ::enter-page
  (fn [{:keys [db]}]
    {:db (assoc db
-         ::form {:licenses #{}}
-         ::loading? true)
+               ::form {:licenses #{}}
+               ::loading? true)
     ::fetch-licenses nil}))
 
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
@@ -55,12 +55,13 @@
            :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/resources/" (:id %))))
            :error-handler status-modal/common-error-handler!})
    {}))
-                                        ;
+
 ;; available licenses
 
 (defn- fetch-licenses []
-  (fetch "/api/licenses?active=true"
-         {:handler #(rf/dispatch [::fetch-licenses-result %])}))
+  (fetch "/api/licenses"
+         {:url-params {:active true}
+          :handler #(rf/dispatch [::fetch-licenses-result %])}))
 
 (rf/reg-fx ::fetch-licenses (fn [_] (fetch-licenses)))
 

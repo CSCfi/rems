@@ -10,7 +10,7 @@
 (rf/reg-fx
  ::fetch-potential-deciders
  (fn [[user on-success]]
-   (fetch (str "/api/applications/deciders")
+   (fetch "/api/applications/deciders"
           {:handler on-success
            :headers {"x-rems-user-id" (:eppn user)}})))
 

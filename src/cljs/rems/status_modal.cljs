@@ -114,6 +114,7 @@
   "Common variant of `set-success!` where you only wish to customize the `on-close`
   by currying."
   [on-close response]
+  (assert on-close)
   (if (:success response)
     (set-success! {:on-close (partial on-close response)})
     (set-error! {:result response})))
