@@ -906,7 +906,8 @@
                               :eventdata (event->json event)})
   nil)
 
-(defn add-application-created-event! [{:keys [application-id catalogue-item-ids time actor]}]
+(defn application-created-event [{:keys [application-id catalogue-item-ids time actor]}]
+  (assert (seq catalogue-item-ids))
   (let [items (get-catalogue-items catalogue-item-ids)]
     (assert (= 1 (count (distinct (mapv :wfid items)))) "catalogue items did not have the same workflow")
     (assert (= 1 (count (distinct (mapv :formid items)))) "catalogue items did not have the same form")
@@ -921,21 +922,24 @@
                                              catalogue-item-ids)]
       (assert (= :workflow/dynamic (:type workflow))
               (str "workflow type was " (:type workflow))) ; TODO: support other workflows
-      (add-dynamic-event! {:event/type :application.event/created
-                           :event/time time
-                           :event/actor actor
-                           :application/id application-id
-                           :application/resources (map (fn [item]
-                                                         {:catalogue-item/id (:id item)
-                                                          :resource/ext-id (:resid item)})
-                                                       items)
-                           :application/licenses (map (fn [license]
-                                                        {:license/id (:id license)})
-                                                      licenses)
-                           :form/id form-id
-                           :workflow/id workflow-id
-                           :workflow/type (:type workflow)
-                           :workflow.dynamic/handlers (set (:handlers workflow))}))))
+      {:event/type :application.event/created
+       :event/time time
+       :event/actor actor
+       :application/id application-id
+       :application/resources (map (fn [item]
+                                     {:catalogue-item/id (:id item)
+                                      :resource/ext-id (:resid item)})
+                                   items)
+       :application/licenses (map (fn [license]
+                                    {:license/id (:id license)})
+                                  licenses)
+       :form/id form-id
+       :workflow/id workflow-id
+       :workflow/type (:type workflow)
+       :workflow.dynamic/handlers (set (:handlers workflow))})))
+
+(defn add-application-created-event! [opts]
+  (add-dynamic-event! (application-created-event opts)))
 
 (defn- valid-user? [userid]
   (not (nil? (users/get-user-attributes userid))))
