@@ -328,31 +328,6 @@
                   "application.event/submitted"]
                  (map :event/type (get-in submitted [:application :dynamic-events])))))))))
 
-(deftest disabled-catalogue-item
-  (let [api-key "42"
-        applicant "alice"
-        handler "developer"
-        disabled-catalogue-item 11
-        draft-with-disabled 17
-        submitted-with-disabled 18]
-    (testing "save is forbidden for an application with a disabled item"
-      (let [response (-> (request :post (str "/api/applications/save"))
-                         (authenticate api-key applicant)
-                         (json-body {:command "save"
-                                     :catalogue-items [disabled-catalogue-item]
-                                     :items {1 ""}})
-                         app)]
-        (is (= 400 (:status response)))))
-    (testing "submit is forbidden for an application with a disabled item"
-      (is (= {:success false :errors [{:type "forbidden"}]}
-             (send-dynamic-command applicant {:type :rems.workflow.dynamic/submit
-                                              :application-id draft-with-disabled}))))
-    (testing "approve is allowed for a submitted application with a disabled item"
-      (is (= {:success true}
-             (send-dynamic-command handler {:type :rems.workflow.dynamic/approve
-                                            :application-id submitted-with-disabled
-                                            :comment "Looks fine."}))))))
-
 (def testfile (clojure.java.io/file "./test-data/test.txt"))
 
 (def malicious-file (clojure.java.io/file "./test-data/malicious_test.html"))
