@@ -257,6 +257,39 @@
                                            :time (DateTime. 1000)
                                            :actor "alice"})))))
 
-    (testing "workflow licenses") ; TODO
+    (testing "workflow licenses"
+      (let [lic-id (:id (licenses/create-license! {:licensetype "text"
+                                                   :title ""
+                                                   :textcontent ""
+                                                   :localizations {}}
+                                                  "owner"))
+            _ (assert lic-id)
+            wf-id2 (:id (workflow/create-workflow! {:type :dynamic
+                                                    :organization "abc"
+                                                    :title ""
+                                                    :handlers []
+                                                    :user-id "owner"}))
+            _ (assert wf-id2)
+            _ (db/create-workflow-license! {:wfid wf-id2 :licid lic-id :round 0})
+            cat-id2 (:id (catalogue/create-catalogue-item! {:title ""
+                                                            :resid res-id
+                                                            :form form-id
+                                                            :wfid wf-id2}))
+            _ (assert cat-id2)]
+        (is (= {:event/type :application.event/created
+                :event/actor "alice"
+                :event/time (DateTime. 1000)
+                :application/id 42
+                :application/resources [{:catalogue-item/id cat-id2
+                                         :resource/ext-id "res1"}]
+                :application/licenses [{:license/id lic-id}]
+                :form/id form-id
+                :workflow/id wf-id2
+                :workflow/type :workflow/dynamic
+                :workflow.dynamic/handlers #{}}
+               (application-created-event {:application-id 42
+                                           :catalogue-item-ids [cat-id2]
+                                           :time (DateTime. 1000)
+                                           :actor "alice"})))))
 
     (testing "workflow handlers"))) ; TODO
