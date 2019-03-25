@@ -53,7 +53,7 @@
     (create-catalogue-item form-id workflow-id)))
 
 (defn- send-dynamic-command [actor cmd]
-  (-> (request :post (str "/api/applications/command"))
+  (-> (request :post "/api/applications/command")
       (authenticate "42" actor)
       (json-body cmd)
       app
@@ -67,7 +67,7 @@
       read-body))
 
 (defn- create-v2-application [catalogue-item-ids user-id]
-  (-> (request :post (str "/api/v2/applications/create"))
+  (-> (request :post "/api/v2/applications/create")
       (authenticate "42" user-id)
       (json-body {:catalogue-item-ids catalogue-item-ids})
       app
@@ -157,17 +157,17 @@
 
 (deftest pdf-smoke-test
   (testing "not found"
-    (let [response (-> (request :get (str "/api/applications/9999999/pdf"))
+    (let [response (-> (request :get "/api/applications/9999999/pdf")
                        (authenticate "42" "developer")
                        app)]
       (is (response-is-not-found? response))))
   (testing "forbidden"
-    (let [response (-> (request :get (str "/api/applications/13/pdf"))
+    (let [response (-> (request :get "/api/applications/13/pdf")
                        (authenticate "42" "bob")
                        app)]
       (is (response-is-forbidden? response))))
   (testing "success"
-    (let [response (-> (request :get (str "/api/applications/13/pdf"))
+    (let [response (-> (request :get "/api/applications/13/pdf")
                        (authenticate "42" "developer")
                        app
                        assert-response-is-ok)]
@@ -175,8 +175,7 @@
       (is (.startsWith (slurp (:body response)) "%PDF-1.")))))
 
 (deftest dynamic-applications-test
-  (let [api-key "42"
-        user-id "alice"
+  (let [user-id "alice"
         handler-id "developer"
         commenter-id "carl"
         decider-id "bob"
@@ -392,48 +391,45 @@
         (is (response-is-forbidden? response))))))
 
 (deftest applications-api-security-test
-  (testing "fetch application without authentication"
-    (is (response-is-unauthorized? (-> (request :get (str "/api/v2/applications/13"))
-                                       app))))
-  (testing "fetch deciders without authentication"
-    (is (response-is-unauthorized? (-> (request :get (str "/api/applications/deciders"))
-                                       app))))
-  (testing "save without authentication"
-    (is (response-is-unauthorized? (-> (request :post (str "/api/applications/save"))
-                                       (json-body {:command "save"
-                                                   :catalogue-items [2]
-                                                   :items {1 "REST-Test"}})
-                                       app))))
-  (testing "save with wrong API-Key"
-    (is (response-is-unauthorized? (-> (request :post (str "/api/applications/save"))
-                                       (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
-                                       (json-body {:command "save"
-                                                   :catalogue-items [2]
-                                                   :items {1 "REST-Test"}})
-                                       app))))
-  (let [app-id (create-dynamic-application "alice")]
+  (let [cat-id (create-dymmy-catalogue-item)
+        app-id (create-v2-application [cat-id] "alice")]
+    (testing "fetch application without authentication"
+      (is (response-is-unauthorized? (-> (request :get (str "/api/v2/applications/" app-id))
+                                         app))))
+    (testing "fetch deciders without authentication"
+      (is (response-is-unauthorized? (-> (request :get "/api/applications/deciders")
+                                         app))))
+    (testing "create without authentication"
+      (is (response-is-unauthorized? (-> (request :post "/api/v2/applications/create")
+                                         (json-body {:catalogue-item-ids [cat-id]})
+                                         app))))
+    (testing "create with wrong API-Key"
+      (is (response-is-unauthorized? (-> (request :post "/api/v2/applications/create")
+                                         (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
+                                         (json-body {:catalogue-item-ids [cat-id]})
+                                         app))))
     (testing "send command without authentication"
-      (is (response-is-unauthorized? (-> (request :post (str "/api/applications/command"))
+      (is (response-is-unauthorized? (-> (request :post "/api/applications/command")
                                          (json-body {:type :rems.workflow.dynamic/submit
                                                      :application-id app-id})
                                          app))))
     (testing "send command with wrong api-key"
-      (is (response-is-unauthorized? (-> (request :post (str "/api/applications/command"))
+      (is (response-is-unauthorized? (-> (request :post "/api/applications/command")
                                          (authenticate "invalid-api-key" "alice")
                                          (json-body {:type :rems.workflow.dynamic/submit
                                                      :application-id app-id})
-                                         app)))))
-  (testing "upload attachment without authentication"
-    (is (response-is-unauthorized? (-> (request :post (str "/api/applications/add_attachment"))
-                                       (assoc :params {"file" filecontent})
-                                       (assoc :multipart-params {"file" filecontent})
-                                       app))))
-  (testing "upload attachment with wrong API-Key"
-    (is (response-is-unauthorized? (-> (request :post (str "/api/applications/add_attachment"))
-                                       (assoc :params {"file" filecontent})
-                                       (assoc :multipart-params {"file" filecontent})
-                                       (authenticate "invalid-api-key" "developer")
-                                       app)))))
+                                         app))))
+    (testing "upload attachment without authentication"
+      (is (response-is-unauthorized? (-> (request :post "/api/applications/add_attachment")
+                                         (assoc :params {"file" filecontent})
+                                         (assoc :multipart-params {"file" filecontent})
+                                         app))))
+    (testing "upload attachment with wrong API-Key"
+      (is (response-is-unauthorized? (-> (request :post "/api/applications/add_attachment")
+                                         (assoc :params {"file" filecontent})
+                                         (assoc :multipart-params {"file" filecontent})
+                                         (authenticate "invalid-api-key" "developer")
+                                         app))))))
 
 (deftest test-v2-application-api
   (let [app-id (create-dynamic-application "alice")]
