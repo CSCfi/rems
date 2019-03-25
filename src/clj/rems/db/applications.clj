@@ -907,8 +907,9 @@
   nil)
 
 (defn application-created-event [{:keys [application-id catalogue-item-ids time actor]}]
-  (assert (seq catalogue-item-ids))
+  (assert (seq catalogue-item-ids) "catalogue item not specified")
   (let [items (get-catalogue-items catalogue-item-ids)]
+    (assert (= (count items) (count catalogue-item-ids)) "catalogue item not found")
     (assert (= 1 (count (distinct (mapv :wfid items)))) "catalogue items did not have the same workflow")
     (assert (= 1 (count (distinct (mapv :formid items)))) "catalogue items did not have the same form")
     (let [workflow-id (:wfid (first items))

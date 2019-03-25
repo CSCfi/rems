@@ -98,21 +98,21 @@
       (is (str/includes? json "\"event/time\":\"2020-01-01T10:00:00.000Z\"")))))
 
 (deftest test-application-created-event
-  (let [form-id (:id (form/create-form! "owner" {:organization "abc"
+  (let [wf-id (:id (workflow/create-workflow! {:type :dynamic
+                                               :organization "abc"
+                                               :title ""
+                                               :handlers []
+                                               :user-id "owner"}))
+        form-id (:id (form/create-form! "owner" {:organization "abc"
                                                  :title ""
                                                  :items []}))
         res-id (:id (resource/create-resource! {:resid "res1"
                                                 :organization "abc"
                                                 :licenses []}
                                                "owner"))
-        wf-id (:id (workflow/create-workflow! {:type :dynamic
-                                               :organization "abc"
-                                               :title ""
-                                               :handlers []
-                                               :user-id "owner"}))
         cat-id (:id (catalogue/create-catalogue-item! {:title ""
-                                                       :form form-id
                                                        :resid res-id
+                                                       :form form-id
                                                        :wfid wf-id}))]
 
     (testing "minimal application"
@@ -132,15 +132,84 @@
                                          :time (DateTime. 1000)
                                          :actor "alice"}))))
 
-    (testing "multiple catalogue items") ; TODO
+    (testing "multiple resources"
+      (let [res-id2 (:id (resource/create-resource! {:resid "res2"
+                                                     :organization "abc"
+                                                     :licenses []}
+                                                    "owner"))
+            cat-id2 (:id (catalogue/create-catalogue-item! {:title ""
+                                                            :resid res-id2
+                                                            :form form-id
+                                                            :wfid wf-id}))]
+        (is (= {:event/type :application.event/created
+                :event/actor "alice"
+                :event/time (DateTime. 1000)
+                :application/id 42
+                :application/resources [{:catalogue-item/id cat-id
+                                         :resource/ext-id "res1"}
+                                        {:catalogue-item/id cat-id2
+                                         :resource/ext-id "res2"}]
+                :application/licenses []
+                :form/id form-id
+                :workflow/id wf-id
+                :workflow/type :workflow/dynamic
+                :workflow.dynamic/handlers #{}}
+               (application-created-event {:application-id 42
+                                           :catalogue-item-ids [cat-id cat-id2]
+                                           :time (DateTime. 1000)
+                                           :actor "alice"})))))
 
-    (testing "error: zero catalogue items") ; TODO
+    (testing "error: zero catalogue items"
+      (is (thrown-with-msg? AssertionError #"catalogue item not specified"
+                            (application-created-event {:application-id 42
+                                                        :catalogue-item-ids []
+                                                        :time (DateTime. 1000)
+                                                        :actor "alice"}))))
 
-    (testing "error: non-existing catalogue items") ; TODO
+    (testing "error: non-existing catalogue items"
+      (is (thrown-with-msg? AssertionError #"catalogue item not found"
+                            (application-created-event {:application-id 42
+                                                        :catalogue-item-ids [999999]
+                                                        :time (DateTime. 1000)
+                                                        :actor "alice"}))))
 
-    (testing "error: catalogue items with different forms") ; TODO
+    (testing "error: catalogue items with different forms"
+      (let [form-id2 (:id (form/create-form! "owner" {:organization "abc"
+                                                      :title ""
+                                                      :items []}))
+            res-id2 (:id (resource/create-resource! {:resid "res2"
+                                                     :organization "abc"
+                                                     :licenses []}
+                                                    "owner"))
+            cat-id2 (:id (catalogue/create-catalogue-item! {:title ""
+                                                            :resid res-id2
+                                                            :form form-id2
+                                                            :wfid wf-id}))]
+        (is (thrown-with-msg? AssertionError #"catalogue items did not have the same form"
+                              (application-created-event {:application-id 42
+                                                          :catalogue-item-ids [cat-id cat-id2]
+                                                          :time (DateTime. 1000)
+                                                          :actor "alice"})))))
 
-    (testing "error: catalogue items with different workflows") ; TODO
+    (testing "error: catalogue items with different workflows"
+      (let [wf-id2 (:id (workflow/create-workflow! {:type :dynamic
+                                                    :organization "abc"
+                                                    :title ""
+                                                    :handlers []
+                                                    :user-id "owner"}))
+            res-id2 (:id (resource/create-resource! {:resid "res2"
+                                                     :organization "abc"
+                                                     :licenses []}
+                                                    "owner"))
+            cat-id2 (:id (catalogue/create-catalogue-item! {:title ""
+                                                            :resid res-id2
+                                                            :form form-id
+                                                            :wfid wf-id2}))]
+        (is (thrown-with-msg? AssertionError #"catalogue items did not have the same workflow"
+                              (application-created-event {:application-id 42
+                                                          :catalogue-item-ids [cat-id cat-id2]
+                                                          :time (DateTime. 1000)
+                                                          :actor "alice"})))))
 
     (testing "resource licenses") ; TODO
 
