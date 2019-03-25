@@ -478,8 +478,8 @@
                                   :actor user-id
                                   :application-id app-id
                                   :time (get-in form [:application :start])
-                                  :items {}
-                                  :licenses {}})]
+                                  :field-values {}
+                                  :accepted-licenses #{}})]
     (when dynamic-workflow?
       (applications/add-application-created-event! {:application-id app-id
                                                     :catalogue-item-ids catids
@@ -490,7 +490,7 @@
       (db/save-field-value! {:application app-id :form (:id form)
                              :item item-id :user user-id :value trimmed-value})
       (swap! save-draft-command
-             update :items
+             update :field-values
              conj [item-id trimmed-value]))
     (db/update-application-description! {:id app-id :description field-value})
     (doseq [{license-id :id} (:licenses form)]
@@ -500,8 +500,8 @@
                                   :actoruserid user-id
                                   :state "approved"})
       (swap! save-draft-command
-             update :licenses
-             conj [license-id "approved"]))
+             update :accepted-licenses
+             conj license-id))
     (when dynamic-workflow?
       (let [error (applications/dynamic-command! @save-draft-command)]
         (assert (nil? error) error)))

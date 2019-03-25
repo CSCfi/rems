@@ -593,11 +593,8 @@
 (defmethod command-handler ::save-draft
   [cmd _application _injections]
   (ok {:event/type :application.event/draft-saved
-       :application/field-values (:items cmd)
-       :application/accepted-licenses (->> (:licenses cmd)
-                                           (filter #(= "approved" (second %)))
-                                           (map first)
-                                           set)}))
+       :application/field-values (:field-values cmd)
+       :application/accepted-licenses (set (:accepted-licenses cmd))}))
 
 (defmethod command-handler ::submit
   [cmd application injections]
@@ -826,8 +823,8 @@
                               :time 456
                               :actor "applicant"
                               :application-id 123
-                              :items {1 "foo" 2 "bar"}
-                              :licenses {1 "approved" 2 "approved"}}
+                              :field-values {1 "foo" 2 "bar"}
+                              :accepted-licenses #{1 2}}
                              application
                              injections))))
     (testing "only the applicant can save a draft"
@@ -836,16 +833,16 @@
                               :time 456
                               :actor "non-applicant"
                               :application-id 123
-                              :items {1 "foo" 2 "bar"}
-                              :licenses {1 "approved" 2 "approved"}}
+                              :field-values {1 "foo" 2 "bar"}
+                              :accepted-licenses #{1 2}}
                              application
                              injections)
              (handle-command {:type ::save-draft
                               :time 456
                               :actor "assistant"
                               :application-id 123
-                              :items {1 "foo" 2 "bar"}
-                              :licenses {1 "approved" 2 "approved"}}
+                              :field-values {1 "foo" 2 "bar"}
+                              :accepted-licenses #{1 2}}
                              application
                              injections))))
     (testing "draft can be updated multiple times"
@@ -854,19 +851,20 @@
                               :licenses {3 "approved"}
                               :accepted-licenses {"applicant" #{3}}}}
              (-> (apply-commands application
-                                 [{:actor "applicant" :type ::save-draft :items {1 "original"} :licenses {2 "approved"}}
-                                  {:actor "applicant" :type ::save-draft :items {1 "updated"} :licenses {3 "approved"}}]
+                                 [{:actor "applicant" :type ::save-draft :field-values {1 "original"} :accepted-licenses #{2}}
+                                  {:actor "applicant" :type ::save-draft :field-values {1 "updated"} :accepted-licenses #{3}}]
                                  injections)
                  (select-keys relevant-application-keys)))))
     (testing "draft cannot be updated after submitting"
       (let [application (apply-commands application
-                                        [{:actor "applicant" :type ::save-draft :items {1 "original"} :licenses {2 "original"}}
+                                        [{:actor "applicant" :type ::save-draft :field-values {1 "original"} :accepted-licenses #{2}}
                                          {:actor "applicant" :type ::submit}]
                                         injections)]
         (is (= {:errors [{:type :forbidden}]}
                (handle-command {:type ::save-draft
                                 :actor "applicant"
-                                :items {1 "updated"} :licenses {2 "updated"}}
+                                :field-values {1 "updated"}
+                                :accepted-licenses #{3}}
                                application
                                injections)))))
     (testing "draft can be updated after returning it to applicant"
@@ -879,10 +877,10 @@
                                         :accepted-licenses {"applicant" #{2}}}
               :previous-submitted-form-contents nil}
              (-> (apply-commands application
-                                 [{:actor "applicant" :type ::save-draft :items {1 "original"} :licenses {2 "approved"}}
+                                 [{:actor "applicant" :type ::save-draft :field-values {1 "original"} :accepted-licenses #{2}}
                                   {:actor "applicant" :type ::submit}
                                   {:actor "assistant" :type ::return}
-                                  {:actor "applicant" :type ::save-draft :items {1 "updated"} :licenses {3 "approved"}}]
+                                  {:actor "applicant" :type ::save-draft :field-values {1 "updated"} :accepted-licenses #{3}}]
                                  injections)
                  (select-keys relevant-application-keys)))))
     (testing "resubmitting remembers the previous and current application"
@@ -897,10 +895,10 @@
                                                  :licenses {2 "approved"}
                                                  :accepted-licenses {"applicant" #{2}}}}
              (-> (apply-commands application
-                                 [{:actor "applicant" :type ::save-draft :items {1 "original"} :licenses {2 "approved"}}
+                                 [{:actor "applicant" :type ::save-draft :field-values {1 "original"} :accepted-licenses #{2}}
                                   {:actor "applicant" :type ::submit}
                                   {:actor "assistant" :type ::return}
-                                  {:actor "applicant" :type ::save-draft :items {1 "updated"} :licenses {3 "approved"}}
+                                  {:actor "applicant" :type ::save-draft :field-values {1 "updated"} :accepted-licenses #{3}}
                                   {:actor "applicant" :type ::submit}]
                                  injections)
                  (select-keys relevant-application-keys)))))))
