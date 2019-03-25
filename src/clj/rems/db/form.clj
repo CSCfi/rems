@@ -173,15 +173,3 @@
       success? (assoc :id application-id
                       :state (:state application)))))
 
-(comment
-  (binding [context/*tempura* (fn [& args] (pr-str args))]
-    (let [app-id (:id (api-save {:actor "developer"
-                                 :command "save"
-                                 :catalogue-items [1]
-                                 :items {}
-                                 :licenses {}}))]
-      (api-save {:actor "developer"
-                 :application-id app-id
-                 :command "submit"
-                 :items {1 "x" 2 "y" 3 "z"}
-                 :licenses {1 "approved" 2 "approved"}}))))
