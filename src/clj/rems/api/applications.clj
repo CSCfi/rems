@@ -157,14 +157,6 @@
   (context "/applications" []
     :tags ["applications"]
 
-    (GET "/draft" []
-      :summary "Get application (draft) for `catalogue-items`"
-      :roles #{:logged-in}
-      :query-params [catalogue-items :- (describe [s/Num] "catalogue item ids")]
-      :return GetApplicationResponse
-      (let [app (applications/make-draft-application (getx-user-id) catalogue-items)]
-        (ok (applications/get-draft-form-for app))))
-
     (GET "/commenters" []
       :summary "Available third party commenters"
       :roles #{:approver}
@@ -222,13 +214,6 @@
             (ok)
             (content-type "application/pdf"))
         (not-found! "not found")))
-
-    (POST "/save" []
-      :summary "Create a new application, change an existing one or submit an application"
-      :roles #{:logged-in}
-      :body [request SaveApplicationCommand]
-      :return SaveApplicationResponse
-      (ok (form/api-save (assoc (fix-keys request) :actor (getx-user-id)))))
 
     ;; TODO: think about size limit
     (POST "/add_attachment" []
