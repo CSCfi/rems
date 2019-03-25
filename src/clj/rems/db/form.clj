@@ -156,8 +156,11 @@
                                                        :actor actor
                                                        :application-id application-id
                                                        :time (time/now)
-                                                       :items items
-                                                       :licenses licenses})]
+                                                       :field-values items
+                                                       :accepted-licenses (->> licenses
+                                                                               (filter #(= "approved" (second %)))
+                                                                               (map first)
+                                                                               set)})]
           (bad-request! error)))
       (when (= "save" command)
         (db/add-application-event! {:application application-id

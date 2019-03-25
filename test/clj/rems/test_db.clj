@@ -788,8 +788,8 @@
                                               :actor "alice"
                                               :application-id app-id
                                               :time (time/now)
-                                              :items {form-item "X"}
-                                              :licenses {}})))
+                                              :field-values {form-item "X"}
+                                              :accepted-licenses #{}})))
     (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/submit
                                               :actor "alice"
                                               :application-id app-id

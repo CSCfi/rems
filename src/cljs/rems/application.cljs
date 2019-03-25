@@ -126,12 +126,10 @@
   (post! "/api/applications/command"
          {:handler (partial status-modal/common-success-handler! #(rf/dispatch [::enter-application-page application-id]))
           :error-handler status-modal/common-error-handler!
-          ;; TODO change the command to match the draft-saved event's structure
           :params {:type :rems.workflow.dynamic/save-draft
                    :application-id application-id
-                   :items field-values
-                   :licenses (into {} (for [license-id accepted-licenses]
-                                        [license-id "approved"]))}}))
+                   :field-values field-values
+                   :accepted-licenses accepted-licenses}}))
 
 (rf/reg-event-fx
  ::save-application
@@ -165,9 +163,8 @@
           :error-handler status-modal/common-error-handler!
           :params {:type :rems.workflow.dynamic/save-draft
                    :application-id application-id
-                   :items field-values
-                   :licenses (into {} (for [license-id accepted-licenses]
-                                        [license-id "approved"]))}}))
+                   :field-values field-values
+                   :accepted-licenses accepted-licenses}}))
 
 (rf/reg-event-fx
  ::submit-application
