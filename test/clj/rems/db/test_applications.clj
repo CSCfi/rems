@@ -9,6 +9,7 @@
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.form :as form]
+            [rems.db.licenses :as licenses]
             [rems.db.resource :as resource]
             [rems.db.test-data :as test-data]
             [rems.db.workflow :as workflow]
@@ -223,7 +224,38 @@
                                                           :time (DateTime. 1000)
                                                           :actor "alice"})))))
 
-    (testing "resource licenses") ; TODO
+    (testing "resource licenses"
+      (let [lic-id (:id (licenses/create-license! {:licensetype "text"
+                                                   :title ""
+                                                   :textcontent ""
+                                                   :localizations {}}
+                                                  "owner"))
+            _ (assert lic-id)
+            res-id2 (:id (resource/create-resource! {:resid "res2+++"
+                                                     :organization "abc"
+                                                     :licenses [lic-id]}
+                                                    "owner"))
+            _ (assert res-id2)
+            cat-id2 (:id (catalogue/create-catalogue-item! {:title ""
+                                                            :resid res-id2
+                                                            :form form-id
+                                                            :wfid wf-id}))
+            _ (assert cat-id2)]
+        (is (= {:event/type :application.event/created
+                :event/actor "alice"
+                :event/time (DateTime. 1000)
+                :application/id 42
+                :application/resources [{:catalogue-item/id cat-id2
+                                         :resource/ext-id "res2+++"}]
+                :application/licenses [{:license/id lic-id}]
+                :form/id form-id
+                :workflow/id wf-id
+                :workflow/type :workflow/dynamic
+                :workflow.dynamic/handlers #{}}
+               (application-created-event {:application-id 42
+                                           :catalogue-item-ids [cat-id2]
+                                           :time (DateTime. 1000)
+                                           :actor "alice"})))))
 
     (testing "workflow licenses") ; TODO
 

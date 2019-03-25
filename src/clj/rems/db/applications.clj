@@ -916,11 +916,8 @@
           form-id (:formid (first items))
           workflow (-> (:workflow (workflow/get-workflow workflow-id))
                        (update :type keyword))
-          licenses (get-application-licenses {:id application-id
-                                              :applicantuserid actor
-                                              :start time
-                                              :wfid workflow-id}
-                                             catalogue-item-ids)]
+          licenses (db/get-licenses {:wfid workflow-id
+                                     :items catalogue-item-ids})]
       (assert (= :workflow/dynamic (:type workflow))
               (str "workflow type was " (:type workflow))) ; TODO: support other workflows
       {:event/type :application.event/created

@@ -2,7 +2,7 @@
   (:require [rems.api.schema :refer :all]
             [rems.api.util]
             [rems.db.licenses :as licenses]
-            [rems.util :as util]
+            [rems.util :refer [getx-user-id]]
             [rems.db.core :as db]
             [compojure.api.sweet :refer :all]
             [ring.util.http-response :refer :all]
@@ -63,7 +63,7 @@
       :roles #{:owner}
       :body [command CreateLicenseCommand]
       :return CreateLicenseResponse
-      (ok (licenses/create-license! command)))
+      (ok (licenses/create-license! command (getx-user-id))))
 
     (POST "/add_attachment" []
       :summary "Add an attachment file that will be used in a license"
@@ -72,7 +72,7 @@
       :middleware [multipart/wrap-multipart-params]
       :return AttachmentMetadata
       (check-attachment-content-type (:content-type file))
-      (ok (licenses/create-license-attachment! file (util/getx-user-id))))
+      (ok (licenses/create-license-attachment! file (getx-user-id))))
 
     (POST "/remove_attachment" []
       :summary "Remove an attachment that could have been used in a license."
