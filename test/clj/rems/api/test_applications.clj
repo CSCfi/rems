@@ -10,6 +10,17 @@
 
 ;;; shared helpers
 
+(defn- create-dynamic-workflow []
+  (-> (request :post "/api/workflows/create")
+      (json-body {:organization "abc"
+                  :title "dynamic workflow"
+                  :type :dynamic
+                  :handlers ["developer"]})
+      (authenticate "42" "owner")
+      app
+      read-ok-body
+      :id))
+
 (defn- create-form-with-fields [form-items]
   (-> (request :post "/api/forms/create")
       (authenticate "42" "owner")
@@ -34,6 +45,11 @@
       app
       read-ok-body
       :id))
+
+(defn- create-dymmy-catalogue-item []
+  (let [form-id (create-empty-form)
+        workflow-id (create-dynamic-workflow)]
+    (create-catalogue-item form-id workflow-id)))
 
 (defn- create-application-draft-for-catalogue-item [cat-item-id]
   (-> (request :get (str "/api/applications/draft?catalogue-items=" cat-item-id))
@@ -63,17 +79,6 @@
       app
       read-body))
 
-(defn- create-dynamic-workflow []
-  (-> (request :post "/api/workflows/create")
-      (json-body {:organization "abc"
-                  :title "dynamic workflow"
-                  :type :dynamic
-                  :handlers ["developer"]})
-      (authenticate "42" "owner")
-      app
-      read-ok-body
-      :id))
-
 (defn- create-v2-application [catalogue-item-ids user-id]
   (-> (request :post (str "/api/v2/applications/create"))
       (authenticate "42" user-id)
@@ -83,10 +88,7 @@
       :application-id))
 
 (defn- create-dynamic-application [user-id]
-  (let [form-id (create-empty-form)
-        workflow-id (create-dynamic-workflow)
-        cat-item-id (create-catalogue-item form-id workflow-id)]
-    (create-v2-application [cat-item-id] user-id)))
+  (create-v2-application [(create-dymmy-catalogue-item)] user-id))
 
 (defn- get-ids [applications]
   (set (map :application/id applications)))
@@ -136,39 +138,31 @@
         csrf (-> (request :get "/")
                  (header "Cookie" cookie)
                  app
-                 get-csrf-token)]
+                 get-csrf-token)
+        cat-id (create-dymmy-catalogue-item)]
     (is cookie)
     (is csrf)
     (testing "save with session"
-      (let [body (-> (request :post (str "/api/applications/save"))
+      (let [body (-> (request :post "/api/v2/applications/create")
                      (header "Cookie" cookie)
                      (header "x-csrf-token" csrf)
-                     (json-body {:command "save"
-                                 :catalogue-items [2]
-                                 :items {1 "x" 2 "y" 3 "z"}
-                                 :licenses {1 "approved" 2 "approved"}})
+                     (json-body {:catalogue-item-ids [cat-id]})
                      app
                      assert-response-is-ok
                      read-body)]
         (is (:success body))))
     (testing "save with session but without csrf"
-      (let [response (-> (request :post (str "/api/applications/save"))
+      (let [response (-> (request :post "/api/v2/applications/create")
                          (header "Cookie" cookie)
-                         (json-body {:command "save"
-                                     :catalogue-items [2]
-                                     :items {1 "x" 2 "y" 3 "z"}
-                                     :licenses {1 "approved" 2 "approved"}})
+                         (json-body {:catalogue-item-ids [cat-id]})
                          app)]
         (is (response-is-unauthorized? response))))
     (testing "save with session and csrf and wrong api-key"
-      (let [response (-> (request :post (str "/api/applications/save"))
+      (let [response (-> (request :post "/api/v2/applications/create")
                          (header "Cookie" cookie)
                          (header "x-csrf-token" csrf)
                          (header "x-rems-api-key" "WRONG")
-                         (json-body {:command "save"
-                                     :catalogue-items [2]
-                                     :items {1 "x" 2 "y" 3 "z"}
-                                     :licenses {1 "approved" 2 "approved"}})
+                         (json-body {:catalogue-item-ids [cat-id]})
                          app)
             body (read-body response)]
         (is (response-is-unauthorized? response))
