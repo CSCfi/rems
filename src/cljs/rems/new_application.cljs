@@ -1,6 +1,6 @@
 (ns rems.new-application
   (:require [re-frame.core :as rf]
-            [rems.application :refer [navigate-to]]
+            [rems.application :as application]
             [rems.spinner :as spinner]
             [rems.text :refer [text]]
             [rems.util :refer [post!]]))
@@ -16,7 +16,7 @@
           {:params {:catalogue-item-ids catalogue-item-ids}
            :handler (fn [response]
                       (remove-catalogue-items-from-cart! catalogue-item-ids)
-                      (navigate-to (:application-id response) true))})
+                      (application/navigate-to (:application-id response) true))})
    {}))
 
 (defn new-application-page []

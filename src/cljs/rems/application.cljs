@@ -121,37 +121,33 @@
    (prn errors)
    (assoc-in db [::edit-application :validation-errors] errors)))
 
-(defn- save-application! [description application-id catalogue-ids field-values accepted-licenses]
+(defn- save-application! [description application-id field-values accepted-licenses]
   (status-modal/common-pending-handler! description)
-  (post! "/api/applications/save"
+  (post! "/api/applications/command"
          {:handler (partial status-modal/common-success-handler! #(rf/dispatch [::enter-application-page application-id]))
           :error-handler status-modal/common-error-handler!
-          ;; TODO change the API to match the draft-saved event's structure
-          :params (merge {:command "save"
-                          :items field-values
-                          :licenses (into {} (for [license-id accepted-licenses]
-                                               [license-id "approved"]))}
-                         (if application-id
-                           {:application-id application-id}
-                           {:catalogue-items catalogue-ids}))}))
+          ;; TODO change the command to match the draft-saved event's structure
+          :params {:type :rems.workflow.dynamic/save-draft
+                   :application-id application-id
+                   :items field-values
+                   :licenses (into {} (for [license-id accepted-licenses]
+                                        [license-id "approved"]))}}))
 
 (rf/reg-event-fx
  ::save-application
  (fn [{:keys [db]} [_ description]]
    (let [application (::application db)
-         edit-application (::edit-application db)
-         catalogue-ids (map :catalogue-item/id (:application/resources application))]
+         edit-application (::edit-application db)]
      (save-application! description
                         (:application/id application)
-                        catalogue-ids
                         (:field-values edit-application)
                         (:accepted-licenses edit-application)))
    {:db (assoc-in db [::edit-application :validation-errors] nil)}))
 
-(defn- submit-application! [application description application-id catalogue-ids field-values accepted-licenses]
+(defn- submit-application! [application description application-id field-values accepted-licenses]
   ;; TODO: deduplicate with save-application!
   (status-modal/common-pending-handler! description)
-  (post! "/api/applications/save"
+  (post! "/api/applications/command"
          {:handler (fn [response]
                      (if (:success response)
                        (post! "/api/applications/command"
@@ -167,24 +163,20 @@
                                         :application-id application-id}})
                        (status-modal/common-error-handler! response)))
           :error-handler status-modal/common-error-handler!
-          :params (merge {:command "save"
-                          :items field-values
-                          :licenses (into {} (for [license-id accepted-licenses]
-                                               [license-id "approved"]))}
-                         (if application-id
-                           {:application-id application-id}
-                           {:catalogue-items catalogue-ids}))}))
+          :params {:type :rems.workflow.dynamic/save-draft
+                   :application-id application-id
+                   :items field-values
+                   :licenses (into {} (for [license-id accepted-licenses]
+                                        [license-id "approved"]))}}))
 
 (rf/reg-event-fx
  ::submit-application
  (fn [{:keys [db]} [_ description]]
    (let [application (::application db)
-         edit-application (::edit-application db)
-         catalogue-ids (map :catalogue-item/id (:application/resources application))]
+         edit-application (::edit-application db)]
      (submit-application! application
                           description
                           (:application/id application)
-                          catalogue-ids
                           (:field-values edit-application)
                           (:accepted-licenses edit-application)))
    {:db (assoc-in db [::edit-application :validation-errors] nil)}))
