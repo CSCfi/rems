@@ -1,22 +1,17 @@
 (ns rems.api.applications
   (:require [clj-time.core :as time]
-            [clojure.set :as set]
             [clojure.string :as str]
             [clojure.test :refer [deftest is]]
             [compojure.api.sweet :refer :all]
             [rems.api.applications-v2 :refer [get-user-applications-v2 api-get-application-v2 api-get-application-v1]]
             [rems.api.schema :refer :all]
             [rems.api.util :refer [longify-keys]]
-            [rems.config :refer [env]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
-            [rems.db.dynamic-roles :as dynamic-roles]
             [rems.db.form :as form]
             [rems.db.users :as users]
             [rems.pdf :as pdf]
-            [rems.permissions :as permissions]
             [rems.util :refer [getx-user-id update-present]]
-            [rems.workflow.dynamic :as dynamic]
             [ring.middleware.multipart-params :as multipart]
             [ring.swagger.upload :as upload]
             [ring.util.http-response :refer :all]
@@ -30,9 +25,6 @@
 (s/defschema CreateApplicationResponse
   {:success s/Bool
    (s/optional-key :application-id) s/Int})
-
-(s/defschema GetApplicationsResponse
-  [Application])
 
 (s/defschema Phases
   [{:phase s/Keyword
@@ -74,18 +66,6 @@
    (s/optional-key :state) (s/cond-pre s/Str s/Keyword) ;; HACK for dynamic applications
    (s/optional-key :errors) [ValidationMessage]})
 
-(s/defschema JudgeApplicationCommand
-  {:command (s/enum "approve" "close" "reject" "return" "review" "third-party-review" "withdraw")
-   :application-id s/Num
-   :round s/Num
-   :comment s/Str})
-
-(s/defschema ReviewRequestCommand
-  {:application-id s/Num
-   :round s/Num
-   :comment s/Str
-   :recipients [s/Str]})
-
 (s/defschema User
   {:userid s/Str
    :name (s/maybe s/Str)
@@ -123,18 +103,6 @@
    (s/optional-key :errors) [s/Any]})
 
 ;; Api implementation
-
-(defn- api-judge [{:keys [command application-id round comment actor]}]
-  (case command
-    "approve" (applications/approve-application actor application-id round comment)
-    "close" (applications/close-application actor application-id round comment)
-    "reject" (applications/reject-application actor application-id round comment)
-    "return" (applications/return-application actor application-id round comment)
-    "review" (applications/review-application actor application-id round comment)
-    "third-party-review" (applications/perform-third-party-review actor application-id round comment)
-    "withdraw" (applications/withdraw-application actor application-id round comment))
-  ;; failure communicated via an exception
-  {:success true})
 
 (defn- fix-keys [application]
   (-> application
