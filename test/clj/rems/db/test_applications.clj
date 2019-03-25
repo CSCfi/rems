@@ -103,17 +103,21 @@
                                                :title ""
                                                :handlers []
                                                :user-id "owner"}))
+        _ (assert wf-id)
         form-id (:id (form/create-form! "owner" {:organization "abc"
                                                  :title ""
                                                  :items []}))
+        _ (assert form-id)
         res-id (:id (resource/create-resource! {:resid "res1"
                                                 :organization "abc"
                                                 :licenses []}
                                                "owner"))
+        _ (assert res-id)
         cat-id (:id (catalogue/create-catalogue-item! {:title ""
                                                        :resid res-id
                                                        :form form-id
-                                                       :wfid wf-id}))]
+                                                       :wfid wf-id}))
+        _ (assert cat-id)]
 
     (testing "minimal application"
       (is (= {:event/type :application.event/created
@@ -137,10 +141,12 @@
                                                      :organization "abc"
                                                      :licenses []}
                                                     "owner"))
+            _ (assert res-id2)
             cat-id2 (:id (catalogue/create-catalogue-item! {:title ""
                                                             :resid res-id2
                                                             :form form-id
-                                                            :wfid wf-id}))]
+                                                            :wfid wf-id}))
+            _ (assert cat-id2)]
         (is (= {:event/type :application.event/created
                 :event/actor "alice"
                 :event/time (DateTime. 1000)
@@ -177,14 +183,17 @@
       (let [form-id2 (:id (form/create-form! "owner" {:organization "abc"
                                                       :title ""
                                                       :items []}))
-            res-id2 (:id (resource/create-resource! {:resid "res2"
+            _ (assert form-id2)
+            res-id2 (:id (resource/create-resource! {:resid "res2+"
                                                      :organization "abc"
                                                      :licenses []}
                                                     "owner"))
+            _ (assert res-id2)
             cat-id2 (:id (catalogue/create-catalogue-item! {:title ""
                                                             :resid res-id2
                                                             :form form-id2
-                                                            :wfid wf-id}))]
+                                                            :wfid wf-id}))
+            _ (assert cat-id2)]
         (is (thrown-with-msg? AssertionError #"catalogue items did not have the same form"
                               (application-created-event {:application-id 42
                                                           :catalogue-item-ids [cat-id cat-id2]
@@ -197,14 +206,17 @@
                                                     :title ""
                                                     :handlers []
                                                     :user-id "owner"}))
-            res-id2 (:id (resource/create-resource! {:resid "res2"
+            _ (assert wf-id2)
+            res-id2 (:id (resource/create-resource! {:resid "res2++"
                                                      :organization "abc"
                                                      :licenses []}
                                                     "owner"))
+            _ (assert res-id2)
             cat-id2 (:id (catalogue/create-catalogue-item! {:title ""
                                                             :resid res-id2
                                                             :form form-id
-                                                            :wfid wf-id2}))]
+                                                            :wfid wf-id2}))
+            _ (assert cat-id2)]
         (is (thrown-with-msg? AssertionError #"catalogue items did not have the same workflow"
                               (application-created-event {:application-id 42
                                                           :catalogue-item-ids [cat-id cat-id2]
