@@ -129,10 +129,8 @@
           ;; TODO change the API to match the draft-saved event's structure
           :params (merge {:command "save"
                           :items field-values
-                          :licenses (->> accepted-licenses
-                                         (map (fn [license-id]
-                                                [license-id "approved"]))
-                                         (into {}))}
+                          :licenses (into {} (for [license-id accepted-licenses]
+                                               [license-id "approved"]))}
                          (if application-id
                            {:application-id application-id}
                            {:catalogue-items catalogue-ids}))}))
@@ -171,10 +169,8 @@
           :error-handler status-modal/common-error-handler!
           :params (merge {:command "save"
                           :items field-values
-                          :licenses (->> accepted-licenses
-                                         (map (fn [license-id]
-                                                [license-id "approved"]))
-                                         (into {}))}
+                          :licenses (into {} (for [license-id accepted-licenses]
+                                               [license-id "approved"]))}
                          (if application-id
                            {:application-id application-id}
                            {:catalogue-items catalogue-ids}))}))
@@ -200,7 +196,7 @@
            {:url-params {:application-id application-id
                          :field-id field-id}
             :body file
-            :handler (partial status-modal/common-success-handler! (fn [] (println "added attachment")))
+            :handler (partial status-modal/common-success-handler! (fn []))
             :error-handler status-modal/common-error-handler!})
     {}))
 
@@ -212,7 +208,7 @@
          {:url-params {:application-id application-id
                        :field-id field-id}
           :body {}
-          :handler (partial status-modal/common-success-handler! (fn [] (println "removed attachment")))
+          :handler (partial status-modal/common-success-handler! (fn []))
           :error-handler status-modal/common-error-handler!})
   {})
 
