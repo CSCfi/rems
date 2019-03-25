@@ -44,4 +44,16 @@
                      {:id 3
                       :localizations {:en {:title "C"}}
                       :optional false
-                      :value nil}]})))))
+                      :value nil}]}))))
+
+  (testing "error: field input too long"
+    (is (= [{:type :t.form.validation/toolong :field-id 2}]
+           (validate
+            {:items [{:id 1
+                      :localizations {:en {:title "A"}}
+                      :maxlength 5
+                      :value "abcde"}
+                     {:id 2
+                      :localizations {:en {:title "B"}}
+                      :maxlength 5
+                      :value "abcdef"}]})))))
