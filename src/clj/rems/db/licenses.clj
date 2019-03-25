@@ -1,10 +1,7 @@
 (ns rems.db.licenses
   "querying localized licenses"
-  (:require [clj-time.core :as time]
-            [rems.db.core :as db]
-            [rems.common-util :refer [distinct-by]]
-            [rems.util :refer [getx-user-id]]
-            [clojure.tools.logging :as log])
+  (:require [rems.common-util :refer [distinct-by]]
+            [rems.db.core :as db])
   (:import (java.io FileInputStream ByteArrayOutputStream)))
 
 (defn- format-license [license]
@@ -83,9 +80,9 @@
        (filter (fn [license] (db/now-active? now (:start license) (:end license))))
        (distinct-by :id)))
 
-(defn create-license! [{:keys [title licensetype textcontent localizations attachment-id]}]
-  (let [license (db/create-license! {:owneruserid (getx-user-id)
-                                     :modifieruserid (getx-user-id)
+(defn create-license! [{:keys [title licensetype textcontent localizations attachment-id]} user-id]
+  (let [license (db/create-license! {:owneruserid user-id
+                                     :modifieruserid user-id
                                      :type licensetype
                                      :title title
                                      :textcontent textcontent
