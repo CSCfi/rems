@@ -1,7 +1,8 @@
-(ns ^:integration rems.api.test-applications
+(ns ^:focused ^:integration rems.api.test-applications
   (:require [clojure.test :refer :all]
-            [rems.handler :refer [app]]
             [rems.api.testing :refer :all]
+            [rems.db.form :as form]
+            [rems.handler :refer [app]]
             [ring.mock.request :refer :all]))
 
 (use-fixtures
@@ -395,12 +396,13 @@
 (deftest application-api-attachments-test
   (let [api-key "42"
         user-id "alice"
-        catid 9
-        field-id 5
-        app-id (save-application {:command "save"
-                                  :catalogue-items [catid]
-                                  :items {1 "x" 2 "x"}
-                                  :licenses {1 "approved" 2 "approved"}})]
+        workflow-id (create-dynamic-workflow)
+        form-id (create-form-with-fields [{:title {:en "some attachment"}
+                                           :type "attachment"
+                                           :optional true}])
+        field-id (-> (form/get-form form-id) :fields first :id)
+        cat-id (create-catalogue-item form-id workflow-id)
+        app-id (create-v2-application [cat-id] user-id)]
     (testing "uploading attachment for a draft"
       (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
           (assoc :params {"file" filecontent})
@@ -416,7 +418,7 @@
                          app)]
         (is (= 400 (:status response)))))
     (testing "retrieving attachment for a draft"
-      (let [response (-> (request :get (str "/api/applications/attachments/") {:application-id app-id :field-id field-id})
+      (let [response (-> (request :get "/api/applications/attachments" {:application-id app-id :field-id field-id})
                          (authenticate api-key user-id)
                          app
                          assert-response-is-ok)]
@@ -429,7 +431,7 @@
                          app)]
         (is (response-is-forbidden? response))))
     (testing "retrieving attachment as non-applicant"
-      (let [response (-> (request :get (str "/api/applications/attachments/") {:application-id app-id :field-id field-id})
+      (let [response (-> (request :get "/api/applications/attachments" {:application-id app-id :field-id field-id})
                          (authenticate api-key "carl")
                          app)]
         (is (response-is-forbidden? response))))

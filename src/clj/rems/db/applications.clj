@@ -28,6 +28,8 @@
   (:import [java.io ByteArrayOutputStream FileInputStream]
            [org.joda.time DateTime]))
 
+(declare get-dynamic-application-state)
+
 (defn draft?
   "Is the given `application-id` for an unsaved draft application?"
   [application-id]
@@ -519,15 +521,16 @@
 
 (defn save-attachment!
   [{:keys [tempfile filename content-type]} user-id application-id item-id]
-  (let [form (get-form-for user-id application-id)
+  (let [application (->> (get-dynamic-application-state application-id)
+                         (dynamic/assoc-possible-commands user-id))
         byte-array (with-open [input (FileInputStream. tempfile)
                                buffer (ByteArrayOutputStream.)]
                      (clojure.java.io/copy input buffer)
                      (.toByteArray buffer))]
-    (when-not (form-fields-editable? (:application form))
+    (when-not (form-fields-editable? application)
       (throw-forbidden))
     (db/save-attachment! {:application application-id
-                          :form (:id form)
+                          :form (:form/id application)
                           :item item-id
                           :user user-id
                           :filename filename
@@ -536,11 +539,12 @@
 
 (defn remove-attachment!
   [user-id application-id item-id]
-  (let [form (get-form-for user-id application-id)]
-    (when-not (form-fields-editable? (:application form))
+  (let [application (->> (get-dynamic-application-state application-id)
+                         (dynamic/assoc-possible-commands user-id))]
+    (when-not (form-fields-editable? application)
       (throw-forbidden))
     (db/remove-attachment! {:application application-id
-                            :form (:id form)
+                            :form (:form/id application)
                             :item item-id})))
 
 (defn get-draft-form-for
@@ -684,8 +688,6 @@
   (reduce apply-event application events))
 
 ;;; Public event api
-
-(declare get-dynamic-application-state)
 
 (defn get-application-state
   ([application-id]

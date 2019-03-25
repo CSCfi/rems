@@ -6,16 +6,19 @@
             [rems.api.applications-v2 :refer [get-user-applications-v2 api-get-application-v2 api-get-application-v1]]
             [rems.api.schema :refer :all]
             [rems.api.util :refer [longify-keys]]
+            [rems.auth.util :refer [throw-forbidden]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.form :as form]
             [rems.db.users :as users]
             [rems.pdf :as pdf]
             [rems.util :refer [getx-user-id update-present]]
+            [rems.workflow.dynamic :as dynamic]
             [ring.middleware.multipart-params :as multipart]
             [ring.swagger.upload :as upload]
             [ring.util.http-response :refer :all]
-            [schema.core :as s]))
+            [schema.core :as s])
+  (:import [java.io ByteArrayInputStream]))
 
 ;; Response models
 
@@ -180,18 +183,22 @@
       :return Deciders
       (ok (get-deciders)))
 
-    (GET "/attachments/" []
+    (GET "/attachments" []
       :summary "Get an attachment for a field in an application"
       :roles #{:logged-in}
       :query-params [application-id :- (describe s/Int "application id")
                      field-id :- (describe s/Int "application form field id the attachment is related to")]
-      (let [form (applications/get-form-for (getx-user-id) application-id)]
+      (let [user-id (getx-user-id)
+            application (->> (applications/get-dynamic-application-state application-id)
+                             (dynamic/assoc-possible-commands user-id))]
+        (when-not (applications/may-see-application? user-id application)
+          (throw-forbidden))
         (if-let [attachment (db/get-attachment {:item field-id
-                                                :form (:id form)
+                                                :form (:form/id application)
                                                 :application application-id})]
           (do (check-attachment-content-type (:type attachment))
               (-> (:data attachment)
-                  (java.io.ByteArrayInputStream.)
+                  (ByteArrayInputStream.)
                   (ok)
                   (content-type (:type attachment))))
           (not-found! "not found"))))
@@ -211,7 +218,7 @@
       (if-let [app (api-get-application-v1 (getx-user-id) application-id)]
         (-> app
             (pdf/application-to-pdf-bytes)
-            (java.io.ByteArrayInputStream.)
+            (ByteArrayInputStream.)
             (ok)
             (content-type "application/pdf"))
         (not-found! "not found")))
