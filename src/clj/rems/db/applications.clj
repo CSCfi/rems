@@ -11,6 +11,7 @@
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.entitlements :as entitlements]
+            [rems.db.form :as form]
             [rems.db.licenses :as licenses]
             [rems.db.roles :as roles]
             [rems.db.users :as users]
@@ -27,6 +28,9 @@
             [schema.utils])
   (:import [java.io ByteArrayOutputStream FileInputStream]
            [org.joda.time DateTime]))
+
+(declare get-dynamic-application-state)
+(declare get-dynamic-application-state-for-user)
 
 (defn draft?
   "Is the given `application-id` for an unsaved draft application?"
@@ -288,46 +292,15 @@
     (get-catalogue-items (mapv :item application-items)
                          localized-items)))
 
-(defn application-cleanup [application]
-  (dissoc application
-          ;; very sensitive
-          :invitation-tokens
-          ;; only used in the write model
-          :form/id
-          :application/licenses
-          :application/accepted-licenses
-          :form-contents
-          :submitted-form-contents
-          :previous-submitted-form-contents
-          :deciders
-          :commenters))
-
-(defn assoc-review-type-to-app [user-id app]
-  (assoc app :review-type (if (is-reviewer? user-id (:id app)) :normal :third-party)))
-
-(defn make-draft-application
-  "Make a draft application with an initial set of catalogue items."
-  [user-id catalogue-item-ids]
-  (let [items (get-catalogue-items catalogue-item-ids)]
-    (assert (= 1 (count (distinct (mapv :wfid items)))))
-    (assert (= 1 (count (distinct (mapv :formid items)))))
-    {:id nil
-     :state "draft"
-     :applicantuserid user-id
-     :wfid (:wfid (first items))
-     :formid (:formid (first items))
-     :catalogue-items items
-     :events []}))
-
-(defn- get-item-value [item form-id application-id]
-  (let [query-params {:item (:id item)
+(defn- get-field-value [field form-id application-id]
+  (let [query-params {:item (:id field)
                       :form form-id
                       :application application-id}]
-    (if (= "attachment" (:type item))
+    (if (= "attachment" (:type field))
       (:filename (db/get-attachment query-params))
       (:value (db/get-field-value query-params)))))
 
-(defn- process-item-options [options]
+(defn- process-field-options [options]
   (->> options
        (map (fn [{:keys [key langcode label displayorder]}]
               {:key key
@@ -338,17 +311,17 @@
        (sort-by :displayorder)
        (mapv #(select-keys % [:key :label]))))
 
-(deftest process-item-options-test
+(deftest process-field-options-test
   (is (= [{:key "yes" :label {:en "Yes" :fi "Kyllä"}}
           {:key "no" :label {:en "No" :fi "Ei"}}]
-         (process-item-options
+         (process-field-options
           [{:itemid 9, :key "no", :langcode "en", :label "No", :displayorder 1}
            {:itemid 9, :key "no", :langcode "fi", :label "Ei", :displayorder 1}
            {:itemid 9, :key "yes", :langcode "en", :label "Yes", :displayorder 0}
            {:itemid 9, :key "yes", :langcode "fi", :label "Kyllä", :displayorder 0}]))))
 
-(defn process-item
-  "Returns an item structure like this:
+(defn process-field
+  "Returns a field structure like this:
 
     {:id 123
      :type \"texta\"
@@ -356,28 +329,28 @@
      :inputprompt \"hello\"
      :optional true
      :value \"filled value or nil\"}"
-  [application-id form-id item]
-  {:id (:id item)
-   :optional (:formitemoptional item)
-   :type (:type item)
+  [application-id form-id field]
+  {:id (:id field)
+   :optional (:formitemoptional field)
+   :type (:type field)
    ;; TODO here we do a db call per item, for licenses we do one huge
    ;; db call. Not sure which is better?
    :localizations (into {} (for [{:keys [langcode title inputprompt]}
-                                 (db/get-form-item-localizations {:item (:id item)})]
+                                 (db/get-form-item-localizations {:item (:id field)})]
                              [(keyword langcode) {:title title :inputprompt inputprompt}]))
-   :options (process-item-options (db/get-form-item-options {:item (:id item)}))
+   :options (process-field-options (db/get-form-item-options {:item (:id field)}))
    :value (or
            (when-not (draft? application-id)
-             (get-item-value item form-id application-id))
+             (get-field-value field form-id application-id))
            "")
-   :maxlength (:maxlength item)})
+   :maxlength (:maxlength field)})
 
-(defn- assoc-item-previous-values [application items]
+(defn- assoc-field-previous-values [application fields]
   (let [previous-values (:items (if (form-fields-editable? application)
                                   (:submitted-form-contents application)
                                   (:previous-submitted-form-contents application)))]
-    (for [item items]
-      (assoc item :previous-value (get previous-values (:id item))))))
+    (for [field fields]
+      (assoc field :previous-value (get previous-values (:id field))))))
 
 (defn- process-license
   [application license]
@@ -483,8 +456,8 @@
          catalogue-item-ids (mapv :item (db/get-application-items {:application application-id}))
          catalogue-items (get-catalogue-items catalogue-item-ids)
          items (->> (db/get-form-items {:id form-id})
-                    (mapv #(process-item application-id form-id %))
-                    (assoc-item-previous-values application))
+                    (mapv #(process-field application-id form-id %))
+                    (assoc-field-previous-values application))
          description (-> (filter #(= "description" (:type %)) items)
                          first
                          :value)
@@ -519,15 +492,16 @@
 
 (defn save-attachment!
   [{:keys [tempfile filename content-type]} user-id application-id item-id]
-  (let [form (get-form-for user-id application-id)
+  (let [application (->> (get-dynamic-application-state application-id)
+                         (dynamic/assoc-possible-commands user-id))
         byte-array (with-open [input (FileInputStream. tempfile)
                                buffer (ByteArrayOutputStream.)]
                      (clojure.java.io/copy input buffer)
                      (.toByteArray buffer))]
-    (when-not (form-fields-editable? (:application form))
+    (when-not (form-fields-editable? application)
       (throw-forbidden))
     (db/save-attachment! {:application application-id
-                          :form (:id form)
+                          :form (:form/id application)
                           :item item-id
                           :user user-id
                           :filename filename
@@ -536,39 +510,12 @@
 
 (defn remove-attachment!
   [user-id application-id item-id]
-  (let [form (get-form-for user-id application-id)]
-    (when-not (form-fields-editable? (:application form))
+  (let [application (get-dynamic-application-state-for-user user-id application-id)]
+    (when-not (form-fields-editable? application)
       (throw-forbidden))
     (db/remove-attachment! {:application application-id
-                            :form (:id form)
+                            :form (:form/id application)
                             :item item-id})))
-
-(defn get-draft-form-for
-  "Returns a draft form structure like `get-form-for` used when a new application is created."
-  ([application]
-   (let [application-id (:id application)
-         catalogue-item-ids (map :id (:catalogue-items application))
-         item-id (first catalogue-item-ids)
-         form (db/get-form-for-item {:item item-id})
-         form-id (:formid form)
-         catalogue-items (:catalogue-items application)
-         items (->> (db/get-form-items {:id form-id})
-                    (mapv #(process-item application-id form-id %))
-                    (assoc-item-previous-values application))
-         licenses (get-application-licenses application catalogue-item-ids)]
-     {:id application-id
-      :title (:formtitle form)
-      :catalogue-items catalogue-items
-      :application (assoc application
-                          :can-approve? false
-                          :can-close? false
-                          :is-applicant? true
-                          :review-type nil)
-      :applicant-attributes (users/get-user-attributes (:applicantuserid application))
-      :items items
-      :licenses licenses
-      :accepted-licenses {}
-      :phases (get-application-phases (:state application))})))
 
 (defn create-new-draft [user-id wfid]
   (assert user-id)
@@ -685,8 +632,6 @@
 
 ;;; Public event api
 
-(declare get-dynamic-application-state)
-
 (defn get-application-state
   ([application-id]
    (get-application-state (first (db/get-applications {:id application-id}))
@@ -702,9 +647,6 @@
                            (assoc :last-modified (or (:time (last events))
                                                      (:start application))))]
        (apply-events application events)))))
-
-(comment
-  (get-application-state 12))
 
 (declare handle-state-change)
 
@@ -897,6 +839,13 @@
     (assert (is-dynamic-application? application) (pr-str application))
     (dynamic/apply-events application events)))
 
+(defn get-dynamic-application-state-for-user [user-id application-id]
+  (let [application (->> (get-dynamic-application-state application-id)
+                         (dynamic/assoc-possible-commands user-id))]
+    (when-not (may-see-application? user-id application)
+      (throw-forbidden))
+    application))
+
 (defn add-dynamic-event! [event]
   (db/add-application-event! {:application (:application/id event)
                               :user (:event/actor event)
@@ -959,11 +908,10 @@
   (not (nil? (users/get-user-attributes userid))))
 
 (defn- get-form [form-id]
-  (require 'rems.db.form) ;; XXX: avoid cyclic dependency
-  (-> ((resolve 'rems.db.form/get-form) form-id) ;; XXX
+  (-> (form/get-form form-id)
       (select-keys [:id :organization :title :start :end])
       (assoc :items (->> (db/get-form-items {:id form-id})
-                         (mapv #(process-item nil form-id %))))))
+                         (mapv #(process-field nil form-id %))))))
 
 (defn- validate-form-answers [form-id answers]
   (let [form (get-form form-id)

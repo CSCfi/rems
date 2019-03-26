@@ -1,88 +1,26 @@
 (ns ^:integration rems.api.test-applications
   (:require [clojure.test :refer :all]
-            [rems.handler :refer [app]]
             [rems.api.testing :refer :all]
+            [rems.db.form :as form]
+            [rems.handler :refer [app]]
             [ring.mock.request :refer :all]))
 
 (use-fixtures
   :once
   api-fixture)
 
-(defn- strip-cookie-attributes [cookie]
-  (re-find #"[^;]*" cookie))
+;;; shared helpers
 
-(defn- get-csrf-token [response]
-  (let [token-regex #"var csrfToken = '([^\']*)'"
-        [_ token] (re-find token-regex (:body response))]
-    token))
-
-(deftest application-api-session-test
-  (let [username "alice"
-        login-headers (-> (request :get "/Shibboleth.sso/Login" {:username username})
-                          app
-                          :headers)
-        cookie (-> (get login-headers "Set-Cookie")
-                   first
-                   strip-cookie-attributes)
-        csrf (-> (request :get "/")
-                 (header "Cookie" cookie)
-                 app
-                 get-csrf-token)]
-    (is cookie)
-    (is csrf)
-    (testing "save with session"
-      (let [body (-> (request :post (str "/api/applications/save"))
-                     (header "Cookie" cookie)
-                     (header "x-csrf-token" csrf)
-                     (json-body {:command "save"
-                                 :catalogue-items [2]
-                                 :items {1 "x" 2 "y" 3 "z"}
-                                 :licenses {1 "approved" 2 "approved"}})
-                     app
-                     assert-response-is-ok
-                     read-body)]
-        (is (:success body))))
-    (testing "save with session but without csrf"
-      (let [response (-> (request :post (str "/api/applications/save"))
-                         (header "Cookie" cookie)
-                         (json-body {:command "save"
-                                     :catalogue-items [2]
-                                     :items {1 "x" 2 "y" 3 "z"}
-                                     :licenses {1 "approved" 2 "approved"}})
-                         app)]
-        (is (response-is-unauthorized? response))))
-    (testing "save with session and csrf and wrong api-key"
-      (let [response (-> (request :post (str "/api/applications/save"))
-                         (header "Cookie" cookie)
-                         (header "x-csrf-token" csrf)
-                         (header "x-rems-api-key" "WRONG")
-                         (json-body {:command "save"
-                                     :catalogue-items [2]
-                                     :items {1 "x" 2 "y" 3 "z"}
-                                     :licenses {1 "approved" 2 "approved"}})
-                         app)
-            body (read-body response)]
-        (is (response-is-unauthorized? response))
-        (is (= "invalid api key" body))))))
-
-(deftest pdf-smoke-test
-  (testing "not found"
-    (let [response (-> (request :get (str "/api/applications/9999999/pdf"))
-                       (authenticate "42" "developer")
-                       app)]
-      (is (response-is-not-found? response))))
-  (testing "forbidden"
-    (let [response (-> (request :get (str "/api/applications/13/pdf"))
-                       (authenticate "42" "bob")
-                       app)]
-      (is (response-is-forbidden? response))))
-  (testing "success"
-    (let [response (-> (request :get (str "/api/applications/13/pdf"))
-                       (authenticate "42" "developer")
-                       app
-                       assert-response-is-ok)]
-      (is (= "application/pdf" (get-in response [:headers "Content-Type"])))
-      (is (.startsWith (slurp (:body response)) "%PDF-1.")))))
+(defn- create-dynamic-workflow []
+  (-> (request :post "/api/workflows/create")
+      (json-body {:organization "abc"
+                  :title "dynamic workflow"
+                  :type :dynamic
+                  :handlers ["developer"]})
+      (authenticate "42" "owner")
+      app
+      read-ok-body
+      :id))
 
 (defn- create-form-with-fields [form-items]
   (-> (request :post "/api/forms/create")
@@ -109,22 +47,13 @@
       read-ok-body
       :id))
 
-(defn- create-application-draft-for-catalogue-item [cat-item-id]
-  (-> (request :get (str "/api/applications/draft?catalogue-items=" cat-item-id))
-      (authenticate "42" "alice")
-      app
-      read-ok-body))
-
-(defn- save-application [command]
-  (-> (request :post (str "/api/applications/save"))
-      (authenticate "42" "alice")
-      (json-body command)
-      app
-      read-ok-body
-      :id))
+(defn- create-dymmy-catalogue-item []
+  (let [form-id (create-empty-form)
+        workflow-id (create-dynamic-workflow)]
+    (create-catalogue-item form-id workflow-id)))
 
 (defn- send-dynamic-command [actor cmd]
-  (-> (request :post (str "/api/applications/command"))
+  (-> (request :post "/api/applications/command")
       (authenticate "42" actor)
       (json-body cmd)
       app
@@ -137,9 +66,116 @@
       app
       read-body))
 
+(defn- create-v2-application [catalogue-item-ids user-id]
+  (-> (request :post "/api/v2/applications/create")
+      (authenticate "42" user-id)
+      (json-body {:catalogue-item-ids catalogue-item-ids})
+      app
+      read-ok-body
+      :application-id))
+
+(defn- create-dynamic-application [user-id]
+  (create-v2-application [(create-dymmy-catalogue-item)] user-id))
+
+(defn- get-ids [applications]
+  (set (map :application/id applications)))
+
+(defn- get-v2-applications [user-id]
+  (-> (request :get "/api/v2/applications")
+      (authenticate "42" user-id)
+      app
+      read-ok-body))
+
+(defn- get-v2-application [app-id user-id]
+  (-> (request :get (str "/api/v2/applications/" app-id))
+      (authenticate "42" user-id)
+      app
+      read-ok-body))
+
+(defn- get-v2-open-reviews [user-id]
+  (-> (request :get "/api/v2/reviews/open")
+      (authenticate "42" user-id)
+      app
+      read-ok-body))
+
+(defn- get-v2-handled-reviews [user-id]
+  (-> (request :get "/api/v2/reviews/handled")
+      (authenticate "42" user-id)
+      app
+      read-ok-body))
+
+;;; tests
+
+(defn- strip-cookie-attributes [cookie]
+  (re-find #"[^;]*" cookie))
+
+(defn- get-csrf-token [response]
+  (let [token-regex #"var csrfToken = '([^\']*)'"
+        [_ token] (re-find token-regex (:body response))]
+    token))
+
+(deftest application-api-session-test
+  (let [username "alice"
+        login-headers (-> (request :get "/Shibboleth.sso/Login" {:username username})
+                          app
+                          :headers)
+        cookie (-> (get login-headers "Set-Cookie")
+                   first
+                   strip-cookie-attributes)
+        csrf (-> (request :get "/")
+                 (header "Cookie" cookie)
+                 app
+                 get-csrf-token)
+        cat-id (create-dymmy-catalogue-item)]
+    (is cookie)
+    (is csrf)
+    (testing "save with session"
+      (let [body (-> (request :post "/api/v2/applications/create")
+                     (header "Cookie" cookie)
+                     (header "x-csrf-token" csrf)
+                     (json-body {:catalogue-item-ids [cat-id]})
+                     app
+                     assert-response-is-ok
+                     read-body)]
+        (is (:success body))))
+    (testing "save with session but without csrf"
+      (let [response (-> (request :post "/api/v2/applications/create")
+                         (header "Cookie" cookie)
+                         (json-body {:catalogue-item-ids [cat-id]})
+                         app)]
+        (is (response-is-unauthorized? response))))
+    (testing "save with session and csrf and wrong api-key"
+      (let [response (-> (request :post "/api/v2/applications/create")
+                         (header "Cookie" cookie)
+                         (header "x-csrf-token" csrf)
+                         (header "x-rems-api-key" "WRONG")
+                         (json-body {:catalogue-item-ids [cat-id]})
+                         app)
+            body (read-body response)]
+        (is (response-is-unauthorized? response))
+        (is (= "invalid api key" body))))))
+
+(deftest pdf-smoke-test
+  (testing "not found"
+    (let [response (-> (request :get "/api/applications/9999999/pdf")
+                       (authenticate "42" "developer")
+                       app)]
+      (is (response-is-not-found? response))))
+  (testing "forbidden"
+    (let [response (-> (request :get "/api/applications/13/pdf")
+                       (authenticate "42" "bob")
+                       app)]
+      (is (response-is-forbidden? response))))
+  (testing "success"
+    (let [response (-> (request :get "/api/applications/13/pdf")
+                       (authenticate "42" "developer")
+                       app
+                       assert-response-is-ok)]
+      (is (= "application/pdf" (get-in response [:headers "Content-Type"])))
+      (is (.startsWith (slurp (:body response)) "%PDF-1.")))))
+
 (deftest dynamic-applications-test
-  (let [api-key "42"
-        user-id "alice"
+  (let [user-id "alice"
         handler-id "developer"
         commenter-id "carl"
         decider-id "bob"
@@ -256,102 +292,36 @@
 (deftest dynamic-application-create-test
   (let [api-key "42"
         user-id "alice"
-        catid 9 ;; catalogue item with dynamic workflow in test-data
-        draft (create-application-draft-for-catalogue-item 9)]
-    (testing "get draft"
-      (is (< 6 (count (:items draft)))))
-    (let [response (-> (request :post (str "/api/applications/save"))
-                       (authenticate api-key user-id)
-                       (json-body {:command "save"
-                                   :catalogue-items [catid]
-                                   :items {1 "dynamic test"}})
-                       app
-                       read-body)
-          application-id (:id response)]
-      (testing "create application"
-        (is (some? application-id))
-        (let [saved (get-application user-id application-id)]
-          (is (= "workflow/dynamic" (get-in saved [:application :workflow :type])))
-          (is (= "rems.workflow.dynamic/draft" (get-in saved [:application :state])))
-          (is (= "dynamic test" (get-in saved [:items 0 :value])))))
-      (testing "getting application as other user is forbidden"
-        (is (response-is-forbidden?
-             (-> (request :get (str "/api/v2/applications/" application-id))
-                 (authenticate api-key "bob")
-                 app))))
-      (testing "saving fields as other user is forbidden"
-        (is (response-is-forbidden?
-             (-> (request :post "/api/applications/save")
-                 (authenticate api-key "bob")
-                 (json-body {:command "save"
-                             :application-id application-id
-                             :items {1 "xxxxx"}})
-                 app))))
-      (testing "can't submit with missing required fields"
-        (is (= {:success false :errors [{:type "t.form.validation/required" :field-id 2}
-                                        {:type "t.form.validation/required" :license-id 1}
-                                        {:type "t.form.validation/required" :license-id 2}]}
-               (send-dynamic-command user-id {:type :rems.workflow.dynamic/submit
-                                              :application-id application-id}))))
-      (testing "add missing fields"
-        (let [save-again (-> (request :post (str "/api/applications/save"))
-                             (authenticate api-key user-id)
-                             (json-body {:command "save"
-                                         :application-id application-id
-                                         :items {1 "dynamic test2"
-                                                 2 "purpose"}
-                                         :licenses {1 "approved" 2 "approved"}})
-                             app
-                             read-body)
-              saved (get-application user-id application-id)]
-          (is (true? (:success save-again)))
-          (is (= application-id (:id save-again)))
-          (is (= "dynamic test2" (get-in saved [:items 0 :value])))))
-      (testing "old-style submit fails"
-        (let [try-submit (-> (request :post (str "/api/applications/save"))
-                             (authenticate api-key user-id)
-                             (json-body {:command "submit"
-                                         :application-id application-id
-                                         :items {}
-                                         :licenses {1 "approved" 2 "approved"}})
-                             app)]
-          (is (= 400 (:status try-submit)))
-          (is (= "Can not submit dynamic application via /save" (read-body try-submit)))))
-      (testing "submitting"
-        (is (= {:success true} (send-dynamic-command user-id {:type :rems.workflow.dynamic/submit
-                                                              :application-id application-id})))
-        (let [submitted (get-application user-id application-id)]
-          (is (= "rems.workflow.dynamic/submitted" (get-in submitted [:application :state])))
-          (is (= ["application.event/created"
-                  "application.event/draft-saved"
-                  "application.event/draft-saved"
-                  "application.event/submitted"]
-                 (map :event/type (get-in submitted [:application :dynamic-events])))))))))
+        application-id (create-dynamic-application user-id)]
 
-(deftest disabled-catalogue-item
-  (let [api-key "42"
-        applicant "alice"
-        handler "developer"
-        disabled-catalogue-item 11
-        draft-with-disabled 17
-        submitted-with-disabled 18]
-    (testing "save is forbidden for an application with a disabled item"
-      (let [response (-> (request :post (str "/api/applications/save"))
-                         (authenticate api-key applicant)
-                         (json-body {:command "save"
-                                     :catalogue-items [disabled-catalogue-item]
-                                     :items {1 ""}})
-                         app)]
-        (is (= 400 (:status response)))))
-    (testing "submit is forbidden for an application with a disabled item"
-      (is (= {:success false :errors [{:type "forbidden"}]}
-             (send-dynamic-command applicant {:type :rems.workflow.dynamic/submit
-                                              :application-id draft-with-disabled}))))
-    (testing "approve is allowed for a submitted application with a disabled item"
+    (testing "creating"
+      (is (some? application-id))
+      (let [created (get-application user-id application-id)]
+        (is (= "rems.workflow.dynamic/draft" (get-in created [:application :state])))))
+
+    (testing "getting application as other user is forbidden"
+      (is (response-is-forbidden?
+           (-> (request :get (str "/api/v2/applications/" application-id))
+               (authenticate api-key "bob")
+               app))))
+
+    (testing "modifying application as other user is forbidden"
+      (is (= {:success false
+              :errors [{:type "forbidden"}]}
+             (send-dynamic-command "bob" {:type :rems.workflow.dynamic/save-draft
+                                          :application-id application-id
+                                          :field-values {}
+                                          :accepted-licenses #{}}))))
+
+    (testing "submitting"
       (is (= {:success true}
-             (send-dynamic-command handler {:type :rems.workflow.dynamic/approve
-                                            :application-id submitted-with-disabled
-                                            :comment "Looks fine."}))))))
+             (send-dynamic-command user-id {:type :rems.workflow.dynamic/submit
+                                            :application-id application-id})))
+      (let [submitted (get-application user-id application-id)]
+        (is (= "rems.workflow.dynamic/submitted" (get-in submitted [:application :state])))
+        (is (= ["application.event/created"
+                "application.event/submitted"]
+               (map :event/type (get-in submitted [:application :dynamic-events]))))))))
 
 (def testfile (clojure.java.io/file "./test-data/test.txt"))
 
@@ -370,12 +340,13 @@
 (deftest application-api-attachments-test
   (let [api-key "42"
         user-id "alice"
-        catid 9
-        field-id 5
-        app-id (save-application {:command "save"
-                                  :catalogue-items [catid]
-                                  :items {1 "x" 2 "x"}
-                                  :licenses {1 "approved" 2 "approved"}})]
+        workflow-id (create-dynamic-workflow)
+        form-id (create-form-with-fields [{:title {:en "some attachment"}
+                                           :type "attachment"
+                                           :optional true}])
+        field-id (-> (form/get-form form-id) :fields first :id)
+        cat-id (create-catalogue-item form-id workflow-id)
+        app-id (create-v2-application [cat-id] user-id)]
     (testing "uploading attachment for a draft"
       (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
           (assoc :params {"file" filecontent})
@@ -391,7 +362,7 @@
                          app)]
         (is (= 400 (:status response)))))
     (testing "retrieving attachment for a draft"
-      (let [response (-> (request :get (str "/api/applications/attachments/") {:application-id app-id :field-id field-id})
+      (let [response (-> (request :get "/api/applications/attachments" {:application-id app-id :field-id field-id})
                          (authenticate api-key user-id)
                          app
                          assert-response-is-ok)]
@@ -404,7 +375,7 @@
                          app)]
         (is (response-is-forbidden? response))))
     (testing "retrieving attachment as non-applicant"
-      (let [response (-> (request :get (str "/api/applications/attachments/") {:application-id app-id :field-id field-id})
+      (let [response (-> (request :get "/api/applications/attachments" {:application-id app-id :field-id field-id})
                          (authenticate api-key "carl")
                          app)]
         (is (response-is-forbidden? response))))
@@ -420,92 +391,45 @@
         (is (response-is-forbidden? response))))))
 
 (deftest applications-api-security-test
-  (testing "fetch application without authentication"
-    (is (response-is-unauthorized? (-> (request :get (str "/api/v2/applications/13"))
-                                       app))))
-  (testing "fetch deciders without authentication"
-    (is (response-is-unauthorized? (-> (request :get (str "/api/applications/deciders"))
-                                       app))))
-  (testing "save without authentication"
-    (is (response-is-unauthorized? (-> (request :post (str "/api/applications/save"))
-                                       (json-body {:command "save"
-                                                   :catalogue-items [2]
-                                                   :items {1 "REST-Test"}})
-                                       app))))
-  (testing "save with wrong API-Key"
-    (is (response-is-unauthorized? (-> (request :post (str "/api/applications/save"))
-                                       (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
-                                       (json-body {:command "save"
-                                                   :catalogue-items [2]
-                                                   :items {1 "REST-Test"}})
-                                       app))))
-  (let [app-id (save-application {:command "save"
-                                  :catalogue-items [9]
-                                  :items {1 "x" 2 "x"}
-                                  :licenses {1 "approved" 2 "approved"}})]
-    (is (pos? app-id))
+  (let [cat-id (create-dymmy-catalogue-item)
+        app-id (create-v2-application [cat-id] "alice")]
+    (testing "fetch application without authentication"
+      (is (response-is-unauthorized? (-> (request :get (str "/api/v2/applications/" app-id))
+                                         app))))
+    (testing "fetch deciders without authentication"
+      (is (response-is-unauthorized? (-> (request :get "/api/applications/deciders")
+                                         app))))
+    (testing "create without authentication"
+      (is (response-is-unauthorized? (-> (request :post "/api/v2/applications/create")
+                                         (json-body {:catalogue-item-ids [cat-id]})
+                                         app))))
+    (testing "create with wrong API-Key"
+      (is (response-is-unauthorized? (-> (request :post "/api/v2/applications/create")
+                                         (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
+                                         (json-body {:catalogue-item-ids [cat-id]})
+                                         app))))
     (testing "send command without authentication"
-      (is (response-is-unauthorized? (-> (request :post (str "/api/applications/command"))
+      (is (response-is-unauthorized? (-> (request :post "/api/applications/command")
                                          (json-body {:type :rems.workflow.dynamic/submit
                                                      :application-id app-id})
                                          app))))
     (testing "send command with wrong api-key"
-      (is (response-is-unauthorized? (-> (request :post (str "/api/applications/command"))
+      (is (response-is-unauthorized? (-> (request :post "/api/applications/command")
                                          (authenticate "invalid-api-key" "alice")
                                          (json-body {:type :rems.workflow.dynamic/submit
                                                      :application-id app-id})
-                                         app)))))
-  (testing "upload attachment without authentication"
-    (is (response-is-unauthorized? (-> (request :post (str "/api/applications/add_attachment"))
-                                       (assoc :params {"file" filecontent})
-                                       (assoc :multipart-params {"file" filecontent})
-                                       app))))
-  (testing "upload attachment with wrong API-Key"
-    (is (response-is-unauthorized? (-> (request :post (str "/api/applications/add_attachment"))
-                                       (assoc :params {"file" filecontent})
-                                       (assoc :multipart-params {"file" filecontent})
-                                       (authenticate "invalid-api-key" "developer")
-                                       app)))))
-
-(defn- create-dynamic-workflow []
-  (-> (request :post "/api/workflows/create")
-      (json-body {:organization "abc"
-                  :title "dynamic workflow"
-                  :type :dynamic
-                  :handlers ["developer"]})
-      (authenticate "42" "owner")
-      app
-      read-ok-body
-      :id))
-
-(defn- create-v2-application [catalogue-item-ids user-id]
-  (-> (request :post (str "/api/v2/applications/create"))
-      (authenticate "42" user-id)
-      (json-body {:catalogue-item-ids catalogue-item-ids})
-      app
-      read-ok-body
-      :application-id))
-
-(defn- create-dynamic-application [user-id]
-  (let [form-id (create-empty-form)
-        workflow-id (create-dynamic-workflow)
-        cat-item-id (create-catalogue-item form-id workflow-id)]
-    (create-v2-application [cat-item-id] user-id)))
-
-(defn- get-ids [applications]
-  (set (map :application/id applications)))
-
-(defn- get-v2-applications [user-id]
-  (-> (request :get "/api/v2/applications")
-      (authenticate "42" user-id)
-      app
-      read-ok-body))
-
-(defn- get-v2-application [app-id user-id]
-  (-> (request :get (str "/api/v2/applications/" app-id))
-      (authenticate "42" user-id)
-      app
-      read-ok-body))
+                                         app))))
+    (testing "upload attachment without authentication"
+      (is (response-is-unauthorized? (-> (request :post "/api/applications/add_attachment")
+                                         (assoc :params {"file" filecontent})
+                                         (assoc :multipart-params {"file" filecontent})
+                                         app))))
+    (testing "upload attachment with wrong API-Key"
+      (is (response-is-unauthorized? (-> (request :post "/api/applications/add_attachment")
+                                         (assoc :params {"file" filecontent})
+                                         (assoc :multipart-params {"file" filecontent})
+                                         (authenticate "invalid-api-key" "developer")
+                                         app))))))
 
 (deftest test-v2-application-api
   (let [app-id (create-dynamic-application "alice")]
@@ -517,18 +441,6 @@
     (testing "get single application"
       (is (= app-id
              (:application/id (get-v2-application app-id "alice")))))))
-
-(defn- get-v2-open-reviews [user-id]
-  (-> (request :get "/api/v2/reviews/open")
-      (authenticate "42" user-id)
-      app
-      read-ok-body))
-
-(defn- get-v2-handled-reviews [user-id]
-  (-> (request :get "/api/v2/reviews/handled")
-      (authenticate "42" user-id)
-      app
-      read-ok-body))
 
 (deftest test-v2-review-api
   (let [app-id (create-dynamic-application "alice")]

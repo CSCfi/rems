@@ -6,16 +6,18 @@
             [rems.api.applications-v2 :refer [get-user-applications-v2 api-get-application-v2 api-get-application-v1]]
             [rems.api.schema :refer :all]
             [rems.api.util :refer [longify-keys]]
+            [rems.auth.util :refer [throw-forbidden]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
-            [rems.db.form :as form]
             [rems.db.users :as users]
             [rems.pdf :as pdf]
             [rems.util :refer [getx-user-id update-present]]
+            [rems.workflow.dynamic :as dynamic]
             [ring.middleware.multipart-params :as multipart]
             [ring.swagger.upload :as upload]
             [ring.util.http-response :refer :all]
-            [schema.core :as s]))
+            [schema.core :as s])
+  (:import [java.io ByteArrayInputStream]))
 
 ;; Response models
 
@@ -45,26 +47,6 @@
    :phases Phases
    :title s/Str
    :items [Item]})
-
-(s/defschema SaveApplicationCommand
-  {:command (s/enum "save" "submit")
-   (s/optional-key :application-id) s/Num
-   (s/optional-key :catalogue-items) [s/Num]
-   ;; NOTE: compojure-api only supports keyword keys properly, see
-   ;; https://github.com/metosin/compojure-api/issues/341
-   :items {s/Any s/Str}
-   (s/optional-key :licenses) {s/Any s/Str}})
-
-(s/defschema ValidationMessage
-  {:type s/Keyword
-   (s/optional-key :field-id) s/Num
-   (s/optional-key :license-id) s/Num})
-
-(s/defschema SaveApplicationResponse
-  {:success s/Bool
-   (s/optional-key :id) s/Num
-   (s/optional-key :state) (s/cond-pre s/Str s/Keyword) ;; HACK for dynamic applications
-   (s/optional-key :errors) [ValidationMessage]})
 
 (s/defschema User
   {:userid s/Str
@@ -103,11 +85,6 @@
    (s/optional-key :errors) [s/Any]})
 
 ;; Api implementation
-
-(defn- fix-keys [application]
-  (-> application
-      (update-in [:items] longify-keys)
-      (update-in [:licenses] longify-keys)))
 
 (defn invalid-user? [u]
   (or (str/blank? (:eppn u))
@@ -154,14 +131,6 @@
   (context "/applications" []
     :tags ["applications"]
 
-    (GET "/draft" []
-      :summary "Get application (draft) for `catalogue-items`"
-      :roles #{:logged-in}
-      :query-params [catalogue-items :- (describe [s/Num] "catalogue item ids")]
-      :return GetApplicationResponse
-      (let [app (applications/make-draft-application (getx-user-id) catalogue-items)]
-        (ok (applications/get-draft-form-for app))))
-
     (GET "/commenters" []
       :summary "Available third party commenters"
       :roles #{:approver}
@@ -180,18 +149,19 @@
       :return Deciders
       (ok (get-deciders)))
 
-    (GET "/attachments/" []
+    (GET "/attachments" []
       :summary "Get an attachment for a field in an application"
       :roles #{:logged-in}
       :query-params [application-id :- (describe s/Int "application id")
                      field-id :- (describe s/Int "application form field id the attachment is related to")]
-      (let [form (applications/get-form-for (getx-user-id) application-id)]
+      (let [user-id (getx-user-id)
+            application (applications/get-dynamic-application-state-for-user user-id application-id)]
         (if-let [attachment (db/get-attachment {:item field-id
-                                                :form (:id form)
+                                                :form (:form/id application)
                                                 :application application-id})]
           (do (check-attachment-content-type (:type attachment))
               (-> (:data attachment)
-                  (java.io.ByteArrayInputStream.)
+                  (ByteArrayInputStream.)
                   (ok)
                   (content-type (:type attachment))))
           (not-found! "not found"))))
@@ -211,17 +181,10 @@
       (if-let [app (api-get-application-v1 (getx-user-id) application-id)]
         (-> app
             (pdf/application-to-pdf-bytes)
-            (java.io.ByteArrayInputStream.)
+            (ByteArrayInputStream.)
             (ok)
             (content-type "application/pdf"))
         (not-found! "not found")))
-
-    (POST "/save" []
-      :summary "Create a new application, change an existing one or submit an application"
-      :roles #{:logged-in}
-      :body [request SaveApplicationCommand]
-      :return SaveApplicationResponse
-      (ok (form/api-save (assoc (fix-keys request) :actor (getx-user-id)))))
 
     ;; TODO: think about size limit
     (POST "/add_attachment" []

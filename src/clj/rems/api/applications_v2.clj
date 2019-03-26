@@ -337,7 +337,7 @@
   (-> (form/get-form form-id)
       (select-keys [:id :organization :title :start :end])
       (assoc :items (->> (db/get-form-items {:id form-id})
-                         (mapv #(applications/process-item nil form-id %))))))
+                         (mapv #(applications/process-field nil form-id %))))))
 
 (defn- get-catalogue-item [catalogue-item-id]
   (assert (int? catalogue-item-id)
