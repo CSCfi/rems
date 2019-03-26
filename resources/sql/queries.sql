@@ -5,7 +5,6 @@
 -- - :resource resource id to fetch items for
 -- - :archived true if archived items should be included
 SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.start, ci.endt as "end", ci.enabled, ci.archived
-, (case when ci.enabled = true then 'enabled' else 'disabled' end) as state -- TODO: remove state
 , res.id AS "resource-id"
 /*~ (when (:expand-names? params) */
 , wf.title AS "workflow-name"
@@ -32,7 +31,6 @@ WHERE 1=1
 
 -- :name get-catalogue-item :? :1
 SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.start, ci.endt as "end", ci.enabled, ci.archived
-, (case when ci.enabled = true then 'enabled' else 'disabled' end) as state -- TODO: remove state
 , res.id AS "resource-id"
 , wf.title AS "workflow-name"
 , res.resid AS "resource-name"

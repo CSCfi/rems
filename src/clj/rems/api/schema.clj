@@ -14,7 +14,6 @@
    :resid s/Str
    :resource-id s/Num
    (s/optional-key :resource-name) s/Str
-   :state (s/enum "enabled" "disabled")
    (s/optional-key :langcode) s/Keyword
    :start DateTime
    :end (s/maybe DateTime)
