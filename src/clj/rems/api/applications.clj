@@ -155,10 +155,7 @@
       :query-params [application-id :- (describe s/Int "application id")
                      field-id :- (describe s/Int "application form field id the attachment is related to")]
       (let [user-id (getx-user-id)
-            application (->> (applications/get-dynamic-application-state application-id)
-                             (dynamic/assoc-possible-commands user-id))]
-        (when-not (applications/may-see-application? user-id application)
-          (throw-forbidden))
+            application (applications/get-dynamic-application-state-for-user user-id application-id)]
         (if-let [attachment (db/get-attachment {:item field-id
                                                 :form (:form/id application)
                                                 :application application-id})]
