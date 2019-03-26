@@ -180,12 +180,12 @@
    (example "catalogue-list empty"
             [catalogue-list {:items [] :sorting {:sort-column :name, :sort-order :asc}}])
    (example "catalogue-list with two items"
-            [catalogue-list {:items [{:title "Item title"} {:title "Another title"}] :sorting {:sort-column :name, :sort-order :asc}}])
+            [catalogue-list {:items [{:title "Item title" :enabled true} {:title "Another title" :enabled true}] :sorting {:sort-column :name, :sort-order :asc}}])
    (example "catalogue-list with two items in reverse order"
-            [catalogue-list {:items [{:title "Item title"} {:title "Another title"}] :sorting {:sort-column :name, :sort-order :desc}}])
+            [catalogue-list {:items [{:title "Item title" :enabled true} {:title "Another title" :enabled true}] :sorting {:sort-column :name, :sort-order :desc}}])
    (example "catalogue-list with three items, of which second is disabled"
-            [catalogue-list {:items [{:title "Item 1"} {:title "Item 2 is disabled and should not be shown" :state "disabled"} {:title "Item 3"}] :sorting {:sort-column :name, :sort-order :asc}}])
+            [catalogue-list {:items [{:title "Item 1" :enabled true} {:title "Item 2 is disabled and should not be shown" :enabled false} {:title "Item 3"}] :sorting {:sort-column :name, :sort-order :asc}}])
    (example "catalogue-list with item linked to urn.fi"
-            [catalogue-list {:items [{:title "Item title" :resid "urn:nbn:fi:lb-201403262"}] :sorting {:sort-column :name, :sort-order :asc}}])
+            [catalogue-list {:items [{:title "Item title" :enabled true :resid "urn:nbn:fi:lb-201403262"}] :sorting {:sort-column :name, :sort-order :asc}}])
    (example "catalogue-list with item linked to example.org"
-            [catalogue-list {:items [{:title "Item title" :resid "urn:nbn:fi:lb-201403262"}] :sorting {:sort-column :name, :sort-order :asc} :config {:urn-organization "http://example.org/"}}])])
+            [catalogue-list {:items [{:title "Item title" :enabled true :resid "urn:nbn:fi:lb-201403262"}] :sorting {:sort-column :name, :sort-order :asc} :config {:urn-organization "http://example.org/"}}])])
