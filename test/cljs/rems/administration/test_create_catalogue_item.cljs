@@ -1,4 +1,4 @@
-(ns rems.administration.test-catalogue-item
+(ns rems.administration.test-create-catalogue-item
   (:require [cljs.test :refer-macros [deftest is testing]]
             [rems.administration.create-catalogue-item :refer [build-request]]))
 

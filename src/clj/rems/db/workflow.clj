@@ -1,6 +1,5 @@
 (ns rems.db.workflow
   (:require [rems.db.core :as db]
-            [rems.db.workflow-actors :as actors]
             [rems.json :as json]))
 
 (defn- parse-workflow-body [json]
@@ -24,6 +23,7 @@
 
 (defn- create-auto-approve-workflow! [{:keys [user-id organization title]}]
   (assert user-id)
+  ;; TODO: create a new auto-approve workflow in the style of dynamic workflows
   (let [wfid (:id (db/create-workflow! {:organization organization,
                                         :owneruserid user-id,
                                         :modifieruserid user-id,
@@ -42,26 +42,10 @@
                                                                          :handlers handlers})}))]
     {:id wfid}))
 
-(defn- create-rounds-workflow! [{:keys [user-id organization title rounds]}]
-  (assert user-id)
-  (assert (not (empty? rounds)) "no rounds")
-  (let [wfid (:id (db/create-workflow! {:organization organization,
-                                        :owneruserid user-id,
-                                        :modifieruserid user-id,
-                                        :title title,
-                                        :fnlround (dec (count rounds))}))]
-    (doseq [[round-index round] (map-indexed vector rounds)]
-      (doseq [actor (:actors round)]
-        (case (:type round)
-          :approval (actors/add-approver! wfid actor round-index)
-          :review (actors/add-reviewer! wfid actor round-index))))
-    {:id wfid}))
-
 (defn create-workflow! [command]
   (let [result (case (:type command)
                  :auto-approve (create-auto-approve-workflow! command)
-                 :dynamic (create-dynamic-workflow! command)
-                 :rounds (create-rounds-workflow! command))]
+                 :dynamic (create-dynamic-workflow! command))]
     (merge
      result
      {:success (not (nil? (:id result)))})))
