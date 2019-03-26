@@ -24,7 +24,7 @@
   (when path
     (let [url (if (str/starts-with? path "http")
                 path
-                (str (util/get-theme-attribute :img-path "../img/") path))]
+                (str (util/get-theme-attribute :img-path "../../img/") path))]
       (str "url(\"" url "\")"))))
 
 (defn get-logo-image [lang]
