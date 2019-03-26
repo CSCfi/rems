@@ -11,6 +11,7 @@
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.entitlements :as entitlements]
+            [rems.db.form :as form]
             [rems.db.licenses :as licenses]
             [rems.db.roles :as roles]
             [rems.db.users :as users]
@@ -907,8 +908,7 @@
   (not (nil? (users/get-user-attributes userid))))
 
 (defn- get-form [form-id]
-  (require 'rems.db.form) ;; XXX: avoid cyclic dependency
-  (-> ((resolve 'rems.db.form/get-form) form-id) ;; XXX
+  (-> (form/get-form form-id)
       (select-keys [:id :organization :title :start :end])
       (assoc :items (->> (db/get-form-items {:id form-id})
                          (mapv #(process-item nil form-id %))))))
