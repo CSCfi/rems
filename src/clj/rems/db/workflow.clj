@@ -23,6 +23,7 @@
 
 (defn- create-auto-approve-workflow! [{:keys [user-id organization title]}]
   (assert user-id)
+  ;; TODO: create a new auto-approve workflow in the style of dynamic workflows
   (let [wfid (:id (db/create-workflow! {:organization organization,
                                         :owneruserid user-id,
                                         :modifieruserid user-id,

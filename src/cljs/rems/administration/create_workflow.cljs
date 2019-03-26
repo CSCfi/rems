@@ -15,7 +15,7 @@
  ::enter-page
  (fn [{:keys [db]}]
    {:db (assoc db
-               ::form {:type :auto-approve}
+               ::form {:type :dynamic}
                ::loading? true)
     ::fetch-actors nil}))
 
@@ -29,10 +29,6 @@
 
 
 ;;; form submit
-
-(defn- valid-round? [round]
-  (and (not (nil? (:type round)))
-       (not (empty? (:actors round)))))
 
 (defn- valid-request? [request]
   (and (not (str/blank? (:organization request)))
@@ -109,10 +105,11 @@
   [radio-button-group context {:id :workflow-type
                                :keys [:type]
                                :orientation :horizontal
-                               :options (concat [{:value :auto-approve
-                                                  :label (text :t.create-workflow/auto-approve-workflow)}]
-                                                [{:value :dynamic
-                                                  :label (text :t.create-workflow/dynamic-workflow)}])}])
+                               :options [;; TODO: create a new auto-approve workflow in the style of dynamic workflows
+                                         #_{:value :auto-approve
+                                            :label (text :t.create-workflow/auto-approve-workflow)}
+                                         {:value :dynamic
+                                          :label (text :t.create-workflow/dynamic-workflow)}]}])
 
 (defn- save-workflow-button [on-click]
   (let [form @(rf/subscribe [::form])
