@@ -703,3 +703,13 @@ VALUES (:name, :state::jsonb)
 ON CONFLICT (name)
 DO UPDATE
 SET state = :state::jsonb;
+
+-- :name get-external-ids :? :*
+SELECT prefix, suffix FROM external_application_id
+/*~ (when (:prefix params) */
+WHERE prefix = :prefix
+/*~ ) ~*/
+
+-- :name add-external-id! :!
+INSERT INTO external_application_id (prefix, suffix)
+VALUES (:prefix, :suffix)

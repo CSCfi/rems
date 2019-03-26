@@ -906,7 +906,18 @@
                               :eventdata (event->json event)})
   nil)
 
-(defn application-created-event [{:keys [application-id catalogue-item-ids time actor]}]
+(defn allocate-external-id! [prefix]
+  ;; TODO with-transaction
+  (let [all (db/get-external-ids {:prefix prefix})
+        last (apply max (cons 0 (map (comp read-string :suffix) all)))
+        new (str (inc last))]
+    (db/add-external-id! {:prefix prefix :suffix new})
+    {:prefix prefix :suffix new}))
+
+(defn format-external-id [{:keys [prefix suffix]}]
+  (str prefix "/" suffix))
+
+(defn application-created-event [{:keys [application-id catalogue-item-ids time actor allocate-external-id?]}]
   (assert (seq catalogue-item-ids) "catalogue item not specified")
   (let [items (get-catalogue-items catalogue-item-ids)]
     (assert (= (count items) (count catalogue-item-ids)) "catalogue item not found")
@@ -924,7 +935,9 @@
        :event/time time
        :event/actor actor
        :application/id application-id
-       :application/external-id nil
+       :application/external-id (when allocate-external-id? ;; TODO parameterize id allocation?
+                                  (let [id-prefix (str (.getYear time))]
+                                    (format-external-id (allocate-external-id! id-prefix))))
        :application/resources (map (fn [item]
                                      {:catalogue-item/id (:id item)
                                       :resource/ext-id (:resid item)})
@@ -938,7 +951,7 @@
        :workflow.dynamic/handlers (set (:handlers workflow))})))
 
 (defn add-application-created-event! [opts]
-  (add-dynamic-event! (application-created-event opts)))
+  (add-dynamic-event! (application-created-event (assoc opts :allocate-external-id? true))))
 
 (defn- get-workflow-id-for-catalogue-items [catalogue-item-ids]
   (:workflow/id (application-created-event {:catalogue-item-ids catalogue-item-ids})))

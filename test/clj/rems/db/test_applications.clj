@@ -324,3 +324,13 @@
                                            :catalogue-item-ids [cat-id2]
                                            :time (DateTime. 1000)
                                            :actor "alice"})))))))
+
+(deftest test-allocate-external-id!
+  (is (= [] (db/get-external-ids {:prefix "a"})))
+  (is (= [] (db/get-external-ids {:prefix "b"})))
+  (is (= {:prefix "a" :suffix "1"} (allocate-external-id! "a")))
+  (is (= {:prefix "a" :suffix "2"} (allocate-external-id! "a")))
+  (is (= {:prefix "a" :suffix "3"} (allocate-external-id! "a")))
+  (is (= {:prefix "b" :suffix "1"} (allocate-external-id! "b")))
+  (is (= {:prefix "b" :suffix "2"} (allocate-external-id! "b")))
+  (is (= {:prefix "a" :suffix "4"} (allocate-external-id! "a"))))
