@@ -7,7 +7,6 @@
             [rems.auth.auth :as auth]
             [rems.config :refer [env]]
             [rems.entitlements :as entitlements]
-            [rems.events :as events]
             [rems.home :as home]
             [rems.layout :refer [error-page]]
             [rems.middleware :as middleware]
@@ -44,7 +43,6 @@
    (auth/auth-routes)))
 
 (defroutes secured-routes
-  events/events-routes
   entitlements/entitlements-routes)
 
 (defn normal-routes []
@@ -73,4 +71,4 @@
 
 ;; we use mount to construct the app so that middleware can access mount state
 (mount/defstate app
-                :start (middleware/wrap-base (app-routes)))
+  :start (middleware/wrap-base (app-routes)))
