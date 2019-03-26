@@ -56,9 +56,11 @@ WHERE id = :id;
 -- :name create-catalogue-item! :insert
 -- :doc Create a single catalogue item
 INSERT INTO catalogue_item
-(title, formid, resid, wfid, enabled)
+(title, formid, resid, wfid, enabled, archived)
 VALUES (:title, :form, :resid, :wfid,
-/*~ (if (= "disabled" (:state params)) */  false /*~*/ true /*~ ) ~*/ -- TODO: remove state
+--~ (if (contains? params :enabled) ":enabled" "true")
+,
+--~ (if (contains? params :archived) ":archived" "false")
 );
 
 -- :name get-resources :? :*

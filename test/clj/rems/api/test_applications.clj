@@ -41,8 +41,7 @@
       (json-body {:title ""
                   :form form-id
                   :resid 1
-                  :wfid workflow-id
-                  :state "enabled"})
+                  :wfid workflow-id})
       app
       read-ok-body
       :id))

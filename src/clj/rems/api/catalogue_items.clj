@@ -18,7 +18,8 @@
    :form s/Num
    :resid s/Num
    :wfid s/Num
-   (s/optional-key :state) (s/maybe s/Str)})
+   (s/optional-key :enabled) s/Bool
+   (s/optional-key :archived) s/Bool})
 
 (s/defschema CreateCatalogueItemResponse
   {:success s/Bool
