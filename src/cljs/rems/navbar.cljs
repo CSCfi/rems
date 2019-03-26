@@ -34,7 +34,7 @@
           [nav-link "#/applications" (text :t.navigation/applications) (contains? #{:application
                                                                                     :applications}
                                                                                   page-id)])
-        (when (roles/is-handler-or-commenter-or-decider? roles)
+        (when (roles/is-reviewer? roles)
           [nav-link "#/actions" (text :t.navigation/actions) (= page-id :actions)])
         (when (roles/is-admin? roles)
           [nav-link "#/administration"

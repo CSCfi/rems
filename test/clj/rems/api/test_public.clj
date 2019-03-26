@@ -48,7 +48,6 @@
 
       (testing "without entitlements"
         (users/add-user! "allison" {})
-        (roles/add-role! "allison" :applicant)
         (let [body (-> (request :get (str "/api/entitlements"))
                        (authenticate api-key "allison")
                        app

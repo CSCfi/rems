@@ -153,7 +153,7 @@
        (.removeItem js/sessionStorage "rems-redirect-url")
        (cond
          (roles/is-admin? roles) (dispatch! "/#/administration")
-         (roles/is-handler-or-commenter-or-decider? roles) (dispatch! "/#/actions")
+         (roles/is-reviewer? roles) (dispatch! "/#/actions")
          :else (dispatch! "/#/catalogue"))
        {})
      ;;; else dispatch the same event again while waiting for set-identity (happens especially with Firefox)

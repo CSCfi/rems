@@ -20,7 +20,7 @@
    :mail mail})
 
 (defn get-entitlements-for-api [user-or-nil resource-or-nil]
-  (if (has-roles? :approver)
+  (if (has-roles? :handler)
     (mapv entitlement-to-api (db/get-entitlements {:user user-or-nil
                                                    :resource resource-or-nil}))
     (mapv entitlement-to-api (db/get-entitlements {:user (getx-user-id)
@@ -29,7 +29,7 @@
 (defn get-entitlements-for-export
   "Returns a CSV string representing entitlements"
   []
-  (when-not (has-roles? :approver)
+  (when-not (has-roles? :handler)
     (throw-forbidden))
   (let [ents (db/get-entitlements)
         separator (:csv-separator env)]

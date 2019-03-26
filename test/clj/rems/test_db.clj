@@ -348,12 +348,10 @@
 (deftest test-roles
   (db/add-user! {:user "pekka", :userattrs nil})
   (db/add-user! {:user "simo", :userattrs nil})
-  (roles/add-role! "pekka" :applicant)
-  (roles/add-role! "pekka" :reviewer)
-  (roles/add-role! "pekka" :reviewer) ;; add should be idempotent
-  (roles/add-role! "simo" :approver)
-  (is (= #{:logged-in :applicant :reviewer} (roles/get-roles "pekka")))
-  (is (= #{:logged-in :approver} (roles/get-roles "simo")))
+  (roles/add-role! "pekka" :owner)
+  (roles/add-role! "pekka" :owner) ;; add should be idempotent
+  (is (= #{:logged-in :owner} (roles/get-roles "pekka")))
+  (is (= #{:logged-in} (roles/get-roles "simo")))
   (is (= #{:logged-in} (roles/get-roles "juho"))) ;; default role
   (is (thrown? RuntimeException (roles/add-role! "pekka" :unknown-role))))
 
@@ -562,11 +560,11 @@
           (is (= #{:logged-in} (roles/get-roles "third-party-reviewer"))) ;; default role
           (is (= #{:logged-in} (roles/get-roles "another-reviewer"))) ;; default role
           (applications/send-review-request uid new-app 0 "review?" "third-party-reviewer")
-          (is (= #{:logged-in :reviewer} (roles/get-roles "third-party-reviewer")))
+          (is (= #{:logged-in} (roles/get-roles "third-party-reviewer")))
           ;; should not send twice to third-party-reviewer, but another-reviewer should still be added
           (applications/send-review-request uid new-app 0 "can you please review this?" ["third-party-reviewer" "another-reviewer"])
-          (is (= #{:logged-in :reviewer} (roles/get-roles "third-party-reviewer")))
-          (is (= #{:logged-in :reviewer} (roles/get-roles "another-reviewer")))
+          (is (= #{:logged-in} (roles/get-roles "third-party-reviewer")))
+          (is (= #{:logged-in} (roles/get-roles "another-reviewer")))
           (is (= (fetch new-app) {:curround 0 :state "applied"}))
           (applications/perform-third-party-review "third-party-reviewer" new-app 0 "comment")
           (is (thrown? ForbiddenException (applications/review-application "third-party-reviewer" new-app 0 "another comment")
@@ -660,7 +658,7 @@
     (applications/submit-application "jack" jack-app)
     (applications/submit-application "jill" jill-app)
     ;; entitlements should now be added via autoapprove
-    (binding [context/*roles* #{:approver}]
+    (binding [context/*roles* #{:handler}]
       (let [lines (split-lines (entitlements/get-entitlements-for-export))]
         (is (= 4 (count lines))) ;; header + 3 resources
         (is (some #(and (.contains % "resource1")
@@ -675,7 +673,7 @@
                         (.contains % "jack")
                         (.contains % (str jack-app)))
                   lines))))
-    (binding [context/*roles* #{:applicant :reviewer}]
+    (binding [context/*roles* #{:applicant}]
       (is (thrown? ForbiddenException
                    (entitlements/get-entitlements-for-export))))))
 

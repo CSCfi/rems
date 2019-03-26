@@ -27,11 +27,11 @@
   (testing "role required"
     (let [route (GET "/foo" []
                   :summary "Summary text"
-                  :roles #{:approver}
+                  :roles #{:role1}
                   (ok {:success true}))]
 
       (testing "and user has it"
-        (binding [context/*roles* #{:approver}
+        (binding [context/*roles* #{:role1}
                   context/*user* {:eppn "user1"}]
           (is (= {:status 200
                   :headers {}
@@ -47,7 +47,7 @@
                                :uri "/foo"})))))
 
       (testing "but user is not logged in"
-        (binding [context/*roles* #{:approver}
+        (binding [context/*roles* #{:role1}
                   context/*user* nil]
           (is (thrown? NotAuthorizedException
                        (route {:request-method :get
@@ -56,9 +56,9 @@
   (testing "required roles are added to summary documentation"
     (let [route (GET "/foo" []
                   :summary "Summary text"
-                  :roles #{:approver :reviewer}
+                  :roles #{:role1 :role2}
                   (ok {:success true}))]
-      (is (= "Summary text (roles: approver, reviewer)"
+      (is (= "Summary text (roles: role1, role2)"
              (get-in route [:info :public :summary])))))
 
   (testing "summary documentation is required"
