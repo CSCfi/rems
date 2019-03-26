@@ -1,4 +1,4 @@
-(ns rems.administration.test-license
+(ns rems.administration.test-create-license
   (:require [cljs.test :refer-macros [deftest is testing]]
             [rems.administration.create-license :refer [parse-textcontent build-request]]))
 

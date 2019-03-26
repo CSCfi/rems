@@ -1,4 +1,4 @@
-(ns rems.administration.test-resource
+(ns rems.administration.test-create-resource
   (:require [cljs.test :refer-macros [deftest is testing]]
             [rems.administration.create-resource :refer [build-request]]))
 

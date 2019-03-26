@@ -1,4 +1,4 @@
-(ns rems.administration.test-workflow
+(ns rems.administration.test-create-workflow
   (:require [cljs.test :refer-macros [deftest is testing]]
             [rems.administration.create-workflow :refer [build-request]]))
 

@@ -1,4 +1,4 @@
-(ns rems.administration.test-form
+(ns rems.administration.test-create-form
   (:require [cljs.test :refer-macros [deftest is testing use-fixtures]]
             [re-frame.core :as rf]
             [rems.administration.create-form :as f :refer [build-request build-localized-string]]
