@@ -924,6 +924,7 @@
        :event/time time
        :event/actor actor
        :application/id application-id
+       :application/external-id nil
        :application/resources (map (fn [item]
                                      {:catalogue-item/id (:id item)
                                       :resource/ext-id (:resid item)})

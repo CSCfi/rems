@@ -129,6 +129,7 @@
                      :event/time (DateTime. 1000)
                      :event/actor "applicant"
                      :application/id 1
+                     :application/external-id nil
                      :application/resources [{:catalogue-item/id 10
                                               :resource/ext-id "urn:11"}
                                              {:catalogue-item/id 20

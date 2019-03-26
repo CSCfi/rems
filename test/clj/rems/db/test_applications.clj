@@ -125,6 +125,7 @@
               :event/actor "alice"
               :event/time (DateTime. 1000)
               :application/id 42
+              :application/external-id nil
               :application/resources [{:catalogue-item/id cat-id
                                        :resource/ext-id "res1"}]
               :application/licenses []
@@ -152,6 +153,7 @@
                 :event/actor "alice"
                 :event/time (DateTime. 1000)
                 :application/id 42
+                :application/external-id nil
                 :application/resources [{:catalogue-item/id cat-id
                                          :resource/ext-id "res1"}
                                         {:catalogue-item/id cat-id2
@@ -245,6 +247,7 @@
                 :event/actor "alice"
                 :event/time (DateTime. 1000)
                 :application/id 42
+                :application/external-id nil
                 :application/resources [{:catalogue-item/id cat-id2
                                          :resource/ext-id "res2+++"}]
                 :application/licenses [{:license/id lic-id}]
@@ -280,6 +283,7 @@
                 :event/actor "alice"
                 :event/time (DateTime. 1000)
                 :application/id 42
+                :application/external-id nil
                 :application/resources [{:catalogue-item/id cat-id2
                                          :resource/ext-id "res1"}]
                 :application/licenses [{:license/id lic-id}]
@@ -308,6 +312,7 @@
                 :event/actor "alice"
                 :event/time (DateTime. 1000)
                 :application/id 42
+                :application/external-id nil
                 :application/resources [{:catalogue-item/id cat-id2
                                          :resource/ext-id "res1"}]
                 :application/licenses []

@@ -125,6 +125,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/time test-data/creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
+                                :application/external-id nil
                                 :application/resources [{:catalogue-item/id 2
                                                          :resource/ext-id "urn:nbn:fi:lb-201403262"}]
                                 :application/licenses [{:license/id 1}
@@ -162,6 +163,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/time test-data/creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
+                                :application/external-id nil
                                 :application/resources [{:catalogue-item/id 2
                                                          :resource/ext-id "urn:nbn:fi:lb-201403262"}]
                                 :application/licenses [{:license/id 1}
@@ -204,6 +206,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/time test-data/creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
+                                :application/external-id nil
                                 :application/resources [{:catalogue-item/id 2
                                                          :resource/ext-id "urn:nbn:fi:lb-201403262"}]
                                 :application/licenses [{:license/id 1}
@@ -252,6 +255,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/time test-data/creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
+                                :application/external-id nil
                                 :application/resources [{:catalogue-item/id 2
                                                          :resource/ext-id "urn:nbn:fi:lb-201403262"}]
                                 :application/licenses [{:license/id 1}
@@ -300,6 +304,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/time test-data/creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
+                                :application/external-id nil
                                 :application/resources [{:catalogue-item/id 2
                                                          :resource/ext-id "urn:nbn:fi:lb-201403262"}]
                                 :application/licenses [{:license/id 1}
@@ -348,6 +353,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/time test-data/creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
+                                :application/external-id nil
                                 :application/resources [{:catalogue-item/id 2
                                                          :resource/ext-id "urn:nbn:fi:lb-201403262"}
                                                         {:catalogue-item/id 3
@@ -404,6 +410,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/time test-data/creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
+                                :application/external-id nil
                                 :application/resources [{:catalogue-item/id 4
                                                          :resource/ext-id "urn:nbn:fi:lb-201403262"}]
                                 :application/licenses [{:license/id 1}
@@ -459,6 +466,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/time test-data/creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
+                                :application/external-id nil
                                 :application/resources [{:catalogue-item/id 4
                                                          :resource/ext-id "urn:nbn:fi:lb-201403262"}]
                                 :application/licenses [{:license/id 1}
@@ -501,6 +509,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/time (-> application :dynamic-events (nth 0) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id
+                                :application/external-id nil
                                 :application/resources [{:catalogue-item/id 1
                                                          :resource/ext-id "urn:nbn:fi:lb-201403262"}]
                                 :application/licenses [{:license/id 1}
@@ -551,6 +560,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/time (-> application :dynamic-events (nth 0) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id
+                                :application/external-id nil
                                 :application/resources [{:catalogue-item/id 2
                                                          :resource/ext-id "urn:nbn:fi:lb-201403262"}]
                                 :application/licenses [{:license/id 1}
@@ -608,6 +618,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/time (-> application :dynamic-events (nth 1) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id
+                                :application/external-id nil
                                 :application/resources [{:catalogue-item/id 2
                                                          :resource/ext-id "urn:nbn:fi:lb-201403262"}]
                                 :application/licenses [{:license/id 1}
@@ -656,6 +667,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/time (-> application :dynamic-events (nth 1) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id
+                                :application/external-id nil
                                 :application/resources [{:catalogue-item/id 2
                                                          :resource/ext-id "urn:nbn:fi:lb-201403262"}]
                                 :application/licenses [{:license/id 1}
