@@ -18,13 +18,13 @@
        (str/join ", ")))
 
 (def +all-columns+
-  [:id :description :resource :applicant :state :created :last-activity :view])
+  [:description :resource :applicant :state :created :last-activity :view])
 
 (def +default-columns+
-  [:id :description :resource :applicant :state :created :view])
+  [:description :resource :applicant :state :created :view])
 
 (def +draft-columns+
-  [:id :resource :last-activity :view])
+  [:resource :last-activity :view])
 
 (def ^:private +columns+
   {:id {:value :application/id
