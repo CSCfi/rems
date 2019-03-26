@@ -39,8 +39,8 @@
         (throw (js/Error. (str "No `:filter-value` or `:value` defined for column \"" col "\"")))))
     ""))
 
-(defn- row [column-definitions columns item]
-  (into [:tr.action]
+(defn- row [id column-definitions columns item]
+  (into [:tr.action {:id id}]
         (for [col columns]
           (into [:td {:class (column-class column-definitions col item)
                       :data-th (column-header column-definitions col)}]
@@ -174,7 +174,7 @@
   (let [{:keys [initial-sort sort-column sort-order set-sorting]} sorting
         {:keys [show-filters filters]} filtering]
     [:tbody
-     (map (fn [item] ^{:key (id-function item)} [row column-definitions visible-columns item])
+     (map (fn [item] ^{:key (id-function item)} [row (id-function item) column-definitions visible-columns item])
           (cond->> items
             (and initial-sort (not sort-column)) (apply-initial-sorting column-definitions initial-sort)
             (and show-filters filters) (apply-filtering column-definitions filters)

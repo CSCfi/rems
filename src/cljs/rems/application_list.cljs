@@ -57,7 +57,7 @@
   [opts]
   [table/component
    (merge {:column-definitions +columns+
-           :id-function :application/id
+           :id-function #(str "application-" (:application/id %))
            :class "applications"}
           opts)])
 
