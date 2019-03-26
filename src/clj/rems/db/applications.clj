@@ -292,15 +292,15 @@
     (get-catalogue-items (mapv :item application-items)
                          localized-items)))
 
-(defn- get-item-value [item form-id application-id]
-  (let [query-params {:item (:id item)
+(defn- get-field-value [field form-id application-id]
+  (let [query-params {:item (:id field)
                       :form form-id
                       :application application-id}]
-    (if (= "attachment" (:type item))
+    (if (= "attachment" (:type field))
       (:filename (db/get-attachment query-params))
       (:value (db/get-field-value query-params)))))
 
-(defn- process-item-options [options]
+(defn- process-field-options [options]
   (->> options
        (map (fn [{:keys [key langcode label displayorder]}]
               {:key key
@@ -311,17 +311,17 @@
        (sort-by :displayorder)
        (mapv #(select-keys % [:key :label]))))
 
-(deftest process-item-options-test
+(deftest process-field-options-test
   (is (= [{:key "yes" :label {:en "Yes" :fi "Kyllä"}}
           {:key "no" :label {:en "No" :fi "Ei"}}]
-         (process-item-options
+         (process-field-options
           [{:itemid 9, :key "no", :langcode "en", :label "No", :displayorder 1}
            {:itemid 9, :key "no", :langcode "fi", :label "Ei", :displayorder 1}
            {:itemid 9, :key "yes", :langcode "en", :label "Yes", :displayorder 0}
            {:itemid 9, :key "yes", :langcode "fi", :label "Kyllä", :displayorder 0}]))))
 
-(defn process-item
-  "Returns an item structure like this:
+(defn process-field
+  "Returns a field structure like this:
 
     {:id 123
      :type \"texta\"
@@ -329,28 +329,28 @@
      :inputprompt \"hello\"
      :optional true
      :value \"filled value or nil\"}"
-  [application-id form-id item]
-  {:id (:id item)
-   :optional (:formitemoptional item)
-   :type (:type item)
+  [application-id form-id field]
+  {:id (:id field)
+   :optional (:formitemoptional field)
+   :type (:type field)
    ;; TODO here we do a db call per item, for licenses we do one huge
    ;; db call. Not sure which is better?
    :localizations (into {} (for [{:keys [langcode title inputprompt]}
-                                 (db/get-form-item-localizations {:item (:id item)})]
+                                 (db/get-form-item-localizations {:item (:id field)})]
                              [(keyword langcode) {:title title :inputprompt inputprompt}]))
-   :options (process-item-options (db/get-form-item-options {:item (:id item)}))
+   :options (process-field-options (db/get-form-item-options {:item (:id field)}))
    :value (or
            (when-not (draft? application-id)
-             (get-item-value item form-id application-id))
+             (get-field-value field form-id application-id))
            "")
-   :maxlength (:maxlength item)})
+   :maxlength (:maxlength field)})
 
-(defn- assoc-item-previous-values [application items]
+(defn- assoc-field-previous-values [application fields]
   (let [previous-values (:items (if (form-fields-editable? application)
                                   (:submitted-form-contents application)
                                   (:previous-submitted-form-contents application)))]
-    (for [item items]
-      (assoc item :previous-value (get previous-values (:id item))))))
+    (for [field fields]
+      (assoc field :previous-value (get previous-values (:id field))))))
 
 (defn- process-license
   [application license]
@@ -456,8 +456,8 @@
          catalogue-item-ids (mapv :item (db/get-application-items {:application application-id}))
          catalogue-items (get-catalogue-items catalogue-item-ids)
          items (->> (db/get-form-items {:id form-id})
-                    (mapv #(process-item application-id form-id %))
-                    (assoc-item-previous-values application))
+                    (mapv #(process-field application-id form-id %))
+                    (assoc-field-previous-values application))
          description (-> (filter #(= "description" (:type %)) items)
                          first
                          :value)
@@ -911,7 +911,7 @@
   (-> (form/get-form form-id)
       (select-keys [:id :organization :title :start :end])
       (assoc :items (->> (db/get-form-items {:id form-id})
-                         (mapv #(process-item nil form-id %))))))
+                         (mapv #(process-field nil form-id %))))))
 
 (defn- validate-form-answers [form-id answers]
   (let [form (get-form form-id)
