@@ -160,8 +160,7 @@
                                                            :catalogue-item/start (DateTime. 100)
                                                            :catalogue-item/end nil
                                                            :catalogue-item/enabled true
-                                                           :catalogue-item/archived false
-                                                           :catalogue-item/state :enabled}
+                                                           :catalogue-item/archived false}
                                                           {:catalogue-item/id 20
                                                            :resource/id 21
                                                            :resource/ext-id "urn:21"
@@ -171,8 +170,7 @@
                                                            :catalogue-item/start (DateTime. 100)
                                                            :catalogue-item/end nil
                                                            :catalogue-item/enabled true
-                                                           :catalogue-item/archived false
-                                                           :catalogue-item/state :enabled}]
+                                                           :catalogue-item/archived false}]
                                   :application/licenses [{:license/id 30
                                                           :license/accepted false
                                                           :license/type :link

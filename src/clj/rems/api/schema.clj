@@ -124,8 +124,7 @@
    :catalogue-item/start DateTime
    :catalogue-item/end (s/maybe DateTime)
    :catalogue-item/enabled s/Bool
-   :catalogue-item/archived s/Bool
-   :catalogue-item/state s/Keyword})
+   :catalogue-item/archived s/Bool})
 
 (s/defschema V2License
   {:license/id s/Int
