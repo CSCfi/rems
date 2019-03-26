@@ -16,16 +16,12 @@
 (rf/reg-event-db
  ::add-item
  (fn [db [_ item]]
-   (let [cart (-> (::cart db)
-                  (conj item))]
-     (assoc db ::cart cart))))
+   (update db ::cart conj item)))
 
 (rf/reg-event-db
  ::remove-item
  (fn [db [_ item]]
-   (let [cart (->> (::cart db)
-                   (remove (comp #{(:id item)} :id)))]
-     (assoc db ::cart cart))))
+   (update db ::cart #(remove (comp #{(:id item)} :id) %))))
 
 (defn add-to-cart-button
   "Hiccup fragment that contains a button that adds the given item to the cart"
