@@ -26,23 +26,26 @@
   (is (= (map-structure loc-en)
          (map-structure loc-fi))))
 
-(deftest all-translation-keywords-used-in-source-defined
+(defn- translation-keywords-in-use []
   ;; git grep would be nice, but circleci's git grep doesn't have -o
   ;; --include is needed to exclude editor backup files etc.
   (let [grep (sh/sh "grep" "-Rho" "--include=*.clj[cs]" "--include=*.clj" ":t\\.[-a-z.]*/[-a-z.]\\+" "src")]
     (assert (= 0 (:exit grep))
             (pr-str grep))
-    (let [all-tokens (->> grep
-                          :out
-                          clojure.string/split-lines
-                          (map read-string)
-                          set)
-          tr-config {:dict (locales/load-translations {:languages [:en]
-                                                       :translations-directory "translations/"})}
-          tr (partial tempura/tr tr-config [:en])]
-      (doseq [token all-tokens]
-        (testing token
-          (is (tr [token])))))))
+    (->> grep
+         :out
+         clojure.string/split-lines
+         (map read-string)
+         set)))
+
+(deftest all-translation-keywords-used-in-source-defined
+  (let [all-tokens (translation-keywords-in-use)
+        tr-config {:dict (locales/load-translations {:languages [:en]
+                                                     :translations-directory "translations/"})}
+        tr (partial tempura/tr tr-config [:en])]
+    (doseq [token all-tokens]
+      (testing token
+        (is (tr [token]))))))
 
 (deftest load-translations-test
   (testing "loads internal translations"
