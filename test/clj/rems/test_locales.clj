@@ -1,15 +1,13 @@
 (ns rems.test-locales
   (:require [clojure.java.io :as io]
             [clojure.java.shell :as sh]
-            clojure.string
+            [clojure.set :as set]
+            [clojure.string :as str]
             [clojure.test :refer :all]
-            [mount.core :as mount]
-            [rems.context :as context]
             [rems.locales :as locales]
-            [rems.util :refer [getx-in]]
             [rems.testing-util :refer [create-temp-dir delete-recursively]]
-            [rems.text :refer [with-language]]
-            [taoensso.tempura :as tempura])
+            [rems.util :refer [getx-in]]
+            [taoensso.tempura.impl :refer [compile-dictionary]])
   (:import (java.io FileNotFoundException)))
 
 (def loc-en (read-string (slurp (io/resource "translations/en.edn"))))
@@ -26,23 +24,33 @@
   (is (= (map-structure loc-en)
          (map-structure loc-fi))))
 
-(deftest all-translation-keywords-used-in-source-defined
+(defn- translation-keywords-in-use []
   ;; git grep would be nice, but circleci's git grep doesn't have -o
   ;; --include is needed to exclude editor backup files etc.
-  (let [grep (sh/sh "grep" "-Rho" "--include=*.clj[cs]" "--include=*.clj" ":t\\.[-a-z.]*/[-a-z.]\\+" "src")]
+  (let [grep (sh/sh "grep" "-ERho" "--include=*.clj[cs]" "--include=*.clj" ":t[./][-a-z./]+" "src")]
     (assert (= 0 (:exit grep))
             (pr-str grep))
-    (let [all-tokens (->> grep
-                          :out
-                          clojure.string/split-lines
-                          (map read-string)
-                          set)
-          tr-config {:dict (locales/load-translations {:languages [:en]
-                                                       :translations-directory "translations/"})}
-          tr (partial tempura/tr tr-config [:en])]
-      (doseq [token all-tokens]
-        (testing token
-          (is (tr [token])))))))
+    (->> grep
+         :out
+         str/split-lines
+         (map read-string)
+         set)))
+
+(deftest test-translation-keywords-in-use
+  (let [keys-in-source (set (translation-keywords-in-use))]
+    (assert (seq keys-in-source))
+    (doseq [lang [:en :fi]]
+      (testing lang
+        (let [dictionary (->> (locales/load-translations {:languages [lang]
+                                                          :translations-directory "translations/"})
+                              lang
+                              (compile-dictionary false))
+              keys-in-dictionary (set (keys dictionary))]
+          (assert (seq keys-in-dictionary))
+          (testing "dictionary is missing translations"
+            (is (empty? (sort (set/difference keys-in-source keys-in-dictionary)))))
+          (testing "dictionary has unused translations"
+            (is (empty? (sort (set/difference keys-in-dictionary keys-in-source))))))))))
 
 (deftest load-translations-test
   (testing "loads internal translations"

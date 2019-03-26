@@ -29,13 +29,13 @@
   "Return the tempura translation for a given key. Additional fallback
   keys can be given."
   [& ks]
-  #?(:clj (context/*tempura* (conj (vec ks) (text-format :t.missing (vec ks))))
+  #?(:clj (context/*tempura* (conj (vec ks) (text-format :t/missing (vec ks))))
      :cljs (let [translations (rf/subscribe [:translations])
                  language (rf/subscribe [:language])]
              (try
                (tr {:dict @translations}
                    [@language]
-                   (conj (vec ks) (text-format :t.missing (vec ks))))
+                   (conj (vec ks) (text-format :t/missing (vec ks))))
                (catch js/Object e
                  ;; fail gracefully if the re-frame state is incomplete
                  (.error js/console e)

@@ -72,7 +72,7 @@
                           (index-by [:field/id]))
         licenses-by-id (->> (get-in application [:application/licenses])
                             (index-by [:license/id]))]
-    [:div (text :t.form/validation.errors)
+    [:div (text :t.form.validation/errors)
      (into [:ul]
            (concat
             (for [{:keys [type field-id]} errors
@@ -962,7 +962,7 @@
              [field {:field/type :text
                      :field/title {:en "Title"}
                      :field/placeholder {:en "prompt"}
-                     :validation {:type :t.form.validation.required}}]])
+                     :validation {:type :t.form.validation/required}}]])
    (example "non-editable field of type \"text\" without text"
             [:form
              [field {:field/type :text
@@ -992,7 +992,7 @@
              [field {:field/type :texta
                      :field/title {:en "Title"}
                      :field/placeholder {:en "prompt"}
-                     :validation {:type :t.form.validation.required}}]])
+                     :validation {:type :t.form.validation/required}}]])
    (example "non-editable field of type \"texta\""
             [:form
              [field {:field/type :texta
@@ -1153,7 +1153,7 @@
                              :license/type :link
                              :license/title {:en "Link to license"}
                              :license/link {:en "https://creativecommons.org/licenses/by/4.0/deed.en"}
-                             :validation {:type :t.form.validation.required}}]])
+                             :validation {:type :t.form.validation/required}}]])
    (example "text license"
             [:form
              [license-field {:license/id 1
@@ -1166,7 +1166,7 @@
                              :license/type :text
                              :license/title {:en "A Text License"}
                              :license/text {:en lipsum-paragraphs}
-                             :validation {:type :t.form.validation.required}}]])
+                             :validation {:type :t.form.validation/required}}]])
 
    (component-info render-application)
    (example "application, partially filled"

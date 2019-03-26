@@ -63,7 +63,7 @@
            [spinner/big]
 
            (empty? apps)
-           [:div.applications.alert.alert-success (text :t/applications.empty)]
+           [:div.applications.alert.alert-success (text :t.applications/empty)]
 
            :else
            [application-list/component
