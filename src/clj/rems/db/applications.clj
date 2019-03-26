@@ -492,8 +492,7 @@
 
 (defn save-attachment!
   [{:keys [tempfile filename content-type]} user-id application-id item-id]
-  (let [application (->> (get-dynamic-application-state application-id)
-                         (dynamic/assoc-possible-commands user-id))
+  (let [application (get-dynamic-application-state-for-user user-id application-id)
         byte-array (with-open [input (FileInputStream. tempfile)
                                buffer (ByteArrayOutputStream.)]
                      (clojure.java.io/copy input buffer)
@@ -742,8 +741,7 @@
       (doseq [recipient send-to]
         (when-not (is-third-party-reviewer? recipient (:curround application) application)
           (db/add-application-event! {:application application-id :user recipient
-                                      :round round :event "review-request" :comment msg})
-          (roles/add-role! recipient :reviewer))))))
+                                      :round round :event "review-request" :comment msg}))))))
 
 ;; TODO better name
 ;; TODO consider refactoring together with judge

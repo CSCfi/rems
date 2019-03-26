@@ -55,15 +55,10 @@
 (defn- create-users-and-roles! []
   ;; users provided by the fake login
   (users/add-user! (+fake-users+ :approver1) (+fake-user-data+ (+fake-users+ :approver1)))
-  (roles/add-role! (+fake-users+ :approver1) :applicant)
-  (roles/add-role! (+fake-users+ :approver1) :approver)
   (users/add-user! (+fake-users+ :applicant1) (+fake-user-data+ (+fake-users+ :applicant1)))
   (users/add-user! (+fake-users+ :applicant2) (+fake-user-data+ (+fake-users+ :applicant2)))
-  (roles/add-role! (+fake-users+ :applicant1) :applicant)
   (users/add-user! (+fake-users+ :approver2) (+fake-user-data+ (+fake-users+ :approver2)))
-  (roles/add-role! (+fake-users+ :approver2) :approver)
   (users/add-user! (+fake-users+ :reviewer) (+fake-user-data+ (+fake-users+ :reviewer)))
-  (roles/add-role! (+fake-users+ :reviewer) :reviewer)
   ;; users without roles
   (users/add-user! (+fake-users+ :roleless1) (+fake-user-data+ (+fake-users+ :roleless1)))
   (users/add-user! (+fake-users+ :roleless2) (+fake-user-data+ (+fake-users+ :roleless2)))
@@ -76,15 +71,11 @@
 (defn- create-demo-users-and-roles! []
   ;; users used on remsdemo
   (doseq [applicant [(+demo-users+ :applicant1) (+demo-users+ :applicant2)]]
-    (users/add-user! applicant (+demo-user-data+ applicant))
-    (roles/add-role! applicant :applicant))
+    (users/add-user! applicant (+demo-user-data+ applicant)))
   (doseq [approver [(+demo-users+ :approver1) (+demo-users+ :approver2)]]
-    (users/add-user! approver (+demo-user-data+ approver))
-    (roles/add-role! approver :approver)
-    (roles/add-role! approver :applicant))
+    (users/add-user! approver (+demo-user-data+ approver)))
   (let [reviewer (+demo-users+ :reviewer)]
-    (users/add-user! reviewer (+demo-user-data+ reviewer))
-    (roles/add-role! reviewer :reviewer))
+    (users/add-user! reviewer (+demo-user-data+ reviewer)))
   ;; a user to own things
   (let [owner (+demo-users+ :owner)]
     (users/add-user! owner (+demo-user-data+ owner))

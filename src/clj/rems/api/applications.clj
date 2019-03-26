@@ -133,19 +133,19 @@
 
     (GET "/commenters" []
       :summary "Available third party commenters"
-      :roles #{:approver}
+      :roles #{:handler}
       :return Commenters
       (ok (get-commenters)))
 
     (GET "/members" []
       :summary "Existing REMS users available for application membership"
-      :roles #{:approver}
+      :roles #{:handler}
       :return [Applicant]
       (ok (get-applicants)))
 
     (GET "/deciders" []
       :summary "Available deciders"
-      :roles #{:approver}
+      :roles #{:handler}
       :return Deciders
       (ok (get-deciders)))
 
