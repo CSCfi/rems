@@ -80,9 +80,7 @@
   {:organization s/Str
    :title s/Str
    :type s/Keyword
-   (s/optional-key :handlers) [UserId]
-   (s/optional-key :rounds) [{:type (s/enum :approval :review)
-                              :actors [UserId]}]})
+   (s/optional-key :handlers) [UserId]})
 
 (s/defschema CreateWorkflowResponse
   {:success s/Bool

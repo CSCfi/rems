@@ -29,37 +29,6 @@
                :role "approver"}]
              (:actors simple)))))
 
-  (testing "create"
-    (let [body (-> (request :post (str "/api/workflows/create"))
-                   (json-body {:organization "abc"
-                               :title "workflow title"
-                               :type :rounds
-                               :rounds [{:type :review
-                                         :actors ["alice" "bob"]}
-                                        {:type :approval
-                                         :actors ["carl"]}]})
-                   (authenticate "42" "owner")
-                   app
-                   assert-response-is-ok
-                   read-body)
-          id (:id body)]
-      (is (< 0 id))
-      (testing "and fetch"
-        (let [workflows (-> (request :get "/api/workflows")
-                            (authenticate "42" "owner")
-                            app
-                            assert-response-is-ok
-                            read-body)
-              workflow (first (filter #(= id (:id %)) workflows))]
-          (is (= {:id id
-                  :organization "abc"
-                  :title "workflow title"
-                  :final-round 1
-                  :actors [{:actoruserid "alice", :role "reviewer", :round 0}
-                           {:actoruserid "bob", :role "reviewer", :round 0}
-                           {:actoruserid "carl", :role "approver", :round 1}]}
-                 (select-keys workflow [:id :organization :title :final-round :actors])))))))
-
   (testing "create auto-approved workflow"
     (let [body (-> (request :post (str "/api/workflows/create"))
                    (json-body {:organization "abc"

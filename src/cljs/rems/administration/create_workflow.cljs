@@ -3,21 +3,20 @@
             [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.components :refer [radio-button-group text-field]]
-            [rems.administration.items :as items]
             [rems.status-modal :as status-modal]
             [rems.atoms :refer [enrich-user]]
             [rems.autocomplete :as autocomplete]
             [rems.collapsible :as collapsible]
             [rems.spinner :as spinner]
-            [rems.text :refer [text text-format localize-item]]
+            [rems.text :refer [text]]
             [rems.util :refer [dispatch! fetch post!]]))
 
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
    {:db (assoc db
-         ::form {:type :auto-approve}
-         ::loading? true)
+               ::form {:type :auto-approve}
+               ::loading? true)
     ::fetch-actors nil}))
 
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
@@ -27,10 +26,6 @@
 (rf/reg-sub ::form (fn [db _] (::form db)))
 
 (rf/reg-event-db ::set-form-field (fn [db [_ keys value]] (assoc-in db (concat [::form] keys) value)))
-
-(rf/reg-event-db ::add-round (fn [db [_]] (update-in db [::form :rounds] items/add {})))
-
-(rf/reg-event-db ::remove-round (fn [db [_ index]] (update-in db [::form :rounds] items/remove index)))
 
 
 ;;; form submit
@@ -45,12 +40,7 @@
        (case (:type request)
          :auto-approve true
          :dynamic (not (empty? (:handlers request)))
-         :rounds (every? valid-round? (:rounds request))
          nil false)))
-
-(defn- build-request-round [{:keys [type actors]}]
-  {:type type
-   :actors (map :userid actors)})
 
 (defn build-request [form]
   (let [request {:organization (:organization form)
@@ -58,8 +48,7 @@
                  :type (:type form)}
         request (case (:type form)
                   :auto-approve request
-                  :dynamic (assoc request :handlers (map :userid (:handlers form)))
-                  :rounds (assoc request :rounds (map build-request-round (:rounds form))))]
+                  :dynamic (assoc request :handlers (map :userid (:handlers form))))]
     (when (valid-request? request)
       request)))
 
@@ -81,10 +70,6 @@
   (-> actors
       (remove-actor actor) ; avoid duplicates
       (conj actor)))
-
-(rf/reg-event-db ::remove-actor (fn [db [_ round actor]] (update-in db [::form :rounds round :actors] remove-actor actor)))
-(rf/reg-event-db ::add-actor (fn [db [_ round actor]] (update-in db [::form :rounds round :actors] add-actor actor)))
-
 
 (rf/reg-event-db ::remove-handler (fn [db [_ handler]] (update-in db [::form :handlers] remove-actor handler)))
 (rf/reg-event-db ::add-handler (fn [db [_ handler]] (update-in db [::form :handlers] add-actor handler)))
@@ -127,61 +112,7 @@
                                :options (concat [{:value :auto-approve
                                                   :label (text :t.create-workflow/auto-approve-workflow)}]
                                                 [{:value :dynamic
-                                                  :label (text :t.create-workflow/dynamic-workflow)}]
-                                                [{:value :rounds
-                                                  :label (text :t.create-workflow/rounds-workflow)}])}])
-
-(defn- round-type-radio-group [round]
-  [radio-button-group context {:id :round-type
-                               :keys [:rounds round :type]
-                               :orientation :horizontal
-                               :options [{:value :approval
-                                          :label (text :t.create-workflow/approval-round)}
-                                         {:value :review
-                                          :label (text :t.create-workflow/review-round)}]}])
-
-(defn- workflow-actors-field [round]
-  (let [form @(rf/subscribe [::form])
-        round-type (get-in form [:rounds round :type])
-        all-actors @(rf/subscribe [::actors])
-        selected-actors (get-in form [:rounds round :actors])]
-    (when round-type
-      [:div.form-group
-       [:label (case round-type
-                 :approval (text :t.create-workflow/approvers)
-                 :review (text :t.create-workflow/reviewers))]
-       [autocomplete/component
-        {:value (sort-by :userid selected-actors)
-         :items all-actors
-         :value->text #(:display %2)
-         :item->key :userid
-         :item->text :display
-         :item->value identity
-         :search-fields [:display :userid]
-         :add-fn #(rf/dispatch [::add-actor round %])
-         :remove-fn #(rf/dispatch [::remove-actor round %])}]])))
-
-(defn- next-workflow-arrow []
-  [:i.next-workflow-arrow.fa.fa-long-arrow-alt-down
-   {:aria-hidden true}])
-
-(defn- add-round-button []
-  [:a {:href "#"
-       :on-click (fn [event]
-                   (.preventDefault event)
-                   (rf/dispatch [::add-round]))}
-   (text :t.create-workflow/add-round)])
-
-(defn- remove-round-button [round]
-  [:a.remove-workflow-round
-   {:href "#"
-    :on-click (fn [event]
-                (.preventDefault event)
-                (rf/dispatch [::remove-round round]))
-    :aria-label (text :t.create-workflow/remove-round)
-    :title (text :t.create-workflow/remove-round)}
-   [:i.icon-link.fas.fa-times
-    {:aria-hidden true}]])
+                                                  :label (text :t.create-workflow/dynamic-workflow)}])}])
 
 (defn- save-workflow-button [on-click]
   (let [form @(rf/subscribe [::form])
@@ -198,26 +129,6 @@
 
 (defn workflow-type-description [description]
   [:div.alert.alert-info description])
-
-(defn round-workflow-form []
-  (let [form @(rf/subscribe [::form])
-        num-rounds (count (:rounds form))
-        last-round (dec num-rounds)]
-    [:div
-     [workflow-type-description (text :t.create-workflow/rounds-workflow-description)]
-     (for [round (range num-rounds)]
-       [:div.workflow-round
-        {:key round}
-        [remove-round-button round]
-
-        [:h2 (text-format :t.create-workflow/round-n (inc round))]
-        [round-type-radio-group round]
-        [workflow-actors-field round]
-        (when (not= round last-round)
-          [next-workflow-arrow])])
-
-     [:div.workflow-round.new-workflow-round
-      [add-round-button]]]))
 
 (defn- workflow-handlers-field []
   (let [form @(rf/subscribe [::form])
@@ -264,8 +175,7 @@
 
                   (case workflow-type
                     :auto-approve [auto-approve-workflow-form]
-                    :dynamic [dynamic-workflow-form]
-                    :rounds [round-workflow-form])
+                    :dynamic [dynamic-workflow-form])
 
                   [:div.col.commands
                    [cancel-button]
