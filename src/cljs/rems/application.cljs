@@ -35,9 +35,9 @@
   (rf/dispatch [:rems.application/enter-application-page application-id]))
 
 (defn- in-processing? [application]
-  (not (contains? #{:rems.workflow.dynamic/approved
-                    :rems.workflow.dynamic/rejected
-                    :rems.workflow.dynamic/closed}
+  (not (contains? #{:application.state/approved
+                    :application.state/rejected
+                    :application.state/closed}
                   (get-in application [:application/workflow :workflow.dynamic/state]))))
 
 (defn- disabled-items-warning [application]
@@ -650,27 +650,27 @@
             [event-view e]))))
 
 (defn- get-application-phases [state]
-  (cond (contains? #{:rems.workflow.dynamic/rejected} state)
+  (cond (contains? #{:application.state/rejected} state)
         [{:phase :apply :completed? true :text :t.phases/apply}
          {:phase :approve :completed? true :rejected? true :text :t.phases/approve}
          {:phase :result :completed? true :rejected? true :text :t.phases/rejected}]
 
-        (contains? #{:rems.workflow.dynamic/approved} state)
+        (contains? #{:application.state/approved} state)
         [{:phase :apply :completed? true :text :t.phases/apply}
          {:phase :approve :completed? true :approved? true :text :t.phases/approve}
          {:phase :result :completed? true :approved? true :text :t.phases/approved}]
 
-        (contains? #{:rems.workflow.dynamic/closed} state)
+        (contains? #{:application.state/closed} state)
         [{:phase :apply :closed? true :text :t.phases/apply}
          {:phase :approve :closed? true :text :t.phases/approve}
          {:phase :result :closed? true :text :t.phases/approved}]
 
-        (contains? #{:rems.workflow.dynamic/draft :rems.workflow.dynamic/returned} state)
+        (contains? #{:application.state/draft :application.state/returned} state)
         [{:phase :apply :active? true :text :t.phases/apply}
          {:phase :approve :text :t.phases/approve}
          {:phase :result :text :t.phases/approved}]
 
-        (contains? #{:rems.workflow.dynamic/submitted} state)
+        (contains? #{:application.state/submitted} state)
         [{:phase :apply :completed? true :text :t.phases/apply}
          {:phase :approve :active? true :text :t.phases/approve}
          {:phase :result :text :t.phases/approved}]
@@ -1172,7 +1172,7 @@
    (example "application, partially filled"
             [render-application
              {:application/id 17
-              :application/workflow {:workflow.dynamic/state :rems.workflow.dynamic/draft}
+              :application/workflow {:workflow.dynamic/state :application.state/draft}
               :application/resources [{:catalogue-item/title {:en "An applied item"}}]
               :application/form {:form/fields [{:field/id 1
                                                 :field/type :text
@@ -1208,7 +1208,7 @@
    (example "application, applied"
             [render-application
              {:application/id 17
-              :application/workflow {:workflow.dynamic/state :rems.workflow.dynamic/submitted}
+              :application/workflow {:workflow.dynamic/state :application.state/submitted}
               :application/resources [{:catalogue-item/title {:en "An applied item"}}]
               :application/form {:form/fields [{:field/id 1
                                                 :field/type :text
@@ -1223,7 +1223,7 @@
    (example "application, approved"
             [render-application
              {:application/id 17
-              :application/workflow {:workflow.dynamic/state :rems.workflow.dynamic/approved}
+              :application/workflow {:workflow.dynamic/state :application.state/approved}
               :application/applicant-attributes {:eppn "eppn"
                                                  :mail "email@example.com"
                                                  :additional "additional field"}

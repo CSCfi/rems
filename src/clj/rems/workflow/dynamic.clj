@@ -19,13 +19,13 @@
    :handlers [UserId]})
 
 (def States
-  #{::approved
-    ::closed
-    ::draft
-    ::rejected
-    ::returned
-    ::submitted
-    #_::withdrawn}) ; TODO withdraw support?
+  #{:application.state/approved
+    :application.state/closed
+    :application.state/draft
+    :application.state/rejected
+    :application.state/returned
+    :application.state/submitted
+    #_:application.state/withdrawn}) ; TODO withdraw support?
 
 (def CommandTypes
   #{#_::accept-license
@@ -418,7 +418,7 @@
 (defmethod apply-event [:application.event/created :workflow/dynamic]
   [application _workflow event]
   (assoc application
-         :state ::draft
+         :state :application.state/draft
          :applicantuserid (:event/actor event)
          :members [{:userid (:event/actor event)}]
          :form/id (:form/id event)
@@ -440,7 +440,7 @@
 (defmethod apply-event [:application.event/submitted :workflow/dynamic]
   [application _workflow event]
   (assoc application
-         :state ::submitted
+         :state :application.state/submitted
          :commenters #{}
          :deciders #{}
          :previous-submitted-form-contents (:submitted-form-contents application)
@@ -448,19 +448,19 @@
 
 (defmethod apply-event [:application.event/approved :workflow/dynamic]
   [application _workflow _event]
-  (assoc application :state ::approved))
+  (assoc application :state :application.state/approved))
 
 (defmethod apply-event [:application.event/rejected :workflow/dynamic]
   [application _workflow _event]
-  (assoc application :state ::rejected))
+  (assoc application :state :application.state/rejected))
 
 (defmethod apply-event [:application.event/returned :workflow/dynamic]
   [application _workflow _event]
-  (assoc application :state ::returned))
+  (assoc application :state :application.state/returned))
 
 (defmethod apply-event [:application.event/closed :workflow/dynamic]
   [application _workflow _event]
-  (assoc application :state ::closed))
+  (assoc application :state :application.state/closed))
 
 (defmethod apply-event [:application.event/decision-requested :workflow/dynamic]
   [application _workflow event]
@@ -847,7 +847,7 @@
                              application
                              injections))))
     (testing "draft can be updated multiple times"
-      (is (= {:state :rems.workflow.dynamic/draft
+      (is (= {:state :application.state/draft
               :form-contents {:items {1 "updated"}
                               :licenses {3 "approved"}
                               :accepted-licenses {"applicant" #{3}}}}
@@ -869,7 +869,7 @@
                                application
                                injections)))))
     (testing "draft can be updated after returning it to applicant"
-      (is (= {:state ::returned
+      (is (= {:state :application.state/returned
               :form-contents {:items {1 "updated"}
                               :licenses {3 "approved"}
                               :accepted-licenses {"applicant" #{3}}}
@@ -885,7 +885,7 @@
                                  injections)
                  (select-keys relevant-application-keys)))))
     (testing "resubmitting remembers the previous and current application"
-      (is (= {:state ::submitted
+      (is (= {:state :application.state/submitted
               :form-contents {:items {1 "updated"}
                               :licenses {3 "approved"}
                               :accepted-licenses {"applicant" #{3}}}
@@ -987,13 +987,13 @@
         (is (= {:errors [{:type :forbidden}]}
                (handle-command {:actor "applicant" :type ::submit} submitted injections))))
       (testing "approving"
-        (is (= ::approved (:state (apply-command submitted
-                                                 {:actor "assistant" :type ::approve}
-                                                 injections)))))
+        (is (= :application.state/approved (:state (apply-command submitted
+                                                                  {:actor "assistant" :type ::approve}
+                                                                  injections)))))
       (testing "rejecting"
-        (is (= ::rejected (:state (apply-command submitted
-                                                 {:actor "assistant" :type ::reject}
-                                                 injections))))))))
+        (is (= :application.state/rejected (:state (apply-command submitted
+                                                                  {:actor "assistant" :type ::reject}
+                                                                  injections))))))))
 
 (deftest test-submit-return-submit-approve-close
   (let [injections {:validate-form-answers (constantly nil)}
@@ -1012,9 +1012,9 @@
                                              injections)
         closed-application (apply-command approved-application {:actor "assistant" :type ::close}
                                           injections)]
-    (is (= ::returned (:state returned-application)))
-    (is (= ::approved (:state approved-application)))
-    (is (= ::closed (:state closed-application)))))
+    (is (= :application.state/returned (:state returned-application)))
+    (is (= :application.state/approved (:state approved-application)))
+    (is (= :application.state/closed (:state closed-application)))))
 
 (deftest test-decision
   (let [application (apply-events nil

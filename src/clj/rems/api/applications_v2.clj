@@ -42,7 +42,7 @@
                                     :workflow/type (:workflow/type event)
                                     ;; TODO: other workflows
                                     ;; TODO: extract an event handler for dynamic workflow specific stuff
-                                    :workflow.dynamic/state :rems.workflow.dynamic/draft
+                                    :workflow.dynamic/state :application.state/draft
                                     :workflow.dynamic/handlers (:workflow.dynamic/handlers event)
                                     :workflow.dynamic/awaiting-commenters #{}
                                     :workflow.dynamic/awaiting-deciders #{}})))
@@ -96,13 +96,13 @@
       (assoc ::previous-submitted-answers (::submitted-answers application))
       (assoc ::submitted-answers (::draft-answers application))
       (dissoc ::draft-answers)
-      (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/submitted)))
+      (assoc-in [:application/workflow :workflow.dynamic/state] :application.state/submitted)))
 
 (defmethod event-type-specific-application-view :application.event/returned
   [application event]
   (-> application
       (assoc ::draft-answers (::submitted-answers application)) ; guard against re-submit without saving a new draft
-      (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/returned)))
+      (assoc-in [:application/workflow :workflow.dynamic/state] :application.state/returned)))
 
 (defmethod event-type-specific-application-view :application.event/comment-requested
   [application event]
@@ -127,17 +127,17 @@
 (defmethod event-type-specific-application-view :application.event/approved
   [application event]
   (-> application
-      (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/approved)))
+      (assoc-in [:application/workflow :workflow.dynamic/state] :application.state/approved)))
 
 (defmethod event-type-specific-application-view :application.event/rejected
   [application event]
   (-> application
-      (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/rejected)))
+      (assoc-in [:application/workflow :workflow.dynamic/state] :application.state/rejected)))
 
 (defmethod event-type-specific-application-view :application.event/closed
   [application event]
   (-> application
-      (assoc-in [:application/workflow :workflow.dynamic/state] ::dynamic/closed)))
+      (assoc-in [:application/workflow :workflow.dynamic/state] :application.state/closed)))
 
 (deftest test-event-type-specific-application-view
   (testing "supports all event types"
@@ -541,7 +541,7 @@
                :decider
                :past-decider}
              (:application/roles application))
-       (not= ::dynamic/draft (get-in application [:application/workflow :workflow.dynamic/state]))))
+       (not= :application.state/draft (get-in application [:application/workflow :workflow.dynamic/state]))))
 
 (defn get-all-reviews-v2 [user-id]
   (->> (get-all-applications-v2 user-id)

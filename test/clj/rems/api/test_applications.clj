@@ -271,7 +271,7 @@
               applicant-event-types (map :event/type (get-in applicant-data [:application :dynamic-events]))]
           (testing "handler can see all events"
             (is (= {:id application-id
-                    :state "rems.workflow.dynamic/approved"}
+                    :state "application.state/approved"}
                    (select-keys (:application handler-data) [:id :state])))
             (is (= ["application.event/created"
                     "application.event/draft-saved"
@@ -297,7 +297,7 @@
     (testing "creating"
       (is (some? application-id))
       (let [created (get-application user-id application-id)]
-        (is (= "rems.workflow.dynamic/draft" (get-in created [:application :state])))))
+        (is (= "application.state/draft" (get-in created [:application :state])))))
 
     (testing "getting application as other user is forbidden"
       (is (response-is-forbidden?
@@ -318,7 +318,7 @@
              (send-dynamic-command user-id {:type :rems.workflow.dynamic/submit
                                             :application-id application-id})))
       (let [submitted (get-application user-id application-id)]
-        (is (= "rems.workflow.dynamic/submitted" (get-in submitted [:application :state])))
+        (is (= "application.state/submitted" (get-in submitted [:application :state])))
         (is (= ["application.event/created"
                 "application.event/submitted"]
                (map :event/type (get-in submitted [:application :dynamic-events]))))))))

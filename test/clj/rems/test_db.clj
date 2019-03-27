@@ -217,7 +217,7 @@
                                               :application-id app-id
                                               :time (time/now)
                                               :comment ""})))
-    (is (= :rems.workflow.dynamic/approved (:state (applications/get-dynamic-application-state app-id))))
+    (is (= :application.state/approved (:state (applications/get-dynamic-application-state app-id))))
 
     ;; TODO: entitlements are not tracked for dynamic applications
     (is (= [] #_["resid111" "resid222"] (sort (map :resid (db/get-entitlements {:application app-id}))))
@@ -775,7 +775,7 @@
                                                   :actor "alice"})
 
     (is (= {:applicantuserid "alice"
-            :state :rems.workflow.dynamic/draft
+            :state :application.state/draft
             :workflow workflow}
            (select-keys (applications/get-dynamic-application-state app-id) [:applicantuserid :state :workflow])))
     (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/invite-member
@@ -793,7 +793,7 @@
                                               :actor "alice"
                                               :application-id app-id
                                               :time (time/now)})))
-    (is (= :rems.workflow.dynamic/submitted
+    (is (= :application.state/submitted
            (:state (applications/get-dynamic-application-state app-id))))
     (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/add-member
                                               :actor "handler"
@@ -812,7 +812,7 @@
                                               :application-id app-id
                                               :time (time/now)
                                               :comment ""})))
-    (is (= :rems.workflow.dynamic/approved
+    (is (= :application.state/approved
            (:state (applications/get-dynamic-application-state app-id))))))
 
 (deftest test-create-demo-data!

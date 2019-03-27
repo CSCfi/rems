@@ -240,7 +240,7 @@
                                                                     :field/max-length 100}]}
                                   :application/workflow {:workflow/id 50
                                                          :workflow/type :workflow/dynamic
-                                                         :workflow.dynamic/state :rems.workflow.dynamic/draft
+                                                         :workflow.dynamic/state :application.state/draft
                                                          :workflow.dynamic/handlers #{"handler"}
                                                          :workflow.dynamic/awaiting-commenters #{}
                                                          :workflow.dynamic/awaiting-deciders #{}}}]
@@ -275,7 +275,7 @@
                     expected-application (deep-merge expected-application
                                                      {:application/last-activity (DateTime. 3000)
                                                       :application/events events
-                                                      :application/workflow {:workflow.dynamic/state ::dynamic/submitted}})]
+                                                      :application/workflow {:workflow.dynamic/state :application.state/submitted}})]
                 (is (= expected-application (apply-events events)))
 
                 (testing "> returned"
@@ -287,7 +287,7 @@
                         expected-application (deep-merge expected-application
                                                          {:application/last-activity (DateTime. 4000)
                                                           :application/events events
-                                                          :application/workflow {:workflow.dynamic/state ::dynamic/returned}
+                                                          :application/workflow {:workflow.dynamic/state :application.state/returned}
                                                           :application/form {:form/fields [{:field/previous-value "foo"}
                                                                                            {:field/previous-value "bar"}]}})]
                     (is (= expected-application (apply-events events)))
@@ -329,7 +329,7 @@
                                 expected-application (deep-merge expected-application
                                                                  {:application/last-activity (DateTime. 7000)
                                                                   :application/events events
-                                                                  :application/workflow {:workflow.dynamic/state ::dynamic/submitted}})]
+                                                                  :application/workflow {:workflow.dynamic/state :application.state/submitted}})]
                             (is (= expected-application (apply-events events)))))))
 
                     (testing "> submitted (no draft saved)"
@@ -341,7 +341,7 @@
                             expected-application (deep-merge expected-application
                                                              {:application/last-activity (DateTime. 7000)
                                                               :application/events events
-                                                              :application/workflow {:workflow.dynamic/state ::dynamic/submitted}
+                                                              :application/workflow {:workflow.dynamic/state :application.state/submitted}
                                                               ;; when there was no draft-saved event, the current and
                                                               ;; previous submitted answers must be the same
                                                               :application/form {:form/fields [{:field/value "foo"
@@ -360,7 +360,7 @@
                         expected-application (deep-merge expected-application
                                                          {:application/last-activity (DateTime. 4000)
                                                           :application/events events
-                                                          :application/workflow {:workflow.dynamic/state ::dynamic/approved}})]
+                                                          :application/workflow {:workflow.dynamic/state :application.state/approved}})]
                     (is (= expected-application (apply-events events)))
 
                     (testing "> closed"
@@ -373,7 +373,7 @@
                             expected-application (deep-merge expected-application
                                                              {:application/last-activity (DateTime. 5000)
                                                               :application/events events
-                                                              :application/workflow {:workflow.dynamic/state ::dynamic/closed}})]
+                                                              :application/workflow {:workflow.dynamic/state :application.state/closed}})]
                         (is (= expected-application (apply-events events)))))))
 
                 (testing "> rejected"
@@ -386,7 +386,7 @@
                         expected-application (deep-merge expected-application
                                                          {:application/last-activity (DateTime. 4000)
                                                           :application/events events
-                                                          :application/workflow {:workflow.dynamic/state ::dynamic/rejected}})]
+                                                          :application/workflow {:workflow.dynamic/state :application.state/rejected}})]
                     (is (= expected-application (apply-events events)))))
 
                 (testing "> comment requested"

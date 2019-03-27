@@ -48,9 +48,9 @@
 
 (defn handling-event? [app e]
   ;; event types which are definitely not by applicant
-  (or (contains? #{:rems.workflow.dynamic/approved
-                   :rems.workflow.dynamic/rejected
-                   :rems.workflow.dynamic/returned}
+  (or (contains? #{:application.state/approved
+                   :application.state/rejected
+                   :application.state/returned}
                  (:event/type e)) ; new style events
       (contains? #{"approve" "autoapprove" "reject" "return" "review"}
                  (:event e)) ; old style events
@@ -62,12 +62,12 @@
 
 (defn handled? [app]
   (or (contains? #{"approved" "rejected" "returned"
-                   :rems.workflow.dynamic/returned
-                   :rems.workflow.dynamic/approved
-                   :rems.workflow.dynamic/rejected}
+                   :application.state/returned
+                   :application.state/approved
+                   :application.state/rejected}
                  (:state app)) ;; by approver action
       (and (contains? #{"closed" "withdrawn"
-                        :rems.workflow.dynamic/closed} (:state app))
+                        :application.state/closed} (:state app))
            (some (partial handling-event? app) (concat (:events app) (:dynamic-events app))))))
 
 (defn- get-events-of-type
@@ -376,27 +376,27 @@
 ;;; Application phases
 
 (defn get-application-phases [state]
-  (cond (contains? #{"rejected" :rems.workflow.dynamic/rejected} state)
+  (cond (contains? #{"rejected" :application.state/rejected} state)
         [{:phase :apply :completed? true :text :t.phases/apply}
          {:phase :approve :completed? true :rejected? true :text :t.phases/approve}
          {:phase :result :completed? true :rejected? true :text :t.phases/rejected}]
 
-        (contains? #{"approved" :rems.workflow.dynamic/approved} state)
+        (contains? #{"approved" :application.state/approved} state)
         [{:phase :apply :completed? true :text :t.phases/apply}
          {:phase :approve :completed? true :approved? true :text :t.phases/approve}
          {:phase :result :completed? true :approved? true :text :t.phases/approved}]
 
-        (contains? #{"closed" :rems.workflow.dynamic/closed} state)
+        (contains? #{"closed" :application.state/closed} state)
         [{:phase :apply :closed? true :text :t.phases/apply}
          {:phase :approve :closed? true :text :t.phases/approve}
          {:phase :result :closed? true :text :t.phases/approved}]
 
-        (contains? #{"draft" "returned" "withdrawn" :rems.workflow.dynamic/draft} state)
+        (contains? #{"draft" "returned" "withdrawn" :application.state/draft} state)
         [{:phase :apply :active? true :text :t.phases/apply}
          {:phase :approve :text :t.phases/approve}
          {:phase :result :text :t.phases/approved}]
 
-        (contains? #{"applied" :rems.workflow.dynamic/submitted} state)
+        (contains? #{"applied" :application.state/submitted} state)
         [{:phase :apply :completed? true :text :t.phases/apply}
          {:phase :approve :active? true :text :t.phases/approve}
          {:phase :result :text :t.phases/approved}]
@@ -830,7 +830,7 @@
   (let [application (first (db/get-applications {:id application-id}))
         events (get-dynamic-application-events application-id)
         application (assoc application
-                           :state ::dynamic/draft
+                           :state :application.state/draft
                            :dynamic-events events
                            :workflow (fix-workflow-from-db (:workflow application))
                            :last-modified (or (:event/time (last events))

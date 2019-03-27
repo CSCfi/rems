@@ -48,13 +48,14 @@
         (get m :default)
         (first (vals m)))))
 
+; TODO next
 (def ^:private states
-  {:rems.workflow.dynamic/draft :t.applications.dynamic-states/draft
-   :rems.workflow.dynamic/submitted :t.applications.dynamic-states/submitted
-   :rems.workflow.dynamic/approved :t.applications.dynamic-states/approved
-   :rems.workflow.dynamic/rejected :t.applications.dynamic-states/rejected
-   :rems.workflow.dynamic/closed :t.applications.dynamic-states/closed
-   :rems.workflow.dynamic/returned :t.applications.dynamic-states/returned})
+  {:application.state/draft :t.applications.dynamic-states/draft
+   :application.state/submitted :t.applications.dynamic-states/submitted
+   :application.state/approved :t.applications.dynamic-states/approved
+   :application.state/rejected :t.applications.dynamic-states/rejected
+   :application.state/closed :t.applications.dynamic-states/closed
+   :application.state/returned :t.applications.dynamic-states/returned})
 
 (defn localize-state [state]
   (text (get states state :t.applications.states/unknown)))
