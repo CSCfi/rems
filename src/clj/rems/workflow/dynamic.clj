@@ -27,25 +27,107 @@
     :application.state/submitted
     #_:application.state/withdrawn}) ; TODO withdraw support?
 
-(def CommandTypes
-  #{#_:application.command/accept-license
-    #_:application.command/require-license
-    :application.command/accept-invitation
-    :application.command/add-member
-    :application.command/invite-member
-    :application.command/approve
-    :application.command/close
-    :application.command/comment
-    :application.command/decide
-    :application.command/reject
-    :application.command/request-comment
-    :application.command/request-decision
-    :application.command/remove-member
-    :application.command/return
-    :application.command/save-draft
-    :application.command/submit
-    :application.command/uninvite-member
-    #_:application.command/withdraw})
+(s/defschema CommandInternal
+  {:actor UserId
+   ;; TODO: tests use non-DateTime times
+   :time s/Any})
+
+(s/defschema CommandBase
+  {:type s/Keyword
+   :application-id s/Int})
+
+(s/defschema SaveDraftCommand
+  {:type (s/eq :application.command/save-draft)
+   :field-values s/Any
+   :accepted-licenses s/Any})
+
+(s/defschema SubmitCommand
+  {:type (s/eq :application.command/submit)})
+
+(s/defschema ApproveCommand
+  {:type (s/eq :application.command/approve)
+   :comment s/Str})
+
+(s/defschema RejectCommand
+  {:type (s/eq :application.command/reject)
+   :comment s/Str})
+
+(s/defschema ReturnCommand
+  {:type (s/eq :application.command/return)
+   :comment s/Str})
+
+(s/defschema CloseCommand
+  {:type (s/eq :application.command/close)
+   :comment s/Str})
+
+(s/defschema RequestDecisionCommand
+  {:type (s/eq :application.command/request-decision)
+   :deciders [UserId]
+   :comment s/Str})
+
+(s/defschema DecideCommand
+  {:type (s/eq :application.command/decide)
+   :decision s/Keyword ;; TODO: (s/enum :approved :rejected), validated now in the command handler
+   :comment s/Str})
+
+(s/defschema RequestCommentCommand
+  {:type (s/eq :application.command/request-comment)
+   :commenters [UserId]
+   :comment s/Str})
+
+(s/defschema CommentCommand
+  {:type (s/eq :application.command/comment)
+   :comment s/Str})
+
+(s/defschema AddMemberCommand
+  {:type (s/eq :application.command/add-member)
+   :member {:userid UserId}})
+
+(s/defschema InviteMemberCommand
+  {:type (s/eq :application.command/invite-member)
+   :member {:name s/Str
+            :email s/Str}})
+
+(s/defschema AcceptInvitationCommand
+  {:type (s/eq :application.command/accept-invitation)
+   :token s/Str})
+
+(s/defschema RemoveMemberCommand
+  {:type (s/eq :application.command/remove-member)
+   :member {:userid UserId}
+   :comment s/Str})
+
+(s/defschema UninviteMemberCommand
+  {:type (s/eq :application.command/uninvite-member)
+   :member {:name s/Str
+            :email s/Str}
+   :comment s/Str})
+
+(def command-schemas
+  {#_:application.command/accept-license
+   #_:application.command/require-license
+   :application.command/accept-invitation AcceptInvitationCommand
+   :application.command/add-member AddMemberCommand
+   :application.command/invite-member InviteMemberCommand
+   :application.command/approve ApproveCommand
+   :application.command/close CloseCommand
+   :application.command/comment CommentCommand
+   :application.command/decide DecideCommand
+   :application.command/reject RejectCommand
+   :application.command/request-comment RequestCommentCommand
+   :application.command/request-decision RequestDecisionCommand
+   :application.command/remove-member RemoveMemberCommand
+   :application.command/return ReturnCommand
+   :application.command/save-draft SaveDraftCommand
+   :application.command/submit SubmitCommand
+   :application.command/uninvite-member UninviteMemberCommand
+   #_:application.command/withdraw})
+
+(defn- validate-command [cmd]
+  (s/validate (merge CommandBase
+                     CommandInternal
+                     (getx command-schemas (:type cmd)))
+              cmd))
 
 (s/defschema EventBase
   {(s/optional-key :event/id) s/Int
@@ -105,7 +187,7 @@
 (s/defschema MemberAddedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/member-added)
-         :application/member {:userid s/Str}))
+         :application/member {:userid UserId}))
 (s/defschema MemberInvitedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/member-invited)
@@ -119,7 +201,7 @@
 (s/defschema MemberRemovedEvent
   (assoc EventBase
          :event/type (s/eq :application.event/member-removed)
-         :application/member {:userid s/Str}
+         :application/member {:userid UserId}
          :application/comment s/Str))
 (s/defschema MemberUninvitedEvent
   (assoc EventBase
@@ -539,7 +621,7 @@
   (keys (methods command-handler)))
 
 (deftest test-all-command-types-handled
-  (is (= CommandTypes (set (get-command-types)))))
+  (is (= (set (keys command-schemas)) (set (get-command-types)))))
 
 (defn- invalid-user-error [user-id injections]
   (cond
@@ -694,7 +776,7 @@
       (invitation-token-error application (:token cmd))
       {:success true
        :result {:event/type :application.event/member-joined
-                :event/time (:time cmd)
+                :event/time (:time cmd) ;; TODO these are redundant
                 :event/actor (:actor cmd)
                 :application/id (:application-id cmd)
                 :invitation/token (:token cmd)}}))
@@ -732,6 +814,7 @@
     result))
 
 (defn handle-command [cmd application injections]
+  (validate-command cmd)
   (let [permissions (permissions/user-permissions application (:actor cmd))]
     (if (contains? permissions (:type cmd))
       (-> (command-handler cmd application injections)
@@ -744,7 +827,10 @@
                                         :event/actor "applicant"
                                         :workflow/type :workflow/dynamic
                                         :workflow.dynamic/handlers #{"assistant"}}])
-        command {:type :application.command/save-draft
+        command {:application-id 123 :time 456
+                 :type :application.command/save-draft
+                 :field-values []
+                 :accepted-licenses []
                  :actor "applicant"}]
     (testing "executes command when user is authorized"
       (is (:success (handle-command command application {}))))
@@ -772,11 +858,15 @@
      (catch RuntimeException e#
        (ex-data e#))))
 
+;; TODO rename to be test-specific
 (defn- apply-command
   ([application cmd]
    (apply-command application cmd nil))
   ([application cmd injections]
-   (let [result (handle-command cmd application injections)
+   (let [enriched-cmd (merge {:application-id 123
+                              :time 456}
+                             cmd)
+         result (handle-command enriched-cmd application injections)
          _ (assert-ex (:success result) {:cmd cmd :result result})
          event (getx result :result)]
      (-> (apply-event application (:workflow application) event)
@@ -831,16 +921,16 @@
     (testing "only the applicant can save a draft"
       (is (= {:errors [{:type :forbidden}]}
              (handle-command {:type :application.command/save-draft
-                              :time 456
                               :actor "non-applicant"
+                              :time 456
                               :application-id 123
                               :field-values {1 "foo" 2 "bar"}
                               :accepted-licenses #{1 2}}
                              application
                              injections)
              (handle-command {:type :application.command/save-draft
-                              :time 456
                               :actor "assistant"
+                              :time 456
                               :application-id 123
                               :field-values {1 "foo" 2 "bar"}
                               :accepted-licenses #{1 2}}
@@ -852,17 +942,29 @@
                               :licenses {3 "approved"}
                               :accepted-licenses {"applicant" #{3}}}}
              (-> (apply-commands application
-                                 [{:actor "applicant" :type :application.command/save-draft :field-values {1 "original"} :accepted-licenses #{2}}
-                                  {:actor "applicant" :type :application.command/save-draft :field-values {1 "updated"} :accepted-licenses #{3}}]
+                                 [{:type :application.command/save-draft
+                                   :actor "applicant"
+                                   :field-values {1 "original"}
+                                   :accepted-licenses #{2}}
+                                  {:type :application.command/save-draft
+                                   :actor "applicant"
+                                   :field-values {1 "updated"}
+                                   :accepted-licenses #{3}}]
                                  injections)
                  (select-keys relevant-application-keys)))))
     (testing "draft cannot be updated after submitting"
       (let [application (apply-commands application
-                                        [{:actor "applicant" :type :application.command/save-draft :field-values {1 "original"} :accepted-licenses #{2}}
-                                         {:actor "applicant" :type :application.command/submit}]
+                                        [{:type :application.command/save-draft
+                                          :actor "applicant"
+                                          :field-values {1 "original"}
+                                          :accepted-licenses #{2}}
+                                         {:type :application.command/submit
+                                          :actor "applicant"}]
                                         injections)]
         (is (= {:errors [{:type :forbidden}]}
                (handle-command {:type :application.command/save-draft
+                                :application-id 123
+                                :time 456
                                 :actor "applicant"
                                 :field-values {1 "updated"}
                                 :accepted-licenses #{3}}
@@ -878,10 +980,15 @@
                                         :accepted-licenses {"applicant" #{2}}}
               :previous-submitted-form-contents nil}
              (-> (apply-commands application
-                                 [{:actor "applicant" :type :application.command/save-draft :field-values {1 "original"} :accepted-licenses #{2}}
-                                  {:actor "applicant" :type :application.command/submit}
-                                  {:actor "assistant" :type :application.command/return}
-                                  {:actor "applicant" :type :application.command/save-draft :field-values {1 "updated"} :accepted-licenses #{3}}]
+                                 [{:type :application.command/save-draft
+                                   :actor "applicant" :field-values {1 "original"} :accepted-licenses #{2}}
+                                  {:type :application.command/submit
+                                   :actor "applicant"}
+                                  {:type :application.command/return
+                                   :comment "ret"
+                                   :actor "assistant"}
+                                  {:type :application.command/save-draft
+                                   :actor "applicant" :field-values {1 "updated"} :accepted-licenses #{3}}]
                                  injections)
                  (select-keys relevant-application-keys)))))
     (testing "resubmitting remembers the previous and current application"
@@ -898,7 +1005,7 @@
              (-> (apply-commands application
                                  [{:actor "applicant" :type :application.command/save-draft :field-values {1 "original"} :accepted-licenses #{2}}
                                   {:actor "applicant" :type :application.command/submit}
-                                  {:actor "assistant" :type :application.command/return}
+                                  {:actor "assistant" :type :application.command/return :comment ""}
                                   {:actor "applicant" :type :application.command/save-draft :field-values {1 "updated"} :accepted-licenses #{3}}
                                   {:actor "applicant" :type :application.command/submit}]
                                  injections)
@@ -974,25 +1081,32 @@
                                     :application/accepted-licenses #{}}])]
     (testing "non-applicant cannot submit"
       (is (= {:errors [{:type :forbidden}]}
-             (handle-command {:actor "not-applicant" :type :application.command/submit} application injections))))
+             (handle-command {:application-id 123 :time 456
+                              :actor "not-applicant" :type :application.command/submit}
+                             application injections))))
     (testing "cannot submit non-valid forms"
       (let [application (apply-events application [{:event/type :application.event/draft-saved
                                                     :event/actor "applicant"
                                                     :application/field-values {10 ""}
                                                     :application/accepted-licenses #{}}])]
         (is (= {:errors [{:type :t.form.validation/required :field-id 10}]}
-               (handle-command {:actor "applicant" :type :application.command/submit} application injections)))))
+               (handle-command {:application-id 123 :time 456
+                                :actor "applicant" :type :application.command/submit}
+                               application injections)))))
     (let [submitted (apply-command application {:actor "applicant" :type :application.command/submit} injections)]
       (testing "cannot submit twice"
         (is (= {:errors [{:type :forbidden}]}
-               (handle-command {:actor "applicant" :type :application.command/submit} submitted injections))))
+               (handle-command {:application-id 123 :time 456
+                                :actor "applicant" :type :application.command/submit} submitted injections))))
       (testing "approving"
         (is (= :application.state/approved (:state (apply-command submitted
-                                                                  {:actor "assistant" :type :application.command/approve}
+                                                                  {:actor "assistant" :type :application.command/approve
+                                                                   :comment "fine"}
                                                                   injections)))))
       (testing "rejecting"
         (is (= :application.state/rejected (:state (apply-command submitted
-                                                                  {:actor "assistant" :type :application.command/reject}
+                                                                  {:actor "assistant" :type :application.command/reject
+                                                                   :comment "bad"}
                                                                   injections))))))))
 
 (deftest test-submit-return-submit-approve-close
@@ -1005,12 +1119,12 @@
                                     :workflow.dynamic/handlers #{"assistant"}}])
         returned-application (apply-commands application
                                              [{:actor "applicant" :type :application.command/submit}
-                                              {:actor "assistant" :type :application.command/return}]
+                                              {:actor "assistant" :type :application.command/return :comment "ret"}]
                                              injections)
         approved-application (apply-commands returned-application [{:actor "applicant" :type :application.command/submit}
-                                                                   {:actor "assistant" :type :application.command/approve}]
+                                                                   {:actor "assistant" :type :application.command/approve :comment "fine"}]
                                              injections)
-        closed-application (apply-command approved-application {:actor "assistant" :type :application.command/close}
+        closed-application (apply-command approved-application {:actor "assistant" :type :application.command/close :comment ""}
                                           injections)]
     (is (= :application.state/returned (:state returned-application)))
     (is (= :application.state/approved (:state approved-application)))
@@ -1027,46 +1141,67 @@
         injections {:valid-user? #{"deity"}}]
     (testing "required :valid-user? injection"
       (is (= {:errors [{:type :missing-injection :injection :valid-user?}]}
-             (handle-command {:actor "assistant" :deciders ["deity"] :type :application.command/request-decision}
+             (handle-command {:application-id 123 :time 456
+                              :actor "assistant" :deciders ["deity"] :type :application.command/request-decision
+                              :comment "pls"}
                              application
                              {}))))
     (testing "decider must be a valid user"
       (is (= {:errors [{:type :t.form.validation/invalid-user :userid "deity2"}]}
-             (handle-command {:actor "assistant" :deciders ["deity2"] :type :application.command/request-decision}
+             (handle-command {:application-id 123 :time 456
+                              :actor "assistant" :deciders ["deity2"] :type :application.command/request-decision
+                              :comment "pls"}
                              application
                              injections))))
     (testing "deciding before ::request-decision should fail"
       (is (= {:errors [{:type :forbidden}]}
-             (handle-command {:actor "deity" :decision :approved :type :application.command/decide}
+             (handle-command {:application-id 123 :time 456 :comment "pls"
+                              :actor "deity" :decision :approved :type :application.command/decide}
                              application
                              injections))))
-    (let [requested (apply-command application {:actor "assistant" :deciders ["deity"] :type :application.command/request-decision} injections)]
+    (let [requested (apply-command application
+                                   {:actor "assistant" :deciders ["deity"]
+                                    :type :application.command/request-decision
+                                    :comment ""}
+                                   injections)]
       (testing "request decision succesfully"
         (is (= #{"deity"} (:deciders requested))))
       (testing "only the requested user can decide"
         (is (= {:errors [{:type :forbidden}]}
-               (handle-command {:actor "deity2" :decision :approved :type :application.command/decide}
+               (handle-command {:application-id 123 :time 456
+                                :actor "deity2" :decision :approved :comment "" :type :application.command/decide}
                                requested
                                injections))))
-      (let [approved (apply-command requested {:actor "deity" :decision :approved :type :application.command/decide} injections)]
+      (let [approved (apply-command requested
+                                    {:actor "deity" :decision :approved :comment ""
+                                     :type :application.command/decide}
+                                    injections)]
         (testing "succesfully approved"
           (is (= #{} (:deciders approved))))
         (testing "cannot approve twice"
           (is (= {:errors [{:type :forbidden}]}
-                 (handle-command {:actor "deity" :decision :approved :type :application.command/decide}
+                 (handle-command {:application-id 123 :time 456 :comment ""
+                                  :actor "deity" :decision :approved :type :application.command/decide}
                                  approved
                                  injections)))))
-      (let [rejected (apply-command requested {:actor "deity" :decision :rejected :type :application.command/decide} injections)]
+      (let [rejected (apply-command requested
+                                    {:actor "deity" :decision :rejected :comment ""
+                                     :type :application.command/decide}
+                                    injections)]
         (testing "successfully rejected"
           (is (= #{} (:deciders rejected))))
         (testing "can not reject twice"
           (is (= {:errors [{:type :forbidden}]}
-                 (handle-command {:actor "deity" :decision :rejected :type :application.command/decide}
+                 (handle-command {:application-id 123 :time 456
+                                  :actor "deity" :decision :rejected :comment ""
+                                  :type :application.command/decide}
                                  rejected
                                  injections)))))
       (testing "other decisions are not possible"
         (is (= {:errors [{:type :invalid-decision :decision :foobar}]}
-               (handle-command {:actor "deity" :decision :foobar :type :application.command/decide}
+               (handle-command {:application-id 123 :time 456
+                                :actor "deity" :decision :foobar :comment ""
+                                :type :application.command/decide}
                                requested
                                injections)))))))
 
@@ -1090,15 +1225,18 @@
                               injections)))))
     (testing "only handler can add members"
       (is (= {:errors [{:type :forbidden}]}
-             (handle-command {:type :application.command/add-member :actor "applicant" :member {:userid "member1"}}
+             (handle-command {:application-id 123 :time 456
+                              :type :application.command/add-member :actor "applicant" :member {:userid "member1"}}
                              application
                              injections)
-             (handle-command {:type :application.command/add-member :actor "member1" :member {:userid "member2"}}
+             (handle-command {:application-id 123 :time 456
+                              :type :application.command/add-member :actor "member1" :member {:userid "member2"}}
                              application
                              injections))))
     (testing "only valid users can be added"
       (is (= {:errors [{:type :t.form.validation/invalid-user :userid "member3"}]}
-             (handle-command {:type :application.command/add-member :actor "assistant" :member {:userid "member3"}}
+             (handle-command {:application-id 123 :time 456
+                              :type :application.command/add-member :actor "assistant" :member {:userid "member3"}}
                              application
                              injections))))
     (testing "added members can see the application"
@@ -1125,7 +1263,11 @@
     (is (= "very-secure"
            (:invitation/token
             (:result
-             (handle-command {:type :application.command/invite-member :actor "applicant" :member {:name "Member Applicant 1" :email "member1@applicants.com"}} application injections))))
+             (handle-command {:application-id 123 :time 456
+                              :type :application.command/invite-member :actor "applicant"
+                              :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
+                             application
+                             injections))))
         "should generate secure token")
     (testing "invite two members by handler"
       (let [application (apply-events application [{:event/type :application.event/submitted
@@ -1138,7 +1280,9 @@
                                 injections))))))
     (testing "only applicant or handler can invite members"
       (is (= {:errors [{:type :forbidden}]}
-             (handle-command {:type :application.command/invite-member :actor "member1" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
+             (handle-command {:application-id 123 :time 456
+                              :type :application.command/invite-member :actor "member1"
+                              :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
                              application
                              injections))))
     (let [submitted (apply-events application
@@ -1146,7 +1290,9 @@
                                     :event/actor "applicant"}])]
       (testing "applicant can't invite members to submitted application"
         (is (= {:errors [{:type :forbidden}]}
-               (handle-command {:type :application.command/invite-member :actor "applicant" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
+               (handle-command {:application-id 123 :time 456
+                                :type :application.command/invite-member :actor "applicant"
+                                :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
                                submitted
                                injections))))
       (testing "handler can invite members to submitted application"
@@ -1249,29 +1395,34 @@
       (is (= [{:userid "applicant"}]
              (:members
               (apply-commands application
-                              [{:type :application.command/remove-member :actor "applicant" :member {:userid "somebody"}}]
+                              [{:type :application.command/remove-member :actor "applicant" :member {:userid "somebody"}
+                                :comment ""}]
                               injections)))))
     (testing "remove applicant by applicant"
       (is (= {:errors [{:type :cannot-remove-applicant}]}
-             (handle-command {:type :application.command/remove-member :actor "applicant" :member {:userid "applicant"}}
+             (handle-command {:application-id 123 :time 456 :comment ""
+                              :type :application.command/remove-member :actor "applicant" :member {:userid "applicant"}}
                              application
                              injections))))
     (testing "remove member by handler"
       (is (= [{:userid "applicant"}]
              (:members
               (apply-commands application
-                              [{:type :application.command/remove-member :actor "assistant" :member {:userid "somebody"}}]
+                              [{:type :application.command/remove-member :actor "assistant" :member {:userid "somebody"}
+                                :comment ""}]
                               injections)))))
     (testing "only members can be removed"
       (is (= {:errors [{:type :user-not-member :user {:userid "notamember"}}]}
-             (handle-command {:type :application.command/remove-member :actor "assistant" :member {:userid "notamember"}}
+             (handle-command {:application-id 123 :time 456 :comment ""
+                              :type :application.command/remove-member :actor "assistant" :member {:userid "notamember"}}
                              application
                              injections))))
     (testing "removed members cannot see the application"
       (is (-> application
               (see-application? "somebody")))
       (is (not (-> application
-                   (apply-commands [{:type :application.command/remove-member :actor "applicant" :member {:userid "somebody"}}]
+                   (apply-commands [{:type :application.command/remove-member :actor "applicant" :member {:userid "somebody"}
+                                     :comment ""}]
                                    injections)
                    (see-application? "somebody")))))))
 
@@ -1292,17 +1443,21 @@
       (is (= []
              (:invited-members
               (apply-commands application
-                              [{:type :application.command/uninvite-member :actor "applicant" :member {:name "Some Body" :email "some@body.com"}}]
+                              [{:type :application.command/uninvite-member :actor "applicant" :member {:name "Some Body" :email "some@body.com"}
+                                :comment ""}]
                               injections)))))
     (testing "uninvite member by handler"
       (is (= []
              (:invited-members
               (apply-commands application
-                              [{:type :application.command/uninvite-member :actor "assistant" :member {:name "Some Body" :email "some@body.com"}}]
+                              [{:type :application.command/uninvite-member :actor "assistant" :member {:name "Some Body" :email "some@body.com"}
+                                :comment ""}]
                               injections)))))
     (testing "only invited members can be uninvited"
       (is (= {:errors [{:type :user-not-member :user {:name "Not Member" :email "not@member.com"}}]}
-             (handle-command {:type :application.command/uninvite-member :actor "assistant" :member {:name "Not Member" :email "not@member.com"}}
+             (handle-command {:application-id 123 :time 456
+                              :type :application.command/uninvite-member :actor "assistant" :member {:name "Not Member" :email "not@member.com"}
+                              :comment ""}
                              application
                              injections))))))
 
@@ -1317,45 +1472,52 @@
         injections {:valid-user? #{"commenter" "commenter2" "commenter3"}}]
     (testing "required :valid-user? injection"
       (is (= {:errors [{:type :missing-injection :injection :valid-user?}]}
-             (handle-command {:actor "assistant" :commenters ["commenter"] :type :application.command/request-comment}
+             (handle-command {:application-id 123 :time 456 :comment ""
+                              :actor "assistant" :commenters ["commenter"] :type :application.command/request-comment}
                              application
                              {}))))
     (testing "commenters must not be empty"
       (is (= {:errors [{:type :must-not-be-empty :key :commenters}]}
-             (handle-command {:actor "assistant" :commenters [] :type :application.command/request-comment}
+             (handle-command {:application-id 123 :time 456 :comment ""
+                              :actor "assistant" :commenters [] :type :application.command/request-comment}
                              application
                              {}))))
     (testing "commenters must be a valid users"
       (is (= {:errors [{:type :t.form.validation/invalid-user :userid "invaliduser"} {:type :t.form.validation/invalid-user :userid "invaliduser2"}]}
-             (handle-command {:actor "assistant" :commenters ["invaliduser" "commenter" "invaliduser2"] :type :application.command/request-comment}
+             (handle-command {:application-id 123 :time 456 :comment ""
+                              :actor "assistant" :commenters ["invaliduser" "commenter" "invaliduser2"] :type :application.command/request-comment}
                              application
                              injections))))
     (testing "commenting before ::request-comment should fail"
       (is (= {:errors [{:type :forbidden}]}
-             (handle-command {:actor "commenter" :decision :approved :type :application.command/comment}
+             (handle-command {:application-id 123 :time 456
+                              :actor "commenter" :comment "" :type :application.command/comment}
                              application
                              injections))))
     (let [requested (apply-commands application
-                                    [{:actor "assistant" :commenters ["commenter" "commenter2"] :type :application.command/request-comment}
+                                    [{:actor "assistant" :commenters ["commenter" "commenter2"] :comment "" :type :application.command/request-comment}
                                      ;; Make a new request that should partly override previous
-                                     {:actor "assistant" :commenters ["commenter"] :type :application.command/request-comment}]
+                                     {:actor "assistant" :commenters ["commenter"] :comment "" :type :application.command/request-comment}]
                                     injections)]
       (testing "request comment succesfully"
         (is (= #{"commenter2" "commenter"} (:commenters requested))))
       (testing "only the requested commenter can comment"
         (is (= {:errors [{:type :forbidden}]}
-               (handle-command {:actor "commenter3" :comment "..." :type :application.command/comment}
+               (handle-command {:application-id 123 :time 456
+                                :actor "commenter3" :comment "..." :type :application.command/comment}
                                requested
                                injections))))
       (testing "comments are linked to different requests"
         (is (not (= (get-in requested [::latest-comment-request-by-user "commenter"])
                     (get-in requested [::latest-comment-request-by-user "commenter2"]))))
         (is (= (get-in requested [::latest-comment-request-by-user "commenter"])
-               (get-in (handle-command {:actor "commenter" :comment "..." :type :application.command/comment}
+               (get-in (handle-command {:application-id 123 :time 456
+                                        :actor "commenter" :comment "..." :type :application.command/comment}
                                        requested injections)
                        [:result :application/request-id])))
         (is (= (get-in requested [::latest-comment-request-by-user "commenter2"])
-               (get-in (handle-command {:actor "commenter2" :comment "..." :type :application.command/comment}
+               (get-in (handle-command {:application-id 123 :time 456
+                                        :actor "commenter2" :comment "..." :type :application.command/comment}
                                        requested injections)
                        [:result :application/request-id]))))
       (let [commented (apply-command requested {:actor "commenter" :comment "..." :type :application.command/comment} injections)]
@@ -1363,7 +1525,8 @@
           (is (= #{"commenter2"} (:commenters commented))))
         (testing "cannot comment twice"
           (is (= {:errors [{:type :forbidden}]}
-                 (handle-command {:actor "commenter" :comment "..." :type :application.command/comment}
+                 (handle-command {:application-id 123 :time 456
+                                  :actor "commenter" :comment "..." :type :application.command/comment}
                                  commented
                                  injections))))
         (testing "other commenter can still comment"
