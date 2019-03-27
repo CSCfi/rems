@@ -211,10 +211,11 @@
       :roles #{:logged-in}
       :body [request Command]
       :return SuccessResponse
-      (let [cmd (assoc request :actor (getx-user-id))
-            fixed (fix-command-from-api cmd)
-            fixed (assoc fixed :time (time/now))
-            errors (applications/command! fixed)]
+      (let [command (-> request
+                        (fix-command-from-api)
+                        (assoc :actor (getx-user-id))
+                        (assoc :time (time/now)))
+            errors (applications/command! command)]
         (if errors
           (ok {:success false
                :errors (:errors errors)})
