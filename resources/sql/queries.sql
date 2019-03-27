@@ -144,15 +144,6 @@ LEFT OUTER JOIN catalogue_item ci ON ci.id = ciai.catItemId
 LEFT OUTER JOIN application_form form ON form.id = ci.formId
 WHERE ciai.catAppId = :application;
 
--- :name get-form-for-item :? :1
-SELECT
-  form.id as formid,
-  form.title as formtitle,
-  form.visibility as formvisibility
-FROM catalogue_item ci
-LEFT OUTER JOIN application_form form ON form.id = ci.formId
-WHERE ci.id = :item;
-
 -- :name get-form-items :? :*
 SELECT
   item.id,
@@ -273,11 +264,6 @@ VALUES (:itemId, :key, :langCode, :label, :displayOrder);
 SELECT itemId, key, langCode, label, displayOrder
 FROM application_form_item_options
 WHERE itemId = :item;
-
--- :name end-form-item! :!
-UPDATE application_form_item
-SET endt = current_timestamp
-WHERE id = :id;
 
 -- :name create-application! :insert
 INSERT INTO catalogue_item_application
@@ -659,9 +645,6 @@ VALUES (:application, :user, :round, :event, :comment,
 /*~ (if (:eventdata params) */ :eventdata::jsonb /*~*/ NULL /*~ ) ~*/
 );
 
--- :name get-application-states :? :*
-SELECT unnest(enum_range(NULL::application_state));
-
 -- :name log-entitlement-post! :insert
 INSERT INTO entitlement_post_log (payload, status)
 VALUES (:payload::jsonb, :status);
@@ -679,19 +662,6 @@ SELECT app.id
 FROM catalogue_item_application app
 JOIN application_event evt ON (app.id = evt.appid)
 WHERE evt.eventdata->>'invitation/token' = :token
-
--- :name get-invitation-tokens :? :*
-SELECT
-evt.eventdata->>'event/type' AS event,
-evt.eventdata->>'invitation/token' AS token,
-evt.eventdata->>'event/actor' AS actor,
-evt.eventdata->'application/member'->>'name' AS name,
-evt.eventdata->'application/member'->>'email' AS email
-FROM application_event evt
-WHERE evt.eventdata->>'invitation/token' IS NOT NULL
-/*~ (when (:appid params) */
-AND appid = :appid
-/*~ ) ~*/
 
 -- :name get-poller-state :? :1
 SELECT state::TEXT FROM poller_state
