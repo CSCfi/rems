@@ -208,11 +208,11 @@
       :time (time/now)
       :actor uid})
 
-    (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/submit
+    (is (nil? (applications/dynamic-command! {:type :application.command/submit
                                               :actor uid
                                               :application-id app-id
                                               :time (time/now)})))
-    (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/approve
+    (is (nil? (applications/dynamic-command! {:type :application.command/approve
                                               :actor "handler"
                                               :application-id app-id
                                               :time (time/now)
@@ -703,7 +703,7 @@
                                                         :catalogue-item-ids [item1 item2]
                                                         :time (time/now)
                                                         :actor uid})
-          (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/submit
+          (is (nil? (applications/dynamic-command! {:type :application.command/submit
                                                     :actor uid
                                                     :application-id app-id
                                                     :time (time/now)})))
@@ -712,7 +712,7 @@
             (is (empty? (db/get-entitlements {:application app-id})))
             (is (empty? (stub/recorded-requests server))))
 
-          (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/approve
+          (is (nil? (applications/dynamic-command! {:type :application.command/approve
                                                     :actor admin
                                                     :application-id app-id
                                                     :comment ""
@@ -733,7 +733,7 @@
                         {"resource" "resource2" "application" app-id "user" "bob" "mail" "b@o.b"}]
                        body)))))
 
-          (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/close
+          (is (nil? (applications/dynamic-command! {:type :application.command/close
                                                     :actor admin
                                                     :application-id app-id
                                                     :comment ""
@@ -778,36 +778,36 @@
             :state :application.state/draft
             :workflow workflow}
            (select-keys (applications/get-dynamic-application-state app-id) [:applicantuserid :state :workflow])))
-    (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/invite-member
+    (is (nil? (applications/dynamic-command! {:type :application.command/invite-member
                                               :actor "alice"
                                               :member {:name "Jane Doe" :email "jane.doe@members.com"}
                                               :application-id app-id
                                               :time (time/now)})))
-    (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/save-draft
+    (is (nil? (applications/dynamic-command! {:type :application.command/save-draft
                                               :actor "alice"
                                               :application-id app-id
                                               :time (time/now)
                                               :field-values {form-item "X"}
                                               :accepted-licenses #{}})))
-    (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/submit
+    (is (nil? (applications/dynamic-command! {:type :application.command/submit
                                               :actor "alice"
                                               :application-id app-id
                                               :time (time/now)})))
     (is (= :application.state/submitted
            (:state (applications/get-dynamic-application-state app-id))))
-    (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/add-member
+    (is (nil? (applications/dynamic-command! {:type :application.command/add-member
                                               :actor "handler"
                                               :member {:userid "bob"}
                                               :application-id app-id
                                               :time (time/now)})))
-    (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/invite-member
+    (is (nil? (applications/dynamic-command! {:type :application.command/invite-member
                                               :actor "handler"
                                               :member {:name "John Doe" :email "john.doe@members.com"}
                                               :application-id app-id
                                               :time (time/now)})))
     (is (= [{:userid "alice"} {:userid "bob"}]
            (:members (applications/get-dynamic-application-state app-id))))
-    (is (nil? (applications/dynamic-command! {:type :rems.workflow.dynamic/approve
+    (is (nil? (applications/dynamic-command! {:type :application.command/approve
                                               :actor "handler"
                                               :application-id app-id
                                               :time (time/now)

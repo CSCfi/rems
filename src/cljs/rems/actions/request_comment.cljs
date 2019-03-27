@@ -47,7 +47,7 @@
    (status-modal/common-pending-handler! (text :t.actions/request-comment))
    (post! "/api/applications/command"
           {:params {:application-id application-id
-                    :type :rems.workflow.dynamic/request-comment
+                    :type :application.command/request-comment
                     :comment comment
                     :commenters (map :userid commenters)}
            :handler (partial status-modal/common-success-handler! on-finished)

@@ -126,7 +126,7 @@
   (post! "/api/applications/command"
          {:handler (partial status-modal/common-success-handler! #(rf/dispatch [::enter-application-page application-id]))
           :error-handler status-modal/common-error-handler!
-          :params {:type :rems.workflow.dynamic/save-draft
+          :params {:type :application.command/save-draft
                    :application-id application-id
                    :field-values field-values
                    :accepted-licenses accepted-licenses}}))
@@ -157,11 +157,11 @@
                                                                         :error-content (format-validation-errors application (:errors response))})
                                               (rf/dispatch [::set-validation-errors (:errors response)]))))
                                :error-handler status-modal/common-error-handler!
-                               :params {:type :rems.workflow.dynamic/submit
+                               :params {:type :application.command/submit
                                         :application-id application-id}})
                        (status-modal/common-error-handler! response)))
           :error-handler status-modal/common-error-handler!
-          :params {:type :rems.workflow.dynamic/save-draft
+          :params {:type :application.command/save-draft
                    :application-id application-id
                    :field-values field-values
                    :accepted-licenses accepted-licenses}}))
@@ -762,10 +762,10 @@
         members (:application/members application)
         invited-members (:application/invited-members application)
         possible-commands (:application/permissions application)
-        can-add? (contains? possible-commands :rems.workflow.dynamic/add-member)
-        can-remove? (contains? possible-commands :rems.workflow.dynamic/remove-member)
-        can-invite? (contains? possible-commands :rems.workflow.dynamic/invite-member)
-        can-uninvite? (contains? possible-commands :rems.workflow.dynamic/uninvite-member)]
+        can-add? (contains? possible-commands :application.command/add-member)
+        can-remove? (contains? possible-commands :application.command/remove-member)
+        can-invite? (contains? possible-commands :application.command/invite-member)
+        can-uninvite? (contains? possible-commands :application.command/uninvite-member)]
     [collapsible/component
      {:id id
       :title (text :t.applicant-info/applicants)
@@ -803,16 +803,16 @@
                 [add-member-form application-id (partial reload! application-id)]]]}]))
 
 (defn- dynamic-actions [application]
-  (let [commands-and-actions [:rems.workflow.dynamic/save-draft [save-button]
-                              :rems.workflow.dynamic/submit [submit-button]
-                              :rems.workflow.dynamic/return [return-action-button]
-                              :rems.workflow.dynamic/request-decision [request-decision-action-button]
-                              :rems.workflow.dynamic/decide [decide-action-button]
-                              :rems.workflow.dynamic/request-comment [request-comment-action-button]
-                              :rems.workflow.dynamic/comment [comment-action-button]
-                              :rems.workflow.dynamic/approve [approve-reject-action-button]
-                              :rems.workflow.dynamic/reject [approve-reject-action-button]
-                              :rems.workflow.dynamic/close [close-action-button]]]
+  (let [commands-and-actions [:application.command/save-draft [save-button]
+                              :application.command/submit [submit-button]
+                              :application.command/return [return-action-button]
+                              :application.command/request-decision [request-decision-action-button]
+                              :application.command/decide [decide-action-button]
+                              :application.command/request-comment [request-comment-action-button]
+                              :application.command/comment [comment-action-button]
+                              :application.command/approve [approve-reject-action-button]
+                              :application.command/reject [approve-reject-action-button]
+                              :application.command/close [close-action-button]]]
     (distinct (for [[command action] (partition 2 commands-and-actions)
                     :when (contains? (:application/permissions application) command)]
                 action))))
@@ -930,8 +930,8 @@
                               :application/invited-members #{{:name "John Smith" :email "john.smith@invited.com"}}
                               :application/licenses [{:license/id 1}]
                               :application/accepted-licenses {"developer" #{1}}
-                              :application/permissions #{:rems.workflow.dynamic/add-member
-                                                         :rems.workflow.dynamic/invite-member}}])
+                              :application/permissions #{:application.command/add-member
+                                                         :application.command/invite-member}}])
 
    (component-info disabled-items-warning)
    (example "no disabled items"

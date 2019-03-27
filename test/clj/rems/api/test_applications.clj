@@ -188,36 +188,36 @@
                 "application.event/draft-saved"
                 "application.event/submitted"]
                (map :event/type (get-in data [:application :dynamic-events]))))
-        (is (= ["rems.workflow.dynamic/remove-member"
-                "rems.workflow.dynamic/uninvite-member"]
+        (is (= ["application.command/remove-member"
+                "application.command/uninvite-member"]
                (get-in data [:application :possible-commands])))))
 
     (testing "getting dynamic application as handler"
       (let [data (get-application handler-id application-id)]
         (is (= "workflow/dynamic" (get-in data [:application :workflow :type])))
-        (is (= #{"rems.workflow.dynamic/request-comment"
-                 "rems.workflow.dynamic/request-decision"
-                 "rems.workflow.dynamic/reject"
-                 "rems.workflow.dynamic/approve"
-                 "rems.workflow.dynamic/return"
-                 "rems.workflow.dynamic/add-member"
-                 "rems.workflow.dynamic/remove-member"
-                 "rems.workflow.dynamic/invite-member"
-                 "rems.workflow.dynamic/uninvite-member"
+        (is (= #{"application.command/request-comment"
+                 "application.command/request-decision"
+                 "application.command/reject"
+                 "application.command/approve"
+                 "application.command/return"
+                 "application.command/add-member"
+                 "application.command/remove-member"
+                 "application.command/invite-member"
+                 "application.command/uninvite-member"
                  "see-everything"}
                (set (get-in data [:application :possible-commands]))))))
 
     (testing "send command without user"
       (is (= {:success false
               :errors [{:type "forbidden"}]}
-             (send-dynamic-command "" {:type :rems.workflow.dynamic/approve
+             (send-dynamic-command "" {:type :application.command/approve
                                        :application-id application-id}))
           "user should be forbidden to send command"))
 
     (testing "send command with a user that is not a handler"
       (is (= {:success false
               :errors [{:type "forbidden"}]}
-             (send-dynamic-command user-id {:type :rems.workflow.dynamic/approve
+             (send-dynamic-command user-id {:type :application.command/approve
                                             :application-id application-id
                                             :comment ""}))
           "user should be forbidden to send command"))
@@ -226,7 +226,7 @@
       (testing "even handler cannot comment without request"
         (is (= {:errors [{:type "forbidden"}], :success false}
                (send-dynamic-command handler-id
-                                     {:type :rems.workflow.dynamic/comment
+                                     {:type :application.command/comment
                                       :application-id application-id
                                       :comment "What am I commenting on?"}))))
       (testing "comment with request"
@@ -234,13 +234,13 @@
                                         [:application :dynamic-events]))]
           (testing "requesting comment"
             (is (= {:success true} (send-dynamic-command handler-id
-                                                         {:type :rems.workflow.dynamic/request-comment
+                                                         {:type :application.command/request-comment
                                                           :application-id application-id
                                                           :commenters [decider-id commenter-id]
                                                           :comment "What say you?"}))))
           (testing "commenter can now comment"
             (is (= {:success true} (send-dynamic-command commenter-id
-                                                         {:type :rems.workflow.dynamic/comment
+                                                         {:type :application.command/comment
                                                           :application-id application-id
                                                           :comment "Yeah, I dunno"}))))
           (testing "comment was linked to request"
@@ -251,18 +251,18 @@
                      (:application/request-id comment-event)))))))
       (testing "request-decision"
         (is (= {:success true} (send-dynamic-command handler-id
-                                                     {:type :rems.workflow.dynamic/request-decision
+                                                     {:type :application.command/request-decision
                                                       :application-id application-id
                                                       :deciders [decider-id]
                                                       :comment ""}))))
       (testing "decide"
         (is (= {:success true} (send-dynamic-command decider-id
-                                                     {:type :rems.workflow.dynamic/decide
+                                                     {:type :application.command/decide
                                                       :application-id application-id
                                                       :decision :approved
                                                       :comment ""}))))
       (testing "approve"
-        (is (= {:success true} (send-dynamic-command handler-id {:type :rems.workflow.dynamic/approve
+        (is (= {:success true} (send-dynamic-command handler-id {:type :application.command/approve
                                                                  :application-id application-id
                                                                  :comment ""})))
         (let [handler-data (get-application handler-id application-id)
@@ -308,14 +308,14 @@
     (testing "modifying application as other user is forbidden"
       (is (= {:success false
               :errors [{:type "forbidden"}]}
-             (send-dynamic-command "bob" {:type :rems.workflow.dynamic/save-draft
+             (send-dynamic-command "bob" {:type :application.command/save-draft
                                           :application-id application-id
                                           :field-values {}
                                           :accepted-licenses #{}}))))
 
     (testing "submitting"
       (is (= {:success true}
-             (send-dynamic-command user-id {:type :rems.workflow.dynamic/submit
+             (send-dynamic-command user-id {:type :application.command/submit
                                             :application-id application-id})))
       (let [submitted (get-application user-id application-id)]
         (is (= "application.state/submitted" (get-in submitted [:application :state])))
@@ -380,7 +380,7 @@
                          handler)]
         (is (response-is-forbidden? response))))
     (testing "submit application"
-      (is (= {:success true} (send-dynamic-command user-id {:type :rems.workflow.dynamic/submit
+      (is (= {:success true} (send-dynamic-command user-id {:type :application.command/submit
                                                             :application-id app-id}))))
     (testing "uploading attachment for a submitted application"
       (let [response (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
@@ -410,13 +410,13 @@
                                          handler))))
     (testing "send command without authentication"
       (is (response-is-unauthorized? (-> (request :post "/api/applications/command")
-                                         (json-body {:type :rems.workflow.dynamic/submit
+                                         (json-body {:type :application.command/submit
                                                      :application-id app-id})
                                          handler))))
     (testing "send command with wrong api-key"
       (is (response-is-unauthorized? (-> (request :post "/api/applications/command")
                                          (authenticate "invalid-api-key" "alice")
-                                         (json-body {:type :rems.workflow.dynamic/submit
+                                         (json-body {:type :application.command/submit
                                                      :application-id app-id})
                                          handler))))
     (testing "upload attachment without authentication"
@@ -450,7 +450,7 @@
                           app-id))))
 
     (testing "lists submitted in open reviews"
-      (is (= {:success true} (send-dynamic-command "alice" {:type :rems.workflow.dynamic/submit
+      (is (= {:success true} (send-dynamic-command "alice" {:type :application.command/submit
                                                             :application-id app-id})))
       (is (contains? (get-ids (get-v2-open-reviews "developer"))
                      app-id))
@@ -458,7 +458,7 @@
                           app-id))))
 
     (testing "lists handled in handled reviews"
-      (is (= {:success true} (send-dynamic-command "developer" {:type :rems.workflow.dynamic/approve
+      (is (= {:success true} (send-dynamic-command "developer" {:type :application.command/approve
                                                                 :application-id app-id
                                                                 :comment ""})))
       (is (not (contains? (get-ids (get-v2-open-reviews "developer"))

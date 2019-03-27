@@ -24,7 +24,7 @@
    (status-modal/common-pending-handler! (text :t.actions/invite-member))
    (post! "/api/applications/command"
           {:params {:application-id application-id
-                    :type :rems.workflow.dynamic/invite-member
+                    :type :application.command/invite-member
                     :member member}
            :handler (partial status-modal/common-success-handler! on-finished)
            :error-handler status-modal/common-error-handler!})

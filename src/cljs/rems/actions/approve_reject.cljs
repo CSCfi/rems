@@ -19,7 +19,7 @@
    (status-modal/common-pending-handler! (text :t.actions/approve))
    (post! "/api/applications/command"
           {:params {:application-id application-id
-                    :type :rems.workflow.dynamic/approve
+                    :type :application.command/approve
                     :comment comment}
            :handler (partial status-modal/common-success-handler! on-finished)
            :error-handler status-modal/common-error-handler!})
@@ -31,7 +31,7 @@
    (status-modal/common-pending-handler! (text :t.actions/reject))
    (post! "/api/applications/command"
           {:params {:application-id application-id
-                    :type :rems.workflow.dynamic/reject
+                    :type :application.command/reject
                     :comment comment}
            :handler (partial status-modal/common-success-handler! on-finished)
            :error-handler status-modal/common-error-handler!})

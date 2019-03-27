@@ -46,7 +46,7 @@
    (status-modal/common-pending-handler! (text :t.actions/request-decision))
    (post! "/api/applications/command"
           {:params {:application-id application-id
-                    :type :rems.workflow.dynamic/request-decision
+                    :type :application.command/request-decision
                     :comment comment
                     :deciders (map :userid deciders)}
            :handler (partial status-modal/common-success-handler! on-finished)

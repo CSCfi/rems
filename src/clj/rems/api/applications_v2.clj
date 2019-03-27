@@ -548,9 +548,9 @@
        (filter review?)))
 
 (defn- open-review? [application]
-  (some #{::dynamic/approve
-          ::dynamic/comment
-          ::dynamic/decide}
+  (some #{:application.command/approve
+          :application.command/comment
+          :application.command/decide}
         (:application/permissions application)))
 
 (defn get-open-reviews-v2 [user-id]

@@ -137,7 +137,7 @@
            (is-actor? user-id (actors/get-by-role (:id application) (:curround application) role)))
       (and (= "approver" role)
            (contains? (dynamic/possible-commands user-id (get-application-state (:id application)))
-                      :rems.workflow.dynamic/approve))))
+                      :application.command/approve))))
 
 (declare get-application-state)
 
@@ -195,7 +195,7 @@
   "Checks if the current user can perform a comment action for the given application."
   [user-id application-id]
   (let [application (dynamic/assoc-possible-commands user-id (get-application-state application-id))]
-    (contains? (get application :possible-commands) :rems.workflow.dynamic/comment)))
+    (contains? (get application :possible-commands) :application.command/comment)))
 
 ;; TODO add to tests
 (defn- is-decider?
@@ -210,7 +210,7 @@
   "Checks if the current user can perform a decide action for the given application."
   [user-id application-id]
   (let [application (dynamic/assoc-possible-commands user-id (get-application-state application-id))]
-    (contains? (get application :possible-commands) :rems.workflow.dynamic/decide)))
+    (contains? (get application :possible-commands) :application.command/decide)))
 
 (defn get-approvers [application]
   (actors/get-by-role (:id application) "approver"))
@@ -958,7 +958,7 @@
 
 (defn accept-invitation [user-id invitation-token]
   (or (when-let [application-id (:id (db/get-application-by-invitation-token {:token invitation-token}))]
-        (let [response (dynamic-command! {:type :rems.workflow.dynamic/accept-invitation
+        (let [response (dynamic-command! {:type :application.command/accept-invitation
                                           :actor user-id
                                           :application-id application-id
                                           :token invitation-token
