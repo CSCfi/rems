@@ -17,6 +17,7 @@
             [rems.db.core :as db]
             [rems.db.entitlements :as entitlements]
             [rems.db.roles :as roles]
+            [rems.db.test-data :as test-data]
             [rems.db.users :as users]
             [rems.db.workflow-actors :as actors]
             rems.poller.entitlements
@@ -813,3 +814,8 @@
                                               :comment ""})))
     (is (= :rems.workflow.dynamic/approved
            (:state (applications/get-dynamic-application-state app-id))))))
+
+(deftest test-create-demo-data!
+  ;; just a smoke test, check that create-demo-data doesn't fail
+  (test-data/create-demo-data!)
+  (is true))
