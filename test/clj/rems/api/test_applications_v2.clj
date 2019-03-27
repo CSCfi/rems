@@ -143,6 +143,7 @@
                      :workflow.dynamic/handlers #{"handler"}}]
             expected-application {:application/id 1
                                   :application/external-id "extid"
+                                  :application/state :application.state/draft
                                   :application/created (DateTime. 1000)
                                   :application/modified (DateTime. 1000)
                                   :application/last-activity (DateTime. 1000)
@@ -240,7 +241,6 @@
                                                                     :field/max-length 100}]}
                                   :application/workflow {:workflow/id 50
                                                          :workflow/type :workflow/dynamic
-                                                         :workflow.dynamic/state :application.state/draft
                                                          :workflow.dynamic/handlers #{"handler"}
                                                          :workflow.dynamic/awaiting-commenters #{}
                                                          :workflow.dynamic/awaiting-deciders #{}}}]
@@ -272,10 +272,10 @@
                                          :event/time (DateTime. 3000)
                                          :event/actor "applicant"
                                          :application/id 1})
-                    expected-application (deep-merge expected-application
-                                                     {:application/last-activity (DateTime. 3000)
-                                                      :application/events events
-                                                      :application/workflow {:workflow.dynamic/state :application.state/submitted}})]
+                    expected-application (merge expected-application
+                                                {:application/last-activity (DateTime. 3000)
+                                                 :application/events events
+                                                 :application/state :application.state/submitted})]
                 (is (= expected-application (apply-events events)))
 
                 (testing "> returned"
@@ -287,7 +287,7 @@
                         expected-application (deep-merge expected-application
                                                          {:application/last-activity (DateTime. 4000)
                                                           :application/events events
-                                                          :application/workflow {:workflow.dynamic/state :application.state/returned}
+                                                          :application/state :application.state/returned
                                                           :application/form {:form/fields [{:field/previous-value "foo"}
                                                                                            {:field/previous-value "bar"}]}})]
                     (is (= expected-application (apply-events events)))
@@ -326,10 +326,10 @@
                                               :event/time (DateTime. 7000)
                                               :event/actor "applicant"
                                               :application/id 1})
-                                expected-application (deep-merge expected-application
-                                                                 {:application/last-activity (DateTime. 7000)
-                                                                  :application/events events
-                                                                  :application/workflow {:workflow.dynamic/state :application.state/submitted}})]
+                                expected-application (merge expected-application
+                                                            {:application/last-activity (DateTime. 7000)
+                                                             :application/events events
+                                                             :application/state :application.state/submitted})]
                             (is (= expected-application (apply-events events)))))))
 
                     (testing "> submitted (no draft saved)"
@@ -341,7 +341,7 @@
                             expected-application (deep-merge expected-application
                                                              {:application/last-activity (DateTime. 7000)
                                                               :application/events events
-                                                              :application/workflow {:workflow.dynamic/state :application.state/submitted}
+                                                              :application/state :application.state/submitted
                                                               ;; when there was no draft-saved event, the current and
                                                               ;; previous submitted answers must be the same
                                                               :application/form {:form/fields [{:field/value "foo"
@@ -357,10 +357,10 @@
                                       :event/actor "handler"
                                       :application/id 1
                                       :application/comment "looks good"})
-                        expected-application (deep-merge expected-application
-                                                         {:application/last-activity (DateTime. 4000)
-                                                          :application/events events
-                                                          :application/workflow {:workflow.dynamic/state :application.state/approved}})]
+                        expected-application (merge expected-application
+                                                    {:application/last-activity (DateTime. 4000)
+                                                     :application/events events
+                                                     :application/state :application.state/approved})]
                     (is (= expected-application (apply-events events)))
 
                     (testing "> closed"
@@ -370,10 +370,10 @@
                                           :event/actor "handler"
                                           :application/id 1
                                           :application/comment "the project is finished"})
-                            expected-application (deep-merge expected-application
-                                                             {:application/last-activity (DateTime. 5000)
-                                                              :application/events events
-                                                              :application/workflow {:workflow.dynamic/state :application.state/closed}})]
+                            expected-application (merge expected-application
+                                                        {:application/last-activity (DateTime. 5000)
+                                                         :application/events events
+                                                         :application/state :application.state/closed})]
                         (is (= expected-application (apply-events events)))))))
 
                 (testing "> rejected"
@@ -383,10 +383,10 @@
                                       :event/actor "handler"
                                       :application/id 1
                                       :application/comment "never gonna happen"})
-                        expected-application (deep-merge expected-application
-                                                         {:application/last-activity (DateTime. 4000)
-                                                          :application/events events
-                                                          :application/workflow {:workflow.dynamic/state :application.state/rejected}})]
+                        expected-application (merge expected-application
+                                                    {:application/last-activity (DateTime. 4000)
+                                                     :application/events events
+                                                     :application/state :application.state/rejected})]
                     (is (= expected-application (apply-events events)))))
 
                 (testing "> comment requested"

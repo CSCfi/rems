@@ -48,7 +48,6 @@
         (get m :default)
         (first (vals m)))))
 
-; TODO next
 (def ^:private states
   {:application.state/draft :t.applications.dynamic-states/draft
    :application.state/submitted :t.applications.dynamic-states/submitted

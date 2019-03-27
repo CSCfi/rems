@@ -38,7 +38,7 @@
   (not (contains? #{:application.state/approved
                     :application.state/rejected
                     :application.state/closed}
-                  (get-in application [:application/workflow :workflow.dynamic/state]))))
+                  (:application/state application))))
 
 (defn- disabled-items-warning [application]
   (when (in-processing? application)
@@ -681,7 +681,7 @@
          {:phase :result :text :t.phases/approved}]))
 
 (defn- application-header [application]
-  (let [state (get-in application [:application/workflow :workflow.dynamic/state])
+  (let [state (:application/state application)
         last-activity (:application/last-activity application)
         event-groups (->> (:application/events application)
                           (group-by #(or (:application/request-id %)
@@ -1172,7 +1172,7 @@
    (example "application, partially filled"
             [render-application
              {:application/id 17
-              :application/workflow {:workflow.dynamic/state :application.state/draft}
+              :application/state :application.state/draft
               :application/resources [{:catalogue-item/title {:en "An applied item"}}]
               :application/form {:form/fields [{:field/id 1
                                                 :field/type :text
@@ -1208,7 +1208,7 @@
    (example "application, applied"
             [render-application
              {:application/id 17
-              :application/workflow {:workflow.dynamic/state :application.state/submitted}
+              :application/state :application.state/submitted
               :application/resources [{:catalogue-item/title {:en "An applied item"}}]
               :application/form {:form/fields [{:field/id 1
                                                 :field/type :text
@@ -1223,7 +1223,7 @@
    (example "application, approved"
             [render-application
              {:application/id 17
-              :application/workflow {:workflow.dynamic/state :application.state/approved}
+              :application/state :application.state/approved
               :application/applicant-attributes {:eppn "eppn"
                                                  :mail "email@example.com"
                                                  :additional "additional field"}

@@ -162,6 +162,7 @@
 (s/defschema V2Application
   {:application/id s/Int
    :application/external-id (s/maybe s/Str)
+   :application/state s/Keyword
    :application/created DateTime
    :application/modified DateTime
    :application/last-activity DateTime
@@ -178,7 +179,6 @@
    :application/form V2Form
    :application/workflow {:workflow/id s/Int
                           :workflow/type s/Keyword
-                          :workflow.dynamic/state s/Keyword
                           (s/optional-key :workflow.dynamic/handlers) #{s/Str}}
    :application/roles #{s/Keyword}
    :application/permissions #{s/Keyword}})

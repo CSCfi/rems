@@ -22,6 +22,7 @@
   (-> application
       (assoc :application/id (:application/id event)
              :application/external-id (:application/external-id event)
+             :application/state :application.state/draft
              :application/created (:event/time event)
              :application/modified (:event/time event)
              :application/applicant (:event/actor event)
@@ -42,7 +43,6 @@
                                     :workflow/type (:workflow/type event)
                                     ;; TODO: other workflows
                                     ;; TODO: extract an event handler for dynamic workflow specific stuff
-                                    :workflow.dynamic/state :application.state/draft
                                     :workflow.dynamic/handlers (:workflow.dynamic/handlers event)
                                     :workflow.dynamic/awaiting-commenters #{}
                                     :workflow.dynamic/awaiting-deciders #{}})))
@@ -96,13 +96,13 @@
       (assoc ::previous-submitted-answers (::submitted-answers application))
       (assoc ::submitted-answers (::draft-answers application))
       (dissoc ::draft-answers)
-      (assoc-in [:application/workflow :workflow.dynamic/state] :application.state/submitted)))
+      (assoc :application/state :application.state/submitted)))
 
 (defmethod event-type-specific-application-view :application.event/returned
   [application event]
   (-> application
       (assoc ::draft-answers (::submitted-answers application)) ; guard against re-submit without saving a new draft
-      (assoc-in [:application/workflow :workflow.dynamic/state] :application.state/returned)))
+      (assoc :application/state :application.state/returned)))
 
 (defmethod event-type-specific-application-view :application.event/comment-requested
   [application event]
@@ -127,17 +127,17 @@
 (defmethod event-type-specific-application-view :application.event/approved
   [application event]
   (-> application
-      (assoc-in [:application/workflow :workflow.dynamic/state] :application.state/approved)))
+      (assoc :application/state :application.state/approved)))
 
 (defmethod event-type-specific-application-view :application.event/rejected
   [application event]
   (-> application
-      (assoc-in [:application/workflow :workflow.dynamic/state] :application.state/rejected)))
+      (assoc :application/state :application.state/rejected)))
 
 (defmethod event-type-specific-application-view :application.event/closed
   [application event]
   (-> application
-      (assoc-in [:application/workflow :workflow.dynamic/state] :application.state/closed)))
+      (assoc :application/state :application.state/closed)))
 
 (deftest test-event-type-specific-application-view
   (testing "supports all event types"
@@ -440,7 +440,7 @@
                     :invited-members (vec (:application/invited-members application))
                     :start (:application/created application)
                     :last-modified (:application/last-activity application)
-                    :state (:workflow.dynamic/state workflow) ; TODO: round-based workflows
+                    :state (:application/state application) ; TODO: round-based workflows
                     :description (:application/description application)
                     :catalogue-items catalogue-items
                     :events [] ; TODO: round-based workflows
@@ -451,7 +451,7 @@
                     :possible-commands (:application/permissions application)
                     :fnlround 0 ; TODO: round-based workflows
                     :review-type nil}) ; TODO: round-based workflows
-     :phases (applications/get-application-phases (:workflow.dynamic/state workflow))
+     :phases (applications/get-application-phases (:application/state application))
      :licenses (map (fn [license]
                       {:id (:license/id license)
                        :type "license"
@@ -541,7 +541,7 @@
                :decider
                :past-decider}
              (:application/roles application))
-       (not= :application.state/draft (get-in application [:application/workflow :workflow.dynamic/state]))))
+       (not= :application.state/draft (:application/state application))))
 
 (defn get-all-reviews-v2 [user-id]
   (->> (get-all-applications-v2 user-id)
