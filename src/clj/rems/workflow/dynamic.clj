@@ -33,75 +33,89 @@
    :time s/Any})
 
 (s/defschema CommandBase
-  {:type s/Keyword
-   :application-id s/Int})
+  {:application-id s/Int})
 
 (s/defschema SaveDraftCommand
-  {:type (s/eq :application.command/save-draft)
-   :field-values s/Any
-   :accepted-licenses s/Any})
+  (assoc CommandBase
+         :type (s/eq :application.command/save-draft)
+         :field-values s/Any
+         :accepted-licenses s/Any))
 
 (s/defschema SubmitCommand
-  {:type (s/eq :application.command/submit)})
+  (assoc CommandBase
+         :type (s/eq :application.command/submit)))
 
 (s/defschema ApproveCommand
-  {:type (s/eq :application.command/approve)
-   :comment s/Str})
+  (assoc CommandBase
+         :type (s/eq :application.command/approve)
+         :comment s/Str))
 
 (s/defschema RejectCommand
-  {:type (s/eq :application.command/reject)
-   :comment s/Str})
+  (assoc CommandBase
+         :type (s/eq :application.command/reject)
+         :comment s/Str))
 
 (s/defschema ReturnCommand
-  {:type (s/eq :application.command/return)
-   :comment s/Str})
+  (assoc CommandBase
+         :type (s/eq :application.command/return)
+         :comment s/Str))
 
 (s/defschema CloseCommand
-  {:type (s/eq :application.command/close)
-   :comment s/Str})
+  (assoc CommandBase
+         :type (s/eq :application.command/close)
+         :comment s/Str))
 
 (s/defschema RequestDecisionCommand
-  {:type (s/eq :application.command/request-decision)
-   :deciders [UserId]
-   :comment s/Str})
+  (assoc CommandBase
+         :type (s/eq :application.command/request-decision)
+         :deciders [UserId]
+         :comment s/Str))
 
 (s/defschema DecideCommand
-  {:type (s/eq :application.command/decide)
-   :decision s/Keyword ;; TODO: (s/enum :approved :rejected), validated now in the command handler
-   :comment s/Str})
+  (assoc CommandBase
+         :type (s/eq :application.command/decide)
+         :decision s/Keyword ;; TODO: (s/enum :approved :rejected), validated now in the command handler
+         :comment s/Str))
 
 (s/defschema RequestCommentCommand
-  {:type (s/eq :application.command/request-comment)
-   :commenters [UserId]
-   :comment s/Str})
+  (assoc CommandBase
+         :type (s/eq :application.command/request-comment)
+         :commenters [UserId]
+         :comment s/Str))
 
 (s/defschema CommentCommand
-  {:type (s/eq :application.command/comment)
-   :comment s/Str})
+  (assoc CommandBase
+         :type (s/eq :application.command/comment)
+         :comment s/Str))
 
 (s/defschema AddMemberCommand
-  {:type (s/eq :application.command/add-member)
-   :member {:userid UserId}})
+  (assoc CommandBase
+         :type (s/eq :application.command/add-member)
+         :member {:userid UserId}))
 
 (s/defschema InviteMemberCommand
-  {:type (s/eq :application.command/invite-member)
-   :member {:name s/Str
-            :email s/Str}})
+  (assoc CommandBase
+         :type (s/eq :application.command/invite-member)
+         :member {:name s/Str
+                  :email s/Str}))
 
 (s/defschema AcceptInvitationCommand
-  {:type (s/eq :application.command/accept-invitation)
-   :token s/Str})
+  (assoc CommandBase
+         :type (s/eq :application.command/accept-invitation)
+         :token s/Str))
 
 (s/defschema RemoveMemberCommand
-  {:type (s/eq :application.command/remove-member)
-   :member {:userid UserId}
-   :comment s/Str})
+  (assoc CommandBase
+         :type (s/eq :application.command/remove-member)
+         :member {:userid UserId}
+         :comment s/Str))
 
 (s/defschema UninviteMemberCommand
-  {:type (s/eq :application.command/uninvite-member)
-   :member {:name s/Str
-            :email s/Str}
-   :comment s/Str})
+  (assoc CommandBase
+         :type (s/eq :application.command/uninvite-member)
+         :member {:name s/Str
+                  :email s/Str}
+         :comment s/Str))
 
 (def command-schemas
   {#_:application.command/accept-license
@@ -124,8 +138,7 @@
    #_:application.command/withdraw})
 
 (defn- validate-command [cmd]
-  (s/validate (merge CommandBase
-                     CommandInternal
+  (s/validate (merge CommandInternal
                      (getx command-schemas (:type cmd)))
               cmd))
 
