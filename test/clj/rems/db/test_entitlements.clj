@@ -29,7 +29,7 @@
       (for [r (stub/recorded-requests server)]
         (cheshire/parse-string (get-in r [:body "postData"]))))))
 
-(deftest test-post-entitlements
+(deftest ^:eftest/synchronized test-post-entitlements
   (let [log (atom [])]
     (with-redefs [db/log-entitlement-post! #(swap! log conj %)]
       (testing "ok"

@@ -61,7 +61,7 @@
                                       :workflow-name))
             "should find same catalogue item by id")))))
 
-(deftest test-form
+(deftest ^:eftest/synchronized test-form
   (binding [context/*lang* :en]
     (let [uid "test-user"
           form-id (:id (db/create-form! {:organization "abc" :title "internal-title" :user uid}))
@@ -676,7 +676,12 @@
       (is (thrown? ForbiddenException
                    (entitlements/get-entitlements-for-export))))))
 
-(deftest test-entitlement-granting
+(deftest ^:eftest/synchronized test-entitlement-granting
+  (testing "application that is not approved should not result in entitlements"
+    (with-redefs [rems.db.core/add-entitlement! #(throw (Error. "don't call me"))]
+      (entitlements/update-entitlements-for {:id 3
+                                             :state "applied"
+                                             :applicantuserid "bob"})))
   (with-open [server (stub/start! {"/add" {:status 200}
                                    "/remove" {:status 200}})]
     (with-redefs [rems.config/env {:entitlements-target

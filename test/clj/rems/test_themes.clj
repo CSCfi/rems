@@ -32,7 +32,7 @@
       (is (= "example-theme/public"
              (:theme-static-resources (config/load-external-theme config)))))))
 
-(deftest get-theme-attribute-test
+(deftest ^:eftest/synchronized get-theme-attribute-test
   (with-redefs [config/env {:theme {:test "success"
                                     :test-color 2}}]
     (is (= 2 (util/get-theme-attribute :test-color)))

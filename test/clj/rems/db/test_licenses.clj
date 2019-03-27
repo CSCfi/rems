@@ -4,7 +4,7 @@
             [rems.db.core :as db]
             [rems.db.licenses :refer :all]))
 
-(deftest test-localize-licenses
+(deftest ^:eftest/synchronized test-localize-licenses
   (with-redefs [db/get-license-localizations (fn [] [{:licid 1 :langcode "en" :title "en title 1" :textcontent "en content 1" :attachmentid 1}
                                                      {:licid 1 :langcode "fi" :title "fi title 1" :textcontent "fi content 1" :attachmentid 1}
                                                      {:licid 2 :langcode "fi" :title "fi title 2" :textcontent "fi content 2" :attachmentid 1}])]
@@ -23,7 +23,7 @@
             [{:id 1 :type "text" :title "default title 1" :textcontent "default content 1"}
              {:id 2 :type "link" :title "default title 2" :textcontent "default content 2"}])))))
 
-(deftest test-get-active-licenses
+(deftest ^:eftest/synchronized test-get-active-licenses
   (let [today (time/now)
         yesterday (time/minus today (time/days 1))
         expired-license-end (time/plus yesterday (time/hours 1))
