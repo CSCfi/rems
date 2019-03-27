@@ -10,9 +10,8 @@
    :mail "d@av.id"
    :commonName "David Newuser"})
 
-(use-fixtures
-  :once
-  api-fixture)
+(use-fixtures :once api-once-fixture)
+(use-fixtures :each api-each-fixture)
 
 (deftest users-api-test
   (testing "create"

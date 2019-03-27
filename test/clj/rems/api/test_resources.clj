@@ -4,9 +4,8 @@
             [rems.api.testing :refer :all]
             [ring.mock.request :refer :all]))
 
-(use-fixtures
-  :once
-  api-fixture)
+(use-fixtures :once api-once-fixture)
+(use-fixtures :each api-each-fixture)
 
 (defn- create-resource! [command api-key user-id]
   (-> (request :post "/api/resources/create")

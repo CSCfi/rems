@@ -12,9 +12,9 @@
             [rems.validate :as validate])
   (:import [java.util UUID]))
 
-(use-fixtures
-  :once
-  api-fixture)
+(use-fixtures :once api-once-fixture)
+(use-fixtures :each api-each-fixture)
+
 
 ;; dates in the past to avoid external-id conflicts with test-data
 (defn add-more-test-data! []

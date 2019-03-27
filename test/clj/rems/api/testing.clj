@@ -6,9 +6,10 @@
             [rems.config :refer [env]]
             [rems.db.core :as db]
             [rems.db.test-data :as test-data]
+            [rems.test-db :refer [db-each-fixture]]
             [rems.handler :refer :all]))
 
-(defn api-fixture [f]
+(defn api-once-fixture [f]
   (mount/start
    #'rems.config/env
    #'rems.locales/translations
@@ -20,6 +21,8 @@
   (test-data/create-test-data!)
   (f)
   (mount/stop))
+
+(def api-each-fixture db-each-fixture)
 
 (defn authenticate [request api-key user-id]
   (-> request

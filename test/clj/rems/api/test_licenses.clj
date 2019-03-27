@@ -5,9 +5,8 @@
             [ring.mock.request :refer :all])
   (:import (java.util UUID)))
 
-(use-fixtures
-  :once
-  api-fixture)
+(use-fixtures :once api-once-fixture)
+(use-fixtures :each api-each-fixture)
 
 (def testfile (clojure.java.io/file "./test-data/test.txt"))
 
