@@ -4,6 +4,7 @@
             [clj-time.format :as time-format]
             [clojure.set :refer [difference union]]
             [clojure.test :refer [deftest is]]
+            [conman.core :as conman]
             [cprop.tools :refer [merge-maps]]
             [rems.application-util :refer [form-fields-editable?]]
             [rems.auth.util :refer [throw-forbidden]]
@@ -907,12 +908,12 @@
   nil)
 
 (defn allocate-external-id! [prefix]
-  ;; TODO with-transaction
-  (let [all (db/get-external-ids {:prefix prefix})
-        last (apply max (cons 0 (map (comp read-string :suffix) all)))
-        new (str (inc last))]
-    (db/add-external-id! {:prefix prefix :suffix new})
-    {:prefix prefix :suffix new}))
+  (conman/with-transaction [rems.db.core/*db* {:isolation :serializable}]
+    (let [all (db/get-external-ids {:prefix prefix})
+          last (apply max (cons 0 (map (comp read-string :suffix) all)))
+          new (str (inc last))]
+      (db/add-external-id! {:prefix prefix :suffix new})
+      {:prefix prefix :suffix new})))
 
 (defn format-external-id [{:keys [prefix suffix]}]
   (str prefix "/" suffix))
