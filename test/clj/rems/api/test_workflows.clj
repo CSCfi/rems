@@ -1,7 +1,7 @@
 (ns ^:integration rems.api.test-workflows
   (:require [clojure.test :refer :all]
             [rems.common-util :refer [index-by]]
-            [rems.handler :refer [app]]
+            [rems.handler :refer [handler]]
             [rems.api.testing :refer :all]
             [ring.mock.request :refer :all]))
 
@@ -13,7 +13,7 @@
   (testing "list"
     (let [data (-> (request :get "/api/workflows")
                    (authenticate "42" "owner")
-                   app
+                   handler
                    assert-response-is-ok
                    read-body)
           wfs (index-by [:title] data)
@@ -35,7 +35,7 @@
                                :title "auto-approved workflow"
                                :type :auto-approve})
                    (authenticate "42" "owner")
-                   app
+                   handler
                    assert-response-is-ok
                    read-body)
           id (:id body)]
@@ -43,7 +43,7 @@
       (testing "and fetch"
         (let [workflows (-> (request :get "/api/workflows")
                             (authenticate "42" "owner")
-                            app
+                            handler
                             assert-response-is-ok
                             read-body)
               workflow (first (filter #(= id (:id %)) workflows))]
@@ -61,7 +61,7 @@
                                :type :dynamic
                                :handlers ["bob" "carl"]})
                    (authenticate "42" "owner")
-                   app
+                   handler
                    assert-response-is-ok
                    read-body)
           id (:id body)]
@@ -69,7 +69,7 @@
       (testing "and fetch"
         (let [workflows (-> (request :get "/api/workflows")
                             (authenticate "42" "owner")
-                            app
+                            handler
                             assert-response-is-ok
                             read-body)
               workflow (first (filter #(= id (:id %)) workflows))]
@@ -83,12 +83,12 @@
 (deftest workflows-api-filtering-test
   (let [unfiltered (-> (request :get "/api/workflows")
                        (authenticate "42" "owner")
-                       app
+                       handler
                        assert-response-is-ok
                        read-body)
         filtered (-> (request :get "/api/workflows" {:active true})
                      (authenticate "42" "owner")
-                     app
+                     handler
                      assert-response-is-ok
                      read-body)]
     (is (coll-is-not-empty? unfiltered))
@@ -101,7 +101,7 @@
   (testing "without authentication"
     (testing "list"
       (let [response (-> (request :get (str "/api/workflows"))
-                         app)]
+                         handler)]
         (is (response-is-unauthorized? response))
         (is (= "unauthorized" (read-body response)))))
     (testing "create"
@@ -111,7 +111,7 @@
                                      :type :rounds
                                      :rounds [{:type :approval
                                                :actors ["bob"]}]})
-                         app)]
+                         handler)]
         (is (response-is-unauthorized? response))
         (is (= "Invalid anti-forgery token" (read-body response))))))
 
@@ -119,7 +119,7 @@
     (testing "list"
       (let [response (-> (request :get (str "/api/workflows"))
                          (authenticate "42" "alice")
-                         app)]
+                         handler)]
         (is (response-is-forbidden? response))
         (is (= "forbidden" (read-body response)))))
     (testing "create"
@@ -130,6 +130,6 @@
                                      :rounds [{:type :approval
                                                :actors ["bob"]}]})
                          (authenticate "42" "alice")
-                         app)]
+                         handler)]
         (is (response-is-forbidden? response))
         (is (= "forbidden" (read-body response)))))))

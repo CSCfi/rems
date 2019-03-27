@@ -13,7 +13,7 @@
    #'rems.config/env
    #'rems.locales/translations
    #'rems.db.core/*db*
-   #'rems.handler/app)
+   #'rems.handler/handler)
   ;; TODO: silence logging somehow?
   (db/assert-test-database!)
   (migrations/migrate ["reset"] (select-keys env [:database-url]))

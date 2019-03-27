@@ -1,7 +1,7 @@
 (ns ^:integration rems.api.test-users
   (:require [clojure.test :refer :all]
             [rems.db.users :as users]
-            [rems.handler :refer [app]]
+            [rems.handler :refer [handler]]
             [rems.api.testing :refer :all]
             [ring.mock.request :refer :all]))
 
@@ -20,7 +20,7 @@
     (-> (request :post (str "/api/users/create"))
         (json-body new-user)
         (authenticate "42" "owner")
-        app
+        handler
         assert-response-is-ok)
     (is (= {:eppn "david"
             :mail "d@av.id"
@@ -31,7 +31,7 @@
     (testing "create"
       (let [response (-> (request :post (str "/api/users/create"))
                          (json-body new-user)
-                         app)]
+                         handler)]
         (is (response-is-unauthorized? response))
         (is (= "Invalid anti-forgery token" (read-body response))))))
 
@@ -40,6 +40,6 @@
       (let [response (-> (request :post (str "/api/users/create"))
                          (json-body new-user)
                          (authenticate "42" "alice")
-                         app)]
+                         handler)]
         (is (response-is-forbidden? response))
         (is (= "forbidden" (read-body response)))))))

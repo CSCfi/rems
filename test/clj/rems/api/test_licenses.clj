@@ -1,6 +1,6 @@
 (ns ^:integration rems.api.test-licenses
   (:require [clojure.test :refer :all]
-            [rems.handler :refer [app]]
+            [rems.handler :refer [handler]]
             [rems.api.testing :refer :all]
             [ring.mock.request :refer :all])
   (:import (java.util UUID)))
@@ -22,7 +22,7 @@
     (testing "get"
       (let [data (-> (request :get "/api/licenses")
                      (authenticate api-key user-id)
-                     app
+                     handler
                      assert-response-is-ok
                      read-body)]
         (is (:id (first data)))))
@@ -41,12 +41,12 @@
         (-> (request :post "/api/licenses/create")
             (authenticate api-key user-id)
             (json-body command)
-            app
+            handler
             assert-response-is-ok)
         (testing "and fetch"
           (let [body (-> (request :get "/api/licenses")
                          (authenticate api-key user-id)
-                         app
+                         handler
                          assert-response-is-ok
                          read-body)
                 license (->> body
@@ -69,12 +69,12 @@
         (-> (request :post "/api/licenses/create")
             (authenticate api-key user-id)
             (json-body command)
-            app
+            handler
             assert-response-is-ok)
         (testing "and fetch"
           (let [body (-> (request :get "/api/licenses")
                          (authenticate api-key user-id)
-                         app
+                         handler
                          assert-response-is-ok
                          read-body)
                 license (->> body
@@ -88,7 +88,7 @@
                          (assoc :params {"file" filecontent})
                          (assoc :multipart-params {"file" filecontent})
                          (authenticate api-key user-id)
-                         app
+                         handler
                          assert-response-is-ok)
             {:keys [id]} (read-body response)]
 
@@ -97,7 +97,7 @@
         (testing "and test that it can be accessed using GET"
           (let [response-file (is (-> (request :get (str "/api/licenses/attachments/" id))
                                       (authenticate api-key user-id)
-                                      app
+                                      handler
                                       assert-response-is-ok))]
             (is (= (slurp testfile) (slurp (:body response-file))))))
 
@@ -105,13 +105,13 @@
           (-> (request :post (str "/api/licenses/remove_attachment?attachment-id=" id))
               (json-body {:attachment-id id})
               (authenticate api-key user-id)
-              app
+              handler
               assert-response-is-ok))
 
         (testing "and check it's not found after deletion"
           (let [response (is (-> (request :get (str "/api/licenses/attachments/" id))
                                  (authenticate api-key user-id)
-                                 app))]
+                                 handler))]
             (is (response-is-not-found? response))))))
 
     (testing "create attachment license"
@@ -119,7 +119,7 @@
                               (assoc :params {"file" filecontent})
                               (assoc :multipart-params {"file" filecontent})
                               (authenticate api-key user-id)
-                              app
+                              handler
                               assert-response-is-ok
                               read-body
                               (get :id))
@@ -136,13 +136,13 @@
         (-> (request :post "/api/licenses/create")
             (authenticate api-key user-id)
             (json-body command)
-            app
+            handler
             assert-response-is-ok)
 
         (testing "and fetch"
           (let [body (-> (request :get "/api/licenses")
                          (authenticate api-key user-id)
-                         app
+                         handler
                          assert-response-is-ok
                          read-body)
                 license (->> body
@@ -155,18 +155,18 @@
           (-> (request :post (str "/api/licenses/remove_attachment?attachment-id=" attachment-id))
               (json-body {:attachment-id attachment-id})
               (authenticate api-key user-id)
-              app
+              handler
               assert-response-is-server-error?))))))
 
 (deftest licenses-api-filtering-test
   (let [unfiltered (-> (request :get "/api/licenses")
                        (authenticate "42" "owner")
-                       app
+                       handler
                        assert-response-is-ok
                        read-body)
         filtered (-> (request :get "/api/licenses" {:active true})
                      (authenticate "42" "owner")
-                     app
+                     handler
                      assert-response-is-ok
                      read-body)]
     (is (coll-is-not-empty? unfiltered))
@@ -177,7 +177,7 @@
   (testing "without authentication"
     (testing "list"
       (let [response (-> (request :get "/api/licenses")
-                         app)]
+                         handler)]
         (is (response-is-unauthorized? response))
         (is (= "unauthorized" (read-body response)))))
     (testing "create"
@@ -187,7 +187,7 @@
                                      :textcontent "t"
                                      :localizations {:en {:title "t"
                                                           :textcontent "t"}}})
-                         app)]
+                         handler)]
         (is (response-is-unauthorized? response))
         (is (= "Invalid anti-forgery token" (read-body response))))))
 
@@ -195,7 +195,7 @@
     (testing "list"
       (let [response (-> (request :get "/api/licenses")
                          (authenticate "42" "alice")
-                         app)]
+                         handler)]
         (is (response-is-forbidden? response))
         (is (= "forbidden" (read-body response)))))
     (testing "create"
@@ -206,6 +206,6 @@
                                      :textcontent "t"
                                      :localizations {:en {:title "t"
                                                           :textcontent "t"}}})
-                         app)]
+                         handler)]
         (is (response-is-forbidden? response))
         (is (= "forbidden" (read-body response)))))))

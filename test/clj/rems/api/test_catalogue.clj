@@ -1,7 +1,7 @@
 (ns ^:integration rems.api.test-catalogue
   (:require [clojure.string :as str]
             [clojure.test :refer :all]
-            [rems.handler :refer [app]]
+            [rems.handler :refer [handler]]
             [rems.api.testing :refer :all]
             [ring.mock.request :refer :all]))
 
@@ -14,7 +14,7 @@
         user-id "alice"]
     (let [data (-> (request :get "/api/catalogue/")
                    (authenticate api-key user-id)
-                   app
+                   handler
                    read-body)
           item (first data)]
       (is (str/starts-with? (:resid item) "urn:")))))
@@ -22,7 +22,7 @@
 (deftest catalogue-api-security-test
   (testing "listing without authentication"
     (let [response (-> (request :get (str "/api/catalogue"))
-                       app)
+                       handler)
           body (read-body response)]
       (is (response-is-unauthorized? response))
       (is (= "unauthorized" body))))
@@ -30,5 +30,5 @@
     (is (= "invalid api key"
            (-> (request :get (str "/api/catalogue"))
                (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
-               app
+               handler
                (read-body))))))

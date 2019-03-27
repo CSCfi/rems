@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
             [rems.db.form :as form]
-            [rems.handler :refer [app]]
+            [rems.handler :refer [handler]]
             [ring.mock.request :refer :all])
   (:import (java.util UUID)))
 
@@ -17,7 +17,7 @@
     (testing "get"
       (let [data (-> (request :get "/api/forms")
                      (authenticate api-key user-id)
-                     app
+                     handler
                      assert-response-is-ok
                      read-body)]
         (is (:id (first data)))))
@@ -38,7 +38,7 @@
                 response (-> (request :post "/api/forms/create")
                              (authenticate api-key user-id)
                              (json-body command-with-invalid-maxlength)
-                             app)]
+                             handler)]
             (is (= 400 (:status response))
                 "can't send negative maxlength")))
 
@@ -48,20 +48,20 @@
                 response (-> (request :post "/api/forms/create")
                              (authenticate api-key user-id)
                              (json-body command-with-long-prompt)
-                             app)]
+                             handler)]
             (is (= 500 (:status response)))))
 
         (testing "valid create"
           (-> (request :post "/api/forms/create")
               (authenticate api-key user-id)
               (json-body command)
-              app
+              handler
               assert-response-is-ok))
 
         (testing "and fetch"
           (let [body (-> (request :get "/api/forms")
                          (authenticate api-key user-id)
-                         app
+                         handler
                          assert-response-is-ok
                          read-body)
                 forms (->> body
@@ -69,7 +69,7 @@
                 form (first forms)
                 form-template (-> (request :get (str "/api/forms/v2/" (:id form)))
                                   (authenticate api-key user-id)
-                                  app
+                                  handler
                                   assert-response-is-ok
                                   read-body)]
             (is (= 1 (count forms))
@@ -104,13 +104,13 @@
         (-> (request :post "/api/forms/create")
             (authenticate api-key user-id)
             (json-body command)
-            app
+            handler
             assert-response-is-ok)
 
         (testing "and fetch"
           (let [body (-> (request :get "/api/forms")
                          (authenticate api-key user-id)
-                         app
+                         handler
                          assert-response-is-ok
                          read-body)
                 form (->> body
@@ -122,12 +122,12 @@
 (deftest forms-api-filtering-test
   (let [unfiltered (-> (request :get "/api/forms")
                        (authenticate "42" "owner")
-                       app
+                       handler
                        assert-response-is-ok
                        read-body)
         filtered (-> (request :get "/api/forms" {:active true})
                      (authenticate "42" "owner")
-                     app
+                     handler
                      assert-response-is-ok
                      read-body)]
     (is (coll-is-not-empty? unfiltered))
@@ -140,7 +140,7 @@
   (testing "without authentication"
     (testing "list"
       (let [response (-> (request :get (str "/api/forms"))
-                         app)
+                         handler)
             body (read-body response)]
         (is (response-is-unauthorized? response))
         (is (= "unauthorized" body))))
@@ -149,7 +149,7 @@
                          (json-body {:organization "abc"
                                      :title "the title"
                                      :items []})
-                         app)]
+                         handler)]
         (is (response-is-unauthorized? response))
         (is (= "Invalid anti-forgery token" (read-body response))))))
 
@@ -157,7 +157,7 @@
     (testing "list"
       (let [response (-> (request :get (str "/api/forms"))
                          (authenticate "42" "alice")
-                         app)
+                         handler)
             body (read-body response)]
         (is (response-is-forbidden? response))
         (is (= "forbidden" body))))
@@ -167,6 +167,6 @@
                          (json-body {:organization "abc"
                                      :title "the title"
                                      :items []})
-                         app)]
+                         handler)]
         (is (response-is-forbidden? response))
         (is (= "forbidden" (read-body response)))))))

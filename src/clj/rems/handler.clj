@@ -70,5 +70,5 @@
    not-found))
 
 ;; we use mount to construct the app so that middleware can access mount state
-(mount/defstate app
+(mount/defstate handler
   :start (middleware/wrap-base (app-routes)))
