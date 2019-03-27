@@ -917,6 +917,10 @@
 (defn format-external-id [{:keys [prefix suffix]}]
   (str prefix "/" suffix))
 
+(defn application-external-id! [time]
+  (let [id-prefix (str (.getYear time))]
+    (format-external-id (allocate-external-id! id-prefix))))
+
 (defn application-created-event [{:keys [application-id catalogue-item-ids time actor allocate-external-id?]}]
   (assert (seq catalogue-item-ids) "catalogue item not specified")
   (let [items (get-catalogue-items catalogue-item-ids)]
@@ -936,8 +940,7 @@
        :event/actor actor
        :application/id application-id
        :application/external-id (when allocate-external-id? ;; TODO parameterize id allocation?
-                                  (let [id-prefix (str (.getYear time))]
-                                    (format-external-id (allocate-external-id! id-prefix))))
+                                  (application-external-id! time))
        :application/resources (map (fn [item]
                                      {:catalogue-item/id (:id item)
                                       :resource/ext-id (:resid item)})
