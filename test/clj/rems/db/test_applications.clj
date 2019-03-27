@@ -325,12 +325,12 @@
                                            :time (DateTime. 1000)
                                            :actor "alice"})))))))
 
-(deftest test-allocate-external-id!
+(deftest test-application-external-id!
   (is (= [] (db/get-external-ids {:prefix "1981"})))
   (is (= [] (db/get-external-ids {:prefix "1980"})))
-  (is (= {:prefix "1981" :suffix "1"} (allocate-external-id! "1981")))
-  (is (= {:prefix "1981" :suffix "2"} (allocate-external-id! "1981")))
-  (is (= {:prefix "1981" :suffix "3"} (allocate-external-id! "1981")))
-  (is (= {:prefix "1980" :suffix "1"} (allocate-external-id! "1980")))
-  (is (= {:prefix "1980" :suffix "2"} (allocate-external-id! "1980")))
-  (is (= {:prefix "1981" :suffix "4"} (allocate-external-id! "1981"))))
+  (is (= "1981/1" (application-external-id! (DateTime. #inst "1981-03-02"))))
+  (is (= "1981/2" (application-external-id! (DateTime. #inst "1981-01-01"))))
+  (is (= "1981/3" (application-external-id! (DateTime. #inst "1981-04-03"))))
+  (is (= "1980/1" (application-external-id! (DateTime. #inst "1980-12-12"))))
+  (is (= "1980/2" (application-external-id! (DateTime. #inst "1980-12-12"))))
+  (is (= "1981/4" (application-external-id! (DateTime. #inst "1981-04-01")))))
