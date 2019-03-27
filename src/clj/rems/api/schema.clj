@@ -56,7 +56,7 @@
    :value (s/maybe s/Str)
    :previous-value (s/maybe s/Str)})
 
-(s/defschema Event
+(s/defschema V1Event
   {:userid (s/maybe s/Str)
    :round s/Num
    :event s/Str
@@ -71,7 +71,7 @@
 (s/defschema AddedMember
   {:userid s/Str})
 
-(s/defschema DynamicEvent
+(s/defschema Event
   (assoc dynamic/EventBase
          s/Keyword s/Any))
 
@@ -84,8 +84,8 @@
    :wfid s/Num
    (s/optional-key :curround) s/Num ;; does not exist for draft
    (s/optional-key :fnlround) s/Num ;; does not exist for draft
-   (s/optional-key :events) [Event]
-   (s/optional-key :dynamic-events) [DynamicEvent]
+   (s/optional-key :events) [V1Event]
+   (s/optional-key :dynamic-events) [Event]
    (s/optional-key :can-approve?) s/Bool
    (s/optional-key :can-close?) s/Bool
    (s/optional-key :can-withdraw?) s/Bool
@@ -174,7 +174,7 @@
    :application/resources [V2Resource]
    :application/licenses [V2License]
    :application/accepted-licenses (s/maybe {s/Str #{s/Num}})
-   :application/events [DynamicEvent]
+   :application/events [Event]
    :application/description s/Str
    :application/form V2Form
    :application/workflow {:workflow/id s/Int
