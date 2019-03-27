@@ -7,7 +7,7 @@
 
 (defn remove-catalogue-items-from-cart! [catalogue-item-ids]
   (doseq [id catalogue-item-ids]
-    (rf/dispatch [:rems.cart/remove-item {:id id}])))
+    (rf/dispatch [:rems.cart/remove-item id])))
 
 (rf/reg-event-fx
  ::enter-new-application-page
