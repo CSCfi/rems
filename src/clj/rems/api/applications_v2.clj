@@ -273,8 +273,7 @@
                :catalogue-item/start (:start item)
                :catalogue-item/end (:end item)
                :catalogue-item/enabled (:enabled item)
-               :catalogue-item/archived (:archived item)
-               :catalogue-item/state (keyword (:state item))}))
+               :catalogue-item/archived (:archived item)}))
        (sort-by :catalogue-item/id)))
 
 (defn- enrich-licenses [app-licenses get-license]
@@ -415,7 +414,6 @@
                                  :formid (:form/id form)
                                  :start (:catalogue-item/start resource)
                                  :end (:catalogue-item/end resource)
-                                 :state (name (:catalogue-item/state resource))
                                  :archived (:catalogue-item/archived resource)
                                  :enabled (:catalogue-item/enabled resource)
                                  :title (:default (:catalogue-item/title resource))

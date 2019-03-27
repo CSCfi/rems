@@ -24,7 +24,7 @@
                                :form 1
                                :resid 1
                                :wfid 1
-                               :state "enabled"})
+                               :archived true})
                    handler
                    read-body)]
       (is (= 12 (:id data))))

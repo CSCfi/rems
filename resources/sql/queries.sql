@@ -5,7 +5,6 @@
 -- - :resource resource id to fetch items for
 -- - :archived true if archived items should be included
 SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.start, ci.endt as "end", ci.enabled, ci.archived
-, (case when ci.enabled = true then 'enabled' else 'disabled' end) as state -- TODO: remove state
 , res.id AS "resource-id"
 /*~ (when (:expand-names? params) */
 , wf.title AS "workflow-name"
@@ -32,7 +31,6 @@ WHERE 1=1
 
 -- :name get-catalogue-item :? :1
 SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.start, ci.endt as "end", ci.enabled, ci.archived
-, (case when ci.enabled = true then 'enabled' else 'disabled' end) as state -- TODO: remove state
 , res.id AS "resource-id"
 , wf.title AS "workflow-name"
 , res.resid AS "resource-name"
@@ -58,9 +56,11 @@ WHERE id = :id;
 -- :name create-catalogue-item! :insert
 -- :doc Create a single catalogue item
 INSERT INTO catalogue_item
-(title, formid, resid, wfid, enabled)
+(title, formid, resid, wfid, enabled, archived)
 VALUES (:title, :form, :resid, :wfid,
-/*~ (if (= "disabled" (:state params)) */  false /*~*/ true /*~ ) ~*/ -- TODO: remove state
+--~ (if (contains? params :enabled) ":enabled" "true")
+,
+--~ (if (contains? params :archived) ":archived" "false")
 );
 
 -- :name get-resources :? :*

@@ -55,14 +55,9 @@
     (when (valid-request? request)
       request)))
 
-(defn- create-request-with-state [request]
-  (if (nil? (:state request))
-    (merge {:state "disabled"} request)
-    request))
-
 (defn- create-catalogue-item! [_ [_ request]]
   (status-modal/common-pending-handler! (text :t.administration/create-catalogue-item))
-  (post! "/api/catalogue-items/create" {:params (create-request-with-state request)
+  (post! "/api/catalogue-items/create" {:params (assoc request :enabled false) ;; create disabled catalogue items by default
                                         :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/catalogue-items/" (:id %))))
                                         :error-handler status-modal/common-error-handler!})
   {})

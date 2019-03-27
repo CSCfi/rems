@@ -935,15 +935,16 @@
 
    (component-info disabled-items-warning)
    (example "no disabled items"
-            [disabled-items-warning []])
+            [disabled-items-warning {}])
    (example "two disabled items"
             [disabled-items-warning
-             [{:state "disabled" :localizations {:en {:title "English title 1"}
-                                                 :fi {:title "Otsikko suomeksi 1"}}}
-              {:state "disabled" :localizations {:en {:title "English title 2"}
-                                                 :fi {:title "Otsikko suomeksi 2"}}}
-              {:state "enabled" :localizations {:en {:title "English title 3"}
-                                                :fi {:title "Otsikko suomeksi 3"}}}]])
+             {:applicaiton/workflow {:workflow.dynamic/state :rems.workflow.dynamic/approved}
+              :application/resources [{:catalogue-item/enabled true :catalogue-item/archived true
+                                       :catalogue-item/title {:default "Catalogue item 1"}}
+                                      {:catalogue-item/enabled false :catalogue-item/archived false
+                                       :catalogue-item/title {:default "Catalogue item 2"}}
+                                      {:catalogue-item/enabled true :catalogue-item/archived false
+                                       :catalogue-item/title {:default "Catalogue item 3"}}]}])
 
    (component-info field)
    (example "field of type \"text\""
