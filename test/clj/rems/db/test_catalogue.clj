@@ -77,11 +77,15 @@
         item-id (:id (db/create-catalogue-item! {:title "item" :form form-id :resid nil :wfid wf-id}))]
 
     (testing "find all"
-      (is (= [item-id] (map :id (catalogue/get-localized-catalogue-items)))))
+      (is (contains? (set (map :id (catalogue/get-localized-catalogue-items)))
+                     item-id)))
 
     (testing "archived catalogue items"
       (catalogue/update-catalogue-item! {:id item-id
                                          :archived true})
-      (is (= [] (map :id (catalogue/get-localized-catalogue-items))))
-      (is (= [item-id] (map :id (catalogue/get-localized-catalogue-items {:archived true}))))
-      (is (= [] (map :id (catalogue/get-localized-catalogue-items {:archived false})))))))
+      (is (not (contains? (set (map :id (catalogue/get-localized-catalogue-items)))
+                          item-id)))
+      (is (contains? (set (map :id (catalogue/get-localized-catalogue-items {:archived true})))
+                     item-id))
+      (is (not (contains? (set (map :id (catalogue/get-localized-catalogue-items {:archived false})))
+                          item-id))))))

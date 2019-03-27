@@ -44,14 +44,14 @@
 (use-fixtures :each db-each-fixture)
 
 (deftest test-get-catalogue-items
-  (testing "without catalogue items"
-    (is (empty? (db/get-catalogue-items))))
+  (is (= 11 (count (db/get-catalogue-items))) "should find test data catalogue items")
 
-  (testing "with two items"
-    (let [resid (:id (db/create-resource! {:resid "urn:nbn:fi:lb-201403262" :organization "nbn" :owneruserid 1 :modifieruserid 1}))]
-      (db/create-catalogue-item! {:title "ELFA Corpus" :form nil :resid resid :wfid nil})
-      (db/create-catalogue-item! {:title "B" :form nil :resid nil :wfid nil})
-      (is (= ["B" "ELFA Corpus"] (sort (map :title (db/get-catalogue-items))))
+  (testing "with two additional items"
+    (let [resid (:id (db/create-resource! {:resid "new resource" :organization "nbn" :owneruserid 1 :modifieruserid 1}))]
+      (db/create-catalogue-item! {:title "new catalogue item" :form nil :resid resid :wfid nil})
+      (db/create-catalogue-item! {:title "new catalogue item 2" :form nil :resid nil :wfid nil})
+      (is (every? (set (map :title (db/get-catalogue-items)))
+                  ["new catalogue item" "new catalogue item 2"])
           "should find the two items")
       (let [item-from-list (second (db/get-catalogue-items))
             item-by-id (db/get-catalogue-item {:id (:id item-from-list)})]
@@ -336,13 +336,14 @@
                (get-phases)))))))
 
 (deftest test-users
-  (db/add-user! {:user "pekka", :userattrs nil})
-  (db/add-user! {:user "simo", :userattrs nil})
-  (is (= 2 (count (db/get-users))))
-  (db/add-user! {:user "pekka", :userattrs (cheshire/generate-string {:key "value"})})
-  (db/add-user! {:user "simo", :userattrs nil})
-  (is (= 2 (count (db/get-users))))
-  (is (= {:key "value"} (users/get-user-attributes "pekka"))))
+  (let [test-data-users (db/get-users)]
+    (db/add-user! {:user "pekka", :userattrs nil})
+    (db/add-user! {:user "simo", :userattrs nil})
+    (is (= 2 (- (count (db/get-users)) (count test-data-users))))
+    (db/add-user! {:user "pekka", :userattrs (cheshire/generate-string {:key "value"})})
+    (db/add-user! {:user "simo", :userattrs nil})
+    (is (= 2 (- (count (db/get-users)) (count test-data-users))))
+    (is (= {:key "value"} (users/get-user-attributes "pekka")))))
 
 (deftest test-roles
   (db/add-user! {:user "pekka", :userattrs nil})
@@ -413,14 +414,15 @@
         (is (thrown? ForbiddenException (applications/withdraw-application "event-test-approver" app 1 ""))
             "Should not be able to withdraw as approver")
 
-        (is (empty? (db/get-entitlements)))
+        (is (= 2 (count (db/get-entitlements))) "should find test data entitlements")
 
         (applications/approve-application "event-test-approver" app 1 "c2")
         (is (= {:curround 1 :state "approved"} (fetch app)))
 
         (is (= [{:catappid app :resid nil :userid uid}]
                (map #(select-keys % [:catappid :resid :userid])
-                    (db/get-entitlements))))
+                    (filter (comp #{app} :catappid)
+                            (db/get-entitlements)))))
 
         (is (= (->> (applications/get-application-state app)
                     :events
@@ -659,7 +661,7 @@
     ;; entitlements should now be added via autoapprove
     (binding [context/*roles* #{:handler}]
       (let [lines (split-lines (entitlements/get-entitlements-for-export))]
-        (is (= 4 (count lines))) ;; header + 3 resources
+        (is (= 6 (count lines))) ;; header + 3 resources + 2 in test data
         (is (some #(and (.contains % "resource1")
                         (.contains % "jill")
                         (.contains % (str jill-app)))
