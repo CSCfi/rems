@@ -2,7 +2,6 @@
   "Query functions for forms and applications."
   (:require [clj-time.core :as time]
             [clj-time.format :as time-format]
-            [clojure.set :refer [difference union]]
             [clojure.test :refer [deftest is]]
             [conman.core :as conman]
             [cprop.tools :refer [merge-maps]]
@@ -14,14 +13,13 @@
             [rems.db.entitlements :as entitlements]
             [rems.db.form :as form]
             [rems.db.licenses :as licenses]
-            [rems.db.roles :as roles]
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
             [rems.db.workflow-actors :as actors]
             [rems.form-validation :as form-validation]
             [rems.json :as json]
             [rems.permissions :as permissions]
-            [rems.util :refer [get-username secure-token]]
+            [rems.util :refer [secure-token]]
             [rems.workflow.dynamic :as dynamic]
             [schema-tools.core :as st]
             [schema.coerce :as coerce]
@@ -38,7 +36,6 @@
   [application-id]
   (nil? application-id))
 
-;; TODO cache application state in db instead of always computing it from events
 (declare get-application-state)
 
 (defn- not-empty? [args]
@@ -46,79 +43,7 @@
 
 ;;; Query functions
 
-(defn handling-event? [app e]
-  ;; event types which are definitely not by applicant
-  (or (contains? #{:application.state/approved
-                   :application.state/rejected
-                   :application.state/returned}
-                 (:event/type e)) ; new style events
-      (contains? #{"approve" "autoapprove" "reject" "return" "review"}
-                 (:event e)) ; old style events
-      ;; close events are sometimes not by applicant
-      (and (= :application.event/closed (:event/type e))
-           (not= (:applicantuserid app) (:event/actor e)))
-      (and (= "close" (:event e))
-           (not= (:applicantuserid app) (:userid e)))))
-
-(defn handled? [app]
-  (or (contains? #{"approved" "rejected" "returned"
-                   :application.state/returned
-                   :application.state/approved
-                   :application.state/rejected}
-                 (:state app)) ;; by approver action
-      (and (contains? #{"closed" "withdrawn"
-                        :application.state/closed} (:state app))
-           (some (partial handling-event? app) (concat (:events app) (:dynamic-events app))))))
-
-(defn- get-events-of-type
-  "Returns all events of a given type that have occured in an application. Optionally a round parameter can be provided to focus on events occuring during a given round."
-  ([app event]
-   (filter #(= event (:event %)) (:events app)))
-  ([app round event]
-   (filter #(and (= event (:event %)) (= round (:round %))) (:events app))))
-
-(defn get-approval-events
-  "Returns all approve events within a specific round of an application."
-  [app round]
-  (get-events-of-type app round "approve"))
-
-(defn get-review-events
-  "Returns all review events that have occured in an application. Optionally a round parameter can be provided to focus on reviews occuring during a given round."
-  ([app]
-   (get-events-of-type app "review"))
-  ([app round]
-   (get-events-of-type app round "review")))
-
-(defn get-third-party-review-events
-  "Returns all third-party-review events that have occured in an application. Optionally a round parameter can be provided to focus on third-party-reviews occuring during a given round."
-  ([app]
-   (get-events-of-type app "third-party-review"))
-  ([app round]
-   (get-events-of-type app round "third-party-review")))
-
-(declare is-commenter?)
-(declare can-comment?)
-(declare is-decider?)
-(declare can-decide?)
 (declare is-dynamic-application?)
-
-(defn reviewed?
-  "Returns true if the application, given as parameter, has already been reviewed normally or as a 3rd party actor by the current user.
-   Otherwise, current hasn't yet provided feedback and false is returned."
-  ([user-id app]
-   (let [app-state (get-application-state (:id app))]
-     (if (is-dynamic-application? app)
-       (or (and (is-commenter? user-id app-state)
-                (not (can-comment? user-id (:id app))))
-           (and (is-decider? user-id app-state)
-                (not (can-decide? user-id (:id app)))))
-       (contains? (set (map :userid (concat (get-review-events app) (get-third-party-review-events app))))
-                  user-id))))
-  ([user-id app round]
-   (reviewed? user-id (update app :events (fn [events] (filter #(= round (:round %)) events))))))
-
-(comment
-  (reviewed? "bob" (get-application-state 23)))
 
 (declare fix-workflow-from-db)
 (declare is-dynamic-handler?)
@@ -181,55 +106,6 @@
   [user-id application]
   (and (= "applied" (:state application))
        (is-third-party-reviewer? user-id (:curround application) application)))
-
-;; TODO add to tests
-(defn- is-commenter?
-  "Checks if a given user has been requested to comment the given application."
-  ([user application]
-   ;; TODO calculate in backend?
-   (->> (:dynamic-events application)
-        (mapcat :application/commenters)
-        (some #{user}))))
-
-(defn- can-comment?
-  "Checks if the current user can perform a comment action for the given application."
-  [user-id application-id]
-  (let [application (dynamic/assoc-possible-commands user-id (get-application-state application-id))]
-    (contains? (get application :possible-commands) :application.command/comment)))
-
-;; TODO add to tests
-(defn- is-decider?
-  "Checks if a given user has been requested to decide on the given application."
-  ([user application]
-   ;; TODO calculate in backend?
-   (->> (:dynamic-events application)
-        (mapcat :application/deciders)
-        (some #{user}))))
-
-(defn- can-decide?
-  "Checks if the current user can perform a decide action for the given application."
-  [user-id application-id]
-  (let [application (dynamic/assoc-possible-commands user-id (get-application-state application-id))]
-    (contains? (get application :possible-commands) :application.command/decide)))
-
-(defn get-approvers [application]
-  (actors/get-by-role (:id application) "approver"))
-
-(defn get-reviewers [application]
-  (actors/get-by-role (:id application) "reviewer"))
-
-(defn get-third-party-reviewers
-  "Takes as an argument a structure containing application information and a optionally the workflow round. Then returns userids for all users that have been requested to review for the given round or all rounds if not given."
-  ([application]
-   (set (map :userid (get-events-of-type application "review-request"))))
-  ([application round]
-   (set (map :userid (get-events-of-type application round "review-request")))))
-
-(defn get-handlers [application]
-  (let [approvers (get-approvers application)
-        reviewers (get-reviewers application)
-        third-party-reviewers (get-third-party-reviewers application)]
-    (union approvers reviewers third-party-reviewers)))
 
 (defn is-applicant? [user-id application]
   (assert user-id)
