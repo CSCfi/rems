@@ -240,7 +240,7 @@
    :application.event/submitted SubmittedEvent})
 
 (s/defschema Event
-  (apply r/dispatch-on (flatten [:event/type (seq event-schemas)])))
+  (apply r/dispatch-on :event/type (flatten (seq event-schemas))))
 
 (deftest test-event-schema
   (testing "check specific event schema"
