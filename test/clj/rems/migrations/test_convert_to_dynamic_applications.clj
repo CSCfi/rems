@@ -8,7 +8,7 @@
             [rems.db.test-data :as test-data]
             [rems.db.workflow :as workflow]
             [rems.migrations.convert-to-dynamic-applications :refer :all]
-            [rems.api.testing :refer [api-fixture]]
+            [rems.api.testing :refer :all]
             [rems.validate :as validate])
   (:import [java.util UUID]))
 
