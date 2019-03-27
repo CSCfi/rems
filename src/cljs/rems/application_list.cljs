@@ -1,6 +1,6 @@
 (ns rems.application-list
   (:require [clojure.string :as str]
-            [rems.application-util :refer [form-fields-editable?]]
+            [rems.application-util :as application-util]
             [rems.guide-functions]
             [rems.table :as table]
             [rems.text :refer [localize-state localize-time localized text]])
@@ -18,18 +18,18 @@
        (str/join ", ")))
 
 (def +all-columns+
-  [:id :description :resource :applicant :state :created :last-activity :view])
+  [:description :resource :applicant :state :created :last-activity :view])
 
 (def +default-columns+
-  [:id :description :resource :applicant :state :created :view])
+  [:description :resource :applicant :state :created :view])
 
 (def +draft-columns+
-  [:id :resource :last-activity :view])
+  [:resource :last-activity :view])
 
 (def ^:private +columns+
   {:id {:value :application/id
         :header #(text :t.actions/application)}
-   :description {:value :application/description
+   :description {:value application-util/format-description
                  :header #(text :t.actions/description)}
    :resource {:value format-catalogue-items
               :header #(text :t.actions/resource)}
@@ -37,7 +37,7 @@
                :header #(text :t.actions/applicant)}
    :state {:value #(localize-state (get-in % [:application/workflow :workflow.dynamic/state]))
            :header #(text :t.actions/state)
-           :class #(if (form-fields-editable? %) "state text-highlight" "state")}
+           :class #(if (application-util/form-fields-editable? %) "state text-highlight" "state")}
    :created {:value #(localize-time (:application/created %))
              :sort-value :application/created
              :header #(text :t.actions/created)}
@@ -57,7 +57,7 @@
   [opts]
   [table/component
    (merge {:column-definitions +columns+
-           :id-function :application/id
+           :id-function #(str "application-" (:application/id %))
            :class "applications"}
           opts)])
 

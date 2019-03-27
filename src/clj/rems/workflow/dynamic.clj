@@ -82,6 +82,7 @@
          :form/id s/Int
          :workflow/id s/Int
          :workflow/type s/Keyword
+         :application/external-id (s/maybe s/Str)
          ;; workflow-specific data
          (s/optional-key :workflow.dynamic/handlers) #{s/Str}))
 (s/defschema DecidedEvent

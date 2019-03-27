@@ -1,6 +1,6 @@
 (ns ^:integration rems.api.test-resources
   (:require [clojure.test :refer :all]
-            [rems.handler :refer [app]]
+            [rems.handler :refer [handler]]
             [rems.api.testing :refer :all]
             [ring.mock.request :refer :all]))
 
@@ -12,14 +12,14 @@
   (-> (request :post "/api/resources/create")
       (authenticate api-key user-id)
       (json-body command)
-      app
+      handler
       read-ok-body))
 
 (defn- update-resource! [command api-key user-id]
   (-> (request :put "/api/resources/update")
       (authenticate api-key user-id)
       (json-body command)
-      app
+      handler
       read-ok-body))
 
 (deftest resources-api-test
@@ -29,7 +29,7 @@
       (testing "returns stuff"
         (let [data (-> (request :get "/api/resources")
                        (authenticate api-key user-id)
-                       app
+                       handler
                        read-ok-body)]
           (is (:id (first data)))))
       (let [enabled-id (:id (create-resource! {:resid "enabled"
@@ -59,7 +59,7 @@
         (testing "hides disabled and archived by default"
           (let [data (-> (request :get "/api/resources")
                          (authenticate api-key user-id)
-                         app
+                         handler
                          read-ok-body)
                 app-ids (set (map :id data))]
             (is (contains? app-ids enabled-id))
@@ -68,7 +68,7 @@
         (testing "includes disabled when requested"
           (let [data (-> (request :get "/api/resources?disabled=true")
                          (authenticate api-key user-id)
-                         app
+                         handler
                          read-ok-body)
                 app-ids (set (map :id data))]
             (is (contains? app-ids enabled-id))
@@ -77,7 +77,7 @@
         (testing "includes archived when requested"
           (let [data (-> (request :get "/api/resources?archived=true")
                          (authenticate api-key user-id)
-                         app
+                         handler
                          read-ok-body)
                 app-ids (set (map :id data))]
             (is (contains? app-ids enabled-id))
@@ -91,12 +91,12 @@
             (json-body {:resid resid
                         :organization "TEST-ORGANIZATION"
                         :licenses [licid]})
-            app
+            handler
             assert-response-is-ok)
         (testing "and fetch"
           (let [data (-> (request :get "/api/resources")
                          (authenticate api-key user-id)
-                         app
+                         handler
                          assert-response-is-ok
                          read-body)
                 resource (some #(when (= resid (:resid %)) %) data)]
@@ -108,7 +108,7 @@
                              (json-body {:resid resid
                                          :organization "TEST-ORGANIZATION"
                                          :licenses [licid]})
-                             app)
+                             handler)
                 body (read-body response)]
             (is (= 200 (:status response)))
             (is (= false (:success body)))
@@ -119,18 +119,18 @@
               (json-body {:resid resid
                           :organization "TEST-ORGANIZATION2"
                           :licenses [licid]})
-              app
+              handler
               assert-response-is-ok))))))
 
 (deftest resources-api-filtering-test
   (let [unfiltered (-> (request :get "/api/resources")
                        (authenticate "42" "owner")
-                       app
+                       handler
                        assert-response-is-ok
                        read-body)
         filtered (-> (request :get "/api/resources" {:active true})
                      (authenticate "42" "owner")
-                     app
+                     handler
                      assert-response-is-ok
                      read-body)]
     (is (coll-is-not-empty? unfiltered))
@@ -143,7 +143,7 @@
   (testing "without authentication"
     (testing "list"
       (let [response (-> (request :get "/api/resources")
-                         app)]
+                         handler)]
         (is (response-is-unauthorized? response))
         (is (= "unauthorized" (read-body response)))))
     (testing "create"
@@ -151,7 +151,7 @@
                          (json-body {:resid "r"
                                      :organization "o"
                                      :licenses []})
-                         app)]
+                         handler)]
         (is (response-is-unauthorized? response))
         (is (= "Invalid anti-forgery token" (read-body response))))))
 
@@ -161,7 +161,7 @@
       (testing "list"
         (let [response (-> (request :get "/api/resources")
                            (authenticate api-key user-id)
-                           app)]
+                           handler)]
           (is (response-is-unauthorized? response))
           (is (= "invalid api key" (read-body response)))))
       (testing "create"
@@ -170,7 +170,7 @@
                            (json-body {:resid "r"
                                        :organization "o"
                                        :licenses []})
-                           app)]
+                           handler)]
           (is (response-is-unauthorized? response))
           (is (= "invalid api key" (read-body response)))))))
 
@@ -180,7 +180,7 @@
       (testing "list"
         (let [response (-> (request :get "/api/resources")
                            (authenticate api-key user-id)
-                           app)]
+                           handler)]
           (is (response-is-forbidden? response))
           (is (= "forbidden" (read-body response)))))
       (testing "create"
@@ -189,6 +189,6 @@
                            (json-body {:resid "r"
                                        :organization "o"
                                        :licenses []})
-                           app)]
+                           handler)]
           (is (response-is-forbidden? response))
           (is (= "forbidden" (read-body response))))))))

@@ -15,7 +15,7 @@
         user-id "alice"]
     (let [data (-> (request :get "/api/translations")
                    (authenticate api-key user-id)
-                   app
+                   handler
                    read-body)
           languages (keys data)]
       (is (= [:en :fi] (sort languages))))))
@@ -25,14 +25,14 @@
     (testing "all"
       (let [data (-> (request :get "/api/entitlements")
                      (authenticate api-key "developer")
-                     app
+                     handler
                      read-body)]
         (is (= 2 (count data)))))
 
     (testing "just for alice"
       (let [data (-> (request :get "/api/entitlements?user=alice")
                      (authenticate api-key "developer")
-                     app
+                     handler
                      read-body)]
         (is (= 1 (count data)))))
 
@@ -40,7 +40,7 @@
       (testing "with entitlements"
         (let [body (-> (request :get (str "/api/entitlements"))
                        (authenticate api-key "alice")
-                       app
+                       handler
                        assert-response-is-ok
                        read-body)]
           (is (coll-is-not-empty? body))
@@ -50,7 +50,7 @@
         (users/add-user! "allison" {})
         (let [body (-> (request :get (str "/api/entitlements"))
                        (authenticate api-key "allison")
-                       app
+                       handler
                        assert-response-is-ok
                        read-body)]
           (is (coll-is-empty? body)))))))

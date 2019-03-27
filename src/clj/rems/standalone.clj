@@ -22,7 +22,7 @@
   ^{:on-reload :noop}
   http-server
   :start
-  (http/start (assoc env :handler handler/app))
+  (http/start (assoc env :handler handler/handler))
   :stop
   (when http-server (http/stop http-server)))
 

@@ -85,7 +85,7 @@
              :css-dirs ["target/resources/public/css"]
              :nrepl-middleware [cider.piggieback/wrap-cljs-repl]}
 
-  :uberwar {:handler rems.handler/app
+  :uberwar {:handler rems.handler/handler
             :init rems.handler/init
             :destroy rems.handler/destroy
             :web-xml "web.xml"

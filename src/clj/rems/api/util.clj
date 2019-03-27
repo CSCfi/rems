@@ -13,12 +13,6 @@
   (when-not (apply has-roles? roles)
     (throw-forbidden)))
 
-(defn longify-keys [m]
-  (into {} (for [[k v] m]
-             (if (keyword? k)
-               [(Long/parseLong (name k)) v]
-               [k v]))))
-
 (defn add-roles-documentation [summary roles]
   (when (nil? summary)
     (throw (IllegalArgumentException. "Route must have a :summary when using :roles and it must be specified before :roles")))

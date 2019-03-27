@@ -159,6 +159,7 @@
 
 (s/defschema V2Application
   {:application/id s/Int
+   :application/external-id (s/maybe s/Str)
    :application/created DateTime
    :application/modified DateTime
    :application/last-activity DateTime
