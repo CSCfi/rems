@@ -1,5 +1,6 @@
 (ns ^:integration rems.migrations.test-convert-to-dynamic-applications
-  (:require [clojure.java.jdbc :as jdbc]
+  (:require [clj-time.format :as time-format]
+            [clojure.java.jdbc :as jdbc]
             [clojure.pprint :refer [pprint]]
             [clojure.test :refer :all]
             [conman.core :as conman]
@@ -15,6 +16,8 @@
 (use-fixtures :once api-once-fixture)
 (use-fixtures :each api-each-fixture)
 
+(defn get-test-data-creation-time []
+  (time-format/parse (:eventtime (first (jdbc/query *db* ["select eventdata->>'event/time' as eventtime from application_event where eventdata is not null limit 1"])))))
 
 ;; dates in the past to avoid external-id conflicts with test-data
 (defn add-more-test-data! []
@@ -92,7 +95,8 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
 (deftest test-migration
   (add-more-test-data!)
   (let [event-id-seq (atom (:currval (first (jdbc/query *db* ["select currval('application_event_id_seq')"]))))
-        next-event-id #(swap! event-id-seq inc)]
+        next-event-id #(swap! event-id-seq inc)
+        creation-time (get-test-data-creation-time)]
 
     (let [dynamic-workflows (->> (workflow/get-workflows {})
                                  (filter #(= "workflow/dynamic" (get-in % [:workflow :type]))))
@@ -123,7 +127,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
               :applicantuserid "developer"
               :dynamic-events [{:event/type :application.event/created
                                 :event/actor "developer"
-                                :event/time test-data/creation-time
+                                :event/time creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/external-id "2019/10"
@@ -137,7 +141,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :workflow.dynamic/handlers #{"developer"}}
                                {:event/type :application.event/draft-saved
                                 :event/actor "developer"
-                                :event/time test-data/creation-time
+                                :event/time creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/field-values {1 "draft application"
@@ -161,7 +165,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
               :applicantuserid "developer"
               :dynamic-events [{:event/type :application.event/created
                                 :event/actor "developer"
-                                :event/time test-data/creation-time
+                                :event/time creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/external-id "2019/11"
@@ -175,7 +179,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :workflow.dynamic/handlers #{"developer"}}
                                {:event/type :application.event/draft-saved
                                 :event/actor "developer"
-                                :event/time test-data/creation-time
+                                :event/time creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/field-values {1 "applied application"
@@ -204,7 +208,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
               :applicantuserid "developer"
               :dynamic-events [{:event/type :application.event/created
                                 :event/actor "developer"
-                                :event/time test-data/creation-time
+                                :event/time creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/external-id "2019/12"
@@ -218,7 +222,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :workflow.dynamic/handlers #{"developer"}}
                                {:event/type :application.event/draft-saved
                                 :event/actor "developer"
-                                :event/time test-data/creation-time
+                                :event/time creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/field-values {1 "rejected application"
@@ -253,7 +257,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
               :applicantuserid "developer"
               :dynamic-events [{:event/type :application.event/created
                                 :event/actor "developer"
-                                :event/time test-data/creation-time
+                                :event/time creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/external-id "2019/13"
@@ -267,7 +271,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :workflow.dynamic/handlers #{"developer"}}
                                {:event/type :application.event/draft-saved
                                 :event/actor "developer"
-                                :event/time test-data/creation-time
+                                :event/time creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/field-values {1 "accepted application"
@@ -302,7 +306,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
               :applicantuserid "developer"
               :dynamic-events [{:event/type :application.event/created
                                 :event/actor "developer"
-                                :event/time test-data/creation-time
+                                :event/time creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/external-id "2019/14"
@@ -316,7 +320,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :workflow.dynamic/handlers #{"developer"}}
                                {:event/type :application.event/draft-saved
                                 :event/actor "developer"
-                                :event/time test-data/creation-time
+                                :event/time creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/field-values {1 "returned application"
@@ -351,7 +355,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
               :applicantuserid "alice"
               :dynamic-events [{:event/type :application.event/created
                                 :event/actor "alice"
-                                :event/time test-data/creation-time
+                                :event/time creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/external-id "2019/15"
@@ -368,7 +372,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :workflow.dynamic/handlers #{"developer"}}
                                {:event/type :application.event/draft-saved
                                 :event/actor "alice"
-                                :event/time test-data/creation-time
+                                :event/time creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/field-values {1 "bundled application"
@@ -408,7 +412,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
               :applicantuserid "alice"
               :dynamic-events [{:event/type :application.event/created
                                 :event/actor "alice"
-                                :event/time test-data/creation-time
+                                :event/time creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/external-id "2019/16"
@@ -422,7 +426,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :workflow.dynamic/handlers #{"developer"}}
                                {:event/type :application.event/draft-saved
                                 :event/actor "alice"
-                                :event/time test-data/creation-time
+                                :event/time creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/field-values {1 "application with review"
@@ -464,7 +468,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
               :applicantuserid "alice"
               :dynamic-events [{:event/type :application.event/created
                                 :event/actor "alice"
-                                :event/time test-data/creation-time
+                                :event/time creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/external-id "2019/17"
@@ -478,7 +482,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :workflow.dynamic/handlers #{"developer"}}
                                {:event/type :application.event/draft-saved
                                 :event/actor "alice"
-                                :event/time test-data/creation-time
+                                :event/time creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/field-values {1 "application in review"
