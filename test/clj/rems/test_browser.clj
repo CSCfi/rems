@@ -172,9 +172,8 @@
 
 (defn get-application-summary [application-id]
   (let [row (query *driver* [{:css "table.applications"}
-                             {:tag :td, :class "id", :fn/text application-id}
-                             {:xpath "./ancestor::tr"}])]
-    {:id (get-element-text-el *driver* (child *driver* row {:css ".id"}))
+                             {:tag :tr, :id (str "application-" application-id)}])]
+    {:id application-id
      :description (get-element-text-el *driver* (child *driver* row {:css ".description"}))
      :resource (get-element-text-el *driver* (child *driver* row {:css ".resource"}))
      :applicant (get-element-text-el *driver* (child *driver* row {:css ".applicant"}))
@@ -218,12 +217,12 @@
 
     (let [application-id (get-application-id)]
       (go-to-applications)
-      (is (= {:id application-id
-              :description "Test name"
-              :resource "THL catalogue item"
-              :applicant "developer"
-              :state "Applied"}
-             (get-application-summary application-id))))))
+      (let [summary (get-application-summary application-id)]
+        (is (= "THL catalogue item" (:resource summary)))
+        (is (= "developer" (:applicant summary)))
+        (is (= "Applied" (:state summary)))
+        ;; don't bother trying to predict the external id:
+        (is (.contains (:description summary) "Test name"))))))
 
 (deftest test-guide-page
   (with-postmortem *driver* {:dir reporting-dir}

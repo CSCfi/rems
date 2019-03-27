@@ -129,6 +129,7 @@
                      :event/time (DateTime. 1000)
                      :event/actor "applicant"
                      :application/id 1
+                     :application/external-id "extid"
                      :application/resources [{:catalogue-item/id 10
                                               :resource/ext-id "urn:11"}
                                              {:catalogue-item/id 20
@@ -141,6 +142,7 @@
                      :workflow/type :workflow/dynamic
                      :workflow.dynamic/handlers #{"handler"}}]
             expected-application {:application/id 1
+                                  :application/external-id "extid"
                                   :application/created (DateTime. 1000)
                                   :application/modified (DateTime. 1000)
                                   :application/last-activity (DateTime. 1000)

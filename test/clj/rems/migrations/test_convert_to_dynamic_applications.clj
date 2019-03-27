@@ -16,6 +16,7 @@
   :once
   api-fixture)
 
+;; dates in the past to avoid external-id conflicts with test-data
 (defn add-more-test-data! []
   (jdbc/execute! *db* ["
 INSERT INTO catalogue_item_application (id, applicantuserid, start, endt, modifieruserid, wfid, description) VALUES (20, 'alice', '2019-03-05 11:56:19.353103', null, null, 1, 'direct approval');
@@ -125,6 +126,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/time test-data/creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
+                                :application/external-id "2019/10"
                                 :application/resources [{:catalogue-item/id 2
                                                          :resource/ext-id "urn:nbn:fi:lb-201403262"}]
                                 :application/licenses [{:license/id 1}
@@ -162,6 +164,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/time test-data/creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
+                                :application/external-id "2019/11"
                                 :application/resources [{:catalogue-item/id 2
                                                          :resource/ext-id "urn:nbn:fi:lb-201403262"}]
                                 :application/licenses [{:license/id 1}
@@ -204,6 +207,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/time test-data/creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
+                                :application/external-id "2019/12"
                                 :application/resources [{:catalogue-item/id 2
                                                          :resource/ext-id "urn:nbn:fi:lb-201403262"}]
                                 :application/licenses [{:license/id 1}
@@ -252,6 +256,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/time test-data/creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
+                                :application/external-id "2019/13"
                                 :application/resources [{:catalogue-item/id 2
                                                          :resource/ext-id "urn:nbn:fi:lb-201403262"}]
                                 :application/licenses [{:license/id 1}
@@ -300,6 +305,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/time test-data/creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
+                                :application/external-id "2019/14"
                                 :application/resources [{:catalogue-item/id 2
                                                          :resource/ext-id "urn:nbn:fi:lb-201403262"}]
                                 :application/licenses [{:license/id 1}
@@ -348,6 +354,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/time test-data/creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
+                                :application/external-id "2019/15"
                                 :application/resources [{:catalogue-item/id 2
                                                          :resource/ext-id "urn:nbn:fi:lb-201403262"}
                                                         {:catalogue-item/id 3
@@ -404,6 +411,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/time test-data/creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
+                                :application/external-id "2019/16"
                                 :application/resources [{:catalogue-item/id 4
                                                          :resource/ext-id "urn:nbn:fi:lb-201403262"}]
                                 :application/licenses [{:license/id 1}
@@ -459,6 +467,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/time test-data/creation-time
                                 :event/id (next-event-id)
                                 :application/id app-id
+                                :application/external-id "2019/17"
                                 :application/resources [{:catalogue-item/id 4
                                                          :resource/ext-id "urn:nbn:fi:lb-201403262"}]
                                 :application/licenses [{:license/id 1}
@@ -501,6 +510,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/time (-> application :dynamic-events (nth 0) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id
+                                :application/external-id "2019/18"
                                 :application/resources [{:catalogue-item/id 1
                                                          :resource/ext-id "urn:nbn:fi:lb-201403262"}]
                                 :application/licenses [{:license/id 1}
@@ -551,6 +561,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/time (-> application :dynamic-events (nth 0) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id
+                                :application/external-id "2019/19"
                                 :application/resources [{:catalogue-item/id 2
                                                          :resource/ext-id "urn:nbn:fi:lb-201403262"}]
                                 :application/licenses [{:license/id 1}
@@ -608,6 +619,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/time (-> application :dynamic-events (nth 1) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id
+                                :application/external-id "2019/20"
                                 :application/resources [{:catalogue-item/id 2
                                                          :resource/ext-id "urn:nbn:fi:lb-201403262"}]
                                 :application/licenses [{:license/id 1}
@@ -656,6 +668,7 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/time (-> application :dynamic-events (nth 1) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id
+                                :application/external-id "2019/21"
                                 :application/resources [{:catalogue-item/id 2
                                                          :resource/ext-id "urn:nbn:fi:lb-201403262"}]
                                 :application/licenses [{:license/id 1}

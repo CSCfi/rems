@@ -125,6 +125,7 @@
               :event/actor "alice"
               :event/time (DateTime. 1000)
               :application/id 42
+              :application/external-id nil
               :application/resources [{:catalogue-item/id cat-id
                                        :resource/ext-id "res1"}]
               :application/licenses []
@@ -152,6 +153,7 @@
                 :event/actor "alice"
                 :event/time (DateTime. 1000)
                 :application/id 42
+                :application/external-id nil
                 :application/resources [{:catalogue-item/id cat-id
                                          :resource/ext-id "res1"}
                                         {:catalogue-item/id cat-id2
@@ -245,6 +247,7 @@
                 :event/actor "alice"
                 :event/time (DateTime. 1000)
                 :application/id 42
+                :application/external-id nil
                 :application/resources [{:catalogue-item/id cat-id2
                                          :resource/ext-id "res2+++"}]
                 :application/licenses [{:license/id lic-id}]
@@ -280,6 +283,7 @@
                 :event/actor "alice"
                 :event/time (DateTime. 1000)
                 :application/id 42
+                :application/external-id nil
                 :application/resources [{:catalogue-item/id cat-id2
                                          :resource/ext-id "res1"}]
                 :application/licenses [{:license/id lic-id}]
@@ -308,6 +312,7 @@
                 :event/actor "alice"
                 :event/time (DateTime. 1000)
                 :application/id 42
+                :application/external-id nil
                 :application/resources [{:catalogue-item/id cat-id2
                                          :resource/ext-id "res1"}]
                 :application/licenses []
@@ -319,3 +324,13 @@
                                            :catalogue-item-ids [cat-id2]
                                            :time (DateTime. 1000)
                                            :actor "alice"})))))))
+
+(deftest test-application-external-id!
+  (is (= [] (db/get-external-ids {:prefix "1981"})))
+  (is (= [] (db/get-external-ids {:prefix "1980"})))
+  (is (= "1981/1" (application-external-id! (DateTime. #inst "1981-03-02"))))
+  (is (= "1981/2" (application-external-id! (DateTime. #inst "1981-01-01"))))
+  (is (= "1981/3" (application-external-id! (DateTime. #inst "1981-04-03"))))
+  (is (= "1980/1" (application-external-id! (DateTime. #inst "1980-12-12"))))
+  (is (= "1980/2" (application-external-id! (DateTime. #inst "1980-12-12"))))
+  (is (= "1981/4" (application-external-id! (DateTime. #inst "1981-04-01")))))

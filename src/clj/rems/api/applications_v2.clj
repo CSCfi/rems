@@ -21,6 +21,7 @@
   [application event]
   (-> application
       (assoc :application/id (:application/id event)
+             :application/external-id (:application/external-id event)
              :application/created (:event/time event)
              :application/modified (:event/time event)
              :application/applicant (:event/actor event)
