@@ -100,26 +100,42 @@
                          read-body)
                 resource (some #(when (= resid (:resid %)) %) data)]
             (is resource)
-            (is (= [licid] (map :id (:licenses resource))))))
-        (testing "duplicate resource ID is not allowed within one organization"
-          (let [response (-> (request :post "/api/resources/create")
-                             (authenticate api-key user-id)
-                             (json-body {:resid resid
-                                         :organization "TEST-ORGANIZATION"
-                                         :licenses [licid]})
-                             handler)
-                body (read-body response)]
-            (is (= 200 (:status response)))
-            (is (= false (:success body)))
-            (is (= [{:type "t.administration.errors/duplicate-resid" :resid resid}] (:errors body)))))
-        (testing "duplicate resource ID is allowed between organizations"
-          (-> (request :post "/api/resources/create")
-              (authenticate api-key user-id)
-              (json-body {:resid resid
-                          :organization "TEST-ORGANIZATION2"
-                          :licenses [licid]})
-              handler
-              assert-response-is-ok))))))
+            (is (= [licid] (map :id (:licenses resource))))))))))
+
+(deftest resources-api-duplicate-resid-test
+  (let [api-key "42"
+        user-id "owner"
+        licid 1
+        resid "RESOURCE-API-DUPLICATE-TEST"]
+    (-> (request :post "/api/resources/create")
+        (authenticate api-key user-id)
+        (json-body {:resid resid
+                    :organization "TEST-ORGANIZATION"
+                    :licenses [licid]})
+        handler
+        assert-response-is-ok)
+    (testing "duplicate resource ID is allowed between organizations"
+      (-> (request :post "/api/resources/create")
+          (authenticate api-key user-id)
+          (json-body {:resid resid
+                      :organization "TEST-ORGANIZATION2"
+                      :licenses [licid]})
+          handler
+          assert-response-is-ok))
+    (testing "duplicate resource ID is not allowed within one organization"
+      (let [response (-> (request :post "/api/resources/create")
+                         (authenticate api-key user-id)
+                         (json-body {:resid resid
+                                     :organization "TEST-ORGANIZATION"
+                                     :licenses [licid]})
+                         handler)
+            body (read-body response)]
+        (is (= 200 (:status response)))
+        (is (= false (:success body)))
+        (is (= [{:type "t.administration.errors/duplicate-resid" :resid resid}] (:errors body)))
+        ;; NB: the transaction is failed after this try so no more
+        ;; database statements after this
+        ))))
 
 (deftest resources-api-filtering-test
   (let [unfiltered (-> (request :get "/api/resources")

@@ -30,26 +30,6 @@
                               :type "text"
                               :input-prompt {:en "en prompt"
                                              :fi "fi prompt"}}]}]
-
-        (testing "invalid create"
-          ;; TODO: silence the logging for this expected error
-          (let [command-with-invalid-maxlength (assoc-in command [:items 0 :maxlength] -1)
-                response (-> (request :post "/api/forms/create")
-                             (authenticate api-key user-id)
-                             (json-body command-with-invalid-maxlength)
-                             handler)]
-            (is (= 400 (:status response))
-                "can't send negative maxlength")))
-
-        (testing "invalid create: field too long"
-          (let [command-with-long-prompt (assoc-in command [:items 0 :input-prompt :en]
-                                                   (apply str (repeat 10000 "x")))
-                response (-> (request :post "/api/forms/create")
-                             (authenticate api-key user-id)
-                             (json-body command-with-long-prompt)
-                             handler)]
-            (is (= 500 (:status response)))))
-
         (testing "valid create"
           (-> (request :post "/api/forms/create")
               (authenticate api-key user-id)
@@ -83,6 +63,38 @@
                    (select-keys form [:title :organization])))
             (is (= (:items command)
                    (:fields (form/get-form-template (:id form)))))))))))
+
+(deftest forms-api-invalid-create-test
+  (let [api-key "42"
+        user-id "owner"
+        command {:organization "abc"
+                 :title (str "form title " (UUID/randomUUID))
+                 :items [{:title {:en "en title"
+                                  :fi "fi title"}
+                          :optional true
+                          :type "text"
+                          :input-prompt {:en "en prompt"
+                                         :fi "fi prompt"}}]}]
+    ;; TODO: silence the logging for this expected error
+    (testing "invalid create: maxlength"
+      (let [command-with-invalid-maxlength (assoc-in command [:items 0 :maxlength] -1)
+            response (-> (request :post "/api/forms/create")
+                         (authenticate api-key user-id)
+                         (json-body command-with-invalid-maxlength)
+                         handler)]
+        (is (= 400 (:status response))
+            "can't send negative maxlength")))
+    (testing "invalid create: field too long"
+      (let [command-with-long-prompt (assoc-in command [:items 0 :input-prompt :en]
+                                               (apply str (repeat 10000 "x")))
+            response (-> (request :post "/api/forms/create")
+                         (authenticate api-key user-id)
+                         (json-body command-with-long-prompt)
+                         handler)]
+        (is (= 500 (:status response)))
+        ;; NB: the transaction is failed after this try so no more
+        ;; database statements after this
+        ))))
 
 (deftest option-form-item-test
   (let [api-key "42"
