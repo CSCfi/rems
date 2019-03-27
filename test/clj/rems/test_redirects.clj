@@ -3,7 +3,7 @@
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.resource :as resource]
-            [rems.handler :refer [app]]
+            [rems.handler :refer [handler]]
             [rems.api.testing :refer :all]
             [ring.mock.request :refer :all]))
 
@@ -33,13 +33,13 @@
     (let [resid (dummy-resource "urn:one-matching-resource")
           catid (dummy-catalogue-item resid)
           response (-> (request :get "/apply-for?resource=urn:one-matching-resource")
-                       app)]
+                       handler)]
       (is (= 302 (:status response)))
       (is (= (str "http://localhost/#/application?items=" catid) (get-in response [:headers "Location"])))))
 
   (testing "fails if no catalogue item is found"
     (let [response (-> (request :get "/apply-for?resource=urn:no-such-resource")
-                       app)]
+                       handler)]
       (is (= 404 (:status response)))
       (is (= "Resource not found" (read-body response)))))
 
@@ -48,7 +48,7 @@
           _ (dummy-catalogue-item resid)
           _ (dummy-catalogue-item resid)
           response (-> (request :get "/apply-for?resource=urn:two-matching-resources")
-                       app)]
+                       handler)]
       (is (= 404 (:status response)))
       (is (= "Resource ID is not unique" (read-body response)))))
 
@@ -58,6 +58,6 @@
           _ (disable-catalogue-item old-catid)
           new-catid (dummy-catalogue-item resid)
           response (-> (request :get "/apply-for?resource=urn:enabed-and-disabled-items")
-                       app)]
+                       handler)]
       (is (= 302 (:status response)))
       (is (= (str "http://localhost/#/application?items=" new-catid) (get-in response [:headers "Location"]))))))

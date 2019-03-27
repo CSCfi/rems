@@ -1,7 +1,7 @@
 (ns ^:integration rems.api.test-catalogue-items
   (:require [clojure.string :as str]
             [clojure.test :refer :all]
-            [rems.handler :refer [app]]
+            [rems.handler :refer [handler]]
             [rems.api.testing :refer :all]
             [ring.mock.request :refer :all]))
 
@@ -14,7 +14,7 @@
         user-id "alice"]
     (let [data (-> (request :get "/api/catalogue-items/")
                    (authenticate api-key user-id)
-                   app
+                   handler
                    read-body)
           item (first data)]
       (is (str/starts-with? (:resid item) "urn:")))
@@ -25,31 +25,31 @@
                                :resid 1
                                :wfid 1
                                :state "enabled"})
-                   app
+                   handler
                    read-body)]
       (is (= 12 (:id data))))
     (let [data (-> (request :get "/api/catalogue-items/7")
                    (authenticate api-key user-id)
-                   app
+                   handler
                    read-body)]
       (is (= 7 (:id data))))))
 
 (deftest catalogue-items-api-security-test
   (testing "listing without authentication"
     (let [response (-> (request :get (str "/api/catalogue-items"))
-                       app)
+                       handler)
           body (read-body response)]
       (is (response-is-unauthorized? response))
       (is (= "unauthorized" body))))
   (testing "item without authentication"
     (let [response (-> (request :get (str "/api/catalogue-items/2"))
-                       app)
+                       handler)
           body (read-body response)]
       (is (response-is-unauthorized? response))
       (is (= "unauthorized" body))))
   (testing "create without authentication"
     (let [response (-> (request :post (str "/api/catalogue-items/create"))
-                       app)
+                       handler)
           body (read-body response)]
       (is (response-is-unauthorized? response))
       (is (str/includes? body "Invalid anti-forgery token"))))
@@ -61,14 +61,14 @@
                            :form 1
                            :resid 1
                            :wfid 1})
-               app
+               handler
                (read-body)))))
   (testing "create-localization without authentication"
     (let [response (-> (request :post (str "/api/catalogue-items/create-localization"))
                        (json-body {:id 1
                                    :langcode :fi
                                    :title "malicious localization"})
-                       app)
+                       handler)
           body (read-body response)]
       (is (response-is-unauthorized? response))
       (is (str/includes? body "Invalid anti-forgery token"))))
@@ -79,5 +79,5 @@
                (json-body {:id 1
                            :langcode :fi
                            :title "malicious localization"})
-               app
+               handler
                (read-body))))))
