@@ -26,7 +26,7 @@
        (not (.contains str "Unknown"))))
 
 (deftest test-all-state-localizations
-  (is (= (-> (:dynamic-states (:applications (:t loc-en)))
+  (is (= (-> (:states (:applications (:t loc-en)))
              (dissoc :unknown)
              (keys)
              (sort))
@@ -42,7 +42,7 @@
           (is (valid-localization? (localize-state s))))))))
 
 (deftest test-all-event-localizations
-  (is (= (-> (:dynamic-events (:applications (:t loc-en)))
+  (is (= (-> (:events (:applications (:t loc-en)))
              (dissoc :unknown)
              (keys)
              (sort))

@@ -49,41 +49,41 @@
         (first (vals m)))))
 
 (def ^:private states
-  {:rems.workflow.dynamic/draft :t.applications.dynamic-states/draft
-   :rems.workflow.dynamic/submitted :t.applications.dynamic-states/submitted
-   :rems.workflow.dynamic/approved :t.applications.dynamic-states/approved
-   :rems.workflow.dynamic/rejected :t.applications.dynamic-states/rejected
-   :rems.workflow.dynamic/closed :t.applications.dynamic-states/closed
-   :rems.workflow.dynamic/returned :t.applications.dynamic-states/returned})
+  {:application.state/draft :t.applications.states/draft
+   :application.state/submitted :t.applications.states/submitted
+   :application.state/approved :t.applications.states/approved
+   :application.state/rejected :t.applications.states/rejected
+   :application.state/closed :t.applications.states/closed
+   :application.state/returned :t.applications.states/returned})
 
 (defn localize-state [state]
   (text (get states state :t.applications.states/unknown)))
 
 (def ^:private event-types
-  {:application.event/approved :t.applications.dynamic-events/approved
-   :application.event/closed :t.applications.dynamic-events/closed
-   :application.event/comment-requested :t.applications.dynamic-events/comment-requested
-   :application.event/commented :t.applications.dynamic-events/commented
-   :application.event/created :t.applications.dynamic-events/created
-   :application.event/decided :t.applications.dynamic-events/decided
-   :application.event/decision-requested :t.applications.dynamic-events/decision-requested
-   :application.event/draft-saved :t.applications.dynamic-events/draft-saved
-   :application.event/member-added :t.applications.dynamic-events/member-added
-   :application.event/member-invited :t.applications.dynamic-events/member-invited
-   :application.event/member-joined :t.applications.dynamic-events/member-joined
-   :application.event/member-removed :t.applications.dynamic-events/member-removed
-   :application.event/member-uninvited :t.applications.dynamic-events/member-uninvited
-   :application.event/rejected :t.applications.dynamic-events/rejected
-   :application.event/returned :t.applications.dynamic-events/returned
-   :application.event/submitted :t.applications.dynamic-events/submitted})
+  {:application.event/approved :t.applications.events/approved
+   :application.event/closed :t.applications.events/closed
+   :application.event/comment-requested :t.applications.events/comment-requested
+   :application.event/commented :t.applications.events/commented
+   :application.event/created :t.applications.events/created
+   :application.event/decided :t.applications.events/decided
+   :application.event/decision-requested :t.applications.events/decision-requested
+   :application.event/draft-saved :t.applications.events/draft-saved
+   :application.event/member-added :t.applications.events/member-added
+   :application.event/member-invited :t.applications.events/member-invited
+   :application.event/member-joined :t.applications.events/member-joined
+   :application.event/member-removed :t.applications.events/member-removed
+   :application.event/member-uninvited :t.applications.events/member-uninvited
+   :application.event/rejected :t.applications.events/rejected
+   :application.event/returned :t.applications.events/returned
+   :application.event/submitted :t.applications.events/submitted})
 
 (defn localize-event [event-type]
   (text (get event-types event-type :t.applications.events/unknown)))
 
 (defn localize-decision [decision]
   (text (case decision
-          :approved :t.applications.dynamic-events/approved
-          :rejected :t.applications.dynamic-events/rejected
+          :approved :t.applications.events/approved
+          :rejected :t.applications.events/rejected
           :t.applications.events/unknown)))
 
 (def ^:private time-format

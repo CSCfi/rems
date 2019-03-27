@@ -2,7 +2,6 @@
   "Query functions for forms and applications."
   (:require [clj-time.core :as time]
             [clj-time.format :as time-format]
-            [clojure.set :refer [difference union]]
             [clojure.test :refer [deftest is]]
             [conman.core :as conman]
             [cprop.tools :refer [merge-maps]]
@@ -14,14 +13,13 @@
             [rems.db.entitlements :as entitlements]
             [rems.db.form :as form]
             [rems.db.licenses :as licenses]
-            [rems.db.roles :as roles]
             [rems.db.users :as users]
             [rems.db.workflow :as workflow]
             [rems.db.workflow-actors :as actors]
             [rems.form-validation :as form-validation]
             [rems.json :as json]
             [rems.permissions :as permissions]
-            [rems.util :refer [get-username secure-token]]
+            [rems.util :refer [secure-token]]
             [rems.workflow.dynamic :as dynamic]
             [schema-tools.core :as st]
             [schema.coerce :as coerce]
@@ -38,7 +36,6 @@
   [application-id]
   (nil? application-id))
 
-;; TODO cache application state in db instead of always computing it from events
 (declare get-application-state)
 
 (defn- not-empty? [args]
@@ -46,79 +43,7 @@
 
 ;;; Query functions
 
-(defn handling-event? [app e]
-  ;; event types which are definitely not by applicant
-  (or (contains? #{:rems.workflow.dynamic/approved
-                   :rems.workflow.dynamic/rejected
-                   :rems.workflow.dynamic/returned}
-                 (:event/type e)) ; new style events
-      (contains? #{"approve" "autoapprove" "reject" "return" "review"}
-                 (:event e)) ; old style events
-      ;; close events are sometimes not by applicant
-      (and (= :application.event/closed (:event/type e))
-           (not= (:applicantuserid app) (:event/actor e)))
-      (and (= "close" (:event e))
-           (not= (:applicantuserid app) (:userid e)))))
-
-(defn handled? [app]
-  (or (contains? #{"approved" "rejected" "returned"
-                   :rems.workflow.dynamic/returned
-                   :rems.workflow.dynamic/approved
-                   :rems.workflow.dynamic/rejected}
-                 (:state app)) ;; by approver action
-      (and (contains? #{"closed" "withdrawn"
-                        :rems.workflow.dynamic/closed} (:state app))
-           (some (partial handling-event? app) (concat (:events app) (:dynamic-events app))))))
-
-(defn- get-events-of-type
-  "Returns all events of a given type that have occured in an application. Optionally a round parameter can be provided to focus on events occuring during a given round."
-  ([app event]
-   (filter #(= event (:event %)) (:events app)))
-  ([app round event]
-   (filter #(and (= event (:event %)) (= round (:round %))) (:events app))))
-
-(defn get-approval-events
-  "Returns all approve events within a specific round of an application."
-  [app round]
-  (get-events-of-type app round "approve"))
-
-(defn get-review-events
-  "Returns all review events that have occured in an application. Optionally a round parameter can be provided to focus on reviews occuring during a given round."
-  ([app]
-   (get-events-of-type app "review"))
-  ([app round]
-   (get-events-of-type app round "review")))
-
-(defn get-third-party-review-events
-  "Returns all third-party-review events that have occured in an application. Optionally a round parameter can be provided to focus on third-party-reviews occuring during a given round."
-  ([app]
-   (get-events-of-type app "third-party-review"))
-  ([app round]
-   (get-events-of-type app round "third-party-review")))
-
-(declare is-commenter?)
-(declare can-comment?)
-(declare is-decider?)
-(declare can-decide?)
 (declare is-dynamic-application?)
-
-(defn reviewed?
-  "Returns true if the application, given as parameter, has already been reviewed normally or as a 3rd party actor by the current user.
-   Otherwise, current hasn't yet provided feedback and false is returned."
-  ([user-id app]
-   (let [app-state (get-application-state (:id app))]
-     (if (is-dynamic-application? app)
-       (or (and (is-commenter? user-id app-state)
-                (not (can-comment? user-id (:id app))))
-           (and (is-decider? user-id app-state)
-                (not (can-decide? user-id (:id app)))))
-       (contains? (set (map :userid (concat (get-review-events app) (get-third-party-review-events app))))
-                  user-id))))
-  ([user-id app round]
-   (reviewed? user-id (update app :events (fn [events] (filter #(= round (:round %)) events))))))
-
-(comment
-  (reviewed? "bob" (get-application-state 23)))
 
 (declare fix-workflow-from-db)
 (declare is-dynamic-handler?)
@@ -137,7 +62,7 @@
            (is-actor? user-id (actors/get-by-role (:id application) (:curround application) role)))
       (and (= "approver" role)
            (contains? (dynamic/possible-commands user-id (get-application-state (:id application)))
-                      :rems.workflow.dynamic/approve))))
+                      :application.command/approve))))
 
 (declare get-application-state)
 
@@ -181,55 +106,6 @@
   [user-id application]
   (and (= "applied" (:state application))
        (is-third-party-reviewer? user-id (:curround application) application)))
-
-;; TODO add to tests
-(defn- is-commenter?
-  "Checks if a given user has been requested to comment the given application."
-  ([user application]
-   ;; TODO calculate in backend?
-   (->> (:dynamic-events application)
-        (mapcat :application/commenters)
-        (some #{user}))))
-
-(defn- can-comment?
-  "Checks if the current user can perform a comment action for the given application."
-  [user-id application-id]
-  (let [application (dynamic/assoc-possible-commands user-id (get-application-state application-id))]
-    (contains? (get application :possible-commands) :rems.workflow.dynamic/comment)))
-
-;; TODO add to tests
-(defn- is-decider?
-  "Checks if a given user has been requested to decide on the given application."
-  ([user application]
-   ;; TODO calculate in backend?
-   (->> (:dynamic-events application)
-        (mapcat :application/deciders)
-        (some #{user}))))
-
-(defn- can-decide?
-  "Checks if the current user can perform a decide action for the given application."
-  [user-id application-id]
-  (let [application (dynamic/assoc-possible-commands user-id (get-application-state application-id))]
-    (contains? (get application :possible-commands) :rems.workflow.dynamic/decide)))
-
-(defn get-approvers [application]
-  (actors/get-by-role (:id application) "approver"))
-
-(defn get-reviewers [application]
-  (actors/get-by-role (:id application) "reviewer"))
-
-(defn get-third-party-reviewers
-  "Takes as an argument a structure containing application information and a optionally the workflow round. Then returns userids for all users that have been requested to review for the given round or all rounds if not given."
-  ([application]
-   (set (map :userid (get-events-of-type application "review-request"))))
-  ([application round]
-   (set (map :userid (get-events-of-type application round "review-request")))))
-
-(defn get-handlers [application]
-  (let [approvers (get-approvers application)
-        reviewers (get-reviewers application)
-        third-party-reviewers (get-third-party-reviewers application)]
-    (union approvers reviewers third-party-reviewers)))
 
 (defn is-applicant? [user-id application]
   (assert user-id)
@@ -376,27 +252,27 @@
 ;;; Application phases
 
 (defn get-application-phases [state]
-  (cond (contains? #{"rejected" :rems.workflow.dynamic/rejected} state)
+  (cond (contains? #{"rejected" :application.state/rejected} state)
         [{:phase :apply :completed? true :text :t.phases/apply}
          {:phase :approve :completed? true :rejected? true :text :t.phases/approve}
          {:phase :result :completed? true :rejected? true :text :t.phases/rejected}]
 
-        (contains? #{"approved" :rems.workflow.dynamic/approved} state)
+        (contains? #{"approved" :application.state/approved} state)
         [{:phase :apply :completed? true :text :t.phases/apply}
          {:phase :approve :completed? true :approved? true :text :t.phases/approve}
          {:phase :result :completed? true :approved? true :text :t.phases/approved}]
 
-        (contains? #{"closed" :rems.workflow.dynamic/closed} state)
+        (contains? #{"closed" :application.state/closed} state)
         [{:phase :apply :closed? true :text :t.phases/apply}
          {:phase :approve :closed? true :text :t.phases/approve}
          {:phase :result :closed? true :text :t.phases/approved}]
 
-        (contains? #{"draft" "returned" "withdrawn" :rems.workflow.dynamic/draft} state)
+        (contains? #{"draft" "returned" "withdrawn" :application.state/draft} state)
         [{:phase :apply :active? true :text :t.phases/apply}
          {:phase :approve :text :t.phases/approve}
          {:phase :result :text :t.phases/approved}]
 
-        (contains? #{"applied" :rems.workflow.dynamic/submitted} state)
+        (contains? #{"applied" :application.state/submitted} state)
         [{:phase :apply :completed? true :text :t.phases/apply}
          {:phase :approve :active? true :text :t.phases/approve}
          {:phase :result :text :t.phases/approved}]
@@ -830,7 +706,7 @@
   (let [application (first (db/get-applications {:id application-id}))
         events (get-dynamic-application-events application-id)
         application (assoc application
-                           :state ::dynamic/draft
+                           :state :application.state/draft
                            :dynamic-events events
                            :workflow (fix-workflow-from-db (:workflow application))
                            :last-modified (or (:event/time (last events))
@@ -941,7 +817,7 @@
    :validate-form-answers validate-form-answers
    :secure-token secure-token})
 
-(defn dynamic-command! [cmd]
+(defn command! [cmd]
   (assert (:application-id cmd))
   (let [app (get-dynamic-application-state (:application-id cmd))
         result (dynamic/handle-command cmd app db-injections)]
@@ -958,11 +834,11 @@
 
 (defn accept-invitation [user-id invitation-token]
   (or (when-let [application-id (:id (db/get-application-by-invitation-token {:token invitation-token}))]
-        (let [response (dynamic-command! {:type :rems.workflow.dynamic/accept-invitation
-                                          :actor user-id
-                                          :application-id application-id
-                                          :token invitation-token
-                                          :time (time/now)})]
+        (let [response (command! {:type :application.command/accept-invitation
+                                  :actor user-id
+                                  :application-id application-id
+                                  :token invitation-token
+                                  :time (time/now)})]
           (if-not response
             {:success true
              :application-id application-id}

@@ -3,7 +3,7 @@
 (defn form-fields-editable? [application]
   (contains? (or (:possible-commands application) ;; TODO: remove v1 api usage
                  (:application/permissions application))
-             :rems.workflow.dynamic/save-draft))
+             :application.command/save-draft))
 
 (defn format-description [application]
   (if-let [ext-id (:application/external-id application)]

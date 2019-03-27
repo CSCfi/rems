@@ -19,7 +19,7 @@
    (status-modal/common-pending-handler! (text :t.actions/close))
    (post! "/api/applications/command"
           {:params {:application-id application-id
-                    :type :rems.workflow.dynamic/close
+                    :type :application.command/close
                     :comment comment}
            :handler (partial status-modal/common-success-handler! on-finished)
            :error-handler status-modal/common-error-handler!})

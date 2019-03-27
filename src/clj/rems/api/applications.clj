@@ -11,7 +11,6 @@
             [rems.db.users :as users]
             [rems.pdf :as pdf]
             [rems.util :refer [getx-user-id update-present]]
-            [rems.workflow.dynamic :as dynamic]
             [ring.middleware.multipart-params :as multipart]
             [ring.swagger.upload :as upload]
             [ring.util.http-response :refer :all]
@@ -73,7 +72,7 @@
 (s/defschema Deciders
   [Decider])
 
-(s/defschema DynamicCommand
+(s/defschema Command
   {:type s/Keyword
    :application-id s/Num
    s/Keyword s/Any})
@@ -208,14 +207,14 @@
       (ok {:success true}))
 
     (POST "/command" []
-      :summary "Submit a command for a dynamic application"
+      :summary "Submit a command for an application"
       :roles #{:logged-in}
-      :body [request DynamicCommand]
+      :body [request Command]
       :return SuccessResponse
       (let [cmd (assoc request :actor (getx-user-id))
             fixed (fix-command-from-api cmd)
             fixed (assoc fixed :time (time/now))
-            errors (applications/dynamic-command! fixed)]
+            errors (applications/command! fixed)]
         (if errors
           (ok {:success false
                :errors (:errors errors)})

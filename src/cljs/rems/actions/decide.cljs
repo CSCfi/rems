@@ -19,7 +19,7 @@
    (status-modal/common-pending-handler! (text :t.actions/decide))
    (post! "/api/applications/command"
           {:params {:application-id application-id
-                    :type :rems.workflow.dynamic/decide
+                    :type :application.command/decide
                     :decision decision
                     :comment comment}
            :handler (partial status-modal/common-success-handler! on-finished)

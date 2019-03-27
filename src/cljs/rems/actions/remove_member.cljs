@@ -20,8 +20,8 @@
    (post! "/api/applications/command"
           {:params {:application-id application-id
                     :type (if (:userid member)
-                            :rems.workflow.dynamic/remove-member
-                            :rems.workflow.dynamic/uninvite-member)
+                            :application.command/remove-member
+                            :application.command/uninvite-member)
                     :member (if (:userid member)
                               (select-keys member [:userid])
                               (select-keys member [:name :email]))
