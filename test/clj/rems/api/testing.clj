@@ -16,9 +16,6 @@
    #'rems.db.core/*db*
    #'rems.handler/handler)
   ;; TODO: silence logging somehow?
-  (db/assert-test-database!)
-  (migrations/migrate ["reset"] (select-keys env [:database-url]))
-  (test-data/create-test-data!)
   (f)
   (mount/stop))
 

@@ -24,9 +24,6 @@
     (mount/start
      #'rems.config/env
      #'rems.db.core/*db*)
-    (db/assert-test-database!)
-    (migrations/migrate ["reset"] (select-keys env [:database-url]))
-    (test-data/create-test-data!)
     (f)
     (mount/stop)))
 

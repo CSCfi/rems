@@ -37,8 +37,6 @@
 
 (defn fixture-standalone [f]
   (mount/start)
-  (migrations/migrate ["reset"] (select-keys rems.config/env [:database-url]))
-  (test-data/create-test-data!)
   (f)
   (mount/stop))
 
