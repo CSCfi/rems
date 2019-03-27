@@ -802,7 +802,7 @@
                 [invite-member-form application-id (partial reload! application-id)]
                 [add-member-form application-id (partial reload! application-id)]]]}]))
 
-(defn- dynamic-actions [application]
+(defn- action-buttons [application]
   (let [commands-and-actions [:application.command/save-draft [save-button]
                               :application.command/submit [submit-button]
                               :application.command/return [return-action-button]
@@ -819,7 +819,7 @@
 
 (defn- actions-form [application]
   (let [app-id (:application/id application)
-        actions (dynamic-actions application)
+        actions (action-buttons application)
         reload (partial reload! app-id)
         forms [[:div#actions-forms.mt-3
                 [request-comment-form app-id reload]

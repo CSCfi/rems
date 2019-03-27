@@ -817,7 +817,7 @@
    :validate-form-answers validate-form-answers
    :secure-token secure-token})
 
-(defn dynamic-command! [cmd]
+(defn command! [cmd]
   (assert (:application-id cmd))
   (let [app (get-dynamic-application-state (:application-id cmd))
         result (dynamic/handle-command cmd app db-injections)]
@@ -834,11 +834,11 @@
 
 (defn accept-invitation [user-id invitation-token]
   (or (when-let [application-id (:id (db/get-application-by-invitation-token {:token invitation-token}))]
-        (let [response (dynamic-command! {:type :application.command/accept-invitation
-                                          :actor user-id
-                                          :application-id application-id
-                                          :token invitation-token
-                                          :time (time/now)})]
+        (let [response (command! {:type :application.command/accept-invitation
+                                  :actor user-id
+                                  :application-id application-id
+                                  :token invitation-token
+                                  :time (time/now)})]
           (if-not response
             {:success true
              :application-id application-id}

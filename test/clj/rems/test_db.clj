@@ -208,15 +208,15 @@
       :time (time/now)
       :actor uid})
 
-    (is (nil? (applications/dynamic-command! {:type :application.command/submit
-                                              :actor uid
-                                              :application-id app-id
-                                              :time (time/now)})))
-    (is (nil? (applications/dynamic-command! {:type :application.command/approve
-                                              :actor "handler"
-                                              :application-id app-id
-                                              :time (time/now)
-                                              :comment ""})))
+    (is (nil? (applications/command! {:type :application.command/submit
+                                      :actor uid
+                                      :application-id app-id
+                                      :time (time/now)})))
+    (is (nil? (applications/command! {:type :application.command/approve
+                                      :actor "handler"
+                                      :application-id app-id
+                                      :time (time/now)
+                                      :comment ""})))
     (is (= :application.state/approved (:state (applications/get-dynamic-application-state app-id))))
 
     ;; TODO: entitlements are not tracked for dynamic applications
@@ -703,20 +703,20 @@
                                                         :catalogue-item-ids [item1 item2]
                                                         :time (time/now)
                                                         :actor uid})
-          (is (nil? (applications/dynamic-command! {:type :application.command/submit
-                                                    :actor uid
-                                                    :application-id app-id
-                                                    :time (time/now)})))
+          (is (nil? (applications/command! {:type :application.command/submit
+                                            :actor uid
+                                            :application-id app-id
+                                            :time (time/now)})))
           (testing "submitted application should not yet cause entitlements"
             (rems.poller.entitlements/run)
             (is (empty? (db/get-entitlements {:application app-id})))
             (is (empty? (stub/recorded-requests server))))
 
-          (is (nil? (applications/dynamic-command! {:type :application.command/approve
-                                                    :actor admin
-                                                    :application-id app-id
-                                                    :comment ""
-                                                    :time (time/now)})))
+          (is (nil? (applications/command! {:type :application.command/approve
+                                            :actor admin
+                                            :application-id app-id
+                                            :comment ""
+                                            :time (time/now)})))
 
           (testing "approved application generated entitlements"
             (rems.poller.entitlements/run)
@@ -733,11 +733,11 @@
                         {"resource" "resource2" "application" app-id "user" "bob" "mail" "b@o.b"}]
                        body)))))
 
-          (is (nil? (applications/dynamic-command! {:type :application.command/close
-                                                    :actor admin
-                                                    :application-id app-id
-                                                    :comment ""
-                                                    :time (time/now)})))
+          (is (nil? (applications/command! {:type :application.command/close
+                                            :actor admin
+                                            :application-id app-id
+                                            :comment ""
+                                            :time (time/now)})))
 
           (testing "closed application should end entitlements"
             (rems.poller.entitlements/run)
@@ -778,40 +778,40 @@
             :state :application.state/draft
             :workflow workflow}
            (select-keys (applications/get-dynamic-application-state app-id) [:applicantuserid :state :workflow])))
-    (is (nil? (applications/dynamic-command! {:type :application.command/invite-member
-                                              :actor "alice"
-                                              :member {:name "Jane Doe" :email "jane.doe@members.com"}
-                                              :application-id app-id
-                                              :time (time/now)})))
-    (is (nil? (applications/dynamic-command! {:type :application.command/save-draft
-                                              :actor "alice"
-                                              :application-id app-id
-                                              :time (time/now)
-                                              :field-values {form-item "X"}
-                                              :accepted-licenses #{}})))
-    (is (nil? (applications/dynamic-command! {:type :application.command/submit
-                                              :actor "alice"
-                                              :application-id app-id
-                                              :time (time/now)})))
+    (is (nil? (applications/command! {:type :application.command/invite-member
+                                      :actor "alice"
+                                      :member {:name "Jane Doe" :email "jane.doe@members.com"}
+                                      :application-id app-id
+                                      :time (time/now)})))
+    (is (nil? (applications/command! {:type :application.command/save-draft
+                                      :actor "alice"
+                                      :application-id app-id
+                                      :time (time/now)
+                                      :field-values {form-item "X"}
+                                      :accepted-licenses #{}})))
+    (is (nil? (applications/command! {:type :application.command/submit
+                                      :actor "alice"
+                                      :application-id app-id
+                                      :time (time/now)})))
     (is (= :application.state/submitted
            (:state (applications/get-dynamic-application-state app-id))))
-    (is (nil? (applications/dynamic-command! {:type :application.command/add-member
-                                              :actor "handler"
-                                              :member {:userid "bob"}
-                                              :application-id app-id
-                                              :time (time/now)})))
-    (is (nil? (applications/dynamic-command! {:type :application.command/invite-member
-                                              :actor "handler"
-                                              :member {:name "John Doe" :email "john.doe@members.com"}
-                                              :application-id app-id
-                                              :time (time/now)})))
+    (is (nil? (applications/command! {:type :application.command/add-member
+                                      :actor "handler"
+                                      :member {:userid "bob"}
+                                      :application-id app-id
+                                      :time (time/now)})))
+    (is (nil? (applications/command! {:type :application.command/invite-member
+                                      :actor "handler"
+                                      :member {:name "John Doe" :email "john.doe@members.com"}
+                                      :application-id app-id
+                                      :time (time/now)})))
     (is (= [{:userid "alice"} {:userid "bob"}]
            (:members (applications/get-dynamic-application-state app-id))))
-    (is (nil? (applications/dynamic-command! {:type :application.command/approve
-                                              :actor "handler"
-                                              :application-id app-id
-                                              :time (time/now)
-                                              :comment ""})))
+    (is (nil? (applications/command! {:type :application.command/approve
+                                      :actor "handler"
+                                      :application-id app-id
+                                      :time (time/now)
+                                      :comment ""})))
     (is (= :application.state/approved
            (:state (applications/get-dynamic-application-state app-id))))))
 

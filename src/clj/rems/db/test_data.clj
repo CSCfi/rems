@@ -494,7 +494,7 @@
              update :accepted-licenses
              conj license-id))
     (when dynamic-workflow?
-      (let [error (applications/dynamic-command! @save-draft-command)]
+      (let [error (applications/command! @save-draft-command)]
         (assert (nil? error) error)))
     app-id))
 
@@ -514,7 +514,7 @@
       (applications/return-application approver application 0 "comment for return"))))
 
 (defn- run-and-check-dynamic-command! [& args]
-  (let [result (apply applications/dynamic-command! args)]
+  (let [result (apply applications/command! args)]
     (assert (nil? result) {:actual result})
     result))
 

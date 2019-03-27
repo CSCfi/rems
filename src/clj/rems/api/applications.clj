@@ -215,7 +215,7 @@
       (let [cmd (assoc request :actor (getx-user-id))
             fixed (fix-command-from-api cmd)
             fixed (assoc fixed :time (time/now))
-            errors (applications/dynamic-command! fixed)]
+            errors (applications/command! fixed)]
         (if errors
           (ok {:success false
                :errors (:errors errors)})
