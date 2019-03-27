@@ -24,7 +24,7 @@
       :else (redirect (str "/#/application?items=" (:id (first items)))))))
 
 (defn- find-allowed-markdown-file [filename]
-  (let [allowed-files (index-by [:file] (filter :file (:extra-pages env)))]
+  (let [allowed-files (index-by [:file] (filter :file (:extra-pages @env)))]
     (when (contains? allowed-files filename)
       (allowed-files filename))))
 

@@ -37,7 +37,7 @@
     ;; if the context is not specified in the request
     ;; we check if one has been specified in the environment
     ;; instead
-    (:app-context env)))
+    (:app-context @env)))
 
 (defn get-api-key [request]
   (get-in request [:headers "x-rems-api-key"]))
@@ -84,6 +84,13 @@
                                 (set/union (roles/get-roles (getx-user-id))
                                            (dynamic-roles/get-roles (getx-user-id))))]
       (with-mdc {:roles (str/join " " (sort context/*roles*))}
+        (handler request)))))
+
+(defn wrap-db [handler]
+  (fn [request]
+    (if (bound? #'rems.db.core/*db*)
+      (handler request)
+      (binding [rems.db.core/*db* @rems.db.core/db-connection]
         (handler request)))))
 
 (defn wrap-role-headers [handler]
@@ -150,9 +157,9 @@
       (binding [context/*tempura* (:tempura/tr request)
                 context/*lang* (or (get-in request [:params :lang])
                                    (get-in request [:session :language])
-                                   (:default-language env))]
+                                   (:default-language @env))]
         (handler request)))
-    {:tr-opts (tempura-config)})))
+    {:tr-opts @tempura-config})))
 
 (defn on-unauthorized-error [request]
   (error-page
@@ -212,6 +219,7 @@
       wrap-i18n
       wrap-role-headers
       wrap-context
+      wrap-db
       wrap-user
       wrap-api-key-or-csrf-token
       auth/wrap-auth

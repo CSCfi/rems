@@ -10,6 +10,6 @@
 (deftest entitlements-api-security-test
   (testing "listing without authentication"
     (let [response (-> (request :get (str "/api/entitlements"))
-                       handler)
+                       (@handler))
           body (read-body response)]
       (is (= "unauthorized" body)))))

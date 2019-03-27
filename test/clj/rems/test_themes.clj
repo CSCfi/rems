@@ -1,5 +1,6 @@
 (ns rems.test-themes
   (:require [clojure.test :refer :all]
+            [mount.lite :as mount]
             [rems.config :as config]
             [rems.util :as util])
   (:import (java.io FileNotFoundException)))
@@ -32,9 +33,11 @@
       (is (= "example-theme/public"
              (:theme-static-resources (config/load-external-theme config)))))))
 
-(deftest ^:eftest/synchronized get-theme-attribute-test
-  (with-redefs [config/env {:theme {:test "success"
-                                    :test-color 2}}]
+(deftest get-theme-attribute-test
+  (mount/with-substitutes [#'config/env (mount/state :start {:theme {:test "success"
+                                                                     :test-color 2}})]
+    (mount/start #'config/env)
     (is (= 2 (util/get-theme-attribute :test-color)))
     (is (= "success" (util/get-theme-attribute :test)))
-    (is (nil? (util/get-theme-attribute :no-such-attribute)))))
+    (is (nil? (util/get-theme-attribute :no-such-attribute)))
+    (mount/stop #'config/env)))

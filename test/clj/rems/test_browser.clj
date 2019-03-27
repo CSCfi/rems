@@ -6,7 +6,8 @@
             [clojure.tools.logging :as log]
             [etaoin.api :refer :all]
             [luminus-migrations.core :as migrations]
-            [mount.core :as mount]
+            [mount.extensions.namespace-deps :as mount-nsd]
+            [mount.lite :as mount]
             [rems.config]
             [rems.db.test-data :as test-data]
             [rems.standalone])
@@ -26,7 +27,7 @@
   ;; TODO: these args don't affect the date format of <input type="date"> elements; figure out a reliable way to set it
   (let [run #(with-chrome-headless {:args ["--lang=en-US"]
                                     :prefs {"intl.accept_languages" "en-US"}}
-                                   driver
+               driver
                (binding [*driver* driver]
                  (f)))]
     (try
@@ -36,9 +37,9 @@
         (run)))))
 
 (defn fixture-standalone [f]
-  (mount/start)
+  (mount-nsd/start)
   (f)
-  (mount/stop))
+  (mount-nsd/stop))
 
 (defn smoke-test [f]
   (let [response (http/get (str +test-url+ "js/app.js"))]

@@ -17,10 +17,10 @@
   "Returns nil if login fails, map of properties if succeeds."
   [user password]
   (try
-    (let [connection (assoc (getx-in env [:ldap :connection])
+    (let [connection (assoc (getx-in @env [:ldap :connection])
                             :bind-dn user
                             :password password)
-          search-root (getx-in env [:ldap :search-root])
+          search-root (getx-in @env [:ldap :search-root])
 
           conn (ldap/connect connection)
           users (ldap/search conn search-root

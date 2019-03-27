@@ -1,6 +1,7 @@
 (ns rems.db.test-data
   "Populating the database with nice test data."
   (:require [clj-time.core :as time]
+            [mount.lite :as mount]
             [rems.context :as context]
             [rems.db.applications :as applications]
             [rems.db.catalogue :as catalogue]
@@ -499,7 +500,7 @@
     app-id))
 
 (defn- create-applications! [catid wfid applicant approver]
-  (binding [context/*tempura* (locales/tempura-config)]
+  (binding [context/*tempura* @locales/tempura-config]
     (create-draft! applicant catid wfid "draft application")
     (let [application (create-draft! applicant catid wfid "applied application")]
       (applications/submit-application applicant application))
@@ -519,7 +520,7 @@
     result))
 
 (defn- create-disabled-applications! [catid wfid applicant approver]
-  (binding [context/*tempura* (locales/tempura-config)]
+  (binding [context/*tempura* @locales/tempura-config]
     (create-draft! applicant catid wfid "draft with disabled item")
     (let [appid1 (create-draft! applicant catid wfid "approved application with disabled item")]
       (run-and-check-dynamic-command! {:application-id appid1
@@ -538,7 +539,7 @@
                                        :comment "Looking good"}))))
 
 (defn- create-bundled-application! [catid catid2 wfid applicant approver]
-  (binding [context/*tempura* (locales/tempura-config)]
+  (binding [context/*tempura* @locales/tempura-config]
     (let [app-id (create-draft! applicant [catid catid2] wfid "bundled application")]
       (applications/submit-application applicant app-id)
       (applications/return-application approver app-id 0 "comment for return")
@@ -591,7 +592,7 @@
   (let [applicant (users :applicant1)
         approver (users :approver1)
         reviewer (users :reviewer)]
-    (binding [context/*tempura* (locales/tempura-config)]
+    (binding [context/*tempura* @locales/tempura-config]
       (let [app-id (create-draft! applicant catid wfid "application with review")]
         (applications/submit-application applicant app-id)
         (applications/review-application reviewer app-id 0 "comment for review")
@@ -609,7 +610,7 @@
         _ (db/set-resource-license-validity! {:licid licid-expired :start year-ago :end yesterday})
         item-with-expired-license (create-catalogue-item! resource-id wfid form {"en" "Resource with expired resource license"
                                                                                  "fi" "Resurssi jolla on vanhentunut resurssilisenssi"})]
-    (binding [context/*tempura* (locales/tempura-config)]
+    (binding [context/*tempura* @locales/tempura-config]
       (let [application (create-draft! applicant item-with-expired-license wfid "applied when license was valid that has since expired" (time/minus (time/now) (time/days 2)))]
         (applications/submit-application applicant application)))))
 
@@ -621,7 +622,7 @@
         _ (db/set-resource-license-validity! {:licid licid-new :start (time/now) :end nil})
         item-without-new-license (create-catalogue-item! resource-id wfid form {"en" "Resource with just created new resource license"
                                                                                 "fi" "Resurssi jolla on uusi resurssilisenssi"})]
-    (binding [context/*tempura* (locales/tempura-config)]
+    (binding [context/*tempura* @locales/tempura-config]
       (let [application (create-draft! applicant item-without-new-license wfid "applied before license was valid" (time/minus (time/now) (time/days 2)))]
         (applications/submit-application applicant application)))))
 
@@ -696,3 +697,5 @@
                                                     "fi" "Dynaaminen työvuo (pois käytöstä)"})]
       (create-disabled-applications! dynamic-disabled (:dynamic workflows) (+demo-users+ :approver1) (+demo-users+ :approver1))
       (db/set-catalogue-item-state! {:id dynamic-disabled :enabled false}))))
+
+(mount/defstate the-test-data :start (do)) ; for requiring the dependencies of this file

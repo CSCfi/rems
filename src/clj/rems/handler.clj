@@ -2,13 +2,15 @@
   (:require [clojure.tools.logging :as log]
             [compojure.core :refer [defroutes routes wrap-routes]]
             [compojure.route :as route]
-            [mount.core :as mount]
+            [mount.extensions.namespace-deps :as mount-nsd]
+            [mount.lite :as mount]
             [rems.api :refer [api-routes]]
             [rems.auth.auth :as auth]
             [rems.config :refer [env]]
             [rems.entitlements :as entitlements]
             [rems.home :as home]
             [rems.layout :refer [error-page]]
+            [rems.locales] ;; to enable translations
             [rems.middleware :as middleware]
             [rems.poller.email] ;; to enable email polling
             [rems.poller.entitlements] ;; to enable entitlement polling
@@ -21,14 +23,14 @@
    an app server such as Tomcat
    put any initialization code here"
   []
-  (doseq [component (:started (mount/start))]
+  (doseq [component (:started (mount-nsd/start))]
     (log/info component "started")))
 
 (defn destroy
   "destroy will be called when your application
    shuts down, put any clean up code here"
   []
-  (doseq [component (:stopped (mount/stop))]
+  (doseq [component (:stopped (mount-nsd/stop))]
     (log/info component "stopped"))
   (shutdown-agents)
   (log/info "Rems has shut down!"))
@@ -59,12 +61,12 @@
 
 (defn app-routes []
   (routes
-   (extra-script-routes (:extra-scripts env))
+   (extra-script-routes (:extra-scripts @env))
    (normal-routes)
-   (if-let [path (:extra-static-resources env)]
+   (if-let [path (:extra-static-resources @env)]
      (route/files "/" {:root path})
      never-match-route)
-   (if-let [path (:theme-static-resources env)]
+   (if-let [path (:theme-static-resources @env)]
      (route/files "/" {:root path})
      never-match-route)
    not-found))

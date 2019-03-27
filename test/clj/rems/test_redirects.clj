@@ -32,13 +32,13 @@
     (let [resid (dummy-resource "urn:one-matching-resource")
           catid (dummy-catalogue-item resid)
           response (-> (request :get "/apply-for?resource=urn:one-matching-resource")
-                       handler)]
+                       (@handler))]
       (is (= 302 (:status response)))
       (is (= (str "http://localhost/#/application?items=" catid) (get-in response [:headers "Location"])))))
 
   (testing "fails if no catalogue item is found"
     (let [response (-> (request :get "/apply-for?resource=urn:no-such-resource")
-                       handler)]
+                       (@handler))]
       (is (= 404 (:status response)))
       (is (= "Resource not found" (read-body response)))))
 
@@ -47,7 +47,7 @@
           _ (dummy-catalogue-item resid)
           _ (dummy-catalogue-item resid)
           response (-> (request :get "/apply-for?resource=urn:two-matching-resources")
-                       handler)]
+                       (@handler))]
       (is (= 404 (:status response)))
       (is (= "Resource ID is not unique" (read-body response)))))
 
@@ -57,6 +57,6 @@
           _ (disable-catalogue-item old-catid)
           new-catid (dummy-catalogue-item resid)
           response (-> (request :get "/apply-for?resource=urn:enabed-and-disabled-items")
-                       handler)]
+                       (@handler))]
       (is (= 302 (:status response)))
       (is (= (str "http://localhost/#/application?items=" new-catid) (get-in response [:headers "Location"]))))))

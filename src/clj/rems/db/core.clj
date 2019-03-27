@@ -4,15 +4,17 @@
             [clj-time.jdbc] ;; convert db timestamps to joda-time objects
             [clojure.set :refer [superset?]]
             [conman.core :as conman]
-            [mount.core :refer [defstate]]
+            [mount.lite :as mount]
             [rems.config :refer [env]]))
 
-(defstate ^:dynamic *db*
-          :start (cond
-                   (:database-url env) (conman/connect! {:jdbc-url (:database-url env)})
-                   (:database-jndi-name env) {:name (:database-jndi-name env)}
-                   :else (throw (IllegalArgumentException. ":database-url or :database-jndi-name must be configured")))
-          :stop (conman/disconnect! *db*))
+(mount/defstate db-connection
+  :start (cond
+           (:database-url @env) (conman/connect! {:jdbc-url (:database-url @env)})
+           (:database-jndi-name @env) {:name (:database-jndi-name @env)}
+           :else (throw (IllegalArgumentException. ":database-url or :database-jndi-name must be configured")))
+  :stop (conman/disconnect! @db-connection))
+
+(def ^:dynamic *db* nil)
 
 (conman/bind-connection *db* "sql/queries.sql")
 

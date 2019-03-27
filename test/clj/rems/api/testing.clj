@@ -1,25 +1,29 @@
 (ns rems.api.testing
   "Shared code for API testing"
   (:require [cheshire.core :refer [parse-stream]]
+            [clojure.java.jdbc :as jdbc]
+            [conman.core :as conman]
             [luminus-migrations.core :as migrations]
-            [mount.core :as mount]
+            [mount.extensions.namespace-deps :as mount-nsd]
+            [mount.lite :as mount]
             [rems.config :refer [env]]
             [rems.db.core :as db]
             [rems.db.test-data :as test-data]
-            [rems.test-db :refer [db-each-fixture]]
             [rems.handler :refer :all]))
 
-(defn api-once-fixture [f]
-  (mount/start
-   #'rems.config/env
-   #'rems.locales/translations
-   #'rems.db.core/*db*
-   #'rems.handler/handler)
-  ;; TODO: silence logging somehow?
-  (f)
-  (mount/stop))
+(defn api-once-fixture [f] (f))
 
-(def api-each-fixture db-each-fixture)
+(defn api-each-fixture [f]
+  (let [bindings (get-thread-bindings)]
+  @(:result (mount/with-session
+                (with-bindings bindings
+              (mount-nsd/start #'rems.db.core/db-connection)
+              (binding [rems.db.core/*db* @rems.db.core/db-connection]
+                (conman/with-transaction [rems.db.core/*db* {:isolation :serializable}]
+                  (jdbc/db-set-rollback-only! rems.db.core/*db*)
+                  (mount-nsd/start #'rems.handler/handler)
+                  (f)))
+              (mount-nsd/stop))))))
 
 (defn authenticate [request api-key user-id]
   (-> request

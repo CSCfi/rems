@@ -18,7 +18,7 @@
   (when (seq attr-names)
     (let [attr-name (first attr-names)
           attr-value (if (keyword? attr-name)
-                       (get (:theme env) attr-name)
+                       (get (:theme @env) attr-name)
                        attr-name)]
       (or attr-value (recur (rest attr-names))))))
 

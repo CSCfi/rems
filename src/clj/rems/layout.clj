@@ -35,7 +35,7 @@ window.rems = {
            [:title (text :t.header/title)]
            (include-css "/assets/bootstrap/css/bootstrap.min.css")
            (include-css "/assets/font-awesome/css/all.css")
-           (include-css (css-filename (env :default-language)))]
+           (include-css (css-filename (@env :default-language)))]
           [:body
            [:div#app]
            (include-js "/assets/font-awesome/js/fontawesome.js")
@@ -50,7 +50,7 @@ window.rems = {
            (include-js "/assets/tether/dist/js/tether.min.js")
            (include-js "/assets/bootstrap/js/bootstrap.min.js")
            (initialize-hooks)
-           (for [extra-script (get-in env [:extra-scripts :files])]
+           (for [extra-script (get-in @env [:extra-scripts :files])]
              (include-js extra-script))
            content]]))
 

@@ -19,7 +19,7 @@
     (-> (request :post (str "/api/users/create"))
         (json-body new-user)
         (authenticate "42" "owner")
-        handler
+        (@handler)
         assert-response-is-ok)
     (is (= {:eppn "david"
             :mail "d@av.id"
@@ -30,7 +30,7 @@
     (testing "create"
       (let [response (-> (request :post (str "/api/users/create"))
                          (json-body new-user)
-                         handler)]
+                         (@handler))]
         (is (response-is-unauthorized? response))
         (is (= "Invalid anti-forgery token" (read-body response))))))
 
@@ -39,6 +39,6 @@
       (let [response (-> (request :post (str "/api/users/create"))
                          (json-body new-user)
                          (authenticate "42" "alice")
-                         handler)]
+                         (@handler))]
         (is (response-is-forbidden? response))
         (is (= "forbidden" (read-body response)))))))

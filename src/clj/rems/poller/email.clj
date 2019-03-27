@@ -2,7 +2,7 @@
   "Sending emails based on application events."
   (:require [clojure.test :refer :all]
             [clojure.tools.logging :as log]
-            [mount.core :as mount]
+            [mount.lite :as mount]
             [postal.core :as postal]
             [rems.config :refer [env]]
             [rems.db.applications :as applications]
@@ -19,10 +19,10 @@
 
 ;; move this to a util namespace if its needed somewhere else
 (defn- link-to-application [application-id]
-  (str (:public-url env) "#/application/" application-id))
+  (str (:public-url @env) "#/application/" application-id))
 
 (defn- invitation-link [token]
-  (str (:public-url env) "accept-invitation?token=" token))
+  (str (:public-url @env) "accept-invitation?token=" token))
 
 (defmulti ^:private event-to-emails-impl
   (fn [event _application] (:event/type event)))
@@ -148,12 +148,12 @@
     (common/set-poller-state! ::poller {:last-processed-event-id last-id})))
 
 (defn send-email! [email-spec]
-  (let [host (:smtp-host env)
-        port (:smtp-port env)]
+  (let [host (:smtp-host @env)
+        port (:smtp-port @env)]
     (if (not (and host port))
       (log/info "pretending to send email:" (pr-str email-spec))
       (let [email (assoc email-spec
-                         :from (:mail-from env)
+                         :from (:mail-from @env)
                          :body (str (:body email-spec)
                                     (text :t.email/footer))
                          :to (or (:to email-spec)
@@ -166,14 +166,14 @@
 
 (defn run []
   (common/run-event-poller ::poller (fn [event]
-                                      (with-language (:default-language env)
+                                      (with-language (:default-language @env)
                                         #(doseq [mail (event-to-emails event)]
                                            (send-email! mail))))))
 
 (mount/defstate email-poller
   :start (doto (java.util.concurrent.ScheduledThreadPoolExecutor. 1)
            (.scheduleWithFixedDelay run 10 10 java.util.concurrent.TimeUnit/SECONDS))
-  :stop (doto email-poller
+  :stop (doto @email-poller
           (.shutdown)
           (.awaitTermination 60 java.util.concurrent.TimeUnit/SECONDS)))
 

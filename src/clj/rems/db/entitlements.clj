@@ -32,14 +32,14 @@
   (when-not (has-roles? :handler)
     (throw-forbidden))
   (let [ents (db/get-entitlements)
-        separator (:csv-separator env)]
+        separator (:csv-separator @env)]
     (with-out-str
       (println (join separator ["resource" "application" "user" "start"]))
       (doseq [e ents]
         (println (join separator [(:resid e) (:catappid e) (:userid e) (text/localize-time (:start e))]))))))
 
 (defn- post-entitlements [target-key entitlements]
-  (when-let [target (get-in env [:entitlements-target target-key])]
+  (when-let [target (get-in @env [:entitlements-target target-key])]
     (let [payload (for [e entitlements]
                     {:application (:catappid e)
                      :resource (:resid e)

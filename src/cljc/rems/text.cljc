@@ -11,7 +11,7 @@
 
 (defn with-language [lang f]
   #?(:clj (binding [context/*lang* lang
-                    context/*tempura* (partial tr (locales/tempura-config) [lang])]
+                    context/*tempura* (partial tr @locales/tempura-config [lang])]
             (f))))
 
 (defn text-format

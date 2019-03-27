@@ -13,7 +13,7 @@
         user-id "alice"]
     (let [data (-> (request :get "/api/catalogue/")
                    (authenticate api-key user-id)
-                   handler
+                   (@handler)
                    read-body)
           item (first data)]
       (is (str/starts-with? (:resid item) "urn:")))))
@@ -21,7 +21,7 @@
 (deftest catalogue-api-security-test
   (testing "listing without authentication"
     (let [response (-> (request :get (str "/api/catalogue"))
-                       handler)
+                       (@handler))
           body (read-body response)]
       (is (response-is-unauthorized? response))
       (is (= "unauthorized" body))))
@@ -29,5 +29,5 @@
     (is (= "invalid api key"
            (-> (request :get (str "/api/catalogue"))
                (assoc-in [:headers "x-rems-api-key"] "invalid-api-key")
-               handler
+               (@handler)
                (read-body))))))

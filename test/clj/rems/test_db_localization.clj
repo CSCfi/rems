@@ -1,7 +1,8 @@
 (ns ^:integration rems.test-db-localization
   (:require [clojure.test :refer :all]
             [luminus-migrations.core :as migrations]
-            [mount.core :as mount]
+            [mount.extensions.namespace-deps :as mount-nsd]
+            [mount.lite :as mount]
             [rems.config :refer [env]]
             [rems.db.core :as db]
             [rems.test-locales :refer [loc-en]]
@@ -10,14 +11,11 @@
             [rems.workflow.dynamic :as dynamic]))
 
 (use-fixtures
-  :once
+  :each
   (fn [f]
-    (mount/start
-     #'rems.config/env
-     #'rems.db.core/*db*
-     #'rems.locales/translations)
+    (mount-nsd/start #'rems.locales/tempura-config)
     (f)
-    (mount/stop)))
+    (mount-nsd/stop)))
 
 (defn- valid-localization? [str]
   (and (not (.contains str "Missing"))

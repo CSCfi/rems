@@ -15,7 +15,7 @@
             [garden.stylesheet :as stylesheet]
             [garden.units :as u]
             [medley.core :refer [map-vals remove-vals]]
-            [mount.core :as mount]
+            [mount.lite :as mount]
             [rems.config :refer [env]]
             [rems.util :as util]
             [rems.context :as context]))
@@ -663,8 +663,11 @@
   (g/css {:pretty-print? false} (remove-nil-vals (build-screen))))
 
 (deftest test-screen-css
-  (binding [context/*lang* :fi]
-    (is (string? (screen-css)))))
+  (mount/with-session
+    (mount/start #'rems.config/env)
+    (binding [context/*lang* :fi]
+      (is (string? (screen-css))))
+    (mount/stop #'rems.config/env)))
 
 ;; For development use and Figwheel updates render all configured CSS
 ;; files so that Figwheel will notice this change and force our app
@@ -673,8 +676,8 @@
 (mount/defstate
   rendered-css-files
   :start
-  (when (env :render-css-file?)
-    (doseq [language (env :languages)]
+  (when (@env :render-css-file?)
+    (doseq [language (@env :languages)]
       (binding [context/*lang* language]
         (render-css-file language
                          (screen-css))))))

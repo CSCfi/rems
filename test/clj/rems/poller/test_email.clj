@@ -1,6 +1,7 @@
 (ns rems.poller.test-email
   (:require [clojure.test :refer :all]
-            [mount.core :as mount]
+            [mount.extensions.namespace-deps :as mount-nsd]
+            [mount.lite :as mount]
             rems.config
             rems.locales
             [rems.poller.email :refer :all]
@@ -10,9 +11,9 @@
 (use-fixtures
   :once
   (fn [f]
-    (mount/start #'rems.config/env #'rems.locales/translations)
+    (mount-nsd/start #'rems.locales/tempura-config)
     (f)
-    (mount/stop)))
+    (mount-nsd/stop)))
 
 (defn events-to-emails [events]
   (let [application (dynamic/apply-events nil events)]
@@ -117,9 +118,9 @@
                 :body "Dear member,\nYour application 7 has been closed.\nView your application: http://localhost:3001/#/application/7"}]]
              (events-to-emails events))))
     (let [events (conj base-events
-                      {:application/id 7
-                       :event/type :application.event/rejected
-                       :event/actor "handler"})]
+                       {:application/id 7
+                        :event/type :application.event/rejected
+                        :event/actor "handler"})]
       (is (= [[]
               []
               [{:subject "Your application has been rejected",

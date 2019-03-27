@@ -2,6 +2,8 @@
   (:require [cheshire.core :as cheshire]
             [clj-time.core :as time]
             [clojure.test :refer :all]
+            [mount.lite :as mount]
+            [rems.config :as config]
             [rems.db.core :as db]
             [rems.db.entitlements :as entitlements]
             [rems.testing-util :refer [suppress-logging]]
@@ -23,9 +25,11 @@
    Return sequence of data received by mock server."
   [endpoint-spec callback]
   (with-open [server (stub/start! {"/entitlements" endpoint-spec})]
-    (with-redefs [rems.config/env {:entitlements-target
-                                   {:add (str (:uri server) "/entitlements")}}]
+    (mount/with-substitutes [#'config/env (mount/state :start {:entitlements-target
+                                                               {:add (str (:uri server) "/entitlements")}})]
+      (mount/start #'config/env)
       (callback)
+      (mount/stop #'config/env)
       (for [r (stub/recorded-requests server)]
         (cheshire/parse-string (get-in r [:body "postData"]))))))
 
@@ -54,8 +58,10 @@
           (is (= "exception" status))
           (is (= +expected-payload+ (cheshire/parse-string payload)))))
       (testing "no server"
-        (with-redefs [rems.config/env {:entitlements-target "http://invalid/entitlements"}]
+        (mount/with-substitutes [#'config/env (mount/state :start {:entitlements-target "http://invalid/entitlements"})]
+          (mount/start #'config/env)
           (#'entitlements/post-entitlements :add +entitlements+)
           (let [[{payload :payload status :status}] @log]
             (is (= "exception" status))
-            (is (= +expected-payload+ (cheshire/parse-string payload)))))))))
+            (is (= +expected-payload+ (cheshire/parse-string payload))))
+          (mount/stop #'config/env))))))

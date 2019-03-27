@@ -29,7 +29,7 @@
     (GET "/" []
       :summary "Get translations"
       :return GetTranslationsResponse
-      (ok locales/translations))))
+      (ok @locales/translations))))
 
 (def theme-api
   (context "/theme" []
@@ -38,7 +38,7 @@
     (GET "/" []
       :summary "Get current layout theme"
       :return GetThemeResponse
-      (ok (:theme env)))))
+      (ok (:theme @env)))))
 
 (def config-api
   (context "/config" []
@@ -47,4 +47,4 @@
     (GET "/" []
       :summary "Get configuration that is relevant to UI"
       :return GetConfigResponse
-      (ok (select-keys env [:authentication :alternative-login-url :extra-pages :languages :default-language :dev])))))
+      (ok (select-keys @env [:authentication :alternative-login-url :extra-pages :languages :default-language :dev])))))

@@ -6,7 +6,8 @@
             [rems.migrations.convert-to-dynamic-applications :as convert-to-dynamic]
             [luminus.http-server :as http]
             [luminus.repl-server :as repl]
-            [mount.core :as mount]
+            [mount.extensions.namespace-deps :as mount-nsd]
+            [mount.lite :as mount]
             [rems.config :refer [env]]
             [rems.db.test-data :as test-data]
             [rems.handler :as handler]
@@ -19,35 +20,22 @@
     :parse-fn #(Integer/parseInt %)]])
 
 (mount/defstate
-  ^{:on-reload :noop}
   http-server
   :start
-  (http/start (assoc env :handler handler/handler))
+  (http/start (assoc @env :handler @handler/handler))
   :stop
-  (when http-server (http/stop http-server)))
-
-(mount/defstate
-  ^{:on-reload :noop}
-  repl-server
-  :start
-  (when-let [nrepl-port (env :nrepl-port)]
-    (repl/start {:port nrepl-port}))
-  :stop
-  (when repl-server
-    (repl/stop repl-server)))
+  (when @http-server (http/stop @http-server)))
 
 (defn stop-app []
   (doseq [component (:stopped (mount/stop))]
     (log/info component "stopped")))
 
-(defn start-app [& args]
-  (doseq [component (-> args
-                        (parse-opts cli-options)
-                        mount/start-with-args
-                        :started)]
+(defn start-app []
+  (doseq [component (mount-nsd/start)]
     (log/info component "started"))
   (.addShutdownHook (Runtime/getRuntime) (Thread. stop-app))
-  (validate/validate))
+  (binding [rems.db.core/*db* @rems.db.core/db-connection]
+    (validate/validate)))
 
 (defn repl-help []
   (println "Welcome to REMS!")
@@ -70,36 +58,40 @@
   (cond
     (#{"migrate" "rollback"} (first args))
     (do
-      (mount/start #'rems.config/env)
-      (migrations/migrate args (select-keys env [:database-url])))
+      (mount-nsd/start #'rems.db.core/db-connection)
+      (binding [rems.db.core/*db* @rems.db.core/db-connection]
+        (migrations/migrate args (select-keys @env [:database-url]))))
     (= "reset" (first args))
     (do
       (println "\n\n*** Are you absolutely sure??? Reset empties the whole database and runs migrations to empty db.***\nType 'YES' to proceed")
       (when (= "YES" (read-line))
-        (do
-          (println "Running reset")
-          (mount/start #'rems.config/env)
-          (migrations/migrate args (select-keys env [:database-url])))))
+        (println "Running reset")
+        (mount-nsd/start #'rems.db.core/db-connection)
+        (binding [rems.db.core/*db* @rems.db.core/db-connection]
+          (migrations/migrate args (select-keys @env [:database-url])))))
     (= "convert-to-dynamic" (first args))
     (do
       (when-not (= 2 (count args))
         (println "Usage: convert-to-dynamic <new-workflow-id>")
         (System/exit 1))
       (let [new-workflow-id (Long/parseLong (second args))]
-        (mount/start #'rems.config/env #'rems.db.core/*db*)
-        (convert-to-dynamic/migrate-all-applications! new-workflow-id)))
+        (mount-nsd/start #'rems.db.core/db-connection)
+        (binding [rems.db.core/*db* @rems.db.core/db-connection]
+          (convert-to-dynamic/migrate-all-applications! new-workflow-id))))
     (= "test-data" (first args))
     (do
-      (mount/start #'rems.config/env #'rems.db.core/*db*)
-      (test-data/create-test-data!))
+      (mount-nsd/start #'test-data/the-test-data)
+      (binding [rems.db.core/*db* @rems.db.core/db-connection]
+        (test-data/create-test-data!)))
     (= "demo-data" (first args))
     (do
-      (mount/start #'rems.config/env #'rems.db.core/*db*)
-      (test-data/create-demo-data!))
+      (mount-nsd/start #'test-data/the-test-data)
+      (binding [rems.db.core/*db* @rems.db.core/db-connection]
+        (test-data/create-demo-data!)))
     (= "validate" (first args))
     (do
-      (mount/start #'rems.config/env #'rems.db.core/*db*)
-      (when-not (validate/validate)
-        (System/exit 2)))
-    :else
-    (apply start-app args)))
+      (mount-nsd/start #'rems.db.core/db-connection)
+      (binding [rems.db.core/*db* @rems.db.core/db-connection]
+        (when-not (validate/validate)
+          (System/exit 2))))
+    :else (start-app)))

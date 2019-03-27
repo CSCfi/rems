@@ -7,7 +7,8 @@
             [clojure.test :refer :all]
             [conman.core :as conman]
             [luminus-migrations.core :as migrations]
-            [mount.core :as mount]
+            [mount.extensions.namespace-deps :as mount-nsd]
+            [mount.lite :as mount]
             [rems.auth.NotAuthorizedException]
             [rems.auth.ForbiddenException]
             [rems.config :refer [env]]
@@ -27,18 +28,18 @@
   (:import (rems.auth ForbiddenException NotAuthorizedException)))
 
 (defn db-once-fixture [f]
-  (fake-tempura-fixture
-   (fn []
-     (mount/start
-      #'rems.config/env
-      #'rems.db.core/*db*)
-     (f)
-     (mount/stop))))
+  (fake-tempura-fixture f))
 
 (defn db-each-fixture [f]
-  (conman/with-transaction [rems.db.core/*db* {:isolation :serializable}]
-    (jdbc/db-set-rollback-only! rems.db.core/*db*)
-    (f)))
+  (let [bindings (get-thread-bindings)]
+    @(:result (mount/with-session
+                (with-bindings bindings
+                  (mount-nsd/start #'rems.db.core/db-connection)
+                  (binding [rems.db.core/*db* @rems.db.core/db-connection]
+                    (conman/with-transaction [rems.db.core/*db* {:isolation :serializable}]
+                      (jdbc/db-set-rollback-only! rems.db.core/*db*)
+                      (f)))
+                  (mount-nsd/stop))))))
 
 (use-fixtures :once db-once-fixture)
 (use-fixtures :each db-each-fixture)

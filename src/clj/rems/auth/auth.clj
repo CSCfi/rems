@@ -19,18 +19,18 @@
         (wrap-authorization backend))))
 
 (defn wrap-auth [handler]
-  (case (:authentication env)
+  (case (:authentication @env)
     :shibboleth (shibboleth/wrap-auth handler)
     (wrap-auth-default handler)))
 
 (defn- login-url []
-  (case (:authentication env)
+  (case (:authentication @env)
     :shibboleth (shibboleth/login-url)
     :fake-shibboleth (fake-shibboleth/login-url)
     :ldap (ldap/login-url)))
 
 (defn- logout-url []
-  (case (:authentication env)
+  (case (:authentication @env)
     :shibboleth (shibboleth/logout-url)
     :fake-shibboleth (fake-shibboleth/logout-url)
     :ldap (ldap/logout-url)))
@@ -39,7 +39,7 @@
   (routes
    (GET "/logout" _ (redirect (logout-url)))
    (GET "/login" _ (redirect (login-url)))
-   (case (:authentication env)
+   (case (:authentication @env)
      :shibboleth never-match-route ; shibboleth routes handled by tomcat
      ;; for the time being, expose ldap auth in "dev mode" together
      ;; with fake-shibboleth

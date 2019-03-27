@@ -16,7 +16,7 @@
     (testing "get"
       (let [data (-> (request :get "/api/forms")
                      (authenticate api-key user-id)
-                     handler
+                     (@handler)
                      assert-response-is-ok
                      read-body)]
         (is (:id (first data)))))
@@ -34,13 +34,13 @@
           (-> (request :post "/api/forms/create")
               (authenticate api-key user-id)
               (json-body command)
-              handler
+              (@handler)
               assert-response-is-ok))
 
         (testing "and fetch"
           (let [body (-> (request :get "/api/forms")
                          (authenticate api-key user-id)
-                         handler
+                         (@handler)
                          assert-response-is-ok
                          read-body)
                 forms (->> body
@@ -48,7 +48,7 @@
                 form (first forms)
                 form-template (-> (request :get (str "/api/forms/v2/" (:id form)))
                                   (authenticate api-key user-id)
-                                  handler
+                                  (@handler)
                                   assert-response-is-ok
                                   read-body)]
             (is (= 1 (count forms))
@@ -81,7 +81,7 @@
             response (-> (request :post "/api/forms/create")
                          (authenticate api-key user-id)
                          (json-body command-with-invalid-maxlength)
-                         handler)]
+                         (@handler))]
         (is (= 400 (:status response))
             "can't send negative maxlength")))
     (testing "invalid create: field too long"
@@ -90,7 +90,7 @@
             response (-> (request :post "/api/forms/create")
                          (authenticate api-key user-id)
                          (json-body command-with-long-prompt)
-                         handler)]
+                         (@handler))]
         (is (= 500 (:status response)))
         ;; NB: the transaction is failed after this try so no more
         ;; database statements after this
@@ -115,13 +115,13 @@
         (-> (request :post "/api/forms/create")
             (authenticate api-key user-id)
             (json-body command)
-            handler
+            (@handler)
             assert-response-is-ok)
 
         (testing "and fetch"
           (let [body (-> (request :get "/api/forms")
                          (authenticate api-key user-id)
-                         handler
+                         (@handler)
                          assert-response-is-ok
                          read-body)
                 form (->> body
@@ -133,12 +133,12 @@
 (deftest forms-api-filtering-test
   (let [unfiltered (-> (request :get "/api/forms")
                        (authenticate "42" "owner")
-                       handler
+                       (@handler)
                        assert-response-is-ok
                        read-body)
         filtered (-> (request :get "/api/forms" {:active true})
                      (authenticate "42" "owner")
-                     handler
+                     (@handler)
                      assert-response-is-ok
                      read-body)]
     (is (coll-is-not-empty? unfiltered))
@@ -151,7 +151,7 @@
   (testing "without authentication"
     (testing "list"
       (let [response (-> (request :get (str "/api/forms"))
-                         handler)
+                         (@handler))
             body (read-body response)]
         (is (response-is-unauthorized? response))
         (is (= "unauthorized" body))))
@@ -160,7 +160,7 @@
                          (json-body {:organization "abc"
                                      :title "the title"
                                      :items []})
-                         handler)]
+                         (@handler))]
         (is (response-is-unauthorized? response))
         (is (= "Invalid anti-forgery token" (read-body response))))))
 
@@ -168,7 +168,7 @@
     (testing "list"
       (let [response (-> (request :get (str "/api/forms"))
                          (authenticate "42" "alice")
-                         handler)
+                         (@handler))
             body (read-body response)]
         (is (response-is-forbidden? response))
         (is (= "forbidden" body))))
@@ -178,6 +178,6 @@
                          (json-body {:organization "abc"
                                      :title "the title"
                                      :items []})
-                         handler)]
+                         (@handler))]
         (is (response-is-forbidden? response))
         (is (= "forbidden" (read-body response)))))))

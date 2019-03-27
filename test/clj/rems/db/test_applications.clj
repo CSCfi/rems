@@ -3,7 +3,7 @@
             [clojure.test :refer :all]
             [clojure.test.check.generators :as generators]
             [luminus-migrations.core :as migrations]
-            [mount.core :as mount]
+            [mount.lite :as mount]
             [rems.config :refer [env]]
             [rems.db.applications :refer :all]
             [rems.db.catalogue :as catalogue]
@@ -13,19 +13,14 @@
             [rems.db.resource :as resource]
             [rems.db.test-data :as test-data]
             [rems.db.workflow :as workflow]
+            [rems.test-db :refer [db-once-fixture db-each-fixture]]
             [rems.workflow.dynamic :as dynamic]
             [schema-generators.generators :as sg])
   (:import (org.joda.time DateTime DateTimeZone)
            (clojure.lang ExceptionInfo)))
 
-(use-fixtures
-  :once
-  (fn [f]
-    (mount/start
-     #'rems.config/env
-     #'rems.db.core/*db*)
-    (f)
-    (mount/stop)))
+(use-fixtures :once db-once-fixture)
+(use-fixtures :each db-each-fixture)
 
 (deftest can-act-as?-test
   (is (can-act-as? "developer" (get-application-state 10) "approver"))

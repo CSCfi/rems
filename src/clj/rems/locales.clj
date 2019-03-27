@@ -2,7 +2,7 @@
   {:ns-tracker/resource-deps ["translations/en.edn" "translations/fi.edn"]}
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
-            [mount.core :refer [defstate]]
+            [mount.lite :as mount]
             [rems.common-util :refer [deep-merge]]
             [rems.config :refer [env]])
   (:import (java.io FileNotFoundException)))
@@ -16,9 +16,9 @@
                         (and file (.exists file)) file
                         resource resource
                         :else (throw (FileNotFoundException.
-                                       (if file
-                                         (str "translations could not be found in " file " file or " resource-path " resource")
-                                         (str "translations could not be found in " resource-path " resource and " :translations-directory " was not set")))))]
+                                      (if file
+                                        (str "translations could not be found in " file " file or " resource-path " resource")
+                                        (str "translations could not be found in " resource-path " resource and " :translations-directory " was not set")))))]
     (read-string (slurp file-contents))))
 
 (defn- extra-translations-path [theme-path]
@@ -40,7 +40,6 @@
          (apply merge))
     (throw (RuntimeException. ":translations-directory was not set in config"))))
 
-(defstate translations :start (load-translations env))
+(mount/defstate translations :start (load-translations @env))
 
-(defn tempura-config []
-  {:dict translations})
+(mount/defstate tempura-config :start {:dict @translations})
