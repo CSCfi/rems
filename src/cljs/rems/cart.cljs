@@ -16,16 +16,12 @@
 (rf/reg-event-db
  ::add-item
  (fn [db [_ item]]
-   (let [cart (-> (::cart db)
-                  (conj item))]
-     (assoc db ::cart cart))))
+   (update db ::cart conj item)))
 
 (rf/reg-event-db
  ::remove-item
- (fn [db [_ item]]
-   (let [cart (->> (::cart db)
-                   (remove (comp #{(:id item)} :id)))]
-     (assoc db ::cart cart))))
+ (fn [db [_ item-id]]
+   (update db ::cart #(remove (comp (partial = item-id) :id) %))))
 
 (defn add-to-cart-button
   "Hiccup fragment that contains a button that adds the given item to the cart"
@@ -44,7 +40,7 @@
   [item]
   [:button.btn.btn-secondary.remove-from-cart
    {:type "submit"
-    :on-click #(rf/dispatch [::remove-item item])}
+    :on-click #(rf/dispatch [::remove-item (:id item)])}
    (text :t.cart/remove)])
 
 ;; TODO make util for other pages to use?
