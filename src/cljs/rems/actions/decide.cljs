@@ -51,7 +51,7 @@
                     :on-comment on-set-comment}]])
 
 (defn decide-form [application-id on-finished]
-  (let [comment (rf/subscribe [::comment])]
+  (let [comment @(rf/subscribe [::comment])]
     [decide-view {:comment comment
                   :on-set-comment #(rf/dispatch [::set-comment %])
                   :on-send #(rf/dispatch [::send-decide {:application-id application-id
