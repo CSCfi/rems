@@ -24,6 +24,9 @@
 (defn- invitation-link [token]
   (str (:public-url env) "accept-invitation?token=" token))
 
+(defn- application-id-for-email [application]
+  (or (:application/external-id application) (:id application)))
+
 (defmulti ^:private event-to-emails-impl
   (fn [event _application] (:event/type event)))
 
@@ -40,7 +43,7 @@
       :subject (text :t.email.application-approved/subject)
       :body (text-format :t.email.application-approved/message
                          (:userid member)
-                         (:application/id event)
+                         (application-id-for-email application)
                          (link-to-application (:application/id event)))})))
 
 (defmethod event-to-emails-impl :application.event/rejected [event application]
@@ -50,7 +53,7 @@
       :subject (text :t.email.application-rejected/subject)
       :body (text-format :t.email.application-rejected/message
                          (:userid member)
-                         (:application/id event)
+                         (application-id-for-email application)
                          (link-to-application (:application/id event)))})))
 
 (defmethod event-to-emails-impl :application.event/closed [event application]
@@ -60,10 +63,10 @@
       :subject (text :t.email.application-closed/subject)
       :body (text-format :t.email.application-closed/message
                          (:userid member)
-                         (:application/id event)
+                         (application-id-for-email application)
                          (link-to-application (:application/id event)))})))
 
-(defmethod event-to-emails-impl :application.event/comment-requested [event _application]
+(defmethod event-to-emails-impl :application.event/comment-requested [event application]
   (vec
    (for [commenter (:application/commenters event)]
      {:to-user commenter
@@ -71,10 +74,10 @@
       :body (text-format :t.email.comment-requested/message
                          commenter
                          (:event/actor event)
-                         (:application/id event)
+                         (application-id-for-email application)
                          (link-to-application (:application/id event)))})))
 
-(defmethod event-to-emails-impl :application.event/decision-requested [event _application]
+(defmethod event-to-emails-impl :application.event/decision-requested [event application]
   (vec
    (for [decider (:application/deciders event)]
      {:to-user decider
@@ -82,7 +85,7 @@
       :body (text-format :t.email.decision-requested/message
                          decider
                          (:event/actor event)
-                         (:application/id event)
+                         (application-id-for-email application)
                          (link-to-application (:application/id event)))})))
 
 (defmethod event-to-emails-impl :application.event/commented [event application]
@@ -93,7 +96,7 @@
       :body (text-format :t.email.commented/message
                          handler
                          (:event/actor event)
-                         (:application/id event)
+                         (application-id-for-email application)
                          (link-to-application (:application/id event)))})))
 
 (defmethod event-to-emails-impl :application.event/decided [event application]
@@ -104,16 +107,16 @@
       :body (text-format :t.email.decided/message
                          handler
                          (:event/actor event)
-                         (:application/id event)
+                         (application-id-for-email application)
                          (link-to-application (:application/id event)))})))
 
-(defmethod event-to-emails-impl :application.event/member-added [event _application]
+(defmethod event-to-emails-impl :application.event/member-added [event application]
   ;; TODO email to applicant? email to handler?
   [{:to-user (:userid (:application/member event))
     :subject (text :t.email.member-added/subject)
     :body (text-format :t.email.member-added/message
                        (:userid (:application/member event))
-                       (:application/id event)
+                       (application-id-for-email application)
                        (link-to-application (:application/id event)))}])
 
 (defmethod event-to-emails-impl :application.event/member-invited [event _application]
