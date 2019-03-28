@@ -423,6 +423,7 @@
          :members [{:userid (:event/actor event)}]
          :form/id (:form/id event)
          :application/licenses (:application/licenses event)
+         :application/external-id (:application/external-id event)
          :workflow {:type (:workflow/type event)
                     :handlers (vec (:workflow.dynamic/handlers event))}))
 
