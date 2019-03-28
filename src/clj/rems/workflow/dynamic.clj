@@ -786,12 +786,9 @@
   (or (invalid-user-error (:actor cmd) injections)
       (already-member-error application (:actor cmd))
       (invitation-token-error application (:token cmd))
-      {:success true
-       :result {:event/type :application.event/member-joined
-                :event/time (:time cmd) ;; TODO these are redundant
-                :event/actor (:actor cmd)
-                :application/id (:application-id cmd)
-                :invitation/token (:token cmd)}}))
+      (ok {:event/type :application.event/member-joined
+           :application/id (:application-id cmd)
+           :invitation/token (:token cmd)})))
 
 (defmethod command-handler :application.command/remove-member
   [cmd application _injections]
