@@ -14,6 +14,8 @@
             [ring.middleware.multipart-params :as multipart]
             [ring.swagger.upload :as upload]
             [ring.util.http-response :refer :all]
+            [rems.workflow.dynamic :as dynamic]
+            [schema-refined.core :as r]
             [schema.core :as s])
   (:import [java.io ByteArrayInputStream]))
 
@@ -73,9 +75,11 @@
   [Decider])
 
 (s/defschema Command
-  {:type s/Keyword
-   :application-id s/Num
-   s/Keyword s/Any})
+  ;; luckily dispatch-on compiles into a x-oneOf swagger definition, which is exactly what we want
+  (apply r/dispatch-on
+         ;; we need to manually coerce :type to keyword since the schema coercion hasn't happened yet
+         (fn [v] (keyword (:type v)))
+         (flatten (seq dynamic/command-schemas))))
 
 (s/defschema AcceptInvitationResult
   {:success s/Bool
