@@ -73,7 +73,7 @@
 (s/defschema DecideCommand
   (assoc CommandBase
          :type (s/eq :application.command/decide)
-         :decision s/Keyword ;; TODO: (s/enum :approved :rejected), validated now in the command handler
+         :decision (s/enum :approved :rejected)
          :comment s/Str))
 
 (s/defschema RequestCommentCommand
@@ -1209,12 +1209,12 @@
                                  rejected
                                  injections)))))
       (testing "other decisions are not possible"
-        (is (= {:errors [{:type :invalid-decision :decision :foobar}]}
-               (handle-command {:application-id 123 :time test-time
-                                :actor "deity" :decision :foobar :comment ""
-                                :type :application.command/decide}
-                               requested
-                               injections)))))))
+        (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Value does not match schema"
+                              (handle-command {:application-id 123 :time test-time
+                                               :actor "deity" :decision :foobar :comment ""
+                                               :type :application.command/decide}
+                                              requested
+                                              injections)))))))
 
 (deftest test-add-member
   (let [application (apply-events nil
