@@ -823,7 +823,7 @@
     result))
 
 (defn handle-command [cmd application injections]
-  (validate-command cmd)
+  (validate-command cmd) ;; this is here mostly for tests, commands via the api are validated by compojure-api
   (let [permissions (permissions/user-permissions application (:actor cmd))]
     (if (contains? permissions (:type cmd))
       (-> (command-handler cmd application injections)
@@ -845,6 +845,9 @@
                  :actor "applicant"}]
     (testing "executes command when user is authorized"
       (is (:success (handle-command command application {}))))
+    (testing "fails when command fails validation"
+      (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Value does not match schema"
+                            (handle-command (assoc command :time 3) application {}))))
     (testing "fails when user is not authorized"
       ;; the permission checks should happen before executing the command handler
       ;; and only depend on the roles and permissions
