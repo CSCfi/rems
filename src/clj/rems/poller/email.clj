@@ -24,7 +24,7 @@
 (defn- invitation-link [token]
   (str (:public-url env) "accept-invitation?token=" token))
 
-(defn- id-of-application [application]
+(defn- application-id-for-email [application]
   (or (:application/external-id application) (:id application)))
 
 (defmulti ^:private event-to-emails-impl
@@ -43,7 +43,7 @@
       :subject (text :t.email.application-approved/subject)
       :body (text-format :t.email.application-approved/message
                          (:userid member)
-                         (id-of-application application)
+                         (application-id-for-email application)
                          (link-to-application (:application/id event)))})))
 
 (defmethod event-to-emails-impl :application.event/rejected [event application]
@@ -53,7 +53,7 @@
       :subject (text :t.email.application-rejected/subject)
       :body (text-format :t.email.application-rejected/message
                          (:userid member)
-                         (id-of-application application)
+                         (application-id-for-email application)
                          (link-to-application (:application/id event)))})))
 
 (defmethod event-to-emails-impl :application.event/closed [event application]
@@ -63,7 +63,7 @@
       :subject (text :t.email.application-closed/subject)
       :body (text-format :t.email.application-closed/message
                          (:userid member)
-                         (id-of-application application)
+                         (application-id-for-email application)
                          (link-to-application (:application/id event)))})))
 
 (defmethod event-to-emails-impl :application.event/comment-requested [event application]
@@ -74,7 +74,7 @@
       :body (text-format :t.email.comment-requested/message
                          commenter
                          (:event/actor event)
-                         (id-of-application application)
+                         (application-id-for-email application)
                          (link-to-application (:application/id event)))})))
 
 (defmethod event-to-emails-impl :application.event/decision-requested [event application]
@@ -85,7 +85,7 @@
       :body (text-format :t.email.decision-requested/message
                          decider
                          (:event/actor event)
-                         (id-of-application application)
+                         (application-id-for-email application)
                          (link-to-application (:application/id event)))})))
 
 (defmethod event-to-emails-impl :application.event/commented [event application]
@@ -96,7 +96,7 @@
       :body (text-format :t.email.commented/message
                          handler
                          (:event/actor event)
-                         (id-of-application application)
+                         (application-id-for-email application)
                          (link-to-application (:application/id event)))})))
 
 (defmethod event-to-emails-impl :application.event/decided [event application]
@@ -107,7 +107,7 @@
       :body (text-format :t.email.decided/message
                          handler
                          (:event/actor event)
-                         (id-of-application application)
+                         (application-id-for-email application)
                          (link-to-application (:application/id event)))})))
 
 (defmethod event-to-emails-impl :application.event/member-added [event application]
@@ -116,7 +116,7 @@
     :subject (text :t.email.member-added/subject)
     :body (text-format :t.email.member-added/message
                        (:userid (:application/member event))
-                       (id-of-application application)
+                       (application-id-for-email application)
                        (link-to-application (:application/id event)))}])
 
 (defmethod event-to-emails-impl :application.event/member-invited [event _application]
