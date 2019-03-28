@@ -210,7 +210,7 @@
       (is (= {:success false
               :errors [{:type "forbidden"}]}
              (send-dynamic-command "" {:type :application.command/approve
-                                       :application-id application-id}))
+                                       :comment "" :application-id application-id}))
           "user should be forbidden to send command"))
 
     (testing "send command with a user that is not a handler"
