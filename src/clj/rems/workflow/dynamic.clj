@@ -37,7 +37,7 @@
 (defmethod apply-event [:application.event/draft-saved :workflow/dynamic]
   [application _workflow event]
   (assoc application
-         :application/accepted-licenses (:application/accepted-licenses event)
+         ::applicant-accepted-licenses (:application/accepted-licenses event)
          :form-contents {:items (:application/field-values event)
                          :licenses (->> (:application/accepted-licenses event)
                                         (map (fn [id] [id "approved"]))
@@ -127,7 +127,9 @@
   (update application :invited-members #(vec (remove #{(:application/member event)} %))))
 
 (defn apply-events [application events]
+  ;; TODO: remove old apply-event
   (reduce (fn [application event] (-> (apply-event application (:workflow application) event)
+                                      (model/application-view event)
                                       (model/calculate-permissions event)))
           application
           events))
@@ -161,7 +163,7 @@
 
 (defn- validate-licenses [application]
   (let [all-licenses (set (map :license/id (:application/licenses application)))
-        accepted-licenses (set (:application/accepted-licenses application))
+        accepted-licenses (set (::applicant-accepted-licenses application))
         missing-licenses (set/difference all-licenses accepted-licenses)]
     (->> (sort missing-licenses)
          (map (fn [license-id]
