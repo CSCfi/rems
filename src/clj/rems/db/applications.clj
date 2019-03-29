@@ -5,6 +5,7 @@
             [clojure.test :refer [deftest is]]
             [conman.core :as conman]
             [cprop.tools :refer [merge-maps]]
+            [rems.application.model :as model]
             [rems.application-util :refer [form-fields-editable?]]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.context :as context]
@@ -120,7 +121,7 @@
         (is-approver? user-id application-id)
         (is-reviewer? user-id application-id)
         (is-third-party-reviewer? user-id application)
-        (dynamic/see-application? application user-id))))
+        (model/see-application? application user-id))))
 
 (defn can-close? [user-id application]
   (assert user-id)

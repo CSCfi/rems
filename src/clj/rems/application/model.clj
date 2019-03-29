@@ -2,7 +2,135 @@
   (:require [clojure.set :as set]
             [clojure.test :refer [deftest is testing]]
             [medley.core :refer [map-vals]]
+            [rems.permissions :as permissions]
             [rems.workflow.dynamic :as dynamic]))
+
+;;;; Permissions
+
+(defn see-application? [application user-id]
+  (not= #{:everyone-else} (permissions/user-roles application user-id)))
+
+(defmulti calculate-permissions
+  (fn [_application event] (:event/type event)))
+
+(defmethod calculate-permissions :default
+  [application _event]
+  application)
+
+(def ^:private draft-permissions {:applicant [:application.command/save-draft
+                                              :application.command/submit
+                                              :application.command/remove-member
+                                              :application.command/invite-member
+                                              :application.command/uninvite-member]
+                                  :member []
+                                  :handler [:see-everything
+                                            :application.command/remove-member
+                                            :application.command/uninvite-member]
+                                  :commenter [:see-everything]
+                                  :past-commenter [:see-everything]
+                                  :decider [:see-everything]
+                                  :past-decider [:see-everything]
+                                  :everyone-else [:application.command/accept-invitation]})
+
+(def ^:private submitted-permissions {:applicant [:application.command/remove-member
+                                                  :application.command/uninvite-member]
+                                      :handler [:see-everything
+                                                :application.command/add-member
+                                                :application.command/remove-member
+                                                :application.command/invite-member
+                                                :application.command/uninvite-member
+                                                :application.command/request-comment
+                                                :application.command/request-decision
+                                                :application.command/return
+                                                :application.command/approve
+                                                :application.command/reject]
+                                      :commenter [:see-everything
+                                                  :application.command/comment]
+                                      :decider [:see-everything
+                                                :application.command/decide]})
+
+(def ^:private closed-permissions {:applicant []
+                                   :handler [:see-everything]
+                                   :commenter [:see-everything]
+                                   :decider [:see-everything]
+                                   :everyone-else nil})
+
+(defmethod calculate-permissions :application.event/created
+  [application event]
+  (-> application
+      (permissions/give-role-to-users :applicant [(:event/actor event)])
+      (permissions/give-role-to-users :handler (:workflow.dynamic/handlers event))
+      (permissions/set-role-permissions draft-permissions)))
+
+(defmethod calculate-permissions :application.event/member-added
+  [application event]
+  (-> application
+      (permissions/give-role-to-users :member [(get-in event [:application/member :userid])])))
+
+(defmethod calculate-permissions :application.event/member-joined
+  [application event]
+  (-> application
+      (permissions/give-role-to-users :member [(:event/actor event)])))
+
+(defmethod calculate-permissions :application.event/member-removed
+  [application event]
+  (-> application
+      (permissions/remove-role-from-user :member (get-in event [:application/member :userid]))))
+
+(defmethod calculate-permissions :application.event/submitted
+  [application _event]
+  (-> application
+      (permissions/set-role-permissions submitted-permissions)))
+
+(defmethod calculate-permissions :application.event/returned
+  [application _event]
+  (-> application
+      (permissions/set-role-permissions draft-permissions)))
+
+(defmethod calculate-permissions :application.event/comment-requested
+  [application event]
+  (-> application
+      (permissions/give-role-to-users :commenter (:application/commenters event))))
+
+(defmethod calculate-permissions :application.event/commented
+  [application event]
+  (-> application
+      (permissions/remove-role-from-user :commenter (:event/actor event))
+      (permissions/give-role-to-users :past-commenter [(:event/actor event)]))) ; allow to still view the application
+
+(defmethod calculate-permissions :application.event/decision-requested
+  [application event]
+  (-> application
+      (permissions/give-role-to-users :decider (:application/deciders event))))
+
+(defmethod calculate-permissions :application.event/decided
+  [application event]
+  (-> application
+      (permissions/remove-role-from-user :decider (:event/actor event))
+      (permissions/give-role-to-users :past-decider [(:event/actor event)]))) ; allow to still view the application
+
+(defmethod calculate-permissions :application.event/approved
+  [application _event]
+  (-> application
+      (permissions/set-role-permissions (update closed-permissions
+                                                :handler set/union #{:application.command/add-member
+                                                                     :application.command/remove-member
+                                                                     :application.command/invite-member
+                                                                     :application.command/uninvite-member
+                                                                     :application.command/close}))))
+
+(defmethod calculate-permissions :application.event/rejected
+  [application _event]
+  (-> application
+      (permissions/set-role-permissions closed-permissions)))
+
+(defmethod calculate-permissions :application.event/closed
+  [application _event]
+  (-> application
+      (permissions/set-role-permissions closed-permissions)))
+
+
+;;;; Application
 
 (defmulti ^:private event-type-specific-application-view
   "See `application-view`"
@@ -152,10 +280,13 @@
   [application event]
   (-> application
       (event-type-specific-application-view event)
-      (dynamic/calculate-permissions event)
+      (calculate-permissions event)
       (assert-same-application-id event)
       (assoc :application/last-activity (:event/time event))
       (update :application/events conj event)))
+
+
+;;;; Injections
 
 (defn- merge-lists-by
   "Returns a list of merged elements from list1 and list2

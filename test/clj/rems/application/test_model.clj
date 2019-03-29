@@ -1,12 +1,63 @@
 (ns rems.application.test-model
   (:require [clojure.test :refer :all]
-            [rems.api.applications-v2 :refer :all]
+            [rems.application.model :as model]
             [rems.common-util :refer [deep-merge]]
             [rems.db.applications :as applications]
-            [rems.permissions :as permissions]
-            [rems.application.model :as model])
+            [rems.permissions :as permissions])
   (:import [java.util UUID]
            [org.joda.time DateTime]))
+
+(deftest test-calculate-permissions
+  ;; TODO: is this what we want? wouldn't it be useful to be able to write more than one comment?
+  (testing "commenter may comment only once"
+    (let [requested (reduce model/calculate-permissions nil [{:event/type :application.event/created
+                                                              :event/actor "applicant"
+                                                              :workflow.dynamic/handlers ["handler"]}
+                                                             {:event/type :application.event/submitted
+                                                              :event/actor "applicant"}
+                                                             {:event/type :application.event/comment-requested
+                                                              :event/actor "handler"
+                                                              :application/commenters ["commenter1" "commenter2"]}])
+          commented (reduce model/calculate-permissions requested [{:event/type :application.event/commented
+                                                                    :event/actor "commenter1"}])]
+      (is (= #{:see-everything :application.command/comment}
+             (permissions/user-permissions requested "commenter1")))
+      (is (= #{:see-everything}
+             (permissions/user-permissions commented "commenter1")))
+      (is (= #{:see-everything :application.command/comment}
+             (permissions/user-permissions commented "commenter2")))))
+
+  (testing "decider may decide only once"
+    (let [requested (reduce model/calculate-permissions nil [{:event/type :application.event/created
+                                                              :event/actor "applicant"
+                                                              :workflow.dynamic/handlers ["handler"]}
+                                                             {:event/type :application.event/submitted
+                                                              :event/actor "applicant"}
+                                                             {:event/type :application.event/decision-requested
+                                                              :event/actor "handler"
+                                                              :application/deciders ["decider"]}])
+          decided (reduce model/calculate-permissions requested [{:event/type :application.event/decided
+                                                                  :event/actor "decider"}])]
+      (is (= #{:see-everything :application.command/decide}
+             (permissions/user-permissions requested "decider")))
+      (is (= #{:see-everything}
+             (permissions/user-permissions decided "decider")))))
+
+  (testing "everyone can accept invitation"
+    (let [created (reduce model/calculate-permissions nil [{:event/type :application.event/created
+                                                            :event/actor "applicant"
+                                                            :workflow.dynamic/handlers ["handler"]}])]
+      (is (= #{:application.command/accept-invitation}
+             (permissions/user-permissions created "joe")))))
+  (testing "nobody can accept invitation for closed application"
+    (let [closed (reduce model/calculate-permissions nil [{:event/type :application.event/created
+                                                           :event/actor "applicant"
+                                                           :workflow.dynamic/handlers ["handler"]}
+                                                          {:event/type :application.event/closed
+                                                           :event/actor "applicant"}])]
+      (is (= #{}
+             (permissions/user-permissions closed "joe")
+             (permissions/user-permissions closed "applicant"))))))
 
 (defn- validate-events [events]
   (doseq [event events]

@@ -49,7 +49,7 @@
                  :workflow.dynamic/awaiting-deciders)))
 
 (defn apply-user-permissions [application user-id]
-  (let [see-application? (dynamic/see-application? application user-id)
+  (let [see-application? (model/see-application? application user-id)
         roles (permissions/user-roles application user-id)
         permissions (permissions/user-permissions application user-id)
         see-everything? (contains? permissions :see-everything)]

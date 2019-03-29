@@ -1,6 +1,7 @@
 (ns rems.workflow.test-dynamic
   (:require [clojure.test :refer :all]
             [clojure.string :as str]
+            [rems.application.model :as model]
             [rems.util :refer [getx]]
             [rems.workflow.dynamic :refer :all])
   (:import org.joda.time.DateTime))
@@ -34,7 +35,7 @@
          _ (assert-ex (:success result) {:cmd cmd :result result})
          event (getx result :result)]
      (-> (#'rems.workflow.dynamic/apply-event application (:workflow application) event)
-         (calculate-permissions event)))))
+         (model/calculate-permissions event)))))
 
 (defn- apply-commands
   ([application commands]
@@ -403,7 +404,7 @@
       (is (-> (apply-commands application
                               [{:type :application.command/add-member :actor "assistant" :member {:userid "member1"}}]
                               injections)
-              (see-application? "member1"))))))
+              (model/see-application? "member1"))))))
 
 (deftest test-invite-member
   (let [application (apply-events nil
@@ -579,12 +580,12 @@
                              injections))))
     (testing "removed members cannot see the application"
       (is (-> application
-              (see-application? "somebody")))
+              (model/see-application? "somebody")))
       (is (not (-> application
                    (apply-commands [{:type :application.command/remove-member :actor "applicant" :member {:userid "somebody"}
                                      :comment ""}]
                                    injections)
-                   (see-application? "somebody")))))))
+                   (model/see-application? "somebody")))))))
 
 
 (deftest test-uninvite-member
