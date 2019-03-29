@@ -34,8 +34,7 @@
          result (handle-command enriched-cmd application injections)
          _ (assert-ex (:success result) {:cmd cmd :result result})
          event (getx result :result)]
-     (-> (#'rems.workflow.dynamic/apply-event application (:workflow application) event)
-         (model/calculate-permissions event)))))
+     (apply-events application [event]))))
 
 (defn- apply-commands
   ([application commands]
