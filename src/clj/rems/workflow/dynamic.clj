@@ -1,6 +1,5 @@
 (ns rems.workflow.dynamic
   (:require [clojure.set :as set]
-            [clojure.string :as str]
             [clojure.test :refer :all]
             [rems.auth.util :refer [throw-unauthorized]]
             [rems.permissions :as permissions]
@@ -500,14 +499,10 @@
   (fn [_application workflow event] [(:event/type event) (or (:type workflow)
                                                              (:workflow/type event))]))
 
-(defn get-event-types
-  "Fetch sequence of supported event names."
-  []
-  (map first (keys (methods apply-event))))
-
 (deftest test-all-event-types-handled
-  (is (= (set (keys event-schemas))
-         (set (get-event-types)))))
+  (let [handled-event-types (map first (keys (methods apply-event)))]
+    (is (= (set (keys event-schemas))
+           (set handled-event-types)))))
 
 (defmethod apply-event [:application.event/created :workflow/dynamic]
   [application _workflow event]

@@ -42,17 +42,18 @@
           (is (valid-localization? (localize-state s))))))))
 
 (deftest test-all-event-localizations
-  (is (= (-> (:events (:applications (:t loc-en)))
-             (dissoc :unknown)
-             (keys)
-             (sort))
-         (->> (dynamic/get-event-types)
-              (map name)
-              (map keyword)
-              (sort))))
-  (with-language :en
-    (fn []
-      (is (not (valid-localization? (localize-event "foobar"))))
-      (doseq [event-type (dynamic/get-event-types)]
-        (testing event-type
-          (is (valid-localization? (localize-event event-type))))))))
+  (let [event-types (keys dynamic/event-schemas)]
+    (is (= (-> (:events (:applications (:t loc-en)))
+               (dissoc :unknown)
+               (keys)
+               (sort))
+           (->> event-types
+                (map name)
+                (map keyword)
+                (sort))))
+    (with-language :en
+      (fn []
+        (is (not (valid-localization? (localize-event "foobar"))))
+        (doseq [event-type event-types]
+          (testing event-type
+            (is (valid-localization? (localize-event event-type)))))))))
