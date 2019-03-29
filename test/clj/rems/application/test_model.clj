@@ -7,58 +7,6 @@
   (:import [java.util UUID]
            [org.joda.time DateTime]))
 
-(deftest test-calculate-permissions
-  ;; TODO: is this what we want? wouldn't it be useful to be able to write more than one comment?
-  (testing "commenter may comment only once"
-    (let [requested (reduce model/calculate-permissions nil [{:event/type :application.event/created
-                                                              :event/actor "applicant"
-                                                              :workflow.dynamic/handlers ["handler"]}
-                                                             {:event/type :application.event/submitted
-                                                              :event/actor "applicant"}
-                                                             {:event/type :application.event/comment-requested
-                                                              :event/actor "handler"
-                                                              :application/commenters ["commenter1" "commenter2"]}])
-          commented (reduce model/calculate-permissions requested [{:event/type :application.event/commented
-                                                                    :event/actor "commenter1"}])]
-      (is (= #{:see-everything :application.command/comment}
-             (permissions/user-permissions requested "commenter1")))
-      (is (= #{:see-everything}
-             (permissions/user-permissions commented "commenter1")))
-      (is (= #{:see-everything :application.command/comment}
-             (permissions/user-permissions commented "commenter2")))))
-
-  (testing "decider may decide only once"
-    (let [requested (reduce model/calculate-permissions nil [{:event/type :application.event/created
-                                                              :event/actor "applicant"
-                                                              :workflow.dynamic/handlers ["handler"]}
-                                                             {:event/type :application.event/submitted
-                                                              :event/actor "applicant"}
-                                                             {:event/type :application.event/decision-requested
-                                                              :event/actor "handler"
-                                                              :application/deciders ["decider"]}])
-          decided (reduce model/calculate-permissions requested [{:event/type :application.event/decided
-                                                                  :event/actor "decider"}])]
-      (is (= #{:see-everything :application.command/decide}
-             (permissions/user-permissions requested "decider")))
-      (is (= #{:see-everything}
-             (permissions/user-permissions decided "decider")))))
-
-  (testing "everyone can accept invitation"
-    (let [created (reduce model/calculate-permissions nil [{:event/type :application.event/created
-                                                            :event/actor "applicant"
-                                                            :workflow.dynamic/handlers ["handler"]}])]
-      (is (= #{:application.command/accept-invitation}
-             (permissions/user-permissions created "joe")))))
-  (testing "nobody can accept invitation for closed application"
-    (let [closed (reduce model/calculate-permissions nil [{:event/type :application.event/created
-                                                           :event/actor "applicant"
-                                                           :workflow.dynamic/handlers ["handler"]}
-                                                          {:event/type :application.event/closed
-                                                           :event/actor "applicant"}])]
-      (is (= #{}
-             (permissions/user-permissions closed "joe")
-             (permissions/user-permissions closed "applicant"))))))
-
 (defn- validate-events [events]
   (doseq [event events]
     (applications/validate-dynamic-event event))
@@ -571,3 +519,120 @@
                                                          :application/events events
                                                          :application/members #{}})]
                         (is (= expected-application (apply-events events)))))))))))))))
+
+(deftest test-calculate-permissions
+  ;; TODO: is this what we want? wouldn't it be useful to be able to write more than one comment?
+  (testing "commenter may comment only once"
+    (let [requested (reduce model/calculate-permissions nil [{:event/type :application.event/created
+                                                              :event/actor "applicant"
+                                                              :workflow.dynamic/handlers ["handler"]}
+                                                             {:event/type :application.event/submitted
+                                                              :event/actor "applicant"}
+                                                             {:event/type :application.event/comment-requested
+                                                              :event/actor "handler"
+                                                              :application/commenters ["commenter1" "commenter2"]}])
+          commented (reduce model/calculate-permissions requested [{:event/type :application.event/commented
+                                                                    :event/actor "commenter1"}])]
+      (is (= #{:see-everything :application.command/comment}
+             (permissions/user-permissions requested "commenter1")))
+      (is (= #{:see-everything}
+             (permissions/user-permissions commented "commenter1")))
+      (is (= #{:see-everything :application.command/comment}
+             (permissions/user-permissions commented "commenter2")))))
+
+  (testing "decider may decide only once"
+    (let [requested (reduce model/calculate-permissions nil [{:event/type :application.event/created
+                                                              :event/actor "applicant"
+                                                              :workflow.dynamic/handlers ["handler"]}
+                                                             {:event/type :application.event/submitted
+                                                              :event/actor "applicant"}
+                                                             {:event/type :application.event/decision-requested
+                                                              :event/actor "handler"
+                                                              :application/deciders ["decider"]}])
+          decided (reduce model/calculate-permissions requested [{:event/type :application.event/decided
+                                                                  :event/actor "decider"}])]
+      (is (= #{:see-everything :application.command/decide}
+             (permissions/user-permissions requested "decider")))
+      (is (= #{:see-everything}
+             (permissions/user-permissions decided "decider")))))
+
+  (testing "everyone can accept invitation"
+    (let [created (reduce model/calculate-permissions nil [{:event/type :application.event/created
+                                                            :event/actor "applicant"
+                                                            :workflow.dynamic/handlers ["handler"]}])]
+      (is (= #{:application.command/accept-invitation}
+             (permissions/user-permissions created "joe")))))
+  (testing "nobody can accept invitation for closed application"
+    (let [closed (reduce model/calculate-permissions nil [{:event/type :application.event/created
+                                                           :event/actor "applicant"
+                                                           :workflow.dynamic/handlers ["handler"]}
+                                                          {:event/type :application.event/closed
+                                                           :event/actor "applicant"}])]
+      (is (= #{}
+             (permissions/user-permissions closed "joe")
+             (permissions/user-permissions closed "applicant"))))))
+
+(deftest test-apply-user-permissions
+  (let [application (-> (model/application-view nil {:event/type :application.event/created
+                                                     :event/actor "applicant"
+                                                     :workflow.dynamic/handlers #{"handler"}})
+                        (permissions/give-role-to-users :role-1 ["user-1"])
+                        (permissions/give-role-to-users :role-2 ["user-2"])
+                        (permissions/set-role-permissions {:role-1 []
+                                                           :role-2 [:foo :bar]}))]
+    (testing "users with a role can see the application"
+      (is (not (nil? (model/apply-user-permissions application "user-1")))))
+    (testing "users without a role cannot see the application"
+      (is (nil? (model/apply-user-permissions application "user-3"))))
+    (testing "lists the user's permissions"
+      (is (= #{} (:application/permissions (model/apply-user-permissions application "user-1"))))
+      (is (= #{:foo :bar} (:application/permissions (model/apply-user-permissions application "user-2")))))
+    (testing "lists the user's roles"
+      (is (= #{:role-1} (:application/roles (model/apply-user-permissions application "user-1"))))
+      (is (= #{:role-2} (:application/roles (model/apply-user-permissions application "user-2")))))
+
+    (let [all-events [{:event/type :application.event/created}
+                      {:event/type :application.event/submitted}
+                      {:event/type :application.event/comment-requested}]
+          restricted-events [{:event/type :application.event/created}
+                             {:event/type :application.event/submitted}]
+          application (-> application
+                          (assoc :application/events all-events)
+                          (permissions/set-role-permissions {:role-1 [:see-everything]}))]
+      (testing "privileged users"
+        (let [application (model/apply-user-permissions application "user-1")]
+          (testing "see all events"
+            (is (= all-events
+                   (:application/events application))))
+          (testing "see dynamic workflow handlers"
+            (is (= #{"handler"}
+                   (get-in application [:application/workflow :workflow.dynamic/handlers]))))))
+
+      (testing "normal users"
+        (let [application (model/apply-user-permissions application "user-2")]
+          (testing "see only some events"
+            (is (= restricted-events
+                   (:application/events application))))
+          (testing "don't see dynamic workflow handlers"
+            (is (= nil
+                   (get-in application [:application/workflow :workflow.dynamic/handlers])))))))
+
+    (testing "invitation tokens are not visible to anybody"
+      (let [application (model/application-view application {:event/type :application.event/member-invited
+                                                             :application/member {:name "member"
+                                                                                  :email "member@example.com"}
+                                                             :invitation/token "secret"})]
+        (testing "- original"
+          (is (= {"secret" {:name "member"
+                            :email "member@example.com"}}
+                 (:application/invitation-tokens application)))
+          (is (= nil
+                 (:application/invited-members application))))
+        (doseq [user-id ["applicant" "handler"]]
+          (testing (str "- as user " user-id)
+            (let [application (model/apply-user-permissions application user-id)]
+              (is (= nil
+                     (:application/invitation-tokens application)))
+              (is (= #{{:name "member"
+                        :email "member@example.com"}}
+                     (:application/invited-members application))))))))))

@@ -5,7 +5,7 @@
             [rems.application.events :as events]
             [rems.permissions :as permissions]))
 
-;;;; Permissions
+;;;; Roles & Permissions
 
 (defn see-application? [application user-id]
   (not= #{:everyone-else} (permissions/user-roles application user-id)))
@@ -459,3 +459,63 @@
 (defn build-application-view [events injections]
   (-> (reduce application-view nil events)
       (enrich-with-injections injections)))
+
+
+;;;; Authorization
+
+(defmulti ^:private hide-sensitive-event-content
+  (fn [event] (:event/type event)))
+
+(defmethod hide-sensitive-event-content :default
+  [event]
+  event)
+
+(defmethod hide-sensitive-event-content :application.event/created
+  [event]
+  (dissoc event :workflow.dynamic/handlers))
+
+(defmethod hide-sensitive-event-content :application.event/member-invited
+  [event]
+  (dissoc event :invitation/token))
+
+(defmethod hide-sensitive-event-content :application.event/member-joined
+  [event]
+  (dissoc event :invitation/token))
+
+(defn hide-sensitive-events [events]
+  (->> events
+       (remove (comp #{:application.event/comment-requested
+                       :application.event/commented
+                       :application.event/decided
+                       :application.event/decision-requested}
+                     :event/type))
+       (map hide-sensitive-event-content)))
+
+(defn- hide-sensitive-information [application]
+  (-> application
+      (update :application/events hide-sensitive-events)
+      (update :application/workflow dissoc :workflow.dynamic/handlers)))
+
+(defn- hide-very-sensitive-information [application]
+  (-> application
+      ;; the keys are invitation tokens and must be kept secret
+      (dissoc :application/invitation-tokens)
+      (assoc :application/invited-members (set (vals (:application/invitation-tokens application))))
+      ;; these are not used by the UI, so no need to expose them (especially the user IDs)
+      (update-in [:application/workflow] dissoc
+                 :workflow.dynamic/awaiting-commenters
+                 :workflow.dynamic/awaiting-deciders)))
+
+(defn apply-user-permissions [application user-id]
+  (let [see-application? (see-application? application user-id)
+        roles (permissions/user-roles application user-id)
+        permissions (permissions/user-permissions application user-id)
+        see-everything? (contains? permissions :see-everything)]
+    (when see-application?
+      (-> (if see-everything?
+            application
+            (hide-sensitive-information application))
+          (hide-very-sensitive-information)
+          (assoc :application/permissions permissions)
+          (assoc :application/roles roles)
+          (permissions/cleanup)))))

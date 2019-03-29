@@ -1,15 +1,11 @@
 (ns rems.api.applications-v2
-  (:require [clojure.test :refer [deftest is testing]]
-            [medley.core :refer [map-vals]]
-            [rems.application.model :as model]
+  (:require [rems.application.model :as model]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
             [rems.db.form :as form]
             [rems.db.licenses :as licenses]
-            [rems.db.users :as users]
-            [rems.permissions :as permissions]
-            [rems.workflow.dynamic :as dynamic]))
+            [rems.db.users :as users]))
 
 (defn- get-form [form-id]
   (-> (form/get-form form-id)
@@ -33,41 +29,12 @@
                            :get-license get-license
                            :get-user get-user})
 
-(defn- hide-sensitive-information [application]
-  (-> application
-      (update :application/events dynamic/hide-sensitive-dynamic-events)
-      (update :application/workflow dissoc :workflow.dynamic/handlers)))
-
-(defn- hide-very-sensitive-information [application]
-  (-> application
-      ;; the keys are invitation tokens and must be kept secret
-      (dissoc :application/invitation-tokens)
-      (assoc :application/invited-members (set (vals (:application/invitation-tokens application))))
-      ;; these are not used by the UI, so no need to expose them
-      (update-in [:application/workflow] dissoc
-                 :workflow.dynamic/awaiting-commenters
-                 :workflow.dynamic/awaiting-deciders)))
-
-(defn apply-user-permissions [application user-id]
-  (let [see-application? (model/see-application? application user-id)
-        roles (permissions/user-roles application user-id)
-        permissions (permissions/user-permissions application user-id)
-        see-everything? (contains? permissions :see-everything)]
-    (when see-application?
-      (-> (if see-everything?
-            application
-            (hide-sensitive-information application))
-          (hide-very-sensitive-information)
-          (assoc :application/permissions permissions)
-          (assoc :application/roles roles)
-          (permissions/cleanup)))))
-
 (defn api-get-application-v2 [user-id application-id]
   (let [events (applications/get-dynamic-application-events application-id)]
     (if (empty? events)
       nil ;; will result in a 404
       (or (-> (model/build-application-view events injections)
-              (apply-user-permissions user-id))
+              (model/apply-user-permissions user-id))
           (throw-forbidden)))))
 
 ;;; v1 API compatibility layer
@@ -195,7 +162,7 @@
   (let [events (applications/get-dynamic-application-events-since 0)
         applications (reduce all-applications-view nil events)]
     (->> (vals applications)
-         (map #(apply-user-permissions % user-id))
+         (map #(model/apply-user-permissions % user-id))
          (remove nil?)
          ;; TODO: for caching it may be necessary to make assoc-injections idempotent and consider cache invalidation
          (map #(model/enrich-with-injections % injections))

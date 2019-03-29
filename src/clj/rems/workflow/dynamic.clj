@@ -8,36 +8,6 @@
             [rems.util :refer [getx]])
   (:import (org.joda.time DateTime)))
 
-;;; Roles and permissions
-
-(defmulti ^:private hide-sensitive-dynamic-event-content
-  (fn [event] (:event/type event)))
-
-(defmethod hide-sensitive-dynamic-event-content :default
-  [event]
-  event)
-
-(defmethod hide-sensitive-dynamic-event-content :application.event/created
-  [event]
-  (dissoc event :workflow.dynamic/handlers))
-
-(defmethod hide-sensitive-dynamic-event-content :application.event/member-invited
-  [event]
-  (dissoc event :invitation/token))
-
-(defmethod hide-sensitive-dynamic-event-content :application.event/member-joined
-  [event]
-  (dissoc event :invitation/token))
-
-(defn hide-sensitive-dynamic-events [events]
-  (->> events
-       (remove (comp #{:application.event/comment-requested
-                       :application.event/commented
-                       :application.event/decided
-                       :application.event/decision-requested}
-                     :event/type))
-       (map hide-sensitive-dynamic-event-content)))
-
 ;;; Application model
 
 (defmulti ^:private apply-event
