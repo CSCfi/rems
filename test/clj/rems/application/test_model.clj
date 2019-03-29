@@ -168,10 +168,12 @@
                                             :mail "applicant@example.com"
                                             :commonName "Applicant"}}}
         apply-events (fn [events]
-                       (-> events
-                           validate-events
-                           (model/build-application-view injections)
-                           permissions/cleanup))]
+                       (let [application (-> events
+                                             validate-events
+                                             (model/build-application-view injections)
+                                             permissions/cleanup)]
+                         (is (contains? model/states (:application/state application)))
+                         application))]
 
     (testing "created"
       (let [events [{:event/type :application.event/created

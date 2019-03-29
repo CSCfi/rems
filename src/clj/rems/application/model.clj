@@ -2,8 +2,8 @@
   (:require [clojure.set :as set]
             [clojure.test :refer [deftest is testing]]
             [medley.core :refer [map-vals]]
-            [rems.permissions :as permissions]
-            [rems.workflow.dynamic :as dynamic]))
+            [rems.application.events :as events]
+            [rems.permissions :as permissions]))
 
 ;;;; Permissions
 
@@ -53,7 +53,7 @@
                                    :handler [:see-everything]
                                    :commenter [:see-everything]
                                    :decider [:see-everything]
-                                   :everyone-else nil})
+                                   :everyone-else []})
 
 (defmethod calculate-permissions :application.event/created
   [application event]
@@ -131,6 +131,15 @@
 
 
 ;;;; Application
+
+(def states
+  #{:application.state/approved
+    :application.state/closed
+    :application.state/draft
+    :application.state/rejected
+    :application.state/returned
+    :application.state/submitted
+    #_:application.state/withdrawn})
 
 (defmulti ^:private event-type-specific-application-view
   "See `application-view`"
@@ -260,7 +269,7 @@
 
 (deftest test-event-type-specific-application-view
   (testing "supports all event types"
-    (is (= (set (keys dynamic/event-schemas))
+    (is (= (set (keys events/event-schemas))
            (set (keys (methods event-type-specific-application-view)))))))
 
 (defn- assert-same-application-id [application event]

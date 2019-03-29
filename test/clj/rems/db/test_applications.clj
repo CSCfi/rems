@@ -4,6 +4,7 @@
             [clojure.test.check.generators :as generators]
             [luminus-migrations.core :as migrations]
             [mount.core :as mount]
+            [rems.application.events :as events]
             [rems.config :refer [env]]
             [rems.db.applications :refer :all]
             [rems.db.catalogue :as catalogue]
@@ -13,7 +14,6 @@
             [rems.db.resource :as resource]
             [rems.db.test-data :as test-data]
             [rems.db.workflow :as workflow]
-            [rems.workflow.dynamic :as dynamic]
             [schema-generators.generators :as sg])
   (:import (org.joda.time DateTime DateTimeZone)
            (clojure.lang ExceptionInfo)))
@@ -39,7 +39,7 @@
   (testing "round trip serialization"
     (let [generators {DateTime (generators/fmap #(DateTime. ^long % DateTimeZone/UTC)
                                                 (generators/large-integer* {:min 0}))}]
-      (doseq [event (sg/sample 100 dynamic/Event generators)]
+      (doseq [event (sg/sample 100 events/Event generators)]
         (is (= event (-> event event->json json->event))))))
 
   (testing "event->json validates events"

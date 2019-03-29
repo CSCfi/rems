@@ -5,6 +5,7 @@
             [clojure.test :refer [deftest is]]
             [conman.core :as conman]
             [cprop.tools :refer [merge-maps]]
+            [rems.application.events :as events]
             [rems.application.model :as model]
             [rems.application-util :refer [form-fields-editable?]]
             [rems.auth.util :refer [throw-forbidden]]
@@ -666,10 +667,10 @@
       (coerce/string-coercion-matcher schema)))
 
 (def ^:private coerce-dynamic-event-commons
-  (coerce/coercer (st/open-schema dynamic/EventBase) coercion-matcher))
+  (coerce/coercer (st/open-schema events/EventBase) coercion-matcher))
 
 (def ^:private coerce-dynamic-event-specifics
-  (coerce/coercer dynamic/Event coercion-matcher))
+  (coerce/coercer events/Event coercion-matcher))
 
 (defn- coerce-dynamic-event [event]
   ;; must coerce the common fields first, so that dynamic/Event can choose the right event schema based on the event type
@@ -683,11 +684,11 @@
       (when (schema.utils/error? result)
         ;; similar exception as what schema.core/validate throws
         (throw (ex-info (str "Value does not match schema: " (pr-str result))
-                        {:schema dynamic/Event :value json :error result})))
+                        {:schema events/Event :value json :error result})))
       result)))
 
 (defn validate-dynamic-event [event]
-  (s/validate dynamic/Event event))
+  (s/validate events/Event event))
 
 (defn event->json [event]
   (validate-dynamic-event event)

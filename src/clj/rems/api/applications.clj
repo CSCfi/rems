@@ -5,6 +5,7 @@
             [compojure.api.sweet :refer :all]
             [rems.api.applications-v2 :refer [get-user-applications-v2 api-get-application-v2 api-get-application-v1]]
             [rems.api.schema :refer :all]
+            [rems.application.commands :as commands]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.applications :as applications]
             [rems.db.core :as db]
@@ -14,7 +15,6 @@
             [ring.middleware.multipart-params :as multipart]
             [ring.swagger.upload :as upload]
             [ring.util.http-response :refer :all]
-            [rems.workflow.dynamic :as dynamic]
             [schema-refined.core :as r]
             [schema.core :as s])
   (:import [java.io ByteArrayInputStream]))
@@ -79,7 +79,7 @@
   (apply r/dispatch-on
          ;; we need to manually coerce :type to keyword since the schema coercion hasn't happened yet
          (fn [v] (keyword (:type v)))
-         (flatten (seq dynamic/command-schemas))))
+         (flatten (seq commands/command-schemas))))
 
 (s/defschema AcceptInvitationResult
   {:success s/Bool
