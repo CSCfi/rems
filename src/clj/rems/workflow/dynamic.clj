@@ -191,7 +191,9 @@
     {:errors [{:type :t.actions.errors/invalid-token :token token}]}))
 
 (defn already-member-error [application userid]
-  (when (contains? (set (map :userid (:members application))) userid)
+  (when (contains? (conj (set (map :userid (:application/members application)))
+                         (:application/applicant application))
+                   userid)
     {:errors [{:type :already-member :application-id (:id application)}]}))
 
 (defn- ok [event]
