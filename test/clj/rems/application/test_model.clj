@@ -1,16 +1,11 @@
 (ns rems.application.test-model
   (:require [clojure.test :refer :all]
+            [rems.application.events :as events]
             [rems.application.model :as model]
             [rems.common-util :refer [deep-merge]]
-            [rems.db.applications :as applications]
             [rems.permissions :as permissions])
   (:import [java.util UUID]
            [org.joda.time DateTime]))
-
-(defn- validate-events [events]
-  (doseq [event events]
-    (applications/validate-dynamic-event event))
-  events)
 
 (deftest test-application-view
   (let [injections {:get-form {40 {:id 40
@@ -117,7 +112,7 @@
                                             :commonName "Applicant"}}}
         apply-events (fn [events]
                        (let [application (-> events
-                                             validate-events
+                                             events/validate-events
                                              (model/build-application-view injections)
                                              permissions/cleanup)]
                          (is (contains? model/states (:application/state application)))

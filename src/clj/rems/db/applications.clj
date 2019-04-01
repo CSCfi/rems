@@ -25,7 +25,6 @@
             [rems.workflow.dynamic :as dynamic]
             [schema-tools.core :as st]
             [schema.coerce :as coerce]
-            [schema.core :as s]
             [schema.utils])
   (:import [java.io ByteArrayOutputStream FileInputStream]
            [org.joda.time DateTime]))
@@ -687,11 +686,8 @@
                         {:schema events/Event :value json :error result})))
       result)))
 
-(defn validate-dynamic-event [event]
-  (s/validate events/Event event))
-
 (defn event->json [event]
-  (validate-dynamic-event event)
+  (events/validate-event event)
   (json/generate-string event))
 
 (defn- fix-event-from-db [event]

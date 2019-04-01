@@ -123,6 +123,14 @@
 (s/defschema Event
   (apply r/dispatch-on :event/type (flatten (seq event-schemas))))
 
+(defn validate-event [event]
+  (s/validate Event event))
+
+(defn validate-events [events]
+  (doseq [event events]
+    (validate-event event))
+  events)
+
 (deftest test-event-schema
   (testing "check specific event schema"
     (is (nil? (s/check SubmittedEvent {:event/type :application.event/submitted
