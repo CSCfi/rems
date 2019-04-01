@@ -725,42 +725,94 @@
                               :actor "commenter" :comment "" :type :application.command/comment}
                              application
                              injections))))
-    (let [requested (apply-commands application
-                                    [{:actor "assistant" :commenters ["commenter" "commenter2"] :comment "" :type :application.command/request-comment}
-                                     ;; Make a new request that should partly override previous
-                                     {:actor "assistant" :commenters ["commenter"] :comment "" :type :application.command/request-comment}]
-                                    injections)]
-      (testing "request comment succesfully"
-        (is (= #{"commenter2" "commenter"} (:commenters requested))))
+    (let [events-1 (ok-command application
+                               {:type :application.command/request-comment
+                                :actor "assistant"
+                                :commenters ["commenter" "commenter2"]
+                                :comment ""}
+                               injections)
+          request-id-1 (:application/request-id (first events-1))
+          application (apply-events application events-1)
+          ;; Make a new request that should partly override previous
+          events-2 (ok-command application
+                               {:type :application.command/request-comment
+                                :actor "assistant"
+                                :commenters ["commenter"]
+                                :comment ""}
+                               injections)
+          request-id-2 (:application/request-id (first events-2))
+          application (apply-events application events-2)]
+      (testing "comment requested succesfully"
+        (is (instance? UUID request-id-1))
+        (is (= [{:event/type :application.event/comment-requested
+                 :application/request-id request-id-1
+                 :application/commenters ["commenter" "commenter2"]
+                 :application/comment ""
+                 :event/time test-time
+                 :event/actor "assistant"
+                 :application/id 123}]
+               events-1))
+        (is (instance? UUID request-id-2))
+        (is (= [{:event/type :application.event/comment-requested
+                 :application/request-id request-id-2
+                 :application/commenters ["commenter"]
+                 :application/comment ""
+                 :event/time test-time
+                 :event/actor "assistant"
+                 :application/id 123}]
+               events-2)))
       (testing "only the requested commenter can comment"
         (is (= {:errors [{:type :forbidden}]}
-               (handle-command {:application-id 123 :time test-time
-                                :actor "commenter3" :comment "..." :type :application.command/comment}
-                               requested
-                               injections))))
+               (fail-command application
+                             {:type :application.command/comment
+                              :actor "commenter3"
+                              :comment "..."}
+                             injections))))
       (testing "comments are linked to different requests"
-        (is (not= (get-in requested [:rems.workflow.dynamic/latest-comment-request-by-user "commenter"])
-                  (get-in requested [:rems.workflow.dynamic/latest-comment-request-by-user "commenter2"])))
-        (is (= (get-in requested [:rems.workflow.dynamic/latest-comment-request-by-user "commenter"])
-               (get-in (handle-command {:application-id 123 :time test-time
-                                        :actor "commenter" :comment "..." :type :application.command/comment}
-                                       requested injections)
-                       [:result :application/request-id])))
-        (is (= (get-in requested [:rems.workflow.dynamic/latest-comment-request-by-user "commenter2"])
-               (get-in (handle-command {:application-id 123 :time test-time
-                                        :actor "commenter2" :comment "..." :type :application.command/comment}
-                                       requested injections)
-                       [:result :application/request-id]))))
-      (let [commented (apply-command requested {:actor "commenter" :comment "..." :type :application.command/comment} injections)]
+        (is (= [request-id-2]
+               (map :application/request-id
+                    (ok-command application
+                                {:type :application.command/comment
+                                 :actor "commenter"
+                                 :comment "..."}
+                                injections))))
+        (is (= [request-id-1]
+               (map :application/request-id
+                    (ok-command application
+                                {:type :application.command/comment
+                                 :actor "commenter2"
+                                 :comment "..."}
+                                injections)))))
+      (let [events (ok-command application
+                               {:type :application.command/comment
+                                :actor "commenter"
+                                :comment "..."}
+                               injections)
+            application (apply-events application events)]
         (testing "succesfully commented"
-          (is (= #{"commenter2"} (:commenters commented))))
+          (is (= [{:event/type :application.event/commented
+                   :event/time test-time
+                   :event/actor "commenter"
+                   :application/id 123
+                   :application/request-id request-id-2
+                   :application/comment "..."}]
+                 events)))
         (testing "cannot comment twice"
           (is (= {:errors [{:type :forbidden}]}
-                 (handle-command {:application-id 123 :time test-time
-                                  :actor "commenter" :comment "..." :type :application.command/comment}
-                                 commented
-                                 injections))))
+                 (fail-command application
+                               {:type :application.command/comment
+                                :actor "commenter"
+                                :comment "..."}
+                               injections))))
         (testing "other commenter can still comment"
-          (is (= #{} (:commenters (apply-command commented
-                                                 {:actor "commenter2" :comment "..." :type :application.command/comment}
-                                                 injections)))))))))
+          (is (= [{:event/type :application.event/commented
+                   :event/time test-time
+                   :event/actor "commenter2"
+                   :application/id 123
+                   :application/request-id request-id-1
+                   :application/comment "..."}]
+                 (ok-command application
+                             {:type :application.command/comment
+                              :actor "commenter2"
+                              :comment "..."}
+                             injections))))))))
