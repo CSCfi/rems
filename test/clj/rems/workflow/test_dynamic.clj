@@ -5,7 +5,8 @@
             [rems.application.model :as model]
             [rems.util :refer [getx]]
             [rems.workflow.dynamic :refer :all])
-  (:import org.joda.time.DateTime))
+  (:import [java.util UUID]
+           [org.joda.time DateTime]))
 
 (def ^:private test-time (DateTime. 1000))
 (def ^:private command-defaults {:application-id 123
@@ -294,51 +295,88 @@
                               :actor "deity" :decision :approved :type :application.command/decide}
                              application
                              injections))))
-    (let [requested (apply-command application
-                                   {:actor "assistant" :deciders ["deity"]
-                                    :type :application.command/request-decision
-                                    :comment ""}
-                                   injections)]
+    (let [events (ok-command application
+                             {:type :application.command/request-decision
+                              :actor "assistant"
+                              :deciders ["deity"]
+                              :comment ""}
+                             injections)
+          request-id (:application/request-id (first events))
+          requested (apply-events application events)]
       (testing "request decision succesfully"
-        (is (= #{"deity"} (:deciders requested))))
+        (is (instance? UUID request-id))
+        (is (= [{:event/type :application.event/decision-requested
+                 :event/time test-time
+                 :event/actor "assistant"
+                 :application/id 123
+                 :application/request-id request-id
+                 :application/deciders ["deity"]
+                 :application/comment ""}]
+               events)))
       (testing "only the requested user can decide"
         (is (= {:errors [{:type :forbidden}]}
-               (handle-command {:application-id 123 :time test-time
-                                :actor "deity2" :decision :approved :comment "" :type :application.command/decide}
-                               requested
-                               injections))))
-      (let [approved (apply-command requested
-                                    {:actor "deity" :decision :approved :comment ""
-                                     :type :application.command/decide}
-                                    injections)]
+               (fail-command requested
+                             {:type :application.command/decide
+                              :actor "deity2"
+                              :decision :approved
+                              :comment ""}
+                             injections))))
+      (let [events (ok-command requested
+                               {:type :application.command/decide
+                                :actor "deity"
+                                :decision :approved
+                                :comment ""}
+                               injections)
+            approved (apply-events requested events)]
         (testing "succesfully approved"
-          (is (= #{} (:deciders approved))))
+          (is (= [{:event/type :application.event/decided
+                   :event/time test-time
+                   :event/actor "deity"
+                   :application/id 123
+                   :application/request-id request-id
+                   :application/decision :approved
+                   :application/comment ""}]
+                 events)))
         (testing "cannot approve twice"
           (is (= {:errors [{:type :forbidden}]}
-                 (handle-command {:application-id 123 :time test-time :comment ""
-                                  :actor "deity" :decision :approved :type :application.command/decide}
-                                 approved
-                                 injections)))))
-      (let [rejected (apply-command requested
-                                    {:actor "deity" :decision :rejected :comment ""
-                                     :type :application.command/decide}
-                                    injections)]
+                 (fail-command approved
+                               {:type :application.command/decide
+                                :actor "deity"
+                                :decision :approved
+                                :comment ""}
+                               injections)))))
+      (let [events (ok-command requested
+                               {:type :application.command/decide
+                                :actor "deity"
+                                :decision :rejected
+                                :comment ""}
+                               injections)
+            rejected (apply-events requested events)]
         (testing "successfully rejected"
-          (is (= #{} (:deciders rejected))))
+          (is (= [{:event/type :application.event/decided
+                   :event/time test-time
+                   :event/actor "deity"
+                   :application/id 123
+                   :application/request-id request-id
+                   :application/decision :rejected
+                   :application/comment ""}]
+                 events)))
         (testing "can not reject twice"
           (is (= {:errors [{:type :forbidden}]}
-                 (handle-command {:application-id 123 :time test-time
-                                  :actor "deity" :decision :rejected :comment ""
-                                  :type :application.command/decide}
-                                 rejected
-                                 injections)))))
+                 (fail-command rejected
+                               {:type :application.command/decide
+                                :actor "deity"
+                                :decision :rejected
+                                :comment ""}
+                               injections)))))
       (testing "other decisions are not possible"
         (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Value does not match schema"
-                              (handle-command {:application-id 123 :time test-time
-                                               :actor "deity" :decision :foobar :comment ""
-                                               :type :application.command/decide}
-                                              requested
-                                              injections)))))))
+                              (fail-command requested
+                                            {:type :application.command/decide
+                                             :actor "deity"
+                                             :decision :foobar
+                                             :comment ""}
+                                            injections)))))))
 
 (deftest test-add-member
   (let [application (apply-events nil
