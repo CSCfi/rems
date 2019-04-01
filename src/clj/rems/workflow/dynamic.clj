@@ -163,7 +163,8 @@
 
 (defn- validate-licenses [application]
   (let [all-licenses (set (map :license/id (:application/licenses application)))
-        accepted-licenses (set (::applicant-accepted-licenses application))
+        user-id (:application/applicant application)
+        accepted-licenses (get-in application [:application/accepted-licenses user-id])
         missing-licenses (set/difference all-licenses accepted-licenses)]
     (->> (sort missing-licenses)
          (map (fn [license-id]
@@ -172,8 +173,8 @@
 
 (defn- validation-error [application {:keys [validate-form-answers]}]
   (let [form-id (:form/id application)
-        answers (:form-contents application)
-        errors (concat (validate-form-answers form-id answers)
+        answers (:rems.application.model/draft-answers application)
+        errors (concat (validate-form-answers form-id {:items answers})
                        (validate-licenses application))]
     (when (seq errors)
       {:errors errors})))
@@ -200,7 +201,7 @@
        :application/accepted-licenses (set (:accepted-licenses cmd))}))
 
 (defmethod command-handler :application.command/submit
-  [cmd application injections]
+  [_cmd application injections]
   (or (validation-error application injections)
       (ok {:event/type :application.event/submitted})))
 
