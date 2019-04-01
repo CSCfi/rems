@@ -184,7 +184,7 @@
       {:errors errors})))
 
 (defn- valid-invitation-token? [application token]
-  (contains? (:invitation-tokens application) token))
+  (contains? (:application/invitation-tokens application) token))
 
 (defn- invitation-token-error [application token]
   (when-not (valid-invitation-token? application token)
