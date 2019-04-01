@@ -91,6 +91,7 @@
   [application _workflow event]
   (-> application
       (update :commenters into (:application/commenters event))
+      ;; TODO: keep ::latest-comment-request-by-user
       (update ::latest-comment-request-by-user merge (zipmap (:application/commenters event)
                                                              (repeat (:application/request-id event))))))
 
@@ -100,6 +101,7 @@
   ;; the event list
   (-> application
       (update :commenters disj (:event/actor event))
+      ;; TODO: keep ::latest-comment-request-by-user
       (update ::latest-comment-request-by-user dissoc (:event/actor event))))
 
 (defmethod apply-event [:application.event/member-added :workflow/dynamic]
@@ -266,7 +268,8 @@
            :application/comment (:comment cmd)})))
 
 (defn- actor-is-not-commenter-error [application cmd]
-  (when-not (contains? (:commenters application) (:actor cmd))
+  (when-not (contains? (get-in application [:application/workflow :workflow.dynamic/awaiting-commenters])
+                       (:actor cmd))
     {:errors [{:type :forbidden}]}))
 
 (defmethod command-handler :application.command/comment
