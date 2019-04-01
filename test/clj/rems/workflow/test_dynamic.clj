@@ -1,12 +1,15 @@
 (ns rems.workflow.test-dynamic
-  (:require [clojure.test :refer :all]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
+            [clojure.test :refer :all]
+            [rems.application.events :as events]
             [rems.application.model :as model]
             [rems.util :refer [getx]]
             [rems.workflow.dynamic :refer :all])
   (:import org.joda.time.DateTime))
 
 (def ^:private test-time (DateTime. 1000))
+(def ^:private command-defaults {:application-id 123
+                                 :time test-time})
 
 (defmacro assert-ex
   "Like assert but throw the result with ex-info and not as string. "
@@ -24,17 +27,29 @@
      (catch RuntimeException e#
        (ex-data e#))))
 
+(defn- fail-command
+  ([application cmd]
+   (fail-command application cmd nil))
+  ([application cmd injections]
+   (let [cmd (merge command-defaults cmd)
+         result (handle-command cmd application injections)]
+     (assert-ex (not (:success result)) {:cmd cmd :result result})
+     result)))
+
+(defn- ok-command
+  ([application cmd]
+   (ok-command application cmd nil))
+  ([application cmd injections]
+   (let [cmd (merge command-defaults cmd)
+         result (handle-command cmd application injections)]
+     (assert-ex (:success result) {:cmd cmd :result result})
+     (events/validate-events [(getx result :result)]))))
+
 (defn- apply-command
   ([application cmd]
    (apply-command application cmd nil))
   ([application cmd injections]
-   (let [enriched-cmd (merge {:application-id 123
-                              :time test-time}
-                             cmd)
-         result (handle-command enriched-cmd application injections)
-         _ (assert-ex (:success result) {:cmd cmd :result result})
-         event (getx result :result)]
-     (apply-events application [event]))))
+   (apply-events application (ok-command application cmd injections))))
 
 (defn- apply-commands
   ([application commands]
@@ -388,30 +403,40 @@
                                     :application/member {:userid "somebody"}}])
         injections {:valid-user? #{"member1" "member2" "somebody" "applicant"}}]
     (testing "add two members"
-      (is (= [{:userid "applicant"} {:userid "somebody"} {:userid "member1"}]
-             (:members
-              (apply-commands application
-                              [{:type :application.command/add-member :actor "assistant" :member {:userid "member1"}}]
-                              injections)))))
+      (is (= [{:event/type :application.event/member-added
+               :event/time test-time
+               :event/actor "assistant"
+               :application/id 123
+               :application/member {:userid "member1"}}]
+             (ok-command application
+                         {:type :application.command/add-member
+                          :actor "assistant"
+                          :member {:userid "member1"}}
+                         injections))))
     (testing "only handler can add members"
       (is (= {:errors [{:type :forbidden}]}
-             (handle-command {:application-id 123 :time test-time
-                              :type :application.command/add-member :actor "applicant" :member {:userid "member1"}}
-                             application
-                             injections)
-             (handle-command {:application-id 123 :time test-time
-                              :type :application.command/add-member :actor "member1" :member {:userid "member2"}}
-                             application
-                             injections))))
+             (fail-command application
+                           {:type :application.command/add-member
+                            :actor "applicant"
+                            :member {:userid "member1"}}
+                           injections)
+             (fail-command application
+                           {:type :application.command/add-member
+                            :actor "member1"
+                            :member {:userid "member2"}}
+                           injections))))
     (testing "only valid users can be added"
       (is (= {:errors [{:type :t.form.validation/invalid-user :userid "member3"}]}
-             (handle-command {:application-id 123 :time test-time
-                              :type :application.command/add-member :actor "assistant" :member {:userid "member3"}}
-                             application
-                             injections))))
+             (fail-command application
+                           {:type :application.command/add-member
+                            :actor "assistant"
+                            :member {:userid "member3"}}
+                           injections))))
     (testing "added members can see the application"
       (is (-> (apply-commands application
-                              [{:type :application.command/add-member :actor "assistant" :member {:userid "member1"}}]
+                              [{:type :application.command/add-member
+                                :actor "assistant"
+                                :member {:userid "member1"}}]
                               injections)
               (model/see-application? "member1"))))))
 
@@ -500,11 +525,16 @@
                                   injections))))))
 
     (testing "invited member can join draft"
-      (is (= [{:userid "applicant"} {:userid "somebody"}]
-             (:members
-              (apply-commands application
-                              [{:type :application.command/accept-invitation :actor "somebody" :token "very-secure"}]
-                              injections)))))
+      (is (= [{:event/type :application.event/member-joined
+               :event/time test-time
+               :event/actor "somebody"
+               :application/id 123
+               :invitation/token "very-secure"}]
+             (ok-command application
+                         {:type :application.command/accept-invitation
+                          :actor "somebody"
+                          :token "very-secure"}
+                         injections))))
 
     (let [application (apply-events application
                                     [{:event/type :application.event/member-added
@@ -540,11 +570,16 @@
                                     :event/actor "applicant"
                                     :application/id 123}])]
       (testing "invited member can join submitted application"
-        (is (= [{:userid "applicant"} {:userid "somebody"}]
-               (:members
-                (apply-commands application
-                                [{:type :application.command/accept-invitation :actor "somebody" :token "very-secure"}]
-                                injections)))))
+        (is (= [{:event/type :application.event/member-joined
+                 :event/actor "somebody"
+                 :event/time test-time
+                 :application/id 123
+                 :invitation/token "very-secure"}]
+               (ok-command application
+                           {:type :application.command/accept-invitation
+                            :actor "somebody"
+                            :token "very-secure"}
+                           injections))))
       (let [closed (apply-events submitted
                                  [{:event/type :application.event/closed
                                    :event/actor "applicant"
@@ -573,36 +608,54 @@
                                     :application/member {:userid "somebody"}}])
         injections {:valid-user? #{"somebody" "applicant" "assistant"}}]
     (testing "remove member by applicant"
-      (is (= [{:userid "applicant"}]
-             (:members
-              (apply-commands application
-                              [{:type :application.command/remove-member :actor "applicant" :member {:userid "somebody"}
-                                :comment ""}]
-                              injections)))))
+      (is (= [{:event/type :application.event/member-removed
+               :event/time test-time
+               :event/actor "applicant"
+               :application/id 123
+               :application/member {:userid "somebody"}
+               :application/comment "some comment"}]
+             (ok-command application
+                         {:type :application.command/remove-member
+                          :actor "applicant"
+                          :member {:userid "somebody"}
+                          :comment "some comment"}
+                         injections))))
     (testing "remove applicant by applicant"
       (is (= {:errors [{:type :cannot-remove-applicant}]}
-             (handle-command {:application-id 123 :time test-time :comment ""
-                              :type :application.command/remove-member :actor "applicant" :member {:userid "applicant"}}
-                             application
-                             injections))))
+             (fail-command application
+                           {:type :application.command/remove-member
+                            :actor "applicant"
+                            :member {:userid "applicant"}
+                            :comment ""}
+                           injections))))
     (testing "remove member by handler"
-      (is (= [{:userid "applicant"}]
-             (:members
-              (apply-commands application
-                              [{:type :application.command/remove-member :actor "assistant" :member {:userid "somebody"}
-                                :comment ""}]
-                              injections)))))
+      (is (= [{:event/type :application.event/member-removed
+               :event/time test-time
+               :event/actor "assistant"
+               :application/id 123
+               :application/member {:userid "somebody"}
+               :application/comment ""}]
+             (ok-command application
+                         {:type :application.command/remove-member
+                          :actor "assistant"
+                          :member {:userid "somebody"}
+                          :comment ""}
+                         injections))))
     (testing "only members can be removed"
       (is (= {:errors [{:type :user-not-member :user {:userid "notamember"}}]}
-             (handle-command {:application-id 123 :time test-time :comment ""
-                              :type :application.command/remove-member :actor "assistant" :member {:userid "notamember"}}
-                             application
-                             injections))))
+             (fail-command application
+                           {:type :application.command/remove-member
+                            :actor "assistant"
+                            :member {:userid "notamember"}
+                            :comment ""}
+                           injections))))
     (testing "removed members cannot see the application"
       (is (-> application
               (model/see-application? "somebody")))
       (is (not (-> application
-                   (apply-commands [{:type :application.command/remove-member :actor "applicant" :member {:userid "somebody"}
+                   (apply-commands [{:type :application.command/remove-member
+                                     :actor "applicant"
+                                     :member {:userid "somebody"}
                                      :comment ""}]
                                    injections)
                    (model/see-application? "somebody")))))))
