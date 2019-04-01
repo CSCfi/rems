@@ -190,10 +190,12 @@
   (when-not (valid-invitation-token? application token)
     {:errors [{:type :t.actions.errors/invalid-token :token token}]}))
 
+(defn- all-members [application]
+  (conj (set (map :userid (:application/members application)))
+        (:application/applicant application)))
+
 (defn already-member-error [application userid]
-  (when (contains? (conj (set (map :userid (:application/members application)))
-                         (:application/applicant application))
-                   userid)
+  (when (contains? (all-members application) userid)
     {:errors [{:type :already-member :application-id (:id application)}]}))
 
 (defn- ok [event]
@@ -309,10 +311,9 @@
 
 (defmethod command-handler :application.command/remove-member
   [cmd application _injections]
-  (or (when (= (:applicantuserid application) (:userid (:member cmd)))
+  (or (when (= (:application/applicant application) (:userid (:member cmd)))
         {:errors [{:type :cannot-remove-applicant}]})
-      (when-not (contains? (set (map :userid (:members application)))
-                           (:userid (:member cmd)))
+      (when-not (contains? (all-members application) (:userid (:member cmd)))
         {:errors [{:type :user-not-member :user (:member cmd)}]})
       (ok {:event/type :application.event/member-removed
            :application/member (:member cmd)
