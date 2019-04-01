@@ -76,81 +76,69 @@
                                     :application/id 123
                                     :form/id 1
                                     :workflow/type :workflow/dynamic
-                                    :workflow.dynamic/handlers #{"assistant"}}])
-        relevant-application-keys [:state :form-contents :submitted-form-contents :previous-submitted-form-contents]]
+                                    :workflow.dynamic/handlers #{"assistant"}}])]
     (testing "saves a draft"
-      (is (= {:success true
-              :result {:event/type :application.event/draft-saved
-                       :event/time test-time
-                       :event/actor "applicant"
-                       :application/id 123
-                       :application/field-values {1 "foo" 2 "bar"}
-                       :application/accepted-licenses #{1 2}}}
-             (handle-command {:type :application.command/save-draft
-                              :time test-time
-                              :actor "applicant"
-                              :application-id 123
-                              :field-values {1 "foo" 2 "bar"}
-                              :accepted-licenses #{1 2}}
-                             application
-                             injections))))
+      (is (= [{:event/type :application.event/draft-saved
+               :event/time test-time
+               :event/actor "applicant"
+               :application/id 123
+               :application/field-values {1 "foo" 2 "bar"}
+               :application/accepted-licenses #{1 2}}]
+             (ok-command application
+                         {:type :application.command/save-draft
+                          :actor "applicant"
+                          :field-values {1 "foo" 2 "bar"}
+                          :accepted-licenses #{1 2}}
+                         injections))))
     (testing "only the applicant can save a draft"
       (is (= {:errors [{:type :forbidden}]}
-             (handle-command {:type :application.command/save-draft
-                              :actor "non-applicant"
-                              :time test-time
-                              :application-id 123
-                              :field-values {1 "foo" 2 "bar"}
-                              :accepted-licenses #{1 2}}
-                             application
-                             injections)
-             (handle-command {:type :application.command/save-draft
-                              :actor "assistant"
-                              :time test-time
-                              :application-id 123
-                              :field-values {1 "foo" 2 "bar"}
-                              :accepted-licenses #{1 2}}
-                             application
-                             injections))))
+             (fail-command application
+                           {:type :application.command/save-draft
+                            :actor "non-applicant"
+                            :field-values {1 "foo" 2 "bar"}
+                            :accepted-licenses #{1 2}}
+                           injections)
+             (fail-command application
+                           {:type :application.command/save-draft
+                            :actor "assistant"
+                            :field-values {1 "foo" 2 "bar"}
+                            :accepted-licenses #{1 2}}
+                           injections))))
     (testing "draft cannot be updated after submitting"
-      (let [application (apply-commands application
-                                        [{:type :application.command/save-draft
-                                          :actor "applicant"
-                                          :field-values {1 "original"}
-                                          :accepted-licenses #{2}}
-                                         {:type :application.command/submit
-                                          :actor "applicant"}]
-                                        injections)]
+      (let [application (apply-events application
+                                      [{:event/type :application.event/submitted
+                                        :event/time test-time
+                                        :actor "applicant"
+                                        :application/id 123}])]
         (is (= {:errors [{:type :forbidden}]}
-               (handle-command {:type :application.command/save-draft
-                                :application-id 123
-                                :time test-time
-                                :actor "applicant"
-                                :field-values {1 "updated"}
-                                :accepted-licenses #{3}}
-                               application
-                               injections)))))
+               (fail-command application
+                             {:type :application.command/save-draft
+                              :actor "applicant"
+                              :field-values {1 "updated"}
+                              :accepted-licenses #{3}}
+                             injections)))))
     (testing "draft can be updated after returning it to applicant"
-      (is (= {:state :application.state/returned
-              :form-contents {:items {1 "updated"}
-                              :licenses {3 "approved"}
-                              :accepted-licenses {"applicant" #{3}}}
-              :submitted-form-contents {:items {1 "original"}
-                                        :licenses {2 "approved"}
-                                        :accepted-licenses {"applicant" #{2}}}
-              :previous-submitted-form-contents nil}
-             (-> (apply-commands application
-                                 [{:type :application.command/save-draft
-                                   :actor "applicant" :field-values {1 "original"} :accepted-licenses #{2}}
-                                  {:type :application.command/submit
-                                   :actor "applicant"}
-                                  {:type :application.command/return
-                                   :comment "ret"
-                                   :actor "assistant"}
-                                  {:type :application.command/save-draft
-                                   :actor "applicant" :field-values {1 "updated"} :accepted-licenses #{3}}]
-                                 injections)
-                 (select-keys relevant-application-keys)))))))
+      (let [application (apply-events application
+                                      [{:event/type :application.event/submitted
+                                        :event/time test-time
+                                        :actor "applicant"
+                                        :application/id 123}
+                                       {:event/type :application.event/returned
+                                        :event/time test-time
+                                        :actor "assistant"
+                                        :application/id 123}])]
+        (is (= [{:event/type :application.event/draft-saved
+                 :event/time test-time
+                 :event/actor "applicant"
+                 :application/id 123
+                 :application/field-values {1 "updated"}
+                 :application/accepted-licenses #{3}}]
+               (ok-command application
+                           {:type :application.command/save-draft
+                            :actor "applicant"
+                            :field-values {1 "updated"}
+                            :accepted-licenses #{3}}
+                           injections)))))))
 
 (deftest test-submit
   (let [injections {:validate-form-answers fake-validate-form-answers}
