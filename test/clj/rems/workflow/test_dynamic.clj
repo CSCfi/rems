@@ -112,22 +112,6 @@
                               :accepted-licenses #{1 2}}
                              application
                              injections))))
-    (testing "draft can be updated multiple times"
-      (is (= {:state :application.state/draft
-              :form-contents {:items {1 "updated"}
-                              :licenses {3 "approved"}
-                              :accepted-licenses {"applicant" #{3}}}}
-             (-> (apply-commands application
-                                 [{:type :application.command/save-draft
-                                   :actor "applicant"
-                                   :field-values {1 "original"}
-                                   :accepted-licenses #{2}}
-                                  {:type :application.command/save-draft
-                                   :actor "applicant"
-                                   :field-values {1 "updated"}
-                                   :accepted-licenses #{3}}]
-                                 injections)
-                 (select-keys relevant-application-keys)))))
     (testing "draft cannot be updated after submitting"
       (let [application (apply-commands application
                                         [{:type :application.command/save-draft
@@ -165,25 +149,6 @@
                                    :actor "assistant"}
                                   {:type :application.command/save-draft
                                    :actor "applicant" :field-values {1 "updated"} :accepted-licenses #{3}}]
-                                 injections)
-                 (select-keys relevant-application-keys)))))
-    (testing "resubmitting remembers the previous and current application"
-      (is (= {:state :application.state/submitted
-              :form-contents {:items {1 "updated"}
-                              :licenses {3 "approved"}
-                              :accepted-licenses {"applicant" #{3}}}
-              :submitted-form-contents {:items {1 "updated"}
-                                        :licenses {3 "approved"}
-                                        :accepted-licenses {"applicant" #{3}}}
-              :previous-submitted-form-contents {:items {1 "original"}
-                                                 :licenses {2 "approved"}
-                                                 :accepted-licenses {"applicant" #{2}}}}
-             (-> (apply-commands application
-                                 [{:actor "applicant" :type :application.command/save-draft :field-values {1 "original"} :accepted-licenses #{2}}
-                                  {:actor "applicant" :type :application.command/submit}
-                                  {:actor "assistant" :type :application.command/return :comment ""}
-                                  {:actor "applicant" :type :application.command/save-draft :field-values {1 "updated"} :accepted-licenses #{3}}
-                                  {:actor "applicant" :type :application.command/submit}]
                                  injections)
                  (select-keys relevant-application-keys)))))))
 
