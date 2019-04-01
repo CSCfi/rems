@@ -1,14 +1,14 @@
 (ns rems.db.dynamic-roles
   (:require [clojure.set :as set]
             [clojure.test :refer [deftest is testing]]
+            [rems.application.model :as model]
             [rems.db.applications :as applications]
-            [rems.permissions :as permissions]
-            [rems.workflow.dynamic :as dynamic]))
+            [rems.permissions :as permissions]))
 
 ;; TODO: make private after removing the hack which uses this
 (defn permissions-of-all-applications [applications event]
   (if-let [app-id (:application/id event)] ; old style events don't have :application/id
-    (update applications app-id dynamic/calculate-permissions event)
+    (update applications app-id model/calculate-permissions event)
     applications))
 
 (defn- roles-from-all-applications [user events]

@@ -1,12 +1,9 @@
-(ns rems.api.test-applications-v2
+(ns rems.application.test-model
   (:require [clojure.test :refer :all]
-            [lambdaisland.deep-diff :as ddiff]
-            [rems.api.applications-v2 :refer :all]
+            [rems.application.model :as model]
             [rems.common-util :refer [deep-merge]]
-            [rems.context :as context]
             [rems.db.applications :as applications]
-            [rems.permissions :as permissions]
-            [rems.workflow.dynamic :as dynamic])
+            [rems.permissions :as permissions])
   (:import [java.util UUID]
            [org.joda.time DateTime]))
 
@@ -119,10 +116,12 @@
                                             :mail "applicant@example.com"
                                             :commonName "Applicant"}}}
         apply-events (fn [events]
-                       (-> events
-                           validate-events
-                           (build-application-view injections)
-                           permissions/cleanup))]
+                       (let [application (-> events
+                                             validate-events
+                                             (model/build-application-view injections)
+                                             permissions/cleanup)]
+                         (is (contains? model/states (:application/state application)))
+                         application))]
 
     (testing "created"
       (let [events [{:event/type :application.event/created
@@ -521,24 +520,76 @@
                                                          :application/members #{}})]
                         (is (= expected-application (apply-events events)))))))))))))))
 
+(deftest test-calculate-permissions
+  ;; TODO: is this what we want? wouldn't it be useful to be able to write more than one comment?
+  (testing "commenter may comment only once"
+    (let [requested (reduce model/calculate-permissions nil [{:event/type :application.event/created
+                                                              :event/actor "applicant"
+                                                              :workflow.dynamic/handlers ["handler"]}
+                                                             {:event/type :application.event/submitted
+                                                              :event/actor "applicant"}
+                                                             {:event/type :application.event/comment-requested
+                                                              :event/actor "handler"
+                                                              :application/commenters ["commenter1" "commenter2"]}])
+          commented (reduce model/calculate-permissions requested [{:event/type :application.event/commented
+                                                                    :event/actor "commenter1"}])]
+      (is (= #{:see-everything :application.command/comment}
+             (permissions/user-permissions requested "commenter1")))
+      (is (= #{:see-everything}
+             (permissions/user-permissions commented "commenter1")))
+      (is (= #{:see-everything :application.command/comment}
+             (permissions/user-permissions commented "commenter2")))))
+
+  (testing "decider may decide only once"
+    (let [requested (reduce model/calculate-permissions nil [{:event/type :application.event/created
+                                                              :event/actor "applicant"
+                                                              :workflow.dynamic/handlers ["handler"]}
+                                                             {:event/type :application.event/submitted
+                                                              :event/actor "applicant"}
+                                                             {:event/type :application.event/decision-requested
+                                                              :event/actor "handler"
+                                                              :application/deciders ["decider"]}])
+          decided (reduce model/calculate-permissions requested [{:event/type :application.event/decided
+                                                                  :event/actor "decider"}])]
+      (is (= #{:see-everything :application.command/decide}
+             (permissions/user-permissions requested "decider")))
+      (is (= #{:see-everything}
+             (permissions/user-permissions decided "decider")))))
+
+  (testing "everyone can accept invitation"
+    (let [created (reduce model/calculate-permissions nil [{:event/type :application.event/created
+                                                            :event/actor "applicant"
+                                                            :workflow.dynamic/handlers ["handler"]}])]
+      (is (= #{:application.command/accept-invitation}
+             (permissions/user-permissions created "joe")))))
+  (testing "nobody can accept invitation for closed application"
+    (let [closed (reduce model/calculate-permissions nil [{:event/type :application.event/created
+                                                           :event/actor "applicant"
+                                                           :workflow.dynamic/handlers ["handler"]}
+                                                          {:event/type :application.event/closed
+                                                           :event/actor "applicant"}])]
+      (is (= #{}
+             (permissions/user-permissions closed "joe")
+             (permissions/user-permissions closed "applicant"))))))
+
 (deftest test-apply-user-permissions
-  (let [application (-> (application-view nil {:event/type :application.event/created
-                                               :event/actor "applicant"
-                                               :workflow.dynamic/handlers #{"handler"}})
+  (let [application (-> (model/application-view nil {:event/type :application.event/created
+                                                     :event/actor "applicant"
+                                                     :workflow.dynamic/handlers #{"handler"}})
                         (permissions/give-role-to-users :role-1 ["user-1"])
                         (permissions/give-role-to-users :role-2 ["user-2"])
                         (permissions/set-role-permissions {:role-1 []
                                                            :role-2 [:foo :bar]}))]
     (testing "users with a role can see the application"
-      (is (not (nil? (apply-user-permissions application "user-1")))))
+      (is (not (nil? (model/apply-user-permissions application "user-1")))))
     (testing "users without a role cannot see the application"
-      (is (nil? (apply-user-permissions application "user-3"))))
+      (is (nil? (model/apply-user-permissions application "user-3"))))
     (testing "lists the user's permissions"
-      (is (= #{} (:application/permissions (apply-user-permissions application "user-1"))))
-      (is (= #{:foo :bar} (:application/permissions (apply-user-permissions application "user-2")))))
+      (is (= #{} (:application/permissions (model/apply-user-permissions application "user-1"))))
+      (is (= #{:foo :bar} (:application/permissions (model/apply-user-permissions application "user-2")))))
     (testing "lists the user's roles"
-      (is (= #{:role-1} (:application/roles (apply-user-permissions application "user-1"))))
-      (is (= #{:role-2} (:application/roles (apply-user-permissions application "user-2")))))
+      (is (= #{:role-1} (:application/roles (model/apply-user-permissions application "user-1"))))
+      (is (= #{:role-2} (:application/roles (model/apply-user-permissions application "user-2")))))
 
     (let [all-events [{:event/type :application.event/created}
                       {:event/type :application.event/submitted}
@@ -549,7 +600,7 @@
                           (assoc :application/events all-events)
                           (permissions/set-role-permissions {:role-1 [:see-everything]}))]
       (testing "privileged users"
-        (let [application (apply-user-permissions application "user-1")]
+        (let [application (model/apply-user-permissions application "user-1")]
           (testing "see all events"
             (is (= all-events
                    (:application/events application))))
@@ -558,7 +609,7 @@
                    (get-in application [:application/workflow :workflow.dynamic/handlers]))))))
 
       (testing "normal users"
-        (let [application (apply-user-permissions application "user-2")]
+        (let [application (model/apply-user-permissions application "user-2")]
           (testing "see only some events"
             (is (= restricted-events
                    (:application/events application))))
@@ -567,10 +618,10 @@
                    (get-in application [:application/workflow :workflow.dynamic/handlers])))))))
 
     (testing "invitation tokens are not visible to anybody"
-      (let [application (application-view application {:event/type :application.event/member-invited
-                                                       :application/member {:name "member"
-                                                                            :email "member@example.com"}
-                                                       :invitation/token "secret"})]
+      (let [application (model/application-view application {:event/type :application.event/member-invited
+                                                             :application/member {:name "member"
+                                                                                  :email "member@example.com"}
+                                                             :invitation/token "secret"})]
         (testing "- original"
           (is (= {"secret" {:name "member"
                             :email "member@example.com"}}
@@ -579,7 +630,7 @@
                  (:application/invited-members application))))
         (doseq [user-id ["applicant" "handler"]]
           (testing (str "- as user " user-id)
-            (let [application (apply-user-permissions application user-id)]
+            (let [application (model/apply-user-permissions application user-id)]
               (is (= nil
                      (:application/invitation-tokens application)))
               (is (= #{{:name "member"

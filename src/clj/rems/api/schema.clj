@@ -1,6 +1,6 @@
 (ns rems.api.schema
   "Shared schema definitions for the API"
-  (:require [rems.workflow.dynamic :as dynamic]
+  (:require [rems.application.events :as events]
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
 
@@ -71,7 +71,7 @@
   {:userid s/Str})
 
 (s/defschema Event
-  (assoc dynamic/EventBase
+  (assoc events/EventBase
          s/Keyword s/Any))
 
 (s/defschema Application
