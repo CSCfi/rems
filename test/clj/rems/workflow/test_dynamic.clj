@@ -70,8 +70,7 @@
 ;;; Tests
 
 (deftest test-save-draft
-  (let [injections {:validate-form-answers (constantly nil)}
-        application (apply-events nil
+  (let [application (apply-events nil
                                   [{:event/type :application.event/created
                                     :event/actor "applicant"
                                     :application/id 123
@@ -89,22 +88,19 @@
                          {:type :application.command/save-draft
                           :actor "applicant"
                           :field-values {1 "foo" 2 "bar"}
-                          :accepted-licenses #{1 2}}
-                         injections))))
+                          :accepted-licenses #{1 2}}))))
     (testing "only the applicant can save a draft"
       (is (= {:errors [{:type :forbidden}]}
              (fail-command application
                            {:type :application.command/save-draft
                             :actor "non-applicant"
                             :field-values {1 "foo" 2 "bar"}
-                            :accepted-licenses #{1 2}}
-                           injections)
+                            :accepted-licenses #{1 2}})
              (fail-command application
                            {:type :application.command/save-draft
                             :actor "assistant"
                             :field-values {1 "foo" 2 "bar"}
-                            :accepted-licenses #{1 2}}
-                           injections))))
+                            :accepted-licenses #{1 2}}))))
     (testing "draft cannot be updated after submitting"
       (let [application (apply-events application
                                       [{:event/type :application.event/submitted
@@ -116,8 +112,7 @@
                              {:type :application.command/save-draft
                               :actor "applicant"
                               :field-values {1 "updated"}
-                              :accepted-licenses #{3}}
-                             injections)))))
+                              :accepted-licenses #{3}})))))
     (testing "draft can be updated after returning it to applicant"
       (let [application (apply-events application
                                       [{:event/type :application.event/submitted
@@ -138,19 +133,14 @@
                            {:type :application.command/save-draft
                             :actor "applicant"
                             :field-values {1 "updated"}
-                            :accepted-licenses #{3}}
-                           injections)))))))
+                            :accepted-licenses #{3}})))))))
 
-(deftest test-submit
+(deftest test-submit-form-validation
   (let [injections {:validate-form-answers fake-validate-form-answers}
-        run-cmd (fn [events command]
-                  (let [application (apply-events nil events)]
-                    (handle-command command application injections)))
-
         created-event {:event/type :application.event/created
-                       :event/time (DateTime. 1000)
+                       :event/time test-time
                        :event/actor "applicant"
-                       :application/id 1
+                       :application/id 123
                        :application/resources [{:catalogue-item/id 10
                                                 :resource/ext-id "urn:11"}
                                                {:catalogue-item/id 20
@@ -162,107 +152,129 @@
                        :workflow/type :workflow/dynamic
                        :workflow.dynamic/handlers #{"handler"}}
         draft-saved-event {:event/type :application.event/draft-saved
-                           :event/time (DateTime. 2000)
+                           :event/time test-time
                            :event/actor "applicant"
-                           :application/id 1
+                           :application/id 123
                            :application/field-values {41 "foo"
                                                       42 "bar"}
                            :application/accepted-licenses #{30 31}}
         submit-command {:type :application.command/submit
-                        :time (DateTime. 3000)
-                        :actor "applicant"
-                        :application-id 1}]
+                        :actor "applicant"}
+        application (apply-events nil [created-event draft-saved-event])]
 
     (testing "can submit a valid form"
-      (is (= {:success true
-              :result {:event/type :application.event/submitted
-                       :event/time (DateTime. 3000)
-                       :event/actor "applicant"
-                       :application/id 1}}
-             (run-cmd [created-event
-                       draft-saved-event]
-                      submit-command))))
+      (is (= [{:event/type :application.event/submitted
+               :event/time test-time
+               :event/actor "applicant"
+               :application/id 123}]
+             (ok-command application submit-command injections))))
 
     (testing "cannot submit when required fields are empty"
       (is (= {:errors [{:type :t.form.validation/required
                         :field-id 41}]}
-             (run-cmd [created-event
-                       (assoc-in draft-saved-event [:application/field-values 41] "")]
-                      submit-command))))
+             (-> application
+                 (apply-events [(assoc-in draft-saved-event [:application/field-values 41] "")])
+                 (fail-command submit-command injections)))))
 
     (testing "cannot submit when not all licenses are accepted"
       (is (= {:errors [{:type :t.form.validation/required
                         :license-id 31}]}
-             (run-cmd [created-event
-                       (update-in draft-saved-event [:application/accepted-licenses] disj 31)]
-                      submit-command))))))
+             (-> application
+                 (apply-events [(update-in draft-saved-event [:application/accepted-licenses] disj 31)])
+                 (fail-command submit-command injections)))))
 
-(deftest test-submit-approve-or-reject
-  (let [injections {:validate-form-answers fake-validate-form-answers}
-        application (apply-events nil
+    (testing "non-applicant cannot submit"
+      (is (= {:errors [{:type :forbidden}]}
+             (fail-command application
+                           (assoc submit-command :actor "non-applicant")
+                           injections))))
+
+    (testing "cannot submit twice"
+      (is (= {:errors [{:type :forbidden}]}
+             (-> application
+                 (apply-events [{:event/type :application.event/submitted
+                                 :event/time test-time
+                                 :event/actor "applicant"
+                                 :application/id 123}])
+                 (fail-command submit-command injections)))))))
+
+(deftest test-approve-or-reject
+  (let [application (apply-events nil
                                   [{:event/type :application.event/created
                                     :event/actor "applicant"
                                     :application/id 123
                                     :form/id 1
                                     :workflow/type :workflow/dynamic
                                     :workflow.dynamic/handlers #{"assistant"}}
-                                   {:event/type :application.event/draft-saved
+                                   {:event/type :application.event/submitted
+                                    :event/time test-time
                                     :event/actor "applicant"
-                                    :application/id 123
-                                    :application/field-values {10 "foo"}
-                                    :application/accepted-licenses #{}}])]
-    (testing "non-applicant cannot submit"
-      (is (= {:errors [{:type :forbidden}]}
-             (handle-command {:application-id 123 :time test-time
-                              :actor "not-applicant" :type :application.command/submit}
-                             application injections))))
-    (testing "cannot submit non-valid forms"
-      (let [application (apply-events application [{:event/type :application.event/draft-saved
-                                                    :event/actor "applicant"
-                                                    :application/id 123
-                                                    :application/field-values {10 ""}
-                                                    :application/accepted-licenses #{}}])]
-        (is (= {:errors [{:type :t.form.validation/required :field-id 10}]}
-               (handle-command {:application-id 123 :time test-time
-                                :actor "applicant" :type :application.command/submit}
-                               application injections)))))
-    (let [submitted (apply-command application {:actor "applicant" :type :application.command/submit} injections)]
-      (testing "cannot submit twice"
-        (is (= {:errors [{:type :forbidden}]}
-               (handle-command {:application-id 123 :time test-time
-                                :actor "applicant" :type :application.command/submit} submitted injections))))
-      (testing "approving"
-        (is (= :application.state/approved (:state (apply-command submitted
-                                                                  {:actor "assistant" :type :application.command/approve
-                                                                   :comment "fine"}
-                                                                  injections)))))
-      (testing "rejecting"
-        (is (= :application.state/rejected (:state (apply-command submitted
-                                                                  {:actor "assistant" :type :application.command/reject
-                                                                   :comment "bad"}
-                                                                  injections))))))))
+                                    :application/id 123}])]
+    (testing "approved successfully"
+      (is (= [{:event/type :application.event/approved
+               :event/time test-time
+               :event/actor "assistant"
+               :application/id 123
+               :application/comment "fine"}]
+             (ok-command application
+                         {:type :application.command/approve
+                          :actor "assistant"
+                          :comment "fine"}))))
+    (testing "rejected successfully"
+      (is (= [{:event/type :application.event/rejected
+               :application/comment "bad"
+               :event/time test-time
+               :event/actor "assistant"
+               :application/id 123}]
+             (ok-command application
+                         {:type :application.command/reject
+                          :actor "assistant"
+                          :comment "bad"}))))))
 
-(deftest test-submit-return-submit-approve-close
-  (let [injections {:validate-form-answers (constantly nil)}
-        application (apply-events nil
+(deftest test-return
+  (let [application (apply-events nil
                                   [{:event/type :application.event/created
                                     :event/actor "applicant"
                                     :application/id 123
                                     :form/id 1
                                     :workflow/type :workflow/dynamic
-                                    :workflow.dynamic/handlers #{"assistant"}}])
-        returned-application (apply-commands application
-                                             [{:actor "applicant" :type :application.command/submit}
-                                              {:actor "assistant" :type :application.command/return :comment "ret"}]
-                                             injections)
-        approved-application (apply-commands returned-application [{:actor "applicant" :type :application.command/submit}
-                                                                   {:actor "assistant" :type :application.command/approve :comment "fine"}]
-                                             injections)
-        closed-application (apply-command approved-application {:actor "assistant" :type :application.command/close :comment ""}
-                                          injections)]
-    (is (= :application.state/returned (:state returned-application)))
-    (is (= :application.state/approved (:state approved-application)))
-    (is (= :application.state/closed (:state closed-application)))))
+                                    :workflow.dynamic/handlers #{"assistant"}}
+                                   {:event/type :application.event/submitted
+                                    :event/actor "applicant"
+                                    :application/id 123}])]
+    (is (= [{:event/type :application.event/returned
+             :event/time test-time
+             :event/actor "assistant"
+             :application/id 123
+             :application/comment "ret"}]
+           (ok-command application
+                       {:type :application.command/return
+                        :actor "assistant"
+                        :comment "ret"})))))
+
+(deftest test-close
+  (let [application (apply-events nil
+                                  [{:event/type :application.event/created
+                                    :event/actor "applicant"
+                                    :application/id 123
+                                    :form/id 1
+                                    :workflow/type :workflow/dynamic
+                                    :workflow.dynamic/handlers #{"assistant"}}
+                                   {:event/type :application.event/submitted
+                                    :event/actor "applicant"
+                                    :application/id 123}
+                                   {:event/type :application.event/approved
+                                    :event/actor "assistant"
+                                    :application/id 123}])]
+    (is (= [{:event/type :application.event/closed
+             :event/time test-time
+             :event/actor "assistant"
+             :application/id 123
+             :application/comment "outdated"}]
+           (ok-command application
+                       {:type :application.command/close
+                        :actor "assistant"
+                        :comment "outdated"})))))
 
 (deftest test-decision
   (let [application (apply-events nil
@@ -303,7 +315,7 @@
                              injections)
           request-id (:application/request-id (first events))
           requested (apply-events application events)]
-      (testing "request decision succesfully"
+      (testing "decision requested successfully"
         (is (instance? UUID request-id))
         (is (= [{:event/type :application.event/decision-requested
                  :event/time test-time
@@ -328,7 +340,7 @@
                                 :comment ""}
                                injections)
             approved (apply-events requested events)]
-        (testing "succesfully approved"
+        (testing "decided approved successfully"
           (is (= [{:event/type :application.event/decided
                    :event/time test-time
                    :event/actor "deity"
@@ -352,7 +364,7 @@
                                 :comment ""}
                                injections)
             rejected (apply-events requested events)]
-        (testing "successfully rejected"
+        (testing "decided rejected successfully"
           (is (= [{:event/type :application.event/decided
                    :event/time test-time
                    :event/actor "deity"
@@ -742,7 +754,7 @@
                                injections)
           request-id-2 (:application/request-id (first events-2))
           application (apply-events application events-2)]
-      (testing "comment requested succesfully"
+      (testing "comment requested successfully"
         (is (instance? UUID request-id-1))
         (is (= [{:event/type :application.event/comment-requested
                  :application/request-id request-id-1
@@ -789,7 +801,7 @@
                                 :comment "..."}
                                injections)
             application (apply-events application events)]
-        (testing "succesfully commented"
+        (testing "commented successfully"
           (is (= [{:event/type :application.event/commented
                    :event/time test-time
                    :event/actor "commenter"
