@@ -12,18 +12,15 @@
 
 (defmulti ^:private apply-event
   "Applies an event to an application state."
-  ;; dispatch by event type
-  ;; TODO: the workflow parameter could be removed; this method is the only one to use it and it's included in application
-  (fn [_application workflow event] [(:event/type event) (or (:type workflow)
-                                                             (:workflow/type event))]))
+  (fn [_application event] (:event/type event)))
 
 (deftest test-all-event-types-handled
-  (let [handled-event-types (map first (keys (methods apply-event)))]
+  (let [handled-event-types (keys (methods apply-event))]
     (is (= (set (keys events/event-schemas))
            (set handled-event-types)))))
 
-(defmethod apply-event [:application.event/created :workflow/dynamic]
-  [application _workflow event]
+(defmethod apply-event :application.event/created
+  [application event]
   (assoc application
          :state :application.state/draft
          :applicantuserid (:event/actor event)
@@ -34,8 +31,8 @@
          :workflow {:type (:workflow/type event)
                     :handlers (vec (:workflow.dynamic/handlers event))}))
 
-(defmethod apply-event [:application.event/draft-saved :workflow/dynamic]
-  [application _workflow event]
+(defmethod apply-event :application.event/draft-saved
+  [application event]
   (assoc application
          ::applicant-accepted-licenses (:application/accepted-licenses event)
          :form-contents {:items (:application/field-values event)
@@ -45,8 +42,8 @@
                          :accepted-licenses (->> (:accepted-licenses application)
                                                  (merge {(:event/actor event) (:application/accepted-licenses event)}))}))
 
-(defmethod apply-event [:application.event/submitted :workflow/dynamic]
-  [application _workflow event]
+(defmethod apply-event :application.event/submitted
+  [application _event]
   (assoc application
          :state :application.state/submitted
          :commenters #{}
@@ -54,32 +51,32 @@
          :previous-submitted-form-contents (:submitted-form-contents application)
          :submitted-form-contents (:form-contents application)))
 
-(defmethod apply-event [:application.event/approved :workflow/dynamic]
-  [application _workflow _event]
+(defmethod apply-event :application.event/approved
+  [application _event]
   (assoc application :state :application.state/approved))
 
-(defmethod apply-event [:application.event/rejected :workflow/dynamic]
-  [application _workflow _event]
+(defmethod apply-event :application.event/rejected
+  [application _event]
   (assoc application :state :application.state/rejected))
 
-(defmethod apply-event [:application.event/returned :workflow/dynamic]
-  [application _workflow _event]
+(defmethod apply-event :application.event/returned
+  [application _event]
   (assoc application :state :application.state/returned))
 
-(defmethod apply-event [:application.event/closed :workflow/dynamic]
-  [application _workflow _event]
+(defmethod apply-event :application.event/closed
+  [application _event]
   (assoc application :state :application.state/closed))
 
-(defmethod apply-event [:application.event/decision-requested :workflow/dynamic]
-  [application _workflow event]
+(defmethod apply-event :application.event/decision-requested
+  [application event]
   (-> application
       (update :deciders into (:application/deciders event))
       ;; TODO: keep ::latest-decision-request-by-user
       (update ::latest-decision-request-by-user merge (zipmap (:application/deciders event)
                                                               (repeat (:application/request-id event))))))
 
-(defmethod apply-event [:application.event/decided :workflow/dynamic]
-  [application _workflow event]
+(defmethod apply-event :application.event/decided
+  [application event]
   ;; we don't store the decisions in the state, they're available via
   ;; the event list
   (-> application
@@ -87,16 +84,16 @@
       ;; TODO: keep ::latest-decision-request-by-user
       (update ::latest-decision-request-by-user dissoc (:event/actor event))))
 
-(defmethod apply-event [:application.event/comment-requested :workflow/dynamic]
-  [application _workflow event]
+(defmethod apply-event :application.event/comment-requested
+  [application event]
   (-> application
       (update :commenters into (:application/commenters event))
       ;; TODO: keep ::latest-comment-request-by-user
       (update ::latest-comment-request-by-user merge (zipmap (:application/commenters event)
                                                              (repeat (:application/request-id event))))))
 
-(defmethod apply-event [:application.event/commented :workflow/dynamic]
-  [application _workflow event]
+(defmethod apply-event :application.event/commented
+  [application event]
   ;; we don't store the comments in the state, they're available via
   ;; the event list
   (-> application
@@ -104,35 +101,35 @@
       ;; TODO: keep ::latest-comment-request-by-user
       (update ::latest-comment-request-by-user dissoc (:event/actor event))))
 
-(defmethod apply-event [:application.event/member-added :workflow/dynamic]
-  [application _workflow event]
+(defmethod apply-event :application.event/member-added
+  [application event]
   (update application :members #(vec (conj % (:application/member event)))))
 
-(defmethod apply-event [:application.event/member-invited :workflow/dynamic]
-  [application _workflow event]
+(defmethod apply-event :application.event/member-invited
+  [application event]
   (-> application
       (update :invited-members #(vec (conj % (:application/member event))))
       (update :invitation-tokens assoc (:invitation/token event) (:application/member event))))
 
-(defmethod apply-event [:application.event/member-joined :workflow/dynamic]
-  [application _workflow event]
+(defmethod apply-event :application.event/member-joined
+  [application event]
   (let [member-by-token ((:invitation-tokens application) (:invitation/token event))]
     (-> application
         (update :members #(vec (conj % {:userid (:event/actor event)})))
         (update :invited-members #(remove #{member-by-token} %))
         (update :invitation-tokens dissoc (:invitation/token event)))))
 
-(defmethod apply-event [:application.event/member-removed :workflow/dynamic]
-  [application _workflow event]
+(defmethod apply-event :application.event/member-removed
+  [application event]
   (update application :members #(vec (remove #{(:application/member event)} %))))
 
-(defmethod apply-event [:application.event/member-uninvited :workflow/dynamic]
-  [application _workflow event]
+(defmethod apply-event :application.event/member-uninvited
+  [application event]
   (update application :invited-members #(vec (remove #{(:application/member event)} %))))
 
 (defn apply-events [application events]
   ;; TODO: remove old apply-event
-  (reduce (fn [application event] (-> (apply-event application (:workflow application) event)
+  (reduce (fn [application event] (-> (apply-event application event)
                                       (model/application-view event)
                                       (model/calculate-permissions event)))
           application
