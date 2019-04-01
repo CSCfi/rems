@@ -938,7 +938,7 @@
             [disabled-items-warning {}])
    (example "two disabled items"
             [disabled-items-warning
-             {:applicaiton/workflow {:workflow.dynamic/state :rems.workflow.dynamic/approved}
+             {:application/workflow {:workflow.dynamic/state :rems.workflow.dynamic/approved}
               :application/resources [{:catalogue-item/enabled true :catalogue-item/archived true
                                        :catalogue-item/title {:default "Catalogue item 1"}}
                                       {:catalogue-item/enabled false :catalogue-item/archived false

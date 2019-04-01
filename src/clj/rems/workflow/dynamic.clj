@@ -74,6 +74,7 @@
   [application _workflow event]
   (-> application
       (update :deciders into (:application/deciders event))
+      ;; TODO: keep ::latest-decision-request-by-user
       (update ::latest-decision-request-by-user merge (zipmap (:application/deciders event)
                                                               (repeat (:application/request-id event))))))
 
@@ -83,6 +84,7 @@
   ;; the event list
   (-> application
       (update :deciders disj (:event/actor event))
+      ;; TODO: keep ::latest-decision-request-by-user
       (update ::latest-decision-request-by-user dissoc (:event/actor event))))
 
 (defmethod apply-event [:application.event/comment-requested :workflow/dynamic]
@@ -239,7 +241,8 @@
            :application/comment (:comment cmd)})))
 
 (defn- actor-is-not-decider-error [application cmd]
-  (when-not (contains? (:deciders application) (:actor cmd))
+  (when-not (contains? (get-in application [:application/workflow :workflow.dynamic/awaiting-deciders])
+                       (:actor cmd))
     {:errors [{:type :forbidden}]}))
 
 (defmethod command-handler :application.command/decide
