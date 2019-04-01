@@ -618,7 +618,8 @@
                                    {:event/type :application.event/member-invited
                                     :event/actor "applicant"
                                     :application/id 123
-                                    :application/member {:name "Some Body" :email "some@body.com"}}
+                                    :application/member {:name "Some Body" :email "some@body.com"}
+                                    :invitation/token "123456"}
                                    {:event/type :application.event/submitted
                                     :event/actor "applicant"
                                     :application/id 123}])
