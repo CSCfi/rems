@@ -4,7 +4,7 @@
             [rems.application.events :as events]
             [rems.application.model :as model]
             [rems.util :refer [getx]]
-            [rems.workflow.dynamic :refer [handle-command] :as dynamic])
+            [rems.workflow.dynamic :as dynamic])
   (:import [java.util UUID]
            [org.joda.time DateTime]))
 
@@ -39,7 +39,7 @@
    (fail-command application cmd nil))
   ([application cmd injections]
    (let [cmd (merge command-defaults cmd)
-         result (handle-command cmd application injections)]
+         result (dynamic/handle-command cmd application injections)]
      (assert-ex (not (:success result)) {:cmd cmd :result result})
      result)))
 
@@ -48,7 +48,7 @@
    (ok-command application cmd nil))
   ([application cmd injections]
    (let [cmd (merge command-defaults cmd)
-         result (handle-command cmd application injections)]
+         result (dynamic/handle-command cmd application injections)]
      (assert-ex (:success result) {:cmd cmd :result result})
      (events/validate-events [(getx result :result)]))))
 
@@ -277,24 +277,28 @@
         injections {:valid-user? #{"deity"}}]
     (testing "required :valid-user? injection"
       (is (= {:errors [{:type :missing-injection :injection :valid-user?}]}
-             (handle-command {:application-id 123 :time test-time
-                              :actor "assistant" :deciders ["deity"] :type :application.command/request-decision
-                              :comment "pls"}
-                             application
-                             {}))))
+             (fail-command application
+                           {:type :application.command/request-decision
+                            :actor "assistant"
+                            :deciders ["deity"]
+                            :comment "pls"}
+                           {}))))
     (testing "decider must be a valid user"
       (is (= {:errors [{:type :t.form.validation/invalid-user :userid "deity2"}]}
-             (handle-command {:application-id 123 :time test-time
-                              :actor "assistant" :deciders ["deity2"] :type :application.command/request-decision
-                              :comment "pls"}
-                             application
-                             injections))))
+             (fail-command application
+                           {:type :application.command/request-decision
+                            :actor "assistant"
+                            :deciders ["deity2"]
+                            :comment "pls"}
+                           injections))))
     (testing "deciding before ::request-decision should fail"
       (is (= {:errors [{:type :forbidden}]}
-             (handle-command {:application-id 123 :time test-time :comment "pls"
-                              :actor "deity" :decision :approved :type :application.command/decide}
-                             application
-                             injections))))
+             (fail-command application
+                           {:type :application.command/decide
+                            :actor "deity"
+                            :decision :approved
+                            :comment "pls"}
+                           injections))))
     (let [events (ok-command application
                              {:type :application.command/request-decision
                               :actor "assistant"
@@ -693,11 +697,12 @@
                          injections))))
     (testing "only invited members can be uninvited"
       (is (= {:errors [{:type :user-not-member :user {:name "Not Member" :email "not@member.com"}}]}
-             (handle-command {:application-id 123 :time test-time
-                              :type :application.command/uninvite-member :actor "assistant" :member {:name "Not Member" :email "not@member.com"}
-                              :comment ""}
-                             application
-                             injections))))))
+             (fail-command application
+                           {:type :application.command/uninvite-member
+                            :actor "assistant"
+                            :member {:name "Not Member" :email "not@member.com"}
+                            :comment ""}
+                           injections))))))
 
 (deftest test-comment
   (let [application (apply-events nil
@@ -709,28 +714,36 @@
         injections {:valid-user? #{"commenter" "commenter2" "commenter3"}}]
     (testing "required :valid-user? injection"
       (is (= {:errors [{:type :missing-injection :injection :valid-user?}]}
-             (handle-command {:application-id 123 :time test-time :comment ""
-                              :actor "assistant" :commenters ["commenter"] :type :application.command/request-comment}
-                             application
-                             {}))))
+             (fail-command application
+                           {:type :application.command/request-comment
+                            :actor "assistant"
+                            :commenters ["commenter"]
+                            :comment ""}
+                           {}))))
     (testing "commenters must not be empty"
       (is (= {:errors [{:type :must-not-be-empty :key :commenters}]}
-             (handle-command {:application-id 123 :time test-time :comment ""
-                              :actor "assistant" :commenters [] :type :application.command/request-comment}
-                             application
-                             {}))))
+             (fail-command application
+                           {:type :application.command/request-comment
+                            :actor "assistant"
+                            :commenters []
+                            :comment ""}
+                           {}))))
     (testing "commenters must be a valid users"
-      (is (= {:errors [{:type :t.form.validation/invalid-user :userid "invaliduser"} {:type :t.form.validation/invalid-user :userid "invaliduser2"}]}
-             (handle-command {:application-id 123 :time test-time :comment ""
-                              :actor "assistant" :commenters ["invaliduser" "commenter" "invaliduser2"] :type :application.command/request-comment}
-                             application
-                             injections))))
+      (is (= {:errors [{:type :t.form.validation/invalid-user :userid "invaliduser"}
+                       {:type :t.form.validation/invalid-user :userid "invaliduser2"}]}
+             (fail-command application
+                           {:type :application.command/request-comment
+                            :actor "assistant"
+                            :commenters ["invaliduser" "commenter" "invaliduser2"]
+                            :comment ""}
+                           injections))))
     (testing "commenting before ::request-comment should fail"
       (is (= {:errors [{:type :forbidden}]}
-             (handle-command {:application-id 123 :time test-time
-                              :actor "commenter" :comment "" :type :application.command/comment}
-                             application
-                             injections))))
+             (fail-command application
+                           {:type :application.command/comment
+                            :actor "commenter"
+                            :comment ""}
+                           injections))))
     (let [events-1 (ok-command application
                                {:type :application.command/request-comment
                                 :actor "assistant"
