@@ -55,7 +55,7 @@
                  (select-keys workflow [:id :organization :title :final-round :actors])))))))
 
   (testing "create dynamic workflow"
-    (let [body (-> (request :post (str "/api/workflows/create"))
+    (let [body (-> (request :post "/api/workflows/create")
                    (json-body {:organization "abc"
                                :title "dynamic workflow"
                                :type :dynamic
@@ -77,8 +77,24 @@
                   :organization "abc"
                   :title "dynamic workflow"
                   :workflow {:type "workflow/dynamic"
-                             :handlers ["bob" "carl"]}}
-                 (select-keys workflow [:id :organization :title :workflow]))))))))
+                             :handlers ["bob" "carl"]}
+                  :enabled true
+                  :archived false}
+                 (select-keys workflow [:id :organization :title :workflow :enabled :archived])))))
+      (testing "and update"
+        (-> (request :put "/api/workflows/update")
+            (json-body {:id id :enabled false :archived true})
+            (authenticate "42" "owner")
+            handler
+            assert-response-is-ok)
+        (let [workflows (-> (request :get "/api/workflows")
+                            (authenticate "42" "owner")
+                            handler
+                            assert-response-is-ok
+                            read-body)
+              workflow (first (filter #(= id (:id %)) workflows))]
+          (is (= {:id id :enabled false :archived true}
+                 (select-keys workflow [:id :enabled :archived]))))))))
 
 (deftest workflows-api-filtering-test
   (let [unfiltered (-> (request :get "/api/workflows")

@@ -464,6 +464,11 @@ VALUES
  /*~ (if (:workflow params) */ :workflow::jsonb /*~*/ NULL /*~ ) ~*/
 );
 
+-- :name set-workflow-state! :!
+UPDATE workflow
+SET (enabled, archived) = (:enabled, :archived)
+WHERE id = :id
+
 -- :name create-workflow-license! :insert
 INSERT INTO workflow_licenses
 (wfid, licid, round)

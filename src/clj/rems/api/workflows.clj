@@ -3,6 +3,7 @@
             [clojure.test :refer [deftest is]]
             [compojure.api.sweet :refer :all]
             [rems.api.applications :refer [User get-users]]
+            [rems.api.schema :refer [SuccessResponse UpdateStateCommand]]
             [rems.api.util]
             [rems.db.core :as db]
             [rems.db.workflow :as workflow]
@@ -122,6 +123,15 @@
       :body [command CreateWorkflowCommand]
       :return CreateWorkflowResponse
       (ok (workflow/create-workflow! (assoc command :user-id (getx-user-id)))))
+
+    (PUT "/update" []
+      :summary "Update workflow"
+      :roles #{:owner}
+      :body [command UpdateStateCommand]
+      :return SuccessResponse
+      (do
+        (db/set-workflow-state! command)
+        (ok {:success true})))
 
     (GET "/actors" []
       :summary "List of available actors"
