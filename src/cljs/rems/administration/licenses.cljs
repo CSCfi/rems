@@ -12,12 +12,14 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:dispatch [::fetch-licenses]}))
+   {:db (assoc db ::display-archived? false)
+    :dispatch [::fetch-licenses]}))
 
 (rf/reg-event-db
  ::fetch-licenses
  (fn [db]
-   (fetch "/api/licenses/" {:handler #(rf/dispatch [::fetch-licenses-result %])})
+   (fetch "/api/licenses/" {:url-params {:archived (::display-archived? db)}
+                            :handler #(rf/dispatch [::fetch-licenses-result %])})
    (assoc db ::loading? true)))
 
 (rf/reg-event-db
@@ -51,6 +53,14 @@
 
 (rf/reg-event-db ::set-filtering (fn [db [_ filtering]] (assoc db ::filtering filtering)))
 (rf/reg-sub ::filtering (fn [db _] (::filtering db)))
+
+(rf/reg-event-fx
+ ::set-display-archived?
+ (fn [{:keys [db]} [_ display-archived?]]
+   {:db (assoc db ::display-archived? display-archived?)
+    :dispatch [::fetch-licenses]}))
+
+(rf/reg-sub ::display-archived? (fn [db _] (::display-archived? db)))
 
 (defn- to-create-licenses []
   [:a.btn.btn-primary
@@ -98,6 +108,9 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-licenses]
+           [status-flags/display-archived-toggle
+            @(rf/subscribe [::display-archived?])
+            #(rf/dispatch [::set-display-archived? %])]
            [licenses-list
             @(rf/subscribe [::licenses])
             (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))

@@ -87,7 +87,7 @@
             (authenticate "42" "owner")
             handler
             assert-response-is-ok)
-        (let [workflows (-> (request :get "/api/workflows")
+        (let [workflows (-> (request :get "/api/workflows" {:archived true})
                             (authenticate "42" "owner")
                             handler
                             assert-response-is-ok
