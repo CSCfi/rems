@@ -19,15 +19,6 @@
       (throw (ex-info (str "Assert failed: " ~message "\n" (pr-str '~x))
                       (merge ~message {:expression '~x}))))))
 
-
-(defmacro try-catch-ex
-  "Wraps the code in `try` and `catch` and automatically unwraps the possible exception `ex-data` into regular result."
-  [& body]
-  `(try
-     ~@body
-     (catch RuntimeException e#
-       (ex-data e#))))
-
 (defn- fail-command
   ([application cmd]
    (fail-command application cmd nil))
@@ -452,56 +443,64 @@
                                     :workflow.dynamic/handlers #{"assistant"}}])
         injections {:valid-user? #{"somebody" "applicant"}
                     :secure-token (constantly "very-secure")}]
-    (testing "invite two members by applicant"
-      (is (= [{:name "Member Applicant 1" :email "member1@applicants.com"} {:name "Member Applicant 2" :email "member2@applicants.com"}]
-             (:invited-members
-              (apply-commands application
-                              [{:type :application.command/invite-member :actor "applicant" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
-                               {:type :application.command/invite-member :actor "applicant" :member {:name "Member Applicant 2" :email "member2@applicants.com"}}]
-                              injections)))))
-    (is (= "very-secure"
-           (:invitation/token
-            (:result
-             (handle-command {:application-id 123 :time test-time
-                              :type :application.command/invite-member :actor "applicant"
-                              :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
-                             application
-                             injections))))
-        "should generate secure token")
-    (testing "invite two members by handler"
+    (testing "applicant can invite members"
+      (is (= [{:event/type :application.event/member-invited
+               :event/time test-time
+               :event/actor "applicant"
+               :application/id 123
+               :application/member {:name "Member Applicant 1"
+                                    :email "member1@applicants.com"}
+               :invitation/token "very-secure"}]
+             (ok-command application
+                         {:type :application.command/invite-member
+                          :actor "applicant"
+                          :member {:name "Member Applicant 1"
+                                   :email "member1@applicants.com"}}
+                         injections))))
+    (testing "handler can invite members"
       (let [application (apply-events application [{:event/type :application.event/submitted
                                                     :event/actor "applicant"
                                                     :application/id 123}])]
-        (is (= [{:name "Member Applicant 1" :email "member1@applicants.com"} {:name "Member Applicant 2" :email "member2@applicants.com"}]
-               (:invited-members
-                (apply-commands application
-                                [{:type :application.command/invite-member :actor "assistant" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
-                                 {:type :application.command/invite-member :actor "assistant" :member {:name "Member Applicant 2" :email "member2@applicants.com"}}]
-                                injections))))))
-    (testing "only applicant or handler can invite members"
+        (is (= [{:event/type :application.event/member-invited
+                 :event/time test-time
+                 :event/actor "assistant"
+                 :application/id 123
+                 :application/member {:name "Member Applicant 1"
+                                      :email "member1@applicants.com"}
+                 :invitation/token "very-secure"}]
+               (ok-command application
+                           {:type :application.command/invite-member
+                            :actor "assistant"
+                            :member {:name "Member Applicant 1"
+                                     :email "member1@applicants.com"}}
+                           injections)))))
+    (testing "other users cannot invite members"
       (is (= {:errors [{:type :forbidden}]}
-             (handle-command {:application-id 123 :time test-time
-                              :type :application.command/invite-member :actor "member1"
-                              :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
-                             application
-                             injections))))
+             (fail-command application
+                           {:type :application.command/invite-member
+                            :actor "member1"
+                            :member {:name "Member Applicant 1"
+                                     :email "member1@applicants.com"}}
+                           injections))))
     (let [submitted (apply-events application
                                   [{:event/type :application.event/submitted
                                     :event/actor "applicant"
                                     :application/id 123}])]
       (testing "applicant can't invite members to submitted application"
         (is (= {:errors [{:type :forbidden}]}
-               (handle-command {:application-id 123 :time test-time
-                                :type :application.command/invite-member :actor "applicant"
-                                :member {:name "Member Applicant 1" :email "member1@applicants.com"}}
-                               submitted
-                               injections))))
+               (fail-command submitted
+                             {:type :application.command/invite-member
+                              :actor "applicant"
+                              :member {:name "Member Applicant 1"
+                                       :email "member1@applicants.com"}}
+                             injections))))
       (testing "handler can invite members to submitted application"
-        (is (= [{:name "Member Applicant 1" :email "member1@applicants.com"}]
-               (:invited-members
-                (apply-commands submitted
-                                [{:type :application.command/invite-member :actor "assistant" :member {:name "Member Applicant 1" :email "member1@applicants.com"}}]
-                                injections))))))))
+        (is (ok-command submitted
+                        {:type :application.command/invite-member
+                         :actor "assistant"
+                         :member {:name "Member Applicant 1"
+                                  :email "member1@applicants.com"}}
+                        injections))))))
 
 (deftest test-accept-invitation
   (let [application (apply-events nil
@@ -516,16 +515,6 @@
                                     :application/member {:name "Some Body" :email "somebody@applicants.com"}
                                     :invitation/token "very-secure"}])
         injections {:valid-user? #{"somebody" "somebody2" "applicant"}}]
-    (testing "invitation token is available before use"
-      (is (= ["very-secure"]
-             (keys (:invitation-tokens application)))))
-
-    (testing "invitation token is not available after use"
-      (is (empty?
-           (keys (:invitation-tokens
-                  (apply-commands application
-                                  [{:type :application.command/accept-invitation :actor "somebody" :token "very-secure"}]
-                                  injections))))))
 
     (testing "invited member can join draft"
       (is (= [{:event/type :application.event/member-joined
@@ -539,34 +528,40 @@
                           :token "very-secure"}
                          injections))))
 
-    (let [application (apply-events application
-                                    [{:event/type :application.event/member-added
-                                      :event/actor "applicant"
-                                      :application/id 123
-                                      :application/member {:userid "somebody"}}])]
-      (testing "invited member can't join if they are already a member"
+    (testing "invited member can't join if they are already a member"
+      (let [application (apply-events application
+                                      [{:event/type :application.event/member-added
+                                        :event/actor "applicant"
+                                        :application/id 123
+                                        :application/member {:userid "somebody"}}])]
         (is (= {:errors [{:type :already-member :application-id (:id application)}]}
-               (:result (try-catch-ex
-                         (apply-command application
-                                        {:type :application.command/accept-invitation :actor "somebody" :token "very-secure"}
-                                        injections)))))))
+               (fail-command application
+                             {:type :application.command/accept-invitation
+                              :actor "somebody"
+                              :token "very-secure"}
+                             injections)))))
 
     (testing "invalid token can't be used to join"
       (is (= {:errors [{:type :t.actions.errors/invalid-token :token "wrong-token"}]}
-             (:result
-              (try-catch-ex
-               (apply-commands application
-                               [{:type :application.command/accept-invitation :actor "somebody" :token "wrong-token"}]
-                               injections))))))
+             (fail-command application
+                           {:type :application.command/accept-invitation
+                            :actor "somebody"
+                            :token "wrong-token"}
+                           injections))))
 
     (testing "token can't be used twice"
-      (is (= {:errors [{:type :t.actions.errors/invalid-token :token "very-secure"}]}
-             (:result
-              (try-catch-ex
-               (apply-commands application
-                               [{:type :application.command/accept-invitation :actor "somebody" :token "very-secure"}
-                                {:type :application.command/accept-invitation :actor "somebody2" :token "very-secure"}]
-                               injections))))))
+      (let [application (apply-events application
+                                      [{:event/type :application.event/member-joined
+                                        :event/time test-time
+                                        :event/actor "somebody"
+                                        :application/id 123
+                                        :invitation/token "very-secure"}])]
+        (is (= {:errors [{:type :t.actions.errors/invalid-token :token "very-secure"}]}
+               (fail-command application
+                             {:type :application.command/accept-invitation
+                              :actor "somebody2"
+                              :token "very-secure"}
+                             injections)))))
 
     (let [submitted (apply-events application
                                   [{:event/type :application.event/submitted
@@ -583,17 +578,18 @@
                             :actor "somebody"
                             :token "very-secure"}
                            injections))))
+
       (let [closed (apply-events submitted
                                  [{:event/type :application.event/closed
                                    :event/actor "applicant"
                                    :application/id 123}])]
         (testing "invited member can't join a closed application"
           (is (= {:errors [{:type :forbidden}]}
-                 (:result
-                  (try-catch-ex
-                   (apply-commands closed
-                                   [{:type :application.command/accept-invitation :actor "somebody" :token "very-secure"}]
-                                   injections))))))))))
+                 (fail-command closed
+                               {:type :application.command/accept-invitation
+                                :actor "somebody"
+                                :token "very-secure"}
+                               injections))))))))
 
 (deftest test-remove-member
   (let [application (apply-events nil
