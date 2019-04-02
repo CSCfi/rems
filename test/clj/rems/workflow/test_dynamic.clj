@@ -4,13 +4,17 @@
             [rems.application.events :as events]
             [rems.application.model :as model]
             [rems.util :refer [getx]]
-            [rems.workflow.dynamic :refer :all])
+            [rems.workflow.dynamic :refer [handle-command] :as dynamic])
   (:import [java.util UUID]
            [org.joda.time DateTime]))
 
 (def ^:private test-time (DateTime. 1000))
 (def ^:private command-defaults {:application-id 123
                                  :time test-time})
+
+(defn apply-events [application events]
+  (events/validate-events events)
+  (dynamic/apply-events application events))
 
 (defmacro assert-ex
   "Like assert but throw the result with ex-info and not as string. "
@@ -63,10 +67,15 @@
 (deftest test-save-draft
   (let [application (apply-events nil
                                   [{:event/type :application.event/created
+                                    :event/time test-time
                                     :event/actor "applicant"
                                     :application/id 123
+                                    :application/resources []
+                                    :application/licenses []
                                     :form/id 1
+                                    :workflow/id 1
                                     :workflow/type :workflow/dynamic
+                                    :application/external-id nil
                                     :workflow.dynamic/handlers #{"assistant"}}])]
     (testing "saves a draft"
       (is (= [{:event/type :application.event/draft-saved
@@ -96,7 +105,7 @@
       (let [application (apply-events application
                                       [{:event/type :application.event/submitted
                                         :event/time test-time
-                                        :actor "applicant"
+                                        :event/actor "applicant"
                                         :application/id 123}])]
         (is (= {:errors [{:type :forbidden}]}
                (fail-command application
@@ -108,12 +117,13 @@
       (let [application (apply-events application
                                       [{:event/type :application.event/submitted
                                         :event/time test-time
-                                        :actor "applicant"
+                                        :event/actor "applicant"
                                         :application/id 123}
                                        {:event/type :application.event/returned
                                         :event/time test-time
-                                        :actor "assistant"
-                                        :application/id 123}])]
+                                        :event/actor "assistant"
+                                        :application/id 123
+                                        :application/comment ""}])]
         (is (= [{:event/type :application.event/draft-saved
                  :event/time test-time
                  :event/actor "applicant"
@@ -141,6 +151,7 @@
                        :form/id 40
                        :workflow/id 50
                        :workflow/type :workflow/dynamic
+                       :application/external-id nil
                        :workflow.dynamic/handlers #{"handler"}}
         draft-saved-event {:event/type :application.event/draft-saved
                            :event/time test-time
@@ -192,10 +203,15 @@
 (deftest test-approve-or-reject
   (let [application (apply-events nil
                                   [{:event/type :application.event/created
+                                    :event/time test-time
                                     :event/actor "applicant"
                                     :application/id 123
+                                    :application/resources []
+                                    :application/licenses []
                                     :form/id 1
+                                    :workflow/id 1
                                     :workflow/type :workflow/dynamic
+                                    :application/external-id nil
                                     :workflow.dynamic/handlers #{"assistant"}}
                                    {:event/type :application.event/submitted
                                     :event/time test-time
@@ -225,12 +241,18 @@
 (deftest test-return
   (let [application (apply-events nil
                                   [{:event/type :application.event/created
+                                    :event/time test-time
                                     :event/actor "applicant"
                                     :application/id 123
+                                    :application/resources []
+                                    :application/licenses []
                                     :form/id 1
+                                    :workflow/id 1
                                     :workflow/type :workflow/dynamic
+                                    :application/external-id nil
                                     :workflow.dynamic/handlers #{"assistant"}}
                                    {:event/type :application.event/submitted
+                                    :event/time test-time
                                     :event/actor "applicant"
                                     :application/id 123}])]
     (is (= [{:event/type :application.event/returned
@@ -246,17 +268,25 @@
 (deftest test-close
   (let [application (apply-events nil
                                   [{:event/type :application.event/created
+                                    :event/time test-time
                                     :event/actor "applicant"
                                     :application/id 123
+                                    :application/resources []
+                                    :application/licenses []
                                     :form/id 1
+                                    :workflow/id 1
                                     :workflow/type :workflow/dynamic
+                                    :application/external-id nil
                                     :workflow.dynamic/handlers #{"assistant"}}
                                    {:event/type :application.event/submitted
+                                    :event/time test-time
                                     :event/actor "applicant"
                                     :application/id 123}
                                    {:event/type :application.event/approved
+                                    :event/time test-time
                                     :event/actor "assistant"
-                                    :application/id 123}])]
+                                    :application/id 123
+                                    :application/comment ""}])]
     (is (= [{:event/type :application.event/closed
              :event/time test-time
              :event/actor "assistant"
@@ -270,11 +300,18 @@
 (deftest test-decision
   (let [application (apply-events nil
                                   [{:event/type :application.event/created
+                                    :event/time test-time
                                     :event/actor "applicant"
                                     :application/id 123
+                                    :application/resources []
+                                    :application/licenses []
+                                    :form/id 1
+                                    :workflow/id 1
                                     :workflow/type :workflow/dynamic
+                                    :application/external-id nil
                                     :workflow.dynamic/handlers #{"assistant"}}
                                    {:event/type :application.event/submitted
+                                    :event/time test-time
                                     :event/actor "applicant"
                                     :application/id 123}])
         injections {:valid-user? #{"deity"}}]
@@ -384,14 +421,22 @@
 (deftest test-add-member
   (let [application (apply-events nil
                                   [{:event/type :application.event/created
+                                    :event/time test-time
                                     :event/actor "applicant"
                                     :application/id 123
+                                    :application/resources []
+                                    :application/licenses []
+                                    :form/id 1
+                                    :workflow/id 1
                                     :workflow/type :workflow/dynamic
+                                    :application/external-id nil
                                     :workflow.dynamic/handlers #{"assistant"}}
                                    {:event/type :application.event/submitted
+                                    :event/time test-time
                                     :event/actor "applicant"
                                     :application/id 123}
                                    {:event/type :application.event/member-added
+                                    :event/time test-time
                                     :event/actor "applicant"
                                     :application/id 123
                                     :application/member {:userid "somebody"}}])
@@ -437,9 +482,15 @@
 (deftest test-invite-member
   (let [application (apply-events nil
                                   [{:event/type :application.event/created
+                                    :event/time test-time
                                     :event/actor "applicant"
                                     :application/id 123
+                                    :application/resources []
+                                    :application/licenses []
+                                    :form/id 1
+                                    :workflow/id 1
                                     :workflow/type :workflow/dynamic
+                                    :application/external-id nil
                                     :workflow.dynamic/handlers #{"assistant"}}])
         injections {:valid-user? #{"somebody" "applicant"}
                     :secure-token (constantly "very-secure")}]
@@ -459,6 +510,7 @@
                          injections))))
     (testing "handler can invite members"
       (let [application (apply-events application [{:event/type :application.event/submitted
+                                                    :event/time test-time
                                                     :event/actor "applicant"
                                                     :application/id 123}])]
         (is (= [{:event/type :application.event/member-invited
@@ -484,6 +536,7 @@
                            injections))))
     (let [submitted (apply-events application
                                   [{:event/type :application.event/submitted
+                                    :event/time test-time
                                     :event/actor "applicant"
                                     :application/id 123}])]
       (testing "applicant can't invite members to submitted application"
@@ -505,12 +558,19 @@
 (deftest test-accept-invitation
   (let [application (apply-events nil
                                   [{:event/type :application.event/created
+                                    :event/time test-time
                                     :event/actor "applicant"
                                     :application/id 123
+                                    :application/resources []
+                                    :application/licenses []
+                                    :form/id 1
+                                    :workflow/id 1
                                     :workflow/type :workflow/dynamic
+                                    :application/external-id nil
                                     :workflow.dynamic/handlers #{"assistant"}}
                                    {:event/type :application.event/member-invited
-                                    :event/:actor "applicant"
+                                    :event/time test-time
+                                    :event/actor "applicant"
                                     :application/id 123
                                     :application/member {:name "Some Body" :email "somebody@applicants.com"}
                                     :invitation/token "very-secure"}])
@@ -531,6 +591,7 @@
     (testing "invited member can't join if they are already a member"
       (let [application (apply-events application
                                       [{:event/type :application.event/member-added
+                                        :event/time test-time
                                         :event/actor "applicant"
                                         :application/id 123
                                         :application/member {:userid "somebody"}}])]
@@ -565,6 +626,7 @@
 
     (let [submitted (apply-events application
                                   [{:event/type :application.event/submitted
+                                    :event/time test-time
                                     :event/actor "applicant"
                                     :application/id 123}])]
       (testing "invited member can join submitted application"
@@ -581,8 +643,10 @@
 
       (let [closed (apply-events submitted
                                  [{:event/type :application.event/closed
+                                   :event/time test-time
                                    :event/actor "applicant"
-                                   :application/id 123}])]
+                                   :application/id 123
+                                   :application/comment ""}])]
         (testing "invited member can't join a closed application"
           (is (= {:errors [{:type :forbidden}]}
                  (fail-command closed
@@ -594,14 +658,22 @@
 (deftest test-remove-member
   (let [application (apply-events nil
                                   [{:event/type :application.event/created
+                                    :event/time test-time
                                     :event/actor "applicant"
                                     :application/id 123
+                                    :application/resources []
+                                    :application/licenses []
+                                    :form/id 1
+                                    :workflow/id 1
                                     :workflow/type :workflow/dynamic
+                                    :application/external-id nil
                                     :workflow.dynamic/handlers #{"assistant"}}
                                    {:event/type :application.event/submitted
+                                    :event/time test-time
                                     :event/actor "applicant"
                                     :application/id 123}
                                    {:event/type :application.event/member-added
+                                    :event/time test-time
                                     :event/actor "assistant"
                                     :application/id 123
                                     :application/member {:userid "somebody"}}])
@@ -663,16 +735,24 @@
 (deftest test-uninvite-member
   (let [application (apply-events nil
                                   [{:event/type :application.event/created
+                                    :event/time test-time
                                     :event/actor "applicant"
                                     :application/id 123
+                                    :application/resources []
+                                    :application/licenses []
+                                    :form/id 1
+                                    :workflow/id 1
                                     :workflow/type :workflow/dynamic
+                                    :application/external-id nil
                                     :workflow.dynamic/handlers #{"assistant"}}
                                    {:event/type :application.event/member-invited
+                                    :event/time test-time
                                     :event/actor "applicant"
                                     :application/id 123
                                     :application/member {:name "Some Body" :email "some@body.com"}
                                     :invitation/token "123456"}
                                    {:event/type :application.event/submitted
+                                    :event/time test-time
                                     :event/actor "applicant"
                                     :application/id 123}])
         injections {}]
@@ -701,11 +781,18 @@
 (deftest test-comment
   (let [application (apply-events nil
                                   [{:event/type :application.event/created
+                                    :event/time test-time
                                     :event/actor "applicant"
                                     :application/id 123
+                                    :application/resources []
+                                    :application/licenses []
+                                    :form/id 1
+                                    :workflow/id 1
                                     :workflow/type :workflow/dynamic
+                                    :application/external-id nil
                                     :workflow.dynamic/handlers #{"assistant"}}
                                    {:event/type :application.event/submitted
+                                    :event/time test-time
                                     :event/actor "applicant"
                                     :application/id 123}])
         injections {:valid-user? #{"commenter" "commenter2" "commenter3"}}]
