@@ -52,6 +52,7 @@
    (status-modal/common-pending-handler! (text :t.administration/save))
    (post! "/api/resources/create"
           {:params request
+           ;; TODO: render the catalogue items that use this resource in the error handler
            :handler (partial status-modal/common-success-handler! #(dispatch! (str "#/administration/resources/" (:id %))))
            :error-handler status-modal/common-error-handler!})
    {}))

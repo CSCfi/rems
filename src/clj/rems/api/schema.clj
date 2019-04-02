@@ -106,6 +106,11 @@
    :start s/Str
    :mail s/Str})
 
+(s/defschema UpdateStateCommand
+  {:id s/Num
+   :enabled s/Bool
+   :archived s/Bool})
+
 (s/defschema SuccessResponse
   {:success s/Bool
    (s/optional-key :errors) [s/Any]})

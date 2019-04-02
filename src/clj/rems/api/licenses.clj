@@ -65,6 +65,13 @@
       :return CreateLicenseResponse
       (ok (licenses/create-license! command (getx-user-id))))
 
+    (PUT "/update" []
+      :summary "Update workflow"
+      :roles #{:owner}
+      :body [command UpdateStateCommand]
+      :return SuccessResponse
+      (ok (licenses/update-license! command)))
+
     (POST "/add_attachment" []
       :summary "Add an attachment file that will be used in a license"
       :roles #{:owner}

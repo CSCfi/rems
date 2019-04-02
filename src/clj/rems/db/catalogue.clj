@@ -46,5 +46,6 @@
     return))
 
 (defn update-catalogue-item! [command]
+  ;; TODO disallow unarchiving catalogue item if its resource, form or licenses are archived
   (db/set-catalogue-item-state! (select-keys command [:id :enabled :archived]))
   {:success true})

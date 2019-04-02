@@ -57,3 +57,13 @@
       (create-form-item! user-id form-id index item))
     {:success (not (nil? form-id))
      :id form-id}))
+
+(defn update-form! [command]
+  (let [catalogue-items (db/get-catalogue-items {:form (:id command) :archived false})]
+    (if (and (:archived command) (seq catalogue-items))
+      {:success false
+       :errors [{:type :t.administration.errors/form-in-use :catalogue-items (mapv :id catalogue-items)}]}
+      (do
+        (db/set-form-state! command)
+        (db/set-form-template-state! command)
+        {:success true}))))

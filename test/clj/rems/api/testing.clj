@@ -6,7 +6,8 @@
             [rems.config :refer [env]]
             [rems.db.core :as db]
             [rems.db.test-data :as test-data]
-            [rems.handler :refer :all]))
+            [rems.handler :refer :all]
+            [ring.mock.request :refer :all]))
 
 (defn api-fixture [f]
   (mount/start
@@ -65,3 +66,10 @@
 (defn read-ok-body [response]
   (assert-response-is-ok response)
   (read-body response))
+
+(defn api-call [method api body api-key user-id]
+  (-> (request method api)
+      (authenticate api-key user-id)
+      (json-body body)
+      handler
+      read-ok-body))

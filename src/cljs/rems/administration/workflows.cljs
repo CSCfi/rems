@@ -1,22 +1,24 @@
 (ns rems.administration.workflows
   (:require [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.status-flags :as status-flags]
             [rems.atoms :refer [external-link readonly-checkbox]]
             [rems.spinner :as spinner]
+            [rems.status-modal :as status-modal]
             [rems.table :as table]
             [rems.text :refer [localize-time text]]
-            [rems.util :refer [dispatch! fetch]]))
+            [rems.util :refer [dispatch! put! fetch]]))
 
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (assoc db ::loading? true)
-    ::fetch-workflows nil}))
+   {:dispatch [::fetch-workflows]}))
 
-(defn- fetch-workflows []
-  (fetch "/api/workflows/" {:handler #(rf/dispatch [::fetch-workflows-result %])}))
-
-(rf/reg-fx ::fetch-workflows (fn [_] (fetch-workflows)))
+(rf/reg-event-db
+ ::fetch-workflows
+ (fn [db]
+   (fetch "/api/workflows/" {:handler #(rf/dispatch [::fetch-workflows-result %])})
+   (assoc db ::loading? true)))
 
 (rf/reg-event-db
  ::fetch-workflows-result
@@ -27,6 +29,16 @@
 
 (rf/reg-sub ::workflows (fn [db _] (::workflows db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
+
+(rf/reg-event-fx
+ ::update-workflow
+ (fn [_ [_ item]]
+   (put! "/api/workflows/update"
+         {:params (select-keys item [:id :enabled :archived])
+          ;; TODO: render the catalogue items that use this workflow in the error handler
+          :handler (partial status-modal/common-success-handler! #(rf/dispatch [::fetch-workflows]))
+          :error-handler status-modal/common-error-handler!})
+   {}))
 
 (rf/reg-event-db ::set-sorting (fn [db [_ sorting]] (assoc db ::sorting sorting)))
 
@@ -61,7 +73,10 @@
          :value (comp localize-time :end)}
    :active {:header #(text :t.administration/active)
             :value (comp readonly-checkbox :active)}
-   :commands {:value (fn [workflow] [to-view-workflow (:id workflow)])
+   :commands {:values (fn [workflow]
+                        [[to-view-workflow (:id workflow)]
+                         [status-flags/enabled-toggle workflow #(rf/dispatch [::update-workflow %])]
+                         [status-flags/archived-toggle workflow #(rf/dispatch [::update-workflow %])]])
               :sortable? false
               :filterable? false}})
 

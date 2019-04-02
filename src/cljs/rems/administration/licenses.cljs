@@ -1,22 +1,24 @@
 (ns rems.administration.licenses
   (:require [re-frame.core :as rf]
             [rems.administration.administration :refer [administration-navigator-container]]
+            [rems.administration.status-flags :as status-flags]
             [rems.atoms :refer [external-link readonly-checkbox]]
             [rems.spinner :as spinner]
+            [rems.status-modal :as status-modal]
             [rems.table :as table]
             [rems.text :refer [localize-time text]]
-            [rems.util :refer [dispatch! fetch]]))
+            [rems.util :refer [dispatch! put! fetch]]))
 
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:db (assoc db ::loading? true)
-    ::fetch-licenses nil}))
+   {:dispatch [::fetch-licenses]}))
 
-(defn- fetch-licenses []
-  (fetch "/api/licenses/" {:handler #(rf/dispatch [::fetch-licenses-result %])}))
-
-(rf/reg-fx ::fetch-licenses (fn [_] (fetch-licenses)))
+(rf/reg-event-db
+ ::fetch-licenses
+ (fn [db]
+   (fetch "/api/licenses/" {:handler #(rf/dispatch [::fetch-licenses-result %])})
+   (assoc db ::loading? true)))
 
 (rf/reg-event-db
  ::fetch-licenses-result
@@ -29,6 +31,16 @@
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
 (rf/reg-event-db ::set-sorting (fn [db [_ sorting]] (assoc db ::sorting sorting)))
+
+(rf/reg-event-fx
+ ::update-license
+ (fn [_ [_ item]]
+   (put! "/api/licenses/update"
+         {:params (select-keys item [:id :enabled :archived])
+          ;; TODO: render the workflows & resources that use this license in the error handler
+          :handler (partial status-modal/common-success-handler! #(rf/dispatch [::fetch-licenses]))
+          :error-handler status-modal/common-error-handler!})
+   {}))
 
 (rf/reg-sub
  ::sorting
@@ -61,7 +73,10 @@
          :value (comp localize-time :end)}
    :active {:header #(text :t.administration/active)
             :value (comp readonly-checkbox :active)}
-   :commands {:value (fn [license] [to-view-license (:id license)])
+   :commands {:values (fn [license]
+                        [[to-view-license (:id license)]
+                         [status-flags/enabled-toggle license #(rf/dispatch [::update-license %])]
+                         [status-flags/archived-toggle license #(rf/dispatch [::update-license %])]])
               :sortable? false
               :filterable? false}})
 

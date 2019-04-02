@@ -1,6 +1,7 @@
 (ns ^:integration rems.api.test-forms
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
+            [rems.db.core :as db]
             [rems.db.form :as form]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all])
@@ -75,15 +76,72 @@
             (is (= 1 (count forms))
                 "only one form got created")
 
-            (testing "form template matches command"
+            (testing "v2 result matches input"
               (is (= (select-keys command [:title :organization])
                      (select-keys form-template [:title :organization])))
               (is (= (:items command)
                      (:fields form-template))))
-            (is (= (select-keys command [:title :organization])
-                   (select-keys form [:title :organization])))
-            (is (= (:items command)
-                   (:fields (form/get-form-template (:id form)))))))))))
+            (testing "v1 result matches input"
+              (is (= (select-keys command [:title :organization])
+                     (select-keys form [:title :organization])))
+              (is (= (:items command)
+                     (:fields (form/get-form-template (:id form))))))))))))
+
+(deftest form-update-test
+  (let [api-key "42"
+        user-id "owner"
+        form-id (-> (request :post "/api/forms/create")
+                    (authenticate api-key user-id)
+                    (json-body {:organization "abc" :title "form update test"
+                                :items []})
+                    handler
+                    read-ok-body
+                    :id)]
+    (is (not (nil? form-id)))
+    (testing "update"
+      (is (:success (-> (request :put "/api/forms/update")
+                        (authenticate api-key user-id)
+                        (json-body {:id form-id
+                                    :enabled false
+                                    :archived true})
+                        handler
+                        read-ok-body))))
+    (testing "fetch"
+      (let [form (-> (request :get (str "/api/forms/" form-id))
+                     (authenticate api-key user-id)
+                     handler
+                     read-ok-body)]
+        (is (false? (:enabled form)))
+        (is (true? (:archived form)))))
+    (testing "fetch v2"
+      (let [form (-> (request :get (str "/api/forms/v2/" form-id))
+                     (authenticate api-key user-id)
+                     handler
+                     read-ok-body)]
+        (is (false? (:enabled form)))
+        (is (true? (:archived form)))))
+    (testing "update again"
+      (is (:success (-> (request :put "/api/forms/update")
+                        (authenticate api-key user-id)
+                        (json-body {:id form-id
+                                    :enabled true
+                                    :archived false})
+                        handler
+                        read-ok-body))))
+    (testing "fetch again"
+      (let [form (-> (request :get (str "/api/forms/" form-id))
+                     (authenticate api-key user-id)
+                     handler
+                     read-ok-body)]
+        (is (true? (:enabled form)))
+        (is (false? (:archived form)))))
+    (testing "fetch v2 again"
+      (let [form (-> (request :get (str "/api/forms/v2/" form-id))
+                     (authenticate api-key user-id)
+                     handler
+                     read-ok-body)]
+        (is (true? (:enabled form)))
+        (is (false? (:archived form)))))))
 
 (deftest option-form-item-test
   (let [api-key "42"

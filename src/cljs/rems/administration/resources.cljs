@@ -39,7 +39,7 @@
  (fn [_ [_ item]]
    (put! "/api/resources/update"
          {:params (select-keys item [:id :enabled :archived])
-          :handler #(rf/dispatch [::fetch-resources])
+          :handler (partial status-modal/common-success-handler! #(rf/dispatch [::fetch-resources]))
           :error-handler status-modal/common-error-handler!})
    {}))
 

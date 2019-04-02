@@ -2,7 +2,10 @@
 -- :doc
 -- - Get catalogue items
 -- - :ids vector of item ids
--- - :resource resource id to fetch items for
+-- - :resource resource external id to fetch items for
+-- - :resource-id resource internal id to fetch items for
+-- - :workflow workflow id to fetch items for
+-- - :form form id to fetch items for
 -- - :archived true if archived items should be included
 SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.start, ci.endt as "end", ci.enabled, ci.archived
 , res.id AS "resource-id"
@@ -24,6 +27,15 @@ WHERE 1=1
 /*~ (when (:resource params) */
   AND res.resid = :resource
 /*~ ) ~*/
+/*~ (when (:resource-id params) */
+  AND ci.resid = :resource-id
+/*~ ) ~*/
+/*~ (when (:form params) */
+  AND ci.formid = :form
+/*~ ) ~*/
+/*~ (when (:workflow params) */
+  AND ci.wfid = :workflow
+/*~ ) ~*/
 /*~ (when (not (:archived params)) */
   AND ci.archived = false
 /*~ ) ~*/
@@ -42,6 +54,7 @@ LEFT OUTER JOIN application_form form ON (ci.formid = form.id)
 WHERE ci.id = :id;
 
 -- :name set-catalogue-item-state! :insert
+-- TODO set modifieruserid?
 UPDATE catalogue_item
 SET
 /*~ (when (boolean? (:enabled params)) */
@@ -99,6 +112,7 @@ VALUES (:resid, :organization, :owneruserid, :modifieruserid,
 );
 
 -- :name set-resource-state! :insert
+-- TODO set modifieruserid?
 UPDATE resource
 SET
 /*~ (when (boolean? (:enabled params)) */
@@ -223,6 +237,13 @@ VALUES
  :fields::jsonb
 );
 
+-- :name set-form-template-state! :!
+-- TODO set modifieruserid?
+UPDATE form_template
+SET (enabled, archived) = (:enabled, :archived)
+WHERE
+id = :id;
+
 -- :name create-form! :insert
 INSERT INTO application_form
 (organization, title, modifierUserId, ownerUserId, visibility, endt)
@@ -234,6 +255,13 @@ VALUES
  'public',
  /*~ (if (:endt params) */ :endt /*~*/ NULL /*~ ) ~*/
 );
+
+-- :name set-form-state! :!
+-- TODO set modifieruserid?
+UPDATE application_form
+SET (enabled, archived) = (:enabled, :archived)
+WHERE
+id = :id;
 
 -- :name create-form-item! :insert
 INSERT INTO application_form_item
@@ -414,6 +442,11 @@ VALUES
 /*~ (if (:endt params) */ :endt /*~*/ NULL /*~ ) ~*/
 );
 
+-- :name set-license-state! :!
+UPDATE license
+SET (enabled, archived) = (:enabled, :archived)
+WHERE id = :id;
+
 -- :name create-license-attachment! :insert
 INSERT INTO license_attachment
 (modifierUserId, filename, type, data)
@@ -447,6 +480,11 @@ VALUES
  /*~ (if (:endt params) */ :endt /*~*/ NULL /*~ ) ~*/,
  /*~ (if (:workflow params) */ :workflow::jsonb /*~*/ NULL /*~ ) ~*/
 );
+
+-- :name set-workflow-state! :!
+UPDATE workflow
+SET (enabled, archived) = (:enabled, :archived)
+WHERE id = :id
 
 -- :name create-workflow-license! :insert
 INSERT INTO workflow_licenses
@@ -597,6 +635,12 @@ WHERE lic.id = :id;
 -- :name get-license-localizations :? :*
 SELECT licid, langcode, title, textcontent, attachmentid
 FROM license_localization;
+
+-- :name get-resources-for-license :? :*
+SELECT resid FROM resource_licenses WHERE licid = :id;
+
+-- :name get-workflows-for-license :? :*
+SELECT wfid FROM workflow_licenses WHERE licid = :id;
 
 -- :name get-roles :? :*
 SELECT role

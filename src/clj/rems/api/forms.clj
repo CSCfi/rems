@@ -1,5 +1,6 @@
 (ns rems.api.forms
   (:require [compojure.api.sweet :refer :all]
+            [rems.api.schema :refer [SuccessResponse UpdateStateCommand]]
             [rems.api.util]
             [rems.db.core :as db]
             [rems.db.form :as form]
@@ -91,4 +92,11 @@
       :roles #{:owner}
       :body [command CreateFormCommand]
       :return CreateFormResponse
-      (ok (form/create-form! (getx-user-id) command)))))
+      (ok (form/create-form! (getx-user-id) command)))
+
+    (PUT "/update" []
+      :summary "Update form"
+      :roles #{:owner}
+      :body [command UpdateStateCommand]
+      :return SuccessResponse
+      (ok (form/update-form! command)))))
