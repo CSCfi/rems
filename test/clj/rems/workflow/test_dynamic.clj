@@ -11,6 +11,17 @@
 (def ^:private test-time (DateTime. 1000))
 (def ^:private command-defaults {:application-id 123
                                  :time test-time})
+(def ^:private dummy-created-event {:event/type :application.event/created
+                                    :event/time test-time
+                                    :event/actor "applicant"
+                                    :application/id 123
+                                    :application/resources []
+                                    :application/licenses []
+                                    :form/id 1
+                                    :workflow/id 1
+                                    :workflow/type :workflow/dynamic
+                                    :application/external-id nil
+                                    :workflow.dynamic/handlers #{"assistant"}})
 
 (defn apply-events [application events]
   (events/validate-events events)
@@ -65,18 +76,7 @@
 ;;; Tests
 
 (deftest test-save-draft
-  (let [application (apply-events nil
-                                  [{:event/type :application.event/created
-                                    :event/time test-time
-                                    :event/actor "applicant"
-                                    :application/id 123
-                                    :application/resources []
-                                    :application/licenses []
-                                    :form/id 1
-                                    :workflow/id 1
-                                    :workflow/type :workflow/dynamic
-                                    :application/external-id nil
-                                    :workflow.dynamic/handlers #{"assistant"}}])]
+  (let [application (apply-events nil [dummy-created-event])]
     (testing "saves a draft"
       (is (= [{:event/type :application.event/draft-saved
                :event/time test-time
@@ -202,17 +202,7 @@
 
 (deftest test-approve-or-reject
   (let [application (apply-events nil
-                                  [{:event/type :application.event/created
-                                    :event/time test-time
-                                    :event/actor "applicant"
-                                    :application/id 123
-                                    :application/resources []
-                                    :application/licenses []
-                                    :form/id 1
-                                    :workflow/id 1
-                                    :workflow/type :workflow/dynamic
-                                    :application/external-id nil
-                                    :workflow.dynamic/handlers #{"assistant"}}
+                                  [dummy-created-event
                                    {:event/type :application.event/submitted
                                     :event/time test-time
                                     :event/actor "applicant"
@@ -240,17 +230,7 @@
 
 (deftest test-return
   (let [application (apply-events nil
-                                  [{:event/type :application.event/created
-                                    :event/time test-time
-                                    :event/actor "applicant"
-                                    :application/id 123
-                                    :application/resources []
-                                    :application/licenses []
-                                    :form/id 1
-                                    :workflow/id 1
-                                    :workflow/type :workflow/dynamic
-                                    :application/external-id nil
-                                    :workflow.dynamic/handlers #{"assistant"}}
+                                  [dummy-created-event
                                    {:event/type :application.event/submitted
                                     :event/time test-time
                                     :event/actor "applicant"
@@ -267,17 +247,7 @@
 
 (deftest test-close
   (let [application (apply-events nil
-                                  [{:event/type :application.event/created
-                                    :event/time test-time
-                                    :event/actor "applicant"
-                                    :application/id 123
-                                    :application/resources []
-                                    :application/licenses []
-                                    :form/id 1
-                                    :workflow/id 1
-                                    :workflow/type :workflow/dynamic
-                                    :application/external-id nil
-                                    :workflow.dynamic/handlers #{"assistant"}}
+                                  [dummy-created-event
                                    {:event/type :application.event/submitted
                                     :event/time test-time
                                     :event/actor "applicant"
@@ -299,17 +269,7 @@
 
 (deftest test-decision
   (let [application (apply-events nil
-                                  [{:event/type :application.event/created
-                                    :event/time test-time
-                                    :event/actor "applicant"
-                                    :application/id 123
-                                    :application/resources []
-                                    :application/licenses []
-                                    :form/id 1
-                                    :workflow/id 1
-                                    :workflow/type :workflow/dynamic
-                                    :application/external-id nil
-                                    :workflow.dynamic/handlers #{"assistant"}}
+                                  [dummy-created-event
                                    {:event/type :application.event/submitted
                                     :event/time test-time
                                     :event/actor "applicant"
@@ -420,17 +380,7 @@
 
 (deftest test-add-member
   (let [application (apply-events nil
-                                  [{:event/type :application.event/created
-                                    :event/time test-time
-                                    :event/actor "applicant"
-                                    :application/id 123
-                                    :application/resources []
-                                    :application/licenses []
-                                    :form/id 1
-                                    :workflow/id 1
-                                    :workflow/type :workflow/dynamic
-                                    :application/external-id nil
-                                    :workflow.dynamic/handlers #{"assistant"}}
+                                  [dummy-created-event
                                    {:event/type :application.event/submitted
                                     :event/time test-time
                                     :event/actor "applicant"
@@ -480,18 +430,7 @@
               (model/see-application? "member1"))))))
 
 (deftest test-invite-member
-  (let [application (apply-events nil
-                                  [{:event/type :application.event/created
-                                    :event/time test-time
-                                    :event/actor "applicant"
-                                    :application/id 123
-                                    :application/resources []
-                                    :application/licenses []
-                                    :form/id 1
-                                    :workflow/id 1
-                                    :workflow/type :workflow/dynamic
-                                    :application/external-id nil
-                                    :workflow.dynamic/handlers #{"assistant"}}])
+  (let [application (apply-events nil [dummy-created-event])
         injections {:valid-user? #{"somebody" "applicant"}
                     :secure-token (constantly "very-secure")}]
     (testing "applicant can invite members"
@@ -557,17 +496,7 @@
 
 (deftest test-accept-invitation
   (let [application (apply-events nil
-                                  [{:event/type :application.event/created
-                                    :event/time test-time
-                                    :event/actor "applicant"
-                                    :application/id 123
-                                    :application/resources []
-                                    :application/licenses []
-                                    :form/id 1
-                                    :workflow/id 1
-                                    :workflow/type :workflow/dynamic
-                                    :application/external-id nil
-                                    :workflow.dynamic/handlers #{"assistant"}}
+                                  [dummy-created-event
                                    {:event/type :application.event/member-invited
                                     :event/time test-time
                                     :event/actor "applicant"
@@ -657,17 +586,7 @@
 
 (deftest test-remove-member
   (let [application (apply-events nil
-                                  [{:event/type :application.event/created
-                                    :event/time test-time
-                                    :event/actor "applicant"
-                                    :application/id 123
-                                    :application/resources []
-                                    :application/licenses []
-                                    :form/id 1
-                                    :workflow/id 1
-                                    :workflow/type :workflow/dynamic
-                                    :application/external-id nil
-                                    :workflow.dynamic/handlers #{"assistant"}}
+                                  [dummy-created-event
                                    {:event/type :application.event/submitted
                                     :event/time test-time
                                     :event/actor "applicant"
@@ -734,17 +653,7 @@
 
 (deftest test-uninvite-member
   (let [application (apply-events nil
-                                  [{:event/type :application.event/created
-                                    :event/time test-time
-                                    :event/actor "applicant"
-                                    :application/id 123
-                                    :application/resources []
-                                    :application/licenses []
-                                    :form/id 1
-                                    :workflow/id 1
-                                    :workflow/type :workflow/dynamic
-                                    :application/external-id nil
-                                    :workflow.dynamic/handlers #{"assistant"}}
+                                  [dummy-created-event
                                    {:event/type :application.event/member-invited
                                     :event/time test-time
                                     :event/actor "applicant"
@@ -780,17 +689,7 @@
 
 (deftest test-comment
   (let [application (apply-events nil
-                                  [{:event/type :application.event/created
-                                    :event/time test-time
-                                    :event/actor "applicant"
-                                    :application/id 123
-                                    :application/resources []
-                                    :application/licenses []
-                                    :form/id 1
-                                    :workflow/id 1
-                                    :workflow/type :workflow/dynamic
-                                    :application/external-id nil
-                                    :workflow.dynamic/handlers #{"assistant"}}
+                                  [dummy-created-event
                                    {:event/type :application.event/submitted
                                     :event/time test-time
                                     :event/actor "applicant"
