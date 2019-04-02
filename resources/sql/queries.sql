@@ -42,6 +42,7 @@ LEFT OUTER JOIN application_form form ON (ci.formid = form.id)
 WHERE ci.id = :id;
 
 -- :name set-catalogue-item-state! :insert
+-- TODO set modifieruserid?
 UPDATE catalogue_item
 SET
 /*~ (when (boolean? (:enabled params)) */
@@ -99,6 +100,7 @@ VALUES (:resid, :organization, :owneruserid, :modifieruserid,
 );
 
 -- :name set-resource-state! :insert
+-- TODO set modifieruserid?
 UPDATE resource
 SET
 /*~ (when (boolean? (:enabled params)) */
@@ -224,6 +226,7 @@ VALUES
 );
 
 -- :name set-form-template-state! :!
+-- TODO set modifieruserid?
 UPDATE form_template
 SET (enabled, archived) = (:enabled, :archived)
 WHERE
@@ -242,6 +245,7 @@ VALUES
 );
 
 -- :name set-form-state! :!
+-- TODO set modifieruserid?
 UPDATE application_form
 SET (enabled, archived) = (:enabled, :archived)
 WHERE
