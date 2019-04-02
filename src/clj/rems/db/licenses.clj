@@ -113,6 +113,28 @@
   [attachment-id]
   (db/remove-license-attachment! {:id attachment-id}))
 
+(defn- get-license-usage [id]
+  ;; these could be db joins
+  (let [resources (->> (db/get-resources-for-license {:id id})
+                       (map :resid)
+                       (map #(db/get-resource {:id %}))
+                       (remove :archived)
+                       (map :id))
+        workflows (->> (db/get-workflows-for-license {:id id})
+                       (map :wfid)
+                       (map #(db/get-workflow {:wfid %}))
+                       (remove :archived)
+                       (map :id))]
+    (when (or (seq resources) (seq workflows))
+      {:resources resources
+       :workflows workflows})))
+
 (defn update-license! [command]
-  (db/set-license-state! command)
-  {:success true})
+  (let [usage (get-license-usage (:id command))]
+    (if (and (:archived command) usage)
+      {:success false
+       :errors [(merge {:type :t.administration.errors/license-in-use}
+                       usage)]}
+      (do
+        (db/set-license-state! command)
+        {:success true}))))

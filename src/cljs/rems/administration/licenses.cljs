@@ -37,7 +37,7 @@
  (fn [_ [_ item]]
    (put! "/api/licenses/update"
          {:params (select-keys item [:id :enabled :archived])
-          :handler #(rf/dispatch [::fetch-licenses])
+          :handler (partial status-modal/common-success-handler! #(rf/dispatch [::fetch-licenses]))
           :error-handler status-modal/common-error-handler!})
    {}))
 

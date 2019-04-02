@@ -102,6 +102,7 @@
                    :end "Loppu"
                    :errors {:duplicate-resid "Resurssi on jo olemassa organisaatiossa."
                             :form-in-use "Lomake on käytössä."
+                            :license-in-use "Lisenssi käytössä."
                             :resource-in-use "Resurssi on käytössä."
                             :workflow-in-use "Työvuo on käytössä."}
                    :field "Kenttä \"%1\""

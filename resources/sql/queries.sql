@@ -636,6 +636,12 @@ WHERE lic.id = :id;
 SELECT licid, langcode, title, textcontent, attachmentid
 FROM license_localization;
 
+-- :name get-resources-for-license :? :*
+SELECT resid FROM resource_licenses WHERE licid = :id;
+
+-- :name get-workflows-for-license :? :*
+SELECT wfid FROM workflow_licenses WHERE licid = :id;
+
 -- :name get-roles :? :*
 SELECT role
 FROM roles
