@@ -70,9 +70,7 @@
       :roles #{:owner}
       :body [command UpdateStateCommand]
       :return SuccessResponse
-      (do
-        (db/set-license-state! command)
-        (ok {:success true})))
+      (ok (licenses/update-license! command)))
 
     (POST "/add_attachment" []
       :summary "Add an attachment file that will be used in a license"

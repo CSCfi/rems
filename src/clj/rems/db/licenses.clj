@@ -112,3 +112,7 @@
 (defn remove-license-attachment!
   [attachment-id]
   (db/remove-license-attachment! {:id attachment-id}))
+
+(defn update-license! [command]
+  (db/set-license-state! command)
+  {:success true})
