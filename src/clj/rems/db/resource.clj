@@ -37,7 +37,7 @@
         (throw e)))))
 
 (defn update-resource! [command]
-  (let [catalogue-items (db/get-catalogue-items {:resource-id (:id command)})]
+  (let [catalogue-items (db/get-catalogue-items {:resource-id (:id command) :archived false})]
     (if (and (:archived command) (seq catalogue-items))
       {:success false
        :errors [{:type :t.administration.errors/resource-in-use :catalogue-items (mapv :id catalogue-items)}]}
