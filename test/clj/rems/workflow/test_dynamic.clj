@@ -34,8 +34,7 @@
          result (handle-command enriched-cmd application injections)
          _ (assert-ex (:success result) {:cmd cmd :result result})
          event (getx result :result)]
-     (-> (#'rems.workflow.dynamic/apply-event application (:workflow application) event)
-         (model/calculate-permissions event)))))
+     (apply-events application [event]))))
 
 (defn- apply-commands
   ([application commands]
@@ -59,6 +58,7 @@
         application (apply-events nil
                                   [{:event/type :application.event/created
                                     :event/actor "applicant"
+                                    :application/id 123
                                     :form/id 1
                                     :workflow/type :workflow/dynamic
                                     :workflow.dynamic/handlers #{"assistant"}}])
@@ -233,11 +233,13 @@
         application (apply-events nil
                                   [{:event/type :application.event/created
                                     :event/actor "applicant"
+                                    :application/id 123
                                     :form/id 1
                                     :workflow/type :workflow/dynamic
                                     :workflow.dynamic/handlers #{"assistant"}}
                                    {:event/type :application.event/draft-saved
                                     :event/actor "applicant"
+                                    :application/id 123
                                     :application/field-values {10 "foo"}
                                     :application/accepted-licenses #{}}])]
     (testing "non-applicant cannot submit"
@@ -248,6 +250,7 @@
     (testing "cannot submit non-valid forms"
       (let [application (apply-events application [{:event/type :application.event/draft-saved
                                                     :event/actor "applicant"
+                                                    :application/id 123
                                                     :application/field-values {10 ""}
                                                     :application/accepted-licenses #{}}])]
         (is (= {:errors [{:type :t.form.validation/required :field-id 10}]}
@@ -275,6 +278,7 @@
         application (apply-events nil
                                   [{:event/type :application.event/created
                                     :event/actor "applicant"
+                                    :application/id 123
                                     :form/id 1
                                     :workflow/type :workflow/dynamic
                                     :workflow.dynamic/handlers #{"assistant"}}])
@@ -295,10 +299,12 @@
   (let [application (apply-events nil
                                   [{:event/type :application.event/created
                                     :event/actor "applicant"
+                                    :application/id 123
                                     :workflow/type :workflow/dynamic
                                     :workflow.dynamic/handlers #{"assistant"}}
                                    {:event/type :application.event/submitted
-                                    :event/actor "applicant"}])
+                                    :event/actor "applicant"
+                                    :application/id 123}])
         injections {:valid-user? #{"deity"}}]
     (testing "required :valid-user? injection"
       (is (= {:errors [{:type :missing-injection :injection :valid-user?}]}
@@ -370,12 +376,15 @@
   (let [application (apply-events nil
                                   [{:event/type :application.event/created
                                     :event/actor "applicant"
+                                    :application/id 123
                                     :workflow/type :workflow/dynamic
                                     :workflow.dynamic/handlers #{"assistant"}}
                                    {:event/type :application.event/submitted
-                                    :event/actor "applicant"}
+                                    :event/actor "applicant"
+                                    :application/id 123}
                                    {:event/type :application.event/member-added
                                     :event/actor "applicant"
+                                    :application/id 123
                                     :application/member {:userid "somebody"}}])
         injections {:valid-user? #{"member1" "member2" "somebody" "applicant"}}]
     (testing "add two members"
@@ -410,6 +419,7 @@
   (let [application (apply-events nil
                                   [{:event/type :application.event/created
                                     :event/actor "applicant"
+                                    :application/id 123
                                     :workflow/type :workflow/dynamic
                                     :workflow.dynamic/handlers #{"assistant"}}])
         injections {:valid-user? #{"somebody" "applicant"}
@@ -432,7 +442,8 @@
         "should generate secure token")
     (testing "invite two members by handler"
       (let [application (apply-events application [{:event/type :application.event/submitted
-                                                    :event/actor "applicant"}])]
+                                                    :event/actor "applicant"
+                                                    :application/id 123}])]
         (is (= [{:name "Member Applicant 1" :email "member1@applicants.com"} {:name "Member Applicant 2" :email "member2@applicants.com"}]
                (:invited-members
                 (apply-commands application
@@ -448,7 +459,8 @@
                              injections))))
     (let [submitted (apply-events application
                                   [{:event/type :application.event/submitted
-                                    :event/actor "applicant"}])]
+                                    :event/actor "applicant"
+                                    :application/id 123}])]
       (testing "applicant can't invite members to submitted application"
         (is (= {:errors [{:type :forbidden}]}
                (handle-command {:application-id 123 :time test-time
@@ -467,10 +479,12 @@
   (let [application (apply-events nil
                                   [{:event/type :application.event/created
                                     :event/actor "applicant"
+                                    :application/id 123
                                     :workflow/type :workflow/dynamic
                                     :workflow.dynamic/handlers #{"assistant"}}
                                    {:event/type :application.event/member-invited
                                     :event/:actor "applicant"
+                                    :application/id 123
                                     :application/member {:name "Some Body" :email "somebody@applicants.com"}
                                     :invitation/token "very-secure"}])
         injections {:valid-user? #{"somebody" "somebody2" "applicant"}}]
@@ -495,6 +509,7 @@
     (let [application (apply-events application
                                     [{:event/type :application.event/member-added
                                       :event/actor "applicant"
+                                      :application/id 123
                                       :application/member {:userid "somebody"}}])]
       (testing "invited member can't join if they are already a member"
         (is (= {:errors [{:type :already-member :application-id (:id application)}]}
@@ -522,7 +537,8 @@
 
     (let [submitted (apply-events application
                                   [{:event/type :application.event/submitted
-                                    :event/actor "applicant"}])]
+                                    :event/actor "applicant"
+                                    :application/id 123}])]
       (testing "invited member can join submitted application"
         (is (= [{:userid "applicant"} {:userid "somebody"}]
                (:members
@@ -531,7 +547,8 @@
                                 injections)))))
       (let [closed (apply-events submitted
                                  [{:event/type :application.event/closed
-                                   :event/actor "applicant"}])]
+                                   :event/actor "applicant"
+                                   :application/id 123}])]
         (testing "invited member can't join a closed application"
           (is (= {:errors [{:type :forbidden}]}
                  (:result
@@ -544,12 +561,15 @@
   (let [application (apply-events nil
                                   [{:event/type :application.event/created
                                     :event/actor "applicant"
+                                    :application/id 123
                                     :workflow/type :workflow/dynamic
                                     :workflow.dynamic/handlers #{"assistant"}}
                                    {:event/type :application.event/submitted
-                                    :event/actor "applicant"}
+                                    :event/actor "applicant"
+                                    :application/id 123}
                                    {:event/type :application.event/member-added
                                     :event/actor "assistant"
+                                    :application/id 123
                                     :application/member {:userid "somebody"}}])
         injections {:valid-user? #{"somebody" "applicant" "assistant"}}]
     (testing "remove member by applicant"
@@ -592,13 +612,17 @@
   (let [application (apply-events nil
                                   [{:event/type :application.event/created
                                     :event/actor "applicant"
+                                    :application/id 123
                                     :workflow/type :workflow/dynamic
                                     :workflow.dynamic/handlers #{"assistant"}}
                                    {:event/type :application.event/member-invited
                                     :event/actor "applicant"
-                                    :application/member {:name "Some Body" :email "some@body.com"}}
+                                    :application/id 123
+                                    :application/member {:name "Some Body" :email "some@body.com"}
+                                    :invitation/token "123456"}
                                    {:event/type :application.event/submitted
-                                    :event/actor "applicant"}])
+                                    :event/actor "applicant"
+                                    :application/id 123}])
         injections {}]
     (testing "uninvite member by applicant"
       (is (= []
@@ -626,10 +650,12 @@
   (let [application (apply-events nil
                                   [{:event/type :application.event/created
                                     :event/actor "applicant"
+                                    :application/id 123
                                     :workflow/type :workflow/dynamic
                                     :workflow.dynamic/handlers #{"assistant"}}
                                    {:event/type :application.event/submitted
-                                    :event/actor "applicant"}])
+                                    :event/actor "applicant"
+                                    :application/id 123}])
         injections {:valid-user? #{"commenter" "commenter2" "commenter3"}}]
     (testing "required :valid-user? injection"
       (is (= {:errors [{:type :missing-injection :injection :valid-user?}]}
