@@ -34,18 +34,29 @@
     (is workflow-id)
     (is catalogue-id)
 
+    (testing "can disable a resource"
+      (is (:success (api-call :put "/api/resources/update" {:id resource-id :enabled false :archived false}
+                              api-key user-id))))
     (testing "can't archive resource if it is part of an active catalogue item"
       (let [resp (api-call :put "/api/resources/update" {:id resource-id :enabled true :archived true}
                            api-key user-id)]
         (is (false? (:success resp)))
         (is (= [{:type "t.administration.errors/resource-in-use" :catalogue-items [catalogue-id]}]
                (:errors resp)))))
+
+    (testing "can disable a form"
+      (is (:success (api-call :put "/api/forms/update" {:id form-id :enabled false :archived false}
+                              api-key user-id))))
     (testing "can't archive a form that's in use"
       (let [resp (api-call :put "/api/forms/update" {:id form-id :enabled true :archived true}
                            api-key user-id)]
         (is (false? (:success resp)))
         (is (= [{:type "t.administration.errors/form-in-use" :catalogue-items [catalogue-id]}]
                (:errors resp)))))
+
+    (testing "can disable a workflow"
+      (is (:success (api-call :put "/api/workflows/update" {:id workflow-id :enabled false :archived false}
+                              api-key user-id))))
     (testing "can't archive a workflow that's in use"
       (let [resp (api-call :put "/api/workflows/update" {:id workflow-id :enabled true :archived true}
                            api-key user-id)]

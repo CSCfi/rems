@@ -49,3 +49,12 @@
     (merge
      result
      {:success (not (nil? (:id result)))})))
+
+(defn update-workflow! [command]
+  (let [catalogue-items (db/get-catalogue-items {:workflow (:id command)})]
+    (if (and (:archived command) (seq catalogue-items))
+      {:success false
+       :errors [{:type :t.administration.errors/workflow-in-use :catalogue-items (mapv :id catalogue-items)}]}
+      (do
+        (db/set-workflow-state! command)
+        {:success true}))))
