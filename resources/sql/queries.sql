@@ -430,6 +430,11 @@ VALUES
 /*~ (if (:endt params) */ :endt /*~*/ NULL /*~ ) ~*/
 );
 
+-- :name set-license-state! :!
+UPDATE license
+SET (enabled, archived) = (:enabled, :archived)
+WHERE id = :id;
+
 -- :name create-license-attachment! :insert
 INSERT INTO license_attachment
 (modifierUserId, filename, type, data)
