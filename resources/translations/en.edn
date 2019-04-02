@@ -102,7 +102,8 @@
                    :end "End"
                    :errors {:duplicate-resid "Duplicate resource for organization."
                             :form-in-use "Form is in use."
-                            :resource-in-use "Resource is in use."}
+                            :resource-in-use "Resource is in use."
+                            :workflow-in-use "Workflow is in use."}
                    :field "Field \"%1\""
                    :fields "Fields"
                    :form "Form"

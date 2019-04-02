@@ -30,11 +30,6 @@
    :langcode s/Str
    :title s/Str})
 
-(s/defschema UpdateCatalogueItemCommand
-  {:id s/Num
-   :enabled s/Bool
-   :archived s/Bool})
-
 ;; TODO use declarative roles everywhere
 (def catalogue-items-api
   (context "/catalogue-items" []
@@ -72,7 +67,7 @@
     (PUT "/update" []
       :summary "Update catalogue item"
       :roles #{:owner}
-      :body [command UpdateCatalogueItemCommand]
+      :body [command UpdateStateCommand]
       :return SuccessResponse
       (ok (catalogue/update-catalogue-item! command)))
 

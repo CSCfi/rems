@@ -35,7 +35,7 @@
  (fn [_ [_ item]]
    (put! "/api/workflows/update"
          {:params (select-keys item [:id :enabled :archived])
-          :handler #(rf/dispatch [::fetch-workflows])
+          :handler (partial status-modal/common-success-handler! #(rf/dispatch [::fetch-workflows]))
           :error-handler status-modal/common-error-handler!})
    {}))
 

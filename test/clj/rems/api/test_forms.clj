@@ -141,32 +141,7 @@
                      handler
                      read-ok-body)]
         (is (true? (:enabled form)))
-        (is (false? (:archived form)))))
-    (testing "can't archive a form that's in use"
-      (let [catalogue-id (:id (db/create-catalogue-item! {:title "catalogue item"
-                                                          :form form-id
-                                                          :enabled true :archived false
-                                                          :resid nil :wfid nil}))
-            resp (-> (request :put "/api/forms/update")
-                     (authenticate api-key user-id)
-                     (json-body {:id form-id
-                                 :enabled true
-                                 :archived false})
-                     handler
-                     read-ok-body)]
-        (is (false? (:success resp)))
-        (is (= [{:type "t.administration.errors/form-in-use" :catalogue-items [catalogue-id]}]
-               (:errors resp)))
-        (testing "but can archive a form that's not in use"
-          (db/set-catalogue-item-state! {:id catalogue-id :enabled true :archived true})
-          (is (true? (-> (request :put "/api/forms/update")
-                         (authenticate api-key user-id)
-                         (json-body {:id form-id
-                                     :enabled true
-                                     :archived false})
-                         handler
-                         read-ok-body
-                         :success))))))))
+        (is (false? (:archived form)))))))
 
 (deftest option-form-item-test
   (let [api-key "42"

@@ -129,9 +129,15 @@
       :roles #{:owner}
       :body [command UpdateStateCommand]
       :return SuccessResponse
-      (do
-        (db/set-workflow-state! command)
-        (ok {:success true})))
+      ;; TODO move to rems.db.workflow
+      (ok
+       (let [catalogue-items (db/get-catalogue-items {:workflow (:id command)})]
+         (if (seq catalogue-items)
+           {:success false
+            :errors [{:type :t.administration.errors/workflow-in-use :catalogue-items (mapv :id catalogue-items)}]}
+           (do
+             (db/set-workflow-state! command)
+             {:success true})))))
 
     (GET "/actors" []
       :summary "List of available actors"
