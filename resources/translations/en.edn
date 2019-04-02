@@ -100,7 +100,8 @@
                    :display-archived "Display archived"
                    :enable "Enable"
                    :end "End"
-                   :errors {:duplicate-resid "Duplicate resource for organization."}
+                   :errors {:duplicate-resid "Duplicate resource for organization."
+                            :resource-in-use "Resource is in use."}
                    :field "Field \"%1\""
                    :fields "Fields"
                    :form "Form"

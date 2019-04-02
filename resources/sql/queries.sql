@@ -2,7 +2,10 @@
 -- :doc
 -- - Get catalogue items
 -- - :ids vector of item ids
--- - :resource resource id to fetch items for
+-- - :resource resource external id to fetch items for
+-- - :resource-id resource internal id to fetch items for
+-- - :workflow workflow id to fetch items for
+-- - :form form id to fetch items for
 -- - :archived true if archived items should be included
 SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.start, ci.endt as "end", ci.enabled, ci.archived
 , res.id AS "resource-id"
@@ -23,6 +26,15 @@ WHERE 1=1
 /*~ ) ~*/
 /*~ (when (:resource params) */
   AND res.resid = :resource
+/*~ ) ~*/
+/*~ (when (:resource-id params) */
+  AND ci.resid = :resource-id
+/*~ ) ~*/
+/*~ (when (:form params) */
+  AND ci.formid = :form
+/*~ ) ~*/
+/*~ (when (:workflow params) */
+  AND ci.wfid = :workflow
 /*~ ) ~*/
 /*~ (when (not (:archived params)) */
   AND ci.archived = false

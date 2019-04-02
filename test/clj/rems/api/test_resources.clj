@@ -1,5 +1,6 @@
 (ns ^:integration rems.api.test-resources
   (:require [clojure.test :refer :all]
+            [rems.db.core :as db]
             [rems.handler :refer [handler]]
             [rems.api.testing :refer :all]
             [ring.mock.request :refer :all]))
@@ -121,6 +122,34 @@
                           :licenses [licid]})
               handler
               assert-response-is-ok))))))
+
+(deftest resource-in-use-test
+  (let [api-key "42"
+        user-id "owner"
+        resource-id (:id (create-resource! {:resid "in-use-test"
+                                            :organization "abc"
+                                            :licenses []}
+                                           api-key user-id))
+        catalogue-id (:id (db/create-catalogue-item! {:title "catalogue item"
+                                                      :resid resource-id
+                                                      :enabled true :archived false
+                                                      :form nil :wfid nil}))]
+    (testing "can't archive resource if it is part of an active catalogue item"
+      (let [resp (update-resource! {:id resource-id :enabled true :archived true} api-key user-id)]
+        (is (false? (:success resp)))
+        (is (= [{:type "t.administration.errors/resource-in-use" :catalogue-items [catalogue-id]}]
+               (:errors resp)))))
+    (testing "can archive once catalogue item is archived"
+      (db/set-catalogue-item-state! {:id catalogue-id :enabled true :archived true})
+      (let [resp (update-resource! {:id resource-id :enabled true :archived true} api-key user-id)]
+        (is (true? (:success resp))))
+      (let [resources (-> (request :get "/api/resources?archived=true")
+                          (authenticate api-key user-id)
+                          handler
+                          read-ok-body)
+            resource (first (filter #(= resource-id (:id %)) resources))]
+        (is resource)
+        (is (= {:id resource-id :enabled true :archived true} (select-keys resource [:id :enabled :archived])))))))
 
 (deftest resources-api-filtering-test
   (let [unfiltered (-> (request :get "/api/resources")

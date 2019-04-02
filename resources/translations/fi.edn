@@ -100,7 +100,8 @@
                    :display-archived "Näytä arkistoidut"
                    :enable "Ota käyttöön"
                    :end "Loppu"
-                   :errors {:duplicate-resid "Resurssi on jo olemassa organisaatiossa."}
+                   :errors {:duplicate-resid "Resurssi on jo olemassa organisaatiossa."
+                            :resource-in-use "Resurssi on käytössä."}
                    :field "Kenttä \"%1\""
                    :fields "Kentät"
                    :form "Lomake"
