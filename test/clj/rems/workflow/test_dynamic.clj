@@ -666,19 +666,31 @@
                                     :application/id 123}])
         injections {}]
     (testing "uninvite member by applicant"
-      (is (= []
-             (:invited-members
-              (apply-commands application
-                              [{:type :application.command/uninvite-member :actor "applicant" :member {:name "Some Body" :email "some@body.com"}
-                                :comment ""}]
-                              injections)))))
+      (is (= [{:event/type :application.event/member-uninvited
+               :event/time test-time
+               :event/actor "applicant"
+               :application/id 123
+               :application/member {:name "Some Body" :email "some@body.com"}
+               :application/comment ""}]
+             (ok-command application
+                         {:type :application.command/uninvite-member
+                          :actor "applicant"
+                          :member {:name "Some Body" :email "some@body.com"}
+                          :comment ""}
+                         injections))))
     (testing "uninvite member by handler"
-      (is (= []
-             (:invited-members
-              (apply-commands application
-                              [{:type :application.command/uninvite-member :actor "assistant" :member {:name "Some Body" :email "some@body.com"}
-                                :comment ""}]
-                              injections)))))
+      (is (= [{:event/type :application.event/member-uninvited
+               :event/time test-time
+               :event/actor "assistant"
+               :application/id 123
+               :application/member {:name "Some Body" :email "some@body.com"}
+               :application/comment ""}]
+             (ok-command application
+                         {:type :application.command/uninvite-member
+                          :actor "assistant"
+                          :member {:name "Some Body" :email "some@body.com"}
+                          :comment ""}
+                         injections))))
     (testing "only invited members can be uninvited"
       (is (= {:errors [{:type :user-not-member :user {:name "Not Member" :email "not@member.com"}}]}
              (handle-command {:application-id 123 :time test-time
