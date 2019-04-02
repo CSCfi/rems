@@ -136,7 +136,7 @@
                             :field-values {1 "updated"}
                             :accepted-licenses #{3}})))))))
 
-(deftest test-submit-form-validation
+(deftest test-submit
   (let [injections {:validate-form-answers fake-validate-form-answers}
         created-event {:event/type :application.event/created
                        :event/time test-time
@@ -395,7 +395,7 @@
                                     :application/id 123
                                     :application/member {:userid "somebody"}}])
         injections {:valid-user? #{"member1" "member2" "somebody" "applicant"}}]
-    (testing "add two members"
+    (testing "handler can add members"
       (is (= [{:event/type :application.event/member-added
                :event/time test-time
                :event/actor "assistant"
@@ -601,7 +601,7 @@
                                     :application/id 123
                                     :application/member {:userid "somebody"}}])
         injections {:valid-user? #{"somebody" "applicant" "assistant"}}]
-    (testing "remove member by applicant"
+    (testing "applicant can remove members"
       (is (= [{:event/type :application.event/member-removed
                :event/time test-time
                :event/actor "applicant"
@@ -614,15 +614,7 @@
                           :member {:userid "somebody"}
                           :comment "some comment"}
                          injections))))
-    (testing "remove applicant by applicant"
-      (is (= {:errors [{:type :cannot-remove-applicant}]}
-             (fail-command application
-                           {:type :application.command/remove-member
-                            :actor "applicant"
-                            :member {:userid "applicant"}
-                            :comment ""}
-                           injections))))
-    (testing "remove member by handler"
+    (testing "handler can remove members"
       (is (= [{:event/type :application.event/member-removed
                :event/time test-time
                :event/actor "assistant"
@@ -635,7 +627,21 @@
                           :member {:userid "somebody"}
                           :comment ""}
                          injections))))
-    (testing "only members can be removed"
+    (testing "applicant cannot be removed"
+      (is (= {:errors [{:type :cannot-remove-applicant}]}
+             (fail-command application
+                           {:type :application.command/remove-member
+                            :actor "applicant"
+                            :member {:userid "applicant"}
+                            :comment ""}
+                           injections)
+             (fail-command application
+                           {:type :application.command/remove-member
+                            :actor "assistant"
+                            :member {:userid "applicant"}
+                            :comment ""}
+                           injections))))
+    (testing "non-members cannot be removed"
       (is (= {:errors [{:type :user-not-member :user {:userid "notamember"}}]}
              (fail-command application
                            {:type :application.command/remove-member
