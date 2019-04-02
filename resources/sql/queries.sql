@@ -223,6 +223,12 @@ VALUES
  :fields::jsonb
 );
 
+-- :name set-form-template-state! :!
+UPDATE form_template
+SET (enabled, archived) = (:enabled, :archived)
+WHERE
+id = :id;
+
 -- :name create-form! :insert
 INSERT INTO application_form
 (organization, title, modifierUserId, ownerUserId, visibility, endt)
@@ -234,6 +240,12 @@ VALUES
  'public',
  /*~ (if (:endt params) */ :endt /*~*/ NULL /*~ ) ~*/
 );
+
+-- :name set-form-state! :!
+UPDATE application_form
+SET (enabled, archived) = (:enabled, :archived)
+WHERE
+id = :id;
 
 -- :name create-form-item! :insert
 INSERT INTO application_form_item

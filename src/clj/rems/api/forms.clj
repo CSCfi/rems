@@ -1,5 +1,6 @@
 (ns rems.api.forms
   (:require [compojure.api.sweet :refer :all]
+            [rems.api.schema :refer [SuccessResponse]]
             [rems.api.util]
             [rems.db.core :as db]
             [rems.db.form :as form]
@@ -61,6 +62,17 @@
   {:success s/Bool
    :id s/Num})
 
+(s/defschema UpdateFormCommand
+  {:id s/Num
+   :enabled s/Bool
+   :archived s/Bool})
+
+(defn- update-form! [command]
+  ;; TODO form that is part of an active catalogue item can't be archived
+  (db/set-form-state! command)
+  (db/set-form-template-state! command)
+  {:success true})
+
 (def forms-api
   (context "/forms" []
     :tags ["forms"]
@@ -91,4 +103,11 @@
       :roles #{:owner}
       :body [command CreateFormCommand]
       :return CreateFormResponse
-      (ok (form/create-form! (getx-user-id) command)))))
+      (ok (form/create-form! (getx-user-id) command)))
+
+    (PUT "/update" []
+      :summary "Update form"
+      :roles #{:owner}
+      :body [command UpdateFormCommand]
+      :return SuccessResponse
+      (ok (update-form! command)))))
