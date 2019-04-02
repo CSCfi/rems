@@ -101,6 +101,7 @@
                    :enable "Ota käyttöön"
                    :end "Loppu"
                    :errors {:duplicate-resid "Resurssi on jo olemassa organisaatiossa."
+                            :form-in-use "Lomake on käytössä."
                             :resource-in-use "Resurssi on käytössä."}
                    :field "Kenttä \"%1\""
                    :fields "Kentät"

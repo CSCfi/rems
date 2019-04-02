@@ -62,11 +62,16 @@
   {:success s/Bool
    :id s/Num})
 
+;; TODO move to rems.db.form
 (defn- update-form! [command]
-  ;; TODO form that is part of an active catalogue item can't be archived
-  (db/set-form-state! command)
-  (db/set-form-template-state! command)
-  {:success true})
+  (let [catalogue-items (db/get-catalogue-items {:form (:id command)})]
+    (if (seq catalogue-items)
+      {:success false
+       :errors [{:type :t.administration.errors/form-in-use :catalogue-items (mapv :id catalogue-items)}]}
+      (do
+        (db/set-form-state! command)
+        (db/set-form-template-state! command)
+        {:success true}))))
 
 (def forms-api
   (context "/forms" []

@@ -1,6 +1,7 @@
 (ns ^:integration rems.api.test-forms
   (:require [clojure.test :refer :all]
             [rems.api.testing :refer :all]
+            [rems.db.core :as db]
             [rems.db.form :as form]
             [rems.handler :refer [handler]]
             [ring.mock.request :refer :all])
@@ -89,62 +90,83 @@
 (deftest form-update-test
   (let [api-key "42"
         user-id "owner"
-        form-id (-> (request :get "/api/forms")
+        form-id (-> (request :post "/api/forms/create")
                     (authenticate api-key user-id)
+                    (json-body {:organization "abc" :title "form update test"
+                                :items []})
                     handler
-                    assert-response-is-ok
-                    read-body
-                    first
+                    read-ok-body
                     :id)]
     (is (not (nil? form-id)))
     (testing "update"
-      (-> (request :put "/api/forms/update")
-          (authenticate api-key user-id)
-          (json-body {:id form-id
-                      :enabled false
-                      :archived true})
-          handler
-          assert-response-is-ok))
+      (is (:success (-> (request :put "/api/forms/update")
+                        (authenticate api-key user-id)
+                        (json-body {:id form-id
+                                    :enabled false
+                                    :archived true})
+                        handler
+                        read-ok-body))))
     (testing "fetch"
       (let [form (-> (request :get (str "/api/forms/" form-id))
                      (authenticate api-key user-id)
                      handler
-                     assert-response-is-ok
-                     read-body)]
+                     read-ok-body)]
         (is (false? (:enabled form)))
         (is (true? (:archived form)))))
     (testing "fetch v2"
       (let [form (-> (request :get (str "/api/forms/v2/" form-id))
                      (authenticate api-key user-id)
                      handler
-                     assert-response-is-ok
-                     read-body)]
+                     read-ok-body)]
         (is (false? (:enabled form)))
         (is (true? (:archived form)))))
     (testing "update again"
-      (-> (request :put "/api/forms/update")
-          (authenticate api-key user-id)
-          (json-body {:id form-id
-                      :enabled true
-                      :archived false})
-          handler
-          assert-response-is-ok))
+      (is (:success (-> (request :put "/api/forms/update")
+                        (authenticate api-key user-id)
+                        (json-body {:id form-id
+                                    :enabled true
+                                    :archived false})
+                        handler
+                        read-ok-body))))
     (testing "fetch again"
       (let [form (-> (request :get (str "/api/forms/" form-id))
                      (authenticate api-key user-id)
                      handler
-                     assert-response-is-ok
-                     read-body)]
+                     read-ok-body)]
         (is (true? (:enabled form)))
         (is (false? (:archived form)))))
     (testing "fetch v2 again"
       (let [form (-> (request :get (str "/api/forms/v2/" form-id))
                      (authenticate api-key user-id)
                      handler
-                     assert-response-is-ok
-                     read-body)]
+                     read-ok-body)]
         (is (true? (:enabled form)))
-        (is (false? (:archived form)))))))
+        (is (false? (:archived form)))))
+    (testing "can't archive a form that's in use"
+      (let [catalogue-id (:id (db/create-catalogue-item! {:title "catalogue item"
+                                                          :form form-id
+                                                          :enabled true :archived false
+                                                          :resid nil :wfid nil}))
+            resp (-> (request :put "/api/forms/update")
+                     (authenticate api-key user-id)
+                     (json-body {:id form-id
+                                 :enabled true
+                                 :archived false})
+                     handler
+                     read-ok-body)]
+        (is (false? (:success resp)))
+        (is (= [{:type "t.administration.errors/form-in-use" :catalogue-items [catalogue-id]}]
+               (:errors resp)))
+        (testing "but can archive a form that's not in use"
+          (db/set-catalogue-item-state! {:id catalogue-id :enabled true :archived true})
+          (is (true? (-> (request :put "/api/forms/update")
+                         (authenticate api-key user-id)
+                         (json-body {:id form-id
+                                     :enabled true
+                                     :archived false})
+                         handler
+                         read-ok-body
+                         :success))))))))
 
 (deftest option-form-item-test
   (let [api-key "42"
