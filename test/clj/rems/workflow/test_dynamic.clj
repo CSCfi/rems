@@ -11,9 +11,11 @@
 (def ^:private test-time (DateTime. 1000))
 (def ^:private command-defaults {:application-id 123
                                  :time test-time})
+(def ^:private applicant-user-id "applicant")
+(def ^:private handler-user-id "assistant")
 (def ^:private dummy-created-event {:event/type :application.event/created
                                     :event/time test-time
-                                    :event/actor "applicant"
+                                    :event/actor applicant-user-id
                                     :application/id 123
                                     :application/resources []
                                     :application/licenses []
@@ -21,7 +23,7 @@
                                     :workflow/id 1
                                     :workflow/type :workflow/dynamic
                                     :application/external-id nil
-                                    :workflow.dynamic/handlers #{"assistant"}})
+                                    :workflow.dynamic/handlers #{handler-user-id}})
 
 (defn apply-events [application events]
   (events/validate-events events)
@@ -80,13 +82,13 @@
     (testing "saves a draft"
       (is (= [{:event/type :application.event/draft-saved
                :event/time test-time
-               :event/actor "applicant"
+               :event/actor applicant-user-id
                :application/id 123
                :application/field-values {1 "foo" 2 "bar"}
                :application/accepted-licenses #{1 2}}]
              (ok-command application
                          {:type :application.command/save-draft
-                          :actor "applicant"
+                          :actor applicant-user-id
                           :field-values {1 "foo" 2 "bar"}
                           :accepted-licenses #{1 2}}))))
     (testing "only the applicant can save a draft"
@@ -98,41 +100,41 @@
                             :accepted-licenses #{1 2}})
              (fail-command application
                            {:type :application.command/save-draft
-                            :actor "assistant"
+                            :actor handler-user-id
                             :field-values {1 "foo" 2 "bar"}
                             :accepted-licenses #{1 2}}))))
     (testing "draft cannot be updated after submitting"
       (let [application (apply-events application
                                       [{:event/type :application.event/submitted
                                         :event/time test-time
-                                        :event/actor "applicant"
+                                        :event/actor applicant-user-id
                                         :application/id 123}])]
         (is (= {:errors [{:type :forbidden}]}
                (fail-command application
                              {:type :application.command/save-draft
-                              :actor "applicant"
+                              :actor applicant-user-id
                               :field-values {1 "updated"}
                               :accepted-licenses #{3}})))))
     (testing "draft can be updated after returning it to applicant"
       (let [application (apply-events application
                                       [{:event/type :application.event/submitted
                                         :event/time test-time
-                                        :event/actor "applicant"
+                                        :event/actor applicant-user-id
                                         :application/id 123}
                                        {:event/type :application.event/returned
                                         :event/time test-time
-                                        :event/actor "assistant"
+                                        :event/actor handler-user-id
                                         :application/id 123
                                         :application/comment ""}])]
         (is (= [{:event/type :application.event/draft-saved
                  :event/time test-time
-                 :event/actor "applicant"
+                 :event/actor applicant-user-id
                  :application/id 123
                  :application/field-values {1 "updated"}
                  :application/accepted-licenses #{3}}]
                (ok-command application
                            {:type :application.command/save-draft
-                            :actor "applicant"
+                            :actor applicant-user-id
                             :field-values {1 "updated"}
                             :accepted-licenses #{3}})))))))
 
@@ -140,7 +142,7 @@
   (let [injections {:validate-form-answers fake-validate-form-answers}
         created-event {:event/type :application.event/created
                        :event/time test-time
-                       :event/actor "applicant"
+                       :event/actor applicant-user-id
                        :application/id 123
                        :application/resources [{:catalogue-item/id 10
                                                 :resource/ext-id "urn:11"}
@@ -152,22 +154,22 @@
                        :workflow/id 50
                        :workflow/type :workflow/dynamic
                        :application/external-id nil
-                       :workflow.dynamic/handlers #{"handler"}}
+                       :workflow.dynamic/handlers #{handler-user-id}}
         draft-saved-event {:event/type :application.event/draft-saved
                            :event/time test-time
-                           :event/actor "applicant"
+                           :event/actor applicant-user-id
                            :application/id 123
                            :application/field-values {41 "foo"
                                                       42 "bar"}
                            :application/accepted-licenses #{30 31}}
         submit-command {:type :application.command/submit
-                        :actor "applicant"}
+                        :actor applicant-user-id}
         application (apply-events nil [created-event draft-saved-event])]
 
     (testing "can submit a valid form"
       (is (= [{:event/type :application.event/submitted
                :event/time test-time
-               :event/actor "applicant"
+               :event/actor applicant-user-id
                :application/id 123}]
              (ok-command application submit-command injections))))
 
@@ -196,7 +198,7 @@
              (-> application
                  (apply-events [{:event/type :application.event/submitted
                                  :event/time test-time
-                                 :event/actor "applicant"
+                                 :event/actor applicant-user-id
                                  :application/id 123}])
                  (fail-command submit-command injections)))))))
 
@@ -205,27 +207,27 @@
                                   [dummy-created-event
                                    {:event/type :application.event/submitted
                                     :event/time test-time
-                                    :event/actor "applicant"
+                                    :event/actor applicant-user-id
                                     :application/id 123}])]
     (testing "approved successfully"
       (is (= [{:event/type :application.event/approved
                :event/time test-time
-               :event/actor "assistant"
+               :event/actor handler-user-id
                :application/id 123
                :application/comment "fine"}]
              (ok-command application
                          {:type :application.command/approve
-                          :actor "assistant"
+                          :actor handler-user-id
                           :comment "fine"}))))
     (testing "rejected successfully"
       (is (= [{:event/type :application.event/rejected
                :application/comment "bad"
                :event/time test-time
-               :event/actor "assistant"
+               :event/actor handler-user-id
                :application/id 123}]
              (ok-command application
                          {:type :application.command/reject
-                          :actor "assistant"
+                          :actor handler-user-id
                           :comment "bad"}))))))
 
 (deftest test-return
@@ -233,16 +235,16 @@
                                   [dummy-created-event
                                    {:event/type :application.event/submitted
                                     :event/time test-time
-                                    :event/actor "applicant"
+                                    :event/actor applicant-user-id
                                     :application/id 123}])]
     (is (= [{:event/type :application.event/returned
              :event/time test-time
-             :event/actor "assistant"
+             :event/actor handler-user-id
              :application/id 123
              :application/comment "ret"}]
            (ok-command application
                        {:type :application.command/return
-                        :actor "assistant"
+                        :actor handler-user-id
                         :comment "ret"})))))
 
 (deftest test-close
@@ -250,21 +252,21 @@
                                   [dummy-created-event
                                    {:event/type :application.event/submitted
                                     :event/time test-time
-                                    :event/actor "applicant"
+                                    :event/actor applicant-user-id
                                     :application/id 123}
                                    {:event/type :application.event/approved
                                     :event/time test-time
-                                    :event/actor "assistant"
+                                    :event/actor handler-user-id
                                     :application/id 123
                                     :application/comment ""}])]
     (is (= [{:event/type :application.event/closed
              :event/time test-time
-             :event/actor "assistant"
+             :event/actor handler-user-id
              :application/id 123
              :application/comment "outdated"}]
            (ok-command application
                        {:type :application.command/close
-                        :actor "assistant"
+                        :actor handler-user-id
                         :comment "outdated"})))))
 
 (deftest test-decision
@@ -272,14 +274,14 @@
                                   [dummy-created-event
                                    {:event/type :application.event/submitted
                                     :event/time test-time
-                                    :event/actor "applicant"
+                                    :event/actor applicant-user-id
                                     :application/id 123}])
         injections {:valid-user? #{"deity"}}]
     (testing "required :valid-user? injection"
       (is (= {:errors [{:type :missing-injection :injection :valid-user?}]}
              (fail-command application
                            {:type :application.command/request-decision
-                            :actor "assistant"
+                            :actor handler-user-id
                             :deciders ["deity"]
                             :comment "pls"}
                            {}))))
@@ -287,7 +289,7 @@
       (is (= {:errors [{:type :t.form.validation/invalid-user :userid "deity2"}]}
              (fail-command application
                            {:type :application.command/request-decision
-                            :actor "assistant"
+                            :actor handler-user-id
                             :deciders ["deity2"]
                             :comment "pls"}
                            injections))))
@@ -301,7 +303,7 @@
                            injections))))
     (let [events (ok-command application
                              {:type :application.command/request-decision
-                              :actor "assistant"
+                              :actor handler-user-id
                               :deciders ["deity"]
                               :comment ""}
                              injections)
@@ -311,7 +313,7 @@
         (is (instance? UUID request-id))
         (is (= [{:event/type :application.event/decision-requested
                  :event/time test-time
-                 :event/actor "assistant"
+                 :event/actor handler-user-id
                  :application/id 123
                  :application/request-id request-id
                  :application/deciders ["deity"]
@@ -387,30 +389,30 @@
                                   [dummy-created-event
                                    {:event/type :application.event/submitted
                                     :event/time test-time
-                                    :event/actor "applicant"
+                                    :event/actor applicant-user-id
                                     :application/id 123}
                                    {:event/type :application.event/member-added
                                     :event/time test-time
-                                    :event/actor "applicant"
+                                    :event/actor applicant-user-id
                                     :application/id 123
                                     :application/member {:userid "somebody"}}])
-        injections {:valid-user? #{"member1" "member2" "somebody" "applicant"}}]
+        injections {:valid-user? #{"member1" "member2" "somebody" applicant-user-id}}]
     (testing "handler can add members"
       (is (= [{:event/type :application.event/member-added
                :event/time test-time
-               :event/actor "assistant"
+               :event/actor handler-user-id
                :application/id 123
                :application/member {:userid "member1"}}]
              (ok-command application
                          {:type :application.command/add-member
-                          :actor "assistant"
+                          :actor handler-user-id
                           :member {:userid "member1"}}
                          injections))))
     (testing "only handler can add members"
       (is (= {:errors [{:type :forbidden}]}
              (fail-command application
                            {:type :application.command/add-member
-                            :actor "applicant"
+                            :actor applicant-user-id
                             :member {:userid "member1"}}
                            injections)
              (fail-command application
@@ -422,50 +424,50 @@
       (is (= {:errors [{:type :t.form.validation/invalid-user :userid "member3"}]}
              (fail-command application
                            {:type :application.command/add-member
-                            :actor "assistant"
+                            :actor handler-user-id
                             :member {:userid "member3"}}
                            injections))))
     (testing "added members can see the application"
       (is (-> (apply-commands application
                               [{:type :application.command/add-member
-                                :actor "assistant"
+                                :actor handler-user-id
                                 :member {:userid "member1"}}]
                               injections)
               (model/see-application? "member1"))))))
 
 (deftest test-invite-member
   (let [application (apply-events nil [dummy-created-event])
-        injections {:valid-user? #{"somebody" "applicant"}
+        injections {:valid-user? #{"somebody" applicant-user-id}
                     :secure-token (constantly "very-secure")}]
     (testing "applicant can invite members"
       (is (= [{:event/type :application.event/member-invited
                :event/time test-time
-               :event/actor "applicant"
+               :event/actor applicant-user-id
                :application/id 123
                :application/member {:name "Member Applicant 1"
                                     :email "member1@applicants.com"}
                :invitation/token "very-secure"}]
              (ok-command application
                          {:type :application.command/invite-member
-                          :actor "applicant"
+                          :actor applicant-user-id
                           :member {:name "Member Applicant 1"
                                    :email "member1@applicants.com"}}
                          injections))))
     (testing "handler can invite members"
       (let [application (apply-events application [{:event/type :application.event/submitted
                                                     :event/time test-time
-                                                    :event/actor "applicant"
+                                                    :event/actor applicant-user-id
                                                     :application/id 123}])]
         (is (= [{:event/type :application.event/member-invited
                  :event/time test-time
-                 :event/actor "assistant"
+                 :event/actor handler-user-id
                  :application/id 123
                  :application/member {:name "Member Applicant 1"
                                       :email "member1@applicants.com"}
                  :invitation/token "very-secure"}]
                (ok-command application
                            {:type :application.command/invite-member
-                            :actor "assistant"
+                            :actor handler-user-id
                             :member {:name "Member Applicant 1"
                                      :email "member1@applicants.com"}}
                            injections)))))
@@ -480,20 +482,20 @@
     (let [submitted (apply-events application
                                   [{:event/type :application.event/submitted
                                     :event/time test-time
-                                    :event/actor "applicant"
+                                    :event/actor applicant-user-id
                                     :application/id 123}])]
       (testing "applicant can't invite members to submitted application"
         (is (= {:errors [{:type :forbidden}]}
                (fail-command submitted
                              {:type :application.command/invite-member
-                              :actor "applicant"
+                              :actor applicant-user-id
                               :member {:name "Member Applicant 1"
                                        :email "member1@applicants.com"}}
                              injections))))
       (testing "handler can invite members to submitted application"
         (is (ok-command submitted
                         {:type :application.command/invite-member
-                         :actor "assistant"
+                         :actor handler-user-id
                          :member {:name "Member Applicant 1"
                                   :email "member1@applicants.com"}}
                         injections))))))
@@ -503,11 +505,11 @@
                                   [dummy-created-event
                                    {:event/type :application.event/member-invited
                                     :event/time test-time
-                                    :event/actor "applicant"
+                                    :event/actor applicant-user-id
                                     :application/id 123
                                     :application/member {:name "Some Body" :email "somebody@applicants.com"}
                                     :invitation/token "very-secure"}])
-        injections {:valid-user? #{"somebody" "somebody2" "applicant"}}]
+        injections {:valid-user? #{"somebody" "somebody2" applicant-user-id}}]
 
     (testing "invited member can join draft"
       (is (= [{:event/type :application.event/member-joined
@@ -525,7 +527,7 @@
       (let [application (apply-events application
                                       [{:event/type :application.event/member-added
                                         :event/time test-time
-                                        :event/actor "applicant"
+                                        :event/actor applicant-user-id
                                         :application/id 123
                                         :application/member {:userid "somebody"}}])]
         (is (= {:errors [{:type :already-member :application-id (:id application)}]}
@@ -560,7 +562,7 @@
     (let [submitted (apply-events application
                                   [{:event/type :application.event/submitted
                                     :event/time test-time
-                                    :event/actor "applicant"
+                                    :event/actor applicant-user-id
                                     :application/id 123}])]
       (testing "invited member can join submitted application"
         (is (= [{:event/type :application.event/member-joined
@@ -577,7 +579,7 @@
       (let [closed (apply-events submitted
                                  [{:event/type :application.event/closed
                                    :event/time test-time
-                                   :event/actor "applicant"
+                                   :event/actor applicant-user-id
                                    :application/id 123
                                    :application/comment ""}])]
         (testing "invited member can't join a closed application"
@@ -593,37 +595,37 @@
                                   [dummy-created-event
                                    {:event/type :application.event/submitted
                                     :event/time test-time
-                                    :event/actor "applicant"
+                                    :event/actor applicant-user-id
                                     :application/id 123}
                                    {:event/type :application.event/member-added
                                     :event/time test-time
-                                    :event/actor "assistant"
+                                    :event/actor handler-user-id
                                     :application/id 123
                                     :application/member {:userid "somebody"}}])
-        injections {:valid-user? #{"somebody" "applicant" "assistant"}}]
+        injections {:valid-user? #{"somebody" applicant-user-id handler-user-id}}]
     (testing "applicant can remove members"
       (is (= [{:event/type :application.event/member-removed
                :event/time test-time
-               :event/actor "applicant"
+               :event/actor applicant-user-id
                :application/id 123
                :application/member {:userid "somebody"}
                :application/comment "some comment"}]
              (ok-command application
                          {:type :application.command/remove-member
-                          :actor "applicant"
+                          :actor applicant-user-id
                           :member {:userid "somebody"}
                           :comment "some comment"}
                          injections))))
     (testing "handler can remove members"
       (is (= [{:event/type :application.event/member-removed
                :event/time test-time
-               :event/actor "assistant"
+               :event/actor handler-user-id
                :application/id 123
                :application/member {:userid "somebody"}
                :application/comment ""}]
              (ok-command application
                          {:type :application.command/remove-member
-                          :actor "assistant"
+                          :actor handler-user-id
                           :member {:userid "somebody"}
                           :comment ""}
                          injections))))
@@ -631,21 +633,21 @@
       (is (= {:errors [{:type :cannot-remove-applicant}]}
              (fail-command application
                            {:type :application.command/remove-member
-                            :actor "applicant"
-                            :member {:userid "applicant"}
+                            :actor applicant-user-id
+                            :member {:userid applicant-user-id}
                             :comment ""}
                            injections)
              (fail-command application
                            {:type :application.command/remove-member
-                            :actor "assistant"
-                            :member {:userid "applicant"}
+                            :actor handler-user-id
+                            :member {:userid applicant-user-id}
                             :comment ""}
                            injections))))
     (testing "non-members cannot be removed"
       (is (= {:errors [{:type :user-not-member :user {:userid "notamember"}}]}
              (fail-command application
                            {:type :application.command/remove-member
-                            :actor "assistant"
+                            :actor handler-user-id
                             :member {:userid "notamember"}
                             :comment ""}
                            injections))))
@@ -654,7 +656,7 @@
               (model/see-application? "somebody")))
       (is (not (-> application
                    (apply-commands [{:type :application.command/remove-member
-                                     :actor "applicant"
+                                     :actor applicant-user-id
                                      :member {:userid "somebody"}
                                      :comment ""}]
                                    injections)
@@ -666,38 +668,38 @@
                                   [dummy-created-event
                                    {:event/type :application.event/member-invited
                                     :event/time test-time
-                                    :event/actor "applicant"
+                                    :event/actor applicant-user-id
                                     :application/id 123
                                     :application/member {:name "Some Body" :email "some@body.com"}
                                     :invitation/token "123456"}
                                    {:event/type :application.event/submitted
                                     :event/time test-time
-                                    :event/actor "applicant"
+                                    :event/actor applicant-user-id
                                     :application/id 123}])
         injections {}]
     (testing "uninvite member by applicant"
       (is (= [{:event/type :application.event/member-uninvited
                :event/time test-time
-               :event/actor "applicant"
+               :event/actor applicant-user-id
                :application/id 123
                :application/member {:name "Some Body" :email "some@body.com"}
                :application/comment ""}]
              (ok-command application
                          {:type :application.command/uninvite-member
-                          :actor "applicant"
+                          :actor applicant-user-id
                           :member {:name "Some Body" :email "some@body.com"}
                           :comment ""}
                          injections))))
     (testing "uninvite member by handler"
       (is (= [{:event/type :application.event/member-uninvited
                :event/time test-time
-               :event/actor "assistant"
+               :event/actor handler-user-id
                :application/id 123
                :application/member {:name "Some Body" :email "some@body.com"}
                :application/comment ""}]
              (ok-command application
                          {:type :application.command/uninvite-member
-                          :actor "assistant"
+                          :actor handler-user-id
                           :member {:name "Some Body" :email "some@body.com"}
                           :comment ""}
                          injections))))
@@ -705,7 +707,7 @@
       (is (= {:errors [{:type :user-not-member :user {:name "Not Member" :email "not@member.com"}}]}
              (fail-command application
                            {:type :application.command/uninvite-member
-                            :actor "assistant"
+                            :actor handler-user-id
                             :member {:name "Not Member" :email "not@member.com"}
                             :comment ""}
                            injections))))))
@@ -715,14 +717,14 @@
                                   [dummy-created-event
                                    {:event/type :application.event/submitted
                                     :event/time test-time
-                                    :event/actor "applicant"
+                                    :event/actor applicant-user-id
                                     :application/id 123}])
         injections {:valid-user? #{"commenter" "commenter2" "commenter3"}}]
     (testing "required :valid-user? injection"
       (is (= {:errors [{:type :missing-injection :injection :valid-user?}]}
              (fail-command application
                            {:type :application.command/request-comment
-                            :actor "assistant"
+                            :actor handler-user-id
                             :commenters ["commenter"]
                             :comment ""}
                            {}))))
@@ -730,7 +732,7 @@
       (is (= {:errors [{:type :must-not-be-empty :key :commenters}]}
              (fail-command application
                            {:type :application.command/request-comment
-                            :actor "assistant"
+                            :actor handler-user-id
                             :commenters []
                             :comment ""}
                            {}))))
@@ -739,7 +741,7 @@
                        {:type :t.form.validation/invalid-user :userid "invaliduser2"}]}
              (fail-command application
                            {:type :application.command/request-comment
-                            :actor "assistant"
+                            :actor handler-user-id
                             :commenters ["invaliduser" "commenter" "invaliduser2"]
                             :comment ""}
                            injections))))
@@ -752,7 +754,7 @@
                            injections))))
     (let [events-1 (ok-command application
                                {:type :application.command/request-comment
-                                :actor "assistant"
+                                :actor handler-user-id
                                 :commenters ["commenter" "commenter2"]
                                 :comment ""}
                                injections)
@@ -761,7 +763,7 @@
           ;; Make a new request that should partly override previous
           events-2 (ok-command application
                                {:type :application.command/request-comment
-                                :actor "assistant"
+                                :actor handler-user-id
                                 :commenters ["commenter"]
                                 :comment ""}
                                injections)
@@ -774,7 +776,7 @@
                  :application/commenters ["commenter" "commenter2"]
                  :application/comment ""
                  :event/time test-time
-                 :event/actor "assistant"
+                 :event/actor handler-user-id
                  :application/id 123}]
                events-1))
         (is (instance? UUID request-id-2))
@@ -783,7 +785,7 @@
                  :application/commenters ["commenter"]
                  :application/comment ""
                  :event/time test-time
-                 :event/actor "assistant"
+                 :event/actor handler-user-id
                  :application/id 123}]
                events-2)))
       (testing "only the requested commenter can comment"
