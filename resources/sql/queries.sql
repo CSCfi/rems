@@ -345,13 +345,8 @@ WHERE 1=1
 ;
 
 -- :name add-entitlement! :!
--- TODO remove resId from this table to make it normalized?
 INSERT INTO entitlement (catAppId, userId, resId)
-SELECT :application, :user, cat.resid
-FROM catalogue_item_application_items ciai
-LEFT OUTER JOIN catalogue_item_application app ON ciai.catAppId = app.id
-LEFT OUTER JOIN catalogue_item cat ON ciai.catItemId = cat.id
-WHERE ciai.catAppId = :application;
+VALUES (:application, :user, :resource);
 
 -- :name end-entitlement! :!
 UPDATE entitlement

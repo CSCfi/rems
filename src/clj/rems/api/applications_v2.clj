@@ -29,6 +29,12 @@
                            :get-license get-license
                            :get-user get-user})
 
+(defn get-unrestricted-application [application-id]
+  (let [events (applications/get-dynamic-application-events application-id)]
+    (if (empty? events)
+      nil
+      (model/build-application-view events injections))))
+
 (defn api-get-application-v2 [user-id application-id]
   (let [events (applications/get-dynamic-application-events application-id)]
     (if (empty? events)
