@@ -47,9 +47,11 @@
     (GET "/" []
       :summary "Get licenses"
       :roles #{:owner}
-      :query-params [{active :- (describe s/Bool "filter active or inactive licenses") nil}]
+      :query-params [{active :- (describe s/Bool "filter active or inactive licenses") nil}
+                     {archived :- (describe s/Bool "whether to include archived resources") false}]
       :return Licenses
-      (ok (licenses/get-all-licenses (when active {:active active}))))
+      (ok (licenses/get-all-licenses (merge (when active {:active active})
+                                            (when-not archived {:archived false})))))
 
     (GET "/:license-id" []
       :summary "Get license"

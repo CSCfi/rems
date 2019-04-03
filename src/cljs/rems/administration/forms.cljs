@@ -12,12 +12,14 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:dispatch [::fetch-forms]}))
+   {:db (assoc db ::display-archived? false)
+    :dispatch [::fetch-forms]}))
 
 (rf/reg-event-db
  ::fetch-forms
  (fn [db]
-   (fetch "/api/forms/" {:handler #(rf/dispatch [::fetch-forms-result %])})
+   (fetch "/api/forms/" {:url-params {:archived (::display-archived? db)}
+                         :handler #(rf/dispatch [::fetch-forms-result %])})
    (assoc db ::loading? true)))
 
 (rf/reg-event-db
@@ -51,6 +53,14 @@
 
 (rf/reg-event-db ::set-filtering (fn [db [_ filtering]] (assoc db ::filtering filtering)))
 (rf/reg-sub ::filtering (fn [db _] (::filtering db)))
+
+(rf/reg-event-fx
+ ::set-display-archived?
+ (fn [{:keys [db]} [_ display-archived?]]
+   {:db (assoc db ::display-archived? display-archived?)
+    :dispatch [::fetch-forms]}))
+
+(rf/reg-sub ::display-archived? (fn [db _] (::display-archived? db)))
 
 (defn- to-create-form []
   [:a.btn.btn-primary
@@ -98,6 +108,9 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-form]
+           [status-flags/display-archived-toggle
+            @(rf/subscribe [::display-archived?])
+            #(rf/dispatch [::set-display-archived? %])]
            [forms-list
             @(rf/subscribe [::forms])
             (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))

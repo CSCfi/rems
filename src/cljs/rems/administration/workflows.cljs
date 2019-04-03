@@ -12,12 +12,14 @@
 (rf/reg-event-fx
  ::enter-page
  (fn [{:keys [db]}]
-   {:dispatch [::fetch-workflows]}))
+   {:db (assoc db ::display-archived? false)
+    :dispatch [::fetch-workflows]}))
 
 (rf/reg-event-db
  ::fetch-workflows
  (fn [db]
-   (fetch "/api/workflows/" {:handler #(rf/dispatch [::fetch-workflows-result %])})
+   (fetch "/api/workflows/" {:url-params {:archived (::display-archived? db)}
+                             :handler #(rf/dispatch [::fetch-workflows-result %])})
    (assoc db ::loading? true)))
 
 (rf/reg-event-db
@@ -51,6 +53,14 @@
 
 (rf/reg-event-db ::set-filtering (fn [db [_ filtering]] (assoc db ::filtering filtering)))
 (rf/reg-sub ::filtering (fn [db _] (::filtering db)))
+
+(rf/reg-event-fx
+ ::set-display-archived?
+ (fn [{:keys [db]} [_ display-archived?]]
+   {:db (assoc db ::display-archived? display-archived?)
+    :dispatch [::fetch-workflows]}))
+(rf/reg-sub ::display-archived? (fn [db _] (::display-archived? db)))
+
 
 (defn- to-create-workflow []
   [:a.btn.btn-primary
@@ -99,6 +109,9 @@
         (if @(rf/subscribe [::loading?])
           [[spinner/big]]
           [[to-create-workflow]
+           [status-flags/display-archived-toggle
+            @(rf/subscribe [::display-archived?])
+            #(rf/dispatch [::set-display-archived? %])]
            [workflows-list
             @(rf/subscribe [::workflows])
             (assoc @(rf/subscribe [::sorting]) :set-sorting #(rf/dispatch [::set-sorting %]))
