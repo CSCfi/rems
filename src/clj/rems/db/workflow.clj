@@ -1,5 +1,6 @@
 (ns rems.db.workflow
-  (:require [rems.db.core :as db]
+  (:require [rems.db.catalogue :as catalogue]
+            [rems.db.core :as db]
             [rems.json :as json]))
 
 (defn- parse-workflow-body [json]
@@ -51,10 +52,12 @@
      {:success (not (nil? (:id result)))})))
 
 (defn update-workflow! [command]
-  (let [catalogue-items (db/get-catalogue-items {:workflow (:id command) :archived false})]
+  (let [catalogue-items
+        (->> (catalogue/get-localized-catalogue-items {:workflow (:id command) :archived false})
+             (map #(select-keys % [:id :title :localizations])))]
     (if (and (:archived command) (seq catalogue-items))
       {:success false
-       :errors [{:type :t.administration.errors/workflow-in-use :catalogue-items (mapv :id catalogue-items)}]}
+       :errors [{:type :t.administration.errors/workflow-in-use :catalogue-items catalogue-items}]}
       (do
         (db/set-workflow-state! command)
         {:success true}))))
