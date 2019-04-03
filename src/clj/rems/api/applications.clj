@@ -8,6 +8,7 @@
             [rems.application.commands :as commands]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.applications :as applications]
+            [rems.db.attachments :as attachments]
             [rems.db.core :as db]
             [rems.db.users :as users]
             [rems.pdf :as pdf]
@@ -198,7 +199,7 @@
       :middleware [multipart/wrap-multipart-params]
       :return SuccessResponse
       (check-attachment-content-type (:content-type file))
-      (applications/save-attachment! file (getx-user-id) application-id field-id)
+      (attachments/save-attachment! file (getx-user-id) application-id field-id)
       (ok {:success true}))
 
     (POST "/remove_attachment" []
@@ -207,7 +208,7 @@
       :query-params [application-id :- (describe s/Int "application id")
                      field-id :- (describe s/Int "application form field id the attachment is related to")]
       :return SuccessResponse
-      (applications/remove-attachment! (getx-user-id) application-id field-id)
+      (attachments/remove-attachment! (getx-user-id) application-id field-id)
       (ok {:success true}))
 
     (POST "/command" []
