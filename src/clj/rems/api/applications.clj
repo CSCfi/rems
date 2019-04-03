@@ -158,9 +158,10 @@
       :query-params [application-id :- (describe s/Int "application id")
                      field-id :- (describe s/Int "application form field id the attachment is related to")]
       (let [user-id (getx-user-id)
-            application (applications/get-dynamic-application-state-for-user user-id application-id)]
+            application (api-get-application-v2 user-id application-id)
+            form-id (get-in application [:application/form :form/id])]
         (if-let [attachment (db/get-attachment {:item field-id
-                                                :form (:form/id application)
+                                                :form form-id
                                                 :application application-id})]
           (do (check-attachment-content-type (:type attachment))
               (-> (:data attachment)

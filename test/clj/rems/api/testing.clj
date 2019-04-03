@@ -40,6 +40,9 @@
 (defn assert-response-is-server-error? [response]
   (assert (= 500 (:status response))))
 
+(defn response-is-bad-request? [response]
+  (= 400 (:status response)))
+
 (defn response-is-unauthorized? [response]
   (= 401 (:status response)))
 

@@ -347,19 +347,20 @@
         cat-id (create-catalogue-item form-id workflow-id)
         app-id (create-v2-application [cat-id] user-id)]
     (testing "uploading attachment for a draft"
-      (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
-          (assoc :params {"file" filecontent})
-          (assoc :multipart-params {"file" filecontent})
-          (authenticate api-key user-id)
-          handler
-          assert-response-is-ok))
+      (let [body (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
+                     (assoc :params {"file" filecontent})
+                     (assoc :multipart-params {"file" filecontent})
+                     (authenticate api-key user-id)
+                     handler
+                     read-ok-body)]
+        (is (= {:success true} body))))
     (testing "uploading malicious file for a draft"
       (let [response (-> (request :post (str "/api/applications/add_attachment?application-id=" app-id "&field-id=" field-id))
                          (assoc :params {"file" malicious-content})
                          (assoc :multipart-params {"file" malicious-content})
                          (authenticate api-key user-id)
                          handler)]
-        (is (= 400 (:status response)))))
+        (is (response-is-bad-request? response))))
     (testing "retrieving attachment for a draft"
       (let [response (-> (request :get "/api/applications/attachments" {:application-id app-id :field-id field-id})
                          (authenticate api-key user-id)
