@@ -1,3 +1,0 @@
-{:ns rems.migrations.example
- :up-fn migrate-up
- :down-fn nil}
