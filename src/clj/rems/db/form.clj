@@ -1,5 +1,6 @@
 (ns rems.db.form
-  (:require [rems.db.catalogue :as catalogue]
+  (:require [rems.InvalidRequestException]
+            [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.json :as json]))
 
