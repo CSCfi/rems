@@ -35,8 +35,7 @@
  (fn [_ [_ item]]
    (put! "/api/workflows/update"
          {:params (select-keys item [:id :enabled :archived])
-          ;; TODO: render the catalogue items that use this workflow in the error handler
-          :handler (partial status-modal/common-success-handler! #(rf/dispatch [::fetch-workflows]))
+          :handler (partial status-flags/common-update-handler! #(rf/dispatch [::fetch-workflows]))
           :error-handler status-modal/common-error-handler!})
    {}))
 
