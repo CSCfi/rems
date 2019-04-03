@@ -78,7 +78,9 @@
       (let [resp (api-call :put "/api/licenses/update" {:id license-id :enabled true :archived true}
                            api-key user-id)]
         (is (false? (:success resp)))
-        (is (= [{:type "t.administration.errors/license-in-use" :resources [resource-id] :workflows [workflow-id]}]
+        (is (= [{:type "t.administration.errors/license-in-use"
+                 :resources [{:id resource-id :resid "test"}]
+                 :workflows [{:id workflow-id :title "dynamic workflow"}]}]
                (:errors resp)))))
 
     (testing "can archive a catalogue item"
