@@ -753,68 +753,6 @@
                         {"resource" "resource2" "application" app-id "user" "bob" "mail" "b@o.b"}]
                        body))))))))))
 
-(deftest test-dynamic-workflow
-  (db/add-user! {:user "alice" :userattrs "{}"})
-  (db/add-user! {:user "bob" :userattrs "{}"})
-  (db/add-user! {:user "handler" :userattrs "{}"})
-  (let [workflow {:type :workflow/dynamic
-                  :handlers ["handler"]}
-        wfid (:id (db/create-workflow! {:organization "abc" :modifieruserid "owner" :owneruserid "owner" :title "dynamic" :fnlround -1 :workflow (cheshire/generate-string workflow)}))
-        form (:id (db/create-form! {:organization "abc" :title "internal-title" :user "owner"}))
-        form-item (:id (db/create-form-item! {:type "text" :user "owner" :value 0}))
-        _ (db/link-form-item! {:form form :itemorder 1 :item form-item :user "owner" :optional false})
-        res (:id (db/create-resource! {:resid "some resource" :organization "abc" :owneruserid "owner" :modifieruserid "owner"}))
-        ci (:id (db/create-catalogue-item! {:title "dynamic" :resid res :wfid wfid :form form}))
-        app-id (applications/create-new-draft "alice" wfid)]
-    (db/add-application-item! {:application app-id :item ci})
-    (db/save-field-value! {:application app-id :form form :item form-item :user "alice" :value "X"})
-    ;; TODO: rewrite these tests to be event-based; remove the above stuff
-    (applications/add-application-created-event! {:application-id app-id
-                                                  :catalogue-item-ids [ci]
-                                                  :time (time/now)
-                                                  :actor "alice"})
-
-    (is (= {:applicantuserid "alice"
-            :state :application.state/draft
-            :workflow workflow}
-           (select-keys (applications/get-dynamic-application-state app-id) [:applicantuserid :state :workflow])))
-    (is (nil? (applications/command! {:type :application.command/invite-member
-                                      :actor "alice"
-                                      :member {:name "Jane Doe" :email "jane.doe@members.com"}
-                                      :application-id app-id
-                                      :time (time/now)})))
-    (is (nil? (applications/command! {:type :application.command/save-draft
-                                      :actor "alice"
-                                      :application-id app-id
-                                      :time (time/now)
-                                      :field-values {form-item "X"}
-                                      :accepted-licenses #{}})))
-    (is (nil? (applications/command! {:type :application.command/submit
-                                      :actor "alice"
-                                      :application-id app-id
-                                      :time (time/now)})))
-    (is (= :application.state/submitted
-           (:state (applications/get-dynamic-application-state app-id))))
-    (is (nil? (applications/command! {:type :application.command/add-member
-                                      :actor "handler"
-                                      :member {:userid "bob"}
-                                      :application-id app-id
-                                      :time (time/now)})))
-    (is (nil? (applications/command! {:type :application.command/invite-member
-                                      :actor "handler"
-                                      :member {:name "John Doe" :email "john.doe@members.com"}
-                                      :application-id app-id
-                                      :time (time/now)})))
-    (is (= [{:userid "alice"} {:userid "bob"}]
-           (:members (applications/get-dynamic-application-state app-id))))
-    (is (nil? (applications/command! {:type :application.command/approve
-                                      :actor "handler"
-                                      :application-id app-id
-                                      :time (time/now)
-                                      :comment ""})))
-    (is (= :application.state/approved
-           (:state (applications/get-dynamic-application-state app-id))))))
-
 (deftest test-create-demo-data!
   ;; just a smoke test, check that create-demo-data doesn't fail
   (test-data/create-demo-data!)
