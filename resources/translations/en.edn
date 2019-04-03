@@ -101,10 +101,10 @@
                    :enable "Enable"
                    :end "End"
                    :errors {:duplicate-resid "Duplicate resource for organization."
-                            :form-in-use "Form is in use."
-                            :license-in-use "Lisenssi käytössä."
-                            :resource-in-use "Resource is in use."
-                            :workflow-in-use "Workflow is in use."}
+                            :form-in-use "Form is in use by:"
+                            :license-in-use "License is in use by:"
+                            :resource-in-use "Resource is in use by:"
+                            :workflow-in-use "Workflow is in use by:"}
                    :field "Field \"%1\""
                    :fields "Fields"
                    :form "Form"
