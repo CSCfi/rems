@@ -48,7 +48,8 @@
       (let [resp (api-call :put "/api/resources/update" {:id resource-id :enabled true :archived true}
                            api-key user-id)]
         (is (false? (:success resp)))
-        (is (= [{:type "t.administration.errors/resource-in-use" :catalogue-items [catalogue-id]}]
+        (is (= [{:type "t.administration.errors/resource-in-use"
+                 :catalogue-items [{:id catalogue-id :title "test-item-title" :localizations nil}]}]
                (:errors resp)))))
 
     (testing "can disable a form"
@@ -58,7 +59,8 @@
       (let [resp (api-call :put "/api/forms/update" {:id form-id :enabled true :archived true}
                            api-key user-id)]
         (is (false? (:success resp)))
-        (is (= [{:type "t.administration.errors/form-in-use" :catalogue-items [catalogue-id]}]
+        (is (= [{:type "t.administration.errors/form-in-use"
+                 :catalogue-items [{:id catalogue-id :title "test-item-title" :localizations nil}]}]
                (:errors resp)))))
 
     (testing "can disable a workflow"

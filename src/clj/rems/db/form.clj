@@ -1,5 +1,5 @@
 (ns rems.db.form
-  (:require [rems.InvalidRequestException]
+  (:require [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.json :as json]))
 
@@ -59,10 +59,11 @@
      :id form-id}))
 
 (defn update-form! [command]
-  (let [catalogue-items (db/get-catalogue-items {:form (:id command) :archived false})]
+  (let [catalogue-items (->> (catalogue/get-localized-catalogue-items {:form (:id command) :archived false})
+                             (map #(select-keys % [:id :title :localizations])))]
     (if (and (:archived command) (seq catalogue-items))
       {:success false
-       :errors [{:type :t.administration.errors/form-in-use :catalogue-items (mapv :id catalogue-items)}]}
+       :errors [{:type :t.administration.errors/form-in-use :catalogue-items catalogue-items}]}
       (do
         (db/set-form-state! command)
         (db/set-form-template-state! command)
