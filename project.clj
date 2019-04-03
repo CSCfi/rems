@@ -98,7 +98,6 @@
                    :integration #(not (:browser %))
                    :all (constantly true)
                    :focused :focused}
-  :eftest {:multithread? false} ;; integration tests aren't safe to run in parallel
 
   ;; cljs testing
   :npm {:devDependencies [[karma "3.1.1"]
