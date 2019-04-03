@@ -25,7 +25,7 @@
   (str (:public-url env) "accept-invitation?token=" token))
 
 (defn- application-id-for-email [application]
-  (or (:application/external-id application) (:id application)))
+  (or (:application/external-id application) (:application/id application)))
 
 (defmulti ^:private event-to-emails-impl
   (fn [event _application] (:event/type event)))
@@ -33,12 +33,17 @@
 (defmethod event-to-emails-impl :default [_event _application]
   [])
 
+(defn- applicant-and-members [application]
+  ;; XXX: the tests depend on the order of members
+  (conj (reverse (sort-by :userid (:application/members application)))
+        {:userid (:application/applicant application)}))
+
 ;; There's a slight inconsistency here: we look at current members, so
 ;; a member might get an email for an event that happens before he was
 ;; added.
 (defmethod event-to-emails-impl :application.event/approved [event application]
   (vec
-   (for [member (:members application)] ;; applicant is a member
+   (for [member (applicant-and-members application)]
      {:to-user (:userid member)
       :subject (text :t.email.application-approved/subject)
       :body (text-format :t.email.application-approved/message
@@ -48,7 +53,7 @@
 
 (defmethod event-to-emails-impl :application.event/rejected [event application]
   (vec
-   (for [member (:members application)] ;; applicant is a member
+   (for [member (applicant-and-members application)]
      {:to-user (:userid member)
       :subject (text :t.email.application-rejected/subject)
       :body (text-format :t.email.application-rejected/message
@@ -58,7 +63,7 @@
 
 (defmethod event-to-emails-impl :application.event/closed [event application]
   (vec
-   (for [member (:members application)] ;; applicant is a member
+   (for [member (applicant-and-members application)]
      {:to-user (:userid member)
       :subject (text :t.email.application-closed/subject)
       :body (text-format :t.email.application-closed/message
@@ -90,7 +95,7 @@
 
 (defmethod event-to-emails-impl :application.event/commented [event application]
   (vec
-   (for [handler (get-in application [:workflow :handlers])]
+   (for [handler (get-in application [:application/workflow :workflow.dynamic/handlers])]
      {:to-user handler
       :subject (text :t.email.commented/subject)
       :body (text-format :t.email.commented/message
@@ -101,7 +106,7 @@
 
 (defmethod event-to-emails-impl :application.event/decided [event application]
   (vec
-   (for [handler (get-in application [:workflow :handlers])]
+   (for [handler (get-in application [:application/workflow :workflow.dynamic/handlers])]
      {:to-user handler
       :subject (text :t.email.decided/subject)
       :body (text-format :t.email.decided/message
