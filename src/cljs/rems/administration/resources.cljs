@@ -35,25 +35,12 @@
 (rf/reg-sub ::resources (fn [db _] (::resources db)))
 (rf/reg-sub ::loading? (fn [db _] (::loading? db)))
 
-(defn- format-update-error [lang resp]
-  ;; no support for multiple errors
-  (let [{:keys [type catalogue-items]} (first (:errors resp))]
-    [:p (text type)
-     (into [:ul]
-           (for [ci catalogue-items]
-             ;; TODO open in new tab?
-             [:li [:a {:href (str "#/administration/catalogue-items/" (:id ci))}
-                   (get-catalogue-item-title ci lang)]]))]))
-
 (rf/reg-event-fx
  ::update-resource
  (fn [{:keys [db]} [_ item]]
    (put! "/api/resources/update"
          {:params (select-keys item [:id :enabled :archived])
-          :handler (fn [resp]
-                     (if (:success resp)
-                       (status-modal/set-success! {:on-close #(rf/dispatch [::fetch-resources])})
-                       (status-modal/set-error! {:error-content (format-update-error (get db :language) resp)})))
+          :handler (partial status-flags/common-update-handler! #(rf/dispatch [::fetch-resources]))
           :error-handler status-modal/common-error-handler!})
    {}))
 
