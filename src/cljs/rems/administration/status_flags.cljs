@@ -49,14 +49,26 @@
    [:label.form-check-label {:for "display-archived"}
     (text :t.administration/display-archived)]])
 
-(defn- format-update-error [{:keys [type catalogue-items]}]
+(defn- format-update-error [{:keys [type catalogue-items resources workflows]}]
   (let [language @(rf/subscribe [:language])]
     [:p (text type)
      (into [:ul]
            (for [ci catalogue-items]
              ;; TODO open in new tab?
-             [:li [:a {:href (str "#/administration/catalogue-items/" (:id ci))}
-                   (get-catalogue-item-title ci language)]]))]))
+             [:li
+              (text :t.administration/catalogue-item) ": "
+              [:a {:href (str "#/administration/catalogue-items/" (:id ci))}
+               (get-catalogue-item-title ci language)]]))
+     (into [:ul]
+           (for [r resources]
+             [:li
+              (text :t.administration/resource) ": "
+              [:a {:href (str "#/administration/resources/" (:id r))} (:resid r)]]))
+     (into [:ul]
+           (for [w workflows]
+             [:li
+              (text :t.administration/workflow) ": "
+              [:a {:href (str "#/administration/workflows/" (:id w))} (:title w)]]))]))
 
 (defn- format-update-failure [{:keys [errors]}]
   (into [:div]
