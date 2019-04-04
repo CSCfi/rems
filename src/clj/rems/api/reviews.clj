@@ -1,14 +1,9 @@
 (ns rems.api.reviews
   (:require [compojure.api.sweet :refer :all]
-            [rems.api.applications-v2 :refer [get-all-applications-v2]]
+            [rems.api.applications-v2 :as applications-v2]
             [rems.api.schema :refer :all]
-            [rems.api.util]
-            [rems.config :refer [env]]
-            [rems.db.applications :as applications]
             [rems.util :refer [getx-user-id]]
-            [ring.util.http-response :refer :all]
-            [schema.core :as s]))
-
+            [ring.util.http-response :refer :all]))
 
 (defn- review? [application]
   (and (some #{:handler
@@ -20,7 +15,7 @@
        (not= :application.state/draft (:application/state application))))
 
 (defn get-all-reviews [user-id]
-  (->> (get-all-applications-v2 user-id)
+  (->> (applications-v2/get-all-applications user-id)
        (filter review?)))
 
 (defn- open-review? [application]

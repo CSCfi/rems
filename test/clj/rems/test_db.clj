@@ -217,7 +217,7 @@
                                       :application-id app-id
                                       :time (time/now)
                                       :comment ""})))
-    (is (= :application.state/approved (:application/state (applications-v2/api-get-application-v2 uid app-id))))
+    (is (= :application.state/approved (:application/state (applications-v2/get-application uid app-id))))
 
     (rems.poller.entitlements/run)
     (is (= ["resid111" "resid222"] (sort (map :resid (db/get-entitlements {:application app-id}))))

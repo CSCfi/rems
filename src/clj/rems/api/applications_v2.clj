@@ -39,7 +39,7 @@
       nil
       (model/build-application-view events injections))))
 
-(defn api-get-application-v2
+(defn get-application
   "Returns the part of application state which the specified user
    is allowed to see. Suitable for returning from public APIs as-is."
   [user-id application-id]
@@ -50,7 +50,7 @@
               (model/apply-user-permissions user-id))
           (throw-forbidden)))))
 
-;;; v2 API, listing all applications
+;;; Listing all applications
 
 (defn- all-applications-view
   "Projection for the current state of all applications."
@@ -65,7 +65,7 @@
           :application/form
           :application/licenses))
 
-(defn get-all-applications-v2 [user-id]
+(defn get-all-applications [user-id]
   ;; TODO: cache the applications and build the projection incrementally as new events are published
   (let [events (applications/get-dynamic-application-events-since 0)
         applications (reduce all-applications-view nil events)]
@@ -81,6 +81,6 @@
           :member}
         (:application/roles application)))
 
-(defn get-user-applications-v2 [user-id]
-  (->> (get-all-applications-v2 user-id)
+(defn get-own-applications [user-id]
+  (->> (get-all-applications user-id)
        (filter own-application?)))

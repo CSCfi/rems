@@ -1,16 +1,14 @@
 (ns rems.api.applications
   (:require [clj-time.core :as time]
             [clojure.string :as str]
-            [clojure.test :refer [deftest is]]
             [compojure.api.sweet :refer :all]
-            [rems.api.applications-v2 :refer [get-user-applications-v2 api-get-application-v2]]
+            [rems.api.applications-v2 :as applications-v2]
             [rems.api.schema :refer :all]
             [rems.api.util]
             [rems.application.commands :as commands]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.applications :as applications]
             [rems.db.attachments :as attachments]
-            [rems.db.core :as db]
             [rems.db.users :as users]
             [rems.pdf :as pdf]
             [rems.util :refer [getx-user-id update-present]]
@@ -29,15 +27,6 @@
 (s/defschema CreateApplicationResponse
   {:success s/Bool
    (s/optional-key :application-id) s/Int})
-
-(s/defschema Phases
-  [{:phase s/Keyword
-    (s/optional-key :active?) s/Bool
-    (s/optional-key :approved?) s/Bool
-    (s/optional-key :closed?) s/Bool
-    (s/optional-key :completed?) s/Bool
-    (s/optional-key :rejected?) s/Bool
-    :text s/Keyword}])
 
 (s/defschema User
   {:userid s/Str
@@ -150,7 +139,7 @@
       :roles #{:logged-in}
       :path-params [application-id :- (describe s/Num "application id")]
       :produces ["application/pdf"]
-      (if-let [app (api-get-application-v2 (getx-user-id) application-id)]
+      (if-let [app (applications-v2/get-application (getx-user-id) application-id)]
         (-> app
             (pdf/application-to-pdf-bytes)
             (ByteArrayInputStream.)
@@ -202,7 +191,7 @@
       :summary "Get current user's all applications"
       :roles #{:logged-in}
       :return [ApplicationOverview]
-      (ok (get-user-applications-v2 (getx-user-id))))
+      (ok (applications-v2/get-own-applications (getx-user-id))))
 
     (POST "/create" []
       :summary "Create a new application"
@@ -217,6 +206,6 @@
       :path-params [application-id :- (describe s/Num "application id")]
       :responses {200 {:schema Application}
                   404 {:schema s/Str :description "Not found"}}
-      (if-let [app (api-get-application-v2 (getx-user-id) application-id)]
+      (if-let [app (applications-v2/get-application (getx-user-id) application-id)]
         (ok app)
         (not-found! "not found")))))
