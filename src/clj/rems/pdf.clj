@@ -1,14 +1,14 @@
 (ns rems.pdf
   "Rendering applications as pdf"
   (:require [clj-pdf.core :refer :all]
-            [rems.context :as context]
-            [rems.text :refer [localize-event localize-state localize-time text with-language]]))
+            [rems.text :refer [localized localize-event localize-state localize-time text with-language]])
+  (:import [java.io ByteArrayOutputStream]))
 
-(defn- render-header [form]
-  (let [state (get-in form [:application :state])
-        events (get-in form [:application :events])
-        user (:applicant-attributes form)
-        catalogue-items (:catalogue-items form)]
+(defn- render-header [application]
+  (let [state (:application/state application)
+        events (:application/events application)
+        user (:application/applicant-attributes application)
+        resources (:application/resources application)]
     (list
      [:paragraph
       (text :t.applications/state)
@@ -21,63 +21,64 @@
      [:heading (text :t.form/resources)]
      (into
       [:list]
-      (for [ci catalogue-items]
+      (for [resource resources]
         [:phrase
-         (get-in ci [:localizations context/*lang* :title])
-         " (" (:resid ci) ")"]))
+         (localized (:catalogue-item/title resource))
+         " (" (:resource/ext-id resource) ")"]))
      [:heading (text :t.form/events)]
      (if (empty? events)
-       [:paragraph "–"] ;; TODO localize?
+       [:paragraph "–"]
        (into
-        [:table {:header [(text :t.form/user) (text :t.form/event) (text :t.form/comment) (text :t.form/date)]}]
-        (for [e events]
-          [(:userid e) (localize-event (:event e)) (:comment e) (localize-time (:time e))]))))))
+        [:table {:header [(text :t.form/user)
+                          (text :t.form/event)
+                          (text :t.form/comment)
+                          (text :t.form/date)]}]
+        (for [event events]
+          [(:event/actor event)
+           (localize-event (:event/type event))
+           (:application/comment event)
+           (localize-time (:event/time event))]))))))
 
 (defn- render-field [field]
   (list
-   [:heading (:title field)]
-   [:paragraph (:value field)]))
+   [:heading (localized (:field/title field))]
+   [:paragraph (:field/value field)]))
 
-(defn- apply-localization [item]
-  (merge item (get-in item [:localizations context/*lang*])))
-
-(defn- render-fields [form]
+(defn- render-fields [application]
   (apply concat
-         (for [field (:items form)]
-           (render-field (apply-localization field)))))
+         (for [field (get-in application [:application/form :form/fields])]
+           (render-field field))))
 
 (defn- render-license [license]
   ;; TODO nicer checkbox rendering
   ;; TODO license text?
   [:paragraph
-   (if (:approved license) "[x]" "[ ]")
-   (:title license)])
+   (if (:license/accepted license) "[x] " "[ ] ")
+   (localized (:license/title license))])
 
-(defn- render-licenses [form]
+(defn- render-licenses [application]
   (into
    [[:heading (text :t.form/licenses)]]
-   (for [license (:licenses form)]
-     (render-license (apply-localization license)))))
+   (for [license (:application/licenses application)]
+     (render-license license))))
 
-(defn- render-form [form]
+(defn- render-application [application]
   [{}
    [:heading (text :t.applications/application)]
-   (render-header form)
-   (render-fields form)
-   (render-licenses form)])
+   (render-header application)
+   (render-fields application)
+   (render-licenses application)])
 
-(defn application-to-pdf [form out]
-  (pdf (render-form form) out))
+(defn application-to-pdf [application out]
+  (pdf (render-application application) out))
 
-(defn application-to-pdf-bytes [form]
-  (let [out (java.io.ByteArrayOutputStream.)]
-    (pdf (render-form form) out)
+(defn application-to-pdf-bytes [application]
+  (let [out (ByteArrayOutputStream.)]
+    (application-to-pdf application out)
     (.toByteArray out)))
 
 (comment
-  (def form
-    (applications/get-form-for "developer" 9))
   (with-language :en
-    #(clojure.pprint/pprint (render-form form)))
+    #(clojure.pprint/pprint (render-application application)))
   (with-language :en
-    #(application-to-pdf form "/tmp/application.pdf")))
+    #(application-to-pdf application "/tmp/application.pdf")))
