@@ -1,7 +1,9 @@
 (ns rems.db.licenses
   "querying localized licenses"
   (:require [rems.common-util :refer [distinct-by]]
-            [rems.db.core :as db])
+            [rems.db.core :as db]
+            [rems.db.resource :as resource]
+            [rems.db.workflow :as workflow])
   (:import (java.io FileInputStream ByteArrayOutputStream)))
 
 (defn- format-license [license]
@@ -120,14 +122,14 @@
   ;; these could be db joins
   (let [resources (->> (db/get-resources-for-license {:id id})
                        (map :resid)
-                       (map #(db/get-resource {:id %}))
+                       (map resource/get-resource)
                        (remove :archived)
-                       (map :id))
+                       (map #(select-keys % [:id :resid])))
         workflows (->> (db/get-workflows-for-license {:id id})
                        (map :wfid)
-                       (map #(db/get-workflow {:wfid %}))
+                       (map workflow/get-workflow)
                        (remove :archived)
-                       (map :id))]
+                       (map #(select-keys % [:id :title])))]
     (when (or (seq resources) (seq workflows))
       {:resources resources
        :workflows workflows})))

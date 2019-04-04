@@ -37,8 +37,7 @@
  (fn [_ [_ item]]
    (put! "/api/forms/update"
          {:params (select-keys item [:id :enabled :archived])
-          ;; TODO: render the catalogue items that use this form in the error handler
-          :handler (partial status-modal/common-success-handler! #(rf/dispatch [::fetch-forms]))
+          :handler (partial status-flags/common-update-handler! #(rf/dispatch [::fetch-forms]))
           :error-handler status-modal/common-error-handler!})
    {}))
 

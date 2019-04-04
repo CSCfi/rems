@@ -1,5 +1,8 @@
 (ns rems.administration.status-flags
-  (:require [rems.text :refer [text]]))
+  (:require [re-frame.core :as rf]
+            [rems.status-modal :as status-modal]
+            [rems.text :refer [text]]
+            [rems.catalogue-util :refer [get-catalogue-item-title]]))
 
 (defn- disable-button [item on-change]
   [:button.btn.btn-secondary.button-min-width
@@ -45,3 +48,33 @@
                              :on-change #(on-change (not display-archived?))}]
    [:label.form-check-label {:for "display-archived"}
     (text :t.administration/display-archived)]])
+
+(defn- format-update-error [{:keys [type catalogue-items resources workflows]}]
+  (let [language @(rf/subscribe [:language])]
+    [:p (text type)
+     (into [:ul]
+           (for [ci catalogue-items]
+             ;; TODO open in new tab?
+             [:li
+              (text :t.administration/catalogue-item) ": "
+              [:a {:href (str "#/administration/catalogue-items/" (:id ci))}
+               (get-catalogue-item-title ci language)]]))
+     (into [:ul]
+           (for [r resources]
+             [:li
+              (text :t.administration/resource) ": "
+              [:a {:href (str "#/administration/resources/" (:id r))} (:resid r)]]))
+     (into [:ul]
+           (for [w workflows]
+             [:li
+              (text :t.administration/workflow) ": "
+              [:a {:href (str "#/administration/workflows/" (:id w))} (:title w)]]))]))
+
+(defn- format-update-failure [{:keys [errors]}]
+  (into [:div]
+        (map format-update-error errors)))
+
+(defn common-update-handler! [on-close response]
+  (if (:success response)
+    (status-modal/set-success! {:on-close on-close})
+    (status-modal/set-error! {:error-content (format-update-failure response)})))

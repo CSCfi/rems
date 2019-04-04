@@ -1,5 +1,6 @@
 (ns rems.db.resource
-  (:require [rems.db.core :as db])
+  (:require [rems.db.catalogue :as catalogue]
+            [rems.db.core :as db])
   (:import (org.postgresql.util PSQLException)))
 
 (defn get-resource [id]
@@ -37,10 +38,11 @@
         (throw e)))))
 
 (defn update-resource! [command]
-  (let [catalogue-items (db/get-catalogue-items {:resource-id (:id command) :archived false})]
+  (let [catalogue-items (->> (catalogue/get-localized-catalogue-items {:resource-id (:id command) :archived false})
+                             (map #(select-keys % [:id :title :localizations])))]
     (if (and (:archived command) (seq catalogue-items))
       {:success false
-       :errors [{:type :t.administration.errors/resource-in-use :catalogue-items (mapv :id catalogue-items)}]}
+       :errors [{:type :t.administration.errors/resource-in-use :catalogue-items catalogue-items}]}
       (do
         (db/set-resource-state! (select-keys command [:id :enabled :archived]))
         {:success true}))))

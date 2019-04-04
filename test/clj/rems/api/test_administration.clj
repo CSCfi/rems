@@ -48,7 +48,8 @@
       (let [resp (api-call :put "/api/resources/update" {:id resource-id :enabled true :archived true}
                            api-key user-id)]
         (is (false? (:success resp)))
-        (is (= [{:type "t.administration.errors/resource-in-use" :catalogue-items [catalogue-id]}]
+        (is (= [{:type "t.administration.errors/resource-in-use"
+                 :catalogue-items [{:id catalogue-id :title "test-item-title" :localizations nil}]}]
                (:errors resp)))))
 
     (testing "can disable a form"
@@ -58,7 +59,8 @@
       (let [resp (api-call :put "/api/forms/update" {:id form-id :enabled true :archived true}
                            api-key user-id)]
         (is (false? (:success resp)))
-        (is (= [{:type "t.administration.errors/form-in-use" :catalogue-items [catalogue-id]}]
+        (is (= [{:type "t.administration.errors/form-in-use"
+                 :catalogue-items [{:id catalogue-id :title "test-item-title" :localizations nil}]}]
                (:errors resp)))))
 
     (testing "can disable a workflow"
@@ -68,7 +70,8 @@
       (let [resp (api-call :put "/api/workflows/update" {:id workflow-id :enabled true :archived true}
                            api-key user-id)]
         (is (false? (:success resp)))
-        (is (= [{:type "t.administration.errors/workflow-in-use" :catalogue-items [catalogue-id]}]
+        (is (= [{:type "t.administration.errors/workflow-in-use"
+                 :catalogue-items [{:id catalogue-id :title "test-item-title" :localizations nil}]}]
                (:errors resp)))))
 
     (testing "can disable a license"
@@ -78,7 +81,9 @@
       (let [resp (api-call :put "/api/licenses/update" {:id license-id :enabled true :archived true}
                            api-key user-id)]
         (is (false? (:success resp)))
-        (is (= [{:type "t.administration.errors/license-in-use" :resources [resource-id] :workflows [workflow-id]}]
+        (is (= [{:type "t.administration.errors/license-in-use"
+                 :resources [{:id resource-id :resid "test"}]
+                 :workflows [{:id workflow-id :title "dynamic workflow"}]}]
                (:errors resp)))))
 
     (testing "can archive a catalogue item"

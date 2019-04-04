@@ -39,8 +39,7 @@
  (fn [_ [_ item]]
    (put! "/api/licenses/update"
          {:params (select-keys item [:id :enabled :archived])
-          ;; TODO: render the workflows & resources that use this license in the error handler
-          :handler (partial status-modal/common-success-handler! #(rf/dispatch [::fetch-licenses]))
+          :handler (partial status-flags/common-update-handler! #(rf/dispatch [::fetch-licenses]))
           :error-handler status-modal/common-error-handler!})
    {}))
 

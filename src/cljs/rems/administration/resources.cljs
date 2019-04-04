@@ -3,6 +3,7 @@
             [rems.administration.administration :refer [administration-navigator-container]]
             [rems.administration.status-flags :as status-flags]
             [rems.atoms :refer [external-link readonly-checkbox]]
+            [rems.catalogue-util :refer [get-catalogue-item-title]]
             [rems.spinner :as spinner]
             [rems.status-modal :as status-modal]
             [rems.table :as table]
@@ -36,10 +37,10 @@
 
 (rf/reg-event-fx
  ::update-resource
- (fn [_ [_ item]]
+ (fn [{:keys [db]} [_ item]]
    (put! "/api/resources/update"
          {:params (select-keys item [:id :enabled :archived])
-          :handler (partial status-modal/common-success-handler! #(rf/dispatch [::fetch-resources]))
+          :handler (partial status-flags/common-update-handler! #(rf/dispatch [::fetch-resources]))
           :error-handler status-modal/common-error-handler!})
    {}))
 
