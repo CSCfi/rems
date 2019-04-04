@@ -5,6 +5,7 @@
             [compojure.api.sweet :refer :all]
             [rems.api.applications-v2 :refer [get-user-applications-v2 api-get-application-v2 api-get-application-v1]]
             [rems.api.schema :refer :all]
+            [rems.api.util]
             [rems.application.commands :as commands]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.applications :as applications]
@@ -200,7 +201,7 @@
     (GET "/" []
       :summary "Get current user's all applications"
       :roles #{:logged-in}
-      :return [V2ApplicationOverview]
+      :return [ApplicationOverview]
       (ok (get-user-applications-v2 (getx-user-id))))
 
     (POST "/create" []
@@ -214,7 +215,7 @@
       :summary "Get application by `application-id`"
       :roles #{:logged-in}
       :path-params [application-id :- (describe s/Num "application id")]
-      :responses {200 {:schema V2Application}
+      :responses {200 {:schema Application}
                   404 {:schema s/Str :description "Not found"}}
       (if-let [app (api-get-application-v2 (getx-user-id) application-id)]
         (ok app)
