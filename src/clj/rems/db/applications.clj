@@ -138,23 +138,17 @@
   (and (is-applicant? user-id application)
        (= (:state application) "applied")))
 
-(defn translate-catalogue-item [item]
-  (merge item
-         (get-in item [:localizations context/*lang*])))
-
 (defn get-catalogue-items
   "Function that returns localized catalogue-items for the given application items, `ids`. Prefetched localized catalogue items, `localized-items`,
   can be given as a parameter to avoid excessive database calls."
-  ([ids]
-   (mapv translate-catalogue-item
-         (catalogue/get-localized-catalogue-items {:ids ids})))
+  ([ids] (catalogue/get-localized-catalogue-items {:ids ids}))
   ([ids localized-items]
-   (mapv translate-catalogue-item
-         (filter #(some #{(:id %)} ids)
-                 localized-items))))
+   (filter #(some #{(:id %)} ids)
+           localized-items)))
 
+;; TODO remove this function
 (defn get-catalogue-item [id]
-  (translate-catalogue-item (catalogue/get-localized-catalogue-item id)))
+  (catalogue/get-localized-catalogue-item id))
 
 (defn get-catalogue-items-by-application-id
   "Given an `app-id`, the function queries for all the items related to that application and calls `get-catalogue-items` to return all the catalogue items
