@@ -420,11 +420,6 @@
         (applications/approve-application "event-test-approver" app 1 "c2")
         (is (= {:curround 1 :state "approved"} (fetch app)))
 
-        ;; XXX: entitlements don't anymore work with old workflows
-        ;;(is (= [{:catappid app :resid nil :userid uid}]
-        ;;       (map #(select-keys % [:catappid :resid :userid])
-        ;;            (db/get-entitlements))))
-
         (is (= (->> (applications/get-application-state app)
                     :events
                     (map #(select-keys % [:round :event :comment])))
@@ -547,10 +542,6 @@
                [{:round 0 :event "apply"}
                 {:round 0 :event "autoapprove"}
                 {:round 1 :event "autoapprove"}]))))
-    ;; XXX: entitlements don't anymore work with old workflows
-    ;;(is (contains? (set (map #(select-keys % [:catappid :resid :userid])
-    ;;                         (db/get-entitlements)))
-    ;;               {:catappid auto-app :resid "ABC" :userid uid}))))
     (let [new-wf (:id (db/create-workflow! {:organization "abc" :modifieruserid uid :owneruserid uid :title "3rd party review workflow" :fnlround 0}))
           new-item (:id (db/create-catalogue-item! {:title "A" :form nil :resid nil :wfid new-wf}))]
       (actors/add-approver! new-wf uid 0)
