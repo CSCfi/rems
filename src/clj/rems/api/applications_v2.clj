@@ -61,6 +61,7 @@
                                  :end (:catalogue-item/end resource)
                                  :archived (:catalogue-item/archived resource)
                                  :enabled (:catalogue-item/enabled resource)
+                                 :active (:catalogue-item/active resource)
                                  :title (:default (:catalogue-item/title resource))
                                  :localizations (into {} (for [lang (-> (set (keys (:catalogue-item/title resource)))
                                                                         (disj :default))]
