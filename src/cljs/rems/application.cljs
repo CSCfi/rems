@@ -765,7 +765,12 @@
         can-add? (contains? possible-commands :application.command/add-member)
         can-remove? (contains? possible-commands :application.command/remove-member)
         can-invite? (contains? possible-commands :application.command/invite-member)
-        can-uninvite? (contains? possible-commands :application.command/uninvite-member)]
+        can-uninvite? (contains? possible-commands :application.command/uninvite-member)
+        accepted-licenses? (fn [member]
+                             (every? (or (get (:application/accepted-licenses application)
+                                              member)
+                                         #{})
+                                     (map :license/id (:application/licenses application))))]
     [collapsible/component
      {:id id
       :title (text :t.applicant-info/applicants)
@@ -777,17 +782,15 @@
                            :group? (or (seq members)
                                        (seq invited-members))
                            :can-remove? false
-                           :accepted-licenses? (every? (or (get (:application/accepted-licenses application)
-                                                                (:application/applicant application))
-                                                           #{})
-                                                       (map :license/id (:application/licenses application)))}]]
+                           :accepted-licenses? (accepted-licenses? (:userid applicant))}]]
             (concat
              (for [member members]
                [member-info {:element-id id
                              :attributes member
                              :application application
                              :group? true
-                             :can-remove? can-remove?}])
+                             :can-remove? can-remove?
+                             :accepted-licenses? (accepted-licenses? (:userid member))}])
              (for [invited-member invited-members]
                [member-info {:element-id id
                              :attributes invited-member
