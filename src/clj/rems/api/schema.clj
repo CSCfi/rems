@@ -19,6 +19,7 @@
    :end (s/maybe DateTime)
    :enabled s/Bool
    :archived s/Bool
+   :active s/Bool
    :localizations (s/maybe {s/Any s/Any})})
 
 (s/defschema License
@@ -130,6 +131,7 @@
    :catalogue-item/start DateTime
    :catalogue-item/end (s/maybe DateTime)
    :catalogue-item/enabled s/Bool
+   :catalogue-item/active s/Bool
    :catalogue-item/archived s/Bool})
 
 (s/defschema V2License

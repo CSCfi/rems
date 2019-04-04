@@ -111,7 +111,7 @@
   [items language sorting filtering]
   [table/component
    {:column-definitions (catalogue-columns language)
-    :visible-columns [:name :resource :form :workflow :created :active :commands]
+    :visible-columns [:name :resource :form :workflow :created :end :active :commands]
     :sorting sorting
     :filtering filtering
     :id-function :id

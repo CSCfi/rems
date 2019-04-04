@@ -41,18 +41,6 @@ WHERE 1=1
 /*~ ) ~*/
 ;
 
--- :name get-catalogue-item :? :1
-SELECT ci.id, ci.title, res.resid, ci.wfid, ci.formid, ci.start, ci.endt as "end", ci.enabled, ci.archived
-, res.id AS "resource-id"
-, wf.title AS "workflow-name"
-, res.resid AS "resource-name"
-, form.title AS "form-name"
-FROM catalogue_item ci
-LEFT OUTER JOIN resource res ON (ci.resid = res.id)
-LEFT OUTER JOIN workflow wf ON (ci.wfid = wf.id)
-LEFT OUTER JOIN application_form form ON (ci.formid = form.id)
-WHERE ci.id = :id;
-
 -- :name set-catalogue-item-state! :insert
 -- TODO set modifieruserid?
 UPDATE catalogue_item
@@ -62,6 +50,9 @@ SET
 /*~ ) ~*/
 /*~ (when (boolean? (:archived params)) */
   archived = :archived,
+/*~ ) ~*/
+/*~ (when (contains? params :endt) */
+  endt = :endt,
 /*~ ) ~*/
   id = id
 WHERE id = :id;

@@ -2,6 +2,7 @@
   (:require [rems.application.model :as model]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.applications :as applications]
+            [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.form :as form]
             [rems.db.licenses :as licenses]
@@ -16,7 +17,7 @@
 (defn- get-catalogue-item [catalogue-item-id]
   (assert (int? catalogue-item-id)
           (pr-str catalogue-item-id))
-  (applications/get-catalogue-item catalogue-item-id))
+  (catalogue/get-localized-catalogue-item catalogue-item-id))
 
 (defn- get-license [license-id]
   (licenses/get-license license-id))
@@ -51,22 +52,22 @@
   (let [form (:application/form application)
         workflow (:application/workflow application)
         catalogue-items (map (fn [resource]
-                               (applications/translate-catalogue-item
-                                {:id (:catalogue-item/id resource)
-                                 :resource-id (:resource/id resource)
-                                 :resid (:resource/ext-id resource)
-                                 :wfid (:workflow/id workflow)
-                                 :formid (:form/id form)
-                                 :start (:catalogue-item/start resource)
-                                 :end (:catalogue-item/end resource)
-                                 :archived (:catalogue-item/archived resource)
-                                 :enabled (:catalogue-item/enabled resource)
-                                 :title (:default (:catalogue-item/title resource))
-                                 :localizations (into {} (for [lang (-> (set (keys (:catalogue-item/title resource)))
-                                                                        (disj :default))]
-                                                           [lang {:title (get-in resource [:catalogue-item/title lang])
-                                                                  :langcode lang
-                                                                  :id (:catalogue-item/id resource)}]))}))
+                               {:id (:catalogue-item/id resource)
+                                :resource-id (:resource/id resource)
+                                :resid (:resource/ext-id resource)
+                                :wfid (:workflow/id workflow)
+                                :formid (:form/id form)
+                                :start (:catalogue-item/start resource)
+                                :end (:catalogue-item/end resource)
+                                :archived (:catalogue-item/archived resource)
+                                :enabled (:catalogue-item/enabled resource)
+                                :active (:catalogue-item/active resource)
+                                :title (:default (:catalogue-item/title resource))
+                                :localizations (into {} (for [lang (-> (set (keys (:catalogue-item/title resource)))
+                                                                       (disj :default))]
+                                                          [lang {:title (get-in resource [:catalogue-item/title lang])
+                                                                 :langcode lang
+                                                                 :id (:catalogue-item/id resource)}]))})
                              (:application/resources application))]
     {:id (:form/id form)
      :title (:form/title form)

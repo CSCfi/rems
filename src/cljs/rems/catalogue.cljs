@@ -89,6 +89,11 @@
               :sortable? false
               :filterable? false}})
 
+(defn- catalogue-item-visible? [item]
+  ;; archived items are not returned from the API
+  (and (:enabled item)
+       (:active item)))
+
 (defn- catalogue-list
   "Renders the catalogue using table.
 
@@ -98,7 +103,7 @@
    (merge {:column-definitions (catalogue-columns language config)
            :visible-columns [:name :commands]
            :id-function :id
-           :items (filter :enabled items)
+           :items (filter catalogue-item-visible? items)
            :class "catalogue"}
           (when sorting {:sorting sorting})
           (when filtering {:filtering filtering}))])
