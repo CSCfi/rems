@@ -28,6 +28,7 @@
    :end (s/maybe DateTime)
    :enabled s/Bool
    :archived s/Bool
+   (s/optional-key :active) s/Bool ;; TODO make mandatory
    :title s/Str
    :textcontent s/Str
    (s/optional-key :attachment-id) (s/maybe s/Num)
