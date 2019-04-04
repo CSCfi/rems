@@ -58,13 +58,6 @@
       handler
       read-body))
 
-;; TODO refactor tests to use true v2 api
-(defn- get-application [actor id]
-  (-> (request :get (str "/api/v2/applications/" id "/migration"))
-      (authenticate "42" actor)
-      handler
-      read-body))
-
 (defn- create-v2-application [catalogue-item-ids user-id]
   (-> (request :post "/api/v2/applications/create")
       (authenticate "42" user-id)
@@ -181,19 +174,19 @@
         application-id 11] ;; submitted dynamic application from test data
 
     (testing "getting dynamic application as applicant"
-      (let [data (get-application user-id application-id)]
-        (is (= "workflow/dynamic" (get-in data [:application :workflow :type])))
+      (let [application (get-v2-application application-id user-id)]
+        (is (= "workflow/dynamic" (get-in application [:application/workflow :workflow/type])))
         (is (= ["application.event/created"
                 "application.event/draft-saved"
                 "application.event/submitted"]
-               (map :event/type (get-in data [:application :dynamic-events]))))
-        (is (= ["application.command/remove-member"
-                "application.command/uninvite-member"]
-               (get-in data [:application :possible-commands])))))
+               (map :event/type (get application :application/events))))
+        (is (= #{"application.command/remove-member"
+                 "application.command/uninvite-member"}
+               (set (get application :application/permissions))))))
 
     (testing "getting dynamic application as handler"
-      (let [data (get-application handler-id application-id)]
-        (is (= "workflow/dynamic" (get-in data [:application :workflow :type])))
+      (let [application (get-v2-application application-id handler-id)]
+        (is (= "workflow/dynamic" (get-in application [:application/workflow :workflow/type])))
         (is (= #{"application.command/request-comment"
                  "application.command/request-decision"
                  "application.command/reject"
@@ -204,7 +197,7 @@
                  "application.command/invite-member"
                  "application.command/uninvite-member"
                  "see-everything"}
-               (set (get-in data [:application :possible-commands]))))))
+               (set (get application :application/permissions))))))
 
     (testing "send command without user"
       (is (= {:success false
@@ -229,8 +222,7 @@
                                       :application-id application-id
                                       :comment "What am I commenting on?"}))))
       (testing "comment with request"
-        (let [eventcount (count (get-in (get-application handler-id application-id)
-                                        [:application :dynamic-events]))]
+        (let [eventcount (count (get (get-v2-application application-id handler-id) :events))]
           (testing "requesting comment"
             (is (= {:success true} (send-dynamic-command handler-id
                                                          {:type :application.command/request-comment
@@ -243,9 +235,9 @@
                                                           :application-id application-id
                                                           :comment "Yeah, I dunno"}))))
           (testing "comment was linked to request"
-            (let [application (get-application handler-id application-id)
-                  request-event (get-in application [:application :dynamic-events eventcount])
-                  comment-event (get-in application [:application :dynamic-events (inc eventcount)])]
+            (let [application (get-v2-application application-id handler-id)
+                  request-event (get-in application [:application/events eventcount])
+                  comment-event (get-in application [:application/events (inc eventcount)])]
               (is (= (:application/request-id request-event)
                      (:application/request-id comment-event)))))))
       (testing "request-decision"
@@ -264,14 +256,14 @@
         (is (= {:success true} (send-dynamic-command handler-id {:type :application.command/approve
                                                                  :application-id application-id
                                                                  :comment ""})))
-        (let [handler-data (get-application handler-id application-id)
-              handler-event-types (map :event/type (get-in handler-data [:application :dynamic-events]))
-              applicant-data (get-application user-id application-id)
-              applicant-event-types (map :event/type (get-in applicant-data [:application :dynamic-events]))]
+        (let [handler-data (get-v2-application application-id handler-id)
+              handler-event-types (map :event/type (get handler-data :application/events))
+              applicant-data (get-v2-application application-id user-id)
+              applicant-event-types (map :event/type (get applicant-data :application/events))]
           (testing "handler can see all events"
-            (is (= {:id application-id
-                    :state "application.state/approved"}
-                   (select-keys (:application handler-data) [:id :state])))
+            (is (= {:application/id application-id
+                    :application/state "application.state/approved"}
+                   (select-keys handler-data [:application/id :application/state])))
             (is (= ["application.event/created"
                     "application.event/draft-saved"
                     "application.event/submitted"
@@ -295,8 +287,8 @@
 
     (testing "creating"
       (is (some? application-id))
-      (let [created (get-application user-id application-id)]
-        (is (= "application.state/draft" (get-in created [:application :state])))))
+      (let [created (get-v2-application application-id user-id)]
+        (is (= "application.state/draft" (get created :application/state)))))
 
     (testing "getting application as other user is forbidden"
       (is (response-is-forbidden?
@@ -316,11 +308,11 @@
       (is (= {:success true}
              (send-dynamic-command user-id {:type :application.command/submit
                                             :application-id application-id})))
-      (let [submitted (get-application user-id application-id)]
-        (is (= "application.state/submitted" (get-in submitted [:application :state])))
+      (let [submitted (get-v2-application application-id user-id)]
+        (is (= "application.state/submitted" (get submitted :application/state)))
         (is (= ["application.event/created"
                 "application.event/submitted"]
-               (map :event/type (get-in submitted [:application :dynamic-events]))))))))
+               (map :event/type (get submitted :application/events))))))))
 
 (def testfile (clojure.java.io/file "./test-data/test.txt"))
 
