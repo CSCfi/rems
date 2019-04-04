@@ -93,7 +93,7 @@
    :catalogue-item/active s/Bool
    :catalogue-item/archived s/Bool})
 
-(s/defschema V2License
+(s/defschema License
   {:license/id s/Int
    :license/accepted s/Bool
    :license/type (s/enum :text :link :attachment)
@@ -108,7 +108,7 @@
    :license/active s/Bool
    :license/archived s/Bool})
 
-(s/defschema V2Field
+(s/defschema Field
   {:field/id s/Int
    :field/value s/Str
    (s/optional-key :field/previous-value) s/Str
@@ -120,12 +120,12 @@
                     :label LocalizedString}]
    :field/max-length (s/maybe s/Int)})
 
-(s/defschema V2Form
+(s/defschema Form
   {:form/id s/Int
    :form/title s/Str
-   :form/fields [V2Field]})
+   :form/fields [Field]})
 
-(s/defschema V2Application
+(s/defschema Application
   {:application/id s/Int
    :application/external-id (s/maybe s/Str)
    :application/state s/Keyword
@@ -138,19 +138,19 @@
    :application/invited-members #{{:name s/Str
                                    :email s/Str}}
    :application/resources [V2Resource]
-   :application/licenses [V2License]
+   :application/licenses [License]
    :application/accepted-licenses (s/maybe {s/Str #{s/Num}})
    :application/events [Event]
    :application/description s/Str
-   :application/form V2Form
+   :application/form Form
    :application/workflow {:workflow/id s/Int
                           :workflow/type s/Keyword
                           (s/optional-key :workflow.dynamic/handlers) #{s/Str}}
    :application/roles #{s/Keyword}
    :application/permissions #{s/Keyword}})
 
-(s/defschema V2ApplicationOverview
-  (dissoc V2Application
+(s/defschema ApplicationOverview
+  (dissoc Application
           :application/form
           :application/events
           :application/licenses))

@@ -17,11 +17,11 @@
     (GET "/open" []
       :summary "Lists applications which the user needs to review"
       :roles #{:handler :commenter :decider :past-commenter :past-decider}
-      :return [V2ApplicationOverview]
+      :return [ApplicationOverview]
       (ok (get-open-reviews-v2 (getx-user-id))))
 
     (GET "/handled" []
       :summary "Lists applications which the user has already reviewed"
       :roles #{:handler :commenter :decider :past-commenter :past-decider}
-      :return [V2ApplicationOverview]
+      :return [ApplicationOverview]
       (ok (get-handled-reviews-v2 (getx-user-id))))))

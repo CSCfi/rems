@@ -9,6 +9,7 @@
             [schema.core :as s])
   (:import (org.joda.time DateTime)))
 
+;; TODO convert to V2Resource
 (s/defschema Resource
   {:id s/Num
    :owneruserid s/Str
