@@ -49,6 +49,7 @@
   :actions {:accept-invitation "Accept invitation"
             :accept-invitation-success [:div [:p "Joining the application was successful."] [:p "Next you will be taken to the application."]]
             :accept-invitation-already-member [:div [:p "You are already a member."] [:p "Next you will be taken to the application."]]
+            :accept-licenses "Accept terms of use"
             :add-member "Add member"
             :applicant "Applicant"
             :application "Application"

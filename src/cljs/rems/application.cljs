@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [medley.core :refer [map-vals]]
             [re-frame.core :as rf]
+            [rems.actions.accept-licenses :refer [accept-licenses-action-button]]
             [rems.actions.action :refer [action-button action-form-view action-comment action-collapse-id button-wrapper]]
             [rems.actions.add-member :refer [add-member-action-button add-member-form]]
             [rems.actions.approve-reject :refer [approve-reject-action-button approve-reject-form]]
@@ -604,9 +605,12 @@
                              :readonly readonly?
                              :app-id (:application/id application))]))]}]))
 
-(defn- application-licenses [application edit-application]
+(defn- application-licenses [application edit-application userid]
   (when-let [licenses (not-empty (:application/licenses application))]
-    (let [accepted-licenses (:accepted-licenses edit-application)
+    (let [application-id (:application/id application)
+          ;;accepted-licenses (:accepted-licenses edit-application)
+          accepted-licenses (get (:application/accepted-licenses application) userid)
+          possible-commands (:application/permissions application)
           license-validations (index-by [:license-id] (:validation-errors edit-application))
           form-fields-editable? (form-fields-editable? application)
           readonly? (not form-fields-editable?)]
@@ -620,7 +624,10 @@
                  [license-field (assoc license
                                        :accepted (contains? accepted-licenses (:license/id license))
                                        :readonly readonly?
-                                       :validation (license-validations (:license/id license)))]))]}])))
+                                       :validation (license-validations (:license/id license)))]))
+         (when (contains? possible-commands :application.command/accept-licenses)
+           [:div.commands
+            [accept-licenses-action-button application-id (mapv :license/id licenses) reload!]])]}])))
 
 
 (defn- format-event [event]
@@ -850,7 +857,7 @@
                      ^{:key (:resource/id resource)}
                      [:li (localized (:catalogue-item/title resource))]))]}])
 
-(defn- render-application [application edit-application]
+(defn- render-application [application edit-application userid]
   (let [messages (remove nil?
                          [(disabled-items-warning application) ; NB: eval this here so we get nil or a warning
                           (when-let [errors (:validation-errors edit-application)]
@@ -865,7 +872,7 @@
      [:div.mt-3 [applicants-info application]]
      [:div.mt-3 [applied-resources application]]
      [:div.my-3 [application-fields application edit-application]]
-     [:div.my-3 [application-licenses application edit-application]]
+     [:div.my-3 [application-licenses application edit-application userid]]
      [:div.mb-3 [actions-form application]]]))
 
 ;;;; Entrypoint
@@ -873,12 +880,13 @@
 (defn application-page []
   (let [application @(rf/subscribe [::application])
         edit-application @(rf/subscribe [::edit-application])
+        userid (get-in @(rf/subscribe [:identity]) [:user :eppn])
         loading? (not application)]
     (if loading?
       [:div
        [:h2 (text :t.applications/application)]
        [spinner/big]]
-      [render-application application edit-application])))
+      [render-application application edit-application userid])))
 
 
 ;;;; Guide

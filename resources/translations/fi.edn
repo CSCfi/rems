@@ -49,6 +49,7 @@
   :actions {:accept-invitation "Hyväksy kutsu"
             :accept-invitation-success [:div [:p "Liittyminen hakemukseen onnistui."] [:p "Seuraavaksi pääset katsomaan hakemuksen tietoja."]]
             :accept-invitation-already-member [:div. [:p "Olet jo jäsen."] [:p "Seuraavaksi pääset katsomaan hakemuksen tietoja."]]
+            :accept-licenses "Hyväksy käyttöehdot"
             :add-member "Lisää jäsen"
             :applicant "Hakija"
             :application "Hakemus"
