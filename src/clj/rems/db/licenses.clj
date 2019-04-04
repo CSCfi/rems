@@ -115,24 +115,18 @@
   [attachment-id]
   (db/remove-license-attachment! {:id attachment-id}))
 
-(defn- workflow-in-error [wf]
-  (select-keys wf [:id :title]))
-
-(defn- resource-in-error [resource]
-  (select-keys resource [:id :resid]))
-
 (defn- get-license-usage [id]
   ;; these could be db joins
   (let [resources (->> (db/get-resources-for-license {:id id})
                        (map :resid)
                        (map resource/get-resource)
                        (remove :archived)
-                       (map resource-in-error))
+                       (map #(select-keys % [:id :resid])))
         workflows (->> (db/get-workflows-for-license {:id id})
                        (map :wfid)
                        (map workflow/get-workflow)
                        (remove :archived)
-                       (map workflow-in-error))]
+                       (map #(select-keys % [:id :title])))]
     (when (or (seq resources) (seq workflows))
       {:resources resources
        :workflows workflows})))
