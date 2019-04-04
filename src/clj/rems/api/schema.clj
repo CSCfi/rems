@@ -19,6 +19,7 @@
    :end (s/maybe DateTime)
    :enabled s/Bool
    :archived s/Bool
+   (s/optional-key :active) s/Bool ;; TODO make this mandatory
    :localizations (s/maybe {s/Any s/Any})})
 
 (s/defschema License

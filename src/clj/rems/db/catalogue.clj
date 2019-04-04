@@ -28,7 +28,9 @@
   ([]
    (get-localized-catalogue-items {}))
   ([query-params]
-   (map localize-catalogue-item (db/get-catalogue-items query-params))))
+   (->> (db/get-catalogue-items query-params)
+        (map localize-catalogue-item)
+        (map db/assoc-active))))
 
 (defn get-localized-catalogue-item [id]
   (when-let [item (db/get-catalogue-item {:id id})]
