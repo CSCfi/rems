@@ -28,7 +28,7 @@
    :end (s/maybe DateTime)
    :enabled s/Bool
    :archived s/Bool
-   (s/optional-key :active) s/Bool ;; TODO make mandatory
+   :active s/Bool
    :title s/Str
    :textcontent s/Str
    (s/optional-key :attachment-id) (s/maybe s/Num)
@@ -144,6 +144,7 @@
    :license/start DateTime
    :license/end (s/maybe DateTime)
    :license/enabled s/Bool
+   :license/active s/Bool
    :license/archived s/Bool})
 
 (s/defschema V2Field

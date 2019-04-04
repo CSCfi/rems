@@ -107,6 +107,7 @@
                        :end (:license/end license)
                        :enabled (:license/enabled license)
                        :archived (:license/archived license)
+                       :active (:license/active license)
                        :approved (:license/accepted license)
                        :title (:default (:license/title license))
                        :textcontent (:default (or (:license/link license)
