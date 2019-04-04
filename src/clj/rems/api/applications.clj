@@ -37,17 +37,6 @@
     (s/optional-key :rejected?) s/Bool
     :text s/Keyword}])
 
-(s/defschema GetApplicationResponse
-  {:id (s/maybe s/Num)
-   :catalogue-items [CatalogueItem]
-   :applicant-attributes (s/maybe {s/Keyword s/Str})
-   :application (s/maybe Application)
-   :licenses [ApplicationLicense]
-   :accepted-licenses (s/maybe {s/Str #{s/Num}})
-   :phases Phases
-   :title s/Str
-   :items [Item]})
-
 (s/defschema User
   {:userid s/Str
    :name (s/maybe s/Str)

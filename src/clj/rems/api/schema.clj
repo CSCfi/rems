@@ -57,50 +57,9 @@
    :value (s/maybe s/Str)
    :previous-value (s/maybe s/Str)})
 
-(s/defschema V1Event
-  {:userid (s/maybe s/Str)
-   :round s/Num
-   :event s/Str
-   :comment (s/maybe s/Str)
-   :time DateTime
-   :eventdata s/Any})
-
-(s/defschema InvitedMember
-  {:name s/Str
-   :email s/Str})
-
-(s/defschema AddedMember
-  {:userid s/Str})
-
 (s/defschema Event
   (assoc events/EventBase
          s/Keyword s/Any))
-
-(s/defschema Application
-  {:id (s/maybe s/Num) ;; does not exist for unsaved draft
-   :formid s/Num
-   :state (s/cond-pre s/Str s/Keyword) ;; HACK for dynamic applications
-   :applicantuserid s/Str
-   (s/optional-key :start) DateTime ;; does not exist for draft
-   :wfid s/Num
-   (s/optional-key :curround) s/Num ;; does not exist for draft
-   (s/optional-key :fnlround) s/Num ;; does not exist for draft
-   (s/optional-key :events) [V1Event]
-   (s/optional-key :dynamic-events) [Event]
-   (s/optional-key :can-approve?) s/Bool
-   (s/optional-key :can-close?) s/Bool
-   (s/optional-key :can-withdraw?) s/Bool
-   (s/optional-key :can-third-party-review?) s/Bool
-   (s/optional-key :is-applicant?) s/Bool
-   (s/optional-key :review) (s/enum :third-party)
-   :catalogue-items [CatalogueItem]
-   (s/optional-key :review-type) (s/maybe (s/enum :normal :third-party))
-   (s/optional-key :last-modified) DateTime
-   (s/optional-key :invited-members) [InvitedMember]
-   (s/optional-key :members) [AddedMember]
-   (s/optional-key :description) (s/maybe s/Str)
-   (s/optional-key :workflow) s/Any
-   (s/optional-key :possible-commands) #{s/Keyword}})
 
 (s/defschema Entitlement
   {:resource s/Str
