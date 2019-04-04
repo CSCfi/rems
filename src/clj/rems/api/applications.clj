@@ -150,7 +150,7 @@
       :roles #{:logged-in}
       :path-params [application-id :- (describe s/Num "application id")]
       :produces ["application/pdf"]
-      (if-let [app (api-get-application-v1 (getx-user-id) application-id)]
+      (if-let [app (api-get-application-v2 (getx-user-id) application-id)]
         (-> app
             (pdf/application-to-pdf-bytes)
             (ByteArrayInputStream.)
