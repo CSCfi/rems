@@ -29,13 +29,19 @@
                            :get-license get-license
                            :get-user get-user})
 
-(defn get-unrestricted-application [application-id]
+(defn get-unrestricted-application
+  "Returns the full application state without any user permission
+   checks and filtering of sensitive information. Don't expose via APIs."
+  [application-id]
   (let [events (applications/get-dynamic-application-events application-id)]
     (if (empty? events)
       nil
       (model/build-application-view events injections))))
 
-(defn api-get-application-v2 [user-id application-id]
+(defn api-get-application-v2
+  "Returns the part of application state which the specified user
+   is allowed to see. Suitable for returning from public APIs as-is."
+  [user-id application-id]
   (let [events (applications/get-dynamic-application-events application-id)]
     (if (empty? events)
       nil ;; will result in a 404
