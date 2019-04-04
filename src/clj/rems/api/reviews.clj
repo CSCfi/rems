@@ -19,7 +19,7 @@
              (:application/roles application))
        (not= :application.state/draft (:application/state application))))
 
-(defn get-all-reviews-v2 [user-id]
+(defn get-all-reviews [user-id]
   (->> (get-all-applications-v2 user-id)
        (filter review?)))
 
@@ -29,12 +29,12 @@
           :application.command/decide}
         (:application/permissions application)))
 
-(defn get-open-reviews-v2 [user-id]
-  (->> (get-all-reviews-v2 user-id)
+(defn get-open-reviews [user-id]
+  (->> (get-all-reviews user-id)
        (filter open-review?)))
 
-(defn get-handled-reviews-v2 [user-id]
-  (->> (get-all-reviews-v2 user-id)
+(defn get-handled-reviews [user-id]
+  (->> (get-all-reviews user-id)
        (remove open-review?)))
 
 (def reviews-api
@@ -45,10 +45,10 @@
       :summary "Lists applications which the user needs to review"
       :roles #{:handler :commenter :decider :past-commenter :past-decider}
       :return [ApplicationOverview]
-      (ok (get-open-reviews-v2 (getx-user-id))))
+      (ok (get-open-reviews (getx-user-id))))
 
     (GET "/handled" []
       :summary "Lists applications which the user has already reviewed"
       :roles #{:handler :commenter :decider :past-commenter :past-decider}
       :return [ApplicationOverview]
-      (ok (get-handled-reviews-v2 (getx-user-id))))))
+      (ok (get-handled-reviews (getx-user-id))))))
