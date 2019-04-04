@@ -4,13 +4,14 @@
             [clojure.tools.logging :as log]
             [mount.core :as mount]
             [postal.core :as postal]
+            [rems.api.applications-v2 :as applications-v2]
             [rems.config :refer [env]]
             [rems.db.applications :as applications]
             [rems.db.users :as users]
-            [rems.text :refer [text text-format with-language]]
             [rems.poller.common :as common]
-            [rems.util :as util]
-            [rems.workflow.dynamic :as dynamic]))
+            [rems.text :refer [text text-format with-language]]
+            [rems.util :as util])
+  (:import [java.util.concurrent ScheduledThreadPoolExecutor TimeUnit]))
 
 ;;; Mapping events to emails
 
@@ -135,8 +136,7 @@
 
 (defn event-to-emails [event]
   (when-let [app-id (:application/id event)]
-    ;; TODO use api-get-application-v2 or similar
-    (event-to-emails-impl event (applications/get-application-state app-id))))
+    (event-to-emails-impl event (applications-v2/get-unrestricted-application app-id))))
 
 ;;; Generic poller infrastructure
 
@@ -179,11 +179,11 @@
                                            (send-email! mail))))))
 
 (mount/defstate email-poller
-  :start (doto (java.util.concurrent.ScheduledThreadPoolExecutor. 1)
-           (.scheduleWithFixedDelay run 10 10 java.util.concurrent.TimeUnit/SECONDS))
+  :start (doto (ScheduledThreadPoolExecutor. 1)
+           (.scheduleWithFixedDelay run 10 10 TimeUnit/SECONDS))
   :stop (doto email-poller
           (.shutdown)
-          (.awaitTermination 60 java.util.concurrent.TimeUnit/SECONDS)))
+          (.awaitTermination 60 TimeUnit/SECONDS)))
 
 (comment
   (mount/start #{#'email-poller})
