@@ -2,6 +2,7 @@
   (:require [rems.application.model :as model]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.applications :as applications]
+            [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.form :as form]
             [rems.db.licenses :as licenses]
@@ -16,7 +17,7 @@
 (defn- get-catalogue-item [catalogue-item-id]
   (assert (int? catalogue-item-id)
           (pr-str catalogue-item-id))
-  (applications/get-catalogue-item catalogue-item-id))
+  (catalogue/get-localized-catalogue-item catalogue-item-id))
 
 (defn- get-license [license-id]
   (licenses/get-license license-id))
