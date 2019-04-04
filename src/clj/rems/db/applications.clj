@@ -9,7 +9,6 @@
             [rems.application.model :as model]
             [rems.application-util :refer [form-fields-editable?]]
             [rems.auth.util :refer [throw-forbidden]]
-            [rems.context :as context]
             [rems.db.catalogue :as catalogue]
             [rems.db.core :as db]
             [rems.db.entitlements :as entitlements]
@@ -26,8 +25,7 @@
             [schema-tools.core :as st]
             [schema.coerce :as coerce]
             [schema.utils])
-  (:import [java.io ByteArrayOutputStream FileInputStream]
-           [org.joda.time DateTime]))
+  (:import [org.joda.time DateTime]))
 
 (declare get-dynamic-application-state)
 (declare get-dynamic-application-state-for-user)
@@ -328,8 +326,7 @@
                               :is-applicant? (is-applicant? user-id application)
                               :review-type review-type
                               :description description)
-                       (permissions/cleanup)
-                       (dynamic/clean-internal-state))
+                       (permissions/cleanup))
       :applicant-attributes (users/get-user-attributes (:applicantuserid application))
       :items items
       :licenses licenses

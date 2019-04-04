@@ -2,155 +2,65 @@
   (:require [clojure.set :as set]
             [clojure.test :refer :all]
             [rems.application.commands :as commands]
-            [rems.application.events :as events]
             [rems.application.model :as model]
             [rems.permissions :as permissions]
             [rems.util :refer [getx]])
-  (:import (org.joda.time DateTime)))
+  (:import [clojure.lang ExceptionInfo]
+           [java.util UUID]
+           [org.joda.time DateTime]))
 
 ;;; Application model
 
-(defmulti ^:private apply-event
-  "Applies an event to an application state."
+(defmulti ^:private write-model
+  "Projection for application state which is only needed in the command handlers.
+   We don't separate the read and write models in a strict CQRS way, but the
+   command handlers reuse the read model for command validation, instead of
+   having a dedicated write model."
   (fn [_application event] (:event/type event)))
 
-(deftest test-all-event-types-handled
-  (let [handled-event-types (keys (methods apply-event))]
-    (is (= (set (keys events/event-schemas))
-           (set handled-event-types)))))
-
-(defmethod apply-event :application.event/created
-  [application event]
-  (assoc application
-         :state :application.state/draft
-         :applicantuserid (:event/actor event)
-         :members [{:userid (:event/actor event)}]
-         :form/id (:form/id event)
-         :application/licenses (:application/licenses event)
-         :application/external-id (:application/external-id event)
-         :workflow {:type (:workflow/type event)
-                    :handlers (vec (:workflow.dynamic/handlers event))}))
-
-(defmethod apply-event :application.event/draft-saved
-  [application event]
-  (assoc application
-         ::applicant-accepted-licenses (:application/accepted-licenses event)
-         :form-contents {:items (:application/field-values event)
-                         :licenses (->> (:application/accepted-licenses event)
-                                        (map (fn [id] [id "approved"]))
-                                        (into {}))
-                         :accepted-licenses (->> (:accepted-licenses application)
-                                                 (merge {(:event/actor event) (:application/accepted-licenses event)}))}))
-
-(defmethod apply-event :application.event/submitted
+(defmethod write-model :default
   [application _event]
-  (assoc application
-         :state :application.state/submitted
-         :commenters #{}
-         :deciders #{}
-         :previous-submitted-form-contents (:submitted-form-contents application)
-         :submitted-form-contents (:form-contents application)))
+  application)
 
-(defmethod apply-event :application.event/approved
-  [application _event]
-  (assoc application :state :application.state/approved))
-
-(defmethod apply-event :application.event/rejected
-  [application _event]
-  (assoc application :state :application.state/rejected))
-
-(defmethod apply-event :application.event/returned
-  [application _event]
-  (assoc application :state :application.state/returned))
-
-(defmethod apply-event :application.event/closed
-  [application _event]
-  (assoc application :state :application.state/closed))
-
-(defmethod apply-event :application.event/decision-requested
+(defmethod write-model :application.event/decision-requested
   [application event]
   (-> application
-      (update :deciders into (:application/deciders event))
-      ;; TODO: keep ::latest-decision-request-by-user
       (update ::latest-decision-request-by-user merge (zipmap (:application/deciders event)
                                                               (repeat (:application/request-id event))))))
 
-(defmethod apply-event :application.event/decided
+(defmethod write-model :application.event/decided
   [application event]
-  ;; we don't store the decisions in the state, they're available via
-  ;; the event list
   (-> application
-      (update :deciders disj (:event/actor event))
-      ;; TODO: keep ::latest-decision-request-by-user
       (update ::latest-decision-request-by-user dissoc (:event/actor event))))
 
-(defmethod apply-event :application.event/comment-requested
+(defmethod write-model :application.event/comment-requested
   [application event]
   (-> application
-      (update :commenters into (:application/commenters event))
-      ;; TODO: keep ::latest-comment-request-by-user
       (update ::latest-comment-request-by-user merge (zipmap (:application/commenters event)
                                                              (repeat (:application/request-id event))))))
 
-(defmethod apply-event :application.event/commented
+(defmethod write-model :application.event/commented
   [application event]
-  ;; we don't store the comments in the state, they're available via
-  ;; the event list
   (-> application
-      (update :commenters disj (:event/actor event))
-      ;; TODO: keep ::latest-comment-request-by-user
       (update ::latest-comment-request-by-user dissoc (:event/actor event))))
 
-(defmethod apply-event :application.event/member-added
-  [application event]
-  (update application :members #(vec (conj % (:application/member event)))))
-
-(defmethod apply-event :application.event/member-invited
-  [application event]
-  (-> application
-      (update :invited-members #(vec (conj % (:application/member event))))
-      (update :invitation-tokens assoc (:invitation/token event) (:application/member event))))
-
-(defmethod apply-event :application.event/member-joined
-  [application event]
-  (let [member-by-token ((:invitation-tokens application) (:invitation/token event))]
-    (-> application
-        (update :members #(vec (conj % {:userid (:event/actor event)})))
-        (update :invited-members #(remove #{member-by-token} %))
-        (update :invitation-tokens dissoc (:invitation/token event)))))
-
-(defmethod apply-event :application.event/member-removed
-  [application event]
-  (update application :members #(vec (remove #{(:application/member event)} %))))
-
-(defmethod apply-event :application.event/member-uninvited
-  [application event]
-  (update application :invited-members #(vec (remove #{(:application/member event)} %))))
-
 (defn apply-events [application events]
-  ;; TODO: remove old apply-event
-  (reduce (fn [application event] (-> (apply-event application event)
+  (reduce (fn [application event] (-> application
                                       (model/application-view event)
-                                      (model/calculate-permissions event)))
+                                      (model/calculate-permissions event)
+                                      (write-model event)))
           application
           events))
-
-(defn clean-internal-state [application]
-  (dissoc application ::latest-comment-request-by-user ::latest-decision-request-by-user))
 
 ;;; Command handlers
 
 (defmulti command-handler
-  "Handles a command by an event."
+  "Receives a command and produces events."
   (fn [cmd _application _injections] (:type cmd)))
 
-(defn get-command-types
-  "Fetch sequence of supported command names."
-  []
-  (keys (methods command-handler)))
-
 (deftest test-all-command-types-handled
-  (is (= (set (keys commands/command-schemas)) (set (get-command-types)))))
+  (is (= (set (keys commands/command-schemas))
+         (set (keys (methods command-handler))))))
 
 (defn- invalid-user-error [user-id injections]
   (cond
@@ -239,7 +149,7 @@
   (or (must-not-be-empty cmd :deciders)
       (invalid-users-errors (:deciders cmd) injections)
       (ok {:event/type :application.event/decision-requested
-           :application/request-id (java.util.UUID/randomUUID)
+           :application/request-id (UUID/randomUUID)
            :application/deciders (:deciders cmd)
            :application/comment (:comment cmd)})))
 
@@ -264,7 +174,7 @@
   (or (must-not-be-empty cmd :commenters)
       (invalid-users-errors (:commenters cmd) injections)
       (ok {:event/type :application.event/comment-requested
-           :application/request-id (java.util.UUID/randomUUID)
+           :application/request-id (UUID/randomUUID)
            :application/commenters (:commenters cmd)
            :application/comment (:comment cmd)})))
 
@@ -360,7 +270,7 @@
     (testing "executes command when user is authorized"
       (is (:success (handle-command command application {}))))
     (testing "fails when command fails validation"
-      (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Value does not match schema"
+      (is (thrown-with-msg? ExceptionInfo #"Value does not match schema"
                             (handle-command (assoc command :time 3) application {}))))
     (testing "fails when user is not authorized"
       ;; the permission checks should happen before executing the command handler
