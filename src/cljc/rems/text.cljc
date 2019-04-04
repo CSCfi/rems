@@ -60,7 +60,8 @@
   (text (get states state :t.applications.states/unknown)))
 
 (def ^:private event-types
-  {:application.event/approved :t.applications.events/approved
+  {:application.event/accepted-licenses :t.applications.events/accepted-licenses
+   :application.event/approved :t.applications.events/approved
    :application.event/closed :t.applications.events/closed
    :application.event/comment-requested :t.applications.events/comment-requested
    :application.event/commented :t.applications.events/commented

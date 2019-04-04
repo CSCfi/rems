@@ -21,8 +21,9 @@
                                               :application.command/submit
                                               :application.command/remove-member
                                               :application.command/invite-member
-                                              :application.command/uninvite-member]
-                                  :member []
+                                              :application.command/uninvite-member
+                                              :application.command/accept-licenses]
+                                  :member [:application.command/accept-licenses]
                                   :handler [:see-everything
                                             :application.command/remove-member
                                             :application.command/uninvite-member]
@@ -186,6 +187,12 @@
       (assoc :application/modified (:event/time event))
       (assoc ::draft-answers (:application/field-values event))
       (update :application/licenses set-accepted-licences (:application/accepted-licenses event))
+      (assoc-in [:application/accepted-licenses (:event/actor event)] (:application/accepted-licenses event))))
+
+(defmethod event-type-specific-application-view :application.event/accepted-licenses
+  [application event]
+  (-> application
+      (assoc :application/modified (:event/time event))
       (assoc-in [:application/accepted-licenses (:event/actor event)] (:application/accepted-licenses event))))
 
 (defmethod event-type-specific-application-view :application.event/member-invited

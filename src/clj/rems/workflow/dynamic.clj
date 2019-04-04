@@ -115,6 +115,11 @@
        :application/field-values (:field-values cmd)
        :application/accepted-licenses (set (:accepted-licenses cmd))}))
 
+(defmethod command-handler :application.command/accept-licenses
+  [cmd _application _injections]
+  (ok {:event/type :application.event/accepted-licenses
+       :application/accepted-licenses (set (:accepted-licenses cmd))}))
+
 (defmethod command-handler :application.command/submit
   [_cmd application injections]
   (or (validation-error application injections)

@@ -19,6 +19,11 @@
          :field-values s/Any
          :accepted-licenses s/Any))
 
+(s/defschema AcceptLicensesCommand
+  (assoc CommandBase
+         :type (s/enum :application.command/accept-licenses)
+         :accepted-licenses s/Any))
+
 (s/defschema SubmitCommand
   (assoc CommandBase
          :type (s/enum :application.command/submit)))
@@ -96,9 +101,9 @@
          :comment s/Str))
 
 (def command-schemas
-  {#_:application.command/accept-license
-   #_:application.command/require-license
+  {#_:application.command/require-license
    :application.command/accept-invitation AcceptInvitationCommand
+   :application.command/accept-licenses AcceptLicensesCommand
    :application.command/add-member AddMemberCommand
    :application.command/invite-member InviteMemberCommand
    :application.command/approve ApproveCommand

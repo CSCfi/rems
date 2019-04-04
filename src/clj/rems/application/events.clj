@@ -14,6 +14,10 @@
    :event/actor UserId
    :application/id s/Int})
 
+(s/defschema AcceptedLicensesEvent
+  (assoc EventBase
+         :event/type (s/enum :application.event/accepted-licenses)
+         :application/accepted-licenses #{s/Int}))
 (s/defschema ApprovedEvent
   (assoc EventBase
          ;; single-value enums are supported by swagger, unlike s/eq.
@@ -103,7 +107,8 @@
          :event/type (s/enum :application.event/submitted)))
 
 (def event-schemas
-  {:application.event/approved ApprovedEvent
+  {:application.event/accepted-licenses AcceptedLicensesEvent
+   :application.event/approved ApprovedEvent
    :application.event/closed ClosedEvent
    :application.event/commented CommentedEvent
    :application.event/comment-requested CommentRequestedEvent
