@@ -138,12 +138,6 @@
   (and (is-applicant? user-id application)
        (= (:state application) "applied")))
 
-(defn get-catalogue-items
-  "Function that returns localized catalogue-items for the given application items, `ids`. Prefetched localized catalogue items, `localized-items`,
-  can be given as a parameter to avoid excessive database calls."
-  [ids]
-  (catalogue/get-localized-catalogue-items {:ids ids}))
-
 (defn- get-field-value [field form-id application-id]
   (let [query-params {:item (:id field)
                       :form form-id
@@ -306,7 +300,7 @@
          form-id (:formid form)
          _ (assert form-id)
          catalogue-item-ids (mapv :item (db/get-application-items {:application application-id}))
-         catalogue-items (get-catalogue-items catalogue-item-ids)
+         catalogue-items (catalogue/get-localized-catalogue-items {:ids catalogue-item-ids})
          items (->> (db/get-form-items {:id form-id})
                     (mapv #(process-field application-id form-id %))
                     (assoc-field-previous-values application))
@@ -719,7 +713,7 @@
 
 (defn application-created-event [{:keys [application-id catalogue-item-ids time actor allocate-external-id?]}]
   (assert (seq catalogue-item-ids) "catalogue item not specified")
-  (let [items (get-catalogue-items catalogue-item-ids)]
+  (let [items (catalogue/get-localized-catalogue-items {:ids catalogue-item-ids})]
     (assert (= (count items) (count catalogue-item-ids)) "catalogue item not found")
     (assert (= 1 (count (distinct (mapv :wfid items)))) "catalogue items did not have the same workflow")
     (assert (= 1 (count (distinct (mapv :formid items)))) "catalogue items did not have the same form")
