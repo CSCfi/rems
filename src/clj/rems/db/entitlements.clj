@@ -67,7 +67,7 @@
   and call the entitlement REST callback (if defined)."
   [application]
   ;; TODO this is not idempotent
-  (when (contains? #{:application.state/approved} (:application/state application))
+  (when (= :application.state/approved (:application/state application))
     (let [app-id (:application/id application)
           user-id (:application/applicant application)]
       (log/info "granting entitlements on application" app-id "to" user-id)
@@ -80,7 +80,7 @@
 
 (defn- end-entitlements-for
   [application]
-  (when (contains? #{:application.state/closed} (:application/state application))
+  (when (= :application.state/closed (:application/state application))
     (let [app-id (:application/id application)
           user-id (:application/applicant application)]
       (log/info "ending entitlements on application" app-id "to" user-id)
