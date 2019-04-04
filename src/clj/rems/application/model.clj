@@ -419,6 +419,7 @@
                                             :license/start (:start license)
                                             :license/end (:end license)
                                             :license/enabled (:enabled license)
+                                            :license/active (:active license)
                                             :license/archived (:archived license)}
                                            (case license-type
                                              :text {:license/text (assoc (localization-for :textcontent license)

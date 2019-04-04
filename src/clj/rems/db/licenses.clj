@@ -11,6 +11,7 @@
    :end (:endt license)
    :enabled (:enabled license)
    :archived (:archived license)
+   :active (:active license)
    ;; TODO why do licenses have a non-localized title & content while items don't?
    :title (:title license)
    :textcontent (:textcontent license)
@@ -39,6 +40,7 @@
   [id]
   (->> (db/get-resource-licenses {:id id})
        (format-licenses)
+       (mapv db/assoc-active)
        (localize-licenses)))
 
 (defn get-license
@@ -77,7 +79,8 @@
   (->> (db/get-licenses params)
        (format-licenses)
        (localize-licenses)
-       (filter (fn [license] (db/now-active? now (:start license) (:end license))))
+       (map (partial db/assoc-active now))
+       (filter :active)
        (distinct-by :id)))
 
 (defn create-license! [{:keys [title licensetype textcontent localizations attachment-id]} user-id]
