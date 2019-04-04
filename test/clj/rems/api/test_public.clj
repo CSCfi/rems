@@ -1,9 +1,9 @@
 (ns ^:integration rems.api.test-public
   (:require [clojure.test :refer :all]
-            [rems.db.roles :as roles]
+            [rems.api.testing :refer :all]
             [rems.db.users :as users]
             [rems.handler :refer :all]
-            [rems.api.testing :refer :all]
+            [rems.poller.entitlements]
             [ring.mock.request :refer :all]))
 
 (use-fixtures
@@ -21,6 +21,7 @@
       (is (= [:en :fi] (sort languages))))))
 
 (deftest entitlements-test
+  (rems.poller.entitlements/run)
   (let [api-key "42"]
     (testing "all"
       (let [data (-> (request :get "/api/entitlements")

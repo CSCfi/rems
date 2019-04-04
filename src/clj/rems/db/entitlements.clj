@@ -67,18 +67,25 @@
   and call the entitlement REST callback (if defined)."
   [application]
   ;; TODO this is not idempotent
-  (when (contains? #{:application.state/approved "approved"} (:state application))
-    (log/info "granting entitlements on application" (:id application) "to" (:applicantuserid application))
-    (db/add-entitlement! {:application (:id application)
-                          :user (:applicantuserid application)})
-    (post-entitlements :add (db/get-entitlements {:application (:id application)}))))
+  (when (= :application.state/approved (:application/state application))
+    (let [app-id (:application/id application)
+          user-id (:application/applicant application)]
+      (log/info "granting entitlements on application" app-id "to" user-id)
+      (doseq [resource-id (->> (:application/resources application)
+                               (map :resource/id))]
+        (db/add-entitlement! {:application app-id
+                              :user user-id
+                              :resource resource-id}))
+      (post-entitlements :add (db/get-entitlements {:application app-id})))))
 
 (defn- end-entitlements-for
   [application]
-  (when (contains? #{:application.state/closed "closed"} (:state application))
-    (log/info "ending entitlements on application" (:id application) "to" (:applicantuserid application))
-    (db/end-entitlement! {:application (:id application)})
-    (post-entitlements :remove (db/get-entitlements {:application (:id application)}))))
+  (when (= :application.state/closed (:application/state application))
+    (let [app-id (:application/id application)
+          user-id (:application/applicant application)]
+      (log/info "ending entitlements on application" app-id "to" user-id)
+      (db/end-entitlement! {:application app-id})
+      (post-entitlements :remove (db/get-entitlements {:application app-id})))))
 
 (defn update-entitlements-for
   [application]

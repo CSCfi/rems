@@ -4,13 +4,14 @@
             [clojure.tools.logging :as log]
             [mount.core :as mount]
             [postal.core :as postal]
+            [rems.api.applications-v2 :as applications-v2]
             [rems.config :refer [env]]
             [rems.db.applications :as applications]
             [rems.db.users :as users]
-            [rems.text :refer [text text-format with-language]]
             [rems.poller.common :as common]
-            [rems.util :as util]
-            [rems.workflow.dynamic :as dynamic]))
+            [rems.text :refer [text text-format with-language]]
+            [rems.util :as util])
+  (:import [java.util.concurrent ScheduledThreadPoolExecutor TimeUnit]))
 
 ;;; Mapping events to emails
 
@@ -25,7 +26,7 @@
   (str (:public-url env) "accept-invitation?token=" token))
 
 (defn- application-id-for-email [application]
-  (or (:application/external-id application) (:id application)))
+  (or (:application/external-id application) (:application/id application)))
 
 (defmulti ^:private event-to-emails-impl
   (fn [event _application] (:event/type event)))
@@ -33,12 +34,17 @@
 (defmethod event-to-emails-impl :default [_event _application]
   [])
 
+(defn- applicant-and-members [application]
+  ;; XXX: the tests depend on the order of members
+  (conj (reverse (sort-by :userid (:application/members application)))
+        {:userid (:application/applicant application)}))
+
 ;; There's a slight inconsistency here: we look at current members, so
 ;; a member might get an email for an event that happens before he was
 ;; added.
 (defmethod event-to-emails-impl :application.event/approved [event application]
   (vec
-   (for [member (:members application)] ;; applicant is a member
+   (for [member (applicant-and-members application)]
      {:to-user (:userid member)
       :subject (text :t.email.application-approved/subject)
       :body (text-format :t.email.application-approved/message
@@ -48,7 +54,7 @@
 
 (defmethod event-to-emails-impl :application.event/rejected [event application]
   (vec
-   (for [member (:members application)] ;; applicant is a member
+   (for [member (applicant-and-members application)]
      {:to-user (:userid member)
       :subject (text :t.email.application-rejected/subject)
       :body (text-format :t.email.application-rejected/message
@@ -58,7 +64,7 @@
 
 (defmethod event-to-emails-impl :application.event/closed [event application]
   (vec
-   (for [member (:members application)] ;; applicant is a member
+   (for [member (applicant-and-members application)]
      {:to-user (:userid member)
       :subject (text :t.email.application-closed/subject)
       :body (text-format :t.email.application-closed/message
@@ -90,7 +96,7 @@
 
 (defmethod event-to-emails-impl :application.event/commented [event application]
   (vec
-   (for [handler (get-in application [:workflow :handlers])]
+   (for [handler (get-in application [:application/workflow :workflow.dynamic/handlers])]
      {:to-user handler
       :subject (text :t.email.commented/subject)
       :body (text-format :t.email.commented/message
@@ -101,7 +107,7 @@
 
 (defmethod event-to-emails-impl :application.event/decided [event application]
   (vec
-   (for [handler (get-in application [:workflow :handlers])]
+   (for [handler (get-in application [:application/workflow :workflow.dynamic/handlers])]
      {:to-user handler
       :subject (text :t.email.decided/subject)
       :body (text-format :t.email.decided/message
@@ -130,8 +136,7 @@
 
 (defn event-to-emails [event]
   (when-let [app-id (:application/id event)]
-    ;; TODO use api-get-application-v2 or similar
-    (event-to-emails-impl event (applications/get-application-state app-id))))
+    (event-to-emails-impl event (applications-v2/get-unrestricted-application app-id))))
 
 ;;; Generic poller infrastructure
 
@@ -174,11 +179,11 @@
                                            (send-email! mail))))))
 
 (mount/defstate email-poller
-  :start (doto (java.util.concurrent.ScheduledThreadPoolExecutor. 1)
-           (.scheduleWithFixedDelay run 10 10 java.util.concurrent.TimeUnit/SECONDS))
+  :start (doto (ScheduledThreadPoolExecutor. 1)
+           (.scheduleWithFixedDelay run 10 10 TimeUnit/SECONDS))
   :stop (doto email-poller
           (.shutdown)
-          (.awaitTermination 60 java.util.concurrent.TimeUnit/SECONDS)))
+          (.awaitTermination 60 TimeUnit/SECONDS)))
 
 (comment
   (mount/start #{#'email-poller})

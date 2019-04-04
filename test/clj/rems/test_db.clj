@@ -8,7 +8,7 @@
             [conman.core :as conman]
             [luminus-migrations.core :as migrations]
             [mount.core :as mount]
-            [rems.auth.NotAuthorizedException]
+            [rems.api.applications-v2 :as applications-v2]
             [rems.auth.ForbiddenException]
             [rems.config :refer [env]]
             [rems.context :as context]
@@ -20,11 +20,11 @@
             [rems.db.test-data :as test-data]
             [rems.db.users :as users]
             [rems.db.workflow-actors :as actors]
-            rems.poller.entitlements
+            [rems.poller.entitlements]
             [rems.testing-tempura :refer [fake-tempura-fixture]]
             [rems.util :refer [get-user-id]]
             [stub-http.core :as stub])
-  (:import (rems.auth ForbiddenException NotAuthorizedException)))
+  (:import (rems.auth ForbiddenException)))
 
 (defn db-once-fixture [f]
   (fake-tempura-fixture
@@ -217,10 +217,10 @@
                                       :application-id app-id
                                       :time (time/now)
                                       :comment ""})))
-    (is (= :application.state/approved (:state (applications/get-dynamic-application-state app-id))))
+    (is (= :application.state/approved (:application/state (applications-v2/api-get-application-v2 uid app-id))))
 
-    ;; TODO: entitlements are not tracked for dynamic applications
-    (is (= [] #_["resid111" "resid222"] (sort (map :resid (db/get-entitlements {:application app-id}))))
+    (rems.poller.entitlements/run)
+    (is (= ["resid111" "resid222"] (sort (map :resid (db/get-entitlements {:application app-id}))))
         "should create entitlements for both resources")))
 
 (deftest test-phases
@@ -420,10 +420,6 @@
         (applications/approve-application "event-test-approver" app 1 "c2")
         (is (= {:curround 1 :state "approved"} (fetch app)))
 
-        (is (= [{:catappid app :resid nil :userid uid}]
-               (map #(select-keys % [:catappid :resid :userid])
-                    (db/get-entitlements))))
-
         (is (= (->> (applications/get-application-state app)
                     :events
                     (map #(select-keys % [:round :event :comment])))
@@ -545,10 +541,7 @@
                     (map #(select-keys % [:round :event])))
                [{:round 0 :event "apply"}
                 {:round 0 :event "autoapprove"}
-                {:round 1 :event "autoapprove"}]))
-        (is (contains? (set (map #(select-keys % [:catappid :resid :userid])
-                                 (db/get-entitlements)))
-                       {:catappid auto-app :resid "ABC" :userid uid}))))
+                {:round 1 :event "autoapprove"}]))))
     (let [new-wf (:id (db/create-workflow! {:organization "abc" :modifieruserid uid :owneruserid uid :title "3rd party review workflow" :fnlround 0}))
           new-item (:id (db/create-catalogue-item! {:title "A" :form nil :resid nil :wfid new-wf}))]
       (actors/add-approver! new-wf uid 0)
@@ -644,21 +637,38 @@
                   {:round 0 :event "return" :comment "returning"}])))))))
 
 (deftest test-get-entitlements-for-export
+  (db/add-user! {:user "handler" :userattrs nil})
   (db/add-user! {:user "jack" :userattrs nil})
   (db/add-user! {:user "jill" :userattrs nil})
-  (let [wf (:id (db/create-workflow! {:organization "abc" :modifieruserid "owner" :owneruserid "owner" :title "Test workflow" :fnlround 1}))
+  (let [workflow {:type :workflow/dynamic :handlers ["handler"]}
+        wf (:id (db/create-workflow! {:organization "abc" :modifieruserid "owner" :owneruserid "owner" :title "dynamic" :fnlround -1 :workflow (cheshire/generate-string workflow)}))
+        formid (:id (db/create-form! {:organization "abc" :title "internal-title" :user "owner"}))
         res1 (:id (db/create-resource! {:resid "resource1" :organization "pre" :owneruserid "owner" :modifieruserid "owner"}))
         res2 (:id (db/create-resource! {:resid "resource2" :organization "pre" :owneruserid "owner" :modifieruserid "owner"}))
-        item1 (:id (db/create-catalogue-item! {:title "item1" :form nil :resid res1 :wfid wf}))
-        item2 (:id (db/create-catalogue-item! {:title "item2" :form nil :resid res2 :wfid wf}))
-        jack-app (applications/create-new-draft "jack" wf)
-        jill-app (applications/create-new-draft "jill" wf)]
-    (db/add-application-item! {:application jack-app :item item1})
-    (db/add-application-item! {:application jill-app :item item1})
-    (db/add-application-item! {:application jill-app :item item2})
-    (applications/submit-application "jack" jack-app)
-    (applications/submit-application "jill" jill-app)
-    ;; entitlements should now be added via autoapprove
+        item1 (:id (db/create-catalogue-item! {:title "item1" :form formid :resid res1 :wfid wf}))
+        item2 (:id (db/create-catalogue-item! {:title "item2" :form formid :resid res2 :wfid wf}))
+        jack-app (:application-id (applications/create-application! "jack" [item1]))
+        jill-app (:application-id (applications/create-application! "jill" [item1 item2]))]
+    (assert (nil? (applications/command! {:type :application.command/submit
+                                          :time (time/now)
+                                          :actor "jack"
+                                          :application-id jack-app})))
+    (assert (nil? (applications/command! {:type :application.command/approve
+                                          :time (time/now)
+                                          :actor "handler"
+                                          :application-id jack-app
+                                          :comment ""})))
+    (assert (nil? (applications/command! {:type :application.command/submit
+                                          :time (time/now)
+                                          :actor "jill"
+                                          :application-id jill-app})))
+    (assert (nil? (applications/command! {:type :application.command/approve
+                                          :time (time/now)
+                                          :actor "handler"
+                                          :application-id jill-app
+                                          :comment ""})))
+    (rems.poller.entitlements/run)
+
     (binding [context/*roles* #{:handler}]
       (let [lines (split-lines (entitlements/get-entitlements-for-export))]
         (is (= 4 (count lines))) ;; header + 3 resources
@@ -696,13 +706,7 @@
             item2 (:id (db/create-catalogue-item! {:title "item2" :form formid :resid res2 :wfid wfid}))]
         (db/add-user! {:user uid :userattrs (cheshire/generate-string {"mail" "b@o.b"})})
         (db/add-user! {:user admin :userattrs nil})
-        (let [app-id (applications/create-new-draft uid wfid)]
-          (db/add-application-item! {:application app-id :item item1})
-          (db/add-application-item! {:application app-id :item item2})
-          (applications/add-application-created-event! {:application-id app-id
-                                                        :catalogue-item-ids [item1 item2]
-                                                        :time (time/now)
-                                                        :actor uid})
+        (let [app-id (:application-id (applications/create-application! uid [item1 item2]))]
           (is (nil? (applications/command! {:type :application.command/submit
                                             :actor uid
                                             :application-id app-id
@@ -752,68 +756,6 @@
                 (is (= [{"resource" "resource1" "application" app-id "user" "bob" "mail" "b@o.b"}
                         {"resource" "resource2" "application" app-id "user" "bob" "mail" "b@o.b"}]
                        body))))))))))
-
-(deftest test-dynamic-workflow
-  (db/add-user! {:user "alice" :userattrs "{}"})
-  (db/add-user! {:user "bob" :userattrs "{}"})
-  (db/add-user! {:user "handler" :userattrs "{}"})
-  (let [workflow {:type :workflow/dynamic
-                  :handlers ["handler"]}
-        wfid (:id (db/create-workflow! {:organization "abc" :modifieruserid "owner" :owneruserid "owner" :title "dynamic" :fnlround -1 :workflow (cheshire/generate-string workflow)}))
-        form (:id (db/create-form! {:organization "abc" :title "internal-title" :user "owner"}))
-        form-item (:id (db/create-form-item! {:type "text" :user "owner" :value 0}))
-        _ (db/link-form-item! {:form form :itemorder 1 :item form-item :user "owner" :optional false})
-        res (:id (db/create-resource! {:resid "some resource" :organization "abc" :owneruserid "owner" :modifieruserid "owner"}))
-        ci (:id (db/create-catalogue-item! {:title "dynamic" :resid res :wfid wfid :form form}))
-        app-id (applications/create-new-draft "alice" wfid)]
-    (db/add-application-item! {:application app-id :item ci})
-    (db/save-field-value! {:application app-id :form form :item form-item :user "alice" :value "X"})
-    ;; TODO: rewrite these tests to be event-based; remove the above stuff
-    (applications/add-application-created-event! {:application-id app-id
-                                                  :catalogue-item-ids [ci]
-                                                  :time (time/now)
-                                                  :actor "alice"})
-
-    (is (= {:applicantuserid "alice"
-            :state :application.state/draft
-            :workflow workflow}
-           (select-keys (applications/get-dynamic-application-state app-id) [:applicantuserid :state :workflow])))
-    (is (nil? (applications/command! {:type :application.command/invite-member
-                                      :actor "alice"
-                                      :member {:name "Jane Doe" :email "jane.doe@members.com"}
-                                      :application-id app-id
-                                      :time (time/now)})))
-    (is (nil? (applications/command! {:type :application.command/save-draft
-                                      :actor "alice"
-                                      :application-id app-id
-                                      :time (time/now)
-                                      :field-values {form-item "X"}
-                                      :accepted-licenses #{}})))
-    (is (nil? (applications/command! {:type :application.command/submit
-                                      :actor "alice"
-                                      :application-id app-id
-                                      :time (time/now)})))
-    (is (= :application.state/submitted
-           (:state (applications/get-dynamic-application-state app-id))))
-    (is (nil? (applications/command! {:type :application.command/add-member
-                                      :actor "handler"
-                                      :member {:userid "bob"}
-                                      :application-id app-id
-                                      :time (time/now)})))
-    (is (nil? (applications/command! {:type :application.command/invite-member
-                                      :actor "handler"
-                                      :member {:name "John Doe" :email "john.doe@members.com"}
-                                      :application-id app-id
-                                      :time (time/now)})))
-    (is (= [{:userid "alice"} {:userid "bob"}]
-           (:members (applications/get-dynamic-application-state app-id))))
-    (is (nil? (applications/command! {:type :application.command/approve
-                                      :actor "handler"
-                                      :application-id app-id
-                                      :time (time/now)
-                                      :comment ""})))
-    (is (= :application.state/approved
-           (:state (applications/get-dynamic-application-state app-id))))))
 
 (deftest test-create-demo-data!
   ;; just a smoke test, check that create-demo-data doesn't fail

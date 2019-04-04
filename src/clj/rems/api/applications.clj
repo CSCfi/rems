@@ -8,6 +8,7 @@
             [rems.application.commands :as commands]
             [rems.auth.util :refer [throw-forbidden]]
             [rems.db.applications :as applications]
+            [rems.db.attachments :as attachments]
             [rems.db.core :as db]
             [rems.db.users :as users]
             [rems.pdf :as pdf]
@@ -99,20 +100,6 @@
 
 (def get-deciders get-users)
 
-(defn- check-attachment-content-type
-  "Checks that content-type matches the allowed ones listed on the UI side:
-   .pdf, .doc, .docx, .ppt, .pptx, .txt, image/*"
-  [content-type]
-  (when-not (or (#{"application/pdf"
-                   "application/msword"
-                   "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                   "application/vnd.ms-powerpoint"
-                   "application/vnd.openxmlformats-officedocument.presentationml.presentation"
-                   "text/plain"}
-                 content-type)
-                (.startsWith content-type "image/"))
-    (throw (rems.InvalidRequestException. (str "Unsupported content-type: " content-type)))))
-
 (defn- fix-command-from-api
   [cmd]
   ;; schema could do these coercions for us...
@@ -145,17 +132,10 @@
       :roles #{:logged-in}
       :query-params [application-id :- (describe s/Int "application id")
                      field-id :- (describe s/Int "application form field id the attachment is related to")]
-      (let [user-id (getx-user-id)
-            application (applications/get-dynamic-application-state-for-user user-id application-id)]
-        (if-let [attachment (db/get-attachment {:item field-id
-                                                :form (:form/id application)
-                                                :application application-id})]
-          (do (check-attachment-content-type (:type attachment))
-              (-> (:data attachment)
-                  (ByteArrayInputStream.)
-                  (ok)
-                  (content-type (:type attachment))))
-          (not-found! "not found"))))
+      (if-let [attachment (attachments/get-attachment (getx-user-id) application-id field-id)]
+        (-> (ok (:data attachment))
+            (content-type (:content-type attachment)))
+        (not-found! "not found")))
 
     (POST "/accept-invitation" []
       :summary "Accept an invitation by token"
@@ -186,8 +166,7 @@
                      field-id :- (describe s/Int "application form field id the attachment is related to")]
       :middleware [multipart/wrap-multipart-params]
       :return SuccessResponse
-      (check-attachment-content-type (:content-type file))
-      (applications/save-attachment! file (getx-user-id) application-id field-id)
+      (attachments/save-attachment! file (getx-user-id) application-id field-id)
       (ok {:success true}))
 
     (POST "/remove_attachment" []
@@ -196,7 +175,7 @@
       :query-params [application-id :- (describe s/Int "application id")
                      field-id :- (describe s/Int "application form field id the attachment is related to")]
       :return SuccessResponse
-      (applications/remove-attachment! (getx-user-id) application-id field-id)
+      (attachments/remove-attachment! (getx-user-id) application-id field-id)
       (ok {:success true}))
 
     (POST "/command" []
