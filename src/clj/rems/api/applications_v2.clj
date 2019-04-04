@@ -190,30 +190,3 @@
 (defn get-user-applications-v2 [user-id]
   (->> (get-all-applications-v2 user-id)
        (filter own-application?)))
-
-(defn- review? [application]
-  (and (some #{:handler
-               :commenter
-               :past-commenter
-               :decider
-               :past-decider}
-             (:application/roles application))
-       (not= :application.state/draft (:application/state application))))
-
-(defn get-all-reviews-v2 [user-id]
-  (->> (get-all-applications-v2 user-id)
-       (filter review?)))
-
-(defn- open-review? [application]
-  (some #{:application.command/approve
-          :application.command/comment
-          :application.command/decide}
-        (:application/permissions application)))
-
-(defn get-open-reviews-v2 [user-id]
-  (->> (get-all-reviews-v2 user-id)
-       (filter open-review?)))
-
-(defn get-handled-reviews-v2 [user-id]
-  (->> (get-all-reviews-v2 user-id)
-       (remove open-review?)))

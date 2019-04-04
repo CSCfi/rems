@@ -1,6 +1,6 @@
 (ns rems.api.reviews
   (:require [compojure.api.sweet :refer :all]
-            [rems.api.applications-v2 :refer [get-open-reviews-v2 get-handled-reviews-v2]]
+            [rems.api.applications-v2 :refer [get-all-applications-v2]]
             [rems.api.schema :refer :all]
             [rems.api.util]
             [rems.config :refer [env]]
@@ -8,6 +8,34 @@
             [rems.util :refer [getx-user-id]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
+
+
+(defn- review? [application]
+  (and (some #{:handler
+               :commenter
+               :past-commenter
+               :decider
+               :past-decider}
+             (:application/roles application))
+       (not= :application.state/draft (:application/state application))))
+
+(defn get-all-reviews-v2 [user-id]
+  (->> (get-all-applications-v2 user-id)
+       (filter review?)))
+
+(defn- open-review? [application]
+  (some #{:application.command/approve
+          :application.command/comment
+          :application.command/decide}
+        (:application/permissions application)))
+
+(defn get-open-reviews-v2 [user-id]
+  (->> (get-all-reviews-v2 user-id)
+       (filter open-review?)))
+
+(defn get-handled-reviews-v2 [user-id]
+  (->> (get-all-reviews-v2 user-id)
+       (remove open-review?)))
 
 (def reviews-api
   (context "/v2/reviews" []
