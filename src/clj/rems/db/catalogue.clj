@@ -33,8 +33,7 @@
         (map db/assoc-active))))
 
 (defn get-localized-catalogue-item [id]
-  (when-let [item (db/get-catalogue-item {:id id})]
-    (localize-catalogue-item item)))
+  (first (get-localized-catalogue-items {:ids [id] :archived true})))
 
 (defn create-catalogue-item! [command]
   (let [id (:id (db/create-catalogue-item! (select-keys command [:title :form :resid :wfid :enabled :archived])))]
