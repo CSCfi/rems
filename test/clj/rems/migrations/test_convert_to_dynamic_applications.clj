@@ -149,10 +149,9 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                                            7 "draft appl"
                                                            8 "draft application"}
                                 :application/accepted-licenses #{1 2}}]
-              :state :application.state/draft
               :workflow {:type :workflow/dynamic
                          :handlers ["developer"]}}
-             (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow]))))
+             (select-keys application [:id :description :applicantuserid :dynamic-events :workflow]))))
 
     (let [app-id 2
           application (applications/get-application-state app-id)]
@@ -192,10 +191,9 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/time (-> application :dynamic-events (nth 2) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id}]
-              :state :application.state/submitted
               :workflow {:type :workflow/dynamic
                          :handlers ["developer"]}}
-             (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow]))))
+             (select-keys application [:id :description :applicantuserid :dynamic-events :workflow]))))
 
     (let [app-id 3
           application (applications/get-application-state app-id)]
@@ -241,10 +239,9 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/comment "comment for rejection"}]
-              :state :application.state/rejected
               :workflow {:type :workflow/dynamic
                          :handlers ["developer"]}}
-             (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow]))))
+             (select-keys application [:id :description :applicantuserid :dynamic-events :workflow]))))
 
     (let [app-id 4
           application (applications/get-application-state app-id)]
@@ -290,10 +287,9 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/comment "comment for approval"}]
-              :state :application.state/approved
               :workflow {:type :workflow/dynamic
                          :handlers ["developer"]}}
-             (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow]))))
+             (select-keys application [:id :description :applicantuserid :dynamic-events :workflow]))))
 
     (let [app-id 5
           application (applications/get-application-state app-id)]
@@ -339,10 +335,9 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/comment "comment for return"}]
-              :state :application.state/returned
               :workflow {:type :workflow/dynamic
                          :handlers ["developer"]}}
-             (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow]))))
+             (select-keys application [:id :description :applicantuserid :dynamic-events :workflow]))))
 
     (let [app-id 6
           application (applications/get-application-state app-id)]
@@ -396,10 +391,9 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/time (-> application :dynamic-events (nth 4) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id}]
-              :state :application.state/submitted
               :workflow {:type :workflow/dynamic
                          :handlers ["developer"]}}
-             (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow]))))
+             (select-keys application [:id :description :applicantuserid :dynamic-events :workflow]))))
 
     (let [app-id 7
           application (applications/get-application-state app-id)]
@@ -452,10 +446,9 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/comment "comment for approval"}]
-              :state :application.state/approved
               :workflow {:type :workflow/dynamic
                          :handlers ["developer"]}}
-             (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow]))))
+             (select-keys application [:id :description :applicantuserid :dynamic-events :workflow]))))
 
     (let [app-id 8
           application (applications/get-application-state app-id)]
@@ -495,10 +488,9 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/time (-> application :dynamic-events (nth 2) :event/time)
                                 :event/id (next-event-id)
                                 :application/id app-id}]
-              :state :application.state/submitted
               :workflow {:type :workflow/dynamic
                          :handlers ["developer"]}}
-             (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow]))))
+             (select-keys application [:id :description :applicantuserid :dynamic-events :workflow]))))
 
     (let [app-id 20
           application (applications/get-application-state app-id)]
@@ -544,10 +536,9 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/comment ""}]
-              :state :application.state/approved
               :workflow {:type :workflow/dynamic
                          :handlers ["developer"]}}
-             (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow]))))
+             (select-keys application [:id :description :applicantuserid :dynamic-events :workflow]))))
 
     (let [app-id 21
           application (applications/get-application-state app-id)
@@ -604,10 +595,9 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :application/id app-id
                                 :application/request-id request-id
                                 :application/comment "lgtm"}]
-              :state :application.state/submitted
               :workflow {:type :workflow/dynamic
                          :handlers ["developer"]}}
-             (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow]))))
+             (select-keys application [:id :description :applicantuserid :dynamic-events :workflow]))))
 
     (let [app-id 22
           application (applications/get-application-state app-id)]
@@ -653,10 +643,9 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/comment "nope nope nope"}]
-              :state :application.state/returned
               :workflow {:type :workflow/dynamic
                          :handlers ["developer"]}}
-             (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow]))))
+             (select-keys application [:id :description :applicantuserid :dynamic-events :workflow]))))
 
     (let [app-id 23
           application (applications/get-application-state app-id)]
@@ -708,10 +697,9 @@ INSERT INTO entitlement (resid, catappid, userid, start, endt) VALUES (1, 23, 'a
                                 :event/id (next-event-id)
                                 :application/id app-id
                                 :application/comment "no more"}]
-              :state :application.state/closed
               :workflow {:type :workflow/dynamic
                          :handlers ["developer"]}}
-             (select-keys application [:id :description :applicantuserid :dynamic-events :state :workflow]))))))
+             (select-keys application [:id :description :applicantuserid :dynamic-events :workflow]))))))
 
 (comment
   (user/run-tests 'rems.migrations.test-convert-to-dynamic-applications))
