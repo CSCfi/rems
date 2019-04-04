@@ -672,7 +672,11 @@
                                                      {"en" "Dynamic workflow (disabled)"
                                                       "fi" "Dynaaminen työvuo (pois käytöstä)"})]
         (create-disabled-applications! dynamic-disabled (:dynamic workflows) (+fake-users+ :approver1) (+fake-users+ :approver1))
-        (db/set-catalogue-item-state! {:id dynamic-disabled :enabled false})))
+        (db/set-catalogue-item-state! {:id dynamic-disabled :enabled false}))
+      (let [dynamic-expired (create-catalogue-item! res1 (:dynamic workflows) form
+                                                    {"en" "Dynamic workflow (expired)"
+                                                     "fi" "Dynaaminen työvuo (vanhentunut)"})]
+        (db/set-catalogue-item-state! {:id dynamic-expired :endt (time/now)})))
     (finally
       (DateTimeUtils/setCurrentMillisSystem))))
 

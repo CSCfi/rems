@@ -27,7 +27,7 @@
                                :archived true})
                    handler
                    read-body)]
-      (is (= 12 (:id data))))
+      (is (= 13 (:id data))))
     (let [data (-> (request :get "/api/catalogue-items/7")
                    (authenticate api-key user-id)
                    handler

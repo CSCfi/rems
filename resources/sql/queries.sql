@@ -63,6 +63,9 @@ SET
 /*~ (when (boolean? (:archived params)) */
   archived = :archived,
 /*~ ) ~*/
+/*~ (when (contains? params :endt) */
+  endt = :endt,
+/*~ ) ~*/
   id = id
 WHERE id = :id;
 
