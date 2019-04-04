@@ -254,7 +254,7 @@
     result))
 
 (defn handle-command [cmd application injections]
-  (commands/validate-command cmd) ;; this is here mostly for tests, commands via the api are validated by compojure-api
+  (commands/validate-command cmd) ; this is here mostly for tests, commands via the api are validated by compojure-api
   (let [permissions (permissions/user-permissions application (:actor cmd))]
     (if (contains? permissions (:type cmd))
       (-> (command-handler cmd application injections)
