@@ -1,4 +1,4 @@
-(ns rems.api.actions
+(ns rems.api.reviews
   (:require [compojure.api.sweet :refer :all]
             [rems.api.applications-v2 :refer [get-open-reviews-v2 get-handled-reviews-v2]]
             [rems.api.schema :refer :all]
@@ -9,8 +9,7 @@
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
-;; TODO move this to rems.api.reviews
-(def v2-reviews-api
+(def reviews-api
   (context "/v2/reviews" []
     :tags ["reviews"]
 
