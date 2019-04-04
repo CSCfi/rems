@@ -37,17 +37,6 @@
     (s/optional-key :rejected?) s/Bool
     :text s/Keyword}])
 
-(s/defschema GetApplicationResponse
-  {:id (s/maybe s/Num)
-   :catalogue-items [CatalogueItem]
-   :applicant-attributes (s/maybe {s/Keyword s/Str})
-   :application (s/maybe Application)
-   :licenses [ApplicationLicense]
-   :accepted-licenses (s/maybe {s/Str #{s/Num}})
-   :phases Phases
-   :title s/Str
-   :items [Item]})
-
 (s/defschema User
   {:userid s/Str
    :name (s/maybe s/Str)
@@ -249,15 +238,5 @@
       :responses {200 {:schema V2Application}
                   404 {:schema s/Str :description "Not found"}}
       (if-let [app (api-get-application-v2 (getx-user-id) application-id)]
-        (ok app)
-        (not-found! "not found")))
-
-    (GET "/:application-id/migration" []
-      :summary "Get application by `application-id` in v1 schema"
-      :roles #{:logged-in}
-      :path-params [application-id :- (describe s/Num "application id")]
-      :responses {200 {:schema GetApplicationResponse}
-                  404 {:schema s/Str :description "Not found"}}
-      (if-let [app (api-get-application-v1 (getx-user-id) application-id)]
         (ok app)
         (not-found! "not found")))))
