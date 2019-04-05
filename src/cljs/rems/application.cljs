@@ -123,7 +123,7 @@
 
 (defn- save-application! [description application-id field-values accepted-licenses]
   (status-modal/common-pending-handler! description)
-  (post! "/api/applications/command/save-draft"
+  (post! "/api/applications/save-draft"
          {:params {:application-id application-id
                    :field-values field-values
                    :accepted-licenses accepted-licenses}
@@ -144,13 +144,13 @@
 (defn- submit-application! [application description application-id field-values accepted-licenses]
   ;; TODO: deduplicate with save-application!
   (status-modal/common-pending-handler! description)
-  (post! "/api/applications/command/save-draft"
+  (post! "/api/applications/save-draft"
          {:params {:application-id application-id
                    :field-values field-values
                    :accepted-licenses accepted-licenses}
           :handler (fn [response]
                      (if (:success response)
-                       (post! "/api/applications/command/submit"
+                       (post! "/api/applications/submit"
                               {:params {:application-id application-id}
                                :handler (fn [response]
                                           (if (:success response)
@@ -178,7 +178,7 @@
 (defn- save-attachment [{:keys [db]} [_ field-id file description]]
   (let [application-id (get-in db [::application :application/id])]
     (status-modal/common-pending-handler! description)
-    (post! "/api/applications/add_attachment"
+    (post! "/api/applications/add-attachment"
            {:url-params {:application-id application-id
                          :field-id field-id}
             :body file
@@ -193,7 +193,7 @@
 
 (defn- remove-attachment [_ [_ application-id field-id description]]
   (status-modal/common-pending-handler! description)
-  (post! "/api/applications/remove_attachment"
+  (post! "/api/applications/remove-attachment"
          {:url-params {:application-id application-id
                        :field-id field-id}
           :body {}

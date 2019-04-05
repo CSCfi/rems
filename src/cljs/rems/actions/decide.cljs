@@ -17,7 +17,7 @@
  ::send-decide
  (fn [_ [_ {:keys [application-id comment decision on-finished]}]]
    (status-modal/common-pending-handler! (text :t.actions/decide))
-   (post! "/api/applications/command/decide"
+   (post! "/api/applications/decide"
           {:params {:application-id application-id
                     :decision decision
                     :comment comment}

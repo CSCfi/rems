@@ -18,8 +18,8 @@
  (fn [_ [_ {:keys [application-id member comment on-finished]}]]
    (status-modal/common-pending-handler! (text :t.actions/remove-member))
    (post! (if (:userid member)
-            "/api/applications/command/remove-member"
-            "/api/applications/command/uninvite-member")
+            "/api/applications/remove-member"
+            "/api/applications/uninvite-member")
           {:params {:application-id application-id
                     :member (if (:userid member)
                               (select-keys member [:userid])

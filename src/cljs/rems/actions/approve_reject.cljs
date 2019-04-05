@@ -17,7 +17,7 @@
  ::send-approve
  (fn [_ [_ {:keys [application-id comment on-finished]}]]
    (status-modal/common-pending-handler! (text :t.actions/approve))
-   (post! "/api/applications/command/approve"
+   (post! "/api/applications/approve"
           {:params {:application-id application-id
                     :comment comment}
            :handler (partial status-modal/common-success-handler! on-finished)
@@ -28,7 +28,7 @@
  ::send-reject
  (fn [_ [_ {:keys [application-id comment on-finished]}]]
    (status-modal/common-pending-handler! (text :t.actions/reject))
-   (post! "/api/applications/command/reject"
+   (post! "/api/applications/reject"
           {:params {:application-id application-id
                     :comment comment}
            :handler (partial status-modal/common-success-handler! on-finished)

@@ -145,7 +145,7 @@
         (not-found! "not found")))
 
     ;; TODO: think about size limit
-    (POST "/add_attachment" []
+    (POST "/add-attachment" []
       :summary "Add an attachment file related to an application field"
       :roles #{:applicant}
       :multipart-params [file :- upload/TempFileUpload]
@@ -156,7 +156,7 @@
       (attachments/save-attachment! file (getx-user-id) application-id field-id)
       (ok {:success true}))
 
-    (POST "/remove_attachment" []
+    (POST "/remove-attachment" []
       :summary "Remove an attachment file related to an application field"
       :roles #{:applicant}
       :query-params [application-id :- (describe s/Int "application id")
@@ -187,7 +187,7 @@
        (api-command ~command request#))))
 
 (def application-commands-api
-  (context "/applications/command" []
+  (context "/applications" []
     :tags ["applications"]
     (command-endpoint :application.command/accept-invitation commands/AcceptInvitationCommand)
     (command-endpoint :application.command/add-member commands/AddMemberCommand)
