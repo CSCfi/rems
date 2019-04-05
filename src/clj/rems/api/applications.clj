@@ -163,22 +163,7 @@
                      field-id :- (describe s/Int "application form field id the attachment is related to")]
       :return SuccessResponse
       (attachments/remove-attachment! (getx-user-id) application-id field-id)
-      (ok {:success true}))
-
-    (POST "/command" []
-      :summary "Submit a command for an application"
-      :roles #{:logged-in}
-      :body [request Command]
-      :return SuccessResponse
-      (let [command (-> request
-                        (fix-command-from-api)
-                        (assoc :actor (getx-user-id))
-                        (assoc :time (time/now)))
-            errors (applications/command! command)]
-        (if errors
-          (ok {:success false
-               :errors (:errors errors)})
-          (ok {:success true}))))))
+      (ok {:success true}))))
 
 (defn api-command [command-type request]
   (let [command (-> request
