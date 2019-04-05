@@ -183,6 +183,39 @@
                :errors (:errors errors)})
           (ok {:success true}))))))
 
+(defn api-command [command-type request]
+  (let [command (-> request
+                    (assoc :type command-type)
+                    (assoc :actor (getx-user-id))
+                    (assoc :time (time/now))
+                    (fix-command-from-api))
+        errors (applications/command! command)]
+    (if errors
+      (ok {:success false
+           :errors (:errors errors)})
+      (ok {:success true}))))
+
+(defmacro command-endpoints [schemas]
+  `(context "/applications/command" []
+     :tags ["applications"]
+     ~@(for [[command schema] schemas]
+         (let [path (str "/" (name command))]
+           `(POST ~path []
+              :summary ~(str "Submit a `" (name command) "` command for an application.")
+              :roles #{:logged-in}
+              :body [request# ~schema]
+              :return SuccessResponse
+              (api-command ~command request#))))))
+
+(comment
+  (macroexpand-1
+   '(command-endpoints {:application.command/submit SubmitCommand
+                        :application.command/decide DecideCommand})))
+
+(def application-commands-api
+  (command-endpoints {:application.command/submit commands/SubmitCommand
+                      :application.command/decide commands/DecideCommand}))
+
 (def v2-applications-api
   (context "/v2/applications" []
     :tags ["applications"]
